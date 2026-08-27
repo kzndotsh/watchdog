@@ -85,7 +85,7 @@ export interface PresignedPut {
   headers: Record<string, string>;
 }
 
-export async function uploadArtifact(input: {
+export function uploadArtifact(input: {
   caseId: string;
   bytes: Uint8Array;
   mime: string;
@@ -111,7 +111,7 @@ export async function uploadArtifact(input: {
   }));
 }
 
-export async function createPresignedPut(input: {
+export function createPresignedPut(input: {
   caseId: string;
   sha256: string;
   mime: string;
@@ -156,7 +156,7 @@ export async function createPresignedPut(input: {
   }));
 }
 
-export async function assertUploadedObject(input: {
+export function assertUploadedObject(input: {
   uri: string;
   sha256: string;
   mime: string;
@@ -205,7 +205,7 @@ export async function readArtifactBytes(uri: string): Promise<Uint8Array> {
   return buf;
 }
 
-export async function createPresignedGet(
+export function createPresignedGet(
   uri: string,
   expiresIn = 300
 ): Promise<string> {

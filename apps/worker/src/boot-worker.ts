@@ -95,10 +95,7 @@ async function executeCapJobPayload(
   }
 }
 
-async function processCapJob(job: {
-  id: string;
-  data: unknown;
-}): Promise<void> {
+function processCapJob(job: { id: string; data: unknown }): Promise<void> {
   const log = createLogger({
     scope: "cap.job",
     bossJobId: job.id,
@@ -114,7 +111,7 @@ async function processCapJob(job: {
       payloadType: job.data === null ? "null" : typeof job.data,
     });
     finish();
-    return;
+    return Promise.resolve();
   }
 
   return executeCapJobPayload(job.data, log).finally(finish);
@@ -224,11 +221,11 @@ function bindWorkerShutdown(
   });
 }
 
-async function processCapJobBatch(
+function processCapJobBatch(
   jobs: { id: string; data: unknown }[]
 ): Promise<void> {
   const job = jobs[0];
-  if (!job) return;
+  if (!job) return Promise.resolve();
   return processCapJob(job);
 }
 

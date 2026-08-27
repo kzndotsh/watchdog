@@ -81,7 +81,7 @@ export async function createCase(input: CreateCaseInput): Promise<CaseRecord> {
   }
 }
 
-export async function updateCase(input: {
+export function updateCase(input: {
   id: string;
   name?: string;
   description?: string;
@@ -145,7 +145,7 @@ export async function updateCase(input: {
   })();
 }
 
-export async function deleteCase(
+export function deleteCase(
   id: string,
   opts?: { actorId?: string }
 ): Promise<void> {

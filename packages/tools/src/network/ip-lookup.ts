@@ -67,43 +67,6 @@ function originLookupName(ip: string): string {
   throw validationToolsError(`Invalid IP address: ${ip}`);
 }
 
-function parseOriginFields(rawOrigin: string): {
-  asns: string[];
-  bgpPrefix: string | null;
-  countryCode: string | null;
-  registry: string | null;
-  allocated: string | null;
-} {
-  const parts = rawOrigin.split("|").map((p) => p.trim());
-  return {
-    asns: (parts[0] ?? "")
-      .split(/\s+/)
-      .map((a) => a.trim())
-      .filter(Boolean),
-    bgpPrefix: parts[1] || null,
-    countryCode: parts[2] || null,
-    registry: parts[3] || null,
-    allocated: parts[4] || null,
-  };
-}
-
-async function lookupAsName(
-  resolver: ReturnType<typeof withAbortableResolver>["resolver"],
-  primaryAsn: string
-): Promise<{ rawAs: string | null; asName: string | null }> {
-  return resolver
-    .resolveTxt(`AS${primaryAsn}.asn.cymru.com`)
-    .catch(() => [] as string[][])
-    .then((asChunks) => {
-      if (asChunks.length === 0) {
-        return { rawAs: null, asName: null };
-      }
-      const rawAs = stripTxtQuotes(asChunks[0]?.join("") ?? "");
-      const asParts = rawAs.split("|").map((p) => p.trim());
-      return { rawAs, asName: asParts[4] || null };
-    });
-}
-
 /**
  * Team Cymru IP→ASN via DNS (origin.asn.cymru.com / origin6 + AS description).
  * Country/registry are RIR-assigned — not GeoIP.
@@ -129,6 +92,7 @@ export async function fetchIpLookup(
         ? stripTxtQuotes(originChunks[0]?.join("") ?? "")
         : null;
 
+    // "ASN | BGP Prefix | CC | Registry | Allocated"
     let asns: string[] = [];
     let bgpPrefix: string | null = null;
     let countryCode: string | null = null;
@@ -138,18 +102,27 @@ export async function fetchIpLookup(
     let rawAs: string | null = null;
 
     if (rawOrigin) {
-      const originFields = parseOriginFields(rawOrigin);
-      asns = originFields.asns;
-      bgpPrefix = originFields.bgpPrefix;
-      countryCode = originFields.countryCode;
-      registry = originFields.registry;
-      allocated = originFields.allocated;
+      const parts = rawOrigin.split("|").map((p) => p.trim());
+      asns = (parts[0] ?? "")
+        .split(/\s+/)
+        .map((a) => a.trim())
+        .filter(Boolean);
+      bgpPrefix = parts[1] || null;
+      countryCode = parts[2] || null;
+      registry = parts[3] || null;
+      allocated = parts[4] || null;
 
       const primary = asns[0];
       if (primary) {
-        const asLookup = await lookupAsName(resolver, primary);
-        rawAs = asLookup.rawAs;
-        asName = asLookup.asName;
+        const asChunks = await resolver
+          .resolveTxt(`AS${primary}.asn.cymru.com`)
+          .catch(() => [] as string[][]);
+        if (asChunks.length > 0) {
+          rawAs = stripTxtQuotes(asChunks[0]?.join("") ?? "");
+          // "ASN | CC | Registry | Allocated | AS Name"
+          const asParts = rawAs.split("|").map((p) => p.trim());
+          asName = asParts[4] || null;
+        }
       }
     }
 

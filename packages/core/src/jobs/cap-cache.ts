@@ -21,7 +21,7 @@ export function hashCapInput(input: unknown): string {
   return createHash("sha256").update(body).digest("hex");
 }
 
-export async function lookupCapCache(input: {
+export function lookupCapCache(input: {
   caseId: string;
   capabilityId: string;
   inputHash: string;

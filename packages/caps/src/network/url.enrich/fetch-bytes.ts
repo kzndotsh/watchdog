@@ -12,7 +12,7 @@ export async function fetchBytes(
   signal: AbortSignal,
   accept: string = ACCEPT_MARKDOWN_FIRST
 ) {
-  return fetchBytesTool(url, signal, {
+  return await fetchBytesTool(url, signal, {
     userAgent: URL_ENRICH_UA,
     maxBytes: URL_ENRICH_MAX_BYTES,
     accept,

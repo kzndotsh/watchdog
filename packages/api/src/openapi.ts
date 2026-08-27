@@ -8,7 +8,7 @@ const generator = new OpenAPIGenerator({
 });
 
 export async function generateOpenAPISpec(baseUrl = "/api/v1") {
-  return generator.generate(router, {
+  return await generator.generate(router, {
     info: {
       title: "Watchdog API",
       version: "0.1.0",

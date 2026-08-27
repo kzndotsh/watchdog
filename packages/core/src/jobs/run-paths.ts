@@ -8,7 +8,7 @@ import type { CollectResult } from "./stages/collect";
 import { failJob, type createJobLog } from "./stages/helpers";
 import type { PreflightState } from "./stages/preflight";
 
-async function logPlaybookAdvanceFailure(
+function logPlaybookAdvanceFailure(
   advanceError: unknown,
   opts: {
     jobId: string;
@@ -35,7 +35,7 @@ async function logPlaybookAdvanceFailure(
     });
 }
 
-export async function runSucceededPath(opts: {
+export function runSucceededPath(opts: {
   jobId: string;
   state: PreflightState;
   collected: CollectResult;
@@ -61,13 +61,13 @@ export async function runSucceededPath(opts: {
       caseId: state.job.caseId,
       playbookRunId,
     })
-      .catch(async (advanceError: unknown) =>
+      .catch((advanceError: unknown) =>
         logPlaybookAdvanceFailure(advanceError, {
           jobId,
           caseId: state.job.caseId,
           playbookRunId,
           jobLog,
-        }).then(async () =>
+        }).then(() =>
           playbookRunsRepo
             .setStatus(db, playbookRunId, "cancelled", new Date(), {
               onlyStatuses: ["running"],
@@ -84,7 +84,7 @@ export async function runSucceededPath(opts: {
   });
 }
 
-export async function runFailedPath(opts: {
+export function runFailedPath(opts: {
   jobId: string;
   error: unknown;
   jobLog: ReturnType<typeof createJobLog>;

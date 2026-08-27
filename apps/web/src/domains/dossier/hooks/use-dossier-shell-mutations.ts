@@ -62,7 +62,7 @@ async function invalidateDossierEntity(
   });
 }
 
-async function renameEntity(ctx: EntityMutationContext, name: string) {
+function renameEntity(ctx: EntityMutationContext, name: string) {
   return updateEntityFieldsFn({
     data: { caseId: ctx.caseId, entityId: ctx.entity.id, name },
   });
@@ -77,10 +77,7 @@ function onRenameError(err: unknown): void {
   toast.error(errMessage(err, "Rename failed"));
 }
 
-async function editEntity(
-  ctx: EntityMutationContext,
-  values: DossierEditFormValues
-) {
+function editEntity(ctx: EntityMutationContext, values: DossierEditFormValues) {
   return updateEntityFieldsFn({
     data: {
       caseId: ctx.caseId,

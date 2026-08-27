@@ -80,7 +80,7 @@ function toRecord(
   };
 }
 
-export async function listProposalsForCase(
+export function listProposalsForCase(
   caseId: string,
   opts?: { status?: ProposalStatus }
 ): Promise<ProposalRecord[]> {
@@ -133,7 +133,7 @@ export async function getProposalForCase(
   });
 }
 
-export async function acceptProposal(input: {
+export function acceptProposal(input: {
   caseId: string;
   proposalId: string;
   actorId: string;
@@ -201,7 +201,7 @@ export async function acceptProposal(input: {
   })();
 }
 
-export async function rejectProposal(input: {
+export function rejectProposal(input: {
   caseId: string;
   proposalId: string;
   actorId: string;

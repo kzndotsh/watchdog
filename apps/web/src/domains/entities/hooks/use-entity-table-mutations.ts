@@ -36,7 +36,7 @@ interface ConnectionUpdateVars {
   input: UpdateEntityConnectionInput;
 }
 
-async function updateEntityFields(caseId: string, vars: UpdateEntityVars) {
+function updateEntityFields(caseId: string, vars: UpdateEntityVars) {
   return updateEntityFieldsFn({
     data: {
       caseId,
@@ -59,7 +59,7 @@ function onEntityFieldsError(error: unknown): void {
   toast.error(errMessage(error, "Update failed"));
 }
 
-async function createEntityConnection(caseId: string, vars: ConnectionVars) {
+function createEntityConnection(caseId: string, vars: ConnectionVars) {
   return createEdgeFn({
     data: buildCreateEdgeData({
       caseId,
@@ -80,10 +80,7 @@ async function onConnectionCreated(
   });
 }
 
-async function updateEntityConnection(
-  caseId: string,
-  vars: ConnectionUpdateVars
-) {
+function updateEntityConnection(caseId: string, vars: ConnectionUpdateVars) {
   return updateEdgeFn({
     data: buildUpdateEdgeData({
       caseId,

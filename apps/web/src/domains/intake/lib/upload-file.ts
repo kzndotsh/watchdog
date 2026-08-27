@@ -5,10 +5,10 @@ import {
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { MAX_UPLOAD_BYTES } from "@watchdog/schemas";
 
-async function sha256HexFile(file: File): Promise<string> {
+function sha256HexFile(file: File): Promise<string> {
   return file
     .arrayBuffer()
-    .then(async (buf) =>
+    .then((buf) =>
       crypto.subtle
         .digest("SHA-256", buf)
         .then((digest) =>
@@ -19,7 +19,7 @@ async function sha256HexFile(file: File): Promise<string> {
     );
 }
 
-export async function uploadFileEvidence(input: {
+export function uploadFileEvidence(input: {
   caseId: string;
   file: File;
   label?: string;
@@ -36,7 +36,7 @@ export async function uploadFileEvidence(input: {
 
   const mime = input.file.type || "application/octet-stream";
   return sha256HexFile(input.file)
-    .then(async (sha256) =>
+    .then((sha256) =>
       presignUploadFn({
         data: {
           caseId: input.caseId,
@@ -47,7 +47,7 @@ export async function uploadFileEvidence(input: {
         },
       }).then((put) => ({ put, sha256, mime }))
     )
-    .then(async ({ put, sha256, mime }) =>
+    .then(({ put, sha256, mime }) =>
       fetch(put.url, {
         method: "PUT",
         headers: put.headers,
@@ -59,7 +59,7 @@ export async function uploadFileEvidence(input: {
         return { put, sha256, mime };
       })
     )
-    .then(async ({ put }) =>
+    .then(({ put }) =>
       confirmFileUploadFn({
         data: {
           caseId: input.caseId,

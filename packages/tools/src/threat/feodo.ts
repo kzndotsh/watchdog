@@ -57,47 +57,39 @@ interface FeodoOptions2 {
   apiKey?: string;
 }
 
-async function downloadFeodoBlocklist(
+async function fetchBlocklist(
   signal: AbortSignal,
   options: FeodoOptions2
 ): Promise<FeodoEntry[]> {
+  const now = Date.now();
+  if (cachedEntries && now - cachedAt < CACHE_TTL_MS) return cachedEntries;
+  if (inflight) return inflight;
+
   const headers: Record<string, string> = {
     Accept: "application/json",
     "User-Agent": options.userAgent,
   };
   if (options.apiKey) headers["Auth-Key"] = options.apiKey;
 
-  const res = await fetch(FEODO_BLOCKLIST_URL, {
-    method: "GET",
-    signal,
-    headers,
-  });
-  if (!res.ok) throw httpToolsError("Feodo Tracker blocklist", res.status);
-  const body: unknown = await res.json();
-  return parseFeodoEntries(body);
-}
-
-async function fetchBlocklist(
-  signal: AbortSignal,
-  options: FeodoOptions2
-): Promise<FeodoEntry[]> {
-  const now = Date.now();
-  if (cachedEntries && now - cachedAt < CACHE_TTL_MS) {
-    return cachedEntries;
-  }
-  if (inflight) return inflight;
-
-  inflight = downloadFeodoBlocklist(signal, options)
-    .then((entries) => {
-      cachedEntries = entries;
-      cachedAt = Date.now();
-      return entries;
-    })
-    .finally(() => {
-      inflight = null;
+  inflight = (async () => {
+    const res = await fetch(FEODO_BLOCKLIST_URL, {
+      method: "GET",
+      signal,
+      headers,
     });
+    if (!res.ok) throw httpToolsError("Feodo Tracker blocklist", res.status);
+    const body: unknown = await res.json();
+    const entries = parseFeodoEntries(body);
+    cachedEntries = entries;
+    cachedAt = Date.now();
+    return entries;
+  })();
 
-  return inflight;
+  try {
+    return await inflight;
+  } finally {
+    inflight = null;
+  }
 }
 
 /**
@@ -111,11 +103,20 @@ interface FeodoOptions {
   userAgent?: string;
   apiKey?: string;
 }
+export async function fetchFeodoLookup(
+  ipRaw: string,
+  signal: AbortSignal,
+  options?: FeodoOptions
+): Promise<FeodoLookupSnapshot> {
+  const ip = normalizeIp(ipRaw);
+  const ua = options?.userAgent ?? watchdogUserAgent("threat.feodo.lookup");
 
-function feodoMatchSnapshot(
-  ip: string,
-  match: FeodoEntry | undefined
-): FeodoLookupSnapshot {
+  const entries = await fetchBlocklist(signal, {
+    userAgent: ua,
+    apiKey: options?.apiKey,
+  });
+  const match = entries.find((e) => e.ipAddress === ip);
+
   return feodoLookupSnapshotSchema.parse({
     ip,
     queriedAt: new Date().toISOString(),
@@ -126,23 +127,4 @@ function feodoMatchSnapshot(
     firstSeen: match?.firstSeen ?? null,
     lastOnline: match?.lastOnline ?? null,
   });
-}
-
-export async function fetchFeodoLookup(
-  ipRaw: string,
-  signal: AbortSignal,
-  options?: FeodoOptions
-): Promise<FeodoLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.feodo.lookup");
-
-  return fetchBlocklist(signal, {
-    userAgent: ua,
-    apiKey: options?.apiKey,
-  }).then((entries) =>
-    feodoMatchSnapshot(
-      ip,
-      entries.find((e) => e.ipAddress === ip)
-    )
-  );
 }

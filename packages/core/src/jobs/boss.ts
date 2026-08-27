@@ -89,18 +89,18 @@ async function startBoss(role: BossRole): Promise<PgBoss> {
 
 /** Web/API enqueue — no supervise / schedule loops. Starts pg-boss on first call. */
 export async function ensureBossProducer(): Promise<PgBoss> {
-  return startBoss("producer");
+  return await startBoss("producer");
 }
 
 /** Worker — supervises heartbeats / expire / maintenance. Starts pg-boss on first call. */
 export async function ensureBossWorker(): Promise<PgBoss> {
-  return startBoss("worker");
+  return await startBoss("worker");
 }
 
 /** Prefer the live boss (worker in-process) so playbook chain does not spawn a second pool. */
 async function bossForEnqueue(): Promise<PgBoss> {
   if (bossSingleton) return bossSingleton;
-  return startBoss("producer");
+  return await startBoss("producer");
 }
 
 /** Single enqueue path — Cap-derived expire, one boss per process. */

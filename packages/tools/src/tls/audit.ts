@@ -1,9 +1,4 @@
-import {
-  connect,
-  type CipherNameAndProtocol,
-  type PeerCertificate,
-  type TLSSocket,
-} from "node:tls";
+import { connect, type PeerCertificate } from "node:tls";
 
 import { z } from "zod";
 
@@ -36,24 +31,9 @@ export const tlsAuditSnapshotSchema = z.object({
 
 export type TlsAuditSnapshot = z.infer<typeof tlsAuditSnapshotSchema>;
 
-/** Audit probes must read cert metadata even when chain validation fails. */
-const TLS_AUDIT_INSECURE_CONNECT = {
-  rejectUnauthorized: false,
-} as const;
-
 function dnField(value: string | string[] | undefined): string | null {
   if (value === undefined) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
-}
-
-function certSubjectFields(cert: PeerCertificate): {
-  subject: string | null;
-  issuer: string | null;
-} {
-  return {
-    subject: dnField(cert.subject?.CN) ?? dnField(cert.subject?.O),
-    issuer: dnField(cert.issuer?.CN) ?? dnField(cert.issuer?.O),
-  };
 }
 
 function certField(
@@ -65,10 +45,9 @@ function certField(
       ?.split(",")
       .map((s) => s.trim())
       .filter(Boolean) ?? [];
-  const { subject, issuer } = certSubjectFields(cert);
   return {
-    subject,
-    issuer,
+    subject: dnField(cert.subject?.CN) ?? dnField(cert.subject?.O),
+    issuer: dnField(cert.issuer?.CN) ?? dnField(cert.issuer?.O),
     validFrom: cert.valid_from ?? null,
     validTo: cert.valid_to ?? null,
     fingerprint256: cert.fingerprint256 ?? null,
@@ -77,75 +56,13 @@ function certField(
   };
 }
 
-function cipherField(
-  cipher: CipherNameAndProtocol | null
-): TlsAuditSnapshot["cipher"] {
-  if (!cipher) return null;
-  return {
-    name: cipher.name,
-    ...(cipher.standardName ? { standardName: cipher.standardName } : {}),
-    ...(cipher.version ? { version: cipher.version } : {}),
-  };
-}
-
-function snapshotFromSocket(
-  socket: TLSSocket,
-  host: string,
-  port: number
-): TlsAuditSnapshot {
-  const peer = socket.getPeerCertificate(true);
-  const cipher = socket.getCipher();
-  return {
-    host,
-    port,
-    queriedAt: new Date().toISOString(),
-    protocol: socket.getProtocol() ?? null,
-    authorized: socket.authorized,
-    authorizationError: socket.authorizationError
-      ? String(socket.authorizationError)
-      : null,
-    cipher: cipherField(cipher),
-    certificate: certField(peer),
-  };
-}
-
 interface AuditOptions {
   port?: number;
   servername?: string;
 }
 
-function wireTlsAuditSocket(
-  socket: TLSSocket,
-  signal: AbortSignal,
-  host: string,
-  port: number,
-  resolve: (snap: TlsAuditSnapshot) => void,
-  reject: (error: Error) => void
-): void {
-  const onAbort = () => {
-    socket.destroy(new Error("TLS audit aborted"));
-  };
-  signal.addEventListener("abort", onAbort, { once: true });
-
-  socket.setTimeout(20_000, () => {
-    socket.destroy(new Error("TLS audit timed out"));
-  });
-  socket.on("error", (err) => {
-    signal.removeEventListener("abort", onAbort);
-    reject(err instanceof Error ? err : new Error(String(err)));
-  });
-  socket.on("close", () => {
-    signal.removeEventListener("abort", onAbort);
-  });
-  socket.on("secureConnect", () => {
-    const snap = snapshotFromSocket(socket, host, port);
-    socket.end();
-    resolve(tlsAuditSnapshotSchema.parse(snap));
-  });
-}
-
 /** Active TLS handshake against host:port — invasive. */
-export async function fetchTlsAudit(
+export function fetchTlsAudit(
   host: string,
   signal: AbortSignal,
   options?: AuditOptions
@@ -160,12 +77,55 @@ export async function fetchTlsAudit(
       return;
     }
 
-    const socket = connect({
-      host,
-      port,
-      servername,
-      ...TLS_AUDIT_INSECURE_CONNECT,
+    const socket = connect(
+      {
+        host,
+        port,
+        servername,
+        rejectUnauthorized: false,
+      },
+      () => {
+        const peer = socket.getPeerCertificate(true);
+        const cipher = socket.getCipher();
+        const snap: TlsAuditSnapshot = {
+          host,
+          port,
+          queriedAt: new Date().toISOString(),
+          protocol: socket.getProtocol() ?? null,
+          authorized: socket.authorized,
+          authorizationError: socket.authorizationError
+            ? String(socket.authorizationError)
+            : null,
+          cipher: cipher
+            ? {
+                name: cipher.name,
+                ...(cipher.standardName
+                  ? { standardName: cipher.standardName }
+                  : {}),
+                ...(cipher.version ? { version: cipher.version } : {}),
+              }
+            : null,
+          certificate: certField(peer),
+        };
+        socket.end();
+        resolve(tlsAuditSnapshotSchema.parse(snap));
+      }
+    );
+
+    const onAbort = () => {
+      socket.destroy(new Error("TLS audit aborted"));
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+
+    socket.setTimeout(20_000, () => {
+      socket.destroy(new Error("TLS audit timed out"));
     });
-    wireTlsAuditSocket(socket, signal, host, port, resolve, reject);
+    socket.on("error", (err) => {
+      signal.removeEventListener("abort", onAbort);
+      reject(err instanceof Error ? err : new Error(String(err)));
+    });
+    socket.on("close", () => {
+      signal.removeEventListener("abort", onAbort);
+    });
   });
 }

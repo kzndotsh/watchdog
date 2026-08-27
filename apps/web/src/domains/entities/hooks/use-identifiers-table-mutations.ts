@@ -24,10 +24,7 @@ interface UpdateIdentifierVars {
   evidenceIds?: string[];
 }
 
-async function updateIdentifierFields(
-  caseId: string,
-  input: UpdateIdentifierVars
-) {
+function updateIdentifierFields(caseId: string, input: UpdateIdentifierVars) {
   return updateIdentifierFn({ data: { caseId, ...input } });
 }
 

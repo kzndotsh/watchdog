@@ -94,31 +94,23 @@ export interface CreateAttestationInput {
   tx?: DbTx;
 }
 
-function optionalIso(value: Date | null | undefined): string | null {
-  return value?.toISOString() ?? null;
-}
-
-function nullToUndefined<T>(value: T | null | undefined): T | null {
-  return value ?? null;
-}
-
 function toRecord(row: EvidenceRow): EvidenceRecord {
   return {
     id: row.id,
     caseId: row.caseId,
-    entityId: nullToUndefined(row.entityId),
+    entityId: row.entityId ?? null,
     kind: row.kind,
-    label: nullToUndefined(row.label),
-    notes: nullToUndefined(row.notes),
-    mime: nullToUndefined(row.mime),
-    uri: nullToUndefined(row.uri),
-    sha256: nullToUndefined(row.sha256),
-    text: nullToUndefined(row.text),
-    sourceUrl: nullToUndefined(row.sourceUrl),
+    label: row.label ?? null,
+    notes: row.notes ?? null,
+    mime: row.mime ?? null,
+    uri: row.uri ?? null,
+    sha256: row.sha256 ?? null,
+    text: row.text ?? null,
+    sourceUrl: row.sourceUrl ?? null,
     actorId: row.actorId,
     capturedAt: row.capturedAt.toISOString(),
-    processedAt: optionalIso(row.processedAt),
-    deletedAt: optionalIso(row.deletedAt),
+    processedAt: row.processedAt?.toISOString() ?? null,
+    deletedAt: row.deletedAt?.toISOString() ?? null,
   };
 }
 
@@ -196,7 +188,7 @@ export async function restoreEvidence(input: SoftDeleteInput): Promise<void> {
   if (!row) throw new DomainError("not_found", "Hidden Evidence not found");
 }
 
-export async function attachEvidenceEntity(input: {
+export function attachEvidenceEntity(input: {
   caseId: string;
   evidenceId: string;
   entityId: string | null;
@@ -222,7 +214,7 @@ export async function presignUpload(
   input: PresignUploadInput
 ): Promise<PresignedPut> {
   await assertCaseExists(input.caseId);
-  return createPresignedPut({
+  return await createPresignedPut({
     caseId: input.caseId,
     sha256: input.sha256,
     mime: input.mime,
@@ -264,12 +256,12 @@ export async function confirmFileUpload(
   return toRecord(row);
 }
 
-export async function getEvidenceDownloadUrl(
+export function getEvidenceDownloadUrl(
   caseId: string,
   evidenceId: string
 ): Promise<{ url: string | null }> {
   return assertCaseExists(caseId)
-    .then(async () =>
+    .then(() =>
       evidenceRepo.getUriInCaseIncludingDeleted(db, caseId, evidenceId)
     )
     .then((row) => {

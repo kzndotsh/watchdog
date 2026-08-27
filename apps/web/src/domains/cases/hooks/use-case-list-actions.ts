@@ -9,7 +9,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 
-async function selectActiveCase(caseId: string) {
+function selectActiveCase(caseId: string) {
   return setActiveCaseIdFn({ data: { caseId } });
 }
 

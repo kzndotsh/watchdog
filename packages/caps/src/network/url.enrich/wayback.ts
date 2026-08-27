@@ -12,5 +12,5 @@ export async function closestWaybackTimestamp(
   url: string,
   signal: AbortSignal
 ): Promise<string | null> {
-  return closestWaybackTimestampTool(url, signal, URL_ENRICH_UA);
+  return await closestWaybackTimestampTool(url, signal, URL_ENRICH_UA);
 }

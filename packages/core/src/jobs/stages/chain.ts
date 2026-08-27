@@ -22,7 +22,7 @@ import { notifyEvent } from "../../infra/events";
 import { logSwallowed } from "../../infra/process-log";
 import { enqueueCapJob } from "../boss";
 
-async function maybeFinishPlaybookRun(
+function maybeFinishPlaybookRun(
   exec: DbExec,
   playbookRunId: string
 ): Promise<void> {
@@ -48,18 +48,18 @@ interface ReleasedJob {
   capabilityId: string;
 }
 
-async function enqueueReleased(
+function enqueueReleased(
   caseId: string,
   playbookRunId: string,
   released: ReleasedJob[]
 ): Promise<void> {
   if (released.length === 0) return Promise.resolve();
   return Promise.all(
-    released.map(async (row) => enqueueCapJob(row.id, row.capabilityId))
+    released.map((row) => enqueueCapJob(row.id, row.capabilityId))
   )
-    .then(async () =>
+    .then(() =>
       Promise.all(
-        released.map(async (row) =>
+        released.map((row) =>
           notifyEvent({
             type: "job_update",
             caseId,
@@ -78,7 +78,7 @@ async function enqueueReleased(
     .then(() => {});
 }
 
-async function enqueueStepJobs(opts: {
+function enqueueStepJobs(opts: {
   tx: DbExec;
   run: {
     caseId: string;
@@ -132,7 +132,7 @@ async function enqueueStepJobs(opts: {
   })();
 }
 
-export async function advancePlaybookRun(input: {
+export function advancePlaybookRun(input: {
   playbookRunId: string;
   caseId?: string;
 }): Promise<void> {

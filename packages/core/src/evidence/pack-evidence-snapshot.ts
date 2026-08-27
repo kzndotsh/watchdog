@@ -19,7 +19,7 @@ function truncate(text: string, max = MAX_SNAPSHOT_CHARS): string {
   return `${text.slice(0, max)}\n\n…[truncated ${text.length - max} chars]`;
 }
 
-async function loadTextFromEvidence(row: {
+function loadTextFromEvidence(row: {
   text: string | null;
   uri: string | null;
   mime: string | null;
@@ -48,13 +48,13 @@ async function loadTextFromEvidence(row: {
  * URL dumps are metadata-only until Enrich. Process should harvest the Job
  * Output (enriched.md), not the bare URL string on the Evidence row.
  */
-async function loadEnrichOutputText(input: {
+function loadEnrichOutputText(input: {
   caseId: string;
   evidenceId: string;
 }): Promise<string | null> {
   return jobsRepo
     .listSucceededForCapability(db, input.caseId, URL_ENRICH_CAPABILITY_ID, 40)
-    .then(async (recent) => {
+    .then((recent) => {
       let chain: Promise<string | null> = Promise.resolve(null);
       for (const job of recent) {
         chain = chain.then((found) => {
@@ -87,21 +87,21 @@ async function loadEnrichOutputText(input: {
     });
 }
 
-export async function packEvidenceSnapshot(input: {
+export function packEvidenceSnapshot(input: {
   caseId: string;
   evidenceId: string;
   entityId?: string;
 }): Promise<EvidenceSnapshot> {
   return evidenceRepo
     .getActiveInCase(db, input.caseId, input.evidenceId)
-    .then(async (row) => {
+    .then((row) => {
       if (!row) {
         throw new DomainError(
           "not_found",
           `Evidence not found: ${input.evidenceId}`
         );
       }
-      return loadTextFromEvidence(row).then(async (initialText) => {
+      return loadTextFromEvidence(row).then((initialText) => {
         const looksLikeUrlOnly =
           row.uri === null &&
           Boolean(initialText.trim()) &&

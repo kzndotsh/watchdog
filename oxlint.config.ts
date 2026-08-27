@@ -316,7 +316,10 @@ export default defineConfig({
     },
     {
       // Job pipeline + evidence: promise chains avoid desloppify async_no_await churn.
-      files: ["packages/core/src/**/*.{ts,tsx}"],
+      files: [
+        "packages/core/src/**/*.{ts,tsx}",
+        "packages/db/src/**/*.{ts,tsx}",
+      ],
       rules: {
         "eslint/no-empty-function": "off",
         "promise/prefer-await-to-callbacks": "off",
@@ -339,6 +342,8 @@ export default defineConfig({
     {
       // Server fns + SSE + case switch: promise chains over raw async churn.
       files: [
+        "apps/web/src/auth/session.server.ts",
+        "apps/web/src/domains/**/hooks/*.{ts,tsx}",
         "apps/web/src/domains/**/*.functions.ts",
         "apps/web/src/domains/intake/lib/upload-file.ts",
         "apps/web/src/shared/lib/active-case-switch.ts",
@@ -351,6 +356,7 @@ export default defineConfig({
         "promise/prefer-await-to-then": "off",
         "promise/no-nesting": "off",
         "typescript/promise-function-async": "off",
+        "typescript/return-await": "off",
         "unicorn/no-useless-promise-resolve-reject": "off",
         "eslint/prefer-const": "off",
       },
@@ -379,7 +385,21 @@ export default defineConfig({
       // Worker boot: pg-boss handlers return void, not wrapped resolves.
       files: ["apps/worker/src/**/*.{ts,tsx}"],
       rules: {
+        "promise/prefer-await-to-then": "off",
+        "typescript/promise-function-async": "off",
+        "typescript/return-await": "off",
         "unicorn/no-useless-promise-resolve-reject": "off",
+      },
+    },
+    {
+      // Cap wrappers + OpenAPI generator: thin promise delegates.
+      files: [
+        "packages/api/src/openapi.ts",
+        "packages/caps/src/network/url.enrich/**/*.{ts,tsx}",
+      ],
+      rules: {
+        "typescript/promise-function-async": "off",
+        "typescript/return-await": "off",
       },
     },
     {

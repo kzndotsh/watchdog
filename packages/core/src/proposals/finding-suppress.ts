@@ -19,7 +19,7 @@ import {
   type PatchOp,
 } from "@watchdog/schemas";
 
-async function markExistingInGraph(
+function markExistingInGraph(
   caseId: string,
   fps: { op: PatchOp; fp: string }[],
   known: Set<string>
@@ -218,7 +218,7 @@ async function markExistingInGraph(
  * Drop ops whose fingerprint already exists in the Graph, a pending Proposal,
  * or finding_suppressions (rejected FP memory).
  */
-export async function suppressKnownFindings(
+export function suppressKnownFindings(
   caseId: string,
   patch: PatchOp[]
 ): Promise<{ kept: PatchOp[]; suppressed: number }> {
@@ -274,7 +274,7 @@ export async function suppressKnownFindings(
   })();
 }
 
-export async function recordRejectedFingerprints(input: {
+export function recordRejectedFingerprints(input: {
   caseId: string;
   proposalId: string;
   patch: PatchOp[];

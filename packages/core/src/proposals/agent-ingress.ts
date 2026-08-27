@@ -14,7 +14,7 @@ import { getProposalForCase, type ProposalRecord } from "./proposals";
 
 const GRAPH_WRITE_IDEMPOTENCY_INDEX = "graph_writes_case_actor_idem_uidx";
 
-async function findGraphWriteByIdempotency(input: {
+function findGraphWriteByIdempotency(input: {
   caseId: string;
   actorId: string;
   idempotencyKey: string;
@@ -22,7 +22,7 @@ async function findGraphWriteByIdempotency(input: {
   return graphWritesRepo.findIdByIdempotency(db, input);
 }
 
-export async function createAgentProposal(input: {
+export function createAgentProposal(input: {
   caseId: string;
   actorId: string;
   patch: unknown;
@@ -89,7 +89,7 @@ export async function createAgentProposal(input: {
   })();
 }
 
-export async function writeGraphFromAgent(input: {
+export function writeGraphFromAgent(input: {
   caseId: string;
   actorId: string;
   patch: unknown;

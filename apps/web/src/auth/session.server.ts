@@ -6,7 +6,7 @@ import { UnauthorizedError } from "@/auth/unauthorized-error";
 
 export async function readSession() {
   const headers = getRequestHeaders();
-  return auth.api.getSession({ headers });
+  return await auth.api.getSession({ headers });
 }
 
 export async function requireSession() {

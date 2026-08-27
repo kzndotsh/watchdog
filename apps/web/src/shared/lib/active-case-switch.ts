@@ -7,14 +7,16 @@ import type { CaseRecord, CasesContext } from "@/domains/cases/types";
 import { isCaseOverviewPath } from "./case-path";
 import { invalidateAfterCaseSwitch } from "./query-invalidation";
 
-export async function optimisticActiveCaseSwitch(
+export { isCaseOverviewPath } from "./case-path";
+
+export function optimisticActiveCaseSwitch(
   queryClient: QueryClient,
   cases: CaseRecord[],
   caseId: string
 ): Promise<{ prev: CasesContext | undefined; next: CaseRecord | undefined }> {
   const next = cases.find((c) => c.id === caseId);
   if (!next) {
-    return { prev: undefined, next: undefined };
+    return Promise.resolve({ prev: undefined, next: undefined });
   }
   bumpActiveCaseHealEpoch();
   return queryClient
@@ -40,7 +42,7 @@ export function rollbackActiveCaseSwitch(
   }
 }
 
-export async function finalizeActiveCaseSwitch(
+export function finalizeActiveCaseSwitch(
   queryClient: QueryClient,
   next: CaseRecord | undefined
 ): Promise<void> {
@@ -53,7 +55,7 @@ export async function finalizeActiveCaseSwitch(
   });
 }
 
-export async function navigateAfterActiveCaseSwitch(input: {
+export function navigateAfterActiveCaseSwitch(input: {
   next: CaseRecord;
   pathname: string;
   entityId?: string;
@@ -65,14 +67,18 @@ export async function navigateAfterActiveCaseSwitch(input: {
   }) => Promise<void> | void;
 }): Promise<void> {
   if (isCaseOverviewPath(input.pathname)) {
-    await input.navigate({
-      to: "/cases/$caseSlug",
-      params: { caseSlug: input.next.slug },
-      replace: true,
-    });
-    return;
+    return Promise.resolve(
+      input.navigate({
+        to: "/cases/$caseSlug",
+        params: { caseSlug: input.next.slug },
+        replace: true,
+      })
+    ).then(() => {});
   }
   if (input.pathname === "/tasks" && input.entityId) {
-    await input.navigate({ to: "/tasks", search: {}, replace: true });
+    return Promise.resolve(
+      input.navigate({ to: "/tasks", search: {}, replace: true })
+    ).then(() => {});
   }
+  return Promise.resolve();
 }
