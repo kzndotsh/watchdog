@@ -7,8 +7,6 @@ import type { CaseRecord, CasesContext } from "@/domains/cases/types";
 import { isCaseOverviewPath } from "./case-path";
 import { invalidateAfterCaseSwitch } from "./query-invalidation";
 
-export { isCaseOverviewPath } from "./case-path";
-
 export function optimisticActiveCaseSwitch(
   queryClient: QueryClient,
   cases: CaseRecord[],

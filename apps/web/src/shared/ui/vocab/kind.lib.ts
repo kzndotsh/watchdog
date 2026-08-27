@@ -174,7 +174,7 @@ const KIND_LABELS: Record<KindValue, string> = {
   ...IDENTIFIER_TYPE_LABELS,
 };
 
-export const KIND_TONES: Record<KindValue, VocabTone> = {
+const KIND_TONES: Record<KindValue, VocabTone> = {
   ...ENTITY_KIND_TONES,
   ...EVIDENCE_KIND_TONES,
   ...IDENTIFIER_TYPE_TONES,
