@@ -4,6 +4,7 @@ const config: KnipConfig = {
   ignoreExportsUsedInFile: {
     interface: true,
     type: true,
+    function: true,
   },
   ignoreBinaries: ["check", "desloppify"],
   ignore: ["_legacy-v1/**", "_legacy-v2/**"],
@@ -11,6 +12,21 @@ const config: KnipConfig = {
     "apps/web/src/domains/**/types.ts": ["types"],
     "apps/web/src/domains/**/*.server.ts": ["types"],
     "apps/web/src/auth/server.ts": ["types"],
+    // WD UI + domain helpers exported for /ui gallery, COMPONENTS.md, and tests.
+    "apps/web/src/shared/ui/skeletons.tsx": ["exports"],
+    "apps/web/src/shared/ui/graph/index.ts": ["exports"],
+    "apps/web/src/shared/ui/graph/graph-bezier.ts": ["exports"],
+    "apps/web/src/shared/ui/graph/graph-canvas-background.tsx": ["exports"],
+    "apps/web/src/shared/ui/graph/graph-canvas-skeleton.tsx": ["exports"],
+    "apps/web/src/shared/ui/graph/types.ts": ["types"],
+    "apps/web/src/shared/ui/vocab/index.ts": ["exports"],
+    "apps/web/src/shared/ui/vocab/status.lib.ts": ["exports"],
+    "apps/web/src/domains/cases/components/case-graph/case-graph-ranks.ts": [
+      "exports",
+    ],
+    "apps/web/src/domains/jobs/lib/playbook-match.ts": ["exports"],
+    "apps/web/src/domains/jobs/lib/playbook-select-group.ts": ["exports"],
+    "apps/web/src/domains/jobs/lib/status.ts": ["exports"],
   },
   workspaces: {
     ".": {
@@ -45,6 +61,8 @@ const config: KnipConfig = {
         "cmdk",
         "shadcn",
         "tw-animate-css",
+        // Playwright runs from repo root (`playwright.config.ts`, `e2e/`).
+        "playwright",
       ],
     },
     "apps/worker": {
