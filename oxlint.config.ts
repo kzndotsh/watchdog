@@ -414,5 +414,50 @@ export default defineConfig({
         "unicorn/no-useless-promise-resolve-reject": "off",
       },
     },
+    {
+      // Pan/zoom graph — layout measurement requires effect-driven view state.
+      files: ["apps/web/src/shared/ui/graph/graph-canvas.tsx"],
+      rules: {
+        "react/react-compiler": "off",
+        "jsx-a11y/no-noninteractive-element-interactions": "off",
+        "jsx-a11y/no-noninteractive-tabindex": "off",
+        "typescript/consistent-return": "off",
+      },
+    },
+    {
+      // Web maintenance scripts — sequential browser steps, loose DOM typing.
+      files: ["apps/web/scripts/**/*.mjs"],
+      rules: {
+        "eslint/no-await-in-loop": "off",
+        "eslint/no-empty-function": "off",
+        "eslint/no-unused-vars": "off",
+        "promise/avoid-new": "off",
+        "typescript/await-thenable": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/no-unsafe-argument": "off",
+        "typescript/use-unknown-in-catch-callback-variable": "off",
+        "unicorn/no-useless-undefined": "off",
+      },
+    },
+    {
+      // Fixture modules — inert handlers and mixed exports.
+      files: [
+        "apps/web/src/shared/ui/active-tab-body.tsx",
+        "apps/web/src/shared/ui/stack-pending-fallback.tsx",
+      ],
+      rules: {
+        "react/only-export-components": "off",
+      },
+    },
+    {
+      // Fixture modules — inert handlers and mixed exports.
+      files: ["apps/web/src/**/fixtures/**/*.{ts,tsx}"],
+      rules: {
+        "react/only-export-components": "off",
+        "unicorn/prefer-export-from": "off",
+      },
+    },
   ],
 });
