@@ -45,11 +45,11 @@ test.describe("Day-0 core loop", () => {
       entityId: entity.id,
     });
 
-    await page.goto("/intake");
-    await page
-      .getByText(/alice@mailhost.test|mailhost|paste/i)
-      .first()
-      .click();
+    await page.goto("/collect");
+    await page.waitForSelector("html[data-hydrated=true]", { timeout: 30_000 });
+    await expect(page.getByRole("button", { name: /^harvest$/i })).toBeEnabled({
+      timeout: 30_000,
+    });
     await page.getByRole("button", { name: /^harvest$/i }).click();
 
     await expect
@@ -68,7 +68,7 @@ test.describe("Day-0 core loop", () => {
       )
       .toBeGreaterThan(0);
 
-    await page.goto("/inbox");
+    await page.goto("/triage");
     await page.waitForSelector("html[data-hydrated=true]", { timeout: 30_000 });
     const accept = page.getByRole("button", { name: /^accept$/i });
     await expect(accept).toBeVisible({ timeout: 90_000 });

@@ -40,7 +40,8 @@ test.describe("Custody defense", () => {
       ],
     });
 
-    await page.goto("/inbox");
+    await page.goto("/triage");
+    await page.waitForSelector("html[data-hydrated=true]", { timeout: 30_000 });
     await expect(page.getByText("Invalid value")).toBeVisible({
       timeout: 20_000,
     });
@@ -65,10 +66,11 @@ test.describe("Custody defense", () => {
       ],
     });
 
-    await page.goto("/inbox");
+    await page.goto("/triage");
+    await page.waitForSelector("html[data-hydrated=true]", { timeout: 30_000 });
     await page.getByText("Ada observed a host").first().click();
-    await page.getByLabel("Confidence").click();
-    await page.getByRole("option", { name: /confirmed/i }).click();
+    await page.getByRole("combobox", { name: "Confidence" }).click();
+    await page.getByRole("option", { name: "Confirmed" }).click();
     await expect(
       page.getByText("confirmed requires at least 1 evidence item")
     ).toBeVisible();

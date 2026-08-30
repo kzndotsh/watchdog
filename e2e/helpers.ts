@@ -42,11 +42,9 @@ export async function createCase(page: Page, name: string): Promise<void> {
 }
 
 export async function dumpPasteViaUi(page: Page, body: string): Promise<void> {
-  await page.goto("/intake");
+  await page.goto("/collect");
   await page.waitForSelector("html[data-hydrated=true]", { timeout: 30_000 });
-  const dumpEvidence = page.getByLabel("Dump evidence");
-  await dumpEvidence.waitFor({ timeout: 30_000 });
-  await dumpEvidence.getByRole("button", { name: "Paste" }).click();
+  await page.getByRole("button", { name: "Paste" }).first().click();
   await page
     .getByPlaceholder("Paste page text, tool output, notes…")
     .fill(body);
