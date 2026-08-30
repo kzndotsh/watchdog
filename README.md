@@ -196,7 +196,7 @@ A job's path: `enqueueCapJob` → the `watchdog.cap-jobs` queue → worker runs 
 | Reset case data, keep auth and vault | `just wipe` |
 | Lint and format | `pnpm check` · `pnpm fix` |
 | Types | `pnpm typecheck` |
-| Tests | `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` |
+| Tests | `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Codegen | `pnpm generate:caps` · `pnpm generate:client` |
 
 Integration and end-to-end runs need their own databases first: `just test-db`.
@@ -212,7 +212,7 @@ Not there yet, worth knowing before you invest time:
 - **MCP server.** Not built. Agents use the OpenAPI surface today.
 - **Playbooks** are linear chains, with no branching and no conditionals.
 - **Multi-user collaboration** is thin. Auth and API keys work; team workflows aren't designed yet.
-- **End-to-end coverage** is two Playwright flows on top of the unit and integration tiers.
+- **End-to-end coverage** is a tagged Playwright suite (16 tests in `e2e/specs/`) on top of unit, component, and integration tiers — not full manual-smoke parity yet.
 
 Investigation content (corpus, entity notes, mirrors) lives in a separate private repo and never enters this one.
 

@@ -44,7 +44,7 @@ asked to.
 | `packages/caps/**` | `pnpm generate:caps` then `git diff --exit-code -- packages/caps/capabilities.gen.json` |
 | `packages/api/**`, `packages/client/**`, `packages/core/**` | `pnpm generate:client` then `git diff --exit-code -- packages/client/src/generated/` |
 | `packages/db/**` | `pnpm --filter @watchdog/db check:repos` |
-| `e2e/**`, `playwright.config.ts` | `pnpm test:e2e` |
+| `e2e/**`, `playwright.config.ts` | `pnpm exec vitest run --project e2e-parser`, `pnpm test:e2e` (or `pnpm test:e2e:smoke` for harness-only edits) |
 | anything under `packages/`, `apps/` | `pnpm test:unit` |
 | `package.json`, lockfile, workspace/config files | full gate set — treat as if everything changed |
 

@@ -54,7 +54,7 @@ Signal-era field work + build principles confirm this north star and Phases 0–
 | OpenAPI / CLI | **strong** | Typed `@watchdog/client` + agent-first `wd` (compact JSON; graph-child; credentials; evidence hide/restore/download/process/enrich; `apiKeyAuth`). Web-only leftovers: Active Case cookie. `@watchdog/contract` deferred (Phase 2) |
 | Agent Proposal create / graph write | **done** | Propose → Triage; `graph write` → Graph @ unverified + `graph_writes` (atomic tx, idempotency); child writes need `--user-override` |
 | MCP | **missing** | Phase 2+ |
-| Web automated tests | **pyramid** | Packages+worker unit; web lib+component in jsdom; Postgres integration; 2 Playwright flows |
+| Web automated tests | **pyramid** | Packages+worker unit; web lib+component in jsdom; Postgres integration; tagged Playwright suite (`e2e/specs/`, 16 tests) |
 | Scrape / vault import / corpus / LE packs | **missing** | Earned later |
 
 **Overall:** ~7.5/10 solo investigator UI loop · ~6/10 agent-first ingress.

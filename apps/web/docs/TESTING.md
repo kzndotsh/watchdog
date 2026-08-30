@@ -1,6 +1,6 @@
 # Testing — `@watchdog/web`
 
-**What this is:** what to run before merging web UI, and which flows the two Playwright specs already cover.  
+**What this is:** what to run before merging web UI, and which flows Playwright already covers.  
 **Not:** Cap/schema test details (platform index: [`docs/TESTING.md`](../../../docs/TESTING.md); methodology: [`docs/TESTING_STANDARDS.md`](../../../docs/TESTING_STANDARDS.md)).
 
 ## Required gates (web UI)
@@ -25,9 +25,9 @@ Dirty UI paths also trip `.cursor/hooks/stop-gate.mjs` (runs `ds:ban` when web U
 ```bash
 pnpm test:unit            # packages + worker only (web is not in this project)
 pnpm test:component       # all `apps/web/src/**/__tests__/**` (lib `*.test.ts` + `*.component.test.tsx`)
-pnpm test:e2e             # Playwright suite under e2e/specs (needs `just test-db`, MinIO, web+worker)
-pnpm test:e2e:smoke       # @smoke + @custody tags only
-pnpm test:e2e:journey     # @journey tag only
+pnpm test:e2e             # 16 tests under e2e/specs (needs `just up` or `just test-db` + MinIO; Playwright starts web+worker)
+pnpm test:e2e:smoke       # @smoke + @custody (15 tests)
+pnpm test:e2e:journey     # @journey only (core loop)
 ```
 
 Playwright covers the core loop (Collect → Harvest → Triage Accept → Identifiers), custody Accept gates, route smoke, auth sign-up, case create, Collect paste, and Triage reject. Lib tests pin Collect queue filters, jobs domain detail/run-input/status, Dossier confirmed-evidence + claim form, Triage filters/evidence/decide-header + Accept disable (`TriagePatchBody`), intake evidence helpers, Tasks due-date + form, connection table writes (`unverified` / `related_to` notes), identifier commit (handle-without-platform), paste error aliases, dashboard selectors, case overview activity, jump-nav, queue-selection, prefetch **`warm*Queries`**, **`listPending`**, `slugifyName`, and display helpers (`formatOpaqueId` / `group-by-day`). Component: Accept gate copy, bulk-add preview, Triage Accept disable, **`RegionBoundary`**, **`LoadingRegion`**, **`DataTable` pending**, skeletons. Remaining smoke below is layout, live Query/SSE, vault Settings, and chrome that has no lib contract.
@@ -56,7 +56,7 @@ Web does **not** re-test Cap handlers. If a mutation is wrong, fix/test `@watchd
 | Kind | Status |
 | --- | --- |
 | Visual regression | Not set up |
-| Extra Playwright flows | Organized under `e2e/specs/` — see [`docs/TESTING.md`](../../../docs/TESTING.md) |
+| Full browser automation | Partial — 16 Playwright tests in 7 spec files (`e2e/specs/`); Cap runs, Settings vault, Tasks drag, export zip still manual — see platform [`docs/TESTING.md`](../../../docs/TESTING.md) |
 
 ## Manual smoke (split pages)
 
