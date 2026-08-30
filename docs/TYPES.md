@@ -49,13 +49,13 @@ apps/web domains      ← types.ts: domain mutation Zod + DTOs (import schemas a
 | `@watchdog/caps` (Process lib) | `evidence/lib/draft-to-patch-ops`, `process-shared` (`uploadProcessArtifacts`, …) |
 | `@watchdog/caps` (harvest) | `evidence/harvest/harvest.ts` (`harvestDeterministic`); `quote-strip.ts` masks IPB/phpBB quoted spans (text after the quote still harvests); `extractors/` (`HARVEST_EXTRACTORS` — quotes, URLs+filename forensics, searchable selectors). Harvest does **not** emit “run oEmbed” Questions. |
 | `@watchdog/caps` (Collect shared) | `lib/collect/` — `define-collect-cap.ts`, `upload-json-report-pair.ts`, `interpret-observation-claim.ts`, `interpret-identifier-batches.ts` (`interpretTypedIdentifiers` thin re-export), `interpret-whois-snapshot.ts` (Claim + optional near-expiry Event; no NS Identifiers); per-Cap `interpret.ts` |
-| `@watchdog/core` | Exported from the barrel: `parsePatch` / `tryParsePatch`; `applyPatch`; `updateQuestion` / `reopenQuestion`; `loadCapReport`; `parseAgentPatch`; `createAgentProposal` / `writeGraphFromAgent`. Internal (import by path, not from the package root): `graph/apply-*-op.ts`; `edge-update.ts` (`validateEdgeUpdate`, `buildEdgePatch`); `identifier-collisions.ts` (Inbox warn); `questions.ts` `seedDefaultQuestions` (person seeds on Entity create); `jobs/run-paths.ts` |
+| `@watchdog/core` | Exported from the barrel: `parsePatch` / `tryParsePatch`; `applyPatch`; `updateQuestion` / `reopenQuestion`; `loadCapReport`; `parseAgentPatch`; `createAgentProposal` / `writeGraphFromAgent`. Internal (import by path, not from the package root): `graph/apply-*-op.ts`; `edge-update.ts` (`validateEdgeUpdate`, `buildEdgePatch`); `identifier-collisions.ts` (Triage warn); `questions.ts` `seedDefaultQuestions` (person seeds on Entity create); `jobs/run-paths.ts` |
 
 ---
 
 ## Platform vocab is the only vocab here
 
-`@watchdog/schemas` is the sole vocabulary SoT in this repo, covering Postgres, Caps, Inbox and UI. Confidence is `unverified` | `possible` | `confirmed`.
+`@watchdog/schemas` is the sole vocabulary SoT in this repo, covering Postgres, Caps, Triage and UI. Confidence is `unverified` | `possible` | `confirmed`.
 
 The separate investigation vault keeps its own markdown vocabulary in a private repo, including tiers such as `probable` that the platform deliberately does not have. Overlap (predicates, kinds) is intentional but not identical, so do not port values between them by assuming the names line up.
 
@@ -93,9 +93,9 @@ SoT: `EDGE_PREDICATES` + `EDGE_PREDICATE_META` in [`packages/schemas/src/vocab.t
 
 **Updates:** Dossier/API edge edits validate via `packages/core/src/graph/edge-update.ts` (`validateEdgeUpdate` → `buildEdgePatch` → `applyValidatedEdgeUpdate`).
 
-**Handles:** `type === "handle"` requires non-empty `platform` (normalized via `normalizeIdentifierPlatform`) — enforced in core on both Dossier create/update (`identifiers.ts`) and Inbox Accept (`apply-identifier-op.ts`), and in bulk-add paste resolve (not only in the UI). Harvest and `web.media.oembed` canonicalize values with a leading `@`.
+**Handles:** `type === "handle"` requires non-empty `platform` (normalized via `normalizeIdentifierPlatform`) — enforced in core on both Dossier create/update (`identifiers.ts`) and Triage Accept (`apply-identifier-op.ts`), and in bulk-add paste resolve (not only in the UI). Harvest and `web.media.oembed` canonicalize values with a leading `@`.
 
-**Identifier value validation:** `validateIdentifierWrite` in `@watchdog/schemas` (normalize + soft-strict shape + handle→platform). Core create / update / Accept gate with `DomainError("invalid", …)`. Soft types (`handle`, `crypto`, `credential`, `other`) are non-empty trim only; type-only updates re-validate under the new type. Inbox preflight: `listInvalidIdentifierOps`.
+**Identifier value validation:** `validateIdentifierWrite` in `@watchdog/schemas` (normalize + soft-strict shape + handle→platform). Core create / update / Accept gate with `DomainError("invalid", …)`. Soft types (`handle`, `crypto`, `credential`, `other`) are non-empty trim only; type-only updates re-validate under the new type. Triage preflight: `listInvalidIdentifierOps`.
 
 | Type | Reject when (after normalize unless noted) |
 | --- | --- |
@@ -111,7 +111,7 @@ SoT: `EDGE_PREDICATES` + `EDGE_PREDICATE_META` in [`packages/schemas/src/vocab.t
 
 **IPs:** `type === "ip"` is an IPv4/IPv6 Identifier (DNS A/AAAA, harvest) — syntax only, not public-range enforced. Normalized via `normalizeIdentifierValue` (trim, strip `[brackets]`, lowercase IPv6 hex). Lives on the seed Entity — Caps do not auto-create infra Entities or `resolves_to` edges. DNS NS/MX stay in the observation Claim, not as Identifiers.
 
-**Inbox collisions:** `ProposalRecord.identifierCollisions` is a list annotation (same `type+value` on another Entity). Core indexes `identifiersRepo.listForCase`. Warn in Inbox; Accept still allowed. Invalid Identifier values (`listInvalidIdentifierOps` + core write gate) **block** Accept.
+**Triage collisions:** `ProposalRecord.identifierCollisions` is a list annotation (same `type+value` on another Entity). Core indexes `identifiersRepo.listForCase`. Warn in Triage; Accept still allowed. Invalid Identifier values (`listInvalidIdentifierOps` + core write gate) **block** Accept.
 
 **List DTOs:** `EdgeRecord` from `listEdgesForEntity` includes ego-relative `direction`, `peerId`, `peerName`, `peerSlug`, and **`peerKind`** (for canvas/node chrome without a second entities join).
 
@@ -176,8 +176,8 @@ Import DTOs/schemas from `@/domains/{noun}/types`. Import product vocab consts/t
 | Cap run | Cap `input.ts` Zod for Job input; Collect Caps: `safeParse` via Cap-local `report-schema.ts` (re-export of `@watchdog/tools` producer Zod) before `interpret` |
 | Patch wire | `@watchdog/schemas` (`patchOpSchema`); parse via `@watchdog/core` (`tryParsePatch` / `parseAgentPatch`) |
 | Identifier create/update/Accept | `validateIdentifierWrite` (value shape + handle→platform) — enforced in `@watchdog/core` |
-| Inbox identifier collisions | Core annotates Proposals; named `identifierCollisionSchema` on `proposalSchema` — warn, don’t block |
-| Inbox invalid Identifier ops | Schemas `listInvalidIdentifierOps` + core write gate — **block** Accept |
+| Triage identifier collisions | Core annotates Proposals; named `identifierCollisionSchema` on `proposalSchema` — warn, don’t block |
+| Triage invalid Identifier ops | Schemas `listInvalidIdentifierOps` + core write gate — **block** Accept |
 | Custody gates | `@watchdog/policy` (`assertPatchGates` / `assertPatchShape`) |
 | Agent Graph write | oRPC `graph.write` + CLI `wd graph write`; audit table `graph_writes` |
 | Child Graph writes (CLI) | `wd` claims / identifiers / edges / events / questions + `--user-override`; refuse `confirmed` |

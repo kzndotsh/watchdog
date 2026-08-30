@@ -52,7 +52,7 @@ Banned: trivially-true assertions, parked `.skip`/`.todo` without a tracked foll
 
 A test that cannot fail is not a test.
 
-Custody-critical modules (`applyPatch`, Inbox Accept, `validateIdentifierWrite`, `graph_writes`, patch gates): temporarily break the implementation once and confirm the test fails. Record that check in the PR, not as automation.
+Custody-critical modules (`applyPatch`, Triage Accept, `validateIdentifierWrite`, `graph_writes`, patch gates): temporarily break the implementation once and confirm the test fails. Record that check in the PR, not as automation.
 
 ## Edge / defense checklist
 

@@ -48,14 +48,14 @@ Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per
 | Do | Don’t | Skill |
 | --- | --- | --- |
 | Postgres = Case Graph SoT; Export is a projection | Hand-edit Export as a second SoT | `audit-contract` |
-| Intake → Evidence; Caps `interpret` → Proposal → Inbox Accept | Caps/machines write Graph or set `confirmed` | `audit-contract` |
+| Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | `audit-contract` |
 | Agents/CLI default: propose; graph write needs `userOverride` → Graph @ `unverified` + `graph_writes` | Silent machine Graph writes; mid-build verbs (<!-- check:agents allow-banned --> promote / Scratch / Door A / Candidate theater) | `audit-contract` |
 | Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | — (hook: `secrets-guard`) |
 | Chrome: Queue + Detail | Console / Tape / Panel / Pane / Rail / Strip | — |
 | Process logs via `@watchdog/log` (evlog NDJSON) | Secrets/Evidence body in logs; treat evlog as Graph audit (`Job.logs` / `graph_writes` / Accept stay SoT) | — |
 | Extend the tracked packages/apps | Extend `_legacy-*` | — |
 
-**Ingress:** Intake→Evidence · Jobs→artifacts+Proposal · Inbox Accept→Graph · Dossier=human Graph edit.
+**Ingress:** Collect→Evidence · Caps→artifacts+Proposal · Triage Accept→Graph · Dossier=human Graph edit.
 
 ## Investigation (compressed)
 

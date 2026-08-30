@@ -50,7 +50,7 @@ The boundary is enforced by types rather than convention: a Cap's runtime contex
 ```mermaid
 flowchart LR
   A["Caps and agents<br/>collect"] --> B["Evidence<br/>+ Proposal"]
-  B --> C{"Inbox<br/>human review"}
+  B --> C{"Triage<br/>human review"}
   C -->|accept| D[("Case Graph<br/>Postgres")]
   C -->|reject| X["Discarded"]
   D --> E["Export<br/>markdown + zip"]
@@ -131,7 +131,7 @@ Output is compact JSON so it pipes into `jq`; add `--table` when a human is read
 wd jobs playbook -c 0b8f… --id host-footprint --host example.com
 ```
 
-Agents propose by default. `wd graph write` skips the Inbox, but it needs an explicit `--user-override`, still lands at `unverified`, and records a row in `graph_writes`.
+Agents propose by default. `wd graph write` skips Triage, but it needs an explicit `--user-override`, still lands at `unverified`, and records a row in `graph_writes`.
 
 ## Capabilities
 
@@ -174,7 +174,7 @@ packages/
 
 Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and only `core` touches repos. Full matrix in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-A job's path: `enqueueCapJob` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to the Inbox → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
+A job's path: `enqueueCapJob` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to Triage → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
 
 | Layer | Stack |
 | --- | --- |

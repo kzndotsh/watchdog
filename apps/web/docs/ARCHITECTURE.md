@@ -1,7 +1,7 @@
 # Architecture — `@watchdog/web`
 
 **What this is:** TanStack Start layout, Vite, chrome, and the web server-fn boundary.  
-**Not:** package import graph, Caps, Jobs/Inbox/Export — that is [`docs/ARCHITECTURE.md`](../../../docs/ARCHITECTURE.md).
+**Not:** package import graph, Caps, Collect/Triage/Export — that is [`docs/ARCHITECTURE.md`](../../../docs/ARCHITECTURE.md).
 
 ## Stack
 
@@ -26,7 +26,7 @@ Docs index: [https://tanstack.com/llms.txt](https://tanstack.com/llms.txt) → S
 5. **Auth** — Better Auth + Drizzle adapter; tables in `auth` schema; `/api/auth/$`; solo signup via `BETTER_AUTH_ALLOW_SIGNUP`. API keys via `@better-auth/api-key`; Settings → API Keys. Pass `Authorization: Bearer <key>` or `x-api-key`. Layers: BA UI / `_protected` = UX redirect; Start `requireAuth` (global `functionMiddleware`) = ServerFn data gate (throw `UnauthorizedError`); `/api/auth` = cookies. CSRF: `createCsrfMiddleware({ filter: serverFn })` after evlog in `src/start.ts` `requestMiddleware`.
 6. **Server boundary (Start)** — `.functions.ts` = RPC surface (`createServerFn`, safe to import from UI). Auth is global via `functionMiddleware: [evlogFunctionMiddleware, requireAuth]` — do not re-add per-fn `.middleware([requireAuth])`; no public ServerFn opt-out (use `routes/api/*`). Prefer **thin ServerFns → `orpcForActor` → `@watchdog/api` → `@watchdog/core` → `@watchdog/db` repos**. Do not put Drizzle in `apps/web` (allowlist: Better Auth adapter + SSE `listenForEvents`). Shared DTOs + Zod in `types.ts`. Full contract: [`DOMAINS.md`](DOMAINS.md), [`docs/TYPES.md`](../../../docs/TYPES.md). Process logs: `src/start.ts` request + function middleware (`@watchdog/log`); see platform [`docs/ARCHITECTURE.md`](../../../docs/ARCHITECTURE.md#process-logging-evlog).
 7. **Isomorphic by default** — use `createServerFn` for server-only work. Do not use `*.client.ts` for server functions.
-8. **Domain layout** — see [`DOMAINS.md`](DOMAINS.md). `domains/{noun}/` = product surfaces; graph children in `entities/{child}/`; dossier chrome in `dossier/components/`. Domain `hooks/` own workspace state (e.g. `use-jobs-workspace`, `use-inbox-workspace`, `use-intake-actions`, `use-dump-evidence`, `use-entity-table`, `use-dossier-shell`, `use-inbox-detail-forms`, `use-search-ui`); pure helpers stay in `lib/` — see [`DOMAINS.md`](DOMAINS.md) § hooks/lib + Map. Shell-mounted search lives in `domains/search` (`SearchChrome` from `AppShell`).
+8. **Domain layout** — see [`DOMAINS.md`](DOMAINS.md). `domains/{noun}/` = product surfaces; graph children in `entities/{child}/`; dossier chrome in `dossier/components/`. Domain `hooks/` own workspace state (e.g. `use-jobs-workspace`, `use-triage-workspace`, `use-intake-actions`, `use-dump-evidence`, `use-entity-table`, `use-dossier-shell`, `use-triage-detail-forms`, `use-search-ui`); pure helpers stay in `lib/` — see [`DOMAINS.md`](DOMAINS.md) § hooks/lib + Map. Shell-mounted search lives in `domains/search` (`SearchChrome` from `AppShell`).
 
 ## Realtime / Case data
 

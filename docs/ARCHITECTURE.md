@@ -1,6 +1,6 @@
 # Architecture — Watchdog platform
 
-**What this is:** package layout, import direction, Cap/Jobs/Inbox/Export data path, oRPC boundary.  
+**What this is:** package layout, import direction, Cap/Collect/Triage/Export data path, oRPC boundary.  
 **Not:** TanStack Start chrome or Query/SSE wiring — that is [`apps/web/docs/ARCHITECTURE.md`](../apps/web/docs/ARCHITECTURE.md) · [`DATA.md`](../apps/web/docs/DATA.md).
 
 ## Monorepo packages
@@ -19,7 +19,7 @@
 | `@watchdog/cap-sdk` | schemas | db, caps, core, api, apps, tools |
 | `@watchdog/tools` | schemas (only if needed; prefer zero) | db, caps, core, ai, cap-sdk, api, apps |
 | `@watchdog/caps` | schemas, ai, **cap-sdk**, **tools** | **db**, core, api, apps |
-| `@watchdog/core` | db (**repos only** — no `drizzle-orm`), caps, cap-sdk, schemas, **policy**, **env**, **log** | api, apps — layout: `jobs/` · `cases/` · `proposals/` (Inbox accept/reject) · `graph/` (entity services + `graph/patch/` apply pipeline) · `tasks/` · `search/` · `activity/` · `evidence/` · `infra/`; worker imports `@watchdog/core/worker` |
+| `@watchdog/core` | db (**repos only** — no `drizzle-orm`), caps, cap-sdk, schemas, **policy**, **env**, **log** | api, apps — layout: `jobs/` · `cases/` · `proposals/` (Triage accept/reject) · `graph/` (entity services + `graph/patch/` apply pipeline) · `tasks/` · `search/` · `activity/` · `evidence/` · `infra/`; worker imports `@watchdog/core/worker` |
 | `@watchdog/log` | (nothing in-workspace; pin `evlog`) | apps, cli, client, core, api, db, caps, … |
 | `@watchdog/api` | core (+ schemas), **caps** (catalog descriptors only), **log** (`ApiContext.log?`) | apps, **db**, drizzle-orm |
 | `@watchdog/client` | api (**types only** at import) + minified contract JSON | apps, db, caps, core, **log** |
@@ -30,7 +30,7 @@
 
 ## Jobs path
 
-Enqueue: `enqueueCapJob` → pg-boss queue `watchdog.cap-jobs` → `apps/worker` runs Cap → Evidence + Proposal → Inbox Accept/Reject (one TX). `/jobs` list is `JobListRecord` (no `logs`); Detail loads full `JobRecord` via `getJobForCase`.
+Enqueue: `enqueueCapJob` → pg-boss queue `watchdog.cap-jobs` → `apps/worker` runs Cap → Evidence + Proposal → Triage Accept/Reject (one TX). Collect lists jobs via `JobListRecord` (no `logs`); run detail loads full `JobRecord` via `getJobForCase`.
 
 One boss per process: web/API via `enqueueCapJob` / `ensureBossProducer()` (`supervise: false`); worker via `ensureBossWorker()` (`supervise: true`) — playbook chain reuses the live worker boss. Cap `timeoutMs` drives abort, per-job expire, graceful stop, and stale-Job reclaim (see package AGENTS Gotchas). Export shadow sync: worker listens for graph events → `scheduleCaseExport` (coalesced in `@watchdog/core`).
 
@@ -60,7 +60,7 @@ One boss per process: web/API via `enqueueCapJob` / `ensureBossProducer()` (`sup
 - Identify once in `createApiContext` (`identifyUser` + API-key fields) — one `getSession`; no dual `createAuthMiddleware` on those paths.
 - Worker: `initWatchdogLogger` first in `main()`; Cap Job events from `executeJob` → `JobRunOutcome` via `jobWideEventFields` (`outcome` / `stopReason` / `abortReason` / `durationMs`). Cancel → `abort("cancel")`; Cap timeout → `abort("timeout")`. Handler failures: `log.error(err)`, not raw `Error` in `log.set`.
 - Drains: `apps/web/.evlog/logs` and `apps/worker/.evlog/logs` (+ stdout) — not `apps/.evlog`. Hash-chain `.audit/` / `evlog/ai` / Sentry deferred.
-- **Custody split:** `Job.logs`, `graph_writes`, Inbox Accept remain SoT. evlog = process observability, not Graph audit. Never **log** secrets, Evidence bodies, or Bearer / `x-api-key` plaintext. Breach Caps may still **store** recovered credential fields inside Evidence artifacts (see [`CAPS.md`](CAPS.md) **D5**); that material belongs in the case file, not in process logs.
+- **Custody split:** `Job.logs`, `graph_writes`, Triage Accept remain SoT. evlog = process observability, not Graph audit. Never **log** secrets, Evidence bodies, or Bearer / `x-api-key` plaintext. Breach Caps may still **store** recovered credential fields inside Evidence artifacts (see [`CAPS.md`](CAPS.md) **D5**); that material belongs in the case file, not in process logs.
 
 ## Caps (boundary)
 
@@ -77,13 +77,13 @@ Layering: **SPI** (`@watchdog/cap-sdk` — `defineCapability`, `CapDescriptor` /
 - **`kind` / `flags` / `consumes` / `produces`**: Cap metadata for Jobs discoverability and playbook handoffs (`collect` | `enrich` | `process` | `act`; flags like `needs_key`, `third_party`).
 - Caps must not import DB write modules. No live Graph reads Day-0 — Process Caps get a packed **EvidenceSnapshot** from core before `run`.
 - **`interpret` failure**: Job stays `succeeded` with artifacts/Evidence; `jobs.interpretError` set; no Proposal. UI shows an amber “interpret failed” state (not a failed Job).
-- **Finding suppression**: before Proposal insert, core drops ops already on the Graph or previously Rejected (fingerprints) and stores counts on `jobs.suppressed_count` / `proposals.suppressed_count`. Cap `resultSummary` / Proposal `summary` stay Cap-owned prose — do not concatenate all-known into those strings; UI renders the no-Proposal outcome from `suppressedCount` + null `proposalId`. Cache hits set `jobs.from_cache`. Jobs Detail and Inbox surface chips + Reject FP copy.
-- **Identifier collision warn**: listing Proposals, core compares patch Identifier ops to `listForCase` (index by `type+value`). Same value on a _different_ Entity annotates `ProposalRecord.identifierCollisions`. Inbox Alert + per-op chip; Accept still allowed. Not finding suppression (that drops ops). Caps stay Case-blind.
-- **Identifier write gate**: `@watchdog/schemas` `validateIdentifierWrite` (normalize + soft-strict value + handle→platform). Core create / update / Accept throw `DomainError("invalid")`. Inbox `listInvalidIdentifierOps` preflight **blocks** Accept (unlike collisions). Caps stay imprecise; Graph writes do not.
+- **Finding suppression**: before Proposal insert, core drops ops already on the Graph or previously Rejected (fingerprints) and stores counts on `jobs.suppressed_count` / `proposals.suppressed_count`. Cap `resultSummary` / Proposal `summary` stay Cap-owned prose — do not concatenate all-known into those strings; UI renders the no-Proposal outcome from `suppressedCount` + null `proposalId`. Cache hits set `jobs.from_cache`. Collect run detail and Triage surface chips + Reject FP copy.
+- **Identifier collision warn**: listing Proposals, core compares patch Identifier ops to `listForCase` (index by `type+value`). Same value on a _different_ Entity annotates `ProposalRecord.identifierCollisions`. Triage Alert + per-op chip; Accept still allowed. Not finding suppression (that drops ops). Caps stay Case-blind.
+- **Identifier write gate**: `@watchdog/schemas` `validateIdentifierWrite` (normalize + soft-strict value + handle→platform). Core create / update / Accept throw `DomainError("invalid")`. Triage `listInvalidIdentifierOps` preflight **blocks** Accept (unlike collisions). Caps stay imprecise; Graph writes do not.
 - **Agent/CLI ingress** (`packages/core` `agent-ingress` + `@watchdog/cli`):
   - Default: `POST …/proposals` / `wd proposals create` → pending Proposal (`agentSourced` + `createdBy`); shares Cap `proposeStage` + finding suppression.
   - Escape hatch: `POST …/graph/write` / `wd graph write` with body `userOverride: true` (CLI verb _is_ the hatch — no boolean flag) → Graph @ `unverified` + `graph_writes` row in the **same tx** as `applyPatch` (summary→attestation inside that tx). Optional `idempotencyKey` (replay returns `replayed: true`, `opCount: 0`). No Proposal.
-  - Dossier-style child writes: `wd claims|identifiers|edges|events|questions …` require **`--user-override`**; CLI **refuses `confidence=confirmed`** (Inbox Accept / Dossier may set `confirmed`). Prefer proposals when unsure.
+  - Dossier-style child writes: `wd claims|identifiers|edges|events|questions …` require **`--user-override`**; CLI **refuses `confidence=confirmed`** (Triage Accept / Dossier may set `confirmed`). Prefer proposals when unsure.
   - Pure prep: `parseAgentPatch` + `assertPatchShape` (policy). Cap Jobs still set `agentSourced=false`.
   - CLI output contract: compact JSON by default (`{ count, items, help? }`); `--table` / `--full` / `--raw`; see [`packages/cli/AGENTS.md`](../packages/cli/AGENTS.md).
 - LLM helpers live in **`@watchdog/ai`** (provider + `structuredExtract` + draft Zod). Caps call helpers; `draftToPatchOps` stays in `@watchdog/caps`.
@@ -106,13 +106,13 @@ Process AI resolves `ANTHROPIC_API_KEY` or `AI_COMPAT_API_KEY` (+ optional `AI_C
 
 ## Intake
 
-Partner TLDR: **Dump → Enrich (URL) → Process → Inbox Accept** (human sets confidence).
+Partner TLDR: **Dump → Enrich (URL) → Process → Triage Accept** (human sets confidence).
 
 - **Detail tabs** on a queue row: **Content** (source dump) · **Output** (latest Enrich `enriched.md` when present) · **Jobs** (related Cap runs via `ProcessRunCard`).
 - Dump association: toolbar + File/Paste/URL modals share one Case Entity target (`EntityCombobox`; Unattached allowed). Dossier Evidence tab is a second dump entry with Entity locked (same presign / confirm / paste / URL APIs; Intake still owns dump). Evidence Detail can attach / replace / detach after dump (`PATCH evidence.entityId`).
 - **Process** (verb on Intake) → Cap Job `evidence.harvest` (deterministic) or `evidence.extract.ai` (LLM). Core packs **EvidenceSnapshot** (falls back to Enrich Job `enriched.md` for URL-only dumps) → Cap fills **ProcessExtractDraft** → `interpret` → **Proposal** when an Entity is attached. Sets `processedAt` when interpret says so (Proposal, or empty extract with text present) — **not** when signal needs an Entity, or URL dump still has empty text (Enrich first). Filter Unprocessed / Unattached. Same glue via OpenAPI `evidence.process` and `wd evidence process` (`--ai` for extract).
 - **Enrich** (URL dumps) → Cap Job `network.url.enrich` (live + Wayback). **Run-only** — no `interpret` / Proposal (Process owns extract). Cap is **URL-centric** (`network.*`); Intake glue `enrichUrlEvidence` reads `sourceUrl` and starts the Job (OpenAPI `evidence.enrich` / `wd evidence enrich`). Cap folder layout: `network/url.enrich/{cap.ts, input.ts, fetch-bytes.ts, ingest-page.ts, wayback.ts, types.ts}` — `ingest-page` uses `@watchdog/tools` HTML helpers. Markdown pipeline: prefer `Accept: text/markdown` from origin, else local HTML→md — **do not** proxy investigation URLs through `markdown.new` by default (OPSEC). All enrich artifacts stay on the **Job** (Output tab — not new queue rows). `enriched.md` = page prose **plus** `## Outbound links` (absolute hrefs; `links.json` sidecar).
-- Lexicon: **Intake** = dump page; **Process Cap** / **Enrich Cap** = Cap ids above; **Inbox** = Accept gate. Do not compound “Intake Process” as a type.
+- Lexicon: **Collect** = dump + Cap/Job runs (`/collect`); **Process Cap** / **Enrich Cap** = Cap ids above; **Triage** = Accept gate (`/triage`). **`intake`** / **`jobs`** domains = shared Evidence/Job RPC (no standalone queue routes). Do not compound “Intake Process” as a type.
 - **File dump:** client SHA-256 → `presignUploadFn` → PUT MinIO (presigned) → `confirmFileUploadFn` (HeadObject verify → Evidence). Same loop via OpenAPI (`evidence.presign` / `confirmFile`) and `wd evidence file`. Paste hashes server-side via `uploadArtifact`. Max 100 MB/file (`MAX_UPLOAD_BYTES` in `@watchdog/schemas`). URL dump = metadata only until Enrich.
 
 ## Case Export

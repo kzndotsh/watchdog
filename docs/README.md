@@ -6,7 +6,7 @@ Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the doc that matche
 | --- | --- | --- |
 | [`CAPS.md`](CAPS.md) | Cap id/title/kind lexicon, method vocabulary, D1–D5, ship gates; live catalog size via `generate:caps` | Cap SPI / Job runner (ARCHITECTURE) |
 | [`PRODUCT.md`](PRODUCT.md) | Intent, personas, anti-patterns, design doctrine, rewrite lessons | Phase checkboxes, pixels, route chrome |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Package layout, import graph, Jobs/Inbox/Caps/Export, oRPC, process logging (evlog) | Start/Vite pixels, IA |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Package layout, import graph, Collect/Triage/Caps/Export, oRPC, process logging (evlog) | Start/Vite pixels, IA |
 | [`TYPES.md`](TYPES.md) | `@watchdog/schemas`, Zod, vault vs platform vocab | Pixels, IA |
 | [`UX.md`](UX.md) | IA, investigator flows, empty/error _meaning_, copy, experience debt | Component APIs, color tokens |
 | [`SCENARIOS.md`](SCENARIOS.md) | Walked Day-0 journeys vs code (`shipped` / `partial` / `missing` / `lying`) | Cap unit tests, chrome lexicon |

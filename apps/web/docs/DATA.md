@@ -35,7 +35,7 @@ Query owns server-state caching. Router `defaultPreloadStaleTime` is `0` so Quer
 | `shared/lib/query-stale.ts` | `STALE_*` / `GC_*` tiers |
 | `shared/lib/query-invalidation.ts` | Named contracts (`invalidateAfterJobMutation`, …) |
 | `shared/lib/query-client.ts` | `createAppQueryClient` + global `QueryCache.onError` toast |
-| `shared/lib/queue-selection.ts` | Cross-domain pure `resolveQueueSelection` (URL SoT → first visible row) for split-view queues; optional `holdMissingUrlId` keeps a URL id not yet in rows (Jobs start race / filtered-out job). Pair with render-time `<Navigate replace>` in Inbox / Intake / Jobs (not a parent-callback sync effect) |
+| `shared/lib/queue-selection.ts` | Cross-domain pure `resolveQueueSelection` (URL SoT → first visible row) for split-view queues; optional `holdMissingUrlId` keeps a URL id not yet in rows (Collect cap start race / filtered-out job). Pair with render-time `<Navigate replace>` in Collect / Triage (not a parent-callback sync effect) |
 | `router.tsx` | QueryClient in context + `setupRouterSsrQueryIntegration` |
 
 ### Stale tiers
@@ -85,9 +85,26 @@ Soft settle (no loading flash): `invalidateQueries({ refetchType: "none" })` the
 
 ### Suspense split
 
-`useSuspenseQuery` cannot use `enabled: false`. When data needs `caseId` / `entityId`, split components (`Jobs` → `JobsActive`, `Dossier` → `DossierForCase` → `DossierForEntity`).
+`useSuspenseQuery` cannot use `enabled: false`. When data needs `caseId` / `entityId`, split components (`Collect` → active detail, `Dossier` → `DossierForCase` → `DossierForEntity`).
 
-Stack pages: loader `ensureQueryData` identity only + warm helpers (`warmDossierQueries` / `warmCaseOverviewQueries` / `warmDashboardQueries`). Shell counts = `useQuery`; tab/panel bodies = Suspense + `StackBodySkeleton`. Queue pages: await primary list; prefetch secondary; Active Suspense + `QueueSkeleton` when needed.
+Stack pages: loader `ensureQueryData` identity only + warm helpers (`warmDossierQueries` / `warmCaseOverviewQueries` / `warmDashboardQueries`). Shell counts = `useQuery`; tab/panel bodies = `ActiveTabBody` / `RegionBoundary` + `stackPendingFallback()`. Queue pages: Collect loader **awaits** `ensureCollectQueueQueries` (+ job detail when `?id=`); Triage stays identity + `warmTriageQueries`. In-page `PendingRegion` remains for cache misses — not route-level `RoutePending`. Table pages (`/entities`, `/identifiers`): `listPending` → `DataTable` `pending` ([`UI.md`](UI.md) § Tables).
+
+**Warm-helper parity:** every `warm*Queries` helper must prefetch every query the page's components suspend on. Adding a `useSuspenseQuery` (or a second call in the same file) requires updating the matching warm helper in the same change — or switching to `useSuspenseQueries`. The dossier shell hook (`use-dossier-shell-queries`) is the implicit warm layer for tab counts; compare query keys when touching dossier sections.
+
+| Helper | Route / surface | Prefetch module |
+| --- | --- | --- |
+| `ensureCollectQueueQueries` | `/collect` (loader await) | `collect/lib/prefetch-collect.ts` |
+| `warmCollectCatalogQueries` | `/collect` (fire-and-forget after queue ensure) | `collect/lib/prefetch-collect.ts` |
+| `warmTriageQueries` | `/triage` | `triage/lib/prefetch-triage.ts` |
+| `warmEntitiesQueries` | `/entities` | `entities/lib/prefetch-entities.ts` |
+| `warmIdentifiersQueries` | `/identifiers` | `entities/lib/prefetch-identifiers.ts` |
+| `ensureGraphQueries` | `/graph` | `cases/lib/prefetch-graph.ts` |
+| `warmTasksQueries` | `/tasks` | `tasks/lib/prefetch-tasks.ts` |
+| `warmCaseOverviewQueries` | Case overview tab | `cases/lib/prefetch-case-overview.ts` |
+| `warmDossierQueries` | Dossier | `dossier/lib/prefetch-dossier.ts` |
+| `warmDashboardQueries` | `/` Dashboard | `dashboard/lib/prefetch-dashboard.ts` |
+
+**List pending gate:** table/board/graph list surfaces use `listPending()` from `shared/lib/list-pending.ts` — `isLoading || !isFetched`, not `isPending` alone; never show skeleton on `isError`.
 
 ## Live events
 
@@ -130,12 +147,12 @@ UI never imports `*.server.ts` directly. Auth is global `functionMiddleware` —
 
 ## Evidence / artifacts
 
-- Evidence rows: Intake domain (`evidenceListQuery` / upload Fns) — one row per dump; Enrich/Process internals stay on the Job. Dossier Evidence tab dumps with `entityId` set (same Fns; `useDumpEvidence`).
-- Intake Detail tabs: **Content** (dump) · **Output** (latest Enrich `enriched.md`) · **Jobs**.
-- Artifact **display** text: `artifactContentQuery` (`useQuery`) — Jobs + Intake Detail.
-- Intake Content tab blob/text: `hooks/use-evidence-blob.ts` (`useQuery` on download URL + artifact content; parent passes loaded evidence row).
-- Blobs: MinIO via presigned PUT; see ARCHITECTURE Intake / Export sections.
+- Evidence rows: `intake` domain (`evidenceListQuery` / upload Fns) — one row per dump; Enrich/Process internals stay on the Job. Dossier Evidence tab dumps with `entityId` set (same Fns; `useDumpEvidence`).
+- Collect Evidence detail tabs: **Content** (dump) · **Output** (latest Enrich `enriched.md`) · **Runs**.
+- Artifact **display** text: `artifactContentQuery` (`useQuery`) — Collect run detail + Evidence detail.
+- Evidence Content tab blob/text: `hooks/use-evidence-blob.ts` (`useQuery` on download URL + artifact content; parent passes loaded evidence row).
+- Blobs: MinIO via presigned PUT; see platform ARCHITECTURE Evidence / Export sections.
 
 ## Tables
 
-Client-side sort/filter/page via `shared/ui/data-table` is correct for Day-0 case-scoped lists. Hoist `globalFilterFn` (stable reference). Entities / Identifiers use dense defaults + `EditableTextCell` / append-row composer (`DataTableAddRow`) where the surface edits inline. Every column needs TanStack `size` — `DataTable` maps those to a `<colgroup>` (see [`UI.md`](UI.md) Table columns). Entities: `entities/hooks/use-entity-table.ts` (`entityGlobalFilterFn` from `entity-table.columns.tsx`). Identifiers: `entities/hooks/use-identifiers-table.ts` (`identifiersGlobalFilterFn` from `identifiers-table.columns.tsx`); Type / Status / Confidence via TanStack `columnFilters`. Cases use a searchable card grid + New Case dialog. Virtualization / server paging later when volume demands.
+Client-side sort/filter/page via `shared/ui/data-table` is correct for Day-0 case-scoped lists. Hoist `globalFilterFn` (stable reference). Entities / Identifiers use dense defaults + `EditableTextCell` / append-row composer (`DataTableAddRow`) where the surface edits inline. Every column needs TanStack `size` — `DataTable` maps those to a `<colgroup>` (see [`UI.md`](UI.md) Table columns). **Loading:** `pending={listPending(...)}` renders skeleton bars per cell — never `PendingRegion` on table bodies ([`UI.md`](UI.md) § Tables). Entities: `entities/hooks/use-entity-table.ts` (`entityGlobalFilterFn` from `entity-table.columns.tsx`). Identifiers: `entities/hooks/use-identifiers-table.ts` (`identifiersGlobalFilterFn` from `identifiers-table.columns.tsx`); Type / Status / Confidence via TanStack `columnFilters`. Cases use a searchable card grid + New Case dialog. Virtualization / server paging later when volume demands.

@@ -163,7 +163,7 @@ Curated linear recipes. First id token === `seedKinds[0]`. Caps stay individuall
 
 **Seeds:** `host` · `url` · `evidence` · `ip` · `email` · `hash` · `handle`. Email/handle map to Cap IO `identifier` (type email/handle). Caps whose Zod field is `query` receive it from the primary seed (email → handle → ip → url → host). A url seed also derives `host` so archive/host Caps can sit in a url-seeded book.
 
-**Bind (enqueue time):** next-step input is filled from the playbook seed, predecessor `jobs.evidenceIds`, or predecessor `jobs.handoff` bags when that step is created. Caps may declare optional `handoff(report)` (persisted on Job success, including cache hits). Do not bind from Inbox Proposals. `url-capture` harvest still uses the **seed** Evidence id (timing only).
+**Bind (enqueue time):** next-step input is filled from the playbook seed, predecessor `jobs.evidenceIds`, or predecessor `jobs.handoff` bags when that step is created. Caps may declare optional `handoff(report)` (persisted on Job success, including cache hits). Do not bind from Triage Proposals. `url-capture` harvest still uses the **seed** Evidence id (timing only).
 
 **Fan-out:** a step may explode into N Jobs (`playbookFanIndex` 0..n-1, cap default 25). Empty list skips the step and finishes/continues — it does not fail the run. Create the next recipe step only when **all** siblings at the current step are terminal. One sibling failure does not cancel the others; later static steps require ≥1 sibling success.
 

@@ -15,7 +15,7 @@ Status: `shipped` · `partial` · `missing` · `lying` (doc/UI claim a path that
 
 Nouns and Caps shipped ahead of walked journeys. The Collect → Decide → Graph loop **mostly works**. Failures cluster where the UI **pretends** a path exists.
 
-**Healthiest:** Inbox Accept gates, Cases, Auth, Export zip, Cap-shaped Jobs form, Harvest/Extract Intake. **Weakest:** none currently — credential preflight and post-dump Entity attach shipped.
+**Healthiest:** Triage Accept gates, Cases, Auth, Export zip, Cap-shaped Collect run form, Harvest/Extract on Collect. **Weakest:** none currently — credential preflight and post-dump Entity attach shipped.
 
 Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → walk → update this file.
 
@@ -54,7 +54,7 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | Cancel stays cancelled | shipped | ~2s abort poll |
 | Stuck >60s banner | shipped | — |
 | interpretError amber | shipped | Amber “Interpret failed” badge + copy |
-| proposalId → Inbox deep link | shipped | — |
+| proposalId → Triage deep link | shipped | — |
 | `?jobId=` deep link | shipped | Selection writes back to search (`replace`) |
 | Cache hit visible | shipped | Detail “From cache” chip from `jobs.from_cache` |
 | Playbooks from UI | shipped | Run Cap / Run Playbook ToggleGroup; host/url/ip/email/hash/handle books; bind + CT fan-out (`host-enumerate`); waiting chrome; Cancel run; egress greys `url-capture-ai` |
@@ -62,9 +62,9 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | Playbook egress / credential gate | shipped | Egress + vault presence both gate Run (API playbook start already fail-closed) |
 | Cap picker metadata | shipped | CapDescriptor: kind / flags / egress / consumes / produces / credentials / dataSource; CapMatch paste-to-run + category / Passive/Active/Footprint filters; empty-default Cap select |
 | CapMatch paste → Cap select | shipped | Seed input drives CapMatch; filters narrow roster; run seeds queue without page flicker |
-| Re-run → no duplicate Proposal | shipped | Suppression + Jobs/Inbox chips + no-Proposal copy when all known |
+| Re-run → no duplicate Proposal | shipped | Suppression + Collect/Triage chips + no-Proposal copy when all known |
 
-## Inbox
+## Triage
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
@@ -76,10 +76,10 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | confirmed zero evidence blocked | shipped | — |
 | Zero-evidence warn | shipped | — |
 | Identifier collision warn | shipped | Same `type+value` on another Entity → Alert + chip; Accept still allowed |
-| Invalid Identifier value blocks Accept | shipped | Soft-strict `validateIdentifierWrite`; Inbox chip + Accept disabled; TX hard-fail; no partial Accept |
+| Invalid Identifier value blocks Accept | shipped | Soft-strict `validateIdentifierWrite`; Triage chip + Accept disabled; TX hard-fail; no partial Accept |
 | Reject → finding suppressions | shipped | Reject UI explains FP memory; re-runs skip |
 | agentSourced badge | shipped | Agent propose API sets flag; override badge removed |
-| Agent propose API / CLI | shipped | `POST …/proposals` · `wd proposals create` → Inbox (`agentSourced` + `createdBy`); suppresses known/rejected |
+| Agent propose API / CLI | shipped | `POST …/proposals` · `wd proposals create` → Triage (`agentSourced` + `createdBy`); suppresses known/rejected |
 | Agent graph write API / CLI | shipped | `POST …/graph/write` · `wd graph write` → Graph @ unverified + `graph_writes` (same tx); optional idempotency → `replayed` |
 | Child Graph writes CLI | shipped | `wd` claims / identifiers / edges / events / questions … need `--user-override`; CLI refuses `confirmed` (Accept may set it) |
 | Multi-op partial Accept | missing | All-or-nothing transaction |
@@ -105,14 +105,14 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | Soft-deleted evidence not linkable | shipped | Old links may still display |
 | Create entity → dossier | shipped | Person kind seeds default Questions (`seedDefaultQuestions`) |
 | Add / edit / resolve / reopen Questions | shipped | Dossier textarea composer; click text or row menu to edit; check or menu to resolve; reopen clears note. Caps still create-only. Also `wd questions update` / `reopen` |
-| Dossier Evidence dump | shipped | Evidence tab File/Paste/URL (Entity locked). Same Intake APIs; rows also appear in Intake. Process / Enrich / Hide stay on Intake Detail. Preview Drawer on row click. |
+| Dossier Evidence dump | shipped | Evidence tab File/Paste/URL (Entity locked). Same intake APIs; rows also appear in Collect. Process / Enrich / Hide stay on Collect Evidence detail. Preview Drawer on row click. |
 
 ## Cases · Dashboard · Settings · Export · Auth
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
 | Cases CRUD + switch cookie | shipped | **View case** → overview; Select sets Active; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename; update/egress also via API/CLI |
-| Delete case | shipped | Type-to-confirm (`DestructiveConfirmDialog`) on Cases card ⋯ and Overview; cascades Graph/Jobs/Inbox/Evidence; heals Active cookie; also `wd cases delete` |
+| Delete case | shipped | Type-to-confirm (`DestructiveConfirmDialog`) on Cases card ⋯ and Overview; cascades Graph/Jobs/Triage/Evidence; heals Active cookie; also `wd cases delete` |
 | Case overview page | shipped | `/cases/$caseSlug` — case dashboard (stats / activity / settings); Open = set Active; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks` |
 | Identifiers table | shipped | `/identifiers` — Active-Case browse + inline edit + evidence + in-place create (Value first after Entity); **Bulk add** paste/map dialog (default Entity fills empty Entity cells; mapped name/slug miss → **Not found** / **Ambiguous**; preview cells editable; `confirmed` → `unverified`); row click → Dossier Identifiers |
 | Bulk add identifiers | shipped | Same two-stage dialog on `/identifiers` and Dossier Identifiers (paste, then left/right match). Default Entity fills empty Entity cells; a mapped name/slug miss shows **Not found** / **Ambiguous** on the Entity cell (picker stays empty). Preview cells are editable (empty Type/Platform = **—**). Dossier locks Entity. Type deferred from column/values. `validateIdentifierWrite` (incl. handle→platform) marks rows invalid. No Evidence / no `confirmed` from paste. |
@@ -121,15 +121,15 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | allowThirdPartyEgress toggle | shipped | Case overview settings; also `PATCH /cases/{id}` / `wd cases update --allow-third-party-egress` |
 | Case-wide identifiers / edges reads | shipped | `GET /cases/{caseId}/identifiers`, `GET /cases/{caseId}/edges` (aggregate views; invalidate with entity change; no CLI parity in v1) |
 | Entity rename (display name) | shipped | Dossier last-crumb blur-save (`KindBadge` + `EditableTextCell`); `PATCH …/entities/{entityId}` name; slug unchanged |
-| Dashboard stats + Inbox / Due panels | shipped | Active-case scoped stats + lists; Activity is cross-case with optional case filter |
+| Dashboard stats + Triage / Due panels | shipped | Active-case scoped stats + lists; Activity is cross-case with optional case filter |
 | Dashboard Activity resize / scroll | shipped | Vertical resizable panel + `ScrollArea`; overview scrolls independently |
-| Quick Launch paste → Intake | removed | Dump stays on Intake; Dashboard does not host paste |
-| Dashboard → Inbox with proposalId | shipped | Inbox panel rows deep-link `search.proposalId` |
-| Dashboard → Jobs with jobId | removed | Jobs running tile links `/jobs` without a selected job |
+| Quick Launch paste → Collect | removed | Dump stays on Collect; Dashboard does not host paste |
+| Dashboard → Triage with proposalId | shipped | Triage panel rows deep-link `search.proposalId` |
+| Dashboard → Collect with jobId | removed | Jobs running tile links `/collect` without a selected job |
 | Settings vault credentials | shipped | `/settings?tab=credentials`; Connect/Update dialog; needs `WD_MASTER_VAULT_KEY`; also `wd credentials` / `PUT /credentials/{name}` (never plaintext) |
 | Export zip from Cases UI | shipped | 404 if zero entities; also `wd export zip` / `md` (x-api-key file routes) |
 | Evidence hide / restore / download | shipped | UI + `wd evidence hide` / `restore` / `download` |
-| Evidence process / enrich | shipped | UI + `wd evidence process` / `--ai` / `enrich` (same core glue as Intake) |
+| Evidence process / enrich | shipped | UI + `wd evidence process` / `--ai` / `enrich` (same core glue as Collect) |
 | Auth login / gated signup | shipped | — |
 
 ## Search · Hotkeys
@@ -139,7 +139,7 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | Mod+K opens command palette | shipped | Toggle; works in editable fields; sidebar Search… trigger |
 | Jump to pages (idle) | shipped | Dashboard + Case nav + Work/Manage/Config (no Dev /ui) |
 | Type entity name → dossier | shipped | ≥2 chars; Active Case only; Enter → `/entities/$slug` |
-| Identifier / Evidence / Task / Job / Inbox hits | shipped | Deep links: identifiers tab, `?evidenceId=`, `?entityId=`, `?jobId=`, `?proposalId=` |
+| Identifier / Evidence / Task / Job / Triage hits | shipped | Deep links: identifiers tab, `?evidenceId=` (Collect), `?entityId=`, `?jobId=` (Collect), `?proposalId=` (Triage) |
 | Cases group switches Active | shipped | Sets cookie + opens Overview |
 | `?` Shortcuts sheet | shipped | Global list only (no per-surface matrices) |
 | Mod+B toggles sidebar | shipped | Via shared hotkey registry (not shadcn-only listener) |

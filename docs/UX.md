@@ -13,10 +13,9 @@ Operate mode: task clarity over surprise. Surfaces earn their chrome; don’t in
 
 | Route | Job for the investigator | Layout kind (see UI) |
 | --- | --- | --- |
-| `/` | Dashboard — stats, Inbox, Due, cross-case Activity | mixed (dashboard) |
-| `/jobs` | Run Caps or Playbooks; watch Cap Jobs | split |
-| `/inbox` | Accept / reject Proposals into the graph | split |
-| `/intake` | Dump evidence; process; triage queue | split |
+| `/` | Dashboard — stats, Triage, Due, cross-case Activity | mixed (dashboard) |
+| `/collect` | Dump evidence; run Caps/Playbooks; watch acquisitions | split |
+| `/triage` | Accept / reject Proposals into the graph | split |
 | `/entities` | Browse Case entities (+ Connections column) | table |
 | `/identifiers` | Active-Case identifiers table (browse + inline edit + in-place create + bulk add) | table |
 | `/graph` | Active-Case graph preview | stack (split density) |
@@ -30,15 +29,15 @@ Operate mode: task clarity over surprise. Surfaces earn their chrome; don’t in
 
 ## Core flows
 
-1. **Cap run → triage** — Jobs starts a Cap → worker → Evidence + Proposal → Inbox Accept/Reject → graph.
-2. **Playbook run → triage** — Jobs **Run Playbook** mode starts a curated Cap chain (`playbook_runs`); each step is its own Job (+ Proposal). Only the first step is queued at start; later steps are created when the prior step succeeds (fan-out siblings join before the next recipe step). Cancel run stops remaining work. Never auto-fires from Intake.
-3. **Evidence in** — Intake dump (paste/file/URL) → Enrich (URL dumps; Output on the same row) → Process (optional `evidence.harvest` / `evidence.extract.ai`, labeled **Extract (AI)** in the UI) → Inbox Accept. Detail tabs: Content · Output · Jobs. Cap-landed Evidence (e.g. DNS lookup artifact) is labeled **Cap output** with a link to the producing Job. Dossier Evidence tab dumps File/Paste/URL with Entity locked (same APIs; rows also appear in Intake).
+1. **Cap run → triage** — Collect starts a Cap → worker → Evidence + Proposal → Triage Accept/Reject → graph.
+2. **Playbook run → triage** — Collect **Playbook** source starts a curated Cap chain (`playbook_runs`); each step is its own Job (+ Proposal). Only the first step is queued at start; later steps are created when the prior step succeeds (fan-out siblings join before the next recipe step). Cancel run stops remaining work. Never auto-fires from a dump.
+3. **Evidence in** — Collect dump (paste/file/URL) → Enrich (URL dumps; Output on the same row) → Process (optional `evidence.harvest` / `evidence.extract.ai`, labeled **Extract (AI)** in the UI) → Triage Accept. Detail tabs: Content · Output · Runs. Cap-landed Evidence (e.g. DNS lookup artifact) is labeled **Cap output**; **From {cap}** in the detail strip jumps to the Jobs tab and expands that run. Dossier Evidence tab dumps File/Paste/URL with Entity locked (same APIs; rows also appear in Collect).
 4. **Dossier** — open entity → Overview (BLUF Summary via Plate Markdown + scan) / Notes (full-height Plate) / Claims / ids / connections / evidence / events / questions / **Tasks**; trail is folder + `{name} / Entities / {name}` (kind badge + blur-save name as last crumb) or **Edit** → `DossierEditDialog` (name / kind / summary / notes Markdown); click Case → Overview; click Entities → table. Evidence tab dumps onto this subject + peek via Drawer. Questions: inline edit (open + resolved), resolve, reopen.
 5. **Case scope** — Active Case is cookie-scoped (not in URL for Work/graph nouns); all work is Case-bound. Sidebar: WATCHDOG logo → Dashboard (`/`); **Search…** (Mod+K) above Case; under Case: flat Overview / Entities / Identifiers / Graph. Case Overview (`/cases/$caseSlug`) is the case dashboard (stats / activity / settings); Manage **Cases** Open sets Active and lands there. Legacy `/cases/$uuid` and `?tab=` bookmarks redirect.
 6. **Tasks** — case-scoped work items (not Graph writes). `/tasks` is kanban-only (fixed status columns; drag across columns changes status; drag within a column reorders via `position`; lane quick-create + header New task → full dialog). Optional `?entityId=` filter. Due dates are calendar-day only. Dossier **Tasks** tab = entity-scoped board (`density="split"`).
-7. **Command palette** — Mod+K (or sidebar Search) opens a shell-mounted palette. Idle = Jump to pages. Type ≥2 chars → Active Case `searchCase` hits (Entities, Identifiers, Evidence, Tasks, Jobs, pending Inbox) plus Cases (switch + Overview). `?` opens the Shortcuts sheet; Mod+B toggles the sidebar.
+7. **Command palette** — Mod+K (or sidebar Search) opens a shell-mounted palette. Idle = Jump to pages. Type ≥2 chars → Active Case `searchCase` hits (Entities, Identifiers, Evidence, Tasks, Jobs, pending Triage) plus Cases (switch + Overview). `?` opens the Shortcuts sheet; Mod+B toggles the sidebar.
 
-### Inbox Accept (product rules)
+### Triage Accept (product rules)
 
 - Cap/agent patch `data` **must not** include confidence — human picks on Accept.
 - If the patch has any confidence-bearing op (**Claim**, **Identifier**, **Edge**): force **one** confidence for the whole patch (`unverified` / `possible` / `confirmed`). Skip the step if the patch is only Entity / Event / Question (incl. Summary/Notes updates).
@@ -46,15 +45,15 @@ Operate mode: task clarity over surprise. Surfaces earn their chrome; don’t in
 - Claim **`class`**: keep as proposed (default `observation`); edit later in Dossier — no bulk class editor on Accept Day-0.
 - **Reject:** drop patch; keep already-captured Evidence; reason optional; row stays in history (Rejected filter).
 - Any Case member may Accept/Reject Day-0 (dual-control later).
-- Agent **graph write** lands on Graph at `unverified` (audited in `graph_writes`). API requires body `userOverride: true`; CLI escape hatch is the verb `wd graph write` (no boolean flag). Dossier-style child writes (`wd claims|identifiers|edges|events|questions …`) need **`--user-override`** and CLI refuses `confirmed` (Inbox Accept / Dossier may set it). Later human edits still go through confidence rules.
-- **Identifier collision:** if a proposed Identifier `type+value` already exists on another Entity in the Case, Inbox shows a warn Alert + per-op chip. Warn, don’t block Accept. Caps stay Case-blind — this is core/Inbox, not interpret.
-- **Invalid Identifier values:** structured types (`email` / `phone` / `url` / `domain` / `ip` / `pgp`) plus handle→platform are gated by `validateIdentifierWrite`. Inbox chips the op and **disables Accept**; core hard-fails the TX. Reject or rewrite the Proposal — no partial Accept.
+- Agent **graph write** lands on Graph at `unverified` (audited in `graph_writes`). API requires body `userOverride: true`; CLI escape hatch is the verb `wd graph write` (no boolean flag). Dossier-style child writes (`wd claims|identifiers|edges|events|questions …`) need **`--user-override`** and CLI refuses `confirmed` (Triage Accept / Dossier may set it). Later human edits still go through confidence rules.
+- **Identifier collision:** if a proposed Identifier `type+value` already exists on another Entity in the Case, Triage shows a warn Alert + per-op chip. Warn, don’t block Accept. Caps stay Case-blind — this is core/Triage, not interpret.
+- **Invalid Identifier values:** structured types (`email` / `phone` / `url` / `domain` / `ip` / `pgp`) plus handle→platform are gated by `validateIdentifierWrite`. Triage chips the op and **disables Accept**; core hard-fails the TX. Reject or rewrite the Proposal — no partial Accept.
 
 ### Promote-then-adopt (two tracks)
 
 | Track | Rule |
 | --- | --- |
-| **Visual / shell** | Shared component + Jobs + Inbox (+ Intake when same chrome) in one change, **or** dated debt row below |
+| **Visual / shell** | Shared component + Collect + Triage in one change, **or** dated debt row below |
 | **Data wiring** | May roll per route (SSE, loaders) independently |
 
 ## Empty, error, success (meaning)
@@ -110,7 +109,7 @@ Dialog titles = Title Case statements (`Delete case`), not questions. Primary = 
 
 | Item | Status | Notes |
 | --- | --- | --- |
-| Stub / lying Cap honesty (Process) | done | Deterministic Process Cap harvests → Inbox; copy updated |
+| Stub / lying Cap honesty (Process) | done | Deterministic Process Cap harvests → Triage; copy updated |
 | Jobs long-run progress | later | Investigator shouldn’t need chat status pastes; Phase 1–2 |
 | Async Case catch-up for non-builders | done | `/cases/$caseSlug` Case Overview dashboard; Entities / Identifiers / Graph / Tasks are sibling Active-Case routes |
 | Dossier Overview BLOT heaviness | later | Notes split out; Overview still stacks Claims/Ids/Connections — lighten further if needed |
@@ -120,10 +119,10 @@ Dialog titles = Title Case statements (`Delete case`), not questions. Primary = 
 | Facet checkbox rows extract | later | Optional UX chrome share across toolbars |
 | Capability picker discoverability | shipped | CapMatch paste-to-run + category (`id` seg1) + Passive/Active/Footprint filters; empty-default Cap select; Cap meta shows intent |
 | Hide restore / honest copy | done | Filters → Hidden + Restore; dialog copy names the path |
-| Suppression / cache explainability | done | Jobs: From cache / N suppressed chips + clearer no-Proposal copy; Inbox: Reject FP memory note + suppressed-upstream badge |
+| Suppression / cache explainability | done | Collect runs: From cache / N suppressed chips + clearer no-Proposal copy; Triage: Reject FP memory note + suppressed-upstream badge |
 | `agent` badge (`proposal.agentSourced`) | done | Shows when Proposal came from agent propose API; override badge removed (audit is `graph_writes`, not Proposal) |
-| Playbook credential pre-check in UI | done | Vault `configured` folded into Jobs Cap/Playbook `canRun`; `startJob` fail-closed |
-| Intake explicit “Run url-capture” | later | Jobs toolbar ships first; Intake must stay user-initiated (never auto-fire) |
+| Playbook credential pre-check in UI | done | Vault `configured` folded into Collect Cap/Playbook `canRun`; `startJob` fail-closed |
+| Collect explicit “Run url-capture” | later | Collect toolbar ships first; Playbooks must stay user-initiated (never auto-fire) |
 | Figma bridge | later | Gated on Dev seat |
 | Deeper search (FTS / cross-Case Graph) | later | Day-0 is Active Case `ilike` via Mod+K; upgrade when it hurts |
 
@@ -133,22 +132,21 @@ UI/engineering debt (tokens, atom extract, `variant="panel"` rename) lives in gi
 
 | Surface | Feel | Notes |
 | --- | --- | --- |
-| Jobs | Strong | Cap + Playbook run modes; CapMatch paste-to-run + filters + empty-default Cap select; vault credential presence gates Run; queue clusters playbook steps by run; waiting chrome for the next recipe step; Cancel run; interpretError amber; From cache / suppressed chips |
-| Inbox | Strong | Triage parity with Jobs; Reject explains FP memory; identifier collision Alert (warn, don’t block) |
-| Intake | Strong | Dump → Enrich Output → Harvest / Extract (AI) → Inbox; Hide → Hidden filter → Restore |
+| Collect | Strong | Dump + Cap/Playbook run modes; CapMatch paste-to-run + filters + empty-default Cap select; vault credential presence gates Run; queue clusters playbook steps by run; waiting chrome for the next recipe step; Cancel run; interpretError amber; From cache / suppressed chips; Evidence detail: Enrich Output → Harvest / Extract (AI) → Triage; Hide → Hidden filter → Restore |
+| Triage | Strong | Accept/Reject parity with Collect run chrome; Reject explains FP memory; identifier collision Alert (warn, don’t block) |
 | Dossier | Mixed | PageHeader trail folder + `{name} / Entities / {name}` (kind badge + editable last crumb); line tabs (`below=`); **Edit** → `DossierEditDialog` (name/kind/summary/notes); **Tasks** tab (entity-scoped kanban, split density); Connections = outbound/inbound list + read-only 1-hop canvas + dialog CRUD (`clampEdgePhrase` on peer change); Evidence tab dumps File/Paste/URL (Entity locked) + list + Drawer peek; `EvidencePicker` on composers / `EvidenceCiteChips` on Job cites; Overview BLOT still dense |
 | Entities / Cases | Fine | Entities: dense DataTable (+ Connections). Identifiers: Active-Case table (`/identifiers`) with in-place create + bulk-add paste/map. Graph: `/graph` preview. Cases (Manage): create / Select / Open / export. Case Overview: dashboard only (no Tasks tab). |
 | Tasks | Fine | `/tasks` kanban (dnd-kit); drag changes status **and** within-column order (`position`); lane quick-create; `TaskFormDialog` create/edit; date-only due; Task ≠ Graph write |
-| Dashboard | Strong | Trail last crumb **Dashboard**. Stat cards 3×2 (Proposals pending / Tasks overdue / Tasks due soon / Jobs running / Entities / Cases); Inbox + Due panels (dashed empty); Activity = vertical resizable panel + `ScrollArea` (cross-case, case filter); sidebar owns Case switch / nav / Mod+K Search; dump stays on Intake |
+| Dashboard | Strong | Trail last crumb **Dashboard**. Stat cards 3×2 (Proposals pending / Tasks overdue / Tasks due soon / Jobs running / Entities / Cases); Triage + Due panels (dashed empty); Activity = vertical resizable panel + `ScrollArea` (cross-case, case filter); sidebar owns Case switch / nav / Mod+K Search; dump stays on Collect |
 | Settings | Fine | Sidebar sections (Account / Security / API Keys / Credentials); Cap credentials Connect dialog + vault |
-| Command palette | Strong | Mod+K shell palette: Jump to + Active Case search (entities / ids / evidence / tasks / jobs / pending Inbox) + Cases switch; `?` Shortcuts; Mod+B sidebar |
+| Command palette | Strong | Mod+K shell palette: Jump to + Active Case search (entities / ids / evidence / tasks / jobs / pending Triage) + Cases switch; `?` Shortcuts; Mod+B sidebar |
 
 ## UX PR checklist
 
 1. [ ] One job per surface — first viewport isn’t a dashboard of unrelated widgets (unless it _is_ the dashboard)
 2. [ ] Empty / error / success mean the right thing (table above)
 3. [ ] Copy matches rules (labels, placeholders, errors, toasts)
-4. [ ] Jobs ↔ Inbox parity for shared triage patterns (or debt row)
+4. [ ] Collect ↔ Triage parity for shared triage patterns (or debt row)
 5. [ ] No new product jargon that fights [`apps/web/docs/UI.md`](../apps/web/docs/UI.md) layout words in the UI chrome
 6. [ ] Destructive / hide actions confirmed appropriately (AlertDialog vs type-to-confirm)
 7. [ ] Feedback on the right layer (field / toast / FetchErrorAlert / dialog inline)

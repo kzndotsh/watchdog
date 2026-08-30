@@ -25,7 +25,7 @@ Update this file when a phase item ships or a deferred item is earned. Don’t i
 
 ## North star
 
-Small-team (often 1–2) OSINT: keep one **Case Graph** of Claims + Evidence you can defend, while collection stays fast. Loop: **Collect → Decide (Inbox) → Graph under human custody → Export Case package**. Caps and agents never write Graph unchecked (Proposal → Accept, or human Dossier write). Postgres is SoT; markdown Export is a projection.
+Small-team (often 1–2) OSINT: keep one **Case Graph** of Claims + Evidence you can defend, while collection stays fast. Loop: **Collect → Decide (Triage) → Graph under human custody → Export Case package**. Caps and agents never write Graph unchecked (Proposal → Accept, or human Dossier write). Postgres is SoT; markdown Export is a projection.
 
 ### Field research
 
@@ -41,19 +41,18 @@ Signal-era field work + build principles confirm this north star and Phases 0–
 | Cases (UI) | **done** | Create / switch / Export zip |
 | Cases (API/CLI) | **done** | List / get / create / update (`wd cases update`; egress flag) |
 | Entities + Dossier | **done** | Full section CRUD; Overview BLOT still heavy |
-| Intake dump | **done** | Paste / file / URL (URL metadata until Enrich; Output on same row) |
-| Intake Process | **done** | Deterministic harvest Cap → Proposal; optional `aiprocess` |
+| Collect dump + Process | **done** | Paste / file / URL on `/collect`; deterministic harvest Cap → Proposal; optional Extract (AI) |
 | Jobs + worker | **done** | Cap → Job-internal artifacts + Proposal; Enrich does not flood Evidence |
-| Inbox Accept | **done** | Confidence + evidence gates |
+| Triage Accept | **done** | Confidence + evidence gates |
 | Caps catalog | **strong** | **63** Caps (`pnpm generate:caps`); Collect via `defineCollectCap`; Jobs CapMatch / empty-default picker; deepen quality later |
 | Cap SPI / tools / policy | **done** | `@watchdog/{cap-sdk,tools,policy}`; pure interpret + fixture tests |
 | `@watchdog/ai` | **done** | Provider + structuredExtract + draft Zod |
 | Cap credentials | **done** | AES vault + Settings + OpenAPI / `wd credentials` (no plaintext out) |
-| Finding suppression | **done** | Core fingerprints + structured `from_cache` / `suppressed_count` chips in Jobs/Inbox |
+| Finding suppression | **done** | Core fingerprints + structured `from_cache` / `suppressed_count` chips in Collect/Triage |
 | Playbooks | **mid** | Linear `PLAYBOOKS` + API/CLI `runPlaybook` + Jobs Cap/Playbook form; depth/opts later |
 | Export md / zip / shadow | **done** | UI + file routes + `wd export zip | md` + worker sync |
 | OpenAPI / CLI | **strong** | Typed `@watchdog/client` + agent-first `wd` (compact JSON; graph-child; credentials; evidence hide/restore/download/process/enrich; `apiKeyAuth`). Web-only leftovers: Active Case cookie. `@watchdog/contract` deferred (Phase 2) |
-| Agent Proposal create / graph write | **done** | Propose → Inbox; `graph write` → Graph @ unverified + `graph_writes` (atomic tx, idempotency); child writes need `--user-override` |
+| Agent Proposal create / graph write | **done** | Propose → Triage; `graph write` → Graph @ unverified + `graph_writes` (atomic tx, idempotency); child writes need `--user-override` |
 | MCP | **missing** | Phase 2+ |
 | Web automated tests | **pyramid** | Packages+worker unit; web lib+component in jsdom; Postgres integration; 2 Playwright flows |
 | Scrape / vault import / corpus / LE packs | **missing** | Earned later |
@@ -65,13 +64,13 @@ Signal-era field work + build principles confirm this north star and Phases 0–
 ## What we already earned (don’t reopen)
 
 - Day-0 screens + Queue / Detail / Split chrome lexicon
-- Graph nouns + `@watchdog/schemas` + Inbox Accept rules
+- Graph nouns + `@watchdog/schemas` + Triage Accept rules
 - DNS / WHOIS Caps + pg-boss worker + Cap credentials
 - Evidence dump (paste/file) + soft-delete Hide
 - Case Export package (md + zip + shadow workspace)
 - Foundation polish: TanStack Query SoT, domains layout, DS cutover, auth session/layout
 - Evidence + Proposal (not Scratch / Candidate / promote)
-- `@watchdog/ai` + Process Cap path (EvidenceSnapshot → ProcessExtractDraft → Proposal → Inbox)
+- `@watchdog/ai` + Process Cap path (EvidenceSnapshot → ProcessExtractDraft → Proposal → Triage)
 - Cap package split (`cap-sdk` / `tools` / `policy`) + pure `interpret(report, opts)` + `report.json`
 - Cap result cache + known-finding suppression (Reject fingerprints)
 - Linear playbooks (API/CLI + Jobs Cap/Playbook run form)
@@ -109,10 +108,10 @@ Make Collect + agent paths feel real.
 - Port LIVE network / archive Cap ideas into TS (CT, subdomain, TLS / mail / headers, Wayback) — **largely done** (63 Caps); deepen quality / IntelX / CIRCL PDNS later
 - ~~Capability picker / discoverability polish on Jobs~~ **done** (CapMatch + filters + empty-default select)
 - ~~Cmd+K / global hotkeys~~ **done** (Mod+K Active Case search + Jump to; Mod+B sidebar; `?` Shortcuts)
-- ~~Identifier value validation~~ **done** (schemas `validateIdentifierWrite`; core create/update/Accept; Inbox blocks)
-- ~~Suppression / cache explainability in Jobs + Inbox UI~~ **done**
+- ~~Identifier value validation~~ **done** (schemas `validateIdentifierWrite`; core create/update/Accept; Triage blocks)
+- ~~Suppression / cache explainability in Collect + Triage UI~~ **done**
 - ~~Paste-to-run / CapMatch-style launcher on Jobs~~ **done**
-- ~~Finish residual OpenAPI / CLI ↔ ServerFn parity (Intake Process+Enrich)~~ **done** — `POST …/evidence/{id}/process` + `/enrich`; `wd evidence process|enrich`. Web leftover: Active Case cookie
+- ~~Finish residual OpenAPI / CLI ↔ ServerFn parity (Collect Process+Enrich)~~ **done** — `POST …/evidence/{id}/process` + `/enrich`; `wd evidence process|enrich`. Web leftover: Active Case cookie
 
 ---
 
@@ -127,21 +126,21 @@ Only when Case load or workflow demands it.
 - MCP over the same OpenAPI / Caps
 - Dual-control Accept for identity merges
 - `network.*.monitor` (baseline snapshot vs next Job → CHANGE/NEW/GONE) — needs scheduled Jobs
-- Cross-entity correlation Cap (`shares_ip_with` / shared NS/MX) — Caps cannot read the Case; Inbox identifier-collision warn is the shipped 80%
+- Cross-entity correlation Cap (`shares_ip_with` / shared NS/MX) — Caps cannot read the Case; Triage identifier-collision warn is the shipped 80%
 - External tools hub (link-out, not Caps)
 - **`@watchdog/contract` (contract-first oRPC)** — earn when agents/MCP must not depend on `@watchdog/api` even for types, or API surface is designed ahead of handlers. Until then: router SoT + `minifyContractRouter` → `@watchdog/client`
 
 ### Also track (ops / parity debt)
 
 - ~~OpenAPI/CLI: credentials vault; export zip/md; evidence soft-delete/restore/download; graph-child CLI verbs; `cases.update` + egress~~ **done** (binary export stays file routes + `wd export`; OpenAPI declares `x-api-key`)
-- ~~ServerFn → oRPC for Intake Process+Enrich~~ **done**
+- ~~ServerFn → oRPC for Collect Process+Enrich~~ **done**
 - ~~Retire deprecated `analysis.json` alias~~ **done**; ~~`PROCESS_CAPABILITY_ID` aliases~~ **done**
 - Postgres + MinIO backup/restore story
 - Error monitoring (Sentry or equivalent) — deferred
 - Process logging (`@watchdog/log` / evlog NDJSON under `apps/*/.evlog/logs/`) — **shipped**
 - Ops `.audit/` hash-chain / `evlog/ai` — deferred
 - ~~`knip` unused-export gate in CI~~ **done**
-- ~~Credential pre-check on Jobs form; Inbox `?proposalId=` URL sync; Inbox pending-first; Evidence Detail Entity attach~~ **done**
+- ~~Credential pre-check on Collect run form; Triage `?proposalId=` URL sync; Triage pending-first; Evidence Detail Entity attach~~ **done**
 
 ---
 
@@ -188,11 +187,11 @@ Only when Case load or workflow demands it.
 ### Phase 1
 
 - [x] Next network Cap (CT + posture + archive/web/identity/threat/breach waves — catalog at 63)
-- [x] Field-method Wave 1 (`ip` Identifiers, DNS/WHOIS interpret, Inbox collision warn, harvest quote-mask/selectors, `web.media.oembed`, host-footprint/posture, person Question seeds)
+- [x] Field-method Wave 1 (`ip` Identifiers, DNS/WHOIS interpret, Triage collision warn, harvest quote-mask/selectors, `web.media.oembed`, host-footprint/posture, person Question seeds)
 - [x] Jobs Capability discoverability polish (CapMatch / paste-to-run + filters + empty-default Cap select)
 - [x] Cmd+K command palette + global hotkeys (Active Case `searchCase` + Jump to; Mod+B; `?`)
-- [x] Identifier value validation (`validateIdentifierWrite` on Graph writes; Inbox blocks invalid ops)
-- [x] Known-finding suppression for Cap → Inbox spam (core + Jobs/Inbox explainability)
+- [x] Identifier value validation (`validateIdentifierWrite` on Graph writes; Triage blocks invalid ops)
+- [x] Known-finding suppression for Cap → Triage spam (core + Collect/Triage explainability)
 - [x] Jobs paste-to-run / CapMatch launcher
 
 Phase 2–3 items stay as bullets above until earned — don’t checkbox-dream them.

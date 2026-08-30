@@ -14,9 +14,9 @@ document_updated: 2026-07-27T23:28
 
 Small-team OSINT: keep one **Case Graph** of Claims + Evidence you can defend, while collection stays fast.
 
-**Collect → Decide (Inbox) → Graph under human custody → Export Case package.**
+**Collect → Decide (Triage) → Graph under human custody → Export Case package.**
 
-- Caps never write Graph (Proposal → Inbox Accept). Agents default to Proposal; escape hatch is explicit `graph write` @ `unverified` with `graph_writes` audit. Humans may also write via Dossier.
+- Caps never write Graph (Proposal → Triage Accept). Agents default to Proposal; escape hatch is explicit `graph write` @ `unverified` with `graph_writes` audit. Humans may also write via Dossier.
 - Postgres is SoT; markdown Export is a projection.
 - If you need Scratch / Candidate / Mutation R-tiers to explain Day-0, the design failed.
 
@@ -41,7 +41,7 @@ Field chats, vault habits, and frozen prototypes show **pain and anti-patterns**
 | Field improvisation | Signal + masters + Claude stitch + scrapes | Pain lab — not a product |
 | v1 (`_legacy-v1`) | Vault SoT + fixed Python pipeline | Frozen — tradecraft tuition |
 | v2 (`_legacy-v2`) | Broad platform spec; Cap/Mutation/Scratch theater | Frozen — breadth ≫ depth |
-| v3 (greenfield) | Case + Evidence + Proposal + Inbox + Export | **Live** — polish ≠ rewrite #4 |
+| v3 (greenfield) | Case + Evidence + Proposal + Triage + Export | **Live** — polish ≠ rewrite #4 |
 
 **Lessons:**
 
@@ -104,7 +104,7 @@ The `_legacy-*` trees that record this history are untracked and live outside th
 
 1. **Field ≠ design** — pain and personas only; never habit-copy.
 2. **Data shape + write-gate first** — protect option value; don’t reopen earned nouns.
-3. **Boundaries** — validate at OpenAPI / CLI / Cap / Evidence edges; Inbox Accept is the trust boundary; Cap logic stays pure; shell stays thin.
+3. **Boundaries** — validate at OpenAPI / CLI / Cap / Evidence edges; Triage Accept is the trust boundary; Cap logic stays pure; shell stays thin.
 4. **Caps are levers** — deterministic, rerunnable, reviewable; hand/AI stitch is not a lever.
 5. **Encode in structure** — schema and Accept over prose warnings; strongest rung wins.
 6. **Experience = core loop** — say no; ship less; no lying Caps; serve builder + non-tech + agent.
