@@ -1,4 +1,5 @@
 import { Page, PageHeader } from "@/shared/layout/page";
+import { PendingRegion } from "@/shared/ui/pending-region";
 import { QueueSkeleton, StackBodySkeleton } from "@/shared/ui/skeletons";
 
 export type RoutePendingVariant = "queue" | "stack";
@@ -8,7 +9,7 @@ export type RoutePendingVariant = "queue" | "stack";
  * Keeps Page + PageHeader chrome (static shell); only the body slot skeletons.
  * Trail still paints from the route + Active Case cookie.
  *
- * - `queue` — Queue+Detail pages (Inbox, Jobs, Intake, …)
+ * - `queue` — Queue+Detail pages (Collect, Triage, …)
  * - `stack` — tabbed / dashboard-style pages (prefer omitting pending when loader is thin)
  */
 export function RoutePending({
@@ -19,15 +20,23 @@ export function RoutePending({
   return (
     <Page density={variant === "queue" ? "split" : undefined}>
       <PageHeader />
-      <div
-        className="min-h-0 flex-1 overflow-hidden"
-        aria-busy="true"
-        aria-live="polite"
-      >
+      <div className="min-h-0 flex-1 overflow-hidden">
         {variant === "queue" ? (
-          <QueueSkeleton rows={10} />
+          <PendingRegion
+            loading
+            label="Loading queue"
+            fallback={<QueueSkeleton rows={10} />}
+          >
+            {null}
+          </PendingRegion>
         ) : (
-          <StackBodySkeleton />
+          <PendingRegion
+            loading
+            label="Loading content"
+            fallback={<StackBodySkeleton />}
+          >
+            {null}
+          </PendingRegion>
         )}
       </div>
     </Page>
