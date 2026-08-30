@@ -9984,6 +9984,15 @@
                           "type": "string"
                         }
                       },
+                      "entitySlugs": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
                       "identifierCollisions": {
                         "type": "array",
                         "items": {
@@ -10498,6 +10507,15 @@
                         "type": "string"
                       }
                     },
+                    "entitySlugs": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "identifierCollisions": {
                       "type": "array",
                       "items": {
@@ -10898,6 +10916,15 @@
                         "type": "string"
                       }
                     },
+                    "entitySlugs": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "identifierCollisions": {
                       "type": "array",
                       "items": {
@@ -11274,6 +11301,15 @@
                       ]
                     },
                     "entityNames": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "entitySlugs": {
                       "type": "object",
                       "propertyNames": {
                         "type": "string"
