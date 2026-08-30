@@ -10,6 +10,4 @@ export default async function globalSetup(): Promise<void> {
   for (const [key, value] of Object.entries(e2eEnv)) {
     process.env[key] = value;
   }
-  const { resetTestDb } = await import("@watchdog/test-kit/db");
-  await resetTestDb();
 }

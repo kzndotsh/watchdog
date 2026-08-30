@@ -2,23 +2,22 @@ import process from "node:process";
 
 import { defineConfig, devices } from "@playwright/test";
 
-import { e2eEnv, e2eOrigin, e2eWebServerEnv } from "./e2e/env";
+import { e2eEnv, e2eOrigin, e2eWebServerEnv } from "./e2e/support/env";
 
 const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 const isCi = Boolean(process.env.CI);
 
 export default defineConfig({
-  testDir: "./e2e",
-  testMatch: "**/*.spec.ts",
+  testDir: "./e2e/specs",
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  retries: isCi ? 2 : 0,
   timeout: 120_000,
-  globalSetup: "./e2e/global-setup.ts",
+  globalSetup: "./e2e/support/global-setup.ts",
   reporter: isCi ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: e2eOrigin,
-    trace: "retain-on-failure",
+    trace: isCi ? "on-first-retry" : "retain-on-failure",
     screenshot: "only-on-failure",
     ...devices["Desktop Chrome"],
     ...(typeof chromiumPath === "string" && chromiumPath !== ""

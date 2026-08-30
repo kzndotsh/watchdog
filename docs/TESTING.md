@@ -13,7 +13,9 @@ pnpm test:property
 pnpm test:component       # jsdom + Testing Library
 just test-db              # create + migrate watchdog_test / watchdog_e2e
 pnpm test:integration     # real Postgres, rollback-per-test
-pnpm test:e2e             # Playwright, 2 flows (port 3300; needs MinIO + `just test-db`)
+pnpm test:e2e             # full Playwright suite
+pnpm test:e2e:smoke       # @smoke + @custody (fast gate)
+pnpm test:e2e:journey     # @journey only (core loop)
 pnpm test:coverage        # v8 report under coverage/ (not a %)
 pnpm test:watch
 pnpm --filter @watchdog/web ds:check
@@ -28,8 +30,8 @@ pnpm --filter @watchdog/db check:repos
 | Property | `*.property.test.ts` under `packages/*` or `apps/*` | fast-check via `@watchdog/test-kit/fc` |
 | Component | `apps/web/src/**/__tests__/**` (`*.test.ts` + `*.component.test.tsx`) | jsdom + Testing Library |
 | Integration | `*.int.test.ts` under `packages/*` or `apps/*` | `watchdog_test`; `withTestTx` or `resetTestDb` |
-| E2E parser | `e2e/*.test.ts` (not `*.spec.ts`) | Pure; guards the E2E harness itself |
-| E2E | `e2e/*.spec.ts` | `watchdog_e2e` + web + worker |
+| E2E parser | `e2e/**/*.test.ts` (not under `specs/`) | Pure; guards the E2E harness itself |
+| E2E | `e2e/specs/**/*.spec.ts` | `watchdog_e2e` + web + worker; tags `@smoke`, `@custody`, `@journey` |
 
 Sibling `__tests__/` next to source. Shared builders/harness: `@watchdog/test-kit` (`/fc`, `/fixtures`, `/db`, `/http`, `/it`). Playwright starts web on port **3300** (does not reuse `:3000`) and the worker with `pnpm --filter @watchdog/worker start` — not `dev`/`tsx watch`, which would kill a daily worker watching the same files. NixOS: enter `nix develop` so Chromium comes from the flake; CI installs Playwright's own Chromium.
 
@@ -39,7 +41,7 @@ Collect Caps ship `__tests__/interpret.test.ts`. Do not add a `run()` file per C
 
 CLI unit tests cover `--help`, custody envelopes (`CUSTODY` without `--user-override` on identifier/edge/event/question writes), and `loadPatch`. Generated `packages/client/src/generated/` is CI regen, not a test target.
 
-Two Playwright flows: Day-0 core loop (`e2e/day0-core-loop.spec.ts`) and custody defense (`e2e/custody-defense.spec.ts`).
+Playwright suite under `e2e/specs/`: core loop journey, custody Accept gates, route smoke, auth, cases, Collect paste, Triage reject. Harness layers live in `e2e/support/`, `e2e/api/`, `e2e/fixtures/`, and `e2e/pages/`.
 
 ## See also
 

@@ -6,9 +6,9 @@ import {
   parseEntity,
   parseEvidenceList,
   parseProposalList,
-} from "./parse-api";
+} from "./parsers";
 
-describe("e2e parse-api", () => {
+describe("e2e api parsers", () => {
   it("parseCaseList accepts valid rows", () => {
     expect(parseCaseList([{ id: "a", name: "Case A" }])).toEqual([
       { id: "a", name: "Case A" },
@@ -21,13 +21,14 @@ describe("e2e parse-api", () => {
     );
   });
 
-  it("parseEntity requires id and name", () => {
-    expect(parseEntity({ id: "e1", name: "Ada" })).toEqual({
+  it("parseEntity requires id, name, and slug", () => {
+    expect(parseEntity({ id: "e1", name: "Ada", slug: "ada" })).toEqual({
       id: "e1",
       name: "Ada",
+      slug: "ada",
     });
-    expect(() => parseEntity({ id: "e1" })).toThrow(
-      "entity response missing id/name"
+    expect(() => parseEntity({ id: "e1", name: "Ada" })).toThrow(
+      "entity response missing id/name/slug"
     );
   });
 

@@ -24,7 +24,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `*.property.test.ts` | fast-check |
 | `*.int.test.ts` | Postgres via `withTestTx` / `resetTestDb` |
 | `*.component.test.tsx` | jsdom + Testing Library |
-| `*.spec.ts` | Playwright only, under top-level `e2e/` |
+| `*.spec.ts` | Playwright only, under `e2e/specs/` |
 
 ## Helpers (`@watchdog/test-kit`)
 
@@ -66,6 +66,23 @@ No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion
 
 `pnpm test:coverage` is a reviewer signal, not a percentage gate to game.
 
-## Adding a 3rd e2e flow
+## E2E layout
 
-Only when a bug escapes that unit/integration/component tests structurally cannot catch (cross-page navigation state, real browser timing) — not for general coverage. Cap stays 2 until that bar is met.
+Playwright specs live under `e2e/specs/` grouped by product area (`auth/`, `cases/`, `collect/`, `triage/`, `custody/`, `journeys/`, `navigation/`). Shared harness only:
+
+| Layer    | Path            | Role                                       |
+| -------- | --------------- | ------------------------------------------ |
+| Support  | `e2e/support/`  | env, global setup, hydration waits         |
+| API      | `e2e/api/`      | typed `/api/v1` client + response parsers  |
+| Fixtures | `e2e/fixtures/` | `test.extend` (`api`, `authenticatedCase`) |
+| Pages    | `e2e/pages/`    | role-based page objects                    |
+
+One behavior per spec file. Prefer `expect.poll` over sleeps. Seed graph state through the API client when UI setup is not the behavior under test. Custody gates belong in `custody/` or `triage/`, not mixed into journey specs.
+
+Parser unit tests for the harness stay in `e2e/**/*.test.ts` (Vitest `e2e-parser` project).
+
+Each Playwright test runs after an automatic `_resetDb` fixture truncates `watchdog_e2e`. Tag specs with `@smoke`, `@custody`, or `@journey`. Run `pnpm test:e2e:smoke` for the fast gate.
+
+## Adding an e2e spec
+
+Add when the behavior crosses pages, real browser timing, or auth/session chrome that unit/integration/component tests cannot structurally cover. Put the spec in the matching `e2e/specs/<area>/` folder, reuse fixtures and page objects, and assert on persisted/API-visible outcomes — not mock internals.

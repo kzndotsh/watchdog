@@ -25,12 +25,12 @@ Dirty UI paths also trip `.cursor/hooks/stop-gate.mjs` (runs `ds:ban` when web U
 ```bash
 pnpm test:unit            # packages + worker only (web is not in this project)
 pnpm test:component       # all `apps/web/src/**/__tests__/**` (lib `*.test.ts` + `*.component.test.tsx`)
-pnpm test:e2e             # Day-0 core loop + custody defense (needs `just test-db`, MinIO, web+worker)
+pnpm test:e2e             # Playwright suite under e2e/specs (needs `just test-db`, MinIO, web+worker)
+pnpm test:e2e:smoke       # @smoke + @custody tags only
+pnpm test:e2e:journey     # @journey tag only
 ```
 
-Playwright covers: sign-up → New Case → paste dump → Harvest → Triage Accept → identifier visible; confirmed-without-evidence and invalid-identifier Accept chips.
-
-Lib tests pin Collect queue filters, jobs domain detail/run-input/status, Dossier confirmed-evidence + claim form, Triage filters/evidence/decide-header + Accept disable (`TriagePatchBody`), intake evidence helpers, Tasks due-date + form, connection table writes (`unverified` / `related_to` notes), identifier commit (handle-without-platform), paste error aliases, dashboard selectors, case overview activity, jump-nav, queue-selection, prefetch **`warm*Queries`**, **`listPending`**, `slugifyName`, and display helpers (`formatOpaqueId` / `group-by-day`). Component: Accept gate copy, bulk-add preview, Triage Accept disable, **`RegionBoundary`**, **`LoadingRegion`**, **`DataTable` pending**, skeletons. Remaining smoke below is layout, live Query/SSE, vault Settings, and chrome that has no lib contract.
+Playwright covers the core loop (Collect → Harvest → Triage Accept → Identifiers), custody Accept gates, route smoke, auth sign-up, case create, Collect paste, and Triage reject. Lib tests pin Collect queue filters, jobs domain detail/run-input/status, Dossier confirmed-evidence + claim form, Triage filters/evidence/decide-header + Accept disable (`TriagePatchBody`), intake evidence helpers, Tasks due-date + form, connection table writes (`unverified` / `related_to` notes), identifier commit (handle-without-platform), paste error aliases, dashboard selectors, case overview activity, jump-nav, queue-selection, prefetch **`warm*Queries`**, **`listPending`**, `slugifyName`, and display helpers (`formatOpaqueId` / `group-by-day`). Component: Accept gate copy, bulk-add preview, Triage Accept disable, **`RegionBoundary`**, **`LoadingRegion`**, **`DataTable` pending**, skeletons. Remaining smoke below is layout, live Query/SSE, vault Settings, and chrome that has no lib contract.
 
 Examples: `shared/layout/__tests__/page-trail.test.ts`, `domains/jobs/lib/__tests__/jobs-views.test.ts`, `domains/triage/lib/__tests__/triage-patch-body.component.test.tsx`, `routes/__tests__/collect-index.component.test.tsx`, `routes/__tests__/triage-index.component.test.tsx`, `lib/__tests__/orpc-null-if-not-found.test.ts`.
 
@@ -56,7 +56,7 @@ Web does **not** re-test Cap handlers. If a mutation is wrong, fix/test `@watchd
 | Kind | Status |
 | --- | --- |
 | Visual regression | Not set up |
-| Extra Playwright flows | Capped at 2 — see [`docs/TESTING_STANDARDS.md`](../../../docs/TESTING_STANDARDS.md) |
+| Extra Playwright flows | Organized under `e2e/specs/` — see [`docs/TESTING.md`](../../../docs/TESTING.md) |
 
 ## Manual smoke (split pages)
 

@@ -16,15 +16,20 @@ export function parseCaseList(json: unknown): { id: string; name: string }[] {
   });
 }
 
-export function parseEntity(json: unknown): { id: string; name: string } {
+export function parseEntity(json: unknown): {
+  id: string;
+  name: string;
+  slug: string;
+} {
   if (
     !isRecord(json) ||
     typeof json.id !== "string" ||
-    typeof json.name !== "string"
+    typeof json.name !== "string" ||
+    typeof json.slug !== "string"
   ) {
-    throw new Error("entity response missing id/name");
+    throw new Error("entity response missing id/name/slug");
   }
-  return { id: json.id, name: json.name };
+  return { id: json.id, name: json.name, slug: json.slug };
 }
 
 export function parseEntityId(json: unknown): { id: string } {
