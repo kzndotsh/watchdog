@@ -158,10 +158,14 @@ export const entitiesRepo = {
   async listNamesByIds(
     exec: DbExec,
     entityIds: string[]
-  ): Promise<{ id: string; name: string }[]> {
+  ): Promise<{ id: string; name: string; slug: string }[]> {
     if (entityIds.length === 0) return [];
     return exec
-      .select({ id: entities.id, name: entities.name })
+      .select({
+        id: entities.id,
+        name: entities.name,
+        slug: entities.slug,
+      })
       .from(entities)
       .where(inArray(entities.id, entityIds));
   },

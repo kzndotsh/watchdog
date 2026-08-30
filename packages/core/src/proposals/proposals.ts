@@ -46,14 +46,46 @@ export interface ProposalRecord {
   createdBy: string | null;
   /** entityId → name map for display purposes */
   entityNames?: Record<string, string>;
+  /** entityId → dossier slug map for display links */
+  entitySlugs?: Record<string, string>;
   /** Identifier ops whose type+value already exist on another Entity. */
   identifierCollisions?: IdentifierCollision[];
+}
+
+function entityIdsFromPatch(patch: PatchOp[]): Set<string> {
+  const entityIds = new Set<string>();
+  for (const op of patch) {
+    const d = op.data as Record<string, unknown>;
+    if (typeof d.entityId === "string") entityIds.add(d.entityId);
+    if (typeof d.fromId === "string") entityIds.add(d.fromId);
+    if (typeof d.toId === "string") entityIds.add(d.toId);
+  }
+  return entityIds;
+}
+
+async function loadEntityDisplayMaps(entityIds: Iterable<string>): Promise<{
+  entityNames: Record<string, string>;
+  entitySlugs: Record<string, string>;
+}> {
+  const ids = [...entityIds];
+  const entityNames: Record<string, string> = {};
+  const entitySlugs: Record<string, string> = {};
+  if (ids.length === 0) {
+    return { entityNames, entitySlugs };
+  }
+  const ents = await entitiesRepo.listNamesByIds(db, ids);
+  for (const e of ents) {
+    entityNames[e.id] = e.name;
+    entitySlugs[e.id] = e.slug;
+  }
+  return { entityNames, entitySlugs };
 }
 
 function toRecord(
   row: ProposalRow,
   opts?: {
     entityNames?: Record<string, string>;
+    entitySlugs?: Record<string, string>;
     capabilityId?: string | null;
     identifierCollisions?: IdentifierCollision[];
   }
@@ -76,6 +108,7 @@ function toRecord(
     userOverridden: row.userOverridden,
     createdBy: row.createdBy ?? null,
     entityNames: opts?.entityNames ?? {},
+    entitySlugs: opts?.entitySlugs ?? {},
     identifierCollisions: opts?.identifierCollisions ?? [],
   };
 }
@@ -89,19 +122,12 @@ export function listProposalsForCase(
 
     const entityIds = new Set<string>();
     for (const { proposal } of rows) {
-      for (const op of proposal.patch) {
-        const d = op.data as Record<string, unknown>;
-        if (typeof d.entityId === "string") entityIds.add(d.entityId);
-        if (typeof d.fromId === "string") entityIds.add(d.fromId);
-        if (typeof d.toId === "string") entityIds.add(d.toId);
+      for (const id of entityIdsFromPatch(proposal.patch)) {
+        entityIds.add(id);
       }
     }
 
-    const nameMap: Record<string, string> = {};
-    if (entityIds.size > 0) {
-      const ents = await entitiesRepo.listNamesByIds(db, [...entityIds]);
-      for (const e of ents) nameMap[e.id] = e.name;
-    }
+    const { entityNames, entitySlugs } = await loadEntityDisplayMaps(entityIds);
 
     const collisionsByIndex = await loadIdentifierCollisions(
       caseId,
@@ -110,7 +136,8 @@ export function listProposalsForCase(
 
     return rows.map(({ proposal, capabilityId }, i) =>
       toRecord(proposal, {
-        entityNames: nameMap,
+        entityNames,
+        entitySlugs,
         capabilityId,
         identifierCollisions: collisionsByIndex[i] ?? [],
       })
@@ -127,7 +154,12 @@ export async function getProposalForCase(
   const [collisions] = await loadIdentifierCollisions(caseId, [
     row.proposal.patch,
   ]);
+  const { entityNames, entitySlugs } = await loadEntityDisplayMaps(
+    entityIdsFromPatch(row.proposal.patch)
+  );
   return toRecord(row.proposal, {
+    entityNames,
+    entitySlugs,
     capabilityId: row.capabilityId,
     identifierCollisions: collisions ?? [],
   });

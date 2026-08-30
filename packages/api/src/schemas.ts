@@ -257,6 +257,7 @@ export const proposalSchema = z.object({
   userOverridden: z.boolean(),
   createdBy: z.string().nullable(),
   entityNames: z.record(z.string(), z.string()).optional(),
+  entitySlugs: z.record(z.string(), z.string()).optional(),
   identifierCollisions: z.array(identifierCollisionSchema).optional(),
 });
 
