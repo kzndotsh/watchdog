@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { listTasksFn } from "@/domains/tasks/tasks.functions";
 import type { TaskFiltersInput } from "@/domains/tasks/types";
@@ -24,4 +24,5 @@ export const tasksListQuery = (caseId: string, filters?: TaskListFilters) =>
       }),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
+    placeholderData: keepPreviousData,
   });

@@ -1,4 +1,4 @@
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQueries } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -55,8 +55,9 @@ export function ConnectionsSection({
   fillHeight = false,
 }: ConnectionsSectionProps) {
   const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
-  const { data: rows } = useSuspenseQuery(edgesListQuery(caseId, entityId));
-  const { data: entitiesRaw } = useSuspenseQuery(entitiesListQuery(caseId));
+  const [{ data: rows }, { data: entitiesRaw }] = useSuspenseQueries({
+    queries: [edgesListQuery(caseId, entityId), entitiesListQuery(caseId)],
+  });
 
   const entities = useMemo(
     () => entitiesRaw.filter((e) => e.id !== entityId),
@@ -214,7 +215,7 @@ export function ConnectionsSection({
         className={
           fillHeight
             ? "flex min-h-0 flex-1 flex-col gap-3"
-            : "flex flex-col gap-3"
+            : "flex flex-col gap-3 pb-4"
         }
       >
         <CompactConnectionList

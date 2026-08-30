@@ -2,6 +2,7 @@ import type { MouseEvent } from "react";
 
 export type HeadingValue = "h1" | "h2" | "h3";
 export type MarkValue = "bold" | "italic" | "underline";
+export type ListValue = "ul" | "ol";
 
 export function activeHeading(
   isH1: boolean,
@@ -24,6 +25,12 @@ export function activeMarks(
     ...(isItalic ? (["italic"] as const) : []),
     ...(isUnderline ? (["underline"] as const) : []),
   ];
+}
+
+export function activeList(isUl: boolean, isOl: boolean): ListValue[] {
+  if (isUl) return ["ul"];
+  if (isOl) return ["ol"];
+  return [];
 }
 
 export function preventToolbarMouseDown(e: MouseEvent): void {

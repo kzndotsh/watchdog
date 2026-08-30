@@ -6,6 +6,7 @@ import { recentActivityQuery } from "@/domains/activity/queries";
 import type { ActivityItem, ActivityKind } from "@/domains/activity/types";
 import type { CaseRecord } from "@/domains/cases/types";
 import { cn } from "@/lib/utils";
+import { stackPendingFallback } from "@/shared/ui/active-tab-body";
 import { resolveSelectValue } from "@/shared/ui/control-chrome";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { RelativeTime } from "@/shared/ui/relative-time";
@@ -18,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/shadcn/select";
-import { StackBodySkeleton } from "@/shared/ui/skeletons";
 import {
   StatusBadge,
   TaskStatusBadge,
@@ -276,7 +276,7 @@ export function RecentActivity({ cases }: { cases: CaseRecord[] }) {
       />
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex min-h-full flex-col pr-3">
-          <Suspense fallback={<StackBodySkeleton sections={1} />}>
+          <Suspense fallback={stackPendingFallback(1)}>
             <RecentActivityList
               caseId={caseId}
               caseSlugById={caseSlugById}

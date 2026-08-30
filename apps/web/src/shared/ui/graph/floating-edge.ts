@@ -1,32 +1,42 @@
-import { Position } from "@xyflow/react";
-import type { InternalNode, XYPosition } from "@xyflow/react";
+import type { GraphNode } from "@/shared/ui/graph/types";
+import { graphNodeSize } from "@/shared/ui/graph/graph-layout";
 
-/** Intersection of the line between node centers with the source node's border. */
-function getNodeIntersection(
-  intersectionNode: InternalNode,
-  targetNode: InternalNode
-): XYPosition {
-  const { width: wRaw, height: hRaw } = intersectionNode.measured ?? {
-    height: 0,
-    width: 0,
+export interface GraphNodeRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export type GraphEdgeSide = "top" | "right" | "bottom" | "left";
+
+export function graphNodeRect(node: GraphNode): GraphNodeRect {
+  const { width, height } = graphNodeSize(node);
+  return {
+    x: node.position.x,
+    y: node.position.y,
+    width,
+    height,
   };
-  const w = (wRaw ?? 0) / 2;
-  const h = (hRaw ?? 0) / 2;
+}
+
+function getNodeIntersection(
+  intersectionNode: GraphNodeRect,
+  targetNode: GraphNodeRect
+): { x: number; y: number } {
+  const w = intersectionNode.width / 2;
+  const h = intersectionNode.height / 2;
   if (w === 0 || h === 0) {
     return {
-      x: intersectionNode.internals.positionAbsolute.x,
-      y: intersectionNode.internals.positionAbsolute.y,
+      x: intersectionNode.x + w,
+      y: intersectionNode.y + h,
     };
   }
 
-  const x2 = intersectionNode.internals.positionAbsolute.x + w;
-  const y2 = intersectionNode.internals.positionAbsolute.y + h;
-  const x1 =
-    targetNode.internals.positionAbsolute.x +
-    (targetNode.measured?.width ?? 0) / 2;
-  const y1 =
-    targetNode.internals.positionAbsolute.y +
-    (targetNode.measured?.height ?? 0) / 2;
+  const x2 = intersectionNode.x + w;
+  const y2 = intersectionNode.y + h;
+  const x1 = targetNode.x + targetNode.width / 2;
+  const y1 = targetNode.y + targetNode.height / 2;
 
   const xx1 = (x1 - x2) / (2 * w) - (y1 - y2) / (2 * h);
   const yy1 = (x1 - x2) / (2 * w) + (y1 - y2) / (2 * h);
@@ -40,45 +50,35 @@ function getNodeIntersection(
   };
 }
 
-function getEdgePosition(
-  node: InternalNode,
-  intersectionPoint: XYPosition
-): Position {
-  const nx = Math.round(node.internals.positionAbsolute.x);
-  const ny = Math.round(node.internals.positionAbsolute.y);
+function getEdgeSide(
+  node: GraphNodeRect,
+  intersectionPoint: { x: number; y: number }
+): GraphEdgeSide {
+  const nx = Math.round(node.x);
+  const ny = Math.round(node.y);
   const px = Math.round(intersectionPoint.x);
   const py = Math.round(intersectionPoint.y);
-  const width = node.measured?.width ?? 0;
-  const height = node.measured?.height ?? 0;
 
-  if (px <= nx + 1) {
-    return Position.Left;
-  }
-  if (px >= nx + width - 1) {
-    return Position.Right;
-  }
-  if (py <= ny + 1) {
-    return Position.Top;
-  }
-  if (py >= ny + height - 1) {
-    return Position.Bottom;
-  }
-  return Position.Top;
+  if (px <= nx + 1) return "left";
+  if (px >= nx + node.width - 1) return "right";
+  if (py <= ny + 1) return "top";
+  if (py >= ny + node.height - 1) return "bottom";
+  return "top";
 }
 
-/** Dynamic source/target points for floating layouts (xyflow). */
+/** Card-border anchor points for floating edges. */
 export function getFloatingEdgeParams(
-  source: InternalNode,
-  target: InternalNode
+  source: GraphNodeRect,
+  target: GraphNodeRect
 ) {
   const sourceIntersectionPoint = getNodeIntersection(source, target);
   const targetIntersectionPoint = getNodeIntersection(target, source);
 
   return {
-    sourcePos: getEdgePosition(source, sourceIntersectionPoint),
+    sourcePos: getEdgeSide(source, sourceIntersectionPoint),
     sx: sourceIntersectionPoint.x,
     sy: sourceIntersectionPoint.y,
-    targetPos: getEdgePosition(target, targetIntersectionPoint),
+    targetPos: getEdgeSide(target, targetIntersectionPoint),
     tx: targetIntersectionPoint.x,
     ty: targetIntersectionPoint.y,
   };

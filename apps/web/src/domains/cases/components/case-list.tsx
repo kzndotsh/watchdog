@@ -13,6 +13,7 @@ import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
+import { PendingRegion } from "@/shared/ui/pending-region";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
 import {
@@ -31,6 +32,10 @@ import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
+import {
+  CardGridSkeleton,
+  CASE_CARD_MIN_HEIGHT_CLASS,
+} from "@/shared/ui/skeletons";
 
 function CaseCard({
   caseRow,
@@ -132,7 +137,10 @@ function CaseSlotGhost() {
   return (
     <div
       aria-hidden
-      className="h-full min-h-36 rounded-lg bg-[color-mix(in_oklab,var(--muted)_3%,transparent)]"
+      className={cn(
+        "h-full rounded-lg bg-[color-mix(in_oklab,var(--muted)_3%,transparent)]",
+        CASE_CARD_MIN_HEIGHT_CLASS
+      )}
     />
   );
 }
@@ -330,6 +338,7 @@ function CaseListHeaderActions({
 }
 
 function CaseListGrid({
+  pending,
   casesLength,
   filtered,
   activeId,
@@ -342,6 +351,7 @@ function CaseListGrid({
   onDeleteCase,
   onCreate,
 }: {
+  pending: boolean;
   casesLength: number;
   filtered: CaseRecord[];
   activeId: string;
@@ -354,7 +364,7 @@ function CaseListGrid({
   onDeleteCase: (caseRow: CaseRecord) => void;
   onCreate: () => void;
 }) {
-  if (casesLength > 0 && filtered.length === 0) {
+  if (casesLength > 0 && filtered.length === 0 && !pending) {
     return (
       <EmptyState
         intent="no-results"
@@ -368,29 +378,35 @@ function CaseListGrid({
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="grid h-full min-h-full auto-rows-[minmax(9rem,1fr)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((caseRow) => (
-          <CaseCard
-            key={caseRow.id}
-            caseRow={caseRow}
-            isActive={caseRow.id === activeId}
-            selecting={selecting}
-            onSelect={() => {
-              onSelectCase(caseRow.id);
-            }}
-            onOpen={() => {
-              onOpenCase(caseRow);
-            }}
-            onDelete={() => {
-              onDeleteCase(caseRow);
-            }}
-          />
-        ))}
-        <NewCaseCard onClick={onCreate} />
-        {Array.from({ length: ghostCount }, (_, i) => (
-          <CaseSlotGhost key={`ghost-${i}`} />
-        ))}
-      </div>
+      <PendingRegion
+        loading={pending}
+        label="Loading cases"
+        fallback={<CardGridSkeleton />}
+      >
+        <div className="grid h-full min-h-full auto-rows-[minmax(9rem,1fr)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((caseRow) => (
+            <CaseCard
+              key={caseRow.id}
+              caseRow={caseRow}
+              isActive={caseRow.id === activeId}
+              selecting={selecting}
+              onSelect={() => {
+                onSelectCase(caseRow.id);
+              }}
+              onOpen={() => {
+                onOpenCase(caseRow);
+              }}
+              onDelete={() => {
+                onDeleteCase(caseRow);
+              }}
+            />
+          ))}
+          <NewCaseCard onClick={onCreate} />
+          {Array.from({ length: ghostCount }, (_, i) => (
+            <CaseSlotGhost key={`ghost-${i}`} />
+          ))}
+        </div>
+      </PendingRegion>
     </div>
   );
 }
@@ -403,6 +419,7 @@ export function CaseList() {
     setSearch,
     filtered,
     ghostCount,
+    pending,
     submitError,
     createOpen,
     setCreateOpen,
@@ -442,6 +459,7 @@ export function CaseList() {
       />
 
       <CaseListGrid
+        pending={pending}
         casesLength={cases.length}
         filtered={filtered}
         activeId={activeId}

@@ -1,14 +1,25 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { Link, notFound } from "@tanstack/react-router";
 import { PencilIcon } from "lucide-react";
 import { useEffect } from "react";
 
 import { casesContextQuery } from "@/domains/cases/queries";
+import type { CaseRecord } from "@/domains/cases/types";
 import { ClaimsSection } from "@/domains/dossier/components/claims-section";
 import { ConnectionsSection } from "@/domains/dossier/components/connections-section";
 import { DisproveSection } from "@/domains/dossier/components/disprove-section";
 import { DossierEditDialog } from "@/domains/dossier/components/dossier-edit-dialog";
 import { DossierExportMenu } from "@/domains/dossier/components/dossier-export-menu";
+import {
+  dossierClaimsFallback,
+  dossierConnectionsFallback,
+  dossierEvidenceFallback,
+  dossierEventsFallback,
+  dossierOverviewFallback,
+  dossierQuestionsFallback,
+  dossierIdentifiersFallback,
+  dossierNotesFallback,
+} from "@/domains/dossier/components/dossier-tab-pending";
 import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evidence-section";
 import { EventsSection } from "@/domains/dossier/components/events-section";
 import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
@@ -26,6 +37,7 @@ import { Page, PageHeader } from "@/shared/layout/page";
 import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { ActiveTabBody, SuspenseTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   Tabs,
@@ -92,6 +104,7 @@ function DossierForEntity({
     setEditError,
     handleEvidenceClick,
     counts,
+    countsPending,
     renameMutation,
     editMutation,
   } = useDossierShell(caseId, entity);
@@ -153,31 +166,31 @@ function DossierForEntity({
               <TabsTrigger value="notes">Notes</TabsTrigger>
               <TabsTrigger value="claims">
                 Claims
-                <TabCount n={counts.claims} />
+                {countsPending ? null : <TabCount n={counts.claims} />}
               </TabsTrigger>
               <TabsTrigger value="identifiers">
                 Identifiers
-                <TabCount n={counts.identifiers} />
+                {countsPending ? null : <TabCount n={counts.identifiers} />}
               </TabsTrigger>
               <TabsTrigger value="connections">
                 Connections
-                <TabCount n={counts.connections} />
+                {countsPending ? null : <TabCount n={counts.connections} />}
               </TabsTrigger>
               <TabsTrigger value="evidence">
                 Evidence
-                <TabCount n={counts.evidence} />
+                {countsPending ? null : <TabCount n={counts.evidence} />}
               </TabsTrigger>
               <TabsTrigger value="events">
                 Events
-                <TabCount n={counts.events} />
+                {countsPending ? null : <TabCount n={counts.events} />}
               </TabsTrigger>
               <TabsTrigger value="questions">
                 Questions
-                <TabCount n={counts.questions} />
+                {countsPending ? null : <TabCount n={counts.questions} />}
               </TabsTrigger>
               <TabsTrigger value="tasks">
                 Tasks
-                <TabCount n={counts.tasks} />
+                {countsPending ? null : <TabCount n={counts.tasks} />}
               </TabsTrigger>
             </TabsList>
           }
@@ -200,7 +213,7 @@ function DossierForEntity({
 
         <TabsContent value="overview">
           <ActiveTabBody active={tab === "overview"}>
-            <SuspenseTabBody>
+            <SuspenseTabBody fallback={dossierOverviewFallback()}>
               <div className="flex flex-col gap-6">
                 <SummarySection
                   key={`${entity.id}:${entity.updatedAt}`}
@@ -241,17 +254,19 @@ function DossierForEntity({
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <ActiveTabBody active={tab === "notes"}>
-            <NotesSection
-              key={`${entity.id}:${entity.updatedAt}`}
-              caseId={caseId}
-              entity={entity}
-            />
+            <SuspenseTabBody fallback={dossierNotesFallback()}>
+              <NotesSection
+                key={`${entity.id}:${entity.updatedAt}`}
+                caseId={caseId}
+                entity={entity}
+              />
+            </SuspenseTabBody>
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="claims" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "claims"}>
-            <SuspenseTabBody>
+            <SuspenseTabBody fallback={dossierClaimsFallback()}>
               <div className="flex flex-1 flex-col gap-6">
                 <ClaimsSection
                   caseId={caseId}
@@ -269,7 +284,7 @@ function DossierForEntity({
 
         <TabsContent value="identifiers" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "identifiers"}>
-            <SuspenseTabBody>
+            <SuspenseTabBody fallback={dossierIdentifiersFallback()}>
               <IdentifiersSection
                 caseId={caseId}
                 entityId={entity.id}
@@ -285,7 +300,7 @@ function DossierForEntity({
 
         <TabsContent value="connections" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "connections"}>
-            <SuspenseTabBody>
+            <SuspenseTabBody fallback={dossierConnectionsFallback()}>
               <ConnectionsSection
                 caseId={caseId}
                 entityId={entity.id}
@@ -301,24 +316,24 @@ function DossierForEntity({
         </TabsContent>
 
         <TabsContent value="evidence" className="flex flex-1 flex-col">
-          <ActiveTabBody
-            active={tab === "evidence"}
-            pending={evidencePending}
-            pendingSections={1}
-          >
-            <EntityEvidenceSection
-              caseId={caseId}
-              entityId={entity.id}
-              evidenceOptions={evidenceAll}
-              onEvidenceClick={handleEvidenceClick}
-              emptyPresentation="panel"
-            />
+          <ActiveTabBody active={tab === "evidence"}>
+            {evidencePending ? (
+              dossierEvidenceFallback()
+            ) : (
+              <EntityEvidenceSection
+                caseId={caseId}
+                entityId={entity.id}
+                evidenceOptions={evidenceAll}
+                onEvidenceClick={handleEvidenceClick}
+                emptyPresentation="panel"
+              />
+            )}
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="events" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "events"}>
-            <SuspenseTabBody>
+            <SuspenseTabBody fallback={dossierEventsFallback()}>
               <EventsSection
                 caseId={caseId}
                 entityId={entity.id}
@@ -331,7 +346,7 @@ function DossierForEntity({
 
         <TabsContent value="questions" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "questions"}>
-            <SuspenseTabBody>
+            <SuspenseTabBody fallback={dossierQuestionsFallback()}>
               <QuestionsSection
                 caseId={caseId}
                 entityId={entity.id}
@@ -347,13 +362,11 @@ function DossierForEntity({
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <ActiveTabBody active={tab === "tasks"}>
-            <SuspenseTabBody>
-              <DossierTasksSection
-                caseId={caseId}
-                entityId={entity.id}
-                entitySlug={entity.slug}
-              />
-            </SuspenseTabBody>
+            <DossierTasksSection
+              caseId={caseId}
+              entityId={entity.id}
+              entitySlug={entity.slug}
+            />
           </ActiveTabBody>
         </TabsContent>
       </Tabs>
@@ -369,30 +382,28 @@ function DossierForEntity({
   );
 }
 
-function DossierForCase({
-  caseId,
-  caseName,
+function DossierWithActiveCase({
+  active,
   entitySlug,
   tab,
   onTabChange,
 }: {
-  caseId: string;
-  caseName: string;
+  active: CaseRecord;
   entitySlug: string;
   tab: DossierTab;
   onTabChange: (tab: DossierTab) => void;
 }) {
-  const { data: entity } = useSuspenseQuery(
-    entityBySlugQuery(caseId, entitySlug)
-  );
+  const [{ data: entity }] = useSuspenseQueries({
+    queries: [entityBySlugQuery(active.id, entitySlug)],
+  });
   if (entity === null) {
     // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
-    throw notFound({ data: { caseName, entitySlug } });
+    throw notFound({ data: { caseName: active.name, entitySlug } });
   }
 
   return (
     <DossierForEntity
-      caseId={caseId}
+      caseId={active.id}
       entity={entity}
       tab={tab}
       onTabChange={onTabChange}
@@ -410,7 +421,9 @@ export function Dossier({
   onTabChange: (tab: DossierTab) => void;
 }) {
   const queryClient = useQueryClient();
-  const { data: casesCtx } = useSuspenseQuery(casesContextQuery());
+  const [{ data: casesCtx }] = useSuspenseQueries({
+    queries: [casesContextQuery()],
+  });
 
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
@@ -418,17 +431,26 @@ export function Dossier({
     return (
       <Page>
         <PageHeader />
-        <Button nativeButton={false} render={<Link to="/cases" />}>
-          Go to Cases
-        </Button>
+        <EmptyState
+          intent="blank-slate"
+          items="cases"
+          title="No active case"
+          description={
+            <>
+              <Link to="/cases" className="underline">
+                Select a case
+              </Link>{" "}
+              to open a dossier.
+            </>
+          }
+        />
       </Page>
     );
   }
 
   return (
-    <DossierForCase
-      caseId={casesCtx.active.id}
-      caseName={casesCtx.active.name}
+    <DossierWithActiveCase
+      active={casesCtx.active}
       entitySlug={entitySlug}
       tab={parseDossierTab(tabProp)}
       onTabChange={onTabChange}

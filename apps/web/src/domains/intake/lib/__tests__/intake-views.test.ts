@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  buildCollectIndex,
+  jobsForRole,
+  producingCapFromRow,
+} from "@/domains/collect/lib/collect-index";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@/domains/jobs/jobs.functions";
 import { testId } from "@watchdog/test-kit";
@@ -8,10 +13,7 @@ import {
   evidenceHasEnrichableUrl,
   evidenceHint,
   evidenceTitle,
-  enrichJobsForEvidence,
   latestEnrichOutput,
-  processJobsForEvidence,
-  producingCapJob,
   ENRICHED_MD_ARTIFACT,
 } from "../evidence.ts";
 import {
@@ -97,7 +99,9 @@ describe("intake evidence helpers", () => {
     expect(
       evidenceHasEnrichableUrl(evidence({ sourceUrl: ENRICHABLE_SOURCE }))
     ).toBe(true);
-    expect(producingCapJob([], testId(40))).toBeNull();
+    expect(
+      producingCapFromRow(buildCollectIndex([], []).rowById(testId(40)))
+    ).toBeNull();
   });
 
   it("groups process and enrich jobs for an evidence row", () => {
@@ -121,10 +125,14 @@ describe("intake evidence helpers", () => {
       ],
       status: "succeeded",
     });
+    const collectRow = buildCollectIndex(
+      [row],
+      [processJob, enrichJob]
+    ).rowById(row.id);
 
-    expect(processJobsForEvidence([processJob], row.id)).toEqual([processJob]);
-    expect(enrichJobsForEvidence([enrichJob], row.id)).toEqual([enrichJob]);
-    expect(latestEnrichOutput([enrichJob], row.id)).toEqual({
+    expect(jobsForRole(collectRow, "process")).toEqual([processJob]);
+    expect(jobsForRole(collectRow, "enrich")).toEqual([enrichJob]);
+    expect(latestEnrichOutput([enrichJob])).toEqual({
       job: enrichJob,
       artifact: enrichJob.output![0],
     });

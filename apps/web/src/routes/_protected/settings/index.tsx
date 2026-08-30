@@ -15,7 +15,8 @@ import {
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
-import { StackBodySkeleton } from "@/shared/ui/skeletons";
+import { warmPrefetchQuery } from "@/shared/lib/warm-query";
+import { stackPendingFallback } from "@/shared/ui/active-tab-body";
 
 const routeApi = getRouteApi("/_protected/settings/");
 
@@ -77,7 +78,7 @@ function SettingsPanel({ tab }: { tab: SettingsTab }) {
     }
     case "credentials": {
       return (
-        <Suspense fallback={<StackBodySkeleton sections={1} />}>
+        <Suspense fallback={stackPendingFallback(1)}>
           <SettingsCredentialsForm />
         </Suspense>
       );
@@ -123,7 +124,7 @@ export const Route = createFileRoute("/_protected/settings/")({
   loaderDeps: () => ({}),
   loader: async ({ context: { queryClient } }) => {
     // Warm credentials for the Credentials tab; shell does not need them to paint.
-    void queryClient.prefetchQuery(credentialsListQuery());
+    warmPrefetchQuery(queryClient, credentialsListQuery());
   },
   errorComponent: RouteError,
   component: SettingsPage,

@@ -46,6 +46,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useSuspenseQueriesMock = vi.hoisted(() => vi.fn());
 const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 
@@ -54,6 +55,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   return {
     ...actual,
     useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useSuspenseQueries: (options: { queries: unknown[] }) =>
+      useSuspenseQueriesMock(options),
     useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: (...args: unknown[]) => useMutationMock(...args),
   };
@@ -70,9 +73,10 @@ const CASE: CaseRecord = {
 };
 
 function renderOverview(activeId: string | null) {
-  useSuspenseQueryMock.mockReturnValueOnce({ data: CASE }).mockReturnValueOnce({
-    data: { cases: [CASE], active: activeId ? CASE : null },
-  });
+  useSuspenseQueriesMock.mockReturnValue([
+    { data: CASE },
+    { data: { cases: [CASE], active: activeId ? CASE : null } },
+  ]);
   useQueryMock
     .mockReturnValueOnce({ data: [], isPending: false })
     .mockReturnValueOnce({ data: [], isPending: false });
@@ -98,7 +102,7 @@ describe("CaseOverview", () => {
     expect(
       screen.queryByRole("button", { name: "Set Active" })
     ).not.toBeInTheDocument();
-    expect(useSuspenseQueryMock).toHaveBeenCalled();
+    expect(useSuspenseQueriesMock).toHaveBeenCalled();
     expect(useMutationMock).toHaveBeenCalled();
   });
 

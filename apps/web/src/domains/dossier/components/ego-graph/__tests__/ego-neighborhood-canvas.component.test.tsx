@@ -7,11 +7,8 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock("@/shared/ui/graph", () => ({
-  GraphFlowCanvas: () => null,
-  GraphFlowShell: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+vi.mock("@/shared/ui/graph/graph-canvas", () => ({
+  GraphCanvas: () => null,
 }));
 
 import { EgoNeighborhoodCanvas } from "@/domains/dossier/components/ego-graph/ego-neighborhood-canvas";

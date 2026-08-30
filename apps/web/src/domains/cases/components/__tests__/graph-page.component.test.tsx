@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -19,11 +20,14 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
+const useSuspenseQueriesMock = vi.hoisted(() => vi.fn());
+
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: vi.fn(),
+    useSuspenseQueries: (options: { queries: unknown[] }) =>
+      useSuspenseQueriesMock(options),
   };
 });
 
@@ -31,10 +35,11 @@ vi.mock("@/domains/cases/components/case-graph/case-graph-canvas", () => ({
   CaseGraphCanvas: () => <div>Graph canvas</div>,
 }));
 
-import { useSuspenseQuery } from "@tanstack/react-query";
-
 import { GraphPage } from "@/domains/cases/components/graph-page";
+import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
+import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
+import { entitiesListQuery } from "@/domains/entities/queries";
 
 const CASE: CaseRecord = {
   id: "case-1",
@@ -44,35 +49,56 @@ const CASE: CaseRecord = {
   allowThirdPartyEgress: false,
 };
 
+function renderGraphPage() {
+  const client = new QueryClient();
+  return render(
+    <QueryClientProvider client={client}>
+      <GraphPage />
+    </QueryClientProvider>
+  );
+}
+
 describe("GraphPage", () => {
   it("prompts users to go to Cases when no active case is selected", () => {
-    vi.mocked(useSuspenseQuery).mockReturnValue({
-      data: { cases: [], active: null },
-    } as ReturnType<typeof useSuspenseQuery>);
+    useSuspenseQueriesMock.mockReturnValue([
+      { data: { cases: [], active: null } },
+    ]);
 
-    render(<GraphPage />);
-    expect(screen.getByRole("link", { name: "Go to Cases" })).toHaveAttribute(
+    renderGraphPage();
+    expect(screen.getByRole("link", { name: "Select a case" })).toHaveAttribute(
       "href",
       "/cases"
     );
     expect(screen.queryByText("Graph canvas")).not.toBeInTheDocument();
-    expect(vi.mocked(useSuspenseQuery)).toHaveBeenCalled();
+    expect(useSuspenseQueriesMock).toHaveBeenCalled();
   });
 
   it("renders the graph canvas when an active case exists", () => {
-    vi.mocked(useSuspenseQuery)
-      .mockReturnValueOnce({
-        data: { cases: [CASE], active: CASE },
-      } as ReturnType<typeof useSuspenseQuery>)
-      .mockReturnValueOnce({
-        data: [],
-      } as ReturnType<typeof useSuspenseQuery>);
+    useSuspenseQueriesMock.mockImplementation(({ queries }) => {
+      const firstKey = (queries[0] as { queryKey: readonly unknown[] })
+        .queryKey;
+      if (firstKey[0] === "cases") {
+        return [{ data: { cases: [CASE], active: CASE } }];
+      }
+      if (firstKey[0] === "entities") {
+        return [{ data: [] }, { data: [] }];
+      }
+      throw new Error(`Unexpected query: ${String(firstKey[0])}`);
+    });
 
-    render(<GraphPage />);
+    renderGraphPage();
     expect(screen.getByText("Graph canvas")).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "Go to Cases" })
+      screen.queryByRole("link", { name: "Select a case" })
     ).not.toBeInTheDocument();
-    expect(vi.mocked(useSuspenseQuery)).toHaveBeenCalled();
+
+    const queryKeys = useSuspenseQueriesMock.mock.calls.flatMap(([options]) =>
+      (options as { queries: { queryKey: readonly unknown[] }[] }).queries.map(
+        (query) => query.queryKey
+      )
+    );
+    expect(queryKeys).toContainEqual(casesContextQuery().queryKey);
+    expect(queryKeys).toContainEqual(entitiesListQuery(CASE.id).queryKey);
+    expect(queryKeys).toContainEqual(edgesForCaseQuery(CASE.id).queryKey);
   });
 });

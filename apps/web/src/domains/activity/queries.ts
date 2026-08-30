@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { listRecentActivityFn } from "@/domains/activity/activity.functions";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
@@ -26,4 +26,5 @@ export const recentActivityQuery = (filters?: RecentActivityFilters) =>
       }),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
+    placeholderData: keepPreviousData,
   });

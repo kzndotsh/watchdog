@@ -32,14 +32,14 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: (options: {
       mutationFn: (...args: unknown[]) => Promise<unknown>;
     }) => {
@@ -86,11 +86,16 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 function mockQueries() {
-  useSuspenseQueryMock.mockImplementation(
+  useQueryMock.mockImplementation(
     (options: { queryKey?: readonly unknown[] }) => {
       const key = options.queryKey?.[0];
       if (key === "tasks") {
-        return { data: [TASK] };
+        return {
+          data: [TASK],
+          isFetched: true,
+          isLoading: false,
+          isError: false,
+        };
       }
       if (key === "entities") {
         return {
@@ -102,9 +107,12 @@ function mockQueries() {
               kind: "person",
             },
           ],
+          isFetched: true,
+          isLoading: false,
+          isError: false,
         };
       }
-      return { data: [] };
+      return { data: [], isFetched: true, isLoading: false, isError: false };
     }
   );
 }

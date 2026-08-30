@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -7,7 +8,9 @@ import {
 } from "@/domains/intake/components/evidence-detail-header";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import type { JobListRecord } from "@/domains/jobs/jobs.functions";
 import { Tabs } from "@/shared/ui/shadcn/tabs";
+import { capabilityLabel } from "@/shared/ui/vocab";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -77,14 +80,40 @@ describe("EvidenceDetailHeader", () => {
       </Tabs>
     );
 
-    expect(
-      screen.getByRole("navigation", { name: "Evidence path" })
-    ).toBeInTheDocument();
-    expect(screen.getByText("unprocessed")).toBeInTheDocument();
     expect(screen.getByText("Unattached")).toBeInTheDocument();
-    expect(screen.getByText("Analyst note")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Content" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Jobs" })).toBeInTheDocument();
+  });
+
+  it("opens the producing Cap on the Jobs tab", async () => {
+    const onShowProducingRun = vi.fn();
+    const producingCap = {
+      id: testId(11),
+      capabilityId: "network.dns.lookup",
+    } as JobListRecord;
+
+    render(
+      <Tabs value="content">
+        <EvidenceDetailHeader
+          evidence={evidence()}
+          isHidden={false}
+          processed={false}
+          producingCap={producingCap}
+          canEnrich={false}
+          enrichJobs={[]}
+          enrichOutput={null}
+          relatedJobs={[producingCap]}
+          onShowProducingRun={onShowProducingRun}
+        />
+      </Tabs>
+    );
+
+    await userEvent.setup().click(
+      screen.getByRole("button", {
+        name: capabilityLabel(producingCap.capabilityId),
+      })
+    );
+    expect(onShowProducingRun).toHaveBeenCalledWith(producingCap.id);
   });
 });
 

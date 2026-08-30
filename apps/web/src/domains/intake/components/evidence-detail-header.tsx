@@ -9,18 +9,17 @@ import {
 } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@/domains/jobs/jobs.functions";
-import { ComposerShell } from "@/shared/ui/composer-shell";
+import {
+  DetailContextHeader,
+  DetailContextSep,
+} from "@/shared/ui/detail-context-strip";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
-import { IdChip } from "@/shared/ui/id-chip";
-import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { MetaRow } from "@/shared/ui/meta-row";
-import { RelativeTime } from "@/shared/ui/relative-time";
 import { Button } from "@/shared/ui/shadcn/button";
 import { TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import { KindBadge, StatusBadge, capabilityLabel } from "@/shared/ui/vocab";
+import { StatusBadge, capabilityLabel } from "@/shared/ui/vocab";
 
 type EvidenceLifecycleStatus = "cancelled" | "succeeded" | "pending";
 
@@ -256,7 +255,7 @@ export function EvidenceHeaderActions({
       <WithTooltip
         content={
           allowThirdPartyEgress
-            ? "LLM extract → Inbox Proposal"
+            ? "LLM extract → Triage Proposal"
             : "Needs Case third-party egress (Cases → edit)."
         }
         wrapSpan={aiDisabled}
@@ -300,6 +299,7 @@ export function EvidenceDetailHeader({
   relatedJobs,
   attaching = false,
   onAttachEntity,
+  onShowProducingRun,
 }: {
   evidence: EvidenceRecord;
   isHidden: boolean;
@@ -313,69 +313,23 @@ export function EvidenceDetailHeader({
   relatedJobs: JobListRecord[];
   attaching?: boolean;
   onAttachEntity?: (entityId: string) => void;
+  onShowProducingRun?: (jobId: string) => void;
 }) {
   const lifecycle = evidenceLifecycle(isHidden, processed);
   const attachedId = evidence.entityId ?? "";
 
   return (
-    <header className="border-border flex shrink-0 flex-col border-b">
-      <div className="flex flex-col gap-2 px-4 pt-3 pb-2">
-        <div className="flex items-start justify-between gap-3">
-          <nav
-            aria-label="Evidence path"
-            className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs"
-          >
-            <KindBadge kind={evidence.kind} size="md" />
-            <span aria-hidden>/</span>
-            <span className="text-foreground font-medium">
-              {evidenceTitle(evidence)}
-            </span>
-            <span aria-hidden>/</span>
-            <IdChip value={evidence.id} copyable />
-          </nav>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-            <StatusBadge status={lifecycle.status} size="md">
-              {lifecycle.label}
-            </StatusBadge>
-            {producingCap === null ? null : (
-              <DetailStatusChip>Cap output</DetailStatusChip>
-            )}
-          </div>
-        </div>
+    <header className="border-border flex shrink-0 flex-col">
+      {isHidden ? (
+        <p className="text-muted-foreground border-border/60 bg-muted/20 border-b px-4 py-1.5 text-xs">
+          Soft-deleted from the active queue. Restore to Harvest, Extract, or
+          Enrich again.
+        </p>
+      ) : null}
 
-        <MetaRow label="Captured">
-          <span className="text-muted-foreground">
-            <LocalDateTime value={evidence.capturedAt} />
-            <span aria-hidden> · </span>
-            <RelativeTime value={evidence.capturedAt} />
-            {evidence.processedAt === null ? null : (
-              <>
-                <span aria-hidden> · </span>
-                processed <LocalDateTime value={evidence.processedAt} />
-              </>
-            )}
-            {evidence.deletedAt === null ? null : (
-              <>
-                <span aria-hidden> · </span>
-                hidden <LocalDateTime value={evidence.deletedAt} />
-              </>
-            )}
-          </span>
-        </MetaRow>
-
-        {producingCap === null ? null : (
-          <MetaRow label="From">
-            <Link
-              to="/jobs"
-              search={{ jobId: producingCap.id }}
-              className="text-foreground/80 hover:text-foreground underline-offset-2 hover:underline"
-            >
-              {capabilityLabel(producingCap.capabilityId)}
-            </Link>
-          </MetaRow>
-        )}
-
-        <MetaRow label="Entity">
+      <DetailContextHeader>
+        <span className="text-foreground/80 inline-flex min-w-0 items-center gap-1">
+          <span className="text-muted-foreground shrink-0">Entity</span>
           <EvidenceEntityMeta
             entityName={entityName}
             attachedId={attachedId}
@@ -384,25 +338,36 @@ export function EvidenceDetailHeader({
             isHidden={isHidden}
             onAttachEntity={onAttachEntity}
           />
-        </MetaRow>
+        </span>
+        {producingCap === null ? null : (
+          <>
+            <DetailContextSep />
+            <span className="inline-flex min-w-0 items-center gap-1">
+              <span className="shrink-0">From</span>
+              <Button
+                type="button"
+                variant="link"
+                className="text-foreground/80 h-auto min-h-0 p-0 text-xs font-normal underline-offset-2 hover:underline"
+                onClick={() => {
+                  onShowProducingRun?.(producingCap.id);
+                }}
+              >
+                {capabilityLabel(producingCap.capabilityId)}
+              </Button>
+            </span>
+          </>
+        )}
+        <DetailContextSep />
+        <StatusBadge status={lifecycle.status} size="md">
+          {lifecycle.label}
+        </StatusBadge>
+        {producingCap === null ? null : (
+          <DetailStatusChip>Cap output</DetailStatusChip>
+        )}
+      </DetailContextHeader>
+      <span className="sr-only">{evidenceTitle(evidence)}</span>
 
-        {isHidden ? (
-          <p className="text-muted-foreground text-xs">
-            Soft-deleted from the active queue. Restore to Harvest, Extract, or
-            Enrich again.
-          </p>
-        ) : null}
-
-        {evidence.notes !== null && evidence.notes !== "" ? (
-          <ComposerShell density="dense" className="gap-0 px-2.5 py-2">
-            <p className="text-muted-foreground text-xs leading-snug">
-              {evidence.notes}
-            </p>
-          </ComposerShell>
-        ) : null}
-      </div>
-
-      <div className="px-2 pb-0">
+      <div className="border-border border-b px-2 pb-0">
         <TabsList variant="line" className="h-8">
           <TabsTrigger value="content">Content</TabsTrigger>
           {canEnrich || enrichJobs.length > 0 ? (

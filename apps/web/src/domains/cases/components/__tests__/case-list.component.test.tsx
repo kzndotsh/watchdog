@@ -17,14 +17,14 @@ vi.mock("@/shared/ui/shadcn/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: (...args: unknown[]) => useMutationMock(...args),
   };
 });
@@ -79,11 +79,23 @@ function renderCaseList() {
   );
 }
 
+function casesQueryResult(data: {
+  cases: CaseRecord[];
+  active: CaseRecord | null;
+}) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+  };
+}
+
 describe("CaseList", () => {
   it("renders case cards with the active case marked", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: { cases: [CASE_B, CASE_A], active: CASE_A },
-    });
+    useQueryMock.mockReturnValue(
+      casesQueryResult({ cases: [CASE_B, CASE_A], active: CASE_A })
+    );
     useMutationMock.mockReturnValue({
       mutate: vi.fn(),
       mutateAsync: vi.fn().mockResolvedValue(undefined),
@@ -103,9 +115,9 @@ describe("CaseList", () => {
   });
 
   it("shows a no-results empty state when search matches nothing", async () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: { cases: [CASE_A], active: CASE_A },
-    });
+    useQueryMock.mockReturnValue(
+      casesQueryResult({ cases: [CASE_A], active: CASE_A })
+    );
     useMutationMock.mockReturnValue({
       mutate: vi.fn(),
       mutateAsync: vi.fn().mockResolvedValue(undefined),

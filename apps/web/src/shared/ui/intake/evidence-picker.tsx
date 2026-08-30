@@ -13,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/ui/shadcn/popover";
+import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { KindBadge } from "@/shared/ui/vocab";
 
@@ -80,6 +81,50 @@ export function EvidenceCiteChips({
           <span className="text-muted-foreground">· Job</span>
         </DetailStatusChip>
       ))}
+    </div>
+  );
+}
+
+/** Loading shell beside confidence — matches picker trigger or cite chips. */
+export function EvidenceSlotSkeleton({
+  mode,
+  citeCount = 1,
+  className,
+}: {
+  mode: "cite" | "pick";
+  citeCount?: number;
+  className?: string;
+}) {
+  if (mode === "cite") {
+    const count = Math.max(citeCount, 1);
+    return (
+      <div
+        className={cn("flex min-w-0 flex-wrap items-center gap-1.5", className)}
+        aria-busy
+        aria-live="polite"
+        aria-label="Loading evidence"
+      >
+        <WithTooltip content="Evidence" wrapSpan className="inline-flex">
+          <PaperclipIcon
+            aria-hidden
+            className="text-muted-foreground size-3.5 shrink-0"
+          />
+        </WithTooltip>
+        {Array.from({ length: count }).map((_, index) => (
+          <Skeleton key={index} className="h-6 w-24 rounded-full" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn("flex min-w-0 items-center", className)}
+      aria-busy
+      aria-live="polite"
+      aria-label="Loading evidence"
+    >
+      <Skeleton className={cn(CONTROL_FIELD_TRIGGER, "w-32 border-dashed")} />
     </div>
   );
 }

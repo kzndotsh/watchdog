@@ -33,5 +33,11 @@ describe("RichTextToolbar", () => {
     expect(
       screen.getByRole("button", { name: "Heading 1" })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Bulleted list" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Numbered list" })
+    ).toBeInTheDocument();
   });
 });

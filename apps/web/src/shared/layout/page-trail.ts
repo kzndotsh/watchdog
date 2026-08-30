@@ -79,9 +79,8 @@ const TRAIL_BUILDERS: Record<string, TrailBuilder> = {
   identifiers: (input) =>
     buildCaseScopedTrail(input, "identifiers", "Identifiers"),
   graph: (input) => buildCaseScopedTrail(input, "graph", "Graph"),
-  inbox: (input) => buildCaseScopedTrail(input, "inbox", "Inbox"),
-  jobs: (input) => buildCaseScopedTrail(input, "jobs", "Jobs"),
-  intake: (input) => buildCaseScopedTrail(input, "intake", "Intake"),
+  collect: (input) => buildCaseScopedTrail(input, "collect", "Collect"),
+  triage: (input) => buildCaseScopedTrail(input, "triage", "Triage"),
   tasks: (input) => buildCaseScopedTrail(input, "tasks", "Tasks"),
   settings: () => [current("settings", "Settings")],
   ui: () => [current("ui", "Style guide")],

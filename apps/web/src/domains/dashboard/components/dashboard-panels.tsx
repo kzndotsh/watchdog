@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
-import type { ProposalRecord } from "@/domains/inbox/inbox.functions";
 import { isTaskDueOverdue } from "@/domains/tasks/lib/due-date";
 import type { TaskRecord } from "@/domains/tasks/types";
+import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { cn } from "@/lib/utils";
 import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
@@ -19,7 +19,7 @@ function DashedEmpty({ children }: { children: ReactNode }) {
   );
 }
 
-function InboxBody({
+function TriageBody({
   hasCase,
   proposals,
 }: {
@@ -34,7 +34,7 @@ function InboxBody({
     );
   }
   if (proposals.length === 0) {
-    return <DashedEmpty>Inbox clear.</DashedEmpty>;
+    return <DashedEmpty>Triage clear.</DashedEmpty>;
   }
   return (
     <ul className="border-border divide-border divide-y overflow-hidden rounded-md border">
@@ -43,7 +43,7 @@ function InboxBody({
         return (
           <li key={p.id}>
             <Link
-              to="/inbox"
+              to="/triage"
               search={{ proposalId: p.id }}
               className="hover:bg-muted/40 flex items-start justify-between gap-3 px-3 py-2.5 text-sm transition-colors"
             >
@@ -127,7 +127,7 @@ function DueBody({
   );
 }
 
-export function DashboardInboxSection({
+export function DashboardTriageSection({
   hasCase,
   proposals,
 }: {
@@ -135,12 +135,12 @@ export function DashboardInboxSection({
   proposals: ProposalRecord[];
 }) {
   return (
-    <section className="space-y-3" aria-label="Recent inbox">
+    <section className="space-y-3" aria-label="Recent triage">
       <SectionHeaderBar
         variant="inline"
         title={
           <span className="text-muted-foreground font-normal tracking-wide normal-case">
-            Inbox
+            Triage
           </span>
         }
         action={
@@ -152,7 +152,7 @@ export function DashboardInboxSection({
               nativeButton={false}
               render={
                 <Link
-                  to="/inbox"
+                  to="/triage"
                   search={
                     proposals[0] ? { proposalId: proposals[0].id } : undefined
                   }
@@ -165,7 +165,7 @@ export function DashboardInboxSection({
         }
       />
 
-      <InboxBody hasCase={hasCase} proposals={proposals} />
+      <TriageBody hasCase={hasCase} proposals={proposals} />
     </section>
   );
 }

@@ -44,6 +44,9 @@ describe("JobPlaybookRunForm", () => {
     expect(
       screen.getByRole("form", { name: "Run playbook" })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Playbook filters" })
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Playbook")).toBeInTheDocument();
     expect(screen.getByLabelText("Seed host")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Run Playbook" })).toBeDisabled();

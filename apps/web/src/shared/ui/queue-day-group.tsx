@@ -15,8 +15,8 @@ export function QueueDayGroup({
   listClassName,
   listLabel,
 }: {
-  label: string;
-  count: number;
+  label: ReactNode;
+  count?: number;
   children: ReactNode;
   className?: string;
   listClassName?: string;

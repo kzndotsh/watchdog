@@ -59,4 +59,18 @@ describe("ArtifactPreview", () => {
       screen.getByText("Binary artifact — not renderable.")
     ).toBeInTheDocument();
   });
+
+  it("renders headerAction inside the collapsible trigger row", () => {
+    render(
+      <ArtifactPreview
+        name="dns-example.com.json"
+        headerAction={<button type="button">Copy hash</button>}
+        body={{ kind: "binary" }}
+      />
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Copy hash" })
+    ).toBeInTheDocument();
+  });
 });

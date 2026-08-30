@@ -8,14 +8,16 @@ vi.mock("@/shared/ui/rich-text", () => ({
   RichTextEditor: ({
     value,
     onChange,
+    ariaLabel,
     placeholder,
   }: {
     value: string;
     onChange: (next: string) => void;
+    ariaLabel?: string;
     placeholder?: string;
   }) => (
     <textarea
-      aria-label={placeholder}
+      aria-label={ariaLabel ?? placeholder ?? "Rich text editor"}
       value={value}
       onChange={(event) => {
         onChange(event.target.value);
@@ -52,9 +54,7 @@ describe("DossierEditDialog", () => {
       screen.getByRole("heading", { name: "Edit entity" })
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Entity name")).toHaveValue("Alpha Entity");
-    expect(screen.getByLabelText("BLUF summary…")).toHaveValue("Lead subject");
-    expect(screen.getByLabelText("Working notes…")).toHaveValue(
-      "Working notes"
-    );
+    expect(screen.getByLabelText("Summary")).toHaveValue("Lead subject");
+    expect(screen.getByLabelText("Notes")).toHaveValue("Working notes");
   });
 });

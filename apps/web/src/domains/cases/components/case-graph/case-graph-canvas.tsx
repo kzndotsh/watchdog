@@ -1,60 +1,76 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import type { NodeMouseHandler } from "@xyflow/react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
   CASE_GRAPH_ENTITY_CAP,
   caseGraphLayout,
 } from "@/domains/cases/components/case-graph/case-graph-layout";
-import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
+import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import type { EntityRecord } from "@/domains/entities/types";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/shared/ui/empty-state";
-import {
-  GraphFlowCanvas,
-  GraphFlowShell,
-  type EntityFlowNode,
-} from "@/shared/ui/graph";
+import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
+import { GRAPH_CANVAS_PAGE_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-skeleton";
+import type { GraphNode } from "@/shared/ui/graph/types";
 
 export function CaseGraphCanvas({
-  caseId,
   entities,
+  edges,
   className,
 }: {
-  caseId: string;
   entities: EntityRecord[];
+  edges: CaseEdgeRecord[];
   className?: string;
 }) {
   const navigate = useNavigate();
-  const { data: edges } = useSuspenseQuery(edgesForCaseQuery(caseId));
+
+  const entityInputs = useMemo(
+    () =>
+      entities.map((entity) => ({
+        id: entity.id,
+        name: entity.name,
+        slug: entity.slug,
+        kind: entity.kind,
+      })),
+    [entities]
+  );
+
+  const edgeInputs = useMemo(
+    () =>
+      edges.map((edge) => ({
+        id: edge.id,
+        fromId: edge.fromId,
+        toId: edge.toId,
+        predicate: edge.predicate,
+        confidence: edge.confidence,
+      })),
+    [edges]
+  );
 
   const flow = useMemo(
     () =>
       caseGraphLayout({
-        entities: entities.map((e) => ({
-          id: e.id,
-          name: e.name,
-          slug: e.slug,
-          kind: e.kind,
-        })),
-        edges,
+        entities: entityInputs,
+        edges: edgeInputs,
       }),
-    [entities, edges]
+    [entityInputs, edgeInputs]
   );
 
-  const onNodeClick: NodeMouseHandler<EntityFlowNode> = (_event, node) => {
-    void navigate({
-      to: "/entities/$entitySlug",
-      params: { entitySlug: node.data.slug },
-    });
-  };
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: GraphNode) => {
+      void navigate({
+        to: "/entities/$entitySlug",
+        params: { entitySlug: node.data.slug },
+      });
+    },
+    [navigate]
+  );
 
   if (entities.length === 0) {
     return (
       <EmptyState
         intent="blank-slate"
-        items="connections"
+        items="entities"
         title="No entities yet"
         description="Add entities to see a case-wide graph preview."
       />
@@ -73,17 +89,12 @@ export function CaseGraphCanvas({
   }
 
   return (
-    <GraphFlowShell
-      className={cn(
-        "border-border h-[min(70vh,36rem)] min-h-[24rem] overflow-hidden rounded-md border",
-        className
-      )}
-    >
-      <GraphFlowCanvas
+    <div className={cn(GRAPH_CANVAS_PAGE_SHELL_CLASS, className)}>
+      <GraphCanvas
         nodes={flow.nodes}
         edges={flow.edges}
         onNodeClick={onNodeClick}
       />
-    </GraphFlowShell>
+    </div>
   );
 }

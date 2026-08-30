@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import { searchCaseFn } from "@/domains/search/search.functions";
 import {
@@ -20,5 +20,6 @@ export function searchCaseQuery(caseId: string, q: string) {
       searchCaseFn({ data: { caseId, q: trimmed } }),
     enabled: caseId.length > 0 && trimmed.length >= SEARCH_MIN_QUERY_LENGTH,
     staleTime: 15_000,
+    placeholderData: keepPreviousData,
   });
 }

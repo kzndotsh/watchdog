@@ -1,4 +1,9 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type {
+  HTMLAttributes,
+  KeyboardEvent,
+  MouseEvent,
+  ReactNode,
+} from "react";
 
 import { cn } from "@/lib/utils";
 import { formatClockTime } from "@/shared/ui/group-by-day";
@@ -13,12 +18,11 @@ type QueueRowProps = {
   trailing?: ReactNode;
   children: ReactNode;
   className?: string;
-} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children">;
+} & Omit<HTMLAttributes<HTMLDivElement>, "children">;
 
 /**
  * Queue list row hit target — selected / hover / focus chrome.
- * Slots: leading · children (title/meta) · trailing.
- * Presentational only.
+ * Uses `role="option"` (not `<button>`) so nested controls (copy IdChip) stay valid.
  */
 export function QueueRow({
   selected = false,
@@ -27,20 +31,39 @@ export function QueueRow({
   trailing,
   children,
   className,
+  onClick,
+  onKeyDown,
   ...props
 }: QueueRowProps) {
+  function handleActivate(event: MouseEvent<HTMLDivElement>) {
+    onClick?.(event);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    onKeyDown?.(event);
+    if (event.defaultPrevented) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      event.currentTarget.click();
+    }
+  }
+
   return (
-    <button
-      type="button"
+    <div
+      role="option"
+      aria-selected={selected}
+      tabIndex={0}
       data-slot="queue-row"
       data-selected={selected || undefined}
       data-live={live || undefined}
       className={cn(
-        "relative flex w-full min-w-0 flex-nowrap items-start gap-2 px-3 py-1.5 text-left transition-colors",
+        "relative flex w-full min-w-0 cursor-pointer flex-nowrap items-start gap-2 px-3 py-1.5 text-left transition-colors",
         "hover:bg-muted/50 focus-visible:bg-muted/60 focus-visible:outline-none",
         selected && "bg-muted/70",
         className
       )}
+      onClick={handleActivate}
+      onKeyDown={handleKeyDown}
       {...props}
     >
       {live ? (
@@ -58,7 +81,7 @@ export function QueueRow({
           {trailing}
         </span>
       ) : null}
-    </button>
+    </div>
   );
 }
 
@@ -120,7 +143,7 @@ export function QueueRowInstantMeta({
       <span aria-hidden>·</span>
       <RelativeTime value={value} />
       <span aria-hidden>·</span>
-      <IdChip value={id} className="opacity-80" />
+      <IdChip value={id} copyable className="opacity-80" />
       {children}
     </QueueRowMeta>
   );

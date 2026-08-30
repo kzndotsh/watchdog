@@ -31,9 +31,9 @@ TanStack Start UI for Watchdog. Web UI contracts live in [`docs/`](docs/README.m
 | --- | --- |
 | Split = Queue + Detail (`SplitView`) | Console / Tape / Panel / Pane / Rail / Strip as surfaces |
 | Query cache SoT — `ensureQueryData` / `useSuspenseQuery` / named invalidation | Loader→`useState` forks; QueryClient singleton |
-| Reuse domain `hooks/*` workspace hooks (`use-jobs-workspace`, `use-task-workspace`, `use-inbox-workspace`, `use-intake-actions`, …) | Duplicate Queue/Detail mutation machines in components |
+| Reuse domain `hooks/*` workspace hooks (`use-jobs-workspace`, `use-task-workspace`, `use-triage-workspace`, `use-intake-actions`, …) | Duplicate Queue/Detail mutation machines in components |
 | Read web `docs/` + platform `docs/` before inventing | Reinvent from `_legacy-v2` without reading it as reference |
-| Caps/agents → Proposal → Inbox Accept | Land Cap/agent output as `confirmed` Graph |
+| Caps/agents → Proposal → Triage Accept | Land Cap/agent output as `confirmed` Graph |
 | Process logs via `@watchdog/log` + `src/start.ts` middleware | `withEvlog` on handlers; secrets / Evidence bodies in log fields; treat NDJSON as Graph audit |
 
 ## Gotchas
@@ -41,6 +41,9 @@ TanStack Start UI for Watchdog. Web UI contracts live in [`docs/`](docs/README.m
 - Env: repo-root `.env` via Vite `envDir: "../../"`; schema in [`@watchdog/env`](../../packages/env/AGENTS.md). Cap secrets = vault, not env.
 - Solo signup: no account is seeded. `BETTER_AUTH_ALLOW_SIGNUP=1` → restart web → register at `/auth/sign-up` → set back to `0`. There is no `/login` route; Better Auth views are `/auth/$path`.
 - Prefer [`docs/GOTCHAS.md`](docs/GOTCHAS.md) for Router/Query/SSE/hydration traps.
+- **Loading shell doctrine:** thin loaders + `warm*Queries`; in-page `RegionBoundary` / `PendingRegion` in data slots only — no route `RoutePending` on shell-first pages. Sixteen rules + ban table: [`UI.md`](docs/UI.md) § Loading & hydration.
+- **Table loading:** `DataTable` `pending` + per-cell skeleton rows only — never `PendingRegion` on table bodies ([`UI.md`](docs/UI.md) § Tables).
+- **Hand skeletons:** domains gate data slots with `PendingRegion` from `@/shared/ui/pending-region`; shapes live in `shared/ui/skeletons.tsx`.
 - **Jobs:** queue grouping uses `playbookRunStatus` + recipe length (`lib/status.ts`); waiting chrome is the next recipe step, not Job `blocked`. Playbook seeds include ip/email/hash/handle (`lib/playbook-seed-view.ts`).
 - **Tasks:** DnD math in `lib/task-board-dnd.ts`. Cross-column drop changes status; within-column drop calls `reorderTasks` (`position`). `use-task-workspace` owns `handleCommitDrop`.
 - Evlog: `src/start.ts` owns request + function middleware; dynamic-import drain init inside `.server()` only (never top-level `evlog/fs`). Drain dir = `apps/web/.evlog/logs/` (not `apps/.evlog`). Identify in `createApiContext` only. `orpcForActor` injects ALS `log`. Capture failures with `log.error(err)` or `log.setLevel("warn")` + serializable fields — never `log.set({ error: someError })` (`Error` JSON-stringifies to `{}`).
@@ -56,6 +59,6 @@ TanStack Start UI for Watchdog. Web UI contracts live in [`docs/`](docs/README.m
 | Web docs | [`docs/README.md`](docs/README.md) |
 | Platform docs | [`docs/README.md`](../../docs/README.md) |
 | Product / UX / Caps | [`PRODUCT`](../../docs/PRODUCT.md) · [`UX`](../../docs/UX.md) · [`CAPS`](../../docs/CAPS.md) · [`TYPES`](../../docs/TYPES.md) |
-| UI / Domains / Data | [`UI`](docs/UI.md) · [`DOMAINS`](docs/DOMAINS.md) (§ `hooks/` + `lib/`, Page ownership, Map) · [`DATA`](docs/DATA.md) |
+| UI / Domains / Data | [`UI`](docs/UI.md) (loading contract § Loading & hydration, § Loading skeletons) · [`DOMAINS`](docs/DOMAINS.md) (§ `hooks/` + `lib/`, Page ownership, Map) · [`DATA`](docs/DATA.md) |
 | Architecture | [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) · process logging |
 | Log package | [`packages/log/AGENTS.md`](../../packages/log/AGENTS.md) |

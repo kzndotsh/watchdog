@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
@@ -15,6 +15,7 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
+import { listPending } from "@/shared/lib/list-pending";
 import { useDataTable } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
@@ -157,11 +158,18 @@ function buildIdentifiersTableMeta(
 export function useIdentifiersTableState(
   active: CaseRecord,
   rows: CaseIdentifierRecord[],
-  mutations: IdentifiersTableMutations
+  mutations: IdentifiersTableMutations,
+  identifiersPending: boolean
 ) {
   const navigate = useNavigate();
-  const { data: entities } = useSuspenseQuery(entitiesListQuery(active.id));
-  const { data: evidence } = useSuspenseQuery(evidenceListQuery(active.id));
+  const entitiesQuery = useQuery(entitiesListQuery(active.id));
+  const evidenceQuery = useQuery(evidenceListQuery(active.id));
+  const pending =
+    identifiersPending ||
+    listPending(entitiesQuery) ||
+    listPending(evidenceQuery);
+  const entities = entitiesQuery.data;
+  const evidence = evidenceQuery.data;
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<IdentifierType[]>([]);
@@ -171,12 +179,12 @@ export function useIdentifiersTableState(
   );
 
   const evidenceOptions = useMemo(
-    () => evidenceOptionsFromRows(evidence),
+    () => evidenceOptionsFromRows(evidence ?? []),
     [evidence]
   );
 
   const entityOptions = useMemo(
-    () => entityOptionsFromRows(entities),
+    () => entityOptionsFromRows(entities ?? []),
     [entities]
   );
 
@@ -231,6 +239,7 @@ export function useIdentifiersTableState(
 
   return {
     rows,
+    pending,
     table,
     search,
     setSearch,

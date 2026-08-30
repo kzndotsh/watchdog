@@ -1,11 +1,11 @@
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { Suspense, useEffect, useMemo, type ReactNode } from "react";
+import { useSuspenseQueries, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, type ReactNode } from "react";
 
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import {
   DashboardDueTasksSection,
-  DashboardInboxSection,
+  DashboardTriageSection,
 } from "@/domains/dashboard/components/dashboard-panels";
 import {
   MetricsSection,
@@ -20,9 +20,9 @@ import {
   selectRecentProposals,
 } from "@/domains/dashboard/lib/selectors";
 import { entitiesListQuery } from "@/domains/entities/queries";
-import { proposalsByStatusQuery } from "@/domains/inbox/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
+import { proposalsByStatusQuery } from "@/domains/triage/queries";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { Page, PageHeader } from "@/shared/layout/page";
@@ -32,12 +32,13 @@ import {
   invalidateAfterProposalQueueChange,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { stackPendingFallback } from "@/shared/ui/active-tab-body";
+import { RegionBoundary } from "@/shared/ui/region-boundary";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/shared/ui/shadcn/resizable";
-import { StackBodySkeleton } from "@/shared/ui/skeletons";
 
 const OVERVIEW_DEFAULT = "68%";
 const ACTIVITY_DEFAULT = "32%";
@@ -72,7 +73,7 @@ function buildOverviewTiles(
     {
       id: "inbox",
       label: "Proposals pending",
-      to: "/inbox",
+      to: "/triage",
       value: muted ? 0 : metrics.proposalsPending,
       tone: countTone(muted, muted ? 0 : metrics.proposalsPending),
     },
@@ -94,7 +95,7 @@ function buildOverviewTiles(
     {
       id: "live",
       label: "Jobs running",
-      to: "/jobs",
+      to: "/collect",
       value: muted ? "—" : metrics.jobsRunning,
       tone: idleTone(muted),
     },
@@ -119,7 +120,7 @@ function DashboardIdle({ caseCount }: { caseCount: number }) {
     <>
       <MetricsSection tiles={buildOverviewTiles(caseCount, null)} />
       <div className="grid min-h-0 gap-6 lg:grid-cols-2 lg:items-start">
-        <DashboardInboxSection hasCase={false} proposals={[]} />
+        <DashboardTriageSection hasCase={false} proposals={[]} />
         <DashboardDueTasksSection hasCase={false} tasks={[]} />
       </div>
     </>
@@ -134,12 +135,19 @@ function DashboardActive({
   caseCount: number;
 }) {
   const queryClient = useQueryClient();
-  const { data: pendingProposals } = useSuspenseQuery(
-    proposalsByStatusQuery(active.id, "pending")
-  );
-  const { data: jobsRaw } = useSuspenseQuery(jobsListQuery(active.id));
-  const { data: tasksRaw } = useSuspenseQuery(tasksListQuery(active.id));
-  const { data: entities } = useSuspenseQuery(entitiesListQuery(active.id));
+  const [
+    { data: pendingProposals },
+    { data: jobsRaw },
+    { data: tasksRaw },
+    { data: entities },
+  ] = useSuspenseQueries({
+    queries: [
+      proposalsByStatusQuery(active.id, "pending"),
+      jobsListQuery(active.id),
+      tasksListQuery(active.id),
+      entitiesListQuery(active.id),
+    ],
+  });
 
   useLiveEvents(active.id, (event) => {
     if (event.type === "job_update") {
@@ -171,7 +179,7 @@ function DashboardActive({
     <>
       <MetricsSection tiles={tiles} />
       <div className="grid min-h-0 gap-6 lg:grid-cols-2 lg:items-start">
-        <DashboardInboxSection hasCase proposals={proposals} />
+        <DashboardTriageSection hasCase proposals={proposals} />
         <DashboardDueTasksSection hasCase tasks={dueTasks} />
       </div>
     </>
@@ -187,9 +195,9 @@ function DashboardOverview({
 }) {
   if (active) {
     return (
-      <Suspense fallback={<StackBodySkeleton sections={2} />}>
+      <RegionBoundary fallback={stackPendingFallback(2)}>
         <DashboardActive active={active} caseCount={caseCount} />
-      </Suspense>
+      </RegionBoundary>
     );
   }
   return <DashboardIdle caseCount={caseCount} />;
@@ -265,7 +273,9 @@ function DashboardSplit({
 
 export function DashboardHome() {
   const queryClient = useQueryClient();
-  const { data: casesCtx } = useSuspenseQuery(casesContextQuery());
+  const [{ data: casesCtx }] = useSuspenseQueries({
+    queries: [casesContextQuery()],
+  });
   const active = casesCtx.active;
 
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);

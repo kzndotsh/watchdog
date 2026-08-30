@@ -29,7 +29,7 @@ export interface SplitViewProps {
   middleMinSize?: string;
   middleMaxSize?: string;
   detailMinSize?: string;
-  /** Rounded border chrome (Jobs/Inbox). Off for full-bleed shells. */
+  /** Rounded border chrome (Collect/Triage). Off for full-bleed shells. */
   bordered?: boolean;
   className?: string;
 }
@@ -49,7 +49,7 @@ function pct(s: string): number {
 
 /**
  * Shared Queue↔Detail resizable split.
- * Used by Jobs, Inbox, Corpus, Alerts, Playbooks, etc.
+ * Used by Collect, Triage, Corpus, Alerts, Playbooks, etc.
  *
  * Sizes must be strings without units — react-resizable-panels v4 interprets
  * bare strings as percentages and numbers as pixels.

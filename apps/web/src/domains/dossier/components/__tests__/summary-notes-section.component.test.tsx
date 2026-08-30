@@ -21,14 +21,16 @@ vi.mock("@/shared/ui/rich-text", () => ({
   RichTextEditor: ({
     value,
     onChange,
+    ariaLabel,
     placeholder,
   }: {
     value: string;
     onChange: (next: string) => void;
+    ariaLabel?: string;
     placeholder?: string;
   }) => (
     <textarea
-      aria-label={placeholder}
+      aria-label={ariaLabel ?? placeholder ?? "Rich text editor"}
       value={value}
       onChange={(event) => {
         onChange(event.target.value);
@@ -79,18 +81,12 @@ describe("summary-notes sections", () => {
     expect(
       screen.getByRole("heading", { name: "Summary" })
     ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText(
-        "BLUF summary — who is this entity and why do they matter?"
-      )
-    ).toHaveValue("Lead subject");
+    expect(screen.getByLabelText("Summary")).toHaveValue("Lead subject");
   });
 
   it("renders NotesSection with seeded working notes", () => {
     renderWithClient(<NotesSection caseId={testId(10)} entity={ENTITY} />);
     expect(screen.getByRole("heading", { name: "Notes" })).toBeInTheDocument();
-    expect(
-      screen.getByLabelText("Messy spider notes, hunches, leads to follow")
-    ).toHaveValue("Working notes");
+    expect(screen.getByLabelText("Notes")).toHaveValue("Working notes");
   });
 });

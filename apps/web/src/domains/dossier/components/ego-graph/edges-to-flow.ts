@@ -1,12 +1,12 @@
 import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
 import {
   confidenceStroke,
-  type EntityFlowNode,
-  type PredicateFlowEdge,
+  type GraphEdge,
+  type GraphNode,
 } from "@/shared/ui/graph";
 import type { EntityKind } from "@watchdog/schemas";
 
-export type { EntityFlowNode, PredicateFlowEdge } from "@/shared/ui/graph";
+export type { GraphEdge, GraphNode } from "@/shared/ui/graph";
 
 export interface EgoEntityRef {
   id: string;
@@ -58,7 +58,7 @@ export function edgesToEgoFlow({
 }: {
   center: EgoEntityRef;
   edges: EdgeRecord[];
-}): { nodes: EntityFlowNode[]; edges: PredicateFlowEdge[] } {
+}): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const peers: EdgeRecord[] = [];
   const peerSeen = new Set<string>();
 
@@ -69,10 +69,9 @@ export function edgesToEgoFlow({
     peers.push(edge);
   }
 
-  const nodes: EntityFlowNode[] = [
+  const nodes: GraphNode[] = [
     {
       id: center.id,
-      type: "entity",
       position: radialPosition(0, peers.length, true),
       data: {
         label: center.name,
@@ -84,7 +83,6 @@ export function edgesToEgoFlow({
     },
     ...peers.map((peer, index) => ({
       id: peer.peerId,
-      type: "entity" as const,
       position: radialPosition(index, peers.length, false),
       data: {
         label: peer.peerName || peer.peerSlug,
@@ -96,17 +94,16 @@ export function edgesToEgoFlow({
     })),
   ];
 
-  const flowEdges: PredicateFlowEdge[] = edges.map((e) => ({
-    id: e.id,
-    type: "predicate",
-    source: e.fromId,
-    target: e.toId,
+  const flowEdges: GraphEdge[] = edges.map((edge) => ({
+    id: edge.id,
+    source: edge.fromId,
+    target: edge.toId,
     data: {
-      predicate: e.predicate,
-      confidence: e.confidence,
-      edgeId: e.id,
+      predicate: edge.predicate,
+      confidence: edge.confidence,
+      edgeId: edge.id,
     },
-    style: { stroke: confidenceStroke(e.confidence) },
+    style: { stroke: confidenceStroke(edge.confidence) },
   }));
 
   return { nodes, edges: flowEdges };

@@ -8,6 +8,7 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
+import { warmPrefetchQuery } from "@/shared/lib/warm-query";
 
 export type DossierPrefetchTab =
   | "overview"
@@ -31,15 +32,15 @@ export function warmDossierQueries(
   tab: DossierPrefetchTab = "overview"
 ): void {
   // Tab counts + overview share these — prefetch all lightly.
-  void queryClient.prefetchQuery(claimsListQuery(caseId, entityId));
-  void queryClient.prefetchQuery(identifiersListQuery(caseId, entityId));
-  void queryClient.prefetchQuery(edgesListQuery(caseId, entityId));
-  void queryClient.prefetchQuery(eventsListQuery(caseId, entityId));
-  void queryClient.prefetchQuery(questionsListQuery(caseId, entityId));
-  void queryClient.prefetchQuery(tasksListQuery(caseId, { entityId }));
-  void queryClient.prefetchQuery(evidenceListQuery(caseId));
+  warmPrefetchQuery(queryClient, claimsListQuery(caseId, entityId));
+  warmPrefetchQuery(queryClient, identifiersListQuery(caseId, entityId));
+  warmPrefetchQuery(queryClient, edgesListQuery(caseId, entityId));
+  warmPrefetchQuery(queryClient, eventsListQuery(caseId, entityId));
+  warmPrefetchQuery(queryClient, questionsListQuery(caseId, entityId));
+  warmPrefetchQuery(queryClient, tasksListQuery(caseId, { entityId }));
+  warmPrefetchQuery(queryClient, evidenceListQuery(caseId));
 
   if (tab === "connections" || tab === "overview") {
-    void queryClient.prefetchQuery(entitiesListQuery(caseId));
+    warmPrefetchQuery(queryClient, entitiesListQuery(caseId));
   }
 }

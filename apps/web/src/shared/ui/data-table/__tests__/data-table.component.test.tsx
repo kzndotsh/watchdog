@@ -48,4 +48,31 @@ describe("DataTable", () => {
     render(<EmptyTable />);
     expect(screen.getByText("Nothing here")).toBeInTheDocument();
   });
+
+  it("renders per-column skeleton rows while pending (colgroup-aligned)", () => {
+    function PendingTable() {
+      const { table } = useDataTable({
+        data: [],
+        columns: [
+          { accessorKey: "a", header: "A", size: 200 },
+          { accessorKey: "b", header: "B", size: 100 },
+        ],
+      });
+      return (
+        <DataTable
+          table={table}
+          pending
+          pendingLabel="Loading rows"
+          skeletonRows={2}
+        />
+      );
+    }
+
+    render(<PendingTable />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading rows");
+    const tbody = document.querySelector("tbody");
+    expect(tbody?.querySelectorAll("tr")).toHaveLength(2);
+    expect(tbody?.querySelectorAll("td")).toHaveLength(4);
+  });
 });

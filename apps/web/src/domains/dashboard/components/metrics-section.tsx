@@ -7,7 +7,7 @@ export interface MetricTile {
   label: string;
   value: number | string;
   hint?: string;
-  to: "/cases" | "/entities" | "/inbox" | "/jobs" | "/tasks";
+  to: "/cases" | "/entities" | "/triage" | "/collect" | "/tasks";
   tone?: "default" | "warn" | "muted";
 }
 

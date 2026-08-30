@@ -20,6 +20,8 @@ interface Props {
   value: string;
   onChange: (markdown: string) => void;
   placeholder?: string;
+  /** Accessible name when placeholder is omitted (dossier Summary/Notes). */
+  ariaLabel?: string;
   className?: string;
   editorKey?: string | number;
   variant?: "default" | "seamless";
@@ -46,7 +48,8 @@ function isSlateContentTarget(target: EventTarget | null): boolean {
 export function RichTextEditor({
   value,
   onChange,
-  placeholder = "Write…",
+  placeholder,
+  ariaLabel,
   className,
   editorKey,
   variant = "default",
@@ -80,6 +83,7 @@ export function RichTextEditor({
   );
 
   const seamless = variant === "seamless";
+  const editorAriaLabel = ariaLabel ?? placeholder ?? "Rich text editor";
 
   function handleSurfaceMouseDown(e: ReactMouseEvent<HTMLDivElement>) {
     if (disabled || isSlateContentTarget(e.target)) return;
@@ -160,7 +164,7 @@ export function RichTextEditor({
             role="textbox"
             tabIndex={-1}
             aria-multiline="true"
-            aria-label={placeholder}
+            aria-label={editorAriaLabel}
             aria-readonly={disabled || undefined}
             className={cn(
               "min-h-0 flex-1 cursor-text overflow-y-auto",

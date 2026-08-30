@@ -38,6 +38,7 @@ export function FieldSelect({
   options,
   placeholder,
   className,
+  contentClassName,
   id,
   disabled,
   size = "default",
@@ -49,6 +50,8 @@ export function FieldSelect({
   options: readonly FieldSelectOption[];
   placeholder?: string;
   className?: string;
+  /** Popup width/layout — defaults to match trigger (`w-(--anchor-width)`). */
+  contentClassName?: string;
   id?: string;
   disabled?: boolean;
   /** `sm` = h-7 (table cells); `default` = h-8 (standalone fields). */
@@ -78,7 +81,12 @@ export function FieldSelect({
       >
         <SelectValue placeholder={placeholder}>{matched?.label}</SelectValue>
       </SelectTrigger>
-      <SelectContent align="start" side="bottom" alignItemWithTrigger={false}>
+      <SelectContent
+        align="start"
+        side="bottom"
+        alignItemWithTrigger={false}
+        className={contentClassName}
+      >
         {options.map((opt) => {
           const itemValue = toItemValue(opt.value);
           return (

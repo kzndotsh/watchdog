@@ -10,6 +10,7 @@ import { useIdentifiersTable } from "@/domains/entities/hooks/use-identifiers-ta
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import {
   DataTable,
@@ -17,6 +18,7 @@ import {
   DataTablePagination,
   DataTableViewOptions,
 } from "@/shared/ui/data-table";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   IdentifierComposerAppend,
@@ -57,6 +59,8 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
     onRowClick,
     entityOptions,
     evidenceOptions,
+    pending,
+    identifiersPlaceholder,
   } = useIdentifiersTable(active);
   const queryClient = useQueryClient();
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -220,12 +224,16 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
         trailing={<DataTableViewOptions table={table} />}
       />
 
-      <DataTable
-        table={table}
-        emptyText={emptyText}
-        appendRow={appendRow}
-        onRowClick={onRowClick}
-      />
+      <div className={placeholderDeemphasisClass(identifiersPlaceholder)}>
+        <DataTable
+          table={table}
+          emptyText={emptyText}
+          appendRow={appendRow}
+          pending={pending}
+          pendingLabel="Loading identifiers table"
+          onRowClick={onRowClick}
+        />
+      </div>
       {composing ? (
         <IdentifierComposerEvidence
           form={createForm}
@@ -253,9 +261,19 @@ export function IdentifiersPage() {
     return (
       <Page>
         <PageHeader />
-        <Button nativeButton={false} render={<Link to="/cases" />}>
-          Go to Cases
-        </Button>
+        <EmptyState
+          intent="blank-slate"
+          items="cases"
+          title="No active case"
+          description={
+            <>
+              <Link to="/cases" className="underline">
+                Select a case
+              </Link>{" "}
+              to manage identifiers.
+            </>
+          }
+        />
       </Page>
     );
   }

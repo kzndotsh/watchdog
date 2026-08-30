@@ -8,6 +8,18 @@ import {
 
 type EventHandler = (event: WatchdogEvent) => void;
 
+interface SharedConnection {
+  es: EventSource;
+  handlers: Set<EventHandler>;
+  refs: number;
+  listeners: {
+    type: WatchdogEvent["type"];
+    listener: (event: Event) => void;
+  }[];
+}
+
+const connections = new Map<string, SharedConnection>();
+
 function parseWatchdogEvent(
   raw: Event,
   type: WatchdogEvent["type"]
@@ -29,40 +41,60 @@ function parseWatchdogEvent(
 
 function createTypedEventListener(
   type: WatchdogEvent["type"],
-  handleEvent: EventHandler
+  fanOut: () => Iterable<EventHandler>
 ): (event: Event) => void {
   return (event: Event) => {
     const parsed = parseWatchdogEvent(event, type);
-    if (parsed) handleEvent(parsed);
+    if (!parsed) return;
+    for (const handler of fanOut()) {
+      handler(parsed);
+    }
   };
+}
+
+function openConnection(caseId: string): SharedConnection {
+  const url = `/api/events?caseId=${encodeURIComponent(caseId)}`;
+  const es = new EventSource(url);
+  const handlers = new Set<EventHandler>();
+  const listeners = WATCHDOG_EVENT_TYPES.map((type) => {
+    const listener = createTypedEventListener(type, () => handlers);
+    es.addEventListener(type, listener);
+    return { type, listener };
+  });
+  const entry: SharedConnection = { es, handlers, refs: 0, listeners };
+  connections.set(caseId, entry);
+  return entry;
+}
+
+function closeConnection(caseId: string, entry: SharedConnection): void {
+  for (const { type, listener } of entry.listeners) {
+    entry.es.removeEventListener(type, listener);
+  }
+  entry.es.close();
+  connections.delete(caseId);
 }
 
 function subscribeLiveEvents(
   caseId: string,
   handleEvent: EventHandler
 ): () => void {
-  const url = `/api/events?caseId=${encodeURIComponent(caseId)}`;
-  const es = new EventSource(url);
-
-  const listeners = WATCHDOG_EVENT_TYPES.map((type) => {
-    const listener = createTypedEventListener(type, handleEvent);
-    es.addEventListener(type, listener);
-    return { type, listener };
-  });
+  const entry = connections.get(caseId) ?? openConnection(caseId);
+  entry.handlers.add(handleEvent);
+  entry.refs += 1;
 
   return () => {
-    for (const { type, listener } of listeners) {
-      es.removeEventListener(type, listener);
+    entry.handlers.delete(handleEvent);
+    entry.refs -= 1;
+    if (entry.refs <= 0) {
+      closeConnection(caseId, entry);
     }
-    es.close();
   };
 }
 
 /**
  * Subscribe to live server events via SSE.
  *
- * Connects to /api/events?caseId=<caseId> and calls onEvent for each
- * received notification. Reconnects automatically on disconnect.
+ * Shares one EventSource per caseId across all mounted subscribers.
  *
  * @param caseId  Active case to filter events for. Pass null to skip.
  * @param onEvent Called for each WatchdogEvent received.
@@ -75,7 +107,7 @@ export function useLiveEvents(
 
   useEffect(() => {
     // oxlint-disable-next-line unicorn/no-useless-undefined -- consistent-return requires an explicit value alongside the cleanup-returning branch below
-    if (!caseId) return undefined;
+    if (!caseId || typeof EventSource === "undefined") return undefined;
     return subscribeLiveEvents(caseId, handleEvent);
   }, [caseId]);
 }

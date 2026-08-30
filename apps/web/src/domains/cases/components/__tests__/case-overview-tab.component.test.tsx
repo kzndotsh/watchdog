@@ -24,12 +24,15 @@ vi.mock("@/domains/cases/components/case-settings-form", () => ({
 }));
 
 const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useSuspenseQueriesMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
     useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useSuspenseQueries: (options: { queries: unknown[] }) =>
+      useSuspenseQueriesMock(options),
   };
 });
 
@@ -47,11 +50,12 @@ function renderTab(
   entities: Parameters<typeof CaseOverviewTab>[0]["entities"] = [],
   identifiers: Parameters<typeof CaseOverviewTab>[0]["identifiers"] = []
 ) {
-  useSuspenseQueryMock
-    .mockReturnValueOnce({ data: [] })
-    .mockReturnValueOnce({ data: [] })
-    .mockReturnValueOnce({ data: [] })
-    .mockReturnValueOnce({ data: [] });
+  useSuspenseQueriesMock.mockReturnValue([
+    { data: [] },
+    { data: [] },
+    { data: [] },
+    { data: [] },
+  ]);
 
   const client = new QueryClient();
   return render(

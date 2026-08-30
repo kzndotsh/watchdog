@@ -1,6 +1,6 @@
-import type { ProposalRecord } from "@/domains/inbox/inbox.functions";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import type { ProposalRecord } from "@/domains/triage/triage.functions";
 
 export type ActivityKind = "evidence" | "job" | "proposal";
 
@@ -9,7 +9,7 @@ export interface ActivityItem {
   kind: ActivityKind;
   label: string;
   at: string;
-  href: { to: "/intake" | "/jobs" | "/inbox" };
+  href: { to: "/collect" | "/triage" };
 }
 
 const MAX_ACTIVITY = 12;
@@ -38,7 +38,7 @@ export function buildCaseOverviewActivity(
       kind: "evidence",
       label: displayText(e.label, e.kind),
       at: e.capturedAt,
-      href: { to: "/intake" },
+      href: { to: "/collect" },
     });
   }
   for (const j of jobs) {
@@ -47,7 +47,7 @@ export function buildCaseOverviewActivity(
       kind: "job",
       label: displayText(j.resultSummary, j.capabilityId),
       at: j.updatedAt ?? j.createdAt,
-      href: { to: "/jobs" },
+      href: { to: "/collect" },
     });
   }
   for (const p of pendingProposals) {
@@ -56,7 +56,7 @@ export function buildCaseOverviewActivity(
       kind: "proposal",
       label: displayText(p.summary, "Proposal pending"),
       at: p.createdAt,
-      href: { to: "/inbox" },
+      href: { to: "/triage" },
     });
   }
   items.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));

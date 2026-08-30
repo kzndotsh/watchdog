@@ -155,7 +155,7 @@ const ATOM_CATALOG: AtomEntry[] = [
   },
   {
     name: "PatchOpBadge",
-    blurb: "Inbox patch ops.",
+    blurb: "Triage patch ops.",
     render: () => (
       <>
         <PatchOpBadge op="create" />

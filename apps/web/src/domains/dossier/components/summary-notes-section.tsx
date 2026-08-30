@@ -96,7 +96,7 @@ export function SummarySection({
         value={summary}
         onChange={setSummary}
         onBlurShell={onSave}
-        placeholder="BLUF summary — who is this entity and why do they matter?"
+        ariaLabel="Summary"
         variant="seamless"
       />
     </DossierSection>
@@ -145,7 +145,7 @@ export function NotesSection({
           value={notes}
           onChange={setNotes}
           onBlurShell={onSave}
-          placeholder="Messy spider notes, hunches, leads to follow"
+          ariaLabel="Notes"
           variant="seamless"
           fill
         />

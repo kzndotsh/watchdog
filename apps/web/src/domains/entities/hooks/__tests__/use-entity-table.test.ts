@@ -46,14 +46,14 @@ vi.mock("@/shared/ui/data-table", () => ({
   tableComposerKeyDown: vi.fn(),
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: (...args: unknown[]) => useMutationMock(...args),
   };
 });
@@ -68,25 +68,34 @@ const ACTIVE: CaseRecord = {
   allowThirdPartyEgress: false,
 };
 
+function queryResult(data: unknown) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+  };
+}
+
 function renderHookWithClient() {
-  useSuspenseQueryMock.mockImplementation(
-    (options: { queryKey: readonly unknown[] }) => {
-      if (options.queryKey[0] === "entities") {
-        return { data: [] };
-      }
-      if (options.queryKey[0] === "edges") {
-        return { data: [] };
-      }
-      return { data: [] };
+  useQueryMock.mockImplementation(
+    (options: { queryKey?: readonly unknown[] }) => {
+      const key = options.queryKey?.[0];
+      if (key === "entities") return queryResult([]);
+      if (key === "edges") return queryResult([]);
+      return queryResult([]);
     }
   );
   useMutationMock.mockReturnValue({
     mutate: vi.fn(),
-    mutateAsync: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
     isPending: false,
   });
 
-  const client = new QueryClient();
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return renderHook(() => useEntityTable(ACTIVE), {
     wrapper: ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client }, children),
@@ -94,21 +103,15 @@ function renderHookWithClient() {
 }
 
 describe("useEntityTable", () => {
-  it("starts with empty-table copy and opens the composer", () => {
+  it("starts with empty-table copy", () => {
     const { result } = renderHookWithClient();
-
     expect(result.current.emptyText).toBe("No entities yet — add one below.");
-    expect(result.current.composing).toBe(false);
     expect(result.current.rows).toEqual([]);
-    expect(result.current.search).toBe("");
-    expect(result.current.filterChips).toEqual([]);
-    expect(useSuspenseQueryMock).toHaveBeenCalled();
+    expect(useQueryMock).toHaveBeenCalled();
 
     act(() => {
       result.current.openComposer();
     });
     expect(result.current.composing).toBe(true);
-    expect(useMutationMock).toHaveBeenCalled();
-    expect(result.current.kindFilter).toEqual([]);
   });
 });

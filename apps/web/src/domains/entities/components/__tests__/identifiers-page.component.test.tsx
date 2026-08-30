@@ -117,7 +117,7 @@ describe("IdentifiersPage", () => {
     });
 
     render(<IdentifiersPage />);
-    expect(screen.getByRole("link", { name: "Go to Cases" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Select a case" })).toHaveAttribute(
       "href",
       "/cases"
     );

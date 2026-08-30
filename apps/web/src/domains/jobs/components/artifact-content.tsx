@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { artifactContentQuery } from "@/domains/jobs/queries";
 import type { GetArtifactContentInput } from "@/domains/jobs/types";
@@ -36,7 +36,15 @@ type ArtifactContentProps = {
  * Shared by Jobs + Intake Detail.
  */
 export function ArtifactContent(props: ArtifactContentProps) {
-  const { mime, name, sha256, className, headerAction, defaultOpen } = props;
+  const {
+    mime,
+    name,
+    sha256,
+    className,
+    headerAction,
+    defaultOpen = true,
+  } = props;
+  const [open, setOpen] = useState(defaultOpen);
 
   const contentInput: GetArtifactContentInput =
     "jobId" in props
@@ -54,12 +62,15 @@ export function ArtifactContent(props: ArtifactContentProps) {
           mime,
         };
 
-  const { data, isPending, isError } = useQuery(
-    artifactContentQuery(contentInput)
-  );
+  const { data, isPending, isError } = useQuery({
+    ...artifactContentQuery(contentInput),
+    enabled: open,
+  });
 
   let content: string | null | typeof ARTIFACT_LOADING;
-  if (isPending) {
+  if (!open) {
+    content = null;
+  } else if (isPending) {
     content = ARTIFACT_LOADING;
   } else if (isError) {
     content = null;
@@ -77,7 +88,8 @@ export function ArtifactContent(props: ArtifactContentProps) {
       name={name}
       mime={mime}
       className={className}
-      defaultOpen={defaultOpen}
+      open={open}
+      onOpenChange={setOpen}
       headerAction={headerAction ?? shaChip ?? undefined}
       body={artifactBodyFromContent(content, mime)}
     />

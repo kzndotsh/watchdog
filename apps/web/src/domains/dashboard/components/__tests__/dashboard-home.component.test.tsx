@@ -50,24 +50,29 @@ vi.mock("@/domains/dashboard/components/recent-activity", () => ({
 }));
 
 const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useSuspenseQueriesMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
     useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useSuspenseQueries: (options: { queries: unknown[] }) =>
+      useSuspenseQueriesMock(options),
   };
 });
 
 import { DashboardHome } from "@/domains/dashboard/components/dashboard-home";
 
 function renderDashboard(active: null | { id: string }) {
-  useSuspenseQueryMock.mockReturnValue({
-    data: {
-      cases: active ? [{ id: active.id, slug: "alpha", name: "Alpha" }] : [],
-      active,
+  useSuspenseQueriesMock.mockReturnValue([
+    {
+      data: {
+        cases: active ? [{ id: active.id, slug: "alpha", name: "Alpha" }] : [],
+        active,
+      },
     },
-  });
+  ]);
 
   const client = new QueryClient();
   return render(
@@ -78,7 +83,7 @@ function renderDashboard(active: null | { id: string }) {
 }
 
 describe("DashboardHome", () => {
-  it("shows idle inbox and due-task placeholders without an active case", () => {
+  it("shows idle triage and due-task placeholders without an active case", () => {
     renderDashboard(null);
     expect(
       screen.getByText(/Select a Case in the sidebar to see pending proposals/)
@@ -92,6 +97,6 @@ describe("DashboardHome", () => {
     expect(
       screen.getByText(/Select a Case in the sidebar to see pending proposals/)
     ).toBeVisible();
-    expect(useSuspenseQueryMock).toHaveBeenCalled();
+    expect(useSuspenseQueriesMock).toHaveBeenCalled();
   });
 });

@@ -29,7 +29,7 @@ describe("MetricsSection", () => {
             label: "Jobs",
             value: 3,
             hint: "live",
-            to: "/jobs",
+            to: "/collect",
             tone: "warn",
           },
         ]}
@@ -39,6 +39,6 @@ describe("MetricsSection", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("Jobs")).toBeInTheDocument();
     expect(screen.getByText("live")).toBeInTheDocument();
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/jobs");
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/collect");
   });
 });

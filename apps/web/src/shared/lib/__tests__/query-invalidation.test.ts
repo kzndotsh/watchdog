@@ -9,8 +9,8 @@ import { activityKeys } from "@/domains/activity/queries";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import { entitiesKeys } from "@/domains/entities/queries";
-import { proposalsKeys } from "@/domains/inbox/queries";
 import { jobsKeys } from "@/domains/jobs/queries";
+import { proposalsKeys } from "@/domains/triage/queries";
 import {
   bindCasesChangedInvalidation,
   invalidateAfterCaseSwitch,

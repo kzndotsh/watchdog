@@ -79,6 +79,7 @@ describe("ArtifactContent", () => {
     expect(screen.getByText("inline evidence")).toBeInTheDocument();
     expect(useQueryMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        enabled: true,
         queryKey: [
           "artifact",
           "evidence",

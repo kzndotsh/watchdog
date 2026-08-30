@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +15,7 @@ import {
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
 import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import { listPending } from "@/shared/lib/list-pending";
 import { invalidateAfterTaskMutation } from "@/shared/lib/query-invalidation";
 import type { TaskStatus } from "@watchdog/schemas";
 
@@ -39,16 +36,21 @@ export function useTaskWorkspace(
     [entityId]
   );
 
-  const { data: tasks } = useSuspenseQuery(tasksListQuery(caseId, filters));
-  const { data: entities } = useSuspenseQuery(entitiesListQuery(caseId));
+  const tasksQuery = useQuery(tasksListQuery(caseId, filters));
+  const entitiesQuery = useQuery(entitiesListQuery(caseId));
+  const pending = listPending(tasksQuery) || listPending(entitiesQuery);
+  const tasks = tasksQuery.data ?? [];
+  const entities = entitiesQuery.data ?? [];
+  const tasksPlaceholder = tasksQuery.isPlaceholderData;
 
   const entityById = useMemo(() => {
     const map = new Map<string, TaskEntityLabel>();
-    for (const e of entities) {
+    const rows = entitiesQuery.data ?? [];
+    for (const e of rows) {
       map.set(e.id, { id: e.id, name: e.name, kind: e.kind });
     }
     return map;
-  }, [entities]);
+  }, [entitiesQuery.data]);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createStatus, setCreateStatus] = useState<TaskStatus>("backlog");
@@ -239,6 +241,8 @@ export function useTaskWorkspace(
   return {
     tasks,
     entities,
+    pending,
+    tasksPlaceholder,
     entityById,
     entityId,
     selected,

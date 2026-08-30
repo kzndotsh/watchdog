@@ -1,18 +1,14 @@
 import { useNavigate } from "@tanstack/react-router";
-import type { EdgeMouseHandler, NodeMouseHandler } from "@xyflow/react";
 import { useCallback, useMemo, useState } from "react";
 
 import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
 import { cn } from "@/lib/utils";
-import { GraphFlowCanvas, GraphFlowShell } from "@/shared/ui/graph";
+import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
+import { GRAPH_CANVAS_FIT_PADDING } from "@/shared/ui/graph/graph-layout";
+import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
 import { predicateLabel } from "@/shared/ui/vocab";
 
-import {
-  edgesToEgoFlow,
-  type EgoEntityRef,
-  type EntityFlowNode,
-  type PredicateFlowEdge,
-} from "./edges-to-flow";
+import { edgesToEgoFlow, type EgoEntityRef } from "./edges-to-flow";
 import { EgoNodeMenu, type EgoMenuNode } from "./ego-node-menu";
 
 export function EgoNeighborhoodCanvas({
@@ -40,7 +36,7 @@ export function EgoNeighborhoodCanvas({
     [center, edges]
   );
 
-  const openMenu = useCallback((node: EntityFlowNode, x: number, y: number) => {
+  const openMenu = useCallback((node: GraphNode, x: number, y: number) => {
     setMenu({
       x,
       y,
@@ -52,8 +48,8 @@ export function EgoNeighborhoodCanvas({
     });
   }, []);
 
-  const onNodeClick: NodeMouseHandler<EntityFlowNode> = useCallback(
-    (event, node) => {
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent, node: GraphNode) => {
       const target = event.target;
       if (
         target instanceof HTMLElement &&
@@ -77,8 +73,8 @@ export function EgoNeighborhoodCanvas({
     [center.id, navigate, openMenu]
   );
 
-  const onNodeContextMenu: NodeMouseHandler<EntityFlowNode> = useCallback(
-    (event, node) => {
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: GraphNode) => {
       event.preventDefault();
       event.stopPropagation();
       if (node.id === center.id) return;
@@ -87,17 +83,16 @@ export function EgoNeighborhoodCanvas({
     [center.id, openMenu]
   );
 
-  const onEdgeClick: EdgeMouseHandler<PredicateFlowEdge> = useCallback(
-    (_event, edge) => {
-      const edgeId = edge.data?.edgeId ?? edge.id;
-      onEditEdge?.(edgeId);
+  const onEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: GraphEdge) => {
+      onEditEdge?.(edge.data?.edgeId ?? edge.id);
     },
     [onEditEdge]
   );
 
   const shell = cn(
-    "border-border overflow-hidden rounded-lg border",
-    fillHeight ? "min-h-64 flex-1" : "h-64",
+    "border-border relative overflow-hidden rounded-lg border",
+    fillHeight ? "min-h-64 flex-1" : "h-[min(38vh,19rem)] min-h-[17rem]",
     className
   );
 
@@ -112,11 +107,12 @@ export function EgoNeighborhoodCanvas({
   }
 
   return (
-    <GraphFlowShell className={shell}>
-      <GraphFlowCanvas
+    <div className={shell}>
+      <GraphCanvas
         nodes={flow.nodes}
         edges={flow.edges}
         minZoom={0.3}
+        fitPadding={fillHeight ? GRAPH_CANVAS_FIT_PADDING : 0.32}
         onNodeClick={onNodeClick}
         onNodeContextMenu={onNodeContextMenu}
         onEdgeClick={onEdgeClick}
@@ -131,11 +127,12 @@ export function EgoNeighborhoodCanvas({
           node={menu.node}
           connections={flow.edges
             .filter(
-              (e) => e.source === menu.node.id || e.target === menu.node.id
+              (edge) =>
+                edge.source === menu.node.id || edge.target === menu.node.id
             )
-            .map((e) => ({
-              edgeId: e.data?.edgeId ?? e.id,
-              label: predicateLabel(e.data?.predicate ?? "", "out"),
+            .map((edge) => ({
+              edgeId: edge.data?.edgeId ?? edge.id,
+              label: predicateLabel(edge.data?.predicate ?? "", "out"),
             }))}
           onClose={() => {
             setMenu(null);
@@ -143,6 +140,6 @@ export function EgoNeighborhoodCanvas({
           onEditEdge={onEditEdge}
         />
       ) : null}
-    </GraphFlowShell>
+    </div>
   );
 }

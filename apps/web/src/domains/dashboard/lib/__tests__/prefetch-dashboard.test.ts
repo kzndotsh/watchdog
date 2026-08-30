@@ -8,9 +8,9 @@ vi.mock("@/auth/server", () => ({
 import { recentActivityQuery } from "@/domains/activity/queries";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
 import { entitiesListQuery } from "@/domains/entities/queries";
-import { proposalsByStatusQuery } from "@/domains/inbox/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
+import { proposalsByStatusQuery } from "@/domains/triage/queries";
 
 describe("warmDashboardQueries", () => {
   it("always warms recent activity", () => {

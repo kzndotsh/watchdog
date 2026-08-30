@@ -1,8 +1,8 @@
-import type { ProposalRecord } from "@/domains/inbox/inbox.functions";
 import type { JobListRecord } from "@/domains/jobs/jobs.functions";
 import { LIVE_STATUSES } from "@/domains/jobs/lib/status";
 import { isTaskDueOverdue, isTaskDueSoon } from "@/domains/tasks/lib/due-date";
 import type { TaskRecord } from "@/domains/tasks/types";
+import type { ProposalRecord } from "@/domains/triage/triage.functions";
 
 const MAX_LIST_ROWS = 8;
 const NEAR_DUE_DAYS = 7;

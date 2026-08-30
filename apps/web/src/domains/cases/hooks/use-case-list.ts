@@ -1,8 +1,9 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
+import { listPending } from "@/shared/lib/list-pending";
 
 import { useCaseListActions } from "./use-case-list-actions";
 
@@ -42,16 +43,21 @@ function caseListGhostCount(
 }
 
 export function useCaseList() {
-  const { data: casesCtx } = useSuspenseQuery(casesContextQuery());
-  const cases = casesCtx.cases;
-  const activeId = casesCtx.active?.id ?? "";
+  const casesQuery = useQuery(casesContextQuery());
+  const pending = listPending(casesQuery);
+  const casesCtx = casesQuery.data;
+  const cases = casesCtx?.cases ?? [];
+  const activeId = casesCtx?.active?.id ?? "";
 
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CaseRecord | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const filtered = useMemo(() => filterCases(cases, search), [cases, search]);
+  const filtered = useMemo(
+    () => filterCases(casesQuery.data?.cases ?? [], search),
+    [casesQuery.data, search]
+  );
 
   const actions = useCaseListActions(
     activeId,
@@ -66,6 +72,7 @@ export function useCaseList() {
   return {
     activeId,
     cases,
+    pending,
     search,
     setSearch,
     filtered,

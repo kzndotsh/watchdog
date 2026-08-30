@@ -2,7 +2,8 @@
 /**
  * Design-system ban check.
  * Bidirectional shared/ui registry, fixture coverage, fictional vocab,
- * freestyle palette (full src), opaque-id .slice (all domains).
+ * freestyle palette (full src), opaque-id .slice (all domains),
+ * loading doctrine bans (RoutePending, skeleton imports, waterfalls, …).
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
@@ -47,6 +48,76 @@ function rel(abs) {
 /** @param {string} abs */
 function relFromRoot(abs) {
   return path.relative(root, abs).replaceAll("\\", "/");
+}
+
+/** Escape hatch: `// ds:allow-<rule> — reason` on the line above a flagged line. */
+const ALLOW_COMMENT_RE = /^\/\/\s*ds:allow-([\w-]+)\s*[—-]\s*.+/;
+
+/** @type {number} */
+let allowCount = 0;
+
+/**
+ * @param {string[]} lines
+ * @param {number} lineIndex
+ * @param {string} rule
+ */
+function isLineAllowed(lines, lineIndex, rule) {
+  if (lineIndex <= 0) return false;
+  const prev = lines[lineIndex - 1].trim();
+  const m = ALLOW_COMMENT_RE.exec(prev);
+  return m?.[1] === rule;
+}
+
+/**
+ * @param {string[]} lines
+ * @param {number} lineIndex
+ * @param {string} rule
+ * @returns {boolean}
+ */
+function consumeAllow(lines, lineIndex, rule) {
+  if (isLineAllowed(lines, lineIndex, rule)) {
+    allowCount += 1;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * @param {string} text
+ * @returns {boolean}
+ */
+function loaderAwaitedPromiseAll(text) {
+  const lines = text.split("\n");
+  let inLoader = false;
+  let braceDepth = 0;
+  let started = false;
+
+  for (const line of lines) {
+    if (!inLoader && /\bloader\s*:/.test(line)) {
+      inLoader = true;
+      braceDepth = 0;
+      started = false;
+    }
+    if (!inLoader) continue;
+
+    for (const ch of line) {
+      if (ch === "{") {
+        braceDepth += 1;
+        started = true;
+      } else if (ch === "}") {
+        braceDepth -= 1;
+      }
+    }
+
+    if (started && /await\s+Promise\.all\s*\(/.test(line)) {
+      return true;
+    }
+
+    if (started && braceDepth === 0) {
+      inLoader = false;
+    }
+  }
+  return false;
 }
 
 // ── 1. Single SectionLabel SoT ───────────────────────────────────────────────
@@ -257,7 +328,154 @@ if (existsSync(uiDir)) {
   fail("Missing /ui fixture route dir: routes/_protected/ui/");
 }
 
-// ── 7. COMPONENTS.md registry present ────────────────────────────────────────
+// ── 7. Loading doctrine bans (see apps/web/docs/UI.md § Loading contract) ────
+const ROUTE_PENDING_IMPORT_RE =
+  /from\s+["']@\/shared\/layout\/route-pending["']/;
+const SHADCN_SKELETON_IMPORT_RE =
+  /from\s+["']@\/shared\/ui\/shadcn\/skeleton["']/;
+const USE_SUSPENSE_QUERY_CALL_RE = /\buseSuspenseQuery\s*\(/;
+
+const routePendingHits = [];
+for (const f of walk(path.join(src, "routes"))) {
+  const r = rel(f);
+  const lines = readFileSync(f, "utf-8").split("\n");
+  for (const [i, line] of lines.entries()) {
+    if (line.trimStart().startsWith("//")) continue;
+    if (!ROUTE_PENDING_IMPORT_RE.test(line)) continue;
+    if (consumeAllow(lines, i, "route-pending")) continue;
+    routePendingHits.push(`${r}:${i + 1}`);
+  }
+}
+for (const hit of routePendingHits) {
+  fail(
+    `RoutePending import in routes/ — shell-first: in-page RegionBoundary + shape skeleton in the data slot instead. Exception: routes with ssr:false or ssr:'data-only' need pendingComponent (or defaultPendingComponent); use // ds:allow-route-pending — reason: ${hit}`
+  );
+}
+if (routePendingHits.length === 0) {
+  ok("No RoutePending imports in routes/");
+}
+
+const domainSkeletonHits = [];
+for (const f of walk(path.join(src, "domains"))) {
+  const r = rel(f);
+  const lines = readFileSync(f, "utf-8").split("\n");
+  for (const [i, line] of lines.entries()) {
+    if (line.trimStart().startsWith("//")) continue;
+    if (!SHADCN_SKELETON_IMPORT_RE.test(line)) continue;
+    if (consumeAllow(lines, i, "shadcn-skeleton")) continue;
+    domainSkeletonHits.push(`${r}:${i + 1}`);
+  }
+}
+for (const hit of domainSkeletonHits) {
+  fail(
+    `shadcn/skeleton import in domains/ — use PendingRegion / shared/ui/skeletons.tsx (QueueSkeleton, StackBodySkeleton, …). Tables: DataTable pending only (UI.md § Tables): ${hit}`
+  );
+}
+if (domainSkeletonHits.length === 0) {
+  ok("No shadcn/skeleton imports in domains/");
+}
+
+const animatePulseHits = [];
+for (const f of walk(src)) {
+  const r = rel(f);
+  if (r.startsWith("shared/ui/") || r.startsWith("auth/ui/")) continue;
+  const lines = readFileSync(f, "utf-8").split("\n");
+  for (const [i, line] of lines.entries()) {
+    if (line.trimStart().startsWith("//")) continue;
+    if (!/\banimate-pulse\b/.test(line)) continue;
+    if (consumeAllow(lines, i, "animate-pulse")) continue;
+    animatePulseHits.push(`${r}:${i + 1}: ${line.trim()}`);
+  }
+}
+for (const hit of animatePulseHits) {
+  fail(
+    `animate-pulse outside shared/ui — use Skeleton from shared/ui/shadcn/skeleton (prefers-reduced-motion guard keys [data-slot=skeleton]): ${hit}`
+  );
+}
+if (animatePulseHits.length === 0) {
+  ok("No hand-rolled animate-pulse outside shared/ui");
+}
+
+const ariaBusyHits = [];
+for (const f of walk(src)) {
+  const r = rel(f);
+  if (r.startsWith("shared/ui/") || r.includes("/__tests__/")) continue;
+  const lines = readFileSync(f, "utf-8").split("\n");
+  for (const [i, line] of lines.entries()) {
+    if (line.trimStart().startsWith("//")) continue;
+    if (!/\baria-busy\b/.test(line)) continue;
+    if (consumeAllow(lines, i, "aria-busy")) continue;
+    ariaBusyHits.push(`${r}:${i + 1}: ${line.trim()}`);
+  }
+}
+for (const hit of ariaBusyHits) {
+  fail(
+    `aria-busy outside shared/ui — wrap loading regions in LoadingRegion (aria-busy + aria-hidden skeleton + role=status label): ${hit}`
+  );
+}
+if (ariaBusyHits.length === 0) {
+  ok("No hand-rolled aria-busy outside shared/ui");
+}
+
+const loaderPromiseAllHits = [];
+for (const f of walk(path.join(src, "routes"))) {
+  const r = rel(f);
+  if (r.startsWith("routes/api/")) continue;
+  const text = readFileSync(f, "utf-8");
+  if (!/\bloader\s*:/.test(text)) continue;
+  if (!loaderAwaitedPromiseAll(text)) continue;
+  const lines = text.split("\n");
+  let flaggedLine = 1;
+  for (const [i, line] of lines.entries()) {
+    if (/await\s+Promise\.all\s*\(/.test(line)) {
+      flaggedLine = i + 1;
+      break;
+    }
+  }
+  if (consumeAllow(lines, flaggedLine - 1, "loader-promise-all")) continue;
+  loaderPromiseAllHits.push(`${r}:${flaggedLine}`);
+}
+for (const hit of loaderPromiseAllHits) {
+  fail(
+    `await Promise.all in route loader — thin loader (identity only) + warm*Queries helper; parallel reads belong in components via useSuspenseQueries: ${hit}`
+  );
+}
+if (loaderPromiseAllHits.length === 0) {
+  ok("No awaited Promise.all in route loaders (excl. routes/api/)");
+}
+
+const suspenseWaterfallHits = [];
+for (const f of walk(src)) {
+  const r = rel(f);
+  if (r.includes("/__tests__/")) continue;
+  const lines = readFileSync(f, "utf-8").split("\n");
+  let unallowedCalls = 0;
+  for (const [i, line] of lines.entries()) {
+    if (line.trimStart().startsWith("//")) continue;
+    if (!USE_SUSPENSE_QUERY_CALL_RE.test(line)) continue;
+    if (consumeAllow(lines, i, "use-suspense-query")) continue;
+    unallowedCalls += 1;
+  }
+  if (unallowedCalls >= 2) {
+    suspenseWaterfallHits.push(`${r} (${unallowedCalls} calls)`);
+  }
+}
+for (const hit of suspenseWaterfallHits) {
+  fail(
+    `2+ useSuspenseQuery in one file — serial waterfalls; collapse to useSuspenseQueries (warm* parity is not enough on cold cache / SSR TTFB): ${hit}`
+  );
+}
+if (suspenseWaterfallHits.length === 0) {
+  ok("No useSuspenseQuery waterfalls (≤1 call per file)");
+}
+
+if (allowCount > 0) {
+  ok(`${allowCount} ds:allow escape hatch(es) in use`);
+} else {
+  ok("No ds:allow escape hatches in use");
+}
+
+// ── 8. COMPONENTS.md registry present ────────────────────────────────────────
 const componentsDoc = path.join(root, "docs/COMPONENTS.md");
 if (existsSync(componentsDoc)) {
   ok("COMPONENTS.md registry present");

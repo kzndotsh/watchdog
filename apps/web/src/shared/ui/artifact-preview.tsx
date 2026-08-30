@@ -1,16 +1,19 @@
 import { ChevronDownIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "@/shared/ui/code-block";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import {
+  CHIP_SIZE_CLASS,
+  DetailStatusChip,
+} from "@/shared/ui/detail-status-chip";
 import { JsonView } from "@/shared/ui/json-view";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/shared/ui/shadcn/collapsible";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 
 export type ArtifactPreviewBody =
   | { kind: "loading" }
@@ -27,12 +30,10 @@ function ArtifactPreviewBodyView({
   switch (body.kind) {
     case "loading": {
       return (
-        <div
-          className="text-muted-foreground flex items-center gap-2 py-2 text-xs"
-          aria-busy
-          aria-live="polite"
-        >
-          <Spinner className="size-3.5" aria-label="Loading" />
+        <div className="space-y-2 py-1" aria-busy aria-live="polite">
+          <Skeleton className="h-3 w-full rounded-sm" />
+          <Skeleton className="h-3 w-5/6 rounded-sm" />
+          <Skeleton className="h-3 w-2/3 rounded-sm" />
         </div>
       );
     }
@@ -77,6 +78,8 @@ export function ArtifactPreview({
   body,
   className,
   defaultOpen = true,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
 }: {
   name: string;
   /** Omit when the name already carries type (e.g. Intake Content). */
@@ -87,33 +90,54 @@ export function ArtifactPreview({
   className?: string;
   /** When false, start collapsed (filename header still visible). */
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const open = openProp ?? internalOpen;
+  const onOpenChange = onOpenChangeProp ?? setInternalOpen;
+
   return (
     <Collapsible
-      defaultOpen={defaultOpen}
+      open={open}
+      onOpenChange={onOpenChange}
       data-slot="artifact-preview"
       className={cn(
         "border-border flex flex-col overflow-hidden rounded-md border",
         className
       )}
     >
-      <div className="border-border flex items-center gap-2 border-b px-3 py-2">
-        <CollapsibleTrigger className="group/artifact-trigger hover:bg-muted/40 focus-visible:ring-ring/50 -mx-1 flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-0.5 text-left outline-none focus-visible:ring-2">
-          <ChevronDownIcon
-            className="text-muted-foreground size-3.5 shrink-0 transition-transform group-aria-expanded/artifact-trigger:rotate-180"
-            aria-hidden
-          />
-          <span className="text-foreground truncate font-mono text-xs font-medium">
-            {name}
-          </span>
-          {mime !== undefined && mime !== "" ? (
-            <DetailStatusChip size="sm" className="shrink-0">
-              {mime}
-            </DetailStatusChip>
-          ) : null}
-        </CollapsibleTrigger>
-        {headerAction}
-      </div>
+      <CollapsibleTrigger
+        nativeButton={false}
+        render={<div />}
+        className="group/artifact-trigger hover:bg-muted/40 focus-visible:ring-ring/50 flex w-full items-center gap-2 border-b px-3 py-2 text-left outline-none focus-visible:ring-2"
+      >
+        <ChevronDownIcon
+          className="text-muted-foreground size-3.5 shrink-0 transition-transform group-aria-expanded/artifact-trigger:rotate-180"
+          aria-hidden
+        />
+        <span className="text-foreground min-w-0 flex-1 truncate font-mono text-xs font-medium">
+          {name}
+        </span>
+        {mime !== undefined && mime !== "" ? (
+          <DetailStatusChip size="sm" className="shrink-0">
+            {mime}
+          </DetailStatusChip>
+        ) : null}
+        {headerAction === undefined ? null : (
+          <>
+            {/* oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- keep header control from toggling the preview */}
+            <span
+              className="shrink-0"
+              onMouseDown={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              {headerAction}
+            </span>
+          </>
+        )}
+      </CollapsibleTrigger>
 
       <CollapsibleContent>
         {meta ? (
@@ -124,6 +148,54 @@ export function ArtifactPreview({
 
         <div className="bg-muted/40 rounded-b-md p-3">
           <ArtifactPreviewBodyView body={body} />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+/** Artifact preview skeleton — same chrome as {@link ArtifactPreview} (open by default). */
+export function ArtifactPreviewSkeleton({
+  className,
+  defaultOpen = true,
+  showMeta = false,
+}: {
+  className?: string;
+  defaultOpen?: boolean;
+  showMeta?: boolean;
+}) {
+  return (
+    <Collapsible
+      defaultOpen={defaultOpen}
+      data-slot="artifact-preview-skeleton"
+      className={cn(
+        "border-border flex flex-col overflow-hidden rounded-md border",
+        className
+      )}
+    >
+      <div className="border-border group/artifact-trigger flex w-full items-center gap-2 border-b px-3 py-2">
+        <ChevronDownIcon
+          className="text-muted-foreground size-3.5 shrink-0"
+          aria-hidden
+        />
+        <Skeleton className="h-3 max-w-full min-w-0 flex-1 basis-36 rounded-sm" />
+        <Skeleton className={cn(CHIP_SIZE_CLASS.md, "w-[4.5rem] shrink-0")} />
+      </div>
+
+      <CollapsibleContent>
+        {showMeta ? (
+          <div className="border-border space-y-1.5 border-b px-3 py-2">
+            <Skeleton className="h-3 w-20" />
+          </div>
+        ) : null}
+
+        <div className="bg-muted/40 rounded-b-md p-3">
+          <div className="space-y-2">
+            <Skeleton className="h-40 w-full rounded-md" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-5/6" />
+            <Skeleton className="h-3 w-2/3" />
+          </div>
         </div>
       </CollapsibleContent>
     </Collapsible>

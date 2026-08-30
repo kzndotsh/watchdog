@@ -93,13 +93,16 @@ vi.mock("@/domains/tasks/components/dossier-tasks-section", () => ({
   DossierTasksSection: () => null,
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const resolveSuspenseQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useSuspenseQuery: (...args: unknown[]) => resolveSuspenseQueryMock(...args),
+    useSuspenseQueries: (options: {
+      queries: { queryKey: readonly unknown[] }[];
+    }) => options.queries.map((query) => resolveSuspenseQueryMock(query)),
   };
 });
 
@@ -126,16 +129,23 @@ const ENTITY: EntityRecord = {
 };
 
 function renderDossier(active: typeof CASE | null) {
-  useSuspenseQueryMock.mockReset();
-  if (active) {
-    useSuspenseQueryMock
-      .mockReturnValueOnce({ data: { cases: [active], active } })
-      .mockReturnValueOnce({ data: ENTITY });
-  } else {
-    useSuspenseQueryMock.mockReturnValueOnce({
-      data: { cases: [], active: null },
-    });
-  }
+  resolveSuspenseQueryMock.mockReset();
+  resolveSuspenseQueryMock.mockImplementation(
+    (options: { queryKey?: readonly unknown[] }) => {
+      const root = options.queryKey?.[0];
+      if (root === "cases") {
+        return {
+          data: active
+            ? { cases: [active], active }
+            : { cases: [], active: null },
+        };
+      }
+      if (root === "entity") {
+        return { data: ENTITY };
+      }
+      return { data: null };
+    }
+  );
 
   const client = new QueryClient();
   return render(
@@ -148,7 +158,7 @@ function renderDossier(active: typeof CASE | null) {
 describe("Dossier", () => {
   it("prompts users to select a case when none is active", () => {
     renderDossier(null);
-    expect(screen.getByRole("link", { name: "Go to Cases" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Select a case" })).toHaveAttribute(
       "href",
       "/cases"
     );
@@ -178,7 +188,9 @@ describe("Dossier", () => {
     expect(screen.getByRole("tab", { name: /Questions/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Tasks/i })).toBeInTheDocument();
     expect(screen.getByRole("tablist")).toBeInTheDocument();
-    expect(useSuspenseQueryMock).toHaveBeenCalled();
-    expect(useSuspenseQueryMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(resolveSuspenseQueryMock).toHaveBeenCalled();
+    expect(resolveSuspenseQueryMock.mock.calls.length).toBeGreaterThanOrEqual(
+      2
+    );
   });
 });

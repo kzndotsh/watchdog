@@ -48,7 +48,7 @@ export function DeleteCaseDialog({
       title="Delete case"
       description={
         caseRow
-          ? `Delete “${caseRow.name}” and everything in it — entities, evidence, jobs, inbox, and tasks.`
+          ? `Delete “${caseRow.name}” and everything in it — entities, evidence, collect, triage, and tasks.`
           : undefined
       }
       confirmLabel="Delete case"

@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 
 import {
   getEvidenceDownloadUrlFn,
@@ -24,6 +24,7 @@ export const evidenceListQuery = (
     queryFn: async () => listEvidenceFn({ data: { caseId, hiddenOnly } }),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
+    placeholderData: keepPreviousData,
   });
 };
 

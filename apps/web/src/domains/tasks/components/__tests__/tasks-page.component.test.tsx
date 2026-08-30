@@ -43,7 +43,7 @@ vi.mock("@/domains/tasks/components/task-form-dialog", () => ({
 }));
 
 vi.mock("@/shared/ui/skeletons", () => ({
-  QueueSkeleton: () => <div>Loading tasks</div>,
+  BoardSkeleton: () => <div>Loading tasks</div>,
 }));
 
 const useSuspenseQueryMock = vi.hoisted(() => vi.fn());

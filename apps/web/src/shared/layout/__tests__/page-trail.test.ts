@@ -69,9 +69,8 @@ describe("buildPageTrail", () => {
       ["/entities", "Entities"],
       ["/identifiers", "Identifiers"],
       ["/graph", "Graph"],
-      ["/inbox", "Inbox"],
-      ["/jobs", "Jobs"],
-      ["/intake", "Intake"],
+      ["/collect", "Collect"],
+      ["/triage", "Triage"],
       ["/tasks", "Tasks"],
     ] as const) {
       const items = buildPageTrail({ ...BASE_TRAIL_INPUT, pathname: path });

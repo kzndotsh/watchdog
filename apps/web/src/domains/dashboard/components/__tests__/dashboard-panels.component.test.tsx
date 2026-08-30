@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ProposalRecord } from "@/domains/inbox/inbox.functions";
 import type { TaskRecord } from "@/domains/tasks/types";
+import type { ProposalRecord } from "@/domains/triage/triage.functions";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -22,7 +22,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 import {
   DashboardDueTasksSection,
-  DashboardInboxSection,
+  DashboardTriageSection,
 } from "@/domains/dashboard/components/dashboard-panels";
 
 const PROPOSAL = {
@@ -46,20 +46,20 @@ const TASK: TaskRecord = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
-describe("DashboardInboxSection", () => {
+describe("DashboardTriageSection", () => {
   it("prompts for an active case when none is selected", () => {
-    render(<DashboardInboxSection hasCase={false} proposals={[]} />);
+    render(<DashboardTriageSection hasCase={false} proposals={[]} />);
     expect(
       screen.getByText(/Select a Case in the sidebar to see pending proposals/)
     ).toBeInTheDocument();
   });
 
   it("lists recent proposals when a case is active", () => {
-    render(<DashboardInboxSection hasCase proposals={[PROPOSAL]} />);
+    render(<DashboardTriageSection hasCase proposals={[PROPOSAL]} />);
     expect(screen.getByText("Link entity A to B")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Link entity A to B/ })
-    ).toHaveAttribute("href", "/inbox?proposalId=prop-1");
+    ).toHaveAttribute("href", "/triage?proposalId=prop-1");
   });
 });
 

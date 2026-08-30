@@ -58,9 +58,8 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
     case "/entities":
     case "/identifiers":
     case "/graph":
-    case "/inbox":
-    case "/jobs":
-    case "/intake":
+    case "/collect":
+    case "/triage":
     case "/tasks":
     case "/settings":
     case "/ui": {

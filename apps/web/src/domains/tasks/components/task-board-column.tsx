@@ -14,6 +14,7 @@ import { Button } from "@/shared/ui/shadcn/button";
 import { Input } from "@/shared/ui/shadcn/input";
 import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
 import { TabCount } from "@/shared/ui/tab-count";
+import { TASK_BOARD_COLUMN_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 import { taskStatusLabel } from "@/shared/ui/vocab";
 import type { TaskStatus } from "@watchdog/schemas";
 
@@ -100,7 +101,7 @@ export function TaskBoardColumn({
   }
 
   return (
-    <div className="relative flex h-full min-h-0 min-w-[14rem] flex-1 basis-0 flex-col">
+    <div className={TASK_BOARD_COLUMN_SHELL_CLASS}>
       <header className="border-border bg-background/95 sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2 backdrop-blur-sm">
         <SectionLabel as="h3">
           {taskStatusLabel(column)}

@@ -54,21 +54,33 @@ function dossierTabCounts(
 export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const queryClient = useQueryClient();
 
-  const { data: claimsRaw = [] } = useQuery(claimsListQuery(caseId, entity.id));
-  const { data: identifiers = [] } = useQuery(
-    identifiersListQuery(caseId, entity.id)
-  );
-  const { data: edges = [] } = useQuery(edgesListQuery(caseId, entity.id));
-  const { data: events = [] } = useQuery(eventsListQuery(caseId, entity.id));
-  const { data: questions = [] } = useQuery(
-    questionsListQuery(caseId, entity.id)
-  );
-  const { data: entityTasks = [] } = useQuery(
+  const claimsQuery = useQuery(claimsListQuery(caseId, entity.id));
+  const identifiersQuery = useQuery(identifiersListQuery(caseId, entity.id));
+  const edgesQuery = useQuery(edgesListQuery(caseId, entity.id));
+  const eventsQuery = useQuery(eventsListQuery(caseId, entity.id));
+  const questionsQuery = useQuery(questionsListQuery(caseId, entity.id));
+  const entityTasksQuery = useQuery(
     tasksListQuery(caseId, { entityId: entity.id })
   );
-  const { data: evidenceAll = [], isPending: evidencePending } = useQuery(
-    evidenceListQuery(caseId)
-  );
+  const evidenceQuery = useQuery(evidenceListQuery(caseId));
+
+  const claimsRaw = claimsQuery.data ?? [];
+  const identifiers = identifiersQuery.data ?? [];
+  const edges = edgesQuery.data ?? [];
+  const events = eventsQuery.data ?? [];
+  const questions = questionsQuery.data ?? [];
+  const entityTasks = entityTasksQuery.data ?? [];
+  const evidenceAll = evidenceQuery.data ?? [];
+  const evidencePending = evidenceQuery.isPending;
+
+  const countsPending =
+    claimsQuery.isPending ||
+    identifiersQuery.isPending ||
+    edgesQuery.isPending ||
+    eventsQuery.isPending ||
+    questionsQuery.isPending ||
+    entityTasksQuery.isPending ||
+    evidenceQuery.isPending;
 
   const [previewEvidence, setPreviewEvidence] = useState<EvidenceRecord | null>(
     null
@@ -77,8 +89,8 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const [editError, setEditError] = useState<string | null>(null);
 
   const evidenceMap = useMemo(
-    () => evidenceRecordMap(evidenceAll),
-    [evidenceAll]
+    () => evidenceRecordMap(evidenceQuery.data ?? []),
+    [evidenceQuery.data]
   );
 
   const handleEvidenceClick = useCallback(
@@ -92,24 +104,24 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const counts = useMemo(
     () =>
       dossierTabCounts(
-        claimsRaw,
-        identifiers,
-        edges,
-        events,
-        questions,
-        evidenceAll,
+        claimsQuery.data ?? [],
+        identifiersQuery.data ?? [],
+        edgesQuery.data ?? [],
+        eventsQuery.data ?? [],
+        questionsQuery.data ?? [],
+        evidenceQuery.data ?? [],
         entity.id,
-        entityTasks
+        entityTasksQuery.data ?? []
       ),
     [
-      claimsRaw,
-      identifiers,
-      edges,
-      events,
-      questions,
-      evidenceAll,
+      claimsQuery.data,
+      identifiersQuery.data,
+      edgesQuery.data,
+      eventsQuery.data,
+      questionsQuery.data,
+      evidenceQuery.data,
       entity.id,
-      entityTasks,
+      entityTasksQuery.data,
     ]
   );
 
@@ -132,5 +144,6 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     evidenceMap,
     handleEvidenceClick,
     counts,
+    countsPending,
   };
 }

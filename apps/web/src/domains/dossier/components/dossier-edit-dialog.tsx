@@ -135,7 +135,7 @@ export function DossierEditDialog({
                     }}
                     onBlurShell={field.handleBlur}
                     disabled={busy}
-                    placeholder="BLUF summary…"
+                    ariaLabel="Summary"
                   />
                 </Field>
               )}
@@ -153,7 +153,7 @@ export function DossierEditDialog({
                     }}
                     onBlurShell={field.handleBlur}
                     disabled={busy}
-                    placeholder="Working notes…"
+                    ariaLabel="Notes"
                   />
                 </Field>
               )}

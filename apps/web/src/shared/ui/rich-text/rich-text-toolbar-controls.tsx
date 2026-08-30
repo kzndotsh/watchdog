@@ -10,17 +10,46 @@ import {
 } from "lucide-react";
 import { KEYS } from "platejs";
 import type { PlateEditor } from "platejs/react";
+import { useEditorSelector } from "platejs/react";
 
-import type {
-  HeadingValue,
-  MarkValue,
+import {
+  activeList,
+  type HeadingValue,
+  type ListValue,
+  type MarkValue,
 } from "@/shared/ui/rich-text/rich-text-toolbar-controls.lib";
-import { Button } from "@/shared/ui/shadcn/button";
 import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/shadcn/toggle-group";
-import { WithTooltip } from "@/shared/ui/timestamp";
 
 function isHeadingValue(value: string | undefined): value is HeadingValue {
   return value === "h1" || value === "h2" || value === "h3";
+}
+
+function isListValue(value: string | undefined): value is ListValue {
+  return value === "ul" || value === "ol";
+}
+
+function applyListChange(
+  editor: PlateEditor,
+  next: string[],
+  isUl: boolean,
+  isOl: boolean
+): void {
+  const selected = next[0];
+  if (isUl && selected !== "ul") {
+    editor.tf.toggleBlock(KEYS.ul);
+  }
+  if (isOl && selected !== "ol") {
+    editor.tf.toggleBlock(KEYS.ol);
+  }
+  if (!isListValue(selected)) {
+    return;
+  }
+  if (selected === "ul" && !isUl) {
+    editor.tf.toggleBlock(KEYS.ul);
+  }
+  if (selected === "ol" && !isOl) {
+    editor.tf.toggleBlock(KEYS.ol);
+  }
 }
 
 function applyHeadingChange(
@@ -155,36 +184,40 @@ export function RichTextMarkToggleGroup({
 }
 
 export function RichTextListButtons({ editor }: { editor: PlateEditor }) {
+  const isUl = useEditorSelector(
+    (ed) => ed.api.some({ match: { type: KEYS.ul } }),
+    []
+  );
+  const isOl = useEditorSelector(
+    (ed) => ed.api.some({ match: { type: KEYS.ol } }),
+    []
+  );
+
   return (
-    <>
-      <WithTooltip content="Bulleted list">
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          aria-label="Bulleted list"
-          className="size-7"
-          onClick={() => {
-            editor.tf.toggleBlock(KEYS.ul);
-          }}
-        >
-          <ListIcon data-icon="inline-start" />
-        </Button>
-      </WithTooltip>
-      <WithTooltip content="Numbered list">
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          aria-label="Numbered list"
-          className="size-7"
-          onClick={() => {
-            editor.tf.toggleBlock(KEYS.ol);
-          }}
-        >
-          <ListOrderedIcon data-icon="inline-start" />
-        </Button>
-      </WithTooltip>
-    </>
+    <ToggleGroup
+      variant="outline"
+      size="sm"
+      spacing={0}
+      value={activeList(isUl, isOl)}
+      onValueChange={(next: string[]) => {
+        applyListChange(editor, next, isUl, isOl);
+      }}
+      aria-label="Lists"
+    >
+      <ToggleGroupItem
+        value="ul"
+        aria-label="Bulleted list"
+        title="Bulleted list"
+      >
+        <ListIcon data-icon="inline-start" />
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="ol"
+        aria-label="Numbered list"
+        title="Numbered list"
+      >
+        <ListOrderedIcon data-icon="inline-start" />
+      </ToggleGroupItem>
+    </ToggleGroup>
   );
 }

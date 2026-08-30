@@ -22,7 +22,7 @@ describe("QueueRow", () => {
       </QueueRow>
     );
 
-    const row = screen.getByRole("button");
+    const row = screen.getByRole("option");
     expect(row).toHaveAttribute("data-selected");
     expect(row).toHaveAttribute("data-live");
     expect(screen.getByText("Job run")).toBeInTheDocument();

@@ -158,7 +158,7 @@ export function CapCapabilitySelect({
         placeholder="Select Cap…"
         className={cn(
           CONTROL_HEIGHT,
-          "w-56 shrink-0 [&_[data-slot=input-group-control]]:text-xs",
+          "w-full max-w-full min-w-[12rem] [&_[data-slot=input-group-control]]:text-xs",
           needsEgress &&
             "border-warning/40 [&_[data-slot=input-group-control]]:text-warning",
           className

@@ -1,6 +1,8 @@
 import { Suspense, type ReactNode } from "react";
 
-import { StackBodySkeleton } from "@/shared/ui/skeletons";
+import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
+
+export { stackPendingFallback };
 
 /**
  * Gate for stack / Detail tab panels: inactive → null; pending → skeleton;
@@ -20,12 +22,22 @@ export function ActiveTabBody({
 }): ReactNode {
   if (!active) return null;
   if (pending) {
-    return <StackBodySkeleton sections={pendingSections} />;
+    return stackPendingFallback(pendingSections);
   }
   return children;
 }
 
 /** Suspense wrapper with StackBodySkeleton — use inside ActiveTabBody. */
-export function SuspenseTabBody({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<StackBodySkeleton />}>{children}</Suspense>;
+export function SuspenseTabBody({
+  children,
+  fallback,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  return (
+    <Suspense fallback={fallback ?? stackPendingFallback()}>
+      {children}
+    </Suspense>
+  );
 }

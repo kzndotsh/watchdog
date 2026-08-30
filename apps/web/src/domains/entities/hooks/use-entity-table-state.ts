@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
@@ -14,6 +14,7 @@ import { connectionPeersByEntityId } from "@/domains/entities/lib/connection-pee
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
+import { listPending } from "@/shared/lib/list-pending";
 import { useDataTable } from "@/shared/ui/data-table";
 
 import type { useEntityTableMutations } from "./use-entity-table-mutations";
@@ -90,18 +91,24 @@ export function useEntityTableState(
   mutations: EntityTableMutations
 ) {
   const navigate = useNavigate();
-  const { data: rows } = useSuspenseQuery(entitiesListQuery(active.id));
-  const { data: caseEdges } = useSuspenseQuery(edgesForCaseQuery(active.id));
+  const entitiesQuery = useQuery(entitiesListQuery(active.id));
+  const edgesQuery = useQuery(edgesForCaseQuery(active.id));
+  const pending = listPending(entitiesQuery) || listPending(edgesQuery);
+  const rows = entitiesQuery.data;
+  const caseEdges = edgesQuery.data;
 
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<string[]>([]);
 
   const peersByEntityId = useMemo(
-    () => connectionPeersByEntityId(caseEdges),
+    () => connectionPeersByEntityId(caseEdges ?? []),
     [caseEdges]
   );
 
-  const entityOptions = useMemo(() => entityOptionsFromRows(rows), [rows]);
+  const entityOptions = useMemo(
+    () => entityOptionsFromRows(rows ?? []),
+    [rows]
+  );
 
   const columnFilters = useMemo(
     () => kindColumnFilters(kindFilter),
@@ -114,7 +121,7 @@ export function useEntityTableState(
   );
 
   const { table } = useDataTable({
-    data: rows,
+    data: rows ?? [],
     columns: entityTableColumns,
     meta: tableMeta,
     getRowId: entityRowId,
@@ -131,7 +138,7 @@ export function useEntityTableState(
     [kindFilter]
   );
 
-  const emptyText = entityTableEmptyText(rows.length);
+  const emptyText = entityTableEmptyText(rows?.length ?? 0);
 
   const onRowClick = useCallback(
     (row: { slug: string }) => {
@@ -144,7 +151,8 @@ export function useEntityTableState(
   );
 
   return {
-    rows,
+    rows: rows ?? [],
+    pending,
     table,
     search,
     setSearch,

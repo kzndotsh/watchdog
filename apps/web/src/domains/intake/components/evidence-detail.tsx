@@ -1,6 +1,11 @@
 import { DownloadIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import {
+  buildCollectIndex,
+  jobsForRole,
+  producingCapFromRow,
+} from "@/domains/collect/lib/collect-index";
 import {
   EvidenceDetailHeader,
   EvidenceHeaderActions,
@@ -10,13 +15,11 @@ import { useEvidenceBlob } from "@/domains/intake/hooks/use-evidence-blob";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import {
   ENRICHED_MD_ARTIFACT,
-  enrichJobsForEvidence,
   evidenceHasEnrichableUrl,
   evidenceTitle,
   latestEnrichOutput,
-  processJobsForEvidence,
-  producingCapJob,
 } from "@/domains/intake/lib/evidence";
+import { processRunCardDomId } from "@/domains/intake/lib/process-run-card-dom";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import type { JobListRecord } from "@/domains/jobs/jobs.functions";
@@ -25,6 +28,7 @@ import {
   ArtifactPreview,
   type ArtifactPreviewBody,
 } from "@/shared/ui/artifact-preview";
+import { ComposerShell } from "@/shared/ui/composer-shell";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -118,9 +122,13 @@ function EvidenceOutputTab({
 function EvidenceJobsTab({
   relatedJobs,
   canEnrich,
+  focusedJobId,
+  onFocusedJobChange,
 }: {
   relatedJobs: JobListRecord[];
   canEnrich: boolean;
+  focusedJobId: string | null;
+  onFocusedJobChange: (jobId: string | null) => void;
 }) {
   if (relatedJobs.length === 0) {
     return (
@@ -130,8 +138,8 @@ function EvidenceJobsTab({
         title="No Cap runs"
         description={
           canEnrich
-            ? "Enrich writes Job output (see Output tab). Harvest / Extract propose identifiers into Inbox when an Entity is attached."
-            : "Harvest (deterministic) or Extract (AI) propose identifiers from Evidence text. Analyze file / Analyze EML run from Jobs — they are not Harvest. With an Entity attached, candidates land in Inbox."
+            ? "Enrich writes Job output (see Output tab). Harvest / Extract propose identifiers into Triage when an Entity is attached."
+            : "Harvest (deterministic) or Extract (AI) propose identifiers from Evidence text. Analyze file / Analyze EML run from Collect — they are not Harvest. With an Entity attached, candidates land in Triage."
         }
         className="py-6"
       />
@@ -141,11 +149,18 @@ function EvidenceJobsTab({
     <div className="flex flex-col gap-2">
       {relatedJobs.map((job, i) => {
         const live = job.status === "queued" || job.status === "running";
+        const isFocused = focusedJobId === job.id;
+        const controlled = focusedJobId !== null;
         return (
           <ProcessRunCard
             key={job.id}
             job={job}
-            defaultOpen={live || i === 0}
+            open={controlled ? isFocused : undefined}
+            defaultOpen={controlled ? undefined : live || i === 0}
+            highlighted={isFocused}
+            onOpenChange={(next) => {
+              if (!next && isFocused) onFocusedJobChange(null);
+            }}
           />
         );
       })}
@@ -241,43 +256,52 @@ function EvidenceContentPanel({
   hasUri: boolean;
 }) {
   const title = evidenceTitle(evidence);
+  const notes =
+    evidence.notes !== null && evidence.notes !== "" ? evidence.notes : null;
 
   return (
-    <ArtifactPreview
-      name={title}
-      defaultOpen
-      headerAction={
-        evidence.sha256 !== null && evidence.sha256 !== "" ? (
-          <IdChip
-            value={evidence.sha256}
-            preset="sha256"
-            copyable
-            className="min-w-0"
-          />
-        ) : undefined
-      }
-      meta={
-        evidence.sourceUrl !== null && evidence.sourceUrl !== "" ? (
-          <MetaRow
-            label="Source URL"
-            className="flex-col items-start gap-1"
-            labelClassName="text-xs font-medium"
-          >
-            <ExternalUrl href={evidence.sourceUrl} />
-          </MetaRow>
-        ) : undefined
-      }
-      body={evidenceContentBody({
-        canEnrich,
-        isImage,
-        downloadUrl,
-        loadingBlob,
-        resolvedText,
-        mime: evidence.mime,
-        title,
-        hasUri,
-      })}
-    />
+    <div className="flex flex-col gap-3">
+      {notes === null ? null : (
+        <ComposerShell density="dense" className="gap-0 px-2.5 py-2">
+          <p className="text-muted-foreground text-xs leading-snug">{notes}</p>
+        </ComposerShell>
+      )}
+      <ArtifactPreview
+        name={title}
+        defaultOpen
+        headerAction={
+          evidence.sha256 !== null && evidence.sha256 !== "" ? (
+            <IdChip
+              value={evidence.sha256}
+              preset="sha256"
+              copyable
+              className="min-w-0"
+            />
+          ) : undefined
+        }
+        meta={
+          evidence.sourceUrl !== null && evidence.sourceUrl !== "" ? (
+            <MetaRow
+              label="Source URL"
+              className="flex-col items-start gap-1"
+              labelClassName="text-xs font-medium"
+            >
+              <ExternalUrl href={evidence.sourceUrl} />
+            </MetaRow>
+          ) : undefined
+        }
+        body={evidenceContentBody({
+          canEnrich,
+          isImage,
+          downloadUrl,
+          loadingBlob,
+          resolvedText,
+          mime: evidence.mime,
+          title,
+          hasUri,
+        })}
+      />
+    </div>
   );
 }
 
@@ -292,28 +316,34 @@ export function EvidenceDetail({
 }: EvidenceDetailProps) {
   // Callers remount this component with `key={evidence.id}` on selection
   // change, so this only needs to compute the initial tab once per evidence.
+  const collectRow = useMemo(() => {
+    if (!evidence) return null;
+    return buildCollectIndex([evidence], jobs).rowById(evidence.id);
+  }, [evidence, jobs]);
   const [tab, setTab] = useState<DetailTab>(() => {
     if (!evidence) return "content";
-    if (latestEnrichOutput(jobs, evidence.id) !== null) return "output";
+    const row = buildCollectIndex([evidence], jobs).rowById(evidence.id);
+    const enrichJobs = jobsForRole(row, "enrich");
+    if (latestEnrichOutput(enrichJobs) !== null) return "output";
     const hasJobs =
-      processJobsForEvidence(jobs, evidence.id).length > 0 ||
-      enrichJobsForEvidence(jobs, evidence.id).length > 0;
+      jobsForRole(row, "process").length > 0 || enrichJobs.length > 0;
     return hasJobs ? "jobs" : "content";
   });
   const [hideOpen, setHideOpen] = useState(false);
+  const [focusedJobId, setFocusedJobId] = useState<string | null>(null);
   const isHidden = Boolean(evidence?.deletedAt);
 
   const processJobs = useMemo(
-    () => (evidence ? processJobsForEvidence(jobs, evidence.id) : []),
-    [evidence, jobs]
+    () => jobsForRole(collectRow, "process"),
+    [collectRow]
   );
   const enrichJobs = useMemo(
-    () => (evidence ? enrichJobsForEvidence(jobs, evidence.id) : []),
-    [evidence, jobs]
+    () => jobsForRole(collectRow, "enrich"),
+    [collectRow]
   );
   const enrichOutput = useMemo(
-    () => (evidence ? latestEnrichOutput(jobs, evidence.id) : null),
-    [evidence, jobs]
+    () => latestEnrichOutput(enrichJobs),
+    [enrichJobs]
   );
   const enrichPending = useMemo(
     () =>
@@ -322,8 +352,8 @@ export function EvidenceDetail({
   );
   const canEnrich = Boolean(evidence && evidenceHasEnrichableUrl(evidence));
   const producingCap = useMemo(
-    () => (evidence ? producingCapJob(jobs, evidence.id) : null),
-    [evidence, jobs]
+    () => producingCapFromRow(collectRow),
+    [collectRow]
   );
   const relatedJobs = useMemo(() => {
     const fromCap = producingCap === null ? [] : [producingCap];
@@ -333,6 +363,25 @@ export function EvidenceDetail({
       (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)
     );
   }, [producingCap, enrichJobs, processJobs]);
+
+  useEffect(() => {
+    let frame = 0;
+    if (tab === "jobs" && focusedJobId !== null) {
+      frame = requestAnimationFrame(() => {
+        document
+          .querySelector(`#${CSS.escape(processRunCardDomId(focusedJobId))}`)
+          ?.scrollIntoView({
+            block: "nearest",
+            behavior: "smooth",
+          });
+      });
+    }
+    return () => {
+      if (frame !== 0) {
+        cancelAnimationFrame(frame);
+      }
+    };
+  }, [tab, focusedJobId]);
 
   const {
     isImage,
@@ -345,6 +394,11 @@ export function EvidenceDetail({
 
   function handleAttachEntity(entityId: string) {
     actions.onAttachEntity(entityId);
+  }
+
+  function handleShowProducingRun(jobId: string) {
+    setFocusedJobId(jobId);
+    setTab("jobs");
   }
 
   if (!evidence) {
@@ -364,7 +418,10 @@ export function EvidenceDetail({
         value={tab}
         onValueChange={(v) => {
           if (typeof v !== "string") return;
-          if (v === "content" || v === "output" || v === "jobs") setTab(v);
+          if (v === "content" || v === "output" || v === "jobs") {
+            setTab(v);
+            if (v !== "jobs") setFocusedJobId(null);
+          }
         }}
         className="flex min-h-0 flex-1 flex-col"
       >
@@ -381,6 +438,7 @@ export function EvidenceDetail({
           relatedJobs={relatedJobs}
           attaching={actions.attaching}
           onAttachEntity={handleAttachEntity}
+          onShowProducingRun={handleShowProducingRun}
         />
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
@@ -413,6 +471,8 @@ export function EvidenceDetail({
               <EvidenceJobsTab
                 relatedJobs={relatedJobs}
                 canEnrich={canEnrich}
+                focusedJobId={focusedJobId}
+                onFocusedJobChange={setFocusedJobId}
               />
             </ActiveTabBody>
           </TabsContent>

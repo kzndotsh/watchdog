@@ -56,6 +56,7 @@ vi.mock("@/shared/layout/page", () => ({
 
 vi.mock("@/shared/ui/skeletons", () => ({
   StackBodySkeleton: () => <div>Loading credentials</div>,
+  StackBodySkeletonLayout: () => <div>Loading credentials layout</div>,
 }));
 
 import { Route } from "@/routes/_protected/settings/index";

@@ -6,6 +6,7 @@ import { isTaskDueOverdue } from "@/domains/tasks/lib/due-date";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
 import { cn } from "@/lib/utils";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 import {
   TASK_PRIORITY_TONE_MAP,
   KindBadge,
@@ -150,7 +151,8 @@ export function TaskCard({
         transition: isDragging ? undefined : transition,
       }}
       className={cn(
-        "border-border bg-card group relative flex w-full cursor-grab touch-none gap-1.5 rounded-md border py-2 pr-2 pl-1.5 text-left shadow-xs active:cursor-grabbing",
+        TASK_CARD_SHELL_CLASS,
+        "group cursor-grab touch-none text-left active:cursor-grabbing",
         !isDragging && "overflow-hidden",
         selected && !isDragging && "ring-foreground/25 ring-1",
         isDragging &&
@@ -199,7 +201,7 @@ export function TaskCardPreview({
   const overdue = isTaskDueOverdue(task.dueDate, task.status);
 
   return (
-    <div className="border-border bg-card relative flex w-full cursor-grabbing gap-1.5 overflow-hidden rounded-md border py-2 pr-2 pl-1.5 shadow-md">
+    <div className={cn(TASK_CARD_SHELL_CLASS, "cursor-grabbing shadow-md")}>
       {task.priority ? (
         <span
           aria-hidden

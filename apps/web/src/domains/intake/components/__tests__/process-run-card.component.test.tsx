@@ -52,13 +52,12 @@ function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
 }
 
 describe("ProcessRunCard", () => {
-  it("renders cap identity, summary, and jobs link", () => {
+  it("renders cap identity and artifact output", () => {
     render(<ProcessRunCard job={job()} defaultOpen />);
 
     expect(screen.getByText("Resolved A record")).toBeInTheDocument();
     expect(screen.getByText("1 artifact")).toBeInTheDocument();
     expect(screen.getByText("report.json")).toBeInTheDocument();
-    expect(screen.getByText("Open in Jobs")).toBeInTheDocument();
   });
 
   it("shows live chip for running jobs", () => {

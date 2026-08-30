@@ -1,12 +1,10 @@
-import type { Edge, Node } from "@xyflow/react";
-
 import type {
   ConfidenceTier,
   EdgePredicate,
   EntityKind,
 } from "@watchdog/schemas";
 
-export interface EntityNodeData extends Record<string, unknown> {
+export interface EntityNodeData {
   label: string;
   kind: EntityKind;
   slug: string;
@@ -15,11 +13,35 @@ export interface EntityNodeData extends Record<string, unknown> {
   showMenu?: boolean;
 }
 
-export interface PredicateEdgeData extends Record<string, unknown> {
+export interface PredicateEdgeData {
   predicate: EdgePredicate;
   confidence: ConfidenceTier;
   edgeId: string;
 }
 
-export type EntityFlowNode = Node<EntityNodeData, "entity">;
-export type PredicateFlowEdge = Edge<PredicateEdgeData, "predicate">;
+export interface GraphNode {
+  id: string;
+  position: { x: number; y: number };
+  width?: number;
+  height?: number;
+  data: EntityNodeData;
+  selected?: boolean;
+}
+
+export interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  data?: PredicateEdgeData;
+  style?: {
+    stroke?: string;
+    strokeWidth?: number;
+  };
+  selected?: boolean;
+}
+
+/** @deprecated Use {@link GraphNode}. */
+export type EntityFlowNode = GraphNode;
+
+/** @deprecated Use {@link GraphEdge}. */
+export type PredicateFlowEdge = GraphEdge;

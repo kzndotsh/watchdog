@@ -5,9 +5,8 @@ export type TrailTo =
   | { to: "/entities" }
   | { to: "/identifiers" }
   | { to: "/graph" }
-  | { to: "/inbox" }
-  | { to: "/jobs" }
-  | { to: "/intake" }
+  | { to: "/collect" }
+  | { to: "/triage" }
   | { to: "/tasks" }
   | { to: "/settings" }
   | { to: "/ui" };

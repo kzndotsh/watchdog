@@ -4,8 +4,6 @@
 /* Fontsource variable faces — /wght.css is the documented import (weights 100–900). */
 @import "@fontsource-variable/geist/wght.css";
 @import "@fontsource-variable/geist-mono/wght.css";
-/* React Flow — load in CSS (not TS) so Vite + Tailwind 4 resolve it. */
-@import "@xyflow/react/dist/style.css" layer(base);
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -15,3 +13,9 @@
 @import "./styles/wd-typography.css";
 @import "./styles/wd-dark.css";
 @import "./styles/wd-overrides.css";
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="skeleton"] {
+    animation: none;
+  }
+}

@@ -9,11 +9,11 @@ import { eventsKeys } from "@/domains/entities/events/queries";
 import { identifiersKeys } from "@/domains/entities/identifiers/queries";
 import { entitiesKeys } from "@/domains/entities/queries";
 import { questionsKeys } from "@/domains/entities/questions/queries";
-import { proposalsKeys } from "@/domains/inbox/queries";
 import { evidenceKeys } from "@/domains/intake/queries";
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
 import { credentialsKeys } from "@/domains/settings/queries";
 import { tasksKeys } from "@/domains/tasks/queries";
+import { proposalsKeys } from "@/domains/triage/queries";
 
 interface EntityChangedOpts {
   entityId?: string;

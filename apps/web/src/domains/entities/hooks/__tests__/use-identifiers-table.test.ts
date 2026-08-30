@@ -41,14 +41,14 @@ vi.mock("@/shared/ui/data-table", () => ({
   tableComposerKeyDown: vi.fn(),
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: (...args: unknown[]) => useMutationMock(...args),
   };
 });
@@ -64,16 +64,26 @@ const ACTIVE: CaseRecord = {
 };
 
 function renderHookWithClient() {
-  useSuspenseQueryMock.mockImplementation(
+  useQueryMock.mockImplementation(
     (options: { queryKey: readonly unknown[] }) => {
       switch (options.queryKey[0]) {
         case "identifiers":
         case "entities":
         case "evidence": {
-          return { data: [] };
+          return {
+            data: [],
+            isFetched: true,
+            isLoading: false,
+            isError: false,
+          };
         }
         default: {
-          return { data: [] };
+          return {
+            data: [],
+            isFetched: true,
+            isLoading: false,
+            isError: false,
+          };
         }
       }
     }
@@ -101,7 +111,7 @@ describe("useIdentifiersTable", () => {
     expect(result.current.entityOptions).toEqual([]);
     expect(result.current.evidenceOptions).toEqual([]);
     expect(result.current.rows).toEqual([]);
-    expect(useSuspenseQueryMock).toHaveBeenCalled();
+    expect(useQueryMock).toHaveBeenCalled();
 
     act(() => {
       result.current.openComposer();

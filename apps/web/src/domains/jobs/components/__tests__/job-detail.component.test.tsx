@@ -56,9 +56,7 @@ describe("JobDetail", () => {
   it("renders queued job header, logs, and cancel action", () => {
     render(<JobDetail job={jobRecord()} busy={false} onCancel={vi.fn()} />);
 
-    expect(
-      screen.getByRole("navigation", { name: "Job path" })
-    ).toHaveTextContent("mailhost.test");
+    expect(screen.getByText("mailhost.test")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Log" })).toBeInTheDocument();
     expect(screen.getByText(/resolved A record/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
@@ -96,6 +94,6 @@ describe("JobDetail", () => {
       />
     );
 
-    expect(screen.getByText("Open Proposal in Inbox")).toBeInTheDocument();
+    expect(screen.getByText("Open Proposal in Triage")).toBeInTheDocument();
   });
 });

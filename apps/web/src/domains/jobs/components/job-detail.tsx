@@ -16,6 +16,10 @@ import { playbookWaitingOnNextStep } from "@/domains/jobs/lib/status";
 import { cn } from "@/lib/utils";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { CodeBlock } from "@/shared/ui/code-block";
+import {
+  DetailContextHeader,
+  DetailContextSep,
+} from "@/shared/ui/detail-context-strip";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import {
@@ -27,11 +31,7 @@ import {
   FormInlineError,
   FormInlineWarning,
 } from "@/shared/ui/form-inline-message";
-import { IdChip } from "@/shared/ui/id-chip";
 import { JsonView } from "@/shared/ui/json-view";
-import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { MetaRow } from "@/shared/ui/meta-row";
-import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { Badge } from "@/shared/ui/shadcn/badge";
 import { Button } from "@/shared/ui/shadcn/button";
@@ -220,83 +220,56 @@ function JobDetailHeader({
   view: JobDetailView;
 }) {
   return (
-    <header className="border-border flex shrink-0 flex-col border-b">
-      <div className="flex flex-col gap-2 px-4 pt-3 pb-2">
-        <div className="flex items-start justify-between gap-3">
-          <nav
-            aria-label="Job path"
-            className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs"
-          >
-            <span className="text-foreground font-medium">
-              {capabilityLabel(job.capabilityId)}
+    <header className="border-border flex shrink-0 flex-col">
+      <DetailContextHeader>
+        <span className="text-foreground font-medium">
+          {capabilityLabel(job.capabilityId)}
+        </span>
+        {view.inputHint === "" ? null : (
+          <>
+            <span aria-hidden className="text-muted-foreground/60">
+              →
             </span>
-            {view.inputHint === "" ? null : (
-              <>
-                <span aria-hidden>/</span>
-                <span className="text-foreground/80 max-w-[14rem] truncate leading-none">
-                  {view.inputHint}
-                </span>
-              </>
-            )}
-            <span aria-hidden>/</span>
-            <IdChip value={job.id} copyable />
-          </nav>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-            {view.interpretFailed ? (
-              <Badge
-                variant="outline"
-                className={cn(DETAIL_CHIP_CLASS, "bg-warning/15 text-warning")}
-              >
-                Interpret failed
-              </Badge>
-            ) : (
-              <StatusBadge status={job.status} size="md" />
-            )}
-            {job.fromCache ? (
-              <DetailStatusChip>From cache</DetailStatusChip>
-            ) : null}
-            {view.showSucceededOutcomeChip ? (
-              <DetailStatusChip>
-                {job.suppressedCount > 0 ? "No proposal" : "Evidence only"}
-              </DetailStatusChip>
-            ) : null}
-            {job.suppressedCount > 0 ? (
-              <DetailStatusChip>
-                {job.suppressedCount} suppressed
-              </DetailStatusChip>
-            ) : null}
-            {view.live ? <DetailStatusChip>live</DetailStatusChip> : null}
-            {view.showPlaybookChip ? (
-              <DetailStatusChip>playbook</DetailStatusChip>
-            ) : null}
-          </div>
-        </div>
-
-        <MetaRow label="Ran">
-          <span className="text-muted-foreground">
-            <LocalDateTime value={view.ranInstant} />
-            {view.duration !== null && view.duration !== "" ? (
-              <>
-                <span aria-hidden> · </span>
-                {view.duration}
-                {job.finishedAt === null && view.live ? " (elapsed)" : ""}
-              </>
-            ) : null}
-            <span aria-hidden> · </span>
-            <RelativeTime value={view.ranInstant} />
-          </span>
-        </MetaRow>
-
+            <span className="text-foreground/80 max-w-[14rem] truncate">
+              {view.inputHint}
+            </span>
+          </>
+        )}
+        <DetailContextSep />
         {view.interpretFailed ? (
-          <FormInlineWarning>
-            Evidence captured; interpretation failed — no Proposal created.{" "}
-            {job.interpretError}
-          </FormInlineWarning>
+          <Badge
+            variant="outline"
+            className={cn(DETAIL_CHIP_CLASS, "bg-warning/15 text-warning")}
+          >
+            Interpret failed
+          </Badge>
+        ) : (
+          <StatusBadge status={job.status} size="md" />
+        )}
+        {job.fromCache ? <DetailStatusChip>From cache</DetailStatusChip> : null}
+        {view.showSucceededOutcomeChip ? (
+          <DetailStatusChip>
+            {job.suppressedCount > 0 ? "No proposal" : "Evidence only"}
+          </DetailStatusChip>
         ) : null}
-        <FormInlineError>{job.error}</FormInlineError>
-      </div>
+        {job.suppressedCount > 0 ? (
+          <DetailStatusChip>{job.suppressedCount} suppressed</DetailStatusChip>
+        ) : null}
+        {view.live ? <DetailStatusChip>live</DetailStatusChip> : null}
+        {view.showPlaybookChip ? (
+          <DetailStatusChip>playbook</DetailStatusChip>
+        ) : null}
+      </DetailContextHeader>
 
-      <div className="px-2 pb-0">
+      {view.interpretFailed ? (
+        <FormInlineWarning className="px-3">
+          Evidence captured; interpretation failed — no Proposal created.{" "}
+          {job.interpretError}
+        </FormInlineWarning>
+      ) : null}
+      <FormInlineError className="px-3">{job.error}</FormInlineError>
+
+      <div className="border-border border-b px-2 pb-0">
         <TabsList variant="line" className="h-8">
           <TabsTrigger value="log">Log</TabsTrigger>
           <TabsTrigger value="input">Input</TabsTrigger>
@@ -361,9 +334,11 @@ function JobDetailFooterBar({
           nativeButton={false}
           size="sm"
           className="h-7"
-          render={<Link to="/inbox" search={{ proposalId: view.proposalId }} />}
+          render={
+            <Link to="/triage" search={{ proposalId: view.proposalId }} />
+          }
         >
-          Open Proposal in Inbox
+          Open Proposal in Triage
         </Button>
       )}
     </DetailFooter>

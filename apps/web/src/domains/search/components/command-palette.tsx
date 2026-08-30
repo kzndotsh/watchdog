@@ -10,6 +10,7 @@ import {
   type SearchCaseResult,
 } from "@/domains/search/types";
 import { errMessage } from "@/lib/utils";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import {
   Command,
@@ -61,6 +62,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const {
     data: hits,
     isFetching,
+    isPlaceholderData,
     isError,
     error,
   } = useQuery({
@@ -133,7 +135,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           value={query}
           onValueChange={setQuery}
         />
-        <CommandList>
+        <CommandList className={placeholderDeemphasisClass(isPlaceholderData)}>
           <CommandEmpty>{emptyMessage}</CommandEmpty>
 
           {showResults ? null : (
@@ -212,8 +214,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   onSelect={() => {
                     closeThen(() => {
                       void navigate({
-                        to: "/intake",
-                        search: { evidenceId: hit.id },
+                        to: "/collect",
+                        search: { id: hit.id },
                       });
                     });
                   }}
@@ -256,8 +258,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   onSelect={() => {
                     closeThen(() => {
                       void navigate({
-                        to: "/jobs",
-                        search: { jobId: hit.id },
+                        to: "/collect",
+                        search: { id: hit.id },
                       });
                     });
                   }}
@@ -270,7 +272,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           ) : null}
 
           {resultHits && resultHits.proposals.length > 0 ? (
-            <CommandGroup heading="Inbox">
+            <CommandGroup heading="Triage">
               {resultHits.proposals.map((hit) => (
                 <CommandItem
                   key={hit.id}
@@ -278,7 +280,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   onSelect={() => {
                     closeThen(() => {
                       void navigate({
-                        to: "/inbox",
+                        to: "/triage",
                         search: { proposalId: hit.id },
                       });
                     });

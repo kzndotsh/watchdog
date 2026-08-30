@@ -18,6 +18,7 @@ import {
   EditableSelectCell,
   TableComposerInput,
 } from "@/shared/ui/data-table";
+import { EmptyState } from "@/shared/ui/empty-state";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { SearchField } from "@/shared/ui/search-field";
 import { Button } from "@/shared/ui/shadcn/button";
@@ -46,6 +47,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
     filterChips,
     emptyText,
     onRowClick,
+    pending,
   } = useEntityTable(active);
 
   const appendRow = composing ? (
@@ -194,6 +196,8 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
         table={table}
         emptyText={emptyText}
         appendRow={appendRow}
+        pending={pending}
+        pendingLabel="Loading entities table"
         onRowClick={(row) => {
           onRowClick(row);
         }}
@@ -210,9 +214,19 @@ export function EntityTable() {
     return (
       <Page>
         <PageHeader />
-        <Button nativeButton={false} render={<Link to="/cases" />}>
-          Go to Cases
-        </Button>
+        <EmptyState
+          intent="blank-slate"
+          items="cases"
+          title="No active case"
+          description={
+            <>
+              <Link to="/cases" className="underline">
+                Select a case
+              </Link>{" "}
+              to manage entities.
+            </>
+          }
+        />
       </Page>
     );
   }

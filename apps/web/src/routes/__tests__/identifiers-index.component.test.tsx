@@ -36,14 +36,16 @@ describe("identifiers index route", () => {
       .fn()
       .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
       .mockResolvedValue([]);
+    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: { ensureQueryData } },
+      context: { queryClient: { ensureQueryData, prefetchQuery } },
     } as never);
 
-    expect(ensureQueryData).toHaveBeenCalledTimes(4);
+    expect(ensureQueryData).toHaveBeenCalledTimes(3);
+    expect(prefetchQuery).toHaveBeenCalledTimes(1);
   });
 
   it("renders the identifiers page", () => {

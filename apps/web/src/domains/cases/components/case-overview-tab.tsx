@@ -1,4 +1,4 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 
@@ -8,10 +8,10 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import type { EntityRecord } from "@/domains/entities/types";
-import { proposalsByStatusQuery } from "@/domains/inbox/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { LIVE_STATUSES } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
+import { proposalsByStatusQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import {
@@ -31,9 +31,8 @@ interface StatTile {
     | "/identifiers"
     | "/graph"
     | "/tasks"
-    | "/intake"
-    | "/inbox"
-    | "/jobs";
+    | "/collect"
+    | "/triage";
   tone?: "warn";
 }
 
@@ -42,20 +41,29 @@ export function CaseOverviewTab({
   caseRow,
   entities,
   identifiers,
+  listsPending = false,
 }: {
   caseId: string;
   caseRow: CaseRecord;
   entities: EntityRecord[];
   identifiers: CaseIdentifierRecord[];
+  listsPending?: boolean;
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: edges } = useSuspenseQuery(edgesForCaseQuery(caseId));
-  const { data: evidence } = useSuspenseQuery(evidenceListQuery(caseId));
-  const { data: jobs } = useSuspenseQuery(jobsListQuery(caseId));
-  const { data: pendingProposals } = useSuspenseQuery(
-    proposalsByStatusQuery(caseId, "pending")
-  );
+  const [
+    { data: edges },
+    { data: evidence },
+    { data: jobs },
+    { data: pendingProposals },
+  ] = useSuspenseQueries({
+    queries: [
+      edgesForCaseQuery(caseId),
+      evidenceListQuery(caseId),
+      jobsListQuery(caseId),
+      proposalsByStatusQuery(caseId, "pending"),
+    ],
+  });
 
   useLiveEvents(caseId, (event) => {
     if (event.type === "job_update") {
@@ -76,13 +84,13 @@ export function CaseOverviewTab({
       {
         id: "entities",
         label: "Entities",
-        value: entities.length,
+        value: listsPending ? "—" : entities.length,
         to: "/entities",
       },
       {
         id: "identifiers",
         label: "Identifiers",
-        value: identifiers.length,
+        value: listsPending ? "—" : identifiers.length,
         to: "/identifiers",
       },
       {
@@ -95,23 +103,24 @@ export function CaseOverviewTab({
         id: "evidence",
         label: "Evidence",
         value: evidence.length,
-        to: "/intake",
+        to: "/collect",
       },
       {
         id: "live",
         label: "Live jobs",
         value: liveJobs.length,
-        to: "/jobs",
+        to: "/collect",
       },
       {
         id: "inbox",
         label: "Pending proposals",
         value: pendingProposals.length,
         tone: pendingProposals.length > 0 ? "warn" : undefined,
-        to: "/inbox",
+        to: "/triage",
       },
     ],
     [
+      listsPending,
       entities.length,
       identifiers.length,
       edges.length,

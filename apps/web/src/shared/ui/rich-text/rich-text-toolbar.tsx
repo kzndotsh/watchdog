@@ -44,7 +44,7 @@ export function RichTextToolbar() {
       role="toolbar"
       tabIndex={-1}
       aria-label="Formatting"
-      className="border-border bg-muted/30 flex flex-wrap items-center gap-1 border-b px-1 py-1"
+      className="border-border bg-muted/30 flex min-h-9 flex-nowrap items-center gap-1 overflow-x-auto border-b px-1 py-1"
       onMouseDown={preventToolbarMouseDown}
     >
       <RichTextHeadingToggleGroup

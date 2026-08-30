@@ -56,6 +56,10 @@ export function EgoNodeMenu({
     };
   }, [onClose]);
 
+  if (typeof document === "undefined") {
+    return null;
+  }
+
   return createPortal(
     <div
       ref={ref}

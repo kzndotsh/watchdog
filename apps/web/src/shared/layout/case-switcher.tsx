@@ -6,6 +6,7 @@ import { casesContextQuery } from "@/domains/cases/queries";
 import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import { SidebarGroupLabel, useSidebar } from "@/shared/ui/shadcn/sidebar";
+import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 
 import {
   CaseSwitcherCollapsed,
@@ -17,7 +18,7 @@ function CaseSwitcherSkeleton() {
   return (
     <>
       <SidebarGroupLabel>Case</SidebarGroupLabel>
-      <div className="dark:bg-input/30 h-8 w-full animate-pulse rounded-md bg-transparent" />
+      <Skeleton className="h-8 w-full" />
     </>
   );
 }

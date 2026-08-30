@@ -39,7 +39,7 @@ describe("DeleteCaseDialog", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /Delete “Alpha Case” and everything in it — entities, evidence, jobs, inbox, and tasks\./
+        /Delete “Alpha Case” and everything in it — entities, evidence, collect, triage, and tasks\./
       )
     ).toBeInTheDocument();
     expect(screen.getByText(/cannot be undone/i)).toBeInTheDocument();

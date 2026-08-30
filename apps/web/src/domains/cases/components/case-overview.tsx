@@ -2,7 +2,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
-  useSuspenseQuery,
+  useSuspenseQueries,
 } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, DownloadIcon } from "lucide-react";
@@ -10,6 +10,10 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
+import {
+  CaseOverviewSuspense,
+  CaseOverviewPending,
+} from "@/domains/cases/components/case-overview-pending";
 import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
@@ -22,7 +26,6 @@ import {
   bindCasesChangedInvalidation,
   invalidateAfterCaseSwitch,
 } from "@/shared/lib/query-invalidation";
-import { ActiveTabBody, SuspenseTabBody } from "@/shared/ui/active-tab-body";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { Button } from "@/shared/ui/shadcn/button";
 
@@ -31,8 +34,9 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const { data: caseRow } = useSuspenseQuery(caseByIdQuery(caseId));
-  const { data: casesCtx } = useSuspenseQuery(casesContextQuery());
+  const [{ data: caseRow }, { data: casesCtx }] = useSuspenseQueries({
+    queries: [caseByIdQuery(caseId), casesContextQuery()],
+  });
 
   const { data: entities = [], isPending: entitiesPending } = useQuery(
     entitiesListQuery(caseId)
@@ -113,16 +117,19 @@ export function CaseOverview({ caseId }: { caseId: string }) {
         }
       />
 
-      <ActiveTabBody active pending={listsPending}>
-        <SuspenseTabBody>
+      {listsPending ? (
+        <CaseOverviewPending />
+      ) : (
+        <CaseOverviewSuspense>
           <CaseOverviewTab
             caseId={caseId}
             caseRow={caseRow}
             entities={entities}
             identifiers={identifiers}
+            listsPending={listsPending}
           />
-        </SuspenseTabBody>
-      </ActiveTabBody>
+        </CaseOverviewSuspense>
+      )}
 
       <DeleteCaseDialog
         caseRow={caseRow}

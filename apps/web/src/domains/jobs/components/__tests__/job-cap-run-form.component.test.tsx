@@ -77,7 +77,9 @@ describe("JobCapRunForm", () => {
     expect(
       screen.getByRole("button", { name: "Cap filters" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Run" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Run Capability" })
+    ).toBeDisabled();
   });
 
   it("submits selected cap input through onRunCap", async () => {
@@ -99,7 +101,7 @@ describe("JobCapRunForm", () => {
       "network.dns.lookup"
     );
     await user.type(screen.getByLabelText("Capability host"), "mailhost.test");
-    await user.click(screen.getByRole("button", { name: "Run" }));
+    await user.click(screen.getByRole("button", { name: "Run Capability" }));
 
     expect(onRunCap).toHaveBeenCalledWith({
       capabilityId: "network.dns.lookup",
