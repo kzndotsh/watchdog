@@ -8,10 +8,21 @@ set -eu
 
 input=$(cat)
 
-file_path=$(printf '%s' "$input" \
-  | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' \
-  | head -n 1 \
-  | sed -E 's/.*:[[:space:]]*"(.*)"/\1/')
+# grep exits 1 on no match; with set -e that aborts before the empty-path
+# allow below. Cursor also uses "path" for some reads (e.g. transcripts).
+extract_path_field() {
+  field=$1
+  printf '%s' "$input" \
+    | grep -o "\"$field\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" 2>/dev/null \
+    | head -n 1 \
+    | sed -E 's/.*:[[:space:]]*"(.*)"/\1/' \
+    || true
+}
+
+file_path=$(extract_path_field file_path)
+if [ -z "$file_path" ]; then
+  file_path=$(extract_path_field path)
+fi
 
 if [ -z "$file_path" ]; then
   printf '{"permission":"allow"}'

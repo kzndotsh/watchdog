@@ -107,6 +107,7 @@ function main() {
     (f) =>
       f.startsWith("apps/web/src/shared/ui/") ||
       f.startsWith("apps/web/src/domains/") ||
+      f.startsWith("apps/web/src/routes/") ||
       f.startsWith("apps/web/src/styles.css") ||
       f.startsWith("apps/web/scripts/") ||
       f.includes("UX.md") ||
