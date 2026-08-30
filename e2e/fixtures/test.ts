@@ -25,7 +25,7 @@ interface E2eFixtures {
 
 export const test = base.extend<E2eFixtures>({
   _resetDb: [
-    async (_fixtures, use) => {
+    async ({ page: _page }, use) => {
       await resetE2eDb();
       // oxlint-disable-next-line typescript/no-unsafe-call -- Playwright fixture `use` is typed loosely
       await use();
