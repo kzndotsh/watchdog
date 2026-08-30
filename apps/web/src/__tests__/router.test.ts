@@ -31,7 +31,7 @@ describe("getRouter", () => {
     expect(createAppQueryClientMock).toHaveBeenCalledTimes(1);
     expect(createTanStackRouterMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        scrollRestoration: true,
+        scrollRestoration: false,
         defaultPreload: "intent",
         defaultPreloadStaleTime: 0,
         defaultPendingMs: 400,

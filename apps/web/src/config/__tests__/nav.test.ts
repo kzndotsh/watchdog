@@ -6,7 +6,7 @@ describe("nav config", () => {
   it("marks nested routes active for their nav target", () => {
     expect(pathActive("/entities/person-1", "/entities")).toBe(true);
     expect(pathActive("/settings/credentials", "/settings")).toBe(true);
-    expect(pathActive("/jobs", "/inbox")).toBe(false);
+    expect(pathActive("/collect", "/triage")).toBe(false);
   });
 
   it("exposes case and workspace nav groups", () => {

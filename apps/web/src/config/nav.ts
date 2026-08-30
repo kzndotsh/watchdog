@@ -7,7 +7,6 @@ import {
   GitForkIcon,
   HashIcon,
   InboxIcon,
-  ListTodoIcon,
   PaletteIcon,
   SettingsIcon,
   ShapesIcon,
@@ -20,9 +19,8 @@ export type NavTo =
   | "/entities"
   | "/identifiers"
   | "/graph"
-  | "/inbox"
-  | "/jobs"
-  | "/intake"
+  | "/collect"
+  | "/triage"
   | "/tasks"
   | "/settings"
   | "/ui";
@@ -50,9 +48,8 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Work",
     items: [
       { to: "/tasks", label: "Tasks", icon: CheckSquareIcon },
-      { to: "/intake", label: "Intake", icon: UploadIcon },
-      { to: "/inbox", label: "Inbox", icon: InboxIcon },
-      { to: "/jobs", label: "Jobs", icon: ListTodoIcon },
+      { to: "/collect", label: "Collect", icon: UploadIcon },
+      { to: "/triage", label: "Triage", icon: InboxIcon },
     ],
   },
   {

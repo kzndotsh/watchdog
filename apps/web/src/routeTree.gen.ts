@@ -16,15 +16,14 @@ import { Route as ApiV1RouteImport } from './routes/api/v1'
 import { Route as AuthPathRouteImport } from './routes/auth/$path'
 import { Route as ProtectedCasesIndexRouteImport } from './routes/_protected/cases/index'
 import { Route as ProtectedCasesCaseSlugRouteImport } from './routes/_protected/cases/$caseSlug'
+import { Route as ProtectedCollectIndexRouteImport } from './routes/_protected/collect/index'
 import { Route as ProtectedEntitiesIndexRouteImport } from './routes/_protected/entities/index'
 import { Route as ProtectedEntitiesEntitySlugRouteImport } from './routes/_protected/entities/$entitySlug'
 import { Route as ProtectedGraphIndexRouteImport } from './routes/_protected/graph/index'
 import { Route as ProtectedIdentifiersIndexRouteImport } from './routes/_protected/identifiers/index'
-import { Route as ProtectedInboxIndexRouteImport } from './routes/_protected/inbox/index'
-import { Route as ProtectedIntakeIndexRouteImport } from './routes/_protected/intake/index'
-import { Route as ProtectedJobsIndexRouteImport } from './routes/_protected/jobs/index'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
 import { Route as ProtectedTasksIndexRouteImport } from './routes/_protected/tasks/index'
+import { Route as ProtectedTriageIndexRouteImport } from './routes/_protected/triage/index'
 import { Route as ProtectedUiIndexRouteImport } from './routes/_protected/ui/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiRpcSplatRouteImport } from './routes/api/rpc.$'
@@ -66,6 +65,11 @@ const ProtectedCasesCaseSlugRoute = ProtectedCasesCaseSlugRouteImport.update({
   path: '/cases/$caseSlug',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedCollectIndexRoute = ProtectedCollectIndexRouteImport.update({
+  id: '/collect/',
+  path: '/collect/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ProtectedEntitiesIndexRoute = ProtectedEntitiesIndexRouteImport.update({
   id: '/entities/',
   path: '/entities/',
@@ -88,21 +92,6 @@ const ProtectedIdentifiersIndexRoute =
     path: '/identifiers/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedInboxIndexRoute = ProtectedInboxIndexRouteImport.update({
-  id: '/inbox/',
-  path: '/inbox/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedIntakeIndexRoute = ProtectedIntakeIndexRouteImport.update({
-  id: '/intake/',
-  path: '/intake/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedJobsIndexRoute = ProtectedJobsIndexRouteImport.update({
-  id: '/jobs/',
-  path: '/jobs/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -111,6 +100,11 @@ const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
 const ProtectedTasksIndexRoute = ProtectedTasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedTriageIndexRoute = ProtectedTriageIndexRouteImport.update({
+  id: '/triage/',
+  path: '/triage/',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedUiIndexRoute = ProtectedUiIndexRouteImport.update({
@@ -157,14 +151,13 @@ export interface FileRoutesByFullPath {
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/cases/': typeof ProtectedCasesIndexRoute
+  '/collect/': typeof ProtectedCollectIndexRoute
   '/entities/': typeof ProtectedEntitiesIndexRoute
   '/graph/': typeof ProtectedGraphIndexRoute
   '/identifiers/': typeof ProtectedIdentifiersIndexRoute
-  '/inbox/': typeof ProtectedInboxIndexRoute
-  '/intake/': typeof ProtectedIntakeIndexRoute
-  '/jobs/': typeof ProtectedJobsIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
   '/tasks/': typeof ProtectedTasksIndexRoute
+  '/triage/': typeof ProtectedTriageIndexRoute
   '/ui/': typeof ProtectedUiIndexRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
@@ -180,14 +173,13 @@ export interface FileRoutesByTo {
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/cases': typeof ProtectedCasesIndexRoute
+  '/collect': typeof ProtectedCollectIndexRoute
   '/entities': typeof ProtectedEntitiesIndexRoute
   '/graph': typeof ProtectedGraphIndexRoute
   '/identifiers': typeof ProtectedIdentifiersIndexRoute
-  '/inbox': typeof ProtectedInboxIndexRoute
-  '/intake': typeof ProtectedIntakeIndexRoute
-  '/jobs': typeof ProtectedJobsIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
   '/tasks': typeof ProtectedTasksIndexRoute
+  '/triage': typeof ProtectedTriageIndexRoute
   '/ui': typeof ProtectedUiIndexRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
@@ -205,14 +197,13 @@ export interface FileRoutesById {
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
   '/_protected/cases/': typeof ProtectedCasesIndexRoute
+  '/_protected/collect/': typeof ProtectedCollectIndexRoute
   '/_protected/entities/': typeof ProtectedEntitiesIndexRoute
   '/_protected/graph/': typeof ProtectedGraphIndexRoute
   '/_protected/identifiers/': typeof ProtectedIdentifiersIndexRoute
-  '/_protected/inbox/': typeof ProtectedInboxIndexRoute
-  '/_protected/intake/': typeof ProtectedIntakeIndexRoute
-  '/_protected/jobs/': typeof ProtectedJobsIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
   '/_protected/tasks/': typeof ProtectedTasksIndexRoute
+  '/_protected/triage/': typeof ProtectedTriageIndexRoute
   '/_protected/ui/': typeof ProtectedUiIndexRoute
   '/api/v1/cases/$caseId/export.zip': typeof ApiV1CasesCaseIdExportDotzipRoute
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
@@ -230,14 +221,13 @@ export interface FileRouteTypes {
     | '/api/rpc/$'
     | '/api/v1/$'
     | '/cases/'
+    | '/collect/'
     | '/entities/'
     | '/graph/'
     | '/identifiers/'
-    | '/inbox/'
-    | '/intake/'
-    | '/jobs/'
     | '/settings/'
     | '/tasks/'
+    | '/triage/'
     | '/ui/'
     | '/api/v1/cases/$caseId/export.zip'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
@@ -253,14 +243,13 @@ export interface FileRouteTypes {
     | '/api/rpc/$'
     | '/api/v1/$'
     | '/cases'
+    | '/collect'
     | '/entities'
     | '/graph'
     | '/identifiers'
-    | '/inbox'
-    | '/intake'
-    | '/jobs'
     | '/settings'
     | '/tasks'
+    | '/triage'
     | '/ui'
     | '/api/v1/cases/$caseId/export.zip'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
@@ -277,14 +266,13 @@ export interface FileRouteTypes {
     | '/api/rpc/$'
     | '/api/v1/$'
     | '/_protected/cases/'
+    | '/_protected/collect/'
     | '/_protected/entities/'
     | '/_protected/graph/'
     | '/_protected/identifiers/'
-    | '/_protected/inbox/'
-    | '/_protected/intake/'
-    | '/_protected/jobs/'
     | '/_protected/settings/'
     | '/_protected/tasks/'
+    | '/_protected/triage/'
     | '/_protected/ui/'
     | '/api/v1/cases/$caseId/export.zip'
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
@@ -350,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedCasesCaseSlugRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/collect/': {
+      id: '/_protected/collect/'
+      path: '/collect'
+      fullPath: '/collect/'
+      preLoaderRoute: typeof ProtectedCollectIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/entities/': {
       id: '/_protected/entities/'
       path: '/entities'
@@ -378,27 +373,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedIdentifiersIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/inbox/': {
-      id: '/_protected/inbox/'
-      path: '/inbox'
-      fullPath: '/inbox/'
-      preLoaderRoute: typeof ProtectedInboxIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/intake/': {
-      id: '/_protected/intake/'
-      path: '/intake'
-      fullPath: '/intake/'
-      preLoaderRoute: typeof ProtectedIntakeIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/jobs/': {
-      id: '/_protected/jobs/'
-      path: '/jobs'
-      fullPath: '/jobs/'
-      preLoaderRoute: typeof ProtectedJobsIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/settings/': {
       id: '/_protected/settings/'
       path: '/settings'
@@ -411,6 +385,13 @@ declare module '@tanstack/react-router' {
       path: '/tasks'
       fullPath: '/tasks/'
       preLoaderRoute: typeof ProtectedTasksIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/triage/': {
+      id: '/_protected/triage/'
+      path: '/triage'
+      fullPath: '/triage/'
+      preLoaderRoute: typeof ProtectedTriageIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/ui/': {
@@ -463,14 +444,13 @@ interface ProtectedRouteChildren {
   ProtectedCasesCaseSlugRoute: typeof ProtectedCasesCaseSlugRoute
   ProtectedEntitiesEntitySlugRoute: typeof ProtectedEntitiesEntitySlugRoute
   ProtectedCasesIndexRoute: typeof ProtectedCasesIndexRoute
+  ProtectedCollectIndexRoute: typeof ProtectedCollectIndexRoute
   ProtectedEntitiesIndexRoute: typeof ProtectedEntitiesIndexRoute
   ProtectedGraphIndexRoute: typeof ProtectedGraphIndexRoute
   ProtectedIdentifiersIndexRoute: typeof ProtectedIdentifiersIndexRoute
-  ProtectedInboxIndexRoute: typeof ProtectedInboxIndexRoute
-  ProtectedIntakeIndexRoute: typeof ProtectedIntakeIndexRoute
-  ProtectedJobsIndexRoute: typeof ProtectedJobsIndexRoute
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
   ProtectedTasksIndexRoute: typeof ProtectedTasksIndexRoute
+  ProtectedTriageIndexRoute: typeof ProtectedTriageIndexRoute
   ProtectedUiIndexRoute: typeof ProtectedUiIndexRoute
 }
 
@@ -479,14 +459,13 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedCasesCaseSlugRoute: ProtectedCasesCaseSlugRoute,
   ProtectedEntitiesEntitySlugRoute: ProtectedEntitiesEntitySlugRoute,
   ProtectedCasesIndexRoute: ProtectedCasesIndexRoute,
+  ProtectedCollectIndexRoute: ProtectedCollectIndexRoute,
   ProtectedEntitiesIndexRoute: ProtectedEntitiesIndexRoute,
   ProtectedGraphIndexRoute: ProtectedGraphIndexRoute,
   ProtectedIdentifiersIndexRoute: ProtectedIdentifiersIndexRoute,
-  ProtectedInboxIndexRoute: ProtectedInboxIndexRoute,
-  ProtectedIntakeIndexRoute: ProtectedIntakeIndexRoute,
-  ProtectedJobsIndexRoute: ProtectedJobsIndexRoute,
   ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
   ProtectedTasksIndexRoute: ProtectedTasksIndexRoute,
+  ProtectedTriageIndexRoute: ProtectedTriageIndexRoute,
   ProtectedUiIndexRoute: ProtectedUiIndexRoute,
 }
 
