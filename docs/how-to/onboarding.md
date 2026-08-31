@@ -15,6 +15,13 @@
 
 `just bootstrap-hint` prints the signup checklist without running servers.
 
+## Next steps
+
+| Goal | Doc |
+| --- | --- |
+| Learn the investigation loop | [`../tutorials/first-investigation.md`](../tutorials/first-investigation.md) |
+| Something broken | [`troubleshooting.md`](troubleshooting.md) |
+
 ## After onboarding
 
 | Next            | Doc                                                      |
@@ -23,6 +30,7 @@
 | Auth / API keys | [`auth-setup.md`](auth-setup.md)                         |
 | Wipe case data  | [`local-dev.md`](local-dev.md) (`just wipe`)             |
 | Product loop    | [`../explanation/product.md`](../explanation/product.md) |
+| All how-tos     | [`README.md`](README.md)                                 |
 
 ## Gotchas
 

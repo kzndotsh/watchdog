@@ -5,11 +5,14 @@
 
 ## Path
 
-```
-Collect (dump / Cap run)
-  → Evidence (artifacts on Case)
-  → Cap interpret → Proposal (pending)
-  → Triage Accept → Graph
+```mermaid
+flowchart LR
+  C["Collect<br/>dump / Cap run"] --> E["Evidence"]
+  E --> I["Cap interpret"]
+  I --> P["Proposal<br/>pending"]
+  P --> T{"Triage Accept"}
+  T -->|accept| G[("Case Graph")]
+  T -->|reject| X["Discarded"]
 ```
 
 Also:
@@ -26,3 +29,8 @@ Also:
 | Postgres Case Graph is SoT | Hand-edit Export markdown as SoT |
 
 See product loop: [`../../explanation/product.md`](../../explanation/product.md). Agent escape hatch: [`agent-ingress.md`](agent-ingress.md).
+
+## See also
+
+- Tutorial walkthrough: [`../../tutorials/first-investigation.md`](../../tutorials/first-investigation.md)
+- Troubleshooting Collect/Jobs: [`../../how-to/troubleshooting.md`](../../how-to/troubleshooting.md)

@@ -21,3 +21,8 @@ Product nouns and investigator loop: [`../../explanation/product.md`](../../expl
 | [`custody.md`](custody.md) | Accept tiers, confirmed gates, breach caveats |
 | [`agent-ingress.md`](agent-ingress.md) | CLI/API propose vs `userOverride` graph write |
 | [`evlog.md`](evlog.md) | Process logging rules |
+
+## See also
+
+- Documentation charter: [`../../explanation/documentation.md`](../../explanation/documentation.md)
+- Tutorial: [`../../tutorials/first-investigation.md`](../../tutorials/first-investigation.md)

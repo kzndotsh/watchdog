@@ -17,6 +17,8 @@ Nouns and Caps shipped ahead of walked journeys. The Collect → Decide → Grap
 
 **Healthiest:** Triage Accept gates, Cases, Auth, Export zip, Cap-shaped Collect run form, Harvest/Extract on Collect. **Weakest:** none currently: credential preflight and post-dump Entity attach shipped.
 
+**Tutorial:** [`../tutorials/first-investigation.md`](../tutorials/first-investigation.md) mirrors the core `@journey` e2e path; keep it aligned when Intake/Triage flows change.
+
 Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk → update this file.
 
 ---

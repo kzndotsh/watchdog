@@ -31,6 +31,13 @@ Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets 
 - **Route 404 after adding files:** `pnpm generate-routes` or restart `pnpm dev:web` (`routeTree.gen.ts` is generated).
 - **Integration/e2e locally:** `just test-db` then `pnpm test:integration` or `pnpm test:e2e`.
 
+## Next steps
+
+| Goal | Doc |
+| --- | --- |
+| First investigation tutorial | [`../tutorials/first-investigation.md`](../tutorials/first-investigation.md) |
+| Symptom → fix | [`troubleshooting.md`](troubleshooting.md) |
+
 ## Gotchas
 
 - `@tanstack/devtools-vite` skill text still says Vite ^6 \|\| ^7; CLI ships **Vite 8**: builds succeed; watch for plugin warnings.

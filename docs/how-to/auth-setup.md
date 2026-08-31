@@ -32,6 +32,11 @@ Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated).
 2. In `.env` (or shell): `WD_API_URL=http://localhost:3000/api/v1`, `WD_API_KEY=<key>`.
 3. `wd --help` works without a key; authenticated verbs need both vars (`@watchdog/env/cli`).
 
+## See also
+
+- Full CLI surface: [`agent-cli.md`](agent-cli.md)
+- Troubleshooting: [`troubleshooting.md`](troubleshooting.md)
+
 ## Gotchas
 
 - **Auth session cache**: `_protected` seeds BA UI's `authQueryKeys.session` via `ensureAppSession` (`createIsomorphicFn`). Use `useSession(authClient)` from `@better-auth-ui/react` in UI: not `authClient.useSession()`. Post-sign-in return URL search param is **`redirectTo`** (BA UI), not `redirect`. Sign out via `/auth/sign-out` (BA UI clears cookie **and** removes auth queries); raw `authClient.signOut()` leaves a stale session cache and bounces you back in.

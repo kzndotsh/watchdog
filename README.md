@@ -76,9 +76,11 @@ pnpm dev:web
 pnpm dev:worker             # second terminal; jobs stay queued without it
 ```
 
-No account is seeded and registration is closed by default, so a fresh install cannot sign in until you bootstrap one. Set `BETTER_AUTH_ALLOW_SIGNUP=1`, restart the web process, register at `/auth/sign-up`, then set it back to `0`.
+No account is seeded and registration is closed by default. See [`docs/how-to/onboarding.md`](docs/how-to/onboarding.md) and [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup and env detail.
 
-Everything binds to loopback: web on `:3000`, Postgres on `:5432`, MinIO on `:9100` with its console on `:9101`. Agents get the same API at `/api/v1` with an `x-api-key` header, and the OpenAPI spec is served at `/api/v1/spec.json`.
+**First investigation tutorial:** [`docs/tutorials/first-investigation.md`](docs/tutorials/first-investigation.md) (dump → Process → Triage → Dossier).
+
+Everything binds to loopback: web on `:3000`, Postgres on `:5432`, MinIO on `:9100` with its console on `:9101`. Agents: [`docs/how-to/agent-cli.md`](docs/how-to/agent-cli.md) · OpenAPI `/api/v1/spec.json`.
 
 **pnpm only.** Version is pinned in `package.json`; npm and yarn will produce a broken workspace.
 

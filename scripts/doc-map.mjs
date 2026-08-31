@@ -54,9 +54,25 @@ export const DOC_MAP = [
   {
     id: "api-client",
     code: [/^packages\/api\//, /^packages\/client\//],
-    docs: ["docs/reference/platform/jobs-orpc.md"],
+    docs: ["docs/reference/platform/jobs-orpc.md", "docs/how-to/agent-cli.md"],
     strict: false,
     note: "Skip when only packages/client/src/generated/ changes",
+  },
+  {
+    id: "cli",
+    code: [/^packages\/cli\//],
+    docs: ["docs/how-to/agent-cli.md", "packages/cli/AGENTS.md"],
+    strict: true,
+  },
+  {
+    id: "e2e-journey",
+    code: [/^e2e\/specs\/journeys\//],
+    docs: [
+      "docs/explanation/scenarios.md",
+      "docs/tutorials/first-investigation.md",
+    ],
+    strict: false,
+    note: "Core loop e2e should stay aligned with tutorial + scenarios",
   },
 ];
 

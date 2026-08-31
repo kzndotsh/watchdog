@@ -49,3 +49,8 @@ CLI needs `WD_API_URL` + `WD_API_KEY` (create key in Settings → API Keys). See
 3. If the slot is empty, Run is blocked in the UI with a credential gate message.
 
 Deploy/boot vars (`DATABASE_URL`, `BETTER_AUTH_*`, S3, `WD_MASTER_VAULT_KEY`) stay in env. Only **Cap runtime secrets** use the vault.
+
+## See also
+
+- Agent/CLI: [`agent-cli.md`](agent-cli.md)
+- Troubleshooting: [`troubleshooting.md`](troubleshooting.md)

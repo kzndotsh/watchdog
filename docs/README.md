@@ -6,6 +6,24 @@ Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that match
 
 `.cursor/plans/` (incl. `_archived/`) are historical: durable contracts live here, not in plans.
 
+Documentation charter (Diátaxis, page shape, update rules): [`explanation/documentation.md`](explanation/documentation.md).
+
+## Start by role
+
+| Role | Start here | Then |
+| --- | --- | --- |
+| **New builder** | [`tutorials/first-investigation.md`](tutorials/first-investigation.md) | [`how-to/onboarding.md`](how-to/onboarding.md) · [`how-to/local-dev.md`](how-to/local-dev.md) |
+| **Investigator (UI)** | [`explanation/product.md`](explanation/product.md) | [`explanation/ux.md`](explanation/ux.md) · [`explanation/scenarios.md`](explanation/scenarios.md) |
+| **Agent / CLI** | [`how-to/agent-cli.md`](how-to/agent-cli.md) | [`reference/contracts/agent-ingress.md`](reference/contracts/agent-ingress.md) · OpenAPI `/api/v1/` |
+| **Contributor** | [`contributing/ci-gates.md`](contributing/ci-gates.md) | [`contributing/testing/index.md`](contributing/testing/index.md) |
+| **Stuck locally** | [`how-to/troubleshooting.md`](how-to/troubleshooting.md) | [`reference/web/README.md#traps-index`](reference/web/README.md#traps-index) |
+
+## Tutorials
+
+| Doc | Owns |
+| --- | --- |
+| [`tutorials/first-investigation.md`](tutorials/first-investigation.md) | First Case: dump → Process → Triage Accept → Dossier |
+
 ## Explanation
 
 | Doc | Owns | Does not own |
@@ -13,6 +31,7 @@ Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that match
 | [`explanation/product.md`](explanation/product.md) | Intent, personas, refuse | Phase checkboxes, pixels |
 | [`explanation/ux.md`](explanation/ux.md) | IA, flows, copy meaning | Component APIs, tokens |
 | [`explanation/scenarios.md`](explanation/scenarios.md) | Walked journeys (`shipped` / `partial` / `missing` / `lying`) | Cap unit tests |
+| [`explanation/documentation.md`](explanation/documentation.md) | Doc IA charter (Diátaxis) | Gate scripts |
 
 ## Reference: contracts
 
@@ -38,12 +57,16 @@ Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that match
 
 ## How-to
 
+Index: [`how-to/README.md`](how-to/README.md).
+
 | Doc | Owns |
 | --- | --- |
 | [`how-to/onboarding.md`](how-to/onboarding.md) | First-run setup |
 | [`how-to/local-dev.md`](how-to/local-dev.md) | Wipe, test-db, toolchain traps |
 | [`how-to/vault-setup.md`](how-to/vault-setup.md) | Vault / Cap credentials |
 | [`how-to/auth-setup.md`](how-to/auth-setup.md) | BA session, CSRF, ServerFn auth |
+| [`how-to/agent-cli.md`](how-to/agent-cli.md) | `wd` CLI + OpenAPI agents |
+| [`how-to/troubleshooting.md`](how-to/troubleshooting.md) | Symptom → fix |
 
 ## Contributing
 
