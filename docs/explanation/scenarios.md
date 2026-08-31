@@ -38,7 +38,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Process Cap from Intake | shipped | Also `wd evidence process` (Harvest glue; dedupes active Jobs) |
 | Extract (AI) from Intake | shipped | Needs Case `allowThirdPartyEgress` + AI credential; also `wd evidence process --ai` |
 | Attach entity to evidence | shipped | Dump-time picker + Detail EntityCombobox (attach / replace / detach) |
-| `?evidenceId=` deep link | shipped | Selection writes back to search (`replace`) |
+| `?id=` deep link (Collect) | shipped | Selection writes back to search (`replace`); unified id for Evidence rows and Jobs |
 | No Case / empty queue | shipped | : |
 
 ## Jobs
@@ -55,7 +55,6 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Stuck >60s banner | shipped | : |
 | interpretError amber | shipped | Amber "Interpret failed" badge + copy |
 | proposalId → Triage deep link | shipped | : |
-| `?jobId=` deep link | shipped | Selection writes back to search (`replace`) |
 | Cache hit visible | shipped | Detail "From cache" chip from `jobs.from_cache` |
 | Playbooks from UI | shipped | Run Cap / Run Playbook ToggleGroup; host/url/ip/email/hash/handle books; bind + CT fan-out (`host-enumerate`); waiting chrome; Cancel run; egress greys `url-capture-ai` |
 | Playbook lazy-release | shipped | Later steps are created when the prior step succeeds |
@@ -90,7 +89,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | --- | --- | --- |
 | View all sections | shipped | : |
 | Edit summary / notes | shipped | : |
-| Create claim + confidence + evidence | shipped | UI doesn't disable confirmed+zero |
+| Create claim + confidence + evidence | shipped | `isConfirmedBlocked` disables Save when confirmed with zero evidence |
 | Edit claim confidence | shipped | : |
 | Edit claim class later | shipped | ClaimClassSelect on Dossier edit |
 | Create identifier | shipped | : |
@@ -117,7 +116,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Identifiers table | shipped | `/identifiers`: Active-Case browse + inline edit + evidence + in-place create (Value first after Entity); **Bulk add** paste/map dialog (default Entity fills empty Entity cells; mapped name/slug miss → **Not found** / **Ambiguous**; preview cells editable; `confirmed` → `unverified`); row click → Dossier Identifiers |
 | Bulk add identifiers | shipped | Same two-stage dialog on `/identifiers` and Dossier Identifiers (paste, then left/right match). Default Entity fills empty Entity cells; a mapped name/slug miss shows **Not found** / **Ambiguous** on the Entity cell (picker stays empty). Preview cells are editable (empty Type/Platform = **: **). Dossier locks Entity. Type deferred from column/values. `validateIdentifierWrite` (incl. handle→platform) marks rows invalid. No Evidence / no `confirmed` from paste. |
 | Case graph page | shipped | `/graph`: case-wide preview (`CaseGraphCanvas`); Graph Studio still Phase 2 |
-| Tasks CRUD + kanban | shipped | `/tasks` kanban only; drag = status change (no persisted column order); optional entity link (`?entityId=`); Dossier Tasks = entity-scoped board; Case Overview has no Tasks tab (stat tile → `/tasks`); not a Graph write |
+| Tasks CRUD + kanban | shipped | `/tasks` kanban only; drag across columns changes status; drag within a column persists `position` via `reorderTasks`; optional entity link (`?entityId=`); Dossier Tasks = entity-scoped board; Case Overview has no Tasks tab (stat tile → `/tasks`); not a Graph write |
 | allowThirdPartyEgress toggle | shipped | Case overview settings; also `PATCH /cases/{id}` / `wd cases update --allow-third-party-egress` |
 | Case-wide identifiers / edges reads | shipped | `GET /cases/{caseId}/identifiers`, `GET /cases/{caseId}/edges` (aggregate views; invalidate with entity change; no CLI parity in v1) |
 | Entity rename (display name) | shipped | Dossier last-crumb blur-save (`KindBadge` + `EditableTextCell`); `PATCH …/entities/{entityId}` name; slug unchanged |
@@ -139,7 +138,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Mod+K opens command palette | shipped | Toggle; works in editable fields; sidebar Search… trigger |
 | Jump to pages (idle) | shipped | Dashboard + Case nav + Work/Manage/Config (no Dev /ui) |
 | Type entity name → dossier | shipped | ≥2 chars; Active Case only; Enter → `/entities/$slug` |
-| Identifier / Evidence / Task / Job / Triage hits | shipped | Deep links: identifiers tab, `?evidenceId=` (Collect), `?entityId=`, `?jobId=` (Collect), `?proposalId=` (Triage) |
+| Identifier / Evidence / Task / Job / Triage hits | shipped | Deep links: identifiers tab, `?id=` (Collect Evidence or Job), `?entityId=` (Tasks), `?proposalId=` (Triage) |
 | Cases group switches Active | shipped | Sets cookie + opens Overview |
 | `?` Shortcuts sheet | shipped | Global list only (no per-surface matrices) |
 | Mod+B toggles sidebar | shipped | Via shared hotkey registry (not shadcn-only listener) |

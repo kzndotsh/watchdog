@@ -34,7 +34,7 @@ Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that match
 | [`reference/platform/caps-boundary.md`](reference/platform/caps-boundary.md) | Caps SPI, credentials, Intake, Export | Cap D1-D5 |
 | [`reference/platform/types.md`](reference/platform/types.md) | Schema / vocab ownership | Pixels, IA |
 | [`reference/platform/caps-lexicon.md`](reference/platform/caps-lexicon.md) | Cap lexicon, D1-D5, ship gates | Cap SPI / Job runner |
-| [`reference/platform/graph-model.md`](reference/platform/graph-model.md) | Graph model (stub) | UI domains map |
+| [`reference/platform/graph-model.md`](reference/platform/graph-model.md) | Graph model (entities, patch ops) | UI domains map |
 
 ## How-to
 

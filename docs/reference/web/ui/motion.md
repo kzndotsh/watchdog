@@ -2,6 +2,15 @@
 
 This page defines motion budgets for high-frequency Operate surfaces.
 
+## Tokens
+
+Defined in `apps/web/src/styles/wd-tokens.css`:
+
+| Token              | Value | Use                                    |
+| ------------------ | ----- | -------------------------------------- |
+| `--duration-fast`  | 100ms | Queue select, Detail swap (color-only) |
+| `--duration-panel` | 180ms | Panels, dialogs                        |
+
 ## Motion (Operate)
 
 - High-frequency paths (Queue select, Detail swap): instant or ≤100ms and **color-only** (`--duration-fast`)
