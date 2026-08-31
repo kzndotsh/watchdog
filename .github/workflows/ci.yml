@@ -45,6 +45,7 @@ jobs:
       db: ${{ steps.filter.outputs.db }}
       e2e: ${{ steps.filter.outputs.e2e }}
       agents: ${{ steps.filter.outputs.agents }}
+      docs: ${{ steps.filter.outputs.docs }}
       code: ${{ steps.filter.outputs.code }}
     steps:
       - uses: actions/checkout@v5
@@ -101,6 +102,13 @@ jobs:
               - '**/.agents/skills/**'
               - 'scripts/validate-agents.mjs'
               - '.cursor/README.md'
+            docs:
+              - 'docs/**'
+              - 'docs/reference/web/**'
+              - '**/*.md'
+              - 'scripts/check-docs.mjs'
+              - 'scripts/doc-map.mjs'
+              - 'scripts/check-docs-affected.mjs'
 
   check:
     name: Check
@@ -108,7 +116,8 @@ jobs:
     if: |
       github.event_name != 'pull_request' ||
       needs.changes.outputs.code == 'true' ||
-      needs.changes.outputs.agents == 'true'
+      needs.changes.outputs.agents == 'true' ||
+      needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -147,6 +156,14 @@ jobs:
       - name: AGENTS.md hygiene
         if: github.event_name != 'pull_request' || needs.changes.outputs.agents == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:agents:strict
+
+      - name: Docs links and index
+        if: github.event_name != 'pull_request' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.agents == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:docs:strict
+
+      - name: Docs affect (strict map)
+        if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:docs-affected:strict
 
       - name: Agent Skills validation
         if: github.event_name != 'pull_request' || needs.changes.outputs.agents == 'true' || needs.changes.outputs.config == 'true'

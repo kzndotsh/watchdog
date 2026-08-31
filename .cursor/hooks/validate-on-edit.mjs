@@ -48,6 +48,8 @@ function main() {
     run(path.join(root, "scripts/check-agents.mjs"), ["--strict"]);
   } else if (rel.includes(".agents/skills/") || rel === ".cursor/README.md") {
     run(path.join(root, "scripts/validate-agents.mjs"), []);
+  } else if (rel.startsWith("docs/") || rel.startsWith("docs/reference/web/")) {
+    run(path.join(root, "scripts/check-docs.mjs"), []);
   }
 
   process.exit(0);

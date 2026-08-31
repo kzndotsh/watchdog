@@ -25,13 +25,37 @@ pre-commit:
       glob:
         - "{AGENTS.md,**/AGENTS.md}"
         - "scripts/check-agents.mjs"
+        - "docs/**"
+        - "scripts/check-docs.mjs"
       run: pnpm check:agents:strict
+    docs:
+      glob:
+        - "docs/**"
+        - "scripts/check-docs.mjs"
+        - "scripts/doc-map.mjs"
+        - "scripts/check-docs-affected.mjs"
+      run: pnpm check:docs
+    docs-affect:
+      glob:
+        - "apps/web/src/**"
+        - "apps/web/scripts/**"
+        - "packages/caps/**"
+        - "packages/api/**"
+        - "packages/client/**"
+        - "e2e/**"
+        - "playwright.config.ts"
+      run: pnpm check:docs-affected:strict
     agent-skills:
       glob:
         - "**/.agents/skills/**"
         - "scripts/validate-agents.mjs"
         - ".cursor/README.md"
       run: pnpm validate:agents
+
+commit-msg:
+  commands:
+    docs-allow-affect:
+      run: node ./scripts/docs-allow-affect-msg.mjs {1}
 
 pre-push:
   parallel: true

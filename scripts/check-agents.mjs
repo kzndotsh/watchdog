@@ -4,7 +4,8 @@
  * Default: warnings only. Pass --strict (or CHECK_AGENTS_STRICT=1) to fail CI.
  *
  * Vault dirs (staging/data/templates/tools/reports/graph) are out of scope.
- * Docs: `docs/**` + `apps/web/docs/**` — broken relative markdown links are fails.
+ * Docs: recursive `docs/**` (+ `docs/reference/web/**` until merged) — broken relative
+ * markdown links are fails. Prefer `pnpm check:docs` for anchors + AGENTS fail-level links.
  */
 import { existsSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
@@ -297,24 +298,59 @@ async function checkKiro() {
   }
 }
 
-async function collectDocFiles() {
-  /** @type {string[]} */
-  const files = [];
-  const dirs = ["docs", "apps/web/docs"];
-  const listings = await Promise.all(
-    dirs.map(async (dirRel) => {
-      const abs = path.join(repoRoot, dirRel);
-      if (!existsSync(abs)) return [];
-      const names = await readdir(abs);
-      return names
-        .filter((name) => name.endsWith(".md"))
-        .map((name) => path.join(abs, name));
-    })
+/**
+ * @param {string} dirAbs
+ * @returns {Promise<string[]>}
+ */
+async function walkMdFiles(dirAbs) {
+  if (!existsSync(dirAbs)) return [];
+  const entries = await readdir(dirAbs, { withFileTypes: true });
+  const nested = await Promise.all(
+    entries
+      .filter(
+        (ent) =>
+          ent.isDirectory() &&
+          !ent.name.startsWith(".") &&
+          ent.name !== "node_modules"
+      )
+      .map(async (ent) => walkMdFiles(path.join(dirAbs, ent.name)))
   );
-  for (const batch of listings) {
-    files.push(...batch);
+  const files = entries
+    .filter((ent) => ent.isFile() && ent.name.endsWith(".md"))
+    .map((ent) => path.join(dirAbs, ent.name));
+  return [...files, ...nested.flat()];
+}
+
+async function collectDocFiles() {
+  const dirs = ["docs"];
+  const listings = await Promise.all(
+    dirs.map(async (dirRel) => walkMdFiles(path.join(repoRoot, dirRel)))
+  );
+  return listings.flat();
+}
+
+/**
+ * Warn on oversized durable doc leaves (fail only with --fail-docs-length / D6).
+ * Prefer `pnpm check:docs` for the full budget gate.
+ * @param {string} absPath
+ */
+async function checkDocLength(absPath) {
+  const failLength = process.argv.includes("--fail-docs-length");
+  const rel = path.relative(repoRoot, absPath);
+  const text = await readFile(absPath, "utf-8");
+  const n = text.split("\n").length;
+  const allow =
+    text.includes("<!-- docs:allow-length -->") ||
+    rel === "docs/explanation/scenarios.md";
+  if (allow) return;
+  if (n > 250) {
+    note(
+      failLength ? "fail" : "warn",
+      `${rel}: >250 lines (${n})${failLength ? "" : " [warn until docs D6]"}`
+    );
+  } else if (n > 180) {
+    note("warn", `${rel}: >180 lines (${n})`);
   }
-  return files;
 }
 
 /**
@@ -344,7 +380,12 @@ async function main() {
   await Promise.all(agentFiles.map(async (f) => checkFile(f)));
 
   const docFiles = await collectDocFiles();
-  await Promise.all(docFiles.map(async (f) => checkDocLinks(f)));
+  await Promise.all(
+    docFiles.map(async (f) => {
+      await checkDocLinks(f);
+      await checkDocLength(f);
+    })
+  );
 
   const tradecraft = path.join(repoRoot, ".agents/tradecraft.md");
   if (existsSync(tradecraft)) {

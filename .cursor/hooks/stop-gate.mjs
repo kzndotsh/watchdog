@@ -110,7 +110,8 @@ function main() {
       f.startsWith("apps/web/src/routes/") ||
       f.startsWith("apps/web/src/styles.css") ||
       f.startsWith("apps/web/scripts/") ||
-      f.includes("UX.md") ||
+      f.startsWith("docs/reference/web/") ||
+      f.includes("docs/explanation/ux.md") ||
       f.includes("AGENTS.md")
   );
   const dsBanScript = path.join(root, "apps/web/scripts/ds-ban-check.mjs");
@@ -121,7 +122,7 @@ function main() {
     });
     if (ban.status !== 0) {
       parts.push(
-        "`pnpm --filter @watchdog/web ds:check` failed after web UI edits. Read `apps/web/docs/UX.md` / `DOMAINS.md`, fix the violation, then stop.",
+        "`pnpm --filter @watchdog/web ds:check` failed after web UI edits. Read `docs/reference/web/` (loading / tables / components) and `docs/explanation/ux.md`, fix the violation, then stop.",
         "",
         "```",
         clip(formatSpawn(ban)),
@@ -166,6 +167,52 @@ function main() {
         "",
         "```",
         clip(formatSpawn(res)),
+        "```"
+      );
+    }
+  }
+
+  const docsChanged = files.some(
+    (f) => f.startsWith("docs/") || f.startsWith("docs/reference/web/")
+  );
+  if (docsChanged) {
+    const res = spawnSync(
+      process.execPath,
+      [path.join(root, "scripts/check-docs.mjs")],
+      { cwd: root, encoding: "utf8" }
+    );
+    if (res.status !== 0) {
+      parts.push(
+        "`pnpm check:docs` failed after a docs edit. Fix broken links/anchors, then stop.",
+        "",
+        "```",
+        clip(formatSpawn(res)),
+        "```"
+      );
+    }
+  }
+
+  const codeForDocs = files.some(
+    (f) =>
+      f.startsWith("apps/web/src/") ||
+      f.startsWith("apps/web/scripts/") ||
+      f.startsWith("packages/caps/") ||
+      f.startsWith("e2e/") ||
+      f === "playwright.config.ts"
+  );
+  const docsAffectScript = path.join(root, "scripts/check-docs-affected.mjs");
+  if (codeForDocs && existsSync(docsAffectScript)) {
+    const res = spawnSync(process.execPath, [docsAffectScript], {
+      cwd: root,
+      encoding: "utf8",
+    });
+    const out = formatSpawn(res);
+    if (/WARN|FAIL/.test(out)) {
+      parts.push(
+        "`pnpm check:docs-affected` warned after code edits without a paired doc touch. Update the mapped docs, or use `docs:allow-affect — <reason>` in the commit message.",
+        "",
+        "```",
+        clip(out),
         "```"
       );
     }
