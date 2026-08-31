@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
  * **Loading:** pass `pending` + `pendingLabel` — renders one skeleton bar per
  * cell under the mounted header. Never wrap table bodies in `PendingRegion`
  * (flex skeleton rows misalign with the column grid). See
- * `apps/web/docs/UI.md` § Tables.
+ * `docs/reference/web/ui/tables.md`.
  */
 
 import { cn } from "@/lib/utils";

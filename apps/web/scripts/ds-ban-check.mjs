@@ -328,7 +328,7 @@ if (existsSync(uiDir)) {
   fail("Missing /ui fixture route dir: routes/_protected/ui/");
 }
 
-// ── 7. Loading doctrine bans (see apps/web/docs/UI.md § Loading contract) ────
+// ── 7. Loading doctrine bans (see docs/reference/web/ui/loading.md) ────
 const ROUTE_PENDING_IMPORT_RE =
   /from\s+["']@\/shared\/layout\/route-pending["']/;
 const SHADCN_SKELETON_IMPORT_RE =
@@ -368,7 +368,7 @@ for (const f of walk(path.join(src, "domains"))) {
 }
 for (const hit of domainSkeletonHits) {
   fail(
-    `shadcn/skeleton import in domains/ — use PendingRegion / shared/ui/skeletons.tsx (QueueSkeleton, StackBodySkeleton, …). Tables: DataTable pending only (UI.md § Tables): ${hit}`
+    `shadcn/skeleton import in domains/ — use PendingRegion / shared/ui/skeletons.tsx (QueueSkeleton, StackBodySkeleton, …). Tables: DataTable pending only (ui/tables.md): ${hit}`
   );
 }
 if (domainSkeletonHits.length === 0) {
@@ -476,11 +476,11 @@ if (allowCount > 0) {
 }
 
 // ── 8. COMPONENTS.md registry present ────────────────────────────────────────
-const componentsDoc = path.join(root, "docs/COMPONENTS.md");
+const componentsDoc = path.join(root, "../../docs/reference/web/components.md");
 if (existsSync(componentsDoc)) {
   ok("COMPONENTS.md registry present");
 } else {
-  fail("Missing apps/web/docs/COMPONENTS.md registry");
+  fail("Missing docs/reference/web/components.md registry");
 }
 
 if (failed) {

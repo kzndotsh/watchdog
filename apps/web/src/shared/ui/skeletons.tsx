@@ -7,7 +7,7 @@ import { GripVerticalIcon } from "lucide-react";
  *
  * **Tables:** production loading uses `DataTable` `pending` + per-cell
  * skeleton rows (colgroup-aligned) — never wrap table bodies in `PendingRegion`.
- * See [`UI.md`](../docs/UI.md) § Loading & hydration.
+ * See [`docs/reference/web/ui/loading.md`](../../../../docs/reference/web/ui/loading.md).
  *
  * **Naming:** `*Skeleton` — PendingRegion fallback / exported loading UI.
  * `*SkeletonLayout` — inner layout blocks composed by `*Skeleton` (or wrapped

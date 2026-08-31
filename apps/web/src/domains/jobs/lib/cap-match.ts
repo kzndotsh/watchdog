@@ -1,6 +1,6 @@
 import type { CapListItem } from "@/domains/jobs/types";
 
-/** Jobs category label from Cap id first segment (`docs/CAPS.md`). */
+/** Jobs category label from Cap id first segment (`docs/reference/platform/caps-lexicon.md`). */
 const CAP_CATEGORY_LABELS: Record<string, string> = {
   network: "Infrastructure",
   archive: "Archives",

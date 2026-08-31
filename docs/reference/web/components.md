@@ -1,7 +1,7 @@
 # Components — hand-owned atom registry
 
 **What this is:** inventory + anatomy for `src/shared/ui/` (not `shadcn/`). Page chrome (`PageToolbar`, `PageFilterMenu`, `RoutePending`, `RouteError`) lives in `shared/layout/` — see § below. Domain composites (e.g. `EvidencePicker`) may appear in the registry with Status **domain** — they are not in `wd-ui-files.mjs`.  
-**What this is not:** brand brief (`UI.md`), product IA (`docs/UX.md`), or Storybook.
+**What this is not:** brand brief ([`tokens.md`](ui/tokens.md)), product IA (`docs/explanation/ux.md`), or Storybook.
 
 Code SoT: `src/shared/ui/` · style guide: **`/ui`** (Foundations · Atoms) · gates: `pnpm ds:check` · manifest: `scripts/wd-ui-files.mjs` · new atoms: `node scripts/new-atom-checklist.mjs`.
 
@@ -69,9 +69,9 @@ Code SoT: `src/shared/ui/` · style guide: **`/ui`** (Foundations · Atoms) · g
 | `SearchField` | Named search input — CONTROL chrome | Filters / toolbars | Debounced fetch inside atom | — | canonical | yes | — |
 | `SectionHeaderBar` | Title + count + trailing | Sections / day groups | Page headers | `Page` header | canonical | no | — |
 | `SectionLabel` | Small meta section label (normal case) | Field / meta captions · dossier section titles | Page titles | — | canonical | yes | meta |
-| `LoadingRegion` | Three-channel a11y wrapper (`aria-busy` + sr-only `role="status"` + `aria-hidden` skeleton subtree) | Inside `PendingRegion` / hand skeletons | Domains spelling `aria-busy` directly | — | canonical | no | [`loading-region.tsx`](../src/shared/ui/loading-region.tsx) |
-| `RegionBoundary` | `QueryErrorResetBoundary` → `ErrorBoundary` → `Suspense` — error + pending in the same footprint | Every in-page data region (Collect/Triage split, Dashboard panels, …) | Route-level error for region failures | raw `Suspense` alone | canonical | no | [`region-boundary.tsx`](../src/shared/ui/region-boundary.tsx) |
-| `PendingRegion` | `LoadingRegion` + hand skeleton `fallback` when `loading={true}`; live children when ready | Domain data-slot loading (boards, grids, stack, split queue/detail, case overview) | **`DataTable`** (use `pending`) · graph (hand `GraphCanvasLoadingRegion`) · static chrome | hand skeletons in `skeletons.tsx` as `fallback` | canonical | no | [`pending-region.tsx`](../src/shared/ui/pending-region.tsx) |
+| `LoadingRegion` | Three-channel a11y wrapper (`aria-busy` + sr-only `role="status"` + `aria-hidden` skeleton subtree) | Inside `PendingRegion` / hand skeletons | Domains spelling `aria-busy` directly | — | canonical | no | [`loading-region.tsx`](../../../apps/web/src/shared/ui/loading-region.tsx) |
+| `RegionBoundary` | `QueryErrorResetBoundary` → `ErrorBoundary` → `Suspense` — error + pending in the same footprint | Every in-page data region (Collect/Triage split, Dashboard panels, …) | Route-level error for region failures | raw `Suspense` alone | canonical | no | [`region-boundary.tsx`](../../../apps/web/src/shared/ui/region-boundary.tsx) |
+| `PendingRegion` | `LoadingRegion` + hand skeleton `fallback` when `loading={true}`; live children when ready | Domain data-slot loading (boards, grids, stack, split queue/detail, case overview) | **`DataTable`** (use `pending`) · graph (hand `GraphCanvasLoadingRegion`) · static chrome | hand skeletons in `skeletons.tsx` as `fallback` | canonical | no | [`pending-region.tsx`](../../../apps/web/src/shared/ui/pending-region.tsx) |
 | `QueueSkeleton` | Queue-row skeleton | `PendingRegion` fallback · `/ui` specimen | Full page chrome · stack tabs | — | canonical | yes | — |
 | `StackBodySkeleton` | Hand stack/tab skeleton | `PendingRegion` / `stackPendingFallback()` fallback · Settings Suspense | Primary stack pending (use `PendingRegion`) | `stackPendingFallback()` | canonical | yes | — |
 | `BoardSkeleton` | Task board column/card skeleton | `PendingRegion` fallback for task board | Full page chrome | — | canonical | yes | — |
@@ -84,7 +84,7 @@ Code SoT: `src/shared/ui/` · style guide: **`/ui`** (Foundations · Atoms) · g
 | `TimelineSpine` / `TimelineDot` | Vertical timeline rail | Events / questions | Flat lists | — | canonical | yes | — |
 | `Timestamp` / `WithTooltip` | Instant + tooltip wrapper | Time surfaces / dense hits | Bare titles | — | canonical | yes | — |
 | `CapabilityLabel` | Cap id → catalog title | Collect / Triage / Dashboard | Raw ids in UI | — | canonical | no | — |
-| `DataTable` (+ kit) | TanStack table shell (dense: `text-xs` · `th` h-8 · `td` py-1 · row h-10). `table-fixed` + `<colgroup>` from each column’s `size` — set `size` on every column ([`UI.md`](UI.md) Table columns). **`pending`** + **`pendingLabel`** → one skeleton bar per cell under the mounted header — **never** `PendingRegion` ([`UI.md`](UI.md) § Tables) | Entity / identifier tables (Entities: `entity-table.columns.tsx` + `hooks/use-entity-table.ts`; Identifiers: `identifiers-table.columns.tsx` + `hooks/use-identifiers-table.ts`; shared evidence popover: `dossier/components/identifier-evidence-cell.tsx`). Bulk-add preview is a raw `Table` + `PREVIEW_COLUMNS` colgroup, not this kit. Dossier Identifiers uses Suspense (no `pending`). | Queue lists · Cases card grid · Task board | `QueueRow` | canonical | **no** | — |
+| `DataTable` (+ kit) | TanStack table shell (dense: `text-xs` · `th` h-8 · `td` py-1 · row h-10). `table-fixed` + `<colgroup>` from each column’s `size` — set `size` on every column ([`tables.md`](ui/tables.md#table-columns)). **`pending`** + **`pendingLabel`** → one skeleton bar per cell under the mounted header — **never** `PendingRegion` ([`tables.md`](ui/tables.md)) | Entity / identifier tables (Entities: `entity-table.columns.tsx` + `hooks/use-entity-table.ts`; Identifiers: `identifiers-table.columns.tsx` + `hooks/use-identifiers-table.ts`; shared evidence popover: `dossier/components/identifier-evidence-cell.tsx`). Bulk-add preview is a raw `Table` + `PREVIEW_COLUMNS` colgroup, not this kit. Dossier Identifiers uses Suspense (no `pending`). | Queue lists · Cases card grid · Task board | `QueueRow` | canonical | **no** | — |
 | `EditableTextCell` | Commit-on-blur text cell | Inline table edit | Forms | `Input` | canonical | no | — |
 | `EditableSelectCell` | Commit-on-pick select cell | Inline table enum edit | Forms | `Select` | canonical | no | — |
 | `DataTableAddRow` / `TableComposerInput` | Dashed append-row create chrome | Entity / identifier tables | Page composers · Cases New Case dialog | `ComposerShell` | canonical | no | — |
@@ -126,7 +126,7 @@ Fictional tokens (`probable`, `active`/`dormant`/`merged`, vault kinds, `--sever
 
 | Rule | Implementation |
 | --- | --- |
-| Static shell never skeleton | Domain owns `<Page>` + `PageHeader`; data slot = `RegionBoundary` + `PendingRegion` / hand fallback (`QueueSkeleton`, `BoardSkeleton`, …) or **`DataTable` `pending`** for tables — see [`UI.md`](UI.md) § Loading & hydration · § Tables |
+| Static shell never skeleton | Domain owns `<Page>` + `PageHeader`; data slot = `RegionBoundary` + `PendingRegion` / hand fallback (`QueueSkeleton`, `BoardSkeleton`, …) or **`DataTable` `pending`** for tables — see [`loading.md`](ui/loading.md) · [`tables.md`](ui/tables.md) |
 | Detail fetch wait | `InlineLoading` on buttons / artifact panels — never `DetailEmpty` for fetch |
 | Stack tab / panel first load | Generic stack: `ActiveTabBody` → `stackPendingFallback()`. Dossier tabs: hand `LoadingRegion` + `*SkeletonLayout` except tasks (`BoardSkeleton`); Case Overview → `CaseOverviewPending` — never “Loading…” copy in data slots |
 | Dashboard live data | `useLiveEvents` on Dashboard for jobs + proposals + tasks |
@@ -145,7 +145,7 @@ Fictional tokens (`probable`, `active`/`dormant`/`merged`, vault kinds, `--sever
 - Freestyle palette across all `src/`
 - Opaque-id `.slice` across all domains
 - Fictional vocab literals
-- Loading doctrine bans (RoutePending in routes, shadcn/skeleton in domains, animate-pulse / aria-busy outside shared/ui, loader `Promise.all`, useSuspenseQuery waterfalls) — see [`UI.md`](UI.md) § ds:check loading bans
+- Loading doctrine bans (RoutePending in routes, shadcn/skeleton in domains, animate-pulse / aria-busy outside shared/ui, loader `Promise.all`, useSuspenseQuery waterfalls) — see [`loading.md`](ui/loading.md)
 - `COMPONENTS.md` present
 
 Stop hook (`.cursor/hooks/stop-gate.mjs`) lint-checks files changed this turn and runs `ds:ban` when web UI paths are dirty; pre-push owns the full typecheck.

@@ -74,7 +74,7 @@ if (manifest.includes(`"${fileRel}"`) || manifest.includes(`'${fileRel}'`)) {
   fail(`Not listed in scripts/wd-ui-files.mjs — add the path`);
 }
 
-const componentsDoc = path.join(root, "docs/COMPONENTS.md");
+const componentsDoc = path.join(root, "../../docs/reference/web/components.md");
 if (existsSync(componentsDoc)) {
   const doc = readFileSync(componentsDoc, "utf-8");
   if (doc.includes(`\`${atomName}\``) || doc.includes(atomName)) {
@@ -85,7 +85,7 @@ if (existsSync(componentsDoc)) {
     );
   }
 } else {
-  fail("docs/COMPONENTS.md missing");
+  fail("docs/reference/web/components.md missing");
 }
 
 const uiDir = path.join(root, "src/routes/_protected/ui");

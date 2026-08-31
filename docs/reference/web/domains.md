@@ -1,7 +1,7 @@
 # Domains — `src/domains/`
 
 **What this is:** which folder owns which product surface, and where I/O lives.  
-**Not:** pixels ([`UI.md`](UI.md)) or investigator flows ([`docs/UX.md`](../../../docs/UX.md)).
+**Not:** pixels ([`UI.md`](UI.md) / [`ui/`](ui/README.md)) or investigator flows ([`docs/explanation/ux.md`](../../../docs/explanation/ux.md)).
 
 ## Shape
 
@@ -28,9 +28,9 @@ domains/{noun}/
 | `lib/*` | Pure filters, status maps, formOptions, browser helpers (no React hooks) | Yes |
 | `*.client.ts` | True browser-only utils (rare) | Client only |
 
-Invalidation contracts live in `shared/lib/query-invalidation.ts` (not in `queries.ts`). Data rules: [`DATA.md`](DATA.md).
+Invalidation contracts live in `shared/lib/query-invalidation.ts` (not in `queries.ts`). Data rules: [`data.md`](data.md).
 
-Zod / schemas contract: [`docs/TYPES.md`](../../../docs/TYPES.md).
+Zod / schemas contract: [`docs/reference/platform/types.md`](../../../docs/reference/platform/types.md).
 
 ### Naming
 
@@ -122,7 +122,7 @@ Shared chrome under `src/shared/`.
 | Layout kind | Route owns | Domain entry owns |
 | --- | --- | --- |
 | **Split-view** (Collect, Triage) | Thin loader (identity + `warmCollectQueries` / `warmTriageQueries`) | `<Page density="split">` + `PageHeader` + `SplitView`; queue/detail **`PendingRegion`** + hand skeletons (`QueueSkeleton`, `CollectDetailSkeleton`); Triage split in **`RegionBoundary`** → `TriageSplitPendingFallback` |
-| **Table** (`/entities`, `/identifiers`) | Thin loader + `warmEntitiesQueries` / `warmIdentifiersQueries` | `<Page>` + `PageHeader` + `DataTable` with `pending={listPending(...)}` — per-cell skeletons, not `PendingRegion` ([`UI.md`](UI.md) § Tables) |
+| **Table** (`/entities`, `/identifiers`) | Thin loader + `warmEntitiesQueries` / `warmIdentifiersQueries` | `<Page>` + `PageHeader` + `DataTable` with `pending={listPending(...)}` — per-cell skeletons, not `PendingRegion` ([`tables.md`](ui/tables.md)) |
 | **Board** (`/tasks`) | Thin loader + `warmTasksQueries` | `<Page>` + `PageHeader` + `TaskBoard`; board slot **`PendingRegion`** + `BoardSkeleton` |
 | **Card grid** (`/cases`) | Thin loader (identity only) | `case-list.tsx`; grid slot **`PendingRegion`** + `CardGridSkeleton` |
 | **Graph** (`/graph`) | Thin loader + `ensureGraphQueries` | `graph-page.tsx`; `GraphCanvasLoadingRegion` while suspense; then `CaseGraphCanvas` |
@@ -130,7 +130,7 @@ Shared chrome under `src/shared/`.
 | **Mixed / split stack** (Dashboard) | Thin loader + `warmDashboardQueries` | `dashboard-home.tsx`: `Page density="split"`; Activity panel in `RegionBoundary` |
 | **Settings** | `<Page>` + `PageHeader` | `SettingsShell` + tab panels; credentials tab **`Suspense`** + `stackPendingFallback(1)` |
 
-Split-view domains own the full page shell including `<Page>` (Collect/Triage pattern). Table/board/stack domains own the shell in the domain entry (`actions=`, `count=` + `countOn=` on table/board last crumbs, and `below=` line tabs live with the tab state they drive). Identity is the PageHeader trail — see [`UI.md`](UI.md) trail notes. Do not pass per-page identity titles or explainer `description=` (404 missing-slug copy only).
+Split-view domains own the full page shell including `<Page>` (Collect/Triage pattern). Table/board/stack domains own the shell in the domain entry (`actions=`, `count=` + `countOn=` on table/board last crumbs, and `below=` line tabs live with the tab state they drive). Identity is the PageHeader trail — see [`page-shell.md`](ui/page-shell.md). Do not pass per-page identity titles or explainer `description=` (404 missing-slug copy only).
 
 ## Cross-domain rules
 
@@ -141,7 +141,7 @@ Split-view domains own the full page shell including `<Page>` (Collect/Triage pa
 | Identifiers table | `/identifiers` — `identifiers-page.tsx` + `hooks/use-identifiers-table.ts` + `identifiers-table.columns.tsx`. Columns: Entity · Value · Type · Platform · Status · Confidence · Evidence · Notes. SearchField + PageFilterMenu (Type / Status / Confidence `columnFilters`). Loading: `DataTable` `pending` (not `PendingRegion`). In-place create reuses `useIdentifierCreateForm` + optional Entity combobox. **Bulk add** = dialog + `entities/lib/parse-identifier-paste.ts` barrel (Dossier Identifiers reuses the same dialog; Entity locked). Preview cells editable; mapped Entity miss → **Not found** / **Ambiguous**. Row click → Dossier Identifiers. Do not put this table under `cases/`. |
 | Artifact bytes in Detail | Domain wrapper / parent loads (`ArtifactContent` + `getArtifactContentFn`) |
 | Evidence options in dossier / Triage | Parent loads Case Evidence (`evidenceListQuery(caseId)` — full Case list; EvidencePicker needs every dump). Dossier Evidence tab client-filters `entityId` and dumps via `useDumpEvidence` (Intake RPC). Dossier composers → `EvidencePicker` (chips + Add). Job-linked Triage cites → `EvidenceCiteChips` (read-only; no Add). Both live in `dossier/components/evidence-picker.tsx` (not `shared/ui`). |
-| Case switch | `cases` + `CASES_CHANGED_EVENT` — see [`DATA.md`](DATA.md) |
+| Case switch | `cases` + `CASES_CHANGED_EVENT` — see [`data.md`](data.md) |
 | Task surfaces | `useTaskWorkspace(caseId, { entityId?, live? })` owns queries / mutations / selection / dialogs. `handleCommitDrop` = status change (cross-column) + `reorderTasks` (`position` within the dest column). Dossier section passes `live: false` — parent dossier already listens for `task_changed` (tab counts). Do not fork a third create/edit machine. |
 | Jobs workspace | `useJobsWorkspace(caseId, { jobId, onJobIdChange, …, jobsListFetching? })` owns selection, detail fetch, cap/playbook start/cancel, SSE `job_update`. Used from Collect (not a standalone Jobs page). On start: seed list+detail cache before `onJobIdChange` so URL selection resolves without a Navigate remount. Run UI: `JobCapRunForm` / `JobPlaybookRunForm` in Collect detail. Do not fork a second jobs mutation machine. |
 | Triage workspace | `useTriageWorkspace(caseId, { proposalId, initialStatus })` owns filters, selection, accept/reject mutations, SSE `proposal_created`. First paint = pending-only (`PENDING_TRIAGE_FILTERS`). URL auto-fallback via `<Navigate replace>` + `resolveQueueSelection`. Do not fork a second triage mutation machine. |
@@ -163,3 +163,11 @@ Split-view domains own the full page shell including `<Page>` (Collect/Triage pa
 - Forking edge create/update endpoint resolution outside `entities/lib/edge-write.ts`
 - Remounting Entities columns from a global `connectionBusy` flag — keep saving state local to the open cell
 - Dual toast + inline error for the same table connection mutation (prefer inline in the popover)
+
+## Gotchas
+
+- **Dashboard Activity** — cross-case feed (`recentActivityQuery`) has no dedicated SSE type; soft-invalidate via named contracts (`invalidateAfterTaskMutation` / job / proposal / evidence). UI: vertical resizable panel under overview (`Page density="split"`) with `ScrollArea` inside `recent-activity.tsx`. Rows link to `/cases/$caseSlug` only (resolve slug from Cases context; cookie-scoped routes like `/collect` / `/triage` / `/tasks` must not be deep-linked from a foreign Case). Case filter lives on that section alone — do not re-scope Collect/Triage panels to a non-active Case without addressing Active Case routing. Task rows come from append-only `activity_events` (create / status_changed / deleted) so status diffs are real `from → to`, not inferred from the current task row; evidence / jobs / pending proposals are still live-row snapshots until those paths write events too.
+- **Vocab in UI** — edge predicates, confidence, kinds come from `@watchdog/schemas` directly (do not re-export via domain `types.ts` / `*.functions.ts`). Freestyle options in dossier pickers drift from the write gate. Connection create stores `{predicate, orientation}`; encode/decode phrases only at the `FieldCombobox` boundary (`edgePhraseValue` / `parseEdgePhraseValue`). Phrase options carry schema `group` → Combobox section headings (`EDGE_PREDICATE_GROUP_LABELS`). Use `preferredEdgePhrase` / `clampEdgePhrase` for kind-pair defaults — do not reintroduce a private dossier `clampRelation`.
+- **Task due dates** — UI is `<input type="date">` / `LocalDateTime dateOnly`. Persist via `dueDateToIso` (local noon ISO) so calendar-day semantics survive timezone display; overdue is day-based (`isTaskDueOverdue`), not wall-clock; Dashboard “Tasks due soon” / Due panel uses `isTaskDueSoon(..., 7)` (today + 7 calendar days, excluding overdue).
+- **Task board DnD** — status-only moves (server sort remains priority → due → createdAt). Do not reintroduce ephemeral within-column order or `suppressStaleRef` reconcile without a persisted rank column.
+- **Dashboard “Jobs running”** — tile count uses `LIVE_STATUSES` (`queued` + `running`), not `running` alone.
