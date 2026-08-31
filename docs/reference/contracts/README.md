@@ -1,6 +1,6 @@
 # Platform contracts
 
-Canonical platform invariants. Elsewhere: **link only** — do not restate.
+Canonical platform invariants. Elsewhere: **link only**: do not restate.
 
 | Doc | Owns |
 | --- | --- |

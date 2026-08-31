@@ -9,13 +9,13 @@ Platform Accept tiers: **`unverified` / `possible` / `confirmed`**.
 
 - Cap/agent output stays **`unverified`** until human Accept.
 - CLI/agent graph writes land at **`unverified`** only; CLI refuses `confidence=confirmed`.
-- **`confirmed`** requires human Accept (Triage) or Dossier with evidence gates — never Cap/agent alone.
+- **`confirmed`** requires human Accept (Triage) or Dossier with evidence gates: never Cap/agent alone.
 
 ## Identifier / patch gates
 
 - Invalid Identifier ops **block** Accept (`listInvalidIdentifierOps`).
 - Identifier collisions **warn** (Alert + chip); Accept still allowed.
-- Custody helpers live in `@watchdog/policy` (`assertPatchGates`, `patchNeedsConfidence`) — pure, DB-free.
+- Custody helpers live in `@watchdog/policy` (`assertPatchGates`, `patchNeedsConfidence`): pure, DB-free.
 
 ## Breach caveat
 

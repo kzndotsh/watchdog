@@ -1,9 +1,8 @@
-# UI — design system hub
+# UI: design system hub
 
-**What this is:** index for how we build the interface.  
-**What this is not:** product IA ([`../../explanation/ux.md`](../../explanation/ux.md)).
+This index covers how the interface is built. Product IA is in [`../../explanation/ux.md`](../../explanation/ux.md).
 
-Code SoT: `apps/web/src/styles.css` + `shared/ui/`. Style guide: **/ui**.
+The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. The style guide is **/ui**.
 
 | Leaf | Owns |
 | --- | --- |
@@ -17,4 +16,4 @@ Code SoT: `apps/web/src/styles.css` + `shared/ui/`. Style guide: **/ui**.
 | [`ui/motion.md`](ui/motion.md) | Operate motion |
 | [`ui/multi-mode.md`](ui/multi-mode.md) | Detail / composers |
 
-Deep links that previously pointed at `UI.md#tables` → [`ui/tables.md`](ui/tables.md). Loading doctrine → [`ui/loading.md`](ui/loading.md).
+Links that point to `UI.md#tables` should use [`ui/tables.md`](ui/tables.md). Loading rules are in [`ui/loading.md`](ui/loading.md).

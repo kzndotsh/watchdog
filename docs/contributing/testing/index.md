@@ -1,8 +1,8 @@
-# Testing — platform index
+# Testing: platform index
 
 **What this is:** where tests live and which command runs which tier.  
-**Not:** how to write a good test — that is [`TESTING_STANDARDS.md`](standards.md).  
-**Not:** web DS gates — that is [`docs/contributing/testing/web.md`](../../../docs/contributing/testing/web.md).
+**Not:** how to write a good test. See [`TESTING_STANDARDS.md`](standards.md).  
+**Not:** web DS gates. See [`docs/contributing/testing/web.md`](../../../docs/contributing/testing/web.md).
 
 ## Commands
 
@@ -34,15 +34,15 @@ pnpm --filter @watchdog/db check:repos
 | E2E parser | `e2e/**/*.test.ts` (not under `specs/`) | Pure; guards the E2E harness itself |
 | E2E | `e2e/specs/**/*.spec.ts` | `watchdog_e2e` + web + worker; tags `@smoke`, `@custody`, `@journey`; CI retries ×2 |
 
-Sibling `__tests__/` next to source. Shared builders/harness: `@watchdog/test-kit` (`/fc`, `/fixtures`, `/db`, `/http`, `/it`). **E2E prereqs:** Postgres + MinIO (`just up` or `just test-db` + MinIO). Playwright starts web on port **3300** (does not reuse `:3000`) and the worker with `pnpm --filter @watchdog/worker start` — not `dev`/`tsx watch`, which would kill a daily worker watching the same files. Each browser test truncates `watchdog_e2e` via the auto `_resetDb` fixture before running. NixOS: enter `nix develop` so Chromium comes from the flake; CI installs Playwright's own Chromium.
+Sibling `__tests__/` next to source. Shared builders/harness: `@watchdog/test-kit` (`/fc`, `/fixtures`, `/db`, `/http`, `/it`). **E2E prereqs:** Postgres + MinIO (`just up` or `just test-db` + MinIO). Playwright starts web on port **3300** (does not reuse `:3000`) and the worker with `pnpm --filter @watchdog/worker start`: not `dev`/`tsx watch`, which would kill a daily worker watching the same files. Each browser test truncates `watchdog_e2e` via the auto `_resetDb` fixture before running. NixOS: enter `nix develop` so Chromium comes from the flake; CI installs Playwright's own Chromium.
 
 **Web lib tests run in the component project** (jsdom), not `pnpm test:unit`. Unit is packages + worker only.
 
-Collect Caps ship `__tests__/interpret.test.ts`. Do not add a `run()` file per Cap — prove `report.json` + interpret via `itRunsCollectCap` (`@watchdog/test-kit/it`) on **three** Caps (`network.dns.lookup`, `web.url.unshorten`, `threat.virustotal.lookup`). Special `run()` (not `defineCollectCap`): `evidence.harvest`, `evidence.extract.ai`, `network.url.enrich`, `evidence.file.analyze`, `evidence.eml.analyze`. Web does not re-test Cap handlers. MSW: import `http` / `HttpResponse` / `mockServer` / `mockJson` from `@watchdog/test-kit/http`, not `msw`.
+Collect Caps ship `__tests__/interpret.test.ts`. Do not add a `run()` file per Cap: prove `report.json` + interpret via `itRunsCollectCap` (`@watchdog/test-kit/it`) on **three** Caps (`network.dns.lookup`, `web.url.unshorten`, `threat.virustotal.lookup`). Special `run()` (not `defineCollectCap`): `evidence.harvest`, `evidence.extract.ai`, `network.url.enrich`, `evidence.file.analyze`, `evidence.eml.analyze`. Web does not re-test Cap handlers. MSW: import `http` / `HttpResponse` / `mockServer` / `mockJson` from `@watchdog/test-kit/http`, not `msw`.
 
 CLI unit tests cover `--help`, custody envelopes (`CUSTODY` without `--user-override` on identifier/edge/event/question writes), and `loadPatch`. Generated `packages/client/src/generated/` is CI regen, not a test target.
 
-Playwright suite under `e2e/specs/` (**7 files, 16 tests**): `@journey` core loop; `@custody` Accept gates; `@smoke` auth, cases, Collect paste, Triage reject, and per-route navigation smoke (+ dossier). Harness: `e2e/support/`, `e2e/api/`, `e2e/fixtures/test.ts` (import `test`/`expect` here — not `@playwright/test`), `e2e/pages/`.
+Playwright suite under `e2e/specs/` (**7 files, 16 tests**): `@journey` core loop; `@custody` Accept gates; `@smoke` auth, cases, Collect paste, Triage reject, and per-route navigation smoke (+ dossier). Harness: `e2e/support/`, `e2e/api/`, `e2e/fixtures/test.ts` (import `test`/`expect` here: not `@playwright/test`), `e2e/pages/`.
 
 ## See also
 

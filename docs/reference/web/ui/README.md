@@ -1,11 +1,10 @@
-# UI — delivery and chrome
+# UI: delivery and chrome
 
-**What this is:** delivery gates, chrome lexicon, PR checklist.  
-**What this is not:** tokens/loading detail — see sibling leaves in this folder.
+This page covers delivery gates, the chrome lexicon, and the PR checklist. Token and loading details are in the sibling pages.
 
 ## Delivery
 
-Greenfield Foundations/atoms on `/ui` **before** inventing chrome inside live product pages. `shared/ui` = presentational only (**no I/O**). Domains wire data via hooks/serverFns. Extract named generics at the **second** call site.
+Build new foundations and atoms on `/ui` before adding chrome to live product pages. `shared/ui` is presentational only (**no I/O**). Domains wire data through hooks and ServerFns. Extract a named generic at the **second** call site.
 
 | Gate                      | Command                                      |
 | ------------------------- | -------------------------------------------- |
@@ -15,17 +14,17 @@ Greenfield Foundations/atoms on `/ui` **before** inventing chrome inside live pr
 
 ## Chrome lexicon (UI parts)
 
-Name the **layout kind**, then the **parts**. These are component/layout words — not product feature names.
+Name the **layout kind**, then the **parts**. These are component/layout words: not product feature names.
 
 | Kind | Parts | Layout atom |
 | --- | --- | --- |
 | **split** | **Queue** (list) + **Detail** (selection) | `SplitView`, `density="split"` |
-| **stack** | **Section** × N | — |
+| **stack** | **Section** × N | : |
 | **table** | data table | Entities / Identifiers; bulk-add preview |
-| **form** | **FormSection** × N | — |
-| **card grid** | searchable cards (+ dashed create CTA) | Cases — `ACCENT_CARD_SURFACE` |
-| **board** | status columns + cards (kanban) | `/tasks` + Dossier Tasks tab — domain-owned (`TaskBoard`) |
-| **mixed (dashboard)** | Stat cards + section panels + resizable Activity (`ScrollArea`) | `/` Dashboard — domain-owned (`MetricsSection`, `dashboard-panels`, `RecentActivity` in vertical `ResizablePanelGroup`) |
+| **form** | **FormSection** × N | : |
+| **card grid** | searchable cards (+ dashed create CTA) | Cases: `ACCENT_CARD_SURFACE` |
+| **board** | status columns + cards (kanban) | `/tasks` + Dossier Tasks tab: domain-owned (`TaskBoard`) |
+| **mixed (dashboard)** | Stat cards + section panels + resizable Activity (`ScrollArea`) | `/` Dashboard: domain-owned (`MetricsSection`, `dashboard-panels`, `RecentActivity` in vertical `ResizablePanelGroup`) |
 
 | Part | Code |
 | --- | --- |
@@ -59,10 +58,10 @@ Never: *Console *Workbench *Panel *Pane *Rail *Strip *Tape
 
 ## UI PR checklist
 
-1. [ ] Semantic tokens / existing primitives — refuse list above
+1. [ ] Semantic tokens / existing primitives: refuse list above
 2. [ ] Shell not replaced by skeleton; loading matrix followed
 3. [ ] Loading / empty / error / success share footprint in the data region
-4. [ ] Chrome lexicon above — no banned surface nouns
+4. [ ] Chrome lexicon above: no banned surface nouns
 5. [ ] `shared/ui` remains no-I/O
 6. [ ] Opaque ids via `IdChip` / `formatOpaqueId` (no `.slice`)
 7. [ ] Right control for the job (ButtonGroup / ToggleGroup / SearchField / badges)

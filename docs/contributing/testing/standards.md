@@ -8,7 +8,7 @@ Tiers, commands, and file layout: [`TESTING.md`](index.md).
 
 Arrange / Act / Assert. One behavior per `it`. Names read as specs: `"rejects X when Y"`, not `"test1"`.
 
-`describe("<exported subject>", …)` names the function, module, or component as exported. `it("<verb-s> <object> when <condition>", …)` does not repeat that subject. Race tests live in a nested `describe("concurrency")`. Always pair `describe` + `it` — never a bare `test()`.
+`describe("<exported subject>", …)` names the function, module, or component as exported. `it("<verb-s> <object> when <condition>", …)` does not repeat that subject. Race tests live in a nested `describe("concurrency")`. Always pair `describe` + `it`: never a bare `test()`.
 
 ## Contracts, not implementation
 
@@ -20,7 +20,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 
 | Suffix | Tier |
 | --- | --- |
-| `*.test.ts` | Unit (pure, zero IO). Under `apps/web/` these files still run in the **component** (jsdom) project — `pnpm test:component`, not `pnpm test:unit`. |
+| `*.test.ts` | Unit (pure, zero IO). Under `apps/web/` these files still run in the **component** (jsdom) project: `pnpm test:component`, not `pnpm test:unit`. |
 | `*.property.test.ts` | fast-check |
 | `*.int.test.ts` | Postgres via `withTestTx` / `resetTestDb` |
 | `*.component.test.tsx` | jsdom + Testing Library |
@@ -44,7 +44,7 @@ Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting patch
 
 Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-kit/db` (`testDb`, seeds). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
-Do not add tests for generated client JSON, `shared/ui/shadcn/`, ServerFn wrappers, live vendor HTTP, or a 4th–58th Collect `run()` copy. Assert behavior (rows, `DomainError` codes, CLI JSON) — not mocks of internals.
+Do not add tests for generated client JSON, `shared/ui/shadcn/`, ServerFn wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, `DomainError` codes, CLI JSON): not mocks of internals.
 
 ## Anti-cheat
 
@@ -74,7 +74,7 @@ Playwright specs live under `e2e/specs/` grouped by product area (`auth/`, `case
 | --- | --- | --- |
 | Support | `e2e/support/` | env, globalSetup (env seed), hydration, db-reset, route smoke table |
 | API | `e2e/api/` | typed `/api/v1` client + response parsers |
-| Fixtures | `e2e/fixtures/` | `test.extend` — auto `_resetDb`, `api`, `authenticatedCase`, page fixtures |
+| Fixtures | `e2e/fixtures/` | `test.extend`: auto `_resetDb`, `api`, `authenticatedCase`, page fixtures |
 | Pages | `e2e/pages/` | role-based page objects (actions only; assert in specs) |
 
 One behavior per spec file. Prefer `expect.poll` over sleeps. Seed graph state through the API client when UI setup is not the behavior under test. Custody gates belong in `custody/` or `triage/`, not mixed into journey specs.
@@ -85,4 +85,4 @@ Each Playwright test runs after an automatic `_resetDb` fixture truncates `watch
 
 ## Adding an e2e spec
 
-Add when the behavior crosses pages, real browser timing, or auth/session chrome that unit/integration/component tests cannot structurally cover. Put the spec in the matching `e2e/specs/<area>/` folder, reuse fixtures and page objects, and assert on persisted/API-visible outcomes — not mock internals.
+Add when the behavior crosses pages, real browser timing, or auth/session chrome that unit/integration/component tests cannot structurally cover. Put the spec in the matching `e2e/specs/<area>/` folder, reuse fixtures and page objects, and assert on persisted/API-visible outcomes: not mock internals.

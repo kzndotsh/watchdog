@@ -5,7 +5,7 @@
 
 ## Rules
 
-| Do | Don’t |
+| Do | Don't |
 | --- | --- |
 | `log.error(err)` or `setLevel` + `{ name, message }` | `log.set({ error: someError })` (`JSON.stringify(Error)` → `{}`) |
 | Auth denials as `warn` + `auth.denied` | Treat expected `UnauthorizedError` as `error` |

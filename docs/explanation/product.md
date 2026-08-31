@@ -3,7 +3,7 @@ document_created: 2026-07-27T23:28
 document_updated: 2026-07-27T23:28
 ---
 
-# PRODUCT — intent and doctrine
+# PRODUCT: intent and doctrine
 
 **What this is:** why Watchdog exists, who it serves, what we refuse, and how we decide. Shared by web, CLI, Caps, and agents.  
 **What this is not:** phase checkboxes ([`ROADMAP.md`](../../ROADMAP.md)) or route chrome ([`UX.md`](ux.md)).
@@ -24,11 +24,11 @@ Small-team OSINT: keep one **Case Graph** of Claims + Evidence you can defend, w
 
 ## Past practice ≠ design
 
-Field chats, vault habits, and frozen prototypes show **pain and anti-patterns** — not features to clone.
+Field chats, vault habits, and frozen prototypes show **pain and anti-patterns**: not features to clone.
 
 | Use history for | Do not use for |
 | --- | --- |
-| Personas, constraints, failure modes | “We did X → ship X” |
+| Personas, constraints, failure modes | "We did X → ship X" |
 | Stress-testing whether the loop solves lived pain | Chat/git/Claude as product surfaces |
 | Steal algorithms from `_legacy-*` when earned | Extending `_legacy-*` or resurrecting intake theater |
 
@@ -38,29 +38,29 @@ Field chats, vault habits, and frozen prototypes show **pain and anti-patterns**
 
 | Era | What | Outcome |
 | --- | --- | --- |
-| Field improvisation | Signal + masters + Claude stitch + scrapes | Pain lab — not a product |
-| v1 (`_legacy-v1`) | Vault SoT + fixed Python pipeline | Frozen — tradecraft tuition |
-| v2 (`_legacy-v2`) | Broad platform spec; Cap/Mutation/Scratch theater | Frozen — breadth ≫ depth |
-| v3 (greenfield) | Case + Evidence + Proposal + Triage + Export | **Live** — polish ≠ rewrite #4 |
+| Field improvisation | Signal + masters + Claude stitch + scrapes | Pain lab: not a product |
+| v1 (`_legacy-v1`) | Vault SoT + fixed Python pipeline | Frozen: tradecraft tuition |
+| v2 (`_legacy-v2`) | Broad platform spec; Cap/Mutation/Scratch theater | Frozen: breadth ≫ depth |
+| v3 (greenfield) | Case + Evidence + Proposal + Triage + Export | **Live**: polish ≠ rewrite #4 |
 
 **Lessons:**
 
-1. Vibe / breadth prototypes are paid tuition — steal algorithms; do not extend frozen trees.
-2. Spec ≠ product — Cap “done” means Evidence + Proposal out, not a registered stub.
-3. Nouns earn their place from the loop — prefer precise words over soft synonyms.
-4. Write-gate spirit stays; intake theater goes — untrusted → human via Evidence + Proposal.
+1. Vibe / breadth prototypes are paid tuition: steal algorithms; do not extend frozen trees.
+2. Spec ≠ product: Cap "done" means Evidence + Proposal out, not a registered stub.
+3. Nouns earn their place from the loop: prefer precise words over soft synonyms.
+4. Write-gate spirit stays; intake theater goes: untrusted → human via Evidence + Proposal.
 5. Field improvisation confirms pain, not architecture.
-6. Build principles (shape first, boundaries, levers, structure over prose) are doctrine — not a feature backlog.
+6. Build principles (shape first, boundaries, levers, structure over prose) are doctrine: not a feature backlog.
 7. Polish inside greenfield; a fourth rewrite is the failure mode to refuse.
-8. Phase 0 honesty first — lying stubs and doc drift recreate “file exists ≠ works” at small scale.
+8. Phase 0 honesty first: lying stubs and doc drift recreate "file exists ≠ works" at small scale.
 
 The `_legacy-*` trees that record this history are untracked and live outside this repo.
 
 ---
 
-## Personas (design for / don’t productize)
+## Personas (design for / don't productize)
 
-| Persona | Design for | Don’t productize |
+| Persona | Design for | Don't productize |
 | --- | --- | --- |
 | **Builder** | Cap Jobs, CLI/API, Case Graph | Git-push as collab model; creds-in-chat onboarding |
 | **Publisher-scraper** | Caps + Evidence + Export | Informal % confidence; mega-dossier as SoT |
@@ -73,7 +73,7 @@ The `_legacy-*` trees that record this history are untracked and live outside th
 ## Problems we solve (pain, not features)
 
 1. AI / chat summaries treated as truth
-2. Chat or git as system of record; dual “masters”
+2. Chat or git as system of record; dual "masters"
 3. Async non-builder catch-up tax (Case must be readable without scrollback)
 4. Weak identity merges (handle, mailbox, coincidence)
 5. More collection → less clarity (progress paradox)
@@ -102,14 +102,14 @@ The `_legacy-*` trees that record this history are untracked and live outside th
 
 ## Design doctrine
 
-1. **Field ≠ design** — pain and personas only; never habit-copy.
-2. **Data shape + write-gate first** — protect option value; don’t reopen earned nouns.
-3. **Boundaries** — validate at OpenAPI / CLI / Cap / Evidence edges; Triage Accept is the trust boundary; Cap logic stays pure; shell stays thin.
-4. **Caps are levers** — deterministic, rerunnable, reviewable; hand/AI stitch is not a lever.
-5. **Encode in structure** — schema and Accept over prose warnings; strongest rung wins.
-6. **Experience = core loop** — say no; ship less; no lying Caps; serve builder + non-tech + agent.
-7. **Idempotent Jobs / Export / Accept** — converge on retry; content-address Evidence.
-8. **Outcome over smooth middles** — phases verify end state; no legacy/Signal comfort shims.
+1. **Field ≠ design**: pain and personas only; never habit-copy.
+2. **Data shape + write-gate first**: protect option value; don't reopen earned nouns.
+3. **Boundaries**: validate at OpenAPI / CLI / Cap / Evidence edges; Triage Accept is the trust boundary; Cap logic stays pure; shell stays thin.
+4. **Caps are levers**: deterministic, rerunnable, reviewable; hand/AI stitch is not a lever.
+5. **Encode in structure**: schema and Accept over prose warnings; strongest rung wins.
+6. **Experience = core loop**: say no; ship less; no lying Caps; serve builder + non-tech + agent.
+7. **Idempotent Jobs / Export / Accept**: converge on retry; content-address Evidence.
+8. **Outcome over smooth middles**: phases verify end state; no legacy/Signal comfort shims.
 
 ---
 

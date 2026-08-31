@@ -3,9 +3,9 @@ document_created: 2026-07-30T01:30
 document_updated: 2026-08-15T10:35
 ---
 
-# SCENARIOS — Day-0 investigator journeys
+# SCENARIOS: Day-0 investigator journeys
 
-**What this is:** walked user scenarios vs code. Status SoT for “does this journey work,” not architecture. **Not:** Cap unit tests ([`TESTING.md`](../contributing/testing/index.md)), chrome lexicon ([`docs/reference/web/UI.md`](../../docs/reference/web/UI.md)), product doctrine ([`PRODUCT.md`](product.md)).
+**What this is:** walked user scenarios vs code. Status SoT for "does this journey work," not architecture. **Not:** Cap unit tests ([`TESTING.md`](../contributing/testing/index.md)), chrome lexicon ([`docs/reference/web/UI.md`](../../docs/reference/web/UI.md)), product doctrine ([`PRODUCT.md`](product.md)).
 
 Status: `shipped` · `partial` · `missing` · `lying` (doc/UI claim a path that cannot complete).
 
@@ -15,15 +15,15 @@ Status: `shipped` · `partial` · `missing` · `lying` (doc/UI claim a path that
 
 Nouns and Caps shipped ahead of walked journeys. The Collect → Decide → Graph loop **mostly works**. Failures cluster where the UI **pretends** a path exists.
 
-**Healthiest:** Triage Accept gates, Cases, Auth, Export zip, Cap-shaped Collect run form, Harvest/Extract on Collect. **Weakest:** none currently — credential preflight and post-dump Entity attach shipped.
+**Healthiest:** Triage Accept gates, Cases, Auth, Export zip, Cap-shaped Collect run form, Harvest/Extract on Collect. **Weakest:** none currently: credential preflight and post-dump Entity attach shipped.
 
-Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → walk → update this file.
+Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk → update this file.
 
 ---
 
 ## Fix first (trust damage order)
 
-1. **Keep this file updated** — scenario debt ≠ polish backlog.
+1. **Keep this file updated**: scenario debt ≠ polish backlog.
 
 ---
 
@@ -39,24 +39,24 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | Extract (AI) from Intake | shipped | Needs Case `allowThirdPartyEgress` + AI credential; also `wd evidence process --ai` |
 | Attach entity to evidence | shipped | Dump-time picker + Detail EntityCombobox (attach / replace / detach) |
 | `?evidenceId=` deep link | shipped | Selection writes back to search (`replace`) |
-| No Case / empty queue | shipped | — |
+| No Case / empty queue | shipped | : |
 
 ## Jobs
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
 | Start DNS / WHOIS with host | shipped | A/AAAA → `ip` Identifiers; NS/MX stay in Claim; WHOIS expiry Event if within 90 days |
-| Start Media oEmbed with URL | shipped | `web.media.oembed` — `@handle` + url Identifiers when Entity set |
+| Start Media oEmbed with URL | shipped | `web.media.oembed`: `@handle` + url Identifiers when Entity set |
 | Start URL Enrich from Jobs | shipped | Form sends `{url}` from Cap schema |
 | Start Harvest / Extract from Jobs | shipped | Form sends `{evidenceId}`; `evidence.harvest` / `evidence.extract.ai` listed |
 | Missing credential preflight | shipped | Run disabled + `jobs.start` / `wd jobs start` refuse before queue |
 | Egress off → aiprocess refused | shipped | Jobs + Intake warn/disable before Run |
 | Cancel stays cancelled | shipped | ~2s abort poll |
-| Stuck >60s banner | shipped | — |
-| interpretError amber | shipped | Amber “Interpret failed” badge + copy |
-| proposalId → Triage deep link | shipped | — |
+| Stuck >60s banner | shipped | : |
+| interpretError amber | shipped | Amber "Interpret failed" badge + copy |
+| proposalId → Triage deep link | shipped | : |
 | `?jobId=` deep link | shipped | Selection writes back to search (`replace`) |
-| Cache hit visible | shipped | Detail “From cache” chip from `jobs.from_cache` |
+| Cache hit visible | shipped | Detail "From cache" chip from `jobs.from_cache` |
 | Playbooks from UI | shipped | Run Cap / Run Playbook ToggleGroup; host/url/ip/email/hash/handle books; bind + CT fan-out (`host-enumerate`); waiting chrome; Cancel run; egress greys `url-capture-ai` |
 | Playbook lazy-release | shipped | Later steps are created when the prior step succeeds |
 | Playbook egress / credential gate | shipped | Egress + vault presence both gate Run (API playbook start already fail-closed) |
@@ -70,11 +70,11 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | --- | --- | --- |
 | List / filter Proposals | shipped | First paint pending-only; clear filters shows history |
 | `?proposalId=` deep link | shipped | Selection writes back to search (`replace`) |
-| Review patch ops | shipped | — |
-| Accept unverified / possible / confirmed | shipped | — |
-| confirmed + attestation paste | shipped | — |
-| confirmed zero evidence blocked | shipped | — |
-| Zero-evidence warn | shipped | — |
+| Review patch ops | shipped | : |
+| Accept unverified / possible / confirmed | shipped | : |
+| confirmed + attestation paste | shipped | : |
+| confirmed zero evidence blocked | shipped | : |
+| Zero-evidence warn | shipped | : |
 | Identifier collision warn | shipped | Same `type+value` on another Entity → Alert + chip; Accept still allowed |
 | Invalid Identifier value blocks Accept | shipped | Soft-strict `validateIdentifierWrite`; Triage chip + Accept disabled; TX hard-fail; no partial Accept |
 | Reject → finding suppressions | shipped | Reject UI explains FP memory; re-runs skip |
@@ -88,17 +88,17 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
-| View all sections | shipped | — |
-| Edit summary / notes | shipped | — |
-| Create claim + confidence + evidence | shipped | UI doesn’t disable confirmed+zero |
-| Edit claim confidence | shipped | — |
+| View all sections | shipped | : |
+| Edit summary / notes | shipped | : |
+| Create claim + confidence + evidence | shipped | UI doesn't disable confirmed+zero |
+| Edit claim confidence | shipped | : |
 | Edit claim class later | shipped | ClaimClassSelect on Dossier edit |
-| Create identifier | shipped | — |
+| Create identifier | shipped | : |
 | Bulk add identifiers | shipped | Paste → left/right column match (type from header/values; Email+Phone on one row explodes). Preview cells editable (Entity locked). Handle needs platform. `confirmed` → `unverified`. |
 | Identifier confirmed + evidence | shipped | Create + Evidence column picker; confirmed blocked without links |
 | Attach / replace identifier evidence | shipped | `EvidencePicker` on create + edit |
 | related_to requires notes | shipped | Connection dialog + table composer gate Save when notes empty |
-| Connections list + 1-hop ego canvas | shipped | `connections-section` — Outbound/Inbound list + `@xyflow/react` canvas; dialog CRUD; Graph Studio `/graph` still Phase 2 |
+| Connections list + 1-hop ego canvas | shipped | `connections-section`: Outbound/Inbound list + `@xyflow/react` canvas; dialog CRUD; Graph Studio `/graph` still Phase 2 |
 | Connection phrase picker (inverse labels) | shipped | `{predicate, orientation}` → absolute `fromId`/`toId`; kind pairs filtered by `validKinds`; Combobox grouped by `EDGE_PREDICATE_GROUPS` |
 | Entities table Connections column | shipped | Chips (≤2 + `+N` browse) + Add/edit popover; `preferredEdgePhrase` / `clampEdgePhrase`; writes via `edge-write` builders @ `unverified` (no evidence); row-click opens dossier (chips/Add are buttons) |
 | Retract / contest / disprove | shipped | Contest hides like retract |
@@ -113,10 +113,10 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | --- | --- | --- |
 | Cases CRUD + switch cookie | shipped | **View case** → overview; Select sets Active; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename; update/egress also via API/CLI |
 | Delete case | shipped | Type-to-confirm (`DestructiveConfirmDialog`) on Cases card ⋯ and Overview; cascades Graph/Jobs/Triage/Evidence; heals Active cookie; also `wd cases delete` |
-| Case overview page | shipped | `/cases/$caseSlug` — case dashboard (stats / activity / settings); Open = set Active; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks` |
-| Identifiers table | shipped | `/identifiers` — Active-Case browse + inline edit + evidence + in-place create (Value first after Entity); **Bulk add** paste/map dialog (default Entity fills empty Entity cells; mapped name/slug miss → **Not found** / **Ambiguous**; preview cells editable; `confirmed` → `unverified`); row click → Dossier Identifiers |
-| Bulk add identifiers | shipped | Same two-stage dialog on `/identifiers` and Dossier Identifiers (paste, then left/right match). Default Entity fills empty Entity cells; a mapped name/slug miss shows **Not found** / **Ambiguous** on the Entity cell (picker stays empty). Preview cells are editable (empty Type/Platform = **—**). Dossier locks Entity. Type deferred from column/values. `validateIdentifierWrite` (incl. handle→platform) marks rows invalid. No Evidence / no `confirmed` from paste. |
-| Case graph page | shipped | `/graph` — case-wide preview (`CaseGraphCanvas`); Graph Studio still Phase 2 |
+| Case overview page | shipped | `/cases/$caseSlug`: case dashboard (stats / activity / settings); Open = set Active; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks` |
+| Identifiers table | shipped | `/identifiers`: Active-Case browse + inline edit + evidence + in-place create (Value first after Entity); **Bulk add** paste/map dialog (default Entity fills empty Entity cells; mapped name/slug miss → **Not found** / **Ambiguous**; preview cells editable; `confirmed` → `unverified`); row click → Dossier Identifiers |
+| Bulk add identifiers | shipped | Same two-stage dialog on `/identifiers` and Dossier Identifiers (paste, then left/right match). Default Entity fills empty Entity cells; a mapped name/slug miss shows **Not found** / **Ambiguous** on the Entity cell (picker stays empty). Preview cells are editable (empty Type/Platform = **: **). Dossier locks Entity. Type deferred from column/values. `validateIdentifierWrite` (incl. handle→platform) marks rows invalid. No Evidence / no `confirmed` from paste. |
+| Case graph page | shipped | `/graph`: case-wide preview (`CaseGraphCanvas`); Graph Studio still Phase 2 |
 | Tasks CRUD + kanban | shipped | `/tasks` kanban only; drag = status change (no persisted column order); optional entity link (`?entityId=`); Dossier Tasks = entity-scoped board; Case Overview has no Tasks tab (stat tile → `/tasks`); not a Graph write |
 | allowThirdPartyEgress toggle | shipped | Case overview settings; also `PATCH /cases/{id}` / `wd cases update --allow-third-party-egress` |
 | Case-wide identifiers / edges reads | shipped | `GET /cases/{caseId}/identifiers`, `GET /cases/{caseId}/edges` (aggregate views; invalidate with entity change; no CLI parity in v1) |
@@ -130,7 +130,7 @@ Before the next Cap or UI slice: happy path + 2–3 sad paths + done-when → wa
 | Export zip from Cases UI | shipped | 404 if zero entities; also `wd export zip` / `md` (x-api-key file routes) |
 | Evidence hide / restore / download | shipped | UI + `wd evidence hide` / `restore` / `download` |
 | Evidence process / enrich | shipped | UI + `wd evidence process` / `--ai` / `enrich` (same core glue as Collect) |
-| Auth login / gated signup | shipped | — |
+| Auth login / gated signup | shipped | : |
 
 ## Search · Hotkeys
 

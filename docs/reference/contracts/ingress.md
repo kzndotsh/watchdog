@@ -15,11 +15,11 @@ Collect (dump / Cap run)
 Also:
 
 - **Dossier** = human Graph edit (direct, not via Proposal).
-- **Export** = projection of Graph — never a second SoT.
+- **Export** = projection of Graph: never a second SoT.
 
 ## Rules
 
-| Do | Don’t |
+| Do | Don't |
 | --- | --- |
 | Caps `interpret` → Proposal only | Caps/machines write Graph or set `confirmed` |
 | Triage Accept applies patch under human custody | Silent machine Graph writes |

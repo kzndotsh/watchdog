@@ -1,6 +1,6 @@
 # Watchdog web docs
 
-Agents: start at [`../../../apps/web/AGENTS.md`](../../../apps/web/AGENTS.md), then open the leaf that matches. Platform docs: [`docs/README.md`](../../README.md).
+Start with [`../../../apps/web/AGENTS.md`](../../../apps/web/AGENTS.md), then open the relevant leaf. Platform docs are in [`docs/README.md`](../../README.md).
 
 | Doc | Owns | Does not own |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ Agents: start at [`../../../apps/web/AGENTS.md`](../../../apps/web/AGENTS.md), t
 
 **Platform:** [`product`](../../explanation/product.md) · [`ux`](../../explanation/ux.md) · [`types`](../platform/types.md) · [`caps-lexicon`](../platform/caps-lexicon.md) · [`scenarios`](../../explanation/scenarios.md) · [`platform hub`](../platform/README.md).
 
-Code SoT: `apps/web/src/styles.css` + `shared/ui/`. Loading: [`ui/loading.md`](ui/loading.md). Tables: [`ui/tables.md`](ui/tables.md).
+The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. Loading: [`ui/loading.md`](ui/loading.md). Tables: [`ui/tables.md`](ui/tables.md).
 
 ## Traps index
 

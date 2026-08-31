@@ -11,7 +11,7 @@
 
 ## Escape hatch: graph write
 
-- `POST …/graph/write` / `wd graph write` with body `userOverride: true` (CLI verb _is_ the hatch — no boolean flag).
+- `POST …/graph/write` / `wd graph write` with body `userOverride: true` (CLI verb _is_ the hatch: no boolean flag).
 - Lands Graph @ **`unverified`** + `graph_writes` row in the **same tx** as `applyPatch`.
 - Optional `idempotencyKey` (replay returns `replayed: true`, `opCount: 0`).
 - No Proposal on this path.
