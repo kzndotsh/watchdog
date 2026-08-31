@@ -36,9 +36,9 @@ T3 Env + Zod for deploy/boot secrets. Schemas composed per entrypoint — CLI do
 
 ## See also / External References
 
-| Need                  | File                                                 |
-| --------------------- | ---------------------------------------------------- |
-| Server field list     | `src/server.ts` / `src/fragments.ts`                 |
-| CLI fields            | `src/cli.ts`                                         |
-| DB kit dotenv         | [`packages/db/AGENTS.md`](../db/AGENTS.md)           |
-| Platform architecture | [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) |
+| Need | File |
+| --- | --- |
+| Server field list | `src/server.ts` / `src/fragments.ts` |
+| CLI fields | `src/cli.ts` |
+| DB kit dotenv | [`packages/db/AGENTS.md`](../db/AGENTS.md) |
+| Platform architecture | [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md) |

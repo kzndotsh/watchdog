@@ -42,5 +42,5 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Controllers call `@watchdog/co
 | --- | --- |
 | Generated client | [`packages/client/AGENTS.md`](../client/AGENTS.md) |
 | Core services | [`packages/core/AGENTS.md`](../core/AGENTS.md) |
-| Playbooks | [`docs/CAPS.md`](../../docs/CAPS.md) |
-| Process logging | [`packages/log/AGENTS.md`](../log/AGENTS.md) · [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) |
+| Playbooks | [`docs/reference/platform/caps-lexicon.md`](../../docs/reference/platform/caps-lexicon.md) |
+| Process logging | [`packages/log/AGENTS.md`](../log/AGENTS.md) · [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md) |

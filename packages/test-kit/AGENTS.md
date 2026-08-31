@@ -47,5 +47,5 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 
 | Need | File |
 | --- | --- |
-| Methodology | [`docs/TESTING_STANDARDS.md`](../../docs/TESTING_STANDARDS.md) |
-| Commands / tiers | [`docs/TESTING.md`](../../docs/TESTING.md) |
+| Methodology | [`docs/contributing/testing/standards.md`](../../docs/contributing/testing/standards.md) |
+| Commands / tiers | [`docs/contributing/testing/index.md`](../../docs/contributing/testing/index.md) |

@@ -49,10 +49,10 @@ Domain services for Case Graph, Jobs, evidence, Tasks (case work items — not G
 
 ## See also / External References
 
-| Need                  | File                                                 |
-| --------------------- | ---------------------------------------------------- |
-| Repo contract         | [`packages/db/AGENTS.md`](../db/AGENTS.md)           |
-| Cap authoring         | [`packages/caps/AGENTS.md`](../caps/AGENTS.md)       |
-| Patch custody         | [`packages/policy/AGENTS.md`](../policy/AGENTS.md)   |
-| Process logging       | [`packages/log/AGENTS.md`](../log/AGENTS.md)         |
-| Platform architecture | [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) |
+| Need | File |
+| --- | --- |
+| Repo contract | [`packages/db/AGENTS.md`](../db/AGENTS.md) |
+| Cap authoring | [`packages/caps/AGENTS.md`](../caps/AGENTS.md) |
+| Patch custody | [`packages/policy/AGENTS.md`](../policy/AGENTS.md) |
+| Process logging | [`packages/log/AGENTS.md`](../log/AGENTS.md) |
+| Platform architecture | [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md) |

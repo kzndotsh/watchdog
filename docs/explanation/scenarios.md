@@ -5,7 +5,7 @@ document_updated: 2026-08-15T10:35
 
 # SCENARIOS — Day-0 investigator journeys
 
-**What this is:** walked user scenarios vs code. Status SoT for “does this journey work,” not architecture. **Not:** Cap unit tests ([`TESTING.md`](TESTING.md)), chrome lexicon ([`apps/web/docs/UI.md`](../apps/web/docs/UI.md)), product doctrine ([`PRODUCT.md`](PRODUCT.md)).
+**What this is:** walked user scenarios vs code. Status SoT for “does this journey work,” not architecture. **Not:** Cap unit tests ([`TESTING.md`](../contributing/testing/index.md)), chrome lexicon ([`docs/reference/web/UI.md`](../../docs/reference/web/UI.md)), product doctrine ([`PRODUCT.md`](product.md)).
 
 Status: `shipped` · `partial` · `missing` · `lying` (doc/UI claim a path that cannot complete).
 

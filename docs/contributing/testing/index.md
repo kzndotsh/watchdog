@@ -1,8 +1,8 @@
 # Testing — platform index
 
 **What this is:** where tests live and which command runs which tier.  
-**Not:** how to write a good test — that is [`TESTING_STANDARDS.md`](TESTING_STANDARDS.md).  
-**Not:** web DS gates — that is [`apps/web/docs/TESTING.md`](../apps/web/docs/TESTING.md).
+**Not:** how to write a good test — that is [`TESTING_STANDARDS.md`](standards.md).  
+**Not:** web DS gates — that is [`docs/contributing/testing/web.md`](../../../docs/contributing/testing/web.md).
 
 ## Commands
 
@@ -48,7 +48,7 @@ Playwright suite under `e2e/specs/` (**7 files, 16 tests**): `@journey` core loo
 
 | Need | Doc |
 | --- | --- |
-| Methodology / anti-cheat | [`TESTING_STANDARDS.md`](TESTING_STANDARDS.md) |
-| Web gates + remaining manual smoke | [`apps/web/docs/TESTING.md`](../apps/web/docs/TESTING.md) |
-| Day-0 journeys | [`SCENARIOS.md`](SCENARIOS.md) |
-| test-kit | [`packages/test-kit/AGENTS.md`](../packages/test-kit/AGENTS.md) |
+| Methodology / anti-cheat | [`TESTING_STANDARDS.md`](standards.md) |
+| Web gates + remaining manual smoke | [`docs/contributing/testing/web.md`](../../../docs/contributing/testing/web.md) |
+| Day-0 journeys | [`SCENARIOS.md`](../../explanation/scenarios.md) |
+| test-kit | [`packages/test-kit/AGENTS.md`](../../../packages/test-kit/AGENTS.md) |

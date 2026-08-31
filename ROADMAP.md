@@ -5,7 +5,7 @@ document_updated: 2026-08-16T19:31
 
 # Watchdog ROADMAP
 
-Living phase / backlog SoT for **product work**. Nouns, Cap loop rules, intent, personas and doctrine: [`docs/PRODUCT.md`](docs/PRODUCT.md). UI contracts: [`apps/web/docs/`](apps/web/docs/README.md). Platform UX: [`docs/UX.md`](docs/UX.md). The `_legacy-*` trees are untracked, frozen mines — **do not extend**.
+Living phase / backlog SoT for **product work**. Nouns, Cap loop rules, intent, personas and doctrine: [`docs/explanation/product.md`](docs/explanation/product.md). UI contracts: [`docs/reference/web/`](docs/reference/web/README.md). Platform UX: [`docs/explanation/ux.md`](docs/explanation/ux.md). The `_legacy-*` trees are untracked, frozen mines — **do not extend**.
 
 ---
 
@@ -29,7 +29,7 @@ Small-team (often 1–2) OSINT: keep one **Case Graph** of Claims + Evidence you
 
 ### Field research
 
-Signal-era field work + build principles confirm this north star and Phases 0–1. They do **not** add backlog items. Personas, pain, anti-patterns, rewrite lessons, and design doctrine live in [`docs/PRODUCT.md`](docs/PRODUCT.md) — past practice ≠ design.
+Signal-era field work + build principles confirm this north star and Phases 0–1. They do **not** add backlog items. Personas, pain, anti-patterns, rewrite lessons, and design doctrine live in [`docs/explanation/product.md`](docs/explanation/product.md) — past practice ≠ design.
 
 ---
 
@@ -203,8 +203,8 @@ Phase 2–3 items stay as bullets above until earned — don’t checkbox-dream 
 | Doc | Owns |
 | --- | --- |
 | **This file** | Phases, backlog, maturity, legacy mines |
-| [`docs/PRODUCT.md`](docs/PRODUCT.md) | Nouns, hard bets, Cap loop, intent, personas, doctrine, rewrite lessons |
+| [`docs/explanation/product.md`](docs/explanation/product.md) | Nouns, hard bets, Cap loop, intent, personas, doctrine, rewrite lessons |
 | [`AGENTS.md`](AGENTS.md) | Operational rules |
 | [`docs/`](docs/README.md) | Platform architecture / UX / types / scenarios |
-| [`apps/web/docs/`](apps/web/docs/README.md) | UI / DATA / domains / web architecture |
-| [`docs/UX.md`](docs/UX.md) | Experience debt (dated) |
+| [`docs/reference/web/`](docs/reference/web/README.md) | UI / DATA / domains / web architecture |
+| [`docs/explanation/ux.md`](docs/explanation/ux.md) | Experience debt (dated) |

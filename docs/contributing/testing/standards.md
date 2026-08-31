@@ -2,7 +2,7 @@
 
 How to write tests in this repo so they catch regressions instead of existing to pass.
 
-Tiers, commands, and file layout: [`TESTING.md`](TESTING.md).
+Tiers, commands, and file layout: [`TESTING.md`](index.md).
 
 ## AAA, one behavior
 

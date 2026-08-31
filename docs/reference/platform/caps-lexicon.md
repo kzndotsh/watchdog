@@ -1,7 +1,7 @@
 # Caps — naming, lexicon, ship gates
 
 **What this is:** Cap id / title / kind lexicon, method vocabulary, pre-code decisions (D1–D5), and ship-gate rules for catalog growth.  
-**Not:** Cap SPI details (see [`ARCHITECTURE.md`](ARCHITECTURE.md) § Caps) or Job runner internals.
+**Not:** Cap SPI details (see [`ARCHITECTURE.md`](README.md) § Caps) or Job runner internals.
 
 **Catalog size:** `pnpm generate:caps` currently emits **63** CapDescriptors (Collect/enrich/process/act across network · archive · web · identity · breach · threat · evidence). Growth is gated by the ship-gate table below — not by the original first-slate “≈28” ceiling (that was the Day-0 honest floor; later waves earned beyond it and are listed under Public vs paid).
 
@@ -190,7 +190,7 @@ Shipped starter set includes same-seed books (`host-footprint`, `host-posture`, 
 
 | Need | Doc |
 | --- | --- |
-| Cap SPI / Jobs path | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
-| Identifier vocab | [`TYPES.md`](TYPES.md) |
-| Cap package layout | [`packages/caps/AGENTS.md`](../packages/caps/AGENTS.md) |
-| Product refuse list | [`PRODUCT.md`](PRODUCT.md) |
+| Cap SPI / Jobs path | [`ARCHITECTURE.md`](README.md) |
+| Identifier vocab | [`TYPES.md`](types.md) |
+| Cap package layout | [`packages/caps/AGENTS.md`](../../../packages/caps/AGENTS.md) |
+| Product refuse list | [`PRODUCT.md`](../../explanation/product.md) |

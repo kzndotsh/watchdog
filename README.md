@@ -172,7 +172,7 @@ packages/
 └── test-kit/             Dev-only fixtures, Postgres harness, MSW
 ```
 
-Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and only `core` touches repos. Full matrix in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and only `core` touches repos. Full matrix in [`docs/reference/platform/README.md`](docs/reference/platform/README.md).
 
 A job's path: `enqueueCapJob` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to Triage → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
 
@@ -203,7 +203,7 @@ Integration and end-to-end runs need their own databases first: `just test-db`.
 
 ## Status
 
-Third design, first one that ships. A vault-plus-Python-pipeline version and a broad platform spec both got frozen before this; [`docs/PRODUCT.md`](docs/PRODUCT.md) records what each one taught and what not to resurrect.
+Third design, first one that ships. A vault-plus-Python-pipeline version and a broad platform spec both got frozen before this; [`docs/explanation/product.md`](docs/explanation/product.md) records what each one taught and what not to resurrect.
 
 Today: **63 Caps**, **14 packages**, **433 unit and property tests** green. The solo-investigator loop runs end to end: authenticate, create a case, dump evidence, run Caps, accept proposals, export the package.
 
@@ -220,12 +220,12 @@ Investigation content (corpus, entity notes, mirrors) lives in a separate privat
 
 | Read | For |
 | --- | --- |
-| [`docs/PRODUCT.md`](docs/PRODUCT.md) | Intent, personas, what this refuses to build and why |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Packages, import rules, jobs, oRPC, logging |
-| [`docs/CAPS.md`](docs/CAPS.md) · [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md) | Cap naming, method vocabulary, ship gates, how to write one |
-| [`docs/TYPES.md`](docs/TYPES.md) | Shared Zod schemas and vocabulary |
-| [`docs/UX.md`](docs/UX.md) | Information architecture and investigator flows |
-| [`apps/web/docs/`](apps/web/docs/README.md) | UI, design system, domains, data fetching |
+| [`docs/explanation/product.md`](docs/explanation/product.md) | Intent, personas, what this refuses to build and why |
+| [`docs/reference/platform/README.md`](docs/reference/platform/README.md) | Packages, import rules, jobs, oRPC, logging |
+| [`docs/reference/platform/caps-lexicon.md`](docs/reference/platform/caps-lexicon.md) · [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md) | Cap naming, method vocabulary, ship gates, how to write one |
+| [`docs/reference/platform/types.md`](docs/reference/platform/types.md) | Shared Zod schemas and vocabulary |
+| [`docs/explanation/ux.md`](docs/explanation/ux.md) | Information architecture and investigator flows |
+| [`docs/reference/web/`](docs/reference/web/README.md) | UI, design system, domains, data fetching |
 | [`AGENTS.md`](AGENTS.md) | Conventions for coding agents in this repo |
 
 ## License

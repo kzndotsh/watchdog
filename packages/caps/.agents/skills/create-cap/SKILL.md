@@ -9,13 +9,13 @@ description: >-
   packages/caps questions that do not involve adding a new Cap id.
 metadata:
   owner: watchdog
-  sources: docs/CAPS.md, packages/caps/AGENTS.md
+  sources: docs/reference/platform/caps-lexicon.md, packages/caps/AGENTS.md
 ---
 
 # Create cap
 
 Orchestrates the D1-D5 decision method and authoring checklist already
-documented in `docs/CAPS.md` and `packages/caps/AGENTS.md`. Does not
+documented in `docs/reference/platform/caps-lexicon.md` and `packages/caps/AGENTS.md`. Does not
 restate their content — read them; this skill only sequences the steps.
 
 ## Outcomes
@@ -36,9 +36,9 @@ Writes only inside the new Cap's folder
 
 ## Instructions
 
-1. Read `docs/CAPS.md` sections "Three layers" and "Reserved categories" —
+1. Read `docs/reference/platform/caps-lexicon.md` sections "Three layers" and "Reserved categories" —
    settle category, salient axis, and method (slot 3) before writing code.
-2. Walk D1-D5 in `docs/CAPS.md` for anything the new Cap touches: Identifier
+2. Walk D1-D5 in `docs/reference/platform/caps-lexicon.md` for anything the new Cap touches: Identifier
    landing shape (D1), passive vs active `useCases`/`invasive` (D2),
    named-check exemption (D3), one-request-per-origin (D4), breach
    credential handling (D5). Record the answers; do not skip silently.

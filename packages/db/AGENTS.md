@@ -83,4 +83,4 @@ Repos take `exec` first. Outside a TX pass `db`; inside pass `tx`. This **invert
 
 ## See also
 
-[`docs/CAPS.md`](../../docs/CAPS.md) · [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)
+[`docs/reference/platform/caps-lexicon.md`](../../docs/reference/platform/caps-lexicon.md) · [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md)

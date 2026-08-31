@@ -6,7 +6,7 @@ document_updated: 2026-07-27T23:28
 # PRODUCT — intent and doctrine
 
 **What this is:** why Watchdog exists, who it serves, what we refuse, and how we decide. Shared by web, CLI, Caps, and agents.  
-**What this is not:** phase checkboxes ([`ROADMAP.md`](../ROADMAP.md)) or route chrome ([`UX.md`](UX.md)).
+**What this is not:** phase checkboxes ([`ROADMAP.md`](../../ROADMAP.md)) or route chrome ([`UX.md`](ux.md)).
 
 ---
 
@@ -115,10 +115,10 @@ The `_legacy-*` trees that record this history are untracked and live outside th
 
 ## See also
 
-| Doc                                             | Owns                       |
-| ----------------------------------------------- | -------------------------- |
-| [`ROADMAP.md`](../ROADMAP.md)                   | Phases, backlog, maturity  |
-| **This file**                                   | Nouns, hard bets           |
-| [`UX.md`](UX.md)                                | IA, flows, experience debt |
-| [`apps/web/docs/UI.md`](../apps/web/docs/UI.md) | Design system / chrome     |
-| [`README.md`](README.md)                        | Platform docs index        |
+| Doc | Owns |
+| --- | --- |
+| [`ROADMAP.md`](../../ROADMAP.md) | Phases, backlog, maturity |
+| **This file** | Nouns, hard bets |
+| [`UX.md`](ux.md) | IA, flows, experience debt |
+| [`docs/reference/web/UI.md`](../../docs/reference/web/UI.md) | Design system / chrome |
+| [`README.md`](../README.md) | Platform docs index |

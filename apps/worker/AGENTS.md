@@ -37,4 +37,4 @@ Thin Cap Job runner: pg-boss `work` → `executeJob`, cancel poll, export events
 | Job pipeline | [`packages/core/AGENTS.md`](../../packages/core/AGENTS.md) |
 | Caps | [`packages/caps/AGENTS.md`](../../packages/caps/AGENTS.md) |
 | Process logging | [`packages/log/AGENTS.md`](../../packages/log/AGENTS.md) |
-| Platform architecture | [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) |
+| Platform architecture | [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md) |

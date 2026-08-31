@@ -14,7 +14,7 @@ description: >-
   nothing about Watchdog's contracts.
 metadata:
   owner: watchdog
-  sources: AGENTS.md, docs/PRODUCT.md
+  sources: AGENTS.md, docs/explanation/product.md
 ---
 
 # Audit contract
@@ -61,6 +61,6 @@ Read-only. Reports inline with citations. Never edits code, docs, or config.
 - Adversarial-test claims the same way the Investigation discipline requires
   of case work: the absence of a violation in the files you read is not
   proof across the whole subsystem.
-- Breach/credential handling has its own caveats (`docs/CAPS.md` D5) — do
+- Breach/credential handling has its own caveats (`docs/reference/platform/caps-lexicon.md` D5) — do
   not flag stored plaintext as a violation without checking whether the
   source is metadata-only.

@@ -1,13 +1,13 @@
 # UX — product experience
 
 **What this is:** how investigators _use_ Watchdog — information architecture, flows, empty/error meaning, copy, experience debt.  
-**What this is not:** tokens, atoms, or component naming — that is [`apps/web/docs/UI.md`](../apps/web/docs/UI.md). Product intent, personas, and doctrine live in [`PRODUCT.md`](PRODUCT.md).
+**What this is not:** tokens, atoms, or component naming — that is [`docs/reference/web/UI.md`](../../docs/reference/web/UI.md). Product intent, personas, and doctrine live in [`PRODUCT.md`](product.md).
 
 Last updated: 2026-08-15 (Identifier write gate · Cmd+K search · Dossier Evidence dump · Bulk add identifiers · Delete case · Questions edit/reopen · Jobs vault preflight)
 
 ## Product principle
 
-Operate mode: task clarity over surprise. Surfaces earn their chrome; don’t invent a second app inside a page. Core loop and refusals: [`PRODUCT.md`](PRODUCT.md).
+Operate mode: task clarity over surprise. Surfaces earn their chrome; don’t invent a second app inside a page. Core loop and refusals: [`PRODUCT.md`](product.md).
 
 ## Information architecture
 
@@ -39,13 +39,14 @@ Operate mode: task clarity over surprise. Surfaces earn their chrome; don’t in
 
 ### Triage Accept (product rules)
 
+Canonical gates: [`custody`](../reference/contracts/custody.md) · agent graph write: [`agent-ingress`](../reference/contracts/agent-ingress.md). Cap loop nouns: [`product.md`](product.md).
+
+UX-only Accept chrome (not restated in contracts):
+
 - Cap/agent patch `data` **must not** include confidence — human picks on Accept.
-- If the patch has any confidence-bearing op (**Claim**, **Identifier**, **Edge**): force **one** confidence for the whole patch (`unverified` / `possible` / `confirmed`). Skip the step if the patch is only Entity / Event / Question (incl. Summary/Notes updates).
-- **`confirmed` requires ≥1 Evidence** (file/URL or attestation note) — Job-linked proposal evidence counts and is shown locked (no Add extras / attestation). Only when none are linked: attach Case Evidence and/or create from paste on Accept. `unverified` / `possible` may proceed with zero (warn, don’t block).
 - Claim **`class`**: keep as proposed (default `observation`); edit later in Dossier — no bulk class editor on Accept Day-0.
 - **Reject:** drop patch; keep already-captured Evidence; reason optional; row stays in history (Rejected filter).
 - Any Case member may Accept/Reject Day-0 (dual-control later).
-- Agent **graph write** lands on Graph at `unverified` (audited in `graph_writes`). API requires body `userOverride: true`; CLI escape hatch is the verb `wd graph write` (no boolean flag). Dossier-style child writes (`wd claims|identifiers|edges|events|questions …`) need **`--user-override`** and CLI refuses `confirmed` (Triage Accept / Dossier may set it). Later human edits still go through confidence rules.
 - **Identifier collision:** if a proposed Identifier `type+value` already exists on another Entity in the Case, Triage shows a warn Alert + per-op chip. Warn, don’t block Accept. Caps stay Case-blind — this is core/Triage, not interpret.
 - **Invalid Identifier values:** structured types (`email` / `phone` / `url` / `domain` / `ip` / `pgp`) plus handle→platform are gated by `validateIdentifierWrite`. Triage chips the op and **disables Accept**; core hard-fails the TX. Reject or rewrite the Proposal — no partial Accept.
 
@@ -102,7 +103,7 @@ Dialog titles = Title Case statements (`Delete case`), not questions. Primary = 
 - Field errors: name the field + period (no “please”)
 - Menu / dialog primary: `Verb + Noun`
 - Select ≤~10 fixed options; Combobox when filtering helps
-- ToggleGroup for 2–3 view modes (not boolean `Switch`) — ButtonGroup vs flex: see [`apps/web/docs/UI.md`](../apps/web/docs/UI.md)
+- ToggleGroup for 2–3 view modes (not boolean `Switch`) — ButtonGroup vs flex: see [`docs/reference/web/UI.md`](../../docs/reference/web/UI.md)
 - Tabs for sibling views (prefer URL sync); disabled control → Tooltip explaining why
 
 ## Experience debt (dated)
@@ -114,7 +115,7 @@ Dialog titles = Title Case statements (`Delete case`), not questions. Primary = 
 | Async Case catch-up for non-builders | done | `/cases/$caseSlug` Case Overview dashboard; Entities / Identifiers / Graph / Tasks are sibling Active-Case routes |
 | Dossier Overview BLOT heaviness | later | Notes split out; Overview still stacks Claims/Ids/Connections — lighten further if needed |
 | Dossier Connections ego-graph | done | Compact list + read-only 1-hop canvas; dialog CRUD. Graph Studio Cap-context / full canvas still Phase 2 |
-| Form library single stack | done | TanStack Form for composers/dialogs with Save + multi-field or cross-field rules; commit-on-blur cells, blur-autosave prose, SearchField/filter chrome, and DestructiveConfirmDialog stay local state — see `apps/web/docs/UI.md` § Form library |
+| Form library single stack | done | TanStack Form for composers/dialogs with Save + multi-field or cross-field rules; commit-on-blur cells, blur-autosave prose, SearchField/filter chrome, and DestructiveConfirmDialog stay local state — see `docs/reference/web/ui/forms.md` |
 | Dossier section CRUD duplication | partial | Shared `useInvalidateEntity` + confidence / phrase pickers; composers still per-section |
 | Facet checkbox rows extract | later | Optional UX chrome share across toolbars |
 | Capability picker discoverability | shipped | CapMatch paste-to-run + category (`id` seg1) + Passive/Active/Footprint filters; empty-default Cap select; Cap meta shows intent |
@@ -147,6 +148,10 @@ UI/engineering debt (tokens, atom extract, `variant="panel"` rename) lives in gi
 2. [ ] Empty / error / success mean the right thing (table above)
 3. [ ] Copy matches rules (labels, placeholders, errors, toasts)
 4. [ ] Collect ↔ Triage parity for shared triage patterns (or debt row)
-5. [ ] No new product jargon that fights [`apps/web/docs/UI.md`](../apps/web/docs/UI.md) layout words in the UI chrome
+5. [ ] No new product jargon that fights [`docs/reference/web/UI.md`](../../docs/reference/web/UI.md) layout words in the UI chrome
 6. [ ] Destructive / hide actions confirmed appropriately (AlertDialog vs type-to-confirm)
 7. [ ] Feedback on the right layer (field / toast / FetchErrorAlert / dialog inline)
+
+## Gotchas
+
+- **Case shell IA** — Sidebar: WATCHDOG logo → Dashboard (`/`); **Search…** (Mod+K) above Case; under Case: flat Overview / Entities / Identifiers / Graph. Work = Tasks · Collect · Triage. Manage = Cases. Opening `/cases/$caseSlug` heals Active Case to that slug. Switching while on Overview must navigate to the new slug (else a stale heal snaps the cookie back). Case switcher uses DropdownMenu (not Select) so option clicks commit reliably next to DnD surfaces like Tasks. Do not reintroduce Overview line tabs that clone `/entities` / `/identifiers` / `/graph` / `/tasks`. Overview back-to-Cases is the trail (`Cases / {folder} {name}`), not a `← Cases` action. Do not add a second window listener in shadcn sidebar — Mod+B is `shared/lib/hotkeys.ts` via `SearchChrome`.

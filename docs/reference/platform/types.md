@@ -2,7 +2,7 @@
 
 Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs in `domains/*/types.ts`, package wire (oRPC / Caps / patch) at the edge.
 
-**Not this doc:** UI props styling ([`apps/web/docs/UI.md`](../apps/web/docs/UI.md)), domain folder map ([`apps/web/docs/DOMAINS.md`](../apps/web/docs/DOMAINS.md)).
+**Not this doc:** UI props styling ([`docs/reference/web/UI.md`](../../../docs/reference/web/UI.md)), domain folder map ([`docs/reference/web/domains.md`](../../../docs/reference/web/domains.md)).
 
 ---
 
@@ -61,7 +61,7 @@ The separate investigation vault keeps its own markdown vocabulary in a private 
 
 ### Platform edge predicates
 
-SoT: `EDGE_PREDICATES` + `EDGE_PREDICATE_META` in [`packages/schemas/src/vocab.ts`](../packages/schemas/src/vocab.ts).
+SoT: `EDGE_PREDICATES` + `EDGE_PREDICATE_META` in [`packages/schemas/src/vocab.ts`](../../../packages/schemas/src/vocab.ts).
 
 **Doctrine:** one directed Postgres row (`from_id` → `to_id`). Inverse labels are display metadata (`inverseLabel`), not a second stored predicate or Wikidata-style dual statement. Prefer **dependent → provider** for infra topology (`hosted_on`, `dns_via`, `mail_via`, `resolves_to`).
 

@@ -26,6 +26,6 @@ Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normaliz
 
 | Need | File |
 | --- | --- |
-| Types contract | [`docs/TYPES.md`](../../docs/TYPES.md) |
-| Edge predicates + inverses + phrase groups | [`docs/TYPES.md` § Platform edge predicates](../../docs/TYPES.md) |
-| Playbooks | [`docs/CAPS.md`](../../docs/CAPS.md) |
+| Types contract | [`docs/reference/platform/types.md`](../../docs/reference/platform/types.md) |
+| Edge predicates + inverses + phrase groups | [`docs/reference/platform/types.md` § Platform edge predicates](../../docs/reference/platform/types.md) |
+| Playbooks | [`docs/reference/platform/caps-lexicon.md`](../../docs/reference/platform/caps-lexicon.md) |
