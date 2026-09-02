@@ -25,7 +25,7 @@ Dirty UI paths also trip `.cursor/hooks/stop-gate.mjs` (runs `ds:ban` when web U
 ```bash
 pnpm test:unit            # packages + worker only (web is not in this project)
 pnpm test:component       # all `apps/web/src/**/__tests__/**` (lib `*.test.ts` + `*.component.test.tsx`)
-pnpm test:e2e             # 16 tests under e2e/specs (needs `just up` or `just test-db` + MinIO; Playwright starts web+worker)
+pnpm test:e2e             # 16 tests under e2e/specs (needs `just up` or `just test-db` + `just docker-up`; Playwright starts web+worker)
 pnpm test:e2e:smoke       # @smoke + @custody (15 tests)
 pnpm test:e2e:journey     # @journey only (core loop)
 ```
@@ -60,7 +60,7 @@ Web does **not** re-test Cap handlers. If a mutation is wrong, fix/test `@watchd
 
 ## Manual smoke (split pages)
 
-With `just up`, migrated DB, `pnpm dev:web` (+ worker for Cap runs):
+With `just up` (infra ready), `pnpm dev:web` (+ worker for Cap runs):
 
 1. **Collect**: pick Case → paste/file dump → row appears in queue; Detail shows Content/Output/Jobs tabs; CapMatch paste / Cap select → start a Cap → job row appears without page flicker; Detail shows log/output; missing vault key → Run disabled. Cancel mid-run → `cancelled` within ~2s. Hard-kill + restart worker → stale `running` Jobs fail via `reconcileStaleJobs`. Optional: `wd evidence hide|restore|download|process|enrich`, `wd jobs start`.
 2. **Triage**: first paint pending-only (clear filters for history); accept/reject a Proposal (single TX) → queue updates; confirmed without evidence blocked; agent-sourced rows show **agent** badge (no override badge). Same Identifier `type+value` on another Entity → warn Alert (Accept still works). Cap junk Identifier op (e.g. bad email) → Invalid value chip + Accept disabled. 2b. **CLI agents (optional)**: `wd proposals create` lands Triage; `wd graph write` mutates Graph at unverified; child writes need `--user-override` (needs API key).

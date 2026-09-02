@@ -28,7 +28,7 @@
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| Evidence upload fails | MinIO not initialized | `just minio-init` after fresh volume |
+| Evidence upload fails | MinIO not initialized | `just up` or `just minio-init` after fresh volume |
 | Migrations fail | DB not up / wrong URL | `just up` · check `DATABASE_URL` / `DATABASE_URL_MIGRATE` |
 | Stale Case data after experiments | Need wipe | `just wipe yes` (keeps auth + vault) |
 | Route 404 after new route file | Generated route tree | `pnpm generate-routes` or restart `pnpm dev:web` |

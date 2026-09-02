@@ -8,11 +8,12 @@
 | Task | Command |
 | --- | --- |
 | Enter toolchain | `nix develop` |
-| Postgres + MinIO | `just up` |
-| First-time bucket | `just minio-init` |
-| Install / migrate | `pnpm install` · `pnpm db:migrate` |
-| Web dev server | `pnpm dev:web` → http://127.0.0.1:3000 |
-| Cap Job worker | `pnpm dev:worker` (second terminal; required for Jobs/Collect/Process) |
+| Infra (Postgres + MinIO + bucket + migrate) | `just up` |
+| Full stack (infra + web + worker) | `just dev` |
+| Containers only | `just docker-up` |
+| Install | `pnpm install` |
+| Web only | `pnpm dev:web` → http://127.0.0.1:3000 |
+| Worker only | `pnpm dev:worker` (required for Jobs/Collect/Process) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth + vault) |
 | Test DBs | `just test-db` (`watchdog_test`, `watchdog_e2e`) |
 | Stop containers | `just down` |
@@ -22,7 +23,7 @@ Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets 
 ## Services
 
 - **Postgres** — `127.0.0.1:5432`, app user from `DATABASE_URL`; migrations may use `DATABASE_URL_MIGRATE` (superuser).
-- **MinIO** — S3-compatible evidence storage at `S3_ENDPOINT` (default `http://127.0.0.1:9100`). Run `just minio-init` once per fresh volume.
+- **MinIO** — S3-compatible evidence storage at `S3_ENDPOINT` (default `http://127.0.0.1:9100`). `just up` runs `minio-init` (idempotent); use `just minio-init` alone after a fresh volume if you skipped `up`.
 - **Worker** — Without `pnpm dev:worker`, Jobs stay queued; web UI still loads.
 
 ## Common fixes
