@@ -1,10 +1,20 @@
-# Watchdog greenfield
+# Watchdog greenfield — local infra via just.
+# `just up` = healthy Postgres + MinIO + bucket + migrations (not docker-only).
 
 set dotenv-load := true
+set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# Postgres + MinIO
-up:
+# Postgres + MinIO + bucket + migrations (daily / first-run infra)
+up: docker-up wait-healthy minio-init migrate
+
+# Docker only — use when you need containers without migrate/bucket
+docker-up:
     docker compose up -d postgres minio
+
+# Block until Postgres + MinIO healthchecks pass
+wait-healthy:
+    @echo "Waiting for Postgres + MinIO…"
+    docker compose up -d --wait postgres minio
 
 down:
     docker compose down
@@ -23,7 +33,11 @@ wipe *args:
 test-db:
     bash scripts/ensure-test-db.sh
 
-# Cap Job worker
+# Infra + web + worker (single terminal; Ctrl+C stops all)
+dev: up
+    bash scripts/dev.sh
+
+# Cap Job worker only
 worker:
     pnpm dev:worker
 

@@ -68,12 +68,8 @@ nix develop                 # optional
 cp env.example .env         # set BETTER_AUTH_SECRET + WD_MASTER_VAULT_KEY
                             #   openssl rand -base64 32
 
-just up && just minio-init  # Postgres 16 + MinIO
 pnpm install
-pnpm db:migrate
-pnpm dev:web
-
-pnpm dev:worker             # second terminal; jobs stay queued without it
+just dev                    # Postgres + MinIO + migrations + web + worker
 ```
 
 No account is seeded and registration is closed by default. See [`docs/how-to/onboarding.md`](docs/how-to/onboarding.md) and [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup and env detail.
@@ -192,9 +188,9 @@ A job's path: `enqueueCapJob` → the `watchdog.cap-jobs` queue → worker runs 
 
 | Task | Command |
 | --- | --- |
-| Dev servers | `pnpm dev:web` · `pnpm dev:worker` |
+| Dev servers | `just dev` · `pnpm dev:web` · `pnpm dev:worker` |
 | Database | `pnpm db:migrate` · `pnpm db:generate` · `pnpm db:studio` |
-| Containers | `just up` · `just down` · `just minio-init` |
+| Local infra | `just up` · `just down` · `just docker-up` (containers only) |
 | Reset case data, keep auth and vault | `just wipe` |
 | Lint and format | `pnpm check` · `pnpm fix` |
 | Types | `pnpm typecheck` |

@@ -11,10 +11,10 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Task | Command |
 | --- | --- |
 | Toolchain | `nix develop` |
-| Postgres + MinIO | `just up` · `just minio-init` |
+| Local infra (Postgres + MinIO + migrate) | `just up` · `just docker-up` (containers only) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth+vault) |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
-| Dev | `pnpm dev:web` · `pnpm dev:worker` |
+| Dev | `just dev` · `pnpm dev:web` · `pnpm dev:worker` |
 | Lint / fix | `pnpm check` · `pnpm fix` |
 | Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix + agents + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
