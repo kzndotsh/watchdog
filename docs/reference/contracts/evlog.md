@@ -17,3 +17,4 @@ Package: [`@watchdog/log`](../../../packages/log/AGENTS.md). Never depend from `
 ## Gotchas
 
 - **Evlog Error fields**: `log.set({ error: err })` drains as `error: {}`. Use `log.error(err)` or `setLevel("warn")` + `{ name, message }`. Auth denials are `warn` + `auth.denied`, not `error`.
+- **FS drain**: always compact NDJSON (`pretty: false` on `createFsDrain`); console/`pretty` is separate. `redact.builtins: false` so CC/email/IP maskers do not corrupt case/evidence UUIDs; path redaction (`auditRedactPreset` + extras) stays.

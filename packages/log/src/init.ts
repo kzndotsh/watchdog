@@ -24,18 +24,22 @@ export function initWatchdogLogger(options: InitWatchdogLoggerOptions): void {
   initialized = true;
 
   const isProd = process.env.NODE_ENV === "production";
-  const pretty = options.pretty ?? !isProd;
+  // Console/stdout only; FS drain stays compact NDJSON for parsers.
+  const consolePretty = options.pretty ?? !isProd;
 
   initLogger({
     env: { service: options.service },
-    pretty,
+    pretty: consolePretty,
     redact: {
       paths: [...(auditRedactPreset.paths ?? []), ...EXTRA_REDACT_PATHS],
+      // Builtins (CC/email/IP) false-positive on digit-heavy case/evidence UUIDs.
+      builtins: false,
     },
     drain: createFsDrain({
-      dir: options.drainDir,
-      pretty,
+      pretty: false,
       maxFiles: 14,
+      maxSizePerFile: 10 * 1024 * 1024,
+      dir: options.drainDir,
     }),
   });
 }
