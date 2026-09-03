@@ -23,7 +23,7 @@ Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets 
 ## Services
 
 - **Postgres** — `127.0.0.1:5432`, app user from `DATABASE_URL`; migrations may use `DATABASE_URL_MIGRATE` (superuser).
-- **MinIO** — S3-compatible evidence storage at `S3_ENDPOINT` (default `http://127.0.0.1:9100`). `just up` runs `minio-init` (idempotent); use `just minio-init` alone after a fresh volume if you skipped `up`.
+- **MinIO** — S3-compatible evidence storage at `S3_ENDPOINT` (default `http://127.0.0.1:9100`). `just up` runs `minio-init` (idempotent); use `just minio-init` alone after a fresh volume if you skipped `up`. Bucket create uses host `mc` when present, otherwise `docker run minio/mc` (no `nix develop` required for this step).
 - **Worker** — Without `pnpm dev:worker`, Jobs stay queued; web UI still loads.
 
 ## Common fixes
