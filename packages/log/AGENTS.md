@@ -18,7 +18,8 @@ Process logging via evlog (NDJSON + stdout). Contract SoT: [`docs/reference/cont
 | Init once per process (`initWatchdogLogger`) | Depend from `packages/cli` or `packages/client` (stdout is the agent contract) |
 | Use ALS (`peekRequestLogger` / `runWithRequestLogger`) under Start middleware | Call `createFsDrain().flush()` (no flush API; awaits per event) |
 | Shape Cap Job events with `jobWideEventFields` from `JobRunOutcome` | — |
-| Redact via `initWatchdogLogger` presets | — |
+| Redact via `initWatchdogLogger` path presets (`builtins: false`) | Enable redact builtins (CC/email/IP maskers corrupt UUIDs) |
+| Keep FS drain compact NDJSON (`pretty: false`) | Tie FS `pretty` to console/`!isProd` |
 
 Error fields, auth/CSRF level, secrets, and “evlog ≠ Graph audit”: see [`evlog`](../../docs/reference/contracts/evlog.md).
 
