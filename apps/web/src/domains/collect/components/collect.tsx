@@ -174,7 +174,7 @@ function renderCollectQueueBody({
       <EmptyState
         intent="blank-slate"
         items="items"
-        description="Add evidence or run a Cap / Playbook to start collecting."
+        description="Dump File, Paste, or URL evidence first. Then Run a Cap (one capability) or Playbook (curated Cap chain) when you need acquisition."
         action={
           <CollectDumpButtons disabled={intakeBusy} onDump={setDumpModal} />
         }

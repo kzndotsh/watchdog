@@ -75,7 +75,7 @@ describe("JobCapRunForm", () => {
       screen.getByRole("form", { name: "Run capability" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Cap filters" })
+      screen.getByRole("button", { name: "Advanced" })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Run Capability" })

@@ -253,7 +253,7 @@ export function JobCapRunForm({
                     align="end"
                     contentClassName="w-[16rem]"
                     icon={ListFilterIcon}
-                    label="Cap filters"
+                    label="Advanced"
                   >
                     <div className="space-y-2">
                       <Label htmlFor="cap-filter-kind">Kind</Label>

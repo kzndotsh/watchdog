@@ -74,7 +74,7 @@ export function CollectDumpButtons({
       <Button
         type="button"
         size="sm"
-        variant="outline"
+        variant="default"
         className="h-8 text-xs"
         disabled={disabled}
         onClick={() => {
@@ -87,7 +87,7 @@ export function CollectDumpButtons({
       <Button
         type="button"
         size="sm"
-        variant="outline"
+        variant="default"
         className="h-8 text-xs"
         disabled={disabled}
         onClick={() => {
@@ -100,7 +100,7 @@ export function CollectDumpButtons({
       <Button
         type="button"
         size="sm"
-        variant="outline"
+        variant="default"
         className="h-8 text-xs"
         disabled={disabled}
         onClick={() => {
@@ -126,10 +126,17 @@ export function CollectRunPopover({
   return (
     <Popover>
       <PopoverTrigger
-        render={<Button type="button" size="sm" className="h-8 text-xs" />}
+        render={
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+          />
+        }
       >
         <PlayIcon data-icon="inline-start" />
-        Run cap/playbook
+        Run
       </PopoverTrigger>
       <PopoverContent
         align="end"
@@ -145,8 +152,8 @@ export function CollectRunPopover({
           </div>
           <PopoverDescription>
             {runMode === "playbook"
-              ? "Chain Caps from a saved playbook recipe."
-              : "Run one capability against a target or seed."}
+              ? "Playbook: curated Cap chain from a saved recipe."
+              : "Cap: one capability against a target or seed."}
           </PopoverDescription>
         </PopoverHeader>
         <div className="[&_form]:w-full [&_form]:justify-start [&>div]:max-w-none [&>div]:items-stretch">
