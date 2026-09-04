@@ -1,6 +1,6 @@
 ---
 document_created: 2026-07-30T01:30
-document_updated: 2026-09-03T08:44
+document_updated: 2026-09-04T14:30
 ---
 
 # SCENARIOS: Day-0 investigator journeys
@@ -41,7 +41,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Extract (AI) from Intake | shipped | Needs Case `allowThirdPartyEgress` + AI credential; also `wd evidence process --ai` |
 | Attach entity to evidence | shipped | Dump-time picker + Detail EntityCombobox (attach / replace / detach) |
 | `?id=` deep link (Collect) | shipped | Selection writes back to search (`replace`); unified id for Evidence rows and Jobs |
-| No Case / empty queue | shipped | : |
+| No Case / empty queue | shipped | Blank slate: dump File/Paste/URL first; Cap = one capability, Playbook = curated Cap chain (Run is secondary) |
 
 ## Jobs
 
@@ -112,9 +112,9 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
-| Cases CRUD + switch cookie | shipped | **View case** → overview; Select sets Active; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename; update/egress also via API/CLI |
+| Cases CRUD + switch cookie | shipped | **Open** sets Active + opens Overview; **Set as active case** in card ⋯; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename; update/egress also via API/CLI |
 | Delete case | shipped | Type-to-confirm (`DestructiveConfirmDialog`) on Cases card ⋯ and Overview; cascades Graph/Jobs/Triage/Evidence; heals Active cookie; also `wd cases delete` |
-| Case overview page | shipped | `/cases/$caseSlug`: case dashboard (stats / activity / settings); Open = set Active; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks` |
+| Case overview page | shipped | `/cases/$caseSlug`: case dashboard (stats / activity / settings); landing via **Open** from Manage Cases; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks` |
 | Identifiers table | shipped | `/identifiers`: Active-Case browse + inline edit + evidence + in-place create (Value first after Entity); **Bulk add** paste/map dialog (default Entity fills empty Entity cells; mapped name/slug miss → **Not found** / **Ambiguous**; preview cells editable; `confirmed` → `unverified`); row click → Dossier Identifiers |
 | Bulk add identifiers | shipped | Same two-stage dialog on `/identifiers` and Dossier Identifiers (paste, then left/right match). Default Entity fills empty Entity cells; a mapped name/slug miss shows **Not found** / **Ambiguous** on the Entity cell (picker stays empty). Preview cells are editable (empty Type/Platform = **: **). Dossier locks Entity. Type deferred from column/values. `validateIdentifierWrite` (incl. handle→platform) marks rows invalid. No Evidence / no `confirmed` from paste. |
 | Case graph page | shipped | `/graph`: case-wide preview (`CaseGraphCanvas`); Graph Studio still Phase 2 |
@@ -131,7 +131,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Export zip from Cases UI | shipped | Session or API key. Zip 404 if Case missing or zero entities; entity `export.md` 404 if Case/slug missing. Also `wd export zip` / `md` |
 | Evidence hide / restore / download | shipped | UI + `wd evidence hide` / `restore` / `download` |
 | Evidence process / enrich | shipped | UI + `wd evidence process` / `--ai` / `enrich` (same core glue as Collect) |
-| Auth login / gated signup | shipped | : |
+| Auth login / gated signup | shipped | `/auth/$path` layout shows WATCHDOG mark + “Case Graph under human custody”; sign-in/up password visibility toggle; signed-in users redirect home from sign-in/up |
 
 ## Search · Hotkeys
 

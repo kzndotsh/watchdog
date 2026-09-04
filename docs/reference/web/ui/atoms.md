@@ -8,7 +8,7 @@ Key atoms include `ActiveTabBody` / `SuspenseTabBody`, `LoadingRegion`, `RegionB
 
 Picker atoms are `EntityCombobox` / `FieldCombobox` / `FieldSelect` / `ConfidenceSelect` (options in, no I/O; Combobox may set `group` for headings). Other shared atoms are `FormInlineError` / `ComposerShell`, Queue + Detail + `QueueShell` + `SplitView` + `ArtifactPreview`, `DetailFooter` / `DetailStatusChip`, the `DataTable` kit (+ editable cells / append composer; **`pending` per cell**), the graph kit (`GraphCanvas` / `EntityNode` / `GraphEdgePath`), `RichTextEditor` / `RichTextViewer` (Markdown string source of truth for dossier Summary/Notes), `InlineLoading`, `Spinner`, `FetchErrorAlert`, `Empty` / `EmptyState`, and hand skeletons in `skeletons.tsx`. Page chrome (`PageToolbar` / `PageFilterMenu` / `RouteError`; `RoutePending` for `defaultPendingComponent` only) is in `shared/layout/`. The style guide is **`/ui`**. Add new atoms with `pnpm --filter @watchdog/web ds:atom: <Name> <file>`.
 
-Domain evidence pickers: `dossier/components/evidence-picker.tsx` (`EvidencePicker`, `EvidenceCiteChips`): dossier composers + Triage Accept; not `shared/ui`.
+Evidence pickers live in `shared/ui/intake/evidence-picker.tsx` (`EvidencePicker`, `EvidenceCiteChips`); `dossier/components/evidence-picker.tsx` re-exports them for dossier composers + Triage Accept.
 
 ### Component job matrices
 

@@ -3,7 +3,7 @@
 **What this is:** how investigators _use_ Watchdog: information architecture, flows, empty/error meaning, copy, experience debt.  
 **What this is not:** tokens, atoms, or component naming: that is [`docs/reference/web/UI.md`](../../docs/reference/web/UI.md). Product intent, personas, and doctrine live in [`PRODUCT.md`](product.md).
 
-Last updated: 2026-08-15 (Identifier write gate · Cmd+K search · Dossier Evidence dump · Bulk add identifiers · Delete case · Questions edit/reopen · Jobs vault preflight)
+Last updated: 2026-09-04 (EntityKindGlyph · identifier Notes sheet · EvidencePicker panel · Cases Open)
 
 ## Product principle
 
@@ -21,19 +21,19 @@ Operate mode: task clarity over surprise. Surfaces earn their chrome; don't inve
 | `/graph` | Active-Case graph preview | stack (split density) |
 | `/entities/$entitySlug` | Work a subject dossier (Notes tab separate from Overview) | stack |
 | `/tasks` | Case work board (kanban); optional entity filter | board |
-| `/cases` | Manage Cases (create / Select Active / Open / export) | card grid |
+| `/cases` | Manage Cases (create / Open / export) | card grid |
 | `/cases/$caseSlug` | Case Overview: case dashboard (stats, activity, settings) | stack |
 | `/settings` | Account, security, API keys, Cap credentials (`?tab=`) | stack (sidebar + form) |
 | `/ui` | DS fixtures only: not a product surface | fixtures |
-| `/auth/$path` | Better Auth views: `sign-in`, `sign-up`, `forgot-password`, `reset-password`, `verify-email`, `sign-out` | centered card |
+| `/auth/$path` | Better Auth views: `sign-in`, `sign-up`, `forgot-password`, `reset-password`, `verify-email`, `sign-out` (WATCHDOG mark + custody line above card) | centered card |
 
 ## Core flows
 
 1. **Cap run → triage**: Collect starts a Cap → worker → Evidence + Proposal → Triage Accept/Reject → graph.
 2. **Playbook run → triage**: Collect **Playbook** source starts a curated Cap chain (`playbook_runs`); each step is its own Job (+ Proposal). Only the first step is queued at start; later steps are created when the prior step succeeds (fan-out siblings join before the next recipe step). Cancel run stops remaining work. Never auto-fires from a dump.
 3. **Evidence in**: Collect dump (paste/file/URL) → Enrich (URL dumps; Output on the same row) → Process (optional `evidence.harvest` / `evidence.extract.ai`, labeled **Extract (AI)** in the UI) → Triage Accept. Detail tabs: Content · Output · Runs. Cap-landed Evidence (e.g. DNS lookup artifact) is labeled **Cap output**; **From {cap}** in the detail strip jumps to the Jobs tab and expands that run. Dossier Evidence tab dumps File/Paste/URL with Entity locked (same APIs; rows also appear in Collect).
-4. **Dossier**: open entity → Overview (BLUF Summary via Plate Markdown + scan) / Notes (full-height Plate) / Claims / ids / connections / evidence / events / questions / **Tasks**; trail is folder + `{name} / Entities / {name}` (kind badge + blur-save name as last crumb) or **Edit** → `DossierEditDialog` (name / kind / summary / notes Markdown); click Case → Overview; click Entities → table. Evidence tab dumps onto this subject + peek via Drawer. Questions: inline edit (open + resolved), resolve, reopen.
-5. **Case scope**: Active Case is cookie-scoped (not in URL for Work/graph nouns); all work is Case-bound. Sidebar: WATCHDOG logo → Dashboard (`/`); **Search…** (Mod+K) above Case; under Case: flat Overview / Entities / Identifiers / Graph. Case Overview (`/cases/$caseSlug`) is the case dashboard (stats / activity / settings); Manage **Cases** Open sets Active and lands there. Legacy `/cases/$uuid` and `?tab=` bookmarks redirect.
+4. **Dossier**: open entity → Overview (BLUF Summary via Plate Markdown + scan) / Notes (full-height Plate) / Claims / ids / connections / evidence / events / questions / **Tasks**; trail is folder + `{name} / Entities / {name}` (`EntityKindGlyph` + blur-save name as last crumb) or **Edit** → `DossierEditDialog` (name / kind / summary / notes Markdown); click Case → Overview; click Entities → table. Evidence tab dumps onto this subject + peek via Drawer. Questions: inline edit (open + resolved), resolve, reopen.
+5. **Case scope**: Active Case is cookie-scoped (not in URL for Work/graph nouns); all work is Case-bound. Sidebar: WATCHDOG logo → Dashboard (`/`); **Search…** (Mod+K) above Case; under Case: flat Overview / Entities / Identifiers / Graph. Case Overview (`/cases/$caseSlug`) is the case dashboard (stats / activity / settings); Manage **Cases** **Open** sets Active and lands on Overview (**Set as active case** stays in the card menu). Legacy `/cases/$uuid` and `?tab=` bookmarks redirect.
 6. **Tasks**: case-scoped work items (not Graph writes). `/tasks` is kanban-only (fixed status columns; drag across columns changes status; drag within a column reorders via `position`; lane quick-create + header New task → full dialog). Optional `?entityId=` filter. Due dates are calendar-day only. Dossier **Tasks** tab = entity-scoped board (`density="split"`).
 7. **Command palette**: Mod+K (or sidebar Search) opens a shell-mounted palette. Idle = Jump to pages. Type ≥2 chars → Active Case `searchCase` hits (Entities, Identifiers, Evidence, Tasks, Jobs, pending Triage) plus Cases (switch + Overview). `?` opens the Shortcuts sheet; Mod+B toggles the sidebar.
 
@@ -135,8 +135,8 @@ UI/engineering debt (tokens, atom extract, `variant="panel"` rename) lives in gi
 | --- | --- | --- |
 | Collect | Strong | Dump + Cap/Playbook run modes; CapMatch paste-to-run + filters + empty-default Cap select; vault credential presence gates Run; queue clusters playbook steps by run; waiting chrome for the next recipe step; Cancel run; interpretError amber; From cache / suppressed chips; Evidence detail: Enrich Output → Harvest / Extract (AI) → Triage; Hide → Hidden filter → Restore |
 | Triage | Strong | Accept/Reject parity with Collect run chrome; Reject explains FP memory; identifier collision Alert (warn, don't block) |
-| Dossier | Mixed | PageHeader trail folder + `{name} / Entities / {name}` (kind badge + editable last crumb); line tabs (`below=`); **Edit** → `DossierEditDialog` (name/kind/summary/notes); **Tasks** tab (entity-scoped kanban, split density); Connections = outbound/inbound list + read-only 1-hop canvas + dialog CRUD (`clampEdgePhrase` on peer change); Evidence tab dumps File/Paste/URL (Entity locked) + list + Drawer peek; `EvidencePicker` on composers / `EvidenceCiteChips` on Job cites; Overview BLOT still dense |
-| Entities / Cases | Fine | Entities: dense DataTable (+ Connections). Identifiers: Active-Case table (`/identifiers`) with in-place create + bulk-add paste/map. Graph: `/graph` preview. Cases (Manage): create / Select / Open / export. Case Overview: dashboard only (no Tasks tab). |
+| Dossier | Mixed | PageHeader trail folder + `{name} / Entities / {name}` (`EntityKindGlyph` + editable last crumb); line tabs (`below=`); **Edit** → `DossierEditDialog` (name/kind/summary/notes); **Tasks** tab (entity-scoped kanban, split density); Connections = outbound/inbound list + read-only 1-hop canvas + dialog CRUD (`clampEdgePhrase` on peer change); Evidence tab dumps File/Paste/URL (Entity locked) + list + Drawer peek; `EvidencePicker` on composers / `EvidenceCiteChips` on Job cites; Overview BLOT still dense |
+| Entities / Cases | Fine | Entities: dense DataTable (+ Connections). Identifiers: Active-Case table (`/identifiers`) with in-place create + bulk-add paste/map. Graph: `/graph` preview. Cases (Manage): create / Open / export. Case Overview: dashboard only (no Tasks tab). |
 | Tasks | Fine | `/tasks` kanban (dnd-kit); drag changes status **and** within-column order (`position`); lane quick-create; `TaskFormDialog` create/edit; date-only due; Task ≠ Graph write |
 | Dashboard | Strong | Trail last crumb **Dashboard**. Stat cards 3×2 (Proposals pending / Tasks overdue / Tasks due soon / Jobs running / Entities / Cases); Triage + Due panels (dashed empty); Activity = vertical resizable panel + `ScrollArea` (cross-case, case filter); sidebar owns Case switch / nav / Mod+K Search; dump stays on Collect |
 | Settings | Fine | Sidebar sections (Account / Security / API Keys / Credentials); Cap credentials Connect dialog + vault |
