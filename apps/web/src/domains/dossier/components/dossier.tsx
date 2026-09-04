@@ -46,7 +46,7 @@ import {
   TabsTrigger,
 } from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
-import { KindBadge } from "@/shared/ui/vocab";
+import { EntityKindGlyph } from "@/shared/ui/vocab";
 
 type DossierTab =
   | "overview"
@@ -120,24 +120,22 @@ function DossierForEntity({
       >
         <PageHeader
           current={
-            <span className="inline-flex min-w-0 items-center gap-2">
-              <KindBadge kind={entity.kind} />
-              <EditableTextCell
-                value={entity.name}
-                aria-label="Entity name"
-                placeholder="Name…"
-                disabled={renameMutation.isPending}
-                className="focus-visible:border-border focus-visible:ring-ring/40 w-auto max-w-[min(28rem,50vw)] min-w-[6rem] border-transparent bg-transparent px-1.5 text-sm font-semibold tracking-tight shadow-none hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-1 dark:bg-transparent"
-                onCommit={(next) => {
-                  const name = next.trim();
-                  if (!name) return false;
-                  if (name !== entity.name) {
-                    renameMutation.mutate(name);
-                  }
-                  return true;
-                }}
-              />
-            </span>
+            <EditableTextCell
+              value={entity.name}
+              aria-label="Entity name"
+              placeholder="Name…"
+              disabled={renameMutation.isPending}
+              prefix={<EntityKindGlyph kind={entity.kind} size="md" />}
+              className="focus-within:border-border focus-within:ring-ring/40 w-auto max-w-[min(28rem,50vw)] min-w-[6rem] focus-within:bg-transparent focus-within:ring-1 hover:bg-transparent dark:bg-transparent [&_input]:text-sm [&_input]:font-semibold [&_input]:tracking-tight"
+              onCommit={(next) => {
+                const name = next.trim();
+                if (!name) return false;
+                if (name !== entity.name) {
+                  renameMutation.mutate(name);
+                }
+                return true;
+              }}
+            />
           }
           actions={
             <div className="flex items-center gap-2">

@@ -1,12 +1,14 @@
 import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { WithTooltip } from "@/shared/ui/timestamp";
 import {
   CLAIM_CLASS_LABELS,
   CLAIM_CLASS_TONES,
   ENTITY_KIND_ICON_CLASS,
   ENTITY_KIND_ICON_SIZE,
   ENTITY_KIND_ICONS,
+  ENTITY_KIND_LABELS,
   type EntityKindIconSize,
   isEntityKind,
   kindBadgeLabel,
@@ -43,6 +45,30 @@ export function EntityKindIcon({
       )}
       {...props}
     />
+  );
+}
+
+/** Icon + type tooltip — use before entity names (tables, dossier trail). */
+export function EntityKindGlyph({
+  kind,
+  size = "sm",
+  className,
+}: {
+  kind: EntityKind;
+  size?: EntityKindIconSize;
+  className?: string;
+}) {
+  const label = ENTITY_KIND_LABELS[kind];
+  return (
+    <WithTooltip
+      content={label}
+      wrapSpan
+      className={cn("inline-flex shrink-0", className)}
+    >
+      <span role="img" aria-label={label} className="inline-flex">
+        <EntityKindIcon kind={kind} size={size} />
+      </span>
+    </WithTooltip>
   );
 }
 

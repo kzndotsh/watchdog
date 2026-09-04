@@ -1,7 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { ClaimClassBadge, KindBadge } from "@/shared/ui/vocab/kind";
+import {
+  ClaimClassBadge,
+  EntityKindGlyph,
+  KindBadge,
+} from "@/shared/ui/vocab/kind";
 import {
   ENTITY_KIND_LABELS,
   isEntityKind,
@@ -22,5 +26,10 @@ describe("kind vocab", () => {
 
     render(<ClaimClassBadge claimClass="observation" />);
     expect(screen.getByText("Observation")).toBeInTheDocument();
+  });
+
+  it("renders entity kind glyph with type label", () => {
+    render(<EntityKindGlyph kind="org" />);
+    expect(screen.getByLabelText(ENTITY_KIND_LABELS.org)).toBeInTheDocument();
   });
 });

@@ -20,7 +20,7 @@ import {
 } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { RelativeTime } from "@/shared/ui/relative-time";
-import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
+import { ENTITY_KIND_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import { entityKindSchema, type EntityKind } from "@watchdog/schemas";
 
 export const entityGlobalFilterFn: FilterFn<EntityRecord> = (
@@ -102,10 +102,14 @@ function createdColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
 }
 
 function renderNameCell(ctx: CellContext<EntityRecord, unknown>) {
+  const row = ctx.row.original;
   return (
-    <span className="block truncate text-sm font-medium">
-      {ctx.row.original.name}
-    </span>
+    <div className="flex min-w-0 items-center gap-1.5">
+      <EntityKindGlyph kind={row.kind} />
+      <span className="block min-w-0 truncate text-sm font-medium">
+        {row.name}
+      </span>
+    </div>
   );
 }
 

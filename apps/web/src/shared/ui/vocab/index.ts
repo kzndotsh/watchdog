@@ -19,10 +19,12 @@ export {
   KindBadge,
   ClaimClassBadge,
   EntityKindIcon,
+  EntityKindGlyph,
 } from "@/shared/ui/vocab/kind";
 export {
   IDENTIFIER_TYPE_LABELS,
   CLAIM_CLASS_LABELS,
+  ENTITY_KIND_LABELS,
   ENTITY_KIND_OPTIONS,
   IDENTIFIER_TYPE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,
