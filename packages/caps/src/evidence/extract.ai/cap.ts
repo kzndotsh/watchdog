@@ -1,16 +1,18 @@
+import { Effect } from "effect";
+
 import {
   createWatchdogModel,
   processExtractDraftSchema,
-  structuredExtract,
+  structuredExtractEffect,
   type EvidenceSnapshot,
-  type LlmProviderConfig,
 } from "@watchdog/ai";
-import { defineCapability } from "@watchdog/cap-sdk";
+import { defineCapability, type CapContext } from "@watchdog/cap-sdk";
 import {
   EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   IDENTIFIER_PLATFORM_SLUGS,
   trimmedOrUndefined,
 } from "@watchdog/schemas";
+import { ValidationVendorError } from "@watchdog/tools";
 
 import {
   interpretProcessDraft,
@@ -89,40 +91,39 @@ function buildMessages(snapshot: EvidenceSnapshot): {
   return { system, prompt };
 }
 
-interface ResolveProviderCtx {
-  getCredential: (name: string) => Promise<string>;
-  hasCredential: (name: string) => Promise<boolean>;
-}
-
-async function resolveProvider(
-  ctx: ResolveProviderCtx,
+function resolveProvider(
+  ctx: Pick<CapContext<unknown>, "getCredential" | "hasCredential">,
   modelOverride?: string
-): Promise<LlmProviderConfig> {
-  // Preflight already ensured one of these exists — pick without swallowing
-  // vault decrypt / master-key errors.
-  if (await ctx.hasCredential("ANTHROPIC_API_KEY")) {
-    const apiKey = await ctx.getCredential("ANTHROPIC_API_KEY");
-    return {
-      kind: "anthropic",
-      apiKey,
-      model: trimmedOrUndefined(modelOverride) ?? "claude-sonnet-4-20250514",
-    };
-  }
-  if (await ctx.hasCredential("AI_COMPAT_API_KEY")) {
-    const apiKey = await ctx.getCredential("AI_COMPAT_API_KEY");
-    const baseUrl = (await ctx.hasCredential("AI_COMPAT_BASE_URL"))
-      ? await ctx.getCredential("AI_COMPAT_BASE_URL")
-      : DEFAULT_AI_COMPAT_BASE_URL;
-    return {
-      kind: "openai_compat",
-      baseUrl,
-      apiKey,
-      model: trimmedOrUndefined(modelOverride) ?? "default",
-    };
-  }
-  throw new Error(
-    "Missing LLM credential — set ANTHROPIC_API_KEY or AI_COMPAT_API_KEY (+ optional AI_COMPAT_BASE_URL) in Settings"
-  );
+) {
+  return Effect.gen(function* resolveProviderGen() {
+    const hasAnthropic = yield* ctx.hasCredential("ANTHROPIC_API_KEY");
+    if (hasAnthropic) {
+      const apiKey = yield* ctx.getCredential("ANTHROPIC_API_KEY");
+      return {
+        kind: "anthropic" as const,
+        apiKey,
+        model: trimmedOrUndefined(modelOverride) ?? "claude-sonnet-4-20250514",
+      };
+    }
+    const hasCompat = yield* ctx.hasCredential("AI_COMPAT_API_KEY");
+    if (hasCompat) {
+      const apiKey = yield* ctx.getCredential("AI_COMPAT_API_KEY");
+      const hasBase = yield* ctx.hasCredential("AI_COMPAT_BASE_URL");
+      const baseUrl = hasBase
+        ? yield* ctx.getCredential("AI_COMPAT_BASE_URL")
+        : DEFAULT_AI_COMPAT_BASE_URL;
+      return {
+        kind: "openai_compat" as const,
+        baseUrl,
+        apiKey,
+        model: trimmedOrUndefined(modelOverride) ?? "default",
+      };
+    }
+    return yield* new ValidationVendorError({
+      message:
+        "Missing LLM credential — set ANTHROPIC_API_KEY or AI_COMPAT_API_KEY (+ optional AI_COMPAT_BASE_URL) in Settings",
+    });
+  });
 }
 
 export const extractAi = defineCapability({
@@ -153,53 +154,58 @@ export const extractAi = defineCapability({
     linkEvidenceFromInput: ["evidenceId"],
     markEvidenceProcessed: true,
   },
-  async run(ctx) {
-    const snapshot = ctx.evidenceSnapshot;
-    if (!snapshot) {
-      throw new Error("EvidenceSnapshot missing — packer did not run");
-    }
-    if (!snapshot.text.trim()) {
-      const empty = processExtractDraftSchema.parse({
-        identifiers: [],
-        claims: [],
-        questions: [],
-        summary: "Empty Evidence text — skipped LLM",
-      });
-      return {
-        artifacts: await uploadProcessArtifacts(
+  run: (ctx) =>
+    Effect.gen(function* extractAiRun() {
+      const snapshot = ctx.evidenceSnapshot;
+      if (!snapshot) {
+        return yield* new ValidationVendorError({
+          message: "EvidenceSnapshot missing — packer did not run",
+        });
+      }
+      if (!snapshot.text.trim()) {
+        const empty = processExtractDraftSchema.parse({
+          identifiers: [],
+          claims: [],
+          questions: [],
+          summary: "Empty Evidence text — skipped LLM",
+        });
+        const artifacts = yield* uploadProcessArtifacts(
           ctx.uploadArtifact,
           snapshot,
           empty
-        ),
-      };
-    }
+        );
+        return { artifacts };
+      }
 
-    const provider = await resolveProvider(ctx, ctx.input.model);
-    ctx.log(`AI extract via ${provider.kind} model=${provider.model}`);
-    const model = createWatchdogModel(provider);
-    const { system, prompt } = buildMessages(snapshot);
-    const { object: draft, usage } = await structuredExtract({
-      model,
-      schema: processExtractDraftSchema,
-      instructions: system,
-      prompt,
-      abortSignal: ctx.signal,
-      temperature: 0,
-    });
-    if (usage) {
-      ctx.log(
-        `usage tokens in=${usage.inputTokens ?? "?"} out=${usage.outputTokens ?? "?"}`
+      const provider = yield* resolveProvider(ctx, ctx.input.model);
+      ctx.log(`AI extract via ${provider.kind} model=${provider.model}`);
+      const model = createWatchdogModel(provider);
+      const { system, prompt } = buildMessages(snapshot);
+      const { object: draft, usage } = yield* structuredExtractEffect({
+        model,
+        schema: processExtractDraftSchema,
+        instructions: system,
+        prompt,
+        abortSignal: ctx.signal,
+        temperature: 0,
+      }).pipe(
+        Effect.mapError(
+          (error) => new ValidationVendorError({ message: error.reason })
+        )
       );
-    }
+      if (usage) {
+        ctx.log(
+          `usage tokens in=${usage.inputTokens ?? "?"} out=${usage.outputTokens ?? "?"}`
+        );
+      }
 
-    return {
-      artifacts: await uploadProcessArtifacts(
+      const artifacts = yield* uploadProcessArtifacts(
         ctx.uploadArtifact,
         snapshot,
         draft
-      ),
-    };
-  },
+      );
+      return { artifacts };
+    }),
   interpret(report, opts) {
     return interpretProcessDraft(report, opts, {
       noEntity:

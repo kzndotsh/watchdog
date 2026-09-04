@@ -1,11 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import {
-  httpToolsError,
-  parseToolsError,
-  rateLimitedToolsError,
-} from "../errors/tools-error";
+import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -54,66 +53,53 @@ interface TrancoOptions {
   userAgent?: string;
 }
 
-async function readTrancoBody(
+function readTrancoBodyEffect(
   domain: string,
   signal: AbortSignal,
   ua: string
-): Promise<Record<string, unknown>> {
-  const res = await fetch(
-    `https://tranco-list.eu/api/ranks/domain/${encodeURIComponent(domain)}`,
-    {
-      method: "GET",
+): Effect.Effect<Record<string, unknown>, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* readTrancoBodyGen() {
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url: `https://tranco-list.eu/api/ranks/domain/${encodeURIComponent(domain)}`,
       signal,
-      headers: { Accept: "application/json", "User-Agent": ua },
+      service: "Tranco",
+      subject: domain,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 403,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
+    if (status === 403) {
+      return yield* new HttpVendorError({ service: "Tranco", status });
     }
-  );
-
-  if (res.status === 429) {
-    throw rateLimitedToolsError("Tranco", domain);
-  }
-  if (res.status === 403) {
-    throw httpToolsError(
-      "Tranco",
-      res.status,
-      `Tranco temporarily unavailable for ${domain}`
-    );
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "Tranco API",
-      res.status,
-      `Tranco API ${res.status} for ${domain}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("Tranco", domain);
-  }
-  return body;
+    return body;
+  });
 }
 
-export async function fetchTrancoLookup(
+export function fetchTrancoLookupEffect(
   domainRaw: string,
   signal: AbortSignal,
   options?: TrancoOptions
-): Promise<TrancoLookupSnapshot> {
-  const domain = normalizeHost(domainRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("network.tranco.lookup");
+): Effect.Effect<TrancoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchTrancoLookupGen() {
+    const domain = normalizeHost(domainRaw);
+    const ua = options?.userAgent ?? watchdogUserAgent("network.tranco.lookup");
 
-  const body = await readTrancoBody(domain, signal, ua);
-  const rows = parseRanks(body.ranks).sort((a, b) =>
-    b.date.localeCompare(a.date)
-  );
-  const latest = rows[0] ?? null;
+    const body = yield* readTrancoBodyEffect(domain, signal, ua);
+    const rows = parseRanks(body.ranks).sort((a, b) =>
+      b.date.localeCompare(a.date)
+    );
+    const latest = rows[0] ?? null;
 
-  return trancoLookupSnapshotSchema.parse({
-    domain,
-    queriedAt: new Date().toISOString(),
-    source: "tranco-list.eu",
-    found: rows.length > 0,
-    latestRank: latest?.rank ?? null,
-    latestDate: latest?.date ?? null,
-    ranksCount: rows.length,
+    return trancoLookupSnapshotSchema.parse({
+      domain,
+      queriedAt: new Date().toISOString(),
+      source: "tranco-list.eu",
+      found: rows.length > 0,
+      latestRank: latest?.rank ?? null,
+      latestDate: latest?.date ?? null,
+      ranksCount: rows.length,
+    });
   });
 }

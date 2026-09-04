@@ -29,7 +29,7 @@ import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import { patchNeedsConfidence } from "@watchdog/policy";
+import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 
 function JobEvidenceMissingHint({ missingCount }: { missingCount: number }) {
   if (missingCount < 1) return null;

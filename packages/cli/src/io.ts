@@ -263,6 +263,43 @@ function isOrpcError(
   return name === "ORPCError" || typeof status === "number";
 }
 
+function taggedErrorEnvelope(error: unknown): {
+  code: string;
+  message: string;
+} | null {
+  if (typeof error !== "object" || error === null) return null;
+  const tag = readProp(error, "_tag");
+  if (typeof tag !== "string") return null;
+  const reason = readProp(error, "reason");
+  const resource = readProp(error, "resource");
+  const fallback = readProp(error, "message");
+  let message = tag;
+  if (typeof reason === "string") {
+    message = reason;
+  } else if (typeof resource === "string") {
+    message = resource;
+  } else if (typeof fallback === "string") {
+    message = fallback;
+  }
+  switch (tag) {
+    case "NotFoundError": {
+      return { code: "NOT_FOUND", message };
+    }
+    case "ConflictError": {
+      return { code: "CONFLICT", message };
+    }
+    case "InvalidError": {
+      return { code: "BAD_REQUEST", message };
+    }
+    case "ForbiddenError": {
+      return { code: "FORBIDDEN", message };
+    }
+    default: {
+      return null;
+    }
+  }
+}
+
 export function handleCliError(error: unknown): never {
   if (error instanceof CliExitError) {
     process.exit(error.exitCode);
@@ -271,6 +308,10 @@ export function handleCliError(error: unknown): never {
     process.stderr.write(
       `${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`
     );
+  }
+  const tagged = taggedErrorEnvelope(error);
+  if (tagged !== null) {
+    fail(tagged.code, tagged.message, { help: ["wd --help"] });
   }
   if (isOrpcError(error)) {
     fail(error.code, error.message, {

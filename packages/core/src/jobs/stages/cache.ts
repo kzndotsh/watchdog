@@ -1,6 +1,9 @@
+import { Effect } from "effect";
+
 import type { JobArtifact } from "@watchdog/db";
 
-import { storeCapCache } from "../cap-cache";
+import type { DomainTag } from "../../infra/tagged-errors";
+import { storeCapCacheEffect } from "../cap-cache";
 import type { CollectRuntime } from "./collect";
 import type { PreflightState } from "./preflight";
 
@@ -14,29 +17,35 @@ interface StoreCacheStageInput {
   interpretError: string | null;
 }
 
-/** Persist Cap result for future cache hits (act Caps / errors / reclaim skip). */
-export async function storeCacheStage(
+export function storeCacheStageEffect(
   input: StoreCacheStageInput
-): Promise<void> {
+): Effect.Effect<void, DomainTag> {
   const { runtime, state } = input;
+  const cacheTtlMs = runtime.cacheTtlMs;
+  const inputHash = runtime.inputHash;
   if (
-    runtime.cacheTtlMs === null ||
-    runtime.inputHash === null ||
+    cacheTtlMs === null ||
+    inputHash === null ||
     input.fromCache ||
     input.reclaim ||
     input.interpretError !== null
   ) {
-    return;
+    return Effect.void;
   }
 
-  await storeCapCache({
+  return storeCapCacheEffect({
     caseId: state.job.caseId,
     capabilityId: state.cap.id,
-    inputHash: runtime.inputHash,
+    inputHash,
     jobId: state.jobId,
     artifacts: input.artifacts,
     resultSummary: input.resultSummary,
-    ttlMs: runtime.cacheTtlMs,
-  });
-  runtime.jobLog.log(`cache stored (ttl=${runtime.cacheTtlMs}ms)`);
+    ttlMs: cacheTtlMs,
+  }).pipe(
+    Effect.tap(() =>
+      Effect.sync(() => {
+        runtime.jobLog.log(`cache stored (ttl=${cacheTtlMs}ms)`);
+      })
+    )
+  );
 }

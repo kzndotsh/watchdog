@@ -36,6 +36,11 @@ TanStack Start UI for Watchdog. When UI contracts disagree with root AGENTS, **[
 | Caps/agents → Proposal → Triage Accept | Land Cap/agent output as `confirmed` Graph |
 | Process logs via `@watchdog/log` + `src/start.ts` middleware | Secrets / Evidence bodies in log fields; treat NDJSON as Graph audit |
 
+## Gotchas
+
+- Artifact bytes from MinIO are `readArtifactBytesEffect`. Job Detail and zip/md file routes use `runApp` (`jobs.functions.ts`, export routes).
+- Client UI must not import `@watchdog/policy` barrel (pulls Effect into the browser). Use `@watchdog/policy/patch-needs-confidence` for Triage confidence UI. Vite `optimizeDeps.include: ["effect"]` is a safety net for residual server-fn / HMR discovery.
+
 Canonical contracts: [`docs/reference/contracts/`](../../docs/reference/contracts/README.md). Web traps: [`docs/reference/web/README.md#traps-index`](../../docs/reference/web/README.md#traps-index).
 
 ## See also

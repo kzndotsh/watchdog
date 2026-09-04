@@ -1,5 +1,7 @@
+import { Effect } from "effect";
+
 import { defineCapability, type JobHandoff } from "@watchdog/cap-sdk";
-import { analyzeFileBytes } from "@watchdog/tools";
+import { analyzeFileBytes, ValidationVendorError } from "@watchdog/tools";
 
 import {
   interpretProcessDraft,
@@ -26,35 +28,38 @@ export const fileAnalyze = defineCapability({
     linkEvidenceFromInput: ["evidenceId"],
     markEvidenceProcessed: true,
   },
-  async run(ctx) {
-    const snapshot = ctx.evidenceSnapshot;
-    if (!snapshot) {
-      throw new Error("EvidenceSnapshot missing — packer did not run");
-    }
-    const uri = snapshot.uri?.trim() ?? "";
-    let bytes: Uint8Array;
-    if (uri === "") {
-      if (snapshot.text.trim() === "") {
-        throw new Error(
-          "File Evidence has no bytes (missing uri and empty text)"
-        );
+  run: (ctx) =>
+    Effect.gen(function* fileAnalyzeRun() {
+      const snapshot = ctx.evidenceSnapshot;
+      if (!snapshot) {
+        return yield* new ValidationVendorError({
+          message: "EvidenceSnapshot missing — packer did not run",
+        });
       }
-      bytes = new TextEncoder().encode(snapshot.text);
-      ctx.log(`analyzing snapshot text (${bytes.byteLength} bytes)`);
-    } else {
-      bytes = new Uint8Array(await ctx.readArtifact(uri));
-      ctx.log(`read Evidence bytes (${bytes.byteLength})`);
-    }
-    const snap = analyzeFileBytes(snapshot.evidenceId, bytes);
-    const draft = fileAnalyzeToDraft(snap, snapshot.label);
-    const reportBody = { ...draft, sha256: snap.sha256 };
-    const artifacts = await uploadProcessArtifacts(
-      ctx.uploadArtifact,
-      snapshot,
-      reportBody
-    );
-    return { artifacts };
-  },
+      const uri = snapshot.uri?.trim() ?? "";
+      let bytes: Uint8Array;
+      if (uri === "") {
+        if (snapshot.text.trim() === "") {
+          return yield* new ValidationVendorError({
+            message: "File Evidence has no bytes (missing uri and empty text)",
+          });
+        }
+        bytes = new TextEncoder().encode(snapshot.text);
+        ctx.log(`analyzing snapshot text (${bytes.byteLength} bytes)`);
+      } else {
+        bytes = new Uint8Array(yield* ctx.readArtifact(uri));
+        ctx.log(`read Evidence bytes (${bytes.byteLength})`);
+      }
+      const snap = analyzeFileBytes(snapshot.evidenceId, bytes);
+      const draft = fileAnalyzeToDraft(snap, snapshot.label);
+      const reportBody = { ...draft, sha256: snap.sha256 };
+      const artifacts = yield* uploadProcessArtifacts(
+        ctx.uploadArtifact,
+        snapshot,
+        reportBody
+      );
+      return { artifacts };
+    }),
   handoff(report): JobHandoff | undefined {
     let bags: JobHandoff | undefined;
     if (

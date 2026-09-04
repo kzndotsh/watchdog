@@ -1,4 +1,6 @@
-import { fetchCertspotterLookup, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchCertspotterLookupEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { certspotterLookupInput } from "./input";
@@ -28,16 +30,17 @@ export const certspotterLookup = defineCollectCap({
   },
   schema: certspotterLookupSnapshotSchema,
   reportLabel: "certspotter.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`Cert Spotter ${host}`);
-    const snap = await fetchCertspotterLookup(host, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(
-      `issuances=${snap.issuances.length} domains=${snap.domains.length}`
-    );
-    return { snap, artifactName: `certspotter-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* certspotterLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`Cert Spotter ${host}`);
+      const snap = yield* fetchCertspotterLookupEffect(host, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `issuances=${snap.issuances.length} domains=${snap.domains.length}`
+      );
+      return { snap, artifactName: `certspotter-${host}.json` };
+    }),
   interpretSnap: interpretCertspotterLookupReport,
 });

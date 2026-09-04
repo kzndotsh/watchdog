@@ -1,4 +1,6 @@
-import { fetchGreedybearLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchGreedybearLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { greedybearLookupInput } from "./input";
@@ -27,15 +29,16 @@ export const greedybearLookup = defineCollectCap({
   },
   schema: greedybearLookupSnapshotSchema,
   reportLabel: "greedybear.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`GreedyBear ${query}`);
-    const snap = await fetchGreedybearLookup(query, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found}`);
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `greedybear-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* greedybearLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`GreedyBear ${query}`);
+      const snap = yield* fetchGreedybearLookupEffect(query, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found}`);
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `greedybear-${safe}.json` };
+    }),
   interpretSnap: interpretGreedybearLookupReport,
 });

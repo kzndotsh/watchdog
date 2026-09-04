@@ -8,7 +8,8 @@
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "types": ["node"],
-    "rootDir": "src"
+    "rootDir": "src",
+    "plugins": [{ "name": "@effect/tsgo" }]
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"]

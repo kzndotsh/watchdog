@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { listProposalsForCase } from "@watchdog/core";
+import {
+  listProposalsForCaseEffect,
+  runDomain
+} from "@watchdog/core";
 import { db } from "@watchdog/db";
 import { buildIdentifierCreateOp, testId } from "@watchdog/test-kit";
 import {
@@ -40,7 +43,7 @@ describe("loadIdentifierCollisions", () => {
       }),
     ]);
 
-    const listed = await listProposalsForCase(cased.id, { status: "pending" });
+    const listed = await runDomain(listProposalsForCaseEffect(cased.id, { status: "pending" }));
     expect(listed[0]?.identifierCollisions?.length).toBeGreaterThan(0);
     expect(listed[0]?.identifierCollisions?.[0]?.entityName).toBe("Entity A");
   });

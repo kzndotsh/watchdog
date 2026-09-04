@@ -1,6 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect } from "effect";
+import { vi } from "vitest";
 
-import { fetchHibpBreachedAccount, hibpLookupSnapshotSchema } from "../hibp";
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
+import {
+  fetchHibpBreachedAccountEffect,
+  hibpLookupSnapshotSchema,
+} from "../hibp";
 
 describe("hibp", () => {
   it("parses empty breach snapshots", () => {
@@ -15,20 +21,26 @@ describe("hibp", () => {
     expect(snap.found).toBe(false);
   });
 
-  it("fetchHibpBreachedAccount treats HTTP 404 as no breaches", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response(null, { status: 404 }))
-    );
+  it.effect(
+    "fetchHibpBreachedAccountEffect treats HTTP 404 as no breaches",
+    () =>
+      Effect.gen(function* fetchHibpBreachedAccountGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi.fn().mockResolvedValue(new Response(null, { status: 404 }))
+        );
 
-    const snap = await fetchHibpBreachedAccount(
-      "alice@mailhost.test",
-      "test-key",
-      AbortSignal.timeout(5000)
-    );
+        const snap = yield* fetchHibpBreachedAccountEffect(
+          "alice@mailhost.test",
+          "test-key",
+          AbortSignal.timeout(5000)
+        );
 
-    expect(snap.found).toBe(false);
-    expect(snap.breachCount).toBe(0);
-    vi.unstubAllGlobals();
-  });
+        expect(snap.found).toBe(false);
+        expect(snap.breachCount).toBe(0);
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

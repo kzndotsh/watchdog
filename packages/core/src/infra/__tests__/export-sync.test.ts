@@ -1,12 +1,13 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
 import {
-  removeCaseExportDir,
-  renameCaseExportDir,
+  removeCaseExportDirEffect,
+  renameCaseExportDirEffect,
   safeFilename,
-  scheduleCaseExport,
+  scheduleCaseExportEffect,
 } from "../export-sync.ts";
 
 describe("safeFilename", () => {
@@ -18,14 +19,16 @@ describe("safeFilename", () => {
 
 describe("export path guards", () => {
   it("ignores path-traversal slugs for remove and rename", async () => {
-    await expect(removeCaseExportDir("../outside")).resolves.toBeUndefined();
     await expect(
-      renameCaseExportDir("../outside", "safe-slug")
+      Effect.runPromise(removeCaseExportDirEffect("../outside"))
+    ).resolves.toBeUndefined();
+    await expect(
+      Effect.runPromise(renameCaseExportDirEffect("../outside", "safe-slug"))
     ).resolves.toBeUndefined();
   });
 });
 
-describe("scheduleCaseExport", () => {
+describe("scheduleCaseExportEffect", () => {
   it("coalesces concurrent schedules into one in-flight write then a follow-up", async () => {
     let calls = 0;
     let releaseFirst!: () => void;
@@ -33,17 +36,22 @@ describe("scheduleCaseExport", () => {
       releaseFirst = resolve;
     });
 
-    const writeExport = async () => {
-      calls += 1;
-      if (calls === 1) {
-        await firstGate;
-      }
-    };
+    const writeExport = () =>
+      Effect.tryPromise({
+        try: async () => {
+          calls += 1;
+          if (calls === 1) {
+            await firstGate;
+          }
+        },
+        catch: (error) => error,
+      });
 
     const caseId = testId(99);
-    const run = scheduleCaseExport(caseId, writeExport);
-    void scheduleCaseExport(caseId, writeExport);
-    await Promise.resolve();
+    const run = Effect.runPromise(
+      scheduleCaseExportEffect(caseId, writeExport)
+    );
+    void Effect.runPromise(scheduleCaseExportEffect(caseId, writeExport));
     expect(calls).toBe(1);
 
     releaseFirst();

@@ -1,5 +1,7 @@
+import { Effect } from "effect";
+
 import type { JobHandoff } from "@watchdog/cap-sdk";
-import { fetchCrtShLookup, normalizeHost } from "@watchdog/tools";
+import { fetchCrtShLookupEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ctLookupInput } from "./input";
@@ -27,18 +29,19 @@ export const ctLookup = defineCollectCap({
   },
   schema: ctLookupSnapshotSchema,
   reportLabel: "ct.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`CT lookup ${host}`);
-    const snap = await fetchCrtShLookup(host, ctx.signal, {
-      limit: ctx.input.limit ?? 50,
-      userAgent: "Watchdog/1.0 (+network.ct.lookup; OSINT)",
-    });
-    ctx.log(
-      `crt.sh ok — ${snap.entries.length} entries, ${snap.domains.length} domains`
-    );
-    return { snap, artifactName: `ct-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* ctLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`CT lookup ${host}`);
+      const snap = yield* fetchCrtShLookupEffect(host, ctx.signal, {
+        limit: ctx.input.limit ?? 50,
+        userAgent: "Watchdog/1.0 (+network.ct.lookup; OSINT)",
+      });
+      ctx.log(
+        `crt.sh ok — ${snap.entries.length} entries, ${snap.domains.length} domains`
+      );
+      return { snap, artifactName: `ct-${host}.json` };
+    }),
   interpretSnap: interpretCtReport,
   handoff(report): JobHandoff | undefined {
     const parsed = ctLookupSnapshotSchema.safeParse(report);

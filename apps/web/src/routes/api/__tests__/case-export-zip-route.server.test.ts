@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { testId, testHttpOrigin } from "@watchdog/test-kit";
@@ -5,8 +6,8 @@ import { testId, testHttpOrigin } from "@watchdog/test-kit";
 const createApiContextMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({ actor: { id: "actor-1" }, log: { set: vi.fn() } })
 );
-const getCaseByIdMock = vi.hoisted(() => vi.fn());
-const renderCaseExportMock = vi.hoisted(() => vi.fn());
+const getCaseByIdEffectMock = vi.hoisted(() => vi.fn());
+const renderCaseExportEffectMock = vi.hoisted(() => vi.fn());
 const zipSyncMock = vi.hoisted(() => vi.fn(() => new Uint8Array([1, 2, 3])));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -22,10 +23,15 @@ vi.mock("@/auth/api-context.server", () => ({
   createApiContext: createApiContextMock,
 }));
 
+vi.mock("@watchdog/api", () => ({
+  runApp: (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
+}));
+
 vi.mock("@watchdog/core", () => ({
-  getCaseById: getCaseByIdMock,
-  readArtifactBytes: vi.fn(),
-  renderCaseExport: renderCaseExportMock,
+  getCaseByIdEffect: getCaseByIdEffectMock,
+  readArtifactBytesEffect: vi.fn(),
+  renderCaseExportEffect: renderCaseExportEffectMock,
+  toDomainError: (error: unknown) => error,
 }));
 
 vi.mock("fflate", () => ({
@@ -72,11 +78,15 @@ describe("case export zip route", () => {
       actor: { id: "actor-1" },
       log: { set: vi.fn() },
     });
-    getCaseByIdMock.mockResolvedValueOnce({ id: CASE_ID, slug: "alpha" });
-    renderCaseExportMock.mockResolvedValueOnce({
-      files: new Map([["entities/target.md", "# Target"]]),
-      evidenceRows: [],
-    });
+    getCaseByIdEffectMock.mockReturnValueOnce(
+      Effect.succeed({ id: CASE_ID, slug: "alpha" })
+    );
+    renderCaseExportEffectMock.mockReturnValueOnce(
+      Effect.succeed({
+        files: new Map([["entities/target.md", "# Target"]]),
+        evidenceRows: [],
+      })
+    );
 
     const response = await handlers.GET({
       request: new Request(
@@ -95,11 +105,15 @@ describe("case export zip route", () => {
       actor: { id: "actor-1" },
       log: { set: vi.fn() },
     });
-    getCaseByIdMock.mockResolvedValueOnce({ id: CASE_ID, slug: "alpha" });
-    renderCaseExportMock.mockResolvedValueOnce({
-      files: new Map(),
-      evidenceRows: [],
-    });
+    getCaseByIdEffectMock.mockReturnValueOnce(
+      Effect.succeed({ id: CASE_ID, slug: "alpha" })
+    );
+    renderCaseExportEffectMock.mockReturnValueOnce(
+      Effect.succeed({
+        files: new Map(),
+        evidenceRows: [],
+      })
+    );
 
     const response = await handlers.GET({
       request: new Request(

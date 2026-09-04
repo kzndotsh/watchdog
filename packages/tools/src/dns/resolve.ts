@@ -1,30 +1,32 @@
-import { assertNotAborted, withAbortableResolver } from "./abortable-resolver";
+import { Effect } from "effect";
+
+import type { ToolsTag } from "../errors/tagged-errors";
+import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import type { DnsRecords } from "./schema";
 
 export type { DnsRecords };
 
 /** Resolve A/AAAA/MX/TXT/NS; cancels the Node resolver on abort. */
-export async function resolveDnsRecords(
+export function resolveDnsRecordsEffect(
   host: string,
   signal: AbortSignal
-): Promise<DnsRecords> {
-  const { resolver, cleanup } = withAbortableResolver(
-    signal,
-    "DNS lookup aborted"
+): Effect.Effect<DnsRecords, ToolsTag> {
+  return runAbortableResolver(signal, "DNS lookup aborted", (resolver) =>
+    Effect.gen(function* resolveDnsRecordsGen() {
+      const [a, aaaa, mx, txt, ns] = yield* Effect.all(
+        [
+          dnsOrEmpty(() => resolver.resolve4(host), [] as string[]),
+          dnsOrEmpty(() => resolver.resolve6(host), [] as string[]),
+          dnsOrEmpty(
+            () => resolver.resolveMx(host),
+            [] as { exchange: string; priority: number }[]
+          ),
+          dnsOrEmpty(() => resolver.resolveTxt(host), [] as string[][]),
+          dnsOrEmpty(() => resolver.resolveNs(host), [] as string[]),
+        ],
+        { concurrency: "unbounded" }
+      );
+      return { host, a, aaaa, mx, txt, ns };
+    })
   );
-  try {
-    const [a, aaaa, mx, txt, ns] = await Promise.all([
-      resolver.resolve4(host).catch(() => [] as string[]),
-      resolver.resolve6(host).catch(() => [] as string[]),
-      resolver
-        .resolveMx(host)
-        .catch(() => [] as { exchange: string; priority: number }[]),
-      resolver.resolveTxt(host).catch(() => [] as string[][]),
-      resolver.resolveNs(host).catch(() => [] as string[]),
-    ]);
-    assertNotAborted(signal, "DNS lookup aborted");
-    return { host, a, aaaa, mx, txt, ns };
-  } finally {
-    cleanup();
-  }
 }

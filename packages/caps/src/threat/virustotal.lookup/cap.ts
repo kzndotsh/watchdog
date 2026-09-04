@@ -1,4 +1,6 @@
-import { fetchVirusTotalLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchVirusTotalLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { virusTotalLookupInput } from "./input";
@@ -28,18 +30,19 @@ export const virusTotalLookup = defineCollectCap({
   },
   schema: virusTotalLookupSnapshotSchema,
   reportLabel: "virustotal.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`VirusTotal ${query}`);
-    const key = await ctx.getCredential("VIRUSTOTAL_API_KEY");
-    const snap = await fetchVirusTotalLookup(query, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(
-      `found=${snap.found} kind=${snap.kind} malicious=${snap.malicious ?? "n/a"}`
-    );
-    const safeName = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `virustotal-${safeName}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* virusTotalLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`VirusTotal ${query}`);
+      const key = yield* ctx.getCredential("VIRUSTOTAL_API_KEY");
+      const snap = yield* fetchVirusTotalLookupEffect(query, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `found=${snap.found} kind=${snap.kind} malicious=${snap.malicious ?? "n/a"}`
+      );
+      const safeName = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `virustotal-${safeName}.json` };
+    }),
   interpretSnap: interpretVirusTotalLookupReport,
 });

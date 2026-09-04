@@ -12,4 +12,6 @@ Hub for package layout, jobs/oRPC/evlog, and Caps/Intake/Export. Split leaves be
 | [`graph-model.md`](graph-model.md) | Entity / evidence / patch model |
 | [`../contracts/`](../contracts/README.md) | Ingress, custody, agent writes, evlog contracts |
 
+Runtime failures on API/CLI/worker edges use tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` (same codes as `DomainError`). Ingress and custody contracts are unchanged.
+
 **Not:** TanStack Start chrome or Query/SSE. That lives under [`docs/reference/web/`](../web/README.md).

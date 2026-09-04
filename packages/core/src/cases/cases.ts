@@ -1,15 +1,23 @@
+import { Effect } from "effect";
+
 import { casesRepo, db, type CaseRow } from "@watchdog/db";
 import { slugifyName } from "@watchdog/schemas";
 
-import { deleteCaseArtifacts } from "../infra/blob";
-import { DomainError, isUniqueViolation } from "../infra/domain-error";
-import { notifyEntityChanged } from "../infra/events";
+import { deleteCaseArtifactsEffect } from "../infra/blob";
+import { notifyEntityChangedEffect } from "../infra/events";
 import {
-  removeCaseExportDir,
-  renameCaseExportDir,
-  scheduleCaseExport,
+  removeCaseExportDirEffect,
+  renameCaseExportDirEffect,
+  scheduleCaseExportEffect,
 } from "../infra/export-sync";
+import { tryDb } from "../infra/postgres-effect";
 import { logProcess, logSwallowed } from "../infra/process-log";
+import {
+  ConflictError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
 
 const SLUG_UNIQUE_INDEX = "cases_slug_unique";
 
@@ -42,136 +50,170 @@ function toRecord(row: CaseRow): CaseRecord {
   };
 }
 
-export async function listCases(): Promise<CaseRecord[]> {
-  const rows = await casesRepo.list(db);
-  return rows.map(toRecord);
+export function listCasesEffect(): Effect.Effect<CaseRecord[], DomainTag> {
+  return tryDb(() => casesRepo.list(db)).pipe(
+    Effect.map((rows) => rows.map(toRecord))
+  );
 }
 
-export async function getCaseById(id: string): Promise<CaseRecord | null> {
-  const row = await casesRepo.getById(db, id);
-  return row ? toRecord(row) : null;
+export function getCaseByIdEffect(
+  id: string
+): Effect.Effect<CaseRecord, DomainTag> {
+  return tryDb(() => casesRepo.getById(db, id)).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.succeed(toRecord(row))
+        : new NotFoundError({ resource: "Case not found" })
+    )
+  );
 }
 
-export async function getCaseBySlug(slug: string): Promise<CaseRecord | null> {
-  const row = await casesRepo.getBySlug(db, slug);
-  return row ? toRecord(row) : null;
+export function getCaseBySlugEffect(
+  slug: string
+): Effect.Effect<CaseRecord, DomainTag> {
+  return tryDb(() => casesRepo.getBySlug(db, slug)).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.succeed(toRecord(row))
+        : new NotFoundError({ resource: "Case not found" })
+    )
+  );
 }
 
-export async function createCase(input: CreateCaseInput): Promise<CaseRecord> {
-  const existing = await casesRepo.getBySlug(db, input.slug);
-  if (existing) {
-    throw new DomainError("conflict", `Slug "${input.slug}" already exists`);
-  }
-
-  try {
-    const created = await casesRepo.create(db, {
-      name: input.name,
-      slug: input.slug,
-      description: input.description ?? null,
-    });
+export function createCaseEffect(
+  input: CreateCaseInput
+): Effect.Effect<CaseRecord, DomainTag> {
+  const conflictReason = `Slug "${input.slug}" already exists`;
+  return Effect.gen(function* createCaseGen() {
+    const existing = yield* tryDb(() => casesRepo.getBySlug(db, input.slug));
+    if (existing) {
+      return yield* new ConflictError({ reason: conflictReason });
+    }
+    const created = yield* tryDb(
+      () =>
+        casesRepo.create(db, {
+          name: input.name,
+          slug: input.slug,
+          description: input.description ?? null,
+        }),
+      { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
+    );
     if (!created) {
-      throw new DomainError("invalid", "Failed to create Case");
+      return yield* new InvalidError({ reason: "Failed to create Case" });
     }
     return toRecord(created);
-  } catch (error) {
-    if (isUniqueViolation(error, SLUG_UNIQUE_INDEX)) {
-      throw new DomainError("conflict", `Slug "${input.slug}" already exists`);
-    }
-    throw error;
-  }
+  });
 }
 
-export function updateCase(input: {
+export function updateCaseEffect(input: {
   id: string;
   name?: string;
   description?: string;
   allowThirdPartyEgress?: boolean;
-}): Promise<CaseRecord> {
-  return (async () => {
-    const existing = await casesRepo.getById(db, input.id);
-    if (!existing) throw new DomainError("not_found", "Case not found");
+}): Effect.Effect<CaseRecord, DomainTag> {
+  return Effect.gen(function* updateCaseGen() {
+    const existing = yield* tryDb(() => casesRepo.getById(db, input.id));
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Case not found" });
+    }
 
     let nextSlug: string | undefined;
     if (input.name !== undefined) {
       const slug = slugForCaseName(input.name);
       if (slug === "") {
-        throw new DomainError(
-          "invalid",
-          "Name must contain letters or numbers"
-        );
+        return yield* new InvalidError({
+          reason: "Name must contain letters or numbers",
+        });
       }
       if (slug !== existing.slug) {
-        const taken = await casesRepo.getBySlug(db, slug);
+        const taken = yield* tryDb(() => casesRepo.getBySlug(db, slug));
         if (taken !== null && taken.id !== existing.id) {
-          throw new DomainError("conflict", `Slug "${slug}" already exists`);
+          return yield* new ConflictError({
+            reason: `Slug "${slug}" already exists`,
+          });
         }
         nextSlug = slug;
       }
     }
 
-    try {
-      const updated = await casesRepo.update(db, input.id, {
-        ...(input.name === undefined ? {} : { name: input.name }),
-        ...(nextSlug === undefined ? {} : { slug: nextSlug }),
-        ...(input.description === undefined
-          ? {}
-          : { description: input.description }),
-        ...(input.allowThirdPartyEgress === undefined
-          ? {}
-          : { allowThirdPartyEgress: input.allowThirdPartyEgress }),
-      });
+    const conflictReason =
+      nextSlug === undefined
+        ? `Slug conflict`
+        : `Slug "${nextSlug}" already exists`;
+    const updated = yield* tryDb(
+      () =>
+        casesRepo.update(db, input.id, {
+          ...(input.name === undefined ? {} : { name: input.name }),
+          ...(nextSlug === undefined ? {} : { slug: nextSlug }),
+          ...(input.description === undefined
+            ? {}
+            : { description: input.description }),
+          ...(input.allowThirdPartyEgress === undefined
+            ? {}
+            : { allowThirdPartyEgress: input.allowThirdPartyEgress }),
+        }),
+      { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
+    );
 
-      if (!updated) throw new DomainError("not_found", "Case not found");
-
-      if (nextSlug !== undefined) {
-        try {
-          await renameCaseExportDir(existing.slug, nextSlug);
-        } catch (error) {
-          logSwallowed("rename-case-export", error, {
-            from: existing.slug,
-            to: nextSlug,
-          });
-        }
-        void scheduleCaseExport(input.id);
-      }
-
-      return toRecord(updated);
-    } catch (error) {
-      if (isUniqueViolation(error, SLUG_UNIQUE_INDEX)) {
-        throw new DomainError("conflict", `Slug "${nextSlug}" already exists`);
-      }
-      throw error;
+    if (!updated) {
+      return yield* new NotFoundError({ resource: "Case not found" });
     }
-  })();
+
+    if (nextSlug !== undefined) {
+      yield* renameCaseExportDirEffect(existing.slug, nextSlug).pipe(
+        Effect.catch((error) =>
+          Effect.sync(() => {
+            logSwallowed("rename-case-export", error, {
+              from: existing.slug,
+              to: nextSlug,
+            });
+          })
+        )
+      );
+      yield* scheduleCaseExportEffect(input.id).pipe(
+        Effect.forkDetach({ startImmediately: true })
+      );
+    }
+
+    return toRecord(updated);
+  });
 }
 
-export function deleteCase(
+export function deleteCaseEffect(
   id: string,
   opts?: { actorId?: string }
-): Promise<void> {
-  return (async () => {
-    const existing = await casesRepo.getById(db, id);
-    if (!existing) throw new DomainError("not_found", "Case not found");
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* deleteCaseGen() {
+    const existing = yield* tryDb(() => casesRepo.getById(db, id));
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Case not found" });
+    }
 
-    const deleted = await casesRepo.delete(db, id);
-    if (!deleted) throw new DomainError("invalid", "Failed to delete Case");
+    const deleted = yield* tryDb(() => casesRepo.delete(db, id));
+    if (!deleted) {
+      return yield* new InvalidError({ reason: "Failed to delete Case" });
+    }
     if (opts?.actorId) {
       logProcess("case.delete", "Case deleted", {
         caseId: id,
         actorId: opts.actorId,
       });
     }
-    notifyEntityChanged(id);
+    yield* notifyEntityChangedEffect(id);
 
-    try {
-      await deleteCaseArtifacts(id);
-    } catch (error) {
-      logSwallowed("delete-case-artifacts", error, { caseId: id });
-    }
-    try {
-      await removeCaseExportDir(existing.slug);
-    } catch (error) {
-      logSwallowed("delete-case-export", error, { slug: existing.slug });
-    }
-  })();
+    yield* deleteCaseArtifactsEffect(id).pipe(
+      Effect.catch((error) =>
+        Effect.sync(() => {
+          logSwallowed("delete-case-artifacts", error, { caseId: id });
+        })
+      )
+    );
+    yield* removeCaseExportDirEffect(existing.slug).pipe(
+      Effect.catch((error) =>
+        Effect.sync(() => {
+          logSwallowed("delete-case-export", error, { slug: existing.slug });
+        })
+      )
+    );
+  });
 }

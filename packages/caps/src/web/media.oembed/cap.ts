@@ -1,4 +1,6 @@
-import { fetchOembed } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchOembedEffect, ValidationVendorError } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mediaOembedInput } from "./input";
@@ -31,17 +33,18 @@ export const mediaOembed = defineCollectCap({
   },
   schema: oembedSnapshotSchema,
   reportLabel: "media.oembed",
-  async fetch(ctx) {
-    const url = ctx.input.url.trim();
-    ctx.log(`oEmbed ${url}`);
-    const snap = await fetchOembed(url, ctx.signal, { userAgent: UA });
-    if (snap.error) {
-      throw new Error(snap.error);
-    }
-    ctx.log(
-      `vendor=${snap.vendor ?? "?"} author=${snap.authorName ?? "?"} title=${snap.title ?? "?"}`
-    );
-    return { snap, artifactName: "oembed.json" };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* mediaOembedFetch() {
+      const url = ctx.input.url.trim();
+      ctx.log(`oEmbed ${url}`);
+      const snap = yield* fetchOembedEffect(url, ctx.signal, { userAgent: UA });
+      if (snap.error) {
+        return yield* new ValidationVendorError({ message: snap.error });
+      }
+      ctx.log(
+        `vendor=${snap.vendor ?? "?"} author=${snap.authorName ?? "?"} title=${snap.title ?? "?"}`
+      );
+      return { snap, artifactName: "oembed.json" };
+    }),
   interpretSnap: interpretOembedReport,
 });

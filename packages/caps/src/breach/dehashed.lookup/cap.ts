@@ -1,4 +1,6 @@
-import { fetchDehashedLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchDehashedLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dehashedLookupInput } from "./input";
@@ -32,16 +34,17 @@ export const dehashedLookup = defineCollectCap({
   },
   schema: dehashedLookupSnapshotSchema,
   reportLabel: "dehashed.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`DeHashed ${query}`);
-    const key = await ctx.getCredential("DEHASHED_API_KEY");
-    const snap = await fetchDehashedLookup(query, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} total=${snap.total}`);
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `dehashed-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* dehashedLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`DeHashed ${query}`);
+      const key = yield* ctx.getCredential("DEHASHED_API_KEY");
+      const snap = yield* fetchDehashedLookupEffect(query, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} total=${snap.total}`);
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `dehashed-${safe}.json` };
+    }),
   interpretSnap: interpretDehashedLookupReport,
 });

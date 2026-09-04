@@ -1,16 +1,15 @@
-import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
-  createEntity,
-  getEntityByCaseSlug,
-  listEntitiesForCase,
-  updateEntityFields,
+  createEntityEffect,
+  getEntityByCaseSlugEffect,
+  listEntitiesForCaseEffect,
+  updateEntityFieldsEffect,
 } from "@watchdog/core";
 import { entityKindSchema } from "@watchdog/schemas";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import { entitySchema } from "../schemas";
 
 export const list = authed
@@ -22,8 +21,8 @@ export const list = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.array(entitySchema))
-  .handler(
-    withDomainError(async ({ input }) => listEntitiesForCase(input.caseId))
+  .handler(async ({ input }) =>
+    runApp(listEntitiesForCaseEffect(input.caseId))
   );
 
 export const get = authed
@@ -35,13 +34,8 @@ export const get = authed
   })
   .input(z.object({ caseId: z.uuid(), slug: z.string().min(1) }))
   .output(entitySchema)
-  .handler(
-    withDomainError(async ({ input }) => {
-      const row = await getEntityByCaseSlug(input.caseId, input.slug);
-      if (!row)
-        throw new ORPCError("NOT_FOUND", { message: "Entity not found" });
-      return row;
-    })
+  .handler(async ({ input }) =>
+    runApp(getEntityByCaseSlugEffect(input.caseId, input.slug))
   );
 
 export const create = authed
@@ -61,7 +55,7 @@ export const create = authed
     })
   )
   .output(entitySchema)
-  .handler(withDomainError(async ({ input }) => createEntity(input)));
+  .handler(async ({ input }) => runApp(createEntityEffect(input)));
 
 export const update = authed
   .route({
@@ -81,4 +75,4 @@ export const update = authed
     })
   )
   .output(entitySchema)
-  .handler(withDomainError(async ({ input }) => updateEntityFields(input)));
+  .handler(async ({ input }) => runApp(updateEntityFieldsEffect(input)));

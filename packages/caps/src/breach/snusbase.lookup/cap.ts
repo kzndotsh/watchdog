@@ -1,4 +1,6 @@
-import { fetchSnusbaseLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchSnusbaseLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { snusbaseLookupInput } from "./input";
@@ -32,16 +34,17 @@ export const snusbaseLookup = defineCollectCap({
   },
   schema: snusbaseLookupSnapshotSchema,
   reportLabel: "snusbase.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`Snusbase ${query}`);
-    const key = await ctx.getCredential("SNUSBASE_API_KEY");
-    const snap = await fetchSnusbaseLookup(query, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} total=${snap.total}`);
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `snusbase-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* snusbaseLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`Snusbase ${query}`);
+      const key = yield* ctx.getCredential("SNUSBASE_API_KEY");
+      const snap = yield* fetchSnusbaseLookupEffect(query, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} total=${snap.total}`);
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `snusbase-${safe}.json` };
+    }),
   interpretSnap: interpretSnusbaseLookupReport,
 });

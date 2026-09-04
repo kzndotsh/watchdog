@@ -1,4 +1,7 @@
-import { fetchFeodoLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { optionalCapCredential } from "@watchdog/cap-sdk";
+import { fetchFeodoLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { feodoLookupInput } from "./input";
@@ -28,18 +31,17 @@ export const feodoLookup = defineCollectCap({
   },
   schema: feodoLookupSnapshotSchema,
   reportLabel: "feodo.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`Feodo Tracker ${ip}`);
-    const apiKey = (await ctx.hasCredential("THREATFOX_API_KEY"))
-      ? await ctx.getCredential("THREATFOX_API_KEY")
-      : undefined;
-    const snap = await fetchFeodoLookup(ip, ctx.signal, {
-      userAgent: UA,
-      apiKey,
-    });
-    ctx.log(`found=${snap.found} malware=${snap.malware ?? "?"}`);
-    return { snap, artifactName: `feodo-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* feodoLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`Feodo Tracker ${ip}`);
+      const apiKey = yield* optionalCapCredential(ctx, "THREATFOX_API_KEY");
+      const snap = yield* fetchFeodoLookupEffect(ip, ctx.signal, {
+        userAgent: UA,
+        apiKey,
+      });
+      ctx.log(`found=${snap.found} malware=${snap.malware ?? "?"}`);
+      return { snap, artifactName: `feodo-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretFeodoLookupReport,
 });

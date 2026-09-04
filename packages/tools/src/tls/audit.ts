@@ -1,6 +1,10 @@
 import { connect, type PeerCertificate } from "node:tls";
 
+import { Effect } from "effect";
 import { z } from "zod";
+
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
 
 export const tlsAuditSnapshotSchema = z.object({
   host: z.string().min(1),
@@ -61,71 +65,74 @@ interface AuditOptions {
   servername?: string;
 }
 
-/** Active TLS handshake against host:port — invasive. */
-export function fetchTlsAudit(
+export function fetchTlsAuditEffect(
   host: string,
   signal: AbortSignal,
   options?: AuditOptions
-): Promise<TlsAuditSnapshot> {
+): Effect.Effect<TlsAuditSnapshot, ToolsTag> {
   const port = options?.port ?? 443;
   const servername = options?.servername ?? host;
 
-  // oxlint-disable-next-line promise/avoid-new -- wraps node:tls's callback/event-based connect API, no promise-returning equivalent exists
-  return new Promise<TlsAuditSnapshot>((resolve, reject) => {
-    if (signal.aborted) {
-      reject(new Error("TLS audit aborted"));
-      return;
-    }
+  return Effect.tryPromise({
+    try: () =>
+      // oxlint-disable-next-line promise/avoid-new -- wraps node:tls callback connect
+      new Promise<TlsAuditSnapshot>((resolve, reject) => {
+        if (signal.aborted) {
+          reject(new Error("TLS audit aborted"));
+          return;
+        }
 
-    const socket = connect(
-      {
-        host,
-        port,
-        servername,
-        rejectUnauthorized: false,
-      },
-      () => {
-        const peer = socket.getPeerCertificate(true);
-        const cipher = socket.getCipher();
-        const snap: TlsAuditSnapshot = {
-          host,
-          port,
-          queriedAt: new Date().toISOString(),
-          protocol: socket.getProtocol() ?? null,
-          authorized: socket.authorized,
-          authorizationError: socket.authorizationError
-            ? String(socket.authorizationError)
-            : null,
-          cipher: cipher
-            ? {
-                name: cipher.name,
-                ...(cipher.standardName
-                  ? { standardName: cipher.standardName }
-                  : {}),
-                ...(cipher.version ? { version: cipher.version } : {}),
-              }
-            : null,
-          certificate: certField(peer),
+        const socket = connect(
+          {
+            host,
+            port,
+            servername,
+            rejectUnauthorized: false,
+          },
+          () => {
+            const peer = socket.getPeerCertificate(true);
+            const cipher = socket.getCipher();
+            const snap: TlsAuditSnapshot = {
+              host,
+              port,
+              queriedAt: new Date().toISOString(),
+              protocol: socket.getProtocol() ?? null,
+              authorized: socket.authorized,
+              authorizationError: socket.authorizationError
+                ? String(socket.authorizationError)
+                : null,
+              cipher: cipher
+                ? {
+                    name: cipher.name,
+                    ...(cipher.standardName
+                      ? { standardName: cipher.standardName }
+                      : {}),
+                    ...(cipher.version ? { version: cipher.version } : {}),
+                  }
+                : null,
+              certificate: certField(peer),
+            };
+            socket.end();
+            resolve(tlsAuditSnapshotSchema.parse(snap));
+          }
+        );
+
+        const onAbort = () => {
+          socket.destroy(new Error("TLS audit aborted"));
         };
-        socket.end();
-        resolve(tlsAuditSnapshotSchema.parse(snap));
-      }
-    );
+        signal.addEventListener("abort", onAbort, { once: true });
 
-    const onAbort = () => {
-      socket.destroy(new Error("TLS audit aborted"));
-    };
-    signal.addEventListener("abort", onAbort, { once: true });
-
-    socket.setTimeout(20_000, () => {
-      socket.destroy(new Error("TLS audit timed out"));
-    });
-    socket.on("error", (err) => {
-      signal.removeEventListener("abort", onAbort);
-      reject(err instanceof Error ? err : new Error(String(err)));
-    });
-    socket.on("close", () => {
-      signal.removeEventListener("abort", onAbort);
-    });
+        socket.setTimeout(20_000, () => {
+          socket.destroy(new Error("TLS audit timed out"));
+        });
+        socket.on("error", (err) => {
+          signal.removeEventListener("abort", onAbort);
+          reject(err instanceof Error ? err : new Error(String(err)));
+        });
+        socket.on("close", () => {
+          signal.removeEventListener("abort", onAbort);
+        });
+      }),
+    catch: mapToolsCatch,
   });
 }

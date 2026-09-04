@@ -165,6 +165,10 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:docs-affected:strict
 
+      - name: Effect run* edges
+        if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:effect-edges:strict
+
       - name: Agent Skills validation
         if: github.event_name != 'pull_request' || needs.changes.outputs.agents == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm validate:agents

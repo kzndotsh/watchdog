@@ -1,8 +1,11 @@
+import { Effect } from "effect";
+
 import { listKnownCredentials } from "@watchdog/caps";
 
+import type { DomainTag } from "./tagged-errors";
 import {
-  listCredentialMeta,
-  putCredential,
+  listCredentialMetaEffect,
+  putCredentialEffect,
   type CredentialMeta,
 } from "./vault";
 
@@ -26,12 +29,8 @@ function slotFromMeta(meta: CredentialMeta): CredentialSlot {
   };
 }
 
-/** Known Cap slots + any custom stored names for a user. */
-export async function listCredentialSlots(
-  userId: string
-): Promise<CredentialSlot[]> {
+function slotsFromStored(stored: CredentialMeta[]): CredentialSlot[] {
   const known = listKnownCredentials();
-  const stored = await listCredentialMeta(userId);
   const byName = new Map(stored.map((s) => [s.name, s]));
 
   const slots: CredentialSlot[] = known.map((k) => {
@@ -53,6 +52,14 @@ export async function listCredentialSlots(
   return slots;
 }
 
+export function listCredentialSlotsEffect(
+  userId: string
+): Effect.Effect<CredentialSlot[], DomainTag> {
+  return listCredentialMetaEffect(userId).pipe(
+    Effect.map((stored) => slotsFromStored(stored))
+  );
+}
+
 interface PutCredentialSlotInput {
   userId: string;
   name: string;
@@ -60,10 +67,10 @@ interface PutCredentialSlotInput {
   label?: string | null;
 }
 
-/** Create/replace secret and return the configured slot (no full re-list). */
-export async function putCredentialSlot(
+export function putCredentialSlotEffect(
   input: PutCredentialSlotInput
-): Promise<CredentialSlot> {
-  const meta = await putCredential(input);
-  return slotFromMeta(meta);
+): Effect.Effect<CredentialSlot, DomainTag> {
+  return putCredentialEffect(input).pipe(
+    Effect.map((meta) => slotFromMeta(meta))
+  );
 }

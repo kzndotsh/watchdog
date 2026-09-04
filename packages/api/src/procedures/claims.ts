@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import {
-  createClaim,
-  listClaimsForEntity,
-  retractClaim,
-  updateClaim,
+  createClaimEffect,
+  listClaimsForEntityEffect,
+  retractClaimEffect,
+  updateClaimEffect,
 } from "@watchdog/core";
 import {
   claimClassSchema,
@@ -12,8 +12,8 @@ import {
   retractKindSchema,
 } from "@watchdog/schemas";
 
-import { withDomainError } from "../map-domain-error";
-import { graphChildWrite, authed } from "../os";
+import { authed, graphChildWrite } from "../os";
+import { runApp } from "../runtime";
 import { claimSchema, userOverrideSchema } from "../schemas";
 
 export const list = authed
@@ -31,9 +31,9 @@ export const list = authed
     })
   )
   .output(z.array(claimSchema))
-  .handler(
-    withDomainError(async ({ input }) =>
-      listClaimsForEntity(input.caseId, input.entityId, {
+  .handler(async ({ input }) =>
+    runApp(
+      listClaimsForEntityEffect(input.caseId, input.entityId, {
         includeRetracted: input.includeRetracted,
       })
     )
@@ -59,7 +59,7 @@ export const create = graphChildWrite
     })
   )
   .output(claimSchema)
-  .handler(withDomainError(async ({ input }) => createClaim(input)));
+  .handler(async ({ input }) => runApp(createClaimEffect(input)));
 
 export const update = graphChildWrite
   .route({
@@ -80,7 +80,7 @@ export const update = graphChildWrite
     })
   )
   .output(claimSchema)
-  .handler(withDomainError(async ({ input }) => updateClaim(input)));
+  .handler(async ({ input }) => runApp(updateClaimEffect(input)));
 
 export const retract = graphChildWrite
   .route({
@@ -99,8 +99,6 @@ export const retract = graphChildWrite
     })
   )
   .output(claimSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      retractClaim(input, context.actor.userId)
-    )
+  .handler(async ({ input, context }) =>
+    runApp(retractClaimEffect(input, context.actor.userId))
   );

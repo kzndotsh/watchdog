@@ -1,3 +1,4 @@
+export { runCap } from "@watchdog/cap-sdk";
 export { fc } from "./fc.ts";
 export { TEST_ACTOR_ID, testId } from "./fixtures/ids.ts";
 export { testHttpOrigin, testHttpUrl, testUrlBase } from "./fixtures/urls.ts";

@@ -17,3 +17,4 @@ export type {
   UserLogFields,
 } from "./fields";
 export { jobWideEventFields } from "./fields";
+export { evlogEffectLogger, evlogEffectLoggerLayer } from "./effect-logger";

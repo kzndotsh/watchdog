@@ -1,9 +1,13 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { createTtlCache } from "../cache/ttl-memory";
 import { normalizeIp } from "../dns/reverse";
-import { httpToolsError } from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchBytesEffect } from "../http/fetch-bytes";
 
 export const torExitLookupSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -34,29 +38,30 @@ export function parseExitAddresses(text: string): Set<string> {
   return ips;
 }
 
-async function fetchExitAddresses(
+function fetchExitAddressesEffect(
   signal: AbortSignal,
   ua: string
-): Promise<Set<string>> {
-  const cached = exitListCache.get(EXIT_LIST_CACHE_KEY);
-  if (cached) return cached;
+): Effect.Effect<Set<string>, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchExitAddressesGen() {
+    const cached = exitListCache.get(EXIT_LIST_CACHE_KEY);
+    if (cached) return cached;
 
-  const res = await fetch("https://check.torproject.org/exit-addresses", {
-    method: "GET",
-    signal,
-    headers: { Accept: "text/plain", "User-Agent": ua },
-  });
-  if (!res.ok) {
-    throw httpToolsError(
-      "Tor exit-address list",
-      res.status,
-      `Tor exit-address list ${res.status}`
+    const result = yield* fetchBytesEffect(
+      "https://check.torproject.org/exit-addresses",
+      signal,
+      { userAgent: ua, maxBytes: 4_000_000, accept: "text/plain" }
     );
-  }
+    if (!result.ok) {
+      return yield* new HttpVendorError({
+        service: "Tor",
+        status: result.status,
+      });
+    }
 
-  const ips = parseExitAddresses(await res.text());
-  exitListCache.set(EXIT_LIST_CACHE_KEY, ips);
-  return ips;
+    const ips = parseExitAddresses(new TextDecoder().decode(result.bytes));
+    exitListCache.set(EXIT_LIST_CACHE_KEY, ips);
+    return ips;
+  });
 }
 
 /**
@@ -68,20 +73,26 @@ async function fetchExitAddresses(
 interface TorExitOptions {
   userAgent?: string;
 }
-export async function fetchTorExitLookup(
+export function fetchTorExitLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: TorExitOptions
-): Promise<TorExitLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("network.tor_exit.lookup");
+): Effect.Effect<TorExitLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchTorExitLookupGen() {
+    const ip = yield* Effect.try({
+      try: () => normalizeIp(ipRaw),
+      catch: mapToolsCatch,
+    });
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("network.tor_exit.lookup");
 
-  const exits = await fetchExitAddresses(signal, ua);
+    const exits = yield* fetchExitAddressesEffect(signal, ua);
 
-  return torExitLookupSnapshotSchema.parse({
-    ip,
-    queriedAt: new Date().toISOString(),
-    source: "check.torproject.org",
-    isExit: exits.has(ip),
+    return torExitLookupSnapshotSchema.parse({
+      ip,
+      queriedAt: new Date().toISOString(),
+      source: "check.torproject.org",
+      isExit: exits.has(ip),
+    });
   });
 }

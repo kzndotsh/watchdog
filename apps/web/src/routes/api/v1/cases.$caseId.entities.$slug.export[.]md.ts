@@ -5,9 +5,38 @@
  * Auth: session cookie or API key.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
-import { getEntityByCaseSlug, renderEntityMarkdown } from "@watchdog/core";
+import { runApp } from "@watchdog/api";
+import {
+  getEntityByCaseSlugEffect,
+  renderEntityMarkdownEffect,
+  type DomainTag,
+} from "@watchdog/core";
+
+type EntityExportMdResult =
+  | { kind: "missing" }
+  | { kind: "ok"; markdown: string };
+
+function entityExportMdEffect(
+  caseId: string,
+  slug: string
+): Effect.Effect<EntityExportMdResult, DomainTag> {
+  return Effect.gen(function* entityExportMdGen() {
+    const entity = yield* getEntityByCaseSlugEffect(caseId, slug).pipe(
+      Effect.catchTag("NotFoundError", () => Effect.succeed(null))
+    );
+    if (entity === null) {
+      return { kind: "missing" as const };
+    }
+    const exported = yield* renderEntityMarkdownEffect(entity.id);
+    if (!exported) {
+      return { kind: "missing" as const };
+    }
+    return { kind: "ok" as const, markdown: exported.markdown };
+  });
+}
 
 export const Route = createFileRoute(
   "/api/v1/cases/$caseId/entities/$slug/export.md"
@@ -27,14 +56,8 @@ export const Route = createFileRoute(
         }
 
         const { caseId, slug } = params;
-
-        const entity = await getEntityByCaseSlug(caseId, slug);
-        if (!entity) {
-          return new Response("Not Found", { status: 404 });
-        }
-
-        const exported = await renderEntityMarkdown(entity.id);
-        if (!exported) {
+        const exported = await runApp(entityExportMdEffect(caseId, slug));
+        if (exported.kind === "missing") {
           return new Response("Not Found", { status: 404 });
         }
 

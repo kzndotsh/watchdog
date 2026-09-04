@@ -1,3 +1,5 @@
+import { Data, Effect } from "effect";
+
 import {
   CLAIM_CLASSES,
   EDGE_PREDICATES,
@@ -11,6 +13,10 @@ import {
 
 import { patchNeedsConfidence } from "./patch-needs-confidence";
 
+export class CustodyViolation extends Data.TaggedError("CustodyViolation")<{
+  readonly reason: string;
+}> {}
+
 export interface PatchGateOpts {
   confidence?: ConfidenceTier;
   sharedEvidenceIds?: string[];
@@ -22,7 +28,7 @@ export function requireString(
 ): string {
   const v = data[key];
   if (typeof v !== "string" || !v.trim()) {
-    throw new Error(`${key} is required`);
+    throw new CustodyViolation({ reason: `${key} is required` });
   }
   return v.trim();
 }
@@ -43,12 +49,12 @@ export function requireEnum<T extends string>(
   if (isOneOf(value, allowed)) {
     return value;
   }
-  throw new Error(`Invalid ${label}: ${value}`);
+  throw new CustodyViolation({ reason: `Invalid ${label}: ${value}` });
 }
 
 function assertClaimOpShape(op: PatchOp): void {
   if (op.resource !== "claim" || op.op !== "create") {
-    throw new Error("claim only supports create");
+    throw new CustodyViolation({ reason: "claim only supports create" });
   }
   requireString(op.data, "entityId");
   requireString(op.data, "text");
@@ -59,7 +65,7 @@ function assertClaimOpShape(op: PatchOp): void {
 
 function assertEventOpShape(op: PatchOp): void {
   if (op.resource !== "event" || op.op !== "create") {
-    throw new Error("event only supports create");
+    throw new CustodyViolation({ reason: "event only supports create" });
   }
   requireString(op.data, "entityId");
   requireString(op.data, "when");
@@ -68,7 +74,7 @@ function assertEventOpShape(op: PatchOp): void {
 
 function assertQuestionOpShape(op: PatchOp): void {
   if (op.resource !== "question" || op.op !== "create") {
-    throw new Error("question only supports create");
+    throw new CustodyViolation({ reason: "question only supports create" });
   }
   requireString(op.data, "entityId");
   requireString(op.data, "text");
@@ -83,13 +89,15 @@ function assertEntityOpShape(op: PatchOp): void {
     return;
   }
   if (op.op === "update") return;
-  throw new Error(`entity does not support op: ${JSON.stringify(op.op)}`);
+  throw new CustodyViolation({
+    reason: `entity does not support op: ${JSON.stringify(op.op)}`,
+  });
 }
 
 function assertIdentifierOpShape(op: PatchOp): void {
   if (op.resource !== "identifier") return;
   if (op.op !== "create" && op.op !== "upsert") {
-    throw new Error("identifier supports create/upsert");
+    throw new CustodyViolation({ reason: "identifier supports create/upsert" });
   }
   requireString(op.data, "entityId");
   requireEnum(
@@ -106,7 +114,7 @@ function assertIdentifierOpShape(op: PatchOp): void {
 function assertEdgeOpShape(op: PatchOp): void {
   if (op.resource !== "edge") return;
   if (op.op !== "create" && op.op !== "upsert") {
-    throw new Error("edge supports create/upsert");
+    throw new CustodyViolation({ reason: "edge supports create/upsert" });
   }
   requireString(op.data, "fromId");
   requireString(op.data, "toId");
@@ -117,7 +125,7 @@ function assertEdgeOpShape(op: PatchOp): void {
   );
   const notes = typeof op.data.notes === "string" ? op.data.notes : null;
   if (predicate === "related_to" && (notes === null || notes.trim() === "")) {
-    throw new Error("related_to requires notes");
+    throw new CustodyViolation({ reason: "related_to requires notes" });
   }
 }
 
@@ -134,14 +142,32 @@ function assertOpShape(op: PatchOp): void {
   OP_SHAPE_ASSERTERS[op.resource](op);
 }
 
+function runGate(body: () => void): Effect.Effect<void, CustodyViolation> {
+  return Effect.try({
+    try: body,
+    catch: (error) => {
+      if (error instanceof CustodyViolation) {
+        return error;
+      }
+      return new CustodyViolation({
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    },
+  });
+}
+
 /**
  * Shape-only validation (resource/op/required fields). No confidence gate —
  * use for propose (no confidence yet) and before applyPatch's full gates.
  */
-export function assertPatchShape(patch: PatchOp[]): void {
-  for (const op of patch) {
-    assertOpShape(op);
-  }
+export function assertPatchShape(
+  patch: PatchOp[]
+): Effect.Effect<void, CustodyViolation> {
+  return runGate(() => {
+    for (const op of patch) {
+      assertOpShape(op);
+    }
+  });
 }
 
 /**
@@ -151,19 +177,25 @@ export function assertPatchShape(patch: PatchOp[]): void {
 export function assertPatchGates(
   patch: PatchOp[],
   opts: PatchGateOpts = {}
-): void {
-  if (patchNeedsConfidence(patch) && !opts.confidence) {
-    throw new Error("confidence is required for this Proposal");
-  }
-  if (opts.confidence === "confirmed") {
-    const anyEvidence = patch.some((op) => (op.evidenceIds?.length ?? 0) > 0);
-    const shared = (opts.sharedEvidenceIds?.length ?? 0) > 0;
-    if (!anyEvidence && !shared) {
-      throw new Error("confirmed requires at least one Evidence attachment");
+): Effect.Effect<void, CustodyViolation> {
+  return runGate(() => {
+    if (patchNeedsConfidence(patch) && !opts.confidence) {
+      throw new CustodyViolation({
+        reason: "confidence is required for this Proposal",
+      });
     }
-  }
+    if (opts.confidence === "confirmed") {
+      const anyEvidence = patch.some((op) => (op.evidenceIds?.length ?? 0) > 0);
+      const shared = (opts.sharedEvidenceIds?.length ?? 0) > 0;
+      if (!anyEvidence && !shared) {
+        throw new CustodyViolation({
+          reason: "confirmed requires at least one Evidence attachment",
+        });
+      }
+    }
 
-  for (const op of patch) {
-    assertOpShape(op);
-  }
+    for (const op of patch) {
+      assertOpShape(op);
+    }
+  });
 }

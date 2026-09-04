@@ -1,4 +1,6 @@
-import { fetchShodanHost, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchShodanHostEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { shodanLookupInput } from "./input";
@@ -28,17 +30,18 @@ export const shodanLookup = defineCollectCap({
   },
   schema: shodanLookupSnapshotSchema,
   reportLabel: "shodan.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`Shodan ${ip}`);
-    const key = await ctx.getCredential("SHODAN_API_KEY");
-    const snap = await fetchShodanHost(ip, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(
-      `found=${snap.found} hostnames=${snap.hostnames.length} ports=${snap.ports.length}`
-    );
-    return { snap, artifactName: `shodan-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* shodanLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`Shodan ${ip}`);
+      const key = yield* ctx.getCredential("SHODAN_API_KEY");
+      const snap = yield* fetchShodanHostEffect(ip, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `found=${snap.found} hostnames=${snap.hostnames.length} ports=${snap.ports.length}`
+      );
+      return { snap, artifactName: `shodan-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretShodanLookupReport,
 });

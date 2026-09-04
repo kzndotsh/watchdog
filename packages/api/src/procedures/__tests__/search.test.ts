@@ -1,15 +1,16 @@
 import { createRouterClient } from "@orpc/server";
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { searchCase } = vi.hoisted(() => ({
-  searchCase: vi.fn(),
+const { searchCaseEffect } = vi.hoisted(() => ({
+  searchCaseEffect: vi.fn(),
 }));
 
 vi.mock("@watchdog/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core")>();
   return {
     ...actual,
-    searchCase,
+    searchCaseEffect,
   };
 });
 
@@ -19,16 +20,18 @@ const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
 
 describe("search procedures", () => {
   it("searches within a case", async () => {
-    searchCase.mockResolvedValueOnce({
-      q: "alice",
-      entities: [],
-      identifiers: [],
-      evidence: [],
-      tasks: [],
-      jobs: [],
-      proposals: [],
-      cases: [],
-    });
+    searchCaseEffect.mockReturnValueOnce(
+      Effect.succeed({
+        q: "alice",
+        entities: [],
+        identifiers: [],
+        evidence: [],
+        tasks: [],
+        jobs: [],
+        proposals: [],
+        cases: [],
+      })
+    );
 
     const client = createRouterClient(
       { searchCase: searchCaseProc },

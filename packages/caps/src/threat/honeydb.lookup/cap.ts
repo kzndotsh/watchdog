@@ -1,4 +1,6 @@
-import { fetchHoneydbLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchHoneydbLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { honeydbLookupInput } from "./input";
@@ -28,16 +30,21 @@ export const honeydbLookup = defineCollectCap({
   },
   schema: honeydbLookupSnapshotSchema,
   reportLabel: "honeydb.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`HoneyDB ${ip}`);
-    const apiId = await ctx.getCredential("HONEYDB_API_ID");
-    const apiKey = await ctx.getCredential("HONEYDB_API_KEY");
-    const snap = await fetchHoneydbLookup(ip, apiId, apiKey, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} events=${snap.historyEventCount}`);
-    return { snap, artifactName: `honeydb-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* honeydbLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`HoneyDB ${ip}`);
+      const apiId = yield* ctx.getCredential("HONEYDB_API_ID");
+      const apiKey = yield* ctx.getCredential("HONEYDB_API_KEY");
+      const snap = yield* fetchHoneydbLookupEffect(
+        ip,
+        apiId,
+        apiKey,
+        ctx.signal,
+        { userAgent: UA }
+      );
+      ctx.log(`found=${snap.found} events=${snap.historyEventCount}`);
+      return { snap, artifactName: `honeydb-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretHoneydbLookupReport,
 });

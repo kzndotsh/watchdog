@@ -1,4 +1,6 @@
-import { fetchCommoncrawlLookup, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchCommoncrawlLookupEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { commoncrawlLookupInput } from "./input";
@@ -29,18 +31,19 @@ export const commoncrawlLookup = defineCollectCap({
   },
   schema: commoncrawlLookupSnapshotSchema,
   reportLabel: "commoncrawl.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`Common Crawl ${host}`);
-    const snap = await fetchCommoncrawlLookup(host, ctx.signal, {
-      userAgent: UA,
-      indexes: 2,
-      limit: 40,
-    });
-    ctx.log(
-      `indexes=${snap.indexes.join(",")} urls=${snap.urls.length} hits=${snap.hits.length}`
-    );
-    return { snap, artifactName: `commoncrawl-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* commoncrawlLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`Common Crawl ${host}`);
+      const snap = yield* fetchCommoncrawlLookupEffect(host, ctx.signal, {
+        userAgent: UA,
+        indexes: 2,
+        limit: 40,
+      });
+      ctx.log(
+        `indexes=${snap.indexes.join(",")} urls=${snap.urls.length} hits=${snap.hits.length}`
+      );
+      return { snap, artifactName: `commoncrawl-${host}.json` };
+    }),
   interpretSnap: interpretCommoncrawlLookupReport,
 });

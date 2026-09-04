@@ -1,8 +1,11 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asBool, asString } from "../parse/coerce";
 
 export const greynoiseLookupSnapshotSchema = z.object({
@@ -35,47 +38,51 @@ interface GreynoiseOptions {
   apiKey?: string;
   userAgent?: string;
 }
-export async function fetchGreynoiseCommunity(
+
+export function fetchGreynoiseCommunityEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: GreynoiseOptions
-): Promise<GreynoiseLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const key = options?.apiKey?.trim() ?? "";
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.greynoise.lookup");
+): Effect.Effect<GreynoiseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchGreynoiseCommunityGen() {
+    const ip = normalizeIp(ipRaw);
+    const key = options?.apiKey?.trim() ?? "";
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("threat.greynoise.lookup");
 
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    "User-Agent": ua,
-  };
-  if (key) headers.key = key;
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "User-Agent": ua,
+    };
+    if (key) headers.key = key;
 
-  const body = await fetchJsonObject({
-    url: `https://api.greynoise.io/v3/community/${ip}`,
-    init: {
-      method: "GET",
-      headers,
-    },
-    signal,
-    service: "GreyNoise",
-    subject: ip,
-    acceptStatus: (status) => status === 200 || status === 404,
-  });
-  const noise = asBool(body.noise);
-  const riot = asBool(body.riot);
+    const { body } = yield* fetchJsonObjectEffect({
+      url: `https://api.greynoise.io/v3/community/${ip}`,
+      init: {
+        method: "GET",
+        headers,
+      },
+      signal,
+      service: "GreyNoise",
+      subject: ip,
+      acceptStatus: (status) => status === 200 || status === 404,
+    });
+    const noise = asBool(body.noise);
+    const riot = asBool(body.riot);
 
-  return greynoiseLookupSnapshotSchema.parse({
-    ip,
-    queriedAt: new Date().toISOString(),
-    source: "api.greynoise.io/v3/community",
-    found: noise === true || riot === true,
-    noise,
-    riot,
-    classification: asString(body.classification),
-    name: asString(body.name),
-    link: asString(body.link),
-    lastSeen: asString(body.last_seen),
-    message: asString(body.message),
-    authenticated: Boolean(key),
+    return greynoiseLookupSnapshotSchema.parse({
+      ip,
+      queriedAt: new Date().toISOString(),
+      source: "api.greynoise.io/v3/community",
+      found: noise === true || riot === true,
+      noise,
+      riot,
+      classification: asString(body.classification),
+      name: asString(body.name),
+      link: asString(body.link),
+      lastSeen: asString(body.last_seen),
+      message: asString(body.message),
+      authenticated: Boolean(key),
+    });
   });
 }

@@ -1,5 +1,8 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+
+import { ValidationVendorError } from "@watchdog/tools";
 
 import {
   DEFAULT_CAP_TIMEOUT_MS,
@@ -7,6 +10,7 @@ import {
   defineCapability,
 } from "../define";
 import { toCapDescriptor } from "../descriptor";
+import { runCap } from "../run";
 
 const input = z.object({});
 
@@ -17,7 +21,7 @@ describe("defineCapability", () => {
         id: "",
         title: "Test",
         input,
-        run: async () => ({ artifacts: [] }),
+        run: () => Effect.succeed({ artifacts: [] }),
       })
     ).toThrow(/id is required/);
   });
@@ -28,7 +32,7 @@ describe("defineCapability", () => {
         id: "test.cap",
         title: "",
         input,
-        run: async () => ({ artifacts: [] }),
+        run: () => Effect.succeed({ artifacts: [] }),
       })
     ).toThrow(/title is required/);
   });
@@ -38,7 +42,7 @@ describe("defineCapability", () => {
       id: "test.cap",
       title: "Test",
       input,
-      run: async () => ({ artifacts: [] }),
+      run: () => Effect.succeed({ artifacts: [] }),
     };
     const cap = defineCapability(def);
     expect(cap).toBe(def);
@@ -65,10 +69,23 @@ describe("toCapDescriptor", () => {
       input,
       timeoutMs: 9000,
       credentials: [{ name: "SHODAN_API_KEY" }],
-      run: async () => ({ artifacts: [] }),
+      run: () => Effect.succeed({ artifacts: [] }),
     });
     const descriptor = toCapDescriptor(cap);
     expect(descriptor.timeoutMs).toBe(9000);
     expect(descriptor.credentials).toEqual([{ name: "SHODAN_API_KEY" }]);
+  });
+});
+
+describe("runCap", () => {
+  it("returns artifacts from a succeeding Effect", async () => {
+    const result = await runCap(Effect.succeed({ artifacts: [] }));
+    expect(result.artifacts).toEqual([]);
+  });
+
+  it("maps ValidationVendorError to a ToolsError message", async () => {
+    await expect(
+      runCap(Effect.fail(new ValidationVendorError({ message: "no bytes" })))
+    ).rejects.toThrow(/no bytes/);
   });
 });

@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "verbatimModuleSyntax": true,
-    "types": ["node"]
+    "types": ["node"],
+    "plugins": [{ "name": "@effect/tsgo" }]
   }
 }

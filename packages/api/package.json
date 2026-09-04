@@ -18,6 +18,7 @@
     "@watchdog/core": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
+    "effect": "4.0.0-rc.112",
     "evlog": "2.24.0",
     "zod": "^4.4.3"
   },
@@ -25,6 +26,6 @@
     "@types/node": "^22.10.2",
     "@watchdog/test-kit": "workspace:*",
     "tsx": "^4.20.0",
-    "typescript": "^6.0.2"
+    "typescript": "7.0.2"
   }
 }

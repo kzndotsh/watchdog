@@ -1,9 +1,13 @@
 import { createHash } from "node:crypto";
 
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { httpToolsError } from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 import { normalizeEmail } from "./email-lookup";
 
@@ -119,36 +123,38 @@ export function parseGravatarBody(
 interface GravatarOptions {
   userAgent?: string;
 }
-export async function fetchGravatarLookup(
+
+export function fetchGravatarLookupEffect(
   emailRaw: string,
   signal: AbortSignal,
   options?: GravatarOptions
-): Promise<GravatarLookupSnapshot> {
-  const { email } = normalizeEmail(emailRaw);
-  const hash = gravatarEmailHash(email);
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("identity.gravatar.lookup");
+): Effect.Effect<GravatarLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchGravatarLookupGen() {
+    const { email } = yield* Effect.try({
+      try: () => normalizeEmail(emailRaw),
+      catch: mapToolsCatch,
+    });
+    const hash = gravatarEmailHash(email);
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("identity.gravatar.lookup");
 
-  const url = `https://secure.gravatar.com/${hash}.json`;
-  const res = await fetch(url, {
-    method: "GET",
-    signal,
-    headers: { Accept: "application/json", "User-Agent": ua },
-    redirect: "follow",
+    const url = `https://secure.gravatar.com/${hash}.json`;
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url,
+      signal,
+      service: "Gravatar",
+      subject: hash,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
+
+    if (status === 404) {
+      return emptyGravatar(email, hash, new Date().toISOString());
+    }
+
+    return parseGravatarBody(email, hash, new Date().toISOString(), body);
   });
-
-  if (res.status === 404) {
-    return emptyGravatar(email, hash, new Date().toISOString());
-  }
-
-  if (!res.ok) {
-    throw httpToolsError(
-      "Gravatar API",
-      res.status,
-      `Gravatar API ${res.status} for ${hash}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  return parseGravatarBody(email, hash, new Date().toISOString(), body);
 }

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError, createEdge, updateEdge } from "@watchdog/core";
+import {
+  DomainError,
+  createEdgeEffect,
+  updateEdgeEffect,
+  runDomain
+} from "@watchdog/core";
 import { db, evidenceLinksRepo } from "@watchdog/db";
 import { testId } from "@watchdog/test-kit";
 import {
@@ -27,13 +32,13 @@ describe("createEdge", () => {
       slug: "to",
     });
     await expect(
-      createEdge({
+      runDomain(createEdgeEffect({
         caseId: cased.id,
         fromId: from.id,
         toId: to.id,
         predicate: "related_to",
         confidence: "unverified",
-      })
+      }))
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "invalid"
     );
@@ -53,13 +58,13 @@ describe("createEdge", () => {
       slug: "peer",
     });
     await expect(
-      createEdge({
+      runDomain(createEdgeEffect({
         caseId: cased.id,
         fromId: from.id,
         toId: to.id,
         predicate: "primary_domain",
         confidence: "unverified",
-      })
+      }))
     ).rejects.toThrow(/not allowed/i);
   });
 });
@@ -82,19 +87,19 @@ describe("updateEdge", () => {
     });
     const first = await seedEvidence(db, cased.id, { label: "a" });
     const second = await seedEvidence(db, cased.id, { label: "b" });
-    const created = await createEdge({
+    const created = await runDomain(createEdgeEffect({
       caseId: cased.id,
       fromId: from.id,
       toId: to.id,
       predicate: "same_as",
       confidence: "unverified",
       evidenceIds: [first.id],
-    });
-    await updateEdge({
+    }));
+    await runDomain(updateEdgeEffect({
       caseId: cased.id,
       edgeId: created.id,
       evidenceIds: [second.id],
-    });
+    }));
     const links = await evidenceLinksRepo.listForEdges(db, [created.id]);
     expect(links.get(created.id)).toEqual([second.id]);
   });

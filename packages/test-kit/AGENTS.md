@@ -21,7 +21,7 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 | `@watchdog/test-kit/fixtures` | ids without Postgres |
 | `@watchdog/test-kit/db` | `testDb`, `resetTestDb`, `withTestTx`, `seed*` |
 | `@watchdog/test-kit/http` | `http`, `HttpResponse`, `mockServer`, `mockJson` |
-| `@watchdog/test-kit/it` | `itRejectsIncompleteReport`, `itRunsCollectCap`, `createCapRunHarness` |
+| `@watchdog/test-kit/it` | `itRejectsIncompleteReport`, `itRunsCollectCap`, `createCapRunHarness`, `runCap` |
 
 ## Boundaries
 
@@ -42,6 +42,7 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 - Caps `interpret` tests stay `interpret.test.ts` (pure). `run.test.ts` is still **unit** (MSW / harness) — do not rename to `.int` unless it hits Postgres.
 - Seeds: `seedCase` / `seedEntity` / `seedEvidence` / `seedIdentifier` / `seedJob` / `seedProposal` / `seedGraphWrite` / `seedFindingSuppression` / `seedPlaybookRun`. `seedJob` overrides include `playbookFanIndex` and `handoff`. Playbook tests seed step 0 (optionally one historical `blocked` row for the release shim) — do not seed a full blocked recipe.
 - MSW: listen/reset/close in the test file (or `src/http/msw-setup.ts`).
+- Effect programs that need `TestClock` or scoped Layers: `it.effect` from `@effect/vitest` (provides `TestClock`). Do not return a bare Effect from a plain vitest `it()`.
 
 ## See also / External References
 

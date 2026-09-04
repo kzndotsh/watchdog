@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   db,
   entitiesRepo,
@@ -11,14 +13,23 @@ import type {
 } from "@watchdog/schemas";
 import { trimmedOrNull } from "@watchdog/schemas";
 
-import { assertEvidenceInCase, createAttestation } from "../evidence/evidence";
 import {
-  loadIdentifierCollisions,
+  assertEvidenceIdsInCaseEffect,
+  createAttestationEffect,
+} from "../evidence/evidence";
+import {
+  loadIdentifierCollisionsEffect,
   type IdentifierCollision,
 } from "../graph/identifier-collisions";
-import { applyPatch } from "../graph/patch/apply-patch";
-import { DomainError } from "../infra/domain-error";
-import { notifyEntityChanged } from "../infra/events";
+import { applyPatchEffect } from "../graph/patch/apply-patch";
+import { notifyEntityChangedEffect } from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
+import {
+  ConflictError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
 import { recordRejectedFingerprints } from "./finding-suppress";
 
 export interface ProposalRecord {
@@ -63,22 +74,30 @@ function entityIdsFromPatch(patch: PatchOp[]): Set<string> {
   return entityIds;
 }
 
-async function loadEntityDisplayMaps(entityIds: Iterable<string>): Promise<{
-  entityNames: Record<string, string>;
-  entitySlugs: Record<string, string>;
-}> {
+function loadEntityDisplayMapsEffect(
+  entityIds: Iterable<string>
+): Effect.Effect<
+  {
+    entityNames: Record<string, string>;
+    entitySlugs: Record<string, string>;
+  },
+  DomainTag
+> {
   const ids = [...entityIds];
-  const entityNames: Record<string, string> = {};
-  const entitySlugs: Record<string, string> = {};
   if (ids.length === 0) {
-    return { entityNames, entitySlugs };
+    return Effect.succeed({ entityNames: {}, entitySlugs: {} });
   }
-  const ents = await entitiesRepo.listNamesByIds(db, ids);
-  for (const e of ents) {
-    entityNames[e.id] = e.name;
-    entitySlugs[e.id] = e.slug;
-  }
-  return { entityNames, entitySlugs };
+  return tryDb(() => entitiesRepo.listNamesByIds(db, ids)).pipe(
+    Effect.map((ents) => {
+      const entityNames: Record<string, string> = {};
+      const entitySlugs: Record<string, string> = {};
+      for (const e of ents) {
+        entityNames[e.id] = e.name;
+        entitySlugs[e.id] = e.slug;
+      }
+      return { entityNames, entitySlugs };
+    })
+  );
 }
 
 function toRecord(
@@ -113,12 +132,14 @@ function toRecord(
   };
 }
 
-export function listProposalsForCase(
+export function listProposalsForCaseEffect(
   caseId: string,
   opts?: { status?: ProposalStatus }
-): Promise<ProposalRecord[]> {
-  return (async () => {
-    const rows = await proposalsRepo.listForCase(db, caseId, opts);
+): Effect.Effect<ProposalRecord[], DomainTag> {
+  return Effect.gen(function* listProposalsForCaseGen() {
+    const rows = yield* tryDb(() =>
+      proposalsRepo.listForCase(db, caseId, opts)
+    );
 
     const entityIds = new Set<string>();
     for (const { proposal } of rows) {
@@ -127,9 +148,10 @@ export function listProposalsForCase(
       }
     }
 
-    const { entityNames, entitySlugs } = await loadEntityDisplayMaps(entityIds);
+    const { entityNames, entitySlugs } =
+      yield* loadEntityDisplayMapsEffect(entityIds);
 
-    const collisionsByIndex = await loadIdentifierCollisions(
+    const collisionsByIndex = yield* loadIdentifierCollisionsEffect(
       caseId,
       rows.map(({ proposal }) => proposal.patch)
     );
@@ -142,142 +164,140 @@ export function listProposalsForCase(
         identifierCollisions: collisionsByIndex[i] ?? [],
       })
     );
-  })();
-}
-
-export async function getProposalForCase(
-  caseId: string,
-  proposalId: string
-): Promise<ProposalRecord | null> {
-  const row = await proposalsRepo.getInCase(db, caseId, proposalId);
-  if (!row) return null;
-  const [collisions] = await loadIdentifierCollisions(caseId, [
-    row.proposal.patch,
-  ]);
-  const { entityNames, entitySlugs } = await loadEntityDisplayMaps(
-    entityIdsFromPatch(row.proposal.patch)
-  );
-  return toRecord(row.proposal, {
-    entityNames,
-    entitySlugs,
-    capabilityId: row.capabilityId,
-    identifierCollisions: collisions ?? [],
   });
 }
 
-export function acceptProposal(input: {
+export function getProposalForCaseEffect(
+  caseId: string,
+  proposalId: string
+): Effect.Effect<ProposalRecord | null, DomainTag> {
+  return Effect.gen(function* getProposalForCaseGen() {
+    const row = yield* tryDb(() =>
+      proposalsRepo.getInCase(db, caseId, proposalId)
+    );
+    if (!row) return null;
+    const collisionsByIndex = yield* loadIdentifierCollisionsEffect(caseId, [
+      row.proposal.patch,
+    ]);
+    const { entityNames, entitySlugs } = yield* loadEntityDisplayMapsEffect(
+      entityIdsFromPatch(row.proposal.patch)
+    );
+    return toRecord(row.proposal, {
+      entityNames,
+      entitySlugs,
+      capabilityId: row.capabilityId,
+      identifierCollisions: collisionsByIndex[0] ?? [],
+    });
+  });
+}
+
+export function acceptProposalEffect(input: {
   caseId: string;
   proposalId: string;
   actorId: string;
   confidence?: ConfidenceTier;
   sharedEvidenceIds?: string[];
-  /** Optional paste → creates attestation Evidence and appends to shared ids. */
   attestationText?: string;
-}): Promise<ProposalRecord> {
-  return (async () => {
+}): Effect.Effect<ProposalRecord, DomainTag> {
+  return Effect.gen(function* acceptProposalGen() {
     const shared = [...new Set(input.sharedEvidenceIds)];
-
-    const updated = await db.transaction(async (tx) => {
-      const pending = await proposalsRepo.lockInCase(
-        tx,
-        input.caseId,
-        input.proposalId
-      );
-      if (!pending) {
-        throw new DomainError("not_found", "Proposal not found");
-      }
-      if (pending.status !== "pending") {
-        throw new DomainError(
-          "conflict",
-          `Proposal is already ${pending.status}`
+    const updated = yield* transact((tx) =>
+      Effect.gen(function* acceptProposalTx() {
+        const pending = yield* tryDb(() =>
+          proposalsRepo.lockInCase(tx, input.caseId, input.proposalId)
         );
-      }
+        if (!pending) {
+          return yield* new NotFoundError({ resource: "Proposal not found" });
+        }
+        if (pending.status !== "pending") {
+          return yield* new ConflictError({
+            reason: `Proposal is already ${pending.status}`,
+          });
+        }
 
-      await assertEvidenceInCase(input.caseId, shared, tx);
+        yield* assertEvidenceIdsInCaseEffect(input.caseId, shared, tx);
 
-      const sharedInTx = [...shared];
-      const attestationText = input.attestationText?.trim();
-      if (attestationText !== undefined && attestationText !== "") {
-        const attestation = await createAttestation({
+        const sharedInTx = [...shared];
+        const attestationText = input.attestationText?.trim();
+        if (attestationText !== undefined && attestationText !== "") {
+          const attestation = yield* createAttestationEffect({
+            caseId: input.caseId,
+            text: attestationText,
+            actorId: input.actorId,
+            tx,
+          });
+          sharedInTx.push(attestation.id);
+        }
+
+        yield* applyPatchEffect({
           caseId: input.caseId,
-          text: attestationText,
-          actorId: input.actorId,
+          patch: pending.patch,
+          confidence: input.confidence,
+          sharedEvidenceIds: [
+            ...new Set([...sharedInTx, ...(pending.evidenceIds ?? [])]),
+          ],
           tx,
         });
-        sharedInTx.push(attestation.id);
-      }
 
-      await applyPatch({
-        caseId: input.caseId,
-        patch: pending.patch,
-        confidence: input.confidence,
-        sharedEvidenceIds: [
-          ...new Set([...sharedInTx, ...(pending.evidenceIds ?? [])]),
-        ],
-        tx,
-      });
+        const accepted = yield* tryDb(() =>
+          proposalsRepo.accept(tx, input.proposalId, {
+            decidedBy: input.actorId,
+            decidedAt: new Date(),
+          })
+        );
 
-      const accepted = await proposalsRepo.accept(tx, input.proposalId, {
-        decidedBy: input.actorId,
-        decidedAt: new Date(),
-      });
-
-      if (!accepted) {
-        throw new DomainError("conflict", "Proposal is not pending");
-      }
-      return accepted;
-    });
-
-    notifyEntityChanged(input.caseId);
+        if (!accepted) {
+          return yield* new ConflictError({
+            reason: "Proposal is not pending",
+          });
+        }
+        return accepted;
+      })
+    );
+    yield* notifyEntityChangedEffect(input.caseId);
     return toRecord(updated);
-  })();
+  });
 }
 
-export function rejectProposal(input: {
+export function rejectProposalEffect(input: {
   caseId: string;
   proposalId: string;
   actorId: string;
   reason?: string;
-}): Promise<ProposalRecord> {
-  return (async () => {
-    const updated = await db.transaction(async (tx) => {
-      const existing = await proposalsRepo.lockInCase(
-        tx,
-        input.caseId,
-        input.proposalId
+}): Effect.Effect<ProposalRecord, DomainTag> {
+  return transact((tx) =>
+    Effect.gen(function* rejectProposalTx() {
+      const existing = yield* tryDb(() =>
+        proposalsRepo.lockInCase(tx, input.caseId, input.proposalId)
       );
       if (!existing) {
-        throw new DomainError("not_found", "Proposal not found");
+        return yield* new NotFoundError({ resource: "Proposal not found" });
       }
 
-      const rejected = await proposalsRepo.reject(
-        tx,
-        input.caseId,
-        input.proposalId,
-        {
+      const rejected = yield* tryDb(() =>
+        proposalsRepo.reject(tx, input.caseId, input.proposalId, {
           rejectReason: trimmedOrNull(input.reason),
           decidedBy: input.actorId,
           decidedAt: new Date(),
-        }
+        })
       );
 
       if (!rejected) {
-        throw new DomainError(
-          "conflict",
-          `Proposal is already ${existing.status}`
-        );
+        return yield* new ConflictError({
+          reason: `Proposal is already ${existing.status}`,
+        });
       }
 
-      await recordRejectedFingerprints({
-        caseId: input.caseId,
-        proposalId: rejected.id,
-        patch: rejected.patch,
-        tx,
-      });
+      yield* tryDb(() =>
+        recordRejectedFingerprints({
+          caseId: input.caseId,
+          proposalId: rejected.id,
+          patch: rejected.patch,
+          tx,
+        })
+      );
 
-      return rejected;
-    });
-
-    return toRecord(updated);
-  })();
+      return toRecord(rejected);
+    })
+  );
 }

@@ -15,11 +15,12 @@
     "@watchdog/cap-sdk": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "@watchdog/tools": "workspace:*",
+    "effect": "4.0.0-rc.112",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@watchdog/test-kit": "workspace:*",
-    "typescript": "^6.0.2"
+    "typescript": "7.0.2"
   }
 }

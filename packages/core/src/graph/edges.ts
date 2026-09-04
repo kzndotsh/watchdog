@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   db,
   edgesRepo,
@@ -11,15 +13,25 @@ import {
   type EntityKind,
 } from "@watchdog/schemas";
 
-import { assertEvidenceInCase } from "../evidence/evidence";
-import { DomainError, isUniqueViolation } from "../infra/domain-error";
-import { notifyEntityChanged } from "../infra/events";
+import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
+import { notifyEntityChangedEffect } from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
 import {
-  applyValidatedEdgeUpdate,
-  assertEdgeKindsAllowed,
-  validateEdgeUpdate,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
+import {
+  applyValidatedEdgeUpdateEffect,
+  assertEdgeKindsAllowedEffect,
+  validateEdgeUpdateEffect,
 } from "./edge-update";
-import { assertCaseExists, assertConfidenceEvidence, assertEntityInCase } from "./patch/guards";
+import {
+  assertCaseExistsEffect,
+  assertConfidenceEvidenceEffect,
+  assertEntityInCaseEffect,
+} from "./patch/guards";
 
 const NATURAL_KEY_INDEX = "edges_natural_uidx";
 
@@ -93,17 +105,23 @@ function toRecord(
   };
 }
 
-export async function listEdgesForEntity(
+export function listEdgesForEntityEffect(
   caseId: string,
   entityId: string
-): Promise<EdgeRecord[]> {
-  await assertEntityInCase(caseId, entityId, db);
-  const rows = await edgesRepo.listForEntity(db, caseId, entityId);
-  const byEdge = await evidenceLinksRepo.listForEdges(
-    db,
-    rows.map((r) => r.id)
-  );
-  return rows.map((row) => toRecord(row, entityId, byEdge.get(row.id) ?? []));
+): Effect.Effect<EdgeRecord[], DomainTag> {
+  return Effect.gen(function* listEdgesForEntityGen() {
+    yield* assertEntityInCaseEffect(caseId, entityId, db);
+    const rows = yield* tryDb(() =>
+      edgesRepo.listForEntity(db, caseId, entityId)
+    );
+    const byEdge = yield* tryDb(() =>
+      evidenceLinksRepo.listForEdges(
+        db,
+        rows.map((r) => r.id)
+      )
+    );
+    return rows.map((row) => toRecord(row, entityId, byEdge.get(row.id) ?? []));
+  });
 }
 
 /** Case-wide edge — absolute endpoints (no peer/direction). */
@@ -144,137 +162,174 @@ export function toCaseEdgeRecord(
   };
 }
 
-export async function listEdgesForCase(
+export function listEdgesForCaseEffect(
   caseId: string
-): Promise<CaseEdgeRecord[]> {
-  await assertCaseExists(caseId);
-  const rows = await edgesRepo.listForCase(db, caseId);
-  const byEdge = await evidenceLinksRepo.listForEdges(
-    db,
-    rows.map((r) => r.id)
-  );
-  return rows.map((row) => toCaseEdgeRecord(row, byEdge.get(row.id) ?? []));
+): Effect.Effect<CaseEdgeRecord[], DomainTag> {
+  return Effect.gen(function* listEdgesForCaseGen() {
+    yield* assertCaseExistsEffect(caseId);
+    const rows = yield* tryDb(() => edgesRepo.listForCase(db, caseId));
+    const byEdge = yield* tryDb(() =>
+      evidenceLinksRepo.listForEdges(
+        db,
+        rows.map((r) => r.id)
+      )
+    );
+    return rows.map((row) => toCaseEdgeRecord(row, byEdge.get(row.id) ?? []));
+  });
 }
 
-export async function createEdge(input: CreateEdgeInput): Promise<EdgeRecord> {
-  if (input.fromId === input.toId) {
-    throw new DomainError("invalid", "Edge cannot link an Entity to itself");
-  }
-
-  const viewEntityId = input.viewEntityId ?? input.fromId;
-  if (viewEntityId !== input.fromId && viewEntityId !== input.toId) {
-    throw new DomainError(
-      "invalid",
-      "viewEntityId must be an endpoint of the Edge"
-    );
-  }
-
-  const trimmedNotes = input.notes?.trim();
-  if (
-    input.predicate === "related_to" &&
-    (trimmedNotes === undefined || trimmedNotes === "")
-  ) {
-    throw new DomainError("invalid", "related_to requires notes");
-  }
-
-  const evidenceIds = normalizeIdList(input.evidenceIds ?? []);
-  assertConfidenceEvidence(input.confidence, evidenceIds);
-
-  try {
-    const created = await db.transaction(async (tx) => {
-      await assertEntityInCase(input.caseId, input.fromId, tx);
-      await assertEntityInCase(input.caseId, input.toId, tx);
-      await assertEdgeKindsAllowed(
-        input.caseId,
-        input.fromId,
-        input.toId,
-        input.predicate,
-        tx
-      );
-      await assertEvidenceInCase(input.caseId, evidenceIds, tx);
-
-      const row = await edgesRepo.create(tx, {
-        fromId: input.fromId,
-        toId: input.toId,
-        predicate: input.predicate,
-        confidence: input.confidence,
-        notes: input.notes ?? null,
+export function createEdgeEffect(
+  input: CreateEdgeInput
+): Effect.Effect<EdgeRecord, DomainTag> {
+  return Effect.gen(function* createEdgeGen() {
+    if (input.fromId === input.toId) {
+      return yield* new InvalidError({
+        reason: "Edge cannot link an Entity to itself",
       });
-      if (!row) throw new DomainError("invalid", "Failed to create Edge");
-      await evidenceLinksRepo.linkEdge(tx, row.id, evidenceIds);
-      return row;
-    });
-
-    const listed = await edgesRepo.getListedInCase(
-      db,
-      input.caseId,
-      created.id
-    );
-    if (!listed) throw new DomainError("invalid", "Edge created but not found");
-
-    notifyEntityChanged(input.caseId);
-    return toRecord(listed, viewEntityId, evidenceIds);
-  } catch (error) {
-    if (isUniqueViolation(error, NATURAL_KEY_INDEX)) {
-      throw new DomainError("conflict", "That Edge already exists");
     }
-    throw error;
-  }
+
+    const viewEntityId = input.viewEntityId ?? input.fromId;
+    if (viewEntityId !== input.fromId && viewEntityId !== input.toId) {
+      return yield* new InvalidError({
+        reason: "viewEntityId must be an endpoint of the Edge",
+      });
+    }
+
+    const trimmedNotes = input.notes?.trim();
+    if (
+      input.predicate === "related_to" &&
+      (trimmedNotes === undefined || trimmedNotes === "")
+    ) {
+      return yield* new InvalidError({ reason: "related_to requires notes" });
+    }
+
+    const evidenceIds = normalizeIdList(input.evidenceIds ?? []);
+    yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
+
+    const created = yield* transact(
+      (tx) =>
+        Effect.gen(function* createEdgeTx() {
+          yield* assertEntityInCaseEffect(input.caseId, input.fromId, tx);
+          yield* assertEntityInCaseEffect(input.caseId, input.toId, tx);
+          yield* assertEdgeKindsAllowedEffect(
+            input.caseId,
+            input.fromId,
+            input.toId,
+            input.predicate,
+            tx
+          );
+          yield* assertEvidenceIdsInCaseEffect(input.caseId, evidenceIds, tx);
+
+          const row = yield* tryDb(() =>
+            edgesRepo.create(tx, {
+              fromId: input.fromId,
+              toId: input.toId,
+              predicate: input.predicate,
+              confidence: input.confidence,
+              notes: input.notes ?? null,
+            })
+          );
+          if (!row) {
+            return yield* new InvalidError({
+              reason: "Failed to create Edge",
+            });
+          }
+          yield* tryDb(() =>
+            evidenceLinksRepo.linkEdge(tx, row.id, evidenceIds)
+          );
+          return row;
+        }),
+      {
+        uniqueIndex: NATURAL_KEY_INDEX,
+        conflictReason: "That Edge already exists",
+      }
+    );
+
+    const listed = yield* tryDb(() =>
+      edgesRepo.getListedInCase(db, input.caseId, created.id)
+    );
+    if (!listed) {
+      return yield* new InvalidError({ reason: "Edge created but not found" });
+    }
+
+    yield* notifyEntityChangedEffect(input.caseId);
+    return toRecord(listed, viewEntityId, evidenceIds);
+  });
 }
 
-export async function updateEdge(
+export function updateEdgeEffect(
   input: UpdateEdgeInput
-): Promise<EdgeRecord> {
-  const existing = await edgesRepo.getInCase(db, input.caseId, input.edgeId);
-  if (!existing) {
-    throw new DomainError("not_found", "Edge not found in this Case");
-  }
+): Effect.Effect<EdgeRecord, DomainTag> {
+  return Effect.gen(function* updateEdgeGen() {
+    const existing = yield* tryDb(() =>
+      edgesRepo.getInCase(db, input.caseId, input.edgeId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({
+        resource: "Edge not found in this Case",
+      });
+    }
 
-  const byEdge = await evidenceLinksRepo.listForEdges(db, [existing.id]);
-  const evidenceIds = byEdge.get(existing.id) ?? [];
+    const byEdge = yield* tryDb(() =>
+      evidenceLinksRepo.listForEdges(db, [existing.id])
+    );
+    const evidenceIds = byEdge.get(existing.id) ?? [];
 
-  try {
-    const { listed, evidenceIds: nextEvidenceIds } = await db.transaction(
-      async (tx) => {
-        let nextIds = evidenceIds;
-        if (input.evidenceIds !== undefined) {
-          nextIds = normalizeIdList(input.evidenceIds);
-          await assertEvidenceInCase(input.caseId, nextIds, tx);
-          nextIds = await evidenceLinksRepo.replaceEdge(
-            tx,
-            existing.id,
+    const { listed, evidenceIds: nextEvidenceIds } = yield* transact(
+      (tx) =>
+        Effect.gen(function* updateEdgeTx() {
+          let nextIds = evidenceIds;
+          if (input.evidenceIds !== undefined) {
+            nextIds = normalizeIdList(input.evidenceIds);
+            yield* assertEvidenceIdsInCaseEffect(input.caseId, nextIds, tx);
+            nextIds = yield* tryDb(() =>
+              evidenceLinksRepo.replaceEdge(tx, existing.id, nextIds)
+            );
+          }
+
+          const validated = yield* validateEdgeUpdateEffect(
+            input,
+            existing,
             nextIds
           );
-        }
-
-        const validated = validateEdgeUpdate(input, existing, nextIds);
-        const listedRow = await applyValidatedEdgeUpdate(tx, input, validated);
-        return { listed: listedRow, evidenceIds: nextIds };
+          const listedRow = yield* applyValidatedEdgeUpdateEffect(
+            tx,
+            input,
+            validated
+          );
+          return { listed: listedRow, evidenceIds: nextIds };
+        }),
+      {
+        uniqueIndex: NATURAL_KEY_INDEX,
+        conflictReason: "That Edge already exists",
       }
     );
 
     const viewEntityId = input.viewEntityId ?? existing.fromId;
-    notifyEntityChanged(input.caseId);
+    yield* notifyEntityChangedEffect(input.caseId);
     return toRecord(listed, viewEntityId, nextEvidenceIds);
-  } catch (error) {
-    if (isUniqueViolation(error, NATURAL_KEY_INDEX)) {
-      throw new DomainError("conflict", "That Edge already exists");
-    }
-    throw error;
-  }
+  });
 }
 
-export async function deleteEdge(
+export function deleteEdgeEffect(
   caseId: string,
   edgeId: string
-): Promise<void> {
-  const existing = await edgesRepo.getInCase(db, caseId, edgeId);
-  if (!existing) {
-    throw new DomainError("not_found", "Edge not found in this Case");
-  }
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* deleteEdgeGen() {
+    const existing = yield* tryDb(() =>
+      edgesRepo.getInCase(db, caseId, edgeId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({
+        resource: "Edge not found in this Case",
+      });
+    }
 
-  const deleted = await edgesRepo.delete(db, edgeId);
-  if (!deleted) throw new DomainError("invalid", "Failed to delete Edge");
+    const deleted = yield* tryDb(() => edgesRepo.delete(db, edgeId));
+    if (!deleted) {
+      return yield* new InvalidError({ reason: "Failed to delete Edge" });
+    }
 
-  notifyEntityChanged(caseId);
+    yield* notifyEntityChangedEffect(caseId);
+  });
 }

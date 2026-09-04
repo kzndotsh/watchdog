@@ -45,6 +45,17 @@ pre-commit:
         - "e2e/**"
         - "playwright.config.ts"
       run: pnpm check:docs-affected:strict
+    effect-edges:
+      glob:
+        - "packages/**/*.ts"
+        - "apps/**/*.ts"
+        - "apps/**/*.tsx"
+        - "scripts/check-effect-edges.mjs"
+      exclude:
+        - "**/__tests__/**"
+        - "**/*.test.ts"
+        - "**/*.test.tsx"
+      run: pnpm check:effect-edges:strict
     agent-skills:
       glob:
         - "**/.agents/skills/**"

@@ -1,4 +1,6 @@
-import { fetchGravatarLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchGravatarLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { gravatarLookupInput } from "./input";
@@ -30,14 +32,15 @@ export const gravatarLookup = defineCollectCap({
   },
   schema: gravatarLookupSnapshotSchema,
   reportLabel: "gravatar.lookup",
-  async fetch(ctx) {
-    const email = ctx.input.email.trim();
-    ctx.log(`Gravatar ${email}`);
-    const snap = await fetchGravatarLookup(email, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} user=${snap.preferredUsername ?? "?"}`);
-    return { snap, artifactName: `gravatar-${snap.hash}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* gravatarLookupFetch() {
+      const email = ctx.input.email.trim();
+      ctx.log(`Gravatar ${email}`);
+      const snap = yield* fetchGravatarLookupEffect(email, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} user=${snap.preferredUsername ?? "?"}`);
+      return { snap, artifactName: `gravatar-${snap.hash}.json` };
+    }),
   interpretSnap: interpretGravatarLookupReport,
 });

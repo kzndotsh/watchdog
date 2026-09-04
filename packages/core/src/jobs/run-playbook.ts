@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   checkPlaybookAvailability,
   formatPlanError,
@@ -12,14 +14,23 @@ import {
 import { casesRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 
 import {
-  assertCaseExists,
-  assertEntityInCase,
-  assertEvidenceInCase,
+  assertCaseExistsEffect,
+  assertEntityInCaseEffect,
+  assertEvidenceInCaseEffect,
 } from "../graph/patch/guards";
-import { DomainError, errorMessage } from "../infra/domain-error";
+import { errorMessage } from "../infra/domain-error";
+import { tryDb } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
-import { hasCredential } from "../infra/vault";
-import { enqueueCapJob } from "./boss";
+import {
+  ConflictError,
+  ForbiddenError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
+import { hasCredentialEffect } from "../infra/vault";
+import { enqueueCapJobEffect } from "./boss";
 import { toJobRecord, type JobRecord } from "./start-job";
 
 export interface RunPlaybookInput {
@@ -35,24 +46,25 @@ export interface PlaybookRunResult {
   jobs: JobRecord[];
 }
 
-function loadPlaybook(playbookId: string) {
-  try {
-    return requirePlaybook(playbookId);
-  } catch (error) {
-    throw new DomainError("not_found", errorMessage(error));
-  }
+function loadPlaybookEffect(playbookId: string) {
+  return Effect.try({
+    try: () => requirePlaybook(playbookId),
+    catch: (error) => new NotFoundError({ resource: errorMessage(error) }),
+  });
 }
 
-async function assertSeedAnchorsInCase(
+function assertSeedAnchorsInCaseEffect(
   caseId: string,
   seed: SeedValues
-): Promise<void> {
-  if (seed.entityId !== undefined && seed.entityId !== "") {
-    await assertEntityInCase(caseId, seed.entityId);
-  }
-  if (seed.evidenceId !== undefined && seed.evidenceId !== "") {
-    await assertEvidenceInCase(caseId, seed.evidenceId);
-  }
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* assertSeedAnchorsInCaseGen() {
+    if (seed.entityId !== undefined && seed.entityId !== "") {
+      yield* assertEntityInCaseEffect(caseId, seed.entityId);
+    }
+    if (seed.evidenceId !== undefined && seed.evidenceId !== "") {
+      yield* assertEvidenceInCaseEffect(caseId, seed.evidenceId);
+    }
+  });
 }
 
 function credentialNamesFromDescriptor(
@@ -66,18 +78,23 @@ function credentialNamesFromDescriptor(
   return credNames;
 }
 
-async function presentCredentialNames(
+function presentCredentialNamesEffect(
   actorId: string,
   credNames: Iterable<string>
-): Promise<Set<string>> {
+): Effect.Effect<Set<string>, DomainTag> {
   const present = new Set<string>();
-  // Independent credential lookups — safe to check concurrently.
-  await Promise.all(
-    [...credNames].map(async (name) => {
-      if (await hasCredential(actorId, name)) present.add(name);
-    })
-  );
-  return present;
+  return Effect.forEach(
+    [...credNames],
+    (name) =>
+      hasCredentialEffect(actorId, name).pipe(
+        Effect.tap((ok) =>
+          Effect.sync(() => {
+            if (ok) present.add(name);
+          })
+        )
+      ),
+    { concurrency: "unbounded" }
+  ).pipe(Effect.map(() => present));
 }
 
 function thirdPartyCapabilityId(playbook: ReturnType<typeof requirePlaybook>) {
@@ -91,105 +108,109 @@ function ensurePlaybookRunnable(
   present: Set<string>,
   allowThirdPartyEgress: boolean,
   playbook: ReturnType<typeof requirePlaybook>
-): void {
+): Effect.Effect<void, DomainTag> {
   const availability = checkPlaybookAvailability(descriptor.requires, {
     hasCredential: (name) => present.has(name),
     allowThirdPartyEgress,
     thirdPartyCapabilityId: thirdPartyCapabilityId(playbook),
   });
-  if (availability.ok) return;
+  if (availability.ok) return Effect.void;
   if (availability.kind === "egress_blocked") {
-    throw new DomainError(
-      "forbidden",
-      `Case does not permit third-party egress — enable it in Case settings before running ${availability.capabilityId}`
-    );
+    return new ForbiddenError({
+      reason: `Case does not permit third-party egress — enable it in Case settings before running ${availability.capabilityId}`,
+    });
   }
-  throw new DomainError(
-    "forbidden",
-    `Missing credential — set one of ${availability.names.join(" | ")} in Settings before running this playbook`
-  );
+  return new ForbiddenError({
+    reason: `Missing credential — set one of ${availability.names.join(" | ")} in Settings before running this playbook`,
+  });
 }
 
 /** Plan → insert run + step-0 Job → enqueue. */
-export async function runPlaybook(
+export function runPlaybookEffect(
   input: RunPlaybookInput
-): Promise<PlaybookRunResult> {
-  await assertCaseExists(input.caseId);
-  const playbook = loadPlaybook(input.playbookId);
-  const { seed } = input;
+): Effect.Effect<PlaybookRunResult, DomainTag> {
+  return Effect.gen(function* runPlaybookGen() {
+    yield* assertCaseExistsEffect(input.caseId);
+    const playbook = yield* loadPlaybookEffect(input.playbookId);
+    const { seed } = input;
 
-  await assertSeedAnchorsInCase(input.caseId, seed);
+    yield* assertSeedAnchorsInCaseEffect(input.caseId, seed);
 
-  const plan = planPlaybook(playbook, seed);
-  if ("kind" in plan) {
-    throw new DomainError("invalid", formatPlanError(plan));
-  }
-
-  const descriptor = toPlaybookDescriptor(playbook);
-  const present = await presentCredentialNames(
-    input.actorId,
-    credentialNamesFromDescriptor(descriptor)
-  );
-
-  const caseRow = await casesRepo.getById(db, input.caseId);
-  ensurePlaybookRunnable(
-    descriptor,
-    present,
-    caseRow?.allowThirdPartyEgress ?? false,
-    playbook
-  );
-
-  const seedJson = seedValuesToJson(seed);
-
-  const result = await db.transaction(async (tx) => {
-    const run = await playbookRunsRepo.create(tx, {
-      caseId: input.caseId,
-      playbookId: playbook.id,
-      seed: seedJson,
-      status: "running",
-      actorId: input.actorId,
-    });
-    if (!run) {
-      throw new DomainError("invalid", "Failed to create playbook run");
+    const plan = planPlaybook(playbook, seed);
+    if ("kind" in plan) {
+      return yield* new InvalidError({ reason: formatPlanError(plan) });
     }
 
-    const row = await jobsRepo.create(tx, {
-      caseId: input.caseId,
-      capabilityId: plan.step.capabilityId,
-      input: plan.step.input,
-      status: "queued",
-      actorId: input.actorId,
-      logs: [],
-      playbookRunId: run.id,
-      playbookStep: plan.step.playbookStep,
-      playbookFanIndex: 0,
-    });
-    if (!row) {
-      throw new DomainError(
-        "invalid",
-        `Failed to create Job for step ${plan.step.playbookStep}`
-      );
-    }
+    const descriptor = toPlaybookDescriptor(playbook);
+    const present = yield* presentCredentialNamesEffect(
+      input.actorId,
+      credentialNamesFromDescriptor(descriptor)
+    );
 
-    return { run, jobRows: [row] };
-  });
+    const caseRow = yield* tryDb(() => casesRepo.getById(db, input.caseId));
+    yield* ensurePlaybookRunnable(
+      descriptor,
+      present,
+      caseRow?.allowThirdPartyEgress ?? false,
+      playbook
+    );
 
-  // Independent per-Job enqueues — safe to run concurrently.
-  await Promise.all(
-    result.jobRows
-      .filter((row) => row.status === "queued")
-      .map(async (row) => {
-        await enqueueCapJob(row.id, row.capabilityId);
+    const seedJson = seedValuesToJson(seed);
+
+    const result = yield* transact((tx) =>
+      Effect.gen(function* runPlaybookTx() {
+        const run = yield* tryDb(() =>
+          playbookRunsRepo.create(tx, {
+            caseId: input.caseId,
+            playbookId: playbook.id,
+            seed: seedJson,
+            status: "running",
+            actorId: input.actorId,
+          })
+        );
+        if (!run) {
+          return yield* new InvalidError({
+            reason: "Failed to create playbook run",
+          });
+        }
+
+        const row = yield* tryDb(() =>
+          jobsRepo.create(tx, {
+            caseId: input.caseId,
+            capabilityId: plan.step.capabilityId,
+            input: plan.step.input,
+            status: "queued",
+            actorId: input.actorId,
+            logs: [],
+            playbookRunId: run.id,
+            playbookStep: plan.step.playbookStep,
+            playbookFanIndex: 0,
+          })
+        );
+        if (!row) {
+          return yield* new InvalidError({
+            reason: `Failed to create Job for step ${plan.step.playbookStep}`,
+          });
+        }
+
+        return { run, jobRows: [row] };
       })
-  );
+    );
 
-  return {
-    playbookId: playbook.id,
-    playbookRunId: result.run.id,
-    jobs: result.jobRows.map((row) =>
-      toJobRecord(row, playbook.id, result.run.status)
-    ),
-  };
+    yield* Effect.forEach(
+      result.jobRows.filter((row) => row.status === "queued"),
+      (row) => enqueueCapJobEffect(row.id, row.capabilityId),
+      { concurrency: "unbounded" }
+    );
+
+    return {
+      playbookId: playbook.id,
+      playbookRunId: result.run.id,
+      jobs: result.jobRows.map((row) =>
+        toJobRecord(row, playbook.id, result.run.status)
+      ),
+    };
+  });
 }
 
 interface CancelPlaybookRunOpts {
@@ -201,49 +222,58 @@ interface CancelPlaybookRunResult {
   cancelledJobIds: string[];
 }
 
-export async function cancelPlaybookRun(
+export function cancelPlaybookRunEffect(
   caseId: string,
   playbookRunId: string,
   opts?: CancelPlaybookRunOpts
-): Promise<CancelPlaybookRunResult> {
-  await assertCaseExists(caseId);
-  const now = new Date();
-  const result = await db.transaction(async (tx) => {
-    const run = await playbookRunsRepo.lock(tx, playbookRunId);
-    if (!run || run.caseId !== caseId) {
-      throw new DomainError("not_found", "Playbook run not found");
-    }
-    if (run.status !== "running") {
-      throw new DomainError(
-        "conflict",
-        "Only running playbook runs can be cancelled"
-      );
-    }
+): Effect.Effect<CancelPlaybookRunResult, DomainTag> {
+  return Effect.gen(function* cancelPlaybookRunGen() {
+    yield* assertCaseExistsEffect(caseId);
+    const now = new Date();
+    const result = yield* transact((tx) =>
+      Effect.gen(function* cancelPlaybookTx() {
+        const run = yield* tryDb(() =>
+          playbookRunsRepo.lock(tx, playbookRunId)
+        );
+        if (!run || run.caseId !== caseId) {
+          return yield* new NotFoundError({
+            resource: "Playbook run not found",
+          });
+        }
+        if (run.status !== "running") {
+          return yield* new ConflictError({
+            reason: "Only running playbook runs can be cancelled",
+          });
+        }
 
-    await playbookRunsRepo.setStatus(tx, playbookRunId, "cancelled", now);
+        yield* tryDb(() =>
+          playbookRunsRepo.setStatus(tx, playbookRunId, "cancelled", now)
+        );
 
-    const cancellable = await jobsRepo.listCancellableForPlaybookRun(
-      tx,
-      caseId,
-      playbookRunId
+        const cancellable = yield* tryDb(() =>
+          jobsRepo.listCancellableForPlaybookRun(tx, caseId, playbookRunId)
+        );
+        const updatedIds = yield* Effect.forEach(
+          cancellable,
+          (row) => tryDb(() => jobsRepo.cancelCancellable(tx, row.id, now)),
+          { concurrency: "unbounded" }
+        );
+        const cancelledJobIds = updatedIds.filter((id): id is string =>
+          Boolean(id)
+        );
+        return { playbookRunId, cancelledJobIds };
+      })
     );
-    const updatedIds = await Promise.all(
-      cancellable.map(async (row) =>
-        jobsRepo.cancelCancellable(tx, row.id, now)
-      )
-    );
-    const cancelledJobIds = updatedIds.filter((id): id is string =>
-      Boolean(id)
-    );
-    return { playbookRunId, cancelledJobIds };
+    if (opts?.actorId) {
+      yield* Effect.sync(() => {
+        logProcess("playbook.cancel", "Playbook run cancelled", {
+          caseId,
+          playbookRunId,
+          actorId: opts.actorId,
+          cancelledJobCount: result.cancelledJobIds.length,
+        });
+      });
+    }
+    return result;
   });
-  if (opts?.actorId) {
-    logProcess("playbook.cancel", "Playbook run cancelled", {
-      caseId,
-      playbookRunId,
-      actorId: opts.actorId,
-      cancelledJobCount: result.cancelledJobIds.length,
-    });
-  }
-  return result;
 }

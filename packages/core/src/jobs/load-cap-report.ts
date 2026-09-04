@@ -1,8 +1,13 @@
+import { Effect } from "effect";
+
 import {
   parseJsonValue,
   REPORT_JSON_ARTIFACT,
   type JsonValue,
 } from "@watchdog/schemas";
+
+import { errorMessage } from "../infra/domain-error";
+import { InvalidError } from "../infra/tagged-errors";
 
 interface ArtifactRef {
   name: string;
@@ -23,13 +28,22 @@ interface CapReportLoadResult {
  * Load Cap report JSON for pure interpret.
  * Requires canonical `report.json`.
  */
-export async function loadCapReport(
+export function loadCapReportEffect(
   artifacts: ArtifactRef[],
-  readArtifact: (uri: string) => Promise<Uint8Array>
-): Promise<CapReportLoadResult | null> {
-  const art = artifacts.find((a) => a.name === REPORT_JSON_ARTIFACT);
-  if (!art) return null;
-  const bytes = await readArtifact(art.uri);
-  const text = new TextDecoder().decode(bytes);
-  return { report: parseJsonValue(text), name: art.name };
+  readArtifact: (uri: string) => Effect.Effect<Uint8Array, InvalidError>
+): Effect.Effect<CapReportLoadResult | null, InvalidError> {
+  return Effect.gen(function* loadCapReportGen() {
+    const art = artifacts.find((a) => a.name === REPORT_JSON_ARTIFACT);
+    if (!art) return null;
+    const bytes = yield* readArtifact(art.uri);
+    const text = new TextDecoder().decode(bytes);
+    const report = yield* Effect.try({
+      try: () => parseJsonValue(text),
+      catch: (error) =>
+        new InvalidError({
+          reason: error instanceof Error ? error.message : errorMessage(error),
+        }),
+    });
+    return { report, name: art.name };
+  });
 }

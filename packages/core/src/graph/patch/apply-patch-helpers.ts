@@ -1,30 +1,33 @@
+import { Effect } from "effect";
+
 import {
   requireEnum as requireEnumPolicy,
   requireString as requireStringPolicy,
 } from "@watchdog/policy";
 import type { JsonValue } from "@watchdog/schemas";
 
-import { DomainError, errorMessage } from "../../infra/domain-error";
+import { errorMessage } from "../../infra/domain-error";
+import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 
-function asDomainInvalid<T>(fn: () => T): T {
-  try {
-    return fn();
-  } catch (error) {
-    throw new DomainError("invalid", errorMessage(error, "invalid"));
-  }
-}
-
-export function requireDomainString(
+export function requireDomainStringEffect(
   data: Record<string, JsonValue>,
   key: string
-): string {
-  return asDomainInvalid(() => requireStringPolicy(data, key));
+): Effect.Effect<string, DomainTag> {
+  return Effect.try({
+    try: () => requireStringPolicy(data, key),
+    catch: (error) =>
+      new InvalidError({ reason: errorMessage(error, "invalid") }),
+  });
 }
 
-export function requireDomainEnum<T extends string>(
+export function requireDomainEnumEffect<T extends string>(
   value: string,
   allowed: readonly T[],
   label: string
-): T {
-  return asDomainInvalid(() => requireEnumPolicy(value, allowed, label));
+): Effect.Effect<T, DomainTag> {
+  return Effect.try({
+    try: () => requireEnumPolicy(value, allowed, label),
+    catch: (error) =>
+      new InvalidError({ reason: errorMessage(error, "invalid") }),
+  });
 }

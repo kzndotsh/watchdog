@@ -1,5 +1,9 @@
-import { httpToolsError } from "../errors/tools-error";
-import { fetchBytes } from "../http/fetch-bytes";
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
+
+import type { ToolsTag } from "../errors/tagged-errors";
+import { fetchBytesEffect } from "../http/fetch-bytes";
+import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import {
   waybackFetchSnapshotSchema,
   waybackLookupSnapshotSchema,
@@ -73,68 +77,67 @@ function parseCdxRows(payload: unknown[], url: string): WaybackCdxRow[] {
 /**
  * CDX history rows for a URL — shared by archive.wayback.lookup and url.enrich.
  */
-export async function fetchWaybackLookup(
+export function fetchWaybackLookupEffect(
   url: string,
   signal: AbortSignal,
   options: WaybackLookupOptions
-): Promise<WaybackLookupSnapshot> {
-  const limit = options.limit ?? 25;
-  const params = new URLSearchParams({
-    url,
-    output: "json",
-    fl: "timestamp,original,statuscode,mimetype,digest",
-    limit: String(limit),
-    fastLatest: "true",
-  });
-  if (options.filterStatus200 !== false) {
-    params.set("filter", "statuscode:200");
-  }
+): Effect.Effect<WaybackLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchWaybackLookupGen() {
+    const limit = options.limit ?? 25;
+    const params = new URLSearchParams({
+      url,
+      output: "json",
+      fl: "timestamp,original,statuscode,mimetype,digest",
+      limit: String(limit),
+      fastLatest: "true",
+    });
+    if (options.filterStatus200 !== false) {
+      params.set("filter", "statuscode:200");
+    }
 
-  const res = await fetch(`${CDX}?${params.toString()}`, {
-    signal,
-    headers: { "User-Agent": options.userAgent },
-  });
-  if (!res.ok) {
-    throw httpToolsError(
-      "Wayback CDX",
-      res.status,
-      `Wayback CDX HTTP ${res.status} for ${url}`
-    );
-  }
-  const payload: unknown = await res.json();
-  if (!isUnknownArray(payload) || payload.length === 0) {
+    const { body: payload } = yield* fetchJsonUnknownEffect({
+      url: `${CDX}?${params.toString()}`,
+      signal,
+      service: "Wayback CDX",
+      subject: url,
+      init: { headers: { "User-Agent": options.userAgent } },
+    });
+    if (!isUnknownArray(payload) || payload.length === 0) {
+      return waybackLookupSnapshotSchema.parse({
+        url,
+        queriedAt: new Date().toISOString(),
+        source: "web.archive.org/cdx",
+        rows: [],
+        closestTimestamp: null,
+      });
+    }
+
+    const rows = parseCdxRows(payload, url);
+
     return waybackLookupSnapshotSchema.parse({
       url,
       queriedAt: new Date().toISOString(),
       source: "web.archive.org/cdx",
-      rows: [],
-      closestTimestamp: null,
+      rows,
+      closestTimestamp: rows[0]?.timestamp ?? null,
     });
-  }
-
-  const rows = parseCdxRows(payload, url);
-
-  return waybackLookupSnapshotSchema.parse({
-    url,
-    queriedAt: new Date().toISOString(),
-    source: "web.archive.org/cdx",
-    rows,
-    closestTimestamp: rows[0]?.timestamp ?? null,
   });
 }
 
 /** Closest Wayback CDX timestamp for a URL (200 responses). UA from Cap policy. */
-export async function closestWaybackTimestamp(
+export function closestWaybackTimestampEffect(
   url: string,
   signal: AbortSignal,
   userAgent: string
-): Promise<string | null> {
-  const snap = await fetchWaybackLookup(url, signal, {
-    userAgent,
-    limit: 1,
-    filterStatus200: true,
+): Effect.Effect<string | null, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* closestWaybackTimestampGen() {
+    const snap = yield* fetchWaybackLookupEffect(url, signal, {
+      userAgent,
+      limit: 1,
+      filterStatus200: true,
+    });
+    return snap.closestTimestamp;
   });
-  return snap.closestTimestamp;
 }
 
 /** Fetch a Wayback raw snapshot body (id_ URL). */
@@ -143,30 +146,32 @@ interface CdxOptions {
   userAgent: string;
   maxBytes?: number;
 }
-export async function fetchWaybackSnapshot(
+export function fetchWaybackSnapshotEffect(
   url: string,
   timestamp: string,
   signal: AbortSignal,
   options: CdxOptions
-): Promise<WaybackFetchSnapshot> {
-  const archiveUrl = waybackArchiveUrl(timestamp, url);
-  const maxBytes = options.maxBytes ?? 512_000;
-  const res = await fetchBytes(archiveUrl, signal, {
-    userAgent: options.userAgent,
-    maxBytes,
-    accept: "text/html,text/plain,*/*",
-  });
-  const bodyPreview = new TextDecoder().decode(res.bytes).slice(0, 8000);
-  return waybackFetchSnapshotSchema.parse({
-    url,
-    timestamp,
-    archiveUrl,
-    queriedAt: new Date().toISOString(),
-    status: res.status,
-    ok: res.ok,
-    contentType: res.contentType,
-    bodyPreview,
-    byteLength: res.bytes.byteLength,
-    ...(res.ok ? {} : { error: res.error ?? `HTTP ${res.status}` }),
+): Effect.Effect<WaybackFetchSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchWaybackSnapshotGen() {
+    const archiveUrl = waybackArchiveUrl(timestamp, url);
+    const maxBytes = options.maxBytes ?? 512_000;
+    const res = yield* fetchBytesEffect(archiveUrl, signal, {
+      userAgent: options.userAgent,
+      maxBytes,
+      accept: "text/html,text/plain,*/*",
+    });
+    const bodyPreview = new TextDecoder().decode(res.bytes).slice(0, 8000);
+    return waybackFetchSnapshotSchema.parse({
+      url,
+      timestamp,
+      archiveUrl,
+      queriedAt: new Date().toISOString(),
+      status: res.status,
+      ok: res.ok,
+      contentType: res.contentType,
+      bodyPreview,
+      byteLength: res.bytes.byteLength,
+      ...(res.ok ? {} : { error: res.error ?? `HTTP ${res.status}` }),
+    });
   });
 }

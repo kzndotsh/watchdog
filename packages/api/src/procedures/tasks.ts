@@ -1,13 +1,12 @@
-import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
-  createTask,
-  deleteTask,
-  getTaskInCase,
-  listTasksForCase,
-  reorderTasks,
-  updateTask,
+  createTaskEffect,
+  deleteTaskEffect,
+  getTaskInCaseEffect,
+  listTasksForCaseEffect,
+  reorderTasksEffect,
+  updateTaskEffect,
 } from "@watchdog/core";
 import {
   taskCreateInputSchema,
@@ -18,8 +17,8 @@ import {
   taskUpdateInputSchema,
 } from "@watchdog/schemas";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import { taskSchema } from "../schemas";
 
 export const list = authed
@@ -31,9 +30,9 @@ export const list = authed
   })
   .input(taskFiltersSchema)
   .output(taskSchema.array())
-  .handler(
-    withDomainError(async ({ input }) =>
-      listTasksForCase(input.caseId, {
+  .handler(async ({ input }) =>
+    runApp(
+      listTasksForCaseEffect(input.caseId, {
         entityId: input.entityId,
         status: input.status,
         unattachedOnly: input.unattachedOnly,
@@ -50,12 +49,8 @@ export const get = authed
   })
   .input(taskIdInputSchema)
   .output(taskSchema)
-  .handler(
-    withDomainError(async ({ input }) => {
-      const row = await getTaskInCase(input.caseId, input.taskId);
-      if (!row) throw new ORPCError("NOT_FOUND", { message: "Task not found" });
-      return row;
-    })
+  .handler(async ({ input }) =>
+    runApp(getTaskInCaseEffect(input.caseId, input.taskId))
   );
 
 export const create = authed
@@ -68,7 +63,7 @@ export const create = authed
   })
   .input(taskCreateInputSchema)
   .output(taskSchema)
-  .handler(withDomainError(async ({ input }) => createTask(input)));
+  .handler(async ({ input }) => runApp(createTaskEffect(input)));
 
 export const update = authed
   .route({
@@ -79,7 +74,7 @@ export const update = authed
   })
   .input(taskUpdateInputSchema)
   .output(taskSchema)
-  .handler(withDomainError(async ({ input }) => updateTask(input)));
+  .handler(async ({ input }) => runApp(updateTaskEffect(input)));
 
 export const remove = authed
   .route({
@@ -90,12 +85,10 @@ export const remove = authed
   })
   .input(taskDeleteInputSchema)
   .output(z.object({ ok: z.literal(true) }))
-  .handler(
-    withDomainError(async ({ input }) => {
-      await deleteTask(input.caseId, input.taskId);
-      return { ok: true as const };
-    })
-  );
+  .handler(async ({ input }) => {
+    await runApp(deleteTaskEffect(input.caseId, input.taskId));
+    return { ok: true as const };
+  });
 
 export const reorder = authed
   .route({
@@ -106,4 +99,4 @@ export const reorder = authed
   })
   .input(taskReorderInputSchema)
   .output(taskSchema.array())
-  .handler(withDomainError(async ({ input }) => reorderTasks(input)));
+  .handler(async ({ input }) => runApp(reorderTasksEffect(input)));

@@ -2,7 +2,7 @@
 
 > Scope: `apps/worker` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-Thin Cap Job runner: pg-boss `work` → `executeJob`, cancel poll, export events → `scheduleCaseExport`.
+Thin Cap Job runner: pg-boss `work` → `executeJobOnMap`, cancel poll, export events → `scheduleCaseExportEffect`.
 
 ## Commands
 
@@ -24,11 +24,11 @@ Thin Cap Job runner: pg-boss `work` → `executeJob`, cancel poll, export events
 
 - Imports `@watchdog/env/server` for boot validation.
 - Cap `timeoutMs` (from Caps) drives expire / graceful stop — do not hardcode elsewhere.
-- Use `ensureBossWorker()` (`supervise: true`) only — never a second boss; playbook chain is `advancePlaybookRun` in core (`enqueueCapJob` on the live worker boss). Do not call deleted `releasePlaybookDependents` / `abandonPlaybookOnFailure`.
-- Cancel: poll product `jobs.status` (~2s) and abort Cap `AbortController`; do not bridge pg-boss `job.signal`.
-- Startup: `reconcileStaleJobs` fails stale `running` rows (per-Cap expire window); `reconcileStuckPlaybookRuns` re-advances playbook runs with no open Jobs (`queued`/`running`/`blocked`). All-`blocked` leftover recipes are not this path.
-- Export: call `scheduleCaseExport(caseId)` only — coalesced; no parallel `writeCaseExport`.
-- Logging: `initWatchdogLogger` first in `main()`; Cap Job wide events via `jobWideEventFields(executeJob → JobRunOutcome)`. Failures: `log.error(err)` — never `log.set({ error: err })` (`Error` → `{}`). Abort reasons: `abort("cancel")` / Cap timeout `abort("timeout")`. Analyze: `apps/worker/.evlog/logs/`.
+- Use `ensureBossWorkerEffect` (`supervise: true`) only — never a second boss; playbook chain is `advancePlaybookRunEffect` in core (`enqueueCapJobEffect` on the live worker boss). Do not call deleted `releasePlaybookDependents` / `abandonPlaybookOnFailure`.
+- Cancel: `cancelPollLoopEffect` (`findCancelledJobIdsEffect` + `Schedule.spaced("2 seconds")`, first tick immediate) forked inside `bootWorkerEffect`. Yields `JobFibers` and calls `fibers.abort` (FiberMap interrupt + abort reason set before interrupt). Do not bridge pg-boss `job.signal`.
+- Export: `handleExportEventEffect` → `scheduleCaseExportEffect` (forkDetach join). `listenForEventsStream` + `Stream.runForEach` is the only LISTEN path. Coalesced; no parallel case writes.
+- Startup: `reconcileStaleJobsEffect` fails stale `running` rows (per-Cap expire window); `reconcileStuckPlaybookRunsEffect` re-advances playbook runs with no open Jobs (`queued`/`running`/`blocked`). All-`blocked` leftover recipes are not this path.
+- Logging: `initWatchdogLogger` first in `bootWorkerEffect`; `runMain` provides `JobFibers.layer`. Cap jobs: pg-boss `work` calls `Effect.runPromise(processCapJobBatchEffect.pipe(provideService(JobFibers)))` which yields `executeJobOnMap(jobId)`. Export events: `listenForEventsStream` + `Stream.runForEach`. Cap Job wide events via `jobWideEventFields(executeJobOnMap → JobRunOutcome)`. Failures: `log.error(err)` — never `log.set({ error: err })` (`Error` → `{}`). Abort reasons: `abort("cancel")` / Cap timeout `abort("timeout")`. Analyze: `apps/worker/.evlog/logs/`. Process entry: `NodeRuntime.runMain(bootWorkerEffect)`. Effect.log goes through `evlogEffectLoggerLayer`. Tests run `bootWorkerEffect` (same program as prod).
 
 ## See also / External References
 

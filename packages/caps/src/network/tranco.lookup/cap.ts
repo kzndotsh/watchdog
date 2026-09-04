@@ -1,4 +1,6 @@
-import { fetchTrancoLookup, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchTrancoLookupEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { trancoLookupInput } from "./input";
@@ -25,12 +27,15 @@ export const trancoLookup = defineCollectCap({
   },
   schema: trancoLookupSnapshotSchema,
   reportLabel: "tranco.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`Tranco ${host}`);
-    const snap = await fetchTrancoLookup(host, ctx.signal, { userAgent: UA });
-    ctx.log(`found=${snap.found} latestRank=${snap.latestRank ?? "n/a"}`);
-    return { snap, artifactName: `tranco-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* trancoLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`Tranco ${host}`);
+      const snap = yield* fetchTrancoLookupEffect(host, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} latestRank=${snap.latestRank ?? "n/a"}`);
+      return { snap, artifactName: `tranco-${host}.json` };
+    }),
   interpretSnap: interpretTrancoLookupReport,
 });

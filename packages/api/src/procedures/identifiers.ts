@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import {
-  createIdentifier,
-  listIdentifiersForCase,
-  listIdentifiersForEntity,
-  updateIdentifier,
+  createIdentifierEffect,
+  listIdentifiersForCaseEffect,
+  listIdentifiersForEntityEffect,
+  updateIdentifierEffect,
 } from "@watchdog/core";
 import {
   confidenceTierSchema,
@@ -12,8 +12,8 @@ import {
   identifierTypeSchema,
 } from "@watchdog/schemas";
 
-import { withDomainError } from "../map-domain-error";
 import { authed, graphChildWrite } from "../os";
+import { runApp } from "../runtime";
 import {
   caseIdentifierSchema,
   identifierSchema,
@@ -34,10 +34,8 @@ export const list = authed
     })
   )
   .output(z.array(identifierSchema))
-  .handler(
-    withDomainError(async ({ input }) =>
-      listIdentifiersForEntity(input.caseId, input.entityId)
-    )
+  .handler(async ({ input }) =>
+    runApp(listIdentifiersForEntityEffect(input.caseId, input.entityId))
   );
 
 export const listForCase = authed
@@ -49,8 +47,8 @@ export const listForCase = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.array(caseIdentifierSchema))
-  .handler(
-    withDomainError(async ({ input }) => listIdentifiersForCase(input.caseId))
+  .handler(async ({ input }) =>
+    runApp(listIdentifiersForCaseEffect(input.caseId))
   );
 
 export const create = graphChildWrite
@@ -76,7 +74,7 @@ export const create = graphChildWrite
     })
   )
   .output(identifierSchema)
-  .handler(withDomainError(async ({ input }) => createIdentifier(input)));
+  .handler(async ({ input }) => runApp(createIdentifierEffect(input)));
 
 export const update = graphChildWrite
   .route({
@@ -100,4 +98,4 @@ export const update = graphChildWrite
     })
   )
   .output(identifierSchema)
-  .handler(withDomainError(async ({ input }) => updateIdentifier(input)));
+  .handler(async ({ input }) => runApp(updateIdentifierEffect(input)));

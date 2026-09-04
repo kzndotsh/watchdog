@@ -1,6 +1,9 @@
 import type { Resolver } from "node:dns/promises";
 
-import { assertNotAborted, withAbortableResolver } from "./abortable-resolver";
+import { Effect } from "effect";
+
+import type { ToolsTag } from "../errors/tagged-errors";
+import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import {
   mailConfigSnapshotSchema,
   type MailConfigSnapshot,
@@ -25,72 +28,77 @@ function flattenTxt(chunks: string[][]): string[] {
   return chunks.map((parts) => parts.join(""));
 }
 
-async function resolveTxtFlat(
+function resolveTxtFlatEffect(
   resolver: Resolver,
   name: string
-): Promise<string[]> {
-  const chunks = await resolver.resolveTxt(name).catch(() => [] as string[][]);
-  return flattenTxt(chunks);
+): Effect.Effect<string[]> {
+  return dnsOrEmpty(() => resolver.resolveTxt(name), [] as string[][]).pipe(
+    Effect.map((chunks) => flattenTxt(chunks))
+  );
+}
+
+interface MailConfigOptions {
+  dkimSelectors?: readonly string[];
 }
 
 /**
  * Collect MX + SPF/DMARC/DKIM posture via DNS only (passive).
  * DKIM uses a small fixed selector list — not a full selector hunt.
  */
-
-interface MailConfigOptions {
-  dkimSelectors?: readonly string[];
-}
-export async function fetchMailConfig(
+export function fetchMailConfigEffect(
   host: string,
   signal: AbortSignal,
   options?: MailConfigOptions
-): Promise<MailConfigSnapshot> {
-  const { resolver, cleanup } = withAbortableResolver(
+): Effect.Effect<MailConfigSnapshot, ToolsTag> {
+  return runAbortableResolver(
     signal,
-    "Mail config lookup aborted"
-  );
-  try {
-    const selectors = options?.dkimSelectors ?? DEFAULT_DKIM_SELECTORS;
-    const [mx, txtRoot, txtDmarc, ...dkimResults] = await Promise.all([
-      resolver
-        .resolveMx(host)
-        .catch(() => [] as { exchange: string; priority: number }[]),
-      resolveTxtFlat(resolver, host),
-      resolveTxtFlat(resolver, `_dmarc.${host}`),
-      ...selectors.map(async (selector) => {
-        const name = `${selector}._domainkey.${host}`;
-        const records = await resolveTxtFlat(resolver, name);
-        return {
-          selector,
-          present: records.some((r) => /v=DKIM1/i.test(r)),
-          records,
+    "Mail config lookup aborted",
+    (resolver) =>
+      Effect.gen(function* fetchMailConfigGen() {
+        const selectors = options?.dkimSelectors ?? DEFAULT_DKIM_SELECTORS;
+        const [mx, txtRoot, txtDmarc, ...dkimResults] = yield* Effect.all(
+          [
+            dnsOrEmpty(
+              () => resolver.resolveMx(host),
+              [] as { exchange: string; priority: number }[]
+            ),
+            resolveTxtFlatEffect(resolver, host),
+            resolveTxtFlatEffect(resolver, `_dmarc.${host}`),
+            ...selectors.map((selector) =>
+              resolveTxtFlatEffect(
+                resolver,
+                `${selector}._domainkey.${host}`
+              ).pipe(
+                Effect.map((records) => ({
+                  selector,
+                  present: records.some((r) => /v=DKIM1/i.test(r)),
+                  records,
+                }))
+              )
+            ),
+          ],
+          { concurrency: "unbounded" }
+        );
+
+        const spfRecords = txtRoot.filter((r) => /v=spf1/i.test(r));
+        const dmarcRecords = txtDmarc.filter((r) => /v=DMARC1/i.test(r));
+        const found = dkimResults.filter((d) => d.present);
+
+        const snap: MailConfigSnapshot = {
+          host,
+          queriedAt: new Date().toISOString(),
+          mx: mx
+            .map((m) => ({ exchange: m.exchange, priority: m.priority }))
+            .sort((a, b) => a.priority - b.priority),
+          spf: { present: spfRecords.length > 0, records: spfRecords },
+          dmarc: { present: dmarcRecords.length > 0, records: dmarcRecords },
+          dkim: {
+            selectorsTried: [...selectors],
+            found,
+          },
+          txt: txtRoot,
         };
-      }),
-    ]);
-
-    assertNotAborted(signal, "Mail config lookup aborted");
-
-    const spfRecords = txtRoot.filter((r) => /v=spf1/i.test(r));
-    const dmarcRecords = txtDmarc.filter((r) => /v=DMARC1/i.test(r));
-    const found = dkimResults.filter((d) => d.present);
-
-    const snap: MailConfigSnapshot = {
-      host,
-      queriedAt: new Date().toISOString(),
-      mx: mx
-        .map((m) => ({ exchange: m.exchange, priority: m.priority }))
-        .sort((a, b) => a.priority - b.priority),
-      spf: { present: spfRecords.length > 0, records: spfRecords },
-      dmarc: { present: dmarcRecords.length > 0, records: dmarcRecords },
-      dkim: {
-        selectorsTried: [...selectors],
-        found,
-      },
-      txt: txtRoot,
-    };
-    return mailConfigSnapshotSchema.parse(snap);
-  } finally {
-    cleanup();
-  }
+        return mailConfigSnapshotSchema.parse(snap);
+      })
+  );
 }

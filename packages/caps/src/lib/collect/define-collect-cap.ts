@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import type { z } from "zod";
 
 import {
@@ -5,11 +6,18 @@ import {
   type CapContext,
   type CapInterpretOpts,
   type CapInterpretResult,
+  type CapServices,
   type CapabilityDef,
 } from "@watchdog/cap-sdk";
 import type { JsonValue } from "@watchdog/schemas";
+import type { ToolsTag } from "@watchdog/tools";
 
 import { uploadJsonReportPair } from "./upload-json-report-pair";
+
+interface CollectSnap<TSnap> {
+  readonly snap: TSnap;
+  readonly artifactName: string;
+}
 
 type CollectCapDef<TSchema extends z.ZodType, TSnap> = Omit<
   CapabilityDef<TSchema>,
@@ -17,14 +25,13 @@ type CollectCapDef<TSchema extends z.ZodType, TSnap> = Omit<
 > & {
   schema: z.ZodType<TSnap>;
   reportLabel: string;
-  fetch: (ctx: CapContext<z.infer<TSchema>>) => Promise<{
-    snap: TSnap;
-    artifactName: string;
-  }>;
+  fetch: (
+    ctx: CapContext<z.infer<TSchema>>
+  ) => Effect.Effect<CollectSnap<TSnap>, ToolsTag, CapServices>;
   interpretSnap: (
     snap: TSnap,
     opts: CapInterpretOpts<z.infer<TSchema>>
-  ) => CapInterpretResult | Promise<CapInterpretResult>;
+  ) => CapInterpretResult;
 };
 
 /** Collect/act Caps: JSON report pair upload + pure interpret(snap). */
@@ -35,16 +42,17 @@ export function defineCollectCap<TSchema extends z.ZodType, TSnap>(
   return defineCapability({
     ...meta,
     kind: meta.kind ?? "collect",
-    async run(ctx) {
-      const { snap, artifactName } = await fetch(ctx);
-      const { report, artifact } = await uploadJsonReportPair(
-        ctx.uploadArtifact,
-        snap,
-        artifactName
-      );
-      return { artifacts: [report, artifact] };
-    },
-    async interpret(report: JsonValue, opts) {
+    run: (ctx) =>
+      Effect.gen(function* collectCapRun() {
+        const { snap, artifactName } = yield* fetch(ctx);
+        const { report, artifact } = yield* uploadJsonReportPair(
+          ctx.uploadArtifact,
+          snap,
+          artifactName
+        );
+        return { artifacts: [report, artifact] };
+      }),
+    interpret(report: JsonValue, opts) {
       const parsed = schema.safeParse(report);
       if (!parsed.success) {
         throw new Error(

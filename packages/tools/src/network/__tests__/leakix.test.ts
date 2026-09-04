@@ -1,6 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect } from "effect";
+import { vi } from "vitest";
 
-import { fetchLeakixLookup, leakixLookupSnapshotSchema } from "../leakix";
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
+import { fetchLeakixLookupEffect, leakixLookupSnapshotSchema } from "../leakix";
 
 describe("leakix", () => {
   it("parses empty lookup snapshots", () => {
@@ -18,19 +21,23 @@ describe("leakix", () => {
     expect(snap.found).toBe(false);
   });
 
-  it("fetchLeakixLookup treats HTTP 404 as no exposure", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response(null, { status: 404 }))
-    );
+  it.effect("fetchLeakixLookupEffect treats HTTP 404 as no exposure", () =>
+    Effect.gen(function* fetchLeakixLookupGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response(null, { status: 404 }))
+      );
 
-    const snap = await fetchLeakixLookup(
-      "8.8.8.8",
-      "test-key",
-      AbortSignal.timeout(5000)
-    );
+      const snap = yield* fetchLeakixLookupEffect(
+        "8.8.8.8",
+        "test-key",
+        AbortSignal.timeout(5000)
+      );
 
-    expect(snap.found).toBe(false);
-    vi.unstubAllGlobals();
-  });
+      expect(snap.found).toBe(false);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

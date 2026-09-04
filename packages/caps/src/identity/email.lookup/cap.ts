@@ -1,4 +1,6 @@
-import { fetchEmailLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchEmailLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { emailLookupInput } from "./input";
@@ -23,14 +25,15 @@ export const emailLookup = defineCollectCap({
   },
   schema: emailLookupSnapshotSchema,
   reportLabel: "email.lookup",
-  async fetch(ctx) {
-    const email = ctx.input.email.trim();
-    ctx.log(`email lookup ${email}`);
-    const snap = await fetchEmailLookup(email, ctx.signal);
-    ctx.log(
-      `domain=${snap.domain} provider=${snap.providerHint ?? "?"} MX=${snap.mx.length}`
-    );
-    return { snap, artifactName: `email-lookup.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* emailLookupFetch() {
+      const email = ctx.input.email.trim();
+      ctx.log(`email lookup ${email}`);
+      const snap = yield* fetchEmailLookupEffect(email, ctx.signal);
+      ctx.log(
+        `domain=${snap.domain} provider=${snap.providerHint ?? "?"} MX=${snap.mx.length}`
+      );
+      return { snap, artifactName: `email-lookup.json` };
+    }),
   interpretSnap: interpretEmailLookupReport,
 });

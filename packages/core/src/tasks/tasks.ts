@@ -1,19 +1,24 @@
-import {
-  activityEventsRepo,
-  db,
-  tasksRepo,
-  type DbExec,
-  type TaskRow,
-} from "@watchdog/db";
+import { Effect } from "effect";
+
+import { activityEventsRepo, db, tasksRepo, type TaskRow } from "@watchdog/db";
 import {
   trimmedOrNull,
   type TaskPriority,
   type TaskStatus,
 } from "@watchdog/schemas";
 
-import { assertCaseExists, assertEntityInCase } from "../graph/patch/guards";
-import { DomainError } from "../infra/domain-error";
-import { notifyTaskChanged } from "../infra/events";
+import {
+  assertCaseExistsEffect,
+  assertEntityInCaseEffect,
+} from "../graph/patch/guards";
+import { notifyTaskChangedEffect } from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
 
 export interface TaskRecord {
   id: string;
@@ -72,16 +77,19 @@ function toRecord(row: TaskRow): TaskRecord {
   };
 }
 
-function parseDueDate(
+function parseDueDateEffect(
   value: string | null | undefined
-): Date | null | undefined {
-  if (value === undefined) return undefined;
-  if (value === null || value === "") return null;
+): Effect.Effect<Date | null | undefined, DomainTag> {
+  if (value === undefined) {
+    const unset: Date | null | undefined = undefined;
+    return Effect.succeed(unset);
+  }
+  if (value === null || value === "") return Effect.succeed(null);
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    throw new DomainError("invalid", "Invalid due date");
+    return Effect.fail(new InvalidError({ reason: "Invalid due date" }));
   }
-  return parsed;
+  return Effect.succeed(parsed);
 }
 
 function buildTaskUpdateFields(
@@ -102,135 +110,177 @@ function buildTaskUpdateFields(
   };
 }
 
-async function logTaskStatusChange(
-  tx: DbExec,
-  input: UpdateTaskInput,
-  existing: TaskRow,
-  row: TaskRow
-): Promise<void> {
-  await activityEventsRepo.create(tx, {
-    caseId: input.caseId,
-    kind: "task",
-    action: "status_changed",
-    subjectId: row.id,
-    label: row.title,
-    fromValue: existing.status,
-    toValue: row.status,
-  });
-}
-
-export async function listTasksForCase(
+export function listTasksForCaseEffect(
   caseId: string,
   opts?: ListTasksOpts
-): Promise<TaskRecord[]> {
-  await assertCaseExists(caseId);
-  const rows = await tasksRepo.listForCase(db, caseId, opts);
-  return rows.map(toRecord);
+): Effect.Effect<TaskRecord[], DomainTag> {
+  return Effect.gen(function* listTasksGen() {
+    yield* assertCaseExistsEffect(caseId);
+    const rows = yield* tryDb(() => tasksRepo.listForCase(db, caseId, opts));
+    return rows.map(toRecord);
+  });
 }
 
-export async function getTaskInCase(
+export function getTaskInCaseEffect(
   caseId: string,
   taskId: string
-): Promise<TaskRecord | null> {
-  const row = await tasksRepo.getInCase(db, caseId, taskId);
-  return row ? toRecord(row) : null;
+): Effect.Effect<TaskRecord, DomainTag> {
+  return tryDb(() => tasksRepo.getInCase(db, caseId, taskId)).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.succeed(toRecord(row))
+        : new NotFoundError({ resource: "Task not found" })
+    )
+  );
 }
 
-export async function createTask(input: CreateTaskInput): Promise<TaskRecord> {
-  await assertCaseExists(input.caseId);
-  if (input.entityId) {
-    await assertEntityInCase(input.caseId, input.entityId);
-  }
-
-  const dueDate = parseDueDate(input.dueDate);
-  const status = input.status ?? "backlog";
-
-  const created = await db.transaction(async (tx) => {
-    const row = await tasksRepo.create(tx, {
-      caseId: input.caseId,
-      title: input.title.trim(),
-      description: trimmedOrNull(input.description),
-      status,
-      priority: input.priority ?? null,
-      dueDate: dueDate === undefined ? null : dueDate,
-      entityId: input.entityId ?? null,
-    });
-    if (!row) throw new DomainError("invalid", "Failed to create Task");
-    await activityEventsRepo.create(tx, {
-      caseId: input.caseId,
-      kind: "task",
-      action: "created",
-      subjectId: row.id,
-      label: row.title,
-      toValue: row.status,
-    });
-    return row;
-  });
-
-  notifyTaskChanged(input.caseId, input.entityId ?? undefined);
-  return toRecord(created);
-}
-
-export async function updateTask(input: UpdateTaskInput): Promise<TaskRecord> {
-  const existing = await tasksRepo.getInCase(db, input.caseId, input.taskId);
-  if (!existing) throw new DomainError("not_found", "Task not found");
-
-  if (input.entityId) {
-    await assertEntityInCase(input.caseId, input.entityId);
-  }
-
-  const dueDate = parseDueDate(input.dueDate);
-  const statusChanged =
-    input.status !== undefined && input.status !== existing.status;
-
-  const updated = await db.transaction(async (tx) => {
-    const destStatus = input.status;
-    const position =
-      statusChanged && destStatus !== undefined
-        ? await tasksRepo.nextPosition(tx, input.caseId, destStatus)
-        : undefined;
-    const row = await tasksRepo.update(
-      tx,
-      input.taskId,
-      buildTaskUpdateFields(input, dueDate, position)
-    );
-    if (!row) throw new DomainError("invalid", "Failed to update Task");
-
-    if (statusChanged) {
-      await logTaskStatusChange(tx, input, existing, row);
+export function createTaskEffect(
+  input: CreateTaskInput
+): Effect.Effect<TaskRecord, DomainTag> {
+  return Effect.gen(function* createTaskGen() {
+    yield* assertCaseExistsEffect(input.caseId);
+    if (input.entityId) {
+      yield* assertEntityInCaseEffect(input.caseId, input.entityId);
     }
 
-    return row;
-  });
+    const dueDate = yield* parseDueDateEffect(input.dueDate);
+    const status = input.status ?? "backlog";
 
-  notifyTaskChanged(
-    input.caseId,
-    updated.entityId ?? existing.entityId ?? undefined
-  );
-  return toRecord(updated);
+    const created = yield* transact((tx) =>
+      Effect.gen(function* createTaskTx() {
+        const row = yield* tryDb(() =>
+          tasksRepo.create(tx, {
+            caseId: input.caseId,
+            title: input.title.trim(),
+            description: trimmedOrNull(input.description),
+            status,
+            priority: input.priority ?? null,
+            dueDate: dueDate === undefined ? null : dueDate,
+            entityId: input.entityId ?? null,
+          })
+        );
+        if (!row) {
+          return yield* new InvalidError({ reason: "Failed to create Task" });
+        }
+        yield* tryDb(() =>
+          activityEventsRepo.create(tx, {
+            caseId: input.caseId,
+            kind: "task",
+            action: "created",
+            subjectId: row.id,
+            label: row.title,
+            toValue: row.status,
+          })
+        );
+        return row;
+      })
+    );
+
+    yield* notifyTaskChangedEffect(input.caseId, input.entityId ?? undefined);
+    return toRecord(created);
+  });
 }
 
-export async function deleteTask(
+export function updateTaskEffect(
+  input: UpdateTaskInput
+): Effect.Effect<TaskRecord, DomainTag> {
+  return Effect.gen(function* updateTaskGen() {
+    const existing = yield* tryDb(() =>
+      tasksRepo.getInCase(db, input.caseId, input.taskId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Task not found" });
+    }
+
+    if (input.entityId) {
+      yield* assertEntityInCaseEffect(input.caseId, input.entityId);
+    }
+
+    const dueDate = yield* parseDueDateEffect(input.dueDate);
+    const statusChanged =
+      input.status !== undefined && input.status !== existing.status;
+
+    const updated = yield* transact((tx) =>
+      Effect.gen(function* updateTaskTx() {
+        const destStatus = input.status;
+        const position =
+          statusChanged && destStatus !== undefined
+            ? yield* tryDb(() =>
+                tasksRepo.nextPosition(tx, input.caseId, destStatus)
+              )
+            : undefined;
+        const row = yield* tryDb(() =>
+          tasksRepo.update(
+            tx,
+            input.taskId,
+            buildTaskUpdateFields(input, dueDate, position)
+          )
+        );
+        if (!row) {
+          return yield* new InvalidError({ reason: "Failed to update Task" });
+        }
+
+        if (statusChanged) {
+          yield* tryDb(() =>
+            activityEventsRepo.create(tx, {
+              caseId: input.caseId,
+              kind: "task",
+              action: "status_changed",
+              subjectId: row.id,
+              label: row.title,
+              fromValue: existing.status,
+              toValue: row.status,
+            })
+          );
+        }
+
+        return row;
+      })
+    );
+
+    yield* notifyTaskChangedEffect(
+      input.caseId,
+      updated.entityId ?? existing.entityId ?? undefined
+    );
+    return toRecord(updated);
+  });
+}
+
+export function deleteTaskEffect(
   caseId: string,
   taskId: string
-): Promise<void> {
-  const existing = await tasksRepo.getInCase(db, caseId, taskId);
-  if (!existing) throw new DomainError("not_found", "Task not found");
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* deleteTaskGen() {
+    const existing = yield* tryDb(() =>
+      tasksRepo.getInCase(db, caseId, taskId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Task not found" });
+    }
 
-  await db.transaction(async (tx) => {
-    const ok = await tasksRepo.remove(tx, taskId);
-    if (!ok) throw new DomainError("invalid", "Failed to delete Task");
-    await activityEventsRepo.create(tx, {
-      caseId,
-      kind: "task",
-      action: "deleted",
-      subjectId: existing.id,
-      label: existing.title,
-      fromValue: existing.status,
-    });
+    yield* transact((tx) =>
+      Effect.gen(function* deleteTaskTx() {
+        const ok = yield* tryDb(() => tasksRepo.remove(tx, taskId));
+        if (!ok) {
+          return yield* new InvalidError({
+            reason: "Failed to delete Task",
+          });
+        }
+        yield* tryDb(() =>
+          activityEventsRepo.create(tx, {
+            caseId,
+            kind: "task",
+            action: "deleted",
+            subjectId: existing.id,
+            label: existing.title,
+            fromValue: existing.status,
+          })
+        );
+      })
+    );
+
+    yield* notifyTaskChangedEffect(caseId, existing.entityId ?? undefined);
   });
-
-  notifyTaskChanged(caseId, existing.entityId ?? undefined);
 }
 
 export interface ReorderTasksInput {
@@ -239,41 +289,52 @@ export interface ReorderTasksInput {
   orderedIds: string[];
 }
 
-export async function reorderTasks(
+export function reorderTasksEffect(
   input: ReorderTasksInput
-): Promise<TaskRecord[]> {
-  await assertCaseExists(input.caseId);
+): Effect.Effect<TaskRecord[], DomainTag> {
+  return Effect.gen(function* reorderTasksGen() {
+    yield* assertCaseExistsEffect(input.caseId);
 
-  const records = await db.transaction(async (tx) => {
-    const rows = await tasksRepo.listForCase(tx, input.caseId, {
-      status: input.status,
-    });
-    const existing = new Set(rows.map((row) => row.id));
-    if (input.orderedIds.length !== existing.size) {
-      throw new DomainError("invalid", "Task order does not match the column");
-    }
-    const seen = new Set<string>();
-    for (const id of input.orderedIds) {
-      if (!existing.has(id) || seen.has(id)) {
-        throw new DomainError(
-          "invalid",
-          "Task order does not match the column"
+    const records = yield* transact((tx) =>
+      Effect.gen(function* reorderTasksTx() {
+        const rows = yield* tryDb(() =>
+          tasksRepo.listForCase(tx, input.caseId, {
+            status: input.status,
+          })
         );
-      }
-      seen.add(id);
-    }
-    await tasksRepo.rewriteOrder(
-      tx,
-      input.caseId,
-      input.status,
-      input.orderedIds
+        const existing = new Set(rows.map((row) => row.id));
+        if (input.orderedIds.length !== existing.size) {
+          return yield* new InvalidError({
+            reason: "Task order does not match the column",
+          });
+        }
+        const seen = new Set<string>();
+        for (const id of input.orderedIds) {
+          if (!existing.has(id) || seen.has(id)) {
+            return yield* new InvalidError({
+              reason: "Task order does not match the column",
+            });
+          }
+          seen.add(id);
+        }
+        yield* tryDb(() =>
+          tasksRepo.rewriteOrder(
+            tx,
+            input.caseId,
+            input.status,
+            input.orderedIds
+          )
+        );
+        const next = yield* tryDb(() =>
+          tasksRepo.listForCase(tx, input.caseId, {
+            status: input.status,
+          })
+        );
+        return next.map(toRecord);
+      })
     );
-    const next = await tasksRepo.listForCase(tx, input.caseId, {
-      status: input.status,
-    });
-    return next.map(toRecord);
-  });
 
-  notifyTaskChanged(input.caseId);
-  return records;
+    yield* notifyTaskChangedEffect(input.caseId);
+    return records;
+  });
 }

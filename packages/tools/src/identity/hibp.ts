@@ -1,11 +1,15 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import {
-  httpToolsError,
-  missingApiKey,
-  validationToolsError,
-} from "../errors/tools-error";
+  MissingCredentialError,
+  ParseVendorError,
+  ValidationVendorError,
+  type ToolsTag,
+} from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { recordRows } from "../parse/coerce";
 
 export const hibpBreachSchema = z.object({
@@ -38,78 +42,86 @@ interface HibpOptions {
   userAgent?: string;
   truncate?: number;
 }
-export async function fetchHibpBreachedAccount(
+
+export function fetchHibpBreachedAccountEffect(
   email: string,
   apiKey: string,
   signal: AbortSignal,
   options?: HibpOptions
-): Promise<HibpLookupSnapshot> {
-  const normalized = email.trim().toLowerCase();
-  if (!normalized.includes("@"))
-    throw validationToolsError(`Invalid email: ${email}`);
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("HIBP_API_KEY");
+): Effect.Effect<HibpLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchHibpBreachedAccountGen() {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized.includes("@")) {
+      return yield* new ValidationVendorError({
+        message: `Invalid email: ${email}`,
+      });
+    }
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "HIBP_API_KEY" });
+    }
 
-  const ua = options?.userAgent ?? watchdogUserAgent("breach.hibp.lookup");
-  const truncate = options?.truncate ?? 40;
-  const url = `https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(normalized)}?truncateResponse=false`;
+    const ua = options?.userAgent ?? watchdogUserAgent("breach.hibp.lookup");
+    const truncate = options?.truncate ?? 40;
+    const url = `https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(normalized)}?truncateResponse=false`;
 
-  const res = await fetch(url, {
-    method: "GET",
-    signal,
-    headers: {
-      "User-Agent": ua,
-      "hibp-api-key": key,
-      Accept: "application/json",
-    },
-  });
+    const { status, body: raw } = yield* fetchJsonUnknownEffect({
+      url,
+      signal,
+      service: "HIBP",
+      subject: normalized,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+      init: {
+        method: "GET",
+        headers: {
+          "User-Agent": ua,
+          "hibp-api-key": key,
+          Accept: "application/json",
+        },
+      },
+    });
 
-  if (res.status === 404) {
+    if (status === 404) {
+      return hibpLookupSnapshotSchema.parse({
+        email: normalized,
+        queriedAt: new Date().toISOString(),
+        found: false,
+        breachCount: 0,
+        breaches: [],
+        status: 404,
+      });
+    }
+
+    if (!Array.isArray(raw)) {
+      return yield* new ParseVendorError({
+        service: "HIBP",
+        subject: normalized,
+      });
+    }
+
+    const breaches: HibpBreach[] = recordRows(raw)
+      .slice(0, truncate)
+      .map((r) => {
+        const dataClasses = Array.isArray(r.DataClasses)
+          ? r.DataClasses.filter((x): x is string => typeof x === "string")
+          : [];
+        return hibpBreachSchema.parse({
+          name: typeof r.Name === "string" ? r.Name : "unknown",
+          title: typeof r.Title === "string" ? r.Title : null,
+          domain: typeof r.Domain === "string" ? r.Domain : null,
+          breachDate: typeof r.BreachDate === "string" ? r.BreachDate : null,
+          pwnCount: typeof r.PwnCount === "number" ? r.PwnCount : null,
+          dataClasses,
+        });
+      });
+
     return hibpLookupSnapshotSchema.parse({
       email: normalized,
       queriedAt: new Date().toISOString(),
-      found: false,
-      breachCount: 0,
-      breaches: [],
-      status: 404,
+      found: breaches.length > 0,
+      breachCount: raw.length,
+      breaches,
+      status,
     });
-  }
-
-  if (!res.ok) {
-    throw httpToolsError(
-      "HIBP API",
-      res.status,
-      `HIBP API ${res.status} for ${normalized}`
-    );
-  }
-
-  const raw: unknown = await res.json();
-  if (!Array.isArray(raw)) {
-    throw new TypeError("HIBP response was not an array");
-  }
-
-  const breaches: HibpBreach[] = recordRows(raw)
-    .slice(0, truncate)
-    .map((r) => {
-      const dataClasses = Array.isArray(r.DataClasses)
-        ? r.DataClasses.filter((x): x is string => typeof x === "string")
-        : [];
-      return hibpBreachSchema.parse({
-        name: typeof r.Name === "string" ? r.Name : "unknown",
-        title: typeof r.Title === "string" ? r.Title : null,
-        domain: typeof r.Domain === "string" ? r.Domain : null,
-        breachDate: typeof r.BreachDate === "string" ? r.BreachDate : null,
-        pwnCount: typeof r.PwnCount === "number" ? r.PwnCount : null,
-        dataClasses,
-      });
-    });
-
-  return hibpLookupSnapshotSchema.parse({
-    email: normalized,
-    queriedAt: new Date().toISOString(),
-    found: breaches.length > 0,
-    breachCount: raw.length,
-    breaches,
-    status: res.status,
   });
 }

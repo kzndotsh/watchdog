@@ -1,12 +1,14 @@
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
+import { NotFoundError } from "@watchdog/core";
 import { testId, testHttpOrigin } from "@watchdog/test-kit";
 
 const createApiContextMock = vi.hoisted(() =>
   vi.fn().mockResolvedValue({ actor: { id: "actor-1" } })
 );
-const getEntityByCaseSlugMock = vi.hoisted(() => vi.fn());
-const renderEntityMarkdownMock = vi.hoisted(() => vi.fn());
+const getEntityByCaseSlugEffectMock = vi.hoisted(() => vi.fn());
+const renderEntityMarkdownEffectMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -21,10 +23,18 @@ vi.mock("@/auth/api-context.server", () => ({
   createApiContext: createApiContextMock,
 }));
 
-vi.mock("@watchdog/core", () => ({
-  getEntityByCaseSlug: getEntityByCaseSlugMock,
-  renderEntityMarkdown: renderEntityMarkdownMock,
+vi.mock("@watchdog/api", () => ({
+  runApp: (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
 }));
+
+vi.mock("@watchdog/core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core")>();
+  return {
+    ...actual,
+    getEntityByCaseSlugEffect: getEntityByCaseSlugEffectMock,
+    renderEntityMarkdownEffect: renderEntityMarkdownEffectMock,
+  };
+});
 
 import { Route } from "@/routes/api/v1/cases.$caseId.entities.$slug.export[.]md";
 
@@ -59,8 +69,12 @@ describe("entity export markdown route", () => {
 
   it("returns markdown when the entity export succeeds", async () => {
     createApiContextMock.mockResolvedValueOnce({ actor: { id: "actor-1" } });
-    getEntityByCaseSlugMock.mockResolvedValueOnce({ id: testId(20) });
-    renderEntityMarkdownMock.mockResolvedValueOnce({ markdown: "# Target\n" });
+    getEntityByCaseSlugEffectMock.mockReturnValueOnce(
+      Effect.succeed({ id: testId(20) })
+    );
+    renderEntityMarkdownEffectMock.mockReturnValueOnce(
+      Effect.succeed({ markdown: "# Target\n" })
+    );
 
     const response = await handlers.GET({
       request: new Request(
@@ -76,7 +90,9 @@ describe("entity export markdown route", () => {
 
   it("returns 404 when the entity is missing", async () => {
     createApiContextMock.mockResolvedValueOnce({ actor: { id: "actor-1" } });
-    getEntityByCaseSlugMock.mockResolvedValueOnce(null);
+    getEntityByCaseSlugEffectMock.mockReturnValueOnce(
+      new NotFoundError({ resource: "Entity not found" })
+    );
 
     const response = await handlers.GET({
       request: new Request(

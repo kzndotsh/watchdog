@@ -1,4 +1,6 @@
-import { fetchAbuseIpdbCheck, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchAbuseIpdbCheckEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { abuseIpdbLookupInput } from "./input";
@@ -28,17 +30,21 @@ export const abuseIpdbLookup = defineCollectCap({
   },
   schema: abuseIpdbLookupSnapshotSchema,
   reportLabel: "abuseipdb.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`AbuseIPDB ${ip}`);
-    const key = await ctx.getCredential("ABUSEIPDB_API_KEY");
-    const snap = await fetchAbuseIpdbCheck(ip, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(
-      `confidence=${snap.abuseConfidenceScore ?? "n/a"} reports=${snap.totalReports ?? "n/a"}`
-    );
-    return { snap, artifactName: `abuseipdb-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* abuseIpdbLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`AbuseIPDB ${ip}`);
+      const key = yield* ctx.getCredential("ABUSEIPDB_API_KEY");
+      const snap = yield* fetchAbuseIpdbCheckEffect(ip, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `confidence=${snap.abuseConfidenceScore ?? "n/a"} reports=${snap.totalReports ?? "n/a"}`
+      );
+      return {
+        snap,
+        artifactName: `abuseipdb-${ip.replaceAll(":", "-")}.json`,
+      };
+    }),
   interpretSnap: interpretAbuseIpdbLookupReport,
 });

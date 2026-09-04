@@ -1,4 +1,6 @@
-import { fetchHackertargetReverseIp, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchHackertargetReverseIpEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hackertargetLookupInput } from "./input";
@@ -28,19 +30,20 @@ export const hackertargetLookup = defineCollectCap({
   },
   schema: hackertargetLookupSnapshotSchema,
   reportLabel: "hackertarget.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`HackerTarget reverse-IP ${ip}`);
-    const snap = await fetchHackertargetReverseIp(ip, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(
-      `domains=${snap.domains.length}${snap.error ? ` error=${snap.error}` : ""}`
-    );
-    return {
-      snap,
-      artifactName: `hackertarget-${ip.replaceAll(":", "-")}.json`,
-    };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* hackertargetLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`HackerTarget reverse-IP ${ip}`);
+      const snap = yield* fetchHackertargetReverseIpEffect(ip, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `domains=${snap.domains.length}${snap.error ? ` error=${snap.error}` : ""}`
+      );
+      return {
+        snap,
+        artifactName: `hackertarget-${ip.replaceAll(":", "-")}.json`,
+      };
+    }),
   interpretSnap: interpretHackertargetLookupReport,
 });

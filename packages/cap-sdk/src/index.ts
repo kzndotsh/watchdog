@@ -3,7 +3,9 @@ export {
   DEFAULT_CAP_TIMEOUT_MS,
   capTimeoutMs,
   type CapArtifact,
+  type CapRun,
   type CapRunResult,
+  type CapServices,
   type CapInterpretResult,
   type CapInterpretOpts,
   type CapJobPolicy,
@@ -18,6 +20,8 @@ export {
   type PatchOp,
   type JobHandoff,
 } from "./define";
+export { runCap } from "./run";
+export { optionalCapCredential } from "./optional-credential";
 export {
   toCapDescriptor,
   type CapDescriptor,

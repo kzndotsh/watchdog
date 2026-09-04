@@ -1,4 +1,8 @@
+import { Cause, Effect, Exit } from "effect";
+import { HttpClient } from "effect/unstable/http";
+
 import { errorMessage } from "../errors/tools-error";
+import { abortWhen } from "./abort-when";
 
 export interface FetchBytesOptions {
   /** User-Agent header (Cap OPSEC policy — pass from Cap, never hardcode Cap id here). */
@@ -7,6 +11,7 @@ export interface FetchBytesOptions {
   maxBytes: number;
   /** Accept header. */
   accept?: string;
+  headers?: Record<string, string>;
 }
 
 export interface FetchBytesResult {
@@ -30,40 +35,64 @@ function fetchBytesFailure(url: string, error: unknown): FetchBytesResult {
   };
 }
 
-/** Dumb fetch + truncate — Cap supplies UA / limits / Accept. */
-export async function fetchBytes(
+function mapFetchBytesFailure(url: string) {
+  return (error: unknown) => Effect.succeed(fetchBytesFailure(url, error));
+}
+
+function fetchBytesBody(
   url: string,
-  signal: AbortSignal,
   options: FetchBytesOptions
-): Promise<FetchBytesResult> {
+): Effect.Effect<FetchBytesResult, never, HttpClient.HttpClient> {
   const accept = options.accept ?? "*/*";
-  try {
-    const res = await fetch(url, {
-      signal,
-      redirect: "follow",
+  return Effect.gen(function* fetchBytesGen() {
+    const client = yield* HttpClient.HttpClient;
+    const res = yield* client.get(url, {
       headers: {
         Accept: accept,
         "User-Agent": options.userAgent,
+        ...options.headers,
       },
     });
-    const buf = new Uint8Array(await res.arrayBuffer());
+    const buffer = yield* res.arrayBuffer;
+    const buf = new Uint8Array(buffer);
     const truncated =
       buf.byteLength > options.maxBytes ? buf.slice(0, options.maxBytes) : buf;
-    const tokenHeader = res.headers.get("x-markdown-tokens");
+    const tokenHeader = res.headers["x-markdown-tokens"];
     const markdownTokensHint =
-      tokenHeader !== null && tokenHeader !== ""
+      tokenHeader !== undefined && tokenHeader !== ""
         ? Math.trunc(Number(tokenHeader))
         : undefined;
+    const requestUrl = res.request.url;
+    const finalUrl = requestUrl === "" ? url : requestUrl;
     return {
-      ok: res.ok,
+      ok: res.status >= 200 && res.status < 300,
       status: res.status,
       bytes: truncated,
-      contentType: res.headers.get("content-type"),
+      contentType: res.headers["content-type"] ?? null,
       ...(Number.isFinite(markdownTokensHint) ? { markdownTokensHint } : {}),
-      finalUrl: res.url || url,
-      ...(res.ok ? {} : { error: `HTTP ${res.status}` }),
+      finalUrl: finalUrl || url,
+      ...(res.status >= 200 && res.status < 300
+        ? {}
+        : { error: `HTTP ${res.status}` }),
     };
-  } catch (error) {
-    return fetchBytesFailure(url, error);
-  }
+  }).pipe(Effect.catch(mapFetchBytesFailure(url)));
+}
+
+/** Dumb fetch + truncate — Cap supplies UA / limits / Accept. Abort → `{ ok: false }`. */
+export function fetchBytesEffect(
+  url: string,
+  signal: AbortSignal,
+  options: FetchBytesOptions
+): Effect.Effect<FetchBytesResult, never, HttpClient.HttpClient> {
+  return fetchBytesBody(url, options).pipe(
+    Effect.raceFirst(abortWhen(signal)),
+    Effect.exit,
+    Effect.map((exit) => {
+      if (Exit.isSuccess(exit)) return exit.value;
+      if (Cause.hasInterruptsOnly(exit.cause)) {
+        return fetchBytesFailure(url, new Error("This operation was aborted"));
+      }
+      return fetchBytesFailure(url, Cause.squash(exit.cause));
+    })
+  );
 }

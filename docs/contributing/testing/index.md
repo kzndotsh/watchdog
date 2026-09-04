@@ -38,7 +38,7 @@ Sibling `__tests__/` next to source. Shared builders/harness: `@watchdog/test-ki
 
 **Web lib tests run in the component project** (jsdom), not `pnpm test:unit`. Unit is packages + worker only.
 
-Collect Caps ship `__tests__/interpret.test.ts`. Do not add a `run()` file per Cap: prove `report.json` + interpret via `itRunsCollectCap` (`@watchdog/test-kit/it`) on **three** Caps (`network.dns.lookup`, `web.url.unshorten`, `threat.virustotal.lookup`). Special `run()` (not `defineCollectCap`): `evidence.harvest`, `evidence.extract.ai`, `network.url.enrich`, `evidence.file.analyze`, `evidence.eml.analyze`. Web does not re-test Cap handlers. MSW: import `http` / `HttpResponse` / `mockServer` / `mockJson` from `@watchdog/test-kit/http`, not `msw`.
+Collect Caps ship `__tests__/interpret.test.ts`. Do not add a `run()` file per Cap: prove `report.json` + interpret via `itRunsCollectCap` (`@watchdog/test-kit/it`) on **three** Caps (`network.dns.lookup`, `web.url.unshorten`, `threat.virustotal.lookup`). Special `run()` (not `defineCollectCap`): `evidence.harvest`, `evidence.extract.ai`, `network.url.enrich`, `evidence.file.analyze`, `evidence.eml.analyze`. Web does not re-test Cap handlers. MSW: import `http` / `HttpResponse` / `mockServer` / `mockJson` from `@watchdog/test-kit/http`, not `msw`. Effect unit tests that sleep or use Layers: `it.effect` from `@effect/vitest` (TestClock is provided). Examples: `apps/worker/src/__tests__/cancel-poll.test.ts`, `packages/policy/src/__tests__/patch-gates.test.ts`.
 
 CLI unit tests cover `--help`, custody envelopes (`CUSTODY` without `--user-override` on identifier/edge/event/question writes), and `loadPatch`. Generated `packages/client/src/generated/` is CI regen, not a test target.
 

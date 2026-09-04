@@ -1,4 +1,6 @@
-import { fetchXforceLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchXforceLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { xforceLookupInput } from "./input";
@@ -28,17 +30,22 @@ export const xforceLookup = defineCollectCap({
   },
   schema: xforceLookupSnapshotSchema,
   reportLabel: "xforce.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`X-Force ${query}`);
-    const key = await ctx.getCredential("XFORCE_API_KEY");
-    const password = await ctx.getCredential("XFORCE_API_PASSWORD");
-    const snap = await fetchXforceLookup(query, key, password, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} score=${snap.score ?? "n/a"}`);
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `xforce-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* xforceLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`X-Force ${query}`);
+      const key = yield* ctx.getCredential("XFORCE_API_KEY");
+      const password = yield* ctx.getCredential("XFORCE_API_PASSWORD");
+      const snap = yield* fetchXforceLookupEffect(
+        query,
+        key,
+        password,
+        ctx.signal,
+        { userAgent: UA }
+      );
+      ctx.log(`found=${snap.found} score=${snap.score ?? "n/a"}`);
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `xforce-${safe}.json` };
+    }),
   interpretSnap: interpretXforceLookupReport,
 });

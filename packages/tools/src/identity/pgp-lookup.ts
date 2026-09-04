@@ -1,7 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { validationToolsError } from "../errors/tools-error";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchBytesEffect } from "../http/fetch-bytes";
 
 export const pgpKeySchema = z.object({
   /** Key id / fingerprint string from HKP index (may be short id). */
@@ -70,45 +73,45 @@ export function parseHkpMrIndex(body: string): PgpKeyHit[] {
 interface PgpLookupOptions {
   userAgent?: string;
 }
-export async function fetchPgpLookup(
+export function fetchPgpLookupEffect(
   queryRaw: string,
   signal: AbortSignal,
   options?: PgpLookupOptions
-): Promise<PgpLookupSnapshot> {
-  const query = queryRaw.trim();
-  if (!query) throw validationToolsError("PGP query required");
-  const ua = options?.userAgent ?? watchdogUserAgent("identity.pgp.lookup");
-
-  let source: string | null = null;
-  let keys: PgpKeyHit[] = [];
-
-  for (const base of KEYSERVERS) {
-    const url = `${base}/pks/lookup?op=index&options=mr&search=${encodeURIComponent(query)}`;
-    try {
-      // oxlint-disable-next-line no-await-in-loop -- ordered keyserver fallback; stops at first hit, must stay sequential
-      const res = await fetch(url, {
-        method: "GET",
-        signal,
-        headers: { "User-Agent": ua, Accept: "text/plain" },
+): Effect.Effect<PgpLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchPgpLookupGen() {
+    const query = queryRaw.trim();
+    if (!query) {
+      return yield* new ValidationVendorError({
+        message: "PGP query required",
       });
-      if (!res.ok) continue;
-      // oxlint-disable-next-line no-await-in-loop -- same ordered fallback as above
-      const text = await res.text();
+    }
+    const ua = options?.userAgent ?? watchdogUserAgent("identity.pgp.lookup");
+
+    let source: string | null = null;
+    let keys: PgpKeyHit[] = [];
+
+    for (const base of KEYSERVERS) {
+      const url = `${base}/pks/lookup?op=index&options=mr&search=${encodeURIComponent(query)}`;
+      const result = yield* fetchBytesEffect(url, signal, {
+        userAgent: ua,
+        maxBytes: 512_000,
+        accept: "text/plain",
+      });
+      if (!result.ok) continue;
+      const text = new TextDecoder().decode(result.bytes);
       const parsed = parseHkpMrIndex(text);
       if (parsed.length > 0) {
         keys = parsed;
         source = base;
         break;
       }
-    } catch {
-      // try next
     }
-  }
 
-  return pgpLookupSnapshotSchema.parse({
-    query,
-    queriedAt: new Date().toISOString(),
-    source,
-    keys,
+    return pgpLookupSnapshotSchema.parse({
+      query,
+      queriedAt: new Date().toISOString(),
+      source,
+      keys,
+    });
   });
 }

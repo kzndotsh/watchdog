@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   db,
   evidenceLinksRepo,
@@ -11,15 +13,22 @@ import type {
   IdentifierStatus,
   IdentifierType,
 } from "@watchdog/schemas";
-import {
-  normalizeIdList,
-  validateIdentifierWrite,
-} from "@watchdog/schemas";
+import { normalizeIdList, validateIdentifierWrite } from "@watchdog/schemas";
 
-import { assertEvidenceInCase } from "../evidence/evidence";
-import { DomainError, isUniqueViolation } from "../infra/domain-error";
-import { notifyEntityChanged } from "../infra/events";
-import { assertCaseExists, assertConfidenceEvidence, assertEntityInCase } from "./patch/guards";
+import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
+import { notifyEntityChangedEffect } from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
+import {
+  assertCaseExistsEffect,
+  assertConfidenceEvidenceEffect,
+  assertEntityInCaseEffect,
+} from "./patch/guards";
 
 const NATURAL_KEY_INDEX = "identifiers_natural_uidx";
 const DUPLICATE_MESSAGE = "That Identifier already exists on this Entity";
@@ -74,17 +83,23 @@ function toRecord(row: IdentifierRow, evidenceIds: string[]): IdentifierRecord {
   };
 }
 
-export async function listIdentifiersForEntity(
+export function listIdentifiersForEntityEffect(
   caseId: string,
   entityId: string
-): Promise<IdentifierRecord[]> {
-  await assertEntityInCase(caseId, entityId, db);
-  const rows = await identifiersRepo.listForEntity(db, entityId);
-  const byId = await evidenceLinksRepo.listForIdentifiers(
-    db,
-    rows.map((r) => r.id)
-  );
-  return rows.map((row) => toRecord(row, byId.get(row.id) ?? []));
+): Effect.Effect<IdentifierRecord[], DomainTag> {
+  return Effect.gen(function* listIdentifiersForEntityGen() {
+    yield* assertEntityInCaseEffect(caseId, entityId, db);
+    const rows = yield* tryDb(() =>
+      identifiersRepo.listForEntity(db, entityId)
+    );
+    const byId = yield* tryDb(() =>
+      evidenceLinksRepo.listForIdentifiers(
+        db,
+        rows.map((r) => r.id)
+      )
+    );
+    return rows.map((row) => toRecord(row, byId.get(row.id) ?? []));
+  });
 }
 
 /** Identifier plus owning entity labels for case-wide lists. */
@@ -106,163 +121,175 @@ export function toCaseIdentifierRecord(
   };
 }
 
-export async function listIdentifiersForCase(
+export function listIdentifiersForCaseEffect(
   caseId: string
-): Promise<CaseIdentifierRecord[]> {
-  await assertCaseExists(caseId);
-  const rows = await identifiersRepo.listForCase(db, caseId);
-  const byId = await evidenceLinksRepo.listForIdentifiers(
-    db,
-    rows.map((r) => r.id)
-  );
-  return rows.map((row) =>
-    toCaseIdentifierRecord(row, byId.get(row.id) ?? [])
-  );
-}
-
-export async function createIdentifier(
-  input: CreateIdentifierInput
-): Promise<IdentifierRecord> {
-  const written = validateIdentifierWrite({
-    type: input.type,
-    value: input.value,
-    platform: input.platform,
+): Effect.Effect<CaseIdentifierRecord[], DomainTag> {
+  return Effect.gen(function* listIdentifiersForCaseGen() {
+    yield* assertCaseExistsEffect(caseId);
+    const rows = yield* tryDb(() => identifiersRepo.listForCase(db, caseId));
+    const byId = yield* tryDb(() =>
+      evidenceLinksRepo.listForIdentifiers(
+        db,
+        rows.map((r) => r.id)
+      )
+    );
+    return rows.map((row) =>
+      toCaseIdentifierRecord(row, byId.get(row.id) ?? [])
+    );
   });
-  if (!written.ok) {
-    throw new DomainError("invalid", written.message);
-  }
-  const { value, platform } = written;
-
-  const evidenceIds = normalizeIdList(input.evidenceIds ?? []);
-  assertConfidenceEvidence(input.confidence, evidenceIds);
-
-  try {
-    const row = await db.transaction(async (tx) => {
-      await assertEntityInCase(input.caseId, input.entityId, tx);
-      await assertEvidenceInCase(input.caseId, evidenceIds, tx);
-
-      const created = await identifiersRepo.create(tx, {
-        entityId: input.entityId,
-        type: input.type,
-        platform,
-        value,
-        confidence: input.confidence,
-        status: input.status,
-        notes: input.notes ?? null,
-      });
-      if (!created) throw new DomainError("invalid", "Failed to create Identifier");
-      await evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds);
-      return created;
-    });
-
-    notifyEntityChanged(input.caseId);
-    return toRecord(row, evidenceIds);
-  } catch (error) {
-    if (isUniqueViolation(error, NATURAL_KEY_INDEX)) {
-      throw new DomainError("conflict", DUPLICATE_MESSAGE);
-    }
-    throw error;
-  }
 }
 
-export async function updateIdentifier(
-  input: UpdateIdentifierInput
-): Promise<IdentifierRecord> {
-  const existing = await identifiersRepo.getInCase(
-    db,
-    input.caseId,
-    input.identifierId
-  );
-  if (!existing) throw new DomainError("not_found", "Identifier not found");
+export function createIdentifierEffect(
+  input: CreateIdentifierInput
+): Effect.Effect<IdentifierRecord, DomainTag> {
+  return Effect.gen(function* createIdentifierGen() {
+    const written = validateIdentifierWrite({
+      type: input.type,
+      value: input.value,
+      platform: input.platform,
+    });
+    if (!written.ok) {
+      return yield* new InvalidError({ reason: written.message });
+    }
+    const { value, platform } = written;
 
-  if (
-    input.value === undefined &&
-    input.platform === undefined &&
-    input.type === undefined &&
-    input.status === undefined &&
-    input.confidence === undefined &&
-    input.notes === undefined &&
-    input.evidenceIds === undefined
-  ) {
-    throw new DomainError("invalid", "Nothing to update");
-  }
+    const evidenceIds = normalizeIdList(input.evidenceIds ?? []);
+    yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
-  const byIdExisting = await evidenceLinksRepo.listForIdentifiers(db, [
-    existing.id,
-  ]);
-  const evidenceIds = byIdExisting.get(existing.id) ?? [];
+    const row = yield* transact(
+      (tx) =>
+        Effect.gen(function* createIdentifierTx() {
+          yield* assertEntityInCaseEffect(input.caseId, input.entityId, tx);
+          yield* assertEvidenceIdsInCaseEffect(input.caseId, evidenceIds, tx);
 
-  try {
-    const { row, evidenceIds: nextEvidenceIds } = await db.transaction(
-      async (tx) => {
-        let nextIds = evidenceIds;
-        if (input.evidenceIds !== undefined) {
-          nextIds = normalizeIdList(input.evidenceIds);
-          await assertEvidenceInCase(input.caseId, nextIds, tx);
-          nextIds = await evidenceLinksRepo.replaceIdentifier(
-            tx,
-            existing.id,
-            nextIds
+          const created = yield* tryDb(() =>
+            identifiersRepo.create(tx, {
+              entityId: input.entityId,
+              type: input.type,
+              platform,
+              value,
+              confidence: input.confidence,
+              status: input.status,
+              notes: input.notes ?? null,
+            })
           );
-        }
-
-        const nextConfidence = input.confidence ?? existing.confidence;
-        assertConfidenceEvidence(nextConfidence, nextIds);
-
-        const patch: Parameters<typeof identifiersRepo.update>[2] = {};
-        if (
-          input.value !== undefined ||
-          input.type !== undefined ||
-          input.platform !== undefined
-        ) {
-          const written = validateIdentifierWrite({
-            type: input.type ?? existing.type,
-            value: input.value ?? existing.value,
-            platform: input.platform ?? existing.platform,
-          });
-          if (!written.ok) {
-            throw new DomainError("invalid", written.message);
+          if (!created) {
+            return yield* new InvalidError({
+              reason: "Failed to create Identifier",
+            });
           }
-          if (input.type !== undefined) patch.type = written.type;
-          if (input.platform !== undefined) {
-            patch.platform = written.platform;
+          yield* tryDb(() =>
+            evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
+          );
+          return created;
+        }),
+      { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
+    );
+
+    yield* notifyEntityChangedEffect(input.caseId);
+    return toRecord(row, evidenceIds);
+  });
+}
+
+export function updateIdentifierEffect(
+  input: UpdateIdentifierInput
+): Effect.Effect<IdentifierRecord, DomainTag> {
+  return Effect.gen(function* updateIdentifierGen() {
+    const existing = yield* tryDb(() =>
+      identifiersRepo.getInCase(db, input.caseId, input.identifierId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Identifier not found" });
+    }
+
+    if (
+      input.value === undefined &&
+      input.platform === undefined &&
+      input.type === undefined &&
+      input.status === undefined &&
+      input.confidence === undefined &&
+      input.notes === undefined &&
+      input.evidenceIds === undefined
+    ) {
+      return yield* new InvalidError({ reason: "Nothing to update" });
+    }
+
+    const byIdExisting = yield* tryDb(() =>
+      evidenceLinksRepo.listForIdentifiers(db, [existing.id])
+    );
+    const evidenceIds = byIdExisting.get(existing.id) ?? [];
+
+    const { row, evidenceIds: nextEvidenceIds } = yield* transact(
+      (tx) =>
+        Effect.gen(function* updateIdentifierTx() {
+          let nextIds = evidenceIds;
+          if (input.evidenceIds !== undefined) {
+            nextIds = normalizeIdList(input.evidenceIds);
+            yield* assertEvidenceIdsInCaseEffect(input.caseId, nextIds, tx);
+            nextIds = yield* tryDb(() =>
+              evidenceLinksRepo.replaceIdentifier(tx, existing.id, nextIds)
+            );
           }
+
+          const nextConfidence = input.confidence ?? existing.confidence;
+          if (nextConfidence === "confirmed" && nextIds.length === 0) {
+            return yield* new InvalidError({
+              reason: "confirmed requires at least one Evidence attachment",
+            });
+          }
+
+          const patch: Parameters<typeof identifiersRepo.update>[2] = {};
           if (
             input.value !== undefined ||
             input.type !== undefined ||
-            written.value !== existing.value
+            input.platform !== undefined
           ) {
-            patch.value = written.value;
+            const written = validateIdentifierWrite({
+              type: input.type ?? existing.type,
+              value: input.value ?? existing.value,
+              platform: input.platform ?? existing.platform,
+            });
+            if (!written.ok) {
+              return yield* new InvalidError({ reason: written.message });
+            }
+            if (input.type !== undefined) patch.type = written.type;
+            if (input.platform !== undefined) {
+              patch.platform = written.platform;
+            }
+            if (
+              input.value !== undefined ||
+              input.type !== undefined ||
+              written.value !== existing.value
+            ) {
+              patch.value = written.value;
+            }
           }
-        }
-        if (input.status !== undefined) patch.status = input.status;
-        if (input.confidence !== undefined) {
-          patch.confidence = input.confidence;
-        }
-        if (input.notes !== undefined) {
-          patch.notes = input.notes.trim() || null;
-        }
+          if (input.status !== undefined) patch.status = input.status;
+          if (input.confidence !== undefined) {
+            patch.confidence = input.confidence;
+          }
+          if (input.notes !== undefined) {
+            patch.notes = input.notes.trim() || null;
+          }
 
-        if (Object.keys(patch).length === 0) {
-          return { row: existing, evidenceIds: nextIds };
-        }
+          if (Object.keys(patch).length === 0) {
+            return { row: existing, evidenceIds: nextIds };
+          }
 
-        const updated = await identifiersRepo.update(
-          tx,
-          input.identifierId,
-          patch
-        );
-        if (!updated) throw new DomainError("invalid", "Failed to update Identifier");
-        return { row: updated, evidenceIds: nextIds };
-      }
+          const updated = yield* tryDb(() =>
+            identifiersRepo.update(tx, input.identifierId, patch)
+          );
+          if (!updated) {
+            return yield* new InvalidError({
+              reason: "Failed to update Identifier",
+            });
+          }
+          return { row: updated, evidenceIds: nextIds };
+        }),
+      { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
     );
 
-    notifyEntityChanged(input.caseId);
+    yield* notifyEntityChangedEffect(input.caseId);
     return toRecord(row, nextEvidenceIds);
-  } catch (error) {
-    if (isUniqueViolation(error, NATURAL_KEY_INDEX)) {
-      throw new DomainError("conflict", DUPLICATE_MESSAGE);
-    }
-    throw error;
-  }
+  });
 }

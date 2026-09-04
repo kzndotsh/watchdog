@@ -1,11 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import {
-  httpToolsError,
-  missingApiKey,
-  parseToolsError,
-} from "../errors/tools-error";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -44,94 +43,94 @@ function contactField(contact: unknown, key: string): string | null {
 interface WhoxyOptions {
   userAgent?: string;
 }
-export async function fetchWhoxyWhois(
+
+export function fetchWhoxyWhoisEffect(
   hostRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: WhoxyOptions
-): Promise<WhoxyLookupSnapshot> {
-  const host = normalizeHost(hostRaw);
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("WHOXY_API_KEY");
+): Effect.Effect<WhoxyLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchWhoxyWhoisGen() {
+    const host = normalizeHost(hostRaw);
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "WHOXY_API_KEY" });
+    }
 
-  const ua = options?.userAgent ?? watchdogUserAgent("network.whoxy.lookup");
-  const url = new URL("https://api.whoxy.com/");
-  url.searchParams.set("key", key);
-  url.searchParams.set("whois", host);
+    const ua = options?.userAgent ?? watchdogUserAgent("network.whoxy.lookup");
+    const url = new URL("https://api.whoxy.com/");
+    url.searchParams.set("key", key);
+    url.searchParams.set("whois", host);
 
-  const res = await fetch(url, {
-    method: "GET",
-    signal,
-    headers: { Accept: "application/json", "User-Agent": ua },
-  });
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url,
+      signal,
+      service: "Whoxy",
+      subject: host,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
+    let statusNum: number | null;
+    if (typeof body.status === "number") {
+      statusNum = body.status;
+    } else if (typeof body.status === "string") {
+      statusNum = Number(body.status);
+    } else {
+      statusNum = null;
+    }
+    const ok = statusNum === 1;
 
-  if (!res.ok) {
-    throw httpToolsError(
-      "Whoxy API",
-      res.status,
-      `Whoxy API ${res.status} for ${host}`
-    );
-  }
+    let nameServers: string[];
+    if (Array.isArray(body.name_servers)) {
+      nameServers = body.name_servers.filter(
+        (n): n is string => typeof n === "string"
+      );
+    } else if (typeof body.name_servers === "string") {
+      nameServers = body.name_servers.split(/[\s,]+/).filter(Boolean);
+    } else {
+      nameServers = [];
+    }
 
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("Whoxy", host);
-  }
-  let statusNum: number | null;
-  if (typeof body.status === "number") {
-    statusNum = body.status;
-  } else if (typeof body.status === "string") {
-    statusNum = Number(body.status);
-  } else {
-    statusNum = null;
-  }
-  const ok = statusNum === 1;
+    const registrant = body.registrant_contact;
 
-  let nameServers: string[];
-  if (Array.isArray(body.name_servers)) {
-    nameServers = body.name_servers.filter(
-      (n): n is string => typeof n === "string"
-    );
-  } else if (typeof body.name_servers === "string") {
-    nameServers = body.name_servers.split(/[\s,]+/).filter(Boolean);
-  } else {
-    nameServers = [];
-  }
+    const registrarObj = isRecord(body.domain_registrar)
+      ? body.domain_registrar
+      : null;
+    let registrarName: string | null;
+    if (typeof registrarObj?.registrar_name === "string") {
+      registrarName = registrarObj.registrar_name;
+    } else if (typeof body.registrar_name === "string") {
+      registrarName = body.registrar_name;
+    } else {
+      registrarName = null;
+    }
 
-  const registrant = body.registrant_contact;
-
-  const registrarObj = isRecord(body.domain_registrar)
-    ? body.domain_registrar
-    : null;
-  let registrarName: string | null;
-  if (typeof registrarObj?.registrar_name === "string") {
-    registrarName = registrarObj.registrar_name;
-  } else if (typeof body.registrar_name === "string") {
-    registrarName = body.registrar_name;
-  } else {
-    registrarName = null;
-  }
-
-  return whoxyLookupSnapshotSchema.parse({
-    host,
-    queriedAt: new Date().toISOString(),
-    status: res.status,
-    ok,
-    registrarName,
-    createDate: typeof body.create_date === "string" ? body.create_date : null,
-    updateDate: typeof body.update_date === "string" ? body.update_date : null,
-    expireDate: typeof body.expiry_date === "string" ? body.expiry_date : null,
-    domainRegistrar: registrarName,
-    nameServers,
-    registrantName: contactField(registrant, "full_name"),
-    registrantEmail: contactField(registrant, "email_address"),
-    registrantOrg: contactField(registrant, "company_name"),
-    registrantCountry:
-      contactField(registrant, "country_name") ??
-      contactField(registrant, "country_code"),
-    rawStatus:
-      typeof body.status === "string" || typeof body.status === "number"
-        ? body.status
-        : null,
+    return whoxyLookupSnapshotSchema.parse({
+      host,
+      queriedAt: new Date().toISOString(),
+      status,
+      ok,
+      registrarName,
+      createDate:
+        typeof body.create_date === "string" ? body.create_date : null,
+      updateDate:
+        typeof body.update_date === "string" ? body.update_date : null,
+      expireDate:
+        typeof body.expiry_date === "string" ? body.expiry_date : null,
+      domainRegistrar: registrarName,
+      nameServers,
+      registrantName: contactField(registrant, "full_name"),
+      registrantEmail: contactField(registrant, "email_address"),
+      registrantOrg: contactField(registrant, "company_name"),
+      registrantCountry:
+        contactField(registrant, "country_name") ??
+        contactField(registrant, "country_code"),
+      rawStatus:
+        typeof body.status === "string" || typeof body.status === "number"
+          ? body.status
+          : null,
+    });
   });
 }

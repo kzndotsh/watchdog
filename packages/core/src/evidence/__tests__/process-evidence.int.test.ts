@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   DomainError,
-  confirmFileUpload,
-  enrichUrlEvidence,
-  markEvidenceProcessed,
-  processEvidence,
+  confirmFileUploadEffect,
+  enrichUrlEvidenceEffect,
+  markEvidenceProcessedEffect,
+  processEvidenceEffect,
+  runDomain,
 } from "@watchdog/core";
 import { casesRepo, db, evidenceRepo } from "@watchdog/db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
@@ -19,19 +20,23 @@ describe("processEvidence", () => {
   it("starts harvest and returns the active job on a second call", async () => {
     const cased = await seedCase(db);
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
-    const first = await processEvidence({
-      caseId: cased.id,
-      evidenceId: evidence.id,
-      actorId: TEST_ACTOR_ID,
-    });
+    const first = await runDomain(
+      processEvidenceEffect({
+        caseId: cased.id,
+        evidenceId: evidence.id,
+        actorId: TEST_ACTOR_ID,
+      })
+    );
     expect(first.capabilityId).toBe("evidence.harvest");
     expect(first.input).toEqual({ evidenceId: evidence.id });
     expect(first.input).not.toHaveProperty("entityId");
-    const second = await processEvidence({
-      caseId: cased.id,
-      evidenceId: evidence.id,
-      actorId: TEST_ACTOR_ID,
-    });
+    const second = await runDomain(
+      processEvidenceEffect({
+        caseId: cased.id,
+        evidenceId: evidence.id,
+        actorId: TEST_ACTOR_ID,
+      })
+    );
     expect(second.id).toBe(first.id);
   });
 
@@ -40,12 +45,14 @@ describe("processEvidence", () => {
     await casesRepo.update(db, cased.id, { allowThirdPartyEgress: true });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     await expect(
-      processEvidence({
-        caseId: cased.id,
-        evidenceId: evidence.id,
-        actorId: TEST_ACTOR_ID,
-        ai: true,
-      })
+      runDomain(
+        processEvidenceEffect({
+          caseId: cased.id,
+          evidenceId: evidence.id,
+          actorId: TEST_ACTOR_ID,
+          ai: true,
+        })
+      )
     ).rejects.toThrow(/credential/i);
   });
 
@@ -57,11 +64,13 @@ describe("processEvidence", () => {
       sourceUrl: null,
     });
     await expect(
-      enrichUrlEvidence({
-        caseId: cased.id,
-        evidenceId: evidence.id,
-        actorId: TEST_ACTOR_ID,
-      })
+      runDomain(
+        enrichUrlEvidenceEffect({
+          caseId: cased.id,
+          evidenceId: evidence.id,
+          actorId: TEST_ACTOR_ID,
+        })
+      )
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "invalid"
     );
@@ -70,10 +79,12 @@ describe("processEvidence", () => {
   it("stamps processedAt", async () => {
     const cased = await seedCase(db);
     const evidence = await seedEvidence(db, cased.id);
-    await markEvidenceProcessed({
-      caseId: cased.id,
-      evidenceId: evidence.id,
-    });
+    await runDomain(
+      markEvidenceProcessedEffect({
+        caseId: cased.id,
+        evidenceId: evidence.id,
+      })
+    );
     const row = await evidenceRepo.getActiveInCase(db, cased.id, evidence.id);
     expect(row?.processedAt).not.toBeNull();
   });
@@ -81,15 +92,17 @@ describe("processEvidence", () => {
   it("rejects confirmFile when the uri is not in the case prefix", async () => {
     const cased = await seedCase(db);
     await expect(
-      confirmFileUpload(
-        {
-          caseId: cased.id,
-          uri: "other-case/file.bin",
-          sha256: "ab".repeat(32),
-          mime: "application/octet-stream",
-          byteLength: 4,
-        },
-        TEST_ACTOR_ID
+      runDomain(
+        confirmFileUploadEffect(
+          {
+            caseId: cased.id,
+            uri: "other-case/file.bin",
+            sha256: "ab".repeat(32),
+            mime: "application/octet-stream",
+            byteLength: 4,
+          },
+          TEST_ACTOR_ID
+        )
       )
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "invalid"

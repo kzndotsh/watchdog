@@ -1,13 +1,14 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import {
-  httpToolsError,
-  missingApiKey,
-  parseToolsError,
-  rateLimitedToolsError,
-  validationToolsError,
-} from "../errors/tools-error";
+  MissingCredentialError,
+  ValidationVendorError,
+  type ToolsTag,
+} from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { isRecord } from "../parse/coerce";
 
 export const safebrowsingMatchSchema = z.object({
@@ -44,78 +45,73 @@ const THREAT_TYPES = [
 interface SafebrowsingOptions {
   userAgent?: string;
 }
-export async function fetchSafebrowsingLookup(
+
+export function fetchSafebrowsingLookupEffect(
   urlRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: SafebrowsingOptions
-): Promise<SafebrowsingLookupSnapshot> {
-  const url = urlRaw.trim();
-  if (!url) throw validationToolsError("url required");
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("GOOGLE_SAFEBROWSING_API_KEY");
+): Effect.Effect<SafebrowsingLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchSafebrowsingLookupGen() {
+    const url = urlRaw.trim();
+    if (!url) {
+      return yield* new ValidationVendorError({ message: "url required" });
+    }
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({
+        slot: "GOOGLE_SAFEBROWSING_API_KEY",
+      });
+    }
 
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("threat.safebrowsing.lookup");
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("threat.safebrowsing.lookup");
 
-  const res = await fetch(
-    `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${encodeURIComponent(key)}`,
-    {
-      method: "POST",
+    const { body } = yield* fetchJsonObjectEffect({
+      url: `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${encodeURIComponent(key)}`,
       signal,
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "User-Agent": ua,
-      },
-      body: JSON.stringify({
-        client: { clientId: "watchdog", clientVersion: "1.0" },
-        threatInfo: {
-          threatTypes: THREAT_TYPES,
-          platformTypes: ["ANY_PLATFORM"],
-          threatEntryTypes: ["URL"],
-          threatEntries: [{ url }],
+      service: "Safe Browsing",
+      subject: url,
+      init: {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": ua,
         },
-      }),
-    }
-  );
-
-  if (res.status === 429) {
-    throw rateLimitedToolsError("Safe Browsing", url);
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "Safe Browsing API",
-      res.status,
-      `Safe Browsing API ${res.status} for ${url}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("Safe Browsing", url);
-  }
-  const rawMatches = Array.isArray(body.matches) ? body.matches : [];
-  const matches: SafebrowsingMatch[] = [];
-  for (const row of rawMatches) {
-    if (!isRecord(row)) continue;
-    if (
-      typeof row.threatType !== "string" ||
-      typeof row.platformType !== "string"
-    ) {
-      continue;
-    }
-    matches.push({
-      threatType: row.threatType,
-      platformType: row.platformType,
+        body: JSON.stringify({
+          client: { clientId: "watchdog", clientVersion: "1.0" },
+          threatInfo: {
+            threatTypes: THREAT_TYPES,
+            platformTypes: ["ANY_PLATFORM"],
+            threatEntryTypes: ["URL"],
+            threatEntries: [{ url }],
+          },
+        }),
+      },
     });
-  }
+    const rawMatches = Array.isArray(body.matches) ? body.matches : [];
+    const matches: SafebrowsingMatch[] = [];
+    for (const row of rawMatches) {
+      if (!isRecord(row)) continue;
+      if (
+        typeof row.threatType !== "string" ||
+        typeof row.platformType !== "string"
+      ) {
+        continue;
+      }
+      matches.push({
+        threatType: row.threatType,
+        platformType: row.platformType,
+      });
+    }
 
-  return safebrowsingLookupSnapshotSchema.parse({
-    url,
-    queriedAt: new Date().toISOString(),
-    source: "safebrowsing.googleapis.com",
-    found: matches.length > 0,
-    matches,
+    return safebrowsingLookupSnapshotSchema.parse({
+      url,
+      queriedAt: new Date().toISOString(),
+      source: "safebrowsing.googleapis.com",
+      found: matches.length > 0,
+      matches,
+    });
   });
 }

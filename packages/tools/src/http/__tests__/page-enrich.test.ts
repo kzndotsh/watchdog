@@ -1,10 +1,19 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+} from "@effect/vitest";
+import { Effect } from "effect";
 
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 
-import { fetchPageEnrich } from "../page-enrich.ts";
+import { toolsHttpClientLayer } from "../http-client-layer";
+import { fetchPageEnrichEffect } from "../page-enrich.ts";
 
-describe("fetchPageEnrich", () => {
+describe("fetchPageEnrichEffect", () => {
   beforeAll(() => {
     mockServer.listen({ onUnhandledRequest: "error" });
   });
@@ -15,20 +24,22 @@ describe("fetchPageEnrich", () => {
     mockServer.close();
   });
 
-  it("extracts the title from live HTML", async () => {
-    mockServer.use(
-      http.get("https://mailhost.test/page", () =>
-        HttpResponse.text("<html><title>Ada</title></html>", {
-          headers: { "content-type": "text/html" },
-        })
-      )
-    );
-    const snap = await fetchPageEnrich(
-      "https://mailhost.test/page",
-      new AbortController().signal,
-      { userAgent: "watchdog-test" }
-    );
-    expect(snap.title).toBe("Ada");
-    expect(snap.ok).toBe(true);
-  });
+  it.effect("extracts the title from live HTML", () =>
+    Effect.gen(function* fetchPageEnrichTitleGen() {
+      mockServer.use(
+        http.get("https://mailhost.test/page", () =>
+          HttpResponse.text("<html><title>Ada</title></html>", {
+            headers: { "content-type": "text/html" },
+          })
+        )
+      );
+      const snap = yield* fetchPageEnrichEffect(
+        "https://mailhost.test/page",
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
+      );
+      expect(snap.title).toBe("Ada");
+      expect(snap.ok).toBe(true);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 });

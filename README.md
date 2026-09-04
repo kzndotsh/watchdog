@@ -172,7 +172,7 @@ packages/
 
 Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and only `core` touches repos. Full matrix in [`docs/reference/platform/README.md`](docs/reference/platform/README.md).
 
-A job's path: `enqueueCapJob` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to Triage → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
+A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to Triage → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
 
 | Layer | Stack |
 | --- | --- |

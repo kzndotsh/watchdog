@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import { requireCapability } from "@watchdog/caps";
 import {
   db,
@@ -13,12 +15,22 @@ import {
   type PlaybookRunStatus,
 } from "@watchdog/schemas";
 
-import { assertCaseExists, assertEntityInCase } from "../graph/patch/guards";
-import { DomainError, errorMessage } from "../infra/domain-error";
+import {
+  assertCaseExistsEffect,
+  assertEntityInCaseEffect,
+} from "../graph/patch/guards";
+import { errorMessage } from "../infra/domain-error";
+import { tryDb } from "../infra/postgres-effect";
 import { logProcess } from "../infra/process-log";
-import { enqueueCapJob } from "./boss";
-import { assertCapAvailability } from "./cap-availability";
-import { setJobStatus } from "./set-job-status";
+import {
+  ConflictError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
+import { enqueueCapJobEffect } from "./boss";
+import { assertCapAvailabilityEffect } from "./cap-availability";
+import { setJobStatusEffect } from "./set-job-status";
 
 const CANCELLABLE_STATUSES = new Set<JobStatus>([
   "queued",
@@ -107,107 +119,128 @@ export function toJobRecord(
   };
 }
 
-export async function startJob(input: StartJobInput): Promise<JobRecord> {
-  await assertCaseExists(input.caseId);
-  let cap;
-  try {
-    cap = requireCapability(input.capabilityId);
-  } catch (error) {
-    const msg = errorMessage(error);
-    throw new DomainError("not_found", msg);
-  }
-  const parsed = cap.input.safeParse(input.input);
-  if (!parsed.success) {
-    throw new DomainError(
-      "invalid",
-      `Invalid Cap input: ${parsed.error.message}`
+export function startJobEffect(
+  input: StartJobInput
+): Effect.Effect<JobRecord, DomainTag> {
+  return Effect.gen(function* startJobGen() {
+    yield* assertCaseExistsEffect(input.caseId);
+    const cap = yield* Effect.try({
+      try: () => requireCapability(input.capabilityId),
+      catch: (error) => new NotFoundError({ resource: errorMessage(error) }),
+    });
+    const parsed = cap.input.safeParse(input.input);
+    if (!parsed.success) {
+      return yield* new InvalidError({
+        reason: `Invalid Cap input: ${parsed.error.message}`,
+      });
+    }
+
+    if (!isJsonObject(parsed.data)) {
+      return yield* new InvalidError({
+        reason: "Invalid Cap input: expected a JSON object",
+      });
+    }
+    const capInput = parsed.data;
+
+    if (typeof capInput.entityId === "string") {
+      yield* assertEntityInCaseEffect(input.caseId, capInput.entityId);
+    }
+
+    yield* assertCapAvailabilityEffect({
+      actorId: input.actorId,
+      caseId: input.caseId,
+      cap,
+    });
+
+    const row = yield* tryDb(() =>
+      jobsRepo.create(db, {
+        caseId: input.caseId,
+        capabilityId: input.capabilityId,
+        input: capInput,
+        status: "queued",
+        actorId: input.actorId,
+        logs: [],
+      })
     );
-  }
 
-  if (!isJsonObject(parsed.data)) {
-    throw new DomainError(
-      "invalid",
-      "Invalid Cap input: expected a JSON object"
-    );
-  }
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to create Job" });
+    }
 
-  if (typeof parsed.data.entityId === "string") {
-    await assertEntityInCase(input.caseId, parsed.data.entityId);
-  }
+    yield* enqueueCapJobEffect(row.id, input.capabilityId);
 
-  await assertCapAvailability({
-    actorId: input.actorId,
-    caseId: input.caseId,
-    cap,
+    return toJobRecord(row);
   });
-
-  const row = await jobsRepo.create(db, {
-    caseId: input.caseId,
-    capabilityId: input.capabilityId,
-    input: parsed.data,
-    status: "queued",
-    actorId: input.actorId,
-    logs: [],
-  });
-
-  if (!row) throw new Error("Failed to create Job");
-
-  await enqueueCapJob(row.id, input.capabilityId);
-
-  return toJobRecord(row);
 }
 
-export async function listJobsForCase(
+export function listJobsForCaseEffect(
   caseId: string
-): Promise<JobListRecord[]> {
-  await assertCaseExists(caseId);
-  const rows = await jobsRepo.listForCase(db, caseId);
-  return rows.map(({ job, playbookId, playbookRunStatus }) =>
-    toJobListRecord(job, playbookId, playbookRunStatus)
-  );
+): Effect.Effect<JobListRecord[], DomainTag> {
+  return Effect.gen(function* listJobsGen() {
+    yield* assertCaseExistsEffect(caseId);
+    const rows = yield* tryDb(() => jobsRepo.listForCase(db, caseId));
+    return rows.map(({ job, playbookId, playbookRunStatus }) =>
+      toJobListRecord(job, playbookId, playbookRunStatus)
+    );
+  });
 }
 
-export async function getJobForCase(
+export function getJobForCaseEffect(
   caseId: string,
   jobId: string
-): Promise<JobRecord | null> {
-  const row = await jobsRepo.getInCase(db, caseId, jobId);
-  if (!row) return null;
-  return toJobRecord(row.job, row.playbookId, row.playbookRunStatus);
+): Effect.Effect<JobRecord, DomainTag> {
+  return tryDb(() => jobsRepo.getInCase(db, caseId, jobId)).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.succeed(
+            toJobRecord(row.job, row.playbookId, row.playbookRunStatus)
+          )
+        : new NotFoundError({ resource: "Job not found" })
+    )
+  );
 }
 
 interface EntityListOpts3 {
   actorId?: string;
 }
 
-export async function cancelJob(
+export function cancelJobEffect(
   caseId: string,
   jobId: string,
   opts?: EntityListOpts3
-): Promise<JobRecord> {
-  const row = await jobsRepo.getInCase(db, caseId, jobId);
-  if (!row) throw new DomainError("not_found", "Job not found");
-  if (!CANCELLABLE_STATUSES.has(row.job.status)) {
-    throw new DomainError(
-      "conflict",
-      "Only queued/running/blocked Jobs can be cancelled"
-    );
-  }
-  const updated = await setJobStatus(jobId, {
-    status: "cancelled",
-    finishedAt: new Date(),
-  });
-  if (!updated) throw new Error("Cancel failed");
-  if (opts?.actorId) {
-    logProcess("job.cancel", "Job cancelled", {
-      caseId,
-      jobId,
-      actorId: opts.actorId,
+): Effect.Effect<JobRecord, DomainTag> {
+  return Effect.gen(function* cancelJobGen() {
+    const row = yield* tryDb(() => jobsRepo.getInCase(db, caseId, jobId));
+    if (!row) {
+      return yield* new NotFoundError({ resource: "Job not found" });
+    }
+    if (!CANCELLABLE_STATUSES.has(row.job.status)) {
+      return yield* new ConflictError({
+        reason: "Only queued/running/blocked Jobs can be cancelled",
+      });
+    }
+    const updated = yield* setJobStatusEffect(jobId, {
+      status: "cancelled",
+      finishedAt: new Date(),
     });
-  }
-  return toJobRecord(updated, row.playbookId, row.playbookRunStatus);
+    if (!updated) {
+      return yield* new InvalidError({ reason: "Cancel failed" });
+    }
+    if (opts?.actorId) {
+      yield* Effect.sync(() => {
+        logProcess("job.cancel", "Job cancelled", {
+          caseId,
+          jobId,
+          actorId: opts.actorId,
+        });
+      });
+    }
+    return toJobRecord(updated, row.playbookId, row.playbookRunStatus);
+  });
 }
 
-export async function findCancelledJobIds(ids: string[]): Promise<string[]> {
-  return await jobsRepo.findCancelledJobIds(db, ids);
+export function findCancelledJobIdsEffect(
+  ids: string[]
+): Effect.Effect<string[], DomainTag> {
+  return tryDb(() => jobsRepo.findCancelledJobIds(db, ids));
 }

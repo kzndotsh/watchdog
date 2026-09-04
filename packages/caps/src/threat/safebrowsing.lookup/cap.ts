@@ -1,4 +1,6 @@
-import { fetchSafebrowsingLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchSafebrowsingLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { safebrowsingLookupInput } from "./input";
@@ -28,16 +30,17 @@ export const safebrowsingLookup = defineCollectCap({
   },
   schema: safebrowsingLookupSnapshotSchema,
   reportLabel: "safebrowsing.lookup",
-  async fetch(ctx) {
-    const url = ctx.input.url.trim();
-    ctx.log(`Safe Browsing ${url}`);
-    const key = await ctx.getCredential("GOOGLE_SAFEBROWSING_API_KEY");
-    const snap = await fetchSafebrowsingLookup(url, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} matches=${snap.matches.length}`);
-    const safe = url.replaceAll(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
-    return { snap, artifactName: `safebrowsing-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* safebrowsingLookupFetch() {
+      const url = ctx.input.url.trim();
+      ctx.log(`Safe Browsing ${url}`);
+      const key = yield* ctx.getCredential("GOOGLE_SAFEBROWSING_API_KEY");
+      const snap = yield* fetchSafebrowsingLookupEffect(url, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} matches=${snap.matches.length}`);
+      const safe = url.replaceAll(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
+      return { snap, artifactName: `safebrowsing-${safe}.json` };
+    }),
   interpretSnap: interpretSafebrowsingLookupReport,
 });

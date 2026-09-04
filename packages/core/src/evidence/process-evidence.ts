@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   db,
   evidenceRepo,
@@ -12,58 +14,62 @@ import {
   URL_ENRICH_CAPABILITY_ID,
 } from "@watchdog/schemas";
 
-import { DomainError } from "../infra/domain-error";
-import { startJob, type JobRecord, toJobRecord } from "../jobs/start-job";
+import { tryDb } from "../infra/postgres-effect";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
+import { startJobEffect, type JobRecord, toJobRecord } from "../jobs/start-job";
 
-/**
- * Shared Intake glue: load Evidence, dedupe against active Cap Jobs, startJob.
- */
-function startCapForEvidence(input: {
+function startCapForEvidenceEffect(input: {
   caseId: string;
   evidenceId: string;
   actorId: string;
   capabilityId: string;
   matchActive: (job: JobRow, seed: EvidenceCapSeed) => boolean;
   buildInput: (seed: EvidenceCapSeed) => JsonObject;
-  /** Optional gate after Evidence load (e.g. require http(s) URL). */
-  assertSeed?: (seed: EvidenceCapSeed) => void;
-}): Promise<JobRecord> {
-  return evidenceRepo
-    .getCapSeedInCase(db, input.caseId, input.evidenceId)
-    .then((seed) => {
-      if (!seed) throw new DomainError("not_found", "Evidence not found");
-      input.assertSeed?.(seed);
-      return jobsRepo
-        .listActiveForCapability(db, input.caseId, input.capabilityId)
-        .then((active) => {
-          for (const job of active) {
-            if (input.matchActive(job, seed)) {
-              return toJobRecord(job);
-            }
-          }
-          return startJob({
-            caseId: input.caseId,
-            capabilityId: input.capabilityId,
-            actorId: input.actorId,
-            input: input.buildInput(seed),
-          });
-        });
+  assertSeed?: (seed: EvidenceCapSeed) => Effect.Effect<void, DomainTag>;
+}): Effect.Effect<JobRecord, DomainTag> {
+  return Effect.gen(function* startCapForEvidenceGen() {
+    const seed = yield* tryDb(() =>
+      evidenceRepo.getCapSeedInCase(db, input.caseId, input.evidenceId)
+    );
+    if (!seed) {
+      return yield* new NotFoundError({ resource: "Evidence not found" });
+    }
+    if (input.assertSeed) {
+      yield* input.assertSeed(seed);
+    }
+    const active = yield* tryDb(() =>
+      jobsRepo.listActiveForCapability(db, input.caseId, input.capabilityId)
+    );
+    for (const job of active) {
+      if (input.matchActive(job, seed)) {
+        return toJobRecord(job);
+      }
+    }
+    return yield* startJobEffect({
+      caseId: input.caseId,
+      capabilityId: input.capabilityId,
+      actorId: input.actorId,
+      input: input.buildInput(seed),
     });
+  });
 }
 
-export function processEvidence(input: {
+export function processEvidenceEffect(input: {
   caseId: string;
   evidenceId: string;
   actorId: string;
-  /** When true, start evidence.extract.ai instead of evidence.harvest. */
   ai?: boolean;
-}): Promise<JobRecord> {
+}): Effect.Effect<JobRecord, DomainTag> {
   const capabilityId =
     input.ai === true
       ? EVIDENCE_EXTRACT_AI_CAPABILITY_ID
       : EVIDENCE_HARVEST_CAPABILITY_ID;
 
-  return startCapForEvidence({
+  return startCapForEvidenceEffect({
     caseId: input.caseId,
     evidenceId: input.evidenceId,
     actorId: input.actorId,
@@ -84,21 +90,21 @@ export function processEvidence(input: {
   });
 }
 
-export function markEvidenceProcessed(input: {
+export function markEvidenceProcessedEffect(input: {
   caseId: string;
   evidenceId: string;
-}): Promise<void> {
-  return evidenceRepo
-    .markProcessed(db, input.caseId, input.evidenceId)
-    .then(() => {});
+}): Effect.Effect<void, DomainTag> {
+  return tryDb(() =>
+    evidenceRepo.markProcessed(db, input.caseId, input.evidenceId)
+  ).pipe(Effect.asVoid);
 }
 
-export function enrichUrlEvidence(input: {
+export function enrichUrlEvidenceEffect(input: {
   caseId: string;
   evidenceId: string;
   actorId: string;
-}): Promise<JobRecord> {
-  return startCapForEvidence({
+}): Effect.Effect<JobRecord, DomainTag> {
+  return startCapForEvidenceEffect({
     caseId: input.caseId,
     evidenceId: input.evidenceId,
     actorId: input.actorId,
@@ -106,11 +112,11 @@ export function enrichUrlEvidence(input: {
     assertSeed: (seed) => {
       const url = (seed.sourceUrl ?? seed.text)?.trim();
       if (url === undefined || url === "" || !/^https?:\/\//i.test(url)) {
-        throw new DomainError(
-          "invalid",
-          "Evidence has no http(s) URL to enrich"
-        );
+        return new InvalidError({
+          reason: "Evidence has no http(s) URL to enrich",
+        });
       }
+      return Effect.void;
     },
     matchActive: (job, seed) => {
       const url = (seed.sourceUrl ?? seed.text)?.trim() ?? "";

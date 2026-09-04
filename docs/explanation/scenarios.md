@@ -1,6 +1,6 @@
 ---
 document_created: 2026-07-30T01:30
-document_updated: 2026-08-15T10:35
+document_updated: 2026-09-03T08:44
 ---
 
 # SCENARIOS: Day-0 investigator journeys
@@ -128,7 +128,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Dashboard → Triage with proposalId | shipped | Triage panel rows deep-link `search.proposalId` |
 | Dashboard → Collect with jobId | removed | Jobs running tile links `/collect` without a selected job |
 | Settings vault credentials | shipped | `/settings?tab=credentials`; Connect/Update dialog; needs `WD_MASTER_VAULT_KEY`; also `wd credentials` / `PUT /credentials/{name}` (never plaintext) |
-| Export zip from Cases UI | shipped | 404 if zero entities; also `wd export zip` / `md` (x-api-key file routes) |
+| Export zip from Cases UI | shipped | Session or API key. Zip 404 if Case missing or zero entities; entity `export.md` 404 if Case/slug missing. Also `wd export zip` / `md` |
 | Evidence hide / restore / download | shipped | UI + `wd evidence hide` / `restore` / `download` |
 | Evidence process / enrich | shipped | UI + `wd evidence process` / `--ai` / `enrich` (same core glue as Collect) |
 | Auth login / gated signup | shipped | : |

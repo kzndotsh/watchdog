@@ -1,20 +1,21 @@
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { loadCapReport } = vi.hoisted(() => ({
-  loadCapReport: vi.fn(),
+const { loadCapReportEffect } = vi.hoisted(() => ({
+  loadCapReportEffect: vi.fn(),
 }));
 
 vi.mock("../../load-cap-report", () => ({
-  loadCapReport,
+  loadCapReportEffect,
 }));
 
 vi.mock("../../infra/blob", () => ({
-  readArtifactBytes: vi.fn(),
+  readArtifactBytesEffect: vi.fn(),
 }));
 
 import type { CollectRuntime } from "../collect";
 import { createJobLog } from "../helpers";
-import { interpretStage, logInterpretFailure } from "../interpret";
+import { interpretStageEffect, logInterpretFailure } from "../interpret";
 import type { PreflightState } from "../preflight";
 
 describe("interpret stage", () => {
@@ -36,10 +37,12 @@ describe("interpret stage", () => {
       input: {},
     } as PreflightState;
 
-    const result = await interpretStage(state, [], runtime, {
-      proposalId: null,
-      resultSummary: "cached",
-    });
+    const result = await Effect.runPromise(
+      interpretStageEffect(state, [], runtime, {
+        proposalId: null,
+        resultSummary: "cached",
+      })
+    );
 
     expect(result.resultSummary).toBe("cached");
     expect(result.patch).toEqual([]);
@@ -47,17 +50,19 @@ describe("interpret stage", () => {
   });
 
   it("captures interpret errors when report.json is missing", async () => {
-    loadCapReport.mockResolvedValueOnce(null);
+    loadCapReportEffect.mockReturnValueOnce(Effect.succeed(null));
     const runtime = { evidenceSnapshot: undefined } as CollectRuntime;
     const state = {
       cap: { interpret: vi.fn() },
       input: {},
     } as PreflightState;
 
-    const result = await interpretStage(state, [], runtime, {
-      proposalId: null,
-      resultSummary: null,
-    });
+    const result = await Effect.runPromise(
+      interpretStageEffect(state, [], runtime, {
+        proposalId: null,
+        resultSummary: null,
+      })
+    );
 
     expect(result.interpretError).toContain("No report.json");
   });

@@ -5,11 +5,14 @@ import {
   randomBytes,
 } from "node:crypto";
 
+import { Data, Effect } from "effect";
+
 import { credentialsRepo, db } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 import { trimmedOrNull } from "@watchdog/schemas";
 
-import { DomainError } from "./domain-error";
+import { tryDb } from "./postgres-effect";
+import { InvalidError, NotFoundError, type DomainTag } from "./tagged-errors";
 
 const NONCE_LEN = 12;
 const TAG_LEN = 16;
@@ -18,12 +21,9 @@ const HKDF_INFO = Buffer.from("watchdog-vault-v1");
 const MASTER_NORMALIZE_SALT = Buffer.from("watchdog-master-vault-normalize");
 const MASTER_NORMALIZE_INFO = Buffer.from("watchdog-master-v1");
 
-export class VaultError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "VaultError";
-  }
-}
+export class VaultError extends Data.TaggedError("VaultError")<{
+  readonly reason: string;
+}> {}
 
 export interface CredentialMeta {
   id: string;
@@ -75,7 +75,7 @@ function seal(key: Buffer, plaintext: string): Buffer {
 
 function open(key: Buffer, blob: Buffer): string {
   if (blob.length < NONCE_LEN + TAG_LEN + 1) {
-    throw new VaultError("corrupt vault blob");
+    throw new VaultError({ reason: "corrupt vault blob" });
   }
   const nonce = blob.subarray(0, NONCE_LEN);
   const tag = blob.subarray(NONCE_LEN, NONCE_LEN + TAG_LEN);
@@ -102,44 +102,58 @@ function toMeta(row: {
 
 const NAME_RE = /^[A-Z][A-Z0-9_]*$/;
 
-export function assertCredentialName(name: string): string {
+function requireCredentialName(name: string): Effect.Effect<string, DomainTag> {
   const trimmed = name.trim();
   if (!NAME_RE.test(trimmed)) {
-    throw new DomainError(
-      "invalid",
-      "Credential name must be SCREAMING_SNAKE (A-Z, 0-9, _)"
-    );
+    return new InvalidError({
+      reason: "Credential name must be SCREAMING_SNAKE (A-Z, 0-9, _)",
+    });
   }
-  return trimmed;
+  return Effect.succeed(trimmed);
 }
 
 /** Metadata only — never returns plaintext. */
-export async function listCredentialMeta(
+export function listCredentialMetaEffect(
   userId: string
-): Promise<CredentialMeta[]> {
-  const rows = await credentialsRepo.listMeta(db, userId);
-  return rows.map(toMeta);
+): Effect.Effect<CredentialMeta[], DomainTag> {
+  return tryDb(() => credentialsRepo.listMeta(db, userId)).pipe(
+    Effect.map((rows) => rows.map(toMeta))
+  );
 }
 
-export async function hasCredential(
+export function hasCredentialEffect(
   userId: string,
   name: string
-): Promise<boolean> {
-  const n = assertCredentialName(name);
-  const id = await credentialsRepo.getIdByName(db, userId, n);
-  return id !== null;
+): Effect.Effect<boolean, DomainTag> {
+  return Effect.gen(function* hasCredentialGen() {
+    const n = yield* requireCredentialName(name);
+    const id = yield* tryDb(() => credentialsRepo.getIdByName(db, userId, n));
+    return id !== null;
+  });
 }
 
-export async function getCredential(
+export function getCredentialEffect(
   userId: string,
   name: string
-): Promise<string> {
-  const n = assertCredentialName(name);
-  const ciphertext = await credentialsRepo.getCiphertext(db, userId, n);
-  if (!ciphertext) {
-    throw new DomainError("not_found", `Credential ${n} is not configured`);
-  }
-  return open(userKey(userId), Buffer.from(ciphertext));
+): Effect.Effect<string, DomainTag> {
+  return Effect.gen(function* getCredentialGen() {
+    const n = yield* requireCredentialName(name);
+    const ciphertext = yield* tryDb(() =>
+      credentialsRepo.getCiphertext(db, userId, n)
+    );
+    if (!ciphertext) {
+      return yield* new NotFoundError({
+        resource: `Credential ${n} is not configured`,
+      });
+    }
+    return yield* Effect.try({
+      try: () => open(userKey(userId), Buffer.from(ciphertext)),
+      catch: (error) =>
+        error instanceof VaultError
+          ? new InvalidError({ reason: error.reason })
+          : new InvalidError({ reason: "corrupt vault blob" }),
+    });
+  });
 }
 
 interface PutCredentialInput {
@@ -149,47 +163,60 @@ interface PutCredentialInput {
   label?: string | null;
 }
 
-export async function putCredential(
+export function putCredentialEffect(
   input: PutCredentialInput
-): Promise<CredentialMeta> {
-  const name = assertCredentialName(input.name);
-  const secret = input.secret.trim();
-  if (!secret) {
-    throw new DomainError("invalid", "Secret must be non-empty");
-  }
-  const blob = seal(userKey(input.userId), secret);
-  const label = trimmedOrNull(input.label);
-  const now = new Date();
-
-  const existingId = await credentialsRepo.getIdByName(db, input.userId, name);
-
-  if (existingId !== null) {
-    const updated = await credentialsRepo.update(db, existingId, {
-      ciphertext: blob,
-      label,
-      updatedAt: now,
-    });
-    if (!updated) throw new Error("Failed to update credential");
-    return toMeta(updated);
-  }
-
-  const created = await credentialsRepo.create(db, {
-    userId: input.userId,
-    name,
-    label,
-    ciphertext: blob,
+): Effect.Effect<CredentialMeta, DomainTag> {
+  return Effect.gen(function* putCredentialGen() {
+    const name = yield* requireCredentialName(input.name);
+    const secret = input.secret.trim();
+    if (!secret) {
+      return yield* new InvalidError({ reason: "Secret must be non-empty" });
+    }
+    const blob = seal(userKey(input.userId), secret);
+    const label = trimmedOrNull(input.label);
+    const now = new Date();
+    const existingId = yield* tryDb(() =>
+      credentialsRepo.getIdByName(db, input.userId, name)
+    );
+    if (existingId !== null) {
+      const updated = yield* tryDb(() =>
+        credentialsRepo.update(db, existingId, {
+          ciphertext: blob,
+          label,
+          updatedAt: now,
+        })
+      );
+      if (!updated) {
+        return yield* Effect.die(new Error("Failed to update credential"));
+      }
+      return toMeta(updated);
+    }
+    const created = yield* tryDb(() =>
+      credentialsRepo.create(db, {
+        userId: input.userId,
+        name,
+        label,
+        ciphertext: blob,
+      })
+    );
+    if (!created) {
+      return yield* Effect.die(new Error("Failed to create credential"));
+    }
+    return toMeta(created);
   });
-  if (!created) throw new Error("Failed to create credential");
-  return toMeta(created);
 }
 
-export async function deleteCredential(
+export function deleteCredentialEffect(
   userId: string,
   name: string
-): Promise<void> {
-  const n = assertCredentialName(name);
-  const deleted = await credentialsRepo.deleteByName(db, userId, n);
-  if (!deleted) {
-    throw new DomainError("not_found", "Credential not found");
-  }
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* deleteCredentialGen() {
+    const n = yield* requireCredentialName(name);
+    const deleted = yield* tryDb(() =>
+      credentialsRepo.deleteByName(db, userId, n)
+    );
+    if (!deleted) {
+      return yield* new NotFoundError({ resource: "Credential not found" });
+    }
+  });
 }

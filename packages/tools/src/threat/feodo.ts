@@ -1,8 +1,11 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import { httpToolsError } from "../errors/tools-error";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { asString, isRecord } from "../parse/coerce";
 
 export const feodoLookupSnapshotSchema = z.object({
@@ -32,7 +35,6 @@ const CACHE_TTL_MS = 60 * 60_000;
 
 let cachedEntries: FeodoEntry[] | null = null;
 let cachedAt = 0;
-let inflight: Promise<FeodoEntry[]> | null = null;
 
 export function parseFeodoEntries(raw: unknown): FeodoEntry[] {
   if (!Array.isArray(raw)) return [];
@@ -57,39 +59,32 @@ interface FeodoOptions2 {
   apiKey?: string;
 }
 
-async function fetchBlocklist(
+function fetchBlocklistEffect(
   signal: AbortSignal,
   options: FeodoOptions2
-): Promise<FeodoEntry[]> {
-  const now = Date.now();
-  if (cachedEntries && now - cachedAt < CACHE_TTL_MS) return cachedEntries;
-  if (inflight) return inflight;
+): Effect.Effect<FeodoEntry[], ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchFeodoBlocklistGen() {
+    const now = Date.now();
+    if (cachedEntries && now - cachedAt < CACHE_TTL_MS) return cachedEntries;
 
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    "User-Agent": options.userAgent,
-  };
-  if (options.apiKey) headers["Auth-Key"] = options.apiKey;
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "User-Agent": options.userAgent,
+    };
+    if (options.apiKey) headers["Auth-Key"] = options.apiKey;
 
-  inflight = (async () => {
-    const res = await fetch(FEODO_BLOCKLIST_URL, {
-      method: "GET",
+    const { body } = yield* fetchJsonUnknownEffect({
+      url: FEODO_BLOCKLIST_URL,
       signal,
-      headers,
+      service: "Feodo Tracker",
+      subject: "blocklist",
+      init: { method: "GET", headers },
     });
-    if (!res.ok) throw httpToolsError("Feodo Tracker blocklist", res.status);
-    const body: unknown = await res.json();
     const entries = parseFeodoEntries(body);
     cachedEntries = entries;
     cachedAt = Date.now();
     return entries;
-  })();
-
-  try {
-    return await inflight;
-  } finally {
-    inflight = null;
-  }
+  });
 }
 
 /**
@@ -103,28 +98,31 @@ interface FeodoOptions {
   userAgent?: string;
   apiKey?: string;
 }
-export async function fetchFeodoLookup(
+
+export function fetchFeodoLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: FeodoOptions
-): Promise<FeodoLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.feodo.lookup");
+): Effect.Effect<FeodoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchFeodoLookupGen() {
+    const ip = normalizeIp(ipRaw);
+    const ua = options?.userAgent ?? watchdogUserAgent("threat.feodo.lookup");
 
-  const entries = await fetchBlocklist(signal, {
-    userAgent: ua,
-    apiKey: options?.apiKey,
-  });
-  const match = entries.find((e) => e.ipAddress === ip);
+    const entries = yield* fetchBlocklistEffect(signal, {
+      userAgent: ua,
+      apiKey: options?.apiKey,
+    });
+    const match = entries.find((e) => e.ipAddress === ip);
 
-  return feodoLookupSnapshotSchema.parse({
-    ip,
-    queriedAt: new Date().toISOString(),
-    source: "feodotracker.abuse.ch",
-    found: Boolean(match),
-    malware: match?.malware ?? null,
-    status: match?.status ?? null,
-    firstSeen: match?.firstSeen ?? null,
-    lastOnline: match?.lastOnline ?? null,
+    return feodoLookupSnapshotSchema.parse({
+      ip,
+      queriedAt: new Date().toISOString(),
+      source: "feodotracker.abuse.ch",
+      found: Boolean(match),
+      malware: match?.malware ?? null,
+      status: match?.status ?? null,
+      firstSeen: match?.firstSeen ?? null,
+      lastOnline: match?.lastOnline ?? null,
+    });
   });
 }

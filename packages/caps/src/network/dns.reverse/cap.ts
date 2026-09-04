@@ -1,4 +1,6 @@
-import { fetchDnsReverse, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchDnsReverseEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dnsReverseInput } from "./input";
@@ -23,12 +25,13 @@ export const dnsReverse = defineCollectCap({
   },
   schema: dnsReverseSnapshotSchema,
   reportLabel: "dns.reverse",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`PTR ${ip}`);
-    const snap = await fetchDnsReverse(ip, ctx.signal);
-    ctx.log(`hostnames=${snap.hostnames.length}`);
-    return { snap, artifactName: `ptr-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* dnsReverseFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`PTR ${ip}`);
+      const snap = yield* fetchDnsReverseEffect(ip, ctx.signal);
+      ctx.log(`hostnames=${snap.hostnames.length}`);
+      return { snap, artifactName: `ptr-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretDnsReverseReport,
 });

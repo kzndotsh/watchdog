@@ -1,4 +1,7 @@
-import { assertNotAborted, withAbortableResolver } from "./abortable-resolver";
+import { Effect } from "effect";
+
+import type { ToolsTag } from "../errors/tagged-errors";
+import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import {
   txtInventorySnapshotSchema,
   type TxtInventorySnapshot,
@@ -156,28 +159,24 @@ export function classifyTxtRecord(record: string): TxtToken {
  * Resolve apex TXT and classify verification / mail posture tokens.
  * Passive — system resolver only.
  */
-export async function fetchTxtInventory(
+export function fetchTxtInventoryEffect(
   host: string,
   signal: AbortSignal
-): Promise<TxtInventorySnapshot> {
-  const { resolver, cleanup } = withAbortableResolver(
-    signal,
-    "TXT inventory aborted"
+): Effect.Effect<TxtInventorySnapshot, ToolsTag> {
+  return runAbortableResolver(signal, "TXT inventory aborted", (resolver) =>
+    Effect.gen(function* fetchTxtInventoryGen() {
+      const chunks = yield* dnsOrEmpty(
+        () => resolver.resolveTxt(host),
+        [] as string[][]
+      );
+      const records = flattenTxt(chunks);
+      const tokens = records.map(classifyRecord);
+      return txtInventorySnapshotSchema.parse({
+        host,
+        queriedAt: new Date().toISOString(),
+        records,
+        tokens,
+      });
+    })
   );
-  try {
-    const chunks = await resolver
-      .resolveTxt(host)
-      .catch(() => [] as string[][]);
-    assertNotAborted(signal, "TXT inventory aborted");
-    const records = flattenTxt(chunks);
-    const tokens = records.map(classifyRecord);
-    return txtInventorySnapshotSchema.parse({
-      host,
-      queriedAt: new Date().toISOString(),
-      records,
-      tokens,
-    });
-  } finally {
-    cleanup();
-  }
 }

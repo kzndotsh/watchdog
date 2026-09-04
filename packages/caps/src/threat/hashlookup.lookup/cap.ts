@@ -1,4 +1,6 @@
-import { fetchHashlookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchHashlookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hashlookupLookupInput } from "./input";
@@ -27,12 +29,15 @@ export const hashlookupLookup = defineCollectCap({
   },
   schema: hashlookupSnapshotSchema,
   reportLabel: "hashlookup.lookup",
-  async fetch(ctx) {
-    const hash = ctx.input.hash.trim();
-    ctx.log(`CIRCL hashlookup ${hash}`);
-    const snap = await fetchHashlookup(hash, ctx.signal, { userAgent: UA });
-    ctx.log(`found=${snap.found} algo=${snap.algo}`);
-    return { snap, artifactName: `hashlookup-${snap.hash}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* hashlookupLookupFetch() {
+      const hash = ctx.input.hash.trim();
+      ctx.log(`CIRCL hashlookup ${hash}`);
+      const snap = yield* fetchHashlookupEffect(hash, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} algo=${snap.algo}`);
+      return { snap, artifactName: `hashlookup-${snap.hash}.json` };
+    }),
   interpretSnap: interpretHashlookupLookupReport,
 });

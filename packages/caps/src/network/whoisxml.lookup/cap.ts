@@ -1,4 +1,6 @@
-import { fetchWhoisXml, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchWhoisXmlEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoisXmlLookupInput } from "./input";
@@ -26,13 +28,14 @@ export const whoisXmlLookup = defineCollectCap({
   },
   schema: whoisSnapshotSchema,
   reportLabel: "whoisxml.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`WhoisXML for ${host}`);
-    const key = await ctx.getCredential("WHOIS_API_KEY");
-    const snap = await fetchWhoisXml(host, key, ctx.signal);
-    ctx.log("WhoisXML ok");
-    return { snap, artifactName: `whoisxml-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* whoisXmlLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`WhoisXML for ${host}`);
+      const key = yield* ctx.getCredential("WHOIS_API_KEY");
+      const snap = yield* fetchWhoisXmlEffect(host, key, ctx.signal);
+      ctx.log("WhoisXML ok");
+      return { snap, artifactName: `whoisxml-${host}.json` };
+    }),
   interpretSnap: interpretWhoisXmlReport,
 });

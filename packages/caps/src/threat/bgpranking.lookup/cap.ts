@@ -1,4 +1,6 @@
-import { fetchBgprankingLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchBgprankingLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { bgprankingLookupInput } from "./input";
@@ -27,14 +29,20 @@ export const bgprankingLookup = defineCollectCap({
   },
   schema: bgprankingLookupSnapshotSchema,
   reportLabel: "bgpranking.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`CIRCL BGP Ranking ${ip}`);
-    const snap = await fetchBgprankingLookup(ip, ctx.signal, { userAgent: UA });
-    ctx.log(
-      `found=${snap.found} asn=${snap.asn ?? "n/a"} rank=${snap.asnRank ?? "n/a"}`
-    );
-    return { snap, artifactName: `bgpranking-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* bgprankingLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`CIRCL BGP Ranking ${ip}`);
+      const snap = yield* fetchBgprankingLookupEffect(ip, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `found=${snap.found} asn=${snap.asn ?? "n/a"} rank=${snap.asnRank ?? "n/a"}`
+      );
+      return {
+        snap,
+        artifactName: `bgpranking-${ip.replaceAll(":", "-")}.json`,
+      };
+    }),
   interpretSnap: interpretBgprankingLookupReport,
 });

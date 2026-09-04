@@ -1,15 +1,15 @@
 import { z } from "zod";
 
 import {
-  createQuestion,
-  listQuestionsForEntity,
-  reopenQuestion,
-  resolveQuestion,
-  updateQuestion,
+  createQuestionEffect,
+  listQuestionsForEntityEffect,
+  reopenQuestionEffect,
+  resolveQuestionEffect,
+  updateQuestionEffect,
 } from "@watchdog/core";
 
-import { withDomainError } from "../map-domain-error";
 import { authed, graphChildWrite } from "../os";
+import { runApp } from "../runtime";
 import { questionSchema, userOverrideSchema } from "../schemas";
 
 export const list = authed
@@ -26,10 +26,8 @@ export const list = authed
     })
   )
   .output(z.array(questionSchema))
-  .handler(
-    withDomainError(async ({ input }) =>
-      listQuestionsForEntity(input.caseId, input.entityId)
-    )
+  .handler(async ({ input }) =>
+    runApp(listQuestionsForEntityEffect(input.caseId, input.entityId))
   );
 
 export const create = graphChildWrite
@@ -49,7 +47,7 @@ export const create = graphChildWrite
     })
   )
   .output(questionSchema)
-  .handler(withDomainError(async ({ input }) => createQuestion(input)));
+  .handler(async ({ input }) => runApp(createQuestionEffect(input)));
 
 export const update = graphChildWrite
   .route({
@@ -68,7 +66,7 @@ export const update = graphChildWrite
     })
   )
   .output(questionSchema)
-  .handler(withDomainError(async ({ input }) => updateQuestion(input)));
+  .handler(async ({ input }) => runApp(updateQuestionEffect(input)));
 
 export const resolve = graphChildWrite
   .route({
@@ -86,7 +84,7 @@ export const resolve = graphChildWrite
     })
   )
   .output(questionSchema)
-  .handler(withDomainError(async ({ input }) => resolveQuestion(input)));
+  .handler(async ({ input }) => runApp(resolveQuestionEffect(input)));
 
 export const reopen = graphChildWrite
   .route({
@@ -103,4 +101,4 @@ export const reopen = graphChildWrite
     })
   )
   .output(questionSchema)
-  .handler(withDomainError(async ({ input }) => reopenQuestion(input)));
+  .handler(async ({ input }) => runApp(reopenQuestionEffect(input)));

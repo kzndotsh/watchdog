@@ -1,18 +1,19 @@
 import { createRouterClient } from "@orpc/server";
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listEventsForEntity } = vi.hoisted(() => ({
-  listEventsForEntity: vi.fn(),
+const { listEventsForEntityEffect } = vi.hoisted(() => ({
+  listEventsForEntityEffect: vi.fn(),
 }));
 
 vi.mock("@watchdog/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core")>();
   return {
     ...actual,
-    listEventsForEntity,
-    createEvent: vi.fn(),
-    updateEvent: vi.fn(),
-    deleteEvent: vi.fn(),
+    listEventsForEntityEffect,
+    createEventEffect: vi.fn(),
+    updateEventEffect: vi.fn(),
+    deleteEventEffect: vi.fn(),
   };
 });
 
@@ -22,15 +23,17 @@ const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
 
 describe("events procedures", () => {
   it("lists events for an entity", async () => {
-    listEventsForEntity.mockResolvedValueOnce([
-      {
-        id: "00000000-0000-4000-8000-000000000030",
-        entityId: "00000000-0000-4000-8000-000000000010",
-        when: "2026-01-01T12:00:00.000Z",
-        what: "Seen online",
-        where: null,
-      },
-    ]);
+    listEventsForEntityEffect.mockReturnValueOnce(
+      Effect.succeed([
+        {
+          id: "00000000-0000-4000-8000-000000000030",
+          entityId: "00000000-0000-4000-8000-000000000010",
+          when: "2026-01-01T12:00:00.000Z",
+          what: "Seen online",
+          where: null,
+        },
+      ])
+    );
 
     const client = createRouterClient(
       { list },

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { applyPatch } from "@watchdog/core";
+import {
+  applyPatchEffect,
+  runDomain
+} from "@watchdog/core";
 import {
   claimsRepo,
   db,
@@ -66,12 +69,12 @@ describe("applyPatch", () => {
         id: testId(36),
       });
 
-      await applyPatch({
+      await runDomain(applyPatchEffect({
         tx,
         caseId: cased.id,
         confidence: "unverified",
         patch: [claimOp, identifierOp, questionOp, eventOp, entityOp, edgeOp],
-      });
+      }));
 
       const claims = await claimsRepo.listForEntity(tx, entity.id);
       expect(claims.some((row) => row.text === "Ada observed a host")).toBe(
@@ -115,13 +118,13 @@ describe("applyPatch", () => {
         "ada@example.com",
         { id: testId(41), data: { platform: "", notes: "first" } }
       );
-      await applyPatch({
+      await runDomain(applyPatchEffect({
         tx,
         caseId: cased.id,
         confidence: "unverified",
         patch: [createOp],
-      });
-      await applyPatch({
+      }));
+      await runDomain(applyPatchEffect({
         tx,
         caseId: cased.id,
         confidence: "possible",
@@ -133,7 +136,7 @@ describe("applyPatch", () => {
             data: { ...createOp.data, notes: "updated" },
           },
         ],
-      });
+      }));
       const identifiers = await identifiersRepo.listForEntity(tx, entity.id);
       const matches = identifiers.filter(
         (row) => row.type === "email" && row.value === "ada@example.com"
@@ -149,7 +152,7 @@ describe("applyPatch", () => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(43) });
       await expect(
-        applyPatch({
+        runDomain(applyPatchEffect({
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -159,7 +162,7 @@ describe("applyPatch", () => {
               data: { platform: "" },
             }),
           ],
-        })
+        }))
       ).rejects.toThrow(/platform/i);
     });
   });
@@ -179,7 +182,7 @@ describe("applyPatch", () => {
         slug: "peer",
       });
       await expect(
-        applyPatch({
+        runDomain(applyPatchEffect({
           tx,
           caseId: cased.id,
           confidence: "unverified",
@@ -188,7 +191,7 @@ describe("applyPatch", () => {
               id: testId(47),
             }),
           ],
-        })
+        }))
       ).rejects.toThrow(/not allowed/i);
     });
   });
@@ -198,7 +201,7 @@ describe("applyPatch", () => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(48) });
       await expect(
-        applyPatch({
+        runDomain(applyPatchEffect({
           tx,
           caseId: cased.id,
           patch: [
@@ -206,7 +209,7 @@ describe("applyPatch", () => {
               id: testId(49),
             }),
           ],
-        })
+        }))
       ).rejects.toThrow(/confidence/i);
     });
   });
@@ -216,7 +219,7 @@ describe("applyPatch", () => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(55) });
       await expect(
-        applyPatch({
+        runDomain(applyPatchEffect({
           tx,
           caseId: cased.id,
           confidence: "confirmed",
@@ -225,7 +228,7 @@ describe("applyPatch", () => {
               id: testId(56),
             }),
           ],
-        })
+        }))
       ).rejects.toThrow(/confirmed requires/i);
     });
   });
@@ -234,7 +237,7 @@ describe("applyPatch", () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(50) });
     await expect(
-      applyPatch({
+      runDomain(applyPatchEffect({
         caseId: cased.id,
         confidence: "unverified",
         patch: [
@@ -244,7 +247,7 @@ describe("applyPatch", () => {
             data: { platform: "" },
           }),
         ],
-      })
+      }))
     ).rejects.toThrow(/platform/i);
 
     const claims = await claimsRepo.listForEntity(db, entity.id);
@@ -257,13 +260,13 @@ describe("applyPatch", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(53) });
       const evidence = await seedEvidence(tx, cased.id);
       const claimId = testId(54);
-      await applyPatch({
+      await runDomain(applyPatchEffect({
         tx,
         caseId: cased.id,
         confidence: "unverified",
         sharedEvidenceIds: [evidence.id],
         patch: [buildClaimCreateOp(entity.id, "Cited", { id: claimId })],
-      });
+      }));
       const links = await evidenceLinksRepo.listForClaims(tx, [claimId]);
       expect(links.get(claimId)).toEqual([evidence.id]);
     });

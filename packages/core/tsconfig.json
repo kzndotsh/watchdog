@@ -7,7 +7,8 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["node"],
-    "rootDir": "src"
+    "rootDir": "src",
+    "plugins": [{ "name": "@effect/tsgo" }]
   },
   "include": ["src"],
   "exclude": ["src/**/__tests__/**", "src/**/*.test.ts"]

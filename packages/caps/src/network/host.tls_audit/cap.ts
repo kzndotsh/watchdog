@@ -1,4 +1,6 @@
-import { fetchTlsAudit, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchTlsAuditEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { tlsAuditInput } from "./input";
@@ -25,15 +27,16 @@ export const tlsAudit = defineCollectCap({
   },
   schema: tlsAuditSnapshotSchema,
   reportLabel: "host.tls_audit",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    const port = ctx.input.port ?? 443;
-    ctx.log(`TLS audit ${host}:${port}`);
-    const snap = await fetchTlsAudit(host, ctx.signal, { port });
-    ctx.log(
-      `proto=${snap.protocol ?? "?"} authorized=${snap.authorized} subject=${snap.certificate?.subject ?? "?"}`
-    );
-    return { snap, artifactName: `tls-${host}-${port}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* tlsAuditFetch() {
+      const host = normalizeHost(ctx.input.host);
+      const port = ctx.input.port ?? 443;
+      ctx.log(`TLS audit ${host}:${port}`);
+      const snap = yield* fetchTlsAuditEffect(host, ctx.signal, { port });
+      ctx.log(
+        `proto=${snap.protocol ?? "?"} authorized=${snap.authorized} subject=${snap.certificate?.subject ?? "?"}`
+      );
+      return { snap, artifactName: `tls-${host}-${port}.json` };
+    }),
   interpretSnap: interpretTlsAuditReport,
 });

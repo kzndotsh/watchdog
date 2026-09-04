@@ -1,3 +1,5 @@
+import type { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import type { z } from "zod";
 
 import type {
@@ -8,6 +10,7 @@ import type {
   JsonValue,
   PatchOp,
 } from "@watchdog/schemas";
+import type { ToolsTag } from "@watchdog/tools";
 
 export {
   type JsonObject,
@@ -24,6 +27,15 @@ export interface CapArtifact {
 export interface CapRunResult {
   artifacts: CapArtifact[];
 }
+
+/**
+ * Cap.run requirements. Vault/blob I/O is on `CapContext` as Effects (`ToolsTag`).
+ * Tools HTTP uses `HttpClient` from `toolsHttpClientLayer` (provided at Cap/job root).
+ */
+export type CapServices = HttpClient.HttpClient;
+
+/** Cap collect/act body — Effect; interpret stays pure/sync. */
+export type CapRun = Effect.Effect<CapRunResult, ToolsTag, CapServices>;
 
 export interface CapInterpretResult {
   patch: PatchOp[];
@@ -92,12 +104,12 @@ export interface CapContext<TInput> {
     bytes: Uint8Array;
     mime: string;
     name?: string;
-  }) => Promise<CapArtifact>;
-  readArtifact: (uri: string) => Promise<Uint8Array>;
+  }) => Effect.Effect<CapArtifact, ToolsTag>;
+  readArtifact: (uri: string) => Effect.Effect<Uint8Array, ToolsTag>;
   scratchDir: string;
-  getCredential: (name: string) => Promise<string>;
+  getCredential: (name: string) => Effect.Effect<string, ToolsTag>;
   /** Presence check — does not decrypt. Use before selecting a provider. */
-  hasCredential: (name: string) => Promise<boolean>;
+  hasCredential: (name: string) => Effect.Effect<boolean, ToolsTag>;
   /**
    * From Case.allowThirdPartyEgress — Caps check this before optional paid API
    * fallbacks. Cap-level `egress: "third_party"` is preflighted.
@@ -156,7 +168,7 @@ export interface CapabilityDef<TSchema extends z.ZodType> {
   /** What this Cap emits as artifacts / Proposal candidates. */
   produces?: readonly CapIoKind[];
   jobPolicy?: CapJobPolicy;
-  run: (ctx: CapContext<z.infer<TSchema>>) => Promise<CapRunResult>;
+  run: (ctx: CapContext<z.infer<TSchema>>) => CapRun;
   /**
    * Pure Proposal mapping — report JSON only (no ctx / network / DB).
    * Core loads `report.json` before calling.
@@ -164,7 +176,7 @@ export interface CapabilityDef<TSchema extends z.ZodType> {
   interpret?: (
     report: JsonValue,
     opts: CapInterpretOpts<z.infer<TSchema>>
-  ) => CapInterpretResult | Promise<CapInterpretResult>;
+  ) => CapInterpretResult;
   /**
    * Pure bags for playbook bind/fan-out. Core persists on Job.handoff at
    * success (including cache hits). Independent of `produces`.

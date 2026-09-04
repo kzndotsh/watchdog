@@ -1,4 +1,6 @@
-import { fetchPgpLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchPgpLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { pgpLookupInput } from "./input";
@@ -30,12 +32,15 @@ export const pgpLookup = defineCollectCap({
   },
   schema: pgpLookupSnapshotSchema,
   reportLabel: "pgp.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`PGP lookup ${query}`);
-    const snap = await fetchPgpLookup(query, ctx.signal, { userAgent: UA });
-    ctx.log(`keys=${snap.keys.length} source=${snap.source ?? "none"}`);
-    return { snap, artifactName: "pgp-lookup.json" };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* pgpLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`PGP lookup ${query}`);
+      const snap = yield* fetchPgpLookupEffect(query, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`keys=${snap.keys.length} source=${snap.source ?? "none"}`);
+      return { snap, artifactName: "pgp-lookup.json" };
+    }),
   interpretSnap: interpretPgpLookupReport,
 });

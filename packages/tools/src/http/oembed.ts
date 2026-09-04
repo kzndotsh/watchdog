@@ -1,6 +1,9 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { fetchBytes } from "./fetch-bytes";
+import type { ToolsTag } from "../errors/tagged-errors";
+import { fetchBytesEffect } from "./fetch-bytes";
 
 export const OEMBED_VENDORS = [
   "youtube",
@@ -127,38 +130,45 @@ interface OembedOptions {
   userAgent: string;
 }
 
-export async function fetchOembed(
+export function fetchOembedEffect(
   url: string,
   signal: AbortSignal,
   options: OembedOptions
-): Promise<OembedSnapshot> {
-  const queriedAt = new Date().toISOString();
-  const vendor = matchOembedVendor(url);
-  if (vendor === null) {
-    return emptySnap(url, queriedAt, "Unsupported oEmbed host");
-  }
+): Effect.Effect<OembedSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchOembedGen() {
+    const queriedAt = new Date().toISOString();
+    const vendor = matchOembedVendor(url);
+    if (vendor === null) {
+      return emptySnap(url, queriedAt, "Unsupported oEmbed host");
+    }
 
-  const endpoint = oembedEndpoint(vendor, url);
-  const res = await fetchBytes(endpoint, signal, {
-    userAgent: options.userAgent,
-    maxBytes: MAX_OEMBED_BYTES,
-    accept: "application/json",
+    const endpoint = oembedEndpoint(vendor, url);
+    const res = yield* fetchBytesEffect(endpoint, signal, {
+      userAgent: options.userAgent,
+      maxBytes: MAX_OEMBED_BYTES,
+      accept: "application/json",
+    });
+    if (!res.ok) {
+      return emptySnap(
+        url,
+        queriedAt,
+        res.error ?? `HTTP ${res.status}`,
+        vendor
+      );
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(new TextDecoder().decode(res.bytes));
+    } catch {
+      return emptySnap(url, queriedAt, "Invalid oEmbed JSON", vendor);
+    }
+
+    const json = oembedJsonSchema.safeParse(parsed);
+    if (!json.success) {
+      return emptySnap(url, queriedAt, "Unexpected oEmbed JSON shape", vendor);
+    }
+
+    return snapshotFromJson(url, queriedAt, vendor, json.data);
   });
-  if (!res.ok) {
-    return emptySnap(url, queriedAt, res.error ?? `HTTP ${res.status}`, vendor);
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(new TextDecoder().decode(res.bytes));
-  } catch {
-    return emptySnap(url, queriedAt, "Invalid oEmbed JSON", vendor);
-  }
-
-  const json = oembedJsonSchema.safeParse(parsed);
-  if (!json.success) {
-    return emptySnap(url, queriedAt, "Unexpected oEmbed JSON shape", vendor);
-  }
-
-  return snapshotFromJson(url, queriedAt, vendor, json.data);
 }

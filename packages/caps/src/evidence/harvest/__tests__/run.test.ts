@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { parseJsonValue, REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
-import { createCapRunHarness, testId } from "@watchdog/test-kit";
+import { createCapRunHarness, runCap, testId } from "@watchdog/test-kit";
 
 import { harvest } from "../cap.ts";
 
@@ -17,10 +17,12 @@ describe("evidence.harvest run", () => {
         packerVersion: 1,
       },
     });
-    const result = await harvest.run({
-      ...harness.ctx,
-      input: { evidenceId: testId(40) },
-    });
+    const result = await runCap(
+      harvest.run({
+        ...harness.ctx,
+        input: { evidenceId: testId(40) },
+      })
+    );
     expect(
       result.artifacts.some((row) => row.name === REPORT_JSON_ARTIFACT)
     ).toBe(true);
@@ -38,10 +40,12 @@ describe("evidence.harvest run", () => {
   it("throws when the snapshot is missing", async () => {
     const harness = createCapRunHarness();
     await expect(
-      harvest.run({
-        ...harness.ctx,
-        input: { evidenceId: testId(40) },
-      })
+      runCap(
+        harvest.run({
+          ...harness.ctx,
+          input: { evidenceId: testId(40) },
+        })
+      )
     ).rejects.toThrow(/EvidenceSnapshot missing/);
   });
 });

@@ -1,21 +1,26 @@
 import { createRouterClient, ORPCError } from "@orpc/server";
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listCases, getCaseById, createCase } = vi.hoisted(() => ({
-  listCases: vi.fn(),
-  getCaseById: vi.fn(),
-  createCase: vi.fn(),
-}));
+import { NotFoundError } from "@watchdog/core";
+
+const { listCasesEffect, getCaseByIdEffect, createCaseEffect } = vi.hoisted(
+  () => ({
+    listCasesEffect: vi.fn(),
+    getCaseByIdEffect: vi.fn(),
+    createCaseEffect: vi.fn(),
+  })
+);
 
 vi.mock("@watchdog/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core")>();
   return {
     ...actual,
-    listCases,
-    getCaseById,
-    createCase,
-    updateCase: vi.fn(),
-    deleteCase: vi.fn(),
+    listCasesEffect,
+    getCaseByIdEffect,
+    createCaseEffect,
+    updateCaseEffect: vi.fn(),
+    deleteCaseEffect: vi.fn(),
   };
 });
 
@@ -23,17 +28,17 @@ import { create, get, list } from "../cases";
 
 const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
 
+const sampleCase = {
+  id: "00000000-0000-4000-8000-000000000001",
+  name: "Alpha",
+  slug: "alpha",
+  description: null,
+  allowThirdPartyEgress: false,
+};
+
 describe("cases procedures", () => {
   it("lists cases for authenticated callers", async () => {
-    listCases.mockResolvedValueOnce([
-      {
-        id: "00000000-0000-4000-8000-000000000001",
-        name: "Alpha",
-        slug: "alpha",
-        description: null,
-        allowThirdPartyEgress: false,
-      },
-    ]);
+    listCasesEffect.mockReturnValueOnce(Effect.succeed([sampleCase]));
 
     const client = createRouterClient(
       { list, get, create },
@@ -50,7 +55,9 @@ describe("cases procedures", () => {
   });
 
   it("maps missing cases to NOT_FOUND", async () => {
-    getCaseById.mockResolvedValueOnce(null);
+    getCaseByIdEffect.mockReturnValueOnce(
+      new NotFoundError({ resource: "Case not found" })
+    );
 
     const client = createRouterClient(
       { get },
@@ -72,13 +79,15 @@ describe("cases procedures", () => {
   });
 
   it("creates a case from validated input", async () => {
-    createCase.mockResolvedValueOnce({
-      id: "00000000-0000-4000-8000-000000000002",
-      name: "Beta",
-      slug: "beta",
-      description: null,
-      allowThirdPartyEgress: false,
-    });
+    createCaseEffect.mockReturnValueOnce(
+      Effect.succeed({
+        id: "00000000-0000-4000-8000-000000000002",
+        name: "Beta",
+        slug: "beta",
+        description: null,
+        allowThirdPartyEgress: false,
+      })
+    );
 
     const client = createRouterClient(
       { create },

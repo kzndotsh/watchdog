@@ -13,7 +13,8 @@ import {
   type PlaybookListItem,
 } from "@/domains/jobs/types";
 import { orpcFromContext } from "@/lib/orpc.server";
-import { readArtifactBytes } from "@watchdog/core";
+import { runApp } from "@watchdog/api";
+import { readArtifactBytesEffect } from "@watchdog/core";
 import type { JobListRecord, JobRecord } from "@watchdog/core";
 
 export type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
@@ -152,6 +153,6 @@ export const getArtifactContentFn = createServerFn({ method: "POST" })
     const uri = await resolveJobArtifactUri(data, context);
     if (uri === null) return { text: null };
 
-    const bytes = await readArtifactBytes(uri);
+    const bytes = await runApp(readArtifactBytesEffect(uri));
     return { text: truncateArtifactText(new TextDecoder().decode(bytes)) };
   });

@@ -9,18 +9,19 @@ Installed via `lefthook install` (auto in `nix develop`). Override with `lefthoo
 
 | Hook | Commands (glob-scoped; see `lefthook.yml`) |
 | --- | --- |
-| **pre-commit** | `pnpm fix` · `pnpm check:agents:strict` (AGENTS/docs) · `pnpm check:docs` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm validate:agents` (skills) |
+| **pre-commit** | `pnpm fix` · `pnpm check:agents:strict` (AGENTS/docs) · `pnpm check:docs` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm validate:agents` (skills) |
 | **pre-push** | `pnpm typecheck` · `pnpm ds:check` from `apps/web/` |
 
 Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference):
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm check` | Oxlint + Oxfmt (Ultracite) |
+| `pnpm check` | Oxlint + Oxfmt (Ultracite). `effecttsgo` recommended is on; warn-severity Effect rules do not fail this gate. |
 | `pnpm typecheck` | Workspace TS |
 | `pnpm check:agents:strict` | AGENTS.md hygiene + doc length on agents |
 | `pnpm check:docs:strict` | Docs links, index, leaf length budget |
 | `pnpm check:docs-affected:strict` | Changed code must touch mapped docs |
+| `pnpm check:effect-edges:strict` | `Effect.runPromise` / `runSync` only on allowlisted edges; `tryPromise`/`try` must use `{ try, catch }`; no production `throw new DomainError` |
 | `pnpm validate:agents` | Agent Skills frontmatter / structure |
 | `pnpm --filter @watchdog/web ds:check` | Web design-system bans |
 | `pnpm test` / `pnpm test:e2e:smoke` | Tests (see [`testing/index.md`](testing/index.md)) |

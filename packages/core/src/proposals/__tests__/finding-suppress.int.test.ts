@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
-  createClaim,
-  createEvent,
+  createClaimEffect,
+  createEventEffect,
   suppressKnownFindings,
+  runDomain,
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
 import { fingerprintPatchOp } from "@watchdog/schemas";
@@ -53,13 +54,15 @@ describe("suppressKnownFindings", () => {
   it("drops a claim that already exists on the Graph", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(21) });
-    await createClaim({
-      caseId: cased.id,
-      entityId: entity.id,
-      text: "Ada observed a host",
-      confidence: "unverified",
-      class: "observation",
-    });
+    await runDomain(
+      createClaimEffect({
+        caseId: cased.id,
+        entityId: entity.id,
+        text: "Ada observed a host",
+        confidence: "unverified",
+        class: "observation",
+      })
+    );
     const result = await suppressKnownFindings(cased.id, [
       buildClaimCreateOp(entity.id, "Ada observed a host", { id: testId(32) }),
     ]);
@@ -70,12 +73,14 @@ describe("suppressKnownFindings", () => {
   it("keeps event ops even when the Graph already has that event", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(22) });
-    await createEvent({
-      caseId: cased.id,
-      entityId: entity.id,
-      when: "1815-12-10",
-      what: "Born",
-    });
+    await runDomain(
+      createEventEffect({
+        caseId: cased.id,
+        entityId: entity.id,
+        when: "1815-12-10",
+        what: "Born",
+      })
+    );
     const op = buildEventCreateOp(entity.id, "1815-12-10", "Born", {
       id: testId(33),
     });

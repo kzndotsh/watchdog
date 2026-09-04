@@ -9,11 +9,13 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Effect } from "effect";
 
 import { env } from "@watchdog/env/server";
 import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas";
 
-import { DomainError } from "./domain-error";
+import { errorMessage } from "./domain-error";
+import { InvalidError, type DomainTag } from "./tagged-errors";
 
 export { MAX_UPLOAD_BYTES } from "@watchdog/schemas";
 
@@ -75,6 +77,15 @@ export interface UploadedArtifact {
   byteLength: number;
 }
 
+function mapBlobCatch(error: unknown): InvalidError {
+  if (error instanceof InvalidError) return error;
+  return new InvalidError({ reason: errorMessage(error) });
+}
+
+function blobTry<A>(tryFn: () => Promise<A>): Effect.Effect<A, InvalidError> {
+  return Effect.tryPromise({ try: tryFn, catch: mapBlobCatch });
+}
+
 export interface PresignedPut {
   url: string;
   uri: string;
@@ -85,16 +96,15 @@ export interface PresignedPut {
   headers: Record<string, string>;
 }
 
-export async function uploadArtifact(input: {
+export function uploadArtifactEffect(input: {
   caseId: string;
   bytes: Uint8Array;
   mime: string;
   name?: string;
-}): Promise<UploadedArtifact> {
+}): Effect.Effect<UploadedArtifact, InvalidError> {
   const cfg = s3Config();
   const sha256 = sha256Hex(input.bytes);
   const uri = artifactUri(input.caseId, sha256, input.name);
-  const s3 = getClient();
   const command = new PutObjectCommand({
     Bucket: cfg.bucket,
     Key: uri,
@@ -103,150 +113,187 @@ export async function uploadArtifact(input: {
     ContentLength: input.bytes.byteLength,
     Metadata: { sha256 },
   });
-  await s3.send(command);
-  return {
-    uri,
-    sha256,
-    mime: input.mime,
-    byteLength: input.bytes.byteLength,
-  };
+  return blobTry(() => getClient().send(command)).pipe(
+    Effect.map(() => ({
+      uri,
+      sha256,
+      mime: input.mime,
+      byteLength: input.bytes.byteLength,
+    }))
+  );
 }
 
-export async function createPresignedPut(input: {
+export function createPresignedPutEffect(input: {
   caseId: string;
   sha256: string;
   mime: string;
   byteLength: number;
   name?: string;
-}): Promise<PresignedPut> {
-  const sha256 = assertSha256Hex(input.sha256);
-  const mime = input.mime.trim() || "application/octet-stream";
-  if (!Number.isInteger(input.byteLength) || input.byteLength < 1) {
-    throw new DomainError("invalid", "byteLength must be a positive integer");
-  }
-  if (input.byteLength > MAX_UPLOAD_BYTES) {
-    throw new DomainError(
-      "invalid",
-      `File exceeds ${MAX_UPLOAD_BYTES} byte limit`
+}): Effect.Effect<PresignedPut, DomainTag> {
+  return Effect.gen(function* createPresignedPutGen() {
+    const sha256 = assertSha256Hex(input.sha256);
+    const mime = input.mime.trim() || "application/octet-stream";
+    if (!Number.isInteger(input.byteLength) || input.byteLength < 1) {
+      return yield* new InvalidError({
+        reason: "byteLength must be a positive integer",
+      });
+    }
+    if (input.byteLength > MAX_UPLOAD_BYTES) {
+      return yield* new InvalidError({
+        reason: `File exceeds ${MAX_UPLOAD_BYTES} byte limit`,
+      });
+    }
+
+    const cfg = s3Config();
+    const uri = artifactUri(input.caseId, sha256, input.name);
+    const headers = { "Content-Type": mime };
+    const command = new PutObjectCommand({
+      Bucket: cfg.bucket,
+      Key: uri,
+      ContentType: mime,
+      Metadata: { sha256 },
+    });
+    const url = yield* blobTry(() =>
+      getSignedUrl(getClient(), command, {
+        expiresIn: PRESIGN_EXPIRES_IN,
+        signableHeaders: new Set(["content-type"]),
+      })
     );
-  }
-
-  const cfg = s3Config();
-  const uri = artifactUri(input.caseId, sha256, input.name);
-  const headers = { "Content-Type": mime };
-
-  const command = new PutObjectCommand({
-    Bucket: cfg.bucket,
-    Key: uri,
-    ContentType: mime,
-    Metadata: { sha256 },
+    return {
+      url,
+      uri,
+      sha256,
+      mime,
+      byteLength: input.byteLength,
+      expiresIn: PRESIGN_EXPIRES_IN,
+      headers,
+    };
   });
-
-  const s3 = getClient();
-  const url = await getSignedUrl(s3, command, {
-    expiresIn: PRESIGN_EXPIRES_IN,
-    signableHeaders: new Set(["content-type"]),
-  });
-  return {
-    url,
-    uri,
-    sha256,
-    mime,
-    byteLength: input.byteLength,
-    expiresIn: PRESIGN_EXPIRES_IN,
-    headers,
-  };
 }
 
-export async function assertUploadedObject(input: {
+export function assertUploadedObjectEffect(input: {
   uri: string;
   sha256: string;
   mime: string;
   byteLength: number;
-}): Promise<void> {
-  const sha256 = assertSha256Hex(input.sha256);
-  const cfg = s3Config();
-  const s3 = getClient();
-  const head = await s3.send(
-    new HeadObjectCommand({ Bucket: cfg.bucket, Key: input.uri })
-  );
-  const metaSha = head.Metadata?.sha256?.toLowerCase();
-  if (metaSha !== sha256) {
-    throw new DomainError(
-      "invalid",
-      "Uploaded object sha256 metadata mismatch"
+}): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* assertUploadedObjectGen() {
+    const sha256 = assertSha256Hex(input.sha256);
+    const cfg = s3Config();
+    const head = yield* blobTry(() =>
+      getClient().send(
+        new HeadObjectCommand({ Bucket: cfg.bucket, Key: input.uri })
+      )
     );
-  }
-  if (head.ContentLength !== input.byteLength) {
-    throw new DomainError("invalid", "Uploaded object size mismatch");
-  }
-  const contentType = head.ContentType?.split(";")[0]?.trim().toLowerCase();
-  const expected = input.mime.split(";")[0]?.trim().toLowerCase();
-  if (
-    contentType !== undefined &&
-    contentType !== "" &&
-    expected !== undefined &&
-    expected !== "" &&
-    contentType !== expected
-  ) {
-    throw new DomainError("invalid", "Uploaded object Content-Type mismatch");
-  }
+    const metaSha = head.Metadata?.sha256?.toLowerCase();
+    if (metaSha !== sha256) {
+      return yield* new InvalidError({
+        reason: "Uploaded object sha256 metadata mismatch",
+      });
+    }
+    if (head.ContentLength !== input.byteLength) {
+      return yield* new InvalidError({
+        reason: "Uploaded object size mismatch",
+      });
+    }
+    const contentType = head.ContentType?.split(";")[0]?.trim().toLowerCase();
+    const expected = input.mime.split(";")[0]?.trim().toLowerCase();
+    if (
+      contentType !== undefined &&
+      contentType !== "" &&
+      expected !== undefined &&
+      expected !== "" &&
+      contentType !== expected
+    ) {
+      return yield* new InvalidError({
+        reason: "Uploaded object Content-Type mismatch",
+      });
+    }
+  });
 }
 
-export async function readArtifactBytes(uri: string): Promise<Uint8Array> {
-  const cfg = s3Config();
-  const res = await getClient().send(
-    new GetObjectCommand({ Bucket: cfg.bucket, Key: uri })
-  );
-  if (!res.Body) throw new Error(`Empty artifact body: ${uri}`);
-  const buf = await res.Body.transformToByteArray();
-  return buf;
+export function readArtifactBytesEffect(
+  uri: string
+): Effect.Effect<Uint8Array, InvalidError> {
+  return Effect.gen(function* readArtifactBytesGen() {
+    const cfg = s3Config();
+    const res = yield* blobTry(() =>
+      getClient().send(new GetObjectCommand({ Bucket: cfg.bucket, Key: uri }))
+    );
+    if (!res.Body) {
+      return yield* new InvalidError({
+        reason: `Empty artifact body: ${uri}`,
+      });
+    }
+    const body = res.Body;
+    return yield* blobTry(() => body.transformToByteArray());
+  });
 }
 
-export async function createPresignedGet(
+export function createPresignedGetEffect(
   uri: string,
   expiresIn = 300
-): Promise<string> {
+): Effect.Effect<string, InvalidError> {
   const cfg = s3Config();
-  const url = await getSignedUrl(
-    getClient(),
-    new GetObjectCommand({ Bucket: cfg.bucket, Key: uri }),
-    { expiresIn }
+  return blobTry(() =>
+    getSignedUrl(
+      getClient(),
+      new GetObjectCommand({ Bucket: cfg.bucket, Key: uri }),
+      { expiresIn }
+    )
   );
-  return url;
+}
+
+function listCaseArtifactPage(
+  s3: S3Client,
+  bucket: string,
+  prefix: string,
+  continuationToken: string | undefined
+) {
+  return blobTry(() =>
+    s3.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      })
+    )
+  );
+}
+
+function deleteCaseArtifactKeys(s3: S3Client, bucket: string, keys: string[]) {
+  return blobTry(() =>
+    s3.send(
+      new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: {
+          Objects: keys.map((Key) => ({ Key })),
+          Quiet: true,
+        },
+      })
+    )
+  );
 }
 
 /** Best-effort: objects are keyed `{caseId}/…` (`artifactUri`). */
-export async function deleteCaseArtifacts(caseId: string): Promise<void> {
-  const prefix = `${caseId}/`;
-  const cfg = s3Config();
-  const s3 = getClient();
-  let token: string | undefined;
-  do {
-    // oxlint-disable-next-line no-await-in-loop -- S3 list pages must be sequential
-    const listed = await s3.send(
-      new ListObjectsV2Command({
-        Bucket: cfg.bucket,
-        Prefix: prefix,
-        ContinuationToken: token,
-      })
-    );
-    const keys = (listed.Contents ?? [])
-      .map((object) => object.Key)
-      .filter((key): key is string => key !== undefined && key !== "");
-    if (keys.length > 0) {
-      // oxlint-disable-next-line no-await-in-loop -- delete each list page before the next
-      await s3.send(
-        new DeleteObjectsCommand({
-          Bucket: cfg.bucket,
-          Delete: {
-            Objects: keys.map((Key) => ({ Key })),
-            Quiet: true,
-          },
-        })
-      );
-    }
-    token =
-      listed.IsTruncated === true ? listed.NextContinuationToken : undefined;
-  } while (token !== undefined);
+export function deleteCaseArtifactsEffect(
+  caseId: string
+): Effect.Effect<void, InvalidError> {
+  return Effect.gen(function* deleteCaseArtifactsGen() {
+    const prefix = `${caseId}/`;
+    const cfg = s3Config();
+    const s3 = getClient();
+    let token: string | undefined;
+    do {
+      const listed = yield* listCaseArtifactPage(s3, cfg.bucket, prefix, token);
+      const keys = (listed.Contents ?? [])
+        .map((object) => object.Key)
+        .filter((key): key is string => key !== undefined && key !== "");
+      if (keys.length > 0) {
+        yield* deleteCaseArtifactKeys(s3, cfg.bucket, keys);
+      }
+      token =
+        listed.IsTruncated === true ? listed.NextContinuationToken : undefined;
+    } while (token !== undefined);
+  });
 }

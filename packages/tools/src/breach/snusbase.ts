@@ -1,8 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { missingApiKey } from "../errors/tools-error";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -107,50 +109,56 @@ function flattenSearchResults(results: unknown): {
 interface SnusbaseOptions {
   userAgent?: string;
 }
-export async function fetchSnusbaseLookup(
+
+export function fetchSnusbaseLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: SnusbaseOptions
-): Promise<SnusbaseLookupSnapshot> {
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("SNUSBASE_API_KEY");
+): Effect.Effect<SnusbaseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchSnusbaseLookupGen() {
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "SNUSBASE_API_KEY" });
+    }
 
-  const { kind, value, type } = classifySnusbaseQuery(queryRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("breach.snusbase.lookup");
+    const { kind, value, type } = classifySnusbaseQuery(queryRaw);
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("breach.snusbase.lookup");
 
-  const body = await fetchJsonObject({
-    url: "https://api.snusbase.com/data/search",
-    init: {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Auth: key,
-        "User-Agent": ua,
+    const { body } = yield* fetchJsonObjectEffect({
+      url: "https://api.snusbase.com/data/search",
+      init: {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Auth: key,
+          "User-Agent": ua,
+        },
+        body: JSON.stringify({ terms: [value], types: [type] }),
       },
-      body: JSON.stringify({ terms: [value], types: [type] }),
-    },
-    signal,
-    service: "Snusbase",
-    subject: value,
-    acceptStatus: (status) => status < 400,
-  });
-  const { tables, entries } = flattenSearchResults(body.results);
-  const total =
-    typeof body.size === "number"
-      ? body.size
-      : tables.reduce((sum, t) => sum + t.count, 0);
+      signal,
+      service: "Snusbase",
+      subject: value,
+      acceptStatus: (status) => status < 400,
+    });
+    const { tables, entries } = flattenSearchResults(body.results);
+    const total =
+      typeof body.size === "number"
+        ? body.size
+        : tables.reduce((sum, t) => sum + t.count, 0);
 
-  return snusbaseLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    source: "api.snusbase.com",
-    found: total > 0,
-    total,
-    tables,
-    sampleCount: entries.length,
-    entries,
+    return snusbaseLookupSnapshotSchema.parse({
+      query: value,
+      kind,
+      queriedAt: new Date().toISOString(),
+      source: "api.snusbase.com",
+      found: total > 0,
+      total,
+      tables,
+      sampleCount: entries.length,
+      entries,
+    });
   });
 }

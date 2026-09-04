@@ -6,11 +6,11 @@
 
 ## Commands
 
-| Task        | Command                                       |
-| ----------- | --------------------------------------------- |
+| Task | Command |
+| --- | --- |
 | Run locally | `pnpm --filter @watchdog/cli start -- <args>` |
-| Typecheck   | `pnpm --filter @watchdog/cli typecheck`       |
-| Unit tests  | `pnpm test:unit`                              |
+| Typecheck | `pnpm --filter @watchdog/cli typecheck` (workspace TypeScript **7.0.2**; exact pin in `package.json`) |
+| Unit tests | `pnpm test:unit` |
 
 ### Surface (agent ingress)
 
@@ -29,7 +29,7 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 
 ### Output contract (agent-first)
 
-- **Default:** compact JSON on stdout. Lists: `{ "count", "items", "help?" }`. Mutations: object or `{ "ok": true, … }`. Errors: `{ "ok": false, "error": { "code", "message" }, "help?" }` (stdout), exit 1; unknown flags exit 2.
+- **Default:** compact JSON on stdout. Lists: `{ "count", "items", "help?" }`. Mutations: object or `{ "ok": true, … }`. Errors: `{ "ok": false, "error": { "code", "message" }, "help?" }` (stdout), exit 1; unknown flags exit 2. ORPC errors and tagged `_tag` domain errors (`NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError`) map into that envelope in `handleCliError`. The CLI still talks HTTP via `@watchdog/client` (same application programs as the API, not in-process core Effects).
 - **`--table`:** human ASCII tables for lists.
 - **`--full`:** restore untruncated / full fields (list projections are minimal by default).
 - **`--raw`:** bare path/URL for `export` / `evidence download` (shell `$(…)`).

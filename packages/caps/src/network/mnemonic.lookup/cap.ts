@@ -1,4 +1,6 @@
-import { fetchMnemonicPdns } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchMnemonicPdnsEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mnemonicLookupInput } from "./input";
@@ -28,18 +30,19 @@ export const mnemonicLookup = defineCollectCap({
   },
   schema: mnemonicLookupSnapshotSchema,
   reportLabel: "mnemonic.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`Mnemonic PDNS ${query}`);
-    const snap = await fetchMnemonicPdns(query, ctx.signal, {
-      userAgent: UA,
-      limit: 50,
-    });
-    ctx.log(
-      `kind=${snap.kind} records=${snap.records.length} domains=${snap.domains.length}`
-    );
-    const safeName = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `mnemonic-${safeName}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* mnemonicLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`Mnemonic PDNS ${query}`);
+      const snap = yield* fetchMnemonicPdnsEffect(query, ctx.signal, {
+        userAgent: UA,
+        limit: 50,
+      });
+      ctx.log(
+        `kind=${snap.kind} records=${snap.records.length} domains=${snap.domains.length}`
+      );
+      const safeName = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `mnemonic-${safeName}.json` };
+    }),
   interpretSnap: interpretMnemonicLookupReport,
 });

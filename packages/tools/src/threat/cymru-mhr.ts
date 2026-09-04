@@ -1,9 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import {
-  assertNotAborted,
-  withAbortableResolver,
-} from "../dns/abortable-resolver";
+import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
 
 export const cymruMhrLookupSnapshotSchema = z.object({
@@ -72,34 +73,35 @@ export function parseTxtAnswer(records: string[][]): {
  * `dig +short {labels}.hash.cymru.com TXT` — NXDOMAIN/no-answer = not known malware.
  * @see https://hash.cymru.com/docs_dns
  */
-export async function fetchCymruMhrLookup(
+export function fetchCymruMhrLookupEffect(
   hashRaw: string,
   signal: AbortSignal
-): Promise<CymruMhrLookupSnapshot> {
-  const hash = normalizeCymruMhrHash(hashRaw);
-  const domain = `${labelsForHash(hash)}.hash.cymru.com`;
-
-  const { resolver, cleanup } = withAbortableResolver(
-    signal,
-    "Team Cymru MHR lookup aborted"
-  );
-
-  try {
-    const answers = await resolver
-      .resolveTxt(domain)
-      .catch(() => [] as string[][]);
-    assertNotAborted(signal, "Team Cymru MHR lookup aborted");
-
-    const { lastSeenEpoch, detectionPct } = parseTxtAnswer(answers);
-    return cymruMhrLookupSnapshotSchema.parse({
-      hash,
-      queriedAt: new Date().toISOString(),
-      source: "hash.cymru.com",
-      found: answers.length > 0,
-      lastSeenEpoch,
-      detectionPct,
+): Effect.Effect<CymruMhrLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchCymruMhrLookupGen() {
+    const hash = yield* Effect.try({
+      try: () => normalizeCymruMhrHash(hashRaw),
+      catch: mapToolsCatch,
     });
-  } finally {
-    cleanup();
-  }
+    const domain = `${labelsForHash(hash)}.hash.cymru.com`;
+    return yield* runAbortableResolver(
+      signal,
+      "Team Cymru MHR lookup aborted",
+      (resolver) =>
+        Effect.gen(function* fetchCymruMhrDnsGen() {
+          const answers = yield* dnsOrEmpty(
+            () => resolver.resolveTxt(domain),
+            [] as string[][]
+          );
+          const { lastSeenEpoch, detectionPct } = parseTxtAnswer(answers);
+          return cymruMhrLookupSnapshotSchema.parse({
+            hash,
+            queriedAt: new Date().toISOString(),
+            source: "hash.cymru.com",
+            found: answers.length > 0,
+            lastSeenEpoch,
+            detectionPct,
+          });
+        })
+    );
+  });
 }

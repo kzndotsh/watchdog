@@ -1,11 +1,15 @@
 import { isIPv4, isIPv6 } from "node:net";
 
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { createTtlCache } from "../cache/ttl-memory";
 import { normalizeIp } from "../dns/reverse";
-import { httpToolsError } from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchBytesEffect } from "../http/fetch-bytes";
 
 export const fireholLookupSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -87,38 +91,40 @@ function ipInCidrList(ipInt: number, entries: CidrEntry[]): boolean {
   );
 }
 
-async function fetchCidrList(
+function fetchCidrListEffect(
   signal: AbortSignal,
   ua: string
-): Promise<FireholList> {
-  const cached = listCache.get(LIST_CACHE_KEY);
-  if (cached) return cached;
+): Effect.Effect<FireholList, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchCidrListGen() {
+    const cached = listCache.get(LIST_CACHE_KEY);
+    if (cached) return cached;
 
-  const res = await fetch(
-    "https://iplists.firehol.org/files/firehol_level1.netset",
-    {
-      method: "GET",
+    const result = yield* fetchBytesEffect(
+      "https://iplists.firehol.org/files/firehol_level1.netset",
       signal,
-      headers: { Accept: "text/plain", "User-Agent": ua },
+      { userAgent: ua, maxBytes: 8_000_000, accept: "text/plain" }
+    );
+    if (!result.ok) {
+      return yield* new HttpVendorError({
+        service: "FireHOL",
+        status: result.status,
+      });
     }
-  );
-  if (!res.ok) {
-    throw httpToolsError("FireHOL level1 list", res.status);
-  }
 
-  const text = await res.text();
-  const v4: CidrEntry[] = [];
-  const v6 = new Set<string>();
-  for (const line of text.split(/\r?\n/)) {
-    const cidr = parseCidrLine(line);
-    if (cidr) v4.push(cidr);
-    const ipv6 = parseIpv6ExactLine(line);
-    if (ipv6) v6.add(ipv6);
-  }
+    const text = new TextDecoder().decode(result.bytes);
+    const v4: CidrEntry[] = [];
+    const v6 = new Set<string>();
+    for (const line of text.split(/\r?\n/)) {
+      const cidr = parseCidrLine(line);
+      if (cidr) v4.push(cidr);
+      const ipv6 = parseIpv6ExactLine(line);
+      if (ipv6) v6.add(ipv6);
+    }
 
-  const parsed = { v4, v6 };
-  listCache.set(LIST_CACHE_KEY, parsed);
-  return parsed;
+    const parsed = { v4, v6 };
+    listCache.set(LIST_CACHE_KEY, parsed);
+    return parsed;
+  });
 }
 
 /**
@@ -131,27 +137,32 @@ async function fetchCidrList(
 interface FireholOptions {
   userAgent?: string;
 }
-export async function fetchFireholLookup(
+export function fetchFireholLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: FireholOptions
-): Promise<FireholLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.firehol.lookup");
+): Effect.Effect<FireholLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchFireholLookupGen() {
+    const ip = yield* Effect.try({
+      try: () => normalizeIp(ipRaw),
+      catch: mapToolsCatch,
+    });
+    const ua = options?.userAgent ?? watchdogUserAgent("threat.firehol.lookup");
 
-  let found = false;
-  const list = await fetchCidrList(signal, ua);
-  if (isIPv4(ip)) {
-    found = ipInCidrList(ipv4ToInt(ip), list.v4);
-  } else if (isIPv6(ip)) {
-    found = list.v6.has(ip);
-  }
+    let found = false;
+    const list = yield* fetchCidrListEffect(signal, ua);
+    if (isIPv4(ip)) {
+      found = ipInCidrList(ipv4ToInt(ip), list.v4);
+    } else if (isIPv6(ip)) {
+      found = list.v6.has(ip);
+    }
 
-  return fireholLookupSnapshotSchema.parse({
-    ip,
-    queriedAt: new Date().toISOString(),
-    source: "iplists.firehol.org",
-    list: "firehol_level1",
-    found,
+    return fireholLookupSnapshotSchema.parse({
+      ip,
+      queriedAt: new Date().toISOString(),
+      source: "iplists.firehol.org",
+      list: "firehol_level1",
+      found,
+    });
   });
 }

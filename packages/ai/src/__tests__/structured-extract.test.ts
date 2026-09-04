@@ -1,10 +1,11 @@
+import { Effect } from "effect";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { mockJson, mockServer } from "@watchdog/test-kit/http";
 
 import { createWatchdogModel } from "../provider";
-import { structuredExtract } from "../structured-extract";
+import { structuredExtractEffect } from "../structured-extract";
 
 const draftSchema = z.object({
   identifiers: z.array(z.object({ type: z.string(), value: z.string() })),
@@ -55,11 +56,13 @@ describe("structuredExtract", () => {
       model: "gpt-4o",
     });
 
-    const extracted = await structuredExtract({
-      model,
-      schema: draftSchema,
-      prompt: "extract",
-    });
+    const extracted = await Effect.runPromise(
+      structuredExtractEffect({
+        model,
+        schema: draftSchema,
+        prompt: "extract",
+      })
+    );
     expect(extracted.object.identifiers).toEqual([
       { type: "email", value: "ada@example.com" },
     ]);
@@ -92,11 +95,13 @@ describe("structuredExtract", () => {
     });
 
     await expect(
-      structuredExtract({
-        model,
-        schema: draftSchema,
-        prompt: "extract",
-      })
+      Effect.runPromise(
+        structuredExtractEffect({
+          model,
+          schema: draftSchema,
+          prompt: "extract",
+        })
+      )
     ).rejects.toThrow();
   });
 
@@ -129,11 +134,13 @@ describe("structuredExtract", () => {
     });
 
     await expect(
-      structuredExtract({
-        model,
-        schema: draftSchema,
-        prompt: "extract",
-      })
+      Effect.runPromise(
+        structuredExtractEffect({
+          model,
+          schema: draftSchema,
+          prompt: "extract",
+        })
+      )
     ).rejects.toThrow();
   });
 });

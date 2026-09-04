@@ -29,7 +29,8 @@
     "db:generate": "pnpm --filter @watchdog/db generate",
     "db:migrate": "pnpm --filter @watchdog/db migrate",
     "db:studio": "pnpm --filter @watchdog/db studio",
-    "check:agents": "node ./scripts/check-agents.mjs",
+    "check:effect-edges": "node ./scripts/check-effect-edges.mjs",
+    "check:effect-edges:strict": "node ./scripts/check-effect-edges.mjs --strict",
     "check:agents:strict": "node ./scripts/check-agents.mjs --strict --fail-docs-length",
     "check:docs": "node ./scripts/check-docs.mjs",
     "check:docs:strict": "node ./scripts/check-docs.mjs --strict --fail-length",
@@ -40,9 +41,16 @@
     "desloppify:scan": "bash scripts/desloppify-bootstrap.sh && PYTHONPATH= desloppify --lang typescript scan --path .",
     "desloppify:scan:ci": "bash scripts/desloppify-bootstrap.sh && PYTHONPATH= desloppify --lang typescript scan --path . --profile ci --no-badge",
     "desloppify:status": "desloppify status",
-    "desloppify:next": "desloppify next"
+    "desloppify:next": "desloppify next",
+    "prepare": "effect-tsgo patch --oxlint"
+  },
+  "dependencies": {
+    "effect": "4.0.0-rc.112"
   },
   "devDependencies": {
+    "@effect/platform-node": "4.0.0-rc.112",
+    "@effect/tsgo": "0.39.1",
+    "@effect/vitest": "4.0.0-rc.112",
     "@playwright/test": "^1.62.1",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.10",
@@ -51,13 +59,13 @@
     "jsdom": "^30.0.1",
     "knip": "^6.0.0",
     "oxfmt": "^0.59.0",
-    "oxlint": "^1.74.0",
+    "oxlint": "1.81.0",
     "oxlint-plugin-react-doctor": "^0.7.8",
-    "oxlint-tsgolint": "^0.25.0",
+    "oxlint-tsgolint": "7.0.2001",
     "react-doctor": "^0.7.8",
     "tsx": "^4.20.0",
-    "typescript": "^6.0.2",
-    "ultracite": "7.9.4",
+    "typescript": "7.0.2",
+    "ultracite": "7.10.7",
     "vitest": "^4.1.10",
     "yaml": "^2.9.0"
   },

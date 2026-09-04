@@ -1,4 +1,6 @@
-import { fetchOtxLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchOtxLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { otxLookupInput } from "./input";
@@ -28,16 +30,17 @@ export const otxLookup = defineCollectCap({
   },
   schema: otxLookupSnapshotSchema,
   reportLabel: "otx.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`OTX ${query}`);
-    const key = await ctx.getCredential("OTX_API_KEY");
-    const snap = await fetchOtxLookup(query, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} pulses=${snap.pulseCount}`);
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `otx-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* otxLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`OTX ${query}`);
+      const key = yield* ctx.getCredential("OTX_API_KEY");
+      const snap = yield* fetchOtxLookupEffect(query, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} pulses=${snap.pulseCount}`);
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `otx-${safe}.json` };
+    }),
   interpretSnap: interpretOtxLookupReport,
 });

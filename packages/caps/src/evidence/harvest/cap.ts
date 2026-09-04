@@ -1,5 +1,8 @@
+import { Effect } from "effect";
+
 import { defineCapability } from "@watchdog/cap-sdk";
 import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/schemas";
+import { ValidationVendorError } from "@watchdog/tools";
 
 import {
   interpretProcessDraft,
@@ -30,26 +33,29 @@ export const harvest = defineCapability({
     linkEvidenceFromInput: ["evidenceId"],
     markEvidenceProcessed: true,
   },
-  async run(ctx) {
-    const snapshot = ctx.evidenceSnapshot;
-    if (!snapshot) {
-      throw new Error("EvidenceSnapshot missing — packer did not run");
-    }
-    ctx.log(
-      `harvest Evidence ${snapshot.evidenceId} (${snapshot.text.length} chars)`
-    );
+  run: (ctx) =>
+    Effect.gen(function* harvestRun() {
+      const snapshot = ctx.evidenceSnapshot;
+      if (!snapshot) {
+        return yield* new ValidationVendorError({
+          message: "EvidenceSnapshot missing — packer did not run",
+        });
+      }
+      ctx.log(
+        `harvest Evidence ${snapshot.evidenceId} (${snapshot.text.length} chars)`
+      );
 
-    const draft = harvestDeterministic(snapshot.text);
-    const artifacts = await uploadProcessArtifacts(
-      ctx.uploadArtifact,
-      snapshot,
-      draft
-    );
-    ctx.log(
-      `harvested ${draft.identifiers.length} id(s), ${draft.claims.length} claim(s)`
-    );
-    return { artifacts };
-  },
+      const draft = harvestDeterministic(snapshot.text);
+      const artifacts = yield* uploadProcessArtifacts(
+        ctx.uploadArtifact,
+        snapshot,
+        draft
+      );
+      ctx.log(
+        `harvested ${draft.identifiers.length} id(s), ${draft.claims.length} claim(s)`
+      );
+      return { artifacts };
+    }),
   interpret(report, opts) {
     return interpretProcessDraft(report, opts, {
       noEntity:

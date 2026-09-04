@@ -1,15 +1,16 @@
 import { createRouterClient } from "@orpc/server";
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { writeGraphFromAgent } = vi.hoisted(() => ({
-  writeGraphFromAgent: vi.fn(),
+const { writeGraphFromAgentEffect } = vi.hoisted(() => ({
+  writeGraphFromAgentEffect: vi.fn(),
 }));
 
 vi.mock("@watchdog/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core")>();
   return {
     ...actual,
-    writeGraphFromAgent,
+    writeGraphFromAgentEffect,
   };
 });
 
@@ -19,12 +20,14 @@ const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
 
 describe("graph procedures", () => {
   it("writes graph patches from authenticated callers", async () => {
-    writeGraphFromAgent.mockResolvedValueOnce({
-      writeId: "00000000-0000-4000-8000-000000000099",
-      confidence: "unverified",
-      opCount: 1,
-      replayed: false,
-    });
+    writeGraphFromAgentEffect.mockReturnValueOnce(
+      Effect.succeed({
+        writeId: "00000000-0000-4000-8000-000000000099",
+        confidence: "unverified",
+        opCount: 1,
+        replayed: false,
+      })
+    );
 
     const client = createRouterClient(
       { write },

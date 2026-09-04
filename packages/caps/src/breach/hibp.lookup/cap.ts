@@ -1,4 +1,6 @@
-import { fetchHibpBreachedAccount } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchHibpBreachedAccountEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hibpLookupInput } from "./input";
@@ -28,15 +30,19 @@ export const hibpLookup = defineCollectCap({
   },
   schema: hibpLookupSnapshotSchema,
   reportLabel: "hibp.lookup",
-  async fetch(ctx) {
-    const email = ctx.input.email.trim();
-    ctx.log(`HIBP ${email}`);
-    const key = await ctx.getCredential("HIBP_API_KEY");
-    const snap = await fetchHibpBreachedAccount(email, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} breaches=${snap.breachCount}`);
-    return { snap, artifactName: "hibp-lookup.json" };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* hibpLookupFetch() {
+      const email = ctx.input.email.trim();
+      ctx.log(`HIBP ${email}`);
+      const key = yield* ctx.getCredential("HIBP_API_KEY");
+      const snap = yield* fetchHibpBreachedAccountEffect(
+        email,
+        key,
+        ctx.signal,
+        { userAgent: UA }
+      );
+      ctx.log(`found=${snap.found} breaches=${snap.breachCount}`);
+      return { snap, artifactName: "hibp-lookup.json" };
+    }),
   interpretSnap: interpretHibpLookupReport,
 });

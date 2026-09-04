@@ -1,11 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import {
-  httpToolsError,
-  missingApiKey,
-  parseToolsError,
-} from "../errors/tools-error";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { isRecord } from "../parse/coerce";
 
@@ -41,87 +40,89 @@ export type VirusTotalLookupSnapshot = z.infer<
 interface VirustotalOptions {
   userAgent?: string;
 }
-export async function fetchVirusTotalLookup(
+
+export function fetchVirusTotalLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: VirustotalOptions
-): Promise<VirusTotalLookupSnapshot> {
-  const { kind, value } = classifyIpOrHost(queryRaw);
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("VIRUSTOTAL_API_KEY");
+): Effect.Effect<VirusTotalLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchVirusTotalLookupGen() {
+    const { kind, value } = classifyIpOrHost(queryRaw);
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "VIRUSTOTAL_API_KEY" });
+    }
 
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("threat.virustotal.lookup");
-  const path =
-    kind === "ip"
-      ? `ip_addresses/${encodeURIComponent(value)}`
-      : `domains/${encodeURIComponent(value)}`;
-  const url = `https://www.virustotal.com/api/v3/${path}`;
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("threat.virustotal.lookup");
+    const path =
+      kind === "ip"
+        ? `ip_addresses/${encodeURIComponent(value)}`
+        : `domains/${encodeURIComponent(value)}`;
+    const url = `https://www.virustotal.com/api/v3/${path}`;
 
-  const res = await fetch(url, {
-    method: "GET",
-    signal,
-    headers: {
-      Accept: "application/json",
-      "x-apikey": key,
-      "User-Agent": ua,
-    },
-  });
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url,
+      signal,
+      service: "VirusTotal",
+      subject: value,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+      init: {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "x-apikey": key,
+          "User-Agent": ua,
+        },
+      },
+    });
 
-  if (res.status === 404) {
+    if (status === 404) {
+      return virusTotalLookupSnapshotSchema.parse({
+        query: value,
+        kind,
+        queriedAt: new Date().toISOString(),
+        found: false,
+        status: 404,
+        reputation: null,
+        malicious: null,
+        suspicious: null,
+        harmless: null,
+        undetected: null,
+        asOwner: null,
+        asn: null,
+        country: null,
+        network: null,
+        registrar: null,
+      });
+    }
+
+    const data = isRecord(body.data) ? body.data : {};
+    const attrs = isRecord(data.attributes) ? data.attributes : {};
+    const stats = isRecord(attrs.last_analysis_stats)
+      ? attrs.last_analysis_stats
+      : {};
+
     return virusTotalLookupSnapshotSchema.parse({
       query: value,
       kind,
       queriedAt: new Date().toISOString(),
-      found: false,
-      status: 404,
-      reputation: null,
-      malicious: null,
-      suspicious: null,
-      harmless: null,
-      undetected: null,
-      asOwner: null,
-      asn: null,
-      country: null,
-      network: null,
-      registrar: null,
+      found: true,
+      status,
+      reputation:
+        typeof attrs.reputation === "number" ? attrs.reputation : null,
+      malicious: typeof stats.malicious === "number" ? stats.malicious : null,
+      suspicious:
+        typeof stats.suspicious === "number" ? stats.suspicious : null,
+      harmless: typeof stats.harmless === "number" ? stats.harmless : null,
+      undetected:
+        typeof stats.undetected === "number" ? stats.undetected : null,
+      asOwner: typeof attrs.as_owner === "string" ? attrs.as_owner : null,
+      asn: typeof attrs.asn === "number" ? attrs.asn : null,
+      country: typeof attrs.country === "string" ? attrs.country : null,
+      network: typeof attrs.network === "string" ? attrs.network : null,
+      registrar: typeof attrs.registrar === "string" ? attrs.registrar : null,
     });
-  }
-
-  if (!res.ok) {
-    throw httpToolsError(
-      "VirusTotal API",
-      res.status,
-      `VirusTotal API ${res.status} for ${value}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("VirusTotal", value);
-  }
-  const data = isRecord(body.data) ? body.data : {};
-  const attrs = isRecord(data.attributes) ? data.attributes : {};
-  const stats = isRecord(attrs.last_analysis_stats)
-    ? attrs.last_analysis_stats
-    : {};
-
-  return virusTotalLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    found: true,
-    status: res.status,
-    reputation: typeof attrs.reputation === "number" ? attrs.reputation : null,
-    malicious: typeof stats.malicious === "number" ? stats.malicious : null,
-    suspicious: typeof stats.suspicious === "number" ? stats.suspicious : null,
-    harmless: typeof stats.harmless === "number" ? stats.harmless : null,
-    undetected: typeof stats.undetected === "number" ? stats.undetected : null,
-    asOwner: typeof attrs.as_owner === "string" ? attrs.as_owner : null,
-    asn: typeof attrs.asn === "number" ? attrs.asn : null,
-    country: typeof attrs.country === "string" ? attrs.country : null,
-    network: typeof attrs.network === "string" ? attrs.network : null,
-    registrar: typeof attrs.registrar === "string" ? attrs.registrar : null,
   });
 }

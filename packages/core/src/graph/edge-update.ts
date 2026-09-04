@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   edgesRepo,
   entitiesRepo,
@@ -10,9 +12,17 @@ import {
   type EdgePredicate,
 } from "@watchdog/schemas";
 
-import { DomainError } from "../infra/domain-error";
-import { assertConfidenceEvidence, assertEntityInCase } from "./patch/guards";
+import { tryDb } from "../infra/postgres-effect";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
 import type { UpdateEdgeInput } from "./edges";
+import {
+  assertConfidenceEvidenceEffect,
+  assertEntityInCaseEffect,
+} from "./patch/guards";
 
 export interface ValidatedEdgeUpdate {
   existing: NonNullable<Awaited<ReturnType<typeof edgesRepo.getInCase>>>;
@@ -28,98 +38,107 @@ export interface ValidatedEdgeUpdate {
   predicateChanged: boolean;
 }
 
-export function validateEdgeUpdate(
+export function validateEdgeUpdateEffect(
   input: UpdateEdgeInput,
   existing: NonNullable<Awaited<ReturnType<typeof edgesRepo.getInCase>>>,
   evidenceIds: string[]
-): ValidatedEdgeUpdate {
-  const viewEntityId = input.viewEntityId ?? existing.fromId;
-  if (
-    viewEntityId !== existing.fromId &&
-    viewEntityId !== existing.toId
-  ) {
-    throw new DomainError(
-      "invalid",
-      "viewEntityId must be an endpoint of the Edge"
-    );
-  }
+): Effect.Effect<ValidatedEdgeUpdate, DomainTag> {
+  return Effect.gen(function* validateEdgeUpdateGen() {
+    const viewEntityId = input.viewEntityId ?? existing.fromId;
+    if (
+      viewEntityId !== existing.fromId &&
+      viewEntityId !== existing.toId
+    ) {
+      return yield* new InvalidError({
+        reason: "viewEntityId must be an endpoint of the Edge",
+      });
+    }
 
-  const hasEndpoints =
-    input.fromId !== undefined || input.toId !== undefined;
-  if (hasEndpoints && (input.fromId === undefined || input.toId === undefined)) {
-    throw new DomainError("invalid", "fromId and toId must be sent together");
-  }
+    const hasEndpoints =
+      input.fromId !== undefined || input.toId !== undefined;
+    if (
+      hasEndpoints &&
+      (input.fromId === undefined || input.toId === undefined)
+    ) {
+      return yield* new InvalidError({
+        reason: "fromId and toId must be sent together",
+      });
+    }
 
-  if (
-    !hasEndpoints &&
-    input.predicate === undefined &&
-    input.confidence === undefined &&
-    input.notes === undefined &&
-    input.evidenceIds === undefined
-  ) {
-    throw new DomainError("invalid", "Nothing to update");
-  }
+    if (
+      !hasEndpoints &&
+      input.predicate === undefined &&
+      input.confidence === undefined &&
+      input.notes === undefined &&
+      input.evidenceIds === undefined
+    ) {
+      return yield* new InvalidError({ reason: "Nothing to update" });
+    }
 
-  const next = {
-    fromId: input.fromId ?? existing.fromId,
-    toId: input.toId ?? existing.toId,
-    predicate: input.predicate ?? existing.predicate,
-    confidence: input.confidence ?? existing.confidence,
-    notes:
-      input.notes === undefined
-        ? (existing.notes ?? null)
-        : input.notes.trim() || null,
-  };
+    const next = {
+      fromId: input.fromId ?? existing.fromId,
+      toId: input.toId ?? existing.toId,
+      predicate: input.predicate ?? existing.predicate,
+      confidence: input.confidence ?? existing.confidence,
+      notes:
+        input.notes === undefined
+          ? (existing.notes ?? null)
+          : input.notes.trim() || null,
+    };
 
-  assertConfidenceEvidence(next.confidence, evidenceIds);
+    yield* assertConfidenceEvidenceEffect(next.confidence, evidenceIds);
 
-  if (next.fromId === next.toId) {
-    throw new DomainError("invalid", "Edge cannot link an Entity to itself");
-  }
-  if (viewEntityId !== next.fromId && viewEntityId !== next.toId) {
-    throw new DomainError(
-      "invalid",
-      "viewEntityId must remain an endpoint of this Edge"
-    );
-  }
-  if (
-    next.predicate === "related_to" &&
-    (next.notes === null || next.notes === "")
-  ) {
-    throw new DomainError("invalid", "related_to requires notes");
-  }
+    if (next.fromId === next.toId) {
+      return yield* new InvalidError({
+        reason: "Edge cannot link an Entity to itself",
+      });
+    }
+    if (viewEntityId !== next.fromId && viewEntityId !== next.toId) {
+      return yield* new InvalidError({
+        reason: "viewEntityId must remain an endpoint of this Edge",
+      });
+    }
+    if (
+      next.predicate === "related_to" &&
+      (next.notes === null || next.notes === "")
+    ) {
+      return yield* new InvalidError({ reason: "related_to requires notes" });
+    }
 
-  const endpointsChanged =
-    next.fromId !== existing.fromId || next.toId !== existing.toId;
-  const predicateChanged = next.predicate !== existing.predicate;
-
-  return {
-    existing,
-    evidenceIds,
-    next,
-    endpointsChanged,
-    predicateChanged,
-  };
+    return {
+      existing,
+      evidenceIds,
+      next,
+      endpointsChanged:
+        next.fromId !== existing.fromId || next.toId !== existing.toId,
+      predicateChanged: next.predicate !== existing.predicate,
+    };
+  });
 }
 
-export async function assertEdgeKindsAllowed(
+export function assertEdgeKindsAllowedEffect(
   caseId: string,
   fromId: string,
   toId: string,
   predicate: EdgePredicate,
   exec: DbExec
-): Promise<void> {
-  const from = await entitiesRepo.getInCase(exec, caseId, fromId);
-  const to = await entitiesRepo.getInCase(exec, caseId, toId);
-  if (!from || !to) {
-    throw new DomainError("not_found", "Entity not found in this Case");
-  }
-  if (!edgePredicateAllowsKinds(predicate, from.kind, to.kind)) {
-    throw new DomainError(
-      "invalid",
-      `${predicate} is not allowed for ${from.kind} → ${to.kind}`
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* assertEdgeKindsAllowedGen() {
+    const from = yield* tryDb(() =>
+      entitiesRepo.getInCase(exec, caseId, fromId)
     );
-  }
+    const to = yield* tryDb(() => entitiesRepo.getInCase(exec, caseId, toId));
+    if (!from || !to) {
+      return yield* new NotFoundError({
+        resource: "Entity not found in this Case",
+      });
+    }
+    if (!edgePredicateAllowsKinds(predicate, from.kind, to.kind)) {
+      return yield* new InvalidError({
+        reason: `${predicate} is not allowed for ${from.kind} → ${to.kind}`,
+      });
+    }
+  });
 }
 
 function buildEdgePatch(
@@ -141,42 +160,46 @@ function buildEdgePatch(
   return patch;
 }
 
-export async function applyValidatedEdgeUpdate(
+export function applyValidatedEdgeUpdateEffect(
   tx: DbExec,
   input: UpdateEdgeInput,
   validated: ValidatedEdgeUpdate
-): Promise<EdgeListRow> {
-  const { existing, next, endpointsChanged, predicateChanged } = validated;
+): Effect.Effect<EdgeListRow, DomainTag> {
+  return Effect.gen(function* applyValidatedEdgeUpdateGen() {
+    const { existing, next, endpointsChanged, predicateChanged } = validated;
 
-  if (endpointsChanged) {
-    await assertEntityInCase(input.caseId, next.fromId, tx);
-    await assertEntityInCase(input.caseId, next.toId, tx);
-  }
-  if (endpointsChanged || predicateChanged) {
-    await assertEdgeKindsAllowed(
-      input.caseId,
-      next.fromId,
-      next.toId,
-      next.predicate,
-      tx
-    );
-  }
-
-  const patch = buildEdgePatch(existing, next);
-  if (Object.keys(patch).length > 0) {
-    const updated = await edgesRepo.update(tx, input.edgeId, patch);
-    if (!updated) {
-      throw new DomainError("invalid", "Failed to update Edge");
+    if (endpointsChanged) {
+      yield* assertEntityInCaseEffect(input.caseId, next.fromId, tx);
+      yield* assertEntityInCaseEffect(input.caseId, next.toId, tx);
     }
-  }
+    if (endpointsChanged || predicateChanged) {
+      yield* assertEdgeKindsAllowedEffect(
+        input.caseId,
+        next.fromId,
+        next.toId,
+        next.predicate,
+        tx
+      );
+    }
 
-  const listedRow = await edgesRepo.getListedInCase(
-    tx,
-    input.caseId,
-    input.edgeId
-  );
-  if (!listedRow) {
-    throw new DomainError("invalid", "Edge updated but not found");
-  }
-  return listedRow;
+    const patch = buildEdgePatch(existing, next);
+    if (Object.keys(patch).length > 0) {
+      const updated = yield* tryDb(() =>
+        edgesRepo.update(tx, input.edgeId, patch)
+      );
+      if (!updated) {
+        return yield* new InvalidError({ reason: "Failed to update Edge" });
+      }
+    }
+
+    const listedRow = yield* tryDb(() =>
+      edgesRepo.getListedInCase(tx, input.caseId, input.edgeId)
+    );
+    if (!listedRow) {
+      return yield* new InvalidError({
+        reason: "Edge updated but not found",
+      });
+    }
+    return listedRow;
+  });
 }

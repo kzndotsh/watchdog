@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { listRecentActivity } from "@watchdog/core";
+import { listRecentActivityEffect } from "@watchdog/core";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import { activityItemSchema } from "../schemas";
 
 export const listRecent = authed
@@ -20,9 +20,9 @@ export const listRecent = authed
     })
   )
   .output(z.array(activityItemSchema))
-  .handler(
-    withDomainError(async ({ input }) =>
-      listRecentActivity({
+  .handler(async ({ input }) =>
+    runApp(
+      listRecentActivityEffect({
         caseId: input.caseId,
         limit: input.limit,
       })

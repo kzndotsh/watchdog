@@ -1,13 +1,13 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import {
-  httpToolsError,
-  parseToolsError,
-  rateLimitedToolsError,
-  validationToolsError,
-} from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
+import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { asString, isRecord, recordRows } from "../parse/coerce";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { asString, recordRows } from "../parse/coerce";
 
 export const HASHLOOKUP_ALGOS = ["md5", "sha1", "sha256", "sha512"] as const;
 export type HashlookupAlgo = (typeof HASHLOOKUP_ALGOS)[number];
@@ -77,76 +77,73 @@ function firstProductName(body: Record<string, unknown>): string | null {
 interface HashlookupOptions {
   userAgent?: string;
 }
-export async function fetchHashlookup(
+
+export function fetchHashlookupEffect(
   hashRaw: string,
   signal: AbortSignal,
   options?: HashlookupOptions
-): Promise<HashlookupSnapshot> {
-  const hash = normalizeHashlookupHash(hashRaw);
-  const algo = algoForHash(hash);
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("threat.hashlookup.lookup");
+): Effect.Effect<HashlookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchHashlookupGen() {
+    const hash = yield* Effect.try({
+      try: () => normalizeHashlookupHash(hashRaw),
+      catch: mapToolsCatch,
+    });
+    const algo = yield* Effect.try({
+      try: () => algoForHash(hash),
+      catch: mapToolsCatch,
+    });
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("threat.hashlookup.lookup");
 
-  const res = await fetch(
-    `https://hashlookup.circl.lu/lookup/${algo}/${hash}`,
-    {
-      method: "GET",
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url: `https://hashlookup.circl.lu/lookup/${algo}/${hash}`,
       signal,
-      headers: { Accept: "application/json", "User-Agent": ua },
-    }
-  );
+      service: "CIRCL hashlookup",
+      subject: hash,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
 
-  if (res.status === 404) {
+    if (status === 404) {
+      return hashlookupSnapshotSchema.parse({
+        hash,
+        algo,
+        queriedAt: new Date().toISOString(),
+        source: "hashlookup.circl.lu",
+        found: false,
+        trust: null,
+        fileName: null,
+        product: null,
+        md5: null,
+        sha1: null,
+        sha256: null,
+        parentCount: null,
+        childCount: null,
+      });
+    }
+    const trustRaw = body["hashlookup:trust"];
+    const trust =
+      typeof trustRaw === "number" || typeof trustRaw === "string"
+        ? trustRaw
+        : null;
+
     return hashlookupSnapshotSchema.parse({
       hash,
       algo,
       queriedAt: new Date().toISOString(),
       source: "hashlookup.circl.lu",
-      found: false,
-      trust: null,
-      fileName: null,
-      product: null,
-      md5: null,
-      sha1: null,
-      sha256: null,
-      parentCount: null,
-      childCount: null,
+      found: true,
+      trust,
+      fileName: asString(body.FileName),
+      product: firstProductName(body),
+      md5: asString(body.MD5),
+      sha1: asString(body["SHA-1"]),
+      sha256: asString(body["SHA-256"]),
+      parentCount: Array.isArray(body.parents) ? body.parents.length : null,
+      childCount: Array.isArray(body.children) ? body.children.length : null,
     });
-  }
-  if (res.status === 429) {
-    throw rateLimitedToolsError("CIRCL hashlookup", hash);
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "CIRCL hashlookup API",
-      res.status,
-      `CIRCL hashlookup API ${res.status} for ${hash}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("CIRCL hashlookup", hash);
-  }
-  const trustRaw = body["hashlookup:trust"];
-  const trust =
-    typeof trustRaw === "number" || typeof trustRaw === "string"
-      ? trustRaw
-      : null;
-
-  return hashlookupSnapshotSchema.parse({
-    hash,
-    algo,
-    queriedAt: new Date().toISOString(),
-    source: "hashlookup.circl.lu",
-    found: true,
-    trust,
-    fileName: asString(body.FileName),
-    product: firstProductName(body),
-    md5: asString(body.MD5),
-    sha1: asString(body["SHA-1"]),
-    sha256: asString(body["SHA-256"]),
-    parentCount: Array.isArray(body.parents) ? body.parents.length : null,
-    childCount: Array.isArray(body.children) ? body.children.length : null,
   });
 }
