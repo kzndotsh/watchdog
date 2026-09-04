@@ -1,7 +1,10 @@
 /* oxlint-disable react/only-export-components, react-doctor/only-export-components -- create defaults + form hook shared with IdentifiersSection */
 
 import { useForm } from "@tanstack/react-form";
+import { LinkIcon, PencilIcon } from "lucide-react";
+import { useState } from "react";
 
+import { cn } from "@/lib/utils";
 import {
   CONFIRMED_REQUIRES_EVIDENCE,
   isConfirmedBlocked,
@@ -13,6 +16,7 @@ import {
   EditableSuggestCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
+import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import {
@@ -23,7 +27,18 @@ import {
   TYPE_OPTIONS,
 } from "@/shared/ui/identifiers/identifier-cells";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
-import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
+import {
+  EvidencePicker,
+  evidenceLabel,
+} from "@/shared/ui/intake/evidence-picker";
+import { Button } from "@/shared/ui/shadcn/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/shared/ui/shadcn/popover";
 import { TableCell } from "@/shared/ui/shadcn/table";
 import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
@@ -102,7 +117,159 @@ interface IdentifierComposerAppendProps {
   onKeyDown: (e: React.KeyboardEvent) => void;
   onSubmit: () => void;
   onCancel: () => void;
+  evidenceOptions: EvidenceOption[];
   entityPicker?: { entities: EntityOption[] };
+}
+
+function ComposerEvidenceField({
+  form,
+  evidenceOptions,
+}: {
+  form: IdentifierCreateForm;
+  evidenceOptions: EvidenceOption[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <TableCell>
+      <form.Field
+        name="evidenceIds"
+        validators={{
+          onChangeListenTo: ["confidence"],
+          onChange: ({ value, fieldApi }) => {
+            const confidence = fieldApi.form.getFieldValue("confidence");
+            if (isConfirmedBlocked(confidence, value)) {
+              return CONFIRMED_REQUIRES_EVIDENCE;
+            }
+            // oxlint-disable-next-line unicorn/no-useless-undefined -- TanStack Form: undefined = valid
+            return undefined;
+          },
+        }}
+      >
+        {(field) => {
+          const selected = field.state.value;
+          const primary = selected[0]
+            ? evidenceOptions.find((opt) => opt.id === selected[0])
+            : undefined;
+          let primaryLabel: string | null = null;
+          if (primary) {
+            primaryLabel = evidenceLabel(primary);
+          } else if (selected[0]) {
+            primaryLabel = "1 linked";
+          }
+          const overflow = selected.length - 1;
+
+          return (
+            <div
+              className="flex w-full max-w-full min-w-0 items-center gap-1 overflow-hidden"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              {primaryLabel ? (
+                <DetailStatusChip
+                  size="sm"
+                  className="max-w-full min-w-0 flex-1 justify-start overflow-hidden"
+                  title={primaryLabel}
+                >
+                  <span className="block min-w-0 truncate">{primaryLabel}</span>
+                </DetailStatusChip>
+              ) : null}
+              {overflow > 0 ? (
+                <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
+                  +{overflow}
+                </span>
+              ) : null}
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      aria-label={
+                        selected.length > 0
+                          ? "Edit evidence links"
+                          : "Link evidence"
+                      }
+                      title={
+                        selected.length > 0
+                          ? "Edit evidence links"
+                          : "Link evidence"
+                      }
+                      disabled={form.state.isSubmitting}
+                      className={cn(
+                        "shrink-0",
+                        selected.length > 0
+                          ? "text-muted-foreground size-6 px-0"
+                          : "text-muted-foreground h-6 gap-1 px-1 text-xs font-normal"
+                      )}
+                    />
+                  }
+                >
+                  {selected.length > 0 ? (
+                    <PencilIcon className="size-3" aria-hidden />
+                  ) : (
+                    <>
+                      <LinkIcon className="size-3" aria-hidden />
+                      <span>Link</span>
+                    </>
+                  )}
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  className="w-72 gap-2 rounded-md p-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <PopoverHeader>
+                    <PopoverTitle className="text-xs">
+                      Link evidence
+                    </PopoverTitle>
+                  </PopoverHeader>
+                  <EvidencePicker
+                    options={evidenceOptions}
+                    selectedIds={selected}
+                    onChange={(ids) => {
+                      field.handleChange(ids);
+                    }}
+                    layout="panel"
+                  />
+                  <form.Subscribe
+                    selector={(state) => ({
+                      confidence: state.values.confidence,
+                      evidenceIds: state.values.evidenceIds,
+                    })}
+                  >
+                    {({ confidence, evidenceIds }) =>
+                      isConfirmedBlocked(confidence, evidenceIds) ? (
+                        <FormInlineWarning>
+                          {CONFIRMED_REQUIRES_EVIDENCE}
+                        </FormInlineWarning>
+                      ) : null
+                    }
+                  </form.Subscribe>
+                </PopoverContent>
+              </Popover>
+            </div>
+          );
+        }}
+      </form.Field>
+      <form.Subscribe
+        selector={(state) => ({
+          confidence: state.values.confidence,
+          evidenceIds: state.values.evidenceIds,
+        })}
+      >
+        {({ confidence, evidenceIds }) =>
+          isConfirmedBlocked(confidence, evidenceIds) ? (
+            <FormInlineWarning>{CONFIRMED_REQUIRES_EVIDENCE}</FormInlineWarning>
+          ) : null
+        }
+      </form.Subscribe>
+    </TableCell>
+  );
 }
 
 function ValueField({
@@ -183,6 +350,7 @@ export function IdentifierComposerAppend({
   onKeyDown,
   onSubmit,
   onCancel,
+  evidenceOptions,
   entityPicker,
 }: IdentifierComposerAppendProps) {
   const requireEntity = entityPicker !== undefined;
@@ -271,6 +439,7 @@ export function IdentifierComposerAppend({
           )}
         </form.Field>
       </TableCell>
+      <ComposerEvidenceField form={form} evidenceOptions={evidenceOptions} />
       <form.Subscribe
         selector={(state) => ({
           isSubmitting: state.isSubmitting,
@@ -283,70 +452,14 @@ export function IdentifierComposerAppend({
             canSubmit={identifierCreateCanSubmit(values, { requireEntity })}
             onSubmit={onSubmit}
             onCancel={onCancel}
-            colSpan={2}
+            blockedHint={
+              isHandleWithoutPlatform(values.type, values.platform)
+                ? HANDLE_REQUIRES_PLATFORM
+                : undefined
+            }
           />
         )}
       </form.Subscribe>
     </DataTableComposerRow>
-  );
-}
-
-interface IdentifierComposerEvidenceProps {
-  form: IdentifierCreateForm;
-  evidenceOptions: EvidenceOption[];
-}
-
-export function IdentifierComposerEvidence({
-  form,
-  evidenceOptions,
-}: IdentifierComposerEvidenceProps) {
-  return (
-    <div className="bg-muted/15 flex flex-col gap-1.5 rounded-md border border-dashed p-2">
-      <form.Field
-        name="evidenceIds"
-        validators={{
-          onChangeListenTo: ["confidence"],
-          onChange: ({ value, fieldApi }) => {
-            const confidence = fieldApi.form.getFieldValue("confidence");
-            if (isConfirmedBlocked(confidence, value)) {
-              return CONFIRMED_REQUIRES_EVIDENCE;
-            }
-            // oxlint-disable-next-line unicorn/no-useless-undefined -- TanStack Form: undefined = valid
-            return undefined;
-          },
-        }}
-      >
-        {(field) => (
-          <EvidencePicker
-            options={evidenceOptions}
-            selectedIds={field.state.value}
-            onChange={(ids) => {
-              field.handleChange(ids);
-            }}
-          />
-        )}
-      </form.Field>
-      <form.Subscribe
-        selector={(state) => ({
-          confidence: state.values.confidence,
-          evidenceIds: state.values.evidenceIds,
-          type: state.values.type,
-          platform: state.values.platform,
-        })}
-      >
-        {({ confidence, evidenceIds, type, platform }) => (
-          <>
-            {isConfirmedBlocked(confidence, evidenceIds) ? (
-              <FormInlineWarning>
-                {CONFIRMED_REQUIRES_EVIDENCE}
-              </FormInlineWarning>
-            ) : null}
-            {isHandleWithoutPlatform(type, platform) ? (
-              <FormInlineWarning>{HANDLE_REQUIRES_PLATFORM}</FormInlineWarning>
-            ) : null}
-          </>
-        )}
-      </form.Subscribe>
-    </div>
   );
 }

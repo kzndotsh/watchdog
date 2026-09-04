@@ -48,6 +48,7 @@ export const WD_UI_FILES = [
   "src/shared/ui/identifiers/identifier-cells.tsx",
   "src/shared/ui/identifiers/identifier-composer.tsx",
   "src/shared/ui/identifiers/identifier-evidence-cell.tsx",
+  "src/shared/ui/identifiers/identifier-notes-cell.tsx",
   "src/shared/ui/inline-loading.tsx",
   "src/shared/ui/intake/evidence-option.ts",
   "src/shared/ui/intake/evidence-picker.tsx",

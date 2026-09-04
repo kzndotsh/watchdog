@@ -4,6 +4,7 @@ import type {
   ColumnDef,
   HeaderContext,
 } from "@tanstack/react-table";
+import { CopyIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { IdentifierRecord } from "@/domains/entities/identifiers/identifiers.functions";
@@ -24,7 +25,9 @@ import {
   type EditableSelectOption,
 } from "@/shared/ui/data-table";
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
+import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import { Button } from "@/shared/ui/shadcn/button";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,
@@ -35,8 +38,6 @@ import {
   confidenceTierSchema,
   identifierStatusSchema,
   identifierTypeSchema,
-  identifierPlatformMeta,
-  normalizeIdentifierPlatform,
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
@@ -47,64 +48,37 @@ export {
   isHandleWithoutPlatform,
 } from "@/domains/entities/lib/commit-identifier-field";
 
+export function IdentifierValueCopyControl({ value }: { value: string }) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+      aria-label="Copy value"
+      title="Copy value"
+      onClick={(event) => {
+        event.stopPropagation();
+        void (async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            toast.success("Copied");
+          } catch {
+            toast.error("Couldn't copy");
+          }
+        })();
+      }}
+    >
+      <CopyIcon className="size-3" aria-hidden />
+    </Button>
+  );
+}
+
 export const PLATFORM_OPTIONS: EditableSelectOption[] =
   IDENTIFIER_PLATFORM_OPTIONS;
 
 export const TYPE_OPTIONS: EditableSelectOption[] = IDENTIFIER_TYPE_OPTIONS;
 export const STATUS_OPTIONS: EditableSelectOption[] = IDENTIFIER_STATUS_OPTIONS;
-
-function buildHandleHref(value: string, platform: string): string | null {
-  const meta = identifierPlatformMeta(normalizeIdentifierPlatform(platform));
-  if (meta?.urlTemplate === undefined || meta.urlTemplate === "") return null;
-
-  let handle = value;
-  if (
-    meta.stripSigil !== undefined &&
-    meta.stripSigil !== "" &&
-    handle.startsWith(meta.stripSigil)
-  ) {
-    handle = handle.slice(meta.stripSigil.length);
-  }
-  handle = handle.replace(/^@+/, "").replace(/^u\//, "");
-  return meta.urlTemplate.replaceAll("{value}", handle);
-}
-
-function buildHref(
-  type: IdentifierType,
-  value: string,
-  platform: string
-): string | null {
-  const v = value.trim();
-  if (!v) return null;
-  switch (type) {
-    case "email": {
-      return `mailto:${v}`;
-    }
-    case "phone": {
-      return `tel:${v.replaceAll(/\s/g, "")}`;
-    }
-    case "url": {
-      return v.startsWith("http") ? v : `https://${v}`;
-    }
-    case "domain": {
-      return `https://${v.replace(/^\*\./, "")}`;
-    }
-    case "handle": {
-      return buildHandleHref(v, platform);
-    }
-    case "credential":
-    case "crypto":
-    case "pgp":
-    case "ip":
-    case "other": {
-      return null;
-    }
-    default: {
-      const _exhaustive: never = type;
-      return _exhaustive;
-    }
-  }
-}
 
 export interface IdentifierFieldUpdate {
   value?: string;
@@ -170,7 +144,13 @@ function evidenceColumnHeader({
 function notesColumnHeader({
   column,
 }: HeaderContext<IdentifierRecord, unknown>) {
-  return <DataTableColumnHeader column={column} title="Notes" />;
+  return (
+    <DataTableColumnHeader
+      column={column}
+      title="Notes"
+      className="flex w-full justify-center"
+    />
+  );
 }
 
 function renderIdentifierValueCell(
@@ -178,28 +158,12 @@ function renderIdentifierValueCell(
 ) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
-  const href = buildHref(row.type, row.value, row.platform);
   return (
     <EditableTextCell
       value={row.value}
       placeholder="Value…"
       aria-label="Identifier value"
-      suffix={
-        href !== null && href !== "" ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground ml-1"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            title="Open"
-          >
-            ↗
-          </a>
-        ) : undefined
-      }
+      suffix={<IdentifierValueCopyControl value={row.value} />}
       onCommit={(next) => {
         const value = tryCommitIdentifierValue(row.type, next, row.platform);
         if (value === false) return false;
@@ -315,12 +279,11 @@ function renderIdentifierNotesCell(
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
   return (
-    <EditableTextCell
-      value={row.notes ?? ""}
-      placeholder="Notes…"
-      aria-label="Notes"
-      onCommit={(next) => {
-        meta.updateField(row.id, { notes: next });
+    <IdentifierNotesCell
+      identifierId={row.id}
+      notes={row.notes}
+      saveNotes={(identifierId, notes) => {
+        meta.updateField(identifierId, { notes });
       }}
     />
   );
@@ -339,8 +302,8 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     accessorKey: "type",
     header: typeColumnHeader,
     cell: renderIdentifierTypeCell,
-    size: 140,
-    minSize: 120,
+    size: 120,
+    minSize: 100,
     meta: { label: "Type" },
   },
   {
@@ -355,16 +318,16 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     accessorKey: "status",
     header: statusColumnHeader,
     cell: renderIdentifierStatusCell,
-    size: 140,
-    minSize: 120,
+    size: 120,
+    minSize: 100,
     meta: { label: "Status" },
   },
   {
     accessorKey: "confidence",
     header: confidenceColumnHeader,
     cell: renderIdentifierConfidenceCell,
-    size: 140,
-    minSize: 120,
+    size: 120,
+    minSize: 100,
     meta: { label: "Confidence" },
   },
   {
@@ -372,7 +335,7 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     header: evidenceColumnHeader,
     cell: renderIdentifierEvidenceCell,
     enableSorting: false,
-    size: 120,
+    size: 160,
     meta: { label: "Evidence" },
   },
   {
@@ -380,7 +343,8 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     header: notesColumnHeader,
     cell: renderIdentifierNotesCell,
     enableSorting: false,
-    size: 140,
+    size: 52,
+    minSize: 48,
     meta: { label: "Notes" },
   },
 ];

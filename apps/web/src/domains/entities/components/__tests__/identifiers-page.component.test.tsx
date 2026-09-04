@@ -35,7 +35,6 @@ vi.mock("@/domains/entities/components/bulk-add-identifiers-dialog", () => ({
 
 vi.mock("@/shared/ui/identifiers/identifier-composer", () => ({
   IdentifierComposerAppend: () => null,
-  IdentifierComposerEvidence: () => null,
 }));
 
 vi.mock("@/shared/ui/data-table", () => ({

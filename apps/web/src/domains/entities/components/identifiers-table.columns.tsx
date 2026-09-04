@@ -5,7 +5,6 @@ import type {
   FilterFn,
   HeaderContext,
 } from "@tanstack/react-table";
-import { CopyIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
@@ -25,15 +24,16 @@ import {
   EditableTextCell,
 } from "@/shared/ui/data-table";
 import {
+  IdentifierValueCopyControl,
   PLATFORM_OPTIONS,
   STATUS_OPTIONS,
   TYPE_OPTIONS,
   type IdentifierFieldUpdate,
 } from "@/shared/ui/identifiers/identifier-cells";
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
+import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
-import { Button } from "@/shared/ui/shadcn/button";
-import { CONFIDENCE_OPTIONS, KindBadge } from "@/shared/ui/vocab";
+import { CONFIDENCE_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import {
   confidenceTierSchema,
   identifierStatusSchema,
@@ -151,15 +151,21 @@ function evidenceColumnHeader({
 function notesColumnHeader({
   column,
 }: HeaderContext<CaseIdentifierRecord, unknown>) {
-  return <DataTableColumnHeader column={column} title="Notes" />;
+  return (
+    <DataTableColumnHeader
+      column={column}
+      title="Notes"
+      className="flex w-full justify-center"
+    />
+  );
 }
 
 function renderEntityCell(ctx: CellContext<CaseIdentifierRecord, unknown>) {
   const row = ctx.row.original;
   return (
     <div className="flex min-w-0 items-center gap-1.5">
+      <EntityKindGlyph kind={row.entityKind} />
       <span className="truncate text-xs font-medium">{row.entityName}</span>
-      <KindBadge kind={row.entityKind} className="text-chip shrink-0" />
     </div>
   );
 }
@@ -187,53 +193,23 @@ function renderTypeCell(ctx: CellContext<CaseIdentifierRecord, unknown>) {
   );
 }
 
-async function copyIdentifierValue(value: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.success("Copied");
-  } catch {
-    toast.error("Couldn't copy");
-  }
-}
-
-function onCopyValueClick(
-  value: string,
-  e: React.MouseEvent<HTMLButtonElement>
-): void {
-  e.stopPropagation();
-  void copyIdentifierValue(value);
-}
-
 function renderValueCell(ctx: CellContext<CaseIdentifierRecord, unknown>) {
   const row = ctx.row.original;
   const meta = identifiersMeta(ctx);
   return (
-    <div className="flex min-w-0 items-center gap-1">
-      <EditableTextCell
-        value={row.value}
-        placeholder="Value…"
-        aria-label="Identifier value"
-        onCommit={(next) => {
-          const value = tryCommitIdentifierValue(row.type, next, row.platform);
-          if (value === false) return false;
-          meta.updateField(row.id, { value });
-          // oxlint-disable-next-line unicorn/no-useless-undefined -- consistent-return with the `false` reject above
-          return undefined;
-        }}
-      />
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="size-6 shrink-0 p-0"
-        aria-label="Copy value"
-        onClick={(e) => {
-          onCopyValueClick(row.value, e);
-        }}
-      >
-        <CopyIcon className="size-3" />
-      </Button>
-    </div>
+    <EditableTextCell
+      value={row.value}
+      placeholder="Value…"
+      aria-label="Identifier value"
+      suffix={<IdentifierValueCopyControl value={row.value} />}
+      onCommit={(next) => {
+        const value = tryCommitIdentifierValue(row.type, next, row.platform);
+        if (value === false) return false;
+        meta.updateField(row.id, { value });
+        // oxlint-disable-next-line unicorn/no-useless-undefined -- consistent-return with the `false` reject above
+        return undefined;
+      }}
+    />
   );
 }
 
@@ -310,13 +286,11 @@ function renderNotesCell(ctx: CellContext<CaseIdentifierRecord, unknown>) {
   const row = ctx.row.original;
   const meta = identifiersMeta(ctx);
   return (
-    <EditableTextCell
-      value={row.notes ?? ""}
-      placeholder="Notes…"
-      aria-label="Notes"
-      onCommit={(next) => {
-        if (next === (row.notes ?? "")) return;
-        meta.updateField(row.id, { notes: next });
+    <IdentifierNotesCell
+      identifierId={row.id}
+      notes={row.notes}
+      saveNotes={(identifierId, notes) => {
+        meta.updateField(identifierId, { notes });
       }}
     />
   );
@@ -346,8 +320,8 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     cell: renderTypeCell,
     filterFn: filterByType,
     meta: { label: "Type" },
-    size: 140,
-    minSize: 120,
+    size: 120,
+    minSize: 100,
   },
   {
     accessorKey: "platform",
@@ -363,8 +337,8 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     cell: renderStatusCell,
     filterFn: filterByStatus,
     meta: { label: "Status" },
-    size: 140,
-    minSize: 120,
+    size: 120,
+    minSize: 100,
   },
   {
     accessorKey: "confidence",
@@ -372,15 +346,15 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     cell: renderConfidenceCell,
     filterFn: filterByConfidence,
     meta: { label: "Confidence" },
-    size: 140,
-    minSize: 120,
+    size: 120,
+    minSize: 100,
   },
   {
     id: "evidence",
     header: evidenceColumnHeader,
     cell: renderEvidenceCell,
     meta: { label: "Evidence" },
-    size: 140,
+    size: 160,
     enableSorting: false,
   },
   {
@@ -388,6 +362,8 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     header: notesColumnHeader,
     cell: renderNotesCell,
     meta: { label: "Notes" },
-    size: 180,
+    size: 52,
+    minSize: 48,
+    enableSorting: false,
   },
 ];

@@ -20,10 +20,7 @@ import {
 } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import {
-  IdentifierComposerAppend,
-  IdentifierComposerEvidence,
-} from "@/shared/ui/identifiers/identifier-composer";
+import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
 import { SearchField } from "@/shared/ui/search-field";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
@@ -72,6 +69,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
       onSubmit={submitCreate}
       onCancel={closeComposer}
       entityPicker={{ entities: entityOptions }}
+      evidenceOptions={evidenceOptions}
     />
   ) : (
     <DataTableAddRow
@@ -234,12 +232,6 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
           onRowClick={onRowClick}
         />
       </div>
-      {composing ? (
-        <IdentifierComposerEvidence
-          form={createForm}
-          evidenceOptions={evidenceOptions}
-        />
-      ) : null}
       <DataTablePagination table={table} />
       <BulkAddIdentifiersDialog
         open={bulkOpen}

@@ -13,7 +13,6 @@ import {
 } from "@/domains/dossier/components/identifiers-section.cells";
 import {
   IdentifierComposerAppend,
-  IdentifierComposerEvidence,
   identifierCreateCanSubmit,
   useIdentifierCreateForm,
 } from "@/domains/dossier/components/identifiers-section.composer";
@@ -177,6 +176,7 @@ export function IdentifiersSection({
       onKeyDown={onComposerKey}
       onSubmit={submit}
       onCancel={closeComposer}
+      evidenceOptions={evidenceOptions}
     />
   ) : (
     <DataTableAddRow
@@ -245,12 +245,6 @@ export function IdentifiersSection({
             emptyText="No identifiers."
             appendRow={appendRow}
           />
-          {composing ? (
-            <IdentifierComposerEvidence
-              form={createForm}
-              evidenceOptions={evidenceOptions}
-            />
-          ) : null}
           <DataTablePagination table={table} />
         </div>
       </DossierSection>
