@@ -4,7 +4,7 @@ import { findCancelledJobIdsEffect, JobFibers } from "@watchdog/core/worker";
 import { createLogger } from "@watchdog/log";
 
 /** Dual SoT cancel: product `jobs.status` is polled on this spacing. */
-export const CANCEL_POLL_SPACING = "2 seconds" as const;
+const CANCEL_POLL_SPACING = "2 seconds" as const;
 
 function logCancelPollError(error: unknown): void {
   const log = createLogger({ scope: "worker.cancel_poll" });
@@ -13,7 +13,7 @@ function logCancelPollError(error: unknown): void {
   void log.emit();
 }
 
-export const pollCancelledJobsEffect: Effect.Effect<void, never, JobFibers> =
+const pollCancelledJobsEffect: Effect.Effect<void, never, JobFibers> =
   Effect.gen(function* pollCancelledJobsGen() {
     const fibers = yield* JobFibers;
     const running = fibers.listIds();

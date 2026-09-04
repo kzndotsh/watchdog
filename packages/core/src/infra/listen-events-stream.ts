@@ -1,4 +1,1 @@
-export {
-  listenForEventsStream,
-  type ListenForEventsStreamOpts,
-} from "@watchdog/db";
+export { listenForEventsStream } from "@watchdog/db";
