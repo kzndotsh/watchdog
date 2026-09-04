@@ -48,7 +48,6 @@
     "effect": "4.0.0-rc.112"
   },
   "devDependencies": {
-    "@effect/platform-node": "4.0.0-rc.112",
     "@effect/tsgo": "0.39.1",
     "@effect/vitest": "4.0.0-rc.112",
     "@playwright/test": "^1.62.1",
