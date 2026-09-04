@@ -99,7 +99,6 @@ function classifyRun(input: {
 
 /** Effect 4: interrupted fibers exit as interrupt even if catchCause "recovers". */
 function jobOutcomeFromInterrupt(
-  jobId: string,
   reason: JobAbortReason,
   row: JobRow | null,
   started: number
@@ -564,7 +563,7 @@ export function executeJobOnMap(
         Effect.orDie
       );
       fibers.clearReason(jobId);
-      return jobOutcomeFromInterrupt(jobId, reason, row, started);
+      return jobOutcomeFromInterrupt(reason, row, started);
     }
     fibers.clearReason(jobId);
     return yield* Effect.die(Cause.squash(exit.cause));
