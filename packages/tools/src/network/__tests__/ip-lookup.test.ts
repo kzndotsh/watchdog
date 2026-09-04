@@ -27,7 +27,8 @@ describe("ip-lookup", () => {
   it.effect("fetchIpLookupEffect parses Team Cymru origin TXT", () =>
     Effect.gen(function* fetchIpLookupGen() {
       mockResolver.resolveTxt.mockImplementation(async (name: string) => {
-        if (name.endsWith("origin.asn.cymru.com")) {
+        // Exact Team Cymru origin name for 8.8.8.8 (avoid substring host checks).
+        if (name === "8.8.8.8.origin.asn.cymru.com") {
           return [["15169 | 8.8.8.0/24 | US | arin | 2000-03-30"]];
         }
         if (name === "AS15169.asn.cymru.com") {

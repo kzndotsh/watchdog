@@ -361,6 +361,45 @@ export function identifierPlatformMeta(
   return PLATFORM_BY_SLUG.get(slug) ?? null;
 }
 
+/** Strip a trailing "(…)" group without regex (avoids ReDoS on free text). */
+function stripTrailingParenthetical(text: string): string {
+  if (!text.endsWith(")")) return text;
+  const open = text.lastIndexOf("(");
+  if (open <= 0) return text;
+  return text.slice(0, open).trimEnd();
+}
+
+/** Custom platform slug: lowercase, spaces/junk → `_`, keep `[a-z0-9._-]`. */
+function toCustomPlatformSlug(text: string): string {
+  let out = "";
+  let prevUnderscore = false;
+  for (const ch of text.toLowerCase()) {
+    const isSpace = ch === " " || ch === "\t" || ch === "\n" || ch === "\r";
+    const keep =
+      (ch >= "a" && ch <= "z") ||
+      (ch >= "0" && ch <= "9") ||
+      ch === "." ||
+      ch === "_" ||
+      ch === "-";
+    if (isSpace || !keep) {
+      if (!prevUnderscore && out.length > 0) {
+        out += "_";
+        prevUnderscore = true;
+      }
+      continue;
+    }
+    out += ch;
+    prevUnderscore = ch === "_";
+  }
+  while (out.length > 0 && "._-".includes(out[0] ?? "")) {
+    out = out.slice(1);
+  }
+  while (out.length > 0 && "._-".includes(out.at(-1) ?? "")) {
+    out = out.slice(0, -1);
+  }
+  return out.slice(0, 64);
+}
+
 /** Resolve free text to a known canonical slug, or null if unknown. */
 export function resolveIdentifierPlatform(text: string): string | null {
   const cleaned = text.trim().toLowerCase();
@@ -368,7 +407,7 @@ export function resolveIdentifierPlatform(text: string): string | null {
   const exact = ALIAS_TO_SLUG.get(cleaned);
   if (exact !== undefined && exact !== "") return exact;
   // mild: "Discord (user)" style — take first token / strip parenthetical
-  const bare = cleaned.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  const bare = stripTrailingParenthetical(cleaned);
   if (bare && bare !== cleaned) {
     const viaBare = ALIAS_TO_SLUG.get(bare);
     if (viaBare !== undefined && viaBare !== "") return viaBare;
@@ -387,13 +426,7 @@ export function normalizeIdentifierPlatform(text: string): string {
   if (!trimmed) return "";
   const known = resolveIdentifierPlatform(trimmed);
   if (known !== null && known !== "") return known;
-  return trimmed
-    .toLowerCase()
-    .replaceAll(/\s+/g, "_")
-    .replaceAll(/[^a-z0-9._-]+/g, "_")
-    .replaceAll(/_+/g, "_")
-    .replaceAll(/^[._-]+|[._-]+$/g, "")
-    .slice(0, 64);
+  return toCustomPlatformSlug(trimmed);
 }
 
 /** Slugs only — useful for AI prompts / datalists. */
