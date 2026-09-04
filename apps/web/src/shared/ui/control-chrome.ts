@@ -35,14 +35,14 @@ export const CONTROL_FIELD_TRIGGER = [
  * Transparent resting border — table CSS quiets the outline further.
  */
 export const CONTROL_CELL =
-  "h-7 w-full min-w-0 rounded-md border-transparent bg-transparent py-0 shadow-none hover:bg-muted/40 focus-visible:border-ring focus-visible:bg-background";
+  "h-7 w-full min-w-0 max-w-full rounded-md border-transparent bg-transparent py-0 shadow-none hover:bg-muted/40 focus-visible:border-ring focus-visible:bg-background";
 
 /**
  * InputGroup / ComboboxInput twin of CONTROL_CELL (Peer in composers).
  * Table CSS applies the same quiet border/fill as SelectTrigger.
  */
 export const CONTROL_CELL_SHELL =
-  "h-7 w-full min-w-0 rounded-md border-transparent bg-transparent py-0 shadow-none dark:bg-transparent hover:bg-muted/40 focus-within:border-ring focus-within:bg-background [&_[data-slot=input-group-control]]:h-7 [&_[data-slot=input-group-control]]:text-xs";
+  "h-7 w-full min-w-0 max-w-full rounded-md border-transparent bg-transparent py-0 shadow-none dark:bg-transparent hover:bg-muted/40 focus-within:border-ring focus-within:bg-background [&_[data-slot=input-group-control]]:h-7 [&_[data-slot=input-group-control]]:min-w-0 [&_[data-slot=input-group-control]]:truncate [&_[data-slot=input-group-control]]:text-xs";
 
 /** Base UI Select `onValueChange` may pass string | string[]. */
 export function resolveSelectValue(next: unknown): string | null {

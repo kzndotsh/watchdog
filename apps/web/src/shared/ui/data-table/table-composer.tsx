@@ -1,10 +1,11 @@
-import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, InfoIcon, PlusIcon, XIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Input } from "@/shared/ui/shadcn/input";
 import { TableCell, TableRow } from "@/shared/ui/shadcn/table";
+import { WithTooltip } from "@/shared/ui/timestamp";
 
 const TABLE_COMPOSER_INPUT_CLASS =
   "h-7 w-full rounded-md border-transparent bg-transparent px-1.5 py-0 text-xs shadow-none focus-visible:bg-background/60 focus-visible:border-transparent focus-visible:!shadow-none focus-visible:!ring-0 focus-visible:outline-none";
@@ -48,16 +49,19 @@ export function DataTableComposerActions({
   onSubmit,
   onCancel,
   colSpan = 1,
+  blockedHint,
 }: {
   busy: boolean;
   canSubmit: boolean;
   onSubmit: () => void;
   onCancel: () => void;
   colSpan?: number;
+  /** Shown as a far-right info icon tooltip when submit is blocked for a specific reason. */
+  blockedHint?: string;
 }) {
   return (
     <TableCell colSpan={colSpan}>
-      <div className="flex items-center gap-1">
+      <div className="flex w-full items-center justify-center gap-1">
         <Button
           type="button"
           size="sm"
@@ -80,6 +84,14 @@ export function DataTableComposerActions({
         >
           <XIcon className="size-3.5" />
         </Button>
+        {blockedHint ? (
+          <WithTooltip content={blockedHint} side="left">
+            <InfoIcon
+              className="text-muted-foreground size-3.5 shrink-0"
+              aria-label={blockedHint}
+            />
+          </WithTooltip>
+        ) : null}
       </div>
     </TableCell>
   );

@@ -75,11 +75,15 @@ export function FieldSelect({
       <SelectTrigger
         id={id}
         size={size}
-        className={cn(CONTROL_TRIGGER, "w-auto", className)}
+        className={cn(CONTROL_TRIGGER, "min-w-0", className)}
         aria-label={ariaLabel}
         onKeyDown={onKeyDown}
       >
-        <SelectValue placeholder={placeholder}>{matched?.label}</SelectValue>
+        <SelectValue placeholder={placeholder}>
+          {matched ? (
+            <span className="block min-w-0 truncate">{matched.label}</span>
+          ) : null}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent
         align="start"

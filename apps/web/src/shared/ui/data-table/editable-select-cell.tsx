@@ -39,20 +39,22 @@ export function EditableSelectCell({
       : options;
 
   return (
-    <FieldSelect
-      value={value}
-      onValueChange={(next) => {
-        if (next === value) return;
-        if (!allowEmpty && !next) return;
-        onCommit(next);
-      }}
-      options={resolvedOptions}
-      disabled={disabled}
-      size="sm"
-      aria-label={ariaLabel}
-      placeholder={allowEmpty ? emptyLabel : undefined}
-      onKeyDown={onKeyDown}
-      className={cn(CONTROL_CELL, className)}
-    />
+    <div className="w-full max-w-full min-w-0">
+      <FieldSelect
+        value={value}
+        onValueChange={(next) => {
+          if (next === value) return;
+          if (!allowEmpty && !next) return;
+          onCommit(next);
+        }}
+        options={resolvedOptions}
+        disabled={disabled}
+        size="sm"
+        aria-label={ariaLabel}
+        placeholder={allowEmpty ? emptyLabel : undefined}
+        onKeyDown={onKeyDown}
+        className={cn(CONTROL_CELL, "w-full max-w-full min-w-0", className)}
+      />
+    </div>
   );
 }

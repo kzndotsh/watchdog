@@ -19,7 +19,9 @@ interface Props {
   mono?: boolean;
   autoFocus?: boolean;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
-  /** Trailing control (e.g. external link) — rendered beside the input. */
+  /** Leading control inside the field chrome (e.g. entity kind glyph). */
+  prefix?: ReactNode;
+  /** Trailing control beside the input (e.g. copy) — outside field chrome. */
   suffix?: ReactNode;
 }
 
@@ -42,6 +44,7 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
       mono = false,
       autoFocus = false,
       onKeyDown: externalKeyDown,
+      prefix,
       suffix,
     },
     ref
@@ -75,28 +78,55 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
       }
     }
 
+    const sharedInputProps = {
+      ref,
+      type,
+      value: draft,
+      autoFocus,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        const next = sanitize ? sanitize(e.target.value) : e.target.value;
+        setDraft(next);
+      },
+      onBlur: commit,
+      onKeyDown: handleKeyDown,
+      disabled,
+      placeholder,
+      "aria-label": ariaLabel,
+      autoComplete: "off" as const,
+      "data-1p-ignore": true,
+      "data-lpignore": "true",
+      "data-form-type": "other",
+    };
+
+    if (prefix) {
+      return (
+        <span
+          className={cn(
+            "group inline-flex h-7 min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1.5 py-0 shadow-none",
+            "hover:bg-muted/40 focus-within:border-ring focus-within:bg-background",
+            className
+          )}
+        >
+          {prefix}
+          <input
+            {...sharedInputProps}
+            className={cn(
+              "text-foreground placeholder:text-muted-foreground h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-xs outline-none focus:outline-none focus-visible:outline-none",
+              mono && "font-mono"
+            )}
+          />
+          {suffix}
+        </span>
+      );
+    }
+
     const input = (
       <Input
-        ref={ref}
-        type={type}
-        value={draft}
-        autoFocus={autoFocus}
-        onChange={(e) => {
-          const next = sanitize ? sanitize(e.target.value) : e.target.value;
-          setDraft(next);
-        }}
-        onBlur={commit}
-        onKeyDown={handleKeyDown}
-        disabled={disabled}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
-        autoComplete="off"
-        data-1p-ignore
-        data-lpignore="true"
-        data-form-type="other"
+        {...sharedInputProps}
         className={cn(
           CONTROL_CELL,
           "px-1.5 text-xs focus-visible:ring-0",
+          suffix && "pr-7",
           mono && "font-mono",
           className
         )}
@@ -106,9 +136,11 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
     if (!suffix) return input;
 
     return (
-      <span className="inline-flex w-full min-w-0 items-center gap-0.5">
+      <span className="group relative inline-flex w-full min-w-0 items-center">
         <span className="min-w-0 flex-1">{input}</span>
-        {suffix}
+        <span className="pointer-events-none absolute top-1/2 right-0.5 z-10 -translate-y-1/2 group-focus-within:pointer-events-auto group-hover:pointer-events-auto [&:has(:focus-visible)]:pointer-events-auto">
+          {suffix}
+        </span>
       </span>
     );
   }

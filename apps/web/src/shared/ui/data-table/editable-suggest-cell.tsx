@@ -87,65 +87,71 @@ export function EditableSuggestCell({
   }
 
   return (
-    <Combobox
-      inputValue={inputValue}
-      onInputValueChange={setInputValue}
-      items={items}
-      itemToStringLabel={(opt: EditableSuggestOption) => opt.label}
-      isItemEqualToValue={(a, b) => a.value === b.value}
-      disabled={disabled}
-      onValueChange={(next: EditableSuggestOption | null, details) => {
-        if (details.reason === "escape-key") {
-          details.allowPropagation();
-        }
-        if (!next) return;
-        skipBlurCommit.current = true;
-        setInputValue(next.label);
-        if (next.value !== value) onCommit(next.value);
-      }}
-    >
-      <ComboboxInput
-        showTrigger
-        aria-label={ariaLabel}
-        placeholder={placeholder}
-        autoComplete="off"
-        data-1p-ignore=""
-        data-lpignore="true"
-        data-form-type="other"
-        className={cn(CONTROL_CELL_SHELL, className)}
-        onBlur={() => {
-          if (skipBlurCommit.current) {
-            skipBlurCommit.current = false;
-            return;
+    <div className="w-full max-w-full min-w-0">
+      <Combobox
+        inputValue={inputValue}
+        onInputValueChange={setInputValue}
+        items={items}
+        itemToStringLabel={(opt: EditableSuggestOption) => opt.label}
+        isItemEqualToValue={(a, b) => a.value === b.value}
+        disabled={disabled}
+        onValueChange={(next: EditableSuggestOption | null, details) => {
+          if (details.reason === "escape-key") {
+            details.allowPropagation();
           }
-          commitRaw(inputValue);
+          if (!next) return;
+          skipBlurCommit.current = true;
+          setInputValue(next.label);
+          if (next.value !== value) onCommit(next.value);
         }}
-        onKeyDown={(e) => {
-          externalKeyDown?.(e);
-          if (e.key === "Escape") {
-            e.preventDefault();
-            skipBlurCommit.current = false;
-            setInputValue(optionFor(items, value)?.label ?? value);
-            e.currentTarget.blur();
-            return;
-          }
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            commitRaw(inputValue);
-            e.currentTarget.blur();
-          }
-        }}
-      />
-      <ComboboxContent>
-        <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-        <ComboboxList>
-          {(opt: EditableSuggestOption) => (
-            <ComboboxItem key={opt.value} value={opt}>
-              {opt.label}
-            </ComboboxItem>
+      >
+        <ComboboxInput
+          showTrigger
+          aria-label={ariaLabel}
+          placeholder={placeholder}
+          autoComplete="off"
+          data-1p-ignore=""
+          data-lpignore="true"
+          data-form-type="other"
+          className={cn(
+            CONTROL_CELL_SHELL,
+            "w-full max-w-full min-w-0",
+            className
           )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+          onBlur={() => {
+            if (skipBlurCommit.current) {
+              skipBlurCommit.current = false;
+              return;
+            }
+            commitRaw(inputValue);
+          }}
+          onKeyDown={(e) => {
+            externalKeyDown?.(e);
+            if (e.key === "Escape") {
+              e.preventDefault();
+              skipBlurCommit.current = false;
+              setInputValue(optionFor(items, value)?.label ?? value);
+              e.currentTarget.blur();
+              return;
+            }
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              commitRaw(inputValue);
+              e.currentTarget.blur();
+            }
+          }}
+        />
+        <ComboboxContent>
+          <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+          <ComboboxList>
+            {(opt: EditableSuggestOption) => (
+              <ComboboxItem key={opt.value} value={opt}>
+                {opt.label}
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </div>
   );
 }

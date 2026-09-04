@@ -111,7 +111,7 @@ function renderTableBodyRows<TData>({
         }
       >
         {row.getVisibleCells().map((cell) => (
-          <TableCell key={cell.id} className="overflow-hidden">
+          <TableCell key={cell.id} className="min-w-0 overflow-hidden">
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </TableCell>
         ))}
@@ -189,7 +189,7 @@ export function DataTable<TData>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="overflow-hidden">
+                <TableHead key={header.id} className="min-w-0 overflow-hidden">
                   {header.isPlaceholder
                     ? null
                     : flexRender(
