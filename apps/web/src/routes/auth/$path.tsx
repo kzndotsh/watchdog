@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { ensureAppSession } from "@/auth/ensure-session";
 import { Auth } from "@/auth/ui/auth";
+import { AuthProductMark } from "@/auth/ui/auth-product-mark";
 
 const validAuthPaths = new Set(Object.values(viewPaths.auth));
 
@@ -18,6 +19,7 @@ function AuthPage() {
 
   return (
     <main className="mx-auto flex min-h-svh max-w-md flex-col justify-center px-4 py-10">
+      <AuthProductMark />
       <Auth path={path} />
     </main>
   );
