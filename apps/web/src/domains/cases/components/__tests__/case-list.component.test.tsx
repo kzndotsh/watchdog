@@ -108,7 +108,12 @@ describe("CaseList", () => {
     expect(screen.getByText("Beta")).toBeInTheDocument();
     expect(screen.getByText("First case")).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Select" })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: "Open" }).length
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.queryByRole("button", { name: "Select" })
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Active" })
     ).not.toBeInTheDocument();

@@ -41,15 +41,15 @@ function CaseCard({
   caseRow,
   isActive,
   selecting,
-  onSelect,
-  onOpen,
+  onWork,
+  onSetActiveOnly,
   onDelete,
 }: {
   caseRow: CaseRecord;
   isActive: boolean;
   selecting: boolean;
-  onSelect: () => void;
-  onOpen: () => void;
+  onWork: () => void;
+  onSetActiveOnly: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -74,19 +74,13 @@ function CaseCard({
             <CheckIcon className="size-2.5" />
             Active
           </DetailStatusChip>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-6 shrink-0 text-xs"
-            disabled={selecting}
-            onClick={onSelect}
-          >
-            Select
-          </Button>
-        )}
+        ) : null}
         <RowActionsMenu label="Case actions" className="opacity-100">
+          {isActive ? null : (
+            <DropdownMenuItem disabled={selecting} onClick={onSetActiveOnly}>
+              Set as active case
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem className="text-destructive" onClick={onDelete}>
             Delete
           </DropdownMenuItem>
@@ -104,12 +98,12 @@ function CaseCard({
       )}
 
       <Button
-        variant="link"
-        size="xs"
-        className="text-muted-foreground hover:text-foreground mt-auto h-auto self-start p-0"
+        variant="default"
+        size="sm"
+        className="mt-auto h-8 self-start text-xs"
         type="button"
         disabled={selecting}
-        onClick={onOpen}
+        onClick={onWork}
       >
         Open
       </Button>
@@ -347,7 +341,7 @@ function CaseListGrid({
   search,
   onClearSearch,
   onSelectCase,
-  onOpenCase,
+  onWorkCase,
   onDeleteCase,
   onCreate,
 }: {
@@ -360,7 +354,7 @@ function CaseListGrid({
   search: string;
   onClearSearch: () => void;
   onSelectCase: (id: string) => void;
-  onOpenCase: (caseRow: CaseRecord) => void;
+  onWorkCase: (caseRow: CaseRecord) => void;
   onDeleteCase: (caseRow: CaseRecord) => void;
   onCreate: () => void;
 }) {
@@ -390,11 +384,11 @@ function CaseListGrid({
               caseRow={caseRow}
               isActive={caseRow.id === activeId}
               selecting={selecting}
-              onSelect={() => {
-                onSelectCase(caseRow.id);
+              onWork={() => {
+                onWorkCase(caseRow);
               }}
-              onOpen={() => {
-                onOpenCase(caseRow);
+              onSetActiveOnly={() => {
+                onSelectCase(caseRow.id);
               }}
               onDelete={() => {
                 onDeleteCase(caseRow);
@@ -468,7 +462,7 @@ export function CaseList() {
         search={search}
         onClearSearch={clearSearch}
         onSelectCase={selectCase}
-        onOpenCase={(caseRow) => {
+        onWorkCase={(caseRow) => {
           void openCase(caseRow);
         }}
         onDeleteCase={beginDeleteCase}
