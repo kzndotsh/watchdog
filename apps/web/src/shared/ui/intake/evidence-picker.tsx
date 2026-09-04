@@ -1,9 +1,12 @@
-import { ChevronDownIcon, PaperclipIcon, XIcon } from "lucide-react";
+/* oxlint-disable react/only-export-components -- evidenceLabel shared with identifier cells */
+import { PaperclipIcon, PlusIcon, XIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { CONTROL_FIELD_TRIGGER } from "@/shared/ui/control-chrome";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import {
+  CHIP_SIZE_CLASS,
+  DetailStatusChip,
+} from "@/shared/ui/detail-status-chip";
 import { formatOpaqueId } from "@/shared/ui/format-opaque-id";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
@@ -15,13 +18,18 @@ import {
 } from "@/shared/ui/shadcn/popover";
 import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import { KindBadge } from "@/shared/ui/vocab";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 
 export type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 
 const FILTER_THRESHOLD = 8;
 
-function evidenceLabel(row: EvidenceOption): string {
+const PICKER_TRIGGER_CLASS = cn(
+  CHIP_SIZE_CLASS.sm,
+  "text-muted-foreground hover:text-foreground hover:bg-muted/50 border-border/60 focus-visible:ring-ring/50 inline-flex cursor-pointer items-center bg-transparent transition-colors outline-none focus-visible:ring-2"
+);
+
+export function evidenceLabel(row: EvidenceOption): string {
   const label = row.label?.trim();
   if (label !== undefined && label !== "") return label;
   const sourceUrl = row.sourceUrl?.trim();
@@ -111,7 +119,7 @@ export function EvidenceSlotSkeleton({
           />
         </WithTooltip>
         {Array.from({ length: count }).map((_, index) => (
-          <Skeleton key={index} className="h-6 w-24 rounded-full" />
+          <Skeleton key={index} className="h-5 w-24 rounded-md" />
         ))}
       </div>
     );
@@ -124,14 +132,107 @@ export function EvidenceSlotSkeleton({
       aria-live="polite"
       aria-label="Loading evidence"
     >
-      <Skeleton className={cn(CONTROL_FIELD_TRIGGER, "w-32 border-dashed")} />
+      <Skeleton className={cn(PICKER_TRIGGER_CLASS, "w-14 border-dashed")} />
+    </div>
+  );
+}
+
+function EvidenceChecklist({
+  options,
+  selectedIds,
+  filter,
+  onFilterChange,
+  onToggle,
+  idPrefix,
+}: {
+  options: EvidenceOption[];
+  selectedIds: string[];
+  filter: string;
+  onFilterChange: (next: string) => void;
+  onToggle: (id: string, checked: boolean) => void;
+  idPrefix: string;
+}) {
+  const showFilter = options.length > FILTER_THRESHOLD;
+  const q = filter.trim().toLowerCase();
+  const filteredOptions =
+    q === ""
+      ? options
+      : options.filter((row) => evidenceLabel(row).toLowerCase().includes(q));
+
+  if (options.length === 0) {
+    return (
+      <p className="text-muted-foreground px-2 py-3 text-xs">
+        No Case Evidence yet — add some under Intake first.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col">
+      {showFilter ? (
+        <div className="border-border/60 border-b p-1.5">
+          <Input
+            value={filter}
+            onChange={(e) => {
+              onFilterChange(e.target.value);
+            }}
+            placeholder="Filter…"
+            className="h-7 text-xs"
+            aria-label="Filter evidence"
+          />
+        </div>
+      ) : null}
+      <ul
+        className="flex max-h-52 flex-col overflow-y-auto p-1"
+        aria-label="Evidence options"
+      >
+        {filteredOptions.length === 0 ? (
+          <li className="text-muted-foreground px-2 py-2 text-xs">
+            No matches.
+          </li>
+        ) : (
+          filteredOptions.map((row) => {
+            const checked = selectedIds.includes(row.id);
+            const checkboxId = `${idPrefix}-${row.id}`;
+            const label = evidenceLabel(row);
+            return (
+              <li key={row.id}>
+                <label
+                  htmlFor={checkboxId}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1 text-xs",
+                    checked ? "bg-muted/60" : "hover:bg-muted/40"
+                  )}
+                >
+                  <Checkbox
+                    id={checkboxId}
+                    className="size-3.5 shrink-0"
+                    checked={checked}
+                    onCheckedChange={(next) => {
+                      onToggle(row.id, next);
+                    }}
+                  />
+                  <span className="min-w-0 flex-1 truncate" title={label}>
+                    {label}
+                  </span>
+                  <span className="text-muted-foreground shrink-0 text-[10px] tracking-wide uppercase">
+                    {kindLabel(row.kind)}
+                  </span>
+                </label>
+              </li>
+            );
+          })
+        )}
+      </ul>
     </div>
   );
 }
 
 /**
- * Dense multi-select Case Evidence — chips + Add popover.
+ * Dense multi-select Case Evidence — chips + compact add popover.
  * Options are passed in — parent owns fetch (same contract as EntityCombobox).
+ *
+ * `layout="panel"` = checklist only (for parent popovers like identifier cells).
  */
 export function EvidencePicker({
   options,
@@ -139,6 +240,7 @@ export function EvidencePicker({
   onChange,
   className,
   dashedWhenEmpty = false,
+  layout = "trigger",
 }: {
   options: EvidenceOption[];
   selectedIds: string[];
@@ -149,6 +251,8 @@ export function EvidencePicker({
    * For bands that already message the confirmed-needs-evidence gate elsewhere.
    */
   dashedWhenEmpty?: boolean;
+  /** `trigger` = chips + add control. `panel` = checklist only. */
+  layout?: "trigger" | "panel";
 }) {
   const idPrefix = useId();
   const [filter, setFilter] = useState("");
@@ -163,12 +267,6 @@ export function EvidencePicker({
     .filter((row): row is EvidenceOption => row !== undefined);
 
   const totalCount = selectedIds.length;
-  const showFilter = options.length > FILTER_THRESHOLD;
-  const q = filter.trim().toLowerCase();
-  const filteredOptions =
-    q === ""
-      ? options
-      : options.filter((row) => evidenceLabel(row).toLowerCase().includes(q));
 
   function toggle(id: string, checked: boolean) {
     if (checked) {
@@ -178,87 +276,55 @@ export function EvidencePicker({
     }
   }
 
+  const checklist = (
+    <EvidenceChecklist
+      options={options}
+      selectedIds={selectedIds}
+      filter={filter}
+      onFilterChange={setFilter}
+      onToggle={toggle}
+      idPrefix={idPrefix}
+    />
+  );
+
+  if (layout === "panel") {
+    return <div className={cn("min-w-0", className)}>{checklist}</div>;
+  }
+
   return (
     <div className={cn("flex min-w-0 flex-col gap-1", className)}>
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-1">
         <Popover
           onOpenChange={(open) => {
             if (!open) setFilter("");
           }}
         >
           <PopoverTrigger
-            data-slot="select-trigger"
-            data-size="default"
             className={cn(
-              CONTROL_FIELD_TRIGGER,
+              PICKER_TRIGGER_CLASS,
+              totalCount === 0 ? "gap-1 px-1.5" : "size-5 justify-center px-0",
               dashedWhenEmpty && totalCount === 0 && "border-dashed"
             )}
             aria-label={
               totalCount > 0
-                ? `Evidence, ${totalCount} selected`
+                ? `Add evidence, ${totalCount} selected`
                 : "Add evidence"
             }
           >
-            <span data-slot="select-value" className="flex flex-1 text-left">
-              {totalCount > 0 ? `Evidence · ${totalCount}` : "Add evidence"}
-            </span>
-            <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0" />
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-[18rem] space-y-2 p-2">
-            {options.length === 0 ? (
-              <p className="text-muted-foreground px-1 py-2 text-xs">
-                No Case Evidence yet — add some under Intake first.
-              </p>
-            ) : (
+            {totalCount === 0 ? (
               <>
-                {showFilter ? (
-                  <Input
-                    value={filter}
-                    onChange={(e) => {
-                      setFilter(e.target.value);
-                    }}
-                    placeholder="Filter evidence…"
-                    className="h-8 text-xs"
-                    aria-label="Filter evidence"
-                  />
-                ) : null}
-                <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto">
-                  {filteredOptions.length === 0 ? (
-                    <li className="text-muted-foreground px-1 py-2 text-xs">
-                      No matches.
-                    </li>
-                  ) : (
-                    filteredOptions.map((row) => {
-                      const checked = selectedIds.includes(row.id);
-                      const checkboxId = `${idPrefix}-${row.id}`;
-                      return (
-                        <li key={row.id}>
-                          <label
-                            htmlFor={checkboxId}
-                            className="text-foreground hover:bg-muted/50 flex cursor-pointer items-start gap-2 rounded-md px-1 py-1 text-sm"
-                          >
-                            <Checkbox
-                              id={checkboxId}
-                              className="mt-0.5"
-                              checked={checked}
-                              onCheckedChange={(next) => {
-                                toggle(row.id, next);
-                              }}
-                            />
-                            <span className="flex min-w-0 flex-wrap items-center gap-1">
-                              <span className="min-w-0 truncate">
-                                {evidenceLabel(row)}
-                              </span>
-                              <KindBadge kind={row.kind} size="sm" />
-                            </span>
-                          </label>
-                        </li>
-                      );
-                    })
-                  )}
-                </ul>
+                <PaperclipIcon className="size-3 shrink-0" aria-hidden />
+                <span>Add</span>
               </>
+            ) : (
+              <PlusIcon className="size-3 shrink-0" aria-hidden />
             )}
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="w-72 gap-0 overflow-hidden rounded-md p-0"
+          >
+            {checklist}
           </PopoverContent>
         </Popover>
 
