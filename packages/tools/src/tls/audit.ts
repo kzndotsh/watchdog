@@ -82,6 +82,11 @@ export function fetchTlsAuditEffect(
           return;
         }
 
+        // OSINT TLS audit must complete the handshake even for untrusted /
+        // expired / hostname-mismatched certs so we can report authorized +
+        // authorizationError + peer certificate fields. Do not reuse this
+        // pattern for general HTTPS clients.
+        // codeql[js/disabling-certificate-validation]
         const socket = connect(
           {
             host,
