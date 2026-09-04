@@ -1,7 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect } from "effect";
+import { vi } from "vitest";
 
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
-  fetchHackertargetReverseIp,
+  fetchHackertargetReverseIpEffect,
   hackertargetLookupSnapshotSchema,
 } from "../hackertarget";
 
@@ -17,23 +20,29 @@ describe("hackertarget", () => {
     expect(snap.domains).toContain("dns.google");
   });
 
-  it("fetchHackertargetReverseIp parses newline domain lists", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response("dns.google\none.one.one.one\n", { status: 200 })
-        )
-    );
+  it.effect(
+    "fetchHackertargetReverseIpEffect parses newline domain lists",
+    () =>
+      Effect.gen(function* fetchHackertargetReverseIpGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi
+            .fn()
+            .mockResolvedValue(
+              new Response("dns.google\none.one.one.one\n", { status: 200 })
+            )
+        );
 
-    const snap = await fetchHackertargetReverseIp(
-      "8.8.8.8",
-      AbortSignal.timeout(5000)
-    );
+        const snap = yield* fetchHackertargetReverseIpEffect(
+          "8.8.8.8",
+          AbortSignal.timeout(5000)
+        );
 
-    expect(snap.domains).toContain("dns.google");
-    expect(snap.error).toBeNull();
-    vi.unstubAllGlobals();
-  });
+        expect(snap.domains).toContain("dns.google");
+        expect(snap.error).toBeNull();
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

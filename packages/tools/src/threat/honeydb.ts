@@ -1,13 +1,11 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import {
-  httpToolsError,
-  parseToolsError,
-  rateLimitedToolsError,
-  validationToolsError,
-} from "../errors/tools-error";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString, isRecord } from "../parse/coerce";
 
 export const honeydbLookupSnapshotSchema = z.object({
@@ -49,82 +47,74 @@ function sumHistoryEvents(rows: unknown): number {
  * GET https://honeydb.io/api/ip-context/{ip}
  * @see https://honeydb.io/mssp-aisoc
  */
-export async function fetchHoneydbLookup(
+export function fetchHoneydbLookupEffect(
   ipRaw: string,
   apiId: string,
   apiKey: string,
   signal: AbortSignal,
   options?: { userAgent?: string }
-): Promise<HoneydbLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const id = apiId.trim();
-  const key = apiKey.trim();
-  if (!id || !key) {
-    throw validationToolsError("HONEYDB_API_ID and HONEYDB_API_KEY required");
-  }
-
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.honeydb.lookup");
-  const res = await fetch(
-    `https://honeydb.io/api/ip-context/${encodeURIComponent(ip)}`,
-    {
-      method: "GET",
-      signal,
-      headers: {
-        Accept: "application/json",
-        "X-HoneyDb-ApiId": id,
-        "X-HoneyDb-ApiKey": key,
-        "User-Agent": ua,
-      },
+): Effect.Effect<HoneydbLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchHoneydbLookupGen() {
+    const ip = normalizeIp(ipRaw);
+    const id = apiId.trim();
+    const key = apiKey.trim();
+    if (!id || !key) {
+      return yield* new ValidationVendorError({
+        message: "HONEYDB_API_ID and HONEYDB_API_KEY required",
+      });
     }
-  );
 
-  if (res.status === 404) {
+    const ua = options?.userAgent ?? watchdogUserAgent("threat.honeydb.lookup");
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url: `https://honeydb.io/api/ip-context/${encodeURIComponent(ip)}`,
+      signal,
+      service: "HoneyDB",
+      subject: ip,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+      init: {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-HoneyDb-ApiId": id,
+          "X-HoneyDb-ApiKey": key,
+          "User-Agent": ua,
+        },
+      },
+    });
+
+    if (status === 404) {
+      return honeydbLookupSnapshotSchema.parse({
+        ip,
+        queriedAt: new Date().toISOString(),
+        source: "honeydb.io",
+        found: false,
+        asn: null,
+        country: null,
+        isTor: false,
+        isThreat: false,
+        internetScanner: false,
+        historyEventCount: 0,
+      });
+    }
+    const networkInfo = isRecord(body.network_info) ? body.network_info : {};
+    const threatInfo = isRecord(body.threat_info) ? body.threat_info : {};
+
+    const isTor = threatInfo.is_tor === true;
+    const isThreat = threatInfo.is_threat === true;
+    const internetScanner = body.internet_scanner === true;
+    const historyEventCount = sumHistoryEvents(body.ip_history);
+
     return honeydbLookupSnapshotSchema.parse({
       ip,
       queriedAt: new Date().toISOString(),
       source: "honeydb.io",
-      found: false,
-      asn: null,
-      country: null,
-      isTor: false,
-      isThreat: false,
-      internetScanner: false,
-      historyEventCount: 0,
+      found: isThreat || internetScanner || historyEventCount > 0,
+      asn: typeof networkInfo.asn === "number" ? networkInfo.asn : null,
+      country: asString(networkInfo.country),
+      isTor,
+      isThreat,
+      internetScanner,
+      historyEventCount,
     });
-  }
-  if (res.status === 429) {
-    throw rateLimitedToolsError("HoneyDB", ip);
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "HoneyDB API",
-      res.status,
-      `HoneyDB API ${res.status} for ${ip}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("HoneyDB", ip);
-  }
-  const networkInfo = isRecord(body.network_info) ? body.network_info : {};
-  const threatInfo = isRecord(body.threat_info) ? body.threat_info : {};
-
-  const isTor = threatInfo.is_tor === true;
-  const isThreat = threatInfo.is_threat === true;
-  const internetScanner = body.internet_scanner === true;
-  const historyEventCount = sumHistoryEvents(body.ip_history);
-
-  return honeydbLookupSnapshotSchema.parse({
-    ip,
-    queriedAt: new Date().toISOString(),
-    source: "honeydb.io",
-    found: isThreat || internetScanner || historyEventCount > 0,
-    asn: typeof networkInfo.asn === "number" ? networkInfo.asn : null,
-    country: asString(networkInfo.country),
-    isTor,
-    isThreat,
-    internetScanner,
-    historyEventCount,
   });
 }

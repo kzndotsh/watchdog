@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   casesRepo,
   db,
@@ -7,47 +9,64 @@ import {
 } from "@watchdog/db";
 import type { ConfidenceTier } from "@watchdog/schemas";
 
-import { DomainError } from "../../infra/domain-error";
+import { tryDb } from "../../infra/postgres-effect";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../../infra/tagged-errors";
 
-export async function assertCaseExists(
+export function assertCaseExistsEffect(
   caseId: string,
   exec: DbExec = db
-): Promise<void> {
-  const row = await casesRepo.getById(exec, caseId);
-  if (!row) throw new DomainError("not_found", "Case not found");
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() => casesRepo.getById(exec, caseId)).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.void
+        : new NotFoundError({ resource: "Case not found" })
+    )
+  );
 }
 
-export async function assertEntityInCase(
+export function assertEntityInCaseEffect(
   caseId: string,
   entityId: string,
   exec: DbExec = db
-): Promise<void> {
-  const row = await entitiesRepo.getInCase(exec, caseId, entityId);
-  if (!row) {
-    throw new DomainError("not_found", "Entity not found in this Case");
-  }
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() => entitiesRepo.getInCase(exec, caseId, entityId)).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.void
+        : new NotFoundError({ resource: "Entity not found in this Case" })
+    )
+  );
 }
 
-export async function assertEvidenceInCase(
+export function assertEvidenceInCaseEffect(
   caseId: string,
   evidenceId: string,
   exec: DbExec = db
-): Promise<void> {
-  const row = await evidenceRepo.getActiveInCase(exec, caseId, evidenceId);
-  if (!row) {
-    throw new DomainError("not_found", "Evidence not found in this Case");
-  }
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() =>
+    evidenceRepo.getActiveInCase(exec, caseId, evidenceId)
+  ).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.void
+        : new NotFoundError({ resource: "Evidence not found in this Case" })
+    )
+  );
 }
 
-/** Confirmed claims/ids/edges require at least one Evidence attachment. */
-export function assertConfidenceEvidence(
+export function assertConfidenceEvidenceEffect(
   confidence: ConfidenceTier,
   evidenceIds: string[]
-): void {
+): Effect.Effect<void, DomainTag> {
   if (confidence === "confirmed" && evidenceIds.length === 0) {
-    throw new DomainError(
-      "invalid",
-      "confirmed requires at least one Evidence attachment"
-    );
+    return new InvalidError({
+      reason: "confirmed requires at least one Evidence attachment",
+    });
   }
+  return Effect.void;
 }

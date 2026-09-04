@@ -1,7 +1,13 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { httpToolsError, validationToolsError } from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
+import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchBytesEffect } from "../http/fetch-bytes";
+import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -143,32 +149,32 @@ function collectCdxHits(
   }
 }
 
-async function fetchCdxHitsForIndex(
+function fetchCdxHitsForIndexEffect(
   index: CollinfoIndex,
   host: string,
   limit: number,
   signal: AbortSignal,
   ua: string
-): Promise<string> {
-  const url = new URL(index.cdxApi);
-  url.searchParams.set("url", `*.${host}/*`);
-  url.searchParams.set("output", "json");
-  url.searchParams.set("limit", String(Math.min(limit, 50)));
+): Effect.Effect<string, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchCdxHitsForIndexGen() {
+    const url = new URL(index.cdxApi);
+    url.searchParams.set("url", `*.${host}/*`);
+    url.searchParams.set("output", "json");
+    url.searchParams.set("limit", String(Math.min(limit, 50)));
 
-  return fetch(url, {
-    method: "GET",
-    signal,
-    headers: { Accept: "application/json", "User-Agent": ua },
-  }).then(async (res) => {
-    if (res.status === 404) return "";
-    if (!res.ok) {
-      throw httpToolsError(
-        "Common Crawl CDX",
-        res.status,
-        `Common Crawl CDX ${res.status} (${index.id})`
-      );
+    const result = yield* fetchBytesEffect(url.toString(), signal, {
+      userAgent: ua,
+      maxBytes: 1_000_000,
+      accept: "application/json",
+    });
+    if (result.status === 404) return "";
+    if (!result.ok) {
+      return yield* new HttpVendorError({
+        service: "Common Crawl CDX",
+        status: result.status,
+      });
     }
-    return res.text();
+    return new TextDecoder().decode(result.bytes);
   });
 }
 
@@ -185,61 +191,61 @@ interface CommoncrawlLookupOptions {
  * Resolves latest indexes via collinfo.json, then queries each CDX API.
  * @see https://index.commoncrawl.org/
  */
-export async function fetchCommoncrawlLookup(
+export function fetchCommoncrawlLookupEffect(
   hostRaw: string,
   signal: AbortSignal,
   options?: CommoncrawlLookupOptions
-): Promise<CommoncrawlLookupSnapshot> {
-  const resolved = options ?? {};
-  const host = normalizeHost(hostRaw);
-  const indexCount = Math.min(Math.max(resolved.indexes ?? 2, 1), 6);
-  const limit = Math.min(Math.max(resolved.limit ?? 40, 1), 200);
-  const ua =
-    resolved.userAgent ?? watchdogUserAgent("archive.commoncrawl.lookup");
+): Effect.Effect<CommoncrawlLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchCommoncrawlLookupGen() {
+    const resolved = options ?? {};
+    const host = normalizeHost(hostRaw);
+    const indexCount = Math.min(Math.max(resolved.indexes ?? 2, 1), 6);
+    const limit = Math.min(Math.max(resolved.limit ?? 40, 1), 200);
+    const ua =
+      resolved.userAgent ?? watchdogUserAgent("archive.commoncrawl.lookup");
 
-  const collRes = await fetch("https://index.commoncrawl.org/collinfo.json", {
-    method: "GET",
-    signal,
-    headers: { Accept: "application/json", "User-Agent": ua },
-  });
-  if (!collRes.ok) {
-    throw httpToolsError(
-      "Common Crawl collinfo",
-      collRes.status,
-      `Common Crawl collinfo ${collRes.status}`
-    );
-  }
-
-  const coll: unknown = await collRes.json();
-  const indexes = parseCollinfoIndexes(coll, indexCount);
-
-  const hits: CommoncrawlHit[] = [];
-  const urls: string[] = [];
-  const seenUrl = new Set<string>();
-
-  for (const index of indexes) {
-    if (hits.length >= limit) break;
-
-    // oxlint-disable-next-line no-await-in-loop -- per-index limit depends on hits already collected, must stay sequential
-    const text = await fetchCdxHitsForIndex(
-      index,
-      host,
-      limit - hits.length,
+    const { body: coll } = yield* fetchJsonUnknownEffect({
+      url: "https://index.commoncrawl.org/collinfo.json",
       signal,
-      ua
-    );
-    if (text === "") continue;
+      service: "Common Crawl collinfo",
+      subject: host,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
+    const indexes = yield* Effect.try({
+      try: () => parseCollinfoIndexes(coll, indexCount),
+      catch: mapToolsCatch,
+    });
 
-    const cdxRows = parseCommoncrawlCdxText(text);
-    collectCdxHits(cdxRows, index.id, limit, hits, urls, seenUrl);
-  }
+    const hits: CommoncrawlHit[] = [];
+    const urls: string[] = [];
+    const seenUrl = new Set<string>();
 
-  return commoncrawlLookupSnapshotSchema.parse({
-    host,
-    queriedAt: new Date().toISOString(),
-    source: "index.commoncrawl.org",
-    indexes: indexes.map((i) => i.id),
-    urls,
-    hits,
+    for (const index of indexes) {
+      if (hits.length >= limit) break;
+
+      const text = yield* fetchCdxHitsForIndexEffect(
+        index,
+        host,
+        limit - hits.length,
+        signal,
+        ua
+      );
+      if (text === "") continue;
+
+      const cdxRows = parseCommoncrawlCdxText(text);
+      collectCdxHits(cdxRows, index.id, limit, hits, urls, seenUrl);
+    }
+
+    return commoncrawlLookupSnapshotSchema.parse({
+      host,
+      queriedAt: new Date().toISOString(),
+      source: "index.commoncrawl.org",
+      indexes: indexes.map((i) => i.id),
+      urls,
+      hits,
+    });
   });
 }

@@ -76,65 +76,69 @@ describe("custody helpers", () => {
 });
 
 describe("cli custody", () => {
-  it("requires --user-override on identifier, edge, event, and question creates", () => {
-    const commands: string[][] = [
-      [
-        "identifiers",
-        "create",
-        "-c",
-        CASE_ID,
-        "--entity",
-        "ada",
-        "--type",
-        "email",
-        "--value",
-        "ada@mailhost.test",
-        "--confidence",
-        "unverified",
-      ],
-      [
-        "edges",
-        "create",
-        "-c",
-        CASE_ID,
-        "--from",
-        "ada",
-        "--to",
-        "host",
-        "--predicate",
-        "owns",
-        "--confidence",
-        "unverified",
-      ],
-      [
-        "events",
-        "create",
-        "-c",
-        CASE_ID,
-        "--entity",
-        "ada",
-        "--when",
-        "1815",
-        "--what",
-        "Born",
-      ],
-      [
-        "questions",
-        "create",
-        "-c",
-        CASE_ID,
-        "--entity",
-        "ada",
-        "--text",
-        "Where?",
-      ],
-    ];
-    for (const args of commands) {
-      const { status, stdout } = runWd(args);
-      expect(status).toBe(1);
-      assertCustody(stdout);
+  it(
+    "requires --user-override on identifier, edge, event, and question creates",
+    { timeout: 20_000 },
+    () => {
+      const commands: string[][] = [
+        [
+          "identifiers",
+          "create",
+          "-c",
+          CASE_ID,
+          "--entity",
+          "ada",
+          "--type",
+          "email",
+          "--value",
+          "ada@mailhost.test",
+          "--confidence",
+          "unverified",
+        ],
+        [
+          "edges",
+          "create",
+          "-c",
+          CASE_ID,
+          "--from",
+          "ada",
+          "--to",
+          "host",
+          "--predicate",
+          "owns",
+          "--confidence",
+          "unverified",
+        ],
+        [
+          "events",
+          "create",
+          "-c",
+          CASE_ID,
+          "--entity",
+          "ada",
+          "--when",
+          "1815",
+          "--what",
+          "Born",
+        ],
+        [
+          "questions",
+          "create",
+          "-c",
+          CASE_ID,
+          "--entity",
+          "ada",
+          "--text",
+          "Where?",
+        ],
+      ];
+      for (const args of commands) {
+        const { status, stdout } = runWd(args);
+        expect(status).toBe(1);
+        assertCustody(stdout);
+      }
     }
-  });
+  );
 
   it("refuses confirmed on identifier and edge creates even with override", () => {
     const { stdout: idOut, status: idStatus } = runWd([

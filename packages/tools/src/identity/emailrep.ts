@@ -1,12 +1,12 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import {
-  httpToolsError,
-  parseToolsError,
-  rateLimitedToolsError,
-  validationToolsError,
-} from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
+import { parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asBool, asNumber, asString, isRecord } from "../parse/coerce";
 
 export const emailrepLookupSnapshotSchema = z.object({
@@ -71,18 +71,6 @@ export function parseEmailrepBody(
   });
 }
 
-async function emailrepFailReason(res: Response): Promise<string> {
-  try {
-    const errBody: unknown = await res.json();
-    if (isRecord(errBody) && typeof errBody.reason === "string") {
-      return errBody.reason.trim();
-    }
-  } catch {
-    /* ignore */
-  }
-  return "";
-}
-
 /**
  * EmailRep.io reputation lookup — aggregated risk signal for an email
  * address. `User-Agent` is required; unauthenticated queries are rejected
@@ -95,58 +83,57 @@ interface EmailrepOptions {
   apiKey?: string;
   userAgent?: string;
 }
-export async function fetchEmailrepLookup(
+
+export function fetchEmailrepLookupEffect(
   emailRaw: string,
   signal: AbortSignal,
   options?: EmailrepOptions
-): Promise<EmailrepLookupSnapshot> {
-  const email = emailRaw.trim().toLowerCase();
-  if (!email.includes("@"))
-    throw validationToolsError(`Invalid email: ${emailRaw}`);
-
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("identity.emailrep.lookup");
-  const key = options?.apiKey?.trim() ?? "";
-
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    "User-Agent": ua,
-  };
-  if (key) headers.Key = key;
-
-  const res = await fetch(`https://emailrep.io/${encodeURIComponent(email)}`, {
-    method: "GET",
-    signal,
-    headers,
-  });
-
-  if (res.status === 429) {
-    const reason = await emailrepFailReason(res);
-    if (
-      reason.toLowerCase().includes("unauthenticated api is currently disabled")
-    ) {
-      throw validationToolsError(
-        `EmailRep requires an API key (unauthenticated API disabled) for ${email}`
-      );
+): Effect.Effect<EmailrepLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchEmailrepLookupGen() {
+    const email = emailRaw.trim().toLowerCase();
+    if (!email.includes("@")) {
+      return yield* new ValidationVendorError({
+        message: `Invalid email: ${emailRaw}`,
+      });
     }
-    throw rateLimitedToolsError("EmailRep", email);
-  }
-  if (res.status === 401) {
-    throw validationToolsError(`EmailRep API key invalid for ${email}`);
-  }
-  if (res.status === 403) {
-    throw validationToolsError(
-      `EmailRep rejected request (missing User-Agent) for ${email}`
-    );
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "EmailRep API",
-      res.status,
-      `EmailRep API ${res.status} for ${email}`
-    );
-  }
 
-  const body: unknown = await res.json();
-  return parseEmailrepBody(email, new Date().toISOString(), body);
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("identity.emailrep.lookup");
+    const key = options?.apiKey?.trim() ?? "";
+
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "User-Agent": ua,
+    };
+    if (key) headers.Key = key;
+
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url: `https://emailrep.io/${encodeURIComponent(email)}`,
+      signal,
+      service: "EmailRep",
+      subject: email,
+      acceptStatus: (code) =>
+        (code >= 200 && code < 300) || code === 401 || code === 403,
+      init: {
+        method: "GET",
+        headers,
+      },
+    });
+
+    if (status === 401) {
+      return yield* new ValidationVendorError({
+        message: `EmailRep API key invalid for ${email}`,
+      });
+    }
+    if (status === 403) {
+      return yield* new ValidationVendorError({
+        message: `EmailRep rejected request (missing User-Agent) for ${email}`,
+      });
+    }
+
+    return yield* Effect.try({
+      try: () => parseEmailrepBody(email, new Date().toISOString(), body),
+      catch: mapToolsCatch,
+    });
+  });
 }

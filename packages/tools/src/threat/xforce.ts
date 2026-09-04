@@ -1,14 +1,13 @@
 import { isIP } from "node:net";
 
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import {
-  httpToolsError,
-  parseToolsError,
-  validationToolsError,
-} from "../errors/tools-error";
+import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -63,143 +62,135 @@ function authHeader(apiKey: string, apiPassword: string): string {
  * malware-hash reports. HTTP Basic auth (API key + password).
  * @see https://api.xforce.ibmcloud.com/doc/
  */
-export async function fetchXforceLookup(
+export function fetchXforceLookupEffect(
   queryRaw: string,
   apiKey: string,
   apiPassword: string,
   signal: AbortSignal,
   options?: { userAgent?: string }
-): Promise<XforceLookupSnapshot> {
-  const key = apiKey.trim();
-  const password = apiPassword.trim();
-  if (!key || !password) {
-    throw validationToolsError(
-      "XFORCE_API_KEY and XFORCE_API_PASSWORD required"
-    );
-  }
-
-  const { kind, value } = classifyXforceQuery(queryRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.xforce.lookup");
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    Authorization: authHeader(key, password),
-    "User-Agent": ua,
-  };
-  const notFound = (): XforceLookupSnapshot =>
-    xforceLookupSnapshotSchema.parse({
-      query: value,
-      kind,
-      queriedAt: new Date().toISOString(),
-      source: "exchange.xforce.ibmcloud.com",
-      found: false,
-      score: null,
-      cats: {},
-      malwareCount: 0,
-    });
-
-  if (kind === "ip") {
-    const res = await fetch(`${BASE_URL}/ipr/${encodeURIComponent(value)}`, {
-      method: "GET",
-      signal,
-      headers,
-    });
-    if (res.status === 404) return notFound();
-    if (!res.ok) {
-      throw httpToolsError(
-        "X-Force API",
-        res.status,
-        `X-Force API ${res.status} for ${value}`
-      );
+): Effect.Effect<XforceLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchXforceLookupGen() {
+    const key = apiKey.trim();
+    const password = apiPassword.trim();
+    if (!key || !password) {
+      return yield* new ValidationVendorError({
+        message: "XFORCE_API_KEY and XFORCE_API_PASSWORD required",
+      });
     }
-    const body: unknown = await res.json();
-    if (!isRecord(body)) {
-      throw parseToolsError("X-Force", value);
-    }
-    const score = typeof body.score === "number" ? body.score : null;
-    const cats = normalizeCats(body.cats);
 
-    let malwareCount = 0;
-    const malRes = await fetch(
-      `${BASE_URL}/ipr/malware/${encodeURIComponent(value)}`,
-      { method: "GET", signal, headers }
-    );
-    if (malRes.ok) {
-      const malBody: unknown = await malRes.json();
-      if (isRecord(malBody)) {
-        if (Array.isArray(malBody.malware)) {
-          malwareCount = malBody.malware.length;
-        } else if (typeof malBody.count === "number") {
-          malwareCount = malBody.count;
+    const { kind, value } = classifyXforceQuery(queryRaw);
+    const ua = options?.userAgent ?? watchdogUserAgent("threat.xforce.lookup");
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      Authorization: authHeader(key, password),
+      "User-Agent": ua,
+    };
+    const notFound = (): XforceLookupSnapshot =>
+      xforceLookupSnapshotSchema.parse({
+        query: value,
+        kind,
+        queriedAt: new Date().toISOString(),
+        source: "exchange.xforce.ibmcloud.com",
+        found: false,
+        score: null,
+        cats: {},
+        malwareCount: 0,
+      });
+
+    const jsonInit = { method: "GET" as const, headers };
+
+    switch (kind) {
+      case "ip": {
+        const { status, body } = yield* fetchJsonObjectEffect({
+          url: `${BASE_URL}/ipr/${encodeURIComponent(value)}`,
+          signal,
+          service: "X-Force",
+          subject: value,
+          acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+          init: jsonInit,
+        });
+        if (status === 404) return notFound();
+        const score = typeof body.score === "number" ? body.score : null;
+        const cats = normalizeCats(body.cats);
+
+        let malwareCount = 0;
+        const { status: malStatus, body: malBody } =
+          yield* fetchJsonObjectEffect({
+            url: `${BASE_URL}/ipr/malware/${encodeURIComponent(value)}`,
+            signal,
+            service: "X-Force",
+            subject: value,
+            acceptStatus: () => true,
+            init: jsonInit,
+          });
+        if (malStatus >= 200 && malStatus < 300) {
+          if (Array.isArray(malBody.malware)) {
+            malwareCount = malBody.malware.length;
+          } else if (typeof malBody.count === "number") {
+            malwareCount = malBody.count;
+          }
         }
+
+        return xforceLookupSnapshotSchema.parse({
+          query: value,
+          kind,
+          queriedAt: new Date().toISOString(),
+          source: "exchange.xforce.ibmcloud.com",
+          found: true,
+          score,
+          cats,
+          malwareCount,
+        });
+      }
+      case "domain":
+      case "url": {
+        const { status, body } = yield* fetchJsonObjectEffect({
+          url: `${BASE_URL}/url/${encodeURIComponent(value)}`,
+          signal,
+          service: "X-Force",
+          subject: value,
+          acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+          init: jsonInit,
+        });
+        if (status === 404) return notFound();
+        const result = isRecord(body.result) ? body.result : body;
+        return xforceLookupSnapshotSchema.parse({
+          query: value,
+          kind,
+          queriedAt: new Date().toISOString(),
+          source: "exchange.xforce.ibmcloud.com",
+          found: true,
+          score: typeof result.score === "number" ? result.score : null,
+          cats: normalizeCats(result.cats),
+          malwareCount: 0,
+        });
+      }
+      case "hash": {
+        const { status } = yield* fetchJsonObjectEffect({
+          url: `${BASE_URL}/malware/${encodeURIComponent(value)}`,
+          signal,
+          service: "X-Force",
+          subject: value,
+          acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+          init: jsonInit,
+        });
+        if (status === 404) return notFound();
+
+        return xforceLookupSnapshotSchema.parse({
+          query: value,
+          kind,
+          queriedAt: new Date().toISOString(),
+          source: "exchange.xforce.ibmcloud.com",
+          found: true,
+          score: null,
+          cats: {},
+          malwareCount: 1,
+        });
+      }
+      default: {
+        const _exhaustive: never = kind;
+        return _exhaustive;
       }
     }
-
-    return xforceLookupSnapshotSchema.parse({
-      query: value,
-      kind,
-      queriedAt: new Date().toISOString(),
-      source: "exchange.xforce.ibmcloud.com",
-      found: true,
-      score,
-      cats,
-      malwareCount,
-    });
-  }
-
-  if (kind === "domain" || kind === "url") {
-    const res = await fetch(`${BASE_URL}/url/${encodeURIComponent(value)}`, {
-      method: "GET",
-      signal,
-      headers,
-    });
-    if (res.status === 404) return notFound();
-    if (!res.ok) {
-      throw httpToolsError(
-        "X-Force API",
-        res.status,
-        `X-Force API ${res.status} for ${value}`
-      );
-    }
-    const body: unknown = await res.json();
-    if (!isRecord(body)) {
-      throw parseToolsError("X-Force", value);
-    }
-    const result = isRecord(body.result) ? body.result : body;
-    return xforceLookupSnapshotSchema.parse({
-      query: value,
-      kind,
-      queriedAt: new Date().toISOString(),
-      source: "exchange.xforce.ibmcloud.com",
-      found: true,
-      score: typeof result.score === "number" ? result.score : null,
-      cats: normalizeCats(result.cats),
-      malwareCount: 0,
-    });
-  }
-
-  // hash
-  const res = await fetch(`${BASE_URL}/malware/${encodeURIComponent(value)}`, {
-    method: "GET",
-    signal,
-    headers,
-  });
-  if (res.status === 404) return notFound();
-  if (!res.ok) {
-    throw httpToolsError(
-      "X-Force API",
-      res.status,
-      `X-Force API ${res.status} for ${value}`
-    );
-  }
-
-  return xforceLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    source: "exchange.xforce.ibmcloud.com",
-    found: true,
-    score: null,
-    cats: {},
-    malwareCount: 1,
   });
 }

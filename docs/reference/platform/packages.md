@@ -24,7 +24,7 @@
 | `@watchdog/cli` | client + env/cli + schemas | core, db, api, apps, **log** |
 | `apps/*` | api / core / caps / schemas / **env** / **log** as needed | web must not import **db** except `auth/server.ts` + SSE `routes/api/events.ts` |
 
-`PatchOp` and `patchOpSchema` live in **`@watchdog/schemas`** so Caps never depend on Drizzle. `EvidenceSnapshot` also lives in schemas (re-exported from `@watchdog/ai` for Process helpers). Accept / apply-patch custody (`assertPatchGates`, `patchNeedsConfidence`) lives in **`@watchdog/policy`**: pure, DB-free; import policy/schemas directly (do not re-export through core).
+`PatchOp` and `patchOpSchema` live in **`@watchdog/schemas`** so Caps never depend on Drizzle. `EvidenceSnapshot` also lives in schemas (re-exported from `@watchdog/ai` for Process helpers). Accept / apply-patch custody (`assertPatchGates`, `patchNeedsConfidence`) lives in **`@watchdog/policy`**: pure, DB-free; import policy/schemas directly (do not re-export through core). Client UI: `@watchdog/policy/patch-needs-confidence` — not the package barrel (Effect stays off the browser).
 
 ## See also
 

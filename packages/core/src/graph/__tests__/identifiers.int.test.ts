@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   DomainError,
-  createIdentifier,
-  updateIdentifier,
+  createIdentifierEffect,
+  updateIdentifierEffect,
+  runDomain
 } from "@watchdog/core";
 import { db, evidenceLinksRepo } from "@watchdog/db";
 import { testId } from "@watchdog/test-kit";
@@ -23,14 +24,14 @@ describe("createIdentifier", () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
     await expect(
-      createIdentifier({
+      runDomain(createIdentifierEffect({
         caseId: cased.id,
         entityId: entity.id,
         type: "email",
         value: "ada@mailhost.test",
         confidence: "confirmed",
         status: "unknown",
-      })
+      }))
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "invalid"
     );
@@ -40,7 +41,7 @@ describe("createIdentifier", () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(21) });
     const evidence = await seedEvidence(db, cased.id);
-    const created = await createIdentifier({
+    const created = await runDomain(createIdentifierEffect({
       caseId: cased.id,
       entityId: entity.id,
       type: "email",
@@ -48,7 +49,7 @@ describe("createIdentifier", () => {
       confidence: "unverified",
       status: "unknown",
       evidenceIds: [evidence.id],
-    });
+    }));
     const links = await evidenceLinksRepo.listForIdentifiers(db, [created.id]);
     expect(links.get(created.id)).toEqual([evidence.id]);
   });
@@ -64,8 +65,8 @@ describe("createIdentifier", () => {
       confidence: "unverified" as const,
       status: "unknown" as const,
     };
-    await createIdentifier(input);
-    await expect(createIdentifier(input)).rejects.toSatisfy(
+    await runDomain(createIdentifierEffect(input));
+    await expect(runDomain(createIdentifierEffect(input))).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "conflict"
     );
   });
@@ -81,7 +82,7 @@ describe("updateIdentifier", () => {
     const entity = await seedEntity(db, cased.id, { id: testId(23) });
     const first = await seedEvidence(db, cased.id, { label: "first" });
     const second = await seedEvidence(db, cased.id, { label: "second" });
-    const created = await createIdentifier({
+    const created = await runDomain(createIdentifierEffect({
       caseId: cased.id,
       entityId: entity.id,
       type: "email",
@@ -89,12 +90,12 @@ describe("updateIdentifier", () => {
       confidence: "unverified",
       status: "unknown",
       evidenceIds: [first.id],
-    });
-    await updateIdentifier({
+    }));
+    await runDomain(updateIdentifierEffect({
       caseId: cased.id,
       identifierId: created.id,
       evidenceIds: [second.id],
-    });
+    }));
     const links = await evidenceLinksRepo.listForIdentifiers(db, [created.id]);
     expect(links.get(created.id)).toEqual([second.id]);
   });

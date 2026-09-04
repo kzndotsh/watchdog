@@ -1,4 +1,6 @@
-import { fetchUrlhausLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchUrlhausLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlhausLookupInput } from "./input";
@@ -28,16 +30,17 @@ export const urlhausLookup = defineCollectCap({
   },
   schema: urlhausLookupSnapshotSchema,
   reportLabel: "urlhaus.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`URLhaus ${query}`);
-    const key = await ctx.getCredential("THREATFOX_API_KEY");
-    const snap = await fetchUrlhausLookup(query, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} kind=${snap.kind}`);
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `urlhaus-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* urlhausLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`URLhaus ${query}`);
+      const key = yield* ctx.getCredential("THREATFOX_API_KEY");
+      const snap = yield* fetchUrlhausLookupEffect(query, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} kind=${snap.kind}`);
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `urlhaus-${safe}.json` };
+    }),
   interpretSnap: interpretUrlhausLookupReport,
 });

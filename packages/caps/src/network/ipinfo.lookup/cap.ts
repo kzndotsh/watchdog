@@ -1,4 +1,6 @@
-import { fetchIpinfoLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchIpinfoLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipinfoLookupInput } from "./input";
@@ -32,15 +34,16 @@ export const ipinfoLookup = defineCollectCap({
   },
   schema: ipinfoLookupSnapshotSchema,
   reportLabel: "ipinfo.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`IPinfo lookup ${ip}`);
-    const token = await ctx.getCredential("IPINFO_API_TOKEN");
-    const snap = await fetchIpinfoLookup(ip, token, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} org=${snap.org ?? "none"}`);
-    return { snap, artifactName: `ipinfo-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* ipinfoLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`IPinfo lookup ${ip}`);
+      const token = yield* ctx.getCredential("IPINFO_API_TOKEN");
+      const snap = yield* fetchIpinfoLookupEffect(ip, token, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} org=${snap.org ?? "none"}`);
+      return { snap, artifactName: `ipinfo-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretIpinfoLookupReport,
 });

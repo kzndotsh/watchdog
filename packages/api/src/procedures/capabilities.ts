@@ -1,10 +1,12 @@
+import { Effect } from "effect";
 import { z } from "zod";
 
 import { listCapabilities, listPlaybookDescriptors } from "@watchdog/caps";
+import { mapDomainCatch } from "@watchdog/core";
 import { jsonObjectSchema, PLAYBOOK_SEED_KINDS } from "@watchdog/schemas";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 
 const capIoKindSchema = z.object({
   kind: z.string(),
@@ -73,7 +75,14 @@ export const list = authed
     tags: ["capabilities"],
   })
   .output(z.array(capabilitySchema))
-  .handler(withDomainError(async () => listCapabilities()));
+  .handler(async () =>
+    runApp(
+      Effect.tryPromise({
+        try: async () => listCapabilities(),
+        catch: mapDomainCatch,
+      })
+    )
+  );
 
 export const listPlaybooksProc = authed
   .route({
@@ -83,4 +92,11 @@ export const listPlaybooksProc = authed
     tags: ["capabilities"],
   })
   .output(z.array(playbookSchema))
-  .handler(withDomainError(async () => listPlaybookDescriptors()));
+  .handler(async () =>
+    runApp(
+      Effect.tryPromise({
+        try: async () => listPlaybookDescriptors(),
+        catch: mapDomainCatch,
+      })
+    )
+  );

@@ -1,4 +1,6 @@
-import { fetchIpctlLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchIpctlLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipctlLookupInput } from "./input";
@@ -29,12 +31,15 @@ export const ipctlLookup = defineCollectCap({
   },
   schema: ipctlLookupSnapshotSchema,
   reportLabel: "ipctl.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`ipctl ${ip}`);
-    const snap = await fetchIpctlLookup(ip, ctx.signal, { userAgent: UA });
-    ctx.log(`asn=${snap.asn ?? "none"} prefix=${snap.bgpPrefix ?? "none"}`);
-    return { snap, artifactName: `ipctl-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* ipctlLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`ipctl ${ip}`);
+      const snap = yield* fetchIpctlLookupEffect(ip, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`asn=${snap.asn ?? "none"} prefix=${snap.bgpPrefix ?? "none"}`);
+      return { snap, artifactName: `ipctl-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretIpctlLookupReport,
 });

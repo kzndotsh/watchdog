@@ -1,4 +1,6 @@
-import { submitWaybackSave } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { submitWaybackSaveEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { archiveUrlSubmitInput } from "./input";
@@ -24,15 +26,18 @@ export const urlSubmit = defineCollectCap({
   produces: [{ kind: "evidence", evidenceKind: "file" }],
   schema: archiveSubmitSnapshotSchema,
   reportLabel: "archive.url.submit",
-  async fetch(ctx) {
-    const url = ctx.input.url.trim();
-    ctx.log(`archive submit (Wayback SPN) ${url}`);
-    const snap = await submitWaybackSave(url, ctx.signal, { userAgent: UA });
-    const r = snap.results[0];
-    ctx.log(
-      `wayback accepted=${r?.accepted ?? false} status=${r?.status ?? "?"}`
-    );
-    return { snap, artifactName: "archive-submit.json" };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* urlSubmitFetch() {
+      const url = ctx.input.url.trim();
+      ctx.log(`archive submit (Wayback SPN) ${url}`);
+      const snap = yield* submitWaybackSaveEffect(url, ctx.signal, {
+        userAgent: UA,
+      });
+      const r = snap.results[0];
+      ctx.log(
+        `wayback accepted=${r?.accepted ?? false} status=${r?.status ?? "?"}`
+      );
+      return { snap, artifactName: "archive-submit.json" };
+    }),
   interpretSnap: interpretArchiveUrlSubmitReport,
 });

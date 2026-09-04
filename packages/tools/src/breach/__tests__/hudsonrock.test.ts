@@ -1,7 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect } from "effect";
+import { vi } from "vitest";
 
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
-  fetchHudsonrockLookup,
+  fetchHudsonrockLookupEffect,
   hudsonrockLookupSnapshotSchema,
 } from "../hudsonrock";
 
@@ -19,20 +22,24 @@ describe("hudsonrock", () => {
     expect(snap.found).toBe(false);
   });
 
-  it("fetchHudsonrockLookup treats HTTP 404 as no hits", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response(null, { status: 404 }))
-    );
+  it.effect("fetchHudsonrockLookupEffect treats HTTP 404 as no hits", () =>
+    Effect.gen(function* fetchHudsonrockLookupGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response(null, { status: 404 }))
+      );
 
-    const snap = await fetchHudsonrockLookup(
-      "alice@mailhost.test",
-      "test-key",
-      AbortSignal.timeout(5000)
-    );
+      const snap = yield* fetchHudsonrockLookupEffect(
+        "alice@mailhost.test",
+        "test-key",
+        AbortSignal.timeout(5000)
+      );
 
-    expect(snap.found).toBe(false);
-    expect(snap.totalResults).toBe(0);
-    vi.unstubAllGlobals();
-  });
+      expect(snap.found).toBe(false);
+      expect(snap.totalResults).toBe(0);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

@@ -1,7 +1,11 @@
+import { Effect } from "effect";
+
 import { db, proposalsRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas";
 
 import { attachEvidenceIds } from "../../graph/attach-evidence";
+import { tryDb } from "../../infra/postgres-effect";
+import type { DomainTag } from "../../infra/tagged-errors";
 
 export interface ProposeResult {
   proposalId: string | null;
@@ -23,35 +27,38 @@ export interface ProposeStageInput {
 }
 
 /** Insert a pending Proposal with evidence attached to claim/identifier/edge ops. */
-export async function proposeStage(
+export function proposeStageEffect(
   input: ProposeStageInput
-): Promise<ProposeResult> {
+): Effect.Effect<ProposeResult, DomainTag> {
   if (input.kept.length === 0) {
-    return {
+    return Effect.succeed({
       proposalId: null,
       resultSummary: input.resultSummary,
       suppressedCount: input.suppressed,
-    };
+    });
   }
 
   const withEvidence = attachEvidenceIds(input.kept, input.attachEvidenceIds);
 
-  const prop = await proposalsRepo.create(db, {
-    caseId: input.caseId,
-    jobId: input.jobId ?? null,
-    status: "pending",
-    patch: withEvidence,
-    summary: input.resultSummary,
-    suppressedCount: input.suppressed,
-    evidenceIds: input.attachEvidenceIds,
-    agentSourced: input.agentSourced ?? false,
-    userOverridden: false,
-    createdBy: input.createdBy ?? null,
+  return Effect.gen(function* proposeStageGen() {
+    const prop = yield* tryDb(() =>
+      proposalsRepo.create(db, {
+        caseId: input.caseId,
+        jobId: input.jobId ?? null,
+        status: "pending",
+        patch: withEvidence,
+        summary: input.resultSummary,
+        suppressedCount: input.suppressed,
+        evidenceIds: input.attachEvidenceIds,
+        agentSourced: input.agentSourced ?? false,
+        userOverridden: false,
+        createdBy: input.createdBy ?? null,
+      })
+    );
+    return {
+      proposalId: prop?.id ?? null,
+      resultSummary: input.resultSummary,
+      suppressedCount: input.suppressed,
+    };
   });
-
-  return {
-    proposalId: prop?.id ?? null,
-    resultSummary: input.resultSummary,
-    suppressedCount: input.suppressed,
-  };
 }

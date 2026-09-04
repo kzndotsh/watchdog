@@ -6,7 +6,8 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    "plugins": [{ "name": "@effect/tsgo" }]
   },
   "include": ["src"],
   "exclude": ["src/**/__tests__/**", "src/**/*.test.ts"]

@@ -1,8 +1,11 @@
+import { Effect } from "effect";
 import { PgBoss } from "pg-boss";
 
 import { env } from "@watchdog/env/server";
 
+import { errorMessage } from "../infra/domain-error";
 import { logProcess, logSwallowed } from "../infra/process-log";
+import { InvalidError } from "../infra/tagged-errors";
 import { capExpireSeconds, queueExpireSeconds } from "./timeouts";
 
 /** pg-boss queue name for Cap Jobs. */
@@ -22,6 +25,7 @@ export function isCapJobPayload(value: unknown): value is CapJobPayload {
   );
 }
 
+export type BossHandle = PgBoss;
 export type BossRole = "producer" | "worker";
 
 const QUEUE_RETRY_LIMIT = 1;
@@ -49,68 +53,98 @@ function attachBossListeners(boss: PgBoss, role: BossRole): void {
   });
 }
 
-async function ensureCapQueue(boss: PgBoss): Promise<void> {
+function mapBossCatch(error: unknown): InvalidError {
+  return new InvalidError({
+    reason: errorMessage(error, "pg-boss failed"),
+  });
+}
+
+function ensureCapQueueEffect(boss: PgBoss): Effect.Effect<void, InvalidError> {
   const opts = queueOptions();
-  const existing = await boss.getQueue(CAP_JOB_QUEUE);
-  if (!existing) {
-    await boss.createQueue(CAP_JOB_QUEUE, opts);
-  }
-  await boss.updateQueue(CAP_JOB_QUEUE, opts);
+  return Effect.gen(function* ensureCapQueueGen() {
+    const existing = yield* Effect.tryPromise({
+      try: () => boss.getQueue(CAP_JOB_QUEUE),
+      catch: mapBossCatch,
+    });
+    if (!existing) {
+      yield* Effect.tryPromise({
+        try: () => boss.createQueue(CAP_JOB_QUEUE, opts),
+        catch: mapBossCatch,
+      });
+    }
+    yield* Effect.tryPromise({
+      try: () => boss.updateQueue(CAP_JOB_QUEUE, opts),
+      catch: mapBossCatch,
+    });
+  });
 }
 
 /**
- * One boss per process. Role is chosen at first start; a second role throws.
- * Producer (web/API): migrate, no supervise. Worker: supervise + migrate.
+ * One boss per process. Role is chosen at first start; a second role
+ * fails with InvalidError. Producer (web/API): migrate, no supervise.
+ * Worker: supervise + migrate.
  */
-async function startBoss(role: BossRole): Promise<PgBoss> {
-  if (bossSingleton) {
-    if (bossRole !== role) {
-      throw new Error(
-        `pg-boss already started as ${bossRole}; cannot start as ${role}`
-      );
+function startBossEffect(role: BossRole): Effect.Effect<PgBoss, InvalidError> {
+  return Effect.gen(function* startBossGen() {
+    if (bossSingleton) {
+      if (bossRole !== role) {
+        return yield* new InvalidError({
+          reason: `pg-boss already started as ${bossRole}; cannot start as ${role}`,
+        });
+      }
+      return bossSingleton;
     }
-    return bossSingleton;
-  }
 
-  const boss = new PgBoss({
-    connectionString: env.DATABASE_URL,
-    application_name: role === "producer" ? "watchdog-web" : "watchdog-worker",
-    supervise: role === "worker",
-    schedule: false,
-    migrate: true,
+    const boss = new PgBoss({
+      connectionString: env.DATABASE_URL,
+      application_name:
+        role === "producer" ? "watchdog-web" : "watchdog-worker",
+      supervise: role === "worker",
+      schedule: false,
+      migrate: true,
+    });
+    attachBossListeners(boss, role);
+    yield* Effect.tryPromise({
+      try: () => boss.start(),
+      catch: mapBossCatch,
+    });
+    yield* ensureCapQueueEffect(boss);
+    bossSingleton = boss;
+    bossRole = role;
+    return boss;
   });
-  attachBossListeners(boss, role);
-  await boss.start();
-  await ensureCapQueue(boss);
-  bossSingleton = boss;
-  bossRole = role;
-  return boss;
 }
 
-/** Web/API enqueue — no supervise / schedule loops. Starts pg-boss on first call. */
-export async function ensureBossProducer(): Promise<PgBoss> {
-  return await startBoss("producer");
-}
-
-/** Worker — supervises heartbeats / expire / maintenance. Starts pg-boss on first call. */
-export async function ensureBossWorker(): Promise<PgBoss> {
-  return await startBoss("worker");
-}
-
-/** Prefer the live boss (worker in-process) so playbook chain does not spawn a second pool. */
-async function bossForEnqueue(): Promise<PgBoss> {
-  if (bossSingleton) return bossSingleton;
-  return await startBoss("producer");
+function bossForEnqueueEffect(): Effect.Effect<PgBoss, InvalidError> {
+  if (bossSingleton) return Effect.succeed(bossSingleton);
+  return startBossEffect("producer");
 }
 
 /** Single enqueue path — Cap-derived expire, one boss per process. */
-export async function enqueueCapJob(
+export function enqueueCapJobEffect(
   jobId: string,
   capabilityId: string
-): Promise<void> {
-  const boss = await bossForEnqueue();
-  const payload: CapJobPayload = { jobId };
-  await boss.send(CAP_JOB_QUEUE, payload, {
-    expireInSeconds: capExpireSeconds(capabilityId),
+): Effect.Effect<void, InvalidError> {
+  return Effect.gen(function* enqueueCapJobGen() {
+    const boss = yield* bossForEnqueueEffect();
+    const payload: CapJobPayload = { jobId };
+    yield* Effect.tryPromise({
+      try: () =>
+        boss.send(CAP_JOB_QUEUE, payload, {
+          expireInSeconds: capExpireSeconds(capabilityId),
+        }),
+      catch: mapBossCatch,
+    });
   });
+}
+
+export function ensureBossProducerEffect(): Effect.Effect<
+  PgBoss,
+  InvalidError
+> {
+  return startBossEffect("producer");
+}
+
+export function ensureBossWorkerEffect(): Effect.Effect<PgBoss, InvalidError> {
+  return startBossEffect("worker");
 }

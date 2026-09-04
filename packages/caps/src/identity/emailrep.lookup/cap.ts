@@ -1,4 +1,6 @@
-import { fetchEmailrepLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchEmailrepLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { emailrepLookupInput } from "./input";
@@ -31,17 +33,19 @@ export const emailrepLookup = defineCollectCap({
   },
   schema: emailrepLookupSnapshotSchema,
   reportLabel: "emailrep.lookup",
-  async fetch(ctx) {
-    const email = ctx.input.email.trim();
-    ctx.log(`EmailRep ${email}`);
-    const snap = await fetchEmailrepLookup(email, ctx.signal, {
-      userAgent: UA,
-      apiKey: await ctx.getCredential("EMAILREP_API_KEY"),
-    });
-    ctx.log(
-      `found=${snap.found} reputation=${snap.reputation ?? "?"} suspicious=${snap.suspicious}`
-    );
-    return { snap, artifactName: "emailrep-lookup.json" };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* emailrepLookupFetch() {
+      const email = ctx.input.email.trim();
+      ctx.log(`EmailRep ${email}`);
+      const key = yield* ctx.getCredential("EMAILREP_API_KEY");
+      const snap = yield* fetchEmailrepLookupEffect(email, ctx.signal, {
+        userAgent: UA,
+        apiKey: key,
+      });
+      ctx.log(
+        `found=${snap.found} reputation=${snap.reputation ?? "?"} suspicious=${snap.suspicious}`
+      );
+      return { snap, artifactName: "emailrep-lookup.json" };
+    }),
   interpretSnap: interpretEmailrepLookupReport,
 });

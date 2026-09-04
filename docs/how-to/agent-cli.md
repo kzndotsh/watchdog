@@ -18,7 +18,7 @@ WD_API_KEY=<key-from-settings>
 
 4. `wd --help` works without a key; authenticated verbs need both vars.
 
-Regenerate client after API changes: `pnpm generate:client`.
+Regenerate client after API changes: `pnpm generate:client`. `@watchdog/api`, `@watchdog/client`, and `@watchdog/cli` typecheck with workspace TypeScript **7.0.2** — keep `"typescript": "7.0.2"` in those `package.json` files; do not float `^6`.
 
 ## Interactive API docs
 

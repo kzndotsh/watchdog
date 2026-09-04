@@ -1,24 +1,25 @@
+import { Effect, Fiber, FiberMap } from "effect";
 import { describe, expect, it } from "vitest";
 
-import {
-  abortActiveJob,
-  getActiveJobAbortSignal,
-  listActiveJobIds,
-  registerActiveJobController,
-  unregisterActiveJobController,
-} from "../job-cancel-registry";
+import { JobFibers } from "../job-fibers";
 
-describe("job-cancel-registry", () => {
-  it("registers controllers and aborts active jobs", () => {
-    const controller = new AbortController();
-    registerActiveJobController("job-1", controller);
-
-    expect(listActiveJobIds()).toContain("job-1");
-    expect(getActiveJobAbortSignal("job-1")).toBe(controller.signal);
-    expect(abortActiveJob("job-1", "cancel")).toBe(true);
-    expect(controller.signal.aborted).toBe(true);
-
-    unregisterActiveJobController("job-1");
-    expect(abortActiveJob("job-1", "timeout")).toBe(false);
+describe("job fiber cancel", () => {
+  it("tracks a fiber and interrupts it as cancel", async () => {
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* jobCancelGen() {
+          const fibers = yield* JobFibers;
+          const fiber = yield* FiberMap.run(
+            fibers.map,
+            "job-cancel-test"
+          )(Effect.never).pipe(Effect.tap(() => Effect.yieldNow));
+          expect(fibers.listIds()).toContain("job-cancel-test");
+          expect(yield* fibers.abort("job-cancel-test", "cancel")).toBe(true);
+          expect(fibers.peekReason("job-cancel-test")).toBe("cancel");
+          yield* Fiber.join(fiber).pipe(Effect.catchCause(() => Effect.void));
+          expect(yield* fibers.abort("job-cancel-test", "timeout")).toBe(false);
+        })
+      ).pipe(Effect.provide(JobFibers.layer))
+    );
   });
 });

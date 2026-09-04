@@ -1,16 +1,15 @@
 import { isIP } from "node:net";
 
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import {
-  httpToolsError,
-  missingApiKey,
-  parseToolsError,
-  rateLimitedToolsError,
-  validationToolsError,
-} from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
+import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -111,66 +110,65 @@ function extractPulseInfo(body: Record<string, unknown>): {
 interface OtxOptions {
   userAgent?: string;
 }
-export async function fetchOtxLookup(
+
+export function fetchOtxLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: OtxOptions
-): Promise<OtxLookupSnapshot> {
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("OTX_API_KEY");
+): Effect.Effect<OtxLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchOtxLookupGen() {
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "OTX_API_KEY" });
+    }
 
-  const { kind, otxType, value } = classifyOtxIndicator(queryRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.otx.lookup");
-  const url = `https://otx.alienvault.com/api/v1/indicators/${otxType}/${encodeURIComponent(value)}/general`;
+    const { kind, otxType, value } = yield* Effect.try({
+      try: () => classifyOtxIndicator(queryRaw),
+      catch: mapToolsCatch,
+    });
+    const ua = options?.userAgent ?? watchdogUserAgent("threat.otx.lookup");
+    const url = `https://otx.alienvault.com/api/v1/indicators/${otxType}/${encodeURIComponent(value)}/general`;
 
-  const res = await fetch(url, {
-    method: "GET",
-    signal,
-    headers: {
-      Accept: "application/json",
-      "X-OTX-API-KEY": key,
-      "User-Agent": ua,
-    },
-  });
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url,
+      signal,
+      service: "OTX",
+      subject: value,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+      init: {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-OTX-API-KEY": key,
+          "User-Agent": ua,
+        },
+      },
+    });
 
-  if (res.status === 404) {
+    if (status === 404) {
+      return otxLookupSnapshotSchema.parse({
+        query: value,
+        kind,
+        queriedAt: new Date().toISOString(),
+        source: "otx.alienvault.com",
+        found: false,
+        pulseCount: 0,
+        pulseNames: [],
+        malwareFamilies: [],
+      });
+    }
+    const { pulseCount, pulseNames, malwareFamilies } = extractPulseInfo(body);
+
     return otxLookupSnapshotSchema.parse({
       query: value,
       kind,
       queriedAt: new Date().toISOString(),
       source: "otx.alienvault.com",
-      found: false,
-      pulseCount: 0,
-      pulseNames: [],
-      malwareFamilies: [],
+      found: pulseCount > 0,
+      pulseCount,
+      pulseNames,
+      malwareFamilies,
     });
-  }
-  if (res.status === 429) {
-    throw rateLimitedToolsError("OTX", value);
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "OTX API",
-      res.status,
-      `OTX API ${res.status} for ${value}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("OTX", value);
-  }
-  const { pulseCount, pulseNames, malwareFamilies } = extractPulseInfo(body);
-
-  return otxLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    source: "otx.alienvault.com",
-    found: pulseCount > 0,
-    pulseCount,
-    pulseNames,
-    malwareFamilies,
   });
 }

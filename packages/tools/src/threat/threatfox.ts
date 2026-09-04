@@ -1,8 +1,14 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { missingApiKey, ToolsError } from "../errors/tools-error";
+import {
+  MissingCredentialError,
+  ValidationVendorError,
+  type ToolsTag,
+} from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -64,90 +70,98 @@ function classifyQuery(raw: string): {
 interface ThreatfoxOptions {
   userAgent?: string;
 }
-export async function fetchThreatfoxLookup(
+
+export function fetchThreatfoxLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: ThreatfoxOptions
-): Promise<ThreatfoxLookupSnapshot> {
-  const { kind, value } = classifyQuery(queryRaw);
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("THREATFOX_API_KEY");
+): Effect.Effect<ThreatfoxLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchThreatfoxLookupGen() {
+    const { kind, value } = classifyQuery(queryRaw);
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "THREATFOX_API_KEY" });
+    }
 
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.threatfox.lookup");
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("threat.threatfox.lookup");
 
-  const body = await fetchJsonObject({
-    url: "https://threatfox-api.abuse.ch/api/v1/",
-    init: {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "Auth-Key": key,
-        "User-Agent": ua,
+    const { body } = yield* fetchJsonObjectEffect({
+      url: "https://threatfox-api.abuse.ch/api/v1/",
+      init: {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "Auth-Key": key,
+          "User-Agent": ua,
+        },
+        body: JSON.stringify({
+          query: "search_ioc",
+          search_term: value,
+          exact_match: true,
+        }),
       },
-      body: JSON.stringify({
-        query: "search_ioc",
-        search_term: value,
-        exact_match: true,
-      }),
-    },
-    signal,
-    service: "ThreatFox",
-    subject: value,
-  });
-  const queryStatus =
-    typeof body.query_status === "string" ? body.query_status : "unknown";
+      signal,
+      service: "ThreatFox",
+      subject: value,
+    });
+    const queryStatus =
+      typeof body.query_status === "string" ? body.query_status : "unknown";
 
-  if (queryStatus === "no_result") {
+    if (queryStatus === "no_result") {
+      return threatfoxLookupSnapshotSchema.parse({
+        query: value,
+        kind,
+        queriedAt: new Date().toISOString(),
+        source: "threatfox-api.abuse.ch",
+        queryStatus,
+        found: false,
+        iocs: [],
+      });
+    }
+
+    if (queryStatus !== "ok") {
+      return yield* new ValidationVendorError({
+        message: `ThreatFox query_status=${queryStatus} for ${value}`,
+      });
+    }
+
+    const rows = Array.isArray(body.data) ? body.data : [];
+    const iocs: ThreatfoxIoc[] = [];
+    for (const row of rows) {
+      if (!isRecord(row)) continue;
+      const ioc = asString(row.ioc);
+      if (!ioc) continue;
+      const tags = Array.isArray(row.tags)
+        ? row.tags.filter((t): t is string => typeof t === "string")
+        : [];
+      iocs.push({
+        id: asString(row.id),
+        ioc,
+        iocType: asString(row.ioc_type),
+        threatType: asString(row.threat_type),
+        malware: asString(row.malware),
+        malwarePrintable: asString(row.malware_printable),
+        confidenceLevel:
+          typeof row.confidence_level === "number"
+            ? row.confidence_level
+            : null,
+        firstSeen: asString(row.first_seen),
+        lastSeen: asString(row.last_seen),
+        tags,
+      });
+    }
+
     return threatfoxLookupSnapshotSchema.parse({
       query: value,
       kind,
       queriedAt: new Date().toISOString(),
       source: "threatfox-api.abuse.ch",
       queryStatus,
-      found: false,
-      iocs: [],
+      found: iocs.length > 0,
+      iocs,
     });
-  }
-
-  if (queryStatus !== "ok") {
-    throw new ToolsError(`ThreatFox query_status=${queryStatus} for ${value}`, {
-      code: "query_error",
-    });
-  }
-
-  const rows = Array.isArray(body.data) ? body.data : [];
-  const iocs: ThreatfoxIoc[] = [];
-  for (const row of rows) {
-    if (!isRecord(row)) continue;
-    const ioc = asString(row.ioc);
-    if (!ioc) continue;
-    const tags = Array.isArray(row.tags)
-      ? row.tags.filter((t): t is string => typeof t === "string")
-      : [];
-    iocs.push({
-      id: asString(row.id),
-      ioc,
-      iocType: asString(row.ioc_type),
-      threatType: asString(row.threat_type),
-      malware: asString(row.malware),
-      malwarePrintable: asString(row.malware_printable),
-      confidenceLevel:
-        typeof row.confidence_level === "number" ? row.confidence_level : null,
-      firstSeen: asString(row.first_seen),
-      lastSeen: asString(row.last_seen),
-      tags,
-    });
-  }
-
-  return threatfoxLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    source: "threatfox-api.abuse.ch",
-    queryStatus,
-    found: iocs.length > 0,
-    iocs,
   });
 }

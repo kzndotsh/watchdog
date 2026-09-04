@@ -1,5 +1,7 @@
+import { Effect } from "effect";
+
 import { defineCapability } from "@watchdog/cap-sdk";
-import { analyzeEmlText } from "@watchdog/tools";
+import { analyzeEmlText, ValidationVendorError } from "@watchdog/tools";
 
 import {
   interpretProcessDraft,
@@ -29,34 +31,41 @@ export const emlAnalyze = defineCapability({
     linkEvidenceFromInput: ["evidenceId"],
     markEvidenceProcessed: true,
   },
-  async run(ctx) {
-    const snapshot = ctx.evidenceSnapshot;
-    if (!snapshot) {
-      throw new Error("EvidenceSnapshot missing — packer did not run");
-    }
-    const uri = snapshot.uri?.trim() ?? "";
-    let text = snapshot.text;
-    if (uri) {
-      const bytes = await ctx.readArtifact(uri);
-      try {
-        text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-      } catch {
-        throw new Error("EML artifact is not valid UTF-8");
+  run: (ctx) =>
+    Effect.gen(function* emlAnalyzeRun() {
+      const snapshot = ctx.evidenceSnapshot;
+      if (!snapshot) {
+        return yield* new ValidationVendorError({
+          message: "EvidenceSnapshot missing — packer did not run",
+        });
       }
-    }
-    if (!text.trim()) {
-      throw new Error("EML Evidence has no readable text");
-    }
-    ctx.log(`eml analyze (${text.length} chars)`);
-    const snap = analyzeEmlText(snapshot.evidenceId, text);
-    const draft = emlAnalyzeToDraft(snap);
-    const artifacts = await uploadProcessArtifacts(
-      ctx.uploadArtifact,
-      snapshot,
-      draft
-    );
-    return { artifacts };
-  },
+      const uri = snapshot.uri?.trim() ?? "";
+      let text = snapshot.text;
+      if (uri) {
+        const bytes = yield* ctx.readArtifact(uri);
+        text = yield* Effect.try({
+          try: () => new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+          catch: () =>
+            new ValidationVendorError({
+              message: "EML artifact is not valid UTF-8",
+            }),
+        });
+      }
+      if (!text.trim()) {
+        return yield* new ValidationVendorError({
+          message: "EML Evidence has no readable text",
+        });
+      }
+      ctx.log(`eml analyze (${text.length} chars)`);
+      const snap = analyzeEmlText(snapshot.evidenceId, text);
+      const draft = emlAnalyzeToDraft(snap);
+      const artifacts = yield* uploadProcessArtifacts(
+        ctx.uploadArtifact,
+        snapshot,
+        draft
+      );
+      return { artifacts };
+    }),
   interpret(report, opts) {
     return interpretProcessDraft(report, opts, {
       noEntity:

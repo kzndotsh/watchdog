@@ -1,6 +1,11 @@
-import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { Effect } from "effect";
+
+import { evidenceRepo, jobsRepo } from "@watchdog/db";
 import { isJobInternalArtifact } from "@watchdog/schemas";
 
+import { tryDb } from "../../infra/postgres-effect";
+import { transact } from "../../infra/postgres-tx";
+import type { DomainTag } from "../../infra/tagged-errors";
 import type { CollectResult } from "./collect";
 import { inputString } from "./helpers";
 import type { PreflightState } from "./preflight";
@@ -10,53 +15,65 @@ import type { PreflightState } from "./preflight";
  * Reclaim always reuses stored ids. Cache hits reuse ids when the source Job
  * still has them; otherwise land from cached artifacts (deleted Job / null ids).
  */
-export async function landEvidence(
+export function landEvidenceEffect(
   state: PreflightState,
   collected: CollectResult
-): Promise<string[]> {
+): Effect.Effect<string[], DomainTag> {
   if (collected.reclaim) {
-    return collected.evidenceIds;
+    return Effect.succeed(collected.evidenceIds);
   }
   if (collected.fromCache && collected.evidenceIds.length > 0) {
-    return collected.evidenceIds;
+    return Effect.succeed(collected.evidenceIds);
   }
 
   const entityId = inputString(state.input, "entityId");
 
-  return db.transaction(async (tx) => {
-    let evidenceIds: string[] = [];
+  return transact((tx) =>
+    Effect.gen(function* landEvidenceTx() {
+      const ids: string[] = [];
+      yield* Effect.forEach(
+        collected.artifacts.filter((art) => !isJobInternalArtifact(art.name)),
+        (art) =>
+          tryDb(() =>
+            evidenceRepo.create(tx, {
+              caseId: state.job.caseId,
+              entityId: entityId ?? null,
+              kind:
+                art.mime?.startsWith("text/html") ||
+                art.mime === "application/pdf"
+                  ? "url_archive"
+                  : "file",
+              label: art.name,
+              mime: art.mime,
+              uri: art.uri,
+              sha256: art.sha256,
+              actorId: state.job.actorId,
+            })
+          ).pipe(
+            Effect.tap((row) =>
+              Effect.sync(() => {
+                if (row) ids.push(row.id);
+              })
+            )
+          ),
+        { concurrency: 1 }
+      );
 
-    for (const art of collected.artifacts) {
-      if (isJobInternalArtifact(art.name)) continue;
-      const kind =
-        art.mime?.startsWith("text/html") || art.mime === "application/pdf"
-          ? "url_archive"
-          : "file";
-      // oxlint-disable-next-line no-await-in-loop -- same-tx inserts share one connection
-      const row = await evidenceRepo.create(tx, {
-        caseId: state.job.caseId,
-        entityId: entityId ?? null,
-        kind,
-        label: art.name,
-        mime: art.mime,
-        uri: art.uri,
-        sha256: art.sha256,
-        actorId: state.job.actorId,
-      });
-      if (row) evidenceIds.push(row.id);
-    }
+      const linkedSource = collected.runtime.linkedSource;
+      const evidenceIds =
+        linkedSource !== undefined && linkedSource !== ""
+          ? [...new Set([...ids, linkedSource])]
+          : ids;
 
-    const linkedSource = collected.runtime.linkedSource;
-    if (linkedSource !== undefined && linkedSource !== "") {
-      evidenceIds = [...new Set([...evidenceIds, linkedSource])];
-    }
+      yield* tryDb(() =>
+        jobsRepo.update(tx, state.jobId, {
+          output: collected.artifacts,
+          evidenceIds,
+          logs: collected.runtime.jobLog.lines,
+        })
+      );
 
-    await jobsRepo.update(tx, state.jobId, {
-      output: collected.artifacts,
-      evidenceIds,
-      logs: collected.runtime.jobLog.lines,
-    });
-
-    return evidenceIds;
-  });
+      return evidenceIds;
+    })
+  );
 }

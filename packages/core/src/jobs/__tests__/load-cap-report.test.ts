@@ -1,33 +1,49 @@
+import { Effect } from "effect";
 import { describe, it, expect } from "vitest";
 
-import { artifactsHaveCapReport, loadCapReport } from "../load-cap-report.ts";
+import {
+  artifactsHaveCapReport,
+  loadCapReportEffect,
+} from "../load-cap-report.ts";
 
 describe("load-cap-report", () => {
-  it("loadCapReport loads report.json", async () => {
-    const loaded = await loadCapReport(
-      [{ name: "report.json", uri: "s3://a/report.json" }],
-      () => new TextEncoder().encode(JSON.stringify({ kind: "report" }))
+  it("loadCapReportEffect loads report.json", async () => {
+    const loaded = await Effect.runPromise(
+      loadCapReportEffect(
+        [{ name: "report.json", uri: "s3://a/report.json" }],
+        () =>
+          Effect.succeed(
+            new TextEncoder().encode(JSON.stringify({ kind: "report" }))
+          )
+      )
     );
     expect(loaded).toBeTruthy();
-    expect(loaded.name).toBe("report.json");
-    expect(loaded.report).toEqual({ kind: "report" });
+    expect(loaded?.name).toBe("report.json");
+    expect(loaded?.report).toEqual({ kind: "report" });
   });
 
-  it("loadCapReport ignores non-report artifacts", async () => {
-    const loaded = await loadCapReport(
-      [
-        { name: "dns-x.json", uri: "s3://a/x" },
-        { name: "derived.json", uri: "s3://a/d" },
-      ],
-      () => new TextEncoder().encode(JSON.stringify({ kind: "nope" }))
+  it("loadCapReportEffect ignores non-report artifacts", async () => {
+    const loaded = await Effect.runPromise(
+      loadCapReportEffect(
+        [
+          { name: "dns-x.json", uri: "s3://a/x" },
+          { name: "derived.json", uri: "s3://a/d" },
+        ],
+        () =>
+          Effect.succeed(
+            new TextEncoder().encode(JSON.stringify({ kind: "nope" }))
+          )
+      )
     );
     expect(loaded).toBe(null);
   });
 
-  it("loadCapReport returns null when missing", async () => {
-    const loaded = await loadCapReport(
-      [{ name: "other.json", uri: "s3://a/other.json" }],
-      () => new Uint8Array()
+  it("loadCapReportEffect returns null when missing", async () => {
+    const loaded = await Effect.runPromise(
+      loadCapReportEffect(
+        [{ name: "other.json", uri: "s3://a/other.json" }],
+        () => Effect.succeed(new Uint8Array())
+      )
     );
     expect(loaded).toBe(null);
   });

@@ -1,8 +1,14 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { missingApiKey, validationToolsError } from "../errors/tools-error";
+import {
+  MissingCredentialError,
+  ValidationVendorError,
+  type ToolsTag,
+} from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -70,9 +76,9 @@ function buildDehashedQuery(
     }
     default: {
       const _exhaustive: never = kind;
-      throw validationToolsError(
-        `Unhandled DeHashed query kind: ${String(_exhaustive)}`
-      );
+      throw new ValidationVendorError({
+        message: `Unhandled DeHashed query kind: ${String(_exhaustive)}`,
+      });
     }
   }
 }
@@ -111,62 +117,68 @@ function mapEntry(raw: unknown): DehashedEntry | null {
 interface DehashedOptions {
   userAgent?: string;
 }
-export async function fetchDehashedLookup(
+
+export function fetchDehashedLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: DehashedOptions
-): Promise<DehashedLookupSnapshot> {
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("DEHASHED_API_KEY");
+): Effect.Effect<DehashedLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchDehashedLookupGen() {
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "DEHASHED_API_KEY" });
+    }
 
-  const { kind, value } = classifyDehashedQuery(queryRaw);
-  const query = buildDehashedQuery(kind, value);
-  const ua = options?.userAgent ?? watchdogUserAgent("breach.dehashed.lookup");
+    const { kind, value } = classifyDehashedQuery(queryRaw);
+    const query = buildDehashedQuery(kind, value);
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("breach.dehashed.lookup");
 
-  const body = await fetchJsonObject({
-    url: "https://api.dehashed.com/v2/search",
-    init: {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "DeHashed-Api-Key": key,
-        "User-Agent": ua,
+    const { body } = yield* fetchJsonObjectEffect({
+      url: "https://api.dehashed.com/v2/search",
+      init: {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "DeHashed-Api-Key": key,
+          "User-Agent": ua,
+        },
+        body: JSON.stringify({
+          query,
+          page: 1,
+          size: ENTRIES_CAP,
+          de_dupe: true,
+          wildcard: false,
+        }),
       },
-      body: JSON.stringify({
-        query,
-        page: 1,
-        size: ENTRIES_CAP,
-        de_dupe: true,
-        wildcard: false,
-      }),
-    },
-    signal,
-    service: "DeHashed",
-    subject: value,
-    acceptStatus: (status) => status < 400,
-  });
-  const rawEntries = Array.isArray(body.entries) ? body.entries : [];
-  const entries: DehashedEntry[] = [];
-  for (const raw of rawEntries.slice(0, ENTRIES_CAP)) {
-    const mapped = mapEntry(raw);
-    if (mapped) entries.push(mapped);
-  }
-  const total = typeof body.total === "number" ? body.total : entries.length;
-  const balance = typeof body.balance === "number" ? body.balance : null;
-  const databases = extractDatabases(entries);
+      signal,
+      service: "DeHashed",
+      subject: value,
+      acceptStatus: (status) => status < 400,
+    });
+    const rawEntries = Array.isArray(body.entries) ? body.entries : [];
+    const entries: DehashedEntry[] = [];
+    for (const raw of rawEntries.slice(0, ENTRIES_CAP)) {
+      const mapped = mapEntry(raw);
+      if (mapped) entries.push(mapped);
+    }
+    const total = typeof body.total === "number" ? body.total : entries.length;
+    const balance = typeof body.balance === "number" ? body.balance : null;
+    const databases = extractDatabases(entries);
 
-  return dehashedLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    source: "api.dehashed.com",
-    found: total > 0,
-    total,
-    balance,
-    databases,
-    sampleCount: entries.length,
-    entries,
+    return dehashedLookupSnapshotSchema.parse({
+      query: value,
+      kind,
+      queriedAt: new Date().toISOString(),
+      source: "api.dehashed.com",
+      found: total > 0,
+      total,
+      balance,
+      databases,
+      sampleCount: entries.length,
+      entries,
+    });
   });
 }

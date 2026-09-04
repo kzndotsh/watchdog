@@ -37,3 +37,7 @@ export {
   WATCHDOG_CHANNEL,
   type WatchdogEvent,
 } from "./events";
+export {
+  listenForEventsStream,
+  type ListenForEventsStreamOpts,
+} from "./listen-events-stream";

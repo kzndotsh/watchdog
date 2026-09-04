@@ -139,6 +139,27 @@ describe("CLI output contract", () => {
     expect(JSON.parse(firstLine)).toEqual({ ok: true, deleted: true, id: "x" });
   });
 
+  it("handleCliError maps tagged domain errors to the JSON envelope", async () => {
+    const { handleCliError } = await import("../io");
+    const lines: string[] = [];
+    const original = console.log;
+    console.log = (msg?: unknown) => {
+      lines.push(String(msg));
+    };
+    try {
+      expect(() =>
+        handleCliError({ _tag: "ConflictError", reason: "duplicate slug" })
+      ).toThrow(CliExitError);
+    } finally {
+      console.log = original;
+    }
+    const body = JSON.parse(lines[0] ?? "{}");
+    expect(body).toMatchObject({
+      ok: false,
+      error: { code: "CONFLICT", message: "duplicate slug" },
+    });
+  });
+
   it("fail prints { ok: false, error } and throws CliExitError", async () => {
     const { fail } = await import("../io");
     const lines: string[] = [];

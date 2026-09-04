@@ -1,4 +1,6 @@
-import { fetchDshieldLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchDshieldLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dshieldLookupInput } from "./input";
@@ -28,14 +30,17 @@ export const dshieldLookup = defineCollectCap({
   },
   schema: dshieldLookupSnapshotSchema,
   reportLabel: "dshield.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`DShield ${ip}`);
-    const snap = await fetchDshieldLookup(ip, ctx.signal, { userAgent: UA });
-    ctx.log(
-      `found=${snap.found} attacks=${snap.attacks ?? "n/a"} count=${snap.count ?? "n/a"}`
-    );
-    return { snap, artifactName: `dshield-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* dshieldLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`DShield ${ip}`);
+      const snap = yield* fetchDshieldLookupEffect(ip, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `found=${snap.found} attacks=${snap.attacks ?? "n/a"} count=${snap.count ?? "n/a"}`
+      );
+      return { snap, artifactName: `dshield-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretDshieldLookupReport,
 });

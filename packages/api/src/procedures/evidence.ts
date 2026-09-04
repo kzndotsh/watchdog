@@ -1,21 +1,21 @@
 import { z } from "zod";
 
 import {
-  attachEvidenceEntity,
-  confirmFileUpload,
-  dumpPaste,
-  dumpUrl,
-  enrichUrlEvidence,
-  getEvidenceDownloadUrl,
-  listEvidenceForCase,
-  presignUpload,
-  processEvidence,
-  restoreEvidence,
-  softDeleteEvidence,
+  attachEvidenceEntityEffect,
+  confirmFileUploadEffect,
+  dumpPasteEffect,
+  dumpUrlEffect,
+  enrichUrlEvidenceEffect,
+  getEvidenceDownloadUrlEffect,
+  listEvidenceForCaseEffect,
+  presignUploadEffect,
+  processEvidenceEffect,
+  restoreEvidenceEffect,
+  softDeleteEvidenceEffect,
 } from "@watchdog/core";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import { evidenceSchema, jobSchema, presignedUploadSchema } from "../schemas";
 
 export const list = authed
@@ -34,9 +34,9 @@ export const list = authed
     })
   )
   .output(z.array(evidenceSchema))
-  .handler(
-    withDomainError(async ({ input }) =>
-      listEvidenceForCase(input.caseId, {
+  .handler(async ({ input }) =>
+    runApp(
+      listEvidenceForCaseEffect(input.caseId, {
         unprocessedOnly: input.unprocessedOnly,
         unattachedOnly: input.unattachedOnly,
         hiddenOnly: input.hiddenOnly,
@@ -62,10 +62,8 @@ export const createPaste = authed
     })
   )
   .output(evidenceSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      dumpPaste({ ...input, actorId: context.actor.userId })
-    )
+  .handler(async ({ input, context }) =>
+    runApp(dumpPasteEffect({ ...input, actorId: context.actor.userId }))
   );
 
 export const createUrl = authed
@@ -86,10 +84,8 @@ export const createUrl = authed
     })
   )
   .output(evidenceSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      dumpUrl({ ...input, actorId: context.actor.userId })
-    )
+  .handler(async ({ input, context }) =>
+    runApp(dumpUrlEffect({ ...input, actorId: context.actor.userId }))
   );
 
 export const softDelete = authed
@@ -101,12 +97,10 @@ export const softDelete = authed
   })
   .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
   .output(z.object({ ok: z.literal(true) }))
-  .handler(
-    withDomainError(async ({ input }) => {
-      await softDeleteEvidence(input);
-      return { ok: true as const };
-    })
-  );
+  .handler(async ({ input }) => {
+    await runApp(softDeleteEvidenceEffect(input));
+    return { ok: true as const };
+  });
 
 export const restore = authed
   .route({
@@ -117,12 +111,10 @@ export const restore = authed
   })
   .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
   .output(z.object({ ok: z.literal(true) }))
-  .handler(
-    withDomainError(async ({ input }) => {
-      await restoreEvidence(input);
-      return { ok: true as const };
-    })
-  );
+  .handler(async ({ input }) => {
+    await runApp(restoreEvidenceEffect(input));
+    return { ok: true as const };
+  });
 
 export const attachEntity = authed
   .route({
@@ -139,7 +131,7 @@ export const attachEntity = authed
     })
   )
   .output(evidenceSchema)
-  .handler(withDomainError(async ({ input }) => attachEvidenceEntity(input)));
+  .handler(async ({ input }) => runApp(attachEvidenceEntityEffect(input)));
 
 export const presign = authed
   .route({
@@ -158,7 +150,7 @@ export const presign = authed
     })
   )
   .output(presignedUploadSchema)
-  .handler(withDomainError(async ({ input }) => presignUpload(input)));
+  .handler(async ({ input }) => runApp(presignUploadEffect(input)));
 
 export const confirmFile = authed
   .route({
@@ -180,10 +172,8 @@ export const confirmFile = authed
     })
   )
   .output(evidenceSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      confirmFileUpload(input, context.actor.userId)
-    )
+  .handler(async ({ input, context }) =>
+    runApp(confirmFileUploadEffect(input, context.actor.userId))
   );
 
 export const downloadUrl = authed
@@ -195,10 +185,8 @@ export const downloadUrl = authed
   })
   .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
   .output(z.object({ url: z.string().nullable() }))
-  .handler(
-    withDomainError(async ({ input }) =>
-      getEvidenceDownloadUrl(input.caseId, input.evidenceId)
-    )
+  .handler(async ({ input }) =>
+    runApp(getEvidenceDownloadUrlEffect(input.caseId, input.evidenceId))
   );
 
 export const process = authed
@@ -217,10 +205,8 @@ export const process = authed
     })
   )
   .output(jobSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      processEvidence({ ...input, actorId: context.actor.userId })
-    )
+  .handler(async ({ input, context }) =>
+    runApp(processEvidenceEffect({ ...input, actorId: context.actor.userId }))
   );
 
 export const enrich = authed
@@ -233,8 +219,6 @@ export const enrich = authed
   })
   .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
   .output(jobSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      enrichUrlEvidence({ ...input, actorId: context.actor.userId })
-    )
+  .handler(async ({ input, context }) =>
+    runApp(enrichUrlEvidenceEffect({ ...input, actorId: context.actor.userId }))
   );

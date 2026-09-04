@@ -1,12 +1,15 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
 import {
-  httpToolsError,
-  missingApiKey,
-  rateLimitedToolsError,
-  validationToolsError,
-} from "../errors/tools-error";
+  MissingCredentialError,
+  ValidationVendorError,
+  type ToolsTag,
+} from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 
@@ -81,89 +84,92 @@ function summarize(raw: unknown): {
 interface HudsonrockOptions {
   userAgent?: string;
 }
-export async function fetchHudsonrockLookup(
+
+export function fetchHudsonrockLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: HudsonrockOptions
-): Promise<HudsonrockLookupSnapshot> {
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("HUDSONROCK_API_KEY");
-
-  const { kind, value } = classifyHudsonrockQuery(queryRaw);
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("breach.hudsonrock.lookup");
-
-  let path: string;
-  let body: Record<string, unknown>;
-  switch (kind) {
-    case "email": {
-      path = "/search-by-login/emails";
-      body = { logins: [value] };
-      break;
+): Effect.Effect<HudsonrockLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchHudsonrockLookupGen() {
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "HUDSONROCK_API_KEY" });
     }
-    case "ip": {
-      path = "/search-by-ip";
-      body = { ips: [value] };
-      break;
-    }
-    case "domain": {
-      path = "/search-by-domain";
-      body = { domains: [value] };
-      break;
-    }
-    default: {
-      const _exhaustive: never = kind;
-      throw validationToolsError(
-        `Unhandled Hudson Rock query kind: ${String(_exhaustive)}`
-      );
-    }
-  }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: "POST",
-    signal,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "api-key": key,
-      "User-Agent": ua,
-    },
-    body: JSON.stringify(body),
-  });
+    const { kind, value } = yield* Effect.try({
+      try: () => classifyHudsonrockQuery(queryRaw),
+      catch: mapToolsCatch,
+    });
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("breach.hudsonrock.lookup");
 
-  if (res.status === 404) {
+    let path: string;
+    let body: Record<string, unknown>;
+    switch (kind) {
+      case "email": {
+        path = "/search-by-login/emails";
+        body = { logins: [value] };
+        break;
+      }
+      case "ip": {
+        path = "/search-by-ip";
+        body = { ips: [value] };
+        break;
+      }
+      case "domain": {
+        path = "/search-by-domain";
+        body = { domains: [value] };
+        break;
+      }
+      default: {
+        const _exhaustive: never = kind;
+        return yield* new ValidationVendorError({
+          message: `Unhandled Hudson Rock query kind: ${String(_exhaustive)}`,
+        });
+      }
+    }
+
+    const { status, body: raw } = yield* fetchJsonUnknownEffect({
+      url: `${BASE_URL}${path}`,
+      signal,
+      service: "Hudson Rock",
+      subject: value,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+      init: {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "api-key": key,
+          "User-Agent": ua,
+        },
+        body: JSON.stringify(body),
+      },
+    });
+
+    if (status === 404) {
+      return hudsonrockLookupSnapshotSchema.parse({
+        query: value,
+        kind,
+        queriedAt: new Date().toISOString(),
+        source: "api.hudsonrock.com",
+        found: false,
+        totalResults: 0,
+        newestDate: null,
+      });
+    }
+
+    const { totalResults, newestDate } = summarize(raw);
+
     return hudsonrockLookupSnapshotSchema.parse({
       query: value,
       kind,
       queriedAt: new Date().toISOString(),
       source: "api.hudsonrock.com",
-      found: false,
-      totalResults: 0,
-      newestDate: null,
+      found: totalResults > 0,
+      totalResults,
+      newestDate,
     });
-  }
-  if (res.status === 429) {
-    throw rateLimitedToolsError("Hudson Rock", value);
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "Hudson Rock API",
-      res.status,
-      `Hudson Rock API ${res.status} for ${value}`
-    );
-  }
-
-  const raw: unknown = await res.json();
-  const { totalResults, newestDate } = summarize(raw);
-
-  return hudsonrockLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    source: "api.hudsonrock.com",
-    found: totalResults > 0,
-    totalResults,
-    newestDate,
   });
 }

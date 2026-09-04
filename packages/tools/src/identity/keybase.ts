@@ -1,10 +1,14 @@
 import { isIP } from "node:net";
 
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { parseToolsError, validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -228,26 +232,36 @@ export function parseKeybaseBody(
 interface KeybaseOptions {
   userAgent?: string;
 }
-export async function fetchKeybaseLookup(
+
+export function fetchKeybaseLookupEffect(
   queryRaw: string,
   signal: AbortSignal,
   options?: KeybaseOptions
-): Promise<KeybaseLookupSnapshot> {
-  const { kind, value, param } = classifyQuery(queryRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("identity.keybase.lookup");
+): Effect.Effect<KeybaseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchKeybaseLookupGen() {
+    const { kind, value, param } = yield* Effect.try({
+      try: () => classifyQuery(queryRaw),
+      catch: mapToolsCatch,
+    });
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("identity.keybase.lookup");
 
-  const url = new URL("https://keybase.io/_/api/1.0/user/lookup.json");
-  url.searchParams.set(param, value);
+    const url = new URL("https://keybase.io/_/api/1.0/user/lookup.json");
+    url.searchParams.set(param, value);
 
-  const body = await fetchJsonObject({
-    url,
-    init: {
-      method: "GET",
-      headers: { Accept: "application/json", "User-Agent": ua },
-    },
-    signal,
-    service: "Keybase",
-    subject: value,
+    const { body } = yield* fetchJsonObjectEffect({
+      url,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+      signal,
+      service: "Keybase",
+      subject: value,
+    });
+    return yield* Effect.try({
+      try: () => parseKeybaseBody(value, kind, new Date().toISOString(), body),
+      catch: mapToolsCatch,
+    });
   });
-  return parseKeybaseBody(value, kind, new Date().toISOString(), body);
 }

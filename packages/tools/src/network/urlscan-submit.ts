@@ -1,13 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import {
-  httpToolsError,
-  missingApiKey,
-  parseToolsError,
-  rateLimitedToolsError,
-} from "../errors/tools-error";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { isRecord } from "../parse/coerce";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 
 export const urlscanSubmitVisibilitySchema = z.enum([
   "public",
@@ -37,56 +34,50 @@ export type UrlscanSubmitSnapshot = z.infer<typeof urlscanSubmitSnapshotSchema>;
  * POST https://urlscan.io/api/v1/scan/
  * @see https://urlscan.io/docs/api/
  */
-export async function submitUrlscan(
+export function submitUrlscanEffect(
   url: string,
   apiKey: string,
   visibility: UrlscanSubmitVisibility,
   signal: AbortSignal,
   options?: { userAgent?: string }
-): Promise<UrlscanSubmitSnapshot> {
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("URLSCAN_API_KEY");
-  const target = url.trim();
-  const ua = options?.userAgent ?? watchdogUserAgent("network.urlscan.submit");
+): Effect.Effect<UrlscanSubmitSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* submitUrlscanGen() {
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "URLSCAN_API_KEY" });
+    }
+    const target = url.trim();
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("network.urlscan.submit");
 
-  const res = await fetch("https://urlscan.io/api/v1/scan/", {
-    method: "POST",
-    signal,
-    headers: {
-      "API-Key": key,
-      "Content-Type": "application/json",
-      "User-Agent": ua,
-    },
-    body: JSON.stringify({ url: target, visibility }),
-  });
+    const { body } = yield* fetchJsonObjectEffect({
+      url: "https://urlscan.io/api/v1/scan/",
+      signal,
+      service: "URLScan",
+      subject: target,
+      init: {
+        method: "POST",
+        headers: {
+          "API-Key": key,
+          "Content-Type": "application/json",
+          "User-Agent": ua,
+        },
+        body: JSON.stringify({ url: target, visibility }),
+      },
+    });
+    const uuid =
+      typeof body.uuid === "string" && body.uuid !== "" ? body.uuid : null;
 
-  if (res.status === 429) {
-    throw rateLimitedToolsError("URLScan", target);
-  }
-  if (res.status >= 400) {
-    throw httpToolsError(
-      "URLScan API",
-      res.status,
-      `URLScan API ${res.status} for ${target}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("URLScan submit", target);
-  }
-  const uuid =
-    typeof body.uuid === "string" && body.uuid !== "" ? body.uuid : null;
-
-  return urlscanSubmitSnapshotSchema.parse({
-    url: target,
-    visibility,
-    queriedAt: new Date().toISOString(),
-    source: "urlscan.io",
-    uuid,
-    resultUrl: typeof body.result === "string" ? body.result : null,
-    apiUrl: typeof body.api === "string" ? body.api : null,
-    message: typeof body.message === "string" ? body.message : null,
-    accepted: uuid !== null,
+    return urlscanSubmitSnapshotSchema.parse({
+      url: target,
+      visibility,
+      queriedAt: new Date().toISOString(),
+      source: "urlscan.io",
+      uuid,
+      resultUrl: typeof body.result === "string" ? body.result : null,
+      apiUrl: typeof body.api === "string" ? body.api : null,
+      message: typeof body.message === "string" ? body.message : null,
+      accepted: uuid !== null,
+    });
   });
 }

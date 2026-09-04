@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { searchCase } from "@watchdog/core";
+import { searchCaseEffect, runDomain } from "@watchdog/core";
 import { db } from "@watchdog/db";
 import { testId } from "@watchdog/test-kit";
 import {
@@ -25,7 +25,9 @@ describe("searchCase", () => {
       name: "Ada Lovelace",
       slug: "ada-lovelace",
     });
-    const result = await searchCase({ caseId: cased.id, q: "Ada" });
+    const result = await runDomain(
+      searchCaseEffect({ caseId: cased.id, q: "Ada" })
+    );
     expect(result.entities.some((hit) => hit.name === "Ada Lovelace")).toBe(
       true
     );
@@ -38,7 +40,9 @@ describe("searchCase", () => {
       type: "email",
       value: "ada@mailhost.test",
     });
-    const result = await searchCase({ caseId: cased.id, q: "ada@mailhost" });
+    const result = await runDomain(
+      searchCaseEffect({ caseId: cased.id, q: "ada@mailhost" })
+    );
     expect(
       result.identifiers.some((hit) => hit.value === "ada@mailhost.test")
     ).toBe(true);

@@ -1,4 +1,7 @@
-import { fetchGreynoiseCommunity, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { optionalCapCredential } from "@watchdog/cap-sdk";
+import { fetchGreynoiseCommunityEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { greynoiseLookupInput } from "./input";
@@ -28,20 +31,22 @@ export const greynoiseLookup = defineCollectCap({
   },
   schema: greynoiseLookupSnapshotSchema,
   reportLabel: "greynoise.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`GreyNoise Community ${ip}`);
-    const apiKey = (await ctx.hasCredential("GREYNOISE_API_KEY"))
-      ? await ctx.getCredential("GREYNOISE_API_KEY")
-      : undefined;
-    const snap = await fetchGreynoiseCommunity(ip, ctx.signal, {
-      userAgent: UA,
-      apiKey,
-    });
-    ctx.log(
-      `noise=${snap.noise ?? "?"} riot=${snap.riot ?? "?"} class=${snap.classification ?? "?"}`
-    );
-    return { snap, artifactName: `greynoise-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* greynoiseLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`GreyNoise Community ${ip}`);
+      const apiKey = yield* optionalCapCredential(ctx, "GREYNOISE_API_KEY");
+      const snap = yield* fetchGreynoiseCommunityEffect(ip, ctx.signal, {
+        userAgent: UA,
+        apiKey,
+      });
+      ctx.log(
+        `noise=${snap.noise ?? "?"} riot=${snap.riot ?? "?"} class=${snap.classification ?? "?"}`
+      );
+      return {
+        snap,
+        artifactName: `greynoise-${ip.replaceAll(":", "-")}.json`,
+      };
+    }),
   interpretSnap: interpretGreynoiseLookupReport,
 });

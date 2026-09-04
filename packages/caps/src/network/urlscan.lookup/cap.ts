@@ -1,4 +1,6 @@
-import { fetchUrlscanSearch, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchUrlscanSearchEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlscanLookupInput } from "./input";
@@ -29,15 +31,16 @@ export const urlscanLookup = defineCollectCap({
   },
   schema: urlscanLookupSnapshotSchema,
   reportLabel: "urlscan.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`URLScan search page.domain:${host}`);
-    const snap = await fetchUrlscanSearch(host, ctx.signal, {
-      userAgent: UA,
-      size: 20,
-    });
-    ctx.log(`hits=${snap.hits.length} urls=${snap.urls.length}`);
-    return { snap, artifactName: `urlscan-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* urlscanLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`URLScan search page.domain:${host}`);
+      const snap = yield* fetchUrlscanSearchEffect(host, ctx.signal, {
+        userAgent: UA,
+        size: 20,
+      });
+      ctx.log(`hits=${snap.hits.length} urls=${snap.urls.length}`);
+      return { snap, artifactName: `urlscan-${host}.json` };
+    }),
   interpretSnap: interpretUrlscanLookupReport,
 });

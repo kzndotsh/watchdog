@@ -1,4 +1,6 @@
-import { fetchThreatfoxLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchThreatfoxLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { threatfoxLookupInput } from "./input";
@@ -28,16 +30,17 @@ export const threatfoxLookup = defineCollectCap({
   },
   schema: threatfoxLookupSnapshotSchema,
   reportLabel: "threatfox.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`ThreatFox ${query}`);
-    const key = await ctx.getCredential("THREATFOX_API_KEY");
-    const snap = await fetchThreatfoxLookup(query, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} iocs=${snap.iocs.length}`);
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `threatfox-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* threatfoxLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`ThreatFox ${query}`);
+      const key = yield* ctx.getCredential("THREATFOX_API_KEY");
+      const snap = yield* fetchThreatfoxLookupEffect(query, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} iocs=${snap.iocs.length}`);
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `threatfox-${safe}.json` };
+    }),
   interpretSnap: interpretThreatfoxLookupReport,
 });

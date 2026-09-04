@@ -1,7 +1,8 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
-import { createCapRunHarness, testId } from "@watchdog/test-kit";
+import { createCapRunHarness, runCap, testId } from "@watchdog/test-kit";
 
 import { fileAnalyze } from "../cap.ts";
 
@@ -22,14 +23,16 @@ describe("evidence.file.analyze run", () => {
       },
     });
     const payload = new TextEncoder().encode("real-file-bytes");
-    const result = await fileAnalyze.run({
-      ...harness.ctx,
-      input: { evidenceId: testId(40) },
-      readArtifact: async (requested) => {
-        expect(requested).toBe(uri);
-        return payload;
-      },
-    });
+    const result = await runCap(
+      fileAnalyze.run({
+        ...harness.ctx,
+        input: { evidenceId: testId(40) },
+        readArtifact: (requested) => {
+          expect(requested).toBe(uri);
+          return Effect.succeed(payload);
+        },
+      })
+    );
     expect(
       result.artifacts.some((row) => row.name === REPORT_JSON_ARTIFACT)
     ).toBe(true);
@@ -46,10 +49,12 @@ describe("evidence.file.analyze run", () => {
         packerVersion: 1,
       },
     });
-    const result = await fileAnalyze.run({
-      ...harness.ctx,
-      input: { evidenceId: testId(40) },
-    });
+    const result = await runCap(
+      fileAnalyze.run({
+        ...harness.ctx,
+        input: { evidenceId: testId(40) },
+      })
+    );
     expect(
       result.artifacts.some((row) => row.name === REPORT_JSON_ARTIFACT)
     ).toBe(true);
@@ -67,10 +72,12 @@ describe("evidence.file.analyze run", () => {
       },
     });
     await expect(
-      fileAnalyze.run({
-        ...harness.ctx,
-        input: { evidenceId: testId(40) },
-      })
+      runCap(
+        fileAnalyze.run({
+          ...harness.ctx,
+          input: { evidenceId: testId(40) },
+        })
+      )
     ).rejects.toThrow(/no bytes/);
   });
 
@@ -87,13 +94,13 @@ describe("evidence.file.analyze run", () => {
       },
     });
     await expect(
-      fileAnalyze.run({
-        ...harness.ctx,
-        input: { evidenceId: testId(40) },
-        readArtifact: async () => {
-          throw new Error("blob missing");
-        },
-      })
+      runCap(
+        fileAnalyze.run({
+          ...harness.ctx,
+          input: { evidenceId: testId(40) },
+          readArtifact: () => Effect.die(new Error("blob missing")),
+        })
+      )
     ).rejects.toThrow(/blob missing/);
   });
 });

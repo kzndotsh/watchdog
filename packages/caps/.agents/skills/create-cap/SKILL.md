@@ -60,6 +60,9 @@ Writes only inside the new Cap's folder
 
 ## Gotchas
 
+- Cap `run` is Effect `CapRun` (not a Promise). Tests use `runCap` /
+  `itRunsCollectCap` (provides `toolsHttpClientLayer`). Prefer
+  `defineCollectCap` for Collect Caps. `interpret` stays pure/sync.
 - Caps never write the Graph — `interpret` returns Proposal ops only. If a
   step in this workflow starts looking like a Graph write, stop; that
   belongs in Inbox Accept, not a Cap.

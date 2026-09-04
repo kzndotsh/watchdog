@@ -3,7 +3,8 @@
   "compilerOptions": {
     "noEmit": true,
     "rootDir": "src",
-    "types": ["node"]
+    "types": ["node"],
+    "plugins": [{ "name": "@effect/tsgo" }]
   },
   "include": ["src"]
 }

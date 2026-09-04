@@ -1,7 +1,7 @@
 import { ORPCError, createRouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { putCredentialSlot } from "@watchdog/core";
+import { putCredentialSlotEffect, runDomain } from "@watchdog/core";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { resetTestDb } from "@watchdog/test-kit/db";
 
@@ -52,11 +52,13 @@ describe("oRPC router (in-process)", () => {
   });
 
   it("credentials.list returns configured slots via procedure layer", async () => {
-    await putCredentialSlot({
-      userId: TEST_ACTOR_ID,
-      name: "AI_COMPAT_API_KEY",
-      secret: "sk-test",
-    });
+    await runDomain(
+      putCredentialSlotEffect({
+        userId: TEST_ACTOR_ID,
+        name: "AI_COMPAT_API_KEY",
+        secret: "sk-test",
+      })
+    );
     const slots = await routerClient().credentials.list();
     const slot = slots.find((row) => row.name === "AI_COMPAT_API_KEY");
     expect(slot?.configured).toBe(true);

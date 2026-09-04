@@ -9,11 +9,13 @@
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import nodePath from "node:path";
 
+import { Effect, Fiber, SynchronizedRef } from "effect";
+
 import type { EvidenceRow } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
-import { readArtifactBytes } from "./blob";
-import { renderCaseExport, renderEntityMarkdown } from "./export";
+import { readArtifactBytesEffect } from "./blob";
+import { renderCaseExportEffect, renderEntityMarkdownEffect } from "./export";
 import { logProcess, logSwallowed } from "./process-log";
 
 function exportRoot(): string {
@@ -23,12 +25,17 @@ function exportRoot(): string {
   );
 }
 
-async function write(
+function writeEffect(
   path: string,
   content: string | Uint8Array
-): Promise<void> {
-  await mkdir(nodePath.dirname(path), { recursive: true });
-  await writeFile(path, content);
+): Effect.Effect<void, unknown> {
+  return Effect.tryPromise({
+    try: async () => {
+      await mkdir(nodePath.dirname(path), { recursive: true });
+      await writeFile(path, content);
+    },
+    catch: (error) => error,
+  });
 }
 
 export function safeFilename(label: string): string {
@@ -42,7 +49,6 @@ export function safeFilename(label: string): string {
 }
 
 function evidenceExt(mime: string | null, label: string | null): string {
-  // Try label extension first
   if (label !== null) {
     const ext = nodePath.extname(label);
     if (ext) return ext;
@@ -68,153 +74,236 @@ interface EvidenceExportCounts {
   skipped: number;
 }
 
-async function writeUriEvidenceFile(
+type EvidenceWriteOutcome = "included" | "skipped" | "none";
+
+function writeUriEvidenceFileEffect(
   caseId: string,
   evidenceDir: string,
   ev: EvidenceRow
-): Promise<"included" | "skipped"> {
+): Effect.Effect<EvidenceWriteOutcome> {
   const prefix = ev.id.slice(0, 8);
   const labelBase = safeFilename(ev.label ?? ev.sourceUrl ?? ev.id.slice(0, 8));
-  if (!ev.uri) return "skipped";
-  try {
-    const bytes = await readArtifactBytes(ev.uri);
+  if (!ev.uri) return Effect.succeed("skipped");
+  const uri = ev.uri;
+  return Effect.gen(function* writeUriEvidenceGen() {
+    const bytes = yield* readArtifactBytesEffect(uri);
     const ext = evidenceExt(ev.mime, ev.label);
     const filename = `${prefix}--${labelBase}${ext}`;
-    await write(nodePath.join(evidenceDir, filename), bytes);
-    return "included";
-  } catch (error) {
-    logSwallowed("export-sync.evidence_skip", error, {
-      caseId,
-      evidenceId: ev.id,
-    });
-    return "skipped";
-  }
+    yield* writeEffect(nodePath.join(evidenceDir, filename), bytes);
+    return "included" as const;
+  }).pipe(
+    Effect.tapError((error) =>
+      Effect.sync(() => {
+        logSwallowed("export-sync.evidence_skip", error, {
+          caseId,
+          evidenceId: ev.id,
+        });
+      })
+    ),
+    Effect.catch(() => Effect.succeed("skipped" as const))
+  );
 }
 
-async function writeInlineEvidenceFile(
+function writeInlineEvidenceFileEffect(
   evidenceDir: string,
   ev: EvidenceRow
-): Promise<void> {
+): Effect.Effect<void, unknown> {
   const prefix = ev.id.slice(0, 8);
   const labelBase = safeFilename(ev.label ?? ev.sourceUrl ?? ev.id.slice(0, 8));
   const filename = `${prefix}--${labelBase}.txt`;
-  if (ev.text === null || ev.text === undefined) return;
-  await write(nodePath.join(evidenceDir, filename), ev.text);
+  if (ev.text === null || ev.text === undefined) return Effect.void;
+  return writeEffect(nodePath.join(evidenceDir, filename), ev.text);
 }
 
-async function writeCaseEvidenceFiles(
+function writeOneEvidenceFileEffect(
+  caseId: string,
+  evidenceDir: string,
+  ev: EvidenceRow
+): Effect.Effect<EvidenceWriteOutcome, unknown> {
+  if (ev.uri !== null) {
+    return writeUriEvidenceFileEffect(caseId, evidenceDir, ev);
+  }
+  if (ev.text !== null && ev.text !== "" && ev.kind !== "attestation") {
+    return writeInlineEvidenceFileEffect(evidenceDir, ev).pipe(
+      Effect.as("included" as const)
+    );
+  }
+  return Effect.succeed("none");
+}
+
+function writeCaseEvidenceFilesEffect(
   caseId: string,
   evidenceDir: string,
   evidenceRows: EvidenceRow[]
-): Promise<EvidenceExportCounts> {
-  const counts: EvidenceExportCounts = { included: 0, skipped: 0 };
-  await Promise.all(
-    evidenceRows.map(async (ev) => {
-      if (ev.uri !== null) {
-        const outcome = await writeUriEvidenceFile(caseId, evidenceDir, ev);
-        if (outcome === "included") counts.included += 1;
-        else counts.skipped += 1;
-        return;
-      }
-      if (ev.text !== null && ev.text !== "" && ev.kind !== "attestation") {
-        await writeInlineEvidenceFile(evidenceDir, ev);
-        counts.included += 1;
-      }
-    })
-  );
-  return counts;
+): Effect.Effect<EvidenceExportCounts, unknown> {
+  return Effect.gen(function* writeCaseEvidenceFilesGen() {
+    const outcomes = yield* Effect.forEach(
+      evidenceRows,
+      (ev) => writeOneEvidenceFileEffect(caseId, evidenceDir, ev),
+      { concurrency: "unbounded" }
+    );
+    const counts: EvidenceExportCounts = { included: 0, skipped: 0 };
+    for (const outcome of outcomes) {
+      if (outcome === "included") counts.included += 1;
+      else if (outcome === "skipped") counts.skipped += 1;
+    }
+    return counts;
+  });
 }
 
-export async function writeEntityExport(entityId: string): Promise<void> {
-  const exported = await renderEntityMarkdown(entityId);
-  if (!exported) return;
-
-  const kindDir = `${exported.kind}s`;
-  const path = nodePath.join(
-    exportRoot(),
-    exported.caseSlug,
-    kindDir,
-    `${exported.entitySlug}.md`
-  );
-
-  await write(path, exported.markdown);
+export function writeEntityExportEffect(
+  entityId: string
+): Effect.Effect<void, unknown> {
+  return Effect.gen(function* writeEntityExportGen() {
+    const exported = yield* renderEntityMarkdownEffect(entityId);
+    if (!exported) return;
+    const kindDir = `${exported.kind}s`;
+    const path = nodePath.join(
+      exportRoot(),
+      exported.caseSlug,
+      kindDir,
+      `${exported.entitySlug}.md`
+    );
+    yield* writeEffect(path, exported.markdown);
+  });
 }
 
-/**
- * Write all entities + evidence for a Case to the export directory.
- */
-export async function writeCaseExport(caseId: string): Promise<void> {
-  const { files: mdFiles, evidenceRows } = await renderCaseExport(caseId);
-  if (mdFiles.size === 0) return;
+export function writeCaseExportEffect(
+  caseId: string
+): Effect.Effect<void, unknown> {
+  return Effect.gen(function* writeCaseExportGen() {
+    const { files: mdFiles, evidenceRows } =
+      yield* renderCaseExportEffect(caseId);
+    if (mdFiles.size === 0) return;
 
-  // Extract case slug from CASE.md
-  const caseMd = mdFiles.get("CASE.md") ?? "";
-  const match = /^slug: (.+)$/m.exec(caseMd);
-  const caseSlug = match?.[1]?.trim();
-  if (caseSlug === undefined || caseSlug === "") return;
+    const caseMd = mdFiles.get("CASE.md") ?? "";
+    const match = /^slug: (.+)$/m.exec(caseMd);
+    const caseSlug = match?.[1]?.trim();
+    if (caseSlug === undefined || caseSlug === "") return;
 
-  const root = nodePath.join(exportRoot(), caseSlug);
+    const root = nodePath.join(exportRoot(), caseSlug);
 
-  // Write markdown files — independent per-file, fetched/written concurrently.
-  await Promise.all(
-    [...mdFiles].map(async ([relPath, content]) =>
-      write(nodePath.join(root, relPath), content)
-    )
-  );
+    yield* Effect.forEach(
+      [...mdFiles],
+      ([relPath, content]) =>
+        writeEffect(nodePath.join(root, relPath), content),
+      { concurrency: "unbounded" }
+    );
 
-  // Write evidence files
-  const evidenceDir = nodePath.join(root, "evidence");
-  await mkdir(evidenceDir, { recursive: true });
-
-  const { included: evidenceIncluded, skipped: evidenceSkipped } =
-    await writeCaseEvidenceFiles(caseId, evidenceDir, evidenceRows);
-
-  if (evidenceSkipped > 0) {
-    logProcess("export-sync", "evidence blob skips during case export", {
-      caseId,
-      evidenceIncluded,
-      evidenceSkipped,
+    const evidenceDir = nodePath.join(root, "evidence");
+    yield* Effect.tryPromise({
+      try: () => mkdir(evidenceDir, { recursive: true }),
+      catch: (error) => error,
     });
-  }
+
+    const { included: evidenceIncluded, skipped: evidenceSkipped } =
+      yield* writeCaseEvidenceFilesEffect(caseId, evidenceDir, evidenceRows);
+
+    if (evidenceSkipped > 0) {
+      yield* Effect.sync(() => {
+        logProcess("export-sync", "evidence blob skips during case export", {
+          caseId,
+          evidenceIncluded,
+          evidenceSkipped,
+        });
+      });
+    }
+  });
 }
 
-/** Per-case dirty-flag coalesce — at most one in-flight writeCaseExport. */
-const exportInFlight = new Map<string, Promise<void>>();
-const exportDirty = new Set<string>();
+interface ExportCoalesceState {
+  dirty: Set<string>;
+  inFlight: Map<string, Fiber.Fiber<void>>;
+}
+
+const exportCoalesce = SynchronizedRef.makeUnsafe({
+  dirty: new Set<string>(),
+  inFlight: new Map<string, Fiber.Fiber<void>>(),
+});
+
+function withDirty(
+  state: ExportCoalesceState,
+  caseId: string
+): ExportCoalesceState {
+  return { dirty: new Set([...state.dirty, caseId]), inFlight: state.inFlight };
+}
+
+function writeExportEffect(
+  caseId: string,
+  writeExport: (id: string) => Effect.Effect<void, unknown>
+): Effect.Effect<void> {
+  return writeExport(caseId).pipe(
+    Effect.tapError((error) =>
+      Effect.sync(() => {
+        logSwallowed("export-sync.write", error, { caseId });
+      })
+    ),
+    Effect.ignore
+  );
+}
+
+function exportLoop(
+  caseId: string,
+  writeExport: (id: string) => Effect.Effect<void, unknown>
+): Effect.Effect<void> {
+  return Effect.gen(function* exportLoopGen() {
+    while (true) {
+      const step = yield* SynchronizedRef.modify(exportCoalesce, (current) => {
+        if (current.dirty.has(caseId)) {
+          const dirty = new Set(current.dirty);
+          dirty.delete(caseId);
+          return ["write", { dirty, inFlight: current.inFlight }] as const;
+        }
+        const inFlight = new Map(current.inFlight);
+        inFlight.delete(caseId);
+        return ["done", { dirty: current.dirty, inFlight }] as const;
+      });
+      if (step === "done") {
+        break;
+      }
+      yield* writeExportEffect(caseId, writeExport);
+    }
+  });
+}
+
+function claimExportJoin(
+  caseId: string,
+  writeExport: (id: string) => Effect.Effect<void, unknown>
+): Effect.Effect<Effect.Effect<void>> {
+  return SynchronizedRef.modifyEffect(exportCoalesce, (state) => {
+    const marked = withDirty(state, caseId);
+    const existing = marked.inFlight.get(caseId);
+    if (existing !== undefined) {
+      return Effect.succeed([Fiber.join(existing), marked] as const);
+    }
+
+    return Effect.gen(function* startExportFiberGen() {
+      const fiber = yield* exportLoop(caseId, writeExport).pipe(
+        Effect.forkDetach({ startImmediately: true })
+      );
+      const inFlight = new Map([...marked.inFlight, [caseId, fiber]]);
+      return [Fiber.join(fiber), { dirty: marked.dirty, inFlight }] as const;
+    });
+  });
+}
 
 /**
  * Schedule a Case export write. Concurrent calls for the same case coalesce
  * into one in-flight write, then at most one follow-up if more events arrived.
  * `writeExport` is injectable so unit tests can assert coalesce without MinIO.
+ *
+ * Marks dirty and starts-or-joins the write fiber when this function is
+ * called, not when the returned Effect is interpreted. Fire-and-forget
+ * (`void Effect.runPromise(scheduleCaseExportEffect(id))`) must coalesce
+ * concurrent marks before the caller yields.
  */
-export async function scheduleCaseExport(
+export function scheduleCaseExportEffect(
   caseId: string,
-  writeExport: (id: string) => Promise<void> = writeCaseExport
-): Promise<void> {
-  exportDirty.add(caseId);
-  const existing = exportInFlight.get(caseId);
-  if (existing !== undefined) {
-    return existing;
-  }
-
-  const run = (async () => {
-    try {
-      while (exportDirty.has(caseId)) {
-        exportDirty.delete(caseId);
-        try {
-          // oxlint-disable-next-line no-await-in-loop -- coalesce loop: each pass must finish before re-checking the dirty flag for another
-          await writeExport(caseId);
-        } catch (error) {
-          logSwallowed("export-sync.write", error, { caseId });
-        }
-      }
-    } finally {
-      exportInFlight.delete(caseId);
-    }
-  })();
-
-  exportInFlight.set(caseId, run);
-  return run;
+  writeExport: (
+    id: string
+  ) => Effect.Effect<void, unknown> = writeCaseExportEffect
+): Effect.Effect<void> {
+  return Effect.runSync(claimExportJoin(caseId, writeExport));
 }
 
 function exportDirForSlug(slug: string): string | null {
@@ -227,28 +316,47 @@ function exportDirForSlug(slug: string): string | null {
 }
 
 /** Best-effort: drop the live Export shadow dir for a deleted Case. */
-export async function removeCaseExportDir(slug: string): Promise<void> {
+export function removeCaseExportDirEffect(
+  slug: string
+): Effect.Effect<void, unknown> {
   const dir = exportDirForSlug(slug);
-  if (dir === null) return;
-  await rm(dir, { recursive: true, force: true });
+  if (dir === null) return Effect.void;
+  return Effect.tryPromise({
+    try: () => rm(dir, { recursive: true, force: true }),
+    catch: (error) => error,
+  });
 }
 
 /** Best-effort: move the Export shadow dir when a Case slug changes. */
-export async function renameCaseExportDir(
+export function renameCaseExportDirEffect(
   fromSlug: string,
   toSlug: string
-): Promise<void> {
-  if (fromSlug === toSlug) return;
+): Effect.Effect<void, unknown> {
+  if (fromSlug === toSlug) return Effect.void;
   const from = exportDirForSlug(fromSlug);
   const to = exportDirForSlug(toSlug);
-  if (from === null || to === null) return;
-  await rm(to, { recursive: true, force: true });
-  try {
-    await rename(from, to);
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return;
-    }
-    throw error;
-  }
+  if (from === null || to === null) return Effect.void;
+  return Effect.gen(function* renameCaseExportDirGen() {
+    yield* Effect.tryPromise({
+      try: () => rm(to, { recursive: true, force: true }),
+      catch: (error) => error,
+    });
+    yield* Effect.tryPromise({
+      try: async () => {
+        try {
+          await rename(from, to);
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            "code" in error &&
+            error.code === "ENOENT"
+          ) {
+            return;
+          }
+          throw error;
+        }
+      },
+      catch: (error) => error,
+    });
+  });
 }

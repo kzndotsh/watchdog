@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 /**
  * export.ts — Render an Entity (and its full graph data) as an Obsidian-style
  * markdown note matching the locked Export format from the greenfield plan.
@@ -35,6 +36,8 @@ import {
   buildEntityFrontmatter,
   isAttestationExportRow,
 } from "./export-sections";
+import { tryDb } from "./postgres-effect";
+import { toDomainError } from "./tagged-errors";
 
 export interface EntityExport {
   caseSlug: string;
@@ -47,61 +50,66 @@ export interface EntityExport {
  * Fetch all data for an entity and render it as a markdown note.
  * Pass `peerMap` when exporting a whole Case to avoid re-scanning peers.
  */
-export async function renderEntityMarkdown(
+export function renderEntityMarkdownEffect(
   entityId: string,
   peerMap?: Map<string, EntityPeerRow>
-): Promise<EntityExport | null> {
-  const row = await entitiesRepo.getWithCase(db, entityId);
-  if (!row) return null;
+): Effect.Effect<EntityExport | null> {
+  return Effect.gen(function* renderEntityMarkdownGen() {
+    const row = yield* tryDb(() => entitiesRepo.getWithCase(db, entityId));
+    if (!row) return null;
 
-  const [
-    entityClaims,
-    entityIdentifiers,
-    outEdges,
-    entityEvents,
-    entityQuestions,
-    entityEvidence,
-    peers,
-  ] = await Promise.all([
-    claimsRepo.listForEntity(db, entityId),
-    identifiersRepo.listForEntity(db, entityId),
-    edgesRepo.listOutboundForEntity(db, entityId),
-    eventsRepo.listForEntity(db, entityId),
-    questionsRepo.listForEntity(db, entityId),
-    evidenceRepo.listForEntity(db, row.caseId, entityId),
-    peerMap
-      ? Promise.resolve([] as EntityPeerRow[])
-      : entitiesRepo.listPeersForCase(db, row.caseId),
-  ]);
+    const [
+      entityClaims,
+      entityIdentifiers,
+      outEdges,
+      entityEvents,
+      entityQuestions,
+      entityEvidence,
+      peers,
+    ] = yield* Effect.all(
+      [
+        tryDb(() => claimsRepo.listForEntity(db, entityId)),
+        tryDb(() => identifiersRepo.listForEntity(db, entityId)),
+        tryDb(() => edgesRepo.listOutboundForEntity(db, entityId)),
+        tryDb(() => eventsRepo.listForEntity(db, entityId)),
+        tryDb(() => questionsRepo.listForEntity(db, entityId)),
+        tryDb(() => evidenceRepo.listForEntity(db, row.caseId, entityId)),
+        peerMap
+          ? Effect.succeed([] as EntityPeerRow[])
+          : tryDb(() => entitiesRepo.listPeersForCase(db, row.caseId)),
+      ],
+      { concurrency: "unbounded" }
+    );
 
-  const resolvedPeers =
-    peerMap ?? new Map(peers.map((e) => [e.id, e] as const));
+    const resolvedPeers =
+      peerMap ?? new Map(peers.map((e) => [e.id, e] as const));
 
-  const lines: string[] = [
-    buildEntityFrontmatter({
-      kind: row.kind,
+    const lines: string[] = [
+      buildEntityFrontmatter({
+        kind: row.kind,
+        caseSlug: row.caseSlug,
+        entityId: row.id,
+      }),
+      `# ${row.name}`,
+      "",
+    ];
+
+    appendConnectionsSection(lines, outEdges, resolvedPeers);
+    appendIdentifiersSection(lines, entityIdentifiers);
+    appendOptionalTextSection(lines, "## Summary", row.summary);
+    appendClaimsSection(lines, entityClaims);
+    appendTimelineSection(lines, entityEvents);
+    appendQuestionsSection(lines, entityQuestions);
+    appendOptionalTextSection(lines, "## Notes", row.notes);
+    appendEvidenceSection(lines, entityEvidence);
+
+    return {
       caseSlug: row.caseSlug,
-      entityId: row.id,
-    }),
-    `# ${row.name}`,
-    "",
-  ];
-
-  appendConnectionsSection(lines, outEdges, resolvedPeers);
-  appendIdentifiersSection(lines, entityIdentifiers);
-  appendOptionalTextSection(lines, "## Summary", row.summary);
-  appendClaimsSection(lines, entityClaims);
-  appendTimelineSection(lines, entityEvents);
-  appendQuestionsSection(lines, entityQuestions);
-  appendOptionalTextSection(lines, "## Notes", row.notes);
-  appendEvidenceSection(lines, entityEvidence);
-
-  return {
-    caseSlug: row.caseSlug,
-    entitySlug: row.slug,
-    kind: row.kind,
-    markdown: `${lines.join("\n").trimEnd()}\n`,
-  };
+      entitySlug: row.slug,
+      kind: row.kind,
+      markdown: `${lines.join("\n").trimEnd()}\n`,
+    };
+  }).pipe(Effect.mapError(toDomainError), Effect.orDie);
 }
 
 interface CaseExportResult {
@@ -114,43 +122,51 @@ interface CaseExportResult {
  * `kind/slug` → markdown string.
  * Also includes evidence file references in CASE.md.
  */
-export async function renderCaseExport(
+export function renderCaseExportEffect(
   caseId: string
-): Promise<CaseExportResult> {
-  const entityRows = await entitiesRepo.listPeersForCase(db, caseId);
-  const peerMap = new Map(entityRows.map((e) => [e.id, e]));
-  const mdFiles = new Map<string, string>();
-
-  const exportedEntities = await Promise.all(
-    entityRows.map(async ({ id }) => renderEntityMarkdown(id, peerMap))
-  );
-  for (const exported of exportedEntities) {
-    if (exported) {
-      mdFiles.set(
-        `${exported.kind}s/${exported.entitySlug}.md`,
-        exported.markdown
-      );
-    }
-  }
-
-  const evidenceRows = await evidenceRepo.listActiveForCaseAsc(db, caseId);
-  const caseRow = await casesRepo.getById(db, caseId);
-
-  if (caseRow) {
-    const attestations = evidenceRows.filter(isAttestationExportRow);
-
-    mdFiles.set(
-      "CASE.md",
-      buildCaseMarkdown(caseRow, mdFiles, evidenceRows.length)
+): Effect.Effect<CaseExportResult> {
+  return Effect.gen(function* renderCaseExportGen() {
+    const entityRows = yield* tryDb(() =>
+      entitiesRepo.listPeersForCase(db, caseId)
     );
+    const peerMap = new Map(entityRows.map((e) => [e.id, e]));
+    const mdFiles = new Map<string, string>();
 
-    if (attestations.length > 0) {
-      mdFiles.set(
-        "evidence/attestations.md",
-        buildAttestationsMarkdown(caseRow.slug, attestations)
-      );
+    const exportedEntities = yield* Effect.forEach(
+      entityRows,
+      ({ id }) => renderEntityMarkdownEffect(id, peerMap),
+      { concurrency: "unbounded" }
+    );
+    for (const exported of exportedEntities) {
+      if (exported) {
+        mdFiles.set(
+          `${exported.kind}s/${exported.entitySlug}.md`,
+          exported.markdown
+        );
+      }
     }
-  }
 
-  return { files: mdFiles, evidenceRows };
+    const evidenceRows = yield* tryDb(() =>
+      evidenceRepo.listActiveForCaseAsc(db, caseId)
+    );
+    const caseRow = yield* tryDb(() => casesRepo.getById(db, caseId));
+
+    if (caseRow) {
+      const attestations = evidenceRows.filter(isAttestationExportRow);
+
+      mdFiles.set(
+        "CASE.md",
+        buildCaseMarkdown(caseRow, mdFiles, evidenceRows.length)
+      );
+
+      if (attestations.length > 0) {
+        mdFiles.set(
+          "evidence/attestations.md",
+          buildAttestationsMarkdown(caseRow.slug, attestations)
+        );
+      }
+    }
+
+    return { files: mdFiles, evidenceRows };
+  }).pipe(Effect.mapError(toDomainError), Effect.orDie);
 }

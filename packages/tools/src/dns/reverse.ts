@@ -1,7 +1,10 @@
 import { isIP } from "node:net";
 
+import { Effect } from "effect";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
 import { assertNotAborted, withAbortableResolver } from "./abortable-resolver";
 
@@ -22,34 +25,54 @@ export function normalizeIp(raw: string): string {
   return trimmed;
 }
 
+function snapshotFromHostnames(
+  ip: string,
+  hostnames: string[]
+): DnsReverseSnapshot {
+  const cleaned = [
+    ...new Set(
+      hostnames
+        .map((h) => h.replace(/\.$/, "").toLowerCase())
+        .filter((h) => h.length > 0)
+    ),
+  ];
+  return dnsReverseSnapshotSchema.parse({
+    ip,
+    queriedAt: new Date().toISOString(),
+    hostnames: cleaned,
+  });
+}
+
 /** Reverse DNS (PTR) via system resolver — hostnames only, not ownership. */
-export async function fetchDnsReverse(
+export function fetchDnsReverseEffect(
   ip: string,
   signal: AbortSignal
-): Promise<DnsReverseSnapshot> {
-  const normalized = normalizeIp(ip);
-  const { resolver, cleanup } = withAbortableResolver(
-    signal,
-    "DNS reverse aborted"
-  );
-  try {
-    const hostnames = await resolver
-      .reverse(normalized)
-      .catch(() => [] as string[]);
-    assertNotAborted(signal, "DNS reverse aborted");
-    const cleaned = [
-      ...new Set(
-        hostnames
-          .map((h) => h.replace(/\.$/, "").toLowerCase())
-          .filter((h) => h.length > 0)
-      ),
-    ];
-    return dnsReverseSnapshotSchema.parse({
-      ip: normalized,
-      queriedAt: new Date().toISOString(),
-      hostnames: cleaned,
+): Effect.Effect<DnsReverseSnapshot, ToolsTag> {
+  return Effect.gen(function* fetchDnsReverseGen() {
+    const normalized = yield* Effect.try({
+      try: () => normalizeIp(ip),
+      catch: mapToolsCatch,
     });
-  } finally {
-    cleanup();
-  }
+    const { resolver, cleanup } = withAbortableResolver(
+      signal,
+      "DNS reverse aborted"
+    );
+    const hostnames = yield* Effect.tryPromise({
+      try: () => resolver.reverse(normalized).catch(() => [] as string[]),
+      catch: mapToolsCatch,
+    }).pipe(
+      Effect.ensuring(
+        Effect.sync(() => {
+          cleanup();
+        })
+      )
+    );
+    yield* Effect.try({
+      try: () => {
+        assertNotAborted(signal, "DNS reverse aborted");
+      },
+      catch: mapToolsCatch,
+    });
+    return snapshotFromHostnames(normalized, hostnames);
+  });
 }

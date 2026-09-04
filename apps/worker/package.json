@@ -8,12 +8,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@effect/platform-node": "4.0.0-rc.112",
     "@watchdog/core": "workspace:*",
-    "@watchdog/log": "workspace:*"
+    "@watchdog/log": "workspace:*",
+    "effect": "4.0.0-rc.112"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "tsx": "^4.20.0",
-    "typescript": "^6.0.2"
+    "typescript": "7.0.2"
   }
 }

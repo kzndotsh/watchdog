@@ -1,4 +1,7 @@
-import { setJobStatus } from "../set-job-status";
+import { Effect } from "effect";
+
+import type { DomainTag } from "../../infra/tagged-errors";
+import { setJobStatusEffect } from "../set-job-status";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -37,12 +40,12 @@ export function createJobLog(initial: string[] = []): JobLog {
   };
 }
 
-export async function failJob(
+export function failJobEffect(
   jobId: string,
   error: string,
   logs: string[] = []
-): Promise<void> {
-  await setJobStatus(
+): Effect.Effect<void, DomainTag> {
+  return setJobStatusEffect(
     jobId,
     {
       status: "failed",
@@ -51,5 +54,5 @@ export async function failJob(
       finishedAt: new Date(),
     },
     { unlessCancelled: true, notify: true }
-  );
+  ).pipe(Effect.asVoid);
 }

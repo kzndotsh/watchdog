@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import type { z } from "zod";
 
 import type { CapabilityDef } from "@watchdog/cap-sdk";
@@ -9,8 +10,9 @@ import {
 } from "@watchdog/caps";
 import { casesRepo, db } from "@watchdog/db";
 
-import { DomainError } from "../infra/domain-error";
-import { hasCredential } from "../infra/vault";
+import { tryDb } from "../infra/postgres-effect";
+import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
+import { hasCredentialEffect } from "../infra/vault";
 
 function credentialNames(
   specs: NonNullable<ReturnType<typeof toCapDescriptor>["credentials"]>
@@ -46,57 +48,68 @@ export function formatCapAvailabilityError(
   }
 }
 
-export function evaluateCapAvailability(input: {
+export function evaluateCapAvailabilityEffect(input: {
   actorId: string;
   caseId: string;
   cap: CapabilityDef<z.ZodType>;
-}): Promise<{
-  allowThirdPartyEgress: boolean;
-  result: AvailabilityResult;
-}> {
+}): Effect.Effect<
+  {
+    allowThirdPartyEgress: boolean;
+    result: AvailabilityResult;
+  },
+  DomainTag
+> {
   const desc = toCapDescriptor(input.cap);
   const specs = desc.credentials ?? [];
   const names = credentialNames(specs);
-  const present = new Set<string>();
-  return Promise.all(
-    names.map((name) =>
-      hasCredential(input.actorId, name).then((ok) => {
-        if (ok) present.add(name);
-      })
-    )
-  ).then(() =>
-    casesRepo.getById(db, input.caseId).then((caseRow) => {
-      const allowThirdPartyEgress = caseRow?.allowThirdPartyEgress ?? false;
-      return {
-        allowThirdPartyEgress,
-        result: checkCapabilityAvailability(
-          {
-            credentials: specs,
-            egress: desc.egress ?? "none",
-            flags: desc.flags ?? [],
-          },
-          {
-            hasCredential: (name) => present.has(name),
-            allowThirdPartyEgress,
-            thirdPartyCapabilityId: input.cap.id,
-          }
+
+  return Effect.gen(function* evaluateCapAvailabilityGen() {
+    const present = new Set<string>();
+    yield* Effect.forEach(
+      names,
+      (name) =>
+        hasCredentialEffect(input.actorId, name).pipe(
+          Effect.tap((ok) =>
+            Effect.sync(() => {
+              if (ok) present.add(name);
+            })
+          )
         ),
-      };
-    })
-  );
+      { concurrency: "unbounded" }
+    );
+
+    const caseRow = yield* tryDb(() => casesRepo.getById(db, input.caseId));
+    const allowThirdPartyEgress = caseRow?.allowThirdPartyEgress ?? false;
+    return {
+      allowThirdPartyEgress,
+      result: checkCapabilityAvailability(
+        {
+          credentials: specs,
+          egress: desc.egress ?? "none",
+          flags: desc.flags ?? [],
+        },
+        {
+          hasCredential: (name) => present.has(name),
+          allowThirdPartyEgress,
+          thirdPartyCapabilityId: input.cap.id,
+        }
+      ),
+    };
+  });
 }
 
 /** Fail closed before enqueue — same predicate as playbooks / worker preflight. */
-export function assertCapAvailability(input: {
+export function assertCapAvailabilityEffect(input: {
   actorId: string;
   caseId: string;
   cap: CapabilityDef<z.ZodType>;
-}): Promise<void> {
-  return evaluateCapAvailability(input).then(({ result }) => {
-    if (result.ok) return;
-    throw new DomainError(
-      "forbidden",
-      formatCapAvailabilityError(result, input.cap.id)
-    );
-  });
+}): Effect.Effect<void, DomainTag> {
+  return evaluateCapAvailabilityEffect(input).pipe(
+    Effect.flatMap(({ result }) => {
+      if (result.ok) return Effect.void;
+      return new ForbiddenError({
+        reason: formatCapAvailabilityError(result, input.cap.id),
+      });
+    })
+  );
 }

@@ -1,10 +1,13 @@
+import { Effect } from "effect";
 import { expect, it } from "vitest";
 
 import type {
   CapContext,
   CapInterpretOpts,
   CapInterpretResult,
+  CapRun,
 } from "@watchdog/cap-sdk";
+import { runCap } from "@watchdog/cap-sdk";
 import {
   parseJsonValue,
   REPORT_JSON_ARTIFACT,
@@ -45,7 +48,7 @@ export function createCapRunHarness<
     caseId: testId(1),
     jobId: testId(2),
     signal: opts?.signal ?? new AbortController().signal,
-    uploadArtifact: async ({ bytes, mime, name }) => {
+    uploadArtifact: ({ bytes, mime, name }) => {
       const art = {
         name: name ?? "blob.bin",
         mime,
@@ -54,22 +57,25 @@ export function createCapRunHarness<
         bytes,
       };
       artifacts.push(art);
-      return {
+      return Effect.succeed({
         name: art.name,
         mime: art.mime,
         uri: art.uri,
         sha256: art.sha256,
-      };
+      });
     },
-    readArtifact: async () => new Uint8Array(),
+    readArtifact: () => Effect.succeed(new Uint8Array()),
     scratchDir: "/tmp",
-    getCredential: async (name) => {
+    getCredential: (name) => {
       credentialCalls.push(name);
       const secret = opts?.secrets?.[name];
-      if (secret === undefined) throw new Error(`missing credential ${name}`);
-      return secret;
+      if (secret === undefined) {
+        return Effect.die(new Error(`missing credential ${name}`));
+      }
+      return Effect.succeed(secret);
     },
-    hasCredential: async (name) => opts?.secrets?.[name] !== undefined,
+    hasCredential: (name) =>
+      Effect.succeed(opts?.secrets?.[name] !== undefined),
     allowThirdPartyEgress: true,
     log: (_message: string) => {},
     ...(opts?.evidenceSnapshot === undefined
@@ -82,11 +88,11 @@ export function createCapRunHarness<
 export function itRunsCollectCap<I extends Record<string, unknown>>(opts: {
   cap: {
     id: string;
-    run: (ctx: CapContext<I>) => Promise<{ artifacts: { name: string }[] }>;
+    run: (ctx: CapContext<I>) => CapRun;
     interpret?: (
       report: JsonValue,
       opts: CapInterpretOpts<I>
-    ) => Promise<CapInterpretResult> | CapInterpretResult;
+    ) => CapInterpretResult;
   };
   input: I;
   setup?: () => void;
@@ -102,7 +108,7 @@ export function itRunsCollectCap<I extends Record<string, unknown>>(opts: {
       secrets: opts.secrets,
       input: opts.input,
     });
-    const result = await opts.cap.run(harness.ctx);
+    const result = await runCap(opts.cap.run(harness.ctx));
     expect(
       result.artifacts.some((row) => row.name === REPORT_JSON_ARTIFACT)
     ).toBe(true);
@@ -119,7 +125,7 @@ export function itRunsCollectCap<I extends Record<string, unknown>>(opts: {
     }
     const parsed = parseJsonValue(decoded);
     expect(opts.cap.interpret).toBeDefined();
-    const interpreted = await opts.cap.interpret?.(parsed, {
+    const interpreted = opts.cap.interpret?.(parsed, {
       input: opts.input,
     });
     expect(interpreted).toBeDefined();
@@ -142,7 +148,7 @@ export function itRunsCollectCap<I extends Record<string, unknown>>(opts: {
         input: opts.input,
         signal: controller.signal,
       });
-      await expect(opts.cap.run(harness.ctx)).rejects.toThrow(/abort/i);
+      await expect(runCap(opts.cap.run(harness.ctx))).rejects.toThrow(/abort/i);
     });
   }
 }

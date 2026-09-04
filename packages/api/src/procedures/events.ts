@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 import {
-  createEvent,
-  deleteEvent,
-  listEventsForEntity,
-  updateEvent,
+  createEventEffect,
+  deleteEventEffect,
+  listEventsForEntityEffect,
+  updateEventEffect,
 } from "@watchdog/core";
 
-import { withDomainError } from "../map-domain-error";
 import { authed, graphChildWrite } from "../os";
+import { runApp } from "../runtime";
 import { eventSchema, userOverrideSchema } from "../schemas";
 
 export const list = authed
@@ -25,10 +25,8 @@ export const list = authed
     })
   )
   .output(z.array(eventSchema))
-  .handler(
-    withDomainError(async ({ input }) =>
-      listEventsForEntity(input.caseId, input.entityId)
-    )
+  .handler(async ({ input }) =>
+    runApp(listEventsForEntityEffect(input.caseId, input.entityId))
   );
 
 export const create = graphChildWrite
@@ -50,7 +48,7 @@ export const create = graphChildWrite
     })
   )
   .output(eventSchema)
-  .handler(withDomainError(async ({ input }) => createEvent(input)));
+  .handler(async ({ input }) => runApp(createEventEffect(input)));
 
 export const update = graphChildWrite
   .route({
@@ -78,7 +76,7 @@ export const update = graphChildWrite
       )
   )
   .output(eventSchema)
-  .handler(withDomainError(async ({ input }) => updateEvent(input)));
+  .handler(async ({ input }) => runApp(updateEventEffect(input)));
 
 export const remove = graphChildWrite
   .route({
@@ -95,9 +93,7 @@ export const remove = graphChildWrite
     })
   )
   .output(z.object({ ok: z.literal(true) }))
-  .handler(
-    withDomainError(async ({ input }) => {
-      await deleteEvent(input.caseId, input.eventId);
-      return { ok: true as const };
-    })
-  );
+  .handler(async ({ input }) => {
+    await runApp(deleteEventEffect(input.caseId, input.eventId));
+    return { ok: true as const };
+  });

@@ -1,16 +1,30 @@
+import { Effect } from "effect";
+
 import { db, graphWritesRepo } from "@watchdog/db";
 import { trimmedOrNull } from "@watchdog/schemas";
 
-import { assertEvidenceInCase, createAttestation } from "../evidence/evidence";
-import { applyPatch } from "../graph/patch/apply-patch";
-import { assertCaseExists } from "../graph/patch/guards";
-import { parseAgentPatch } from "../graph/patch/parse-agent-patch";
-import { DomainError, isUniqueViolation } from "../infra/domain-error";
-import { notifyEvent } from "../infra/events";
-import { logSwallowed } from "../infra/process-log";
-import { proposeStage } from "../jobs/stages/propose";
+import {
+  assertEvidenceIdsInCaseEffect,
+  createAttestationEffect,
+} from "../evidence/evidence";
+import { applyPatchEffect } from "../graph/patch/apply-patch";
+import { assertCaseExistsEffect } from "../graph/patch/guards";
+import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
+import {
+  notifyEntityChangedEffect,
+  notifyProposalCreatedEffect,
+} from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
+import {
+  ConflictError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
+import { proposeStageEffect } from "../jobs/stages/propose";
 import { suppressKnownFindings } from "./finding-suppress";
-import { getProposalForCase, type ProposalRecord } from "./proposals";
+import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
 
 const GRAPH_WRITE_IDEMPOTENCY_INDEX = "graph_writes_case_actor_idem_uidx";
 
@@ -22,38 +36,46 @@ function findGraphWriteByIdempotency(input: {
   return graphWritesRepo.findIdByIdempotency(db, input);
 }
 
-export function createAgentProposal(input: {
+export interface AgentGraphWriteResult {
+  writeId: string;
+  confidence: "unverified";
+  opCount: number;
+  replayed: boolean;
+}
+
+export function createAgentProposalEffect(input: {
   caseId: string;
   actorId: string;
   patch: unknown;
   summary?: string;
   evidenceIds?: string[];
-}): Promise<{ proposal: ProposalRecord }> {
-  return (async () => {
-    const plan = parseAgentPatch({
+}): Effect.Effect<{ proposal: ProposalRecord }, DomainTag> {
+  return Effect.gen(function* createAgentProposalGen() {
+    const plan = yield* parseAgentPatchEffect({
       patch: input.patch,
       summary: input.summary,
       evidenceIds: input.evidenceIds,
     });
-    if (!plan.ok) throw new DomainError("invalid", plan.error);
-
-    await assertCaseExists(input.caseId);
-    await assertEvidenceInCase(input.caseId, plan.evidenceIds);
-
-    const { kept, suppressed } = await suppressKnownFindings(
-      input.caseId,
-      plan.patch
-    );
-    if (kept.length === 0) {
-      throw new DomainError(
-        suppressed > 0 ? "conflict" : "invalid",
-        suppressed > 0
-          ? `All ${suppressed} finding(s) already known or previously rejected — no Proposal`
-          : "patch produced no findings"
-      );
+    if (!plan.ok) {
+      return yield* new InvalidError({ reason: plan.error });
     }
 
-    const proposed = await proposeStage({
+    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertEvidenceIdsInCaseEffect(input.caseId, plan.evidenceIds);
+
+    const { kept, suppressed } = yield* tryDb(() =>
+      suppressKnownFindings(input.caseId, plan.patch)
+    );
+    if (kept.length === 0) {
+      if (suppressed > 0) {
+        return yield* new ConflictError({
+          reason: `All ${suppressed} finding(s) already known or previously rejected — no Proposal`,
+        });
+      }
+      return yield* new InvalidError({ reason: "patch produced no findings" });
+    }
+
+    const proposed = yield* proposeStageEffect({
       caseId: input.caseId,
       kept,
       suppressed,
@@ -64,32 +86,23 @@ export function createAgentProposal(input: {
     });
 
     if (proposed.proposalId === null || proposed.proposalId === "") {
-      throw new DomainError("invalid", "Failed to create Proposal");
+      return yield* new InvalidError({ reason: "Failed to create Proposal" });
     }
 
-    void notifyEvent({
-      type: "proposal_created",
-      caseId: input.caseId,
-      proposalId: proposed.proposalId,
-    }).catch((error: unknown) => {
-      logSwallowed("notify.proposal_created", error, {
-        caseId: input.caseId,
-        proposalId: proposed.proposalId,
-      });
-    });
+    const proposalId = proposed.proposalId;
+    yield* notifyProposalCreatedEffect(input.caseId, proposalId);
 
-    const proposal = await getProposalForCase(
-      input.caseId,
-      proposed.proposalId
-    );
+    const proposal = yield* getProposalForCaseEffect(input.caseId, proposalId);
     if (!proposal) {
-      throw new DomainError("not_found", "Proposal created but not readable");
+      return yield* new NotFoundError({
+        resource: "Proposal created but not readable",
+      });
     }
     return { proposal };
-  })();
+  });
 }
 
-export function writeGraphFromAgent(input: {
+export function writeGraphFromAgentEffect(input: {
   caseId: string;
   actorId: string;
   patch: unknown;
@@ -97,120 +110,134 @@ export function writeGraphFromAgent(input: {
   evidenceIds?: string[];
   userOverride: true;
   idempotencyKey?: string;
-}): Promise<{
-  writeId: string;
-  confidence: "unverified";
-  opCount: number;
-  replayed: boolean;
-}> {
-  return (async () => {
+}): Effect.Effect<AgentGraphWriteResult, DomainTag> {
+  return Effect.gen(function* writeGraphFromAgentGen() {
     if (!input.userOverride) {
-      throw new DomainError(
-        "invalid",
-        "userOverride must be true for graph write"
-      );
+      return yield* new InvalidError({
+        reason: "userOverride must be true for graph write",
+      });
     }
 
-    const plan = parseAgentPatch({
+    const plan = yield* parseAgentPatchEffect({
       patch: input.patch,
       summary: input.summary,
       evidenceIds: input.evidenceIds,
     });
-    if (!plan.ok) throw new DomainError("invalid", plan.error);
+    if (!plan.ok) {
+      return yield* new InvalidError({ reason: plan.error });
+    }
 
-    await assertCaseExists(input.caseId);
-    await assertEvidenceInCase(input.caseId, plan.evidenceIds);
+    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertEvidenceIdsInCaseEffect(input.caseId, plan.evidenceIds);
 
     const idempotencyKey = trimmedOrNull(input.idempotencyKey);
     if (idempotencyKey !== null) {
-      const existingId = await findGraphWriteByIdempotency({
-        caseId: input.caseId,
-        actorId: input.actorId,
-        idempotencyKey,
-      });
+      const existingId = yield* tryDb(() =>
+        findGraphWriteByIdempotency({
+          caseId: input.caseId,
+          actorId: input.actorId,
+          idempotencyKey,
+        })
+      );
       if (existingId !== null && existingId !== "") {
         return {
           writeId: existingId,
-          confidence: "unverified",
+          confidence: "unverified" as const,
           opCount: 0,
           replayed: true,
         };
       }
     }
 
-    try {
-      const writeId = await db.transaction(async (tx) => {
-        const sharedEvidenceIds = [...plan.evidenceIds];
+    const result = yield* transact(
+      (tx) =>
+        Effect.gen(function* writeGraphTx() {
+          const sharedEvidenceIds = [...plan.evidenceIds];
 
-        if (plan.summary !== null && plan.summary !== "") {
-          const attestation = await createAttestation({
+          if (plan.summary !== null && plan.summary !== "") {
+            const attestation = yield* createAttestationEffect({
+              caseId: input.caseId,
+              text: plan.summary,
+              actorId: input.actorId,
+              label: "Agent graph write",
+              tx,
+            });
+            sharedEvidenceIds.push(attestation.id);
+          }
+
+          const write = yield* tryDb(() =>
+            graphWritesRepo.create(tx, {
+              caseId: input.caseId,
+              actorId: input.actorId,
+              channel: "agent_write",
+              userOverridden: true,
+              confidence: "unverified",
+              summary: plan.summary,
+              patch: plan.patch,
+              idempotencyKey,
+            })
+          );
+
+          if (!write) {
+            return yield* new InvalidError({
+              reason: "Failed to record graph write",
+            });
+          }
+
+          yield* applyPatchEffect({
             caseId: input.caseId,
-            text: plan.summary,
-            actorId: input.actorId,
-            label: "Agent graph write",
+            patch: plan.patch,
+            confidence: "unverified",
+            sharedEvidenceIds,
             tx,
           });
-          sharedEvidenceIds.push(attestation.id);
-        }
 
-        const write = await graphWritesRepo.create(tx, {
-          caseId: input.caseId,
-          actorId: input.actorId,
-          channel: "agent_write",
-          userOverridden: true,
-          confidence: "unverified",
-          summary: plan.summary,
-          patch: plan.patch,
-          idempotencyKey,
-        });
-
-        if (!write)
-          throw new DomainError("invalid", "Failed to record graph write");
-
-        await applyPatch({
-          caseId: input.caseId,
-          patch: plan.patch,
-          confidence: "unverified",
-          sharedEvidenceIds,
-          tx,
-        });
-
-        return write.id;
-      });
-
-      void notifyEvent({
-        type: "entity_changed",
-        caseId: input.caseId,
-      }).catch((error: unknown) => {
-        logSwallowed("notify.entity_changed", error, { caseId: input.caseId });
-      });
-
-      return {
+          return write.id;
+        }),
+      {
+        uniqueIndex: GRAPH_WRITE_IDEMPOTENCY_INDEX,
+        conflictReason: "graph write already recorded",
+      }
+    ).pipe(
+      Effect.map((writeId) => ({
         writeId,
-        confidence: "unverified",
+        confidence: "unverified" as const,
         opCount: plan.patch.length,
         replayed: false,
-      };
-    } catch (error) {
-      if (
-        idempotencyKey !== null &&
-        isUniqueViolation(error, GRAPH_WRITE_IDEMPOTENCY_INDEX)
-      ) {
-        const existingId = await findGraphWriteByIdempotency({
-          caseId: input.caseId,
-          actorId: input.actorId,
-          idempotencyKey,
-        });
-        if (existingId !== null && existingId !== "") {
-          return {
-            writeId: existingId,
-            confidence: "unverified",
-            opCount: 0,
-            replayed: true,
-          };
-        }
-      }
-      throw error;
+      })),
+      Effect.catchTag("ConflictError", () =>
+        Effect.gen(function* replayGraphWriteGen() {
+          if (idempotencyKey === null) {
+            return yield* new InvalidError({
+              reason: "Failed to record graph write",
+            });
+          }
+          const existingId = yield* tryDb(() =>
+            findGraphWriteByIdempotency({
+              caseId: input.caseId,
+              actorId: input.actorId,
+              idempotencyKey,
+            })
+          );
+          if (existingId !== null && existingId !== "") {
+            return {
+              writeId: existingId,
+              confidence: "unverified" as const,
+              opCount: 0,
+              replayed: true,
+            };
+          }
+          return yield* new InvalidError({
+            reason: "Failed to record graph write",
+          });
+        })
+      )
+    );
+
+    if (!result.replayed) {
+      yield* notifyEntityChangedEffect(input.caseId);
     }
-  })();
+
+    return result;
+  });
 }

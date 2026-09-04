@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   db,
   evidenceRepo,
@@ -8,15 +10,23 @@ import {
 import type { EvidenceKind } from "@watchdog/schemas";
 import { normalizeIdList, trimmedOrUndefined } from "@watchdog/schemas";
 
-import { assertCaseExists, assertEntityInCase } from "../graph/patch/guards";
 import {
-  assertUploadedObject,
-  createPresignedGet,
-  createPresignedPut,
-  uploadArtifact,
+  assertCaseExistsEffect,
+  assertEntityInCaseEffect,
+} from "../graph/patch/guards";
+import {
+  assertUploadedObjectEffect,
+  createPresignedGetEffect,
+  createPresignedPutEffect,
+  uploadArtifactEffect,
   type PresignedPut,
 } from "../infra/blob";
-import { DomainError } from "../infra/domain-error";
+import { tryDb } from "../infra/postgres-effect";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
 
 export interface EvidenceRecord {
   id: string;
@@ -114,205 +124,260 @@ function toRecord(row: EvidenceRow): EvidenceRecord {
   };
 }
 
-export async function listEvidenceForCase(
+function maybeAssertEntityEffect(
+  caseId: string,
+  entityId: string | undefined
+): Effect.Effect<void, DomainTag> {
+  if (entityId !== undefined && entityId !== "") {
+    return assertEntityInCaseEffect(caseId, entityId);
+  }
+  return Effect.void;
+}
+
+export function listEvidenceForCaseEffect(
   caseId: string,
   opts?: ListEvidenceOpts
-): Promise<EvidenceRecord[]> {
-  const rows = await evidenceRepo.listForCase(db, caseId, {
-    deletedOnly: opts?.hiddenOnly,
-    unprocessedOnly: opts?.unprocessedOnly,
-    unattachedOnly: opts?.unattachedOnly,
-  });
-  return rows.map(toRecord);
+): Effect.Effect<EvidenceRecord[], DomainTag> {
+  return tryDb(() =>
+    evidenceRepo.listForCase(db, caseId, {
+      deletedOnly: opts?.hiddenOnly,
+      unprocessedOnly: opts?.unprocessedOnly,
+      unattachedOnly: opts?.unattachedOnly,
+    })
+  ).pipe(Effect.map((rows) => rows.map(toRecord)));
 }
 
-export async function dumpPaste(
+export function dumpPasteEffect(
   input: DumpPasteInput
-): Promise<EvidenceRecord> {
-  await assertCaseExists(input.caseId);
-  if (input.entityId !== undefined && input.entityId !== "")
-    await assertEntityInCase(input.caseId, input.entityId);
-
-  const bytes = new TextEncoder().encode(input.body);
-  const artifact = await uploadArtifact({
-    caseId: input.caseId,
-    bytes,
-    mime: "text/plain; charset=utf-8",
-    name: "paste.txt",
-  });
-
-  const row = await evidenceRepo.create(db, {
-    caseId: input.caseId,
-    entityId: input.entityId ?? null,
-    kind: "file",
-    label: input.label ?? null,
-    mime: artifact.mime,
-    uri: artifact.uri,
-    sha256: artifact.sha256,
-    sourceUrl: input.sourceUrl ?? null,
-    actorId: input.actorId,
-  });
-  if (!row) throw new DomainError("invalid", "Failed to create Evidence");
-  return toRecord(row);
-}
-
-export async function dumpUrl(input: DumpUrlInput): Promise<EvidenceRecord> {
-  await assertCaseExists(input.caseId);
-  if (input.entityId !== undefined && input.entityId !== "")
-    await assertEntityInCase(input.caseId, input.entityId);
-
-  const row = await evidenceRepo.create(db, {
-    caseId: input.caseId,
-    entityId: input.entityId ?? null,
-    kind: "other",
-    label: input.label ?? null,
-    notes: input.notes ?? null,
-    sourceUrl: input.sourceUrl,
-    text: input.sourceUrl,
-    actorId: input.actorId,
-  });
-  if (!row) throw new DomainError("invalid", "Failed to create Evidence");
-  return toRecord(row);
-}
-
-export async function softDeleteEvidence(
-  input: SoftDeleteInput
-): Promise<void> {
-  const row = await evidenceRepo.softDelete(db, input.caseId, input.evidenceId);
-  if (!row) throw new DomainError("not_found", "Evidence not found");
-}
-
-/** Clear soft-delete — returns the row to the active Intake queue. */
-export async function restoreEvidence(input: SoftDeleteInput): Promise<void> {
-  const row = await evidenceRepo.restore(db, input.caseId, input.evidenceId);
-  if (!row) throw new DomainError("not_found", "Hidden Evidence not found");
-}
-
-export function attachEvidenceEntity(input: {
-  caseId: string;
-  evidenceId: string;
-  entityId: string | null;
-}): Promise<EvidenceRecord> {
-  return assertCaseExists(input.caseId).then(async () => {
-    const entityId =
-      input.entityId === null || input.entityId === "" ? null : input.entityId;
-    if (entityId !== null) {
-      await assertEntityInCase(input.caseId, entityId);
-    }
-    const row = await evidenceRepo.setEntityInCase(
-      db,
-      input.caseId,
-      input.evidenceId,
-      entityId
+): Effect.Effect<EvidenceRecord, DomainTag> {
+  return Effect.gen(function* dumpPasteGen() {
+    yield* assertCaseExistsEffect(input.caseId);
+    yield* maybeAssertEntityEffect(input.caseId, input.entityId);
+    const bytes = new TextEncoder().encode(input.body);
+    const artifact = yield* uploadArtifactEffect({
+      caseId: input.caseId,
+      bytes,
+      mime: "text/plain; charset=utf-8",
+      name: "paste.txt",
+    });
+    const row = yield* tryDb(() =>
+      evidenceRepo.create(db, {
+        caseId: input.caseId,
+        entityId: input.entityId ?? null,
+        kind: "file",
+        label: input.label ?? null,
+        mime: artifact.mime,
+        uri: artifact.uri,
+        sha256: artifact.sha256,
+        sourceUrl: input.sourceUrl ?? null,
+        actorId: input.actorId,
+      })
     );
-    if (!row) throw new DomainError("not_found", "Evidence not found");
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to create Evidence" });
+    }
     return toRecord(row);
   });
 }
 
-export async function presignUpload(
-  input: PresignUploadInput
-): Promise<PresignedPut> {
-  await assertCaseExists(input.caseId);
-  return await createPresignedPut({
-    caseId: input.caseId,
-    sha256: input.sha256,
-    mime: input.mime,
-    byteLength: input.byteLength,
-    name: input.name,
+export function dumpUrlEffect(
+  input: DumpUrlInput
+): Effect.Effect<EvidenceRecord, DomainTag> {
+  return Effect.gen(function* dumpUrlGen() {
+    yield* assertCaseExistsEffect(input.caseId);
+    yield* maybeAssertEntityEffect(input.caseId, input.entityId);
+    const row = yield* tryDb(() =>
+      evidenceRepo.create(db, {
+        caseId: input.caseId,
+        entityId: input.entityId ?? null,
+        kind: "other",
+        label: input.label ?? null,
+        notes: input.notes ?? null,
+        sourceUrl: input.sourceUrl,
+        text: input.sourceUrl,
+        actorId: input.actorId,
+      })
+    );
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to create Evidence" });
+    }
+    return toRecord(row);
   });
 }
 
-export async function confirmFileUpload(
+export function softDeleteEvidenceEffect(
+  input: SoftDeleteInput
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() =>
+    evidenceRepo.softDelete(db, input.caseId, input.evidenceId)
+  ).pipe(
+    Effect.flatMap((row) =>
+      row ? Effect.void : new NotFoundError({ resource: "Evidence not found" })
+    )
+  );
+}
+
+/** Clear soft-delete — returns the row to the active Intake queue. */
+export function restoreEvidenceEffect(
+  input: SoftDeleteInput
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() =>
+    evidenceRepo.restore(db, input.caseId, input.evidenceId)
+  ).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.void
+        : new NotFoundError({ resource: "Hidden Evidence not found" })
+    )
+  );
+}
+
+export function attachEvidenceEntityEffect(input: {
+  caseId: string;
+  evidenceId: string;
+  entityId: string | null;
+}): Effect.Effect<EvidenceRecord, DomainTag> {
+  return Effect.gen(function* attachEvidenceEntityGen() {
+    yield* assertCaseExistsEffect(input.caseId);
+    const entityId =
+      input.entityId === null || input.entityId === "" ? null : input.entityId;
+    if (entityId !== null) {
+      yield* assertEntityInCaseEffect(input.caseId, entityId);
+    }
+    const row = yield* tryDb(() =>
+      evidenceRepo.setEntityInCase(db, input.caseId, input.evidenceId, entityId)
+    );
+    if (!row) {
+      return yield* new NotFoundError({ resource: "Evidence not found" });
+    }
+    return toRecord(row);
+  });
+}
+
+export function presignUploadEffect(
+  input: PresignUploadInput
+): Effect.Effect<PresignedPut, DomainTag> {
+  return Effect.gen(function* presignUploadGen() {
+    yield* assertCaseExistsEffect(input.caseId);
+    return yield* createPresignedPutEffect({
+      caseId: input.caseId,
+      sha256: input.sha256,
+      mime: input.mime,
+      byteLength: input.byteLength,
+      name: input.name,
+    });
+  });
+}
+
+export function confirmFileUploadEffect(
   input: ConfirmFileUploadInput,
   actorId: string
-): Promise<EvidenceRecord> {
-  await assertCaseExists(input.caseId);
-  if (input.entityId !== undefined && input.entityId !== "")
-    await assertEntityInCase(input.caseId, input.entityId);
-
-  if (!input.uri.startsWith(`${input.caseId}/`)) {
-    throw new DomainError("invalid", "uri does not belong to this Case");
-  }
-
-  await assertUploadedObject({
-    uri: input.uri,
-    sha256: input.sha256,
-    mime: input.mime,
-    byteLength: input.byteLength,
+): Effect.Effect<EvidenceRecord, DomainTag> {
+  return Effect.gen(function* confirmFileUploadGen() {
+    yield* assertCaseExistsEffect(input.caseId);
+    yield* maybeAssertEntityEffect(input.caseId, input.entityId);
+    if (!input.uri.startsWith(`${input.caseId}/`)) {
+      return yield* new InvalidError({
+        reason: "uri does not belong to this Case",
+      });
+    }
+    yield* assertUploadedObjectEffect({
+      uri: input.uri,
+      sha256: input.sha256,
+      mime: input.mime,
+      byteLength: input.byteLength,
+    });
+    const row = yield* tryDb(() =>
+      evidenceRepo.create(db, {
+        caseId: input.caseId,
+        entityId: input.entityId ?? null,
+        kind: "file",
+        label: input.label ?? null,
+        mime: input.mime,
+        uri: input.uri,
+        sha256: input.sha256,
+        actorId,
+      })
+    );
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to create Evidence" });
+    }
+    return toRecord(row);
   });
-
-  const row = await evidenceRepo.create(db, {
-    caseId: input.caseId,
-    entityId: input.entityId ?? null,
-    kind: "file",
-    label: input.label ?? null,
-    mime: input.mime,
-    uri: input.uri,
-    sha256: input.sha256,
-    actorId,
-  });
-  if (!row) throw new DomainError("invalid", "Failed to create Evidence");
-  return toRecord(row);
 }
 
-export function getEvidenceDownloadUrl(
+export function getEvidenceDownloadUrlEffect(
   caseId: string,
   evidenceId: string
-): Promise<{ url: string | null }> {
-  return assertCaseExists(caseId)
-    .then(() =>
+): Effect.Effect<{ url: string | null }, DomainTag> {
+  return Effect.gen(function* getEvidenceDownloadUrlGen() {
+    yield* assertCaseExistsEffect(caseId);
+    const row = yield* tryDb(() =>
       evidenceRepo.getUriInCaseIncludingDeleted(db, caseId, evidenceId)
-    )
-    .then((row) => {
-      if (row === null || row.uri === null || row.uri === "") {
-        return { url: null };
-      }
-      return createPresignedGet(row.uri).then((url) => ({ url }));
-    });
+    );
+    const uri = row?.uri;
+    if (uri === undefined || uri === null || uri === "") {
+      return { url: null };
+    }
+    const url = yield* createPresignedGetEffect(uri);
+    return { url };
+  });
 }
 
 /**
  * Human attestation note — text-only Evidence (no MinIO blob).
  * Used on Inbox Accept when the investigator pastes a citeable note.
  */
-export async function createAttestation(
+export function createAttestationEffect(
   input: CreateAttestationInput
-): Promise<EvidenceRecord> {
-  const exec = input.tx ?? db;
-  await assertCaseExists(input.caseId, exec);
-  if (input.entityId !== undefined && input.entityId !== "") {
-    await assertEntityInCase(input.caseId, input.entityId, exec);
-  }
+): Effect.Effect<EvidenceRecord, DomainTag> {
+  return Effect.gen(function* createAttestationGen() {
+    const exec = input.tx ?? db;
+    yield* assertCaseExistsEffect(input.caseId, exec);
+    if (input.entityId !== undefined && input.entityId !== "") {
+      yield* assertEntityInCaseEffect(input.caseId, input.entityId, exec);
+    }
 
-  const text = input.text.trim();
-  if (!text) throw new DomainError("invalid", "Attestation text is required");
+    const text = input.text.trim();
+    if (!text) {
+      return yield* new InvalidError({
+        reason: "Attestation text is required",
+      });
+    }
 
-  const row = await evidenceRepo.create(exec, {
-    caseId: input.caseId,
-    entityId: input.entityId ?? null,
-    kind: "attestation",
-    label: trimmedOrUndefined(input.label) ?? "Accept attestation",
-    text,
-    actorId: input.actorId,
+    const row = yield* tryDb(() =>
+      evidenceRepo.create(exec, {
+        caseId: input.caseId,
+        entityId: input.entityId ?? null,
+        kind: "attestation",
+        label: trimmedOrUndefined(input.label) ?? "Accept attestation",
+        text,
+        actorId: input.actorId,
+      })
+    );
+    if (!row) {
+      return yield* Effect.die(new Error("Failed to create attestation"));
+    }
+    return toRecord(row);
   });
-  if (!row) throw new Error("Failed to create attestation");
-  return toRecord(row);
 }
 
 /** Assert each id is live Case Evidence (not soft-deleted). */
-export async function assertEvidenceInCase(
+export function assertEvidenceIdsInCaseEffect(
   caseId: string,
   evidenceIds: string[],
   exec: DbExec = db
-): Promise<void> {
+): Effect.Effect<void, DomainTag> {
   const unique = normalizeIdList(evidenceIds);
-  if (unique.length === 0) return;
-  const rows = await evidenceRepo.listIdsInCase(exec, caseId, unique);
-  if (rows.length !== unique.length) {
-    throw new DomainError(
-      "invalid",
-      "One or more Evidence ids are missing, soft-deleted, or not in this Case"
-    );
-  }
+  if (unique.length === 0) return Effect.void;
+  return tryDb(() => evidenceRepo.listIdsInCase(exec, caseId, unique)).pipe(
+    Effect.flatMap((rows) =>
+      rows.length === unique.length
+        ? Effect.void
+        : new InvalidError({
+            reason:
+              "One or more Evidence ids are missing, soft-deleted, or not in this Case",
+          })
+    )
+  );
 }

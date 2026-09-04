@@ -1,4 +1,7 @@
-import { fetchGithubUser } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { optionalCapCredential } from "@watchdog/cap-sdk";
+import { fetchGithubUserEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { githubLookupInput } from "./input";
@@ -28,18 +31,17 @@ export const githubLookup = defineCollectCap({
   },
   schema: githubUserSnapshotSchema,
   reportLabel: "github.lookup",
-  async fetch(ctx) {
-    const handle = ctx.input.handle.trim();
-    ctx.log(`GitHub lookup ${handle}`);
-    const token = (await ctx.hasCredential("GITHUB_TOKEN"))
-      ? await ctx.getCredential("GITHUB_TOKEN")
-      : undefined;
-    const snap = await fetchGithubUser(handle, ctx.signal, {
-      userAgent: UA,
-      token,
-    });
-    ctx.log(`found=${snap.found} status=${snap.status ?? "?"}`);
-    return { snap, artifactName: `github-${snap.handle}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* githubLookupFetch() {
+      const handle = ctx.input.handle.trim();
+      ctx.log(`GitHub lookup ${handle}`);
+      const token = yield* optionalCapCredential(ctx, "GITHUB_TOKEN");
+      const snap = yield* fetchGithubUserEffect(handle, ctx.signal, {
+        userAgent: UA,
+        token,
+      });
+      ctx.log(`found=${snap.found} status=${snap.status ?? "?"}`);
+      return { snap, artifactName: `github-${snap.handle}.json` };
+    }),
   interpretSnap: interpretGithubLookupReport,
 });

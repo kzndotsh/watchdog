@@ -22,6 +22,8 @@ Product nouns and investigator loop: [`../../explanation/product.md`](../../expl
 | [`agent-ingress.md`](agent-ingress.md) | CLI/API propose vs `userOverride` graph write |
 | [`evlog.md`](evlog.md) | Process logging rules |
 
+Runtime errors on the API/CLI/worker edge are tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` (same codes as `DomainError`). Ingress and custody contracts are unchanged.
+
 ## See also
 
 - Documentation charter: [`../../explanation/documentation.md`](../../explanation/documentation.md)

@@ -1,4 +1,6 @@
-import { fetchCensysHost, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchCensysHostEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { censysLookupInput } from "./input";
@@ -28,18 +30,23 @@ export const censysLookup = defineCollectCap({
   },
   schema: censysLookupSnapshotSchema,
   reportLabel: "censys.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`Censys ${ip}`);
-    const apiId = await ctx.getCredential("CENSYS_API_ID");
-    const apiSecret = await ctx.getCredential("CENSYS_API_SECRET");
-    const snap = await fetchCensysHost(ip, apiId, apiSecret, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(
-      `found=${snap.found} ports=${snap.ports.length} services=${snap.serviceNames.length}`
-    );
-    return { snap, artifactName: `censys-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* censysLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`Censys ${ip}`);
+      const apiId = yield* ctx.getCredential("CENSYS_API_ID");
+      const apiSecret = yield* ctx.getCredential("CENSYS_API_SECRET");
+      const snap = yield* fetchCensysHostEffect(
+        ip,
+        apiId,
+        apiSecret,
+        ctx.signal,
+        { userAgent: UA }
+      );
+      ctx.log(
+        `found=${snap.found} ports=${snap.ports.length} services=${snap.serviceNames.length}`
+      );
+      return { snap, artifactName: `censys-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretCensysLookupReport,
 });

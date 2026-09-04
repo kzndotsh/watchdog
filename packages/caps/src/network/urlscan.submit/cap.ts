@@ -1,4 +1,6 @@
-import { submitUrlscan } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { submitUrlscanEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlscanSubmitInput } from "./input";
@@ -25,16 +27,21 @@ export const urlscanSubmit = defineCollectCap({
   produces: [{ kind: "evidence", evidenceKind: "file" }],
   schema: urlscanSubmitSnapshotSchema,
   reportLabel: "urlscan.submit",
-  async fetch(ctx) {
-    const url = ctx.input.url.trim();
-    const visibility = ctx.input.visibility ?? "unlisted";
-    ctx.log(`urlscan.io submit ${url} visibility=${visibility}`);
-    const key = await ctx.getCredential("URLSCAN_API_KEY");
-    const snap = await submitUrlscan(url, key, visibility, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`accepted=${snap.accepted} uuid=${snap.uuid ?? "none"}`);
-    return { snap, artifactName: "urlscan-submit.json" };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* urlscanSubmitFetch() {
+      const url = ctx.input.url.trim();
+      const visibility = ctx.input.visibility ?? "unlisted";
+      ctx.log(`urlscan.io submit ${url} visibility=${visibility}`);
+      const key = yield* ctx.getCredential("URLSCAN_API_KEY");
+      const snap = yield* submitUrlscanEffect(
+        url,
+        key,
+        visibility,
+        ctx.signal,
+        { userAgent: UA }
+      );
+      ctx.log(`accepted=${snap.accepted} uuid=${snap.uuid ?? "none"}`);
+      return { snap, artifactName: "urlscan-submit.json" };
+    }),
   interpretSnap: interpretUrlscanSubmitReport,
 });

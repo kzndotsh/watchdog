@@ -1,41 +1,22 @@
 import { ORPCError } from "@orpc/server";
+import { Match } from "effect";
 
-import { DomainError } from "@watchdog/core";
+import type { DomainTag } from "@watchdog/core";
 import { peekRequestLogger } from "@watchdog/log";
 
-/** Map DomainError → ORPC/HTTP. Unknown errors propagate (→ 500). */
-export async function mapDomainError<T>(fn: () => Promise<T>): Promise<T> {
-  try {
-    return await fn();
-  } catch (error) {
-    if (!DomainError.is(error)) throw error;
-    peekRequestLogger()?.set({ error: { domainCode: error.code } });
-    switch (error.code) {
-      case "not_found": {
-        throw new ORPCError("NOT_FOUND", { message: error.message });
-      }
-      case "conflict": {
-        throw new ORPCError("CONFLICT", { message: error.message });
-      }
-      case "invalid": {
-        throw new ORPCError("BAD_REQUEST", { message: error.message });
-      }
-      case "forbidden": {
-        throw new ORPCError("FORBIDDEN", { message: error.message });
-      }
-      default: {
-        const _exhaustive: never = error.code;
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: `Unhandled domain error: ${JSON.stringify(_exhaustive)}`,
-        });
-      }
-    }
-  }
-}
-
-/** Wrap an oRPC handler so DomainError → ORPC/HTTP without inline try/catch. */
-export function withDomainError<TArgs extends unknown[], TResult>(
-  handler: (...args: TArgs) => Promise<TResult>
-): (...args: TArgs) => Promise<TResult> {
-  return async (...args: TArgs) => mapDomainError(async () => handler(...args));
+/** Convert a tagged domain failure to an oRPC HTTP error value. */
+export function toOrpcError(error: DomainTag) {
+  peekRequestLogger()?.set({ error: { domainTag: error._tag } });
+  return Match.value(error).pipe(
+    Match.tagsExhaustive({
+      NotFoundError: (tagged) =>
+        new ORPCError("NOT_FOUND", { message: tagged.resource }),
+      ConflictError: (tagged) =>
+        new ORPCError("CONFLICT", { message: tagged.reason }),
+      InvalidError: (tagged) =>
+        new ORPCError("BAD_REQUEST", { message: tagged.reason }),
+      ForbiddenError: (tagged) =>
+        new ORPCError("FORBIDDEN", { message: tagged.reason }),
+    })
+  );
 }

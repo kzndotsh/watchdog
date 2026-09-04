@@ -1,7 +1,11 @@
+import { Effect } from "effect";
+
 import { db, jobsRepo, type JobPatch, type JobRow } from "@watchdog/db";
 import type { JobStatus } from "@watchdog/schemas";
 
-import { notifyEvent } from "../infra/events";
+import { notifyJobUpdateEffect } from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
+import type { DomainTag } from "../infra/tagged-errors";
 
 interface SetJobStatusOpts {
   unlessCancelled?: boolean;
@@ -17,36 +21,30 @@ type JobStatusPatch = JobPatch & { status: JobStatus };
  * the update matched no row (e.g. already cancelled with unlessCancelled).
  * Optional SSE notify after a successful write.
  */
-export async function setJobStatus(
+export function setJobStatusEffect(
   jobId: string,
   patch: JobStatusPatch,
   opts?: SetJobStatusOpts
-): Promise<JobRow | null> {
-  const updated = await jobsRepo.update(
-    db,
-    jobId,
-    { ...patch },
-    {
-      unlessCancelled: opts?.unlessCancelled,
-      onlyStatuses: opts?.onlyStatuses,
+): Effect.Effect<JobRow | null, DomainTag> {
+  return Effect.gen(function* setJobStatusGen() {
+    const updated = yield* tryDb(() =>
+      jobsRepo.update(
+        db,
+        jobId,
+        { ...patch },
+        {
+          unlessCancelled: opts?.unlessCancelled,
+          onlyStatuses: opts?.onlyStatuses,
+        }
+      )
+    );
+    if (updated && opts?.notify === true) {
+      yield* notifyJobUpdateEffect(
+        opts.caseId ?? updated.caseId,
+        jobId,
+        patch.status
+      );
     }
-  );
-
-  if (updated && opts?.notify === true) {
-    const caseId = opts.caseId ?? updated.caseId;
-    void (async () => {
-      try {
-        await notifyEvent({
-          type: "job_update",
-          caseId,
-          jobId,
-          status: patch.status,
-        });
-      } catch {
-        /* empty */
-      }
-    })();
-  }
-
-  return updated;
+    return updated;
+  });
 }

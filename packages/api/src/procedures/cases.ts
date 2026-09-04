@@ -1,16 +1,15 @@
-import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
-  createCase,
-  deleteCase,
-  getCaseById,
-  listCases,
-  updateCase,
+  createCaseEffect,
+  deleteCaseEffect,
+  getCaseByIdEffect,
+  listCasesEffect,
+  updateCaseEffect,
 } from "@watchdog/core";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import {
   caseSchema,
   createCaseInputSchema,
@@ -25,7 +24,7 @@ export const list = authed
     tags: ["cases"],
   })
   .output(z.array(caseSchema))
-  .handler(withDomainError(async () => listCases()));
+  .handler(async () => runApp(listCasesEffect()));
 
 export const get = authed
   .route({
@@ -36,13 +35,7 @@ export const get = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(caseSchema)
-  .handler(
-    withDomainError(async ({ input }) => {
-      const row = await getCaseById(input.caseId);
-      if (!row) throw new ORPCError("NOT_FOUND", { message: "Case not found" });
-      return row;
-    })
-  );
+  .handler(async ({ input }) => runApp(getCaseByIdEffect(input.caseId)));
 
 export const create = authed
   .route({
@@ -54,7 +47,7 @@ export const create = authed
   })
   .input(createCaseInputSchema)
   .output(caseSchema)
-  .handler(withDomainError(async ({ input }) => createCase(input)));
+  .handler(async ({ input }) => runApp(createCaseEffect(input)));
 
 export const update = authed
   .route({
@@ -66,9 +59,9 @@ export const update = authed
   })
   .input(updateCaseInputSchema)
   .output(caseSchema)
-  .handler(
-    withDomainError(async ({ input }) =>
-      updateCase({
+  .handler(async ({ input }) =>
+    runApp(
+      updateCaseEffect({
         id: input.caseId,
         ...(input.name === undefined ? {} : { name: input.name }),
         ...(input.description === undefined
@@ -90,9 +83,9 @@ export const remove = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.object({ ok: z.literal(true) }))
-  .handler(
-    withDomainError(async ({ input, context }) => {
-      await deleteCase(input.caseId, { actorId: context.actor.userId });
-      return { ok: true as const };
-    })
-  );
+  .handler(async ({ input, context }) => {
+    await runApp(
+      deleteCaseEffect(input.caseId, { actorId: context.actor.userId })
+    );
+    return { ok: true as const };
+  });

@@ -1,9 +1,13 @@
 import { createHash } from "node:crypto";
 
+import { Effect, Result } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/tools-error";
-import { fetchBytes } from "../http/fetch-bytes";
+import { fetchBytesEffect } from "./fetch-bytes";
 
 const SECURITY_HEADER_NAMES = [
   "strict-transport-security",
@@ -75,83 +79,116 @@ function detectCdnHints(headers: Headers): string[] {
   return [...new Set(hints)];
 }
 
-function fetchHeadOrGet(
-  url: string,
-  signal: AbortSignal,
-  userAgent: string
-): Promise<{
+interface ProbeHop {
   ok: boolean;
   status: number;
   headers: Headers;
   finalUrl: string;
   error?: string;
-}> {
-  const getFallback = () =>
-    fetch(url, {
-      method: "GET",
-      redirect: "follow",
-      signal,
-      headers: {
-        "User-Agent": userAgent,
-        Accept: "*/*",
-        Range: "bytes=0-0",
-      },
-    }).then((get) => ({
-      ok: get.ok,
-      status: get.status,
-      headers: get.headers,
-      finalUrl: get.url || url,
-    }));
+}
 
-  return fetch(url, {
-    method: "HEAD",
-    redirect: "follow",
-    signal,
-    headers: { "User-Agent": userAgent, Accept: "*/*" },
-  })
-    .then((head) => {
+type ProbeAttempt = { readonly hop: ProbeHop } | { readonly error: string };
+
+function hopFromResponse(res: Response, url: string): ProbeHop {
+  return {
+    ok: res.ok,
+    status: res.status,
+    headers: res.headers,
+    finalUrl: res.url || url,
+  };
+}
+
+function fetchFollowEffect(
+  url: string,
+  method: "HEAD" | "GET",
+  signal: AbortSignal,
+  userAgent: string
+): Effect.Effect<Response, ToolsTag, HttpClient.HttpClient> {
+  return Effect.tryPromise({
+    try: () =>
+      fetch(url, {
+        method,
+        redirect: "follow",
+        signal,
+        headers:
+          method === "GET"
+            ? {
+                "User-Agent": userAgent,
+                Accept: "*/*",
+                Range: "bytes=0-0",
+              }
+            : { "User-Agent": userAgent, Accept: "*/*" },
+      }),
+    catch: mapToolsCatch,
+  });
+}
+
+function fetchHeadOrGetEffect(
+  url: string,
+  signal: AbortSignal,
+  userAgent: string
+): Effect.Effect<ProbeHop, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchHeadOrGetGen() {
+    const headResult = yield* Effect.result(
+      fetchFollowEffect(url, "HEAD", signal, userAgent)
+    );
+    if (Result.isSuccess(headResult)) {
+      const head = headResult.success;
       if (head.status !== 405 && head.status !== 501) {
-        return {
-          ok: head.ok,
-          status: head.status,
-          headers: head.headers,
-          finalUrl: head.url || url,
-        };
+        return hopFromResponse(head, url);
       }
-      return getFallback();
-    })
-    .catch(() => getFallback());
+    }
+    const get = yield* fetchFollowEffect(url, "GET", signal, userAgent);
+    return hopFromResponse(get, url);
+  });
+}
+
+function probeOriginEffect(
+  origin: string,
+  signal: AbortSignal,
+  userAgent: string
+): Effect.Effect<ProbeAttempt, never, HttpClient.HttpClient> {
+  return Effect.result(fetchHeadOrGetEffect(origin, signal, userAgent)).pipe(
+    Effect.map((result) =>
+      Result.isSuccess(result)
+        ? { hop: result.success }
+        : { error: errorMessage(result.failure) }
+    )
+  );
 }
 
 /**
  * One Cap / one origin: security headers + security.txt + favicon hash + CDN hints.
  * Active HTTP — invasive.
  */
-export function fetchHttpProbe(
+export function fetchHttpProbeEffect(
   host: string,
   signal: AbortSignal,
   options: { userAgent: string; preferHttps?: boolean }
-): Promise<HttpProbeSnapshot> {
-  return (async () => {
+): Effect.Effect<HttpProbeSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchHttpProbeGen() {
     const preferHttps = options.preferHttps ?? true;
     const origins = preferHttps
       ? [`https://${host}/`, `http://${host}/`]
       : [`http://${host}/`, `https://${host}/`];
 
     let lastError: string | undefined;
-    let primary: Awaited<ReturnType<typeof fetchHeadOrGet>> | null = null;
+    let primary: ProbeHop | null = null;
     let originBase = origins[0];
 
     for (const origin of origins) {
-      try {
-        // oxlint-disable-next-line no-await-in-loop -- ordered fallback (https then http); stops at first reachable origin, must stay sequential
-        const res = await fetchHeadOrGet(origin, signal, options.userAgent);
-        primary = res;
-        originBase = `${new URL(res.finalUrl).origin}/`;
-        if (res.status > 0) break;
-      } catch (error) {
-        lastError = errorMessage(error);
+      const attempt = yield* probeOriginEffect(
+        origin,
+        signal,
+        options.userAgent
+      );
+      if ("error" in attempt) {
+        lastError = attempt.error;
+        continue;
       }
+      primary = attempt.hop;
+      originBase = `${new URL(attempt.hop.finalUrl).origin}/`;
+      if (attempt.hop.status > 0) break;
     }
 
     if (!primary) {
@@ -185,18 +222,21 @@ export function fetchHttpProbe(
       .href;
     const faviconUrl = new URL("/favicon.ico", originBase).href;
 
-    const [secTxt, favicon] = await Promise.all([
-      fetchBytes(securityTxtUrl, signal, {
-        userAgent: options.userAgent,
-        maxBytes: 16_384,
-        accept: "text/plain,*/*",
-      }),
-      fetchBytes(faviconUrl, signal, {
-        userAgent: options.userAgent,
-        maxBytes: 65_536,
-        accept: "image/*,*/*",
-      }),
-    ]);
+    const [secTxt, favicon] = yield* Effect.all(
+      [
+        fetchBytesEffect(securityTxtUrl, signal, {
+          userAgent: options.userAgent,
+          maxBytes: 16_384,
+          accept: "text/plain,*/*",
+        }),
+        fetchBytesEffect(faviconUrl, signal, {
+          userAgent: options.userAgent,
+          maxBytes: 65_536,
+          accept: "image/*,*/*",
+        }),
+      ],
+      { concurrency: 2 }
+    );
 
     const bodyPreview =
       secTxt.ok && secTxt.bytes.byteLength > 0
@@ -230,5 +270,5 @@ export function fetchHttpProbe(
       },
       ...(primary.ok ? {} : { error: `HTTP ${primary.status}` }),
     });
-  })();
+  });
 }

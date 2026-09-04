@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   casesRepo,
   db,
@@ -17,7 +19,9 @@ import type {
 } from "@watchdog/schemas";
 import { SEARCH_MIN_QUERY_LENGTH } from "@watchdog/schemas";
 
-import { assertCaseExists } from "../graph/patch/guards";
+import { assertCaseExistsEffect } from "../graph/patch/guards";
+import { tryDb } from "../infra/postgres-effect";
+import type { DomainTag } from "../infra/tagged-errors";
 
 const DEFAULT_LIMIT = 24;
 const DEFAULT_PER_GROUP = 8;
@@ -103,82 +107,91 @@ function emptyResult(q: string): SearchCaseResult {
 }
 
 /** Active-Case graph search + Cases switch hits (ilike). */
-export async function searchCase(
+export function searchCaseEffect(
   opts: SearchCaseOpts
-): Promise<SearchCaseResult> {
-  const q = opts.q.trim();
-  if (q.length < SEARCH_MIN_QUERY_LENGTH) {
-    return emptyResult(q);
-  }
+): Effect.Effect<SearchCaseResult, DomainTag> {
+  return Effect.gen(function* searchCaseGen() {
+    const q = opts.q.trim();
+    if (q.length < SEARCH_MIN_QUERY_LENGTH) {
+      return emptyResult(q);
+    }
 
-  await assertCaseExists(opts.caseId);
+    yield* assertCaseExistsEffect(opts.caseId);
 
-  const perGroup = Math.min(
-    opts.perGroup ?? DEFAULT_PER_GROUP,
-    opts.limit ?? DEFAULT_LIMIT
-  );
+    const perGroup = Math.min(
+      opts.perGroup ?? DEFAULT_PER_GROUP,
+      opts.limit ?? DEFAULT_LIMIT
+    );
 
-  const [
-    entityRows,
-    identifierRows,
-    evidenceRows,
-    taskRows,
-    jobRows,
-    proposalRows,
-    caseRows,
-  ] = await Promise.all([
-    entitiesRepo.searchForCase(db, opts.caseId, q, perGroup),
-    identifiersRepo.searchForCase(db, opts.caseId, q, perGroup),
-    evidenceRepo.searchForCase(db, opts.caseId, q, perGroup),
-    tasksRepo.searchForCase(db, opts.caseId, q, perGroup),
-    jobsRepo.searchForCase(db, opts.caseId, q, perGroup),
-    proposalsRepo.searchPendingForCase(db, opts.caseId, q, perGroup),
-    casesRepo.search(db, q, perGroup),
-  ]);
+    const [
+      entityRows,
+      identifierRows,
+      evidenceRows,
+      taskRows,
+      jobRows,
+      proposalRows,
+      caseRows,
+    ] = yield* Effect.all(
+      [
+        tryDb(() => entitiesRepo.searchForCase(db, opts.caseId, q, perGroup)),
+        tryDb(() =>
+          identifiersRepo.searchForCase(db, opts.caseId, q, perGroup)
+        ),
+        tryDb(() => evidenceRepo.searchForCase(db, opts.caseId, q, perGroup)),
+        tryDb(() => tasksRepo.searchForCase(db, opts.caseId, q, perGroup)),
+        tryDb(() => jobsRepo.searchForCase(db, opts.caseId, q, perGroup)),
+        tryDb(() =>
+          proposalsRepo.searchPendingForCase(db, opts.caseId, q, perGroup)
+        ),
+        tryDb(() => casesRepo.search(db, q, perGroup)),
+      ],
+      { concurrency: "unbounded" }
+    );
 
-  return {
-    q,
-    entities: entityRows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-      kind: row.kind,
-    })),
-    identifiers: identifierRows.map((row) => ({
-      id: row.id,
-      type: row.type,
-      platform: row.platform,
-      value: row.value,
-      entityId: row.entityId,
-      entityName: row.entityName,
-      entitySlug: row.entitySlug,
-    })),
-    evidence: evidenceRows.map((row) => ({
-      id: row.id,
-      label: row.label,
-      kind: row.kind,
-    })),
-    tasks: taskRows.map((row) => ({
-      id: row.id,
-      title: row.title,
-      status: row.status,
-      entityId: row.entityId,
-    })),
-    jobs: jobRows.map((row) => ({
-      id: row.job.id,
-      capabilityId: row.job.capabilityId,
-      status: row.job.status,
-      resultSummary: row.job.resultSummary,
-    })),
-    proposals: proposalRows.map((row) => ({
-      id: row.proposal.id,
-      summary: row.proposal.summary,
-      capabilityId: row.capabilityId,
-    })),
-    cases: caseRows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-    })),
-  };
+    return {
+      q,
+      entities: entityRows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        kind: row.kind,
+      })),
+      identifiers: identifierRows.map((row) => ({
+        id: row.id,
+        type: row.type,
+        platform: row.platform,
+        value: row.value,
+        entityId: row.entityId,
+        entityName: row.entityName,
+        entitySlug: row.entitySlug,
+      })),
+      evidence: evidenceRows.map((row) => ({
+        id: row.id,
+        label: row.label,
+        kind: row.kind,
+      })),
+      tasks: taskRows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        status: row.status,
+        entityId: row.entityId,
+      })),
+      jobs: jobRows.map((row) => ({
+        id: row.job.id,
+        capabilityId: row.job.capabilityId,
+        status: row.job.status,
+        resultSummary: row.job.resultSummary,
+      })),
+      proposals: proposalRows.map((row) => ({
+        id: row.proposal.id,
+        summary: row.proposal.summary,
+        capabilityId: row.capabilityId,
+      })),
+      cases: caseRows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+      })),
+    };
+  });
 }

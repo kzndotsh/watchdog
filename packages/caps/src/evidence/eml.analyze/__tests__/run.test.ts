@@ -1,7 +1,8 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
-import { createCapRunHarness, testId } from "@watchdog/test-kit";
+import { createCapRunHarness, runCap, testId } from "@watchdog/test-kit";
 
 import { emlAnalyze } from "../cap.ts";
 
@@ -26,10 +27,12 @@ describe("evidence.eml.analyze run", () => {
         packerVersion: 1,
       },
     });
-    const result = await emlAnalyze.run({
-      ...harness.ctx,
-      input: { evidenceId: testId(40) },
-    });
+    const result = await runCap(
+      emlAnalyze.run({
+        ...harness.ctx,
+        input: { evidenceId: testId(40) },
+      })
+    );
     expect(
       result.artifacts.some((row) => row.name === REPORT_JSON_ARTIFACT)
     ).toBe(true);
@@ -48,14 +51,16 @@ describe("evidence.eml.analyze run", () => {
         packerVersion: 1,
       },
     });
-    const result = await emlAnalyze.run({
-      ...harness.ctx,
-      input: { evidenceId: testId(40) },
-      readArtifact: async (requested) => {
-        expect(requested).toBe(uri);
-        return new TextEncoder().encode(SAMPLE_EML);
-      },
-    });
+    const result = await runCap(
+      emlAnalyze.run({
+        ...harness.ctx,
+        input: { evidenceId: testId(40) },
+        readArtifact: (requested) => {
+          expect(requested).toBe(uri);
+          return Effect.succeed(new TextEncoder().encode(SAMPLE_EML));
+        },
+      })
+    );
     expect(
       result.artifacts.some((row) => row.name === REPORT_JSON_ARTIFACT)
     ).toBe(true);
@@ -73,10 +78,12 @@ describe("evidence.eml.analyze run", () => {
       },
     });
     await expect(
-      emlAnalyze.run({
-        ...harness.ctx,
-        input: { evidenceId: testId(40) },
-      })
+      runCap(
+        emlAnalyze.run({
+          ...harness.ctx,
+          input: { evidenceId: testId(40) },
+        })
+      )
     ).rejects.toThrow(/no readable text/);
   });
 
@@ -93,11 +100,14 @@ describe("evidence.eml.analyze run", () => {
       },
     });
     await expect(
-      emlAnalyze.run({
-        ...harness.ctx,
-        input: { evidenceId: testId(40) },
-        readArtifact: async () => new Uint8Array([0xff, 0xfe, 0x00]),
-      })
+      runCap(
+        emlAnalyze.run({
+          ...harness.ctx,
+          input: { evidenceId: testId(40) },
+          readArtifact: () =>
+            Effect.succeed(new Uint8Array([0xff, 0xfe, 0x00])),
+        })
+      )
     ).rejects.toThrow(/not valid UTF-8/);
   });
 });

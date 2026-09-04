@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
-  createEvent,
-  createQuestion,
-  reopenQuestion,
-  resolveQuestion,
+  createEventEffect,
+  createQuestionEffect,
+  reopenQuestionEffect,
+  resolveQuestionEffect,
+  runDomain
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
 import { testId } from "@watchdog/test-kit";
@@ -18,12 +19,12 @@ describe("createEvent", () => {
   it("creates a case-scoped event", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
-    const created = await createEvent({
+    const created = await runDomain(createEventEffect({
       caseId: cased.id,
       entityId: entity.id,
       when: "1815-12-10",
       what: "Born",
-    });
+    }));
     expect(created.what).toBe("Born");
   });
 });
@@ -36,21 +37,21 @@ describe("questions", () => {
   it("resolves then reopens a question", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(21) });
-    const created = await createQuestion({
+    const created = await runDomain(createQuestionEffect({
       caseId: cased.id,
       entityId: entity.id,
       text: "Where does Ada live?",
-    });
-    const resolved = await resolveQuestion({
+    }));
+    const resolved = await runDomain(resolveQuestionEffect({
       caseId: cased.id,
       questionId: created.id,
       resolvedNote: "London",
-    });
+    }));
     expect(resolved.status).toBe("resolved");
-    const reopened = await reopenQuestion({
+    const reopened = await runDomain(reopenQuestionEffect({
       caseId: cased.id,
       questionId: created.id,
-    });
+    }));
     expect(reopened.status).toBe("open");
   });
 });

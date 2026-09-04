@@ -13,7 +13,10 @@ export {
 } from "./llm-provider";
 export { createWatchdogModel } from "./provider";
 export {
-  structuredExtract,
+  structuredExtractEffect,
+  RateLimitedOutputError,
+  InvalidOutputError,
   type StructuredExtractResult,
   type StructuredExtractUsage,
+  type StructuredExtractTag,
 } from "./structured-extract";

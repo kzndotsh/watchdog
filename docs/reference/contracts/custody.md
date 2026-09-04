@@ -15,7 +15,7 @@ Platform Accept tiers: **`unverified` / `possible` / `confirmed`**.
 
 - Invalid Identifier ops **block** Accept (`listInvalidIdentifierOps`).
 - Identifier collisions **warn** (Alert + chip); Accept still allowed.
-- Custody helpers live in `@watchdog/policy` (`assertPatchGates`, `patchNeedsConfidence`): pure, DB-free.
+- Custody helpers live in `@watchdog/policy` (`assertPatchGates`, `patchNeedsConfidence`): pure, DB-free. Browser UI imports `patchNeedsConfidence` from `@watchdog/policy/patch-needs-confidence` only (package root pulls Effect-tagged gates into the client).
 
 ## Breach caveat
 

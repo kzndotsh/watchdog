@@ -1,5 +1,7 @@
+import { Effect } from "effect";
+
 import type { JobHandoff } from "@watchdog/cap-sdk";
-import { fetchUnshorten } from "@watchdog/tools";
+import { fetchUnshortenEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlUnshortenInput } from "./input";
@@ -27,13 +29,16 @@ export const urlUnshorten = defineCollectCap({
   },
   schema: unshortenSnapshotSchema,
   reportLabel: "url.unshorten",
-  async fetch(ctx) {
-    const url = ctx.input.url.trim();
-    ctx.log(`unshorten ${url}`);
-    const snap = await fetchUnshorten(url, ctx.signal, { userAgent: UA });
-    ctx.log(`final=${snap.finalUrl} hops=${snap.hopCount}`);
-    return { snap, artifactName: "unshorten.json" };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* urlUnshortenFetch() {
+      const url = ctx.input.url.trim();
+      ctx.log(`unshorten ${url}`);
+      const snap = yield* fetchUnshortenEffect(url, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`final=${snap.finalUrl} hops=${snap.hopCount}`);
+      return { snap, artifactName: "unshorten.json" };
+    }),
   interpretSnap: interpretUnshortenReport,
   handoff(report): JobHandoff | undefined {
     const parsed = unshortenSnapshotSchema.safeParse(report);

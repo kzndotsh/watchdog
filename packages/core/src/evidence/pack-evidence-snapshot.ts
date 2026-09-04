@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
   ENRICHED_MD_ARTIFACT,
@@ -6,8 +8,9 @@ import {
   type EvidenceSnapshot,
 } from "@watchdog/schemas";
 
-import { readArtifactBytes } from "../infra/blob";
-import { DomainError } from "../infra/domain-error";
+import { readArtifactBytesEffect } from "../infra/blob";
+import { tryDb } from "../infra/postgres-effect";
+import { NotFoundError, type DomainTag } from "../infra/tagged-errors";
 
 export const MAX_SNAPSHOT_CHARS = 80_000;
 
@@ -24,24 +27,25 @@ function loadTextFromEvidence(row: {
   uri: string | null;
   mime: string | null;
   kind: string;
-}): Promise<string> {
+}): Effect.Effect<string> {
   if (row.text !== null && row.text.trim() !== "") {
-    return Promise.resolve(row.text);
+    return Effect.succeed(row.text);
   }
   if (row.uri === null) {
-    return Promise.resolve("");
+    return Effect.succeed("");
   }
   const mime = row.mime ?? "";
   if (mime && !TEXTISH_MIME.test(mime) && !mime.includes("charset")) {
-    return Promise.resolve("");
+    return Effect.succeed("");
   }
-  return readArtifactBytes(row.uri)
-    .then((bytes) => {
+  return readArtifactBytesEffect(row.uri).pipe(
+    Effect.map((bytes) => {
       const head = bytes.slice(0, 512);
       if (head.includes(0)) return "";
       return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    })
-    .catch(() => "");
+    }),
+    Effect.catch(() => Effect.succeed(""))
+  );
 }
 
 /**
@@ -51,92 +55,88 @@ function loadTextFromEvidence(row: {
 function loadEnrichOutputText(input: {
   caseId: string;
   evidenceId: string;
-}): Promise<string | null> {
-  return jobsRepo
-    .listSucceededForCapability(db, input.caseId, URL_ENRICH_CAPABILITY_ID, 40)
-    .then((recent) => {
-      let chain: Promise<string | null> = Promise.resolve(null);
-      for (const job of recent) {
-        chain = chain.then((found) => {
-          if (found !== null) return found;
-          const sourceId =
-            typeof job.input === "object" && job.input !== null
-              ? (job.input as { sourceEvidenceId?: string }).sourceEvidenceId
-              : undefined;
-          const linked =
-            sourceId === input.evidenceId ||
-            (job.evidenceIds?.includes(input.evidenceId) ?? false);
-          if (!linked) return null;
-          const arts = job.output ?? [];
-          const enriched =
-            arts.find((a) => a.name === ENRICHED_MD_ARTIFACT) ??
-            arts.find((a) => a.name === "live.md") ??
-            arts.find((a) => a.name === "wayback.md");
-          if (enriched === undefined) return null;
-          return readArtifactBytes(enriched.uri)
-            .then((bytes) => {
-              const text = new TextDecoder("utf-8", { fatal: false }).decode(
-                bytes
-              );
-              return text.trim() ? text : null;
-            })
-            .catch(() => null);
-        });
-      }
-      return chain;
-    });
+}): Effect.Effect<string | null, DomainTag> {
+  return Effect.gen(function* loadEnrichOutputTextGen() {
+    const recent = yield* tryDb(() =>
+      jobsRepo.listSucceededForCapability(
+        db,
+        input.caseId,
+        URL_ENRICH_CAPABILITY_ID,
+        40
+      )
+    );
+    for (const job of recent) {
+      const sourceId =
+        typeof job.input === "object" && job.input !== null
+          ? (job.input as { sourceEvidenceId?: string }).sourceEvidenceId
+          : undefined;
+      const linked =
+        sourceId === input.evidenceId ||
+        (job.evidenceIds?.includes(input.evidenceId) ?? false);
+      if (!linked) continue;
+      const arts = job.output ?? [];
+      const enriched =
+        arts.find((a) => a.name === ENRICHED_MD_ARTIFACT) ??
+        arts.find((a) => a.name === "live.md") ??
+        arts.find((a) => a.name === "wayback.md");
+      if (enriched === undefined) continue;
+      const text = yield* readArtifactBytesEffect(enriched.uri).pipe(
+        Effect.map((bytes) =>
+          new TextDecoder("utf-8", { fatal: false }).decode(bytes)
+        ),
+        Effect.catch(() => Effect.succeed(""))
+      );
+      if (text.trim()) return text;
+    }
+    return null;
+  });
 }
 
-export function packEvidenceSnapshot(input: {
+export function packEvidenceSnapshotEffect(input: {
   caseId: string;
   evidenceId: string;
   entityId?: string;
-}): Promise<EvidenceSnapshot> {
-  return evidenceRepo
-    .getActiveInCase(db, input.caseId, input.evidenceId)
-    .then((row) => {
-      if (!row) {
-        throw new DomainError(
-          "not_found",
-          `Evidence not found: ${input.evidenceId}`
-        );
-      }
-      return loadTextFromEvidence(row).then((initialText) => {
-        const looksLikeUrlOnly =
-          row.uri === null &&
-          Boolean(initialText.trim()) &&
-          /^https?:\/\/\S+$/i.test(initialText.trim());
-        const needsEnrich = !initialText.trim() || looksLikeUrlOnly;
-        const textPromise = needsEnrich
-          ? loadEnrichOutputText({
-              caseId: input.caseId,
-              evidenceId: row.id,
-            }).then((fromEnrich) =>
-              fromEnrich !== null && fromEnrich.trim() !== ""
-                ? fromEnrich
-                : initialText
-            )
-          : Promise.resolve(initialText);
-        return textPromise.then((rawText) => {
-          const entityId = input.entityId ?? row.entityId ?? undefined;
-          return evidenceSnapshotSchema.parse({
-            evidenceId: row.id,
-            caseId: row.caseId,
-            ...(entityId !== undefined && entityId !== "" ? { entityId } : {}),
-            kind: row.kind,
-            ...(row.label !== null && row.label !== ""
-              ? { label: row.label }
-              : {}),
-            text: truncate(rawText),
-            ...(row.mime !== null && row.mime !== "" ? { mime: row.mime } : {}),
-            sha256: row.sha256,
-            uri: row.uri,
-            packedAt: new Date().toISOString(),
-            packerVersion: 1,
-          });
-        });
+}): Effect.Effect<EvidenceSnapshot, DomainTag> {
+  return Effect.gen(function* packEvidenceSnapshotGen() {
+    const row = yield* tryDb(() =>
+      evidenceRepo.getActiveInCase(db, input.caseId, input.evidenceId)
+    );
+    if (!row) {
+      return yield* new NotFoundError({
+        resource: `Evidence not found: ${input.evidenceId}`,
       });
+    }
+    const initialText = yield* loadTextFromEvidence(row);
+    const looksLikeUrlOnly =
+      row.uri === null &&
+      Boolean(initialText.trim()) &&
+      /^https?:\/\/\S+$/i.test(initialText.trim());
+    const needsEnrich = !initialText.trim() || looksLikeUrlOnly;
+    const fromEnrich = needsEnrich
+      ? yield* loadEnrichOutputText({
+          caseId: input.caseId,
+          evidenceId: row.id,
+        })
+      : null;
+    const rawText =
+      fromEnrich !== null && fromEnrich.trim() !== ""
+        ? fromEnrich
+        : initialText;
+    const entityId = input.entityId ?? row.entityId ?? undefined;
+    return evidenceSnapshotSchema.parse({
+      evidenceId: row.id,
+      caseId: row.caseId,
+      ...(entityId !== undefined && entityId !== "" ? { entityId } : {}),
+      kind: row.kind,
+      ...(row.label !== null && row.label !== "" ? { label: row.label } : {}),
+      text: truncate(rawText),
+      ...(row.mime !== null && row.mime !== "" ? { mime: row.mime } : {}),
+      sha256: row.sha256,
+      uri: row.uri,
+      packedAt: new Date().toISOString(),
+      packerVersion: 1,
     });
+  });
 }
 
 export function snapshotToArtifactBytes(

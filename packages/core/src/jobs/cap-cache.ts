@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 
+import { Effect } from "effect";
+
 import { capCacheRepo, db, type JobArtifact } from "@watchdog/db";
+
+import { tryDb } from "../infra/postgres-effect";
+import type { DomainTag } from "../infra/tagged-errors";
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -21,22 +26,27 @@ export function hashCapInput(input: unknown): string {
   return createHash("sha256").update(body).digest("hex");
 }
 
-export function lookupCapCache(input: {
+export function lookupCapCacheEffect(input: {
   caseId: string;
   capabilityId: string;
   inputHash: string;
-}): Promise<{
-  artifacts: JobArtifact[];
-  resultSummary: string | null;
-  jobId: string | null;
-  evidenceIds: string[];
-} | null> {
-  return capCacheRepo.lookupActive(
-    db,
-    input.caseId,
-    input.capabilityId,
-    input.inputHash,
-    new Date()
+}): Effect.Effect<
+  {
+    artifacts: JobArtifact[];
+    resultSummary: string | null;
+    jobId: string | null;
+    evidenceIds: string[];
+  } | null,
+  DomainTag
+> {
+  return tryDb(() =>
+    capCacheRepo.lookupActive(
+      db,
+      input.caseId,
+      input.capabilityId,
+      input.inputHash,
+      new Date()
+    )
   );
 }
 
@@ -50,18 +60,22 @@ interface StoreCapCacheInput {
   ttlMs: number;
 }
 
-export async function storeCapCache(input: StoreCapCacheInput): Promise<void> {
+export function storeCapCacheEffect(
+  input: StoreCapCacheInput
+): Effect.Effect<void, DomainTag> {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + input.ttlMs);
-  await capCacheRepo.upsert(db, {
-    caseId: input.caseId,
-    capabilityId: input.capabilityId,
-    inputHash: input.inputHash,
-    jobId: input.jobId,
-    artifacts: input.artifacts,
-    resultSummary: input.resultSummary,
-    ttlMs: input.ttlMs,
-    createdAt: now,
-    expiresAt,
-  });
+  return tryDb(() =>
+    capCacheRepo.upsert(db, {
+      caseId: input.caseId,
+      capabilityId: input.capabilityId,
+      inputHash: input.inputHash,
+      jobId: input.jobId,
+      artifacts: input.artifacts,
+      resultSummary: input.resultSummary,
+      ttlMs: input.ttlMs,
+      createdAt: now,
+      expiresAt,
+    })
+  ).pipe(Effect.asVoid);
 }

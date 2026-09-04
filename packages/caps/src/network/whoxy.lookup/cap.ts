@@ -1,4 +1,6 @@
-import { fetchWhoxyWhois, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchWhoxyWhoisEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoxyLookupInput } from "./input";
@@ -28,15 +30,16 @@ export const whoxyLookup = defineCollectCap({
   },
   schema: whoxyLookupSnapshotSchema,
   reportLabel: "whoxy.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`Whoxy ${host}`);
-    const key = await ctx.getCredential("WHOXY_API_KEY");
-    const snap = await fetchWhoxyWhois(host, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`ok=${snap.ok} registrar=${snap.registrarName ?? "none"}`);
-    return { snap, artifactName: `whoxy-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* whoxyLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`Whoxy ${host}`);
+      const key = yield* ctx.getCredential("WHOXY_API_KEY");
+      const snap = yield* fetchWhoxyWhoisEffect(host, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`ok=${snap.ok} registrar=${snap.registrarName ?? "none"}`);
+      return { snap, artifactName: `whoxy-${host}.json` };
+    }),
   interpretSnap: interpretWhoxyLookupReport,
 });

@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError, writeGraphFromAgent } from "@watchdog/core";
+import {
+  DomainError,
+  writeGraphFromAgentEffect,
+  runDomain,
+} from "@watchdog/core";
 import { claimsRepo, db, evidenceRepo, graphWritesRepo } from "@watchdog/db";
 import { TEST_ACTOR_ID, buildClaimCreateOp, testId } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
@@ -15,16 +19,18 @@ describe("writeGraphFromAgent", () => {
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
     const claimId = testId(30);
 
-    const written = await writeGraphFromAgent({
-      caseId: cased.id,
-      actorId: TEST_ACTOR_ID,
-      userOverride: true,
-      patch: [
-        buildClaimCreateOp(entity.id, "Ada observed a host", { id: claimId }),
-      ],
-      summary: "agent cite",
-      idempotencyKey: "write-1",
-    });
+    const written = await runDomain(
+      writeGraphFromAgentEffect({
+        caseId: cased.id,
+        actorId: TEST_ACTOR_ID,
+        userOverride: true,
+        patch: [
+          buildClaimCreateOp(entity.id, "Ada observed a host", { id: claimId }),
+        ],
+        summary: "agent cite",
+        idempotencyKey: "write-1",
+      })
+    );
 
     expect(written.replayed).toBe(false);
     expect(written.confidence).toBe("unverified");
@@ -56,8 +62,8 @@ describe("writeGraphFromAgent", () => {
       idempotencyKey: "same-key",
     };
 
-    const first = await writeGraphFromAgent(input);
-    const second = await writeGraphFromAgent(input);
+    const first = await runDomain(writeGraphFromAgentEffect(input));
+    const second = await runDomain(writeGraphFromAgentEffect(input));
 
     expect(second.replayed).toBe(true);
     expect(second.opCount).toBe(0);
@@ -71,12 +77,14 @@ describe("writeGraphFromAgent", () => {
     const cased = await seedCase(db);
 
     await expect(
-      writeGraphFromAgent({
-        caseId: cased.id,
-        actorId: TEST_ACTOR_ID,
-        userOverride: true,
-        patch: [],
-      })
+      runDomain(
+        writeGraphFromAgentEffect({
+          caseId: cased.id,
+          actorId: TEST_ACTOR_ID,
+          userOverride: true,
+          patch: [],
+        })
+      )
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "invalid"
     );
@@ -100,8 +108,8 @@ describe("writeGraphFromAgent", () => {
       };
 
       const results = await Promise.all([
-        writeGraphFromAgent(input),
-        writeGraphFromAgent(input),
+        runDomain(writeGraphFromAgentEffect(input)),
+        runDomain(writeGraphFromAgentEffect(input)),
       ]);
       expect(new Set(results.map((row) => row.writeId)).size).toBe(1);
 

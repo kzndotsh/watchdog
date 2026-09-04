@@ -1,8 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { missingApiKey } from "../errors/tools-error";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -69,63 +71,105 @@ function emptyResult(
 interface UrlhausOptions {
   userAgent?: string;
 }
-export async function fetchUrlhausLookup(
+
+export function fetchUrlhausLookupEffect(
   queryRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: UrlhausOptions
-): Promise<UrlhausLookupSnapshot> {
-  const { kind, value } = classifyQuery(queryRaw);
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("THREATFOX_API_KEY");
+): Effect.Effect<UrlhausLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchUrlhausLookupGen() {
+    const { kind, value } = classifyQuery(queryRaw);
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "THREATFOX_API_KEY" });
+    }
 
-  const ua = options?.userAgent ?? watchdogUserAgent("threat.urlhaus.lookup");
+    const ua = options?.userAgent ?? watchdogUserAgent("threat.urlhaus.lookup");
 
-  let endpoint: "url" | "payload" | "host";
-  if (kind === "url") {
-    endpoint = "url";
-  } else if (kind === "hash") {
-    endpoint = "payload";
-  } else {
-    endpoint = "host";
-  }
-  const body = new URLSearchParams();
-  if (kind === "url") {
-    body.set("url", value);
-  } else if (kind === "host") {
-    body.set("host", value);
-  } else {
-    body.set(value.length === 64 ? "sha256_hash" : "md5_hash", value);
-  }
+    let endpoint: "url" | "payload" | "host";
+    if (kind === "url") {
+      endpoint = "url";
+    } else if (kind === "hash") {
+      endpoint = "payload";
+    } else {
+      endpoint = "host";
+    }
+    const body = new URLSearchParams();
+    if (kind === "url") {
+      body.set("url", value);
+    } else if (kind === "host") {
+      body.set("host", value);
+    } else {
+      body.set(value.length === 64 ? "sha256_hash" : "md5_hash", value);
+    }
 
-  const raw = await fetchJsonObject({
-    url: `https://urlhaus-api.abuse.ch/v1/${endpoint}/`,
-    init: {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Auth-Key": key,
-        "User-Agent": ua,
+    const { body: raw } = yield* fetchJsonObjectEffect({
+      url: `https://urlhaus-api.abuse.ch/v1/${endpoint}/`,
+      init: {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Auth-Key": key,
+          "User-Agent": ua,
+        },
+        body,
       },
-      body,
-    },
-    signal,
-    service: "URLhaus",
-    subject: value,
-  });
-  const queryStatus = asString(raw.query_status) ?? "unknown";
+      signal,
+      service: "URLhaus",
+      subject: value,
+    });
+    const queryStatus = asString(raw.query_status) ?? "unknown";
 
-  if (queryStatus !== "ok") {
-    return urlhausLookupSnapshotSchema.parse(
-      emptyResult(kind, value, queryStatus)
-    );
-  }
+    if (queryStatus !== "ok") {
+      return urlhausLookupSnapshotSchema.parse(
+        emptyResult(kind, value, queryStatus)
+      );
+    }
 
-  if (kind === "url") {
-    const tags = Array.isArray(raw.tags)
-      ? raw.tags.filter((t): t is string => typeof t === "string")
-      : [];
+    if (kind === "url") {
+      const tags = Array.isArray(raw.tags)
+        ? raw.tags.filter((t): t is string => typeof t === "string")
+        : [];
+      return urlhausLookupSnapshotSchema.parse({
+        query: value,
+        kind,
+        queriedAt: new Date().toISOString(),
+        source: "urlhaus-api.abuse.ch",
+        queryStatus,
+        found: true,
+        threat: asString(raw.threat),
+        urlStatus: asString(raw.url_status),
+        tags,
+        urlhausReference: asString(raw.urlhaus_reference),
+        firstSeen: asString(raw.date_added),
+      });
+    }
+
+    if (kind === "host") {
+      const urls = Array.isArray(raw.urls) ? raw.urls : [];
+      const first = urls.find(isRecord);
+      const tags =
+        first && Array.isArray(first.tags)
+          ? first.tags.filter((t): t is string => typeof t === "string")
+          : [];
+      return urlhausLookupSnapshotSchema.parse({
+        query: value,
+        kind,
+        queriedAt: new Date().toISOString(),
+        source: "urlhaus-api.abuse.ch",
+        queryStatus,
+        found: urls.length > 0,
+        threat: first ? asString(first.threat) : null,
+        urlStatus: first ? asString(first.url_status) : null,
+        tags,
+        urlhausReference: first ? asString(first.urlhaus_reference) : null,
+        firstSeen: asString(raw.firstseen),
+      });
+    }
+
+    // payload / hash lookup — MalwareBazaar-style single record, no per-URL fields.
     return urlhausLookupSnapshotSchema.parse({
       query: value,
       kind,
@@ -133,48 +177,11 @@ export async function fetchUrlhausLookup(
       source: "urlhaus-api.abuse.ch",
       queryStatus,
       found: true,
-      threat: asString(raw.threat),
-      urlStatus: asString(raw.url_status),
-      tags,
-      urlhausReference: asString(raw.urlhaus_reference),
-      firstSeen: asString(raw.date_added),
-    });
-  }
-
-  if (kind === "host") {
-    const urls = Array.isArray(raw.urls) ? raw.urls : [];
-    const first = urls.find(isRecord);
-    const tags =
-      first && Array.isArray(first.tags)
-        ? first.tags.filter((t): t is string => typeof t === "string")
-        : [];
-    return urlhausLookupSnapshotSchema.parse({
-      query: value,
-      kind,
-      queriedAt: new Date().toISOString(),
-      source: "urlhaus-api.abuse.ch",
-      queryStatus,
-      found: urls.length > 0,
-      threat: first ? asString(first.threat) : null,
-      urlStatus: first ? asString(first.url_status) : null,
-      tags,
-      urlhausReference: first ? asString(first.urlhaus_reference) : null,
+      threat: asString(raw.signature),
+      urlStatus: null,
+      tags: [],
+      urlhausReference: null,
       firstSeen: asString(raw.firstseen),
     });
-  }
-
-  // payload / hash lookup — MalwareBazaar-style single record, no per-URL fields.
-  return urlhausLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    source: "urlhaus-api.abuse.ch",
-    queryStatus,
-    found: true,
-    threat: asString(raw.signature),
-    urlStatus: null,
-    tags: [],
-    urlhausReference: null,
-    firstSeen: asString(raw.firstseen),
   });
 }

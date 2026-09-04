@@ -1,8 +1,11 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import {
   asBool,
   asNumber,
@@ -117,25 +120,28 @@ export function parseIpctlBody(
 interface IpctlOptions {
   userAgent?: string;
 }
-export async function fetchIpctlLookup(
+
+export function fetchIpctlLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: IpctlOptions
-): Promise<IpctlLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("network.ipctl.lookup");
+): Effect.Effect<IpctlLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchIpctlLookupGen() {
+    const ip = normalizeIp(ipRaw);
+    const ua = options?.userAgent ?? watchdogUserAgent("network.ipctl.lookup");
 
-  const url = `https://api.ipctl.io/v1/ip/${encodeURIComponent(ip)}`;
-  const body = await fetchJsonObject({
-    url,
-    init: {
-      method: "GET",
-      headers: { Accept: "application/json", "User-Agent": ua },
-    },
-    signal,
-    service: "ipctl",
-    subject: ip,
+    const url = `https://api.ipctl.io/v1/ip/${encodeURIComponent(ip)}`;
+    const { body } = yield* fetchJsonObjectEffect({
+      url,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+      signal,
+      service: "ipctl",
+      subject: ip,
+    });
+    const data = isRecord(body.data) ? body.data : {};
+    return parseIpctlBody(ip, new Date().toISOString(), data);
   });
-  const data = isRecord(body.data) ? body.data : {};
-  return parseIpctlBody(ip, new Date().toISOString(), data);
 }

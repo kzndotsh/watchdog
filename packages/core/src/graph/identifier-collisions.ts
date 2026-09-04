@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import { db, identifiersRepo, type IdentifierListRow } from "@watchdog/db";
 import { isOneOf } from "@watchdog/policy";
 import {
@@ -6,6 +8,9 @@ import {
   type IdentifierType,
   type PatchOp,
 } from "@watchdog/schemas";
+
+import { tryDb } from "../infra/postgres-effect";
+import type { DomainTag } from "../infra/tagged-errors";
 
 export interface IdentifierCollision {
   opId: string;
@@ -85,15 +90,18 @@ function collisionsAgainstHits(
 }
 
 /** Case-wide identifier collisions for Inbox patches. */
-export async function loadIdentifierCollisions(
+export function loadIdentifierCollisionsEffect(
   caseId: string,
   patches: readonly PatchOp[][]
-): Promise<IdentifierCollision[][]> {
+): Effect.Effect<IdentifierCollision[][], DomainTag> {
   const perPatchKeys = patches.map(identifierKeysFromPatch);
   if (perPatchKeys.every((keys) => keys.length === 0)) {
-    return patches.map(() => []);
+    return Effect.succeed(patches.map(() => []));
   }
-  const hits = await identifiersRepo.listForCase(db, caseId);
-  const byKey = indexByTypeValue(hits);
-  return perPatchKeys.map((keys) => collisionsAgainstHits(keys, byKey));
+  return tryDb(() => identifiersRepo.listForCase(db, caseId)).pipe(
+    Effect.map((hits) => {
+      const byKey = indexByTypeValue(hits);
+      return perPatchKeys.map((keys) => collisionsAgainstHits(keys, byKey));
+    })
+  );
 }

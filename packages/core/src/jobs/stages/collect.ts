@@ -2,24 +2,40 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { capTimeoutMs, type CapContext } from "@watchdog/cap-sdk";
+import { Effect } from "effect";
+
+import type { CapContext } from "@watchdog/cap-sdk";
 import { db, jobsRepo, type JobArtifact } from "@watchdog/db";
 import type { EvidenceSnapshot } from "@watchdog/schemas";
+import {
+  MissingCredentialError,
+  ValidationVendorError,
+  toolsHttpClientLayer,
+  type ToolsTag,
+} from "@watchdog/tools";
 
-import { packEvidenceSnapshot } from "../../evidence/pack-evidence-snapshot";
-import { readArtifactBytes, uploadArtifact } from "../../infra/blob";
+import { packEvidenceSnapshotEffect } from "../../evidence/pack-evidence-snapshot";
+import {
+  readArtifactBytesEffect,
+  uploadArtifactEffect,
+} from "../../infra/blob";
+import { tryDb } from "../../infra/postgres-effect";
 import { logSwallowed } from "../../infra/process-log";
-import { getCredential, hasCredential } from "../../infra/vault";
-import { hashCapInput, lookupCapCache } from "../cap-cache";
-import { registerActiveJobController } from "../job-cancel-registry";
+import {
+  domainMessageOf,
+  NotFoundError,
+  type DomainTag,
+} from "../../infra/tagged-errors";
+import { getCredentialEffect, hasCredentialEffect } from "../../infra/vault";
+import { hashCapInput, lookupCapCacheEffect } from "../cap-cache";
 import { artifactsHaveCapReport } from "../load-cap-report";
 import { inputString, linkedEvidenceId, type JobLog } from "./helpers";
 import type { PreflightState } from "./preflight";
 
 export interface CollectRuntime {
   scratchDir: string;
-  controller: AbortController;
-  timer: ReturnType<typeof setTimeout>;
+  /** Fiber abort signal forwarded into Cap `ctx.signal`. */
+  signal: AbortSignal;
   jobLog: JobLog;
   evidenceSnapshot: EvidenceSnapshot | undefined;
   linkedSource: string | undefined;
@@ -36,25 +52,41 @@ export interface CollectResult {
   runtime: CollectRuntime;
 }
 
-async function packSnapshotIfNeeded(
+function packSnapshotIfNeededEffect(
   state: PreflightState,
   jobLog: JobLog
-): Promise<EvidenceSnapshot | undefined> {
-  if (state.policy.needsEvidenceSnapshot !== true) return undefined;
+): Effect.Effect<EvidenceSnapshot | undefined, DomainTag> {
+  if (state.policy.needsEvidenceSnapshot !== true) {
+    const none: EvidenceSnapshot | undefined = undefined;
+    return Effect.succeed(none);
+  }
   const evidenceId = inputString(state.input, "evidenceId");
   if (evidenceId === undefined || evidenceId === "") {
-    throw new Error(
-      "jobPolicy.needsEvidenceSnapshot requires input.evidenceId"
+    return Effect.die(
+      new Error("jobPolicy.needsEvidenceSnapshot requires input.evidenceId")
     );
   }
   const entityId = inputString(state.input, "entityId");
-  const snapshot = await packEvidenceSnapshot({
+  return packEvidenceSnapshotEffect({
     caseId: state.job.caseId,
     evidenceId,
     ...(entityId !== undefined && entityId !== "" ? { entityId } : {}),
-  });
-  jobLog.log(`packed EvidenceSnapshot (${snapshot.text.length} chars)`);
-  return snapshot;
+  }).pipe(
+    Effect.tap((snapshot) =>
+      Effect.sync(() => {
+        jobLog.log(`packed EvidenceSnapshot (${snapshot.text.length} chars)`);
+      })
+    )
+  );
+}
+
+function vaultToTools(name: string) {
+  return (error: DomainTag): ToolsTag => {
+    if (error instanceof NotFoundError) {
+      return new MissingCredentialError({ slot: name });
+    }
+    return new ValidationVendorError({ message: domainMessageOf(error) });
+  };
 }
 
 function buildCapContext(
@@ -66,152 +98,205 @@ function buildCapContext(
     input,
     caseId: job.caseId,
     jobId: state.jobId,
-    signal: runtime.controller.signal,
+    signal: runtime.signal,
     scratchDir: runtime.scratchDir,
     log: runtime.jobLog.log,
     allowThirdPartyEgress,
     ...(runtime.evidenceSnapshot
       ? { evidenceSnapshot: runtime.evidenceSnapshot }
       : {}),
-    async getCredential(name: string): Promise<string> {
-      return getCredential(job.actorId, name);
+    getCredential(name: string) {
+      return getCredentialEffect(job.actorId, name).pipe(
+        Effect.mapError(vaultToTools(name))
+      );
     },
-    async hasCredential(name: string): Promise<boolean> {
-      return hasCredential(job.actorId, name);
+    hasCredential(name: string) {
+      return hasCredentialEffect(job.actorId, name).pipe(
+        Effect.mapError(vaultToTools(name))
+      );
     },
-    async uploadArtifact(uploadInput: {
+    uploadArtifact(uploadInput: {
       bytes: Uint8Array;
       mime: string;
       name?: string;
     }) {
-      const uploaded = await uploadArtifact({
+      return uploadArtifactEffect({
         caseId: job.caseId,
         bytes: uploadInput.bytes,
         mime: uploadInput.mime,
         name: uploadInput.name,
-      });
-      return {
-        name: uploadInput.name ?? "artifact",
-        mime: uploaded.mime,
-        uri: uploaded.uri,
-        sha256: uploaded.sha256,
-      };
+      }).pipe(
+        Effect.mapError(
+          (error) => new ValidationVendorError({ message: error.reason })
+        ),
+        Effect.map((uploaded) => ({
+          name: uploadInput.name ?? "artifact",
+          mime: uploaded.mime,
+          uri: uploaded.uri,
+          sha256: uploaded.sha256,
+        }))
+      );
     },
-    async readArtifact(uri: string) {
-      return readArtifactBytes(uri);
+    readArtifact(uri: string) {
+      return readArtifactBytesEffect(uri).pipe(
+        Effect.mapError(
+          (error) => new ValidationVendorError({ message: error.reason })
+        )
+      );
     },
   };
 }
 
-/**
- * Pack snapshot, prepare scratch/timeout, then reclaim / cache-hit / Cap.run.
- * Does not insert Evidence rows (see land-evidence).
- * Caller owns `jobLog` so failures still retain lines for failJob.
- */
-export async function collect(
+function acquireScratchEffect(): Effect.Effect<string> {
+  return Effect.tryPromise({
+    try: () => mkdtemp(path.join(tmpdir(), "wd-cap-")),
+    catch: (error) => error,
+  }).pipe(Effect.orDie);
+}
+
+function cleanupScratchEffect(
+  scratchDir: string,
+  jobId: string
+): Effect.Effect<void> {
+  return Effect.tryPromise({
+    try: async () => {
+      await rm(scratchDir, { recursive: true, force: true });
+    },
+    catch: (cleanupError: unknown) => {
+      logSwallowed("collect.scratch_cleanup", cleanupError, { jobId });
+      return new Error("collect scratch cleanup failed");
+    },
+  }).pipe(Effect.catch(() => Effect.void));
+}
+
+function reclaimResult(
   state: PreflightState,
+  runtime: CollectRuntime,
   jobLog: JobLog
-): Promise<CollectResult> {
-  const evidenceSnapshot = await packSnapshotIfNeeded(state, jobLog);
-  const linkedSource = linkedEvidenceId(
-    state.input,
-    state.policy.linkEvidenceFromInput
-  );
-  const cacheTtlMs =
-    state.cap.kind !== "act" &&
-    state.policy.cacheTtlMs !== undefined &&
-    state.policy.cacheTtlMs > 0
-      ? state.policy.cacheTtlMs
-      : null;
-  const inputHash = cacheTtlMs === null ? null : hashCapInput(state.input);
-
-  const scratchDir = await mkdtemp(path.join(tmpdir(), "wd-cap-"));
-  const controller = new AbortController();
-  registerActiveJobController(state.jobId, controller);
-  const timeoutMs = capTimeoutMs(state.cap);
-  const timer = setTimeout(() => {
-    controller.abort("timeout");
-  }, timeoutMs);
-
-  const runtime: CollectRuntime = {
-    scratchDir,
-    controller,
-    timer,
-    jobLog,
-    evidenceSnapshot,
-    linkedSource,
-    cacheTtlMs,
-    inputHash,
+): CollectResult {
+  jobLog.log("reclaim: reusing existing Job artifacts");
+  return {
+    artifacts: state.reclaimArtifacts ?? [],
+    evidenceIds: [...state.reclaimEvidenceIds],
+    fromCache: false,
+    reclaim: true,
+    runtime,
   };
+}
 
-  try {
-    if (state.reclaimArtifacts) {
-      jobLog.log("reclaim: reusing existing Job artifacts");
-      return {
-        artifacts: state.reclaimArtifacts,
-        evidenceIds: [...state.reclaimEvidenceIds],
-        fromCache: false,
-        reclaim: true,
-        runtime,
-      };
+function lookupCacheHitEffect(
+  state: PreflightState,
+  runtime: CollectRuntime,
+  jobLog: JobLog
+): Effect.Effect<CollectResult | null, DomainTag> {
+  const { cacheTtlMs, inputHash } = runtime;
+  if (cacheTtlMs === null || inputHash === null) {
+    return Effect.succeed(null);
+  }
+  return Effect.gen(function* lookupCacheHitGen() {
+    const hit = yield* lookupCapCacheEffect({
+      caseId: state.job.caseId,
+      capabilityId: state.cap.id,
+      inputHash,
+    });
+    if (!hit) return null;
+    if (state.cap.interpret && !artifactsHaveCapReport(hit.artifacts)) {
+      jobLog.log(
+        "cache hit skipped — artifacts missing report.json (stale cache)"
+      );
+      return null;
     }
-
-    let fromCache = false;
-    let artifacts: JobArtifact[] = [];
-    let evidenceIds: string[] = [];
-
-    if (cacheTtlMs !== null && inputHash !== null) {
-      const hit = await lookupCapCache({
-        caseId: state.job.caseId,
-        capabilityId: state.cap.id,
-        inputHash,
-      });
-      if (hit) {
-        if (state.cap.interpret && !artifactsHaveCapReport(hit.artifacts)) {
-          jobLog.log(
-            "cache hit skipped — artifacts missing report.json (stale cache)"
-          );
-        } else {
-          fromCache = true;
-          artifacts = hit.artifacts;
-          evidenceIds = [...(hit.evidenceIds ?? [])];
-          jobLog.log(
-            `cache hit (ttl=${cacheTtlMs}ms) — reusing artifacts from prior Job${
-              hit.jobId === null ? "" : ` ${hit.jobId}`
-            }`
-          );
-          await jobsRepo.update(db, state.jobId, {
-            output: artifacts,
-            evidenceIds,
-            logs: jobLog.lines,
-          });
-        }
-      }
-    }
-
-    if (!fromCache) {
-      const ctx = buildCapContext(state, runtime);
-      const runResult = await state.cap.run(ctx);
-      artifacts = runResult.artifacts;
-    }
-
+    const artifacts = hit.artifacts;
+    const evidenceIds = [...(hit.evidenceIds ?? [])];
+    jobLog.log(
+      `cache hit (ttl=${cacheTtlMs}ms) — reusing artifacts from prior Job${
+        hit.jobId === null ? "" : ` ${hit.jobId}`
+      }`
+    );
+    yield* tryDb(() =>
+      jobsRepo.update(db, state.jobId, {
+        output: artifacts,
+        evidenceIds,
+        logs: jobLog.lines,
+      })
+    );
     return {
       artifacts,
       evidenceIds,
-      fromCache,
+      fromCache: true,
       reclaim: false,
       runtime,
-    };
-  } catch (error) {
-    // Leave registry entry until executeJob finally unregisters (abortReason read).
-    clearTimeout(timer);
-    await rm(scratchDir, { recursive: true, force: true }).catch(
-      (cleanupError: unknown) => {
-        logSwallowed("collect.scratch_cleanup", cleanupError, {
-          jobId: state.jobId,
-        });
-      }
+    } satisfies CollectResult;
+  });
+}
+
+function runCapCollectEffect(
+  state: PreflightState,
+  runtime: CollectRuntime
+): Effect.Effect<CollectResult, ToolsTag> {
+  return Effect.gen(function* runCapCollectGen() {
+    const ctx = buildCapContext(state, runtime);
+    const runResult = yield* state.cap.run(ctx);
+    return {
+      artifacts: runResult.artifacts,
+      evidenceIds: [] as string[],
+      fromCache: false,
+      reclaim: false,
+      runtime,
+    } satisfies CollectResult;
+  }).pipe(Effect.provide(toolsHttpClientLayer));
+}
+
+/**
+ * Pack snapshot, prepare scratch, then reclaim / cache-hit / Cap.run.
+ * Does not insert Evidence rows (see land-evidence).
+ * Timeout/cancel are fiber-scoped (`JobFibers` + `Effect.abortSignal`); Caps get that signal.
+ */
+export function collectEffect(
+  state: PreflightState,
+  jobLog: JobLog,
+  jobSignal: AbortSignal
+): Effect.Effect<CollectResult, DomainTag | ToolsTag> {
+  return Effect.gen(function* collectSetup() {
+    const evidenceSnapshot = yield* packSnapshotIfNeededEffect(state, jobLog);
+    const linkedSource = linkedEvidenceId(
+      state.input,
+      state.policy.linkEvidenceFromInput
     );
-    throw error;
-  }
+    const cacheTtlMs =
+      state.cap.kind !== "act" &&
+      state.policy.cacheTtlMs !== undefined &&
+      state.policy.cacheTtlMs > 0
+        ? state.policy.cacheTtlMs
+        : null;
+    const inputHash = cacheTtlMs === null ? null : hashCapInput(state.input);
+    const scratchDir = yield* acquireScratchEffect();
+
+    const runtime: CollectRuntime = {
+      scratchDir,
+      signal: jobSignal,
+      jobLog,
+      evidenceSnapshot,
+      linkedSource,
+      cacheTtlMs,
+      inputHash,
+    };
+
+    const body = Effect.gen(function* collectBody() {
+      if (state.reclaimArtifacts) {
+        return reclaimResult(state, runtime, jobLog);
+      }
+      const cached = yield* lookupCacheHitEffect(state, runtime, jobLog);
+      if (cached !== null) return cached;
+      return yield* runCapCollectEffect(state, runtime);
+    });
+
+    return yield* body.pipe(
+      Effect.catchCause((cause) =>
+        cleanupScratchEffect(scratchDir, state.jobId).pipe(
+          Effect.andThen(Effect.failCause(cause))
+        )
+      )
+    );
+  });
 }

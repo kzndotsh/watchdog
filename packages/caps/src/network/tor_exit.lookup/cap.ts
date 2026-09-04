@@ -1,4 +1,6 @@
-import { fetchTorExitLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchTorExitLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { torExitLookupInput } from "./input";
@@ -26,12 +28,15 @@ export const torExitLookup = defineCollectCap({
   },
   schema: torExitLookupSnapshotSchema,
   reportLabel: "tor_exit.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`Tor exit-list check ${ip}`);
-    const snap = await fetchTorExitLookup(ip, ctx.signal, { userAgent: UA });
-    ctx.log(`isExit=${snap.isExit}`);
-    return { snap, artifactName: `tor-exit-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* torExitLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`Tor exit-list check ${ip}`);
+      const snap = yield* fetchTorExitLookupEffect(ip, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`isExit=${snap.isExit}`);
+      return { snap, artifactName: `tor-exit-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretTorExitLookupReport,
 });

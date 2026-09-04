@@ -1,4 +1,6 @@
-import { fetchCymruMhrLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchCymruMhrLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { cymruMhrLookupInput } from "./input";
@@ -25,12 +27,13 @@ export const cymruMhrLookup = defineCollectCap({
   },
   schema: cymruMhrLookupSnapshotSchema,
   reportLabel: "cymru_mhr.lookup",
-  async fetch(ctx) {
-    const hash = ctx.input.hash.trim();
-    ctx.log(`Team Cymru MHR ${hash}`);
-    const snap = await fetchCymruMhrLookup(hash, ctx.signal);
-    ctx.log(`found=${snap.found} detectionPct=${snap.detectionPct ?? "n/a"}`);
-    return { snap, artifactName: `cymru-mhr-${snap.hash}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* cymruMhrLookupFetch() {
+      const hash = ctx.input.hash.trim();
+      ctx.log(`Team Cymru MHR ${hash}`);
+      const snap = yield* fetchCymruMhrLookupEffect(hash, ctx.signal);
+      ctx.log(`found=${snap.found} detectionPct=${snap.detectionPct ?? "n/a"}`);
+      return { snap, artifactName: `cymru-mhr-${snap.hash}.json` };
+    }),
   interpretSnap: interpretCymruMhrLookupReport,
 });

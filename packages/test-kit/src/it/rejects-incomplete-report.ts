@@ -15,7 +15,7 @@ export function itRejectsIncompleteReport(
   incompleteReport: JsonObject,
   input: JsonObject = {}
 ): void {
-  it("rejects incomplete report", async () => {
+  it("rejects incomplete report", () => {
     expect(cap.interpret).toBeDefined();
     const { interpret } = cap;
     if (interpret === undefined) {
@@ -28,8 +28,8 @@ export function itRejectsIncompleteReport(
     const run = interpret as (
       report: JsonObject,
       opts: { input: JsonObject }
-    ) => Promise<unknown>;
-    await expect(run(incompleteReport, { input })).rejects.toThrow(
+    ) => unknown;
+    expect(() => run(incompleteReport, { input })).toThrow(
       new RegExp(
         `Invalid (${cap.id.replaceAll(".", "\\.")}|${errorTarget.replaceAll(".", "\\.")})`
       )

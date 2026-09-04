@@ -1,45 +1,63 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect, Result } from "effect";
+import { vi } from "vitest";
 
-import { ToolsError } from "../../errors/tools-error";
-import { fetchJsonObject } from "../fetch-json";
+import { RateLimitedError } from "../../errors/tagged-errors";
+import { fetchJsonObjectEffect } from "../fetch-json";
+import { toolsHttpClientLayer } from "../http-client-layer";
 
-describe("fetchJsonObject", () => {
-  it("returns parsed JSON objects on success", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(JSON.stringify({ ok: true }), { status: 200 })
-        )
-    );
+describe("fetchJsonObjectEffect", () => {
+  it.effect("returns parsed JSON objects on success", () =>
+    Effect.gen(function* fetchJsonObjectSuccessGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(JSON.stringify({ ok: true }), { status: 200 })
+          )
+      );
 
-    const body = await fetchJsonObject({
-      url: "https://example.com/api",
-      signal: AbortSignal.timeout(5000),
-      service: "Example",
-      subject: "test",
-    });
-
-    expect(body).toEqual({ ok: true });
-    vi.unstubAllGlobals();
-  });
-
-  it("maps HTTP 429 to rateLimitedToolsError", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response(null, { status: 429 }))
-    );
-
-    await expect(
-      fetchJsonObject({
+      const result = yield* fetchJsonObjectEffect({
         url: "https://example.com/api",
         signal: AbortSignal.timeout(5000),
         service: "Example",
         subject: "test",
-      })
-    ).rejects.toThrow(ToolsError);
+        retry: false,
+      });
 
-    vi.unstubAllGlobals();
-  });
+      expect(result.body).toEqual({ ok: true });
+      expect(result.status).toBe(200);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
+
+  it.effect("maps HTTP 429 to RateLimitedError", () =>
+    Effect.gen(function* fetchJsonObjectRateLimitedGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response(null, { status: 429 }))
+      );
+
+      const outcome = yield* Effect.result(
+        fetchJsonObjectEffect({
+          url: "https://example.com/api",
+          signal: AbortSignal.timeout(5000),
+          service: "Example",
+          subject: "test",
+          retry: false,
+        })
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(RateLimitedError);
+      }
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

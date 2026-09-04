@@ -1,7 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { httpToolsError, rateLimitedToolsError } from "../errors/tools-error";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -104,47 +107,42 @@ function collectIssuances(
   return { issuances, domains };
 }
 
-export async function fetchCertspotterLookup(
+export function fetchCertspotterLookupEffect(
   hostRaw: string,
   signal: AbortSignal,
   options?: CertspotterOptions
-): Promise<CertspotterLookupSnapshot> {
-  const host = normalizeHost(hostRaw);
-  const limit = options?.limit ?? 100;
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("network.certspotter.lookup");
+): Effect.Effect<CertspotterLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchCertspotterLookupGen() {
+    const host = normalizeHost(hostRaw);
+    const limit = options?.limit ?? 100;
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("network.certspotter.lookup");
 
-  const url = new URL("https://api.certspotter.com/v1/issuances");
-  url.searchParams.set("domain", host);
-  url.searchParams.set("include_subdomains", "true");
-  url.searchParams.set("expand", "dns_names");
+    const url = new URL("https://api.certspotter.com/v1/issuances");
+    url.searchParams.set("domain", host);
+    url.searchParams.set("include_subdomains", "true");
+    url.searchParams.set("expand", "dns_names");
 
-  const res = await fetch(url, {
-    method: "GET",
-    signal,
-    headers: { Accept: "application/json", "User-Agent": ua },
-  });
+    const { body } = yield* fetchJsonUnknownEffect({
+      url,
+      signal,
+      service: "Cert Spotter",
+      subject: host,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
 
-  if (res.status === 429) {
-    throw rateLimitedToolsError("Cert Spotter", host);
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "Cert Spotter API",
-      res.status,
-      `Cert Spotter API ${res.status} for ${host}`
-    );
-  }
+    const rows = Array.isArray(body) ? body : [];
+    const { issuances, domains } = collectIssuances(rows, limit);
 
-  const body: unknown = await res.json();
-  const rows = Array.isArray(body) ? body : [];
-  const { issuances, domains } = collectIssuances(rows, limit);
-
-  return certspotterLookupSnapshotSchema.parse({
-    host,
-    queriedAt: new Date().toISOString(),
-    source: "api.certspotter.com/v1/issuances",
-    domains,
-    issuances,
+    return certspotterLookupSnapshotSchema.parse({
+      host,
+      queriedAt: new Date().toISOString(),
+      source: "api.certspotter.com/v1/issuances",
+      domains,
+      issuances,
+    });
   });
 }

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PatchOp } from "@watchdog/schemas";
@@ -11,11 +12,13 @@ vi.mock("../../../proposals/finding-suppress", () => ({
 }));
 
 import { createJobLog } from "../helpers";
-import { suppressStage } from "../suppress";
+import { suppressStageEffect } from "../suppress";
 
 describe("suppressStage", () => {
   it("returns empty result for empty patch", async () => {
-    const result = await suppressStage("case-1", [], createJobLog());
+    const result = await Effect.runPromise(
+      suppressStageEffect("case-1", [], createJobLog())
+    );
     expect(result).toEqual({ kept: [], suppressed: 0 });
     expect(suppressKnownFindings).not.toHaveBeenCalled();
   });
@@ -33,7 +36,9 @@ describe("suppressStage", () => {
       suppressed: 1,
     });
     const jobLog = createJobLog();
-    const result = await suppressStage("case-1", patch, jobLog);
+    const result = await Effect.runPromise(
+      suppressStageEffect("case-1", patch, jobLog)
+    );
     expect(result.suppressed).toBe(1);
     expect(jobLog.lines.some((line) => line.includes("suppressed 1"))).toBe(
       true

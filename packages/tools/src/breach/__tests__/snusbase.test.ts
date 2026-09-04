@@ -1,14 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect } from "effect";
+import { vi } from "vitest";
 
-const { fetchJsonObject } = vi.hoisted(() => ({
-  fetchJsonObject: vi.fn(),
-}));
-
-vi.mock("../../http/fetch-json", () => ({
-  fetchJsonObject,
-}));
-
-import { fetchSnusbaseLookup, snusbaseLookupSnapshotSchema } from "../snusbase";
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
+import {
+  fetchSnusbaseLookupEffect,
+  snusbaseLookupSnapshotSchema,
+} from "../snusbase";
 
 describe("snusbase", () => {
   it("parses lookup snapshot schema", () => {
@@ -26,27 +24,40 @@ describe("snusbase", () => {
     expect(snap.kind).toBe("email");
   });
 
-  it("fetchSnusbaseLookup flattens table results", async () => {
-    fetchJsonObject.mockResolvedValueOnce({
-      size: 1,
-      results: {
-        ExampleTable: [
-          {
-            email: "alice@mailhost.test",
-            username: "alice",
-          },
-        ],
-      },
-    });
+  it.effect("fetchSnusbaseLookupEffect flattens table results", () =>
+    Effect.gen(function* fetchSnusbaseLookupGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              size: 1,
+              results: {
+                ExampleTable: [
+                  {
+                    email: "alice@mailhost.test",
+                    username: "alice",
+                  },
+                ],
+              },
+            }),
+            { status: 200 }
+          )
+        )
+      );
 
-    const snap = await fetchSnusbaseLookup(
-      "alice@mailhost.test",
-      "test-key",
-      AbortSignal.timeout(5000)
-    );
+      const snap = yield* fetchSnusbaseLookupEffect(
+        "alice@mailhost.test",
+        "test-key",
+        AbortSignal.timeout(5000)
+      );
 
-    expect(snap.found).toBe(true);
-    expect(snap.entries[0]?.email).toBe("alice@mailhost.test");
-    expect(snap.tables[0]?.name).toBe("ExampleTable");
-  });
+      expect(snap.found).toBe(true);
+      expect(snap.entries[0]?.email).toBe("alice@mailhost.test");
+      expect(snap.tables[0]?.name).toBe("ExampleTable");
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

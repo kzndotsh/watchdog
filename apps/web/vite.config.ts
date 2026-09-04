@@ -45,6 +45,11 @@ const config = defineConfig({
       "@watchdog/tools",
     ],
   },
+  // Belt for residual HMR / server-fn discovery after client code stays on
+  // `@watchdog/policy/patch-needs-confidence` (do not import Effect in browser UI).
+  optimizeDeps: {
+    include: ["effect"],
+  },
 });
 
 export default config;

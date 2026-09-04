@@ -1,7 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -105,39 +108,42 @@ function collectUrlscanHits(rows: unknown[]): {
   return { hits, urls, domains };
 }
 
-export async function fetchUrlscanSearch(
+export function fetchUrlscanSearchEffect(
   hostRaw: string,
   signal: AbortSignal,
   options?: UrlscanOptions
-): Promise<UrlscanLookupSnapshot> {
-  const host = normalizeHost(hostRaw);
-  const size = Math.min(Math.max(options?.size ?? 20, 1), 100);
-  const ua = options?.userAgent ?? watchdogUserAgent("network.urlscan.lookup");
+): Effect.Effect<UrlscanLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchUrlscanSearchGen() {
+    const host = normalizeHost(hostRaw);
+    const size = Math.min(Math.max(options?.size ?? 20, 1), 100);
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("network.urlscan.lookup");
 
-  const url = new URL("https://urlscan.io/api/v1/search/");
-  url.searchParams.set("q", `page.domain:${host}`);
-  url.searchParams.set("size", String(size));
+    const url = new URL("https://urlscan.io/api/v1/search/");
+    url.searchParams.set("q", `page.domain:${host}`);
+    url.searchParams.set("size", String(size));
 
-  const body = await fetchJsonObject({
-    url,
-    init: {
-      method: "GET",
-      headers: { Accept: "application/json", "User-Agent": ua },
-    },
-    signal,
-    service: "URLScan",
-    subject: host,
-  });
-  const rows = Array.isArray(body.results) ? body.results : [];
-  const { hits, urls, domains } = collectUrlscanHits(rows);
+    const { body } = yield* fetchJsonObjectEffect({
+      url,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+      signal,
+      service: "URLScan",
+      subject: host,
+    });
+    const rows = Array.isArray(body.results) ? body.results : [];
+    const { hits, urls, domains } = collectUrlscanHits(rows);
 
-  return urlscanLookupSnapshotSchema.parse({
-    host,
-    queriedAt: new Date().toISOString(),
-    source: "urlscan.io/api/v1/search",
-    total: typeof body.total === "number" ? body.total : null,
-    urls,
-    domains,
-    hits,
+    return urlscanLookupSnapshotSchema.parse({
+      host,
+      queriedAt: new Date().toISOString(),
+      source: "urlscan.io/api/v1/search",
+      total: typeof body.total === "number" ? body.total : null,
+      urls,
+      domains,
+      hits,
+    });
   });
 }

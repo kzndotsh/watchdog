@@ -1,23 +1,24 @@
 /** Slim worker surface — avoids loading the full @watchdog/core graph barrel. */
 export {
   CAP_JOB_QUEUE,
-  ensureBossWorker,
+  ensureBossWorkerEffect,
   isCapJobPayload,
   type CapJobPayload,
   type BossRole,
+  type BossHandle,
 } from "./jobs/boss";
 export { gracefulStopTimeoutMs } from "./jobs/timeouts";
 export {
-  reconcileStaleJobs,
-  reconcileStuckPlaybookRuns,
+  reconcileStaleJobsEffect,
+  reconcileStuckPlaybookRunsEffect,
 } from "./jobs/reconcile-stale-jobs";
 export {
-  executeJob,
-  abortActiveJob,
-  listActiveJobIds,
+  executeJobOnMap,
   type JobRunOutcome,
   type JobAbortReason,
   type JobRunOutcomeName,
 } from "./jobs/run-job";
-export { findCancelledJobIds } from "./jobs/start-job";
+export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
+export { findCancelledJobIdsEffect } from "./jobs/start-job";
 export { isWatchdogEvent, listenForEvents } from "./infra/events";
+export { listenForEventsStream } from "./infra/listen-events-stream";

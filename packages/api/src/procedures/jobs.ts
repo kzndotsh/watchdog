@@ -1,17 +1,16 @@
-import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
-  cancelJob,
-  cancelPlaybookRun,
-  getJobForCase,
-  listJobsForCase,
-  runPlaybook,
-  startJob,
+  cancelJobEffect,
+  cancelPlaybookRunEffect,
+  getJobForCaseEffect,
+  listJobsForCaseEffect,
+  runPlaybookEffect,
+  startJobEffect,
 } from "@watchdog/core";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import { jobListSchema, jobSchema, jsonObjectSchema } from "../schemas";
 
 export const listForCase = authed
@@ -23,7 +22,7 @@ export const listForCase = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.array(jobListSchema))
-  .handler(withDomainError(async ({ input }) => listJobsForCase(input.caseId)));
+  .handler(async ({ input }) => runApp(listJobsForCaseEffect(input.caseId)));
 
 export const get = authed
   .route({
@@ -34,12 +33,8 @@ export const get = authed
   })
   .input(z.object({ caseId: z.uuid(), jobId: z.uuid() }))
   .output(jobSchema)
-  .handler(
-    withDomainError(async ({ input }) => {
-      const row = await getJobForCase(input.caseId, input.jobId);
-      if (!row) throw new ORPCError("NOT_FOUND", { message: "Job not found" });
-      return row;
-    })
+  .handler(async ({ input }) =>
+    runApp(getJobForCaseEffect(input.caseId, input.jobId))
   );
 
 export const start = authed
@@ -58,9 +53,9 @@ export const start = authed
     })
   )
   .output(jobSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      startJob({
+  .handler(async ({ input, context }) =>
+    runApp(
+      startJobEffect({
         caseId: input.caseId,
         capabilityId: input.capabilityId,
         input: input.input,
@@ -83,9 +78,11 @@ export const cancel = authed
     })
   )
   .output(jobSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      cancelJob(input.caseId, input.jobId, { actorId: context.actor.userId })
+  .handler(async ({ input, context }) =>
+    runApp(
+      cancelJobEffect(input.caseId, input.jobId, {
+        actorId: context.actor.userId,
+      })
     )
   );
 
@@ -120,9 +117,9 @@ export const startPlaybook = authed
       jobs: z.array(jobSchema),
     })
   )
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      runPlaybook({
+  .handler(async ({ input, context }) =>
+    runApp(
+      runPlaybookEffect({
         caseId: input.caseId,
         playbookId: input.playbookId,
         seed: input.seed,
@@ -150,9 +147,9 @@ export const cancelPlaybook = authed
       cancelledJobIds: z.array(z.uuid()),
     })
   )
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      cancelPlaybookRun(input.caseId, input.playbookRunId, {
+  .handler(async ({ input, context }) =>
+    runApp(
+      cancelPlaybookRunEffect(input.caseId, input.playbookRunId, {
         actorId: context.actor.userId,
       })
     )

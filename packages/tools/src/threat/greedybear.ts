@@ -1,8 +1,11 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { createTtlCache } from "../cache/ttl-memory";
-import { httpToolsError, ToolsError } from "../errors/tools-error";
+import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -26,12 +29,8 @@ const FEED_CACHE_KEY = "all-scanner-recent";
 const feedCache = createTtlCache<Set<string>>(FEED_TTL_MS);
 
 /** IOC values from the public scanner feed JSON. */
-export function parseGreedybearIocValues(body: unknown): Set<string> {
-  if (!isRecord(body)) {
-    throw new ToolsError("GreedyBear feed response was not a JSON object", {
-      code: "invalid_response",
-    });
-  }
+export function parseGreedybearIocValues(body: unknown): Set<string> | null {
+  if (!isRecord(body)) return null;
   const rows = Array.isArray(body.iocs) ? body.iocs : [];
   const values = new Set<string>();
   for (const row of rows) {
@@ -42,25 +41,34 @@ export function parseGreedybearIocValues(body: unknown): Set<string> {
   return values;
 }
 
-async function fetchScannerFeed(
+function fetchScannerFeedEffect(
   signal: AbortSignal,
   ua: string
-): Promise<Set<string>> {
-  const cached = feedCache.get(FEED_CACHE_KEY);
-  if (cached) return cached;
+): Effect.Effect<Set<string>, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchGreedybearScannerFeedGen() {
+    const cached = feedCache.get(FEED_CACHE_KEY);
+    if (cached) return cached;
 
-  const res = await fetch(FEED_URL, {
-    method: "GET",
-    signal,
-    headers: { Accept: "application/json", "User-Agent": ua },
+    const { body } = yield* fetchJsonObjectEffect({
+      url: FEED_URL,
+      signal,
+      service: "GreedyBear",
+      subject: "feed",
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
+    const parsed = parseGreedybearIocValues(body);
+    if (parsed === null) {
+      return yield* new ParseVendorError({
+        service: "GreedyBear",
+        subject: "feed",
+      });
+    }
+    feedCache.set(FEED_CACHE_KEY, parsed);
+    return parsed;
   });
-  if (!res.ok) throw httpToolsError("GreedyBear feed", res.status);
-
-  // Response shape: { license, iocs: [{ value, feed_type, scanner, ... }] }
-  const body: unknown = await res.json();
-  const values = parseGreedybearIocValues(body);
-  feedCache.set(FEED_CACHE_KEY, values);
-  return values;
 }
 
 /**
@@ -74,23 +82,26 @@ async function fetchScannerFeed(
 interface GreedybearOptions {
   userAgent?: string;
 }
-export async function fetchGreedybearLookup(
+
+export function fetchGreedybearLookupEffect(
   queryRaw: string,
   signal: AbortSignal,
   options?: GreedybearOptions
-): Promise<GreedybearLookupSnapshot> {
-  const { kind, value } = classifyIpOrHost(queryRaw);
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("threat.greedybear.lookup");
+): Effect.Effect<GreedybearLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchGreedybearLookupGen() {
+    const { kind, value } = classifyIpOrHost(queryRaw);
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("threat.greedybear.lookup");
 
-  const feed = await fetchScannerFeed(signal, ua);
+    const feed = yield* fetchScannerFeedEffect(signal, ua);
 
-  return greedybearLookupSnapshotSchema.parse({
-    query: value,
-    kind,
-    queriedAt: new Date().toISOString(),
-    source: "greedybear.honeynet.org",
-    found: feed.has(value.toLowerCase()),
-    feed: "all/scanner/recent",
+    return greedybearLookupSnapshotSchema.parse({
+      query: value,
+      kind,
+      queriedAt: new Date().toISOString(),
+      source: "greedybear.honeynet.org",
+      found: feed.has(value.toLowerCase()),
+      feed: "all/scanner/recent",
+    });
   });
 }

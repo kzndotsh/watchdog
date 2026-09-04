@@ -1,4 +1,6 @@
-import { fetchFireholLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchFireholLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { fireholLookupInput } from "./input";
@@ -26,12 +28,15 @@ export const fireholLookup = defineCollectCap({
   },
   schema: fireholLookupSnapshotSchema,
   reportLabel: "firehol.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`FireHOL level1 ${ip}`);
-    const snap = await fetchFireholLookup(ip, ctx.signal, { userAgent: UA });
-    ctx.log(`found=${snap.found}`);
-    return { snap, artifactName: `firehol-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* fireholLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`FireHOL level1 ${ip}`);
+      const snap = yield* fetchFireholLookupEffect(ip, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found}`);
+      return { snap, artifactName: `firehol-${ip.replaceAll(":", "-")}.json` };
+    }),
   interpretSnap: interpretFireholLookupReport,
 });

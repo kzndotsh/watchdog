@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   processExtractDraftSchema,
   type EvidenceSnapshot,
@@ -13,6 +15,7 @@ import {
   EVIDENCE_SNAPSHOT_ARTIFACT,
   REPORT_JSON_ARTIFACT,
 } from "@watchdog/schemas";
+import type { ToolsTag } from "@watchdog/tools";
 
 import { draftToOutcome } from "./draft-to-patch-ops";
 
@@ -20,32 +23,34 @@ type UploadFn = (input: {
   bytes: Uint8Array;
   mime: string;
   name?: string;
-}) => Promise<CapArtifact>;
+}) => Effect.Effect<CapArtifact, ToolsTag>;
 
 /** Upload snapshot + report.json + derived.json for any Process Cap run. */
-export async function uploadProcessArtifacts(
+export function uploadProcessArtifacts(
   uploadArtifact: UploadFn,
   snapshot: EvidenceSnapshot,
   draft: ProcessExtractDraft
-): Promise<CapArtifact[]> {
-  const snapshotArt = await uploadArtifact({
-    bytes: new TextEncoder().encode(JSON.stringify(snapshot, null, 2)),
-    mime: "application/json",
-    name: EVIDENCE_SNAPSHOT_ARTIFACT,
+): Effect.Effect<CapArtifact[], ToolsTag> {
+  return Effect.gen(function* uploadProcessArtifactsGen() {
+    const snapshotArt = yield* uploadArtifact({
+      bytes: new TextEncoder().encode(JSON.stringify(snapshot, null, 2)),
+      mime: "application/json",
+      name: EVIDENCE_SNAPSHOT_ARTIFACT,
+    });
+    const reportArt = yield* uploadArtifact({
+      bytes: new TextEncoder().encode(JSON.stringify(draft, null, 2)),
+      mime: "application/json",
+      name: REPORT_JSON_ARTIFACT,
+    });
+    const derivedArt = yield* uploadArtifact({
+      bytes: new TextEncoder().encode(
+        JSON.stringify({ identifiers: draft.identifiers }, null, 2)
+      ),
+      mime: "application/json",
+      name: DERIVED_JSON_ARTIFACT,
+    });
+    return [snapshotArt, reportArt, derivedArt];
   });
-  const reportArt = await uploadArtifact({
-    bytes: new TextEncoder().encode(JSON.stringify(draft, null, 2)),
-    mime: "application/json",
-    name: REPORT_JSON_ARTIFACT,
-  });
-  const derivedArt = await uploadArtifact({
-    bytes: new TextEncoder().encode(
-      JSON.stringify({ identifiers: draft.identifiers }, null, 2)
-    ),
-    mime: "application/json",
-    name: DERIVED_JSON_ARTIFACT,
-  });
-  return [snapshotArt, reportArt, derivedArt];
 }
 
 export interface ProcessEmptySummaries {

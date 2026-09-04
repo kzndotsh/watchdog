@@ -1,7 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import type { ToolsTag } from "../errors/tagged-errors";
 import { extractTitle } from "../html/to-text";
-import { fetchBytes } from "./fetch-bytes";
+import { fetchBytesEffect } from "./fetch-bytes";
 
 export const pageEnrichSnapshotSchema = z.object({
   url: z.string().min(1),
@@ -74,58 +77,62 @@ interface PageEnrichOptions {
   userAgent: string;
   maxBytes?: number;
 }
-export async function fetchPageEnrich(
+export function fetchPageEnrichEffect(
   url: string,
   signal: AbortSignal,
   options: PageEnrichOptions
-): Promise<PageEnrichSnapshot> {
-  const res = await fetchBytes(url, signal, {
-    userAgent: options.userAgent,
-    maxBytes: options.maxBytes ?? 512_000,
-    accept: "text/html,application/xhtml+xml,*/*",
-  });
-  if (!res.ok) {
+): Effect.Effect<PageEnrichSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchPageEnrichGen() {
+    const res = yield* fetchBytesEffect(url, signal, {
+      userAgent: options.userAgent,
+      maxBytes: options.maxBytes ?? 512_000,
+      accept: "text/html,application/xhtml+xml,*/*",
+    });
+    if (!res.ok) {
+      return pageEnrichSnapshotSchema.parse({
+        url,
+        finalUrl: res.finalUrl,
+        queriedAt: new Date().toISOString(),
+        status: res.status,
+        ok: false,
+        title: null,
+        meta: {
+          description: null,
+          ogTitle: null,
+          ogDescription: null,
+          ogImage: null,
+          twitterCard: null,
+          canonical: null,
+        },
+        trackers: [],
+        error: res.error ?? `HTTP ${res.status}`,
+      });
+    }
+
+    const html = new TextDecoder().decode(res.bytes);
+    const trackers = TRACKER_PATTERNS.filter((t) => t.re.test(html)).map(
+      (t) => ({
+        vendor: t.vendor,
+        evidence: t.re.source.slice(0, 80),
+      })
+    );
+
     return pageEnrichSnapshotSchema.parse({
       url,
       finalUrl: res.finalUrl,
       queriedAt: new Date().toISOString(),
       status: res.status,
-      ok: false,
-      title: null,
+      ok: true,
+      title: extractTitle(html) ?? null,
       meta: {
-        description: null,
-        ogTitle: null,
-        ogDescription: null,
-        ogImage: null,
-        twitterCard: null,
-        canonical: null,
+        description: metaContent(html, "description"),
+        ogTitle: metaContent(html, "og:title"),
+        ogDescription: metaContent(html, "og:description"),
+        ogImage: metaContent(html, "og:image"),
+        twitterCard: metaContent(html, "twitter:card"),
+        canonical: linkHref(html, "canonical"),
       },
-      trackers: [],
-      error: res.error ?? `HTTP ${res.status}`,
+      trackers,
     });
-  }
-
-  const html = new TextDecoder().decode(res.bytes);
-  const trackers = TRACKER_PATTERNS.filter((t) => t.re.test(html)).map((t) => ({
-    vendor: t.vendor,
-    evidence: t.re.source.slice(0, 80),
-  }));
-
-  return pageEnrichSnapshotSchema.parse({
-    url,
-    finalUrl: res.finalUrl,
-    queriedAt: new Date().toISOString(),
-    status: res.status,
-    ok: true,
-    title: extractTitle(html) ?? null,
-    meta: {
-      description: metaContent(html, "description"),
-      ogTitle: metaContent(html, "og:title"),
-      ogDescription: metaContent(html, "og:description"),
-      ogImage: metaContent(html, "og:image"),
-      twitterCard: metaContent(html, "twitter:card"),
-      canonical: linkHref(html, "canonical"),
-    },
-    trackers,
   });
 }

@@ -1,14 +1,22 @@
+import { Effect } from "effect";
+
 import {
-  questionsRepo,
   db,
+  questionsRepo,
   type DbExec,
   type QuestionRow,
 } from "@watchdog/db";
 import type { EntityKind, QuestionStatus } from "@watchdog/schemas";
 
-import { DomainError } from "../infra/domain-error";
-import { notifyEntityChanged } from "../infra/events";
-import { assertEntityInCase } from "./patch/guards";
+import { notifyEntityChangedEffect } from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
+import {
+  ConflictError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
+import { assertEntityInCaseEffect } from "./patch/guards";
 
 export interface QuestionRecord {
   id: string;
@@ -52,26 +60,36 @@ const DEFAULT_QUESTIONS: Partial<Record<EntityKind, readonly string[]>> = {
   ],
 };
 
-interface SeedQuestionEntity { id: string; kind: EntityKind }
+interface SeedQuestionEntity {
+  id: string;
+  kind: EntityKind;
+}
 
-export async function seedDefaultQuestions(
+export function seedDefaultQuestionsEffect(
   tx: DbExec,
   row: SeedQuestionEntity
-): Promise<void> {
+): Effect.Effect<void, DomainTag> {
   const texts = DEFAULT_QUESTIONS[row.kind];
-  if (!texts) return;
-  const seeded = await Promise.all(
-    texts.map(async (text) =>
-      questionsRepo.create(tx, {
-        entityId: row.id,
-        text,
-        status: "open",
-      })
-    )
-  );
-  if (seeded.some((question) => question === null)) {
-    throw new DomainError("invalid", `Failed to seed ${row.kind} Questions`);
-  }
+  if (!texts) return Effect.void;
+  return Effect.gen(function* seedDefaultQuestionsGen() {
+    const seeded = yield* Effect.forEach(
+      texts,
+      (text) =>
+        tryDb(() =>
+          questionsRepo.create(tx, {
+            entityId: row.id,
+            text,
+            status: "open",
+          })
+        ),
+      { concurrency: "unbounded" }
+    );
+    if (seeded.some((question) => question === null)) {
+      return yield* new InvalidError({
+        reason: `Failed to seed ${row.kind} Questions`,
+      });
+    }
+  });
 }
 
 function toRecord(row: QuestionRow): QuestionRecord {
@@ -84,99 +102,126 @@ function toRecord(row: QuestionRow): QuestionRecord {
   };
 }
 
-export async function listQuestionsForEntity(
+export function listQuestionsForEntityEffect(
   caseId: string,
   entityId: string
-): Promise<QuestionRecord[]> {
-  await assertEntityInCase(caseId, entityId, db);
-  const rows = await questionsRepo.listForEntity(db, entityId);
-  return rows.map(toRecord);
-}
-
-export async function createQuestion(
-  input: CreateQuestionInput
-): Promise<QuestionRecord> {
-  await assertEntityInCase(input.caseId, input.entityId, db);
-  const row = await questionsRepo.create(db, {
-    entityId: input.entityId,
-    text: input.text,
-    status: "open",
-  });
-  if (!row) throw new DomainError("invalid", "Failed to create Question");
-  notifyEntityChanged(input.caseId);
-  return toRecord(row);
-}
-
-export async function resolveQuestion(
-  input: ResolveQuestionInput
-): Promise<QuestionRecord> {
-  const existing = await questionsRepo.getInCase(
-    db,
-    input.caseId,
-    input.questionId
-  );
-  if (!existing) throw new DomainError("not_found", "Question not found");
-  if (existing.status === "resolved") {
-    throw new DomainError("conflict", "Question already resolved");
-  }
-
-  const row = await questionsRepo.resolve(db, input.questionId, {
-    resolvedNote: input.resolvedNote ?? null,
-  });
-  if (!row) throw new DomainError("invalid", "Failed to resolve Question");
-  notifyEntityChanged(input.caseId);
-  return toRecord(row);
-}
-
-export async function updateQuestion(
-  input: UpdateQuestionInput
-): Promise<QuestionRecord> {
-  const existing = await questionsRepo.getInCase(
-    db,
-    input.caseId,
-    input.questionId
-  );
-  if (!existing) throw new DomainError("not_found", "Question not found");
-
-  if (input.text === undefined && input.resolvedNote === undefined) {
-    throw new DomainError("invalid", "Nothing to update");
-  }
-  if (input.resolvedNote !== undefined && existing.status !== "resolved") {
-    throw new DomainError(
-      "invalid",
-      "Resolved note only applies to resolved Questions"
+): Effect.Effect<QuestionRecord[], DomainTag> {
+  return Effect.gen(function* listQuestionsGen() {
+    yield* assertEntityInCaseEffect(caseId, entityId, db);
+    const rows = yield* tryDb(() =>
+      questionsRepo.listForEntity(db, entityId)
     );
-  }
-
-  const row = await questionsRepo.update(db, input.questionId, {
-    ...(input.text === undefined ? {} : { text: input.text }),
-    ...(input.resolvedNote === undefined
-      ? {}
-      : { resolvedNote: input.resolvedNote }),
+    return rows.map(toRecord);
   });
-  if (!row) throw new DomainError("invalid", "Failed to update Question");
-  notifyEntityChanged(input.caseId);
-  return toRecord(row);
 }
 
-export async function reopenQuestion(
-  input: ReopenQuestionInput
-): Promise<QuestionRecord> {
-  const existing = await questionsRepo.getInCase(
-    db,
-    input.caseId,
-    input.questionId
-  );
-  if (!existing) throw new DomainError("not_found", "Question not found");
-  if (existing.status === "open") {
-    throw new DomainError("conflict", "Question is already open");
-  }
-
-  const row = await questionsRepo.update(db, input.questionId, {
-    status: "open",
-    resolvedNote: null,
+export function createQuestionEffect(
+  input: CreateQuestionInput
+): Effect.Effect<QuestionRecord, DomainTag> {
+  return Effect.gen(function* createQuestionGen() {
+    yield* assertEntityInCaseEffect(input.caseId, input.entityId, db);
+    const row = yield* tryDb(() =>
+      questionsRepo.create(db, {
+        entityId: input.entityId,
+        text: input.text,
+        status: "open",
+      })
+    );
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to create Question" });
+    }
+    yield* notifyEntityChangedEffect(input.caseId);
+    return toRecord(row);
   });
-  if (!row) throw new DomainError("invalid", "Failed to reopen Question");
-  notifyEntityChanged(input.caseId);
-  return toRecord(row);
+}
+
+export function resolveQuestionEffect(
+  input: ResolveQuestionInput
+): Effect.Effect<QuestionRecord, DomainTag> {
+  return Effect.gen(function* resolveQuestionGen() {
+    const existing = yield* tryDb(() =>
+      questionsRepo.getInCase(db, input.caseId, input.questionId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Question not found" });
+    }
+    if (existing.status === "resolved") {
+      return yield* new ConflictError({ reason: "Question already resolved" });
+    }
+
+    const row = yield* tryDb(() =>
+      questionsRepo.resolve(db, input.questionId, {
+        resolvedNote: input.resolvedNote ?? null,
+      })
+    );
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to resolve Question" });
+    }
+    yield* notifyEntityChangedEffect(input.caseId);
+    return toRecord(row);
+  });
+}
+
+export function updateQuestionEffect(
+  input: UpdateQuestionInput
+): Effect.Effect<QuestionRecord, DomainTag> {
+  return Effect.gen(function* updateQuestionGen() {
+    const existing = yield* tryDb(() =>
+      questionsRepo.getInCase(db, input.caseId, input.questionId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Question not found" });
+    }
+
+    if (input.text === undefined && input.resolvedNote === undefined) {
+      return yield* new InvalidError({ reason: "Nothing to update" });
+    }
+    if (input.resolvedNote !== undefined && existing.status !== "resolved") {
+      return yield* new InvalidError({
+        reason: "Resolved note only applies to resolved Questions",
+      });
+    }
+
+    const row = yield* tryDb(() =>
+      questionsRepo.update(db, input.questionId, {
+        ...(input.text === undefined ? {} : { text: input.text }),
+        ...(input.resolvedNote === undefined
+          ? {}
+          : { resolvedNote: input.resolvedNote }),
+      })
+    );
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to update Question" });
+    }
+    yield* notifyEntityChangedEffect(input.caseId);
+    return toRecord(row);
+  });
+}
+
+export function reopenQuestionEffect(
+  input: ReopenQuestionInput
+): Effect.Effect<QuestionRecord, DomainTag> {
+  return Effect.gen(function* reopenQuestionGen() {
+    const existing = yield* tryDb(() =>
+      questionsRepo.getInCase(db, input.caseId, input.questionId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Question not found" });
+    }
+    if (existing.status === "open") {
+      return yield* new ConflictError({ reason: "Question is already open" });
+    }
+
+    const row = yield* tryDb(() =>
+      questionsRepo.update(db, input.questionId, {
+        status: "open",
+        resolvedNote: null,
+      })
+    );
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to reopen Question" });
+    }
+    yield* notifyEntityChangedEffect(input.caseId);
+    return toRecord(row);
+  });
 }

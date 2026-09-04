@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 import {
-  deleteCredential,
-  listCredentialSlots,
-  putCredentialSlot,
+  deleteCredentialEffect,
+  listCredentialSlotsEffect,
+  putCredentialSlotEffect,
 } from "@watchdog/core";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import { credentialSlotSchema } from "../schemas";
 
 export const list = authed
@@ -18,10 +18,8 @@ export const list = authed
     tags: ["credentials"],
   })
   .output(z.array(credentialSlotSchema))
-  .handler(
-    withDomainError(async ({ context }) =>
-      listCredentialSlots(context.actor.userId)
-    )
+  .handler(async ({ context }) =>
+    runApp(listCredentialSlotsEffect(context.actor.userId))
   );
 
 export const put = authed
@@ -39,9 +37,9 @@ export const put = authed
     })
   )
   .output(credentialSlotSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      putCredentialSlot({
+  .handler(async ({ input, context }) =>
+    runApp(
+      putCredentialSlotEffect({
         userId: context.actor.userId,
         name: input.name,
         secret: input.secret,
@@ -59,9 +57,7 @@ export const remove = authed
   })
   .input(z.object({ name: z.string().min(1) }))
   .output(z.object({ ok: z.literal(true) }))
-  .handler(
-    withDomainError(async ({ input, context }) => {
-      await deleteCredential(context.actor.userId, input.name);
-      return { ok: true as const };
-    })
-  );
+  .handler(async ({ input, context }) => {
+    await runApp(deleteCredentialEffect(context.actor.userId, input.name));
+    return { ok: true as const };
+  });

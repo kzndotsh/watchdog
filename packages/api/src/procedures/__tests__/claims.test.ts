@@ -1,19 +1,20 @@
 import { createRouterClient } from "@orpc/server";
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listClaimsForEntity, createClaim } = vi.hoisted(() => ({
-  listClaimsForEntity: vi.fn(),
-  createClaim: vi.fn(),
+const { listClaimsForEntityEffect, createClaimEffect } = vi.hoisted(() => ({
+  listClaimsForEntityEffect: vi.fn(),
+  createClaimEffect: vi.fn(),
 }));
 
 vi.mock("@watchdog/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core")>();
   return {
     ...actual,
-    listClaimsForEntity,
-    createClaim,
-    updateClaim: vi.fn(),
-    retractClaim: vi.fn(),
+    listClaimsForEntityEffect,
+    createClaimEffect,
+    updateClaimEffect: vi.fn(),
+    retractClaimEffect: vi.fn(),
   };
 });
 
@@ -37,7 +38,7 @@ const claimRow = {
 
 describe("claims procedures", () => {
   it("lists claims for an entity", async () => {
-    listClaimsForEntity.mockResolvedValueOnce([claimRow]);
+    listClaimsForEntityEffect.mockReturnValueOnce(Effect.succeed([claimRow]));
 
     const client = createRouterClient(
       { list },
@@ -59,11 +60,13 @@ describe("claims procedures", () => {
   });
 
   it("creates claims through graph child write custody", async () => {
-    createClaim.mockResolvedValueOnce({
-      ...claimRow,
-      id: "00000000-0000-4000-8000-000000000011",
-      text: "New claim",
-    });
+    createClaimEffect.mockReturnValueOnce(
+      Effect.succeed({
+        ...claimRow,
+        id: "00000000-0000-4000-8000-000000000011",
+        text: "New claim",
+      })
+    );
 
     const client = createRouterClient(
       { create },

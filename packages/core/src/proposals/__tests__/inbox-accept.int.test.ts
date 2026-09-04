@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   DomainError,
-  acceptProposal,
-  createAgentProposal,
-  rejectProposal,
+  acceptProposalEffect,
+  createAgentProposalEffect,
+  rejectProposalEffect,
+  runDomain,
 } from "@watchdog/core";
 import {
   claimsRepo,
@@ -43,12 +44,14 @@ describe("acceptProposal", () => {
       buildClaimCreateOp(entity.id, "Ada observed a host", { id: testId(30) }),
     ]);
 
-    const accepted = await acceptProposal({
-      caseId: cased.id,
-      proposalId,
-      actorId: TEST_ACTOR_ID,
-      confidence: "unverified",
-    });
+    const accepted = await runDomain(
+      acceptProposalEffect({
+        caseId: cased.id,
+        proposalId,
+        actorId: TEST_ACTOR_ID,
+        confidence: "unverified",
+      })
+    );
     expect(accepted.status).toBe("accepted");
 
     const claims = await claimsRepo.listForEntity(db, entity.id);
@@ -63,12 +66,14 @@ describe("acceptProposal", () => {
     ]);
 
     await expect(
-      acceptProposal({
-        caseId: cased.id,
-        proposalId,
-        actorId: TEST_ACTOR_ID,
-        confidence: "confirmed",
-      })
+      runDomain(
+        acceptProposalEffect({
+          caseId: cased.id,
+          proposalId,
+          actorId: TEST_ACTOR_ID,
+          confidence: "confirmed",
+        })
+      )
     ).rejects.toThrow(/confirmed requires/i);
 
     const row = await proposalsRepo.getInCase(db, cased.id, proposalId);
@@ -99,12 +104,14 @@ describe("acceptProposal", () => {
       }),
     ]);
 
-    const accepted = await acceptProposal({
-      caseId: cased.id,
-      proposalId,
-      actorId: TEST_ACTOR_ID,
-      confidence: "unverified",
-    });
+    const accepted = await runDomain(
+      acceptProposalEffect({
+        caseId: cased.id,
+        proposalId,
+        actorId: TEST_ACTOR_ID,
+        confidence: "unverified",
+      })
+    );
     expect(accepted.status).toBe("accepted");
 
     const onB = await identifiersRepo.listForEntity(db, entityB.id);
@@ -120,12 +127,14 @@ describe("acceptProposal", () => {
       buildClaimCreateOp(entity.id, "Will reject", { id: testId(37) }),
     ]);
 
-    const rejected = await rejectProposal({
-      caseId: cased.id,
-      proposalId,
-      actorId: TEST_ACTOR_ID,
-      reason: "not this",
-    });
+    const rejected = await runDomain(
+      rejectProposalEffect({
+        caseId: cased.id,
+        proposalId,
+        actorId: TEST_ACTOR_ID,
+        reason: "not this",
+      })
+    );
     expect(rejected.status).toBe("rejected");
   });
 
@@ -137,11 +146,13 @@ describe("acceptProposal", () => {
     });
     const { id: proposalId } = await seedProposal(db, cased.id, [op]);
 
-    await rejectProposal({
-      caseId: cased.id,
-      proposalId,
-      actorId: TEST_ACTOR_ID,
-    });
+    await runDomain(
+      rejectProposalEffect({
+        caseId: cased.id,
+        proposalId,
+        actorId: TEST_ACTOR_ID,
+      })
+    );
 
     const fp = fingerprintPatchOp(op);
     expect(fp).toBeTruthy();
@@ -154,13 +165,17 @@ describe("acceptProposal", () => {
     expect(stored).toContain(fp);
 
     await expect(
-      createAgentProposal({
-        caseId: cased.id,
-        actorId: TEST_ACTOR_ID,
-        patch: [
-          buildClaimCreateOp(entity.id, "Suppressed later", { id: testId(60) }),
-        ],
-      })
+      runDomain(
+        createAgentProposalEffect({
+          caseId: cased.id,
+          actorId: TEST_ACTOR_ID,
+          patch: [
+            buildClaimCreateOp(entity.id, "Suppressed later", {
+              id: testId(60),
+            }),
+          ],
+        })
+      )
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "conflict"
     );
@@ -177,19 +192,23 @@ describe("acceptProposal", () => {
     const { id: proposalId } = await seedProposal(db, cased.id, [
       buildClaimCreateOp(entity.id, "Once", { id: testId(61) }),
     ]);
-    await acceptProposal({
-      caseId: cased.id,
-      proposalId,
-      actorId: TEST_ACTOR_ID,
-      confidence: "unverified",
-    });
-    await expect(
-      acceptProposal({
+    await runDomain(
+      acceptProposalEffect({
         caseId: cased.id,
         proposalId,
         actorId: TEST_ACTOR_ID,
         confidence: "unverified",
       })
+    );
+    await expect(
+      runDomain(
+        acceptProposalEffect({
+          caseId: cased.id,
+          proposalId,
+          actorId: TEST_ACTOR_ID,
+          confidence: "unverified",
+        })
+      )
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "conflict"
     );
@@ -204,13 +223,15 @@ describe("acceptProposal", () => {
       buildClaimCreateOp(entity.id, "Cited claim", { id: claimId }),
     ]);
 
-    const accepted = await acceptProposal({
-      caseId: cased.id,
-      proposalId,
-      actorId: TEST_ACTOR_ID,
-      confidence: "confirmed",
-      sharedEvidenceIds: [evidence.id],
-    });
+    const accepted = await runDomain(
+      acceptProposalEffect({
+        caseId: cased.id,
+        proposalId,
+        actorId: TEST_ACTOR_ID,
+        confidence: "confirmed",
+        sharedEvidenceIds: [evidence.id],
+      })
+    );
     expect(accepted.status).toBe("accepted");
     const links = await evidenceLinksRepo.listForClaims(db, [claimId]);
     expect(links.get(claimId)).toEqual([evidence.id]);
@@ -224,13 +245,15 @@ describe("acceptProposal", () => {
       buildClaimCreateOp(entity.id, "Attested", { id: claimId }),
     ]);
 
-    await acceptProposal({
-      caseId: cased.id,
-      proposalId,
-      actorId: TEST_ACTOR_ID,
-      confidence: "unverified",
-      attestationText: "I saw this in WHOIS",
-    });
+    await runDomain(
+      acceptProposalEffect({
+        caseId: cased.id,
+        proposalId,
+        actorId: TEST_ACTOR_ID,
+        confidence: "unverified",
+        attestationText: "I saw this in WHOIS",
+      })
+    );
 
     const evidence = await evidenceRepo.listForCase(db, cased.id);
     const note = evidence.find((row) => row.text === "I saw this in WHOIS");
@@ -255,8 +278,8 @@ describe("acceptProposal", () => {
         confidence: "unverified" as const,
       };
       const results = await Promise.allSettled([
-        acceptProposal(input),
-        acceptProposal(input),
+        runDomain(acceptProposalEffect(input)),
+        runDomain(acceptProposalEffect(input)),
       ]);
       const fulfilled = results.filter((r) => r.status === "fulfilled");
       const rejected = results.filter((r) => r.status === "rejected");
@@ -282,17 +305,21 @@ describe("acceptProposal", () => {
       ]);
 
       const results = await Promise.allSettled([
-        acceptProposal({
-          caseId: cased.id,
-          proposalId,
-          actorId: TEST_ACTOR_ID,
-          confidence: "unverified",
-        }),
-        rejectProposal({
-          caseId: cased.id,
-          proposalId,
-          actorId: TEST_ACTOR_ID,
-        }),
+        runDomain(
+          acceptProposalEffect({
+            caseId: cased.id,
+            proposalId,
+            actorId: TEST_ACTOR_ID,
+            confidence: "unverified",
+          })
+        ),
+        runDomain(
+          rejectProposalEffect({
+            caseId: cased.id,
+            proposalId,
+            actorId: TEST_ACTOR_ID,
+          })
+        ),
       ]);
       const fulfilled = results.filter((r) => r.status === "fulfilled");
       expect(fulfilled).toHaveLength(1);

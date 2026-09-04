@@ -16,15 +16,31 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
 | Dev | `just dev` · `pnpm dev:web` · `pnpm dev:worker` |
 | Lint / fix | `pnpm check` · `pnpm fix` |
-| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix + agents + agent-skills · pre-push: typecheck + web DS |
+| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix + agents + docs + effect-edges + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
 | Caps / client regen | `pnpm generate:caps` · `pnpm generate:client` |
 | AGENTS gate | `pnpm check:agents` · `pnpm check:agents:strict` |
-| Docs gate | `pnpm check:docs` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` |
+| Docs gate | `pnpm check:docs` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` |
 | Skills gate | `pnpm validate:agents` |
 
 Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0`. Package manager: **pnpm** only.
+
+## Learning more about Effect
+
+This repository uses the Effect Typescript library.
+
+Before writing any Effect code, first read `node_modules/effect/AGENTS.md` **completely**, and follow the links in the file when required.
+
+If you need to learn more about particular Effect apis and concepts that the guide doesn't cover, search through the source code in `node_modules/effect/src`.
+
+Watchdog runtime conventions (run* edges, JobFibers, Cap `run`, browser policy) are separate: load `/effect` or the nearest package `AGENTS.md`.
+
+## Vendored Repositories
+
+| Path | Role |
+| --- | --- |
+| `repos/effect` | Optional local Effect clone (gitignored). Prefer `node_modules/effect/AGENTS.md` + `node_modules/effect/src` for API guidance. Do not import from `repos/effect`. |
 
 ## Sub-AGENTS directory
 
@@ -32,7 +48,7 @@ Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0`. Packa
 
 ## Agent Skills
 
-Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per-package (e.g. [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/)) — readable by Cursor, Claude Code, and Codex. Load explicitly by name (`/audit-contract`, `/check-gates`, `/create-cap`); do not rely on auto-selection. `pnpm validate:agents` gates their structure and frontmatter in CI. See [`.cursor/README.md`](.cursor/README.md) for the full catalog and the retirement criterion.
+Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per-package (e.g. [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/)) — readable by Cursor, Claude Code, and Codex. Load explicitly by name (`/audit-contract`, `/check-gates`, `/create-cap`, `/effect`); do not rely on auto-selection. `pnpm validate:agents` gates their structure and frontmatter in CI. See [`.cursor/README.md`](.cursor/README.md) for the full catalog and the retirement criterion.
 
 ## Where to Look
 

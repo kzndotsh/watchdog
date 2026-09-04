@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
@@ -10,11 +11,11 @@ import {
 } from "@watchdog/test-kit/db";
 
 import {
-  reconcileStaleJobs,
-  reconcileStuckPlaybookRuns,
+  reconcileStaleJobsEffect,
+  reconcileStuckPlaybookRunsEffect,
 } from "../reconcile-stale-jobs.ts";
-import { runFailedPath, runSucceededPath } from "../run-paths.ts";
-import { advancePlaybookRun } from "../stages/chain.ts";
+import { runFailedPathEffect, runSucceededPathEffect } from "../run-paths.ts";
+import { advancePlaybookRunEffect } from "../stages/chain.ts";
 import type { CollectResult } from "../stages/collect.ts";
 import { createJobLog } from "../stages/helpers.ts";
 import type { PreflightState } from "../stages/preflight.ts";
@@ -41,8 +42,7 @@ function fakeCollected(
     reclaim: false,
     runtime: {
       scratchDir: "/tmp",
-      controller: new AbortController(),
-      timer: setTimeout(() => {}, 60_000),
+      signal: new AbortController().signal,
       jobLog,
       evidenceSnapshot: undefined,
       linkedSource: undefined,
@@ -84,7 +84,7 @@ describe("reconcileStaleJobs", () => {
       updatedAt: new Date(Date.now() - 48 * 3600 * 1000),
     });
 
-    const failedCount = await reconcileStaleJobs();
+    const failedCount = await Effect.runPromise(reconcileStaleJobsEffect());
     expect(failedCount).toBeGreaterThan(0);
 
     const row = await jobsRepo.get(db, job.id);
@@ -99,7 +99,7 @@ describe("reconcileStaleJobs", () => {
     });
     await jobsRepo.update(db, job.id, { updatedAt: new Date() });
 
-    const failedCount = await reconcileStaleJobs();
+    const failedCount = await Effect.runPromise(reconcileStaleJobsEffect());
     expect(failedCount).toBe(0);
     const row = await jobsRepo.get(db, job.id);
     expect(row?.status).toBe("running");
@@ -125,7 +125,9 @@ describe("reconcileStuckPlaybookRuns", () => {
       input: { host: "example.com" },
     });
 
-    const recovered = await reconcileStuckPlaybookRuns();
+    const recovered = await Effect.runPromise(
+      reconcileStuckPlaybookRunsEffect()
+    );
     expect(recovered).toBe(1);
 
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
@@ -148,7 +150,9 @@ describe("reconcileStuckPlaybookRuns", () => {
       input: { host: "example.com" },
     });
 
-    const recovered = await reconcileStuckPlaybookRuns();
+    const recovered = await Effect.runPromise(
+      reconcileStuckPlaybookRunsEffect()
+    );
     expect(recovered).toBe(0);
   });
 });
@@ -162,12 +166,14 @@ describe("runFailedPath", () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "queued" });
 
-    await runFailedPath({
-      jobId: job.id,
-      error: new Error("boom"),
-      jobLog: createJobLog(),
-      playbookRunId: job.playbookRunId,
-    });
+    await Effect.runPromise(
+      runFailedPathEffect({
+        jobId: job.id,
+        error: new Error("boom"),
+        jobLog: createJobLog(),
+        playbookRunId: job.playbookRunId,
+      })
+    );
 
     const row = await jobsRepo.get(db, job.id);
     expect(row?.status).toBe("failed");
@@ -195,12 +201,14 @@ describe("runFailedPath", () => {
       playbookStep: 1,
     });
 
-    await runFailedPath({
-      jobId: failed.id,
-      error: new Error("enrich failed"),
-      jobLog: createJobLog(),
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      runFailedPathEffect({
+        jobId: failed.id,
+        error: new Error("enrich failed"),
+        jobLog: createJobLog(),
+        playbookRunId: run.id,
+      })
+    );
 
     const sibling = await jobsRepo.get(db, blocked.id);
     expect(sibling?.status).toBe("cancelled");
@@ -220,15 +228,16 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog);
 
-    await runSucceededPath({
-      jobId: job.id,
-      state: await dnsState(job.id),
-      collected,
-      resultSummary: "ok",
-      interpretError: null,
-      jobLog,
-    });
-    clearTimeout(collected.runtime.timer);
+    await Effect.runPromise(
+      runSucceededPathEffect({
+        jobId: job.id,
+        state: await dnsState(job.id),
+        collected,
+        resultSummary: "ok",
+        interpretError: null,
+        jobLog,
+      })
+    );
 
     const hit = await capCacheRepo.lookupActive(
       db,
@@ -246,15 +255,16 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog);
 
-    await runSucceededPath({
-      jobId: job.id,
-      state: await dnsState(job.id),
-      collected,
-      resultSummary: null,
-      interpretError: "bad report",
-      jobLog,
-    });
-    clearTimeout(collected.runtime.timer);
+    await Effect.runPromise(
+      runSucceededPathEffect({
+        jobId: job.id,
+        state: await dnsState(job.id),
+        collected,
+        resultSummary: null,
+        interpretError: "bad report",
+        jobLog,
+      })
+    );
 
     const hit = await capCacheRepo.lookupActive(
       db,
@@ -272,15 +282,16 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog, { fromCache: true });
 
-    await runSucceededPath({
-      jobId: job.id,
-      state: await dnsState(job.id),
-      collected,
-      resultSummary: "ok",
-      interpretError: null,
-      jobLog,
-    });
-    clearTimeout(collected.runtime.timer);
+    await Effect.runPromise(
+      runSucceededPathEffect({
+        jobId: job.id,
+        state: await dnsState(job.id),
+        collected,
+        resultSummary: "ok",
+        interpretError: null,
+        jobLog,
+      })
+    );
 
     const hit = await capCacheRepo.lookupActive(
       db,
@@ -298,15 +309,16 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog, { reclaim: true });
 
-    await runSucceededPath({
-      jobId: job.id,
-      state: await dnsState(job.id),
-      collected,
-      resultSummary: "ok",
-      interpretError: null,
-      jobLog,
-    });
-    clearTimeout(collected.runtime.timer);
+    await Effect.runPromise(
+      runSucceededPathEffect({
+        jobId: job.id,
+        state: await dnsState(job.id),
+        collected,
+        resultSummary: "ok",
+        interpretError: null,
+        jobLog,
+      })
+    );
 
     const hit = await capCacheRepo.lookupActive(
       db,
@@ -343,15 +355,16 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog);
 
-    await runSucceededPath({
-      jobId: first.id,
-      state: await dnsState(first.id),
-      collected,
-      resultSummary: "ok",
-      interpretError: null,
-      jobLog,
-    });
-    clearTimeout(collected.runtime.timer);
+    await Effect.runPromise(
+      runSucceededPathEffect({
+        jobId: first.id,
+        state: await dnsState(first.id),
+        collected,
+        resultSummary: "ok",
+        interpretError: null,
+        jobLog,
+      })
+    );
 
     const next = await jobsRepo.get(db, blocked.id);
     expect(next?.status).toBe("queued");
@@ -373,15 +386,16 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog);
 
-    await runSucceededPath({
-      jobId: first.id,
-      state: await dnsState(first.id),
-      collected,
-      resultSummary: "ok",
-      interpretError: null,
-      jobLog,
-    });
-    clearTimeout(collected.runtime.timer);
+    await Effect.runPromise(
+      runSucceededPathEffect({
+        jobId: first.id,
+        state: await dnsState(first.id),
+        collected,
+        resultSummary: "ok",
+        interpretError: null,
+        jobLog,
+      })
+    );
 
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
     const next = members.filter((j) => j.playbookStep === 1);
@@ -391,7 +405,7 @@ describe("runSucceededPath", () => {
   });
 });
 
-describe("advancePlaybookRun", () => {
+describe("advancePlaybookRunEffect", () => {
   beforeEach(async () => {
     await resetTestDb();
   });
@@ -410,10 +424,12 @@ describe("advancePlaybookRun", () => {
       input: { host: "example.com" },
     });
 
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
 
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
     const next = members.filter((j) => j.playbookStep === 1);
@@ -444,10 +460,12 @@ describe("advancePlaybookRun", () => {
       playbookStep: 1,
     });
 
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
 
     const next = await jobsRepo.get(db, blocked.id);
     expect(next?.status).toBe("queued");
@@ -470,14 +488,18 @@ describe("advancePlaybookRun", () => {
       input: { host: "example.com" },
     });
 
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
 
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
     expect(members.filter((j) => j.playbookStep === 1)).toHaveLength(1);
@@ -502,10 +524,12 @@ describe("advancePlaybookRun", () => {
       playbookStep: 1,
     });
 
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
 
     const cancelled = await jobsRepo.get(db, blocked.id);
     const finishedRun = await playbookRunsRepo.get(db, run.id);
@@ -534,10 +558,12 @@ describe("advancePlaybookRun", () => {
       input: {},
     });
 
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
 
     const harvest = await jobsRepo.get(db, blocked.id);
     expect(harvest?.status).toBe("queued");
@@ -565,10 +591,12 @@ describe("advancePlaybookRun", () => {
       input: {},
     });
 
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
 
     const lookup = await jobsRepo.get(db, blocked.id);
     expect(lookup?.status).toBe("queued");
@@ -590,10 +618,12 @@ describe("advancePlaybookRun", () => {
       },
     });
 
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
 
     let members = await jobsRepo.listForPlaybookRun(db, run.id);
     const dns = members.filter((j) => j.capabilityId === "network.dns.lookup");
@@ -606,10 +636,12 @@ describe("advancePlaybookRun", () => {
     expect(firstDns).toBeDefined();
     if (firstDns === undefined) throw new TypeError("expected DNS job");
     await jobsRepo.update(db, firstDns.id, { status: "succeeded" });
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
     const afterFirst = await playbookRunsRepo.get(db, run.id);
     expect(afterFirst?.status).toBe("running");
     members = await jobsRepo.listForPlaybookRun(db, run.id);
@@ -629,10 +661,12 @@ describe("advancePlaybookRun", () => {
       playbookStep: 0,
       handoff: { host: hosts },
     });
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: many.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: many.id,
+      })
+    );
     const manyMembers = await jobsRepo.listForPlaybookRun(db, many.id);
     expect(
       manyMembers.filter((j) => j.capabilityId === "network.dns.lookup")
@@ -648,10 +682,12 @@ describe("advancePlaybookRun", () => {
       playbookStep: 0,
       handoff: { host: [] },
     });
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: emptyRun.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: emptyRun.id,
+      })
+    );
     const emptyMembers = await jobsRepo.listForPlaybookRun(db, emptyRun.id);
     const emptyFinished = await playbookRunsRepo.get(db, emptyRun.id);
     expect(
@@ -672,10 +708,12 @@ describe("advancePlaybookRun", () => {
       playbookStep: 0,
       handoff: { host: ["a.example.com", "b.example.com"] },
     });
-    await advancePlaybookRun({
-      caseId: cased.id,
-      playbookRunId: run.id,
-    });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({
+        caseId: cased.id,
+        playbookRunId: run.id,
+      })
+    );
     const afterFan = await jobsRepo.listForPlaybookRun(db, run.id);
     const dns = afterFan.filter((j) => j.capabilityId === "network.dns.lookup");
     expect(dns).toHaveLength(2);
@@ -686,7 +724,9 @@ describe("advancePlaybookRun", () => {
       throw new TypeError("expected two DNS jobs");
     }
     await jobsRepo.update(db, failed.id, { status: "failed" });
-    await advancePlaybookRun({ playbookRunId: run.id });
+    await Effect.runPromise(
+      advancePlaybookRunEffect({ playbookRunId: run.id })
+    );
     const siblingRow = await jobsRepo.get(db, sibling.id);
     expect(siblingRow?.status).toBe("queued");
   });

@@ -1,3 +1,6 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
+
 import type { CapArtifact } from "@watchdog/cap-sdk";
 import {
   decodeHtml,
@@ -8,9 +11,11 @@ import {
   htmlToText,
   isHtml,
   isMarkdown,
+  type FetchBytesResult,
+  type ToolsTag,
 } from "@watchdog/tools";
 
-import { fetchBytes } from "./fetch-bytes";
+import { fetchBytesEffect } from "./fetch-bytes";
 import {
   ACCEPT_MARKDOWN_FIRST,
   type IngestResult,
@@ -21,7 +26,7 @@ type UploadFn = (input: {
   bytes: Uint8Array;
   mime: string;
   name?: string;
-}) => Promise<CapArtifact>;
+}) => Effect.Effect<CapArtifact, ToolsTag>;
 
 interface IngestRemotePageOpts {
   fetchUrl: string;
@@ -36,10 +41,8 @@ interface IngestRemotePageOpts {
   stepExtras?: Partial<StepResult>;
 }
 
-type FetchedPage = Awaited<ReturnType<typeof fetchBytes>>;
-
 interface IngestContext {
-  fetched: FetchedPage;
+  fetched: FetchBytesResult;
   step: StepResult;
   label: IngestRemotePageOpts["label"];
   linkBaseUrl: string;
@@ -48,7 +51,7 @@ interface IngestContext {
 }
 
 function buildStep(
-  fetched: FetchedPage,
+  fetched: FetchBytesResult,
   stepExtras?: Partial<StepResult>
 ): StepResult {
   return {
@@ -67,136 +70,150 @@ function buildStep(
   };
 }
 
-async function ingestMarkdownContent(
+function ingestMarkdownContent(
   ctx: IngestContext
-): Promise<IngestResult> {
-  const { fetched, step, label, uploadArtifact, log } = ctx;
-  const md = decodeHtml(fetched.bytes).slice(0, 200_000);
-  step.ok = fetched.ok;
-  step.mdMethod = "native_markdown";
-  const artifacts = [
-    await uploadArtifact({
-      bytes: new TextEncoder().encode(md),
-      mime: "text/markdown; charset=utf-8",
-      name: `${label}.md`,
-    }),
-  ];
-  log(
-    `${label} native markdown status=${fetched.status} tokens~${fetched.markdownTokensHint ?? "?"}`
-  );
-  return {
-    step,
-    text: md,
-    urls: extractOutboundFromMarkdown(md),
-    emails: [],
-    artifacts,
-  };
+): Effect.Effect<IngestResult, ToolsTag> {
+  return Effect.gen(function* ingestMarkdownContentGen() {
+    const { fetched, step, label, uploadArtifact, log } = ctx;
+    const md = decodeHtml(fetched.bytes).slice(0, 200_000);
+    step.ok = fetched.ok;
+    step.mdMethod = "native_markdown";
+    const artifacts = [
+      yield* uploadArtifact({
+        bytes: new TextEncoder().encode(md),
+        mime: "text/markdown; charset=utf-8",
+        name: `${label}.md`,
+      }),
+    ];
+    log(
+      `${label} native markdown status=${fetched.status} tokens~${fetched.markdownTokensHint ?? "?"}`
+    );
+    return {
+      step,
+      text: md,
+      urls: extractOutboundFromMarkdown(md),
+      emails: [],
+      artifacts,
+    };
+  });
 }
 
-async function ingestHtmlContent(ctx: IngestContext): Promise<IngestResult> {
-  const { fetched, step, label, linkBaseUrl, uploadArtifact, log } = ctx;
-  const html = decodeHtml(fetched.bytes);
-  const title = extractTitle(html);
-  const text = htmlToText(html);
-  const fromHtml = extractOutboundFromHtml(html, linkBaseUrl);
-  step.ok = fetched.ok;
-  step.mdMethod = "html_convert";
-  const artifacts = [
-    await uploadArtifact({
-      bytes: fetched.bytes,
-      mime: "text/html; charset=utf-8",
-      name: `${label}.html`,
-    }),
-    await uploadArtifact({
-      bytes: new TextEncoder().encode(htmlToMarkdownish(html, title)),
-      mime: "text/markdown; charset=utf-8",
-      name: `${label}.md`,
-    }),
-  ];
-  log(
-    `${label} html→md status=${fetched.status} bytes=${fetched.bytes.byteLength} links=${fromHtml.urls.length}`
-  );
-  return {
-    step,
-    text,
-    ...(title !== undefined && title !== "" ? { title } : {}),
-    urls: fromHtml.urls,
-    emails: fromHtml.emails,
-    artifacts,
-  };
-}
-
-async function ingestPlainBinaryContent(
+function ingestHtmlContent(
   ctx: IngestContext
-): Promise<IngestResult> {
-  const { fetched, step, label, uploadArtifact, log } = ctx;
-  const text = decodeHtml(fetched.bytes).slice(0, 200_000);
-  step.ok = fetched.ok;
-  step.mdMethod = "plain_text";
-  const artifacts = [
-    await uploadArtifact({
-      bytes: fetched.bytes,
-      mime:
-        fetched.contentType?.split(";")[0]?.trim() ??
-        "application/octet-stream",
-      name: `${label}.bin`,
-    }),
-  ];
-  log(
-    `${label} binary/text status=${fetched.status} bytes=${fetched.bytes.byteLength}`
-  );
-  return { step, text, urls: [], emails: [], artifacts };
+): Effect.Effect<IngestResult, ToolsTag> {
+  return Effect.gen(function* ingestHtmlContentGen() {
+    const { fetched, step, label, linkBaseUrl, uploadArtifact, log } = ctx;
+    const html = decodeHtml(fetched.bytes);
+    const title = extractTitle(html);
+    const text = htmlToText(html);
+    const fromHtml = extractOutboundFromHtml(html, linkBaseUrl);
+    step.ok = fetched.ok;
+    step.mdMethod = "html_convert";
+    const artifacts = [
+      yield* uploadArtifact({
+        bytes: fetched.bytes,
+        mime: "text/html; charset=utf-8",
+        name: `${label}.html`,
+      }),
+      yield* uploadArtifact({
+        bytes: new TextEncoder().encode(htmlToMarkdownish(html, title)),
+        mime: "text/markdown; charset=utf-8",
+        name: `${label}.md`,
+      }),
+    ];
+    log(
+      `${label} html→md status=${fetched.status} bytes=${fetched.bytes.byteLength} links=${fromHtml.urls.length}`
+    );
+    return {
+      step,
+      text,
+      ...(title !== undefined && title !== "" ? { title } : {}),
+      urls: fromHtml.urls,
+      emails: fromHtml.emails,
+      artifacts,
+    };
+  });
 }
 
-export async function ingestRemotePage(
+function ingestPlainBinaryContent(
+  ctx: IngestContext
+): Effect.Effect<IngestResult, ToolsTag> {
+  return Effect.gen(function* ingestPlainBinaryContentGen() {
+    const { fetched, step, label, uploadArtifact, log } = ctx;
+    const text = decodeHtml(fetched.bytes).slice(0, 200_000);
+    step.ok = fetched.ok;
+    step.mdMethod = "plain_text";
+    const artifacts = [
+      yield* uploadArtifact({
+        bytes: fetched.bytes,
+        mime:
+          fetched.contentType?.split(";")[0]?.trim() ??
+          "application/octet-stream",
+        name: `${label}.bin`,
+      }),
+    ];
+    log(
+      `${label} binary/text status=${fetched.status} bytes=${fetched.bytes.byteLength}`
+    );
+    return { step, text, urls: [], emails: [], artifacts };
+  });
+}
+
+export function ingestRemotePageEffect(
   opts: IngestRemotePageOpts
-): Promise<IngestResult> {
-  const {
-    fetchUrl,
-    linkBaseUrl,
-    signal,
-    label,
-    uploadArtifact,
-    log,
-    allowPlainBinary,
-    stepExtras,
-  } = opts;
+): Effect.Effect<IngestResult, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* ingestRemotePageGen() {
+    const {
+      fetchUrl,
+      linkBaseUrl,
+      signal,
+      label,
+      uploadArtifact,
+      log,
+      allowPlainBinary,
+      stepExtras,
+    } = opts;
 
-  const fetched = await fetchBytes(fetchUrl, signal, ACCEPT_MARKDOWN_FIRST);
-  const step = buildStep(fetched, stepExtras);
-  const empty: IngestResult = {
-    step,
-    text: "",
-    urls: [],
-    emails: [],
-    artifacts: [],
-  };
+    const fetched = yield* fetchBytesEffect(
+      fetchUrl,
+      signal,
+      ACCEPT_MARKDOWN_FIRST
+    );
+    const step = buildStep(fetched, stepExtras);
+    const empty: IngestResult = {
+      step,
+      text: "",
+      urls: [],
+      emails: [],
+      artifacts: [],
+    };
 
-  if (fetched.bytes.byteLength === 0) {
-    log(`${label} failed: ${fetched.error ?? "empty"}`);
+    if (fetched.bytes.byteLength === 0) {
+      log(`${label} failed: ${fetched.error ?? "empty"}`);
+      return empty;
+    }
+
+    const ctx: IngestContext = {
+      fetched,
+      step,
+      label,
+      linkBaseUrl,
+      uploadArtifact,
+      log,
+    };
+
+    if (isMarkdown(fetched.contentType)) {
+      return yield* ingestMarkdownContent(ctx);
+    }
+    if (isHtml(fetched.contentType, fetched.bytes)) {
+      return yield* ingestHtmlContent(ctx);
+    }
+    if (allowPlainBinary) {
+      return yield* ingestPlainBinaryContent(ctx);
+    }
+
+    step.error ??= "empty or non-HTML snapshot";
+    log(`${label} fail: ${step.error}`);
     return empty;
-  }
-
-  const ctx: IngestContext = {
-    fetched,
-    step,
-    label,
-    linkBaseUrl,
-    uploadArtifact,
-    log,
-  };
-
-  if (isMarkdown(fetched.contentType)) {
-    return ingestMarkdownContent(ctx);
-  }
-  if (isHtml(fetched.contentType, fetched.bytes)) {
-    return ingestHtmlContent(ctx);
-  }
-  if (allowPlainBinary) {
-    return ingestPlainBinaryContent(ctx);
-  }
-
-  step.error ??= "empty or non-HTML snapshot";
-  log(`${label} fail: ${step.error}`);
-  return empty;
+  });
 }

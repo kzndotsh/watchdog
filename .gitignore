@@ -62,3 +62,9 @@ Thumbs.db
 CLAUDE.local.md
 *.local
 lefthook-local.yml
+
+# Vendored Effect source for agents (nested clone; never commit)
+repos/
+
+# Scratch / batch assessment output
+results/

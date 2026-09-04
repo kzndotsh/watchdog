@@ -12,7 +12,8 @@ Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs 
 @watchdog/schemas     ← atoms: vocab, JsonValue, PatchOp, EvidenceSnapshot, platforms,
                          normalize-identifier, validate-identifier, fingerprint, job-artifact ids
        ↓
-@watchdog/policy      ← assertPatchGates / patchNeedsConfidence (pure; schemas only)
+@watchdog/policy      ← assertPatchGates / patchNeedsConfidence (pure; schemas only;
+                         browser: @watchdog/policy/patch-needs-confidence)
 @watchdog/cap-sdk     ← defineCapability SPI + CapDescriptor / toCapDescriptor
                          + CapContext / interpret types (schemas + zod)
 @watchdog/tools       ← dumb HTML/DNS/WHOIS/HTTP/Wayback fetch+parse + producer Zod
@@ -38,7 +39,7 @@ apps/web domains      ← types.ts: domain mutation Zod + DTOs (import schemas a
 | --- | --- |
 | `@watchdog/schemas` | `CONFIDENCE_TIERS`, `GRAPH_WRITE_CHANNELS`, `TASK_STATUSES` / `TASK_PRIORITIES`, `PLAYBOOK_SEED_KINDS`, `HANDOFF_BAGS` / `JobHandoff`, `OPEN_JOB_STATUSES` / `isOpenJobStatus`, `PLAYBOOK_RUN_STATUSES`, `patchOpSchema` / `PatchOp`, `evidenceSnapshotSchema`, `IDENTIFIER_PLATFORMS`, `normalizeIdentifier*` / `validateIdentifierWrite` / `listInvalidIdentifierOps`, `fingerprint*`, Cap/Job artifact ids (`REPORT_JSON_ARTIFACT`, `isJobInternalArtifact`, `EVIDENCE_HARVEST_CAPABILITY_ID`, …) |
 | `packages/api` | `jobSchema` (`playbookFanIndex`, `playbookRunStatus`), `proposalSchema`, `graphWriteResultSchema` (compose atoms) |
-| `@watchdog/policy` | `assertPatchGates`, `assertPatchShape`, `patchNeedsConfidence` |
+| `@watchdog/policy` | `assertPatchGates`, `assertPatchShape`, `patchNeedsConfidence` (browser: `/patch-needs-confidence`) |
 | `@watchdog/ai` | `processExtractDraftSchema`, `llmProviderConfigSchema`, `createWatchdogModel`, `structuredExtract` (LLM + extract only: not Job persistence policy) |
 | `domains/{noun}/types.ts` | `createClaimInputSchema`, `ClaimRecord` |
 | `packages/api` | `jobSchema` (`playbookFanIndex`, `playbookRunStatus`), `proposalSchema`, `graphWriteResultSchema` (compose atoms) |

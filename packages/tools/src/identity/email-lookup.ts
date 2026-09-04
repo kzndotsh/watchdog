@@ -1,9 +1,9 @@
+import { Effect } from "effect";
 import { z } from "zod";
 
-import {
-  assertNotAborted,
-  withAbortableResolver,
-} from "../dns/abortable-resolver";
+import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
 
 export const emailLookupSnapshotSchema = z.object({
@@ -87,44 +87,54 @@ function providerHint(domain: string, mxExchanges: string[]): string | null {
  * Email-seed pivot: MX + SPF/DMARC presence + provider hint for the mailbox domain.
  * Distinct from network.domain.mail_config (host seed, fuller DKIM posture).
  */
-export async function fetchEmailLookup(
+export function fetchEmailLookupEffect(
   emailRaw: string,
   signal: AbortSignal
-): Promise<EmailLookupSnapshot> {
-  const { email, domain } = normalizeEmail(emailRaw);
-  const { resolver, cleanup } = withAbortableResolver(
-    signal,
-    "Email lookup aborted"
-  );
-  try {
-    const [mx, txtRoot, txtDmarc] = await Promise.all([
-      resolver
-        .resolveMx(domain)
-        .catch(() => [] as { exchange: string; priority: number }[]),
-      resolver.resolveTxt(domain).catch(() => [] as string[][]),
-      resolver.resolveTxt(`_dmarc.${domain}`).catch(() => [] as string[][]),
-    ]);
-    assertNotAborted(signal, "Email lookup aborted");
-
-    const root = flatTxt(txtRoot);
-    const dmarc = flatTxt(txtDmarc);
-    const mxSorted = mx
-      .map((m) => ({ exchange: m.exchange, priority: m.priority }))
-      .sort((a, b) => a.priority - b.priority);
-
-    return emailLookupSnapshotSchema.parse({
-      email,
-      domain,
-      queriedAt: new Date().toISOString(),
-      providerHint: providerHint(
-        domain,
-        mxSorted.map((m) => m.exchange)
-      ),
-      mx: mxSorted,
-      spfPresent: root.some((r) => /v=spf1/i.test(r)),
-      dmarcPresent: dmarc.some((r) => /v=DMARC1/i.test(r)),
+): Effect.Effect<EmailLookupSnapshot, ToolsTag> {
+  return Effect.gen(function* fetchEmailLookupGen() {
+    const { email, domain } = yield* Effect.try({
+      try: () => normalizeEmail(emailRaw),
+      catch: mapToolsCatch,
     });
-  } finally {
-    cleanup();
-  }
+    return yield* runAbortableResolver(
+      signal,
+      "Email lookup aborted",
+      (resolver) =>
+        Effect.gen(function* fetchEmailDnsGen() {
+          const [mx, txtRoot, txtDmarc] = yield* Effect.all(
+            [
+              dnsOrEmpty(
+                () => resolver.resolveMx(domain),
+                [] as { exchange: string; priority: number }[]
+              ),
+              dnsOrEmpty(() => resolver.resolveTxt(domain), [] as string[][]),
+              dnsOrEmpty(
+                () => resolver.resolveTxt(`_dmarc.${domain}`),
+                [] as string[][]
+              ),
+            ],
+            { concurrency: "unbounded" }
+          );
+
+          const root = flatTxt(txtRoot);
+          const dmarc = flatTxt(txtDmarc);
+          const mxSorted = mx
+            .map((m) => ({ exchange: m.exchange, priority: m.priority }))
+            .sort((a, b) => a.priority - b.priority);
+
+          return emailLookupSnapshotSchema.parse({
+            email,
+            domain,
+            queriedAt: new Date().toISOString(),
+            providerHint: providerHint(
+              domain,
+              mxSorted.map((m) => m.exchange)
+            ),
+            mx: mxSorted,
+            spfPresent: root.some((r) => /v=spf1/i.test(r)),
+            dmarcPresent: dmarc.some((r) => /v=DMARC1/i.test(r)),
+          });
+        })
+    );
+  });
 }

@@ -4,6 +4,10 @@
 
 SPI for Caps: `defineCapability`, CapContext, interpret types. No Graph / DB / network helpers.
 
+`run` is `Effect<CapRunResult, ToolsTag, CapServices>` (`CapRun`). `CapServices` is `HttpClient` (`toolsHttpClientLayer` provided by `runCap` / job collect). `interpret` stays pure/sync. Cap I/O on `CapContext` is Effect (`uploadArtifact`, `getCredential`, `hasCredential`, `readArtifact`); optional slots use `optionalCapCredential`. `signal` stays AbortSignal.
+
+Cap `run()` tests call `runCap` (Promise edge; provides HttpClient). Job collect yields `cap.run(ctx)` under `toolsHttpClientLayer` — do not wrap leftover async bodies; Caps are Effect.
+
 ## Commands
 
 | Task       | Command                                     |
@@ -15,7 +19,7 @@ SPI for Caps: `defineCapability`, CapContext, interpret types. No Graph / DB / n
 
 | Do | Don’t |
 | --- | --- |
-| Keep types + `defineCapability` pure | Import `@watchdog/db`, `core`, or apps |
+| Keep types + `defineCapability` / `runCap` | Import `@watchdog/db`, `core`, or apps |
 | Document `timeoutMs` / credential hooks on the Cap | Put secrets in `Job.input` |
 
 ## Gotchas

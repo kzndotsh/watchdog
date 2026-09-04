@@ -1,4 +1,6 @@
-import { fetchTxtInventory, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchTxtInventoryEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { txtInventoryInput } from "./input";
@@ -23,13 +25,14 @@ export const txtInventory = defineCollectCap({
   },
   schema: txtInventorySnapshotSchema,
   reportLabel: "domain.txt_inventory",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`TXT inventory ${host}`);
-    const snap = await fetchTxtInventory(host, ctx.signal);
-    const saas = snap.tokens.filter((t) => t.kind === "verification").length;
-    ctx.log(`records=${snap.records.length} verification=${saas}`);
-    return { snap, artifactName: `txt-inventory-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* txtInventoryFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`TXT inventory ${host}`);
+      const snap = yield* fetchTxtInventoryEffect(host, ctx.signal);
+      const saas = snap.tokens.filter((t) => t.kind === "verification").length;
+      ctx.log(`records=${snap.records.length} verification=${saas}`);
+      return { snap, artifactName: `txt-inventory-${host}.json` };
+    }),
   interpretSnap: interpretTxtInventoryReport,
 });

@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect, Result } from "effect";
 
 import type { PatchOp } from "@watchdog/schemas";
 
@@ -37,93 +38,111 @@ describe("patch-gates", () => {
     };
   }
 
-  it("assertPatchGates rejects confidence-gated patch without confidence", () => {
-    expect(() => {
-      assertPatchGates([claimOp()]);
-    }).toThrow(/confidence is required/);
-  });
+  function expectViolation(
+    outcome: Result.Result<void, { readonly reason: string }>,
+    pattern: RegExp
+  ): void {
+    expect(Result.isFailure(outcome)).toBe(true);
+    if (Result.isFailure(outcome)) {
+      expect(outcome.failure.reason).toMatch(pattern);
+    }
+  }
 
-  it("assertPatchGates accepts unverified with claim ops", () => {
-    expect(() => {
-      assertPatchGates([claimOp()], { confidence: "unverified" });
-    }).not.toThrow();
-  });
+  it.effect(
+    "assertPatchGates rejects confidence-gated patch without confidence",
+    () =>
+      Effect.gen(function* gatesRejectNoConfidence() {
+        const outcome = yield* Effect.result(assertPatchGates([claimOp()]));
+        expectViolation(outcome, /confidence is required/);
+      })
+  );
 
-  it("assertPatchGates rejects confirmed with zero evidence", () => {
-    expect(() => {
-      assertPatchGates([claimOp()], {
-        confidence: "confirmed",
-      });
-    }).toThrow(/confirmed requires at least one Evidence/);
-  });
+  it.effect("assertPatchGates accepts unverified with claim ops", () =>
+    assertPatchGates([claimOp()], { confidence: "unverified" })
+  );
 
-  it("assertPatchGates accepts confirmed via op evidenceIds", () => {
-    expect(() => {
-      assertPatchGates([claimOp({ evidenceIds: [evidenceId] })], {
-        confidence: "confirmed",
-      });
-    }).not.toThrow();
-  });
-
-  it("assertPatchGates accepts confirmed via sharedEvidenceIds", () => {
-    expect(() => {
-      assertPatchGates([claimOp()], {
-        confidence: "confirmed",
-        sharedEvidenceIds: [evidenceId],
-      });
-    }).not.toThrow();
-  });
-
-  it("assertPatchGates rejects unknown claim class", () => {
-    expect(() => {
-      assertPatchGates(
-        [
-          claimOp({
-            data: {
-              entityId,
-              text: "x",
-              class: "not-a-class",
-            },
-          }),
-        ],
-        { confidence: "unverified" }
+  it.effect("assertPatchGates rejects confirmed with zero evidence", () =>
+    Effect.gen(function* gatesRejectConfirmedNoEvidence() {
+      const outcome = yield* Effect.result(
+        assertPatchGates([claimOp()], {
+          confidence: "confirmed",
+        })
       );
-    }).toThrow(/Invalid claim class/);
-  });
+      expectViolation(outcome, /confirmed requires at least one Evidence/);
+    })
+  );
 
-  it("assertPatchGates rejects unknown edge predicate", () => {
-    expect(() => {
-      assertPatchGates([edgeOp("owns_everything")], {
-        confidence: "unverified",
-      });
-    }).toThrow(/Invalid edge predicate/);
-  });
+  it.effect("assertPatchGates accepts confirmed via op evidenceIds", () =>
+    assertPatchGates([claimOp({ evidenceIds: [evidenceId] })], {
+      confidence: "confirmed",
+    })
+  );
 
-  it("assertPatchGates rejects related_to without notes", () => {
-    expect(() => {
-      assertPatchGates([edgeOp("related_to")], {
-        confidence: "unverified",
-      });
-    }).toThrow(/related_to requires notes/);
-  });
+  it.effect("assertPatchGates accepts confirmed via sharedEvidenceIds", () =>
+    assertPatchGates([claimOp()], {
+      confidence: "confirmed",
+      sharedEvidenceIds: [evidenceId],
+    })
+  );
 
-  it("assertPatchGates accepts related_to with notes", () => {
-    expect(() => {
-      assertPatchGates([edgeOp("related_to", "same household hypothesised")], {
-        confidence: "unverified",
-      });
-    }).not.toThrow();
-  });
+  it.effect("assertPatchGates rejects unknown claim class", () =>
+    Effect.gen(function* gatesRejectUnknownClass() {
+      const outcome = yield* Effect.result(
+        assertPatchGates(
+          [
+            claimOp({
+              data: {
+                entityId,
+                text: "x",
+                class: "not-a-class",
+              },
+            }),
+          ],
+          { confidence: "unverified" }
+        )
+      );
+      expectViolation(outcome, /Invalid claim class/);
+    })
+  );
 
-  it("assertPatchShape accepts claim without confidence", () => {
-    expect(() => {
-      assertPatchShape([claimOp()]);
-    }).not.toThrow();
-  });
+  it.effect("assertPatchGates rejects unknown edge predicate", () =>
+    Effect.gen(function* gatesRejectUnknownPredicate() {
+      const outcome = yield* Effect.result(
+        assertPatchGates([edgeOp("owns_everything")], {
+          confidence: "unverified",
+        })
+      );
+      expectViolation(outcome, /Invalid edge predicate/);
+    })
+  );
 
-  it("assertPatchShape rejects related_to without notes", () => {
-    expect(() => {
-      assertPatchShape([edgeOp("related_to")]);
-    }).toThrow(/related_to/);
-  });
+  it.effect("assertPatchGates rejects related_to without notes", () =>
+    Effect.gen(function* gatesRejectRelatedToNoNotes() {
+      const outcome = yield* Effect.result(
+        assertPatchGates([edgeOp("related_to")], {
+          confidence: "unverified",
+        })
+      );
+      expectViolation(outcome, /related_to requires notes/);
+    })
+  );
+
+  it.effect("assertPatchGates accepts related_to with notes", () =>
+    assertPatchGates([edgeOp("related_to", "same household hypothesised")], {
+      confidence: "unverified",
+    })
+  );
+
+  it.effect("assertPatchShape accepts claim without confidence", () =>
+    assertPatchShape([claimOp()])
+  );
+
+  it.effect("assertPatchShape rejects related_to without notes", () =>
+    Effect.gen(function* shapeRejectRelatedTo() {
+      const outcome = yield* Effect.result(
+        assertPatchShape([edgeOp("related_to")])
+      );
+      expectViolation(outcome, /related_to/);
+    })
+  );
 });

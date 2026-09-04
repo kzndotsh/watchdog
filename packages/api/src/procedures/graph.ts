@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { writeGraphFromAgent } from "@watchdog/core";
+import { writeGraphFromAgentEffect } from "@watchdog/core";
 import { patchOpSchema } from "@watchdog/schemas";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import { graphWriteResultSchema } from "../schemas";
 
 export const write = authed
@@ -25,9 +25,9 @@ export const write = authed
     })
   )
   .output(graphWriteResultSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      writeGraphFromAgent({
+  .handler(async ({ input, context }) =>
+    runApp(
+      writeGraphFromAgentEffect({
         caseId: input.caseId,
         actorId: context.actor.userId,
         patch: input.patch,

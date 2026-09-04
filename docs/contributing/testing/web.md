@@ -36,7 +36,7 @@ Examples: `shared/layout/__tests__/page-trail.test.ts`, `domains/jobs/lib/__test
 
 ## Backend / Caps (packages)
 
-Greenfield Cap, core, policy, schema, and tools tests are Vitest. Put suites in a sibling `__tests__/` dir (not next to the source file). Root `pnpm test` is unit+property only.
+Greenfield Cap, core, policy, schema, and tools tests are Vitest. Put suites in a sibling `__tests__/` dir (not next to the source file). Root `pnpm test` is unit+property only. Worker cancel spacing is `cancelPollLoopEffect` (`Schedule.spaced("2 seconds")`); `apps/worker/src/__tests__/cancel-poll.test.ts` drives it with `TestClock.adjust` — live cancel still lands within ~2s.
 
 ```
 packages/caps/src/evidence/harvest/__tests__/harvest.test.ts

@@ -1,7 +1,8 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { cancelJob } from "@watchdog/core";
+import { cancelJobEffect, runDomain } from "@watchdog/core";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
   resetTestDb,
@@ -10,7 +11,7 @@ import {
   seedJob,
 } from "@watchdog/test-kit/db";
 
-import { finish } from "../stages/finish.ts";
+import { finishEffect } from "../stages/finish.ts";
 import { createJobLog } from "../stages/helpers.ts";
 import type { PreflightState } from "../stages/preflight.ts";
 
@@ -39,17 +40,19 @@ describe("finish", () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
 
-    await cancelJob(cased.id, job.id);
-    const outcome = await finish({
-      state: await harvestState(job.id),
-      jobLog: createJobLog(),
-      proposalId: null,
-      resultSummary: "done",
-      fromCache: false,
-      suppressedCount: 0,
-      interpretError: null,
-      markSourceProcessed: false,
-    });
+    await runDomain(cancelJobEffect(cased.id, job.id));
+    const outcome = await Effect.runPromise(
+      finishEffect({
+        state: await harvestState(job.id),
+        jobLog: createJobLog(),
+        proposalId: null,
+        resultSummary: "done",
+        fromCache: false,
+        suppressedCount: 0,
+        interpretError: null,
+        markSourceProcessed: false,
+      })
+    );
     expect(outcome).toBe("cancelled");
     const row = await jobsRepo.get(db, job.id);
     expect(row?.status).toBe("cancelled");
@@ -64,16 +67,18 @@ describe("finish", () => {
       input: { evidenceId: evidence.id },
     });
 
-    const outcome = await finish({
-      state: await harvestState(job.id),
-      jobLog: createJobLog(),
-      proposalId: null,
-      resultSummary: "harvested",
-      fromCache: false,
-      suppressedCount: 0,
-      interpretError: null,
-      markSourceProcessed: true,
-    });
+    const outcome = await Effect.runPromise(
+      finishEffect({
+        state: await harvestState(job.id),
+        jobLog: createJobLog(),
+        proposalId: null,
+        resultSummary: "harvested",
+        fromCache: false,
+        suppressedCount: 0,
+        interpretError: null,
+        markSourceProcessed: true,
+      })
+    );
     expect(outcome).toBe("succeeded");
 
     const rows = await evidenceRepo.listForCase(db, cased.id);

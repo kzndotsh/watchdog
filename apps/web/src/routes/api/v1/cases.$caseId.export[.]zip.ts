@@ -5,13 +5,16 @@
  * Auth: session cookie or API key.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { Effect } from "effect";
 import { zipSync, strToU8 } from "fflate";
 
 import { createApiContext } from "@/auth/api-context.server";
+import { runApp } from "@watchdog/api";
 import {
-  getCaseById,
-  readArtifactBytes,
-  renderCaseExport,
+  getCaseByIdEffect,
+  readArtifactBytesEffect,
+  renderCaseExportEffect,
+  type DomainTag,
 } from "@watchdog/core";
 
 function safeFilename(label: string): string {
@@ -40,6 +43,122 @@ function evidenceExt(mime: string | null, label: string | null): string {
   return map[mime?.split(";")[0]?.trim() ?? ""] ?? ".bin";
 }
 
+type EvidenceZipPart =
+  | { kind: "none" }
+  | { kind: "skipped" }
+  | { kind: "file"; path: string; bytes: Uint8Array };
+
+function evidenceZipPartEffect(
+  caseSlug: string,
+  ev: {
+    id: string;
+    uri: string | null;
+    label: string | null;
+    sourceUrl: string | null;
+    mime: string | null;
+    text: string | null;
+    kind: string;
+  }
+): Effect.Effect<EvidenceZipPart> {
+  const prefix = ev.id.slice(0, 8);
+  const labelBase = safeFilename(ev.label ?? ev.sourceUrl ?? ev.id.slice(0, 8));
+  if (ev.uri) {
+    const uri = ev.uri;
+    return readArtifactBytesEffect(uri).pipe(
+      Effect.map((bytes) => {
+        const ext = evidenceExt(ev.mime, ev.label);
+        return {
+          kind: "file" as const,
+          path: `${caseSlug}/evidence/${prefix}--${labelBase}${ext}`,
+          bytes,
+        };
+      }),
+      Effect.orElseSucceed((): EvidenceZipPart => ({ kind: "skipped" }))
+    );
+  }
+  if (ev.text && ev.kind !== "attestation") {
+    return Effect.succeed({
+      kind: "file",
+      path: `${caseSlug}/evidence/${prefix}--${labelBase}.txt`,
+      bytes: strToU8(ev.text),
+    });
+  }
+  return Effect.succeed({ kind: "none" });
+}
+
+type CaseExportZipResult =
+  | { kind: "missing_case" }
+  | { kind: "empty" }
+  | {
+      kind: "ok";
+      zipInput: Record<string, Uint8Array>;
+      caseSlug: string;
+      markdownFiles: number;
+      evidenceIncluded: number;
+      evidenceSkipped: number;
+    };
+
+function caseExportZipEffect(
+  caseId: string
+): Effect.Effect<CaseExportZipResult, DomainTag> {
+  return Effect.gen(function* caseExportZipGen() {
+    const activeCase = yield* getCaseByIdEffect(caseId).pipe(
+      Effect.catchTag("NotFoundError", () => Effect.succeed(null))
+    );
+    if (activeCase === null) {
+      return { kind: "missing_case" as const };
+    }
+    const caseSlug = activeCase.slug;
+    const { files: mdFiles, evidenceRows } =
+      yield* renderCaseExportEffect(caseId);
+    if (mdFiles.size === 0) {
+      return { kind: "empty" as const };
+    }
+
+    const zipInput: Record<string, Uint8Array> = {};
+    for (const [path, content] of mdFiles) {
+      zipInput[`${caseSlug}/${path}`] = strToU8(content);
+    }
+
+    const parts = yield* Effect.forEach(
+      evidenceRows,
+      (ev) => evidenceZipPartEffect(caseSlug, ev),
+      { concurrency: "unbounded" }
+    );
+    let evidenceIncluded = 0;
+    let evidenceSkipped = 0;
+    for (const part of parts) {
+      switch (part.kind) {
+        case "file": {
+          zipInput[part.path] = part.bytes;
+          evidenceIncluded += 1;
+          break;
+        }
+        case "skipped": {
+          evidenceSkipped += 1;
+          break;
+        }
+        case "none": {
+          break;
+        }
+        default: {
+          const _exhaustive: never = part;
+          return _exhaustive;
+        }
+      }
+    }
+
+    return {
+      kind: "ok" as const,
+      zipInput,
+      caseSlug,
+      markdownFiles: mdFiles.size,
+      evidenceIncluded,
+      evidenceSkipped,
+    };
+  });
+}
+
 export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
   server: {
     handlers: {
@@ -54,68 +173,30 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
         if (!ctx.actor) return new Response("Unauthorized", { status: 401 });
 
         const { caseId } = params;
-
-        const activeCase = await getCaseById(caseId);
-        if (!activeCase) return new Response("Not Found", { status: 404 });
-        const caseSlug = activeCase.slug;
-
-        const { files: mdFiles, evidenceRows } = await renderCaseExport(caseId);
-
-        if (mdFiles.size === 0)
-          return new Response("No entities to export", { status: 404 });
-
-        const zipInput: Record<string, Uint8Array> = {};
-        let evidenceIncluded = 0;
-        let evidenceSkipped = 0;
-
-        // Markdown files
-        for (const [path, content] of mdFiles) {
-          zipInput[`${caseSlug}/${path}`] = strToU8(content);
+        const exported = await runApp(caseExportZipEffect(caseId));
+        if (exported.kind === "missing_case") {
+          return new Response("Not Found", { status: 404 });
         }
-
-        // Evidence files — independent blob reads, fetched concurrently.
-        await Promise.all(
-          evidenceRows.map(async (ev) => {
-            const prefix = ev.id.slice(0, 8);
-            const labelBase = safeFilename(
-              ev.label ?? ev.sourceUrl ?? ev.id.slice(0, 8)
-            );
-
-            if (ev.uri) {
-              try {
-                const bytes = await readArtifactBytes(ev.uri);
-                const ext = evidenceExt(ev.mime, ev.label);
-                zipInput[`${caseSlug}/evidence/${prefix}--${labelBase}${ext}`] =
-                  bytes;
-                evidenceIncluded += 1;
-              } catch {
-                evidenceSkipped += 1;
-              }
-            } else if (ev.text && ev.kind !== "attestation") {
-              zipInput[`${caseSlug}/evidence/${prefix}--${labelBase}.txt`] =
-                strToU8(ev.text);
-              evidenceIncluded += 1;
-            }
-            // attestations handled in evidence/attestations.md
-          })
-        );
+        if (exported.kind === "empty") {
+          return new Response("No entities to export", { status: 404 });
+        }
 
         ctx.log?.set({
           case: { caseId },
           export: {
             kind: "zip",
-            markdownFiles: mdFiles.size,
-            evidenceIncluded,
-            evidenceSkipped,
+            markdownFiles: exported.markdownFiles,
+            evidenceIncluded: exported.evidenceIncluded,
+            evidenceSkipped: exported.evidenceSkipped,
           },
         });
 
-        const zipped = zipSync(zipInput, { level: 6 });
+        const zipped = zipSync(exported.zipInput, { level: 6 });
         const ts = new Date()
           .toISOString()
           .slice(0, 16)
           .replaceAll(/[-T:]/g, "");
-        const filename = `${caseSlug}-${ts}.zip`;
+        const filename = `${exported.caseSlug}-${ts}.zip`;
 
         return new Response(zipped, {
           headers: {

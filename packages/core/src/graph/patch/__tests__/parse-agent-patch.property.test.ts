@@ -1,9 +1,22 @@
+import { Effect } from "effect";
 import { describe, it, expect } from "vitest";
 
 import { fc } from "@watchdog/test-kit/fc";
 import { testId } from "@watchdog/test-kit/fixtures";
 
-import { parseAgentPatch } from "../parse-agent-patch.ts";
+import {
+  parseAgentPatchEffect,
+  type ParsedAgentPatch,
+  type AgentPatchRefusal,
+} from "../parse-agent-patch.ts";
+
+function parseAgentPatch(input: {
+  patch: unknown;
+  summary?: string;
+  evidenceIds?: string[];
+}): ParsedAgentPatch | AgentPatchRefusal {
+  return Effect.runSync(parseAgentPatchEffect(input));
+}
 
 const GATED_RESOURCES = ["claim", "identifier", "edge"] as const;
 const CONFIDENCE_TIERS = ["unverified", "possible", "confirmed"] as const;

@@ -24,7 +24,7 @@ import {
   invalidateAfterProposalQueueChange,
 } from "@/shared/lib/query-invalidation";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
-import { patchNeedsConfidence } from "@watchdog/policy";
+import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import type { ProposalStatus } from "@watchdog/schemas";
 
 export interface UseTriageWorkspaceOptions {

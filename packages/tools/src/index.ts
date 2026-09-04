@@ -1,18 +1,18 @@
-export { resolveDnsRecords, type DnsRecords } from "./dns/resolve";
+export { resolveDnsRecordsEffect, type DnsRecords } from "./dns/resolve";
 export { dnsRecordsSchema } from "./dns/schema";
 export {
-  fetchMailConfig,
+  fetchMailConfigEffect,
   mailConfigSnapshotSchema,
   type MailConfigSnapshot,
 } from "./dns/mail-config";
 export {
-  fetchTxtInventory,
+  fetchTxtInventoryEffect,
   txtInventorySnapshotSchema,
   type TxtInventorySnapshot,
   type TxtToken,
 } from "./dns/txt-inventory";
 export {
-  fetchDnsReverse,
+  fetchDnsReverseEffect,
   normalizeIp,
   dnsReverseSnapshotSchema,
   type DnsReverseSnapshot,
@@ -28,46 +28,70 @@ export {
 } from "./html/to-text";
 export { decodeHtml, isHtml, isMarkdown, mergeUnique } from "./html/sniff";
 export {
-  fetchBytes,
+  fetchBytesEffect,
   type FetchBytesOptions,
   type FetchBytesResult,
 } from "./http/fetch-bytes";
-export { ToolsError, httpToolsError, isToolsError } from "./errors/tools-error";
+export { toolsHttpClientLayer } from "./http/http-client-layer";
 export {
-  fetchHttpProbe,
+  fetchJsonObjectEffect,
+  fetchJsonUnknownEffect,
+  type FetchJsonObjectInput,
+} from "./http/fetch-json";
+export {
+  ToolsError,
+  httpToolsError,
+  isToolsError,
+  abortedToolsError,
+} from "./errors/tools-error";
+export {
+  RateLimitedError,
+  HttpVendorError,
+  ParseVendorError,
+  MissingCredentialError,
+  ValidationVendorError,
+  type ToolsTag,
+} from "./errors/tagged-errors";
+export {
+  isToolsTag,
+  mapToolsCatch,
+  taggedToToolsError,
+} from "./errors/map-tools-tag";
+export {
+  fetchHttpProbeEffect,
   httpProbeSnapshotSchema,
   type HttpProbeSnapshot,
 } from "./http/http-probe";
 export {
-  fetchUnshorten,
+  fetchUnshortenEffect,
   unshortenSnapshotSchema,
   type UnshortenSnapshot,
 } from "./http/unshorten";
 export {
-  fetchPageEnrich,
+  fetchPageEnrichEffect,
   pageEnrichSnapshotSchema,
   type PageEnrichSnapshot,
 } from "./http/page-enrich";
 export {
-  fetchOembed,
+  fetchOembedEffect,
   isOembedUrl,
   oembedSnapshotSchema,
   type OembedSnapshot,
 } from "./http/oembed";
 export {
-  fetchTlsAudit,
+  fetchTlsAuditEffect,
   tlsAuditSnapshotSchema,
   type TlsAuditSnapshot,
 } from "./tls/audit";
-export { fetchRdapWhois } from "./whois/rdap";
+export { fetchRdapWhoisEffect } from "./whois/rdap";
 export { normalizeHost } from "./whois/normalize";
 export { whoisSnapshotSchema, type WhoisSnapshot } from "./whois/schema";
-export { fetchWhoisXml } from "./whois/whoisxml";
+export { fetchWhoisXmlEffect } from "./whois/whoisxml";
 export {
-  closestWaybackTimestamp,
+  closestWaybackTimestampEffect,
   waybackArchiveUrl,
-  fetchWaybackLookup,
-  fetchWaybackSnapshot,
+  fetchWaybackLookupEffect,
+  fetchWaybackSnapshotEffect,
 } from "./wayback/cdx";
 export {
   waybackLookupSnapshotSchema,
@@ -77,13 +101,16 @@ export {
   type WaybackCdxRow,
 } from "./wayback/schema";
 export {
-  submitWaybackSave,
+  submitWaybackSaveEffect,
   archiveSubmitSnapshotSchema,
   archiveSubmitResultSchema,
   type ArchiveSubmitSnapshot,
   type ArchiveSubmitResult,
 } from "./wayback/submit";
-export { fetchCrtShLookup, extractDomainsFromNameValue } from "./ct/crtsh";
+export {
+  fetchCrtShLookupEffect,
+  extractDomainsFromNameValue,
+} from "./ct/crtsh";
 export {
   ctLookupSnapshotSchema,
   ctCertEntrySchema,
@@ -101,13 +128,13 @@ export {
   type EmlAnalyzeSnapshot,
 } from "./file/eml";
 export {
-  fetchEmailLookup,
+  fetchEmailLookupEffect,
   normalizeEmail,
   emailLookupSnapshotSchema,
   type EmailLookupSnapshot,
 } from "./identity/email-lookup";
 export {
-  fetchPgpLookup,
+  fetchPgpLookupEffect,
   parseHkpMrIndex,
   pgpLookupSnapshotSchema,
   pgpKeySchema,
@@ -115,20 +142,20 @@ export {
   type PgpKeyHit,
 } from "./identity/pgp-lookup";
 export {
-  fetchGithubUser,
+  fetchGithubUserEffect,
   normalizeGithubHandle,
   githubUserSnapshotSchema,
   type GithubUserSnapshot,
 } from "./identity/github-user";
 export {
-  fetchHibpBreachedAccount,
+  fetchHibpBreachedAccountEffect,
   hibpLookupSnapshotSchema,
   hibpBreachSchema,
   type HibpLookupSnapshot,
   type HibpBreach,
 } from "./identity/hibp";
 export {
-  fetchKeybaseLookup,
+  fetchKeybaseLookupEffect,
   parseKeybaseBody,
   keybaseLookupSnapshotSchema,
   keybaseProofSchema,
@@ -136,7 +163,7 @@ export {
   type KeybaseProof,
 } from "./identity/keybase";
 export {
-  fetchGravatarLookup,
+  fetchGravatarLookupEffect,
   parseGravatarBody,
   gravatarEmailHash,
   gravatarLookupSnapshotSchema,
@@ -145,52 +172,52 @@ export {
   type GravatarAccount,
 } from "./identity/gravatar";
 export {
-  fetchIpLookup,
+  fetchIpLookupEffect,
   ipLookupSnapshotSchema,
   type IpLookupSnapshot,
 } from "./network/ip-lookup";
 export {
-  fetchShodanHost,
+  fetchShodanHostEffect,
   shodanLookupSnapshotSchema,
   type ShodanLookupSnapshot,
 } from "./network/shodan";
 export {
-  fetchCensysHost,
+  fetchCensysHostEffect,
   censysLookupSnapshotSchema,
   type CensysLookupSnapshot,
 } from "./network/censys";
 export {
-  fetchWhoxyWhois,
+  fetchWhoxyWhoisEffect,
   whoxyLookupSnapshotSchema,
   type WhoxyLookupSnapshot,
 } from "./network/whoxy";
 export {
-  fetchC99Subdomains,
+  fetchC99SubdomainsEffect,
   c99LookupSnapshotSchema,
   c99SubdomainHitSchema,
   type C99LookupSnapshot,
   type C99SubdomainHit,
 } from "./network/c99";
 export {
-  fetchIpctlLookup,
+  fetchIpctlLookupEffect,
   parseIpctlBody,
   ipctlLookupSnapshotSchema,
   type IpctlLookupSnapshot,
 } from "./network/ipctl";
 export {
-  fetchHackertargetReverseIp,
+  fetchHackertargetReverseIpEffect,
   hackertargetLookupSnapshotSchema,
   type HackertargetLookupSnapshot,
 } from "./network/hackertarget";
 export {
-  fetchUrlscanSearch,
+  fetchUrlscanSearchEffect,
   urlscanLookupSnapshotSchema,
   urlscanHitSchema,
   type UrlscanLookupSnapshot,
   type UrlscanHit,
 } from "./network/urlscan";
 export {
-  fetchMnemonicPdns,
+  fetchMnemonicPdnsEffect,
   parseMnemonicPdnsBody,
   mnemonicLookupSnapshotSchema,
   mnemonicRecordSchema,
@@ -198,51 +225,51 @@ export {
   type MnemonicRecord,
 } from "./network/mnemonic";
 export {
-  fetchCertspotterLookup,
+  fetchCertspotterLookupEffect,
   certspotterLookupSnapshotSchema,
   certspotterIssuanceSchema,
   type CertspotterLookupSnapshot,
   type CertspotterIssuance,
 } from "./ct/certspotter";
 export {
-  fetchVirusTotalLookup,
+  fetchVirusTotalLookupEffect,
   virusTotalLookupSnapshotSchema,
   type VirusTotalLookupSnapshot,
 } from "./threat/virustotal";
 export {
-  fetchAbuseIpdbCheck,
+  fetchAbuseIpdbCheckEffect,
   abuseIpdbLookupSnapshotSchema,
   type AbuseIpdbLookupSnapshot,
 } from "./threat/abuseipdb";
 export {
-  fetchThreatfoxLookup,
+  fetchThreatfoxLookupEffect,
   threatfoxLookupSnapshotSchema,
   threatfoxIocSchema,
   type ThreatfoxLookupSnapshot,
   type ThreatfoxIoc,
 } from "./threat/threatfox";
 export {
-  fetchGreynoiseCommunity,
+  fetchGreynoiseCommunityEffect,
   greynoiseLookupSnapshotSchema,
   type GreynoiseLookupSnapshot,
 } from "./threat/greynoise";
 export {
-  fetchUrlhausLookup,
+  fetchUrlhausLookupEffect,
   urlhausLookupSnapshotSchema,
   type UrlhausLookupSnapshot,
 } from "./threat/urlhaus";
 export {
-  fetchMalwarebazaarLookup,
+  fetchMalwarebazaarLookupEffect,
   malwarebazaarLookupSnapshotSchema,
   type MalwarebazaarLookupSnapshot,
 } from "./threat/malwarebazaar";
 export {
-  fetchFeodoLookup,
+  fetchFeodoLookupEffect,
   feodoLookupSnapshotSchema,
   type FeodoLookupSnapshot,
 } from "./threat/feodo";
 export {
-  fetchCommoncrawlLookup,
+  fetchCommoncrawlLookupEffect,
   commoncrawlLookupSnapshotSchema,
   commoncrawlHitSchema,
   type CommoncrawlLookupSnapshot,
@@ -263,7 +290,7 @@ export {
 } from "./parse/classify-breach-query";
 export { createTtlCache, type TtlCache } from "./cache/ttl-memory";
 export {
-  fetchHashlookup,
+  fetchHashlookupEffect,
   normalizeHashlookupHash,
   hashlookupSnapshotSchema,
   HASHLOOKUP_ALGOS,
@@ -271,92 +298,92 @@ export {
   type HashlookupAlgo,
 } from "./threat/hashlookup";
 export {
-  fetchBgprankingLookup,
+  fetchBgprankingLookupEffect,
   bgprankingLookupSnapshotSchema,
   type BgprankingLookupSnapshot,
 } from "./threat/bgpranking";
 export {
-  fetchDshieldLookup,
+  fetchDshieldLookupEffect,
   parseDshieldBody,
   dshieldLookupSnapshotSchema,
   type DshieldLookupSnapshot,
 } from "./threat/dshield";
 export {
-  fetchCymruMhrLookup,
+  fetchCymruMhrLookupEffect,
   normalizeCymruMhrHash,
   cymruMhrLookupSnapshotSchema,
   type CymruMhrLookupSnapshot,
 } from "./threat/cymru-mhr";
 export {
-  fetchFireholLookup,
+  fetchFireholLookupEffect,
   parseCidrLine,
   fireholLookupSnapshotSchema,
   type FireholLookupSnapshot,
 } from "./threat/firehol";
 export {
-  fetchTorExitLookup,
+  fetchTorExitLookupEffect,
   parseExitAddresses,
   torExitLookupSnapshotSchema,
   type TorExitLookupSnapshot,
 } from "./network/tor-exit";
 export {
-  fetchTrancoLookup,
+  fetchTrancoLookupEffect,
   trancoLookupSnapshotSchema,
   type TrancoLookupSnapshot,
 } from "./network/tranco";
 export {
-  fetchOtxLookup,
+  fetchOtxLookupEffect,
   otxLookupSnapshotSchema,
   type OtxLookupSnapshot,
 } from "./threat/otx";
 export {
-  fetchSafebrowsingLookup,
+  fetchSafebrowsingLookupEffect,
   safebrowsingLookupSnapshotSchema,
   safebrowsingMatchSchema,
   type SafebrowsingLookupSnapshot,
   type SafebrowsingMatch,
 } from "./threat/safebrowsing";
 export {
-  fetchXforceLookup,
+  fetchXforceLookupEffect,
   xforceLookupSnapshotSchema,
   type XforceLookupSnapshot,
 } from "./threat/xforce";
 export {
-  fetchGreedybearLookup,
+  fetchGreedybearLookupEffect,
   parseGreedybearIocValues,
   greedybearLookupSnapshotSchema,
   type GreedybearLookupSnapshot,
 } from "./threat/greedybear";
 export {
-  fetchHoneydbLookup,
+  fetchHoneydbLookupEffect,
   honeydbLookupSnapshotSchema,
   type HoneydbLookupSnapshot,
 } from "./threat/honeydb";
 export {
-  fetchLeakixLookup,
+  fetchLeakixLookupEffect,
   leakixLookupSnapshotSchema,
   type LeakixLookupSnapshot,
 } from "./network/leakix";
 export {
-  fetchEmailrepLookup,
+  fetchEmailrepLookupEffect,
   parseEmailrepBody,
   emailrepLookupSnapshotSchema,
   type EmailrepLookupSnapshot,
 } from "./identity/emailrep";
 export {
-  fetchHudsonrockLookup,
+  fetchHudsonrockLookupEffect,
   hudsonrockLookupSnapshotSchema,
   type HudsonrockLookupSnapshot,
 } from "./breach/hudsonrock";
 export {
-  fetchDehashedLookup,
+  fetchDehashedLookupEffect,
   dehashedEntrySchema,
   dehashedLookupSnapshotSchema,
   type DehashedEntry,
   type DehashedLookupSnapshot,
 } from "./breach/dehashed";
 export {
-  fetchSnusbaseLookup,
+  fetchSnusbaseLookupEffect,
   snusbaseEntrySchema,
   snusbaseLookupSnapshotSchema,
   snusbaseTableCountSchema,
@@ -365,14 +392,14 @@ export {
   type SnusbaseTableCount,
 } from "./breach/snusbase";
 export {
-  submitUrlscan,
+  submitUrlscanEffect,
   urlscanSubmitSnapshotSchema,
   urlscanSubmitVisibilitySchema,
   type UrlscanSubmitSnapshot,
   type UrlscanSubmitVisibility,
 } from "./network/urlscan-submit";
 export {
-  fetchIpinfoLookup,
+  fetchIpinfoLookupEffect,
   ipinfoLookupSnapshotSchema,
   type IpinfoLookupSnapshot,
 } from "./network/ipinfo";

@@ -1,24 +1,23 @@
 export {
-  uploadArtifact,
-  readArtifactBytes,
+  uploadArtifactEffect,
+  readArtifactBytesEffect,
   sha256Hex,
   assertSha256Hex,
   artifactUri,
-  createPresignedPut,
-  createPresignedGet,
-  assertUploadedObject,
-  deleteCaseArtifacts,
+  createPresignedGetEffect,
+  deleteCaseArtifactsEffect,
   MAX_UPLOAD_BYTES,
 } from "./infra/blob";
 export type { UploadedArtifact, PresignedPut } from "./infra/blob";
 export {
   CAP_JOB_QUEUE,
-  ensureBossProducer,
-  ensureBossWorker,
-  enqueueCapJob,
+  enqueueCapJobEffect,
+  ensureBossProducerEffect,
+  ensureBossWorkerEffect,
   isCapJobPayload,
   type CapJobPayload,
   type BossRole,
+  type BossHandle,
 } from "./jobs/boss";
 export {
   capExpireSeconds,
@@ -27,12 +26,12 @@ export {
   POST_RUN_SLACK_MS,
 } from "./jobs/timeouts";
 export {
-  reconcileStaleJobs,
-  reconcileStuckPlaybookRuns,
+  reconcileStaleJobsEffect,
+  reconcileStuckPlaybookRunsEffect,
 } from "./jobs/reconcile-stale-jobs";
 export { parsePatch, tryParsePatch } from "./graph/patch/patch";
 export {
-  applyPatch,
+  applyPatchEffect,
   type ApplyPatchOpts,
   type ApplyPatchTx,
 } from "./graph/patch/apply-patch";
@@ -40,107 +39,104 @@ export {
   suppressKnownFindings,
   recordRejectedFingerprints,
 } from "./proposals/finding-suppress";
-export { parseAgentPatch } from "./graph/patch/parse-agent-patch";
+export { parseAgentPatchEffect } from "./graph/patch/parse-agent-patch";
 export {
-  createAgentProposal,
-  writeGraphFromAgent,
+  createAgentProposalEffect,
+  writeGraphFromAgentEffect,
 } from "./proposals/agent-ingress";
+export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
 export {
-  executeJob,
-  abortActiveJob,
-  listActiveJobIds,
-  registerActiveJobController,
-  unregisterActiveJobController,
+  executeJobOnMap,
   type JobRunOutcome,
   type JobAbortReason,
   type JobRunOutcomeName,
-  type ActiveJobAbortReason,
 } from "./jobs/run-job";
-export { loadCapReport, artifactsHaveCapReport } from "./jobs/load-cap-report";
 export {
-  startJob,
-  listJobsForCase,
-  getJobForCase,
-  cancelJob,
-  findCancelledJobIds,
+  loadCapReportEffect,
+  artifactsHaveCapReport,
+} from "./jobs/load-cap-report";
+export {
+  startJobEffect,
+  listJobsForCaseEffect,
+  getJobForCaseEffect,
+  cancelJobEffect,
+  findCancelledJobIdsEffect,
   type StartJobInput,
   type JobRecord,
   type JobListRecord,
 } from "./jobs/start-job";
 export {
-  runPlaybook,
-  cancelPlaybookRun,
+  runPlaybookEffect,
+  cancelPlaybookRunEffect,
   type RunPlaybookInput,
   type PlaybookRunResult,
 } from "./jobs/run-playbook";
 export {
-  processEvidence,
-  markEvidenceProcessed,
-  enrichUrlEvidence,
+  processEvidenceEffect,
+  markEvidenceProcessedEffect,
+  enrichUrlEvidenceEffect,
 } from "./evidence/process-evidence";
 export {
-  packEvidenceSnapshot,
   snapshotToArtifactBytes,
   MAX_SNAPSHOT_CHARS,
 } from "./evidence/pack-evidence-snapshot";
 export {
-  listProposalsForCase,
-  getProposalForCase,
-  acceptProposal,
-  rejectProposal,
+  listProposalsForCaseEffect,
+  getProposalForCaseEffect,
+  acceptProposalEffect,
+  rejectProposalEffect,
   type ProposalRecord,
 } from "./proposals/proposals";
 export type { IdentifierCollision } from "./graph/identifier-collisions";
 export {
   VaultError,
-  listCredentialMeta,
-  hasCredential,
-  getCredential,
-  putCredential,
-  deleteCredential,
-  assertCredentialName,
+  listCredentialMetaEffect,
+  hasCredentialEffect,
+  getCredentialEffect,
+  putCredentialEffect,
+  deleteCredentialEffect,
   type CredentialMeta,
 } from "./infra/vault";
 export {
-  listCredentialSlots,
-  putCredentialSlot,
+  listCredentialSlotsEffect,
+  putCredentialSlotEffect,
   type CredentialSlot,
 } from "./infra/credential-slots";
 export {
-  listCases,
-  getCaseById,
-  getCaseBySlug,
-  createCase,
-  updateCase,
-  deleteCase,
+  createCaseEffect,
+  listCasesEffect,
+  getCaseByIdEffect,
+  getCaseBySlugEffect,
+  updateCaseEffect,
+  deleteCaseEffect,
   type CaseRecord,
   type CreateCaseInput,
 } from "./cases/cases";
 export {
-  listClaimsForEntity,
-  createClaim,
-  updateClaim,
-  retractClaim,
+  listClaimsForEntityEffect,
+  createClaimEffect,
+  updateClaimEffect,
+  retractClaimEffect,
   type ClaimRecord,
   type CreateClaimInput,
   type UpdateClaimInput,
   type RetractClaimInput,
 } from "./graph/claims";
 export {
-  listEventsForEntity,
-  createEvent,
-  updateEvent,
-  deleteEvent,
+  listEventsForEntityEffect,
+  createEventEffect,
+  updateEventEffect,
+  deleteEventEffect,
   type EventRecord,
   type CreateEventInput,
   type UpdateEventInput,
 } from "./graph/events-timeline";
 export {
-  listQuestionsForEntity,
-  createQuestion,
-  updateQuestion,
-  resolveQuestion,
-  reopenQuestion,
+  listQuestionsForEntityEffect,
+  createQuestionEffect,
+  updateQuestionEffect,
+  resolveQuestionEffect,
+  reopenQuestionEffect,
   type QuestionRecord,
   type CreateQuestionInput,
   type UpdateQuestionInput,
@@ -148,54 +144,52 @@ export {
   type ReopenQuestionInput,
 } from "./graph/questions";
 export {
-  listIdentifiersForEntity,
-  listIdentifiersForCase,
+  listIdentifiersForEntityEffect,
+  listIdentifiersForCaseEffect,
   toCaseIdentifierRecord,
-  createIdentifier,
-  updateIdentifier,
+  createIdentifierEffect,
+  updateIdentifierEffect,
   type IdentifierRecord,
   type CaseIdentifierRecord,
   type CreateIdentifierInput,
   type UpdateIdentifierInput,
 } from "./graph/identifiers";
 export {
-  listEdgesForEntity,
-  listEdgesForCase,
+  listEdgesForEntityEffect,
+  listEdgesForCaseEffect,
   toCaseEdgeRecord,
-  createEdge,
-  updateEdge,
-  deleteEdge,
+  createEdgeEffect,
+  updateEdgeEffect,
+  deleteEdgeEffect,
   type EdgeRecord,
   type CaseEdgeRecord,
   type CreateEdgeInput,
   type UpdateEdgeInput,
 } from "./graph/edges";
 export {
-  assertCaseExists,
-  assertEntityInCase,
-  assertConfidenceEvidence,
+  assertCaseExistsEffect,
+  assertEntityInCaseEffect,
 } from "./graph/patch/guards";
 export {
-  listEntitiesForCase,
-  getEntityByCaseSlug,
-  createEntity,
-  updateEntityFields,
+  listEntitiesForCaseEffect,
+  getEntityByCaseSlugEffect,
+  createEntityEffect,
+  updateEntityFieldsEffect,
   type EntityRecord,
   type CreateEntityInput,
   type UpdateEntityFieldsInput,
 } from "./graph/entities";
 export {
-  listEvidenceForCase,
-  dumpPaste,
-  dumpUrl,
-  softDeleteEvidence,
-  restoreEvidence,
-  attachEvidenceEntity,
-  presignUpload,
-  confirmFileUpload,
-  getEvidenceDownloadUrl,
-  createAttestation,
-  assertEvidenceInCase,
+  listEvidenceForCaseEffect,
+  dumpPasteEffect,
+  dumpUrlEffect,
+  softDeleteEvidenceEffect,
+  restoreEvidenceEffect,
+  attachEvidenceEntityEffect,
+  presignUploadEffect,
+  confirmFileUploadEffect,
+  getEvidenceDownloadUrlEffect,
+  createAttestationEffect,
   type EvidenceRecord,
   type ListEvidenceOpts,
   type DumpPasteInput,
@@ -213,32 +207,53 @@ export {
   type DomainErrorCode,
 } from "./infra/domain-error";
 export {
+  NotFoundError,
+  ConflictError,
+  InvalidError,
+  ForbiddenError,
+  fromDomainError,
+  mapDomainCatch,
+  domainCodeOf,
+  domainMessageOf,
+  isDomainTag,
+  toDomainError,
+  type DomainTag,
+} from "./infra/tagged-errors";
+export { tryDb, mapPostgresCatch } from "./infra/postgres-effect";
+export { transact } from "./infra/postgres-tx";
+export { runDomain } from "./infra/run-domain";
+export {
   notifyEvent,
-  notifyEntityChanged,
-  notifyTaskChanged,
+  notifyEntityChangedEffect,
+  notifyTaskChangedEffect,
+  notifyProposalCreatedEffect,
+  notifyJobUpdateEffect,
   listenForEvents,
   isWatchdogEvent,
   WATCHDOG_CHANNEL,
   type WatchdogEvent,
 } from "./infra/events";
+export { listenForEventsStream } from "./infra/listen-events-stream";
+
 export {
-  renderEntityMarkdown,
-  renderCaseExport,
+  renderEntityMarkdownEffect,
+  renderCaseExportEffect,
   type EntityExport,
 } from "./infra/export";
 export {
-  writeEntityExport,
-  writeCaseExport,
-  scheduleCaseExport,
-  removeCaseExportDir,
+  writeEntityExportEffect,
+  writeCaseExportEffect,
+  scheduleCaseExportEffect,
+  removeCaseExportDirEffect,
+  renameCaseExportDirEffect,
 } from "./infra/export-sync";
 export {
-  listTasksForCase,
-  getTaskInCase,
-  createTask,
-  updateTask,
-  deleteTask,
-  reorderTasks,
+  listTasksForCaseEffect,
+  getTaskInCaseEffect,
+  createTaskEffect,
+  updateTaskEffect,
+  deleteTaskEffect,
+  reorderTasksEffect,
   type TaskRecord,
   type CreateTaskInput,
   type UpdateTaskInput,
@@ -246,7 +261,7 @@ export {
   type ListTasksOpts,
 } from "./tasks/tasks";
 export {
-  listRecentActivity,
+  listRecentActivityEffect,
   mergeActivityItems,
   taskEventAction,
   jobActivityAction,
@@ -255,7 +270,7 @@ export {
   type ListRecentActivityOpts,
 } from "./activity/recent-activity";
 export {
-  searchCase,
+  searchCaseEffect,
   type SearchCaseOpts,
   type SearchCaseResult,
   type SearchCaseEntityHit,

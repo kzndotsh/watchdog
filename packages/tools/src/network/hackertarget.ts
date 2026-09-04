@@ -1,8 +1,12 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import { httpToolsError, rateLimitedToolsError } from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchBytesEffect } from "../http/fetch-bytes";
 import { normalizeHost } from "../whois/normalize";
 
 export const hackertargetLookupSnapshotSchema = z.object({
@@ -67,50 +71,51 @@ function parseHackertargetDomains(
   return domains;
 }
 
-export async function fetchHackertargetReverseIp(
+export function fetchHackertargetReverseIpEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: HackertargetOptions
-): Promise<HackertargetLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const limit = options?.limit ?? 200;
-  const ua =
-    options?.userAgent ?? watchdogUserAgent("network.hackertarget.lookup");
+): Effect.Effect<HackertargetLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchHackertargetReverseIpGen() {
+    const ip = yield* Effect.try({
+      try: () => normalizeIp(ipRaw),
+      catch: mapToolsCatch,
+    });
+    const limit = options?.limit ?? 200;
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("network.hackertarget.lookup");
 
-  const url = new URL("https://api.hackertarget.com/reverseiplookup/");
-  url.searchParams.set("q", ip);
+    const url = new URL("https://api.hackertarget.com/reverseiplookup/");
+    url.searchParams.set("q", ip);
 
-  const res = await fetch(url, {
-    method: "GET",
-    signal,
-    headers: { Accept: "text/plain", "User-Agent": ua },
-  });
+    const result = yield* fetchBytesEffect(url.toString(), signal, {
+      userAgent: ua,
+      maxBytes: 1_000_000,
+      accept: "text/plain",
+    });
 
-  if (res.status === 429) {
-    throw rateLimitedToolsError("HackerTarget", ip);
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "HackerTarget API",
-      res.status,
-      `HackerTarget API ${res.status} for ${ip}`
-    );
-  }
+    if (!result.ok) {
+      return yield* new HttpVendorError({
+        service: "HackerTarget",
+        status: result.status,
+      });
+    }
 
-  const text = (await res.text()).trim();
-  const seen = new Set<string>();
-  const responseError = hackertargetResponseError(text);
-  const domains =
-    responseError === null && text !== ""
-      ? parseHackertargetDomains(text, limit, seen)
-      : [];
-  const error = responseError;
+    const text = new TextDecoder().decode(result.bytes).trim();
+    const seen = new Set<string>();
+    const responseError = hackertargetResponseError(text);
+    const domains =
+      responseError === null && text !== ""
+        ? parseHackertargetDomains(text, limit, seen)
+        : [];
+    const error = responseError;
 
-  return hackertargetLookupSnapshotSchema.parse({
-    ip,
-    queriedAt: new Date().toISOString(),
-    source: "api.hackertarget.com/reverseiplookup",
-    domains,
-    error,
+    return hackertargetLookupSnapshotSchema.parse({
+      ip,
+      queriedAt: new Date().toISOString(),
+      source: "api.hackertarget.com/reverseiplookup",
+      domains,
+      error,
+    });
   });
 }

@@ -1,8 +1,15 @@
-import { eventsRepo, db, type EventRow } from "@watchdog/db";
+import { Effect } from "effect";
 
-import { DomainError } from "../infra/domain-error";
-import { notifyEntityChanged } from "../infra/events";
-import { assertEntityInCase } from "./patch/guards";
+import { db, eventsRepo, type EventRow } from "@watchdog/db";
+
+import { notifyEntityChangedEffect } from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
+import { assertEntityInCaseEffect } from "./patch/guards";
 
 export interface EventRecord {
   id: string;
@@ -38,59 +45,85 @@ function toRecord(row: EventRow): EventRecord {
   };
 }
 
-export async function listEventsForEntity(
+export function listEventsForEntityEffect(
   caseId: string,
   entityId: string
-): Promise<EventRecord[]> {
-  await assertEntityInCase(caseId, entityId, db);
-  const rows = await eventsRepo.listForEntity(db, entityId);
-  return rows.map(toRecord);
+): Effect.Effect<EventRecord[], DomainTag> {
+  return Effect.gen(function* listEventsGen() {
+    yield* assertEntityInCaseEffect(caseId, entityId, db);
+    const rows = yield* tryDb(() => eventsRepo.listForEntity(db, entityId));
+    return rows.map(toRecord);
+  });
 }
 
-export async function createEvent(
+export function createEventEffect(
   input: CreateEventInput
-): Promise<EventRecord> {
-  await assertEntityInCase(input.caseId, input.entityId, db);
-  const row = await eventsRepo.create(db, {
-    entityId: input.entityId,
-    when: input.when,
-    what: input.what,
-    whereText: input.where ?? null,
+): Effect.Effect<EventRecord, DomainTag> {
+  return Effect.gen(function* createEventGen() {
+    yield* assertEntityInCaseEffect(input.caseId, input.entityId, db);
+    const row = yield* tryDb(() =>
+      eventsRepo.create(db, {
+        entityId: input.entityId,
+        when: input.when,
+        what: input.what,
+        whereText: input.where ?? null,
+      })
+    );
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to create Event" });
+    }
+    yield* notifyEntityChangedEffect(input.caseId);
+    return toRecord(row);
   });
-  if (!row) throw new DomainError("invalid", "Failed to create Event");
-  notifyEntityChanged(input.caseId);
-  return toRecord(row);
 }
 
-export async function updateEvent(
+export function updateEventEffect(
   input: UpdateEventInput
-): Promise<EventRecord> {
-  const existing = await eventsRepo.getInCase(db, input.caseId, input.eventId);
-  if (!existing) {
-    throw new DomainError("not_found", "Event not found in this Case");
-  }
+): Effect.Effect<EventRecord, DomainTag> {
+  return Effect.gen(function* updateEventGen() {
+    const existing = yield* tryDb(() =>
+      eventsRepo.getInCase(db, input.caseId, input.eventId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({
+        resource: "Event not found in this Case",
+      });
+    }
 
-  const row = await eventsRepo.update(db, input.eventId, {
-    when: input.when ?? existing.when,
-    what: input.what ?? existing.what,
-    whereText:
-      input.where === undefined ? existing.whereText : (input.where ?? null),
+    const row = yield* tryDb(() =>
+      eventsRepo.update(db, input.eventId, {
+        when: input.when ?? existing.when,
+        what: input.what ?? existing.what,
+        whereText:
+          input.where === undefined ? existing.whereText : (input.where ?? null),
+      })
+    );
+    if (!row) {
+      return yield* new InvalidError({ reason: "Failed to update Event" });
+    }
+    yield* notifyEntityChangedEffect(input.caseId);
+    return toRecord(row);
   });
-  if (!row) throw new DomainError("invalid", "Failed to update Event");
-  notifyEntityChanged(input.caseId);
-  return toRecord(row);
 }
 
-export async function deleteEvent(
+export function deleteEventEffect(
   caseId: string,
   eventId: string
-): Promise<void> {
-  const existing = await eventsRepo.getInCase(db, caseId, eventId);
-  if (!existing) {
-    throw new DomainError("not_found", "Event not found in this Case");
-  }
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* deleteEventGen() {
+    const existing = yield* tryDb(() =>
+      eventsRepo.getInCase(db, caseId, eventId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({
+        resource: "Event not found in this Case",
+      });
+    }
 
-  const deleted = await eventsRepo.delete(db, eventId);
-  if (!deleted) throw new DomainError("invalid", "Failed to delete Event");
-  notifyEntityChanged(caseId);
+    const deleted = yield* tryDb(() => eventsRepo.delete(db, eventId));
+    if (!deleted) {
+      return yield* new InvalidError({ reason: "Failed to delete Event" });
+    }
+    yield* notifyEntityChangedEffect(caseId);
+  });
 }

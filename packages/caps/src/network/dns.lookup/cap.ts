@@ -1,4 +1,6 @@
-import { normalizeHost, resolveDnsRecords } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { normalizeHost, resolveDnsRecordsEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dnsLookupInput } from "./input";
@@ -23,11 +25,12 @@ export const dnsLookup = defineCollectCap({
   },
   schema: dnsRecordsSchema,
   reportLabel: "dns.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`resolving ${host}`);
-    const snap = await resolveDnsRecords(host, ctx.signal);
-    return { snap, artifactName: `dns-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* dnsLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`resolving ${host}`);
+      const snap = yield* resolveDnsRecordsEffect(host, ctx.signal);
+      return { snap, artifactName: `dns-${host}.json` };
+    }),
   interpretSnap: interpretDnsReport,
 });

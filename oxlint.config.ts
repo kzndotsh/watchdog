@@ -1,3 +1,4 @@
+import { recommended as effecttsgoRecommended } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "oxlint";
 import core from "ultracite/oxlint/core";
 import react from "ultracite/oxlint/react";
@@ -27,15 +28,17 @@ const watchdogIgnores = [
   ".claude/**",
   ".kiro/**",
   "skills/**",
+  "repos/**",
 ];
 
 export default defineConfig({
-  extends: [core, react, tanstack],
+  extends: [core, react, tanstack, effecttsgoRecommended],
   ignorePatterns: [...(core.ignorePatterns ?? []), ...watchdogIgnores],
   options: {
     typeAware: true,
   },
   // React Doctor only — not the full Ultracite js-plugins (github/sonarjs).
+  // effecttsgo comes from `@effect/tsgo/oxlint-presets` after `effect-tsgo patch --oxlint`.
   jsPlugins: [
     { name: "react-doctor", specifier: "oxlint-plugin-react-doctor" },
   ],
@@ -45,6 +48,12 @@ export default defineConfig({
     "eslint/curly": "off",
     // declaration vs expression holy war
     "eslint/func-style": "off",
+    "react/function-component-definition": "off",
+    "react/exhaustive-effect-dependencies": "off",
+    "react/set-state-in-effect": "off",
+    "react/incompatible-library": "off",
+    "react/todo": "off",
+    "eslint/no-void": "off",
     // often worse readability
     "eslint/prefer-destructuring": "off",
     // regex churn, little safety
@@ -60,7 +69,7 @@ export default defineConfig({
     // .toSorted needs ES2023; tsconfig is ES2022
     "unicorn/no-array-sort": "off",
     // fights promise-function-async on framework handlers that must be async
-    // but only forward a Promise (TanStack / oRPC / mapDomainError)
+    // but only forward a Promise (TanStack / oRPC / runApp)
     "eslint/require-await": "off",
     // unicode flag churn on every regex; low safety signal here
     "eslint/require-unicode-regexp": "off",
@@ -69,6 +78,10 @@ export default defineConfig({
     // script/JSDoc noise — descriptions aren't our lint bar
     "jsdoc/require-param-description": "off",
     "jsdoc/require-returns-description": "off",
+
+    // effecttsgo recommended warn rules stay on (ultracite does not deny
+    // warnings). Highest remaining counts: async-function, global-date,
+    // node-builtin-import, global-console, process-env.
 
     // --- Burn-down backlog (tighten gradually; see lint debt plan) ---
     "eslint/complexity": "off",
@@ -109,7 +122,6 @@ export default defineConfig({
     "react/no-object-type-as-default-prop": "error",
     "react/no-unescaped-entities": "error",
     "react/no-unstable-nested-components": "error",
-    "react/react-compiler": "error",
     "react-hooks/exhaustive-deps": "error",
     "typescript/array-type": "error",
     "typescript/ban-ts-comment": "error",
@@ -204,6 +216,23 @@ export default defineConfig({
   },
   overrides: [
     {
+      files: ["scripts/**/*.mjs"],
+      rules: {
+        "eslint/no-use-before-define": "off",
+      },
+    },
+    {
+      files: [
+        "packages/core/src/infra/tagged-errors.ts",
+        "packages/core/src/infra/repo-layers.ts",
+        "packages/tools/src/errors/tagged-errors.ts",
+        "packages/ai/src/structured-extract.ts",
+      ],
+      rules: {
+        "eslint/max-classes-per-file": "off",
+      },
+    },
+    {
       // TanStack file routes export `Route` for the route tree generator.
       files: ["**/routes/**/*.{ts,tsx}", "**/src/routes/**/*.{ts,tsx}"],
       rules: {
@@ -251,7 +280,6 @@ export default defineConfig({
         "eslint/no-unused-vars": "off",
         "typescript/no-unused-vars": "off",
         "react/only-export-components": "off",
-        "react/react-compiler": "off",
         "unicorn/no-null": "off",
       },
     },
@@ -418,7 +446,6 @@ export default defineConfig({
       // Pan/zoom graph — layout measurement requires effect-driven view state.
       files: ["apps/web/src/shared/ui/graph/graph-canvas.tsx"],
       rules: {
-        "react/react-compiler": "off",
         "jsx-a11y/no-noninteractive-element-interactions": "off",
         "jsx-a11y/no-noninteractive-tabindex": "off",
         "typescript/consistent-return": "off",

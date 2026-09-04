@@ -1,4 +1,6 @@
-import { fetchHttpProbe, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchHttpProbeEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { httpProbeInput } from "./input";
@@ -26,14 +28,17 @@ export const httpProbe = defineCollectCap({
   },
   schema: httpProbeSnapshotSchema,
   reportLabel: "host.http_probe",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`HTTP probe ${host}`);
-    const snap = await fetchHttpProbe(host, ctx.signal, { userAgent: UA });
-    ctx.log(
-      `status=${snap.status} headers=${Object.keys(snap.securityHeaders).length} security.txt=${snap.securityTxt.present}`
-    );
-    return { snap, artifactName: `http-probe-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* httpProbeFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`HTTP probe ${host}`);
+      const snap = yield* fetchHttpProbeEffect(host, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `status=${snap.status} headers=${Object.keys(snap.securityHeaders).length} security.txt=${snap.securityTxt.present}`
+      );
+      return { snap, artifactName: `http-probe-${host}.json` };
+    }),
   interpretSnap: interpretHttpProbeReport,
 });

@@ -1,4 +1,6 @@
-import { fetchHudsonrockLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchHudsonrockLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hudsonrockLookupInput } from "./input";
@@ -32,16 +34,17 @@ export const hudsonrockLookup = defineCollectCap({
   },
   schema: hudsonrockLookupSnapshotSchema,
   reportLabel: "hudsonrock.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`Hudson Rock ${query}`);
-    const key = await ctx.getCredential("HUDSONROCK_API_KEY");
-    const snap = await fetchHudsonrockLookup(query, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(`found=${snap.found} totalResults=${snap.totalResults}`);
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `hudsonrock-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* hudsonrockLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`Hudson Rock ${query}`);
+      const key = yield* ctx.getCredential("HUDSONROCK_API_KEY");
+      const snap = yield* fetchHudsonrockLookupEffect(query, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(`found=${snap.found} totalResults=${snap.totalResults}`);
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `hudsonrock-${safe}.json` };
+    }),
   interpretSnap: interpretHudsonrockLookupReport,
 });

@@ -26,6 +26,7 @@ const watchdogIgnores = [
   ".claude/**",
   ".kiro/**",
   "skills/**",
+  "repos/**",
 ];
 
 export default defineConfig({

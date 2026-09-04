@@ -1,12 +1,13 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import {
-  httpToolsError,
-  parseToolsError,
-  validationToolsError,
-} from "../errors/tools-error";
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import type { ToolsTag } from "../errors/tagged-errors";
+import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { asString, isRecord } from "../parse/coerce";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { asString } from "../parse/coerce";
 
 export const githubUserSnapshotSchema = z.object({
   handle: z.string().min(1),
@@ -94,43 +95,43 @@ function githubUserFromBody(
   });
 }
 
-export async function fetchGithubUser(
+export function fetchGithubUserEffect(
   handleRaw: string,
   signal: AbortSignal,
   options?: GithubUserOptions
-): Promise<GithubUserSnapshot> {
-  const handle = normalizeGithubHandle(handleRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("identity.github.lookup");
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": ua,
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
-  const token = options?.token?.trim();
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const authenticated = Boolean(token);
+): Effect.Effect<GithubUserSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchGithubUserGen() {
+    const handle = yield* Effect.try({
+      try: () => normalizeGithubHandle(handleRaw),
+      catch: mapToolsCatch,
+    });
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("identity.github.lookup");
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": ua,
+      "X-GitHub-Api-Version": "2022-11-28",
+    };
+    const token = options?.token?.trim();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const authenticated = Boolean(token);
 
-  const res = await fetch(`https://api.github.com/users/${handle}`, {
-    method: "GET",
-    signal,
-    headers,
+    const { status, body } = yield* fetchJsonObjectEffect({
+      url: `https://api.github.com/users/${handle}`,
+      signal,
+      service: "GitHub",
+      subject: handle,
+      acceptStatus: (code) => (code >= 200 && code < 300) || code === 404,
+      init: {
+        method: "GET",
+        headers,
+      },
+    });
+
+    if (status === 404) {
+      return notFoundGithubSnapshot(handle, authenticated);
+    }
+
+    return githubUserFromBody(handle, body, status, authenticated);
   });
-
-  if (res.status === 404) {
-    return notFoundGithubSnapshot(handle, authenticated);
-  }
-
-  if (!res.ok) {
-    throw httpToolsError(
-      "GitHub API",
-      res.status,
-      `GitHub API ${res.status} for ${handle}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw parseToolsError("GitHub", handle);
-  }
-  return githubUserFromBody(handle, body, res.status, authenticated);
 }

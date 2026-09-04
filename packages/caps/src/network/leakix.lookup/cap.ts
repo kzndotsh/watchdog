@@ -1,4 +1,6 @@
-import { fetchLeakixLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchLeakixLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { leakixLookupInput } from "./input";
@@ -28,18 +30,19 @@ export const leakixLookup = defineCollectCap({
   },
   schema: leakixLookupSnapshotSchema,
   reportLabel: "leakix.lookup",
-  async fetch(ctx) {
-    const query = ctx.input.query.trim();
-    ctx.log(`LeakIX ${query}`);
-    const key = await ctx.getCredential("LEAKIX_API_KEY");
-    const snap = await fetchLeakixLookup(query, key, ctx.signal, {
-      userAgent: UA,
-    });
-    ctx.log(
-      `found=${snap.found} services=${snap.serviceCount} leaks=${snap.leakCount}`
-    );
-    const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
-    return { snap, artifactName: `leakix-${safe}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* leakixLookupFetch() {
+      const query = ctx.input.query.trim();
+      ctx.log(`LeakIX ${query}`);
+      const key = yield* ctx.getCredential("LEAKIX_API_KEY");
+      const snap = yield* fetchLeakixLookupEffect(query, key, ctx.signal, {
+        userAgent: UA,
+      });
+      ctx.log(
+        `found=${snap.found} services=${snap.serviceCount} leaks=${snap.leakCount}`
+      );
+      const safe = query.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
+      return { snap, artifactName: `leakix-${safe}.json` };
+    }),
   interpretSnap: interpretLeakixLookupReport,
 });

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
@@ -6,7 +7,7 @@ import { resetTestDb, seedCase, seedJob } from "@watchdog/test-kit/db";
 
 import type { CollectResult } from "../stages/collect.ts";
 import { createJobLog } from "../stages/helpers.ts";
-import { landEvidence } from "../stages/land-evidence.ts";
+import { landEvidenceEffect } from "../stages/land-evidence.ts";
 import type { PreflightState } from "../stages/preflight.ts";
 
 function sha(): string {
@@ -51,8 +52,7 @@ function collected(overrides: Partial<CollectResult> = {}): CollectResult {
     reclaim: false,
     runtime: {
       scratchDir: "/tmp",
-      controller: new AbortController(),
-      timer: setTimeout(() => {}, 60_000),
+      signal: new AbortController().signal,
       jobLog,
       evidenceSnapshot: undefined,
       linkedSource: undefined,
@@ -73,8 +73,9 @@ describe("landEvidence", () => {
     const job = await seedJob(db, cased.id, { status: "running" });
     const result = collected();
 
-    const ids = await landEvidence(await stateFor(job.id), result);
-    clearTimeout(result.runtime.timer);
+    const ids = await Effect.runPromise(
+      landEvidenceEffect(await stateFor(job.id), result)
+    );
 
     expect(ids).toHaveLength(1);
     const rows = await evidenceRepo.listForCase(db, cased.id);
@@ -94,8 +95,9 @@ describe("landEvidence", () => {
       evidenceIds: existing,
     });
 
-    const ids = await landEvidence(await stateFor(job.id), result);
-    clearTimeout(result.runtime.timer);
+    const ids = await Effect.runPromise(
+      landEvidenceEffect(await stateFor(job.id), result)
+    );
     expect(ids).toEqual(existing);
 
     const rows = await evidenceRepo.listForCase(db, cased.id);
@@ -110,8 +112,9 @@ describe("landEvidence", () => {
       evidenceIds: [],
     });
 
-    const ids = await landEvidence(await stateFor(job.id), result);
-    clearTimeout(result.runtime.timer);
+    const ids = await Effect.runPromise(
+      landEvidenceEffect(await stateFor(job.id), result)
+    );
 
     expect(ids).toHaveLength(1);
     const rows = await evidenceRepo.listForCase(db, cased.id);
@@ -130,8 +133,9 @@ describe("landEvidence", () => {
       evidenceIds: existing,
     });
 
-    const ids = await landEvidence(await stateFor(job.id), result);
-    clearTimeout(result.runtime.timer);
+    const ids = await Effect.runPromise(
+      landEvidenceEffect(await stateFor(job.id), result)
+    );
     expect(ids).toEqual(existing);
 
     const rows = await evidenceRepo.listForCase(db, cased.id);

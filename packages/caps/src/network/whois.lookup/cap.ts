@@ -1,4 +1,6 @@
-import { fetchRdapWhois, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchRdapWhoisEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoisLookupInput } from "./input";
@@ -23,12 +25,13 @@ export const whoisLookup = defineCollectCap({
   },
   schema: whoisSnapshotSchema,
   reportLabel: "whois.lookup",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`WHOIS (RDAP) for ${host}`);
-    const snap = await fetchRdapWhois(host, ctx.signal);
-    ctx.log("RDAP ok");
-    return { snap, artifactName: `whois-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* whoisLookupFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`WHOIS (RDAP) for ${host}`);
+      const snap = yield* fetchRdapWhoisEffect(host, ctx.signal);
+      ctx.log("RDAP ok");
+      return { snap, artifactName: `whois-${host}.json` };
+    }),
   interpretSnap: interpretWhoisReport,
 });

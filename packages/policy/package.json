@@ -3,16 +3,18 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./patch-needs-confidence": "./src/patch-needs-confidence.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@watchdog/schemas": "workspace:*"
+    "@watchdog/schemas": "workspace:*",
+    "effect": "4.0.0-rc.112"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "typescript": "^6.0.2"
+    "typescript": "7.0.2"
   }
 }

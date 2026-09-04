@@ -1,4 +1,6 @@
-import { fetchWaybackLookup } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchWaybackLookupEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { waybackLookupInput } from "./input";
@@ -26,17 +28,18 @@ export const waybackLookup = defineCollectCap({
   },
   schema: waybackLookupSnapshotSchema,
   reportLabel: "wayback.lookup",
-  async fetch(ctx) {
-    const url = ctx.input.url.trim();
-    ctx.log(`Wayback CDX ${url}`);
-    const snap = await fetchWaybackLookup(url, ctx.signal, {
-      userAgent: UA,
-      limit: ctx.input.limit ?? 25,
-    });
-    ctx.log(
-      `rows=${snap.rows.length} closest=${snap.closestTimestamp ?? "none"}`
-    );
-    return { snap, artifactName: "wayback-lookup.json" };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* waybackLookupFetch() {
+      const url = ctx.input.url.trim();
+      ctx.log(`Wayback CDX ${url}`);
+      const snap = yield* fetchWaybackLookupEffect(url, ctx.signal, {
+        userAgent: UA,
+        limit: ctx.input.limit ?? 25,
+      });
+      ctx.log(
+        `rows=${snap.rows.length} closest=${snap.closestTimestamp ?? "none"}`
+      );
+      return { snap, artifactName: "wayback-lookup.json" };
+    }),
   interpretSnap: interpretWaybackLookupReport,
 });

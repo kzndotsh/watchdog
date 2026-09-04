@@ -1,8 +1,11 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import { httpToolsError, ToolsError } from "../errors/tools-error";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString, isRecord } from "../parse/coerce";
 
 export const dshieldLookupSnapshotSchema = z.object({
@@ -84,45 +87,29 @@ export function parseDshieldBody(
 interface DshieldOptions {
   userAgent?: string;
 }
-export async function fetchDshieldLookup(
+
+export function fetchDshieldLookupEffect(
   ipRaw: string,
   signal: AbortSignal,
   options?: DshieldOptions
-): Promise<DshieldLookupSnapshot> {
-  const ip = normalizeIp(ipRaw);
-  const ua =
-    options?.userAgent ??
-    `${watchdogUserAgent("threat.dshield.lookup")}; contact: osint@watchdog.invalid)`;
+): Effect.Effect<DshieldLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchDshieldLookupGen() {
+    const ip = normalizeIp(ipRaw);
+    const ua =
+      options?.userAgent ??
+      `${watchdogUserAgent("threat.dshield.lookup")}; contact: osint@watchdog.invalid)`;
 
-  const res = await fetch(
-    `https://isc.sans.edu/api/ip/${encodeURIComponent(ip)}?json`,
-    {
-      method: "GET",
+    const { body } = yield* fetchJsonObjectEffect({
+      url: `https://isc.sans.edu/api/ip/${encodeURIComponent(ip)}?json`,
       signal,
-      headers: { Accept: "application/json", "User-Agent": ua },
-    }
-  );
-
-  if (res.status === 429) {
-    throw new ToolsError(`DShield rate-limited for ${ip}`, {
-      status: 429,
-      code: "rate_limited",
+      service: "DShield",
+      subject: ip,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
     });
-  }
-  if (!res.ok) {
-    throw httpToolsError(
-      "DShield API",
-      res.status,
-      `DShield API ${res.status} for ${ip}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  if (!isRecord(body)) {
-    throw new ToolsError(`DShield response for ${ip} was not a JSON object`, {
-      code: "parse_error",
-    });
-  }
-  const data = isRecord(body.ip) ? body.ip : {};
-  return parseDshieldBody(ip, new Date().toISOString(), data);
+    const data = isRecord(body.ip) ? body.ip : {};
+    return parseDshieldBody(ip, new Date().toISOString(), data);
+  });
 }

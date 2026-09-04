@@ -1,7 +1,10 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { httpToolsError, missingApiKey } from "../errors/tools-error";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { asBool, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -71,74 +74,74 @@ interface C99Options {
   realtime?: boolean;
   limit?: number;
 }
-export async function fetchC99Subdomains(
+
+export function fetchC99SubdomainsEffect(
   hostRaw: string,
   apiKey: string,
   signal: AbortSignal,
   options?: C99Options
-): Promise<C99LookupSnapshot> {
-  const host = normalizeHost(hostRaw);
-  const key = apiKey.trim();
-  if (!key) throw missingApiKey("C99_API_KEY");
-
-  const realtime = options?.realtime === true;
-  const limit = options?.limit ?? 200;
-  const ua = options?.userAgent ?? watchdogUserAgent("network.c99.lookup");
-
-  const url = new URL("https://api.c99.nl/subdomainfinder");
-  url.searchParams.set("key", key);
-  url.searchParams.set("domain", host);
-  if (realtime) url.searchParams.set("realtime", "true");
-  // C99 expects a bare `&json` flag (value optional).
-  const fetchUrl = `${url.toString()}&json`;
-
-  const res = await fetch(fetchUrl, {
-    method: "GET",
-    signal,
-    headers: { Accept: "application/json", "User-Agent": ua },
-  });
-
-  if (!res.ok) {
-    throw httpToolsError(
-      "C99 API",
-      res.status,
-      `C99 API ${res.status} for ${host}`
-    );
-  }
-
-  const body: unknown = await res.json();
-  let error: string | null = null;
-  let rows: unknown[] = [];
-
-  if (Array.isArray(body)) {
-    rows = body;
-  } else if (isRecord(body)) {
-    if (typeof body.error === "string" && body.error.trim() !== "") {
-      error = body.error.trim();
-    } else if (body.success === false && typeof body.error === "string") {
-      error = body.error;
+): Effect.Effect<C99LookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchC99SubdomainsGen() {
+    const host = normalizeHost(hostRaw);
+    const key = apiKey.trim();
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "C99_API_KEY" });
     }
-    if (Array.isArray(body.subdomains)) rows = body.subdomains;
-    else if (Array.isArray(body.data)) rows = body.data;
-  }
 
-  const hits: C99SubdomainHit[] = [];
-  const seen = new Set<string>();
-  for (const row of rows) {
-    const hit = parseHit(row);
-    if (!hit || seen.has(hit.subdomain)) continue;
-    seen.add(hit.subdomain);
-    hits.push(hit);
-    if (hits.length >= limit) break;
-  }
+    const realtime = options?.realtime === true;
+    const limit = options?.limit ?? 200;
+    const ua = options?.userAgent ?? watchdogUserAgent("network.c99.lookup");
 
-  return c99LookupSnapshotSchema.parse({
-    host,
-    queriedAt: new Date().toISOString(),
-    source: "api.c99.nl/subdomainfinder",
-    realtime,
-    domains: hits.map((h) => h.subdomain),
-    hits,
-    error,
+    const url = new URL("https://api.c99.nl/subdomainfinder");
+    url.searchParams.set("key", key);
+    url.searchParams.set("domain", host);
+    if (realtime) url.searchParams.set("realtime", "true");
+    // C99 expects a bare `&json` flag (value optional).
+    const fetchUrl = `${url.toString()}&json`;
+
+    const { body } = yield* fetchJsonUnknownEffect({
+      url: fetchUrl,
+      signal,
+      service: "C99",
+      subject: host,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
+    let error: string | null = null;
+    let rows: unknown[] = [];
+
+    if (Array.isArray(body)) {
+      rows = body;
+    } else if (isRecord(body)) {
+      if (typeof body.error === "string" && body.error.trim() !== "") {
+        error = body.error.trim();
+      } else if (body.success === false && typeof body.error === "string") {
+        error = body.error;
+      }
+      if (Array.isArray(body.subdomains)) rows = body.subdomains;
+      else if (Array.isArray(body.data)) rows = body.data;
+    }
+
+    const hits: C99SubdomainHit[] = [];
+    const seen = new Set<string>();
+    for (const row of rows) {
+      const hit = parseHit(row);
+      if (!hit || seen.has(hit.subdomain)) continue;
+      seen.add(hit.subdomain);
+      hits.push(hit);
+      if (hits.length >= limit) break;
+    }
+
+    return c99LookupSnapshotSchema.parse({
+      host,
+      queriedAt: new Date().toISOString(),
+      source: "api.c99.nl/subdomainfinder",
+      realtime,
+      domains: hits.map((h) => h.subdomain),
+      hits,
+      error,
+    });
   });
 }

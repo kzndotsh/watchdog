@@ -1,4 +1,6 @@
-import { scheduleCaseExport, type WatchdogEvent } from "@watchdog/core";
+import { Effect } from "effect";
+
+import { scheduleCaseExportEffect, type WatchdogEvent } from "@watchdog/core";
 
 export function shouldTriggerCaseExport(event: WatchdogEvent): boolean {
   switch (event.type) {
@@ -19,8 +21,14 @@ export function shouldTriggerCaseExport(event: WatchdogEvent): boolean {
   }
 }
 
-export function handleExportEvent(event: WatchdogEvent): void {
-  if (shouldTriggerCaseExport(event)) {
-    void scheduleCaseExport(event.caseId);
+export function handleExportEventEffect(
+  event: WatchdogEvent
+): Effect.Effect<void> {
+  if (!shouldTriggerCaseExport(event)) {
+    return Effect.void;
   }
+  return scheduleCaseExportEffect(event.caseId).pipe(
+    Effect.forkDetach({ startImmediately: true }),
+    Effect.asVoid
+  );
 }

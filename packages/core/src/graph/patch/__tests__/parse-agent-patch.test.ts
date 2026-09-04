@@ -1,5 +1,19 @@
+import { Effect } from "effect";
 import { describe, it, expect } from "vitest";
-import { parseAgentPatch } from "../parse-agent-patch.ts";
+
+import {
+  parseAgentPatchEffect,
+  type ParsedAgentPatch,
+  type AgentPatchRefusal,
+} from "../parse-agent-patch.ts";
+
+function parseAgentPatch(input: {
+  patch: unknown;
+  summary?: string;
+  evidenceIds?: string[];
+}): ParsedAgentPatch | AgentPatchRefusal {
+  return Effect.runSync(parseAgentPatchEffect(input));
+}
 
 describe("parse-agent-patch", () => {
 

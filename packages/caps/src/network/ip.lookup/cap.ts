@@ -1,4 +1,6 @@
-import { fetchIpLookup, normalizeIp } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchIpLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipLookupInput } from "./input";
@@ -23,12 +25,16 @@ export const ipLookup = defineCollectCap({
   },
   schema: ipLookupSnapshotSchema,
   reportLabel: "ip.lookup",
-  async fetch(ctx) {
-    const ip = normalizeIp(ctx.input.ip);
-    ctx.log(`Cymru IP lookup ${ip}`);
-    const snap = await fetchIpLookup(ip, ctx.signal);
-    ctx.log(`asn=${snap.asn ?? "none"} prefix=${snap.bgpPrefix ?? "none"}`);
-    return { snap, artifactName: `ip-lookup-${ip.replaceAll(":", "-")}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* ipLookupFetch() {
+      const ip = normalizeIp(ctx.input.ip);
+      ctx.log(`Cymru IP lookup ${ip}`);
+      const snap = yield* fetchIpLookupEffect(ip, ctx.signal);
+      ctx.log(`asn=${snap.asn ?? "none"} prefix=${snap.bgpPrefix ?? "none"}`);
+      return {
+        snap,
+        artifactName: `ip-lookup-${ip.replaceAll(":", "-")}.json`,
+      };
+    }),
   interpretSnap: interpretIpLookupReport,
 });

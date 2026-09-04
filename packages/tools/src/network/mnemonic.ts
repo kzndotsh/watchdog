@@ -1,10 +1,14 @@
 import { isIP } from "node:net";
 
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { httpToolsError, parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asNumber, asStringEmpty as asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
@@ -167,35 +171,34 @@ interface MnemonicOptions {
   userAgent?: string;
   limit?: number;
 }
-export async function fetchMnemonicPdns(
+
+export function fetchMnemonicPdnsEffect(
   queryRaw: string,
   signal: AbortSignal,
   options?: MnemonicOptions
-): Promise<MnemonicLookupSnapshot> {
-  const { kind, value } = classifyIpOrHost(queryRaw);
-  const limit = Math.min(Math.max(options?.limit ?? 50, 1), 500);
-  const ua = options?.userAgent ?? watchdogUserAgent("network.mnemonic.lookup");
+): Effect.Effect<MnemonicLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchMnemonicPdnsGen() {
+    const { kind, value } = classifyIpOrHost(queryRaw);
+    const limit = Math.min(Math.max(options?.limit ?? 50, 1), 500);
+    const ua =
+      options?.userAgent ?? watchdogUserAgent("network.mnemonic.lookup");
 
-  const url = new URL(
-    `https://api.mnemonic.no/pdns/v3/${encodeURIComponent(value)}`
-  );
-  url.searchParams.set("limit", String(limit));
-  url.searchParams.set("aggregate", "true");
-
-  const res = await fetch(url, {
-    method: "GET",
-    signal,
-    headers: { Accept: "application/json", "User-Agent": ua },
-  });
-
-  if (!res.ok) {
-    throw httpToolsError(
-      "Mnemonic PDNS",
-      res.status,
-      `Mnemonic PDNS ${res.status} for ${value}`
+    const url = new URL(
+      `https://api.mnemonic.no/pdns/v3/${encodeURIComponent(value)}`
     );
-  }
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("aggregate", "true");
 
-  const body: unknown = await res.json();
-  return parseMnemonicPdnsBody(value, kind, new Date().toISOString(), body);
+    const { body } = yield* fetchJsonUnknownEffect({
+      url,
+      signal,
+      service: "Mnemonic PDNS",
+      subject: value,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+    });
+    return parseMnemonicPdnsBody(value, kind, new Date().toISOString(), body);
+  });
 }

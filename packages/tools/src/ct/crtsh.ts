@@ -1,9 +1,11 @@
-import {
-  httpToolsError,
-  parseToolsError,
-  errorMessage,
-} from "../errors/tools-error";
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
+
+import { mapToolsCatch } from "../errors/map-tools-tag";
+import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
+import { parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { fetchBytesEffect } from "../http/fetch-bytes";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 import {
@@ -119,47 +121,48 @@ export interface FetchCrtShOptions {
  * Query crt.sh Certificate Transparency for `%.{host}` (and the bare host).
  * Returns structured entries + deduped domain labels — no Cap/Graph types.
  */
-export async function fetchCrtShLookup(
+export function fetchCrtShLookupEffect(
   host: string,
   signal?: AbortSignal,
   options?: FetchCrtShOptions
-): Promise<CtLookupSnapshot> {
-  const resolved = options ?? {};
-  const normalized = normalizeHost(host);
-  const limit = resolved.limit ?? 50;
-  const userAgent =
-    resolved.userAgent ?? watchdogUserAgent("network.ct.lookup");
+): Effect.Effect<CtLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchCrtShLookupGen() {
+    const resolved = options ?? {};
+    const normalized = normalizeHost(host);
+    const limit = resolved.limit ?? 50;
+    const userAgent =
+      resolved.userAgent ?? watchdogUserAgent("network.ct.lookup");
 
-  const url = new URL(CRT_SH_URL);
-  url.searchParams.set("q", `%.${normalized}`);
-  url.searchParams.set("output", "json");
+    const url = new URL(CRT_SH_URL);
+    url.searchParams.set("q", `%.${normalized}`);
+    url.searchParams.set("output", "json");
 
-  const res = await fetch(url, {
-    signal,
-    headers: { Accept: "application/json", "User-Agent": userAgent },
-  });
-  if (!res.ok) {
-    throw httpToolsError("crt.sh", res.status, `crt.sh HTTP ${res.status}`);
-  }
+    const abort = signal ?? new AbortController().signal;
+    const result = yield* fetchBytesEffect(url.toString(), abort, {
+      userAgent,
+      maxBytes: 4_000_000,
+      accept: "application/json",
+    });
+    if (!result.ok) {
+      return yield* new HttpVendorError({
+        service: "crt.sh",
+        status: result.status,
+      });
+    }
 
-  let payloadText: string;
-  try {
-    payloadText = await res.text();
-  } catch (error) {
-    throw parseToolsError(
-      "crt.sh",
-      normalized,
-      `crt.sh read failed: ${errorMessage(error)}`
-    );
-  }
-  const rows = parseCrtShJson(payloadText);
-  const { entries, domains } = collectCrtShEntries(rows, normalized, limit);
+    const payloadText = new TextDecoder().decode(result.bytes);
+    const rows = yield* Effect.try({
+      try: () => parseCrtShJson(payloadText),
+      catch: mapToolsCatch,
+    });
+    const { entries, domains } = collectCrtShEntries(rows, normalized, limit);
 
-  return ctLookupSnapshotSchema.parse({
-    host: normalized,
-    source: "crt.sh",
-    queriedAt: new Date().toISOString(),
-    entries,
-    domains,
+    return ctLookupSnapshotSchema.parse({
+      host: normalized,
+      source: "crt.sh",
+      queriedAt: new Date().toISOString(),
+      entries,
+      domains,
+    });
   });
 }

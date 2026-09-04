@@ -1,9 +1,11 @@
+import { Effect } from "effect";
+import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import { missingApiKey } from "../errors/tools-error";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
-import { fetchJsonObject } from "../http/fetch-json";
+import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString } from "../parse/coerce";
 
 export const ipinfoLookupSnapshotSchema = z.object({
@@ -32,43 +34,48 @@ export type IpinfoLookupSnapshot = z.infer<typeof ipinfoLookupSnapshotSchema>;
 interface IpinfoOptions {
   userAgent?: string;
 }
-export async function fetchIpinfoLookup(
+
+export function fetchIpinfoLookupEffect(
   ipRaw: string,
   apiToken: string,
   signal: AbortSignal,
   options?: IpinfoOptions
-): Promise<IpinfoLookupSnapshot> {
-  const token = apiToken.trim();
-  if (!token) throw missingApiKey("IPINFO_API_TOKEN");
-  const ip = normalizeIp(ipRaw);
-  const ua = options?.userAgent ?? watchdogUserAgent("network.ipinfo.lookup");
+): Effect.Effect<IpinfoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
+  return Effect.gen(function* fetchIpinfoLookupGen() {
+    const token = apiToken.trim();
+    if (!token) {
+      return yield* new MissingCredentialError({ slot: "IPINFO_API_TOKEN" });
+    }
+    const ip = normalizeIp(ipRaw);
+    const ua = options?.userAgent ?? watchdogUserAgent("network.ipinfo.lookup");
 
-  const url = new URL(`https://ipinfo.io/${ip}/json`);
-  url.searchParams.set("token", token);
+    const url = new URL(`https://ipinfo.io/${ip}/json`);
+    url.searchParams.set("token", token);
 
-  const body = await fetchJsonObject({
-    url,
-    init: {
-      method: "GET",
-      headers: { Accept: "application/json", "User-Agent": ua },
-    },
-    signal,
-    service: "IPinfo",
-    subject: ip,
-  });
+    const { body } = yield* fetchJsonObjectEffect({
+      url,
+      init: {
+        method: "GET",
+        headers: { Accept: "application/json", "User-Agent": ua },
+      },
+      signal,
+      service: "IPinfo",
+      subject: ip,
+    });
 
-  return ipinfoLookupSnapshotSchema.parse({
-    ip,
-    queriedAt: new Date().toISOString(),
-    source: "ipinfo.io",
-    found: typeof body.bogon !== "boolean",
-    hostname: asString(body.hostname),
-    city: asString(body.city),
-    region: asString(body.region),
-    country: asString(body.country),
-    loc: asString(body.loc),
-    org: asString(body.org),
-    postal: asString(body.postal),
-    timezone: asString(body.timezone),
+    return ipinfoLookupSnapshotSchema.parse({
+      ip,
+      queriedAt: new Date().toISOString(),
+      source: "ipinfo.io",
+      found: typeof body.bogon !== "boolean",
+      hostname: asString(body.hostname),
+      city: asString(body.city),
+      region: asString(body.region),
+      country: asString(body.country),
+      loc: asString(body.loc),
+      org: asString(body.org),
+      postal: asString(body.postal),
+      timezone: asString(body.timezone),
+    });
   });
 }

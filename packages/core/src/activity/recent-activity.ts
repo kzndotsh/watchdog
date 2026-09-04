@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   activityEventsRepo,
   activityRepo,
@@ -5,6 +7,9 @@ import {
   type RecentActivityEventRow,
 } from "@watchdog/db";
 import type { ActivityItem, ActivityKind, JobStatus } from "@watchdog/schemas";
+
+import { tryDb } from "../infra/postgres-effect";
+import type { DomainTag } from "../infra/tagged-errors";
 
 export type { ActivityItem, ActivityKind };
 
@@ -94,51 +99,58 @@ export function mergeActivityItems(
     .slice(0, limit);
 }
 
-export async function listRecentActivity(
+export function listRecentActivityEffect(
   opts?: ListRecentActivityOpts
-): Promise<ActivityItem[]> {
+): Effect.Effect<ActivityItem[], DomainTag> {
   const limit = opts?.limit ?? DEFAULT_LIMIT;
   const repoOpts = { caseId: opts?.caseId, limit };
 
-  const [evidenceRows, jobRows, proposalRows, taskEvents] = await Promise.all([
-    activityRepo.recentEvidence(db, repoOpts),
-    activityRepo.recentJobs(db, repoOpts),
-    activityRepo.recentPendingProposals(db, repoOpts),
-    activityEventsRepo.recent(db, { ...repoOpts, kind: "task" }),
-  ]);
+  return Effect.gen(function* listRecentActivityGen() {
+    const [evidenceRows, jobRows, proposalRows, taskEvents] = yield* Effect.all(
+      [
+        tryDb(() => activityRepo.recentEvidence(db, repoOpts)),
+        tryDb(() => activityRepo.recentJobs(db, repoOpts)),
+        tryDb(() => activityRepo.recentPendingProposals(db, repoOpts)),
+        tryDb(() =>
+          activityEventsRepo.recent(db, { ...repoOpts, kind: "task" })
+        ),
+      ],
+      { concurrency: "unbounded" }
+    );
 
-  const items: ActivityItem[] = [
-    ...evidenceRows.map((row) => ({
-      id: row.id,
-      kind: "evidence" as const,
-      action: "Captured",
-      caseId: row.caseId,
-      caseName: row.caseName,
-      label: displayText(row.label, row.kind),
-      at: row.at.toISOString(),
-    })),
-    ...jobRows.map((row) => ({
-      id: row.id,
-      kind: "job" as const,
-      action: jobActivityAction(row.status),
-      caseId: row.caseId,
-      caseName: row.caseName,
-      label: displayText(row.resultSummary, row.capabilityId),
-      status: row.status,
-      at: row.at.toISOString(),
-    })),
-    ...proposalRows.map((row) => ({
-      id: row.id,
-      kind: "proposal" as const,
-      action: "Pending",
-      caseId: row.caseId,
-      caseName: row.caseName,
-      label: displayText(row.summary, "Proposal pending"),
-      status: "pending",
-      at: row.at.toISOString(),
-    })),
-    ...taskEvents.map(mapTaskEvent),
-  ];
+    const items: ActivityItem[] = [
+      ...evidenceRows.map((row) => ({
+        id: row.id,
+        kind: "evidence" as const,
+        action: "Captured",
+        caseId: row.caseId,
+        caseName: row.caseName,
+        label: displayText(row.label, row.kind),
+        at: row.at.toISOString(),
+      })),
+      ...jobRows.map((row) => ({
+        id: row.id,
+        kind: "job" as const,
+        action: jobActivityAction(row.status),
+        caseId: row.caseId,
+        caseName: row.caseName,
+        label: displayText(row.resultSummary, row.capabilityId),
+        status: row.status,
+        at: row.at.toISOString(),
+      })),
+      ...proposalRows.map((row) => ({
+        id: row.id,
+        kind: "proposal" as const,
+        action: "Pending",
+        caseId: row.caseId,
+        caseName: row.caseName,
+        label: displayText(row.summary, "Proposal pending"),
+        status: "pending",
+        at: row.at.toISOString(),
+      })),
+      ...taskEvents.map(mapTaskEvent),
+    ];
 
-  return mergeActivityItems(items, limit);
+    return mergeActivityItems(items, limit);
+  });
 }

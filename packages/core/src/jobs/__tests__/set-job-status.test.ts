@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 const { update, notifyEvent } = vi.hoisted(() => ({
@@ -10,18 +11,17 @@ vi.mock("@watchdog/db", () => ({
   jobsRepo: {
     update,
   },
-}));
-
-vi.mock("../../infra/events", () => ({
   notifyEvent: (...args: unknown[]) => notifyEvent(...args),
 }));
 
-import { setJobStatus } from "../set-job-status";
+import { setJobStatusEffect } from "../set-job-status";
 
 describe("setJobStatus", () => {
   it("returns null when update matches no row", async () => {
     update.mockResolvedValueOnce(null);
-    const result = await setJobStatus("job-1", { status: "running" });
+    const result = await Effect.runPromise(
+      setJobStatusEffect("job-1", { status: "running" })
+    );
     expect(result).toBeNull();
     expect(notifyEvent).not.toHaveBeenCalled();
   });
@@ -32,10 +32,12 @@ describe("setJobStatus", () => {
       caseId: "case-1",
       status: "completed",
     });
-    const result = await setJobStatus(
-      "job-1",
-      { status: "completed" },
-      { notify: true, caseId: "case-1" }
+    const result = await Effect.runPromise(
+      setJobStatusEffect(
+        "job-1",
+        { status: "completed" },
+        { notify: true, caseId: "case-1" }
+      )
     );
     expect(result?.status).toBe("completed");
     await vi.waitFor(() => {

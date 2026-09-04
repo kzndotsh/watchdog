@@ -1,15 +1,15 @@
 import { z } from "zod";
 
 import {
-  acceptProposal,
-  createAgentProposal,
-  listProposalsForCase,
-  rejectProposal,
+  acceptProposalEffect,
+  createAgentProposalEffect,
+  listProposalsForCaseEffect,
+  rejectProposalEffect,
 } from "@watchdog/core";
 import { patchOpSchema } from "@watchdog/schemas";
 
-import { withDomainError } from "../map-domain-error";
 import { authed } from "../os";
+import { runApp } from "../runtime";
 import {
   confidenceTierSchema,
   proposalSchema,
@@ -32,18 +32,18 @@ export const create = authed
     })
   )
   .output(proposalSchema)
-  .handler(
-    withDomainError(async ({ input, context }) => {
-      const { proposal } = await createAgentProposal({
+  .handler(async ({ input, context }) => {
+    const { proposal } = await runApp(
+      createAgentProposalEffect({
         caseId: input.caseId,
         actorId: context.actor.userId,
         patch: input.patch,
         summary: input.summary,
         evidenceIds: input.evidenceIds,
-      });
-      return proposal;
-    })
-  );
+      })
+    );
+    return proposal;
+  });
 
 export const listForCase = authed
   .route({
@@ -59,9 +59,9 @@ export const listForCase = authed
     })
   )
   .output(z.array(proposalSchema))
-  .handler(
-    withDomainError(async ({ input }) =>
-      listProposalsForCase(
+  .handler(async ({ input }) =>
+    runApp(
+      listProposalsForCaseEffect(
         input.caseId,
         input.status === undefined ? undefined : { status: input.status }
       )
@@ -85,9 +85,9 @@ export const accept = authed
     })
   )
   .output(proposalSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      acceptProposal({
+  .handler(async ({ input, context }) =>
+    runApp(
+      acceptProposalEffect({
         caseId: input.caseId,
         proposalId: input.proposalId,
         confidence: input.confidence,
@@ -113,9 +113,9 @@ export const reject = authed
     })
   )
   .output(proposalSchema)
-  .handler(
-    withDomainError(async ({ input, context }) =>
-      rejectProposal({
+  .handler(async ({ input, context }) =>
+    runApp(
+      rejectProposalEffect({
         caseId: input.caseId,
         proposalId: input.proposalId,
         reason: input.reason,

@@ -1,4 +1,6 @@
-import { fetchMailConfig, normalizeHost } from "@watchdog/tools";
+import { Effect } from "effect";
+
+import { fetchMailConfigEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mailConfigInput } from "./input";
@@ -23,14 +25,15 @@ export const mailConfig = defineCollectCap({
   },
   schema: mailConfigSnapshotSchema,
   reportLabel: "domain.mail_config",
-  async fetch(ctx) {
-    const host = normalizeHost(ctx.input.host);
-    ctx.log(`mail config ${host}`);
-    const snap = await fetchMailConfig(host, ctx.signal);
-    ctx.log(
-      `MX=${snap.mx.length} SPF=${snap.spf.present} DMARC=${snap.dmarc.present} DKIM=${snap.dkim.found.length}`
-    );
-    return { snap, artifactName: `mail-config-${host}.json` };
-  },
+  fetch: (ctx) =>
+    Effect.gen(function* mailConfigFetch() {
+      const host = normalizeHost(ctx.input.host);
+      ctx.log(`mail config ${host}`);
+      const snap = yield* fetchMailConfigEffect(host, ctx.signal);
+      ctx.log(
+        `MX=${snap.mx.length} SPF=${snap.spf.present} DMARC=${snap.dmarc.present} DKIM=${snap.dkim.found.length}`
+      );
+      return { snap, artifactName: `mail-config-${host}.json` };
+    }),
   interpretSnap: interpretMailConfigReport,
 });
