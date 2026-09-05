@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -150,7 +149,7 @@ describe("runPlaybook", () => {
     expect(enrich?.capabilityId).toBe("network.url.enrich");
     if (enrich === undefined) throw new TypeError("expected enrich job");
     await jobsRepo.update(db, enrich.id, { status: "succeeded" });
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: result.playbookRunId,

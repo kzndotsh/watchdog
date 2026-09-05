@@ -22,7 +22,7 @@ import {
 import { notifyJobUpdateEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
-import { toDomainError, type DomainTag } from "../../infra/tagged-errors";
+import type { DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 
 interface ReleasedJob {
@@ -142,7 +142,7 @@ function enqueueStepJobsEffect(opts: {
 export function advancePlaybookRunEffect(input: {
   playbookRunId: string;
   caseId?: string;
-}): Effect.Effect<void> {
+}): Effect.Effect<void, DomainTag> {
   const { playbookRunId } = input;
   return Effect.gen(function* advancePlaybookRunGen() {
     const outcome = yield* transact((tx) =>
@@ -220,5 +220,5 @@ export function advancePlaybookRunEffect(input: {
     const caseId = outcome.caseId ?? input.caseId;
     if (caseId === undefined) return;
     yield* enqueueReleasedEffect(caseId, playbookRunId, outcome.jobs);
-  }).pipe(Effect.mapError(toDomainError), Effect.orDie);
+  });
 }
