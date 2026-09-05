@@ -27,6 +27,7 @@ describe("createTask", () => {
     const created = await runDomain(
       createTaskEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         title: "Follow up WHOIS",
         actorId: TEST_ACTOR_ID,
       })
@@ -34,7 +35,9 @@ describe("createTask", () => {
     expect(created.title).toBe("Follow up WHOIS");
     expect(created.status).toBe("backlog");
 
-    const listed = await runDomain(listTasksForCaseEffect(cased.id));
+    const listed = await runDomain(
+      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
     expect(listed.some((row) => row.id === created.id)).toBe(true);
   });
 
@@ -43,6 +46,7 @@ describe("createTask", () => {
     const created = await runDomain(
       createTaskEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         title: "Move me",
         actorId: TEST_ACTOR_ID,
       })
@@ -50,6 +54,7 @@ describe("createTask", () => {
     await runDomain(
       updateTaskEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         taskId: created.id,
         status: "in_progress",
         actorId: TEST_ACTOR_ID,
@@ -75,6 +80,7 @@ describe("createTask", () => {
       runDomain(
         createTaskEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           title: "Bad entity",
           entityId: foreign.id,
         })
@@ -89,11 +95,16 @@ describe("createTask", () => {
     const created = await runDomain(
       createTaskEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         title: "Drop me",
       })
     );
-    await runDomain(deleteTaskEffect(cased.id, created.id));
-    const listed = await runDomain(listTasksForCaseEffect(cased.id));
+    await runDomain(
+      deleteTaskEffect(cased.id, TEST_ORGANIZATION_ID, created.id)
+    );
+    const listed = await runDomain(
+      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
     expect(listed.some((row) => row.id === created.id)).toBe(false);
   });
 
@@ -102,25 +113,30 @@ describe("createTask", () => {
     const first = await runDomain(
       createTaskEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         title: "First",
       })
     );
     const second = await runDomain(
       createTaskEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         title: "Second",
       })
     );
     const reordered = await runDomain(
       reorderTasksEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         status: "backlog",
         orderedIds: [second.id, first.id],
       })
     );
     expect(reordered.map((row) => row.id)).toEqual([second.id, first.id]);
     const listed = await runDomain(
-      listTasksForCaseEffect(cased.id, { status: "backlog" })
+      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+        status: "backlog",
+      })
     );
     expect(listed.map((row) => row.id)).toEqual([second.id, first.id]);
   });

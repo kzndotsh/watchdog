@@ -8,7 +8,7 @@ import {
 } from "@watchdog/schemas";
 
 import {
-  assertCaseExistsEffect,
+  assertCaseInOrgEffect,
   assertEntityInCaseEffect,
 } from "../graph/patch/guards";
 import { notifyTaskChangedEffect } from "../infra/events";
@@ -36,6 +36,7 @@ export interface TaskRecord {
 
 export interface CreateTaskInput {
   caseId: string;
+  organizationId: string;
   title: string;
   description?: string;
   status?: TaskStatus;
@@ -47,6 +48,7 @@ export interface CreateTaskInput {
 
 export interface UpdateTaskInput {
   caseId: string;
+  organizationId: string;
   taskId: string;
   title?: string;
   description?: string | null;
@@ -114,10 +116,11 @@ function buildTaskUpdateFields(
 
 export function listTasksForCaseEffect(
   caseId: string,
+  organizationId: string,
   opts?: ListTasksOpts
 ): Effect.Effect<TaskRecord[], DomainTag> {
   return Effect.gen(function* listTasksGen() {
-    yield* assertCaseExistsEffect(caseId);
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const rows = yield* tryDb(() => tasksRepo.listForCase(db, caseId, opts));
     return rows.map(toRecord);
   });
@@ -125,22 +128,24 @@ export function listTasksForCaseEffect(
 
 export function getTaskInCaseEffect(
   caseId: string,
+  organizationId: string,
   taskId: string
 ): Effect.Effect<TaskRecord, DomainTag> {
-  return tryDb(() => tasksRepo.getInCase(db, caseId, taskId)).pipe(
-    Effect.flatMap((row) =>
-      row
-        ? Effect.succeed(toRecord(row))
-        : new NotFoundError({ resource: "Task not found" })
-    )
-  );
+  return Effect.gen(function* getTaskInCaseGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const row = yield* tryDb(() => tasksRepo.getInCase(db, caseId, taskId));
+    if (!row) {
+      return yield* new NotFoundError({ resource: "Task not found" });
+    }
+    return toRecord(row);
+  });
 }
 
 export function createTaskEffect(
   input: CreateTaskInput
 ): Effect.Effect<TaskRecord, DomainTag> {
   return Effect.gen(function* createTaskGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     if (input.entityId) {
       yield* assertEntityInCaseEffect(input.caseId, input.entityId);
     }
@@ -188,6 +193,7 @@ export function updateTaskEffect(
   input: UpdateTaskInput
 ): Effect.Effect<TaskRecord, DomainTag> {
   return Effect.gen(function* updateTaskGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       tasksRepo.getInCase(db, input.caseId, input.taskId)
     );
@@ -252,10 +258,12 @@ export function updateTaskEffect(
 
 export function deleteTaskEffect(
   caseId: string,
+  organizationId: string,
   taskId: string,
   actorId?: string
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteTaskGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const existing = yield* tryDb(() =>
       tasksRepo.getInCase(db, caseId, taskId)
     );
@@ -291,6 +299,7 @@ export function deleteTaskEffect(
 
 export interface ReorderTasksInput {
   caseId: string;
+  organizationId: string;
   status: TaskStatus;
   orderedIds: string[];
 }
@@ -299,7 +308,7 @@ export function reorderTasksEffect(
   input: ReorderTasksInput
 ): Effect.Effect<TaskRecord[], DomainTag> {
   return Effect.gen(function* reorderTasksGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
 
     const records = yield* transact((tx) =>
       Effect.gen(function* reorderTasksTx() {

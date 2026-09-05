@@ -8,7 +8,7 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedAuthUser,
@@ -26,6 +26,7 @@ describe("startJob", () => {
     const job = await runDomain(
       startJobEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         capabilityId: "network.dns.lookup",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -33,7 +34,9 @@ describe("startJob", () => {
       })
     );
     expect(job.status).toBe("queued");
-    const reread = await runDomain(getJobForCaseEffect(cased.id, job.id));
+    const reread = await runDomain(
+      getJobForCaseEffect(cased.id, TEST_ORGANIZATION_ID, job.id)
+    );
     expect(reread?.id).toBe(job.id);
     expect(reread?.status).toBe("queued");
     expect(reread?.input).toEqual({ host: "mailhost.test" });
@@ -51,6 +54,7 @@ describe("startJob", () => {
     const job = await runDomain(
       startJobEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         capabilityId: "network.dns.lookup",
         actorId: userId,
         input: { host: "mailhost.test" },
@@ -68,12 +72,14 @@ describe("cancelJob", () => {
   it("cancels a queued job and rejects a succeeded one", async () => {
     const cased = await seedCase(db);
     const queued = await seedJob(db, cased.id, { status: "queued" });
-    const cancelled = await runDomain(cancelJobEffect(cased.id, queued.id));
+    const cancelled = await runDomain(
+      cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, queued.id)
+    );
     expect(cancelled.status).toBe("cancelled");
 
     const done = await seedJob(db, cased.id, { status: "succeeded" });
     await expect(
-      runDomain(cancelJobEffect(cased.id, done.id))
+      runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, done.id))
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "conflict"
     );

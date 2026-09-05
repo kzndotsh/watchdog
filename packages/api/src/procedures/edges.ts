@@ -27,8 +27,14 @@ export const list = authed
     })
   )
   .output(z.array(edgeSchema))
-  .handler(async ({ input }) =>
-    runApp(listEdgesForEntityEffect(input.caseId, input.entityId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      listEdgesForEntityEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.entityId
+      )
+    )
   );
 
 export const listForCase = authed
@@ -40,7 +46,9 @@ export const listForCase = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.array(caseEdgeSchema))
-  .handler(async ({ input }) => runApp(listEdgesForCaseEffect(input.caseId)));
+  .handler(async ({ input, context }) =>
+    runApp(listEdgesForCaseEffect(input.caseId, context.actor.organizationId))
+  );
 
 export const create = graphChildWrite
   .route({
@@ -64,7 +72,14 @@ export const create = graphChildWrite
     })
   )
   .output(edgeSchema)
-  .handler(async ({ input }) => runApp(createEdgeEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      createEdgeEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const update = graphChildWrite
   .route({
@@ -96,7 +111,14 @@ export const update = graphChildWrite
       )
   )
   .output(edgeSchema)
-  .handler(async ({ input }) => runApp(updateEdgeEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      updateEdgeEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const remove = graphChildWrite
   .route({
@@ -113,7 +135,9 @@ export const remove = graphChildWrite
     })
   )
   .output(z.object({ ok: z.literal(true) }))
-  .handler(async ({ input }) => {
-    await runApp(deleteEdgeEffect(input.caseId, input.edgeId));
+  .handler(async ({ input, context }) => {
+    await runApp(
+      deleteEdgeEffect(input.caseId, context.actor.organizationId, input.edgeId)
+    );
     return { ok: true as const };
   });

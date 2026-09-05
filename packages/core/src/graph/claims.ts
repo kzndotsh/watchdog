@@ -19,6 +19,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import {
+  assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
 } from "./patch/guards";
@@ -39,6 +40,7 @@ export interface ClaimRecord {
 
 export interface CreateClaimInput {
   caseId: string;
+  organizationId: string;
   entityId: string;
   text: string;
   confidence: ConfidenceTier;
@@ -48,6 +50,7 @@ export interface CreateClaimInput {
 
 export interface UpdateClaimInput {
   caseId: string;
+  organizationId: string;
   claimId: string;
   text?: string;
   class?: ClaimClass;
@@ -57,6 +60,7 @@ export interface UpdateClaimInput {
 
 export interface RetractClaimInput {
   caseId: string;
+  organizationId: string;
   claimId: string;
   kind: RetractKind;
   reason: string;
@@ -84,10 +88,12 @@ interface EntityListOpts {
 
 export function listClaimsForEntityEffect(
   caseId: string,
+  organizationId: string,
   entityId: string,
   opts?: EntityListOpts
 ): Effect.Effect<ClaimRecord[], DomainTag> {
   return Effect.gen(function* listClaimsGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     yield* assertEntityInCaseEffect(caseId, entityId, db);
     const rows = yield* tryDb(() =>
       claimsRepo.listForEntity(db, entityId, opts)
@@ -106,6 +112,7 @@ export function createClaimEffect(
   input: CreateClaimInput
 ): Effect.Effect<ClaimRecord, DomainTag> {
   return Effect.gen(function* createClaimGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const evidenceIds = normalizeIdList(input.evidenceIds ?? []);
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
@@ -144,6 +151,7 @@ export function retractClaimEffect(
   actorId: string
 ): Effect.Effect<ClaimRecord, DomainTag> {
   return Effect.gen(function* retractClaimGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       claimsRepo.getInCase(db, input.caseId, input.claimId)
     );
@@ -177,6 +185,7 @@ export function updateClaimEffect(
   input: UpdateClaimInput
 ): Effect.Effect<ClaimRecord, DomainTag> {
   return Effect.gen(function* updateClaimGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       claimsRepo.getInCase(db, input.caseId, input.claimId)
     );

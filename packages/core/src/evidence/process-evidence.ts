@@ -24,6 +24,7 @@ import { startJobEffect, type JobRecord, toJobRecord } from "../jobs/start-job";
 
 function startCapForEvidenceEffect(input: {
   caseId: string;
+  organizationId: string;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -52,6 +53,7 @@ function startCapForEvidenceEffect(input: {
     }
     return yield* startJobEffect({
       caseId: input.caseId,
+      organizationId: input.organizationId,
       capabilityId: input.capabilityId,
       actorId: input.actorId,
       actorLabel: input.actorLabel,
@@ -62,6 +64,7 @@ function startCapForEvidenceEffect(input: {
 
 export function processEvidenceEffect(input: {
   caseId: string;
+  organizationId: string;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -74,6 +77,7 @@ export function processEvidenceEffect(input: {
 
   return startCapForEvidenceEffect({
     caseId: input.caseId,
+    organizationId: input.organizationId,
     evidenceId: input.evidenceId,
     actorId: input.actorId,
     actorLabel: input.actorLabel,
@@ -105,12 +109,14 @@ export function markEvidenceProcessedEffect(input: {
 
 export function enrichUrlEvidenceEffect(input: {
   caseId: string;
+  organizationId: string;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
 }): Effect.Effect<JobRecord, DomainTag> {
   return startCapForEvidenceEffect({
     caseId: input.caseId,
+    organizationId: input.organizationId,
     evidenceId: input.evidenceId,
     actorId: input.actorId,
     actorLabel: input.actorLabel,

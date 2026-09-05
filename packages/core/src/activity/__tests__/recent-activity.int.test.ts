@@ -20,6 +20,7 @@ describe("listRecentActivity", () => {
     const task = await runDomain(
       createTaskEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         title: "Follow up WHOIS",
         actorId: TEST_ACTOR_ID,
       })
@@ -27,6 +28,7 @@ describe("listRecentActivity", () => {
     await runDomain(
       updateTaskEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         taskId: task.id,
         status: "in_progress",
         actorId: TEST_ACTOR_ID,

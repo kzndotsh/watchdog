@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { cancelJobEffect, runDomain } from "@watchdog/core";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -40,7 +41,7 @@ describe("finish", () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
 
-    await runDomain(cancelJobEffect(cased.id, job.id));
+    await runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id));
     const outcome = await Effect.runPromise(
       finishEffect({
         state: await harvestState(job.id),

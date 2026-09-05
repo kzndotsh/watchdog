@@ -26,8 +26,14 @@ export const list = authed
     })
   )
   .output(z.array(questionSchema))
-  .handler(async ({ input }) =>
-    runApp(listQuestionsForEntityEffect(input.caseId, input.entityId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      listQuestionsForEntityEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.entityId
+      )
+    )
   );
 
 export const create = graphChildWrite
@@ -47,7 +53,14 @@ export const create = graphChildWrite
     })
   )
   .output(questionSchema)
-  .handler(async ({ input }) => runApp(createQuestionEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      createQuestionEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const update = graphChildWrite
   .route({
@@ -66,7 +79,14 @@ export const update = graphChildWrite
     })
   )
   .output(questionSchema)
-  .handler(async ({ input }) => runApp(updateQuestionEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      updateQuestionEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const resolve = graphChildWrite
   .route({
@@ -84,7 +104,14 @@ export const resolve = graphChildWrite
     })
   )
   .output(questionSchema)
-  .handler(async ({ input }) => runApp(resolveQuestionEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      resolveQuestionEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const reopen = graphChildWrite
   .route({
@@ -101,4 +128,11 @@ export const reopen = graphChildWrite
     })
   )
   .output(questionSchema)
-  .handler(async ({ input }) => runApp(reopenQuestionEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      reopenQuestionEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );

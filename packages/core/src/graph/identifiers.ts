@@ -25,7 +25,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import {
-  assertCaseExistsEffect,
+  assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
 } from "./patch/guards";
@@ -47,6 +47,7 @@ export interface IdentifierRecord {
 
 export interface CreateIdentifierInput {
   caseId: string;
+  organizationId: string;
   entityId: string;
   type: IdentifierType;
   value: string;
@@ -59,6 +60,7 @@ export interface CreateIdentifierInput {
 
 export interface UpdateIdentifierInput {
   caseId: string;
+  organizationId: string;
   identifierId: string;
   value?: string;
   platform?: string;
@@ -85,9 +87,11 @@ function toRecord(row: IdentifierRow, evidenceIds: string[]): IdentifierRecord {
 
 export function listIdentifiersForEntityEffect(
   caseId: string,
+  organizationId: string,
   entityId: string
 ): Effect.Effect<IdentifierRecord[], DomainTag> {
   return Effect.gen(function* listIdentifiersForEntityGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     yield* assertEntityInCaseEffect(caseId, entityId, db);
     const rows = yield* tryDb(() =>
       identifiersRepo.listForEntity(db, entityId)
@@ -122,10 +126,11 @@ export function toCaseIdentifierRecord(
 }
 
 export function listIdentifiersForCaseEffect(
-  caseId: string
+  caseId: string,
+  organizationId: string
 ): Effect.Effect<CaseIdentifierRecord[], DomainTag> {
   return Effect.gen(function* listIdentifiersForCaseGen() {
-    yield* assertCaseExistsEffect(caseId);
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const rows = yield* tryDb(() => identifiersRepo.listForCase(db, caseId));
     const byId = yield* tryDb(() =>
       evidenceLinksRepo.listForIdentifiers(
@@ -143,6 +148,7 @@ export function createIdentifierEffect(
   input: CreateIdentifierInput
 ): Effect.Effect<IdentifierRecord, DomainTag> {
   return Effect.gen(function* createIdentifierGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const written = validateIdentifierWrite({
       type: input.type,
       value: input.value,
@@ -195,6 +201,7 @@ export function updateIdentifierEffect(
   input: UpdateIdentifierInput
 ): Effect.Effect<IdentifierRecord, DomainTag> {
   return Effect.gen(function* updateIdentifierGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       identifiersRepo.getInCase(db, input.caseId, input.identifierId)
     );

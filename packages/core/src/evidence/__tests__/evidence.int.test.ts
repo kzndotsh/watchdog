@@ -12,7 +12,11 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
-import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
+import {
+  TEST_ACTOR_ID,
+  testId,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedAuthUser,
@@ -30,6 +34,7 @@ describe("dumpUrl", () => {
     const dumped = await runDomain(
       dumpPasteEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         body: "Contact ada@mailhost.test",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -54,6 +59,7 @@ describe("dumpUrl", () => {
     const dumped = await runDomain(
       dumpPasteEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         body: "Contact ada@mailhost.test",
         actorId: userId,
         label: "paste",
@@ -67,6 +73,7 @@ describe("dumpUrl", () => {
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         sourceUrl: "https://mailhost.test/ada",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -77,15 +84,27 @@ describe("dumpUrl", () => {
     expect(dumped.kind).toBe("other");
 
     await runDomain(
-      softDeleteEvidenceEffect({ caseId: cased.id, evidenceId: dumped.id })
+      softDeleteEvidenceEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        evidenceId: dumped.id,
+      })
     );
-    const active = await runDomain(listEvidenceForCaseEffect(cased.id));
+    const active = await runDomain(
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
     expect(active.some((row) => row.id === dumped.id)).toBe(false);
 
     await runDomain(
-      restoreEvidenceEffect({ caseId: cased.id, evidenceId: dumped.id })
+      restoreEvidenceEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        evidenceId: dumped.id,
+      })
     );
-    const restored = await runDomain(listEvidenceForCaseEffect(cased.id));
+    const restored = await runDomain(
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
     expect(restored.some((row) => row.id === dumped.id)).toBe(true);
   });
 
@@ -100,6 +119,7 @@ describe("dumpUrl", () => {
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         sourceUrl: "https://mailhost.test/",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -109,6 +129,7 @@ describe("dumpUrl", () => {
     const attached = await runDomain(
       attachEvidenceEntityEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         evidenceId: dumped.id,
         entityId: entity.id,
       })
@@ -119,6 +140,7 @@ describe("dumpUrl", () => {
       runDomain(
         attachEvidenceEntityEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           evidenceId: dumped.id,
           entityId: foreign.id,
         })

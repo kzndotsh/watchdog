@@ -22,6 +22,7 @@ import {
   buildClaimCreateOp,
   buildIdentifierCreateOp,
   testId,
+  TEST_ORGANIZATION_ID,
 } from "@watchdog/test-kit";
 import {
   resetTestDb,
@@ -47,6 +48,7 @@ describe("acceptProposal", () => {
     const accepted = await runDomain(
       acceptProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
         confidence: "unverified",
@@ -69,6 +71,7 @@ describe("acceptProposal", () => {
       runDomain(
         acceptProposalEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           proposalId,
           actorId: TEST_ACTOR_ID,
           confidence: "confirmed",
@@ -107,6 +110,7 @@ describe("acceptProposal", () => {
     const accepted = await runDomain(
       acceptProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
         confidence: "unverified",
@@ -130,6 +134,7 @@ describe("acceptProposal", () => {
     const rejected = await runDomain(
       rejectProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
         reason: "not this",
@@ -149,6 +154,7 @@ describe("acceptProposal", () => {
     await runDomain(
       rejectProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
       })
@@ -168,6 +174,7 @@ describe("acceptProposal", () => {
       runDomain(
         createAgentProposalEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           actorId: TEST_ACTOR_ID,
           patch: [
             buildClaimCreateOp(entity.id, "Suppressed later", {
@@ -195,6 +202,7 @@ describe("acceptProposal", () => {
     await runDomain(
       acceptProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
         confidence: "unverified",
@@ -204,6 +212,7 @@ describe("acceptProposal", () => {
       runDomain(
         acceptProposalEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           proposalId,
           actorId: TEST_ACTOR_ID,
           confidence: "unverified",
@@ -226,6 +235,7 @@ describe("acceptProposal", () => {
     const accepted = await runDomain(
       acceptProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
         confidence: "confirmed",
@@ -248,6 +258,7 @@ describe("acceptProposal", () => {
     await runDomain(
       acceptProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
         confidence: "unverified",
@@ -273,6 +284,7 @@ describe("acceptProposal", () => {
 
       const input = {
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
         confidence: "unverified" as const,
@@ -308,6 +320,7 @@ describe("acceptProposal", () => {
         runDomain(
           acceptProposalEffect({
             caseId: cased.id,
+            organizationId: TEST_ORGANIZATION_ID,
             proposalId,
             actorId: TEST_ACTOR_ID,
             confidence: "unverified",
@@ -316,6 +329,7 @@ describe("acceptProposal", () => {
         runDomain(
           rejectProposalEffect({
             caseId: cased.id,
+            organizationId: TEST_ORGANIZATION_ID,
             proposalId,
             actorId: TEST_ACTOR_ID,
           })

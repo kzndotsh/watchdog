@@ -6,7 +6,12 @@ import {
   listProposalsForCaseEffect,
   runDomain,
 } from "@watchdog/core";
-import { TEST_ACTOR_ID, buildClaimCreateOp, testId } from "@watchdog/test-kit";
+import {
+  TEST_ACTOR_ID,
+  buildClaimCreateOp,
+  testId,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -27,7 +32,9 @@ describe("proposals", () => {
       buildClaimCreateOp(entity.id, "Ada observed a host", { id: testId(30) }),
     ]);
 
-    const listed = await runDomain(listProposalsForCaseEffect(cased.id));
+    const listed = await runDomain(
+      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
     expect(
       listed.some((row) => row.id === proposalId && row.status === "pending")
     ).toBe(true);
@@ -35,6 +42,7 @@ describe("proposals", () => {
     const accepted = await runDomain(
       acceptProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: TEST_ACTOR_ID,
         confidence: "unverified",
@@ -49,6 +57,7 @@ describe("proposals", () => {
     const { proposal } = await runDomain(
       createAgentProposalEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         actorId: TEST_ACTOR_ID,
         patch: [
           buildClaimCreateOp(entity.id, "Agent claim", { id: testId(40) }),
@@ -59,7 +68,9 @@ describe("proposals", () => {
     expect(proposal.status).toBe("pending");
 
     const listed = await runDomain(
-      listProposalsForCaseEffect(cased.id, { status: "pending" })
+      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+        status: "pending",
+      })
     );
     expect(listed.some((row) => row.id === proposal.id)).toBe(true);
   });
