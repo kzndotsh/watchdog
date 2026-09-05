@@ -26,6 +26,7 @@ function startCapForEvidenceEffect(input: {
   caseId: string;
   evidenceId: string;
   actorId: string;
+  actorLabel?: string | null;
   capabilityId: string;
   matchActive: (job: JobRow, seed: EvidenceCapSeed) => boolean;
   buildInput: (seed: EvidenceCapSeed) => JsonObject;
@@ -53,6 +54,7 @@ function startCapForEvidenceEffect(input: {
       caseId: input.caseId,
       capabilityId: input.capabilityId,
       actorId: input.actorId,
+      actorLabel: input.actorLabel,
       input: input.buildInput(seed),
     });
   });
@@ -62,6 +64,7 @@ export function processEvidenceEffect(input: {
   caseId: string;
   evidenceId: string;
   actorId: string;
+  actorLabel?: string | null;
   ai?: boolean;
 }): Effect.Effect<JobRecord, DomainTag> {
   const capabilityId =
@@ -73,6 +76,7 @@ export function processEvidenceEffect(input: {
     caseId: input.caseId,
     evidenceId: input.evidenceId,
     actorId: input.actorId,
+    actorLabel: input.actorLabel,
     capabilityId,
     matchActive: (job, seed) => {
       const eid =
@@ -103,11 +107,13 @@ export function enrichUrlEvidenceEffect(input: {
   caseId: string;
   evidenceId: string;
   actorId: string;
+  actorLabel?: string | null;
 }): Effect.Effect<JobRecord, DomainTag> {
   return startCapForEvidenceEffect({
     caseId: input.caseId,
     evidenceId: input.evidenceId,
     actorId: input.actorId,
+    actorLabel: input.actorLabel,
     capabilityId: URL_ENRICH_CAPABILITY_ID,
     assertSeed: (seed) => {
       const url = (seed.sourceUrl ?? seed.text)?.trim();

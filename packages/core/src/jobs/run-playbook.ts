@@ -37,6 +37,7 @@ export interface RunPlaybookInput {
   caseId: string;
   playbookId: string;
   actorId: string;
+  actorLabel?: string | null;
   seed: SeedValues;
 }
 
@@ -147,7 +148,9 @@ export function runPlaybookEffect(
       credentialNamesFromDescriptor(descriptor)
     );
 
-    const caseRow = yield* tryDb(() => casesRepo.getById(db, input.caseId));
+    const caseRow = yield* tryDb(() =>
+      casesRepo.getByIdUnchecked(db, input.caseId)
+    );
     yield* ensurePlaybookRunnable(
       descriptor,
       present,
@@ -166,6 +169,7 @@ export function runPlaybookEffect(
             seed: seedJson,
             status: "running",
             actorId: input.actorId,
+            actorLabel: input.actorLabel ?? null,
           })
         );
         if (!run) {
@@ -181,6 +185,7 @@ export function runPlaybookEffect(
             input: plan.step.input,
             status: "queued",
             actorId: input.actorId,
+            actorLabel: input.actorLabel ?? null,
             logs: [],
             playbookRunId: run.id,
             playbookStep: plan.step.playbookStep,

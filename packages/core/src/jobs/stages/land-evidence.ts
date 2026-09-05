@@ -48,6 +48,7 @@ export function landEvidenceEffect(
               uri: art.uri,
               sha256: art.sha256,
               actorId: state.job.actorId,
+              actorLabel: state.job.actorLabel,
             })
           ).pipe(
             Effect.tap((row) =>

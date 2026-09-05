@@ -29,6 +29,12 @@ export {
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
 } from "./jobs/reconcile-stale-jobs";
+export {
+  actorHandleFromUser,
+  formatActorLabel,
+  maskEmailForActor,
+  storedApiKeyActorLabel,
+} from "./actors/format-actor-label";
 export { parsePatch, tryParsePatch } from "./graph/patch/patch";
 export {
   applyPatchEffect,
@@ -43,6 +49,9 @@ export { parseAgentPatchEffect } from "./graph/patch/parse-agent-patch";
 export {
   createAgentProposalEffect,
   writeGraphFromAgentEffect,
+  listGraphWritesForCaseEffect,
+  type GraphWriteRecord,
+  type AgentGraphWriteResult,
 } from "./proposals/agent-ingress";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
 export {

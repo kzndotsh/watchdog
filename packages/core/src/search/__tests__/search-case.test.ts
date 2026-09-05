@@ -8,6 +8,7 @@ describe("searchCase", () => {
     const result = await runDomain(
       searchCaseEffect({
         caseId: "00000000-0000-4000-8000-000000000000",
+        organizationId: "org-test",
         q: "a",
       })
     );
@@ -25,6 +26,7 @@ describe("searchCase", () => {
     const result = await runDomain(
       searchCaseEffect({
         caseId: "00000000-0000-4000-8000-000000000000",
+        organizationId: "org-test",
         q: "  ",
       })
     );

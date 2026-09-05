@@ -1,8 +1,12 @@
 import { Effect } from "effect";
 
-import { db, graphWritesRepo } from "@watchdog/db";
+import { db, graphWritesRepo, type GraphWriteRow } from "@watchdog/db";
 import { trimmedOrNull } from "@watchdog/schemas";
 
+import {
+  labelForActor,
+  loadActorUsersEffect,
+} from "../actors/resolve-actor-labels";
 import {
   assertEvidenceIdsInCaseEffect,
   createAttestationEffect,
@@ -26,6 +30,39 @@ import { proposeStageEffect } from "../jobs/stages/propose";
 import { suppressKnownFindings } from "./finding-suppress";
 import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
 
+export interface GraphWriteRecord {
+  id: string;
+  caseId: string;
+  actorId: string;
+  actorLabel: string;
+  channel: GraphWriteRow["channel"];
+  userOverridden: boolean;
+  confidence: GraphWriteRow["confidence"];
+  summary: string | null;
+  createdAt: string;
+}
+
+export function listGraphWritesForCaseEffect(
+  caseId: string
+): Effect.Effect<GraphWriteRecord[], DomainTag> {
+  return Effect.gen(function* listGraphWritesGen() {
+    yield* assertCaseExistsEffect(caseId);
+    const rows = yield* tryDb(() => graphWritesRepo.listForCase(db, caseId));
+    const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
+    return rows.map((row) => ({
+      id: row.id,
+      caseId: row.caseId,
+      actorId: row.actorId,
+      actorLabel: labelForActor(row.actorId, users, row.actorLabel),
+      channel: row.channel,
+      userOverridden: row.userOverridden,
+      confidence: row.confidence,
+      summary: row.summary,
+      createdAt: row.createdAt.toISOString(),
+    }));
+  });
+}
+
 const GRAPH_WRITE_IDEMPOTENCY_INDEX = "graph_writes_case_actor_idem_uidx";
 
 function findGraphWriteByIdempotency(input: {
@@ -41,6 +78,7 @@ export interface AgentGraphWriteResult {
   confidence: "unverified";
   opCount: number;
   replayed: boolean;
+  actorLabel: string;
 }
 
 export function createAgentProposalEffect(input: {
@@ -105,6 +143,7 @@ export function createAgentProposalEffect(input: {
 export function writeGraphFromAgentEffect(input: {
   caseId: string;
   actorId: string;
+  actorLabel?: string | null;
   patch: unknown;
   summary?: string;
   evidenceIds?: string[];
@@ -117,6 +156,9 @@ export function writeGraphFromAgentEffect(input: {
         reason: "userOverride must be true for graph write",
       });
     }
+
+    const users = yield* loadActorUsersEffect([input.actorId]);
+    const actorLabel = labelForActor(input.actorId, users, input.actorLabel);
 
     const plan = yield* parseAgentPatchEffect({
       patch: input.patch,
@@ -145,6 +187,7 @@ export function writeGraphFromAgentEffect(input: {
           confidence: "unverified" as const,
           opCount: 0,
           replayed: true,
+          actorLabel,
         };
       }
     }
@@ -169,6 +212,7 @@ export function writeGraphFromAgentEffect(input: {
             graphWritesRepo.create(tx, {
               caseId: input.caseId,
               actorId: input.actorId,
+              actorLabel: input.actorLabel ?? null,
               channel: "agent_write",
               userOverridden: true,
               confidence: "unverified",
@@ -204,6 +248,7 @@ export function writeGraphFromAgentEffect(input: {
         confidence: "unverified" as const,
         opCount: plan.patch.length,
         replayed: false,
+        actorLabel,
       })),
       Effect.catchTag("ConflictError", () =>
         Effect.gen(function* replayGraphWriteGen() {
@@ -225,6 +270,7 @@ export function writeGraphFromAgentEffect(input: {
               confidence: "unverified" as const,
               opCount: 0,
               replayed: true,
+              actorLabel,
             };
           }
           return yield* new InvalidError({

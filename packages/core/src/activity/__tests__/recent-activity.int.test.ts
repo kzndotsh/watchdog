@@ -7,6 +7,7 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
+import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase } from "@watchdog/test-kit/db";
 
 describe("listRecentActivity", () => {
@@ -20,6 +21,7 @@ describe("listRecentActivity", () => {
       createTaskEffect({
         caseId: cased.id,
         title: "Follow up WHOIS",
+        actorId: TEST_ACTOR_ID,
       })
     );
     await runDomain(
@@ -27,11 +29,19 @@ describe("listRecentActivity", () => {
         caseId: cased.id,
         taskId: task.id,
         status: "in_progress",
+        actorId: TEST_ACTOR_ID,
       })
     );
     const items = await runDomain(
-      listRecentActivityEffect({ caseId: cased.id, limit: 20 })
+      listRecentActivityEffect({
+        organizationId: TEST_ORGANIZATION_ID,
+        caseId: cased.id,
+        limit: 20,
+      })
     );
     expect(items.some((row) => row.kind === "task")).toBe(true);
+    expect(
+      items.some((row) => row.kind === "task" && row.actor === TEST_ACTOR_ID)
+    ).toBe(true);
   });
 });

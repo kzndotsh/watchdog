@@ -9,7 +9,12 @@ import {
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-kit/db";
+import {
+  resetTestDb,
+  seedAuthUser,
+  seedCase,
+  seedJob,
+} from "@watchdog/test-kit/db";
 
 describe("startJob", () => {
   beforeEach(async () => {
@@ -23,6 +28,7 @@ describe("startJob", () => {
         caseId: cased.id,
         capabilityId: "network.dns.lookup",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         input: { host: "mailhost.test" },
       })
     );
@@ -31,6 +37,26 @@ describe("startJob", () => {
     expect(reread?.id).toBe(job.id);
     expect(reread?.status).toBe("queued");
     expect(reread?.input).toEqual({ host: "mailhost.test" });
+    expect(reread?.actorLabel).toBe(TEST_ACTOR_ID);
+  });
+
+  it("resolves actorLabel from auth.user", async () => {
+    const cased = await seedCase(db);
+    const userId = crypto.randomUUID();
+    await seedAuthUser(db, {
+      id: userId,
+      name: "Ada",
+      email: `ada-${userId}@mailhost.test`,
+    });
+    const job = await runDomain(
+      startJobEffect({
+        caseId: cased.id,
+        capabilityId: "network.dns.lookup",
+        actorId: userId,
+        input: { host: "mailhost.test" },
+      })
+    );
+    expect(job.actorLabel).toBe("ada");
   });
 });
 

@@ -17,6 +17,7 @@ export const activityItemSchema = z.object({
   fromStatus: z.string().optional(),
   toStatus: z.string().optional(),
   at: z.string(),
+  actor: z.string().optional(),
 });
 export type ActivityItem = z.output<typeof activityItemSchema>;
 

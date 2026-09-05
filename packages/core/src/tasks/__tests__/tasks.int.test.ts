@@ -10,7 +10,11 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { activityEventsRepo, db } from "@watchdog/db";
-import { testId } from "@watchdog/test-kit";
+import {
+  TEST_ACTOR_ID,
+  TEST_ORGANIZATION_ID,
+  testId,
+} from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
 
 describe("createTask", () => {
@@ -24,6 +28,7 @@ describe("createTask", () => {
       createTaskEffect({
         caseId: cased.id,
         title: "Follow up WHOIS",
+        actorId: TEST_ACTOR_ID,
       })
     );
     expect(created.title).toBe("Follow up WHOIS");
@@ -39,6 +44,7 @@ describe("createTask", () => {
       createTaskEffect({
         caseId: cased.id,
         title: "Move me",
+        actorId: TEST_ACTOR_ID,
       })
     );
     await runDomain(
@@ -46,13 +52,16 @@ describe("createTask", () => {
         caseId: cased.id,
         taskId: created.id,
         status: "in_progress",
+        actorId: TEST_ACTOR_ID,
       })
     );
     const events = await activityEventsRepo.recent(db, {
+      organizationId: TEST_ORGANIZATION_ID,
       caseId: cased.id,
       limit: 10,
     });
     expect(events.some((row) => row.action === "status_changed")).toBe(true);
+    expect(events.every((row) => row.actorId === TEST_ACTOR_ID)).toBe(true);
   });
 
   it("rejects an entity from another case", async () => {

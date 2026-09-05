@@ -14,6 +14,10 @@ import type {
 import { trimmedOrNull } from "@watchdog/schemas";
 
 import {
+  labelForActor,
+  loadActorUsersEffect,
+} from "../actors/resolve-actor-labels";
+import {
   assertEvidenceIdsInCaseEffect,
   createAttestationEffect,
 } from "../evidence/evidence";
@@ -55,6 +59,8 @@ export interface ProposalRecord {
   userOverridden: boolean;
   /** Actor who created the Proposal; Cap Jobs leave null. */
   createdBy: string | null;
+  createdByLabel: string | null;
+  decidedByLabel: string | null;
   /** entityId → name map for display purposes */
   entityNames?: Record<string, string>;
   /** entityId → dossier slug map for display links */
@@ -107,8 +113,10 @@ function toRecord(
     entitySlugs?: Record<string, string>;
     capabilityId?: string | null;
     identifierCollisions?: IdentifierCollision[];
+    users?: ReadonlyMap<string, { name: string; email: string }>;
   }
 ): ProposalRecord {
+  const users = opts?.users ?? new Map();
   return {
     id: row.id,
     caseId: row.caseId,
@@ -121,11 +129,13 @@ function toRecord(
     evidenceIds: row.evidenceIds ?? [],
     rejectReason: row.rejectReason,
     decidedBy: row.decidedBy,
+    decidedByLabel: row.decidedBy ? labelForActor(row.decidedBy, users) : null,
     decidedAt: row.decidedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     agentSourced: row.agentSourced,
     userOverridden: row.userOverridden,
     createdBy: row.createdBy ?? null,
+    createdByLabel: row.createdBy ? labelForActor(row.createdBy, users) : null,
     entityNames: opts?.entityNames ?? {},
     entitySlugs: opts?.entitySlugs ?? {},
     identifierCollisions: opts?.identifierCollisions ?? [],
@@ -156,12 +166,21 @@ export function listProposalsForCaseEffect(
       rows.map(({ proposal }) => proposal.patch)
     );
 
+    const users = yield* loadActorUsersEffect(
+      rows.flatMap(({ proposal }) =>
+        [proposal.createdBy, proposal.decidedBy].filter(
+          (id): id is string => typeof id === "string" && id !== ""
+        )
+      )
+    );
+
     return rows.map(({ proposal, capabilityId }, i) =>
       toRecord(proposal, {
         entityNames,
         entitySlugs,
         capabilityId,
         identifierCollisions: collisionsByIndex[i] ?? [],
+        users,
       })
     );
   });
@@ -182,11 +201,17 @@ export function getProposalForCaseEffect(
     const { entityNames, entitySlugs } = yield* loadEntityDisplayMapsEffect(
       entityIdsFromPatch(row.proposal.patch)
     );
+    const users = yield* loadActorUsersEffect(
+      [row.proposal.createdBy, row.proposal.decidedBy].filter(
+        (id): id is string => typeof id === "string" && id !== ""
+      )
+    );
     return toRecord(row.proposal, {
       entityNames,
       entitySlugs,
       capabilityId: row.capabilityId,
       identifierCollisions: collisionsByIndex[0] ?? [],
+      users,
     });
   });
 }
@@ -255,7 +280,12 @@ export function acceptProposalEffect(input: {
       })
     );
     yield* notifyEntityChangedEffect(input.caseId);
-    return toRecord(updated);
+    const users = yield* loadActorUsersEffect(
+      [updated.createdBy, updated.decidedBy].filter(
+        (id): id is string => typeof id === "string" && id !== ""
+      )
+    );
+    return toRecord(updated, { users });
   });
 }
 
@@ -297,7 +327,13 @@ export function rejectProposalEffect(input: {
         })
       );
 
-      return toRecord(rejected);
+      return toRecord(rejected, {
+        users: yield* loadActorUsersEffect(
+          [rejected.createdBy, rejected.decidedBy].filter(
+            (id): id is string => typeof id === "string" && id !== ""
+          )
+        ),
+      });
     })
   );
 }

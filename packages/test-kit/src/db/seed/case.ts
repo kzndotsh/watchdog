@@ -6,6 +6,8 @@ import {
 } from "@watchdog/db";
 import { slugifyName } from "@watchdog/schemas";
 
+import { TEST_ORGANIZATION_ID } from "../../fixtures/ids.ts";
+
 export async function seedCase(
   exec: DbExec,
   overrides?: Partial<NewCase>
@@ -19,6 +21,7 @@ export async function seedCase(
       overridesResolved.slug ??
       `${base}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
     description: overridesResolved.description ?? null,
+    organizationId: overridesResolved.organizationId ?? TEST_ORGANIZATION_ID,
   });
   if (!created) {
     throw new Error("seedCase failed");

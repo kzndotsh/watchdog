@@ -13,7 +13,12 @@ import {
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
+import {
+  resetTestDb,
+  seedAuthUser,
+  seedCase,
+  seedEntity,
+} from "@watchdog/test-kit/db";
 
 describe("dumpUrl", () => {
   beforeEach(async () => {
@@ -27,6 +32,7 @@ describe("dumpUrl", () => {
         caseId: cased.id,
         body: "Contact ada@mailhost.test",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         label: "paste",
       })
     );
@@ -34,6 +40,26 @@ describe("dumpUrl", () => {
     expect(dumped.uri).toBeTruthy();
     expect(dumped.sha256).toBeTruthy();
     expect(dumped.mime).toMatch(/text\/plain/);
+    expect(dumped.actorLabel).toBe(TEST_ACTOR_ID);
+  });
+
+  it("resolves actorLabel from auth.user", async () => {
+    const cased = await seedCase(db);
+    const userId = crypto.randomUUID();
+    await seedAuthUser(db, {
+      id: userId,
+      name: "Ada",
+      email: `ada-${userId}@mailhost.test`,
+    });
+    const dumped = await runDomain(
+      dumpPasteEffect({
+        caseId: cased.id,
+        body: "Contact ada@mailhost.test",
+        actorId: userId,
+        label: "paste",
+      })
+    );
+    expect(dumped.actorLabel).toBe("ada");
   });
 
   it("persists a URL dump then hide and restore", async () => {
@@ -43,6 +69,7 @@ describe("dumpUrl", () => {
         caseId: cased.id,
         sourceUrl: "https://mailhost.test/ada",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         label: "ada page",
       })
     );
@@ -75,6 +102,7 @@ describe("dumpUrl", () => {
         caseId: cased.id,
         sourceUrl: "https://mailhost.test/",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
       })
     );
 
@@ -107,6 +135,7 @@ describe("dumpUrl", () => {
         caseId: cased.id,
         text: "I copied this from WHOIS",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
       })
     );
     expect(note.kind).toBe("attestation");

@@ -10,7 +10,7 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { db, entitiesRepo } from "@watchdog/db";
-import { testId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
 
 describe("createCase", () => {
@@ -19,9 +19,21 @@ describe("createCase", () => {
   });
 
   it("rejects a duplicate slug", async () => {
-    await runDomain(createCaseEffect({ name: "Alpha", slug: "alpha-dup" }));
+    await runDomain(
+      createCaseEffect({
+        name: "Alpha",
+        slug: "alpha-dup",
+        organizationId: TEST_ORGANIZATION_ID,
+      })
+    );
     await expect(
-      runDomain(createCaseEffect({ name: "Beta", slug: "alpha-dup" }))
+      runDomain(
+        createCaseEffect({
+          name: "Beta",
+          slug: "alpha-dup",
+          organizationId: TEST_ORGANIZATION_ID,
+        })
+      )
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "conflict"
     );
@@ -40,7 +52,13 @@ describe("updateCase", () => {
       slug: "second-case",
     });
     await expect(
-      runDomain(updateCaseEffect({ id: second.id, name: "First Case" }))
+      runDomain(
+        updateCaseEffect({
+          id: second.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          name: "First Case",
+        })
+      )
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "conflict"
     );
@@ -55,9 +73,11 @@ describe("deleteCase", () => {
   it("removes the case and cascaded graph rows", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
-    await runDomain(deleteCaseEffect(cased.id));
+    await runDomain(
+      deleteCaseEffect(cased.id, { organizationId: TEST_ORGANIZATION_ID })
+    );
     const missing = await Effect.runPromise(
-      Effect.result(getCaseByIdEffect(cased.id))
+      Effect.result(getCaseByIdEffect(cased.id, TEST_ORGANIZATION_ID))
     );
     expect(Result.isFailure(missing)).toBe(true);
     expect(await entitiesRepo.getById(db, entity.id)).toBeNull();

@@ -86,7 +86,9 @@ describe("preflight", () => {
 
   it("stops when extract.ai credentials are missing after egress is enabled", async () => {
     const cased = await seedCase(db);
-    await casesRepo.update(db, cased.id, { allowThirdPartyEgress: true });
+    await casesRepo.update(db, cased.id, cased.organizationId, {
+      allowThirdPartyEgress: true,
+    });
     const job = await seedJob(db, cased.id, {
       status: "queued",
       capabilityId: "evidence.extract.ai",

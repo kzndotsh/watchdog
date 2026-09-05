@@ -20,7 +20,7 @@ export function assertCaseExistsEffect(
   caseId: string,
   exec: DbExec = db
 ): Effect.Effect<void, DomainTag> {
-  return tryDb(() => casesRepo.getById(exec, caseId)).pipe(
+  return tryDb(() => casesRepo.getByIdUnchecked(exec, caseId)).pipe(
     Effect.flatMap((row) =>
       row
         ? Effect.void

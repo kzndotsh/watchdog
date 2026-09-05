@@ -149,7 +149,7 @@ export function renderCaseExportEffect(
     const evidenceRows = yield* tryDb(() =>
       evidenceRepo.listActiveForCaseAsc(db, caseId)
     );
-    const caseRow = yield* tryDb(() => casesRepo.getById(db, caseId));
+    const caseRow = yield* tryDb(() => casesRepo.getByIdUnchecked(db, caseId));
 
     if (caseRow) {
       const attestations = evidenceRows.filter(isAttestationExportRow);

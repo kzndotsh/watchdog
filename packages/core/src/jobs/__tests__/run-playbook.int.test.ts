@@ -25,6 +25,7 @@ describe("runPlaybook", () => {
         caseId: cased.id,
         sourceUrl: "https://mailhost.test/",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
       })
     );
     const result = await runDomain(
@@ -32,6 +33,7 @@ describe("runPlaybook", () => {
         caseId: cased.id,
         playbookId: "url-capture",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         seed: {
           url: "https://mailhost.test/",
           evidenceId: dumped.id,
@@ -53,6 +55,7 @@ describe("runPlaybook", () => {
         caseId: cased.id,
         playbookId: "host-footprint",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         seed: { host: "mailhost.test" },
       })
     );
@@ -67,12 +70,15 @@ describe("runPlaybook", () => {
 
   it("throws before insert when extract.ai credentials are missing", async () => {
     const cased = await seedCase(db);
-    await casesRepo.update(db, cased.id, { allowThirdPartyEgress: true });
+    await casesRepo.update(db, cased.id, cased.organizationId, {
+      allowThirdPartyEgress: true,
+    });
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
         sourceUrl: "https://mailhost.test/",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
       })
     );
     await expect(
@@ -81,6 +87,7 @@ describe("runPlaybook", () => {
           caseId: cased.id,
           playbookId: "url-capture-ai",
           actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
           seed: {
             url: "https://mailhost.test/",
             evidenceId: dumped.id,
@@ -100,6 +107,7 @@ describe("runPlaybook", () => {
         caseId: cased.id,
         playbookId: "host-enumerate",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         seed: { host: "mailhost.test" },
       })
     );
@@ -115,6 +123,7 @@ describe("runPlaybook", () => {
         caseId: cased.id,
         sourceUrl: "https://mailhost.test/",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
       })
     );
     const result = await runDomain(
@@ -122,6 +131,7 @@ describe("runPlaybook", () => {
         caseId: cased.id,
         playbookId: "url-capture",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         seed: {
           url: "https://mailhost.test/",
           evidenceId: dumped.id,
@@ -156,6 +166,7 @@ describe("cancelPlaybookRun", () => {
         caseId: cased.id,
         playbookId: "host-footprint",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         seed: { host: "mailhost.test" },
       })
     );

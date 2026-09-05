@@ -78,7 +78,9 @@ export function evaluateCapAvailabilityEffect(input: {
       { concurrency: "unbounded" }
     );
 
-    const caseRow = yield* tryDb(() => casesRepo.getById(db, input.caseId));
+    const caseRow = yield* tryDb(() =>
+      casesRepo.getByIdUnchecked(db, input.caseId)
+    );
     const allowThirdPartyEgress = caseRow?.allowThirdPartyEgress ?? false;
     return {
       allowThirdPartyEgress,

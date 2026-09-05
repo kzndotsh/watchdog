@@ -25,6 +25,7 @@ describe("processEvidence", () => {
         caseId: cased.id,
         evidenceId: evidence.id,
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
       })
     );
     expect(first.capabilityId).toBe("evidence.harvest");
@@ -35,6 +36,7 @@ describe("processEvidence", () => {
         caseId: cased.id,
         evidenceId: evidence.id,
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
       })
     );
     expect(second.id).toBe(first.id);
@@ -42,7 +44,9 @@ describe("processEvidence", () => {
 
   it("starts extract.ai when ai is true", async () => {
     const cased = await seedCase(db);
-    await casesRepo.update(db, cased.id, { allowThirdPartyEgress: true });
+    await casesRepo.update(db, cased.id, cased.organizationId, {
+      allowThirdPartyEgress: true,
+    });
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     await expect(
       runDomain(
@@ -50,6 +54,7 @@ describe("processEvidence", () => {
           caseId: cased.id,
           evidenceId: evidence.id,
           actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
           ai: true,
         })
       )
@@ -69,6 +74,7 @@ describe("processEvidence", () => {
           caseId: cased.id,
           evidenceId: evidence.id,
           actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
         })
       )
     ).rejects.toSatisfy(

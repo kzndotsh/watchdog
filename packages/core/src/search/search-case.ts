@@ -19,7 +19,7 @@ import type {
 } from "@watchdog/schemas";
 import { SEARCH_MIN_QUERY_LENGTH } from "@watchdog/schemas";
 
-import { assertCaseExistsEffect } from "../graph/patch/guards";
+import { getCaseByIdEffect } from "../cases/cases";
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
@@ -28,6 +28,7 @@ const DEFAULT_PER_GROUP = 8;
 
 export interface SearchCaseOpts {
   caseId: string;
+  organizationId: string;
   q: string;
   limit?: number;
   perGroup?: number;
@@ -116,7 +117,7 @@ export function searchCaseEffect(
       return emptyResult(q);
     }
 
-    yield* assertCaseExistsEffect(opts.caseId);
+    yield* getCaseByIdEffect(opts.caseId, opts.organizationId);
 
     const perGroup = Math.min(
       opts.perGroup ?? DEFAULT_PER_GROUP,
@@ -143,7 +144,7 @@ export function searchCaseEffect(
         tryDb(() =>
           proposalsRepo.searchPendingForCase(db, opts.caseId, q, perGroup)
         ),
-        tryDb(() => casesRepo.search(db, q, perGroup)),
+        tryDb(() => casesRepo.search(db, opts.organizationId, q, perGroup)),
       ],
       { concurrency: "unbounded" }
     );

@@ -77,6 +77,7 @@ function enqueueStepJobsEffect(opts: {
   run: {
     caseId: string;
     actorId: string;
+    actorLabel: string | null;
   };
   playbookRunId: string;
   jobs: JobRow[];
@@ -116,6 +117,7 @@ function enqueueStepJobsEffect(opts: {
               input: jobInput,
               status: "queued",
               actorId: run.actorId,
+              actorLabel: run.actorLabel,
               logs: [],
               playbookRunId,
               playbookStep: step,

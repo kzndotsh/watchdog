@@ -23,6 +23,7 @@ describe("writeGraphFromAgent", () => {
       writeGraphFromAgentEffect({
         caseId: cased.id,
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         userOverride: true,
         patch: [
           buildClaimCreateOp(entity.id, "Ada observed a host", { id: claimId }),
@@ -57,6 +58,7 @@ describe("writeGraphFromAgent", () => {
     const input = {
       caseId: cased.id,
       actorId: TEST_ACTOR_ID,
+      actorLabel: TEST_ACTOR_ID,
       userOverride: true as const,
       patch,
       idempotencyKey: "same-key",
@@ -81,6 +83,7 @@ describe("writeGraphFromAgent", () => {
         writeGraphFromAgentEffect({
           caseId: cased.id,
           actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
           userOverride: true,
           patch: [],
         })
@@ -100,6 +103,7 @@ describe("writeGraphFromAgent", () => {
       const input = {
         caseId: cased.id,
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         userOverride: true as const,
         patch: [
           buildClaimCreateOp(entity.id, "Race claim", { id: testId(32) }),

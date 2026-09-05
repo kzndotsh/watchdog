@@ -16,6 +16,10 @@ import {
 } from "@watchdog/schemas";
 
 import {
+  labelForActor,
+  loadActorUsersEffect,
+} from "../actors/resolve-actor-labels";
+import {
   assertCaseExistsEffect,
   assertEntityInCaseEffect,
 } from "../graph/patch/guards";
@@ -43,6 +47,8 @@ export interface StartJobInput {
   capabilityId: string;
   input: JsonObject;
   actorId: string;
+  /** When the caller is an API key, `api-key:<keyname>`. */
+  actorLabel?: string | null;
 }
 
 export interface JobRecord {
@@ -61,6 +67,7 @@ export interface JobRecord {
   fromCache: boolean;
   suppressedCount: number;
   actorId: string;
+  actorLabel: string;
   logs: string[];
   playbookRunId: string | null;
   playbookStep: number | null;
@@ -79,7 +86,8 @@ export type JobListRecord = Omit<JobRecord, "logs">;
 function toJobListRecord(
   row: JobListRow,
   playbookId: string | null,
-  playbookRunStatus: PlaybookRunStatus | null = null
+  playbookRunStatus: PlaybookRunStatus | null = null,
+  users: ReadonlyMap<string, { name: string; email: string }> = new Map()
 ): JobListRecord {
   return {
     id: row.id,
@@ -96,6 +104,7 @@ function toJobListRecord(
     fromCache: row.fromCache,
     suppressedCount: row.suppressedCount,
     actorId: row.actorId,
+    actorLabel: labelForActor(row.actorId, users, row.actorLabel),
     playbookRunId: row.playbookRunId ?? null,
     playbookStep: row.playbookStep ?? null,
     playbookFanIndex: row.playbookFanIndex,
@@ -111,10 +120,11 @@ function toJobListRecord(
 export function toJobRecord(
   row: JobRow,
   playbookId: string | null = null,
-  playbookRunStatus: PlaybookRunStatus | null = null
+  playbookRunStatus: PlaybookRunStatus | null = null,
+  users: ReadonlyMap<string, { name: string; email: string }> = new Map()
 ): JobRecord {
   return {
-    ...toJobListRecord(row, playbookId, playbookRunStatus),
+    ...toJobListRecord(row, playbookId, playbookRunStatus, users),
     logs: row.logs ?? [],
   };
 }
@@ -159,6 +169,7 @@ export function startJobEffect(
         input: capInput,
         status: "queued",
         actorId: input.actorId,
+        actorLabel: input.actorLabel ?? null,
         logs: [],
       })
     );
@@ -169,7 +180,8 @@ export function startJobEffect(
 
     yield* enqueueCapJobEffect(row.id, input.capabilityId);
 
-    return toJobRecord(row);
+    const users = yield* loadActorUsersEffect([row.actorId]);
+    return toJobRecord(row, null, null, users);
   });
 }
 
@@ -179,8 +191,11 @@ export function listJobsForCaseEffect(
   return Effect.gen(function* listJobsGen() {
     yield* assertCaseExistsEffect(caseId);
     const rows = yield* tryDb(() => jobsRepo.listForCase(db, caseId));
+    const users = yield* loadActorUsersEffect(
+      rows.map(({ job }) => job.actorId)
+    );
     return rows.map(({ job, playbookId, playbookRunStatus }) =>
-      toJobListRecord(job, playbookId, playbookRunStatus)
+      toJobListRecord(job, playbookId, playbookRunStatus, users)
     );
   });
 }
@@ -190,13 +205,16 @@ export function getJobForCaseEffect(
   jobId: string
 ): Effect.Effect<JobRecord, DomainTag> {
   return tryDb(() => jobsRepo.getInCase(db, caseId, jobId)).pipe(
-    Effect.flatMap((row) =>
-      row
-        ? Effect.succeed(
-            toJobRecord(row.job, row.playbookId, row.playbookRunStatus)
-          )
-        : new NotFoundError({ resource: "Job not found" })
-    )
+    Effect.flatMap((row) => {
+      if (!row) {
+        return new NotFoundError({ resource: "Job not found" });
+      }
+      return loadActorUsersEffect([row.job.actorId]).pipe(
+        Effect.map((users) =>
+          toJobRecord(row.job, row.playbookId, row.playbookRunStatus, users)
+        )
+      );
+    })
   );
 }
 
@@ -235,7 +253,8 @@ export function cancelJobEffect(
         });
       });
     }
-    return toJobRecord(updated, row.playbookId, row.playbookRunStatus);
+    const users = yield* loadActorUsersEffect([updated.actorId]);
+    return toJobRecord(updated, row.playbookId, row.playbookRunStatus, users);
   });
 }
 

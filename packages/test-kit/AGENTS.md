@@ -16,7 +16,7 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 
 | Import | Purpose |
 | --- | --- |
-| `@watchdog/test-kit` | `testId`, `TEST_ACTOR_ID`, `build*` patch fixtures |
+| `@watchdog/test-kit` | `testId`, `TEST_ACTOR_ID`, `TEST_ORGANIZATION_ID`, `build*` patch fixtures |
 | `@watchdog/test-kit/fc` | fast-check (unit/property only) |
 | `@watchdog/test-kit/fixtures` | ids without Postgres |
 | `@watchdog/test-kit/db` | `testDb`, `resetTestDb`, `withTestTx`, `seed*` |
@@ -40,7 +40,7 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 
 - `testId(1)` is `11111111-1111-4111-8111-000000000001` — UUID-v4 shaped, greppable. `TEST_ACTOR_ID` is `"test-actor"`.
 - Caps `interpret` tests stay `interpret.test.ts` (pure). `run.test.ts` is still **unit** (MSW / harness) — do not rename to `.int` unless it hits Postgres.
-- Seeds: `seedCase` / `seedEntity` / `seedEvidence` / `seedIdentifier` / `seedJob` / `seedProposal` / `seedGraphWrite` / `seedFindingSuppression` / `seedPlaybookRun`. `seedJob` overrides include `playbookFanIndex` and `handoff`. Playbook tests seed step 0 (optionally one historical `blocked` row for the release shim) — do not seed a full blocked recipe.
+- Seeds: `seedCase` / `seedEntity` / `seedEvidence` / `seedIdentifier` / `seedJob` / `seedProposal` / `seedGraphWrite` / `seedFindingSuppression` / `seedPlaybookRun` / `seedAuthUser` (auth.user display row; not a Graph repo). `seedJob` overrides include `playbookFanIndex` and `handoff`. Playbook tests seed step 0 (optionally one historical `blocked` row for the release shim) — do not seed a full blocked recipe.
 - MSW: listen/reset/close in the test file (or `src/http/msw-setup.ts`).
 - Effect programs that need `TestClock` or scoped Layers: `it.effect` from `@effect/vitest` (provides `TestClock`). Do not return a bare Effect from a plain vitest `it()`.
 

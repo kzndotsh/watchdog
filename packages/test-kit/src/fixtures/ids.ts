@@ -11,3 +11,4 @@ export function testId(seed: number): string {
 }
 
 export const TEST_ACTOR_ID = "test-actor";
+export const TEST_ORGANIZATION_ID = testId(90);

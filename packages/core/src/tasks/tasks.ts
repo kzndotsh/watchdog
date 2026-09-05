@@ -42,6 +42,7 @@ export interface CreateTaskInput {
   priority?: TaskPriority | null;
   dueDate?: string | null;
   entityId?: string | null;
+  actorId?: string;
 }
 
 export interface UpdateTaskInput {
@@ -53,6 +54,7 @@ export interface UpdateTaskInput {
   priority?: TaskPriority | null;
   dueDate?: string | null;
   entityId?: string | null;
+  actorId?: string;
 }
 
 export interface ListTasksOpts {
@@ -170,6 +172,7 @@ export function createTaskEffect(
             subjectId: row.id,
             label: row.title,
             toValue: row.status,
+            actorId: input.actorId,
           })
         );
         return row;
@@ -230,6 +233,7 @@ export function updateTaskEffect(
               label: row.title,
               fromValue: existing.status,
               toValue: row.status,
+              actorId: input.actorId,
             })
           );
         }
@@ -248,7 +252,8 @@ export function updateTaskEffect(
 
 export function deleteTaskEffect(
   caseId: string,
-  taskId: string
+  taskId: string,
+  actorId?: string
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteTaskGen() {
     const existing = yield* tryDb(() =>
@@ -274,6 +279,7 @@ export function deleteTaskEffect(
             subjectId: existing.id,
             label: existing.title,
             fromValue: existing.status,
+            actorId,
           })
         );
       })

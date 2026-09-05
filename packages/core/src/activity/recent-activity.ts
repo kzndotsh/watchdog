@@ -8,12 +8,17 @@ import {
 } from "@watchdog/db";
 import type { ActivityItem, ActivityKind, JobStatus } from "@watchdog/schemas";
 
+import {
+  labelForActor,
+  loadActorUsersEffect,
+} from "../actors/resolve-actor-labels";
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
 export type { ActivityItem, ActivityKind };
 
 export interface ListRecentActivityOpts {
+  organizationId: string;
   caseId?: string;
   limit?: number;
 }
@@ -74,7 +79,10 @@ export function jobActivityAction(status: JobStatus): string {
   }
 }
 
-function mapTaskEvent(row: RecentActivityEventRow): ActivityItem {
+function mapTaskEvent(
+  row: RecentActivityEventRow,
+  users: ReadonlyMap<string, { name: string; email: string }>
+): ActivityItem {
   return {
     id: row.id,
     kind: "task",
@@ -86,6 +94,7 @@ function mapTaskEvent(row: RecentActivityEventRow): ActivityItem {
     fromStatus: row.fromValue ?? undefined,
     toStatus: row.toValue ?? undefined,
     at: row.at.toISOString(),
+    actor: row.actorId ? labelForActor(row.actorId, users) : undefined,
   };
 }
 
@@ -100,10 +109,14 @@ export function mergeActivityItems(
 }
 
 export function listRecentActivityEffect(
-  opts?: ListRecentActivityOpts
+  opts: ListRecentActivityOpts
 ): Effect.Effect<ActivityItem[], DomainTag> {
-  const limit = opts?.limit ?? DEFAULT_LIMIT;
-  const repoOpts = { caseId: opts?.caseId, limit };
+  const limit = opts.limit ?? DEFAULT_LIMIT;
+  const repoOpts = {
+    organizationId: opts.organizationId,
+    caseId: opts.caseId,
+    limit,
+  };
 
   return Effect.gen(function* listRecentActivityGen() {
     const [evidenceRows, jobRows, proposalRows, taskEvents] = yield* Effect.all(
@@ -118,6 +131,14 @@ export function listRecentActivityEffect(
       { concurrency: "unbounded" }
     );
 
+    const users = yield* loadActorUsersEffect([
+      ...evidenceRows.map((row) => row.actorId),
+      ...jobRows.map((row) => row.actorId),
+      ...taskEvents
+        .map((row) => row.actorId)
+        .filter((id): id is string => typeof id === "string" && id !== ""),
+    ]);
+
     const items: ActivityItem[] = [
       ...evidenceRows.map((row) => ({
         id: row.id,
@@ -127,6 +148,7 @@ export function listRecentActivityEffect(
         caseName: row.caseName,
         label: displayText(row.label, row.kind),
         at: row.at.toISOString(),
+        actor: labelForActor(row.actorId, users, row.actorLabel),
       })),
       ...jobRows.map((row) => ({
         id: row.id,
@@ -137,6 +159,7 @@ export function listRecentActivityEffect(
         label: displayText(row.resultSummary, row.capabilityId),
         status: row.status,
         at: row.at.toISOString(),
+        actor: labelForActor(row.actorId, users, row.actorLabel),
       })),
       ...proposalRows.map((row) => ({
         id: row.id,
@@ -148,7 +171,7 @@ export function listRecentActivityEffect(
         status: "pending",
         at: row.at.toISOString(),
       })),
-      ...taskEvents.map(mapTaskEvent),
+      ...taskEvents.map((row) => mapTaskEvent(row, users)),
     ];
 
     return mergeActivityItems(items, limit);

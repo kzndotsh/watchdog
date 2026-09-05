@@ -11,6 +11,10 @@ import type { EvidenceKind } from "@watchdog/schemas";
 import { normalizeIdList, trimmedOrUndefined } from "@watchdog/schemas";
 
 import {
+  labelForActor,
+  loadActorUsersEffect,
+} from "../actors/resolve-actor-labels";
+import {
   assertCaseExistsEffect,
   assertEntityInCaseEffect,
 } from "../graph/patch/guards";
@@ -41,6 +45,7 @@ export interface EvidenceRecord {
   text: string | null;
   sourceUrl: string | null;
   actorId: string;
+  actorLabel: string;
   capturedAt: string;
   processedAt: string | null;
   deletedAt: string | null;
@@ -60,6 +65,7 @@ export interface DumpPasteInput {
   sourceUrl?: string;
   entityId?: string;
   actorId: string;
+  actorLabel?: string | null;
 }
 
 export interface DumpUrlInput {
@@ -69,6 +75,7 @@ export interface DumpUrlInput {
   notes?: string;
   entityId?: string;
   actorId: string;
+  actorLabel?: string | null;
 }
 
 export interface SoftDeleteInput {
@@ -100,11 +107,15 @@ export interface CreateAttestationInput {
   label?: string;
   entityId?: string;
   actorId: string;
+  actorLabel?: string | null;
   /** When set, insert inside this transaction (no nested begin). */
   tx?: DbTx;
 }
 
-function toRecord(row: EvidenceRow): EvidenceRecord {
+function toRecord(
+  row: EvidenceRow,
+  users: ReadonlyMap<string, { name: string; email: string }> = new Map()
+): EvidenceRecord {
   return {
     id: row.id,
     caseId: row.caseId,
@@ -118,10 +129,19 @@ function toRecord(row: EvidenceRow): EvidenceRecord {
     text: row.text ?? null,
     sourceUrl: row.sourceUrl ?? null,
     actorId: row.actorId,
+    actorLabel: labelForActor(row.actorId, users, row.actorLabel),
     capturedAt: row.capturedAt.toISOString(),
     processedAt: row.processedAt?.toISOString() ?? null,
     deletedAt: row.deletedAt?.toISOString() ?? null,
   };
+}
+
+function labeledEvidence(
+  row: EvidenceRow
+): Effect.Effect<EvidenceRecord, DomainTag> {
+  return loadActorUsersEffect([row.actorId]).pipe(
+    Effect.map((users) => toRecord(row, users))
+  );
 }
 
 function maybeAssertEntityEffect(
@@ -144,7 +164,13 @@ export function listEvidenceForCaseEffect(
       unprocessedOnly: opts?.unprocessedOnly,
       unattachedOnly: opts?.unattachedOnly,
     })
-  ).pipe(Effect.map((rows) => rows.map(toRecord)));
+  ).pipe(
+    Effect.flatMap((rows) =>
+      loadActorUsersEffect(rows.map((row) => row.actorId)).pipe(
+        Effect.map((users) => rows.map((row) => toRecord(row, users)))
+      )
+    )
+  );
 }
 
 export function dumpPasteEffect(
@@ -171,12 +197,13 @@ export function dumpPasteEffect(
         sha256: artifact.sha256,
         sourceUrl: input.sourceUrl ?? null,
         actorId: input.actorId,
+        actorLabel: input.actorLabel ?? null,
       })
     );
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to create Evidence" });
     }
-    return toRecord(row);
+    return yield* labeledEvidence(row);
   });
 }
 
@@ -196,12 +223,13 @@ export function dumpUrlEffect(
         sourceUrl: input.sourceUrl,
         text: input.sourceUrl,
         actorId: input.actorId,
+        actorLabel: input.actorLabel ?? null,
       })
     );
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to create Evidence" });
     }
-    return toRecord(row);
+    return yield* labeledEvidence(row);
   });
 }
 
@@ -250,7 +278,7 @@ export function attachEvidenceEntityEffect(input: {
     if (!row) {
       return yield* new NotFoundError({ resource: "Evidence not found" });
     }
-    return toRecord(row);
+    return yield* labeledEvidence(row);
   });
 }
 
@@ -271,7 +299,8 @@ export function presignUploadEffect(
 
 export function confirmFileUploadEffect(
   input: ConfirmFileUploadInput,
-  actorId: string
+  actorId: string,
+  actorLabel?: string | null
 ): Effect.Effect<EvidenceRecord, DomainTag> {
   return Effect.gen(function* confirmFileUploadGen() {
     yield* assertCaseExistsEffect(input.caseId);
@@ -297,12 +326,13 @@ export function confirmFileUploadEffect(
         uri: input.uri,
         sha256: input.sha256,
         actorId,
+        actorLabel: actorLabel ?? null,
       })
     );
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to create Evidence" });
     }
-    return toRecord(row);
+    return yield* labeledEvidence(row);
   });
 }
 
@@ -353,12 +383,13 @@ export function createAttestationEffect(
         label: trimmedOrUndefined(input.label) ?? "Accept attestation",
         text,
         actorId: input.actorId,
+        actorLabel: input.actorLabel ?? null,
       })
     );
     if (!row) {
       return yield* Effect.die(new Error("Failed to create attestation"));
     }
-    return toRecord(row);
+    return yield* labeledEvidence(row);
   });
 }
 
