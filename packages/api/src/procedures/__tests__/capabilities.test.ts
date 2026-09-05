@@ -13,7 +13,12 @@ vi.mock("@watchdog/caps", () => ({
 
 import { list, listPlaybooksProc } from "../capabilities";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("capabilities procedures", () => {
   it("lists capabilities and playbooks", async () => {

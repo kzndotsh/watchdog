@@ -20,7 +20,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { list } from "../questions";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("questions procedures", () => {
   it("lists questions for an entity", async () => {

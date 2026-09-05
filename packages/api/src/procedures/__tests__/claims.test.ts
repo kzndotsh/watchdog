@@ -20,7 +20,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { create, list } from "../claims";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 const claimRow = {
   id: "00000000-0000-4000-8000-000000000010",

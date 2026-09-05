@@ -6,6 +6,8 @@ export interface ApiActor {
   userId: string;
   email: string | null;
   name: string | null;
+  /** Active Better Auth organization; null if the user has no membership. */
+  organizationId: string | null;
 }
 
 export interface ApiContext {

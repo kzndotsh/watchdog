@@ -38,6 +38,7 @@ describe("api schemas", () => {
         confidence: "unverified",
         opCount: 1,
         replayed: false,
+        actorLabel: "analyst",
       })
     ).toBeDefined();
   });

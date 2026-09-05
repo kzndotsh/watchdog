@@ -20,9 +20,10 @@ export const listRecent = authed
     })
   )
   .output(z.array(activityItemSchema))
-  .handler(async ({ input }) =>
+  .handler(async ({ input, context }) =>
     runApp(
       listRecentActivityEffect({
+        organizationId: context.actor.organizationId,
         caseId: input.caseId,
         limit: input.limit,
       })

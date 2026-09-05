@@ -21,7 +21,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { list } from "../tasks";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("tasks procedures", () => {
   it("lists tasks for a case", async () => {

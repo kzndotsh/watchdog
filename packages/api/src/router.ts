@@ -114,6 +114,7 @@ export const router = {
     delete: credentials.remove,
   },
   graph: {
+    listWrites: graph.listWrites,
     write: graph.write,
   },
 };

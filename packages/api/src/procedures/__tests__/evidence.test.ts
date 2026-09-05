@@ -26,7 +26,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { list } from "../evidence";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("evidence procedures", () => {
   it("lists evidence for a case", async () => {
@@ -45,6 +50,7 @@ describe("evidence procedures", () => {
           text: null,
           sourceUrl: null,
           actorId: "u1",
+          actorLabel: "u1",
           capturedAt: "2026-01-01T00:00:00.000Z",
           processedAt: null,
           deletedAt: null,

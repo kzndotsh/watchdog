@@ -25,6 +25,7 @@ describe("graph write (core service)", () => {
       writeGraphFromAgentEffect({
         caseId: cased.id,
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         userOverride: true,
         patch: [
           buildClaimCreateOp(entity.id, "Ada observed a host", {
@@ -35,6 +36,7 @@ describe("graph write (core service)", () => {
     );
     expect(written.confidence).toBe("unverified");
     expect(written.opCount).toBe(1);
+    expect(written.actorLabel).toBe(TEST_ACTOR_ID);
     const claims = await runDomain(
       listClaimsForEntityEffect(cased.id, entity.id)
     );

@@ -14,10 +14,11 @@ export const searchCaseProc = authed
   })
   .input(searchCaseInputSchema)
   .output(searchCaseResultSchema)
-  .handler(async ({ input }) =>
+  .handler(async ({ input, context }) =>
     runApp(
       searchCaseEffect({
         caseId: input.caseId,
+        organizationId: context.actor.organizationId,
         q: input.q,
         limit: input.limit,
       })

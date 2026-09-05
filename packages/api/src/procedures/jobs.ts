@@ -9,6 +9,7 @@ import {
   startJobEffect,
 } from "@watchdog/core";
 
+import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import { jobListSchema, jobSchema, jsonObjectSchema } from "../schemas";
@@ -60,6 +61,7 @@ export const start = authed
         capabilityId: input.capabilityId,
         input: input.input,
         actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
       })
     )
   );
@@ -124,6 +126,7 @@ export const startPlaybook = authed
         playbookId: input.playbookId,
         seed: input.seed,
         actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
       })
     )
   );

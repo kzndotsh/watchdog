@@ -20,6 +20,7 @@ describe("jobs (core services)", () => {
         caseId: cased.id,
         capabilityId: "network.dns.lookup",
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         input: { host: "mailhost.test" },
       })
     );

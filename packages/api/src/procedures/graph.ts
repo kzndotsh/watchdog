@@ -1,11 +1,28 @@
 import { z } from "zod";
 
-import { writeGraphFromAgentEffect } from "@watchdog/core";
+import {
+  listGraphWritesForCaseEffect,
+  writeGraphFromAgentEffect,
+} from "@watchdog/core";
 import { patchOpSchema } from "@watchdog/schemas";
 
+import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { graphWriteResultSchema } from "../schemas";
+import { graphWriteRecordSchema, graphWriteResultSchema } from "../schemas";
+
+export const listWrites = authed
+  .route({
+    method: "GET",
+    path: "/cases/{caseId}/graph/writes",
+    summary: "List Graph write audit rows for a case",
+    tags: ["graph"],
+  })
+  .input(z.object({ caseId: z.uuid() }))
+  .output(z.array(graphWriteRecordSchema))
+  .handler(async ({ input }) =>
+    runApp(listGraphWritesForCaseEffect(input.caseId))
+  );
 
 export const write = authed
   .route({
@@ -30,6 +47,7 @@ export const write = authed
       writeGraphFromAgentEffect({
         caseId: input.caseId,
         actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
         patch: input.patch,
         summary: input.summary,
         evidenceIds: input.evidenceIds,

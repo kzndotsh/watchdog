@@ -2,7 +2,7 @@ import { ORPCError, createRouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { putCredentialSlotEffect, runDomain } from "@watchdog/core";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb } from "@watchdog/test-kit/db";
 
 import type { ApiActor, ApiContext } from "../context";
@@ -15,6 +15,7 @@ function routerClient(
     userId: TEST_ACTOR_ID,
     email: "agent@test.local",
     name: "Agent",
+    organizationId: TEST_ORGANIZATION_ID,
   };
   return createRouterClient(router, {
     context: {

@@ -153,6 +153,9 @@
                       },
                       "at": {
                         "type": "string"
+                      },
+                      "actor": {
+                        "type": "string"
                       }
                     },
                     "required": [
@@ -5697,6 +5700,9 @@
                       "actorId": {
                         "type": "string"
                       },
+                      "actorLabel": {
+                        "type": "string"
+                      },
                       "capturedAt": {
                         "type": "string"
                       },
@@ -5734,6 +5740,7 @@
                       "text",
                       "sourceUrl",
                       "actorId",
+                      "actorLabel",
                       "capturedAt",
                       "processedAt",
                       "deletedAt"
@@ -5903,6 +5910,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "capturedAt": {
                       "type": "string"
                     },
@@ -5940,6 +5950,7 @@
                     "text",
                     "sourceUrl",
                     "actorId",
+                    "actorLabel",
                     "capturedAt",
                     "processedAt",
                     "deletedAt"
@@ -6107,6 +6118,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "capturedAt": {
                       "type": "string"
                     },
@@ -6144,6 +6158,7 @@
                     "text",
                     "sourceUrl",
                     "actorId",
+                    "actorLabel",
                     "capturedAt",
                     "processedAt",
                     "deletedAt"
@@ -6364,6 +6379,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "capturedAt": {
                       "type": "string"
                     },
@@ -6401,6 +6419,7 @@
                     "text",
                     "sourceUrl",
                     "actorId",
+                    "actorLabel",
                     "capturedAt",
                     "processedAt",
                     "deletedAt"
@@ -6739,6 +6758,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "capturedAt": {
                       "type": "string"
                     },
@@ -6776,6 +6798,7 @@
                     "text",
                     "sourceUrl",
                     "actorId",
+                    "actorLabel",
                     "capturedAt",
                     "processedAt",
                     "deletedAt"
@@ -7114,6 +7137,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "logs": {
                       "type": "array",
                       "items": {
@@ -7215,6 +7241,7 @@
                     "fromCache",
                     "suppressedCount",
                     "actorId",
+                    "actorLabel",
                     "logs",
                     "playbookRunId",
                     "playbookStep",
@@ -7488,6 +7515,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "logs": {
                       "type": "array",
                       "items": {
@@ -7589,6 +7619,7 @@
                     "fromCache",
                     "suppressedCount",
                     "actorId",
+                    "actorLabel",
                     "logs",
                     "playbookRunId",
                     "playbookStep",
@@ -7855,6 +7886,9 @@
                       "actorId": {
                         "type": "string"
                       },
+                      "actorLabel": {
+                        "type": "string"
+                      },
                       "playbookRunId": {
                         "anyOf": [
                           {
@@ -7950,6 +7984,7 @@
                       "fromCache",
                       "suppressedCount",
                       "actorId",
+                      "actorLabel",
                       "playbookRunId",
                       "playbookStep",
                       "playbookFanIndex",
@@ -8317,6 +8352,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "logs": {
                       "type": "array",
                       "items": {
@@ -8418,6 +8456,7 @@
                     "fromCache",
                     "suppressedCount",
                     "actorId",
+                    "actorLabel",
                     "logs",
                     "playbookRunId",
                     "playbookStep",
@@ -8691,6 +8730,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "logs": {
                       "type": "array",
                       "items": {
@@ -8792,6 +8834,7 @@
                     "fromCache",
                     "suppressedCount",
                     "actorId",
+                    "actorLabel",
                     "logs",
                     "playbookRunId",
                     "playbookStep",
@@ -9065,6 +9108,9 @@
                     "actorId": {
                       "type": "string"
                     },
+                    "actorLabel": {
+                      "type": "string"
+                    },
                     "logs": {
                       "type": "array",
                       "items": {
@@ -9166,6 +9212,7 @@
                     "fromCache",
                     "suppressedCount",
                     "actorId",
+                    "actorLabel",
                     "logs",
                     "playbookRunId",
                     "playbookStep",
@@ -9497,6 +9544,9 @@
                           "actorId": {
                             "type": "string"
                           },
+                          "actorLabel": {
+                            "type": "string"
+                          },
                           "logs": {
                             "type": "array",
                             "items": {
@@ -9598,6 +9648,7 @@
                           "fromCache",
                           "suppressedCount",
                           "actorId",
+                          "actorLabel",
                           "logs",
                           "playbookRunId",
                           "playbookStep",
@@ -9946,6 +9997,16 @@
                           }
                         ]
                       },
+                      "decidedByLabel": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "decidedAt": {
                         "anyOf": [
                           {
@@ -9966,6 +10027,16 @@
                         "type": "boolean"
                       },
                       "createdBy": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "createdByLabel": {
                         "anyOf": [
                           {
                             "type": "string"
@@ -10054,11 +10125,13 @@
                       "evidenceIds",
                       "rejectReason",
                       "decidedBy",
+                      "decidedByLabel",
                       "decidedAt",
                       "createdAt",
                       "agentSourced",
                       "userOverridden",
-                      "createdBy"
+                      "createdBy",
+                      "createdByLabel"
                     ]
                   }
                 }
@@ -10469,6 +10542,16 @@
                         }
                       ]
                     },
+                    "decidedByLabel": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "decidedAt": {
                       "anyOf": [
                         {
@@ -10489,6 +10572,16 @@
                       "type": "boolean"
                     },
                     "createdBy": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdByLabel": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -10577,11 +10670,13 @@
                     "evidenceIds",
                     "rejectReason",
                     "decidedBy",
+                    "decidedByLabel",
                     "decidedAt",
                     "createdAt",
                     "agentSourced",
                     "userOverridden",
-                    "createdBy"
+                    "createdBy",
+                    "createdByLabel"
                   ]
                 }
               }
@@ -10878,6 +10973,16 @@
                         }
                       ]
                     },
+                    "decidedByLabel": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "decidedAt": {
                       "anyOf": [
                         {
@@ -10898,6 +11003,16 @@
                       "type": "boolean"
                     },
                     "createdBy": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdByLabel": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -10986,11 +11101,13 @@
                     "evidenceIds",
                     "rejectReason",
                     "decidedBy",
+                    "decidedByLabel",
                     "decidedAt",
                     "createdAt",
                     "agentSourced",
                     "userOverridden",
-                    "createdBy"
+                    "createdBy",
+                    "createdByLabel"
                   ]
                 }
               }
@@ -11271,6 +11388,16 @@
                         }
                       ]
                     },
+                    "decidedByLabel": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "decidedAt": {
                       "anyOf": [
                         {
@@ -11291,6 +11418,16 @@
                       "type": "boolean"
                     },
                     "createdBy": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdByLabel": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -11379,11 +11516,13 @@
                     "evidenceIds",
                     "rejectReason",
                     "decidedBy",
+                    "decidedByLabel",
                     "decidedAt",
                     "createdAt",
                     "agentSourced",
                     "userOverridden",
-                    "createdBy"
+                    "createdBy",
+                    "createdByLabel"
                   ]
                 }
               }
@@ -11563,6 +11702,90 @@
                   "required": [
                     "ok"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cases/{caseId}/graph/writes": {
+      "get": {
+        "operationId": "graph.listWrites",
+        "summary": "List Graph write audit rows for a case",
+        "tags": [
+          "graph"
+        ],
+        "parameters": [
+          {
+            "name": "caseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "caseId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "actorId": {
+                        "type": "string"
+                      },
+                      "actorLabel": {
+                        "type": "string"
+                      },
+                      "channel": {
+                        "type": "string"
+                      },
+                      "userOverridden": {
+                        "type": "boolean"
+                      },
+                      "confidence": {
+                        "type": "string"
+                      },
+                      "summary": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "caseId",
+                      "actorId",
+                      "actorLabel",
+                      "channel",
+                      "userOverridden",
+                      "confidence",
+                      "summary",
+                      "createdAt"
+                    ]
+                  }
                 }
               }
             }
@@ -11773,13 +11996,17 @@
                     },
                     "replayed": {
                       "type": "boolean"
+                    },
+                    "actorLabel": {
+                      "type": "string"
                     }
                   },
                   "required": [
                     "writeId",
                     "confidence",
                     "opCount",
-                    "replayed"
+                    "replayed",
+                    "actorLabel"
                   ]
                 }
               }

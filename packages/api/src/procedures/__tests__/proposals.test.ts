@@ -19,7 +19,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { listForCase } from "../proposals";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("proposals procedures", () => {
   it("lists proposals for a case", async () => {
@@ -37,11 +42,13 @@ describe("proposals procedures", () => {
           evidenceIds: [],
           rejectReason: null,
           decidedBy: null,
+          decidedByLabel: null,
           decidedAt: null,
           createdAt: "2026-01-01T00:00:00.000Z",
           agentSourced: true,
           userOverridden: false,
           createdBy: "u1",
+          createdByLabel: "u1",
         },
       ])
     );

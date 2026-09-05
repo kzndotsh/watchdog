@@ -16,7 +16,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { searchCaseProc } from "../search";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("search procedures", () => {
   it("searches within a case", async () => {

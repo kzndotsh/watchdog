@@ -969,6 +969,20 @@
     }
   },
   "graph": {
+    "listWrites": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "GET",
+          "path": "/cases/{caseId}/graph/writes",
+          "summary": "List Graph write audit rows for a case",
+          "tags": [
+            "graph"
+          ]
+        }
+      }
+    },
     "write": {
       "~orpc": {
         "errorMap": {},

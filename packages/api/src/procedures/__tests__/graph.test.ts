@@ -16,7 +16,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { write } from "../graph";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("graph procedures", () => {
   it("writes graph patches from authenticated callers", async () => {
@@ -26,6 +31,7 @@ describe("graph procedures", () => {
         confidence: "unverified",
         opCount: 1,
         replayed: false,
+        actorLabel: "u1",
       })
     );
 

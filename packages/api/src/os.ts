@@ -47,9 +47,16 @@ export const authed = base.use(({ context, next }) => {
   if (!context.actor) {
     throw new ORPCError("UNAUTHORIZED");
   }
+  const organizationId = context.actor.organizationId;
+  if (!organizationId) {
+    throw new ORPCError("FORBIDDEN");
+  }
   return next({
     context: {
-      actor: context.actor satisfies ApiActor,
+      actor: {
+        ...context.actor,
+        organizationId,
+      } satisfies ApiActor & { organizationId: string },
       authMethod: context.authMethod,
     },
   });

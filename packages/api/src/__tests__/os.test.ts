@@ -25,11 +25,31 @@ describe("os middleware", () => {
     );
   });
 
+  it("rejects authenticated callers with no organization", async () => {
+    const caller = createRouterClient(probe, {
+      context: {
+        headers: new Headers(),
+        actor: { userId: "u1", email: null, name: null, organizationId: null },
+        authMethod: "session",
+      },
+    });
+
+    await expect(caller()).rejects.toSatisfy(
+      (error: unknown) =>
+        error instanceof ORPCError && error.code === "FORBIDDEN"
+    );
+  });
+
   it("allows authenticated calls through authed", async () => {
     const caller = createRouterClient(probe, {
       context: {
         headers: new Headers(),
-        actor: { userId: "u1", email: null, name: null },
+        actor: {
+          userId: "u1",
+          email: null,
+          name: null,
+          organizationId: "org-test",
+        },
         authMethod: "session",
       },
     });

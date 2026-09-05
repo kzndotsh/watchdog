@@ -21,7 +21,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { listForCase } from "../jobs";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("jobs procedures", () => {
   it("lists jobs for a case", async () => {
@@ -42,6 +47,7 @@ describe("jobs procedures", () => {
           fromCache: false,
           suppressedCount: 0,
           actorId: "u1",
+          actorLabel: "u1",
           playbookRunId: null,
           playbookStep: null,
           playbookFanIndex: 0,

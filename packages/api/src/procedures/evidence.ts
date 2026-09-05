@@ -14,6 +14,7 @@ import {
   softDeleteEvidenceEffect,
 } from "@watchdog/core";
 
+import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import { evidenceSchema, jobSchema, presignedUploadSchema } from "../schemas";
@@ -63,7 +64,13 @@ export const createPaste = authed
   )
   .output(evidenceSchema)
   .handler(async ({ input, context }) =>
-    runApp(dumpPasteEffect({ ...input, actorId: context.actor.userId }))
+    runApp(
+      dumpPasteEffect({
+        ...input,
+        actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
+      })
+    )
   );
 
 export const createUrl = authed
@@ -85,7 +92,13 @@ export const createUrl = authed
   )
   .output(evidenceSchema)
   .handler(async ({ input, context }) =>
-    runApp(dumpUrlEffect({ ...input, actorId: context.actor.userId }))
+    runApp(
+      dumpUrlEffect({
+        ...input,
+        actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
+      })
+    )
   );
 
 export const softDelete = authed
@@ -173,7 +186,13 @@ export const confirmFile = authed
   )
   .output(evidenceSchema)
   .handler(async ({ input, context }) =>
-    runApp(confirmFileUploadEffect(input, context.actor.userId))
+    runApp(
+      confirmFileUploadEffect(
+        input,
+        context.actor.userId,
+        actorLabelFromActor(context.actor)
+      )
+    )
   );
 
 export const downloadUrl = authed
@@ -206,7 +225,13 @@ export const process = authed
   )
   .output(jobSchema)
   .handler(async ({ input, context }) =>
-    runApp(processEvidenceEffect({ ...input, actorId: context.actor.userId }))
+    runApp(
+      processEvidenceEffect({
+        ...input,
+        actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
+      })
+    )
   );
 
 export const enrich = authed
@@ -220,5 +245,11 @@ export const enrich = authed
   .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
   .output(jobSchema)
   .handler(async ({ input, context }) =>
-    runApp(enrichUrlEvidenceEffect({ ...input, actorId: context.actor.userId }))
+    runApp(
+      enrichUrlEvidenceEffect({
+        ...input,
+        actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
+      })
+    )
   );

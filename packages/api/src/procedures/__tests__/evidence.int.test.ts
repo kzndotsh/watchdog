@@ -20,6 +20,7 @@ describe("evidence procedures (core services)", () => {
       dumpUrlEffect({
         caseId: cased.id,
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         sourceUrl: "https://example.com/note",
         label: "example note",
       })
@@ -36,6 +37,7 @@ describe("evidence procedures (core services)", () => {
       dumpUrlEffect({
         caseId: cased.id,
         actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
         sourceUrl: "https://example.com/hidden",
       })
     );

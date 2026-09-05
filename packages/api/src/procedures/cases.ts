@@ -24,7 +24,9 @@ export const list = authed
     tags: ["cases"],
   })
   .output(z.array(caseSchema))
-  .handler(async () => runApp(listCasesEffect()));
+  .handler(async ({ context }) =>
+    runApp(listCasesEffect(context.actor.organizationId))
+  );
 
 export const get = authed
   .route({
@@ -35,7 +37,9 @@ export const get = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(caseSchema)
-  .handler(async ({ input }) => runApp(getCaseByIdEffect(input.caseId)));
+  .handler(async ({ input, context }) =>
+    runApp(getCaseByIdEffect(input.caseId, context.actor.organizationId))
+  );
 
 export const create = authed
   .route({
@@ -47,7 +51,14 @@ export const create = authed
   })
   .input(createCaseInputSchema)
   .output(caseSchema)
-  .handler(async ({ input }) => runApp(createCaseEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      createCaseEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const update = authed
   .route({
@@ -59,10 +70,11 @@ export const update = authed
   })
   .input(updateCaseInputSchema)
   .output(caseSchema)
-  .handler(async ({ input }) =>
+  .handler(async ({ input, context }) =>
     runApp(
       updateCaseEffect({
         id: input.caseId,
+        organizationId: context.actor.organizationId,
         ...(input.name === undefined ? {} : { name: input.name }),
         ...(input.description === undefined
           ? {}
@@ -85,7 +97,10 @@ export const remove = authed
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(
-      deleteCaseEffect(input.caseId, { actorId: context.actor.userId })
+      deleteCaseEffect(input.caseId, {
+        actorId: context.actor.userId,
+        organizationId: context.actor.organizationId,
+      })
     );
     return { ok: true as const };
   });

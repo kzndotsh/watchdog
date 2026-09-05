@@ -19,7 +19,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
 
 import { list } from "../identifiers";
 
-const actor = { userId: "u1", email: "a@test.local", name: "Agent" };
+const actor = {
+  userId: "u1",
+  email: "a@test.local",
+  name: "Agent",
+  organizationId: "org-test",
+};
 
 describe("identifiers procedures", () => {
   it("lists identifiers for an entity", async () => {

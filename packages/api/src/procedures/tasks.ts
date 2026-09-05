@@ -63,7 +63,9 @@ export const create = authed
   })
   .input(taskCreateInputSchema)
   .output(taskSchema)
-  .handler(async ({ input }) => runApp(createTaskEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(createTaskEffect({ ...input, actorId: context.actor.userId }))
+  );
 
 export const update = authed
   .route({
@@ -74,7 +76,9 @@ export const update = authed
   })
   .input(taskUpdateInputSchema)
   .output(taskSchema)
-  .handler(async ({ input }) => runApp(updateTaskEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(updateTaskEffect({ ...input, actorId: context.actor.userId }))
+  );
 
 export const remove = authed
   .route({
@@ -85,8 +89,10 @@ export const remove = authed
   })
   .input(taskDeleteInputSchema)
   .output(z.object({ ok: z.literal(true) }))
-  .handler(async ({ input }) => {
-    await runApp(deleteTaskEffect(input.caseId, input.taskId));
+  .handler(async ({ input, context }) => {
+    await runApp(
+      deleteTaskEffect(input.caseId, input.taskId, context.actor.userId)
+    );
     return { ok: true as const };
   });
 

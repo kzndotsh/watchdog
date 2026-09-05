@@ -187,6 +187,7 @@ export const evidenceSchema = z.object({
   text: z.string().nullable(),
   sourceUrl: z.string().nullable(),
   actorId: z.string(),
+  actorLabel: z.string(),
   capturedAt: z.string(),
   processedAt: z.string().nullable(),
   deletedAt: z.string().nullable(),
@@ -216,6 +217,7 @@ export const jobSchema = z.object({
   fromCache: z.boolean(),
   suppressedCount: z.number().int(),
   actorId: z.string(),
+  actorLabel: z.string(),
   logs: z.array(z.string()),
   playbookRunId: z.uuid().nullable(),
   playbookStep: z.number().int().nullable(),
@@ -251,11 +253,13 @@ export const proposalSchema = z.object({
   evidenceIds: z.array(z.uuid()),
   rejectReason: z.string().nullable(),
   decidedBy: z.string().nullable(),
+  decidedByLabel: z.string().nullable(),
   decidedAt: z.string().nullable(),
   createdAt: z.string(),
   agentSourced: z.boolean(),
   userOverridden: z.boolean(),
   createdBy: z.string().nullable(),
+  createdByLabel: z.string().nullable(),
   entityNames: z.record(z.string(), z.string()).optional(),
   entitySlugs: z.record(z.string(), z.string()).optional(),
   identifierCollisions: z.array(identifierCollisionSchema).optional(),
@@ -266,6 +270,19 @@ export const graphWriteResultSchema = z.object({
   confidence: z.literal("unverified"),
   opCount: z.number().int(),
   replayed: z.boolean(),
+  actorLabel: z.string(),
+});
+
+export const graphWriteRecordSchema = z.object({
+  id: z.uuid(),
+  caseId: z.uuid(),
+  actorId: z.string(),
+  actorLabel: z.string(),
+  channel: z.string(),
+  userOverridden: z.boolean(),
+  confidence: z.string(),
+  summary: z.string().nullable(),
+  createdAt: z.string(),
 });
 
 export const credentialSlotSchema = z.object({
