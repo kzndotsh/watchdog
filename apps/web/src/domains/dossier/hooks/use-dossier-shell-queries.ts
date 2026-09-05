@@ -11,45 +11,16 @@ import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { tasksListQuery } from "@/domains/tasks/queries";
 
-export interface DossierTabCounts {
-  claims: number;
-  identifiers: number;
-  connections: number;
-  evidence: number;
-  events: number;
-  questions: number;
-  tasks: number;
-}
+import {
+  anyQueryPending,
+  dataOrEmpty,
+  dossierTabCounts,
+  evidenceRecordMap,
+  openEvidencePreview,
+  type DossierTabCounts,
+} from "./dossier-shell-query-helpers";
 
-function evidenceRecordMap(
-  evidenceAll: EvidenceRecord[]
-): Map<string, EvidenceRecord> {
-  return new Map(evidenceAll.map((entry) => [entry.id, entry]));
-}
-
-function dossierTabCounts(
-  claimsRaw: { retracted: boolean }[],
-  identifiers: unknown[],
-  edges: unknown[],
-  events: unknown[],
-  questions: { status: string }[],
-  evidenceAll: { entityId: string | null }[],
-  entityId: string,
-  entityTasks: { status: string }[]
-): DossierTabCounts {
-  return {
-    claims: claimsRaw.filter((claim) => !claim.retracted).length,
-    identifiers: identifiers.length,
-    connections: edges.length,
-    events: events.length,
-    questions: questions.filter((question) => question.status === "open")
-      .length,
-    evidence: evidenceAll.filter((entry) => entry.entityId === entityId).length,
-    tasks: entityTasks.filter(
-      (task) => task.status !== "done" && task.status !== "dropped"
-    ).length,
-  };
-}
+export type { DossierTabCounts };
 
 export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const queryClient = useQueryClient();
@@ -64,23 +35,24 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   );
   const evidenceQuery = useQuery(evidenceListQuery(caseId));
 
-  const claimsRaw = claimsQuery.data ?? [];
-  const identifiers = identifiersQuery.data ?? [];
-  const edges = edgesQuery.data ?? [];
-  const events = eventsQuery.data ?? [];
-  const questions = questionsQuery.data ?? [];
-  const entityTasks = entityTasksQuery.data ?? [];
-  const evidenceAll = evidenceQuery.data ?? [];
+  const claimsRaw = dataOrEmpty(claimsQuery.data);
+  const identifiers = dataOrEmpty(identifiersQuery.data);
+  const edges = dataOrEmpty(edgesQuery.data);
+  const events = dataOrEmpty(eventsQuery.data);
+  const questions = dataOrEmpty(questionsQuery.data);
+  const entityTasks = dataOrEmpty(entityTasksQuery.data);
+  const evidenceAll = dataOrEmpty(evidenceQuery.data);
   const evidencePending = evidenceQuery.isPending;
 
-  const countsPending =
-    claimsQuery.isPending ||
-    identifiersQuery.isPending ||
-    edgesQuery.isPending ||
-    eventsQuery.isPending ||
-    questionsQuery.isPending ||
-    entityTasksQuery.isPending ||
-    evidenceQuery.isPending;
+  const countsPending = anyQueryPending([
+    claimsQuery.isPending,
+    identifiersQuery.isPending,
+    edgesQuery.isPending,
+    eventsQuery.isPending,
+    questionsQuery.isPending,
+    entityTasksQuery.isPending,
+    evidenceQuery.isPending,
+  ]);
 
   const [previewEvidence, setPreviewEvidence] = useState<EvidenceRecord | null>(
     null
@@ -89,14 +61,13 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const [editError, setEditError] = useState<string | null>(null);
 
   const evidenceMap = useMemo(
-    () => evidenceRecordMap(evidenceQuery.data ?? []),
-    [evidenceQuery.data]
+    () => evidenceRecordMap(evidenceAll),
+    [evidenceAll]
   );
 
   const handleEvidenceClick = useCallback(
     (evId: string) => {
-      const ev = evidenceMap.get(evId);
-      if (ev) setPreviewEvidence(ev);
+      openEvidencePreview(evidenceMap, evId, setPreviewEvidence);
     },
     [evidenceMap]
   );
@@ -104,24 +75,24 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const counts = useMemo(
     () =>
       dossierTabCounts(
-        claimsQuery.data ?? [],
-        identifiersQuery.data ?? [],
-        edgesQuery.data ?? [],
-        eventsQuery.data ?? [],
-        questionsQuery.data ?? [],
-        evidenceQuery.data ?? [],
+        claimsRaw,
+        identifiers,
+        edges,
+        events,
+        questions,
+        evidenceAll,
         entity.id,
-        entityTasksQuery.data ?? []
+        entityTasks
       ),
     [
-      claimsQuery.data,
-      identifiersQuery.data,
-      edgesQuery.data,
-      eventsQuery.data,
-      questionsQuery.data,
-      evidenceQuery.data,
+      claimsRaw,
+      identifiers,
+      edges,
+      events,
+      questions,
+      evidenceAll,
       entity.id,
-      entityTasksQuery.data,
+      entityTasks,
     ]
   );
 
