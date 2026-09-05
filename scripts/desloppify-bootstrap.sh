@@ -12,6 +12,7 @@ patterns=(
   _legacy-v2
   graph
   data
+  repos
   node_modules
   .venv
   .direnv
@@ -21,6 +22,7 @@ patterns=(
   packages/caps/capabilities.gen.json
   apps/web/src/routeTree.gen.ts
   apps/web/src/shared/ui/shadcn
+  apps/web/src/auth/ui
   coverage
   playwright-report
   test-results
