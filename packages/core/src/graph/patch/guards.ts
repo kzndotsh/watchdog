@@ -20,9 +20,6 @@ import {
  * Existence-only check for trusted worker/export paths where the case id
  * already came from a job or child row. Prefer {@link assertCaseInOrgEffect}
  * on API / actor-facing entrypoints.
- *
- * Kept as `assertCaseExistsEffect` for call-site compatibility; new code
- * should use {@link assertCaseExistsUncheckedEffect} or {@link assertCaseInOrgEffect}.
  */
 export function assertCaseExistsUncheckedEffect(
   caseId: string,
@@ -36,9 +33,6 @@ export function assertCaseExistsUncheckedEffect(
     )
   );
 }
-
-/** @see assertCaseExistsUncheckedEffect */
-export const assertCaseExistsEffect = assertCaseExistsUncheckedEffect;
 
 /** Org-scoped case gate for API / actor-facing entrypoints. */
 export function assertCaseInOrgEffect(
