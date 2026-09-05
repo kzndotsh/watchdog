@@ -3,7 +3,9 @@
         <a href="https://github.com/kzndotsh/watchdog/actions/workflows/ci.yml">
             <img alt="CI" src="https://github.com/kzndotsh/watchdog/actions/workflows/ci.yml/badge.svg"></a>
         <a href="https://www.typescriptlang.org">
-            <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6-3178c6?logo=typescript&logoColor=white"></a>
+            <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-7-3178c6?logo=typescript&logoColor=white"></a>
+        <a href="https://effect.website">
+            <img alt="Effect" src="https://img.shields.io/badge/Effect-4-8b5cf6"></a>
         <a href="https://tanstack.com/start">
             <img alt="TanStack Start" src="https://img.shields.io/badge/TanStack_Start-ff4154?logo=react&logoColor=white"></a>
         <a href="https://www.postgresql.org">
@@ -23,7 +25,7 @@
     </p>
 </div>
 
-> [!WARNING] **Pre-1.0 and under active development.** Schemas, Cap ids, and API shapes change without notice, and several surfaces in [`ROADMAP.md`](ROADMAP.md) are half-built. It is built for solo and small-team use and has not been hardened for multi-tenant or production deployment.
+> [!WARNING] **Pre-1.0 and under active development.** Schemas, Cap ids, and API shapes change without notice, and several surfaces in [`ROADMAP.md`](ROADMAP.md) are half-built. Organization-scoped tenancy (Better Auth orgs, invites, org-bound cases) ships for small teams, but the install is not hardened for hostile multi-tenant SaaS or production deployment at scale.
 
 ## Why
 
@@ -72,7 +74,9 @@ pnpm install
 just dev                    # Postgres + MinIO + migrations + web + worker
 ```
 
-No account is seeded and registration is closed by default. See [`docs/how-to/onboarding.md`](docs/how-to/onboarding.md) and [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup and env detail.
+No account is seeded and registration is closed by default. See [`docs/how-to/onboarding.md`](docs/how-to/onboarding.md) and [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup, invites, and env detail.
+
+**Bootstrap:** set `BETTER_AUTH_ALLOW_SIGNUP=1`, create the first account at `/auth/sign-up`, then set the flag back to `0`. That user becomes instance admin and owner of the install organization (`Watchdog`). Everyone else joins via Settings → **Team** invite (copy link, or optional SMTP in `.env`).
 
 **First investigation tutorial:** [`docs/tutorials/first-investigation.md`](docs/tutorials/first-investigation.md) (dump → Process → Triage → Dossier).
 
@@ -99,13 +103,14 @@ Everything binds to loopback: web on `:3000`, Postgres on `:5432`, MinIO on `:91
 | --- | --- |
 | `DATABASE_URL_MIGRATE` | Superuser URL for migrations; falls back to `DATABASE_URL` |
 | `BETTER_AUTH_URL` | Default `http://127.0.0.1:3000` |
-| `BETTER_AUTH_ALLOW_SIGNUP` | Open registration; default off |
+| `BETTER_AUTH_ALLOW_SIGNUP` | Open registration; default off (solo bootstrap only) |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | Comma-separated extra origins |
+| `SMTP_HOST` · `SMTP_FROM` | Optional invitation mail (`SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`); copy-link works without SMTP |
 | `S3_REGION` | Default `us-east-1` |
 | `WD_EXPORT_DIR` | Markdown shadow location; default `<repo>/export` |
 | `NODE_ENV` | `development` · `production` · `test` |
 
-The CLI reads its own pair: `WD_API_URL` and `WD_API_KEY`, the latter created in Settings → API Keys. **Cap API keys never go here.** They live in the encrypted vault.
+The CLI reads its own pair: `WD_API_URL` and `WD_API_KEY`, the latter created in Settings → API Keys. **Cap API keys never go here.** They live in the encrypted vault. API and CLI calls are scoped to the caller's Better Auth organization (session `activeOrganizationId`, or the key owner's membership).
 
 ## A case, end to end
 
@@ -158,7 +163,7 @@ packages/
 ├── schemas/              Zod contracts, PatchOp, vocabulary
 ├── policy/               Accept gates and custody rules, pure and DB-free
 ├── db/                   Drizzle schema + repos (the only SQL)
-├── core/                 Jobs, graph patching, evidence, export sync
+├── core/                 Effect domain layer: jobs, graph, evidence, export sync
 ├── caps/                 Cap implementations + playbooks
 ├── cap-sdk/              Cap SPI: defineCapability, CapContext
 ├── tools/                Dumb fetch/parse helpers, no Graph types
@@ -172,6 +177,14 @@ packages/
 
 Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and only `core` touches repos. Full matrix in [`docs/reference/platform/README.md`](docs/reference/platform/README.md).
 
+### Effect
+
+Most server-side product logic runs on **[Effect](https://effect.website)** (v4): `@watchdog/core` exposes `*Effect` entrypoints for cases, jobs, evidence, proposals, and export; the worker boots with `NodeRuntime.runMain`; Cap `run` handlers are Effect programs with tagged errors and `HttpClient` layers; pg-boss enqueue/cancel and job fibers use `FiberMap`, schedules, and scoped resources. The web app stays mostly React — ServerFns call into core via `runApp`, and the browser never imports Effect-tagged modules (policy exposes a thin `patch-needs-confidence` entry for Triage UI). Conventions and allowlisted `run*` edges: [`AGENTS.md`](AGENTS.md) · [`docs/reference/platform/jobs-orpc.md`](docs/reference/platform/jobs-orpc.md) · `node_modules/effect/AGENTS.md`.
+
+### Organizations and tenancy
+
+Better Auth **organizations** bound the case graph: each Case row carries an `organization_id`; list/get/create/update/delete and search filter on the active org. The first bootstrap user owns the single install org; later users join by invitation (`/auth/accept-invitation/{id}`) with org role `admin` or `member`. Instance admins (`auth.user.role`) manage accounts under Settings → **Users**; org admins invite under **Team**. Missing org context on an API call is **403**, not a silent cross-org leak. Details: [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) · [`docs/explanation/scenarios.md`](docs/explanation/scenarios.md).
+
 A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to Triage → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
 
 | Layer | Stack |
@@ -179,8 +192,8 @@ A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker
 | **Frontend** | TanStack Start · React · Tailwind 4 · shadcn/ui · TanStack Query |
 | **API** | oRPC (RPC for the app, OpenAPI for agents) · Zod |
 | **Data** | Postgres 16 · Drizzle ORM · MinIO/S3 |
-| **Jobs** | pg-boss · dedicated worker process |
-| **Auth** | Better Auth (sessions, API keys) |
+| **Jobs** | pg-boss · dedicated worker process · Effect fibers + tagged errors |
+| **Auth** | Better Auth (sessions, orgs, invites, API keys, instance admin) |
 | **Observability** | evlog structured wide events |
 | **Tooling** | pnpm · Nix · just · Vitest · Playwright · oxlint · oxfmt |
 
@@ -191,7 +204,7 @@ A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker
 | Dev servers | `just dev` · `pnpm dev:web` · `pnpm dev:worker` |
 | Database | `pnpm db:migrate` · `pnpm db:generate` · `pnpm db:studio` |
 | Local infra | `just up` · `just down` · `just docker-up` (containers only) |
-| Reset case data, keep auth and vault | `just wipe` |
+| Reset case data, keep auth (orgs + vault) | `just wipe` |
 | Lint and format | `pnpm check` · `pnpm fix` |
 | Types | `pnpm typecheck` |
 | Tests | `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
@@ -203,14 +216,14 @@ Integration and end-to-end runs need their own databases first: `just test-db`.
 
 Third design, first one that ships. A vault-plus-Python-pipeline version and a broad platform spec both got frozen before this; [`docs/explanation/product.md`](docs/explanation/product.md) records what each one taught and what not to resurrect.
 
-Today: **63 Caps**, **14 packages**, **433 unit and property tests** green. The solo-investigator loop runs end to end: authenticate, create a case, dump evidence, run Caps, accept proposals, export the package.
+Today: **63 Caps**, **14 packages**, **~980 unit/property tests** plus component, integration, and Playwright tiers green. The investigator loop runs end to end: bootstrap auth, org-scoped cases, dump evidence, run Caps, accept proposals, export the package.
 
 Not there yet, worth knowing before you invest time:
 
 - **MCP server.** Not built. Agents use the OpenAPI surface today.
 - **Playbooks** are linear chains, with no branching and no conditionals.
-- **Multi-user collaboration** is thin. Auth and API keys work; team workflows aren't designed yet.
-- **End-to-end coverage** is a tagged Playwright suite (16 tests in `e2e/specs/`) on top of unit, component, and integration tiers — not full manual-smoke parity yet.
+- **Multi-org SaaS.** Single install org at bootstrap; no self-serve org creation or billing. Team invite + org-scoped cases work for a small shop, not arbitrary tenant isolation under attack.
+- **End-to-end coverage** is a tagged Playwright suite (`e2e/specs/`, including auth invite/users) on top of unit, component, and integration tiers — not full manual-smoke parity yet.
 
 Investigation content (corpus, entity notes, mirrors) lives in a separate private repo and never enters this one.
 
@@ -220,6 +233,8 @@ Investigation content (corpus, entity notes, mirrors) lives in a separate privat
 | --- | --- |
 | [`docs/explanation/product.md`](docs/explanation/product.md) | Intent, personas, what this refuses to build and why |
 | [`docs/reference/platform/README.md`](docs/reference/platform/README.md) | Packages, import rules, jobs, oRPC, logging |
+| [`docs/reference/platform/jobs-orpc.md`](docs/reference/platform/jobs-orpc.md) | Jobs queue, oRPC/OpenAPI, Effect runtime edges |
+| [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) | Bootstrap, orgs, invites, API keys, actor labels |
 | [`docs/reference/platform/caps-lexicon.md`](docs/reference/platform/caps-lexicon.md) · [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md) | Cap naming, method vocabulary, ship gates, how to write one |
 | [`docs/reference/platform/types.md`](docs/reference/platform/types.md) | Shared Zod schemas and vocabulary |
 | [`docs/explanation/ux.md`](docs/explanation/ux.md) | Information architecture and investigator flows |

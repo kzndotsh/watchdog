@@ -8,7 +8,7 @@ Agents and CLI share the same OpenAPI contract via `@watchdog/client`. Default g
 ## Setup
 
 1. Run web: `pnpm dev:web` (local API base `http://127.0.0.1:3000/api/v1`).
-2. Settings → **API Keys** → create a key.
+2. Settings → **API Keys** → create a key (personal `wd_` keys; org is the creating user's membership, not an org-owned key). Authed `/api/v1` calls require that organization: session uses `activeOrganizationId` when the user is a member; API keys use the creating user's oldest membership. Missing org is **403**, not 401.
 3. In `.env` or shell:
 
 ```bash
@@ -36,6 +36,8 @@ Browser RPC for the web app uses `/api/rpc` (not the CLI path).
 | Propose (default) | `wd proposals create` · `POST …/proposals` | Pending Proposal → Triage |
 | Graph write (override) | `wd graph write` · `POST …/graph/write` + `userOverride: true` | `@ unverified` + audit row |
 | Child writes | `wd claims | identifiers | edges | …`+`--user-override` | Same as graph write; CLI refuses `confirmed` |
+
+Jobs and evidence started with `WD_API_KEY` show actor `api-key:<key name>` in the UI. Session-started work shows **`By` + AtSign glyph + handle** (from `auth.user.name`, slugged; else email local-part). `actorId` on the row stays the user id (vault).
 
 Full rules: [`../reference/contracts/agent-ingress.md`](../reference/contracts/agent-ingress.md).
 

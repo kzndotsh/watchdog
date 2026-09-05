@@ -12,6 +12,14 @@ No account is seeded; registration is closed by default.
 3. Register at `/auth/sign-up` (or run `just bootstrap-hint` for the checklist).
 4. Set `BETTER_AUTH_ALLOW_SIGNUP=0`, restart web again.
 
+The first account becomes instance admin (`auth.user.role` `admin`) and owner of a single Better Auth organization named Watchdog (`slug` `watchdog`). Later public sign-up stays closed; investigators join by invite from Settings → **Team**. The sign-in page hides the sign-up link when the flag is off.
+
+Owner and organization **admin** can invite with role `admin` or `member`. Members cannot invite. Accept is `/auth/accept-invitation/{id}`: the invitee creates an account on that page (public `/auth/sign-up` stays closed) or signs in if the email already has an account. Invitation URLs are written to process logs; set `SMTP_HOST` + `SMTP_FROM` (optional `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`) to also send mail. The Team tab always has **Copy link**.
+
+Instance admins also see Settings → **Users**: Disable / Enable (Better Auth `banUser` / `unbanUser`; UI never says “ban”), and **Sign out all sessions**. Impersonation is not enabled. A disabled account that tries to sign in sees **This account is disabled.** Organization **admin** is not instance admin. `just wipe` keeps `auth.*` including `auth_event` (session create + IP/UA).
+
+Job, Evidence, Triage, Graph-write, and Dashboard Activity surfaces show **who acted** as `By` plus an AtSign glyph + handle from `auth.user.name` (slug; else email local-part), not the raw user id or a masked email. CLI/API-key runs store a snapshot `api-key:<key name>` on the row (`actor_label`); vault and Graph still key off the **user** id. Caps never set actor.
+
 First-run toolchain order: [`onboarding.md`](onboarding.md).
 
 ## Auth layers
@@ -40,5 +48,6 @@ Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated).
 ## Gotchas
 
 - **Auth session cache**: `_protected` seeds BA UI's `authQueryKeys.session` via `ensureAppSession` (`createIsomorphicFn`). Use `useSession(authClient)` from `@better-auth-ui/react` in UI: not `authClient.useSession()`. Post-sign-in return URL search param is **`redirectTo`** (BA UI), not `redirect`. Sign out via `/auth/sign-out` (BA UI clears cookie **and** removes auth queries); raw `authClient.signOut()` leaves a stale session cache and bounces you back in.
+- **Better Auth versions**: runtime `better-auth` / `@better-auth/core` / `@better-auth/api-key` / `@better-auth/drizzle-adapter` are **1.7.2**. Forked `@better-auth-ui/{core,react}` stay **1.6.25** (exact, no caret). Workspace `overrides` pin `better-auth` and `@better-auth/core` so the catalog cannot keep a 1.6 core. Do not enable organization-owned API keys until `createApiContext` maps `referenceId` without stamping an org id onto `actor.userId`. Password sign-in matches `auth.account.issuer` (`local:credential`); pre-1.7 rows need that column (migration `0011`).
 - **ServerFn auth ≠ route auth**: `_protected` redirects for UX; domain ServerFns are gated by global `requireAuth` in `src/start.ts` (`UnauthorizedError`). Do not re-add `.middleware([requireAuth])` on `*.functions.ts`. No public ServerFn: use `routes/api/*`. Detect denials with `isUnauthorizedError`, not `message === "Unauthorized"`.
 - **CSRF on ServerFns**: custom `start.ts` disables Start's auto CSRF; keep CSRF **after** evlog in `requestMiddleware`. CSRF 403s on `/_serverFn` log `auth.reason: "csrf"` (request logger otherwise skips ServerFns).

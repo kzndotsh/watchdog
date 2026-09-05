@@ -25,9 +25,10 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `DetailEmpty` | Select-none Detail empty: quiet, no dashed frame | No queue selection | Loading / blank slate | `InlineLoading` · `EmptyState` | canonical | yes | muted |
 | `DetailFooter` | Bottom CTA bar for Detail | Accept / Cancel / Harvest · Enrich | Identity / meta | `DetailHeader` | canonical | yes | : |
 | `DetailHeader` | Detail identity: title · subject · meta · IdChip · status · note | Collect Evidence detail (custom crumb+tabs); Triage uses context strip + decide footer | Page headers · CTAs; Triage → `TriageDecideHeader` + `TriageDecideFooter`; Collect Evidence → `EvidenceDetailHeader`; Collect runs → inline header in `job-detail.tsx` | `DetailFooter` | canonical | yes | : |
-| `DetailStatusChip` | Secondary outcome / tag pill: shared `CHIP_SIZE_CLASS` with VocabBadge (IdChip height/radius; sans `text-label-meta`) | From cache · unattached · live · agent | Semantic status/kind/confidence | `StatusBadge` · `KindBadge` | canonical | yes | : |
+| `DetailStatusChip` | Outcome / tag pill: same outline + `CHIP_SIZE_CLASS` as VocabBadge (IdChip height/radius; `text-label-meta`) | Identifier evidence preview · Triage patch-op warnings · table/composer tags | Detail context strips (use plain `span`s + `StatusInk` for lifecycle) | `StatusBadge` · `KindBadge` | canonical | yes | : |
 | `ConfidenceBadge` | Confidence chip | Graph confidence display | Job/proposal status | `StatusBadge` | canonical | yes | `--confidence-*` |
-| `StatusBadge` | Status chip | Job / proposal / retract / identifier | Confidence | `ConfidenceBadge` | canonical | yes | `--status-*` |
+| `StatusBadge` | Status chip | Tables / dense cells that still need a boxed label | Detail context strips | `StatusInk` | canonical | yes | `--status-*` |
+| `StatusInk` | Status as colored type + 6px dot | Collect / Triage / Jobs Detail strips | Table cells that need a chip | `StatusBadge` · `StatusDot` | canonical | yes | `--status-*` |
 | `TaskStatusBadge` | Task status chip (reuses `--status-*` tones) | Task board / compact tabs | Job status | `StatusBadge` | canonical | no | `--status-*` |
 | `TaskPriorityBadge` | Task priority chip (reuses `--status-*` tones) | Task board / compact tabs | Confidence | `StatusBadge` | canonical | no | `--status-*` |
 | `KindBadge` | Kind chip (+ entity kind icon for person/org/infra) | Evidence / identifier kind chips | Entity name rows (use `EntityKindGlyph`) | `EntityKindGlyph` | canonical | yes | `--kind-*` |
@@ -40,6 +41,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `GraphCanvas` | CSS dot grid + pan/zoom + fit-view | Ego + case overview canvases | Custom physics / layout | domain layout helpers | canonical | no | : |
 | `GraphCanvasSkeleton` | Hand graph skeleton layout | Graph loading region / `/ui` specimen | Primary graph runtime | `GraphCanvas` | canonical | yes | : |
 | `EntityMention` | Entity name (optional dossier link) | Inline entity refs (dossier connection list) | Row-click tables / Entities Connections chips (nested `<a>` fights row nav) | static name / chip text | canonical | yes | : |
+| `ActorMention` | Optional `By` prefix + AtSign glyph + handle (`api-key:…` unprefixed); no chip | Job / Evidence / Triage / Activity actor | Entity names · opaque ids | `EntityMention` · `IdChip` | canonical | yes | : |
 | `EditableSuggestCell` | Commit-on-pick suggest cell (uncontrolled selection: avoids snap-back to the stale saved value) | Inline table freeform+suggest | Forms | `EditableTextCell` · `FieldCombobox` | canonical | no | : |
 | `EvidencePicker` | Dense multi-select Case Evidence (chip-height Add/+ · checklist popover; `layout="panel"` for parent shells) | Dossier composers · identifier Link · Triage | Job cite display | `EvidenceCiteChips` | **domain** (`dossier/components/evidence-picker.tsx` re-exports `shared/ui`) | no | : |
 | `EvidenceCiteChips` | Read-only Job/proposal cite chips | Triage decide band | Multi-select | `EvidencePicker` | **domain** (same file) | no | : |
@@ -57,7 +59,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `LocalDateTime` | Short local datetime (`dateOnly` → calendar day) | Absolute times · task due dates | Relative "3m ago" | `RelativeTime` | canonical | no | : |
 | `MetaRow` / `MetaGrid` | Key/value detail rows | Evidence / artifact meta | Form fields | `FormSection` | canonical | no | meta |
 | `MiddleTruncate` | Head…tail truncate | Inside chips | General text | CSS truncate | internal | indirect | : |
-| `QueueDayGroup` | Day-bucketed queue section | Chronological queues | Flat lists | : | canonical | no | : |
+| `QueueDayGroup` | Day-bucketed queue section; live lists use sticky day headers; **`CollectQueueSkeleton` uses `headerVariant="panel"`** so day bars do not overlap rows in a clipped `QueueShell` | Chronological queues | Flat lists | : | canonical | no | : |
 | `QueueFilterBar` | Search + facets + reset | Split Queue filters | Page-level filters only | `PageFilterMenu` (`shared/layout/`) | canonical | no | : |
 | `QueueHeader` | Queue column title + count | Split Queue | Page titles | : | canonical | yes | : |
 | `QueueShell` | Queue scrollport: sticky header + ScrollArea; body flex-fills so EmptyState can center. `scrollable={false}` swaps `ScrollArea` for a plain `overflow-hidden` clip: use while skeleton rows fill the pane so loading never shows its own scrollbar | Collect / Triage Queue | Nested scroll + outer header | `SplitView` · `ScrollArea` | canonical | no | : |
@@ -98,7 +100,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `PageHeader` / `AppBreadcrumbs` | Sticky inset bar; trail is identity (`page-trail.ts`); `count=` + `countOn=` = `TabCount` | Every inset page | Second AppShell header; Detail slash-paths; `/ N entities` copy | Detail headers keep their own crumbs |
 | `PageToolbar` | leading/center/trailing strip under `PageHeader` | Page / queue toolbars | Detail headers | `DetailHeader` |
 | `PageFilterMenu` / `PageFilterChip` | Filter popover + chips | Queue / table toolbars | Search alone | `SearchField` |
-| `RoutePending` | Shared `pendingComponent` (`queue` \| `stack`) with `PendingRegion`; trail still paints | `defaultPendingComponent` floor · future `ssr:false` routes (`// ds:allow-route-pending`) | Shell-first data pages (Collect, tables, …): in-page `RegionBoundary` / `PendingRegion` instead | `DefaultRoutePendingShell` · `stackPendingFallback()` |
+| `RoutePending` | Shared `pendingComponent` (`queue` \| `stack`) with `PendingRegion`; trail still paints | `defaultPendingComponent` floor · future `ssr:false` routes (`// ds:allow-route-pending`) | Shell-first data pages (Collect, tables, …): in-page `RegionBoundary` / `PendingRegion` instead | `DefaultRoutePendingShell` (`RoutePendingSkeletonLayout`) · `stackPendingFallback()` |
 | `RouteError` | Shared `defaultErrorComponent` + per-route override; **Retry** via `router.invalidate()` | Route / layout errors | Inline field errors | `FetchErrorAlert` in `RegionBoundary` |
 
 ---

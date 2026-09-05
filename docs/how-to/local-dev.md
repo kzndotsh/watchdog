@@ -14,7 +14,7 @@
 | Install | `pnpm install` |
 | Web only | `pnpm dev:web` → http://127.0.0.1:3000 |
 | Worker only | `pnpm dev:worker` (required for Jobs/Collect/Process) |
-| Wipe case data | `just wipe` · `just wipe yes` (keeps auth + vault) |
+| Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
 | Test DBs | `just test-db` (`watchdog_test`, `watchdog_e2e`) |
 | Stop containers | `just down` |
 

@@ -4,7 +4,7 @@ This page highlights Queue, SplitView, IdChip, and related atoms.
 
 ## Hand-owned atoms (highlights)
 
-Key atoms include `ActiveTabBody` / `SuspenseTabBody`, `LoadingRegion`, `RegionBoundary`, `PendingRegion`, `SectionLabel`, `SectionHeaderBar`, `FormSection`, and `MetaRow` / `MetaGrid` (Detail/drawer key-value, not form helpers or queue titles). The inventory also includes `shared/ui/vocab` badges; `IdChip` + `MiddleTruncate` (opaque ids/hashes; `ds:ban` blocks `.slice(0,N)`); `EntityMention` (linked entity names, not for row-click tables); `RelativeTime`; `Timestamp`; `StatusDot`; `SearchField`; and `DestructiveConfirmDialog`.
+Key atoms include `ActiveTabBody` / `SuspenseTabBody`, `LoadingRegion`, `RegionBoundary`, `PendingRegion`, `DetailContextStrip` / `DetailContextHeader` (muted inline context under split detail), `SectionLabel`, `SectionHeaderBar`, `FormSection`, and `MetaRow` / `MetaGrid` (Detail/drawer key-value, not form helpers or queue titles). The inventory also includes `shared/ui/vocab` badges; `StatusInk` (dot + colored word in Detail strips); `IdChip` + `MiddleTruncate` (opaque ids/hashes; `ds:ban` blocks `.slice(0,N)`); `EntityMention` (linked entity names, not for row-click tables); `ActorMention` (optional `By` prefix, AtSign glyph + handle, no chip); `RelativeTime`; `Timestamp`; `StatusDot`; `SearchField`; and `DestructiveConfirmDialog`.
 
 Picker atoms are `EntityCombobox` / `FieldCombobox` / `FieldSelect` / `ConfidenceSelect` (options in, no I/O; Combobox may set `group` for headings). Other shared atoms are `FormInlineError` / `ComposerShell`, Queue + Detail + `QueueShell` + `SplitView` + `ArtifactPreview`, `DetailFooter` / `DetailStatusChip`, the `DataTable` kit (+ editable cells / append composer; **`pending` per cell**), the graph kit (`GraphCanvas` / `EntityNode` / `GraphEdgePath`), `RichTextEditor` / `RichTextViewer` (Markdown string source of truth for dossier Summary/Notes), `InlineLoading`, `Spinner`, `FetchErrorAlert`, `Empty` / `EmptyState`, and hand skeletons in `skeletons.tsx`. Page chrome (`PageToolbar` / `PageFilterMenu` / `RouteError`; `RoutePending` for `defaultPendingComponent` only) is in `shared/layout/`. The style guide is **`/ui`**. Add new atoms with `pnpm --filter @watchdog/web ds:atom: <Name> <file>`.
 
@@ -15,13 +15,15 @@ Evidence pickers live in `shared/ui/intake/evidence-picker.tsx` (`EvidencePicker
 | Need | Use |
 | --- | --- |
 | Dense job lifecycle in a row | `StatusDot` (`pulse` only when `running` + opted in) |
-| Scannable text status | `StatusBadge` |
+| Scannable text status | `StatusInk` (Detail strips) · `StatusBadge` (tables) |
 | Confidence / kind / review | domain badges: ≤1-2 per row cluster |
 | Opaque id / hash / path | `IdChip` (not Badge) |
 | Inline entity name (+ optional dossier link) | `EntityMention` |
+| Who acted (`By` + AtSign glyph + handle, or `api-key:…`) | `ActorMention` (`prefix="By"` on Detail/Activity; no chip) |
 | Long searchable enum (edge phrases) | `FieldCombobox` (optional `group` → section headings) |
 | Tiny closed string enum | `FieldSelect` |
 | Detail key/value | `MetaRow` / `MetaGrid` |
+| Detail context strip (Entity · From · By @actor) | `DetailContextHeader` + `DetailContextSep` · `StatusInk` · plain `span` tags · `ActorMention` |
 | Glued sibling actions | `ButtonGroup` (pagination, step) |
 | 2-3 exclusive view modes | `ToggleGroup` (not boolean `Switch`; not `Tabs` when the trigger owns no panel: e.g. Jobs Cap/Playbook run mode, whose form sits in the queue toolbar) |
 | Unrelated CTAs / dialog footer | `flex` + `gap`: don't ButtonGroup everything |

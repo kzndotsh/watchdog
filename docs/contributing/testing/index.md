@@ -13,8 +13,8 @@ pnpm test:property
 pnpm test:component       # jsdom + Testing Library
 just test-db              # create + migrate watchdog_test / watchdog_e2e
 pnpm test:integration     # real Postgres, rollback-per-test
-pnpm test:e2e             # full Playwright suite (16 tests, 7 spec files)
-pnpm test:e2e:smoke       # @smoke + @custody (15 tests; fast gate)
+pnpm test:e2e             # full Playwright suite
+pnpm test:e2e:smoke       # @smoke + @custody (fast gate)
 pnpm test:e2e:journey     # @journey only (core loop)
 pnpm exec vitest run --project e2e-parser  # pure harness unit tests under e2e/
 pnpm test:coverage        # v8 report under coverage/ (not a %)
@@ -42,7 +42,7 @@ Collect Caps ship `__tests__/interpret.test.ts`. Do not add a `run()` file per C
 
 CLI unit tests cover `--help`, custody envelopes (`CUSTODY` without `--user-override` on identifier/edge/event/question writes), and `loadPatch`. Generated `packages/client/src/generated/` is CI regen, not a test target.
 
-Playwright suite under `e2e/specs/` (**7 files, 16 tests**): `@journey` core loop; `@custody` Accept gates; `@smoke` auth, cases, Collect paste, Triage reject, and per-route navigation smoke (+ dossier). Harness: `e2e/support/`, `e2e/api/`, `e2e/fixtures/test.ts` (import `test`/`expect` here: not `@playwright/test`), `e2e/pages/`.
+Playwright suite under `e2e/specs/` (**9 files**): `@journey` core loop; `@custody` Accept gates; `@smoke` auth (sign-up, invite accept, instance-admin Users), cases, Collect paste, Triage reject, and per-route navigation smoke (+ dossier). Harness: `e2e/support/`, `e2e/api/`, `e2e/fixtures/test.ts` (import `test`/`expect` here: not `@playwright/test`), `e2e/pages/`.
 
 ## See also
 

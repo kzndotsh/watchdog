@@ -3,7 +3,7 @@
 **What this is:** how investigators _use_ Watchdog: information architecture, flows, empty/error meaning, copy, experience debt.  
 **What this is not:** tokens, atoms, or component naming: that is [`docs/reference/web/UI.md`](../../docs/reference/web/UI.md). Product intent, personas, and doctrine live in [`PRODUCT.md`](product.md).
 
-Last updated: 2026-09-04 (EntityKindGlyph · identifier Notes sheet · EvidencePicker panel · Cases Open)
+Last updated: 2026-09-05 (Detail strip ink + By @actor; skeleton queue day headers)
 
 ## Product principle
 
@@ -31,7 +31,7 @@ Operate mode: task clarity over surprise. Surfaces earn their chrome; don't inve
 
 1. **Cap run → triage**: Collect starts a Cap → worker → Evidence + Proposal → Triage Accept/Reject → graph.
 2. **Playbook run → triage**: Collect **Playbook** source starts a curated Cap chain (`playbook_runs`); each step is its own Job (+ Proposal). Only the first step is queued at start; later steps are created when the prior step succeeds (fan-out siblings join before the next recipe step). Cancel run stops remaining work. Never auto-fires from a dump.
-3. **Evidence in**: Collect dump (paste/file/URL) → Enrich (URL dumps; Output on the same row) → Process (optional `evidence.harvest` / `evidence.extract.ai`, labeled **Extract (AI)** in the UI) → Triage Accept. Detail tabs: Content · Output · Runs. Cap-landed Evidence (e.g. DNS lookup artifact) is labeled **Cap output**; **From {cap}** in the detail strip jumps to the Jobs tab and expands that run. Dossier Evidence tab dumps File/Paste/URL with Entity locked (same APIs; rows also appear in Collect).
+3. **Evidence in**: Collect dump (paste/file/URL) → Enrich (URL dumps; Output on the same row) → Process (optional `evidence.harvest` / `evidence.extract.ai`, labeled **Extract (AI)** in the UI) → Triage Accept. Detail tabs: Content · Output · Runs. Cap-landed Evidence (e.g. DNS lookup artifact) is marked **From {cap}** in the detail strip (jumps to the Jobs tab and expands that run). Dossier Evidence tab dumps File/Paste/URL with Entity locked (same APIs; rows also appear in Collect).
 4. **Dossier**: open entity → Overview (BLUF Summary via Plate Markdown + scan) / Notes (full-height Plate) / Claims / ids / connections / evidence / events / questions / **Tasks**; trail is folder + `{name} / Entities / {name}` (`EntityKindGlyph` + blur-save name as last crumb) or **Edit** → `DossierEditDialog` (name / kind / summary / notes Markdown); click Case → Overview; click Entities → table. Evidence tab dumps onto this subject + peek via Drawer. Questions: inline edit (open + resolved), resolve, reopen.
 5. **Case scope**: Active Case is cookie-scoped (not in URL for Work/graph nouns); all work is Case-bound. Sidebar: WATCHDOG logo → Dashboard (`/`); **Search…** (Mod+K) above Case; under Case: flat Overview / Entities / Identifiers / Graph. Case Overview (`/cases/$caseSlug`) is the case dashboard (stats / activity / settings); Manage **Cases** **Open** sets Active and lands on Overview (**Set as active case** stays in the card menu). Legacy `/cases/$uuid` and `?tab=` bookmarks redirect.
 6. **Tasks**: case-scoped work items (not Graph writes). `/tasks` is kanban-only (fixed status columns; drag across columns changes status; drag within a column reorders via `position`; lane quick-create + header New task → full dialog). Optional `?entityId=` filter. Due dates are calendar-day only. Dossier **Tasks** tab = entity-scoped board (`density="split"`).
@@ -120,8 +120,8 @@ Dialog titles = Title Case statements (`Delete case`), not questions. Primary = 
 | Facet checkbox rows extract | later | Optional UX chrome share across toolbars |
 | Capability picker discoverability | shipped | CapMatch paste-to-run + category (`id` seg1) + Passive/Active/Footprint filters; empty-default Cap select; Cap meta shows intent |
 | Hide restore / honest copy | done | Filters → Hidden + Restore; dialog copy names the path |
-| Suppression / cache explainability | done | Collect runs: From cache / N suppressed chips + clearer no-Proposal copy; Triage: Reject FP memory note + suppressed-upstream badge |
-| `agent` badge (`proposal.agentSourced`) | done | Shows when Proposal came from agent propose API; override badge removed (audit is `graph_writes`, not Proposal) |
+| Suppression / cache explainability | done | Collect runs: **`StatusInk`** + plain tags (`From cache`, `N suppressed`, …) + clearer no-Proposal copy; Triage: Reject FP memory note + suppressed-upstream plain tag |
+| `agent` tag (`proposal.agentSourced`) | done | Plain **agent** tag in Triage detail strip when Proposal came from agent propose API; override badge removed (audit is `graph_writes`, not Proposal) |
 | Playbook credential pre-check in UI | done | Vault `configured` folded into Collect Cap/Playbook `canRun`; `startJob` fail-closed |
 | Collect explicit "Run url-capture" | later | Collect toolbar ships first; Playbooks must stay user-initiated (never auto-fire) |
 | Figma bridge | later | Gated on Dev seat |
@@ -133,13 +133,13 @@ UI/engineering debt (tokens, atom extract, `variant="panel"` rename) lives in gi
 
 | Surface | Feel | Notes |
 | --- | --- | --- |
-| Collect | Strong | Dump + Cap/Playbook run modes; CapMatch paste-to-run + filters + empty-default Cap select; vault credential presence gates Run; queue clusters playbook steps by run; waiting chrome for the next recipe step; Cancel run; interpretError amber; From cache / suppressed chips; Evidence detail: Enrich Output → Harvest / Extract (AI) → Triage; Hide → Hidden filter → Restore |
+| Collect | Strong | Dump + Cap/Playbook run modes; CapMatch paste-to-run + filters + empty-default Cap select; vault credential presence gates Run; queue clusters playbook steps by run; waiting chrome for the next recipe step; Cancel run; interpretError amber; detail strip **`StatusInk`** + plain tags (`From cache`, suppressed, …) + **`By` @handle**; Evidence detail: Entity attach pencil · Enrich Output → Harvest / Extract (AI) → Triage; Hide → Hidden filter → Restore |
 | Triage | Strong | Accept/Reject parity with Collect run chrome; Reject explains FP memory; identifier collision Alert (warn, don't block) |
 | Dossier | Mixed | PageHeader trail folder + `{name} / Entities / {name}` (`EntityKindGlyph` + editable last crumb); line tabs (`below=`); **Edit** → `DossierEditDialog` (name/kind/summary/notes); **Tasks** tab (entity-scoped kanban, split density); Connections = outbound/inbound list + read-only 1-hop canvas + dialog CRUD (`clampEdgePhrase` on peer change); Evidence tab dumps File/Paste/URL (Entity locked) + list + Drawer peek; `EvidencePicker` on composers / `EvidenceCiteChips` on Job cites; Overview BLOT still dense |
 | Entities / Cases | Fine | Entities: dense DataTable (+ Connections). Identifiers: Active-Case table (`/identifiers`) with in-place create + bulk-add paste/map. Graph: `/graph` preview. Cases (Manage): create / Open / export. Case Overview: dashboard only (no Tasks tab). |
 | Tasks | Fine | `/tasks` kanban (dnd-kit); drag changes status **and** within-column order (`position`); lane quick-create; `TaskFormDialog` create/edit; date-only due; Task ≠ Graph write |
 | Dashboard | Strong | Trail last crumb **Dashboard**. Stat cards 3×2 (Proposals pending / Tasks overdue / Tasks due soon / Jobs running / Entities / Cases); Triage + Due panels (dashed empty); Activity = vertical resizable panel + `ScrollArea` (cross-case, case filter); sidebar owns Case switch / nav / Mod+K Search; dump stays on Collect |
-| Settings | Fine | Sidebar sections (Account / Security / API Keys / Credentials); Cap credentials Connect dialog + vault |
+| Settings | Fine | Sidebar sections (Account / Security / Team / Users / API Keys / Credentials); Cap credentials Connect dialog + vault; Team invite is organization membership; Users is instance-admin Disable/Enable |
 | Command palette | Strong | Mod+K shell palette: Jump to + Active Case search (entities / ids / evidence / tasks / jobs / pending Triage) + Cases switch; `?` Shortcuts; Mod+B sidebar |
 
 ## UX PR checklist
