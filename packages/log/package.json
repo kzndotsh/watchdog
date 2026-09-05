@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "effect": "4.0.0-rc.112",
-    "evlog": "2.24.0"
+    "evlog": "2.28.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
