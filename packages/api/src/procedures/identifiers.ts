@@ -10,6 +10,7 @@ import {
   confidenceTierSchema,
   identifierStatusSchema,
   identifierTypeSchema,
+  identifierUpdateFieldsSchema,
 } from "@watchdog/schemas";
 
 import { authed, graphChildWrite } from "../os";
@@ -99,18 +100,13 @@ export const update = graphChildWrite
     tags: ["identifiers"],
   })
   .input(
-    z.object({
-      caseId: z.uuid(),
-      identifierId: z.uuid(),
-      value: z.string().optional(),
-      platform: z.string().optional(),
-      type: identifierTypeSchema.optional(),
-      status: identifierStatusSchema.optional(),
-      confidence: confidenceTierSchema.optional(),
-      notes: z.string().optional(),
-      evidenceIds: z.array(z.uuid()).optional(),
-      userOverride: userOverrideSchema,
-    })
+    z
+      .object({
+        caseId: z.uuid(),
+        identifierId: z.uuid(),
+        userOverride: userOverrideSchema,
+      })
+      .extend(identifierUpdateFieldsSchema.shape)
   )
   .output(identifierSchema)
   .handler(async ({ input, context }) =>

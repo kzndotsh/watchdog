@@ -5,10 +5,7 @@ import {
   URL_ENRICH_CAPABILITY_ID,
 } from "@watchdog/schemas";
 
-export function classifyRun(
-  job: JobListRecord,
-  evidenceId: string | null
-): CollectRunRole {
+export function classifyRun(job: JobListRecord): CollectRunRole {
   if (job.playbookStep !== null && job.playbookStep !== undefined) {
     return "step";
   }
@@ -17,9 +14,6 @@ export function classifyRun(
   }
   if (job.capabilityId === URL_ENRICH_CAPABILITY_ID) {
     return "enrich";
-  }
-  if (evidenceId !== null && (job.evidenceIds?.length ?? 0) > 1) {
-    return "collect";
   }
   return "collect";
 }
