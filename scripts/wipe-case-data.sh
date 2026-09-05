@@ -18,7 +18,7 @@ fi
 
 if [[ "$YES" -ne 1 ]]; then
   echo "Deletes all cases, entities, evidence, jobs, proposals, and tasks."
-  echo "Keeps: login (auth.*), API keys, vault credentials, migrations."
+  echo "Keeps: login (auth.* including organizations), API keys, vault credentials, migrations."
   echo "Also empties the MinIO evidence bucket (bucket stays)."
   read -r -p "Type wipe to continue: " answer
   if [[ "$answer" != "wipe" ]]; then

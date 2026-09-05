@@ -29,6 +29,15 @@ export const authFields = {
     ),
 };
 
+/** Optional SMTP for organization invitation mail. Copy-link still works without it. */
+export const smtpFields = {
+  SMTP_HOST: z.string().min(1).optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65_535).optional(),
+  SMTP_USER: z.string().min(1).optional(),
+  SMTP_PASS: z.string().min(1).optional(),
+  SMTP_FROM: z.email().optional(),
+};
+
 export const s3Fields = {
   S3_ENDPOINT: z.url(),
   S3_ACCESS_KEY: z.string().min(1),

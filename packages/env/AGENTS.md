@@ -33,6 +33,7 @@ T3 Env + Zod for deploy/boot secrets. Schemas composed per entrypoint — CLI do
 - **`drizzle.config.ts` exception:** kit cannot resolve `@watchdog/env` — loads repo-root `.env` via dotenv (see [`packages/db/AGENTS.md`](../db/AGENTS.md)).
 - `loadRepoEnv` is internal (not a public export).
 - `BETTER_AUTH_ALLOW_SIGNUP` defaults to `false`, so omitting it also closes registration. A fresh DB seeds no account — set it to `1`, restart the web process (`.env` is read at boot, not watched), register at `/auth/sign-up`, then set it back.
+- `SMTP_*` is optional. Invitations still work via copy-link + evlog. Mail sends only when both `SMTP_HOST` and `SMTP_FROM` are set.
 
 ## See also / External References
 

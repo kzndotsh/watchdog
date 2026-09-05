@@ -25,7 +25,7 @@ migrate:
 minio-init:
     bash scripts/minio-init.sh
 
-# Empty Case Graph / Jobs / Inbox / Evidence. Keeps auth + vault. `just wipe yes` skips prompt.
+# Empty Case Graph / Jobs / Inbox / Evidence. Keeps auth (including orgs) + vault. `just wipe yes` skips prompt.
 wipe *args:
     bash scripts/wipe-case-data.sh {{args}}
 

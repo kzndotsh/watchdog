@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { authFields, cliFields, databaseFields, s3Fields } from "../fragments";
+import {
+  authFields,
+  cliFields,
+  databaseFields,
+  s3Fields,
+  smtpFields,
+} from "../fragments";
 
 describe("env fragments", () => {
   it("fails closed on a short auth secret", () => {
@@ -24,6 +30,11 @@ describe("env fragments", () => {
       S3_BUCKET: "watchdog-evidence",
     });
     expect(parsed.S3_REGION).toBe("us-east-1");
+  });
+
+  it("treats SMTP as optional", () => {
+    const parsed = z.object(smtpFields).safeParse({});
+    expect(parsed.success).toBe(true);
   });
 
   it("requires WD_API_KEY", () => {

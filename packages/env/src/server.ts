@@ -7,6 +7,7 @@ import {
   exportFields,
   nodeEnvFields,
   s3Fields,
+  smtpFields,
   vaultFields,
 } from "./fragments";
 import { loadRepoEnv } from "./load";
@@ -24,6 +25,7 @@ export const env = createEnv({
   server: {
     ...databaseFields,
     ...authFields,
+    ...smtpFields,
     ...s3Fields,
     ...vaultFields,
     ...exportFields,
