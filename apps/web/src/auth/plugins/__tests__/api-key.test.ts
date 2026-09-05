@@ -16,10 +16,6 @@ vi.mock("@better-auth-ui/core", () => ({
     factory({}),
 }));
 
-vi.mock("@/auth/ui/api-key/organization-api-keys", () => ({
-  OrganizationApiKeys: "OrganizationApiKeys",
-}));
-
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 
 describe("apiKeyPlugin", () => {

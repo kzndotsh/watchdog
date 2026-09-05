@@ -2,7 +2,7 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/admin/access";
 
 /** Better Auth `auth.user.role`. Not organization member role. */
-export const INSTANCE_ADMIN_ROLE = "admin";
+const INSTANCE_ADMIN_ROLE = "admin";
 
 const INSTANCE_ADMIN_USER_PERMS = [
   "create",

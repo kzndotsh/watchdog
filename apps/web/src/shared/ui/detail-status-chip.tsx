@@ -12,8 +12,6 @@ export const CHIP_SIZE_CLASS: Record<ChipSize, string> = {
   md: "h-5 gap-1 rounded-md border border-border/60 px-1.5 py-0 text-label-meta leading-none",
 };
 
-export const DETAIL_CHIP_CLASS = CHIP_SIZE_CLASS.md;
-
 type DetailStatusChipProps = Omit<ComponentProps<typeof Badge>, "variant"> & {
   size?: ChipSize;
 };

@@ -1,4 +1,4 @@
-export const API_KEY_ACTOR_PREFIX = "api-key:";
+const API_KEY_ACTOR_PREFIX = "api-key:";
 
 export interface ActorUser {
   name: string;
