@@ -8,6 +8,7 @@ import {
   confidenceTierSchema,
   identifierStatusSchema,
   identifierTypeSchema,
+  identifierUpdateFieldsSchema,
   nonEmptyTrimmed,
   optionalTrimmedSchema,
   uuidListSchema,
@@ -46,17 +47,12 @@ export type CreateIdentifierParsed = z.output<
   typeof createIdentifierInputSchema
 >;
 
-export const updateIdentifierInputSchema = z.object({
-  caseId: uuidSchema,
-  identifierId: uuidSchema,
-  value: z.string().optional(),
-  platform: z.string().optional(),
-  type: identifierTypeSchema.optional(),
-  status: identifierStatusSchema.optional(),
-  confidence: confidenceTierSchema.optional(),
-  notes: z.string().optional(),
-  evidenceIds: uuidListSchema.optional(),
-});
+export const updateIdentifierInputSchema = z
+  .object({
+    caseId: uuidSchema,
+    identifierId: uuidSchema,
+  })
+  .extend(identifierUpdateFieldsSchema.shape);
 export type UpdateIdentifierInput = z.output<
   typeof updateIdentifierInputSchema
 >;

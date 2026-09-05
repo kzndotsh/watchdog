@@ -8,14 +8,14 @@ import { useState } from "react";
 
 import { SettingsCredentialsDialogs } from "@/domains/settings/components/settings-credentials-dialogs";
 import {
-  closeConfigureDialog,
-  closeDeleteDialog,
+  bindConfigureOpenChange,
+  bindConfigureSlot,
+  bindCredentialSaved,
+  bindDeleteConfirm,
+  bindDeleteOpenChange,
+  bindDeleteSlot,
   handleCredentialDeleted,
   handleCredentialDeleteError,
-  handleCredentialSaved,
-  handleDeleteConfirm,
-  openConfigureCredential,
-  openDeleteCredential,
 } from "@/domains/settings/components/settings-credentials-handlers";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { deleteCredentialFn } from "@/domains/settings/settings.functions";
@@ -166,6 +166,20 @@ export function SettingsCredentialsForm() {
   const deleteSlotRow = findSlotByName(slots, deleteTarget);
   const { connected, disconnected } = partitionCredentialSlots(slots);
 
+  const onConfigureSlot = bindConfigureSlot(setError, setConfigureName);
+  const onDeleteSlot = bindDeleteSlot(setDeleteError, setDeleteTarget);
+  const onConfigureOpenChange = bindConfigureOpenChange(setConfigureName);
+  const onCredentialSaved = bindCredentialSaved(queryClient, setError);
+  const onDeleteOpenChange = bindDeleteOpenChange(
+    deleteMutation.isPending,
+    setDeleteTarget,
+    setDeleteError
+  );
+  const onDeleteConfirm = bindDeleteConfirm(
+    deleteTarget,
+    deleteMutation.mutate
+  );
+
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       {error ? (
@@ -186,22 +200,14 @@ export function SettingsCredentialsForm() {
           <CredentialSlotGroup
             title="Connected"
             slots={connected}
-            onConfigure={(name) => {
-              openConfigureCredential(name, setError, setConfigureName);
-            }}
-            onDelete={(name) => {
-              openDeleteCredential(name, setDeleteError, setDeleteTarget);
-            }}
+            onConfigure={onConfigureSlot}
+            onDelete={onDeleteSlot}
           />
           <CredentialSlotGroup
             title="Not connected"
             slots={disconnected}
-            onConfigure={(name) => {
-              openConfigureCredential(name, setError, setConfigureName);
-            }}
-            onDelete={(name) => {
-              openDeleteCredential(name, setDeleteError, setDeleteTarget);
-            }}
+            onConfigure={onConfigureSlot}
+            onDelete={onDeleteSlot}
           />
         </>
       )}
@@ -209,28 +215,15 @@ export function SettingsCredentialsForm() {
       <SettingsCredentialsDialogs
         configureSlot={configureSlotRow}
         configureOpen={configureName !== null}
-        onConfigureOpenChange={(open) => {
-          closeConfigureDialog(open, setConfigureName);
-        }}
-        onCredentialSaved={() => {
-          handleCredentialSaved(queryClient, setError);
-        }}
+        onConfigureOpenChange={onConfigureOpenChange}
+        onCredentialSaved={onCredentialSaved}
         onCredentialError={setError}
         deleteOpen={deleteTarget !== null}
         deletePending={deleteMutation.isPending}
         deleteSlot={deleteSlotRow}
         deleteError={deleteError}
-        onDeleteOpenChange={(open) => {
-          closeDeleteDialog(
-            open,
-            deleteMutation.isPending,
-            setDeleteTarget,
-            setDeleteError
-          );
-        }}
-        onDeleteConfirm={() => {
-          handleDeleteConfirm(deleteTarget, deleteMutation.mutate);
-        }}
+        onDeleteOpenChange={onDeleteOpenChange}
+        onDeleteConfirm={onDeleteConfirm}
       />
     </div>
   );

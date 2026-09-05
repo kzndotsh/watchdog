@@ -10,7 +10,8 @@ Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs 
 
 ```
 @watchdog/schemas     ← atoms: vocab, JsonValue, PatchOp, EvidenceSnapshot, platforms,
-                         normalize-identifier, validate-identifier, fingerprint, job-artifact ids
+                         normalize-identifier, validate-identifier, fingerprint, job-artifact ids,
+                         identifierUpdateFieldsSchema (shared identifier PATCH fields)
        ↓
 @watchdog/policy      ← assertPatchGates / patchNeedsConfidence (pure; schemas only;
                          browser: @watchdog/policy/patch-needs-confidence)
@@ -228,6 +229,8 @@ export type CreateClaimInput = z.input<typeof createClaimInputSchema>;
 /** After validator parse (class always present). */
 export type CreateClaimParsed = z.output<typeof createClaimInputSchema>;
 ```
+
+Identifier PATCH fields are shared: `identifierUpdateFieldsSchema` in `@watchdog/schemas` (web `updateIdentifierInputSchema` and API `identifiers.update` both `.extend` its `.shape`).
 
 ```ts
 // claims.functions.ts

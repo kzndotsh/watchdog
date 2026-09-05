@@ -59,7 +59,7 @@ export function assignJobsToEvidence(
       if (!jobLinksEvidence(job, row.id)) continue;
       const bucket = runsByEvidenceId.get(row.id);
       if (bucket === undefined) continue;
-      bucket.push({ job, role: classifyRun(job, row.id) });
+      bucket.push({ job, role: classifyRun(job) });
       assignedJobIds.add(job.id);
     }
   }
@@ -134,9 +134,7 @@ function appendStandaloneJob(
   jobIdToRowId: Map<string, string>
 ): void {
   const landed = landedEvidenceIds(job);
-  const runs: CollectRun[] = [
-    { job, role: classifyRun(job, landed[0] ?? null) },
-  ];
+  const runs: CollectRun[] = [{ job, role: classifyRun(job) }];
   assignedJobIds.add(job.id);
   const row = buildJobRow(job.id, runs, {
     evidence:
@@ -163,7 +161,7 @@ function appendOrphanJob(
   jobIdToRowId: Map<string, string>
 ): void {
   if (assignedJobIds.has(job.id)) return;
-  const runs: CollectRun[] = [{ job, role: classifyRun(job, null) }];
+  const runs: CollectRun[] = [{ job, role: classifyRun(job) }];
   assignedJobIds.add(job.id);
   const row = buildJobRow(job.id, runs, {
     evidence: null,

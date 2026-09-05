@@ -132,6 +132,10 @@ export {
 
 export { normalizeIdentifierValue } from "./normalize-identifier";
 
+export type { IdentifierUpdateFields } from "./identifier-update";
+
+export { identifierUpdateFieldsSchema } from "./identifier-update";
+
 export type {
   InvalidIdentifierOp,
   ValidateIdentifierResult,
