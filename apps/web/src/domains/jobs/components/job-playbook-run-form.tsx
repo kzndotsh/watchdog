@@ -33,8 +33,6 @@ import { Checkbox } from "@/shared/ui/shadcn/checkbox";
 import { Label } from "@/shared/ui/shadcn/label";
 import { WithTooltip } from "@/shared/ui/timestamp";
 
-export type { UrlDumpOption };
-
 export interface PlaybookRunVars {
   playbookId: string;
   host: string;
