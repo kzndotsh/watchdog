@@ -46,7 +46,7 @@ function LinkedEvidenceSummary({
   evidenceIds,
   onEvidenceClick,
 }: {
-  options: EvidenceOption[];
+  options: readonly EvidenceOption[];
   evidenceIds: string[];
   onEvidenceClick?: (evidenceId: string) => void;
 }) {
@@ -115,7 +115,7 @@ export function IdentifierEvidenceCell({
   saveEvidence,
 }: {
   row: IdentifierEvidenceRow;
-  evidenceOptions: EvidenceOption[];
+  evidenceOptions: readonly EvidenceOption[];
   onEvidenceClick?: (evidenceId: string) => void;
   saveEvidence: (
     identifierId: string,

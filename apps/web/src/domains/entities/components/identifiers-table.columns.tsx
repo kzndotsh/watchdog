@@ -63,7 +63,7 @@ export const identifiersGlobalFilterFn: FilterFn<CaseIdentifierRecord> = (
 };
 
 export interface IdentifiersTableMeta {
-  evidenceOptions: EvidenceOption[];
+  evidenceOptions: readonly EvidenceOption[];
   updateField: (identifierId: string, patch: IdentifierFieldUpdate) => void;
   saveEvidence: (
     identifierId: string,

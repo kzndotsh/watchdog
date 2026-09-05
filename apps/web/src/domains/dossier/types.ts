@@ -20,6 +20,6 @@ export interface DossierSectionProps {
 
 /** Sections that link Evidence chips in composers / rows. */
 export type DossierSectionWithEvidenceProps = DossierSectionProps & {
-  evidenceOptions: EvidenceOption[];
+  evidenceOptions: readonly EvidenceOption[];
   onEvidenceClick?: (evidenceId: string) => void;
 };

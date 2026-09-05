@@ -117,7 +117,7 @@ interface IdentifierComposerAppendProps {
   onKeyDown: (e: React.KeyboardEvent) => void;
   onSubmit: () => void;
   onCancel: () => void;
-  evidenceOptions: EvidenceOption[];
+  evidenceOptions: readonly EvidenceOption[];
   entityPicker?: { entities: EntityOption[] };
 }
 
@@ -126,7 +126,7 @@ function ComposerEvidenceField({
   evidenceOptions,
 }: {
   form: IdentifierCreateForm;
-  evidenceOptions: EvidenceOption[];
+  evidenceOptions: readonly EvidenceOption[];
 }) {
   const [open, setOpen] = useState(false);
 
