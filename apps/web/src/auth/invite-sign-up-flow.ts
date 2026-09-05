@@ -43,15 +43,17 @@ export async function createCredentialUser(
     });
   }
 
-  const hash = await ctx.context.password.hash(input.password);
-  const createdUser = await ctx.context.internalAdapter.createUser(
-    {
-      email: input.email,
-      name: input.name,
-      emailVerified: false,
-    },
-    { method: "email-password" }
-  );
+  const [hash, createdUser] = await Promise.all([
+    ctx.context.password.hash(input.password),
+    ctx.context.internalAdapter.createUser(
+      {
+        email: input.email,
+        name: input.name,
+        emailVerified: false,
+      },
+      { method: "email-password" }
+    ),
+  ]);
   if (!createdUser) {
     throw APIError.from("BAD_REQUEST", {
       message: "Failed to create user",

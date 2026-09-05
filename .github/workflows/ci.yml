@@ -360,6 +360,8 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: React Doctor (advisory)
         if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true'

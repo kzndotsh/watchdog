@@ -1,4 +1,3 @@
-/* oxlint-disable react/only-export-components -- evidenceLabel shared with identifier cells */
 import { PaperclipIcon, PlusIcon, XIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 
@@ -7,8 +6,10 @@ import {
   CHIP_SIZE_CLASS,
   DetailStatusChip,
 } from "@/shared/ui/detail-status-chip";
-import { formatOpaqueId } from "@/shared/ui/format-opaque-id";
-import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import {
+  evidenceLabel,
+  type EvidenceOption,
+} from "@/shared/ui/intake/evidence-option";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
 import { Input } from "@/shared/ui/shadcn/input";
 import {
@@ -28,16 +29,6 @@ const PICKER_TRIGGER_CLASS = cn(
   CHIP_SIZE_CLASS.sm,
   "text-muted-foreground hover:text-foreground hover:bg-muted/50 border-border/60 focus-visible:ring-ring/50 inline-flex cursor-pointer items-center bg-transparent transition-colors outline-none focus-visible:ring-2"
 );
-
-export function evidenceLabel(row: EvidenceOption): string {
-  const label = row.label?.trim();
-  if (label !== undefined && label !== "") return label;
-  const sourceUrl = row.sourceUrl?.trim();
-  if (sourceUrl !== undefined && sourceUrl !== "") return sourceUrl;
-  if (row.sha256 !== undefined && row.sha256 !== null && row.sha256 !== "")
-    return `${row.kind} · ${formatOpaqueId(row.sha256, 8)}`;
-  return `${row.kind} · ${formatOpaqueId(row.id, 8)}`;
-}
 
 /**
  * Read-only Job/proposal cite chips.
@@ -154,6 +145,7 @@ function EvidenceChecklist({
 }) {
   const showFilter = options.length > FILTER_THRESHOLD;
   const q = filter.trim().toLowerCase();
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const filteredOptions =
     q === ""
       ? options
@@ -192,7 +184,7 @@ function EvidenceChecklist({
           </li>
         ) : (
           filteredOptions.map((row) => {
-            const checked = selectedIds.includes(row.id);
+            const checked = selectedIdSet.has(row.id);
             const checkboxId = `${idPrefix}-${row.id}`;
             const label = evidenceLabel(row);
             return (

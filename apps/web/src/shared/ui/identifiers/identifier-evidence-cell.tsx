@@ -9,11 +9,11 @@ import {
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { formatOpaqueId } from "@/shared/ui/format-opaque-id";
-import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import {
-  EvidencePicker,
   evidenceLabel,
-} from "@/shared/ui/intake/evidence-picker";
+  type EvidenceOption,
+} from "@/shared/ui/intake/evidence-option";
+import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   Popover,

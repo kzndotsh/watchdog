@@ -65,7 +65,11 @@ export function jobsForRole(
   role: CollectRunRole
 ): JobListRecord[] {
   if (row === null) return [];
-  return row.runs.filter((run) => run.role === role).map((run) => run.job);
+  const jobs: JobListRecord[] = [];
+  for (const run of row.runs) {
+    if (run.role === role) jobs.push(run.job);
+  }
+  return jobs;
 }
 
 export function producingCapFromRow(
