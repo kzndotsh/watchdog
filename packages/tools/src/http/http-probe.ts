@@ -1,91 +1,21 @@
-import { createHash } from "node:crypto";
-
 import { Effect, Result } from "effect";
 import type { HttpClient } from "effect/unstable/http";
-import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/tools-error";
 import { fetchBytesEffect } from "./fetch-bytes";
+import {
+  httpProbeSnapshotSchema,
+  type HttpProbeSnapshot,
+} from "./http-probe-schema";
+import {
+  buildHttpProbeSnapshot,
+  emptyHttpProbeSnapshot,
+  type ProbeHop,
+} from "./http-probe-snapshot";
 
-const SECURITY_HEADER_NAMES = [
-  "strict-transport-security",
-  "content-security-policy",
-  "x-frame-options",
-  "x-content-type-options",
-  "referrer-policy",
-  "permissions-policy",
-  "cross-origin-opener-policy",
-  "cross-origin-resource-policy",
-  "cross-origin-embedder-policy",
-] as const;
-
-export const httpProbeSnapshotSchema = z.object({
-  host: z.string().min(1),
-  queriedAt: z.string().min(1),
-  finalUrl: z.string(),
-  status: z.number(),
-  ok: z.boolean(),
-  securityHeaders: z.record(z.string(), z.string()),
-  server: z.string().nullable(),
-  via: z.string().nullable(),
-  cdnHints: z.array(z.string()),
-  securityTxt: z.object({
-    url: z.string(),
-    status: z.number(),
-    present: z.boolean(),
-    bodyPreview: z.string().nullable(),
-  }),
-  favicon: z.object({
-    url: z.string(),
-    status: z.number(),
-    sha256: z.string().nullable(),
-    contentType: z.string().nullable(),
-  }),
-  error: z.string().optional(),
-});
-
-export type HttpProbeSnapshot = z.infer<typeof httpProbeSnapshotSchema>;
-
-function pickHeaders(headers: Headers): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const name of SECURITY_HEADER_NAMES) {
-    const value = headers.get(name);
-    if (value) out[name] = value;
-  }
-  return out;
-}
-
-function detectCdnHints(headers: Headers): string[] {
-  const hints: string[] = [];
-  const server = headers.get("server")?.toLowerCase() ?? "";
-  const via = headers.get("via")?.toLowerCase() ?? "";
-  const cfRay = headers.get("cf-ray");
-  const cf = headers.get("cf-cache-status");
-  const xcdn = headers.get("x-cdn") ?? headers.get("x-cache");
-  const akamai =
-    headers.get("x-akamai-transformed") ?? headers.get("akamai-grn");
-  const fastly =
-    headers.get("x-served-by") ?? headers.get("fastly-debug-digest");
-  if (cfRay || cf) hints.push("cloudflare");
-  if (akamai) hints.push("akamai");
-  if (fastly || via.includes("fastly")) hints.push("fastly");
-  if (server.includes("cloudflare")) hints.push("cloudflare");
-  if (server.includes("amazons3") || headers.get("x-amz-request-id")) {
-    hints.push("aws");
-  }
-  if (xcdn) hints.push(`header:${xcdn.slice(0, 64)}`);
-  return [...new Set(hints)];
-}
-
-interface ProbeHop {
-  ok: boolean;
-  status: number;
-  headers: Headers;
-  finalUrl: string;
-  error?: string;
-}
+export { httpProbeSnapshotSchema, type HttpProbeSnapshot };
 
 type ProbeAttempt = { readonly hop: ProbeHop } | { readonly error: string };
 
@@ -192,30 +122,11 @@ export function fetchHttpProbeEffect(
     }
 
     if (!primary) {
-      return httpProbeSnapshotSchema.parse({
+      return emptyHttpProbeSnapshot(
         host,
-        queriedAt: new Date().toISOString(),
-        finalUrl: origins[0],
-        status: 0,
-        ok: false,
-        securityHeaders: {},
-        server: null,
-        via: null,
-        cdnHints: [],
-        securityTxt: {
-          url: new URL("/.well-known/security.txt", origins[0]).href,
-          status: 0,
-          present: false,
-          bodyPreview: null,
-        },
-        favicon: {
-          url: new URL("/favicon.ico", origins[0]).href,
-          status: 0,
-          sha256: null,
-          contentType: null,
-        },
-        error: lastError ?? "HTTP probe failed",
-      });
+        origins[0],
+        lastError ?? "HTTP probe failed"
+      );
     }
 
     const securityTxtUrl = new URL("/.well-known/security.txt", originBase)
@@ -238,37 +149,13 @@ export function fetchHttpProbeEffect(
       { concurrency: 2 }
     );
 
-    const bodyPreview =
-      secTxt.ok && secTxt.bytes.byteLength > 0
-        ? new TextDecoder().decode(secTxt.bytes).slice(0, 2000)
-        : null;
-
-    return httpProbeSnapshotSchema.parse({
+    return buildHttpProbeSnapshot({
       host,
-      queriedAt: new Date().toISOString(),
-      finalUrl: primary.finalUrl,
-      status: primary.status,
-      ok: primary.ok,
-      securityHeaders: pickHeaders(primary.headers),
-      server: primary.headers.get("server"),
-      via: primary.headers.get("via"),
-      cdnHints: detectCdnHints(primary.headers),
-      securityTxt: {
-        url: securityTxtUrl,
-        status: secTxt.status,
-        present: secTxt.ok && Boolean(bodyPreview?.includes("Contact:")),
-        bodyPreview,
-      },
-      favicon: {
-        url: faviconUrl,
-        status: favicon.status,
-        sha256:
-          favicon.ok && favicon.bytes.byteLength > 0
-            ? createHash("sha256").update(favicon.bytes).digest("hex")
-            : null,
-        contentType: favicon.contentType,
-      },
-      ...(primary.ok ? {} : { error: `HTTP ${primary.status}` }),
+      primary,
+      securityTxtUrl,
+      faviconUrl,
+      secTxt,
+      favicon,
     });
   });
 }
