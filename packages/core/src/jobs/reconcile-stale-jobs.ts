@@ -6,7 +6,7 @@ import { isOpenJobStatus } from "@watchdog/schemas";
 import { errorMessage } from "../infra/domain-error";
 import { tryDb } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
-import { toDomainError, type DomainTag } from "../infra/tagged-errors";
+import type { DomainTag } from "../infra/tagged-errors";
 import { advancePlaybookRunEffect } from "./stages/chain";
 import { failJobEffect } from "./stages/helpers";
 import { capExpireSeconds } from "./timeouts";
@@ -68,7 +68,7 @@ function reconcileStaleJobEffect(
  * Age threshold is per-Cap (derived expire window) so a hung dns.lookup is
  * reclaimed long before a hung url.enrich.
  */
-export function reconcileStaleJobsEffect(): Effect.Effect<number> {
+export function reconcileStaleJobsEffect(): Effect.Effect<number, DomainTag> {
   return Effect.gen(function* reconcileStaleJobsGen() {
     const running = yield* tryDb(() => jobsRepo.listRunning(db));
     const now = Date.now();
@@ -78,11 +78,14 @@ export function reconcileStaleJobsEffect(): Effect.Effect<number> {
       { concurrency: "unbounded" }
     );
     return results.filter(Boolean).length;
-  }).pipe(Effect.mapError(toDomainError), Effect.orDie);
+  });
 }
 
 /** Re-advance playbook runs left `running` after a swallowed advance error. */
-export function reconcileStuckPlaybookRunsEffect(): Effect.Effect<number> {
+export function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
+  number,
+  DomainTag
+> {
   return Effect.gen(function* reconcileStuckPlaybookRunsGen() {
     const running = yield* tryDb(() => playbookRunsRepo.listRunning(db));
     const results = yield* Effect.forEach(
@@ -115,5 +118,5 @@ export function reconcileStuckPlaybookRunsEffect(): Effect.Effect<number> {
       { concurrency: "unbounded" }
     );
     return results.filter(Boolean).length;
-  }).pipe(Effect.mapError(toDomainError), Effect.orDie);
+  });
 }

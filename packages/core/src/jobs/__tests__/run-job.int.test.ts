@@ -10,6 +10,7 @@ import {
   seedPlaybookRun,
 } from "@watchdog/test-kit/db";
 
+import { runDomain } from "../../infra/run-domain.ts";
 import {
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
@@ -84,7 +85,7 @@ describe("reconcileStaleJobs", () => {
       updatedAt: new Date(Date.now() - 48 * 3600 * 1000),
     });
 
-    const failedCount = await Effect.runPromise(reconcileStaleJobsEffect());
+    const failedCount = await runDomain(reconcileStaleJobsEffect());
     expect(failedCount).toBeGreaterThan(0);
 
     const row = await jobsRepo.get(db, job.id);
@@ -99,7 +100,7 @@ describe("reconcileStaleJobs", () => {
     });
     await jobsRepo.update(db, job.id, { updatedAt: new Date() });
 
-    const failedCount = await Effect.runPromise(reconcileStaleJobsEffect());
+    const failedCount = await runDomain(reconcileStaleJobsEffect());
     expect(failedCount).toBe(0);
     const row = await jobsRepo.get(db, job.id);
     expect(row?.status).toBe("running");
@@ -125,9 +126,7 @@ describe("reconcileStuckPlaybookRuns", () => {
       input: { host: "example.com" },
     });
 
-    const recovered = await Effect.runPromise(
-      reconcileStuckPlaybookRunsEffect()
-    );
+    const recovered = await runDomain(reconcileStuckPlaybookRunsEffect());
     expect(recovered).toBe(1);
 
     const members = await jobsRepo.listForPlaybookRun(db, run.id);
@@ -150,9 +149,7 @@ describe("reconcileStuckPlaybookRuns", () => {
       input: { host: "example.com" },
     });
 
-    const recovered = await Effect.runPromise(
-      reconcileStuckPlaybookRunsEffect()
-    );
+    const recovered = await runDomain(reconcileStuckPlaybookRunsEffect());
     expect(recovered).toBe(0);
   });
 });
@@ -424,7 +421,7 @@ describe("advancePlaybookRunEffect", () => {
       input: { host: "example.com" },
     });
 
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -460,7 +457,7 @@ describe("advancePlaybookRunEffect", () => {
       playbookStep: 1,
     });
 
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -488,13 +485,13 @@ describe("advancePlaybookRunEffect", () => {
       input: { host: "example.com" },
     });
 
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
       })
     );
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -524,7 +521,7 @@ describe("advancePlaybookRunEffect", () => {
       playbookStep: 1,
     });
 
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -558,7 +555,7 @@ describe("advancePlaybookRunEffect", () => {
       input: {},
     });
 
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -591,7 +588,7 @@ describe("advancePlaybookRunEffect", () => {
       input: {},
     });
 
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -618,7 +615,7 @@ describe("advancePlaybookRunEffect", () => {
       },
     });
 
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -636,7 +633,7 @@ describe("advancePlaybookRunEffect", () => {
     expect(firstDns).toBeDefined();
     if (firstDns === undefined) throw new TypeError("expected DNS job");
     await jobsRepo.update(db, firstDns.id, { status: "succeeded" });
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -661,7 +658,7 @@ describe("advancePlaybookRunEffect", () => {
       playbookStep: 0,
       handoff: { host: hosts },
     });
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: many.id,
@@ -682,7 +679,7 @@ describe("advancePlaybookRunEffect", () => {
       playbookStep: 0,
       handoff: { host: [] },
     });
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: emptyRun.id,
@@ -708,7 +705,7 @@ describe("advancePlaybookRunEffect", () => {
       playbookStep: 0,
       handoff: { host: ["a.example.com", "b.example.com"] },
     });
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: run.id,
@@ -724,9 +721,7 @@ describe("advancePlaybookRunEffect", () => {
       throw new TypeError("expected two DNS jobs");
     }
     await jobsRepo.update(db, failed.id, { status: "failed" });
-    await Effect.runPromise(
-      advancePlaybookRunEffect({ playbookRunId: run.id })
-    );
+    await runDomain(advancePlaybookRunEffect({ playbookRunId: run.id }));
     const siblingRow = await jobsRepo.get(db, sibling.id);
     expect(siblingRow?.status).toBe("queued");
   });

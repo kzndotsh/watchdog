@@ -37,7 +37,7 @@ import {
   isAttestationExportRow,
 } from "./export-sections";
 import { tryDb } from "./postgres-effect";
-import { toDomainError } from "./tagged-errors";
+import type { DomainTag } from "./tagged-errors";
 
 export interface EntityExport {
   caseSlug: string;
@@ -53,7 +53,7 @@ export interface EntityExport {
 export function renderEntityMarkdownEffect(
   entityId: string,
   peerMap?: Map<string, EntityPeerRow>
-): Effect.Effect<EntityExport | null> {
+): Effect.Effect<EntityExport | null, DomainTag> {
   return Effect.gen(function* renderEntityMarkdownGen() {
     const row = yield* tryDb(() => entitiesRepo.getWithCase(db, entityId));
     if (!row) return null;
@@ -109,7 +109,7 @@ export function renderEntityMarkdownEffect(
       kind: row.kind,
       markdown: `${lines.join("\n").trimEnd()}\n`,
     };
-  }).pipe(Effect.mapError(toDomainError), Effect.orDie);
+  });
 }
 
 interface CaseExportResult {
@@ -124,7 +124,7 @@ interface CaseExportResult {
  */
 export function renderCaseExportEffect(
   caseId: string
-): Effect.Effect<CaseExportResult> {
+): Effect.Effect<CaseExportResult, DomainTag> {
   return Effect.gen(function* renderCaseExportGen() {
     const entityRows = yield* tryDb(() =>
       entitiesRepo.listPeersForCase(db, caseId)
@@ -168,5 +168,5 @@ export function renderCaseExportEffect(
     }
 
     return { files: mdFiles, evidenceRows };
-  }).pipe(Effect.mapError(toDomainError), Effect.orDie);
+  });
 }
