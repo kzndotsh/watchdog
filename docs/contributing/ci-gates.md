@@ -40,7 +40,7 @@ CI fails if regen output drifts from committed files.
 
 Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show docs-only; push to `main` runs full CI.
 
-Fast gates (change-aware on PRs): Ultracite → AGENTS strict → docs strict → docs-affect strict → validate agents → typecheck → knip → web DS → cap/client drift → unit/property → component → db repo check → integration/e2e with Postgres + MinIO.
+Parallel after File detection: **Gates** (Ultracite, AGENTS/docs/effect/skills, typecheck, knip, web DS, cap/client drift, db repos) ‖ **Unit** (unit/property/component) ‖ **Integration + e2e** (Postgres + MinIO). Advisory (React Doctor / Desloppify) runs separately and does not block. Aggregator job **Check** stays the required status (treats skipped siblings as OK).
 
 Doc-affect escape hatch: commit message, `.git/docs-allow-affect` stamp, or PR body keyword (see `scripts/check-docs-affected.mjs`).
 

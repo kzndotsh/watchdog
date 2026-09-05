@@ -1,5 +1,5 @@
-# Watchdog CI — change-aware, single runner, fail-fast gates.
-# Docs-only PRs skip the heavy job; push to main always runs full CI.
+# Watchdog CI — change-aware parallel jobs, fail-fast gates.
+# Docs-only PRs skip heavy jobs; push to main always runs full CI.
 name: ci
 
 on:
@@ -110,8 +110,8 @@ jobs:
               - 'scripts/doc-map.mjs'
               - 'scripts/check-docs-affected.mjs'
 
-  check:
-    name: Check
+  gates:
+    name: Gates
     needs: changes
     if: |
       github.event_name != 'pull_request' ||
@@ -119,18 +119,7 @@ jobs:
       needs.changes.outputs.agents == 'true' ||
       needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: watchdog
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d watchdog" --health-interval 5s --health-timeout 5s --health-retries 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
@@ -148,7 +137,6 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # ── Fast gates ───────────────────────────────────────────────────────────
       - name: Ultracite (Oxlint + Oxfmt)
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check
@@ -199,6 +187,35 @@ jobs:
           git diff --exit-code -- packages/client/src/generated/ \
             || (echo "client contract out of date — run pnpm generate:client" && exit 1)
 
+      - name: Repo layer contract
+        if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm --filter @watchdog/db check:repos
+
+  unit:
+    name: Unit
+    needs: changes
+    if: |
+      github.event_name != 'pull_request' ||
+      needs.changes.outputs.typescript == 'true' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.config == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
       - name: Unit + property tests
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm test:unit && pnpm test:property
@@ -207,47 +224,55 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm test:component
 
-      - name: Repo layer contract
-        if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm --filter @watchdog/db check:repos
+  integration:
+    name: Integration + e2e
+    needs: changes
+    if: |
+      github.event_name != 'pull_request' ||
+      needs.changes.outputs.db == 'true' ||
+      needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.caps == 'true' ||
+      needs.changes.outputs.web == 'true' ||
+      needs.changes.outputs.e2e == 'true' ||
+      needs.changes.outputs.typescript == 'true' ||
+      needs.changes.outputs.config == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: watchdog
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d watchdog" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
 
-      # ── Postgres + MinIO (integration + e2e) ───────────────────────────────
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
       - name: Install psql
-        if: |
-          github.event_name != 'pull_request' ||
-          needs.changes.outputs.db == 'true' ||
-          needs.changes.outputs.api == 'true' ||
-          needs.changes.outputs.caps == 'true' ||
-          needs.changes.outputs.web == 'true' ||
-          needs.changes.outputs.e2e == 'true' ||
-          needs.changes.outputs.typescript == 'true' ||
-          needs.changes.outputs.config == 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
 
       - name: Test databases + migrate
-        if: |
-          github.event_name != 'pull_request' ||
-          needs.changes.outputs.db == 'true' ||
-          needs.changes.outputs.api == 'true' ||
-          needs.changes.outputs.caps == 'true' ||
-          needs.changes.outputs.web == 'true' ||
-          needs.changes.outputs.e2e == 'true' ||
-          needs.changes.outputs.typescript == 'true' ||
-          needs.changes.outputs.config == 'true'
         env:
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
         run: pnpm test-db
 
       - name: Start MinIO
-        if: |
-          github.event_name != 'pull_request' ||
-          needs.changes.outputs.db == 'true' ||
-          needs.changes.outputs.api == 'true' ||
-          needs.changes.outputs.caps == 'true' ||
-          needs.changes.outputs.web == 'true' ||
-          needs.changes.outputs.e2e == 'true' ||
-          needs.changes.outputs.typescript == 'true' ||
-          needs.changes.outputs.config == 'true'
         run: |
           docker run -d --name minio \
             -p 9100:9000 \
@@ -263,15 +288,6 @@ jobs:
           exit 1
 
       - name: Create evidence bucket
-        if: |
-          github.event_name != 'pull_request' ||
-          needs.changes.outputs.db == 'true' ||
-          needs.changes.outputs.api == 'true' ||
-          needs.changes.outputs.caps == 'true' ||
-          needs.changes.outputs.web == 'true' ||
-          needs.changes.outputs.e2e == 'true' ||
-          needs.changes.outputs.typescript == 'true' ||
-          needs.changes.outputs.config == 'true'
         run: |
           curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /tmp/mc
           chmod +x /tmp/mc
@@ -293,14 +309,23 @@ jobs:
 
       - name: Cache Playwright browsers
         if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
+        id: playwright-cache
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Playwright Chromium
-        if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
+        if: |
+          (github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true') &&
+          steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps
+        if: |
+          (github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true') &&
+          steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
 
       - name: Playwright e2e
         if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
@@ -320,24 +345,36 @@ jobs:
             test-results
           if-no-files-found: ignore
 
-      # ── Advisory (never fail the workflow) ───────────────────────────────────
+  advisory:
+    name: Advisory
+    needs: changes
+    if: |
+      always() &&
+      needs.changes.result == 'success' &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        needs.changes.outputs.web == 'true'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
       - name: React Doctor (advisory)
-        if: always() && (github.event_name != 'pull_request' || needs.changes.outputs.web == 'true')
-        continue-on-error: true
+        if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true'
         uses: millionco/react-doctor@v2
         with:
           blocking: none
           directory: apps/web
 
       - uses: actions/setup-python@v5
-        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        continue-on-error: true
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           python-version: "3.11"
 
       - name: Desloppify scan (advisory, main only)
-        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        continue-on-error: true
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           pip install --quiet --upgrade "desloppify[full]"
           bash scripts/desloppify-bootstrap.sh
@@ -345,10 +382,38 @@ jobs:
           desloppify status --json | tee desloppify-status.json
 
       - name: Upload Desloppify status
-        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        continue-on-error: true
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v5
         with:
           name: desloppify-status
           path: desloppify-status.json
           if-no-files-found: ignore
+
+  # Single required status for branch protection (success | skipped allowed).
+  check:
+    name: Check
+    needs: [changes, gates, unit, integration]
+    if: always() && needs.changes.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate parallel jobs
+        run: |
+          set -euo pipefail
+          fail=0
+          for pair in \
+            "gates:${{ needs.gates.result }}" \
+            "unit:${{ needs.unit.result }}" \
+            "integration:${{ needs.integration.result }}"
+          do
+            name="${pair%%:*}"
+            result="${pair##*:}"
+            echo "$name=$result"
+            case "$result" in
+              success|skipped) ;;
+              *)
+                echo "::error::$name finished with $result"
+                fail=1
+                ;;
+            esac
+          done
+          exit "$fail"
