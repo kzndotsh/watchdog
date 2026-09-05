@@ -1,4 +1,4 @@
-import { PlusIcon } from "lucide-react";
+import { ArrowDownLeftIcon, ArrowUpRightIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 
 import { ConnectionComposerFields } from "@/domains/entities/components/connection-composer-fields";
@@ -183,24 +183,30 @@ export function EntityConnectionsCell({
           <>
             {visible.map((peer) => {
               const label = predicateLabel(peer.predicate, peer.direction);
+              const phrase = `${label} ${peer.peerName}`;
+              const DirectionIcon =
+                peer.direction === "out" ? ArrowUpRightIcon : ArrowDownLeftIcon;
               return (
                 <button
                   key={peer.edgeId}
                   type="button"
-                  title={`${label} ${peer.peerName}`}
-                  aria-label={`Edit connection ${label} ${peer.peerName}`}
+                  title={phrase}
+                  aria-label={`Edit connection ${phrase}`}
                   className={cn(
                     CHIP_SIZE_CLASS.sm,
-                    "text-foreground/80 bg-secondary hover:bg-secondary/80 inline-flex max-w-[8rem] cursor-pointer items-center gap-1 border-transparent"
+                    "text-foreground/80 bg-secondary hover:bg-secondary/80 inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1 border-transparent"
                   )}
                   onClick={() => {
                     openEdit(peer);
                   }}
                 >
-                  <span className="text-muted-foreground truncate">
-                    {label}
+                  <DirectionIcon
+                    className="text-muted-foreground size-3 shrink-0"
+                    aria-hidden
+                  />
+                  <span className="min-w-0 truncate font-medium">
+                    {peer.peerName}
                   </span>
-                  <span className="truncate font-medium">{peer.peerName}</span>
                 </button>
               );
             })}
@@ -233,9 +239,10 @@ export function EntityConnectionsCell({
               type="button"
               variant="ghost"
               size="sm"
-              className={DASHED_PILL_CLASS}
+              className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-0"
               disabled={addDisabled}
               aria-label={`Add connection for ${entity.name}`}
+              title="Add connection"
               onClick={(e) => {
                 e.preventDefault();
                 openCreate();
@@ -243,8 +250,7 @@ export function EntityConnectionsCell({
             />
           }
         >
-          <PlusIcon className="size-3" />
-          Add
+          <PlusIcon className="size-3" aria-hidden />
         </PopoverTrigger>
         <PopoverContent align="end" className="w-80 gap-2.5">
           {peers.length > 0 && (mode.kind === "browse" || overflow > 0) ? (
