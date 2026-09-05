@@ -2,15 +2,28 @@ import "@tanstack/react-start/server-only";
 import { apiKey as apiKeyPlugin } from "@better-auth/api-key";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
+import { admin, organization } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 import {
-  db,
+  DISABLED_ACCOUNT_MESSAGE,
+  instanceAdminAccess,
+} from "@/auth/instance-admin";
+import { inviteSignupPlugin } from "@/auth/invite-signup-plugin";
+import { sendInvitationEmail } from "@/auth/send-invitation-email";
+import {
   account,
+  apiKey as apiKeyTable,
+  bootstrapWatchdogOrganization,
+  db,
+  invitation,
+  member,
+  onAuthSessionCreated,
+  organization as organizationTable,
   session,
   user,
   verification,
-  apiKey as apiKeyTable,
+  resolveUserOrganizationId,
 } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
@@ -52,7 +65,16 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
-    schema: { user, session, account, verification, apikey: apiKeyTable },
+    schema: {
+      user,
+      session,
+      account,
+      verification,
+      apikey: apiKeyTable,
+      organization: organizationTable,
+      member,
+      invitation,
+    },
   }),
   emailAndPassword: {
     enabled: true,
@@ -69,6 +91,26 @@ export const auth = betterAuth({
       generateId: () => crypto.randomUUID(),
     },
   },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (created) => {
+          await bootstrapWatchdogOrganization(db, created.id);
+        },
+      },
+    },
+    session: {
+      create: {
+        after: async (created) => {
+          try {
+            await onAuthSessionCreated(db, created);
+          } catch {
+            // Org stamp / auth_event must not fail sign-in.
+          }
+        },
+      },
+    },
+  },
   plugins: [
     apiKeyPlugin({
       defaultPrefix: "wd_",
@@ -82,9 +124,29 @@ export const auth = betterAuth({
         maxRequests: 2000,
       },
     }),
+    organization({
+      allowUserToCreateOrganization: false,
+      creatorRole: "owner",
+      requireEmailVerificationOnInvitation: false,
+      sendInvitationEmail,
+    }),
+    admin({
+      ac: instanceAdminAccess.ac,
+      roles: instanceAdminAccess.roles,
+      defaultBanReason: "disabled",
+      bannedUserMessage: DISABLED_ACCOUNT_MESSAGE,
+    }),
+    inviteSignupPlugin(),
     // Must be last — otherwise later plugins' Set-Cookie can be dropped.
     tanstackStartCookies(),
   ],
 });
 
 export type Session = typeof auth.$Infer.Session;
+
+export async function resolveActorOrganizationId(
+  userId: string,
+  preferredOrganizationId?: string | null
+): Promise<string | null> {
+  return resolveUserOrganizationId(db, userId, preferredOrganizationId);
+}

@@ -32,6 +32,7 @@ export type SignInProps = {
   className?: string
   socialLayout?: SocialLayout
   socialPosition?: "top" | "bottom"
+  allowSignup?: boolean
 }
 
 /**
@@ -45,7 +46,8 @@ export type SignInProps = {
 export function SignIn({
   className,
   socialLayout,
-  socialPosition = "bottom"
+  socialPosition = "bottom",
+  allowSignup = false
 }: SignInProps) {
   const {
     authClient,
@@ -322,7 +324,7 @@ export function SignIn({
             </Link>
           )}
 
-          {emailAndPassword?.enabled && (
+          {emailAndPassword?.enabled && allowSignup && (
             <FieldDescription className="text-center">
               {localization.auth.needToCreateAnAccount}{" "}
               <Link

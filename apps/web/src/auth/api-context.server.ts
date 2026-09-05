@@ -1,15 +1,19 @@
 import "@tanstack/react-start/server-only";
-import { auth } from "@/auth/server";
+import { auth, resolveActorOrganizationId } from "@/auth/server";
 import type { ApiActor, ApiContext } from "@watchdog/api";
 import { identifyUser, peekRequestLogger } from "@watchdog/log";
 
-export function actorFromSession(session: {
-  user: { id: string; email?: string | null; name?: string | null };
-}): ApiActor {
+export function actorFromSession(
+  session: {
+    user: { id: string; email?: string | null; name?: string | null };
+  },
+  organizationId: string | null
+): ApiActor {
   return {
     userId: session.user.id,
     email: session.user.email ?? null,
     name: session.user.name ?? null,
+    organizationId,
   };
 }
 
@@ -29,9 +33,13 @@ export async function createApiContext(request: Request): Promise<ApiContext> {
       identifyUser(log, session, { maskEmail: true });
       log.set({ auth: { method: "session" } });
     }
+    const organizationId = await resolveActorOrganizationId(
+      session.user.id,
+      session.session.activeOrganizationId
+    );
     return {
       headers: request.headers,
-      actor: actorFromSession(session),
+      actor: actorFromSession(session, organizationId),
       authMethod: "session",
       log,
     };
@@ -41,12 +49,14 @@ export async function createApiContext(request: Request): Promise<ApiContext> {
   if (key) {
     const result = await auth.api.verifyApiKey({ body: { key } });
     if (result.valid && result.key) {
+      const userId = result.key.referenceId;
+      const organizationId = await resolveActorOrganizationId(userId);
       if (log) {
         log.set({
           auth: { method: "apiKey" },
-          userId: result.key.referenceId,
+          userId,
           user: {
-            id: result.key.referenceId,
+            id: userId,
             name: `api-key:${result.key.name ?? result.key.id}`,
           },
         });
@@ -54,9 +64,10 @@ export async function createApiContext(request: Request): Promise<ApiContext> {
       return {
         headers: request.headers,
         actor: {
-          userId: result.key.referenceId,
+          userId,
           email: null,
           name: `api-key:${result.key.name ?? result.key.id}`,
+          organizationId,
         },
         authMethod: "apiKey",
         log,

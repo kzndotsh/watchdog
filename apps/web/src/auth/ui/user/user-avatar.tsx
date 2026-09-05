@@ -48,7 +48,11 @@ export function UserAvatar({
     return <Skeleton className={cn("size-8 rounded-full", className)} />
   }
 
-  const resolvedUser = user ?? session?.user
+  const resolvedUser =
+    user ??
+    (session?.user as
+      | (User & { username?: string | null; displayUsername?: string | null })
+      | undefined)
 
   const initials = (
     resolvedUser?.username ||

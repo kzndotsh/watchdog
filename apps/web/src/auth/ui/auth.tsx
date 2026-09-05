@@ -17,6 +17,8 @@ export type AuthProps = {
   path?: string
   socialLayout?: SocialLayout
   socialPosition?: "top" | "bottom"
+  /** When false, hide the sign-in link to public registration. */
+  allowSignup?: boolean
   /** @remarks `AuthView` */
   view?: AuthView
 }
@@ -56,6 +58,7 @@ export function Auth({
   path,
   socialLayout,
   socialPosition,
+  allowSignup = false,
   view
 }: AuthProps) {
   const { basePaths, emailAndPassword, plugins, viewPaths, navigate } =
@@ -153,6 +156,7 @@ export function Auth({
       className={className}
       socialLayout={socialLayout}
       socialPosition={socialPosition}
+      allowSignup={allowSignup}
     />
   )
 }

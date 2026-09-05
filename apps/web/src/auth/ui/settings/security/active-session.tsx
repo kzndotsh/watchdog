@@ -16,7 +16,7 @@ export type ActiveSessionProps = {
 /**
  * Render a single active session row with device info and revoke control.
  *
- * Shows the session's browser, OS, and creation time. The current session is marked
+ * Shows the session's browser, OS, IP, user agent, and creation time. The current session is marked
  * and navigates to sign-out on click, while other sessions can be revoked individually.
  *
  * @param session - The session object containing id, token, userAgent, ipAddress, and createdAt
@@ -53,6 +53,13 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
           <span className="text-sm font-medium truncate">
             {ua.browser.name || "Unknown Browser"}
             {ua.os.name ? `, ${ua.os.name}` : ""}
+          </span>
+
+          <span className="text-xs text-muted-foreground truncate">
+            {activeSession.ipAddress || "No IP"}
+            {activeSession.userAgent
+              ? ` · ${activeSession.userAgent}`
+              : ""}
           </span>
 
           {isCurrentSession ? (

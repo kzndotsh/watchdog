@@ -23,11 +23,11 @@ vi.mock("@/auth/ui/api-key/organization-api-keys", () => ({
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 
 describe("apiKeyPlugin", () => {
-  it("clears security cards and wires organization cards", () => {
+  it("clears security cards and keeps organization API key cards empty", () => {
     expect(coreFactory).toHaveBeenCalled();
     expect(apiKeyPlugin).toMatchObject({
       securityCards: [],
-      organizationCards: ["OrganizationApiKeys"],
+      organizationCards: [],
     });
     expect(coreFactory).toHaveBeenCalledTimes(1);
   });
