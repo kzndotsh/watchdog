@@ -91,7 +91,7 @@ export interface IdentifierFieldUpdate {
 
 export interface IdentifierTableMeta {
   updateField: (identifierId: string, field: IdentifierFieldUpdate) => void;
-  evidenceOptions: EvidenceOption[];
+  evidenceOptions: readonly EvidenceOption[];
   onEvidenceClick?: (evidenceId: string) => void;
   saveEvidence: (
     identifierId: string,
