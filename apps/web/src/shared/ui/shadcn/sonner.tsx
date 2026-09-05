@@ -58,6 +58,23 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          /* richColors — match status badge tints, not Sonner’s neon defaults */
+          "--success-bg": "var(--status-succeeded-bg)",
+          "--success-border":
+            "color-mix(in oklab, var(--status-succeeded) 35%, transparent)",
+          "--success-text": "var(--status-succeeded-fg)",
+          "--info-bg": "var(--status-running-bg)",
+          "--info-border":
+            "color-mix(in oklab, var(--status-running) 35%, transparent)",
+          "--info-text": "var(--status-running-fg)",
+          "--warning-bg": "var(--status-pending-bg)",
+          "--warning-border":
+            "color-mix(in oklab, var(--status-pending) 35%, transparent)",
+          "--warning-text": "var(--status-pending-fg)",
+          "--error-bg": "var(--status-failed-bg)",
+          "--error-border":
+            "color-mix(in oklab, var(--status-failed) 35%, transparent)",
+          "--error-text": "var(--status-failed-fg)",
         } as CSSProperties
       }
       toastOptions={{

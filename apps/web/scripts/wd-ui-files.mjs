@@ -8,6 +8,7 @@ export const WD_UI_FILES = [
   "src/shared/ui/actor-mention.tsx",
   "src/shared/ui/artifact-body-from-content.ts",
   "src/shared/ui/artifact-preview.tsx",
+  "src/shared/ui/case-card-shell.ts",
   "src/shared/ui/clickable-id-chip.tsx",
   "src/shared/ui/code-block.tsx",
   "src/shared/ui/composer-shell.tsx",

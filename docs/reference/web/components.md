@@ -51,7 +51,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `FieldCombobox` | Filterable string Combobox: CONTROL chrome; optional `group` → section headings | Long / searchable option lists (edge phrases) | Tiny closed enums | `FieldSelect` · `EntityCombobox` | canonical | no | : |
 | `FormInlineError` | Field / form inline error | Mutation / validation errors | Load failures | `FetchErrorAlert` | canonical | yes | destructive |
 | `FormInlineWarning` | Field / form inline warning | Soft confirm / evidence hints | Hard errors | `FormInlineError` | canonical | yes | warning |
-| `FormSection` | Settings fieldset card (`ACCENT_CARD_SURFACE`) | Auth/settings forms · Cases cards reuse the same surface | Queue composers | `ComposerShell` | canonical | no | : |
+| `FormSection` | Settings fieldset card (`ACCENT_CARD_SURFACE`) | Auth/settings forms | Queue composers | `ComposerShell` | canonical | no | : |
 | `IdChip` | Opaque id/hash mono chip (whole-chip copy when `copyable`; `full` skips truncate) | UUIDs / hashes | Human labels | `MiddleTruncate` · `CopyControl` | canonical | yes | chip |
 | `IdentifierNotesCell` | Sticky-note icon → right Sheet + `RichTextEditor` Markdown (blur/close autosave) | Identifier table Notes column (`/identifiers` · Dossier) | Inline Notes cells · entity Summary/Notes tabs | `RichTextEditor` | canonical | no | : |
 | `InlineLoading` | Spinner + label region wait | In-flight Detail / panel | Full-page pending | `RoutePending` | canonical | yes | : |
@@ -79,6 +79,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `StackBodySkeleton` | Hand stack/tab skeleton | `PendingRegion` / `stackPendingFallback()` fallback · Settings Suspense | Primary stack pending (use `PendingRegion`) | `stackPendingFallback()` | canonical | yes | : |
 | `BoardSkeleton` | Task board column/card skeleton | `PendingRegion` fallback for task board | Full page chrome | : | canonical | yes | : |
 | `CardGridSkeleton` | Case grid slot skeleton | `PendingRegion` fallback for cases grid | Full page chrome | : | canonical | yes | : |
+| `case-card-shell` | Shared case grid card/create shell class tokens | `CaseList` · `CardGridSkeleton` | Ad-hoc case card chrome | : | canonical | no | : |
 | `DossierBodySkeleton` | Alias of `StackBodySkeleton` | Legacy import | Prefer `StackBodySkeleton` | : | deprecated | yes | : |
 | `SplitView` | Queue \| Detail split | Console surfaces | Stacked pages | : | canonical | yes | : |
 | `StatusDot` | Lifecycle color dot | Live job rows | Full status label | `StatusBadge` | canonical | yes | `--status-*` |

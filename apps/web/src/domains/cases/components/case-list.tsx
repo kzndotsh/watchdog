@@ -9,10 +9,15 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { cn, errMessage, nextAutoSlug, slugifyName } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
+import {
+  CASE_CARD_ACTIVE_CLASS,
+  CASE_CARD_MIN_HEIGHT_CLASS,
+  CASE_CARD_SHELL_CLASS,
+  CASE_CREATE_SHELL_CLASS,
+} from "@/shared/ui/case-card-shell";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
@@ -32,10 +37,7 @@ import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
-import {
-  CardGridSkeleton,
-  CASE_CARD_MIN_HEIGHT_CLASS,
-} from "@/shared/ui/skeletons";
+import { CardGridSkeleton } from "@/shared/ui/skeletons";
 
 function CaseCard({
   caseRow,
@@ -55,9 +57,9 @@ function CaseCard({
   return (
     <div
       className={cn(
-        ACCENT_CARD_SURFACE,
-        "group flex h-full min-h-36 flex-col gap-3 rounded-lg p-5 ring-1",
-        isActive && "ring-foreground/25 dark:ring-foreground/30"
+        CASE_CARD_SHELL_CLASS,
+        "group flex h-full min-h-36 flex-col gap-3 p-5",
+        isActive && CASE_CARD_ACTIVE_CLASS
       )}
     >
       <div className="flex items-start gap-2">
@@ -116,10 +118,7 @@ function NewCaseCard({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "text-muted-foreground hover:text-foreground border-border/60 flex h-full min-h-36 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-5 transition-colors",
-        "hover:border-border hover:bg-muted/10 focus-visible:border-ring focus-visible:ring-ring/40 focus-visible:ring-2 focus-visible:outline-none"
-      )}
+      className={cn(CASE_CREATE_SHELL_CLASS, "h-full min-h-36 p-5")}
     >
       <PlusIcon className="size-5" />
       <span className="text-sm font-medium">New Case</span>
@@ -131,10 +130,7 @@ function CaseSlotGhost() {
   return (
     <div
       aria-hidden
-      className={cn(
-        "h-full rounded-lg bg-[color-mix(in_oklab,var(--muted)_3%,transparent)]",
-        CASE_CARD_MIN_HEIGHT_CLASS
-      )}
+      className={cn("pointer-events-none", CASE_CARD_MIN_HEIGHT_CLASS)}
     />
   );
 }

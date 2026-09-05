@@ -253,3 +253,26 @@
     transparent
   );
 }
+
+/*
+  Sonner — minimal chrome (border + fill only; no shadow/glow).
+  Rich type colors come from CSS vars on <Toaster> (status-* tokens).
+ */
+[data-sonner-toast][data-styled="true"].cn-toast {
+  font-family: var(--font-sans);
+  box-shadow: none;
+}
+
+[data-sonner-toast][data-styled="true"].cn-toast:focus-visible {
+  box-shadow: none;
+}
+
+[data-sonner-toast][data-styled="true"].cn-toast [data-description] {
+  color: var(--muted-foreground);
+}
+
+[data-rich-colors="true"][data-sonner-toast][data-styled="true"].cn-toast
+  [data-description] {
+  color: inherit;
+  opacity: 0.85;
+}

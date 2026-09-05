@@ -27,7 +27,7 @@ This page defines colors, type roles, the refuse list, and design-system primiti
 - shadcn folder excluded from typecheck; hand-owned `shared/ui` typechecked by default
 - Base UI: `Button` + `render={<Link … />}` → **`nativeButton={false}`**
 - **no-I/O litmus:** `shared/ui` never fetches, mutates, or routes. Domains own I/O.
-- Homogeneous work lists → `divide-y` Queue rows (not Card-per-row stacks). Cases are a small set of containers: card grid is OK (`ACCENT_CARD_SURFACE`).
+- Homogeneous work lists → `divide-y` Queue rows (not Card-per-row stacks). Cases are a small set of containers: card grid is OK (`CASE_CARD_SHELL_CLASS` — border on `background`, same as dashboard metric tiles).
 - Never name a UI component `Entity`: that word means graph subject; use `QueueRow` / `DossierEditDialog` / domain-prefixed names.
 
 ## Color tokens

@@ -18,6 +18,10 @@ import { GripVerticalIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import {
+  CASE_CARD_MIN_HEIGHT_CLASS,
+  CASE_CARD_SHELL_CLASS,
+} from "@/shared/ui/case-card-shell";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
 import { EvidenceDetailSkeleton } from "@/shared/ui/evidence-detail-skeleton";
 import {
@@ -40,9 +44,6 @@ export {
   TASK_CARD_SHELL_CLASS,
 } from "@/shared/ui/task-board-shell";
 export { LoadingRegion } from "@/shared/ui/loading-region";
-
-/** Shared with [case-list.tsx](domains/cases/components/case-list.tsx) card slots. */
-export const CASE_CARD_MIN_HEIGHT_CLASS = "min-h-36";
 
 /** Median visible rows for entity/identifier tables. */
 export const TABLE_BODY_SKELETON_ROW_COUNT = 8;
@@ -208,7 +209,8 @@ export function CardGridSkeletonLayout({
         <div
           key={i}
           className={cn(
-            "rounded-lg bg-[color-mix(in_oklab,var(--muted)_3%,transparent)]",
+            CASE_CARD_SHELL_CLASS,
+            "animate-pulse",
             CASE_CARD_MIN_HEIGHT_CLASS
           )}
         />
