@@ -1,11 +1,11 @@
-import { CollectDumpButtons } from "@/domains/collect/components/collect-action-controls";
+import type { ReactNode } from "react";
+
 import { CollectQueueList } from "@/domains/collect/components/collect-queue-list";
 import {
   EMPTY_COLLECT_FILTERS,
   type CollectFilters,
   type CollectRow,
 } from "@/domains/collect/types";
-import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -24,8 +24,7 @@ export interface CollectQueueBodyProps {
   visibleRows: readonly CollectRow[];
   filters: CollectFilters;
   selectionRowId: string | null;
-  intakeBusy: boolean;
-  onDump: (next: DumpModal | null) => void;
+  blankSlateAction: ReactNode;
   onFiltersChange: (next: CollectFilters) => void;
   onIdChange: (next: string | null) => void;
 }
@@ -39,8 +38,7 @@ export function CollectQueueBody({
   visibleRows,
   filters,
   selectionRowId,
-  intakeBusy,
-  onDump,
+  blankSlateAction,
   onFiltersChange,
   onIdChange,
 }: CollectQueueBodyProps) {
@@ -52,8 +50,8 @@ export function CollectQueueBody({
       <EmptyState
         intent="blank-slate"
         items="items"
-        description="Dump File, Paste, or URL evidence first. Then Run a Cap (one capability) or Playbook (curated Cap chain) when you need acquisition."
-        action={<CollectDumpButtons disabled={intakeBusy} onDump={onDump} />}
+        description="Dump evidence or run a Cap/Playbook."
+        action={blankSlateAction}
       />
     );
   }

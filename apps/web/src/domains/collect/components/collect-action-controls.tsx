@@ -70,7 +70,10 @@ export function CollectDumpButtons({
   onDump: (kind: DumpModal) => void;
 }) {
   return (
-    <ButtonGroup aria-label="Dump evidence">
+    <ButtonGroup
+      aria-label="Dump evidence"
+      className="[&>[data-slot]:not(:has(~[data-slot]))]:rounded-r-md!"
+    >
       <Button
         type="button"
         size="sm"

@@ -60,6 +60,41 @@ function CollectWithCase({
   const handleDumpOpenChange = ws.setDumpModal;
   const handleRetryQueue = ws.retryQueue;
 
+  const ingressActions = (
+    <div className="flex items-center gap-2">
+      <CollectDumpButtons disabled={ws.intake.busy} onDump={handleDump} />
+      <Separator
+        orientation="vertical"
+        className="data-vertical:h-4 data-vertical:self-center"
+      />
+      <CollectRunPopover
+        runMode={ws.runMode}
+        onRunModeChange={handleRunModeChange}
+      >
+        {runCatalogPending ? (
+          <InlineLoading label="Loading caps and playbooks…" />
+        ) : (
+          <CollectRunFormPanel
+            runMode={ws.runMode}
+            playbooks={playbooks}
+            caps={caps}
+            urlDumps={ws.urlDumps}
+            entities={ws.entities}
+            allowThirdPartyEgress={active.allowThirdPartyEgress}
+            configuredCredentials={ws.configuredCredentials}
+            runError={ws.jobsWs.error}
+            onRunPlaybook={async (input) => {
+              await ws.jobsWs.handleRunPlaybook(input);
+            }}
+            onRunCap={async (input) => {
+              await ws.jobsWs.handleRunCap(input);
+            }}
+          />
+        )}
+      </CollectRunPopover>
+    </div>
+  );
+
   return (
     <>
       {/* Sibling, not an early return — an early return here unmounts the
@@ -80,44 +115,7 @@ function CollectWithCase({
         filters={ws.filters}
         onFiltersChange={handleFiltersChange}
         jobs={ws.jobs}
-        actions={
-          <div className="flex items-stretch gap-2">
-            <div className="flex items-center">
-              <CollectDumpButtons
-                disabled={ws.intake.busy}
-                onDump={handleDump}
-              />
-            </div>
-            <Separator orientation="vertical" />
-            <div className="flex items-center">
-              <CollectRunPopover
-                runMode={ws.runMode}
-                onRunModeChange={handleRunModeChange}
-              >
-                {runCatalogPending ? (
-                  <InlineLoading label="Loading caps and playbooks…" />
-                ) : (
-                  <CollectRunFormPanel
-                    runMode={ws.runMode}
-                    playbooks={playbooks}
-                    caps={caps}
-                    urlDumps={ws.urlDumps}
-                    entities={ws.entities}
-                    allowThirdPartyEgress={active.allowThirdPartyEgress}
-                    configuredCredentials={ws.configuredCredentials}
-                    runError={ws.jobsWs.error}
-                    onRunPlaybook={async (input) => {
-                      await ws.jobsWs.handleRunPlaybook(input);
-                    }}
-                    onRunCap={async (input) => {
-                      await ws.jobsWs.handleRunCap(input);
-                    }}
-                  />
-                )}
-              </CollectRunPopover>
-            </div>
-          </div>
-        }
+        actions={ingressActions}
       />
       <FormInlineError>{ws.actionError}</FormInlineError>
       <DumpDialogs
@@ -173,8 +171,7 @@ function CollectWithCase({
               visibleRows={ws.visibleRows}
               filters={ws.filters}
               selectionRowId={ws.selection.rowId}
-              intakeBusy={ws.intake.busy}
-              onDump={handleDump}
+              blankSlateAction={ingressActions}
               onFiltersChange={handleFiltersChange}
               onIdChange={ws.handleQueueSelect}
             />
