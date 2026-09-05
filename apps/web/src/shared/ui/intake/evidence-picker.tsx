@@ -48,7 +48,7 @@ export function EvidenceCiteChips({
   className,
   withIcon = false,
 }: {
-  options: EvidenceOption[];
+  options: readonly EvidenceOption[];
   ids: string[];
   className?: string;
   /** Swap the "Evidence" text label for an icon + tooltip in dense bands. */
@@ -145,7 +145,7 @@ function EvidenceChecklist({
   onToggle,
   idPrefix,
 }: {
-  options: EvidenceOption[];
+  options: readonly EvidenceOption[];
   selectedIds: string[];
   filter: string;
   onFilterChange: (next: string) => void;
@@ -242,7 +242,7 @@ export function EvidencePicker({
   dashedWhenEmpty = false,
   layout = "trigger",
 }: {
-  options: EvidenceOption[];
+  options: readonly EvidenceOption[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   className?: string;

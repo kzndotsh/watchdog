@@ -75,7 +75,7 @@ export function EntityEvidenceSection({
 }: {
   caseId: string;
   entityId: string;
-  evidenceOptions: EvidenceRecord[];
+  evidenceOptions: readonly EvidenceRecord[];
   onEvidenceClick?: (evidenceId: string) => void;
   emptyPresentation?: DossierEmptyPresentation;
 }) {
