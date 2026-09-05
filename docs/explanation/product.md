@@ -1,6 +1,6 @@
 ---
 document_created: 2026-07-27T23:28
-document_updated: 2026-07-27T23:28
+document_updated: 2026-09-05T13:40
 ---
 
 # PRODUCT: intent and doctrine
@@ -19,6 +19,8 @@ Small-team OSINT: keep one **Case Graph** of Claims + Evidence you can defend, w
 - Caps never write Graph (Proposal → Triage Accept). Agents default to Proposal; escape hatch is explicit `graph write` @ `unverified` with `graph_writes` audit. Humans may also write via Dossier.
 - Postgres is SoT; markdown Export is a projection.
 - If you need Scratch / Candidate / Mutation R-tiers to explain Day-0, the design failed.
+
+**Team** maps to a Better Auth **organization**: one install org at bootstrap, org-scoped Cases, Settings → **Team** for invite + membership (`admin` / `member`). **Users** (instance admin only) is account disable/enable — not org membership. API and CLI calls resolve the active org from session or key owner; missing org context is **403**, not cross-org bleed.
 
 ---
 

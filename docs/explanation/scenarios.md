@@ -127,6 +127,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Quick Launch paste → Collect | removed | Dump stays on Collect; Dashboard does not host paste |
 | Dashboard → Triage with proposalId | shipped | Triage panel rows deep-link `search.proposalId` |
 | Dashboard → Collect with jobId | removed | Jobs running tile links `/collect` without a selected job |
+| Settings tab URL sync | shipped | Sidebar tab changes write `?tab=` with `replace: true` (account omits param); deep links `/settings?tab=team | users | …` restore section on load |
 | Settings vault credentials | shipped | `/settings?tab=credentials`; Connect/Update dialog; needs `WD_MASTER_VAULT_KEY`; also `wd credentials` / `PUT /credentials/{name}` (never plaintext) |
 | Settings Team invite / accept | shipped | `/settings?tab=team`; owner/admin invite `admin` or `member`; copy-link + optional SMTP; accept at `/auth/accept-invitation/{id}` (invite-only register; public sign-up stays gated) |
 | Settings Users (instance admin) | shipped | `/settings?tab=users` (hidden unless `auth.user.role` is `admin`); Disable/Enable + sign out all sessions; no impersonation; direct `?tab=users` for others is denied copy |

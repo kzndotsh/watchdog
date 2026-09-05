@@ -14,7 +14,7 @@ Hand-built skeleton components in [`skeletons.tsx`](../../../../apps/web/src/sha
 | Stack tabs | [`stack-pending-fallback.tsx`](../../../../apps/web/src/shared/ui/stack-pending-fallback.tsx): `stackPendingFallback(sections?)` |
 | Router floor | [`default-route-pending-shell.tsx`](../../../../apps/web/src/shared/ui/default-route-pending-shell.tsx) (`RoutePendingSkeletonLayout`: title bar + `StackBodySkeleton` sections) |
 
-Share row counts and grid templates between live UI and skeletons through exported constants (for example, `COLLECT_QUEUE_SKELETON_ROW_COUNT`). **`PendingRegion` fallbacks use `*Skeleton`;** inner blocks are `*SkeletonLayout`. For an unknown shape, use a small centered spinner (`InlineLoading`), not a misleading skeleton.
+Share row counts and grid templates between live UI and skeletons through exported constants (for example, `COLLECT_QUEUE_SKELETON_ROW_COUNT`). Status-chip placeholders import `CHIP_SIZE_CLASS` from [`detail-status-chip.tsx`](../../../../apps/web/src/shared/ui/detail-status-chip.tsx) so skeleton chips match live `DetailStatusChip` height and radius. **`PendingRegion` fallbacks use `*Skeleton`;** inner blocks are `*SkeletonLayout`. For an unknown shape, use a small centered spinner (`InlineLoading`), not a misleading skeleton.
 
 ## Loading & hydration (implementation)
 

@@ -1,6 +1,6 @@
 ---
 document_created: 2026-07-27T23:08
-document_updated: 2026-08-16T19:31
+document_updated: 2026-09-05T13:40
 ---
 
 # Watchdog ROADMAP
@@ -37,7 +37,7 @@ Signal-era field work + build principles confirm this north star and Phases 0–
 
 | Surface | Score | Notes |
 | --- | --- | --- |
-| Auth / session | **done** | Better Auth, protected shell, API keys |
+| Auth / session | **done** | Better Auth org tenancy (install org + Team invite), instance-admin Users, protected shell, API keys |
 | Cases (UI) | **done** | Create / switch / Export zip |
 | Cases (API/CLI) | **done** | List / get / create / update (`wd cases update`; egress flag) |
 | Entities + Dossier | **done** | Full section CRUD; Overview BLOT still heavy |
@@ -54,10 +54,10 @@ Signal-era field work + build principles confirm this north star and Phases 0–
 | OpenAPI / CLI | **strong** | Typed `@watchdog/client` + agent-first `wd` (compact JSON; graph-child; credentials; evidence hide/restore/download/process/enrich; `apiKeyAuth`). Web-only leftovers: Active Case cookie. `@watchdog/contract` deferred (Phase 2) |
 | Agent Proposal create / graph write | **done** | Propose → Triage; `graph write` → Graph @ unverified + `graph_writes` (atomic tx, idempotency); child writes need `--user-override` |
 | MCP | **missing** | Phase 2+ |
-| Web automated tests | **pyramid** | Packages+worker unit; web lib+component in jsdom; Postgres integration; tagged Playwright suite (`e2e/specs/`, 16 tests) |
+| Web automated tests | **pyramid** | Packages+worker unit; web lib+component in jsdom; Postgres integration; tagged Playwright suite (`e2e/specs/`, 18 tests) |
 | Scrape / vault import / corpus / LE packs | **missing** | Earned later |
 
-**Overall:** ~7.5/10 solo investigator UI loop · ~6/10 agent-first ingress.
+**Overall:** ~8/10 small-team investigator UI loop (org-scoped cases + Team invite) · ~6/10 agent-first ingress.
 
 ---
 
