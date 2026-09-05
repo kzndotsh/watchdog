@@ -42,6 +42,8 @@ Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show
 
 Parallel after File detection: **Gates** (Ultracite, AGENTS/docs/effect/skills, typecheck, knip, web DS, cap/client drift, db repos) ‖ **Unit** (unit/property/component) ‖ **Integration + e2e** (Postgres + MinIO). Advisory (React Doctor / Desloppify) runs separately and does not block. Aggregator job **Check** stays the required status (treats skipped siblings as OK).
 
+Dependabot version updates: [`.github/dependabot.yml`](../../.github/dependabot.yml) (npm/pnpm root lockfile, GitHub Actions, docker-compose, Nix flakes) — weekly Mondays, grouped minor/patch.
+
 Doc-affect escape hatch: commit message, `.git/docs-allow-affect` stamp, or PR body keyword (see `scripts/check-docs-affected.mjs`).
 
 ## Cursor stop hook
