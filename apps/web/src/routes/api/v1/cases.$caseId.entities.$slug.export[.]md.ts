@@ -32,9 +32,12 @@ function entityExportMdEffect(
     if (scopedCase === null) {
       return { kind: "missing" as const };
     }
-    const entity = yield* getEntityByCaseSlugEffect(caseId, slug).pipe(
-      Effect.catchTag("NotFoundError", () => Effect.succeed(null))
-    );
+    const entity = yield* getEntityByCaseSlugEffect(
+      caseId,
+      organizationId,
+      slug
+    ).pipe(Effect.catchTag("NotFoundError", () => Effect.succeed(null)));
+
     if (entity === null) {
       return { kind: "missing" as const };
     }

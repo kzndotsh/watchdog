@@ -20,8 +20,10 @@ export const listWrites = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.array(graphWriteRecordSchema))
-  .handler(async ({ input }) =>
-    runApp(listGraphWritesForCaseEffect(input.caseId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      listGraphWritesForCaseEffect(input.caseId, context.actor.organizationId)
+    )
   );
 
 export const write = authed
@@ -46,6 +48,7 @@ export const write = authed
     runApp(
       writeGraphFromAgentEffect({
         caseId: input.caseId,
+        organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
         actorLabel: actorLabelFromActor(context.actor),
         patch: input.patch,

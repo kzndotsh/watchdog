@@ -71,6 +71,7 @@ describe("proposals procedures", () => {
     ).resolves.toHaveLength(1);
     expect(listProposalsForCaseEffect).toHaveBeenCalledWith(
       "00000000-0000-4000-8000-000000000001",
+      "org-test",
       undefined
     );
   });
@@ -96,6 +97,7 @@ describe("proposals procedures", () => {
 
     expect(listProposalsForCaseEffect).toHaveBeenCalledWith(
       "00000000-0000-4000-8000-000000000001",
+      "org-test",
       { status: "pending" }
     );
   });

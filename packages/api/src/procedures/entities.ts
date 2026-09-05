@@ -21,8 +21,10 @@ export const list = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.array(entitySchema))
-  .handler(async ({ input }) =>
-    runApp(listEntitiesForCaseEffect(input.caseId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      listEntitiesForCaseEffect(input.caseId, context.actor.organizationId)
+    )
   );
 
 export const get = authed
@@ -34,8 +36,14 @@ export const get = authed
   })
   .input(z.object({ caseId: z.uuid(), slug: z.string().min(1) }))
   .output(entitySchema)
-  .handler(async ({ input }) =>
-    runApp(getEntityByCaseSlugEffect(input.caseId, input.slug))
+  .handler(async ({ input, context }) =>
+    runApp(
+      getEntityByCaseSlugEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.slug
+      )
+    )
   );
 
 export const create = authed
@@ -55,7 +63,14 @@ export const create = authed
     })
   )
   .output(entitySchema)
-  .handler(async ({ input }) => runApp(createEntityEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      createEntityEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const update = authed
   .route({
@@ -75,4 +90,11 @@ export const update = authed
     })
   )
   .output(entitySchema)
-  .handler(async ({ input }) => runApp(updateEntityFieldsEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      updateEntityFieldsEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );

@@ -9,7 +9,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertEntityInCaseEffect } from "./patch/guards";
+import { assertCaseInOrgEffect, assertEntityInCaseEffect } from "./patch/guards";
 
 export interface EventRecord {
   id: string;
@@ -21,6 +21,7 @@ export interface EventRecord {
 
 export interface CreateEventInput {
   caseId: string;
+  organizationId: string;
   entityId: string;
   when: string;
   what: string;
@@ -29,6 +30,7 @@ export interface CreateEventInput {
 
 export interface UpdateEventInput {
   caseId: string;
+  organizationId: string;
   eventId: string;
   when?: string;
   what?: string;
@@ -47,9 +49,11 @@ function toRecord(row: EventRow): EventRecord {
 
 export function listEventsForEntityEffect(
   caseId: string,
+  organizationId: string,
   entityId: string
 ): Effect.Effect<EventRecord[], DomainTag> {
   return Effect.gen(function* listEventsGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     yield* assertEntityInCaseEffect(caseId, entityId, db);
     const rows = yield* tryDb(() => eventsRepo.listForEntity(db, entityId));
     return rows.map(toRecord);
@@ -60,6 +64,7 @@ export function createEventEffect(
   input: CreateEventInput
 ): Effect.Effect<EventRecord, DomainTag> {
   return Effect.gen(function* createEventGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     yield* assertEntityInCaseEffect(input.caseId, input.entityId, db);
     const row = yield* tryDb(() =>
       eventsRepo.create(db, {
@@ -81,6 +86,7 @@ export function updateEventEffect(
   input: UpdateEventInput
 ): Effect.Effect<EventRecord, DomainTag> {
   return Effect.gen(function* updateEventGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       eventsRepo.getInCase(db, input.caseId, input.eventId)
     );
@@ -108,9 +114,11 @@ export function updateEventEffect(
 
 export function deleteEventEffect(
   caseId: string,
+  organizationId: string,
   eventId: string
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteEventGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const existing = yield* tryDb(() =>
       eventsRepo.getInCase(db, caseId, eventId)
     );

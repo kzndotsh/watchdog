@@ -9,7 +9,7 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { casesRepo, db, evidenceRepo } from "@watchdog/db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedEvidence } from "@watchdog/test-kit/db";
 
 describe("processEvidence", () => {
@@ -23,6 +23,7 @@ describe("processEvidence", () => {
     const first = await runDomain(
       processEvidenceEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         evidenceId: evidence.id,
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -34,6 +35,7 @@ describe("processEvidence", () => {
     const second = await runDomain(
       processEvidenceEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         evidenceId: evidence.id,
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -52,6 +54,7 @@ describe("processEvidence", () => {
       runDomain(
         processEvidenceEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           evidenceId: evidence.id,
           actorId: TEST_ACTOR_ID,
           actorLabel: TEST_ACTOR_ID,
@@ -72,6 +75,7 @@ describe("processEvidence", () => {
       runDomain(
         enrichUrlEvidenceEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           evidenceId: evidence.id,
           actorId: TEST_ACTOR_ID,
           actorLabel: TEST_ACTOR_ID,
@@ -102,6 +106,7 @@ describe("processEvidence", () => {
         confirmFileUploadEffect(
           {
             caseId: cased.id,
+            organizationId: TEST_ORGANIZATION_ID,
             uri: "other-case/file.bin",
             sha256: "ab".repeat(32),
             mime: "application/octet-stream",

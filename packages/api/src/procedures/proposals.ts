@@ -36,6 +36,7 @@ export const create = authed
     const { proposal } = await runApp(
       createAgentProposalEffect({
         caseId: input.caseId,
+        organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
         patch: input.patch,
         summary: input.summary,
@@ -59,10 +60,11 @@ export const listForCase = authed
     })
   )
   .output(z.array(proposalSchema))
-  .handler(async ({ input }) =>
+  .handler(async ({ input, context }) =>
     runApp(
       listProposalsForCaseEffect(
         input.caseId,
+        context.actor.organizationId,
         input.status === undefined ? undefined : { status: input.status }
       )
     )
@@ -89,6 +91,7 @@ export const accept = authed
     runApp(
       acceptProposalEffect({
         caseId: input.caseId,
+        organizationId: context.actor.organizationId,
         proposalId: input.proposalId,
         confidence: input.confidence,
         sharedEvidenceIds: input.sharedEvidenceIds,
@@ -117,6 +120,7 @@ export const reject = authed
     runApp(
       rejectProposalEffect({
         caseId: input.caseId,
+        organizationId: context.actor.organizationId,
         proposalId: input.proposalId,
         reason: input.reason,
         actorId: context.actor.userId,

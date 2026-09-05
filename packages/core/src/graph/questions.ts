@@ -16,7 +16,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertEntityInCaseEffect } from "./patch/guards";
+import { assertCaseInOrgEffect, assertEntityInCaseEffect } from "./patch/guards";
 
 export interface QuestionRecord {
   id: string;
@@ -28,18 +28,21 @@ export interface QuestionRecord {
 
 export interface CreateQuestionInput {
   caseId: string;
+  organizationId: string;
   entityId: string;
   text: string;
 }
 
 export interface ResolveQuestionInput {
   caseId: string;
+  organizationId: string;
   questionId: string;
   resolvedNote?: string;
 }
 
 export interface UpdateQuestionInput {
   caseId: string;
+  organizationId: string;
   questionId: string;
   text?: string;
   resolvedNote?: string | null;
@@ -47,6 +50,7 @@ export interface UpdateQuestionInput {
 
 export interface ReopenQuestionInput {
   caseId: string;
+  organizationId: string;
   questionId: string;
 }
 
@@ -104,9 +108,11 @@ function toRecord(row: QuestionRow): QuestionRecord {
 
 export function listQuestionsForEntityEffect(
   caseId: string,
+  organizationId: string,
   entityId: string
 ): Effect.Effect<QuestionRecord[], DomainTag> {
   return Effect.gen(function* listQuestionsGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     yield* assertEntityInCaseEffect(caseId, entityId, db);
     const rows = yield* tryDb(() =>
       questionsRepo.listForEntity(db, entityId)
@@ -119,6 +125,7 @@ export function createQuestionEffect(
   input: CreateQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag> {
   return Effect.gen(function* createQuestionGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     yield* assertEntityInCaseEffect(input.caseId, input.entityId, db);
     const row = yield* tryDb(() =>
       questionsRepo.create(db, {
@@ -139,6 +146,7 @@ export function resolveQuestionEffect(
   input: ResolveQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag> {
   return Effect.gen(function* resolveQuestionGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       questionsRepo.getInCase(db, input.caseId, input.questionId)
     );
@@ -166,6 +174,7 @@ export function updateQuestionEffect(
   input: UpdateQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag> {
   return Effect.gen(function* updateQuestionGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       questionsRepo.getInCase(db, input.caseId, input.questionId)
     );
@@ -202,6 +211,7 @@ export function reopenQuestionEffect(
   input: ReopenQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag> {
   return Effect.gen(function* reopenQuestionGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       questionsRepo.getInCase(db, input.caseId, input.questionId)
     );

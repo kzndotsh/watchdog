@@ -28,7 +28,7 @@ import {
   validateEdgeUpdateEffect,
 } from "./edge-update";
 import {
-  assertCaseExistsEffect,
+  assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
 } from "./patch/guards";
@@ -53,6 +53,7 @@ export interface EdgeRecord {
 
 export interface CreateEdgeInput {
   caseId: string;
+  organizationId: string;
   fromId: string;
   toId: string;
   predicate: EdgePredicate;
@@ -68,6 +69,7 @@ export interface CreateEdgeInput {
 
 export interface UpdateEdgeInput {
   caseId: string;
+  organizationId: string;
   edgeId: string;
   /**
    * Entity whose dossier orientation to use on the returned record.
@@ -107,9 +109,11 @@ function toRecord(
 
 export function listEdgesForEntityEffect(
   caseId: string,
+  organizationId: string,
   entityId: string
 ): Effect.Effect<EdgeRecord[], DomainTag> {
   return Effect.gen(function* listEdgesForEntityGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     yield* assertEntityInCaseEffect(caseId, entityId, db);
     const rows = yield* tryDb(() =>
       edgesRepo.listForEntity(db, caseId, entityId)
@@ -163,10 +167,11 @@ export function toCaseEdgeRecord(
 }
 
 export function listEdgesForCaseEffect(
-  caseId: string
+  caseId: string,
+  organizationId: string
 ): Effect.Effect<CaseEdgeRecord[], DomainTag> {
   return Effect.gen(function* listEdgesForCaseGen() {
-    yield* assertCaseExistsEffect(caseId);
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const rows = yield* tryDb(() => edgesRepo.listForCase(db, caseId));
     const byEdge = yield* tryDb(() =>
       evidenceLinksRepo.listForEdges(
@@ -182,6 +187,7 @@ export function createEdgeEffect(
   input: CreateEdgeInput
 ): Effect.Effect<EdgeRecord, DomainTag> {
   return Effect.gen(function* createEdgeGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     if (input.fromId === input.toId) {
       return yield* new InvalidError({
         reason: "Edge cannot link an Entity to itself",
@@ -261,6 +267,7 @@ export function updateEdgeEffect(
   input: UpdateEdgeInput
 ): Effect.Effect<EdgeRecord, DomainTag> {
   return Effect.gen(function* updateEdgeGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       edgesRepo.getInCase(db, input.caseId, input.edgeId)
     );
@@ -313,9 +320,11 @@ export function updateEdgeEffect(
 
 export function deleteEdgeEffect(
   caseId: string,
+  organizationId: string,
   edgeId: string
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteEdgeGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const existing = yield* tryDb(() =>
       edgesRepo.getInCase(db, caseId, edgeId)
     );

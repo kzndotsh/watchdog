@@ -6,7 +6,7 @@ import {
   softDeleteEvidenceEffect,
   runDomain,
 } from "@watchdog/core";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-kit/db";
 
 describe("evidence procedures (core services)", () => {
@@ -19,6 +19,7 @@ describe("evidence procedures (core services)", () => {
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
         sourceUrl: "https://example.com/note",
@@ -27,7 +28,9 @@ describe("evidence procedures (core services)", () => {
     );
     expect(dumped.sourceUrl).toBe("https://example.com/note");
 
-    const listed = await runDomain(listEvidenceForCaseEffect(cased.id));
+    const listed = await runDomain(
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
     expect(listed.some((row) => row.id === dumped.id)).toBe(true);
   });
 
@@ -36,6 +39,7 @@ describe("evidence procedures (core services)", () => {
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
         sourceUrl: "https://example.com/hidden",
@@ -44,15 +48,20 @@ describe("evidence procedures (core services)", () => {
     await runDomain(
       softDeleteEvidenceEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         evidenceId: dumped.id,
       })
     );
 
-    const listed = await runDomain(listEvidenceForCaseEffect(cased.id));
+    const listed = await runDomain(
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
     expect(listed.some((row) => row.id === dumped.id)).toBe(false);
 
     const hidden = await runDomain(
-      listEvidenceForCaseEffect(cased.id, { hiddenOnly: true })
+      listEvidenceForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+        hiddenOnly: true,
+      })
     );
     expect(hidden.some((row) => row.id === dumped.id)).toBe(true);
   });
