@@ -65,11 +65,9 @@ Requires Docker, Node ≥ 22, pnpm 11. [Nix](https://nixos.org/download) is opti
 ```bash
 git clone https://github.com/kzndotsh/watchdog.git
 cd watchdog
-
 nix develop                 # optional
 cp env.example .env         # set BETTER_AUTH_SECRET + WD_MASTER_VAULT_KEY
-                            #   openssl rand -base64 32
-
+                            # openssl rand -base64 32
 pnpm install
 just dev                    # Postgres + MinIO + migrations + web + worker
 ```
@@ -117,13 +115,10 @@ The CLI reads its own pair: `WD_API_URL` and `WD_API_KEY`, the latter created in
 ```bash
 wd cases create --name "Example"
 # {"id":"0b8f…","name":"Example","slug":"example"}
-
 wd jobs start -c 0b8f… --cap network.dns.lookup -i '{"host":"example.com"}'
 # {"id":"3c21…","status":"queued","capabilityId":"network.dns.lookup"}
-
 wd proposals list -c 0b8f…
 # 1 proposal: 4 identifiers, 1 claim (job 3c21…)
-
 wd proposals accept -c 0b8f… 4d90… --confidence possible
 wd export zip -c 0b8f…
 ```
@@ -223,7 +218,7 @@ Not there yet, worth knowing before you invest time:
 - **MCP server.** Not built. Agents use the OpenAPI surface today.
 - **Playbooks** are linear chains, with no branching and no conditionals.
 - **Multi-org SaaS.** Single install org at bootstrap; no self-serve org creation or billing. Team invite + org-scoped cases work for a small shop, not arbitrary tenant isolation under attack.
-- **End-to-end coverage** is a tagged Playwright suite (`e2e/specs/`, including auth invite/users) on top of unit, component, and integration tiers — not full manual-smoke parity yet.
+- **End-to-end coverage** — 18 Playwright specs in `e2e/specs/` (`@smoke` / `@custody` / `@journey`), including auth sign-up, team invite, and instance-admin Users, on top of unit, component, and integration tiers — not full manual-smoke parity yet.
 
 Investigation content (corpus, entity notes, mirrors) lives in a separate private repo and never enters this one.
 
