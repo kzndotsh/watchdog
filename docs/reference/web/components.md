@@ -66,7 +66,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `QueueRow` (+ Title/Meta) | Queue hit-target row | Homogeneous work lists | Card stacks | : | canonical | yes | : |
 | `RecentActivity` | Dashboard Activity: header + case filter + ScrollArea feed (lives in vertical resizable panel) | Dashboard Activity panel | Page-level dump / paste | `ScrollArea` · `ResizablePanelGroup` | **domain** (`dashboard/components/recent-activity.tsx`) | no | : |
 | `RelativeTime` | Relative + tooltip absolute | Queue/activity times | Exact wall clock alone | `LocalDateTime` | canonical | yes | : |
-| `RichTextEditor` | Plate Markdown editor (marks · headings · lists) | Dossier Summary / Notes · Edit dialog prose | Claim/identifier note fields · Plate JSON persistence | `Textarea` · `RichTextViewer` | canonical | yes | : |
+| `RichTextEditor` | Plate Markdown editor (marks · headings · lists); toolbar state helpers in `rich-text-toolbar-controls.lib.ts` | Dossier Summary / Notes · Edit dialog prose | Claim/identifier note fields · Plate JSON persistence | `Textarea` · `RichTextViewer` | canonical | yes | : |
 | `RichTextViewer` | Read-only Plate Markdown render | Future Proof / manuscript preview | Editable prose | `RichTextEditor` | canonical | no | : |
 | `RowActionsMenu` | Hover-reveal row actions | Dossier row menus | Page toolbars | DropdownMenu | canonical | yes | : |
 | `SearchField` | Named search input: CONTROL chrome | Filters / toolbars | Debounced fetch inside atom | : | canonical | yes | : |
