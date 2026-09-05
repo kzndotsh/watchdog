@@ -14,7 +14,7 @@ import {
 import { casesRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 
 import {
-  assertCaseExistsEffect,
+  assertCaseInOrgEffect,
   assertEntityInCaseEffect,
   assertEvidenceInCaseEffect,
 } from "../graph/patch/guards";
@@ -35,6 +35,7 @@ import { toJobRecord, type JobRecord } from "./start-job";
 
 export interface RunPlaybookInput {
   caseId: string;
+  organizationId: string;
   playbookId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -131,7 +132,7 @@ export function runPlaybookEffect(
   input: RunPlaybookInput
 ): Effect.Effect<PlaybookRunResult, DomainTag> {
   return Effect.gen(function* runPlaybookGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const playbook = yield* loadPlaybookEffect(input.playbookId);
     const { seed } = input;
 
@@ -149,7 +150,7 @@ export function runPlaybookEffect(
     );
 
     const caseRow = yield* tryDb(() =>
-      casesRepo.getByIdUnchecked(db, input.caseId)
+      casesRepo.getById(db, input.caseId, input.organizationId)
     );
     yield* ensurePlaybookRunnable(
       descriptor,
@@ -229,11 +230,12 @@ interface CancelPlaybookRunResult {
 
 export function cancelPlaybookRunEffect(
   caseId: string,
+  organizationId: string,
   playbookRunId: string,
   opts?: CancelPlaybookRunOpts
 ): Effect.Effect<CancelPlaybookRunResult, DomainTag> {
   return Effect.gen(function* cancelPlaybookRunGen() {
-    yield* assertCaseExistsEffect(caseId);
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const now = new Date();
     const result = yield* transact((tx) =>
       Effect.gen(function* cancelPlaybookTx() {

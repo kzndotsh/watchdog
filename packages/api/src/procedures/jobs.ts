@@ -23,7 +23,9 @@ export const listForCase = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.array(jobListSchema))
-  .handler(async ({ input }) => runApp(listJobsForCaseEffect(input.caseId)));
+  .handler(async ({ input, context }) =>
+    runApp(listJobsForCaseEffect(input.caseId, context.actor.organizationId))
+  );
 
 export const get = authed
   .route({
@@ -34,8 +36,14 @@ export const get = authed
   })
   .input(z.object({ caseId: z.uuid(), jobId: z.uuid() }))
   .output(jobSchema)
-  .handler(async ({ input }) =>
-    runApp(getJobForCaseEffect(input.caseId, input.jobId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      getJobForCaseEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.jobId
+      )
+    )
   );
 
 export const start = authed
@@ -58,6 +66,7 @@ export const start = authed
     runApp(
       startJobEffect({
         caseId: input.caseId,
+        organizationId: context.actor.organizationId,
         capabilityId: input.capabilityId,
         input: input.input,
         actorId: context.actor.userId,
@@ -82,7 +91,7 @@ export const cancel = authed
   .output(jobSchema)
   .handler(async ({ input, context }) =>
     runApp(
-      cancelJobEffect(input.caseId, input.jobId, {
+      cancelJobEffect(input.caseId, context.actor.organizationId, input.jobId, {
         actorId: context.actor.userId,
       })
     )
@@ -123,6 +132,7 @@ export const startPlaybook = authed
     runApp(
       runPlaybookEffect({
         caseId: input.caseId,
+        organizationId: context.actor.organizationId,
         playbookId: input.playbookId,
         seed: input.seed,
         actorId: context.actor.userId,
@@ -152,8 +162,13 @@ export const cancelPlaybook = authed
   )
   .handler(async ({ input, context }) =>
     runApp(
-      cancelPlaybookRunEffect(input.caseId, input.playbookRunId, {
-        actorId: context.actor.userId,
-      })
+      cancelPlaybookRunEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.playbookRunId,
+        {
+          actorId: context.actor.userId,
+        }
+      )
     )
   );

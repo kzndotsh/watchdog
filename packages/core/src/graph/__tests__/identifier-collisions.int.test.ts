@@ -5,7 +5,7 @@ import {
   runDomain
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
-import { buildIdentifierCreateOp, testId } from "@watchdog/test-kit";
+import { buildIdentifierCreateOp, testId, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -43,7 +43,7 @@ describe("loadIdentifierCollisions", () => {
       }),
     ]);
 
-    const listed = await runDomain(listProposalsForCaseEffect(cased.id, { status: "pending" }));
+    const listed = await runDomain(listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, { status: "pending" }));
     expect(listed[0]?.identifierCollisions?.length).toBeGreaterThan(0);
     expect(listed[0]?.identifierCollisions?.[0]?.entityName).toBe("Entity A");
   });

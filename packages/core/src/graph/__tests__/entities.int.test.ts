@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+
 import {
   createEntityEffect,
   listQuestionsForEntityEffect,
@@ -17,11 +19,14 @@ describe("createEntity", () => {
     const cased = await seedCase(db);
     const person = await runDomain(createEntityEffect({
       caseId: cased.id,
+      organizationId: TEST_ORGANIZATION_ID,
       kind: "person",
       name: "Ada Lovelace",
       slug: "ada-lovelace",
     }));
-    const questions = await runDomain(listQuestionsForEntityEffect(cased.id, person.id));
+    const questions = await runDomain(
+      listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, person.id)
+    );
     expect(questions.length).toBeGreaterThan(0);
     expect(questions.every((q) => q.status === "open")).toBe(true);
   });
@@ -30,11 +35,14 @@ describe("createEntity", () => {
     const cased = await seedCase(db);
     const org = await runDomain(createEntityEffect({
       caseId: cased.id,
+      organizationId: TEST_ORGANIZATION_ID,
       kind: "org",
       name: "Analytic Engine",
       slug: "analytic-engine",
     }));
-    const questions = await runDomain(listQuestionsForEntityEffect(cased.id, org.id));
+    const questions = await runDomain(
+      listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, org.id)
+    );
     expect(questions).toHaveLength(0);
   });
 });

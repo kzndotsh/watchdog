@@ -177,6 +177,8 @@ export {
 } from "./graph/edges";
 export {
   assertCaseExistsEffect,
+  assertCaseExistsUncheckedEffect,
+  assertCaseInOrgEffect,
   assertEntityInCaseEffect,
 } from "./graph/patch/guards";
 export {

@@ -5,7 +5,7 @@ import {
   startJobEffect,
   runDomain,
 } from "@watchdog/core";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-kit/db";
 
 describe("jobs (core services)", () => {
@@ -18,6 +18,7 @@ describe("jobs (core services)", () => {
     const job = await runDomain(
       startJobEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         capabilityId: "network.dns.lookup",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -25,7 +26,9 @@ describe("jobs (core services)", () => {
       })
     );
     expect(job.status).toBe("queued");
-    const listed = await runDomain(listJobsForCaseEffect(cased.id));
+    const listed = await runDomain(
+      listJobsForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
     expect(listed.some((row) => row.id === job.id)).toBe(true);
   });
 });

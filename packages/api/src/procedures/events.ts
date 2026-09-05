@@ -25,8 +25,14 @@ export const list = authed
     })
   )
   .output(z.array(eventSchema))
-  .handler(async ({ input }) =>
-    runApp(listEventsForEntityEffect(input.caseId, input.entityId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      listEventsForEntityEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.entityId
+      )
+    )
   );
 
 export const create = graphChildWrite
@@ -48,7 +54,14 @@ export const create = graphChildWrite
     })
   )
   .output(eventSchema)
-  .handler(async ({ input }) => runApp(createEventEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      createEventEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const update = graphChildWrite
   .route({
@@ -76,7 +89,14 @@ export const update = graphChildWrite
       )
   )
   .output(eventSchema)
-  .handler(async ({ input }) => runApp(updateEventEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      updateEventEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const remove = graphChildWrite
   .route({
@@ -93,7 +113,13 @@ export const remove = graphChildWrite
     })
   )
   .output(z.object({ ok: z.literal(true) }))
-  .handler(async ({ input }) => {
-    await runApp(deleteEventEffect(input.caseId, input.eventId));
+  .handler(async ({ input, context }) => {
+    await runApp(
+      deleteEventEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.eventId
+      )
+    );
     return { ok: true as const };
   });

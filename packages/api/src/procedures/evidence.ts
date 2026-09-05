@@ -35,9 +35,9 @@ export const list = authed
     })
   )
   .output(z.array(evidenceSchema))
-  .handler(async ({ input }) =>
+  .handler(async ({ input, context }) =>
     runApp(
-      listEvidenceForCaseEffect(input.caseId, {
+      listEvidenceForCaseEffect(input.caseId, context.actor.organizationId, {
         unprocessedOnly: input.unprocessedOnly,
         unattachedOnly: input.unattachedOnly,
         hiddenOnly: input.hiddenOnly,
@@ -67,6 +67,7 @@ export const createPaste = authed
     runApp(
       dumpPasteEffect({
         ...input,
+        organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
         actorLabel: actorLabelFromActor(context.actor),
       })
@@ -95,6 +96,7 @@ export const createUrl = authed
     runApp(
       dumpUrlEffect({
         ...input,
+        organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
         actorLabel: actorLabelFromActor(context.actor),
       })
@@ -110,8 +112,13 @@ export const softDelete = authed
   })
   .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
   .output(z.object({ ok: z.literal(true) }))
-  .handler(async ({ input }) => {
-    await runApp(softDeleteEvidenceEffect(input));
+  .handler(async ({ input, context }) => {
+    await runApp(
+      softDeleteEvidenceEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    );
     return { ok: true as const };
   });
 
@@ -124,8 +131,13 @@ export const restore = authed
   })
   .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
   .output(z.object({ ok: z.literal(true) }))
-  .handler(async ({ input }) => {
-    await runApp(restoreEvidenceEffect(input));
+  .handler(async ({ input, context }) => {
+    await runApp(
+      restoreEvidenceEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    );
     return { ok: true as const };
   });
 
@@ -144,7 +156,14 @@ export const attachEntity = authed
     })
   )
   .output(evidenceSchema)
-  .handler(async ({ input }) => runApp(attachEvidenceEntityEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      attachEvidenceEntityEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const presign = authed
   .route({
@@ -163,7 +182,14 @@ export const presign = authed
     })
   )
   .output(presignedUploadSchema)
-  .handler(async ({ input }) => runApp(presignUploadEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      presignUploadEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const confirmFile = authed
   .route({
@@ -188,7 +214,10 @@ export const confirmFile = authed
   .handler(async ({ input, context }) =>
     runApp(
       confirmFileUploadEffect(
-        input,
+        {
+          ...input,
+          organizationId: context.actor.organizationId,
+        },
         context.actor.userId,
         actorLabelFromActor(context.actor)
       )
@@ -204,8 +233,14 @@ export const downloadUrl = authed
   })
   .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
   .output(z.object({ url: z.string().nullable() }))
-  .handler(async ({ input }) =>
-    runApp(getEvidenceDownloadUrlEffect(input.caseId, input.evidenceId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      getEvidenceDownloadUrlEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.evidenceId
+      )
+    )
   );
 
 export const process = authed
@@ -228,6 +263,7 @@ export const process = authed
     runApp(
       processEvidenceEffect({
         ...input,
+        organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
         actorLabel: actorLabelFromActor(context.actor),
       })
@@ -248,6 +284,7 @@ export const enrich = authed
     runApp(
       enrichUrlEvidenceEffect({
         ...input,
+        organizationId: context.actor.organizationId,
         actorId: context.actor.userId,
         actorLabel: actorLabelFromActor(context.actor),
       })

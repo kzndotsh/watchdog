@@ -31,11 +31,16 @@ export const list = authed
     })
   )
   .output(z.array(claimSchema))
-  .handler(async ({ input }) =>
+  .handler(async ({ input, context }) =>
     runApp(
-      listClaimsForEntityEffect(input.caseId, input.entityId, {
-        includeRetracted: input.includeRetracted,
-      })
+      listClaimsForEntityEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.entityId,
+        {
+          includeRetracted: input.includeRetracted,
+        }
+      )
     )
   );
 
@@ -59,7 +64,14 @@ export const create = graphChildWrite
     })
   )
   .output(claimSchema)
-  .handler(async ({ input }) => runApp(createClaimEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      createClaimEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const update = graphChildWrite
   .route({
@@ -80,7 +92,14 @@ export const update = graphChildWrite
     })
   )
   .output(claimSchema)
-  .handler(async ({ input }) => runApp(updateClaimEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      updateClaimEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const retract = graphChildWrite
   .route({
@@ -100,5 +119,13 @@ export const retract = graphChildWrite
   )
   .output(claimSchema)
   .handler(async ({ input, context }) =>
-    runApp(retractClaimEffect(input, context.actor.userId))
+    runApp(
+      retractClaimEffect(
+        {
+          ...input,
+          organizationId: context.actor.organizationId,
+        },
+        context.actor.userId
+      )
+    )
   );
