@@ -115,9 +115,10 @@ export function PlaybookSeedFields({
   entities,
   form,
 }: PlaybookSeedFieldsProps) {
+  const neededKinds = new Set(view.needs);
   const seedFields = (
     <>
-      {SEED_TEXT_FIELDS.filter((field) => view.needs.includes(field.kind)).map(
+      {SEED_TEXT_FIELDS.filter((field) => neededKinds.has(field.kind)).map(
         (spec) => (
           <form.Field key={spec.name} name={spec.name}>
             {(field) => (

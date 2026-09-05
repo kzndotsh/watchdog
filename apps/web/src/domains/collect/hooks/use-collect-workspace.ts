@@ -9,26 +9,20 @@ import {
 import { buildCollectIndex } from "@/domains/collect/lib/collect-index";
 import { resolveCollectJobDetailId } from "@/domains/collect/lib/collect-job-detail";
 import { prefetchCollectEvidenceBlobWhenSelected } from "@/domains/collect/lib/prefetch-collect";
-import {
-  EMPTY_COLLECT_FILTERS,
-  type CollectFilters,
-} from "@/domains/collect/types";
-import { entitiesListQuery } from "@/domains/entities/queries";
 import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
 import { useIntakeActions } from "@/domains/intake/hooks/use-intake-actions";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
-import { sortJobQueue } from "@/domains/jobs/lib/status";
 import { jobDetailQuery, jobsListQuery } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
-import { credentialsListQuery } from "@/domains/settings/queries";
-import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
 import {
   bindCasesChangedInvalidation,
   invalidateAfterEvidenceMutation,
 } from "@/shared/lib/query-invalidation";
+
+import { useCollectQueueData } from "./use-collect-queue-data";
 
 /** Mirrors CollectRunMode in collect-action-controls (UI toggle). */
 type CollectRunMode = "cap" | "playbook";
@@ -40,13 +34,6 @@ export interface UseCollectWorkspaceOptions {
   urlId?: string;
   onIdChange: (next: string | null) => void;
 }
-
-export interface CollectUrlDump {
-  id: string;
-  sourceUrl: string;
-  label: string | null;
-}
-
 export function useCollectWorkspace({
   caseId,
   caps,
@@ -55,87 +42,28 @@ export function useCollectWorkspace({
   onIdChange,
 }: UseCollectWorkspaceOptions) {
   const queryClient = useQueryClient();
-  const evidenceQuery = useQuery(
-    evidenceListQuery(caseId, { hiddenOnly: false })
-  );
-  const hiddenEvidenceQuery = useQuery(
-    evidenceListQuery(caseId, { hiddenOnly: true })
-  );
-  const jobsQuery = useQuery(jobsListQuery(caseId));
-  const entitiesQuery = useQuery(entitiesListQuery(caseId));
+  const queue = useCollectQueueData(caseId, playbooks);
   const {
-    data: evidenceRows = [],
-    isPlaceholderData: evidencePlaceholder,
-    isError: evidenceError,
-    error: evidenceLoadError,
-  } = evidenceQuery;
-  const {
-    data: hiddenEvidenceRows = [],
-    isPlaceholderData: hiddenEvidencePlaceholder,
-    isError: hiddenEvidenceError,
-    error: hiddenEvidenceLoadError,
-  } = hiddenEvidenceQuery;
-  const {
-    data: jobsRaw = [],
-    isFetching: jobsListFetching,
-    isError: jobsError,
-    error: jobsLoadError,
-  } = jobsQuery;
-  const { data: credentialSlots = [] } = useQuery(credentialsListQuery());
-
-  const [filters, setFilters] = useState<CollectFilters>(EMPTY_COLLECT_FILTERS);
-
-  const queueCorePending =
-    listPending(evidenceQuery) ||
-    listPending(jobsQuery) ||
-    listPending(entitiesQuery);
-  const queuePending =
-    queueCorePending ||
-    (filters.hiddenOnly && listPending(hiddenEvidenceQuery));
-  const queuePlaceholder = filters.hiddenOnly
-    ? hiddenEvidencePlaceholder
-    : evidencePlaceholder;
-  const queueLoadError =
-    evidenceError || hiddenEvidenceError || jobsError
-      ? errMessage(
-          evidenceLoadError ?? hiddenEvidenceLoadError ?? jobsLoadError ?? null,
-          "Failed to load collect queue"
-        )
-      : null;
-
-  const { data: entities = [] } = entitiesQuery;
+    filters,
+    setFilters,
+    evidence,
+    jobs,
+    entities,
+    urlDumps,
+    configuredCredentials,
+    recipeStepCountByPlaybookId,
+    queueCorePending,
+    queuePending,
+    queuePlaceholder,
+    queueLoadError,
+    jobsListFetching,
+    evidenceError,
+    hiddenEvidenceError,
+    jobsError,
+  } = queue;
 
   const [dumpModal, setDumpModal] = useState<DumpModal | null>(null);
   const [runMode, setRunMode] = useState<CollectRunMode>("cap");
-
-  const evidence = useMemo(
-    () => (filters.hiddenOnly ? hiddenEvidenceRows : evidenceRows),
-    [evidenceRows, hiddenEvidenceRows, filters.hiddenOnly]
-  );
-  const jobs = useMemo(() => sortJobQueue(jobsRaw), [jobsRaw]);
-  const recipeStepCountByPlaybookId = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const playbook of playbooks) {
-      map.set(playbook.id, playbook.steps.length);
-    }
-    return map;
-  }, [playbooks]);
-  const configuredCredentials = useMemo(() => {
-    const names = new Set<string>();
-    for (const slot of credentialSlots) {
-      if (slot.configured) names.add(slot.name);
-    }
-    return names;
-  }, [credentialSlots]);
-  const urlDumps = useMemo(
-    (): CollectUrlDump[] =>
-      evidenceRows.flatMap((row) => {
-        const sourceUrl = row.sourceUrl?.trim();
-        if (sourceUrl === undefined || sourceUrl === "") return [];
-        return [{ id: row.id, sourceUrl, label: row.label }];
-      }),
-    [evidenceRows]
-  );
 
   const index = useMemo(
     () =>
@@ -198,15 +126,14 @@ export function useCollectWorkspace({
     [caseId, onIdChange, queryClient]
   );
 
-  const jobQueueForWorkspace = useMemo(() => jobs, [jobs]);
   const jobsWs = useJobsWorkspace(caseId, {
     jobId:
       selection.focusRunId ??
       (selected?.evidence === null ? selected?.id : undefined),
     onJobIdChange: onIdChange,
     caps,
-    jobs: jobQueueForWorkspace,
-    queue: jobQueueForWorkspace,
+    jobs,
+    queue: jobs,
     jobsListFetching,
   });
 

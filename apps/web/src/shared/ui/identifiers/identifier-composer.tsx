@@ -26,11 +26,11 @@ import {
   STATUS_OPTIONS,
   TYPE_OPTIONS,
 } from "@/shared/ui/identifiers/identifier-cells";
-import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import {
-  EvidencePicker,
   evidenceLabel,
-} from "@/shared/ui/intake/evidence-picker";
+  type EvidenceOption,
+} from "@/shared/ui/intake/evidence-option";
+import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   Popover,

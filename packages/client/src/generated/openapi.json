@@ -2918,6 +2918,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "userOverride": {
+                    "const": true
+                  },
                   "value": {
                     "type": "string"
                   },
@@ -2961,12 +2964,8 @@
                   "evidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
-                  },
-                  "userOverride": {
-                    "const": true
                   }
                 }
               }

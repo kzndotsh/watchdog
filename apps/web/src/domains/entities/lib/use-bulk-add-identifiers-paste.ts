@@ -23,12 +23,18 @@ export function parsePasteTarget(value: string): IdentifierPasteTarget | null {
 }
 
 function mappingOptions(lockEntity: boolean) {
-  return IDENTIFIER_PASTE_TARGETS.filter(
-    (target) => !lockEntity || target !== "entity"
-  ).map((target) => ({
-    value: target,
-    label: IDENTIFIER_PASTE_TARGET_LABELS[target],
-  }));
+  const options: {
+    value: IdentifierPasteTarget;
+    label: string;
+  }[] = [];
+  for (const target of IDENTIFIER_PASTE_TARGETS) {
+    if (lockEntity && target === "entity") continue;
+    options.push({
+      value: target,
+      label: IDENTIFIER_PASTE_TARGET_LABELS[target],
+    });
+  }
+  return options;
 }
 
 function effectiveMapping(

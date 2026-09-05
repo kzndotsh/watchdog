@@ -2,7 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
 import { ListFilterIcon } from "lucide-react";
 import type { SubmitEvent } from "react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect } from "react";
 
 import {
   PlaybookSeedFields,
@@ -10,21 +10,12 @@ import {
   type UrlDumpOption,
 } from "@/domains/jobs/components/playbook-seed-fields";
 import { PlaybookSelect } from "@/domains/jobs/components/playbook-select";
+import { usePlaybookRunFilters } from "@/domains/jobs/hooks/use-playbook-run-filters";
 import { clampSelectId } from "@/domains/jobs/lib/clamp-select";
-import {
-  matchPlaybooks,
-  PLAYBOOK_EGRESS_FILTERS,
-  playbookEgressFilterLabel,
-  playbookSeedFilterLabel,
-  playbookSeedFilterOptions,
-} from "@/domains/jobs/lib/playbook-match";
 import { buildPlaybookSeedView } from "@/domains/jobs/lib/playbook-seed-view";
 import type { PlaybookListItem } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
-import {
-  PageFilterMenu,
-  type PageFilterChip,
-} from "@/shared/layout/page-filter-menu";
+import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
@@ -67,67 +58,24 @@ export function JobPlaybookRunForm({
   onRunPlaybook,
   layout = "inline",
 }: JobPlaybookRunFormProps) {
-  const needsKeyOnlyId = useId();
-  const urlDumpOnlyId = useId();
-  const [seedFilter, setSeedFilter] = useState("");
-  const [egressFilter, setEgressFilter] = useState("");
-  const [needsKeyOnly, setNeedsKeyOnly] = useState(false);
-  const [urlDumpOnly, setUrlDumpOnly] = useState(false);
-
-  const seedOptions = useMemo(
-    () => playbookSeedFilterOptions(playbooks),
-    [playbooks]
-  );
-  const visiblePlaybooks = useMemo(
-    () =>
-      matchPlaybooks(playbooks, {
-        seedFilter,
-        egressFilter,
-        needsKeyOnly,
-        urlDumpOnly,
-      }),
-    [playbooks, seedFilter, egressFilter, needsKeyOnly, urlDumpOnly]
-  );
-  const filterChips: PageFilterChip[] = useMemo(() => {
-    const chips: PageFilterChip[] = [];
-    if (seedFilter) {
-      chips.push({
-        id: "seed",
-        label: playbookSeedFilterLabel(seedFilter),
-        onClear: () => {
-          setSeedFilter("");
-        },
-      });
-    }
-    if (egressFilter) {
-      chips.push({
-        id: "egress",
-        label: playbookEgressFilterLabel(egressFilter),
-        onClear: () => {
-          setEgressFilter("");
-        },
-      });
-    }
-    if (needsKeyOnly) {
-      chips.push({
-        id: "needsKey",
-        label: "Needs key",
-        onClear: () => {
-          setNeedsKeyOnly(false);
-        },
-      });
-    }
-    if (urlDumpOnly) {
-      chips.push({
-        id: "urlDump",
-        label: "URL dump",
-        onClear: () => {
-          setUrlDumpOnly(false);
-        },
-      });
-    }
-    return chips;
-  }, [seedFilter, egressFilter, needsKeyOnly, urlDumpOnly]);
+  const filters = usePlaybookRunFilters(playbooks);
+  const {
+    needsKeyOnlyId,
+    urlDumpOnlyId,
+    seedFilter,
+    setSeedFilter,
+    egressFilter,
+    setEgressFilter,
+    needsKeyOnly,
+    setNeedsKeyOnly,
+    urlDumpOnly,
+    setUrlDumpOnly,
+    seedOptions,
+    visiblePlaybooks,
+    filterChips,
+    clearPlaybookFilters,
+    egressFilterOptions,
+  } = filters;
 
   const form = useForm({
     defaultValues: {
@@ -171,13 +119,6 @@ export function JobPlaybookRunForm({
       form.setFieldValue("playbookId", next);
     }
   }, [visiblePlaybooks, form]);
-
-  function clearPlaybookFilters() {
-    setSeedFilter("");
-    setEgressFilter("");
-    setNeedsKeyOnly(false);
-    setUrlDumpOnly(false);
-  }
 
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
@@ -286,10 +227,7 @@ export function JobPlaybookRunForm({
                         value={egressFilter}
                         onValueChange={setEgressFilter}
                         aria-label="Filter playbooks by egress"
-                        options={PLAYBOOK_EGRESS_FILTERS.map((opt) => ({
-                          value: opt.value,
-                          label: opt.label,
-                        }))}
+                        options={egressFilterOptions}
                       />
                     </div>
                     <label
