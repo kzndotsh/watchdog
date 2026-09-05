@@ -9,7 +9,7 @@
         <a href="https://tanstack.com/start">
             <img alt="TanStack Start" src="https://img.shields.io/badge/TanStack_Start-ff4154?logo=react&logoColor=white"></a>
         <a href="https://www.postgresql.org">
-            <img alt="Postgres" src="https://img.shields.io/badge/Postgres-16-4169e1?logo=postgresql&logoColor=white"></a>
+            <img alt="Postgres" src="https://img.shields.io/badge/Postgres-18-4169e1?logo=postgresql&logoColor=white"></a>
         <a href="https://orpc.dev">
             <img alt="oRPC" src="https://img.shields.io/badge/oRPC-OpenAPI-6366f1"></a>
     </p>
@@ -188,7 +188,7 @@ A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker
 | --- | --- |
 | **Frontend** | TanStack Start · React · Tailwind 4 · shadcn/ui · TanStack Query |
 | **API** | oRPC (RPC for the app, OpenAPI for agents) · Zod |
-| **Data** | Postgres 16 · Drizzle ORM · MinIO/S3 |
+| **Data** | Postgres 18 · Drizzle ORM · MinIO/S3 |
 | **Jobs** | pg-boss · dedicated worker process · Effect fibers + tagged errors |
 | **Auth** | Better Auth (sessions, orgs, invites, API keys, instance admin) |
 | **Observability** | evlog structured wide events |

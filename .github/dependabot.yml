@@ -51,6 +51,10 @@ updates:
       - dependencies
     commit-message:
       prefix: "chore(docker)"
+    # Major Postgres image bumps need volume-path + CI/flake coord — not auto-merge.
+    ignore:
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: nix
     directory: /

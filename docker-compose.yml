@@ -6,7 +6,9 @@
 
 services:
   postgres:
-    image: postgres:16-alpine
+    # PG 18+ Docker images mount the volume at /var/lib/postgresql (not .../data).
+    # Existing 16 volumes are incompatible — recreate: `just down && docker volume rm watchdog_postgres_data` (name may vary) then `just up`.
+    image: postgres:18-alpine
     container_name: watchdog-postgres
     restart: unless-stopped
     environment:
@@ -16,7 +18,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/00_init.sql:ro
       - ./docker/postgres/01_test_dbs.sh:/docker-entrypoint-initdb.d/01_test_dbs.sh:ro
     healthcheck:
