@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1092.0",
-    "@aws-sdk/s3-request-presigner": "^3.1092.0",
+    "@aws-sdk/client-s3": "^3.1124.0",
+    "@aws-sdk/s3-request-presigner": "^3.1124.0",
     "@watchdog/cap-sdk": "workspace:*",
     "@watchdog/caps": "workspace:*",
     "@watchdog/db": "workspace:*",
@@ -22,8 +22,8 @@
     "@watchdog/schemas": "workspace:*",
     "@watchdog/tools": "workspace:*",
     "effect": "4.0.0-rc.112",
-    "pg-boss": "^12.26.1",
-    "zod": "^4.4.3"
+    "pg-boss": "^12.29.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

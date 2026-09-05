@@ -9,19 +9,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.21",
-    "@ai-sdk/openai-compatible": "^3.0.14",
+    "@ai-sdk/anthropic": "^4.0.48",
+    "@ai-sdk/openai-compatible": "^3.0.43",
     "@watchdog/schemas": "workspace:*",
-    "ai": "^7.0.37",
+    "ai": "^7.0.90",
     "effect": "4.0.0-rc.112"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@watchdog/test-kit": "workspace:*",
     "typescript": "7.0.2",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "peerDependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   }
 }
