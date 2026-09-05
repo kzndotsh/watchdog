@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
 import type { JobListRecord, JobRecord } from "@/domains/jobs/jobs.functions";
@@ -357,7 +357,7 @@ function JobDetailFooterBar({
   );
 }
 
-export function JobDetail({
+function JobDetailLoaded({
   job,
   runSiblings = EMPTY_RUN_SIBLINGS,
   evidenceTitleById,
@@ -366,12 +366,12 @@ export function JobDetail({
   onCancel,
   onCancelPlaybook,
   cancelPlaybookBusy,
-}: JobDetailProps) {
+}: Omit<JobDetailProps, "job"> & { job: JobRecord }) {
   const [tab, setTab] = useState<JobDetailTab>("log");
-  const autoOutputJobIdRef = useRef<string | null>(null);
+  const [logPinned, setLogPinned] = useState(false);
 
   const playbookSteps = useMemo(() => {
-    if (job === null || job.playbookId === null || job.playbookId === "") {
+    if (job.playbookId === null || job.playbookId === "") {
       return null;
     }
     const steps = [...runSiblings].sort(
@@ -382,7 +382,7 @@ export function JobDetail({
   }, [job, runSiblings]);
 
   const blockedWaiting = useMemo(() => {
-    if (job === null || playbookSteps === null) return null;
+    if (playbookSteps === null) return null;
     if (job.status === "blocked") {
       const step = job.playbookStep;
       if (step === null) {
@@ -406,34 +406,23 @@ export function JobDetail({
     return null;
   }, [job, playbookSteps, recipeTotal]);
 
-  useEffect(() => {
+  const hasOutput =
+    job.output !== null && job.output !== undefined && job.output.length > 0;
+  const effectiveTab =
+    !logPinned && tab === "log" && job.status === "succeeded" && hasOutput
+      ? "output"
+      : tab;
+
+  const orderedOutput = useMemo(() => {
     if (
-      job?.status === "succeeded" &&
-      job.output &&
-      job.output.length > 0 &&
-      autoOutputJobIdRef.current !== job.id
+      job.output === null ||
+      job.output === undefined ||
+      job.output.length === 0
     ) {
-      autoOutputJobIdRef.current = job.id;
-      setTab("output");
+      return [];
     }
-  }, [job?.id, job?.status, job?.output]);
-
-  const orderedOutput = useMemo(
-    () =>
-      job?.output !== null && job?.output !== undefined && job.output.length > 0
-        ? orderJobArtifacts(job.output)
-        : [],
-    [job]
-  );
-
-  if (!job) {
-    return (
-      <DetailEmpty
-        title="Select a job"
-        description="Choose a run from the queue to view logs, input, and output."
-      />
-    );
-  }
+    return orderJobArtifacts(job.output);
+  }, [job.output]);
 
   const view = buildJobDetailView({
     job,
@@ -445,10 +434,12 @@ export function JobDetail({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <Tabs
-        value={tab}
+        value={effectiveTab}
         onValueChange={(v) => {
           if (typeof v !== "string") return;
-          if (v === "log" || v === "input" || v === "output") setTab(v);
+          if (v !== "log" && v !== "input" && v !== "output") return;
+          setTab(v);
+          setLogPinned(v === "log");
         }}
         className="flex min-h-0 flex-1 flex-col"
       >
@@ -482,7 +473,7 @@ export function JobDetail({
             ) : null}
 
             <TabsContent value="log" className="mt-0">
-              <ActiveTabBody active={tab === "log"}>
+              <ActiveTabBody active={effectiveTab === "log"}>
                 <div className="flex flex-col gap-4">
                   {playbookSteps !== null && job.playbookId !== null ? (
                     <JobPlaybookSpine
@@ -498,13 +489,13 @@ export function JobDetail({
             </TabsContent>
 
             <TabsContent value="input" className="mt-0">
-              <ActiveTabBody active={tab === "input"}>
+              <ActiveTabBody active={effectiveTab === "input"}>
                 <JobInputTabBody input={job.input} />
               </ActiveTabBody>
             </TabsContent>
 
             <TabsContent value="output" className="mt-0">
-              <ActiveTabBody active={tab === "output"}>
+              <ActiveTabBody active={effectiveTab === "output"}>
                 <JobOutputTabBody
                   caseId={job.caseId}
                   jobId={job.id}
@@ -525,5 +516,39 @@ export function JobDetail({
         onCancelPlaybook={onCancelPlaybook}
       />
     </div>
+  );
+}
+
+export function JobDetail({
+  job,
+  runSiblings = EMPTY_RUN_SIBLINGS,
+  evidenceTitleById,
+  recipeTotal,
+  busy,
+  onCancel,
+  onCancelPlaybook,
+  cancelPlaybookBusy,
+}: JobDetailProps) {
+  if (!job) {
+    return (
+      <DetailEmpty
+        title="Select a job"
+        description="Choose a run from the queue to view logs, input, and output."
+      />
+    );
+  }
+
+  return (
+    <JobDetailLoaded
+      key={job.id}
+      job={job}
+      runSiblings={runSiblings}
+      evidenceTitleById={evidenceTitleById}
+      recipeTotal={recipeTotal}
+      busy={busy}
+      onCancel={onCancel}
+      onCancelPlaybook={onCancelPlaybook}
+      cancelPlaybookBusy={cancelPlaybookBusy}
+    />
   );
 }

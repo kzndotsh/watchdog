@@ -1,4 +1,4 @@
-/* oxlint-disable react/only-export-components -- size tokens + chip component */
+/* oxlint-disable react/only-export-components, react-doctor/only-export-components -- size tokens + chip component */
 import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";

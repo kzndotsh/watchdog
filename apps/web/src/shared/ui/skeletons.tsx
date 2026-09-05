@@ -1,3 +1,4 @@
+/* oxlint-disable react/only-export-components, react-doctor/only-export-components -- skeleton layout tokens + components */
 import { GripVerticalIcon } from "lucide-react";
 /**
  * Skeleton loading states for each major surface.

@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   buildDecideHeaderView,
   decidedEdgeClass,
+  type DecideHeaderView,
 } from "@/domains/triage/lib/decide-header-view";
 import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
@@ -40,6 +41,117 @@ function ProducingCapLink({
   );
 }
 
+function DecideHeaderSubject({
+  view,
+  proposal,
+  subject,
+}: {
+  view: DecideHeaderView;
+  proposal: ProposalRecord;
+  subject: string;
+}) {
+  return (
+    <>
+      <span className="text-foreground/80 inline-flex min-w-0 items-center gap-1 font-medium">
+        {view.entityName ? (
+          <>
+            <span className="text-muted-foreground shrink-0 font-normal">
+              Entity
+            </span>
+            <EntityMention
+              name={view.entityName}
+              slug={view.entitySlug ?? undefined}
+              size="sm"
+              nameClassName="text-foreground/80"
+            />
+          </>
+        ) : (
+          <ProducingCapLink jobId={proposal.jobId} label={subject} />
+        )}
+      </span>
+      {view.entityName !== null && view.capLabel !== null ? (
+        <>
+          <DetailContextSep />
+          <span className="inline-flex min-w-0 items-center gap-1">
+            <span className="shrink-0">From</span>
+            <ProducingCapLink jobId={proposal.jobId} label={view.capLabel} />
+          </span>
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function DecideHeaderMeta({
+  proposal,
+  view,
+  actorLabel,
+}: {
+  proposal: ProposalRecord;
+  view: DecideHeaderView;
+  actorLabel: string | null | undefined;
+}) {
+  return (
+    <>
+      <DetailContextSep />
+      <StatusInk status={proposal.status} />
+      {proposal.agentSourced ? (
+        <>
+          <DetailContextSep />
+          <span>agent</span>
+        </>
+      ) : null}
+      {proposal.suppressedCount > 0 ? (
+        <>
+          <DetailContextSep />
+          <span>{proposal.suppressedCount} suppressed</span>
+        </>
+      ) : null}
+      {view.isPending ? null : (
+        <>
+          <DetailContextSep />
+          <span className="tabular-nums">
+            {view.timeLabel}{" "}
+            <LocalDateTime value={proposal.decidedAt ?? proposal.createdAt} />
+          </span>
+        </>
+      )}
+      {actorLabel ? (
+        <>
+          <DetailContextSep />
+          <ActorMention prefix="By" label={actorLabel} />
+        </>
+      ) : null}
+    </>
+  );
+}
+
+function DecideHeaderRejectReason({
+  proposal,
+  view,
+}: {
+  proposal: ProposalRecord;
+  view: DecideHeaderView;
+}) {
+  if (
+    view.isPending ||
+    !view.showRejectReason ||
+    proposal.rejectReason === null ||
+    proposal.rejectReason === ""
+  ) {
+    return null;
+  }
+
+  return (
+    <ComposerShell density="dense" className="gap-0 border-b px-2.5 py-2">
+      <p className="text-xs leading-snug">
+        <span className="text-muted-foreground">Reason · </span>
+        {proposal.rejectReason}
+      </p>
+    </ComposerShell>
+  );
+}
+
 export function TriageDecideHeader({
   proposal,
   linkedIds,
@@ -65,74 +177,19 @@ export function TriageDecideHeader({
       )}
     >
       <DetailContextHeader>
-        <span className="text-foreground/80 inline-flex min-w-0 items-center gap-1 font-medium">
-          {view.entityName ? (
-            <>
-              <span className="text-muted-foreground shrink-0 font-normal">
-                Entity
-              </span>
-              <EntityMention
-                name={view.entityName}
-                slug={view.entitySlug ?? undefined}
-                size="sm"
-                nameClassName="text-foreground/80"
-              />
-            </>
-          ) : (
-            <ProducingCapLink jobId={proposal.jobId} label={subject} />
-          )}
-        </span>
-        {view.entityName !== null && view.capLabel !== null ? (
-          <>
-            <DetailContextSep />
-            <span className="inline-flex min-w-0 items-center gap-1">
-              <span className="shrink-0">From</span>
-              <ProducingCapLink jobId={proposal.jobId} label={view.capLabel} />
-            </span>
-          </>
-        ) : null}
-        <DetailContextSep />
-        <StatusInk status={proposal.status} />
-        {proposal.agentSourced ? (
-          <>
-            <DetailContextSep />
-            <span>agent</span>
-          </>
-        ) : null}
-        {proposal.suppressedCount > 0 ? (
-          <>
-            <DetailContextSep />
-            <span>{proposal.suppressedCount} suppressed</span>
-          </>
-        ) : null}
-        {view.isPending ? null : (
-          <>
-            <DetailContextSep />
-            <span className="tabular-nums">
-              {view.timeLabel}{" "}
-              <LocalDateTime value={proposal.decidedAt ?? proposal.createdAt} />
-            </span>
-          </>
-        )}
-        {actorLabel ? (
-          <>
-            <DetailContextSep />
-            <ActorMention prefix="By" label={actorLabel} />
-          </>
-        ) : null}
+        <DecideHeaderSubject
+          view={view}
+          proposal={proposal}
+          subject={subject}
+        />
+        <DecideHeaderMeta
+          proposal={proposal}
+          view={view}
+          actorLabel={actorLabel}
+        />
       </DetailContextHeader>
 
-      {view.isPending ||
-      !view.showRejectReason ||
-      proposal.rejectReason === null ||
-      proposal.rejectReason === "" ? null : (
-        <ComposerShell density="dense" className="gap-0 border-b px-2.5 py-2">
-          <p className="text-xs leading-snug">
-            <span className="text-muted-foreground">Reason · </span>
-            {proposal.rejectReason}
-          </p>
-        </ComposerShell>
-      )}
+      <DecideHeaderRejectReason proposal={proposal} view={view} />
     </header>
   );
 }

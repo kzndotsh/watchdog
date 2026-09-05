@@ -8,7 +8,7 @@ import {
   UsersIcon,
   WrenchIcon,
 } from "lucide-react";
-import { Suspense } from "react";
+import { Suspense, useCallback } from "react";
 import { z } from "zod";
 
 import { authClient } from "@/auth/client";
@@ -156,15 +156,18 @@ function SettingsPage() {
     (item) => item.id !== "users" || canManageUsers
   );
 
-  function setTab(next: SettingsTab) {
-    void navigate({
-      search: (prev) => ({
-        ...prev,
-        tab: next === "account" ? undefined : next,
-      }),
-      replace: true,
-    });
-  }
+  const setTab = useCallback(
+    (next: SettingsTab) => {
+      void navigate({
+        search: (prev) => ({
+          ...prev,
+          tab: next === "account" ? undefined : next,
+        }),
+        replace: true,
+      });
+    },
+    [navigate]
+  );
 
   return (
     <Page>
