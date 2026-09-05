@@ -23,6 +23,7 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Controllers call `@watchdog/co
 
 ## Gotchas
 
+- **Org scope on case children** — procedures that take `caseId` must pass the actor’s `organizationId` into core. Foreign or missing Case is **`not_found`** (same as a missing id); do not return data or a distinct “wrong org” signal. Session/API-key org resolution stays in web/auth middleware — procedures do not invent a second org source.
 - After route/input changes: export contract → `pnpm generate:client` (CI drifts if skipped). Named nested objects (e.g. `identifierCollisionSchema` on `proposalSchema`) stay in `schemas.ts` — don’t inline anonymous Zod on the wire.
 - Playbook run (`POST …/playbooks/{playbookId}/run`): seeds `host|url|evidence|ip|email|hash|handle`; only step 0 is queued at start. `jobSchema` carries `playbookFanIndex` + `playbookRunStatus`. Capabilities list uses `PLAYBOOK_SEED_KINDS` for playbook `seedKinds`.
 - Tasks: `POST /cases/{caseId}/tasks/reorder` (`status` + `orderedIds`); `taskSchema.position`. Regen client after this route/input change.

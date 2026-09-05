@@ -23,6 +23,7 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | AGENTS gate | `pnpm check:agents` · `pnpm check:agents:strict` |
 | Docs gate | `pnpm check:docs` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` |
 | Skills gate | `pnpm validate:agents` |
+| Desloppify (local hygiene) | `pnpm desloppify:bootstrap` · `pnpm desloppify:scan` · `pnpm desloppify:status` · `pnpm desloppify:next` (state under `.desloppify/` is gitignored; bootstrap excludes `repos`, `data`, generated trees — see `scripts/desloppify-bootstrap.sh`) |
 
 Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0`. Package manager: **pnpm** only.
 
