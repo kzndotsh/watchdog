@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import {
   caseScopeInputSchema,
   createIdentifierInputSchema,
+  deleteIdentifierInputSchema,
   entityScopeInputSchema,
   updateIdentifierInputSchema,
   type CaseIdentifierRecord,
@@ -47,3 +48,12 @@ export const updateIdentifierFn = createServerFn({ method: "POST" })
     async ({ data, context }): Promise<IdentifierRecord> =>
       orpcFromContext(context).identifiers.update(data)
   );
+
+export const deleteIdentifierFn = createServerFn({ method: "POST" })
+  .validator(deleteIdentifierInputSchema)
+  .handler(async ({ data, context }): Promise<void> => {
+    await orpcFromContext(context).identifiers.delete({
+      caseId: data.caseId,
+      identifierId: data.identifierId,
+    });
+  });

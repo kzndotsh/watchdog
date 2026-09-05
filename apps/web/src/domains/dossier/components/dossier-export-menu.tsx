@@ -1,6 +1,7 @@
 import { ClipboardIcon, DownloadIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { fetchEntityMarkdown } from "@/domains/entities/lib/entity-export";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   DropdownMenu,
@@ -9,15 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/shadcn/dropdown-menu";
-
-async function fetchEntityMarkdown(
-  caseId: string,
-  entitySlug: string
-): Promise<string> {
-  const url = `/api/v1/cases/${caseId}/entities/${entitySlug}/export.md`;
-  const res = await fetch(url);
-  return res.text();
-}
 
 export function DossierExportMenu({
   caseId,

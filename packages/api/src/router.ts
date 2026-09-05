@@ -40,6 +40,7 @@ export const router = {
     get: entities.get,
     create: entities.create,
     update: entities.update,
+    delete: entities.remove,
   },
   claims: {
     list: claims.list,
@@ -52,6 +53,7 @@ export const router = {
     listForCase: identifiers.listForCase,
     create: identifiers.create,
     update: identifiers.update,
+    delete: identifiers.remove,
   },
   edges: {
     list: edges.list,

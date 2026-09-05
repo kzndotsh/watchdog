@@ -33,6 +33,11 @@ import {
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/shared/ui/shadcn/dropdown-menu";
 import { CONFIDENCE_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import {
   confidenceTierSchema,
@@ -69,6 +74,9 @@ export interface IdentifiersTableMeta {
     identifierId: string,
     evidenceIds: string[]
   ) => void | Promise<void>;
+  onOpenSubject: (row: CaseIdentifierRecord) => void;
+  onCopyValue: (value: string) => void;
+  onDeleteIdentifier: (row: CaseIdentifierRecord) => void;
 }
 
 function identifiersMeta(
@@ -296,6 +304,40 @@ function renderNotesCell(ctx: CellContext<CaseIdentifierRecord, unknown>) {
   );
 }
 
+function renderActionsCell(ctx: CellContext<CaseIdentifierRecord, unknown>) {
+  const row = ctx.row.original;
+  const meta = identifiersMeta(ctx);
+  return (
+    <div className="flex justify-end">
+      <RowActionsMenu label={`Actions for ${row.value}`}>
+        <DropdownMenuItem
+          onClick={() => {
+            meta.onOpenSubject(row);
+          }}
+        >
+          Open identifier
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            meta.onCopyValue(row.value);
+          }}
+        >
+          Copy value
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive"
+          onClick={() => {
+            meta.onDeleteIdentifier(row);
+          }}
+        >
+          Delete
+        </DropdownMenuItem>
+      </RowActionsMenu>
+    </div>
+  );
+}
+
 export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
   {
     id: "entity",
@@ -304,7 +346,7 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     cell: renderEntityCell,
     meta: { label: "Entity" },
     enableHiding: false,
-    size: 180,
+    size: 160,
   },
   {
     accessorKey: "value",
@@ -312,7 +354,7 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     cell: renderValueCell,
     meta: { label: "Value" },
     enableHiding: false,
-    size: 220,
+    size: 200,
   },
   {
     accessorKey: "type",
@@ -328,7 +370,7 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     header: platformColumnHeader,
     cell: renderPlatformCell,
     meta: { label: "Platform" },
-    size: 140,
+    size: 130,
     minSize: 120,
   },
   {
@@ -354,7 +396,7 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     header: evidenceColumnHeader,
     cell: renderEvidenceCell,
     meta: { label: "Evidence" },
-    size: 160,
+    size: 150,
     enableSorting: false,
   },
   {
@@ -365,5 +407,15 @@ export const identifiersTableColumns: ColumnDef<CaseIdentifierRecord>[] = [
     size: 52,
     minSize: 48,
     enableSorting: false,
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    cell: renderActionsCell,
+    enableSorting: false,
+    enableHiding: false,
+    meta: { label: "Actions" },
+    size: 48,
+    minSize: 48,
   },
 ];

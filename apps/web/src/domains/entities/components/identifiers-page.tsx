@@ -6,6 +6,7 @@ import { useState } from "react";
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
+import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
 import { useIdentifiersTable } from "@/domains/entities/hooks/use-identifiers-table";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
@@ -58,6 +59,9 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
     evidenceOptions,
     pending,
     identifiersPlaceholder,
+    caseId,
+    deleteTarget,
+    setDeleteTarget,
   } = useIdentifiersTable(active);
   const queryClient = useQueryClient();
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -240,6 +244,22 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
         entities={entityOptions}
         onImported={async () => {
           await invalidateAfterEntityChanged(queryClient, active.id);
+        }}
+      />
+      <DeleteIdentifierDialog
+        caseId={caseId}
+        target={
+          deleteTarget
+            ? {
+                id: deleteTarget.id,
+                type: deleteTarget.type,
+                value: deleteTarget.value,
+              }
+            : null
+        }
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
         }}
       />
     </Page>

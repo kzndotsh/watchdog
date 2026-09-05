@@ -21,9 +21,14 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
     <a href={to}>{children}</a>
   ),
+  useNavigate: () => vi.fn(),
   notFound: () => {
     throw new Error("not found");
   },
+}));
+
+vi.mock("@/domains/entities/components/delete-entity-dialog", () => ({
+  DeleteEntityDialog: () => null,
 }));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
@@ -173,6 +178,9 @@ describe("Dossier", () => {
   it("renders the entity dossier chrome when a case is active", () => {
     renderDossier(CASE);
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Delete entity" })
+    ).toBeInTheDocument();
     expect(screen.getByText("Export menu")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Overview/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Notes/i })).toBeInTheDocument();

@@ -56,3 +56,11 @@ export const updateIdentifierInputSchema = z
 export type UpdateIdentifierInput = z.output<
   typeof updateIdentifierInputSchema
 >;
+
+export const deleteIdentifierInputSchema = z.object({
+  caseId: uuidSchema,
+  identifierId: uuidSchema,
+});
+export type DeleteIdentifierInput = z.output<
+  typeof deleteIdentifierInputSchema
+>;

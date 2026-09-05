@@ -300,3 +300,30 @@ export function updateIdentifierEffect(
     return toRecord(row, nextEvidenceIds);
   });
 }
+
+export function deleteIdentifierEffect(
+  caseId: string,
+  organizationId: string,
+  identifierId: string
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* deleteIdentifierGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const existing = yield* tryDb(() =>
+      identifiersRepo.getInCase(db, caseId, identifierId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({
+        resource: "Identifier not found in this Case",
+      });
+    }
+
+    const deleted = yield* tryDb(() =>
+      identifiersRepo.deleteInCase(db, caseId, identifierId)
+    );
+    if (!deleted) {
+      return yield* new InvalidError({ reason: "Failed to delete Identifier" });
+    }
+
+    yield* notifyEntityChangedEffect(caseId);
+  });
+}

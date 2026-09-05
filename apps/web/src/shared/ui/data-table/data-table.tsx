@@ -85,7 +85,7 @@ function renderTableBodyRows<TData>({
     return table.getRowModel().rows.map((row) => (
       <TableRow
         key={row.id}
-        className={onRowClick ? "cursor-pointer" : undefined}
+        className={onRowClick ? "group cursor-pointer" : "group"}
         onPointerDown={
           onRowClick
             ? (e) => {

@@ -4,6 +4,7 @@ import {
   caseIdInputSchema,
   caseSlugInputSchema,
   createEntityInputSchema,
+  deleteEntityInputSchema,
   updateEntityFieldsInputSchema,
   type EntityRecord,
 } from "@/domains/entities/types";
@@ -43,3 +44,12 @@ export const updateEntityFieldsFn = createServerFn({ method: "POST" })
     async ({ data, context }): Promise<EntityRecord> =>
       orpcFromContext(context).entities.update(data)
   );
+
+export const deleteEntityFn = createServerFn({ method: "POST" })
+  .validator(deleteEntityInputSchema)
+  .handler(async ({ data, context }): Promise<void> => {
+    await orpcFromContext(context).entities.delete({
+      caseId: data.caseId,
+      entityId: data.entityId,
+    });
+  });

@@ -106,6 +106,11 @@ function mockIdentifiersTable() {
     onRowClick: vi.fn(),
     entityOptions: [],
     evidenceOptions: [],
+    pending: false,
+    identifiersPlaceholder: false,
+    caseId: ACTIVE.id,
+    deleteTarget: null,
+    setDeleteTarget: vi.fn(),
   });
 }
 

@@ -45,7 +45,7 @@ Full rules: [`../reference/contracts/agent-ingress.md`](../reference/contracts/a
 
 | Noun | Examples |
 | --- | --- |
-| `cases` / `entities` | `wd cases list` · create/update/delete Case |
+| `cases` / `entities` | `wd cases list` · create/update/delete Case. Entity/identifier **hard delete** is OpenAPI-only today (`DELETE …/entities/{entityId}`, `DELETE …/identifiers/{identifierId}` + `userOverride` on identifiers); `wd entities delete` / `wd identifiers delete` not shipped yet |
 | `evidence` | `wd evidence paste` · `file` · `process` · `enrich` · `hide` |
 | `jobs` | `wd jobs start --cap network.dns.lookup --input '{"host":"example.com"}'` |
 | `proposals` | `wd proposals create` (patch JSON) |

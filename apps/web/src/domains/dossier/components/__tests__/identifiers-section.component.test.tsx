@@ -11,10 +11,15 @@ vi.mock("@/auth/server", () => ({
 vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   createIdentifierFn: vi.fn(),
   updateIdentifierFn: vi.fn(),
+  deleteIdentifierFn: vi.fn(),
 }));
 
 vi.mock("@/domains/entities/components/bulk-add-identifiers-dialog", () => ({
   BulkAddIdentifiersDialog: () => null,
+}));
+
+vi.mock("@/domains/entities/components/delete-identifier-dialog", () => ({
+  DeleteIdentifierDialog: () => null,
 }));
 
 vi.mock("sonner", () => ({

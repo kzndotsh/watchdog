@@ -99,6 +99,10 @@ function mockEntityTable() {
     filterChips: [],
     emptyText: "No entities yet — add one below.",
     onRowClick: vi.fn(),
+    pending: false,
+    caseId: ACTIVE.id,
+    deleteTarget: null,
+    setDeleteTarget: vi.fn(),
   });
 }
 

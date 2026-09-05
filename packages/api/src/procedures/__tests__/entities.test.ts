@@ -2,8 +2,9 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listEntitiesForCaseEffect } = vi.hoisted(() => ({
+const { listEntitiesForCaseEffect, deleteEntityEffect } = vi.hoisted(() => ({
   listEntitiesForCaseEffect: vi.fn(),
+  deleteEntityEffect: vi.fn(),
 }));
 
 vi.mock("@watchdog/core", async (importOriginal) => {
@@ -14,10 +15,11 @@ vi.mock("@watchdog/core", async (importOriginal) => {
     getEntityByCaseSlugEffect: vi.fn(),
     createEntityEffect: vi.fn(),
     updateEntityFieldsEffect: vi.fn(),
+    deleteEntityEffect,
   };
 });
 
-import { list } from "../entities";
+import { list, remove } from "../entities";
 
 const actor = {
   userId: "u1",
@@ -26,13 +28,14 @@ const actor = {
   organizationId: "org-test",
 };
 const caseId = "00000000-0000-4000-8000-000000000001";
+const entityId = "00000000-0000-4000-8000-000000000010";
 
 describe("entities procedures", () => {
   it("lists entities for a case", async () => {
     listEntitiesForCaseEffect.mockReturnValueOnce(
       Effect.succeed([
         {
-          id: "00000000-0000-4000-8000-000000000010",
+          id: entityId,
           caseId,
           kind: "person",
           name: "Alice",
@@ -57,5 +60,29 @@ describe("entities procedures", () => {
     );
 
     await expect(client.list({ caseId })).resolves.toHaveLength(1);
+  });
+
+  it("deletes an entity", async () => {
+    deleteEntityEffect.mockReturnValueOnce(Effect.void);
+
+    const client = createRouterClient(
+      { remove },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(client.remove({ caseId, entityId })).resolves.toEqual({
+      ok: true,
+    });
+    expect(deleteEntityEffect).toHaveBeenCalledWith(
+      caseId,
+      actor.organizationId,
+      entityId
+    );
   });
 });

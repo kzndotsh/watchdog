@@ -155,3 +155,26 @@ export function updateEntityFieldsEffect(
     return toRecord(updated);
   });
 }
+
+export function deleteEntityEffect(
+  caseId: string,
+  organizationId: string,
+  entityId: string
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* deleteEntityGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const existing = yield* tryDb(() =>
+      entitiesRepo.getInCase(db, caseId, entityId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Entity not found" });
+    }
+
+    const deleted = yield* tryDb(() => entitiesRepo.delete(db, entityId));
+    if (!deleted) {
+      return yield* new InvalidError({ reason: "Failed to delete Entity" });
+    }
+
+    yield* notifyEntityChangedEffect(caseId);
+  });
+}

@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
+import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
 import { useEntityTable } from "@/domains/entities/hooks/use-entity-table";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
@@ -48,6 +49,9 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
     emptyText,
     onRowClick,
     pending,
+    caseId,
+    deleteTarget,
+    setDeleteTarget,
   } = useEntityTable(active);
 
   const appendRow = composing ? (
@@ -203,6 +207,15 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
         }}
       />
       <DataTablePagination table={table} />
+
+      <DeleteEntityDialog
+        caseId={caseId}
+        entity={deleteTarget}
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      />
     </Page>
   );
 }

@@ -4,6 +4,8 @@ import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 import {
   createEntityEffect,
+  deleteEntityEffect,
+  listEntitiesForCaseEffect,
   listQuestionsForEntityEffect,
   runDomain
 } from "@watchdog/core";
@@ -44,5 +46,31 @@ describe("createEntity", () => {
       listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, org.id)
     );
     expect(questions).toHaveLength(0);
+  });
+});
+
+describe("deleteEntity", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("removes the entity from the case", async () => {
+    const cased = await seedCase(db);
+    const entity = await runDomain(
+      createEntityEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        kind: "person",
+        name: "To Delete",
+        slug: "to-delete",
+      })
+    );
+    await runDomain(
+      deleteEntityEffect(cased.id, TEST_ORGANIZATION_ID, entity.id)
+    );
+    const remaining = await runDomain(
+      listEntitiesForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
+    expect(remaining.find((row) => row.id === entity.id)).toBeUndefined();
   });
 });

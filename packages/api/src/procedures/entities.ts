@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   createEntityEffect,
+  deleteEntityEffect,
   getEntityByCaseSlugEffect,
   listEntitiesForCaseEffect,
   updateEntityFieldsEffect,
@@ -98,3 +99,28 @@ export const update = authed
       })
     )
   );
+
+export const remove = authed
+  .route({
+    method: "DELETE",
+    path: "/cases/{caseId}/entities/{entityId}",
+    summary: "Delete an entity",
+    tags: ["entities"],
+  })
+  .input(
+    z.object({
+      caseId: z.uuid(),
+      entityId: z.uuid(),
+    })
+  )
+  .output(z.object({ ok: z.literal(true) }))
+  .handler(async ({ input, context }) => {
+    await runApp(
+      deleteEntityEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.entityId
+      )
+    );
+    return { ok: true as const };
+  });

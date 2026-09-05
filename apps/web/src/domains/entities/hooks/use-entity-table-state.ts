@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import {
@@ -11,6 +12,10 @@ import {
 } from "@/domains/entities/components/entity-table.columns";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import { connectionPeersByEntityId } from "@/domains/entities/lib/connection-peers";
+import {
+  copyEntityLink,
+  copyEntityMarkdown,
+} from "@/domains/entities/lib/entity-export";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
@@ -74,7 +79,14 @@ function entityTableEmptyText(rowCount: number): string {
 function buildEntityTableMeta(
   mutations: EntityTableMutations,
   peersByEntityId: ReturnType<typeof connectionPeersByEntityId>,
-  entityOptions: ReturnType<typeof entityOptionsFromRows>
+  entityOptions: ReturnType<typeof entityOptionsFromRows>,
+  actions: Pick<
+    EntityTableMeta,
+    | "onOpenEntity"
+    | "onCopyEntityLink"
+    | "onCopyEntityMarkdown"
+    | "onDeleteEntity"
+  >
 ): EntityTableMeta {
   return {
     updateKind: mutations.updateKind,
@@ -83,12 +95,14 @@ function buildEntityTableMeta(
     entityOptions,
     createConnection: mutations.createConnection,
     updateConnection: mutations.updateConnection,
+    ...actions,
   };
 }
 
 export function useEntityTableState(
   active: CaseRecord,
-  mutations: EntityTableMutations
+  mutations: EntityTableMutations,
+  onDeleteEntity: (entity: EntityRecord) => void
 ) {
   const navigate = useNavigate();
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
@@ -115,9 +129,56 @@ export function useEntityTableState(
     [kindFilter]
   );
 
+  const onOpenEntity = useCallback(
+    (entity: EntityRecord) => {
+      void navigate({
+        to: "/entities/$entitySlug",
+        params: { entitySlug: entity.slug },
+      });
+    },
+    [navigate]
+  );
+
+  const onCopyEntityLink = useCallback((entity: EntityRecord) => {
+    void (async () => {
+      try {
+        await copyEntityLink(entity.slug);
+      } catch {
+        toast.error("Copy failed");
+      }
+    })();
+  }, []);
+
+  const onCopyEntityMarkdown = useCallback(
+    (entity: EntityRecord) => {
+      void (async () => {
+        try {
+          await copyEntityMarkdown(active.id, entity.slug);
+        } catch {
+          toast.error("Copy failed");
+        }
+      })();
+    },
+    [active.id]
+  );
+
   const tableMeta = useMemo(
-    () => buildEntityTableMeta(mutations, peersByEntityId, entityOptions),
-    [mutations, peersByEntityId, entityOptions]
+    () =>
+      buildEntityTableMeta(mutations, peersByEntityId, entityOptions, {
+        onOpenEntity,
+        onCopyEntityLink,
+        onCopyEntityMarkdown,
+        onDeleteEntity,
+      }),
+    [
+      mutations,
+      peersByEntityId,
+      entityOptions,
+      onOpenEntity,
+      onCopyEntityLink,
+      onCopyEntityMarkdown,
+      onDeleteEntity,
+    ]
   );
 
   const { table } = useDataTable({

@@ -195,4 +195,24 @@ export const identifiersRepo = {
       .returning(identifierColumns);
     return updated ?? null;
   },
+
+  /** Delete an identifier only when its owning entity is in the Case. */
+  async deleteInCase(
+    exec: DbExec,
+    caseId: string,
+    identifierId: string
+  ): Promise<boolean> {
+    const [owned] = await exec
+      .select({ id: identifiers.id })
+      .from(identifiers)
+      .innerJoin(entities, eq(identifiers.entityId, entities.id))
+      .where(and(eq(identifiers.id, identifierId), eq(entities.caseId, caseId)))
+      .limit(1);
+    if (!owned) return false;
+    const deleted = await exec
+      .delete(identifiers)
+      .where(eq(identifiers.id, identifierId))
+      .returning({ id: identifiers.id });
+    return deleted.length > 0;
+  },
 };

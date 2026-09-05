@@ -34,4 +34,31 @@ describe("identifiersRepo", () => {
       expect(listed?.value).toBe("ada@example.com");
     });
   });
+
+  it("deleteInCase removes the identifier when owned by the case", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const other = await seedCase(tx, { slug: "other-case" });
+      const entity = await seedEntity(tx, cased.id, {
+        id: testId(22),
+        name: "Subject",
+        slug: "subject",
+      });
+      const created = await seedIdentifier(tx, entity.id, {
+        type: "email",
+        value: "delete-me@example.com",
+        platform: "",
+      });
+
+      expect(await identifiersRepo.deleteInCase(tx, other.id, created.id)).toBe(
+        false
+      );
+      expect(await identifiersRepo.deleteInCase(tx, cased.id, created.id)).toBe(
+        true
+      );
+      expect(
+        await identifiersRepo.getInCase(tx, cased.id, created.id)
+      ).toBeNull();
+    });
+  });
 });

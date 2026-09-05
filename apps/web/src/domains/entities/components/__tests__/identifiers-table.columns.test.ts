@@ -46,9 +46,12 @@ describe("identifiers-table.columns", () => {
   });
 
   it("builds expected identifier table columns", () => {
-    expect(identifiersTableColumns).toHaveLength(8);
+    expect(identifiersTableColumns).toHaveLength(9);
     expect(
       identifiersTableColumns.some((column) => column.id === "evidence")
+    ).toBe(true);
+    expect(
+      identifiersTableColumns.some((column) => column.id === "actions")
     ).toBe(true);
   });
 });

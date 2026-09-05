@@ -27,7 +27,12 @@ import {
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { Button } from "@/shared/ui/shadcn/button";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/shared/ui/shadcn/dropdown-menu";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,
@@ -97,6 +102,9 @@ export interface IdentifierTableMeta {
     identifierId: string,
     evidenceIds: string[]
   ) => void | Promise<void>;
+  onOpenSubject?: (row: IdentifierRecord) => void;
+  onCopyValue: (value: string) => void;
+  onDeleteIdentifier: (row: IdentifierRecord) => void;
 }
 
 function identifierMeta(
@@ -289,12 +297,50 @@ function renderIdentifierNotesCell(
   );
 }
 
+function renderIdentifierActionsCell(
+  ctx: CellContext<IdentifierRecord, unknown>
+) {
+  const row = ctx.row.original;
+  const meta = identifierMeta(ctx);
+  return (
+    <div className="flex justify-end">
+      <RowActionsMenu label={`Actions for ${row.value}`}>
+        {meta.onOpenSubject ? (
+          <DropdownMenuItem
+            onClick={() => {
+              meta.onOpenSubject?.(row);
+            }}
+          >
+            Open identifier
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem
+          onClick={() => {
+            meta.onCopyValue(row.value);
+          }}
+        >
+          Copy value
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive"
+          onClick={() => {
+            meta.onDeleteIdentifier(row);
+          }}
+        >
+          Delete
+        </DropdownMenuItem>
+      </RowActionsMenu>
+    </div>
+  );
+}
+
 export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
   {
     accessorKey: "value",
     header: valueColumnHeader,
     cell: renderIdentifierValueCell,
-    size: 180,
+    size: 170,
     meta: { label: "Value" },
     enableHiding: false,
   },
@@ -302,7 +348,7 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     accessorKey: "type",
     header: typeColumnHeader,
     cell: renderIdentifierTypeCell,
-    size: 120,
+    size: 110,
     minSize: 100,
     meta: { label: "Type" },
   },
@@ -310,7 +356,7 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     accessorKey: "platform",
     header: platformColumnHeader,
     cell: renderIdentifierPlatformCell,
-    size: 140,
+    size: 130,
     minSize: 120,
     meta: { label: "Platform" },
   },
@@ -318,7 +364,7 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     accessorKey: "status",
     header: statusColumnHeader,
     cell: renderIdentifierStatusCell,
-    size: 120,
+    size: 110,
     minSize: 100,
     meta: { label: "Status" },
   },
@@ -326,7 +372,7 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     accessorKey: "confidence",
     header: confidenceColumnHeader,
     cell: renderIdentifierConfidenceCell,
-    size: 120,
+    size: 110,
     minSize: 100,
     meta: { label: "Confidence" },
   },
@@ -335,7 +381,7 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     header: evidenceColumnHeader,
     cell: renderIdentifierEvidenceCell,
     enableSorting: false,
-    size: 160,
+    size: 150,
     meta: { label: "Evidence" },
   },
   {
@@ -346,5 +392,15 @@ export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
     size: 52,
     minSize: 48,
     meta: { label: "Notes" },
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    cell: renderIdentifierActionsCell,
+    enableSorting: false,
+    enableHiding: false,
+    size: 48,
+    minSize: 48,
+    meta: { label: "Actions" },
   },
 ];

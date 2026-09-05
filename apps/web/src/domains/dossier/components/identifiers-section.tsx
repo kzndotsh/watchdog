@@ -19,11 +19,13 @@ import {
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
+import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
 import {
   createIdentifierFn,
   updateIdentifierFn,
 } from "@/domains/entities/identifiers/identifiers.functions";
 import { identifiersListQuery } from "@/domains/entities/identifiers/queries";
+import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import {
@@ -62,6 +64,11 @@ export function IdentifiersSection({
   const [composing, setComposing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    type: string;
+    value: string;
+  } | null>(null);
   const lockedEntity = { id: entity.id, name: entity.name, slug: entity.slug };
 
   const createForm = useIdentifierCreateForm(async ({ value, reset }) => {
@@ -157,6 +164,18 @@ export function IdentifiersSection({
     evidenceOptions,
     onEvidenceClick,
     saveEvidence,
+    onCopyValue: (value) => {
+      void (async () => {
+        try {
+          await copyIdentifierValue(value);
+        } catch {
+          toast.error("Couldn't copy");
+        }
+      })();
+    },
+    onDeleteIdentifier: (row) => {
+      setDeleteTarget({ id: row.id, type: row.type, value: row.value });
+    },
   };
 
   const identifierColumns = dossierIdentifierColumns;
@@ -255,6 +274,14 @@ export function IdentifiersSection({
         entities={[lockedEntity]}
         lockEntity={lockedEntity}
         onImported={invalidate}
+      />
+      <DeleteIdentifierDialog
+        caseId={caseId}
+        target={deleteTarget}
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
       />
     </>
   );

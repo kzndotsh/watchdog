@@ -205,6 +205,20 @@
           ]
         }
       }
+    },
+    "delete": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "DELETE",
+          "path": "/cases/{caseId}/entities/{entityId}",
+          "summary": "Delete an entity",
+          "tags": [
+            "entities"
+          ]
+        }
+      }
     }
   },
   "claims": {
@@ -318,6 +332,20 @@
           "method": "PATCH",
           "path": "/cases/{caseId}/identifiers/{identifierId}",
           "summary": "Update an identifier",
+          "tags": [
+            "identifiers"
+          ]
+        }
+      }
+    },
+    "delete": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "DELETE",
+          "path": "/cases/{caseId}/identifiers/{identifierId}",
+          "summary": "Delete an identifier",
           "tags": [
             "identifiers"
           ]

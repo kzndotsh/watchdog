@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   createIdentifierEffect,
+  deleteIdentifierEffect,
   listIdentifiersForCaseEffect,
   listIdentifiersForEntityEffect,
   updateIdentifierEffect,
@@ -117,3 +118,29 @@ export const update = graphChildWrite
       })
     )
   );
+
+export const remove = graphChildWrite
+  .route({
+    method: "DELETE",
+    path: "/cases/{caseId}/identifiers/{identifierId}",
+    summary: "Delete an identifier",
+    tags: ["identifiers"],
+  })
+  .input(
+    z.object({
+      caseId: z.uuid(),
+      identifierId: z.uuid(),
+      userOverride: userOverrideSchema,
+    })
+  )
+  .output(z.object({ ok: z.literal(true) }))
+  .handler(async ({ input, context }) => {
+    await runApp(
+      deleteIdentifierEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.identifierId
+      )
+    );
+    return { ok: true as const };
+  });

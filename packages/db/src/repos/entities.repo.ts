@@ -190,4 +190,12 @@ export const entitiesRepo = {
       .returning(entityColumns);
     return updated ?? null;
   },
+
+  async delete(exec: DbExec, entityId: string): Promise<boolean> {
+    const deleted = await exec
+      .delete(entities)
+      .where(eq(entities.id, entityId))
+      .returning({ id: entities.id });
+    return deleted.length > 0;
+  },
 };

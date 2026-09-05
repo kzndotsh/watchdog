@@ -68,3 +68,9 @@ export const updateEntityFieldsInputSchema = z
 export type UpdateEntityFieldsInput = z.output<
   typeof updateEntityFieldsInputSchema
 >;
+
+export const deleteEntityInputSchema = z.object({
+  caseId: uuidSchema,
+  entityId: uuidSchema,
+});
+export type DeleteEntityInput = z.output<typeof deleteEntityInputSchema>;

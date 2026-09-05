@@ -20,6 +20,11 @@ import {
 } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { RelativeTime } from "@/shared/ui/relative-time";
+import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/shared/ui/shadcn/dropdown-menu";
 import { ENTITY_KIND_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import { entityKindSchema, type EntityKind } from "@watchdog/schemas";
 
@@ -54,6 +59,10 @@ export interface EntityTableMeta {
     centerId: string,
     input: UpdateEntityConnectionInput
   ) => Promise<void>;
+  onOpenEntity: (entity: EntityRecord) => void;
+  onCopyEntityLink: (entity: EntityRecord) => void;
+  onCopyEntityMarkdown: (entity: EntityRecord) => void;
+  onDeleteEntity: (entity: EntityRecord) => void;
 }
 
 function entityMeta(
@@ -179,6 +188,47 @@ function renderCreatedAtCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
+function renderActionsCell(ctx: CellContext<EntityRecord, unknown>) {
+  const row = ctx.row.original;
+  const meta = entityMeta(ctx);
+  return (
+    <div className="flex justify-end">
+      <RowActionsMenu label={`Actions for ${row.name}`}>
+        <DropdownMenuItem
+          onClick={() => {
+            meta.onOpenEntity(row);
+          }}
+        >
+          Open entity
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            meta.onCopyEntityLink(row);
+          }}
+        >
+          Copy link
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            meta.onCopyEntityMarkdown(row);
+          }}
+        >
+          Copy Markdown
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive"
+          onClick={() => {
+            meta.onDeleteEntity(row);
+          }}
+        >
+          Delete
+        </DropdownMenuItem>
+      </RowActionsMenu>
+    </div>
+  );
+}
+
 export const entityTableColumns: ColumnDef<EntityRecord>[] = [
   {
     accessorKey: "name",
@@ -203,7 +253,7 @@ export const entityTableColumns: ColumnDef<EntityRecord>[] = [
     header: summaryColumnHeader,
     cell: renderSummaryCell,
     meta: { label: "Summary" },
-    size: 280,
+    size: 260,
   },
   {
     id: "connections",
@@ -211,7 +261,7 @@ export const entityTableColumns: ColumnDef<EntityRecord>[] = [
     cell: renderConnectionsCell,
     enableSorting: false,
     meta: { label: "Connections" },
-    size: 260,
+    size: 240,
     minSize: 180,
   },
   {
@@ -219,7 +269,7 @@ export const entityTableColumns: ColumnDef<EntityRecord>[] = [
     header: updatedColumnHeader,
     cell: renderUpdatedAtCell,
     meta: { label: "Updated" },
-    size: 110,
+    size: 100,
     minSize: 90,
   },
   {
@@ -227,7 +277,17 @@ export const entityTableColumns: ColumnDef<EntityRecord>[] = [
     header: createdColumnHeader,
     cell: renderCreatedAtCell,
     meta: { label: "Created" },
-    size: 110,
+    size: 100,
     minSize: 90,
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    cell: renderActionsCell,
+    enableSorting: false,
+    enableHiding: false,
+    meta: { label: "Actions" },
+    size: 48,
+    minSize: 48,
   },
 ];

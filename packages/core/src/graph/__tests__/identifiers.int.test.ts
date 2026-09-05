@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   DomainError,
   createIdentifierEffect,
+  deleteIdentifierEffect,
+  listIdentifiersForCaseEffect,
   updateIdentifierEffect,
   runDomain,
 } from "@watchdog/core";
@@ -111,5 +113,34 @@ describe("updateIdentifier", () => {
     );
     const links = await evidenceLinksRepo.listForIdentifiers(db, [created.id]);
     expect(links.get(created.id)).toEqual([second.id]);
+  });
+});
+
+describe("deleteIdentifier", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("removes the identifier from the case", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(24) });
+    const created = await runDomain(
+      createIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        entityId: entity.id,
+        type: "email",
+        value: "delete-me@mailhost.test",
+        confidence: "unverified",
+        status: "unknown",
+      })
+    );
+    await runDomain(
+      deleteIdentifierEffect(cased.id, TEST_ORGANIZATION_ID, created.id)
+    );
+    const remaining = await runDomain(
+      listIdentifiersForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
+    expect(remaining.find((row) => row.id === created.id)).toBeUndefined();
   });
 });

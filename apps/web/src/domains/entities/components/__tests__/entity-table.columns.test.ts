@@ -41,9 +41,12 @@ describe("entity-table.columns", () => {
   });
 
   it("builds expected entity table columns", () => {
-    expect(entityTableColumns).toHaveLength(6);
+    expect(entityTableColumns).toHaveLength(7);
     expect(
       entityTableColumns.some((column) => column.id === "connections")
     ).toBe(true);
+    expect(entityTableColumns.some((column) => column.id === "actions")).toBe(
+      true
+    );
   });
 });

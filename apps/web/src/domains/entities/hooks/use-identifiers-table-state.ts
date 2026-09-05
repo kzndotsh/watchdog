@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import {
@@ -10,6 +11,7 @@ import {
   type IdentifiersTableMeta,
 } from "@/domains/entities/components/identifiers-table.columns";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
+import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { evidenceListQuery } from "@/domains/intake/queries";
@@ -146,12 +148,17 @@ function identifiersTableEmptyText(rowCount: number): string {
 
 function buildIdentifiersTableMeta(
   mutations: IdentifiersTableMutations,
-  evidenceOptions: EvidenceOption[]
+  evidenceOptions: EvidenceOption[],
+  actions: Pick<
+    IdentifiersTableMeta,
+    "onOpenSubject" | "onCopyValue" | "onDeleteIdentifier"
+  >
 ): IdentifiersTableMeta {
   return {
     evidenceOptions,
     updateField: mutations.updateField,
     saveEvidence: mutations.saveEvidence,
+    ...actions,
   };
 }
 
@@ -159,7 +166,8 @@ export function useIdentifiersTableState(
   active: CaseRecord,
   rows: CaseIdentifierRecord[],
   mutations: IdentifiersTableMutations,
-  identifiersPending: boolean
+  identifiersPending: boolean,
+  onDeleteIdentifier: (row: CaseIdentifierRecord) => void
 ) {
   const navigate = useNavigate();
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
@@ -193,9 +201,35 @@ export function useIdentifiersTableState(
     [typeFilter, statusFilter, confidenceFilter]
   );
 
+  const onOpenSubject = useCallback(
+    (row: CaseIdentifierRecord) => {
+      void navigate({
+        to: "/entities/$entitySlug",
+        params: { entitySlug: row.entitySlug },
+        search: { tab: "identifiers" },
+      });
+    },
+    [navigate]
+  );
+
+  const onCopyValue = useCallback((value: string) => {
+    void (async () => {
+      try {
+        await copyIdentifierValue(value);
+      } catch {
+        toast.error("Couldn't copy");
+      }
+    })();
+  }, []);
+
   const tableMeta = useMemo(
-    () => buildIdentifiersTableMeta(mutations, evidenceOptions),
-    [mutations, evidenceOptions]
+    () =>
+      buildIdentifiersTableMeta(mutations, evidenceOptions, {
+        onOpenSubject,
+        onCopyValue,
+        onDeleteIdentifier,
+      }),
+    [mutations, evidenceOptions, onOpenSubject, onCopyValue, onDeleteIdentifier]
   );
 
   const { table } = useDataTable({

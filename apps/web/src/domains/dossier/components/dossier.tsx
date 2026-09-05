@@ -1,7 +1,7 @@
 import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
-import { Link, notFound } from "@tanstack/react-router";
-import { PencilIcon } from "lucide-react";
-import { useEffect } from "react";
+import { Link, notFound, useNavigate } from "@tanstack/react-router";
+import { PencilIcon, Trash2Icon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -30,6 +30,7 @@ import {
   SummarySection,
 } from "@/domains/dossier/components/summary-notes-section";
 import { useDossierShell } from "@/domains/dossier/hooks/use-dossier-shell";
+import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
@@ -108,6 +109,8 @@ function DossierForEntity({
     renameMutation,
     editMutation,
   } = useDossierShell(caseId, entity);
+  const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
     <Page density={tab === "tasks" || tab === "notes" ? "split" : "default"}>
@@ -153,6 +156,18 @@ function DossierForEntity({
                 Edit
               </Button>
               <DossierExportMenu caseId={caseId} entitySlug={entity.slug} />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive gap-1.5"
+                onClick={() => {
+                  setDeleteOpen(true);
+                }}
+              >
+                <Trash2Icon className="size-3.5" />
+                Delete entity
+              </Button>
             </div>
           }
           below={
@@ -206,6 +221,16 @@ function DossierForEntity({
           onSubmit={async (values) => {
             setEditError(null);
             await editMutation.mutateAsync(values);
+          }}
+        />
+
+        <DeleteEntityDialog
+          caseId={caseId}
+          entity={entity}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onDeleted={() => {
+            void navigate({ to: "/entities" });
           }}
         />
 
