@@ -20,6 +20,7 @@
 
 - `wd claims|identifiers|edges|events|questions …` require **`--user-override`**.
 - CLI **refuses `confidence=confirmed`** (Triage Accept / Dossier may set `confirmed`).
+- `caseId` must belong to the actor’s organization; foreign-org Case → **`not_found`**.
 
 ## Pure prep
 

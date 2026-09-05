@@ -206,6 +206,7 @@ A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker
 | Types | `pnpm typecheck` |
 | Tests | `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Codegen | `pnpm generate:caps` · `pnpm generate:client` |
+| Desloppify (optional) | `pnpm desloppify:scan` · `pnpm desloppify:status` · `pnpm desloppify:next` (`.desloppify/` gitignored) |
 
 Integration and end-to-end runs need their own databases first: `just test-db`.
 

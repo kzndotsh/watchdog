@@ -31,6 +31,7 @@ Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets 
 - **Stale Graph / inbox after experiments:** `just wipe yes` then re-seed manually.
 - **Route 404 after adding files:** `pnpm generate-routes` or restart `pnpm dev:web` (`routeTree.gen.ts` is generated).
 - **Integration/e2e locally:** `just test-db` then `pnpm test:integration` or `pnpm test:e2e`.
+- **Desloppify (optional local hygiene):** `pnpm desloppify:scan` (bootstrap excludes first); `pnpm desloppify:status` / `pnpm desloppify:next`. State under `.desloppify/` is gitignored — do not commit it.
 
 ## Next steps
 

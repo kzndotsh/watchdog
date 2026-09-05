@@ -40,7 +40,7 @@ CI fails if regen output drifts from committed files.
 
 Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show docs-only; push to `main` runs full CI.
 
-Parallel after File detection: **Gates** (Ultracite, AGENTS/docs/effect/skills, typecheck, knip, web DS, cap/client drift, db repos) ‖ **Unit** (unit/property/component) ‖ **Integration + e2e** (Postgres + MinIO). Advisory (React Doctor / Desloppify) runs separately and does not block. Aggregator job **Check** stays the required status (treats skipped siblings as OK).
+Parallel after File detection: **Gates** (Ultracite, AGENTS/docs/effect/skills, typecheck, knip, web DS, cap/client drift, db repos) ‖ **Unit** (unit/property/component) ‖ **Integration + e2e** (Postgres + MinIO). Advisory (React Doctor / Desloppify) runs separately and does not block — Desloppify CI uses `pnpm desloppify:scan:ci` (bootstrap excludes `repos`/`data`/generated trees first). Aggregator job **Check** stays the required status (treats skipped siblings as OK).
 
 Dependabot version updates: [`.github/dependabot.yml`](../../.github/dependabot.yml) (npm/pnpm root lockfile, GitHub Actions, docker-compose, Nix flakes) — weekly Mondays, grouped minor/patch.
 
