@@ -63,8 +63,9 @@ CLAUDE.local.md
 *.local
 lefthook-local.yml
 
-# Vendored Effect source for agents (nested clone; never commit)
-repos/
+# Vendored Effect source for agents (nested clone; never commit).
+# Anchored to repo root so packages/db/src/repos/ stays trackable.
+/repos/
 
 # Scratch / batch assessment output
 results/
