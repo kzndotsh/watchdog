@@ -1,10 +1,22 @@
+import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
-import { KeyIcon, ShieldIcon, UserIcon, WrenchIcon } from "lucide-react";
+import {
+  KeyIcon,
+  ShieldIcon,
+  UserCogIcon,
+  UserIcon,
+  UsersIcon,
+  WrenchIcon,
+} from "lucide-react";
 import { Suspense } from "react";
 import { z } from "zod";
 
+import { authClient } from "@/auth/client";
+import { isInstanceAdmin } from "@/auth/instance-admin";
 import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
+import { TeamSettings } from "@/auth/ui/team/team-settings";
+import { UsersSettings } from "@/auth/ui/users/users-settings";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
   SETTINGS_TABS,
@@ -17,6 +29,7 @@ import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
 import { warmPrefetchQuery } from "@/shared/lib/warm-query";
 import { stackPendingFallback } from "@/shared/ui/active-tab-body";
+import { Spinner } from "@/shared/ui/shadcn/spinner";
 
 const routeApi = getRouteApi("/_protected/settings/");
 
@@ -32,6 +45,19 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
     label: "Security",
     description: "Password, sessions, and linked accounts.",
     icon: ShieldIcon,
+  },
+  {
+    id: "team",
+    label: "Team",
+    description: "Invite investigators and manage organization membership.",
+    icon: UsersIcon,
+  },
+  {
+    id: "users",
+    label: "Users",
+    description:
+      "Disable or enable install accounts. Organization membership is on Team.",
+    icon: UserCogIcon,
   },
   {
     id: "api-keys",
@@ -59,7 +85,15 @@ const settingsSearchSchema = z.object({
   tab: z.unknown().transform(parseSettingsTab).optional(),
 });
 
-function SettingsPanel({ tab }: { tab: SettingsTab }) {
+function SettingsPanel({
+  tab,
+  canManageUsers,
+  sessionPending,
+}: {
+  tab: SettingsTab;
+  canManageUsers: boolean;
+  sessionPending: boolean;
+}) {
   switch (tab) {
     case "account":
     case "security": {
@@ -75,6 +109,26 @@ function SettingsPanel({ tab }: { tab: SettingsTab }) {
           <ApiKeys />
         </div>
       );
+    }
+    case "team": {
+      return <TeamSettings />;
+    }
+    case "users": {
+      if (sessionPending) {
+        return (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        );
+      }
+      if (!canManageUsers) {
+        return (
+          <p className="text-muted-foreground text-sm">
+            Only install admins can manage users.
+          </p>
+        );
+      }
+      return <UsersSettings />;
     }
     case "credentials": {
       return (
@@ -93,7 +147,14 @@ function SettingsPanel({ tab }: { tab: SettingsTab }) {
 function SettingsPage() {
   const { tab: tabSearch } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
+  const { data: session, isPending: sessionPending } = useSession(authClient);
+  const canManageUsers = isInstanceAdmin(
+    (session?.user as { role?: string | null } | undefined)?.role
+  );
   const activeTab: SettingsTab = tabSearch ?? "account";
+  const navItems = SETTINGS_NAV.filter(
+    (item) => item.id !== "users" || canManageUsers
+  );
 
   function setTab(next: SettingsTab) {
     void navigate({
@@ -109,11 +170,16 @@ function SettingsPage() {
     <Page>
       <PageHeader />
       <SettingsShell
-        items={SETTINGS_NAV}
+        items={navItems}
+        titles={SETTINGS_NAV}
         activeTab={activeTab}
         onTabChange={setTab}
       >
-        <SettingsPanel tab={activeTab} />
+        <SettingsPanel
+          tab={activeTab}
+          canManageUsers={canManageUsers}
+          sessionPending={sessionPending}
+        />
       </SettingsShell>
     </Page>
   );

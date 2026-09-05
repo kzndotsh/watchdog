@@ -26,4 +26,10 @@ export class AuthPage {
       timeout: 30_000,
     });
   }
+
+  async signOut(): Promise<void> {
+    await this.page.goto("/auth/sign-out");
+    await this.page.waitForURL(/\/auth\/sign-in/, { timeout: 30_000 });
+    await waitForHydrated(this.page);
+  }
 }

@@ -32,6 +32,11 @@ vi.mock("@/lib/api-cors.server", () => ({
 vi.mock("@watchdog/db", () => ({
   isWatchdogEvent: () => true,
   listenForEvents: listenForEventsMock,
+  casesRepo: {
+    getById: vi.fn(),
+    listIds: vi.fn(async () => []),
+  },
+  db: {},
 }));
 
 import { Route } from "@/routes/api/events";
@@ -79,5 +84,28 @@ describe("api events route", () => {
 
     expect(response.status).toBe(401);
     expect(await response.text()).toBe("Unauthorized");
+  });
+
+  it("returns 403 when the actor has no organization", async () => {
+    createApiContextMock.mockResolvedValue({
+      actor: { userId: "u1", email: null, name: null, organizationId: null },
+    });
+    const handlers = (
+      Route.options as {
+        server: {
+          handlers: Record<
+            string,
+            (ctx: { request: Request }) => Promise<Response>
+          >;
+        };
+      }
+    ).server.handlers;
+
+    const response = await handlers.GET({
+      request: new Request(testHttpOrigin("localhost", "/api/events")),
+    });
+
+    expect(response.status).toBe(403);
+    expect(await response.text()).toBe("Forbidden");
   });
 });

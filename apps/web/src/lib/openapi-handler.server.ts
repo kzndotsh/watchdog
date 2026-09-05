@@ -8,8 +8,6 @@ import { router } from "@watchdog/api";
 
 const openApiHandler = new OpenAPIHandler(router, {
   plugins: [
-    // TS7 makes CORSPlugin's context invariant against OpenAPI's merged plugin context.
-    // @ts-expect-error CORSPlugin vs OpenAPI merged handler plugin context
     watchdogCorsPlugin,
     new OpenAPIReferencePlugin({
       schemaConverters: [new ZodToJsonSchemaConverter()],

@@ -5,8 +5,11 @@ import { NotFoundError } from "@watchdog/core";
 import { testId, testHttpOrigin } from "@watchdog/test-kit";
 
 const createApiContextMock = vi.hoisted(() =>
-  vi.fn().mockResolvedValue({ actor: { id: "actor-1" } })
+  vi.fn().mockResolvedValue({
+    actor: { userId: "actor-1", organizationId: "org-1" },
+  })
 );
+const getCaseByIdEffectMock = vi.hoisted(() => vi.fn());
 const getEntityByCaseSlugEffectMock = vi.hoisted(() => vi.fn());
 const renderEntityMarkdownEffectMock = vi.hoisted(() => vi.fn());
 
@@ -31,6 +34,7 @@ vi.mock("@watchdog/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core")>();
   return {
     ...actual,
+    getCaseByIdEffect: getCaseByIdEffectMock,
     getEntityByCaseSlugEffect: getEntityByCaseSlugEffectMock,
     renderEntityMarkdownEffect: renderEntityMarkdownEffectMock,
   };
@@ -68,7 +72,12 @@ describe("entity export markdown route", () => {
   });
 
   it("returns markdown when the entity export succeeds", async () => {
-    createApiContextMock.mockResolvedValueOnce({ actor: { id: "actor-1" } });
+    createApiContextMock.mockResolvedValueOnce({
+      actor: { userId: "actor-1", organizationId: "org-1" },
+    });
+    getCaseByIdEffectMock.mockReturnValueOnce(
+      Effect.succeed({ id: CASE_ID, slug: "alpha" })
+    );
     getEntityByCaseSlugEffectMock.mockReturnValueOnce(
       Effect.succeed({ id: testId(20) })
     );
@@ -89,7 +98,12 @@ describe("entity export markdown route", () => {
   });
 
   it("returns 404 when the entity is missing", async () => {
-    createApiContextMock.mockResolvedValueOnce({ actor: { id: "actor-1" } });
+    createApiContextMock.mockResolvedValueOnce({
+      actor: { userId: "actor-1", organizationId: "org-1" },
+    });
+    getCaseByIdEffectMock.mockReturnValueOnce(
+      Effect.succeed({ id: CASE_ID, slug: "alpha" })
+    );
     getEntityByCaseSlugEffectMock.mockReturnValueOnce(
       new NotFoundError({ resource: "Entity not found" })
     );

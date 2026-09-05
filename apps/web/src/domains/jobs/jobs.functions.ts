@@ -20,6 +20,8 @@ import type { JobListRecord, JobRecord } from "@watchdog/core";
 export type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 export type { JobListRecord, JobRecord } from "@watchdog/core";
 
+type OrpcFnContext = Parameters<typeof orpcFromContext>[0];
+
 export const listCapabilitiesFn = createServerFn({ method: "GET" }).handler(
   async ({ context }): Promise<CapListItem[]> =>
     await orpcFromContext(context).capabilities.list()
@@ -99,7 +101,7 @@ function caseScopedArtifactUri(caseId: string, uri: string): string | null {
 
 function resolveJobArtifactUri(
   data: GetArtifactContentInput & { source: "job" },
-  context: { session: Parameters<typeof orpcFromContext>[0]["session"] }
+  context: OrpcFnContext
 ): Promise<string | null> {
   return orpcFromContext(context)
     .jobs.get({
@@ -115,7 +117,7 @@ function resolveJobArtifactUri(
 
 function fetchEvidenceBlobText(
   data: GetArtifactContentInput & { source: "evidence" },
-  context: { session: Parameters<typeof orpcFromContext>[0]["session"] }
+  context: OrpcFnContext
 ): Promise<string | null> {
   return orpcFromContext(context)
     .evidence.downloadUrl({

@@ -7,12 +7,16 @@ const { mockClient, createRouterClient, actorFromSession, peekRequestLogger } =
       mockClient,
       createRouterClient: vi.fn(() => mockClient),
       actorFromSession: vi.fn(
-        (session: {
-          user: { id: string; email?: string | null; name?: string | null };
-        }) => ({
+        (
+          session: {
+            user: { id: string; email?: string | null; name?: string | null };
+          },
+          organizationId: string | null
+        ) => ({
           userId: session.user.id,
           email: session.user.email ?? null,
           name: session.user.name ?? null,
+          organizationId,
         })
       ),
       peekRequestLogger: vi.fn(() => ({})),
@@ -34,7 +38,12 @@ import {
 describe("orpc.server", () => {
   it("creates an in-process router client for an actor", () => {
     createRouterClient.mockClear();
-    const actor = { userId: "u1", email: "a@b.c", name: "Alice" };
+    const actor = {
+      userId: "u1",
+      email: "a@b.c",
+      name: "Alice",
+      organizationId: "org-1",
+    };
 
     const client = orpcForActor(actor);
 
@@ -54,9 +63,9 @@ describe("orpc.server", () => {
     actorFromSession.mockClear();
     const session = { user: { id: "u1", email: "a@b.c", name: "Alice" } };
 
-    orpcFromContext({ session });
+    orpcFromContext({ session, organizationId: "org-1" });
 
-    expect(actorFromSession).toHaveBeenCalledWith(session);
+    expect(actorFromSession).toHaveBeenCalledWith(session, "org-1");
   });
 
   it("re-exports actorFromSession", () => {

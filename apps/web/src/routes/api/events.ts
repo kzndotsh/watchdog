@@ -16,7 +16,7 @@ import {
   applyWatchdogCors,
   corsPreflightResponse,
 } from "@/lib/api-cors.server";
-import { isWatchdogEvent, listenForEvents } from "@watchdog/db";
+import { casesRepo, db, isWatchdogEvent, listenForEvents } from "@watchdog/db";
 
 export const Route = createFileRoute("/api/events")({
   server: {
@@ -28,9 +28,21 @@ export const Route = createFileRoute("/api/events")({
         if (!ctx.actor) {
           return new Response("Unauthorized", { status: 401 });
         }
+        const organizationId = ctx.actor.organizationId;
+        if (!organizationId) {
+          return new Response("Forbidden", { status: 403 });
+        }
 
         const url = new URL(request.url);
         const caseId = url.searchParams.get("caseId") ?? null;
+        if (caseId) {
+          const scoped = await casesRepo.getById(db, caseId, organizationId);
+          if (!scoped) {
+            return new Response("Not Found", { status: 404 });
+          }
+        }
+
+        let allowed = new Set(await casesRepo.listIds(db, organizationId));
 
         const stream = new ReadableStream({
           start(controller) {
@@ -38,7 +50,6 @@ export const Route = createFileRoute("/api/events")({
             let closed = false;
             let listener: ReturnType<typeof listenForEvents> | undefined;
 
-            // Heartbeat to keep connection alive through proxies
             const heartbeat = setInterval(() => {
               try {
                 controller.enqueue(enc.encode(": heartbeat\n\n"));
@@ -77,10 +88,19 @@ export const Route = createFileRoute("/api/events")({
                 try {
                   const parsed: unknown = JSON.parse(rawPayload);
                   if (!isWatchdogEvent(parsed)) return;
-                  if (caseId && parsed.caseId !== caseId) {
+                  const eventCaseId = parsed.caseId;
+                  if (eventCaseId === undefined || eventCaseId === "") return;
+                  if (caseId && eventCaseId !== caseId) return;
+                  if (allowed.has(eventCaseId)) {
+                    send(parsed.type, rawPayload);
                     return;
                   }
-                  send(parsed.type, rawPayload);
+                  void casesRepo.listIds(db, organizationId).then((ids) => {
+                    allowed = new Set(ids);
+                    if (allowed.has(eventCaseId)) {
+                      send(parsed.type, rawPayload);
+                    }
+                  });
                 } catch {
                   // malformed — skip
                 }

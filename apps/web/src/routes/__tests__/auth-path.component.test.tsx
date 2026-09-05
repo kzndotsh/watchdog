@@ -2,6 +2,9 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const useParamsMock = vi.hoisted(() => vi.fn(() => ({ path: "sign-in" })));
+const useRouteContextMock = vi.hoisted(() =>
+  vi.fn(() => ({ allowSignup: false }))
+);
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -9,7 +12,10 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   return {
     ...actual,
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
-    getRouteApi: () => ({ useParams: useParamsMock }),
+    getRouteApi: () => ({
+      useParams: useParamsMock,
+      useRouteContext: useRouteContextMock,
+    }),
     redirect: (options: unknown) => {
       throw options;
     },

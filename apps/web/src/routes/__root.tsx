@@ -17,6 +17,7 @@ const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getIte
 
 export interface RouterContext {
   queryClient: QueryClient;
+  allowSignup?: boolean;
 }
 
 function NotFoundPage() {

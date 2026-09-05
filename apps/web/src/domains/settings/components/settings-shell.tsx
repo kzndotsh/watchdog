@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 export const SETTINGS_TABS = [
   "account",
   "security",
+  "team",
+  "users",
   "api-keys",
   "credentials",
 ] as const;
@@ -22,6 +24,7 @@ export interface SettingsNavItem {
 
 interface SettingsShellProps {
   items: readonly SettingsNavItem[];
+  titles?: readonly SettingsNavItem[];
   activeTab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
   children: ReactNode;
@@ -33,11 +36,16 @@ interface SettingsShellProps {
  */
 export function SettingsShell({
   items,
+  titles,
   activeTab,
   onTabChange,
   children,
 }: SettingsShellProps) {
-  const active = items.find((item) => item.id === activeTab) ?? items[0];
+  const catalog = titles ?? items;
+  const active =
+    catalog.find((item) => item.id === activeTab) ??
+    items.find((item) => item.id === activeTab) ??
+    items[0];
 
   return (
     <div className="flex flex-col gap-8 lg:flex-row">

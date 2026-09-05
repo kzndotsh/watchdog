@@ -75,7 +75,7 @@ describe("case export zip route", () => {
 
   it("returns a zip attachment when export files exist", async () => {
     createApiContextMock.mockResolvedValueOnce({
-      actor: { id: "actor-1" },
+      actor: { userId: "actor-1", organizationId: "org-1" },
       log: { set: vi.fn() },
     });
     getCaseByIdEffectMock.mockReturnValueOnce(
@@ -102,7 +102,7 @@ describe("case export zip route", () => {
 
   it("returns 404 when there are no markdown files to export", async () => {
     createApiContextMock.mockResolvedValueOnce({
-      actor: { id: "actor-1" },
+      actor: { userId: "actor-1", organizationId: "org-1" },
       log: { set: vi.fn() },
     });
     getCaseByIdEffectMock.mockReturnValueOnce(

@@ -23,8 +23,11 @@ type SessionForActor = Parameters<typeof actorFromSession>[0];
 /** ServerFn handler context → in-process oRPC client for the authenticated actor. */
 export function orpcFromContext(context: {
   session: SessionForActor;
+  organizationId: string | null;
 }): RouterClient<AppRouter> {
-  return orpcForActor(actorFromSession(context.session));
+  return orpcForActor(
+    actorFromSession(context.session, context.organizationId)
+  );
 }
 
 export { actorFromSession };

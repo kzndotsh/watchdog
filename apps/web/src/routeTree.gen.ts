@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
+import { Route as ApiSignupAllowedRouteImport } from './routes/api/signup-allowed'
 import { Route as ApiV1RouteImport } from './routes/api/v1'
 import { Route as AuthPathRouteImport } from './routes/auth/$path'
 import { Route as ProtectedCasesIndexRouteImport } from './routes/_protected/cases/index'
@@ -28,6 +29,7 @@ import { Route as ProtectedUiIndexRouteImport } from './routes/_protected/ui/ind
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiRpcSplatRouteImport } from './routes/api/rpc.$'
 import { Route as ApiV1SplatRouteImport } from './routes/api/v1.$'
+import { Route as AuthAcceptInvitationInvitationIdRouteImport } from './routes/auth/accept-invitation.$invitationId'
 import { Route as ApiV1CasesCaseIdExportDotzipRouteImport } from './routes/api/v1/cases.$caseId.export[.]zip'
 import { Route as ApiV1CasesCaseIdEntitiesSlugExportDotmdRouteImport } from './routes/api/v1/cases.$caseId.entities.$slug.export[.]md'
 
@@ -43,6 +45,11 @@ const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
 const ApiEventsRoute = ApiEventsRouteImport.update({
   id: '/api/events',
   path: '/api/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSignupAllowedRoute = ApiSignupAllowedRouteImport.update({
+  id: '/api/signup-allowed',
+  path: '/api/signup-allowed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1Route = ApiV1RouteImport.update({
@@ -127,6 +134,12 @@ const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
   path: '/$',
   getParentRoute: () => ApiV1Route,
 } as any)
+const AuthAcceptInvitationInvitationIdRoute =
+  AuthAcceptInvitationInvitationIdRouteImport.update({
+    id: '/auth/accept-invitation/$invitationId',
+    path: '/auth/accept-invitation/$invitationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiV1CasesCaseIdExportDotzipRoute =
   ApiV1CasesCaseIdExportDotzipRouteImport.update({
     id: '/cases/$caseId/export.zip',
@@ -143,6 +156,7 @@ const ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
   '/api/events': typeof ApiEventsRoute
+  '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
   '/auth/$path': typeof AuthPathRoute
   '/cases/$caseSlug': typeof ProtectedCasesCaseSlugRoute
@@ -150,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/cases/': typeof ProtectedCasesIndexRoute
   '/collect/': typeof ProtectedCollectIndexRoute
   '/entities/': typeof ProtectedEntitiesIndexRoute
@@ -164,6 +179,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/api/events': typeof ApiEventsRoute
+  '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
   '/auth/$path': typeof AuthPathRoute
   '/': typeof ProtectedIndexRoute
@@ -172,6 +188,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/cases': typeof ProtectedCasesIndexRoute
   '/collect': typeof ProtectedCollectIndexRoute
   '/entities': typeof ProtectedEntitiesIndexRoute
@@ -188,6 +205,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_protected': typeof ProtectedRouteWithChildren
   '/api/events': typeof ApiEventsRoute
+  '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
   '/auth/$path': typeof AuthPathRoute
   '/_protected/': typeof ProtectedIndexRoute
@@ -196,6 +214,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/rpc/$': typeof ApiRpcSplatRoute
   '/api/v1/$': typeof ApiV1SplatRoute
+  '/auth/accept-invitation/$invitationId': typeof AuthAcceptInvitationInvitationIdRoute
   '/_protected/cases/': typeof ProtectedCasesIndexRoute
   '/_protected/collect/': typeof ProtectedCollectIndexRoute
   '/_protected/entities/': typeof ProtectedEntitiesIndexRoute
@@ -213,6 +232,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api/events'
+    | '/api/signup-allowed'
     | '/api/v1'
     | '/auth/$path'
     | '/cases/$caseSlug'
@@ -220,6 +240,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/api/v1/$'
+    | '/auth/accept-invitation/$invitationId'
     | '/cases/'
     | '/collect/'
     | '/entities/'
@@ -234,6 +255,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/api/events'
+    | '/api/signup-allowed'
     | '/api/v1'
     | '/auth/$path'
     | '/'
@@ -242,6 +264,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/api/v1/$'
+    | '/auth/accept-invitation/$invitationId'
     | '/cases'
     | '/collect'
     | '/entities'
@@ -257,6 +280,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_protected'
     | '/api/events'
+    | '/api/signup-allowed'
     | '/api/v1'
     | '/auth/$path'
     | '/_protected/'
@@ -265,6 +289,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/rpc/$'
     | '/api/v1/$'
+    | '/auth/accept-invitation/$invitationId'
     | '/_protected/cases/'
     | '/_protected/collect/'
     | '/_protected/entities/'
@@ -281,10 +306,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   ProtectedRoute: typeof ProtectedRouteWithChildren
   ApiEventsRoute: typeof ApiEventsRoute
+  ApiSignupAllowedRoute: typeof ApiSignupAllowedRoute
   ApiV1Route: typeof ApiV1RouteWithChildren
   AuthPathRoute: typeof AuthPathRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiRpcSplatRoute: typeof ApiRpcSplatRoute
+  AuthAcceptInvitationInvitationIdRoute: typeof AuthAcceptInvitationInvitationIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -308,6 +335,13 @@ declare module '@tanstack/react-router' {
       path: '/api/events'
       fullPath: '/api/events'
       preLoaderRoute: typeof ApiEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/signup-allowed': {
+      id: '/api/signup-allowed'
+      path: '/api/signup-allowed'
+      fullPath: '/api/signup-allowed'
+      preLoaderRoute: typeof ApiSignupAllowedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1': {
@@ -422,6 +456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1SplatRouteImport
       parentRoute: typeof ApiV1Route
     }
+    '/auth/accept-invitation/$invitationId': {
+      id: '/auth/accept-invitation/$invitationId'
+      path: '/auth/accept-invitation/$invitationId'
+      fullPath: '/auth/accept-invitation/$invitationId'
+      preLoaderRoute: typeof AuthAcceptInvitationInvitationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/cases/$caseId/export.zip': {
       id: '/api/v1/cases/$caseId/export.zip'
       path: '/cases/$caseId/export.zip'
@@ -491,10 +532,12 @@ const ApiV1RouteWithChildren = ApiV1Route._addFileChildren(ApiV1RouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   ProtectedRoute: ProtectedRouteWithChildren,
   ApiEventsRoute: ApiEventsRoute,
+  ApiSignupAllowedRoute: ApiSignupAllowedRoute,
   ApiV1Route: ApiV1RouteWithChildren,
   AuthPathRoute: AuthPathRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiRpcSplatRoute: ApiRpcSplatRoute,
+  AuthAcceptInvitationInvitationIdRoute: AuthAcceptInvitationInvitationIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

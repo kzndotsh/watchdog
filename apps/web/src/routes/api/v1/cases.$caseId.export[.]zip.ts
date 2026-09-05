@@ -99,10 +99,11 @@ type CaseExportZipResult =
     };
 
 function caseExportZipEffect(
-  caseId: string
+  caseId: string,
+  organizationId: string
 ): Effect.Effect<CaseExportZipResult, DomainTag> {
   return Effect.gen(function* caseExportZipGen() {
-    const activeCase = yield* getCaseByIdEffect(caseId).pipe(
+    const activeCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
       Effect.catchTag("NotFoundError", () => Effect.succeed(null))
     );
     if (activeCase === null) {
@@ -171,9 +172,14 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
       }) => {
         const ctx = await createApiContext(request);
         if (!ctx.actor) return new Response("Unauthorized", { status: 401 });
+        if (!ctx.actor.organizationId) {
+          return new Response("Forbidden", { status: 403 });
+        }
 
         const { caseId } = params;
-        const exported = await runApp(caseExportZipEffect(caseId));
+        const exported = await runApp(
+          caseExportZipEffect(caseId, ctx.actor.organizationId)
+        );
         if (exported.kind === "missing_case") {
           return new Response("Not Found", { status: 404 });
         }

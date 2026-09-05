@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { GuideSection, Specimen } from "@/routes/_protected/ui/-guide-chrome";
 import { ActiveTabBody, SuspenseTabBody } from "@/shared/ui/active-tab-body";
+import { ActorMention } from "@/shared/ui/actor-mention";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
@@ -38,6 +39,7 @@ import {
   KindBadge,
   PatchOpBadge,
   StatusBadge,
+  StatusInk,
 } from "@/shared/ui/vocab";
 
 const DEMO_EXTERNAL_HREF = ["https", "://example.com/evidence"].join("");
@@ -71,7 +73,7 @@ const ATOM_CATALOG: AtomEntry[] = [
   },
   {
     name: "StatusDot",
-    blurb: "Dense lifecycle color — prefer with StatusBadge for labels.",
+    blurb: "Dense lifecycle color — StatusInk when the word sits beside it.",
     render: () => (
       <>
         <StatusDot status="succeeded" />
@@ -95,9 +97,20 @@ const ATOM_CATALOG: AtomEntry[] = [
     ),
   },
   {
+    name: "StatusInk",
+    blurb: "Status as colored type + dot — Detail strips, no pill.",
+    render: () => (
+      <>
+        <StatusInk status="pending">unprocessed</StatusInk>
+        <StatusInk status="succeeded" />
+        <StatusInk status="running" pulse />
+      </>
+    ),
+  },
+  {
     name: "DetailStatusChip",
     blurb:
-      "Secondary outcome/tag pill — same height/radius/stroke as VocabBadge.",
+      "Outcome/tag pill — outline chrome, same height/radius/type as VocabBadge.",
     render: () => (
       <>
         <DetailStatusChip>From cache</DetailStatusChip>
@@ -140,6 +153,17 @@ const ATOM_CATALOG: AtomEntry[] = [
         <EntityMention name="Ada Lovelace" />
         <EntityMention name="Acme Corp" slug="acme-corp" />
         <EntityMention name="acme.com" slug="acme-com" />
+      </>
+    ),
+  },
+  {
+    name: "ActorMention",
+    blurb: "Who acted — optional By prefix, AtSign glyph + handle, no chip.",
+    render: () => (
+      <>
+        <ActorMention prefix="By" label="kaizen" />
+        <ActorMention label="api-key:cli" />
+        <ActorMention label="kaizen" size="sm" />
       </>
     ),
   },

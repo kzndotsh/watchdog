@@ -10,6 +10,7 @@ import { Effect } from "effect";
 import { createApiContext } from "@/auth/api-context.server";
 import { runApp } from "@watchdog/api";
 import {
+  getCaseByIdEffect,
   getEntityByCaseSlugEffect,
   renderEntityMarkdownEffect,
   type DomainTag,
@@ -21,9 +22,16 @@ type EntityExportMdResult =
 
 function entityExportMdEffect(
   caseId: string,
-  slug: string
+  slug: string,
+  organizationId: string
 ): Effect.Effect<EntityExportMdResult, DomainTag> {
   return Effect.gen(function* entityExportMdGen() {
+    const scopedCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
+      Effect.catchTag("NotFoundError", () => Effect.succeed(null))
+    );
+    if (scopedCase === null) {
+      return { kind: "missing" as const };
+    }
     const entity = yield* getEntityByCaseSlugEffect(caseId, slug).pipe(
       Effect.catchTag("NotFoundError", () => Effect.succeed(null))
     );
@@ -54,9 +62,14 @@ export const Route = createFileRoute(
         if (!ctx.actor) {
           return new Response("Unauthorized", { status: 401 });
         }
+        if (!ctx.actor.organizationId) {
+          return new Response("Forbidden", { status: 403 });
+        }
 
         const { caseId, slug } = params;
-        const exported = await runApp(entityExportMdEffect(caseId, slug));
+        const exported = await runApp(
+          entityExportMdEffect(caseId, slug, ctx.actor.organizationId)
+        );
         if (exported.kind === "missing") {
           return new Response("Not Found", { status: 404 });
         }
