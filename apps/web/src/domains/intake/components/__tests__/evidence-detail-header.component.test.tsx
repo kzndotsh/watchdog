@@ -37,6 +37,7 @@ function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
     text: "hello",
     sourceUrl: null,
     actorId: "test-actor",
+    actorLabel: "test-actor",
     capturedAt: "2026-01-01T00:00:00.000Z",
     processedAt: null,
     deletedAt: null,
@@ -64,13 +65,12 @@ function intakeActions(
 }
 
 describe("EvidenceDetailHeader", () => {
-  it("renders evidence identity, lifecycle status, and tabs", () => {
+  it("renders evidence identity and tabs", () => {
     render(
       <Tabs value="content">
         <EvidenceDetailHeader
           evidence={evidence()}
           isHidden={false}
-          processed={false}
           producingCap={null}
           canEnrich={false}
           enrichJobs={[]}
@@ -85,6 +85,29 @@ describe("EvidenceDetailHeader", () => {
     expect(screen.getByRole("tab", { name: "Jobs" })).toBeInTheDocument();
   });
 
+  it("shows the resolved actor label instead of the raw actor id", () => {
+    render(
+      <Tabs value="content">
+        <EvidenceDetailHeader
+          evidence={evidence({
+            actorId: "user-uuid",
+            actorLabel: "ada",
+          })}
+          isHidden={false}
+          producingCap={null}
+          canEnrich={false}
+          enrichJobs={[]}
+          enrichOutput={null}
+          relatedJobs={[]}
+        />
+      </Tabs>
+    );
+
+    expect(screen.getByText("ada")).toBeInTheDocument();
+    expect(screen.getByText("By")).toBeInTheDocument();
+    expect(screen.queryByText("user-uuid")).not.toBeInTheDocument();
+  });
+
   it("opens the producing Cap on the Jobs tab", async () => {
     const onShowProducingRun = vi.fn();
     const producingCap = {
@@ -97,7 +120,6 @@ describe("EvidenceDetailHeader", () => {
         <EvidenceDetailHeader
           evidence={evidence()}
           isHidden={false}
-          processed={false}
           producingCap={producingCap}
           canEnrich={false}
           enrichJobs={[]}

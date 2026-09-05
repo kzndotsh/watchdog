@@ -38,6 +38,7 @@ function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
     text: "hello",
     sourceUrl: null,
     actorId: "test-actor",
+    actorLabel: "test-actor",
     capturedAt: "2026-01-01T00:00:00.000Z",
     processedAt: null,
     deletedAt: null,
@@ -89,6 +90,7 @@ describe("intake evidence helpers", () => {
       evidenceIds: [],
       output: [],
       actorId: "test-actor",
+      actorLabel: "test-actor",
       playbookFanIndex: 0,
       ...overrides,
     };

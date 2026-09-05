@@ -29,6 +29,7 @@ function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
     evidenceIds: [],
     output: [],
     actorId: "test-actor",
+    actorLabel: "test-actor",
     playbookFanIndex: 0,
     ...overrides,
   };

@@ -29,11 +29,13 @@ const PROPOSAL: ProposalRecord = {
   evidenceIds: [testId(41)],
   rejectReason: null,
   decidedBy: null,
+  decidedByLabel: null,
   decidedAt: null,
   createdAt: "2026-01-01T12:00:00.000Z",
   agentSourced: false,
   userOverridden: false,
   createdBy: null,
+  createdByLabel: null,
   identifierCollisions: [],
 };
 

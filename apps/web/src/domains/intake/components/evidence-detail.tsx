@@ -428,7 +428,6 @@ export function EvidenceDetail({
         <EvidenceDetailHeader
           evidence={evidence}
           isHidden={isHidden}
-          processed={processed}
           producingCap={producingCap}
           entityName={entityName}
           entities={entities}

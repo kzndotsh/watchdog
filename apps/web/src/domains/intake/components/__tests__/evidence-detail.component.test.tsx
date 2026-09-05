@@ -37,6 +37,7 @@ function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
     text: "dump body",
     sourceUrl: null,
     actorId: "test-actor",
+    actorLabel: "test-actor",
     capturedAt: "2026-01-01T00:00:00.000Z",
     processedAt: null,
     deletedAt: null,
@@ -91,7 +92,7 @@ describe("EvidenceDetail", () => {
       />
     );
 
-    expect(screen.getByText("unprocessed")).toBeInTheDocument();
+    expect(screen.getByText("Unattached")).toBeInTheDocument();
     expect(screen.getByText("dump body")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Harvest" })).toBeInTheDocument();
 

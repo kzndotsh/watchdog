@@ -25,8 +25,12 @@ export function DetailStatusChip({
 }: DetailStatusChipProps) {
   return (
     <Badge
-      variant="secondary"
-      className={cn(CHIP_SIZE_CLASS[size], "text-foreground/80", className)}
+      variant="outline"
+      className={cn(
+        CHIP_SIZE_CLASS[size],
+        "text-foreground/80 bg-transparent",
+        className
+      )}
       {...props}
     />
   );

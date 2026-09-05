@@ -126,6 +126,7 @@ export function CollectQueueSkeletonLayout({
       {daySplits.map((dayRows, dayIndex) => (
         <QueueDayGroup
           key={dayIndex}
+          headerVariant="panel"
           label={<Skeleton className="inline-block h-3 w-20 align-middle" />}
         >
           {Array.from({ length: dayRows }).map((_, itemIndex) => {
@@ -221,7 +222,7 @@ export function StackBodySkeletonLayout({
   sections?: number;
 }) {
   return (
-    <>
+    <div className="flex flex-col gap-6">
       {Array.from({ length: sections }).map((_, i) => (
         <div key={i} className="flex flex-col gap-3">
           <Skeleton className="h-3 w-24" />
@@ -232,7 +233,7 @@ export function StackBodySkeletonLayout({
           </div>
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -399,7 +400,7 @@ export function StackBodySkeleton({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
+    <div className={cn("flex flex-col", className)}>
       <StackBodySkeletonLayout sections={sections} />
     </div>
   );
@@ -446,14 +447,14 @@ export function TableBodySkeletonLayout({
 
 export function RoutePendingSkeletonLayout() {
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <div className="border-border shrink-0 border-b px-6 py-4">
         <Skeleton className="h-5 w-40" />
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto p-6">
         <StackBodySkeletonLayout sections={2} />
       </div>
-    </>
+    </div>
   );
 }
 

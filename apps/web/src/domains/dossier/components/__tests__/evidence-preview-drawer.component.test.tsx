@@ -33,6 +33,7 @@ const EVIDENCE: EvidenceRecord = {
   text: "Body text",
   sourceUrl: null,
   actorId: "actor-1",
+  actorLabel: "actor-1",
   capturedAt: "2026-01-01T00:00:00.000Z",
   processedAt: null,
   deletedAt: null,

@@ -8,6 +8,7 @@ import {
   CollectQueueSkeleton,
   LoadingRegion,
   QueueSkeleton,
+  RoutePendingSkeletonLayout,
   StackBodySkeleton,
 } from "@/shared/ui/skeletons";
 
@@ -45,6 +46,16 @@ describe("Skeletons", () => {
     expect(
       queue.querySelectorAll("[data-slot='collect-queue-row-skeleton']")
     ).toHaveLength(4);
+    expect(
+      queue.querySelectorAll(
+        "[data-slot='section-header-bar'][data-variant='sticky']"
+      )
+    ).toHaveLength(0);
+    expect(
+      queue.querySelectorAll(
+        "[data-slot='section-header-bar'][data-variant='panel']"
+      ).length
+    ).toBeGreaterThan(0);
 
     const { container: detail } = render(<CollectDetailSkeleton />);
     expect(detail.querySelector(".h-40")).toBeInTheDocument();
@@ -68,5 +79,12 @@ describe("Skeletons", () => {
       </LoadingRegion>
     );
     expect(stack.querySelector("[aria-busy='true']")).toBeInTheDocument();
+  });
+
+  it("keeps the full-page pending shell as a single stacked column", () => {
+    const { container } = render(<RoutePendingSkeletonLayout />);
+    const root = container.firstElementChild;
+    expect(root).toHaveClass("flex", "flex-col");
+    expect(root?.children).toHaveLength(2);
   });
 });

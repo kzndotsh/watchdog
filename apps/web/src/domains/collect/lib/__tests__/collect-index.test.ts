@@ -19,6 +19,7 @@ function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
     text: "hello world",
     sourceUrl: null,
     actorId: "test-actor",
+    actorLabel: "test-actor",
     capturedAt: "2026-01-02T00:00:00.000Z",
     processedAt: null,
     deletedAt: null,
@@ -50,6 +51,7 @@ function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
     evidenceIds: [],
     output: [],
     actorId: "test-actor",
+    actorLabel: "test-actor",
     playbookFanIndex: 0,
     ...overrides,
   };

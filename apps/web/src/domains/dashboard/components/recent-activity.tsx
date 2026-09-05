@@ -7,6 +7,7 @@ import type { ActivityItem, ActivityKind } from "@/domains/activity/types";
 import type { CaseRecord } from "@/domains/cases/types";
 import { cn } from "@/lib/utils";
 import { stackPendingFallback } from "@/shared/ui/active-tab-body";
+import { ActorMention } from "@/shared/ui/actor-mention";
 import { resolveSelectValue } from "@/shared/ui/control-chrome";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { RelativeTime } from "@/shared/ui/relative-time";
@@ -95,7 +96,7 @@ function ActivityRows({
     <ul className="divide-border divide-y">
       {items.map((item) => {
         const hasTransition = Boolean(item.fromStatus && item.toStatus);
-        const showMeta = hasTransition || showCaseLink;
+        const showMeta = hasTransition || showCaseLink || Boolean(item.actor);
         const caseSlug = caseSlugById.get(item.caseId);
 
         return (
@@ -153,6 +154,23 @@ function ActivityRows({
                         ) : (
                           <span>{item.caseName}</span>
                         )}
+                      </>
+                    ) : null}
+                    {item.actor ? (
+                      <>
+                        {hasTransition || showCaseLink ? (
+                          <span
+                            aria-hidden
+                            className="text-muted-foreground/60"
+                          >
+                            ·
+                          </span>
+                        ) : null}
+                        <ActorMention
+                          prefix="By"
+                          label={item.actor}
+                          size="sm"
+                        />
                       </>
                     ) : null}
                   </div>

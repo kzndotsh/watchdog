@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { StatusBadge } from "@/shared/ui/vocab/status";
+import { StatusBadge, StatusInk } from "@/shared/ui/vocab/status";
 import {
   STATUS_DOT,
   STATUS_LABELS,
@@ -17,5 +17,10 @@ describe("status vocab", () => {
   it("renders status badge copy", () => {
     render(<StatusBadge status="pending" />);
     expect(screen.getByText("Pending")).toBeInTheDocument();
+  });
+
+  it("renders status ink as a word, not a chip", () => {
+    render(<StatusInk status="pending">unprocessed</StatusInk>);
+    expect(screen.getByText("unprocessed")).toBeInTheDocument();
   });
 });

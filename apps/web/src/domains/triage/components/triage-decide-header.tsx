@@ -7,16 +7,16 @@ import {
 import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { cn } from "@/lib/utils";
+import { ActorMention } from "@/shared/ui/actor-mention";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import {
   DetailContextHeader,
   DetailContextSep,
 } from "@/shared/ui/detail-context-strip";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Button } from "@/shared/ui/shadcn/button";
-import { StatusBadge } from "@/shared/ui/vocab";
+import { StatusInk } from "@/shared/ui/vocab";
 
 function ProducingCapLink({
   jobId,
@@ -53,6 +53,9 @@ export function TriageDecideHeader({
     rejecting: false,
   });
   const subject = view.entityName ?? view.capLabel ?? proposalTitle(proposal);
+  const actorLabel = view.isPending
+    ? proposal.createdByLabel
+    : (proposal.decidedByLabel ?? proposal.createdByLabel);
 
   return (
     <header
@@ -89,14 +92,18 @@ export function TriageDecideHeader({
           </>
         ) : null}
         <DetailContextSep />
-        <StatusBadge status={proposal.status} size="md" />
+        <StatusInk status={proposal.status} />
         {proposal.agentSourced ? (
-          <DetailStatusChip>agent</DetailStatusChip>
+          <>
+            <DetailContextSep />
+            <span>agent</span>
+          </>
         ) : null}
         {proposal.suppressedCount > 0 ? (
-          <DetailStatusChip>
-            {proposal.suppressedCount} suppressed
-          </DetailStatusChip>
+          <>
+            <DetailContextSep />
+            <span>{proposal.suppressedCount} suppressed</span>
+          </>
         ) : null}
         {view.isPending ? null : (
           <>
@@ -107,6 +114,12 @@ export function TriageDecideHeader({
             </span>
           </>
         )}
+        {actorLabel ? (
+          <>
+            <DetailContextSep />
+            <ActorMention prefix="By" label={actorLabel} />
+          </>
+        ) : null}
       </DetailContextHeader>
 
       {view.isPending ||

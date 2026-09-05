@@ -41,6 +41,7 @@ function jobRecord(overrides: Partial<JobRecord> = {}): JobRecord {
     playbookFanIndex: 0,
     evidenceIds: [],
     actorId: "test-actor",
+    actorLabel: "test-actor",
     logs: ["collect started\nresolved A record"],
     ...overrides,
   };
@@ -60,6 +61,23 @@ describe("JobDetail", () => {
     expect(screen.getByRole("tab", { name: "Log" })).toBeInTheDocument();
     expect(screen.getByText(/resolved A record/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+  });
+
+  it("shows the resolved actor label instead of the raw actor id", () => {
+    render(
+      <JobDetail
+        job={jobRecord({
+          actorId: "user-uuid",
+          actorLabel: "ada",
+        })}
+        busy={false}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("ada")).toBeInTheDocument();
+    expect(screen.getByText("By")).toBeInTheDocument();
+    expect(screen.queryByText("user-uuid")).not.toBeInTheDocument();
   });
 
   it("shows input JSON on the input tab", async () => {

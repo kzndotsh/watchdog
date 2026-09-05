@@ -5,6 +5,7 @@
  */
 export const WD_UI_FILES = [
   "src/shared/ui/active-tab-body.tsx",
+  "src/shared/ui/actor-mention.tsx",
   "src/shared/ui/artifact-body-from-content.ts",
   "src/shared/ui/artifact-preview.tsx",
   "src/shared/ui/clickable-id-chip.tsx",
@@ -114,6 +115,7 @@ export const WD_UI_FIXTURE_REQUIRED = [
   "ClaimClassBadge",
   "PatchOpBadge",
   "StatusDot",
+  "StatusInk",
   "IdChip",
   "ClickableIdChip",
   "QueueRow",
@@ -130,6 +132,7 @@ export const WD_UI_FIXTURE_REQUIRED = [
   "ConfidenceSelect",
   "EntityCombobox",
   "EntityMention",
+  "ActorMention",
   "ExternalUrl",
   "RowActionsMenu",
   "TimelineSpine",

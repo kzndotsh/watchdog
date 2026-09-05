@@ -5,7 +5,7 @@ export {
   confidenceLabel,
 } from "@/shared/ui/vocab/confidence.lib";
 
-export { StatusBadge } from "@/shared/ui/vocab/status";
+export { StatusBadge, StatusInk } from "@/shared/ui/vocab/status";
 export {
   STATUS_DOT,
   JOB_STATUS_OPTIONS,

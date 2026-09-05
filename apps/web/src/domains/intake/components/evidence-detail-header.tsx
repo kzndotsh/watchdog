@@ -9,28 +9,17 @@ import {
 } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import { ActorMention } from "@/shared/ui/actor-mention";
 import {
   DetailContextHeader,
   DetailContextSep,
 } from "@/shared/ui/detail-context-strip";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/shadcn/button";
 import { TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import { StatusBadge, capabilityLabel } from "@/shared/ui/vocab";
-
-type EvidenceLifecycleStatus = "cancelled" | "succeeded" | "pending";
-
-function evidenceLifecycle(
-  isHidden: boolean,
-  processed: boolean
-): { status: EvidenceLifecycleStatus; label: string } {
-  if (isHidden) return { status: "cancelled", label: "hidden" };
-  if (processed) return { status: "succeeded", label: "processed" };
-  return { status: "pending", label: "unprocessed" };
-}
+import { capabilityLabel } from "@/shared/ui/vocab";
 
 function entityLabel(entityName: string | null | undefined): string {
   return entityName !== null && entityName !== undefined && entityName !== ""
@@ -96,7 +85,7 @@ function EvidenceEntityEditor({
         disabled={attaching}
         autoFocus
         showClear={false}
-        className="h-6 w-44 [&_[data-slot=input-group-addon]]:py-0 [&_[data-slot=input-group-control]]:h-6"
+        className="h-6 w-44 [&_[data-slot=input-group-addon]]:mr-0 [&_[data-slot=input-group-control]]:h-6"
       />
     </span>
   );
@@ -172,13 +161,13 @@ function EvidenceEntityMeta({
         <Button
           type="button"
           variant="ghost"
-          size="icon-xs"
-          className="text-muted-foreground size-5 [&_svg]:size-2.5"
+          size="sm"
+          className="text-muted-foreground -mr-1.5 size-6 px-0 hover:bg-transparent dark:hover:bg-transparent"
           aria-label="Change entity"
           disabled={attaching}
           onClick={handleStartEdit}
         >
-          <PencilIcon />
+          <PencilIcon className="size-3" aria-hidden />
         </Button>
       </WithTooltip>
     </span>
@@ -289,7 +278,6 @@ export function EvidenceHeaderActions({
 export function EvidenceDetailHeader({
   evidence,
   isHidden,
-  processed,
   producingCap,
   entityName,
   entities,
@@ -303,7 +291,6 @@ export function EvidenceDetailHeader({
 }: {
   evidence: EvidenceRecord;
   isHidden: boolean;
-  processed: boolean;
   producingCap: JobListRecord | null;
   entityName?: string | null;
   entities?: readonly EntityOption[];
@@ -315,7 +302,6 @@ export function EvidenceDetailHeader({
   onAttachEntity?: (entityId: string) => void;
   onShowProducingRun?: (jobId: string) => void;
 }) {
-  const lifecycle = evidenceLifecycle(isHidden, processed);
   const attachedId = evidence.entityId ?? "";
 
   return (
@@ -358,12 +344,7 @@ export function EvidenceDetailHeader({
           </>
         )}
         <DetailContextSep />
-        <StatusBadge status={lifecycle.status} size="md">
-          {lifecycle.label}
-        </StatusBadge>
-        {producingCap === null ? null : (
-          <DetailStatusChip>Cap output</DetailStatusChip>
-        )}
+        <ActorMention prefix="By" label={evidence.actorLabel} />
       </DetailContextHeader>
       <span className="sr-only">{evidenceTitle(evidence)}</span>
 

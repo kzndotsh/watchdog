@@ -50,11 +50,13 @@ function pendingProposal(
     evidenceIds: [],
     rejectReason: null,
     decidedBy: null,
+    decidedByLabel: null,
     decidedAt: null,
     createdAt: "2026-01-01T00:00:00.000Z",
     agentSourced: false,
     userOverridden: false,
     createdBy: null,
+    createdByLabel: null,
     identifierCollisions: [],
     entityNames: { [testId(20)]: "Alpha" },
     ...overrides,
@@ -114,5 +116,24 @@ describe("TriageDecideHeader", () => {
 
     expect(screen.getByText("Duplicate finding")).toBeInTheDocument();
     expect(screen.getByText(/Decided/)).toBeInTheDocument();
+  });
+
+  it("shows decidedByLabel instead of the raw user id", () => {
+    render(
+      <TriageDecideHeader
+        proposal={pendingProposal({
+          status: "rejected",
+          rejectReason: "Duplicate finding",
+          decidedAt: "2026-01-02T00:00:00.000Z",
+          decidedBy: "user-uuid",
+          decidedByLabel: "ada",
+        })}
+        linkedIds={[]}
+      />
+    );
+
+    expect(screen.getByText("ada")).toBeInTheDocument();
+    expect(screen.getByText("By")).toBeInTheDocument();
+    expect(screen.queryByText("user-uuid")).not.toBeInTheDocument();
   });
 });

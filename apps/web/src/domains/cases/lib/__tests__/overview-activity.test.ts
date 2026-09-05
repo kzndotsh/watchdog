@@ -22,6 +22,7 @@ describe("buildCaseOverviewActivity", () => {
       text: null,
       sourceUrl: null,
       actorId: "test-actor",
+      actorLabel: "test-actor",
       capturedAt: "2026-01-01T00:00:00.000Z",
       processedAt: null,
       deletedAt: null,
@@ -50,6 +51,7 @@ describe("buildCaseOverviewActivity", () => {
       evidenceIds: [],
       output: [],
       actorId: "test-actor",
+      actorLabel: "test-actor",
     };
     const pending: ProposalRecord = {
       id: testId(50),
@@ -63,11 +65,13 @@ describe("buildCaseOverviewActivity", () => {
       evidenceIds: [],
       rejectReason: null,
       decidedBy: null,
+      decidedByLabel: null,
       decidedAt: null,
       createdAt: "2026-01-02T00:00:00.000Z",
       agentSourced: false,
       userOverridden: false,
       createdBy: null,
+      createdByLabel: null,
     };
     const extra: EvidenceRecord = {
       ...evidence,

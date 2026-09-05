@@ -31,6 +31,7 @@ function job(status: JobListRecord["status"]): JobListRecord {
     evidenceIds: [],
     output: [],
     actorId: "test-actor",
+    actorLabel: "test-actor",
   };
 }
 

@@ -14,6 +14,7 @@ export function QueueDayGroup({
   className,
   listClassName,
   listLabel,
+  headerVariant = "sticky",
 }: {
   label: ReactNode;
   count?: number;
@@ -22,12 +23,19 @@ export function QueueDayGroup({
   listClassName?: string;
   /** Optional aria-label for the inner ul (parent listbox usually owns it). */
   listLabel?: string;
+  /** `panel` for skeletons in a clipped pane — sticky day bars overlap rows. */
+  headerVariant?: "sticky" | "panel";
 }) {
   return (
     <section
       className={cn("border-border border-b last:border-b-0", className)}
     >
-      <SectionHeaderBar variant="sticky" title={label} count={count} as="h3" />
+      <SectionHeaderBar
+        variant={headerVariant}
+        title={label}
+        count={count}
+        as="h3"
+      />
       <ul
         className={cn("divide-border divide-y", listClassName)}
         aria-label={listLabel}

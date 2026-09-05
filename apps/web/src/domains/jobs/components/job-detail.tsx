@@ -15,6 +15,7 @@ import {
 import { playbookWaitingOnNextStep } from "@/domains/jobs/lib/status";
 import { cn } from "@/lib/utils";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
+import { ActorMention } from "@/shared/ui/actor-mention";
 import { CodeBlock } from "@/shared/ui/code-block";
 import {
   DetailContextHeader,
@@ -22,10 +23,6 @@ import {
 } from "@/shared/ui/detail-context-strip";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import { DetailFooter } from "@/shared/ui/detail-footer";
-import {
-  DETAIL_CHIP_CLASS,
-  DetailStatusChip,
-} from "@/shared/ui/detail-status-chip";
 import { EmptyState } from "@/shared/ui/empty-state";
 import {
   FormInlineError,
@@ -33,7 +30,6 @@ import {
 } from "@/shared/ui/form-inline-message";
 import { JsonView } from "@/shared/ui/json-view";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { Badge } from "@/shared/ui/shadcn/badge";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   Tabs,
@@ -43,7 +39,7 @@ import {
 } from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
-import { StatusBadge, capabilityLabel } from "@/shared/ui/vocab";
+import { StatusInk, capabilityLabel } from "@/shared/ui/vocab";
 
 const EMPTY_RUN_SIBLINGS: JobListRecord[] = [];
 
@@ -237,28 +233,44 @@ function JobDetailHeader({
         )}
         <DetailContextSep />
         {view.interpretFailed ? (
-          <Badge
-            variant="outline"
-            className={cn(DETAIL_CHIP_CLASS, "bg-warning/15 text-warning")}
-          >
-            Interpret failed
-          </Badge>
+          <span className="text-warning">Interpret failed</span>
         ) : (
-          <StatusBadge status={job.status} size="md" />
+          <StatusInk status={job.status} pulse={view.live} />
         )}
-        {job.fromCache ? <DetailStatusChip>From cache</DetailStatusChip> : null}
+        {job.fromCache ? (
+          <>
+            <DetailContextSep />
+            <span>From cache</span>
+          </>
+        ) : null}
         {view.showSucceededOutcomeChip ? (
-          <DetailStatusChip>
-            {job.suppressedCount > 0 ? "No proposal" : "Evidence only"}
-          </DetailStatusChip>
+          <>
+            <DetailContextSep />
+            <span>
+              {job.suppressedCount > 0 ? "No proposal" : "Evidence only"}
+            </span>
+          </>
         ) : null}
         {job.suppressedCount > 0 ? (
-          <DetailStatusChip>{job.suppressedCount} suppressed</DetailStatusChip>
+          <>
+            <DetailContextSep />
+            <span>{job.suppressedCount} suppressed</span>
+          </>
         ) : null}
-        {view.live ? <DetailStatusChip>live</DetailStatusChip> : null}
+        {view.live ? (
+          <>
+            <DetailContextSep />
+            <span>live</span>
+          </>
+        ) : null}
         {view.showPlaybookChip ? (
-          <DetailStatusChip>playbook</DetailStatusChip>
+          <>
+            <DetailContextSep />
+            <span>playbook</span>
+          </>
         ) : null}
+        <DetailContextSep />
+        <ActorMention prefix="By" label={job.actorLabel} />
       </DetailContextHeader>
 
       {view.interpretFailed ? (

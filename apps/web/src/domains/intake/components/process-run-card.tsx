@@ -8,7 +8,6 @@ import {
   orderJobArtifacts,
 } from "@/domains/jobs/lib/artifacts";
 import { cn } from "@/lib/utils";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
@@ -17,7 +16,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/shared/ui/shadcn/collapsible";
-import { StatusBadge, capabilityLabel } from "@/shared/ui/vocab";
+import { StatusInk, capabilityLabel } from "@/shared/ui/vocab";
 
 export function ProcessRunCard({
   job,
@@ -61,8 +60,10 @@ export function ProcessRunCard({
               {capabilityLabel(job.capabilityId)}
             </p>
             <div className="flex items-center gap-1.5">
-              <StatusBadge status={job.status} size="md" />
-              {live ? <DetailStatusChip>live</DetailStatusChip> : null}
+              <StatusInk status={job.status} pulse={live} />
+              {live ? (
+                <span className="text-muted-foreground">live</span>
+              ) : null}
             </div>
           </div>
           <p className="text-label-mono-sm text-muted-foreground mt-1.5 tabular-nums">

@@ -13,7 +13,7 @@ interface StatusDotProps {
 
 /**
  * 6–8px lifecycle/status dot for dense Queue rows.
- * Prefer StatusBadge when there is room for a text label.
+ * Prefer StatusInk in Detail strips; StatusBadge when a table cell needs a chip.
  */
 export function StatusDot({
   status,
