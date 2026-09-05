@@ -16,14 +16,17 @@ function notesPresent(notes: string | null | undefined): boolean {
   return (notes ?? "").trim() !== "";
 }
 
-export function IdentifierNotesCell({
-  identifierId,
+/** Narrow sticky-note control: opens a Markdown notes Sheet (blur/close autosave). */
+export function NotesIconCell({
+  id,
   notes,
   saveNotes,
+  editorAriaLabel = "Notes",
 }: {
-  identifierId: string;
+  id: string;
   notes: string | null | undefined;
-  saveNotes: (identifierId: string, notes: string) => void | Promise<void>;
+  saveNotes: (id: string, notes: string) => void | Promise<void>;
+  editorAriaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(notes ?? "");
@@ -36,7 +39,7 @@ export function IdentifierNotesCell({
   async function flushIfDirty(): Promise<void> {
     const next = draftRef.current;
     if (next === savedRef.current) return;
-    await saveNotes(identifierId, next);
+    await saveNotes(id, next);
     savedRef.current = next;
   }
 
@@ -103,7 +106,7 @@ export function IdentifierNotesCell({
               onBlurShell={() => {
                 void flushIfDirty();
               }}
-              ariaLabel="Identifier notes"
+              ariaLabel={editorAriaLabel}
               variant="seamless"
               toolbar="always"
               fill
@@ -112,5 +115,25 @@ export function IdentifierNotesCell({
         </SheetContent>
       </Sheet>
     </div>
+  );
+}
+
+/** Identifier-table alias for {@link NotesIconCell}. */
+export function IdentifierNotesCell({
+  identifierId,
+  notes,
+  saveNotes,
+}: {
+  identifierId: string;
+  notes: string | null | undefined;
+  saveNotes: (identifierId: string, notes: string) => void | Promise<void>;
+}) {
+  return (
+    <NotesIconCell
+      id={identifierId}
+      notes={notes}
+      saveNotes={saveNotes}
+      editorAriaLabel="Identifier notes"
+    />
   );
 }

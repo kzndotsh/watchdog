@@ -19,12 +19,14 @@ import {
   EditableTextCell,
 } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { RelativeTime } from "@/shared/ui/relative-time";
+import { NotesIconCell } from "@/shared/ui/identifiers/identifier-notes-cell";
+import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/shared/ui/shadcn/dropdown-menu";
+import { WithTooltip } from "@/shared/ui/timestamp";
 import { ENTITY_KIND_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import { entityKindSchema, type EntityKind } from "@watchdog/schemas";
 
@@ -42,13 +44,15 @@ export const entityGlobalFilterFn: FilterFn<EntityRecord> = (
     e.name.toLowerCase().includes(q) ||
     e.slug.toLowerCase().includes(q) ||
     e.kind.toLowerCase().includes(q) ||
-    (e.summary ?? "").toLowerCase().includes(q)
+    (e.summary ?? "").toLowerCase().includes(q) ||
+    (e.notes ?? "").toLowerCase().includes(q)
   );
 };
 
 export interface EntityTableMeta {
   updateKind: (entityId: string, kind: EntityKind) => void;
   updateSummary: (entityId: string, summary: string) => void;
+  updateNotes: (entityId: string, notes: string) => void;
   peersByEntityId: ReadonlyMap<string, readonly EntityConnectionPeer[]>;
   entityOptions: readonly EntityOption[];
   createConnection: (
@@ -106,8 +110,23 @@ function updatedColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
   return <DataTableColumnHeader column={column} title="Updated" />;
 }
 
-function createdColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
-  return <DataTableColumnHeader column={column} title="Created" />;
+function notesColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
+  return (
+    <DataTableColumnHeader
+      column={column}
+      title="Notes"
+      className="flex w-full justify-center"
+    />
+  );
+}
+
+function formatFullLocalDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, {
+    dateStyle: "full",
+    timeStyle: "short",
+  });
 }
 
 function renderNameCell(ctx: CellContext<EntityRecord, unknown>) {
@@ -170,21 +189,44 @@ function renderSummaryCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
-function renderUpdatedAtCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderNotesCell(ctx: CellContext<EntityRecord, unknown>) {
+  const row = ctx.row.original;
+  const meta = entityMeta(ctx);
   return (
-    <RelativeTime
-      value={ctx.row.original.updatedAt}
-      className="text-label-mono-sm whitespace-nowrap"
+    <NotesIconCell
+      id={row.id}
+      notes={row.notes}
+      editorAriaLabel="Entity notes"
+      saveNotes={(entityId, notes) => {
+        meta.updateNotes(entityId, notes);
+      }}
     />
   );
 }
 
-function renderCreatedAtCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderUpdatedAtCell(ctx: CellContext<EntityRecord, unknown>) {
+  const { updatedAt, createdAt } = ctx.row.original;
+  if (!updatedAt) {
+    return <span className="text-muted-foreground text-label-mono-sm">—</span>;
+  }
+
   return (
-    <RelativeTime
-      value={ctx.row.original.createdAt}
-      className="text-label-mono-sm whitespace-nowrap"
-    />
+    <WithTooltip
+      wrapSpan
+      content={
+        <div className="flex flex-col gap-0.5 text-left">
+          <span>Updated {formatFullLocalDateTime(updatedAt)}</span>
+          <span>Created {formatFullLocalDateTime(createdAt)}</span>
+        </div>
+      }
+    >
+      <time
+        dateTime={updatedAt}
+        className="text-muted-foreground text-label-mono-sm cursor-default whitespace-nowrap tabular-nums"
+      >
+        <span suppressHydrationWarning>{formatRelativeTime(updatedAt)}</span>
+      </time>
+    </WithTooltip>
   );
 }
 
@@ -253,7 +295,7 @@ export const entityTableColumns: ColumnDef<EntityRecord>[] = [
     header: summaryColumnHeader,
     cell: renderSummaryCell,
     meta: { label: "Summary" },
-    size: 220,
+    size: 280,
   },
   {
     id: "connections",
@@ -265,18 +307,19 @@ export const entityTableColumns: ColumnDef<EntityRecord>[] = [
     minSize: 200,
   },
   {
+    accessorKey: "notes",
+    header: notesColumnHeader,
+    cell: renderNotesCell,
+    enableSorting: false,
+    meta: { label: "Notes" },
+    size: 52,
+    minSize: 48,
+  },
+  {
     accessorKey: "updatedAt",
     header: updatedColumnHeader,
     cell: renderUpdatedAtCell,
     meta: { label: "Updated" },
-    size: 100,
-    minSize: 90,
-  },
-  {
-    accessorKey: "createdAt",
-    header: createdColumnHeader,
-    cell: renderCreatedAtCell,
-    meta: { label: "Created" },
     size: 100,
     minSize: 90,
   },

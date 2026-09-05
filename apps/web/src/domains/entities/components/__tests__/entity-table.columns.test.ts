@@ -48,5 +48,15 @@ describe("entity-table.columns", () => {
     expect(entityTableColumns.some((column) => column.id === "actions")).toBe(
       true
     );
+    const ids = entityTableColumns.map((column) => {
+      if (column.id) return column.id;
+      if ("accessorKey" in column && column.accessorKey != null) {
+        return String(column.accessorKey);
+      }
+      return "";
+    });
+    expect(ids).toContain("updatedAt");
+    expect(ids).toContain("notes");
+    expect(ids).not.toContain("createdAt");
   });
 });

@@ -91,6 +91,7 @@ function buildEntityTableMeta(
   return {
     updateKind: mutations.updateKind,
     updateSummary: mutations.updateSummary,
+    updateNotes: mutations.updateNotes,
     peersByEntityId,
     entityOptions,
     createConnection: mutations.createConnection,

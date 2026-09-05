@@ -53,7 +53,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `FormInlineWarning` | Field / form inline warning | Soft confirm / evidence hints | Hard errors | `FormInlineError` | canonical | yes | warning |
 | `FormSection` | Settings fieldset card (`ACCENT_CARD_SURFACE`) | Auth/settings forms | Queue composers | `ComposerShell` | canonical | no | : |
 | `IdChip` | Opaque id/hash mono chip (whole-chip copy when `copyable`; `full` skips truncate) | UUIDs / hashes | Human labels | `MiddleTruncate` · `CopyControl` | canonical | yes | chip |
-| `IdentifierNotesCell` | Sticky-note icon → right Sheet + `RichTextEditor` Markdown (blur/close autosave) | Identifier table Notes column (`/identifiers` · Dossier) | Inline Notes cells · entity Summary/Notes tabs | `RichTextEditor` | canonical | no | : |
+| `IdentifierNotesCell` / `NotesIconCell` | Sticky-note icon → right Sheet + `RichTextEditor` Markdown (blur/close autosave) | Identifier + Entity table Notes columns (`/identifiers` · `/entities` · Dossier Identifiers) | Inline Notes cells · entity Summary/Notes tabs | `RichTextEditor` | canonical | no | : |
 | `InlineLoading` | Spinner + label region wait | In-flight Detail / panel | Full-page pending | `RoutePending` | canonical | yes | : |
 | `JsonView` | Collapsible JSON tree | Structured artifacts | Syntax-highlighted dumps | `CodeBlock` | canonical | no | : |
 | `LocalDateTime` | Short local datetime (`dateOnly` → calendar day) | Absolute times · task due dates | Relative "3m ago" | `RelativeTime` | canonical | no | : |

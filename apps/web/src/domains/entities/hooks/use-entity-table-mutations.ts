@@ -24,6 +24,7 @@ interface UpdateEntityVars {
   entityId: string;
   kind?: EntityKind;
   summary?: string;
+  notes?: string;
 }
 
 interface ConnectionVars {
@@ -43,6 +44,7 @@ function updateEntityFields(caseId: string, vars: UpdateEntityVars) {
       entityId: vars.entityId,
       ...(vars.kind === undefined ? {} : { kind: vars.kind }),
       ...(vars.summary === undefined ? {} : { summary: vars.summary }),
+      ...(vars.notes === undefined ? {} : { notes: vars.notes }),
     },
   });
 }
@@ -141,6 +143,9 @@ function buildEntityTableMutationHandlers(
     },
     updateSummary(entityId: string, summary: string) {
       updateMutation.mutate({ entityId, summary });
+    },
+    updateNotes(entityId: string, notes: string) {
+      updateMutation.mutate({ entityId, notes });
     },
     async createConnection(
       centerId: string,
