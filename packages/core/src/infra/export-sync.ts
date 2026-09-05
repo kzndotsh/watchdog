@@ -18,6 +18,7 @@ import { readArtifactBytesEffect } from "./blob";
 import { errorMessage } from "./domain-error";
 import { renderCaseExportEffect, renderEntityMarkdownEffect } from "./export";
 import { logProcess, logSwallowed } from "./process-log";
+import { domainMessageOf } from "./tagged-errors";
 
 export class ExportIOError extends Data.TaggedError("ExportIOError")<{
   readonly reason: string;
@@ -165,7 +166,11 @@ export function writeEntityExportEffect(
   entityId: string
 ): Effect.Effect<void, ExportIOError> {
   return Effect.gen(function* writeEntityExportGen() {
-    const exported = yield* renderEntityMarkdownEffect(entityId);
+    const exported = yield* renderEntityMarkdownEffect(entityId).pipe(
+      Effect.mapError(
+        (error) => new ExportIOError({ reason: domainMessageOf(error) })
+      )
+    );
     if (!exported) return;
     const kindDir = `${exported.kind}s`;
     const path = nodePath.join(
@@ -182,8 +187,13 @@ export function writeCaseExportEffect(
   caseId: string
 ): Effect.Effect<void, ExportIOError> {
   return Effect.gen(function* writeCaseExportGen() {
-    const { files: mdFiles, evidenceRows } =
-      yield* renderCaseExportEffect(caseId);
+    const { files: mdFiles, evidenceRows } = yield* renderCaseExportEffect(
+      caseId
+    ).pipe(
+      Effect.mapError(
+        (error) => new ExportIOError({ reason: domainMessageOf(error) })
+      )
+    );
     if (mdFiles.size === 0) return;
 
     const caseMd = mdFiles.get("CASE.md") ?? "";

@@ -6,6 +6,7 @@ import {
   getCaseByIdEffect,
   listCasesEffect,
   listEntitiesForCaseEffect,
+  listEvidenceForCaseEffect,
   listJobsForCaseEffect,
   runDomain,
 } from "@watchdog/core";
@@ -71,6 +72,12 @@ describe("case organization isolation", () => {
 
     await expect(
       runDomain(listEntitiesForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+    );
+
+    await expect(
+      runDomain(listEvidenceForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "not_found"
     );
