@@ -2,7 +2,7 @@
 
 > Scope: `packages/caps` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-Cap implementations, registry, and Playbooks. Caps never write the Graph — `interpret` → Proposal only.
+Cap implementations, registry, and Playbooks. Caps never write the Graph — `interpret` → Proposal only; **Triage Accept** (or Dossier) applies Graph writes.
 
 ## Commands
 

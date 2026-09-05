@@ -65,7 +65,7 @@ Writes only inside the new Cap's folder
   `defineCollectCap` for Collect Caps. `interpret` stays pure/sync.
 - Caps never write the Graph — `interpret` returns Proposal ops only. If a
   step in this workflow starts looking like a Graph write, stop; that
-  belongs in Inbox Accept, not a Cap.
+  belongs in Triage Accept, not a Cap.
 - Refused vocabulary (module / analyzer / neuron / enricher / transform /
   connector / Mutation / Scratch / Candidate / Promote) is checked by
   `pnpm check:agents:strict`, not by this skill — do not skip that gate
