@@ -9,14 +9,24 @@
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import nodePath from "node:path";
 
-import { Effect, Fiber, SynchronizedRef } from "effect";
+import { Data, Effect, Fiber, SynchronizedRef } from "effect";
 
 import type { EvidenceRow } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 
 import { readArtifactBytesEffect } from "./blob";
+import { errorMessage } from "./domain-error";
 import { renderCaseExportEffect, renderEntityMarkdownEffect } from "./export";
 import { logProcess, logSwallowed } from "./process-log";
+
+export class ExportIOError extends Data.TaggedError("ExportIOError")<{
+  readonly reason: string;
+}> {}
+
+function mapExportCatch(error: unknown): ExportIOError {
+  if (error instanceof ExportIOError) return error;
+  return new ExportIOError({ reason: errorMessage(error) });
+}
 
 function exportRoot(): string {
   return (
@@ -28,13 +38,13 @@ function exportRoot(): string {
 function writeEffect(
   path: string,
   content: string | Uint8Array
-): Effect.Effect<void, unknown> {
+): Effect.Effect<void, ExportIOError> {
   return Effect.tryPromise({
     try: async () => {
       await mkdir(nodePath.dirname(path), { recursive: true });
       await writeFile(path, content);
     },
-    catch: (error) => error,
+    catch: mapExportCatch,
   });
 }
 
@@ -107,7 +117,7 @@ function writeUriEvidenceFileEffect(
 function writeInlineEvidenceFileEffect(
   evidenceDir: string,
   ev: EvidenceRow
-): Effect.Effect<void, unknown> {
+): Effect.Effect<void, ExportIOError> {
   const prefix = ev.id.slice(0, 8);
   const labelBase = safeFilename(ev.label ?? ev.sourceUrl ?? ev.id.slice(0, 8));
   const filename = `${prefix}--${labelBase}.txt`;
@@ -119,7 +129,7 @@ function writeOneEvidenceFileEffect(
   caseId: string,
   evidenceDir: string,
   ev: EvidenceRow
-): Effect.Effect<EvidenceWriteOutcome, unknown> {
+): Effect.Effect<EvidenceWriteOutcome, ExportIOError> {
   if (ev.uri !== null) {
     return writeUriEvidenceFileEffect(caseId, evidenceDir, ev);
   }
@@ -135,7 +145,7 @@ function writeCaseEvidenceFilesEffect(
   caseId: string,
   evidenceDir: string,
   evidenceRows: EvidenceRow[]
-): Effect.Effect<EvidenceExportCounts, unknown> {
+): Effect.Effect<EvidenceExportCounts, ExportIOError> {
   return Effect.gen(function* writeCaseEvidenceFilesGen() {
     const outcomes = yield* Effect.forEach(
       evidenceRows,
@@ -153,7 +163,7 @@ function writeCaseEvidenceFilesEffect(
 
 export function writeEntityExportEffect(
   entityId: string
-): Effect.Effect<void, unknown> {
+): Effect.Effect<void, ExportIOError> {
   return Effect.gen(function* writeEntityExportGen() {
     const exported = yield* renderEntityMarkdownEffect(entityId);
     if (!exported) return;
@@ -170,7 +180,7 @@ export function writeEntityExportEffect(
 
 export function writeCaseExportEffect(
   caseId: string
-): Effect.Effect<void, unknown> {
+): Effect.Effect<void, ExportIOError> {
   return Effect.gen(function* writeCaseExportGen() {
     const { files: mdFiles, evidenceRows } =
       yield* renderCaseExportEffect(caseId);
@@ -193,7 +203,7 @@ export function writeCaseExportEffect(
     const evidenceDir = nodePath.join(root, "evidence");
     yield* Effect.tryPromise({
       try: () => mkdir(evidenceDir, { recursive: true }),
-      catch: (error) => error,
+      catch: mapExportCatch,
     });
 
     const { included: evidenceIncluded, skipped: evidenceSkipped } =
@@ -230,7 +240,7 @@ function withDirty(
 
 function writeExportEffect(
   caseId: string,
-  writeExport: (id: string) => Effect.Effect<void, unknown>
+  writeExport: (id: string) => Effect.Effect<void, ExportIOError>
 ): Effect.Effect<void> {
   return writeExport(caseId).pipe(
     Effect.tapError((error) =>
@@ -244,7 +254,7 @@ function writeExportEffect(
 
 function exportLoop(
   caseId: string,
-  writeExport: (id: string) => Effect.Effect<void, unknown>
+  writeExport: (id: string) => Effect.Effect<void, ExportIOError>
 ): Effect.Effect<void> {
   return Effect.gen(function* exportLoopGen() {
     while (true) {
@@ -268,7 +278,7 @@ function exportLoop(
 
 function claimExportJoin(
   caseId: string,
-  writeExport: (id: string) => Effect.Effect<void, unknown>
+  writeExport: (id: string) => Effect.Effect<void, ExportIOError>
 ): Effect.Effect<Effect.Effect<void>> {
   return SynchronizedRef.modifyEffect(exportCoalesce, (state) => {
     const marked = withDirty(state, caseId);
@@ -301,7 +311,7 @@ export function scheduleCaseExportEffect(
   caseId: string,
   writeExport: (
     id: string
-  ) => Effect.Effect<void, unknown> = writeCaseExportEffect
+  ) => Effect.Effect<void, ExportIOError> = writeCaseExportEffect
 ): Effect.Effect<void> {
   return Effect.runSync(claimExportJoin(caseId, writeExport));
 }
@@ -318,12 +328,12 @@ function exportDirForSlug(slug: string): string | null {
 /** Best-effort: drop the live Export shadow dir for a deleted Case. */
 export function removeCaseExportDirEffect(
   slug: string
-): Effect.Effect<void, unknown> {
+): Effect.Effect<void, ExportIOError> {
   const dir = exportDirForSlug(slug);
   if (dir === null) return Effect.void;
   return Effect.tryPromise({
     try: () => rm(dir, { recursive: true, force: true }),
-    catch: (error) => error,
+    catch: mapExportCatch,
   });
 }
 
@@ -331,7 +341,7 @@ export function removeCaseExportDirEffect(
 export function renameCaseExportDirEffect(
   fromSlug: string,
   toSlug: string
-): Effect.Effect<void, unknown> {
+): Effect.Effect<void, ExportIOError> {
   if (fromSlug === toSlug) return Effect.void;
   const from = exportDirForSlug(fromSlug);
   const to = exportDirForSlug(toSlug);
@@ -339,7 +349,7 @@ export function renameCaseExportDirEffect(
   return Effect.gen(function* renameCaseExportDirGen() {
     yield* Effect.tryPromise({
       try: () => rm(to, { recursive: true, force: true }),
-      catch: (error) => error,
+      catch: mapExportCatch,
     });
     yield* Effect.tryPromise({
       try: async () => {
@@ -356,7 +366,7 @@ export function renameCaseExportDirEffect(
           throw error;
         }
       },
-      catch: (error) => error,
+      catch: mapExportCatch,
     });
   });
 }

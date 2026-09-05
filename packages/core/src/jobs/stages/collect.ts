@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { Effect } from "effect";
+import { Data, Effect } from "effect";
 
 import type { CapContext } from "@watchdog/cap-sdk";
 import { db, jobsRepo, type JobArtifact } from "@watchdog/db";
@@ -19,6 +19,7 @@ import {
   readArtifactBytesEffect,
   uploadArtifactEffect,
 } from "../../infra/blob";
+import { errorMessage } from "../../infra/domain-error";
 import { tryDb } from "../../infra/postgres-effect";
 import { logSwallowed } from "../../infra/process-log";
 import {
@@ -147,10 +148,14 @@ function buildCapContext(
   };
 }
 
+class ScratchIOError extends Data.TaggedError("ScratchIOError")<{
+  readonly reason: string;
+}> {}
+
 function acquireScratchEffect(): Effect.Effect<string> {
   return Effect.tryPromise({
     try: () => mkdtemp(path.join(tmpdir(), "wd-cap-")),
-    catch: (error) => error,
+    catch: (error) => new ScratchIOError({ reason: errorMessage(error) }),
   }).pipe(Effect.orDie);
 }
 
@@ -164,7 +169,7 @@ function cleanupScratchEffect(
     },
     catch: (cleanupError: unknown) => {
       logSwallowed("collect.scratch_cleanup", cleanupError, { jobId });
-      return new Error("collect scratch cleanup failed");
+      return new ScratchIOError({ reason: "collect scratch cleanup failed" });
     },
   }).pipe(Effect.catch(() => Effect.void));
 }
