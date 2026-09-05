@@ -11,6 +11,7 @@ import { fingerprintPatchOp } from "@watchdog/schemas";
 import {
   buildClaimCreateOp,
   buildEventCreateOp,
+  TEST_ORGANIZATION_ID,
   testId,
 } from "@watchdog/test-kit";
 import {
@@ -57,6 +58,7 @@ describe("suppressKnownFindings", () => {
     await runDomain(
       createClaimEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         entityId: entity.id,
         text: "Ada observed a host",
         confidence: "unverified",
@@ -76,6 +78,7 @@ describe("suppressKnownFindings", () => {
     await runDomain(
       createEventEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         entityId: entity.id,
         when: "1815-12-10",
         what: "Born",

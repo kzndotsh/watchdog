@@ -17,10 +17,7 @@ import {
   dossierTabCounts,
   evidenceRecordMap,
   openEvidencePreview,
-  type DossierTabCounts,
 } from "./dossier-shell-query-helpers";
-
-export type { DossierTabCounts };
 
 export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const queryClient = useQueryClient();

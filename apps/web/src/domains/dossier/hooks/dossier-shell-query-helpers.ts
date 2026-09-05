@@ -1,6 +1,6 @@
 import type { EvidenceRecord } from "@/domains/intake/types";
 
-export interface DossierTabCounts {
+interface DossierTabCounts {
   claims: number;
   identifiers: number;
   connections: number;

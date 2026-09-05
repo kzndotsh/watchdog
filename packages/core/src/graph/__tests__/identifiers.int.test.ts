@@ -4,10 +4,10 @@ import {
   DomainError,
   createIdentifierEffect,
   updateIdentifierEffect,
-  runDomain
+  runDomain,
 } from "@watchdog/core";
 import { db, evidenceLinksRepo } from "@watchdog/db";
-import { testId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedCase,
@@ -24,14 +24,17 @@ describe("createIdentifier", () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
     await expect(
-      runDomain(createIdentifierEffect({
-        caseId: cased.id,
-        entityId: entity.id,
-        type: "email",
-        value: "ada@mailhost.test",
-        confidence: "confirmed",
-        status: "unknown",
-      }))
+      runDomain(
+        createIdentifierEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          entityId: entity.id,
+          type: "email",
+          value: "ada@mailhost.test",
+          confidence: "confirmed",
+          status: "unknown",
+        })
+      )
     ).rejects.toSatisfy(
       (error: unknown) => DomainError.is(error) && error.code === "invalid"
     );
@@ -41,15 +44,18 @@ describe("createIdentifier", () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(21) });
     const evidence = await seedEvidence(db, cased.id);
-    const created = await runDomain(createIdentifierEffect({
-      caseId: cased.id,
-      entityId: entity.id,
-      type: "email",
-      value: "ada@mailhost.test",
-      confidence: "unverified",
-      status: "unknown",
-      evidenceIds: [evidence.id],
-    }));
+    const created = await runDomain(
+      createIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        entityId: entity.id,
+        type: "email",
+        value: "ada@mailhost.test",
+        confidence: "unverified",
+        status: "unknown",
+        evidenceIds: [evidence.id],
+      })
+    );
     const links = await evidenceLinksRepo.listForIdentifiers(db, [created.id]);
     expect(links.get(created.id)).toEqual([evidence.id]);
   });
@@ -59,6 +65,7 @@ describe("createIdentifier", () => {
     const entity = await seedEntity(db, cased.id, { id: testId(22) });
     const input = {
       caseId: cased.id,
+      organizationId: TEST_ORGANIZATION_ID,
       entityId: entity.id,
       type: "email" as const,
       value: "ada@mailhost.test",
@@ -82,20 +89,26 @@ describe("updateIdentifier", () => {
     const entity = await seedEntity(db, cased.id, { id: testId(23) });
     const first = await seedEvidence(db, cased.id, { label: "first" });
     const second = await seedEvidence(db, cased.id, { label: "second" });
-    const created = await runDomain(createIdentifierEffect({
-      caseId: cased.id,
-      entityId: entity.id,
-      type: "email",
-      value: "ada@mailhost.test",
-      confidence: "unverified",
-      status: "unknown",
-      evidenceIds: [first.id],
-    }));
-    await runDomain(updateIdentifierEffect({
-      caseId: cased.id,
-      identifierId: created.id,
-      evidenceIds: [second.id],
-    }));
+    const created = await runDomain(
+      createIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        entityId: entity.id,
+        type: "email",
+        value: "ada@mailhost.test",
+        confidence: "unverified",
+        status: "unknown",
+        evidenceIds: [first.id],
+      })
+    );
+    await runDomain(
+      updateIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        identifierId: created.id,
+        evidenceIds: [second.id],
+      })
+    );
     const links = await evidenceLinksRepo.listForIdentifiers(db, [created.id]);
     expect(links.get(created.id)).toEqual([second.id]);
   });

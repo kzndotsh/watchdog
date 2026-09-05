@@ -176,7 +176,6 @@ export {
   type UpdateEdgeInput,
 } from "./graph/edges";
 export {
-  assertCaseExistsEffect,
   assertCaseExistsUncheckedEffect,
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
