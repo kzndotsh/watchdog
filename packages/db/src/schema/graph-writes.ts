@@ -29,6 +29,7 @@ export const graphWrites = pgTable(
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     actorId: text("actor_id").notNull(),
+    actorLabel: text("actor_label"),
     channel: text("channel").$type<GraphWriteChannel>().notNull(),
     userOverridden: boolean("user_overridden").notNull().default(true),
     confidence: text("confidence").$type<ConfidenceTier>().notNull(),

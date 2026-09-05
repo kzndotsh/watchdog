@@ -10,7 +10,8 @@ export type PlaybookRunRow = typeof playbookRuns.$inferSelect;
 export type NewPlaybookRun = Pick<
   typeof playbookRuns.$inferInsert,
   "caseId" | "playbookId" | "seed" | "status" | "actorId"
->;
+> &
+  Partial<Pick<typeof playbookRuns.$inferInsert, "actorLabel">>;
 
 export const playbookRunsRepo = {
   async create(

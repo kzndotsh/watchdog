@@ -3,7 +3,11 @@ export { activityEvents } from "./activity-events";
 export {
   account,
   apiKey,
+  authEvent,
   authSchema,
+  invitation,
+  member,
+  organization,
   session,
   user,
   verification,

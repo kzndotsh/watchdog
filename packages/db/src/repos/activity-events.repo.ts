@@ -13,10 +13,14 @@ export type NewActivityEvent = Pick<
   "caseId" | "kind" | "action" | "subjectId" | "label"
 > &
   Partial<
-    Pick<typeof activityEvents.$inferInsert, "id" | "fromValue" | "toValue">
+    Pick<
+      typeof activityEvents.$inferInsert,
+      "id" | "fromValue" | "toValue" | "actorId"
+    >
   >;
 
 export interface RecentActivityEventOpts {
+  organizationId: string;
   caseId?: string;
   kind?: ActivityKind;
   limit: number;
@@ -32,11 +36,15 @@ export interface RecentActivityEventRow {
   label: string;
   fromValue: string | null;
   toValue: string | null;
+  actorId: string | null;
   at: Date;
 }
 
-function caseFilter(caseId: string | undefined) {
-  return caseId === undefined ? undefined : eq(activityEvents.caseId, caseId);
+function orgCaseFilter(organizationId: string, caseId: string | undefined) {
+  return and(
+    eq(cases.organizationId, organizationId),
+    caseId === undefined ? undefined : eq(activityEvents.caseId, caseId)
+  );
 }
 
 export const activityEventsRepo = {
@@ -66,13 +74,14 @@ export const activityEventsRepo = {
         label: activityEvents.label,
         fromValue: activityEvents.fromValue,
         toValue: activityEvents.toValue,
+        actorId: activityEvents.actorId,
         at: activityEvents.createdAt,
       })
       .from(activityEvents)
       .innerJoin(cases, eq(cases.id, activityEvents.caseId))
       .where(
         and(
-          caseFilter(opts.caseId),
+          orgCaseFilter(opts.organizationId, opts.caseId),
           opts.kind === undefined
             ? undefined
             : eq(activityEvents.kind, opts.kind)

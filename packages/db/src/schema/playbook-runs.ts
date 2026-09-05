@@ -17,6 +17,7 @@ export const playbookRuns = pgTable("playbook_runs", {
     .notNull()
     .default("running"),
   actorId: text("actor_id").notNull(),
+  actorLabel: text("actor_label"),
   createdAt,
   finishedAt: timestamptz("finished_at"),
 });

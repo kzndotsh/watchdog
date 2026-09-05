@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testId, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { seedCase, withTestTx } from "@watchdog/test-kit/db";
 
 import { activityEventsRepo } from "../activity-events.repo.ts";
@@ -19,6 +19,7 @@ describe("activityEventsRepo", () => {
         toValue: "in_progress",
       });
       const recent = await activityEventsRepo.recent(tx, {
+        organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
         kind: "task",
         limit: 10,

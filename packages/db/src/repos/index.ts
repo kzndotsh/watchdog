@@ -64,6 +64,8 @@ export type {
   QuestionTextKey,
   ResolveQuestionValues,
 } from "./questions.repo";
+export { usersRepo } from "./users.repo";
+export type { UserDisplayRow } from "./users.repo";
 export { jobsRepo } from "./jobs.repo";
 export type {
   JobListRow,

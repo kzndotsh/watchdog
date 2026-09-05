@@ -49,6 +49,8 @@ export const jobs = pgTable(
     fromCache: boolean("from_cache").notNull().default(false),
     suppressedCount: integer("suppressed_count").notNull().default(0),
     actorId: text("actor_id").notNull(),
+    /** Snapshot when the actor is an API key (`api-key:…`). User names resolve at read. */
+    actorLabel: text("actor_label"),
     logs: jsonb("logs").$type<string[]>().notNull().default([]),
     playbookRunId: uuid("playbook_run_id").references(() => playbookRuns.id, {
       onDelete: "set null",

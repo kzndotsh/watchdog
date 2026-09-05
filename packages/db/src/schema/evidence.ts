@@ -36,6 +36,7 @@ export const evidence = pgTable(
     text: text("text"),
     sourceUrl: text("source_url"),
     actorId: text("actor_id").notNull(),
+    actorLabel: text("actor_label"),
     capturedAt: timestamptz("captured_at").notNull().defaultNow(),
     processedAt: timestamptz("processed_at"),
     deletedAt: timestamptz("deleted_at"),

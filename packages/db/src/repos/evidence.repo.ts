@@ -27,6 +27,7 @@ export const evidenceColumns = {
   text: evidence.text,
   sourceUrl: evidence.sourceUrl,
   actorId: evidence.actorId,
+  actorLabel: evidence.actorLabel,
   capturedAt: evidence.capturedAt,
   processedAt: evidence.processedAt,
   deletedAt: evidence.deletedAt,
@@ -50,6 +51,7 @@ export type NewEvidence = Pick<
   | "text"
   | "sourceUrl"
   | "actorId"
+  | "actorLabel"
 >;
 
 export interface EvidenceCapSeed {

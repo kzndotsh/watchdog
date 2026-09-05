@@ -27,6 +27,7 @@ export const activityEvents = pgTable(
     /** Source row id (e.g. task id). */
     subjectId: uuid("subject_id").notNull(),
     label: text("label").notNull(),
+    actorId: text("actor_id"),
     /** Previous status (status_changed). */
     fromValue: text("from_value"),
     /** New status (created / status_changed). */

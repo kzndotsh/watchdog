@@ -50,6 +50,41 @@
       "when": 1787546875650,
       "tag": "0006_loose_doctor_faustus",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788559552224,
+      "tag": "0007_bumpy_tenebrous",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788561218711,
+      "tag": "0008_messy_chat",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788563024796,
+      "tag": "0009_mighty_shadow_king",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788565528806,
+      "tag": "0010_steady_scorpion",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788566753320,
+      "tag": "0011_famous_mephistopheles",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,7 @@ import { jobs } from "../schema/jobs";
 import { proposals } from "../schema/proposals";
 
 export interface RecentActivityOpts {
+  organizationId: string;
   caseId?: string;
   limit: number;
 }
@@ -19,6 +20,8 @@ export interface RecentEvidenceActivityRow {
   caseName: string;
   kind: string;
   label: string | null;
+  actorId: string;
+  actorLabel: string | null;
   at: Date;
 }
 
@@ -29,6 +32,8 @@ export interface RecentJobActivityRow {
   capabilityId: string;
   status: JobStatus;
   resultSummary: string | null;
+  actorId: string;
+  actorLabel: string | null;
   at: Date;
 }
 
@@ -40,8 +45,11 @@ export interface RecentProposalActivityRow {
   at: Date;
 }
 
-function caseFilter(caseId: string | undefined) {
-  return caseId === undefined ? undefined : eq(cases.id, caseId);
+function orgCaseFilter(organizationId: string, caseId: string | undefined) {
+  return and(
+    eq(cases.organizationId, organizationId),
+    caseId === undefined ? undefined : eq(cases.id, caseId)
+  );
 }
 
 export const activityRepo = {
@@ -56,11 +64,18 @@ export const activityRepo = {
         caseName: cases.name,
         kind: evidence.kind,
         label: evidence.label,
+        actorId: evidence.actorId,
+        actorLabel: evidence.actorLabel,
         at: evidence.capturedAt,
       })
       .from(evidence)
       .innerJoin(cases, eq(cases.id, evidence.caseId))
-      .where(and(isNull(evidence.deletedAt), caseFilter(opts.caseId)))
+      .where(
+        and(
+          isNull(evidence.deletedAt),
+          orgCaseFilter(opts.organizationId, opts.caseId)
+        )
+      )
       .orderBy(desc(evidence.capturedAt))
       .limit(opts.limit);
   },
@@ -77,11 +92,13 @@ export const activityRepo = {
         capabilityId: jobs.capabilityId,
         status: jobs.status,
         resultSummary: jobs.resultSummary,
+        actorId: jobs.actorId,
+        actorLabel: jobs.actorLabel,
         at: jobs.updatedAt,
       })
       .from(jobs)
       .innerJoin(cases, eq(cases.id, jobs.caseId))
-      .where(caseFilter(opts.caseId))
+      .where(orgCaseFilter(opts.organizationId, opts.caseId))
       .orderBy(desc(jobs.updatedAt))
       .limit(opts.limit);
   },
@@ -100,7 +117,12 @@ export const activityRepo = {
       })
       .from(proposals)
       .innerJoin(cases, eq(cases.id, proposals.caseId))
-      .where(and(eq(proposals.status, "pending"), caseFilter(opts.caseId)))
+      .where(
+        and(
+          eq(proposals.status, "pending"),
+          orgCaseFilter(opts.organizationId, opts.caseId)
+        )
+      )
       .orderBy(desc(proposals.createdAt))
       .limit(opts.limit);
   },

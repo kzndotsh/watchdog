@@ -24,6 +24,7 @@ export const jobListColumns = {
   fromCache: jobs.fromCache,
   suppressedCount: jobs.suppressedCount,
   actorId: jobs.actorId,
+  actorLabel: jobs.actorLabel,
   playbookRunId: jobs.playbookRunId,
   playbookStep: jobs.playbookStep,
   playbookFanIndex: jobs.playbookFanIndex,
@@ -59,6 +60,7 @@ export type NewJob = Pick<
       | "output"
       | "evidenceIds"
       | "handoff"
+      | "actorLabel"
     >
   >;
 

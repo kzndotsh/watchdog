@@ -14,6 +14,7 @@ export type GraphWriteRow = typeof graphWrites.$inferSelect;
 export interface NewGraphWrite {
   caseId: string;
   actorId: string;
+  actorLabel?: string | null;
   channel: GraphWriteChannel;
   userOverridden: boolean;
   confidence: ConfidenceTier;
