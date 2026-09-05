@@ -12,7 +12,7 @@ import {
   createAttestationEffect,
 } from "../evidence/evidence";
 import { applyPatchEffect } from "../graph/patch/apply-patch";
-import { assertCaseExistsEffect } from "../graph/patch/guards";
+import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import {
   notifyEntityChangedEffect,
@@ -43,10 +43,11 @@ export interface GraphWriteRecord {
 }
 
 export function listGraphWritesForCaseEffect(
-  caseId: string
+  caseId: string,
+  organizationId: string
 ): Effect.Effect<GraphWriteRecord[], DomainTag> {
   return Effect.gen(function* listGraphWritesGen() {
-    yield* assertCaseExistsEffect(caseId);
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const rows = yield* tryDb(() => graphWritesRepo.listForCase(db, caseId));
     const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
     return rows.map((row) => ({
@@ -83,6 +84,7 @@ export interface AgentGraphWriteResult {
 
 export function createAgentProposalEffect(input: {
   caseId: string;
+  organizationId: string;
   actorId: string;
   patch: unknown;
   summary?: string;
@@ -98,7 +100,7 @@ export function createAgentProposalEffect(input: {
       return yield* new InvalidError({ reason: plan.error });
     }
 
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     yield* assertEvidenceIdsInCaseEffect(input.caseId, plan.evidenceIds);
 
     const { kept, suppressed } = yield* tryDb(() =>
@@ -142,6 +144,7 @@ export function createAgentProposalEffect(input: {
 
 export function writeGraphFromAgentEffect(input: {
   caseId: string;
+  organizationId: string;
   actorId: string;
   actorLabel?: string | null;
   patch: unknown;
@@ -169,7 +172,7 @@ export function writeGraphFromAgentEffect(input: {
       return yield* new InvalidError({ reason: plan.error });
     }
 
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     yield* assertEvidenceIdsInCaseEffect(input.caseId, plan.evidenceIds);
 
     const idempotencyKey = trimmedOrNull(input.idempotencyKey);

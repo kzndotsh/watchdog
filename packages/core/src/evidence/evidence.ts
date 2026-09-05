@@ -15,7 +15,8 @@ import {
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
 import {
-  assertCaseExistsEffect,
+  assertCaseExistsUncheckedEffect,
+  assertCaseInOrgEffect,
   assertEntityInCaseEffect,
 } from "../graph/patch/guards";
 import {
@@ -60,6 +61,7 @@ export interface ListEvidenceOpts {
 
 export interface DumpPasteInput {
   caseId: string;
+  organizationId: string;
   body: string;
   label?: string;
   sourceUrl?: string;
@@ -70,6 +72,7 @@ export interface DumpPasteInput {
 
 export interface DumpUrlInput {
   caseId: string;
+  organizationId: string;
   sourceUrl: string;
   label?: string;
   notes?: string;
@@ -80,11 +83,13 @@ export interface DumpUrlInput {
 
 export interface SoftDeleteInput {
   caseId: string;
+  organizationId: string;
   evidenceId: string;
 }
 
 export interface PresignUploadInput {
   caseId: string;
+  organizationId: string;
   sha256: string;
   mime: string;
   byteLength: number;
@@ -93,6 +98,7 @@ export interface PresignUploadInput {
 
 export interface ConfirmFileUploadInput {
   caseId: string;
+  organizationId: string;
   uri: string;
   sha256: string;
   mime: string;
@@ -156,28 +162,28 @@ function maybeAssertEntityEffect(
 
 export function listEvidenceForCaseEffect(
   caseId: string,
+  organizationId: string,
   opts?: ListEvidenceOpts
 ): Effect.Effect<EvidenceRecord[], DomainTag> {
-  return tryDb(() =>
-    evidenceRepo.listForCase(db, caseId, {
-      deletedOnly: opts?.hiddenOnly,
-      unprocessedOnly: opts?.unprocessedOnly,
-      unattachedOnly: opts?.unattachedOnly,
-    })
-  ).pipe(
-    Effect.flatMap((rows) =>
-      loadActorUsersEffect(rows.map((row) => row.actorId)).pipe(
-        Effect.map((users) => rows.map((row) => toRecord(row, users)))
-      )
-    )
-  );
+  return Effect.gen(function* listEvidenceGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const rows = yield* tryDb(() =>
+      evidenceRepo.listForCase(db, caseId, {
+        deletedOnly: opts?.hiddenOnly,
+        unprocessedOnly: opts?.unprocessedOnly,
+        unattachedOnly: opts?.unattachedOnly,
+      })
+    );
+    const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
+    return rows.map((row) => toRecord(row, users));
+  });
 }
 
 export function dumpPasteEffect(
   input: DumpPasteInput
 ): Effect.Effect<EvidenceRecord, DomainTag> {
   return Effect.gen(function* dumpPasteGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     yield* maybeAssertEntityEffect(input.caseId, input.entityId);
     const bytes = new TextEncoder().encode(input.body);
     const artifact = yield* uploadArtifactEffect({
@@ -211,7 +217,7 @@ export function dumpUrlEffect(
   input: DumpUrlInput
 ): Effect.Effect<EvidenceRecord, DomainTag> {
   return Effect.gen(function* dumpUrlGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     yield* maybeAssertEntityEffect(input.caseId, input.entityId);
     const row = yield* tryDb(() =>
       evidenceRepo.create(db, {
@@ -236,37 +242,42 @@ export function dumpUrlEffect(
 export function softDeleteEvidenceEffect(
   input: SoftDeleteInput
 ): Effect.Effect<void, DomainTag> {
-  return tryDb(() =>
-    evidenceRepo.softDelete(db, input.caseId, input.evidenceId)
-  ).pipe(
-    Effect.flatMap((row) =>
-      row ? Effect.void : new NotFoundError({ resource: "Evidence not found" })
-    )
-  );
+  return Effect.gen(function* softDeleteEvidenceGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const row = yield* tryDb(() =>
+      evidenceRepo.softDelete(db, input.caseId, input.evidenceId)
+    );
+    if (!row) {
+      return yield* new NotFoundError({ resource: "Evidence not found" });
+    }
+  });
 }
 
 /** Clear soft-delete — returns the row to the active Intake queue. */
 export function restoreEvidenceEffect(
   input: SoftDeleteInput
 ): Effect.Effect<void, DomainTag> {
-  return tryDb(() =>
-    evidenceRepo.restore(db, input.caseId, input.evidenceId)
-  ).pipe(
-    Effect.flatMap((row) =>
-      row
-        ? Effect.void
-        : new NotFoundError({ resource: "Hidden Evidence not found" })
-    )
-  );
+  return Effect.gen(function* restoreEvidenceGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const row = yield* tryDb(() =>
+      evidenceRepo.restore(db, input.caseId, input.evidenceId)
+    );
+    if (!row) {
+      return yield* new NotFoundError({
+        resource: "Hidden Evidence not found",
+      });
+    }
+  });
 }
 
 export function attachEvidenceEntityEffect(input: {
   caseId: string;
+  organizationId: string;
   evidenceId: string;
   entityId: string | null;
 }): Effect.Effect<EvidenceRecord, DomainTag> {
   return Effect.gen(function* attachEvidenceEntityGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const entityId =
       input.entityId === null || input.entityId === "" ? null : input.entityId;
     if (entityId !== null) {
@@ -286,7 +297,7 @@ export function presignUploadEffect(
   input: PresignUploadInput
 ): Effect.Effect<PresignedPut, DomainTag> {
   return Effect.gen(function* presignUploadGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     return yield* createPresignedPutEffect({
       caseId: input.caseId,
       sha256: input.sha256,
@@ -303,7 +314,7 @@ export function confirmFileUploadEffect(
   actorLabel?: string | null
 ): Effect.Effect<EvidenceRecord, DomainTag> {
   return Effect.gen(function* confirmFileUploadGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     yield* maybeAssertEntityEffect(input.caseId, input.entityId);
     if (!input.uri.startsWith(`${input.caseId}/`)) {
       return yield* new InvalidError({
@@ -338,10 +349,11 @@ export function confirmFileUploadEffect(
 
 export function getEvidenceDownloadUrlEffect(
   caseId: string,
+  organizationId: string,
   evidenceId: string
 ): Effect.Effect<{ url: string | null }, DomainTag> {
   return Effect.gen(function* getEvidenceDownloadUrlGen() {
-    yield* assertCaseExistsEffect(caseId);
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const row = yield* tryDb(() =>
       evidenceRepo.getUriInCaseIncludingDeleted(db, caseId, evidenceId)
     );
@@ -357,13 +369,14 @@ export function getEvidenceDownloadUrlEffect(
 /**
  * Human attestation note — text-only Evidence (no MinIO blob).
  * Used on Inbox Accept when the investigator pastes a citeable note.
+ * Caller must already have org-scoped the case (Accept path).
  */
 export function createAttestationEffect(
   input: CreateAttestationInput
 ): Effect.Effect<EvidenceRecord, DomainTag> {
   return Effect.gen(function* createAttestationGen() {
     const exec = input.tx ?? db;
-    yield* assertCaseExistsEffect(input.caseId, exec);
+    yield* assertCaseExistsUncheckedEffect(input.caseId, exec);
     if (input.entityId !== undefined && input.entityId !== "") {
       yield* assertEntityInCaseEffect(input.caseId, input.entityId, exec);
     }

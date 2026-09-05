@@ -4,6 +4,11 @@ import { ListFilterIcon } from "lucide-react";
 import type { SubmitEvent } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 
+import {
+  PlaybookSeedFields,
+  type PlaybookRunFormValues,
+  type UrlDumpOption,
+} from "@/domains/jobs/components/playbook-seed-fields";
 import { PlaybookSelect } from "@/domains/jobs/components/playbook-select";
 import { clampSelectId } from "@/domains/jobs/lib/clamp-select";
 import {
@@ -20,77 +25,13 @@ import {
   PageFilterMenu,
   type PageFilterChip,
 } from "@/shared/layout/page-filter-menu";
-import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Input } from "@/shared/ui/shadcn/input";
 import { Label } from "@/shared/ui/shadcn/label";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import { trimmedOrUndefined, type PlaybookSeedKind } from "@watchdog/schemas";
-
-export interface UrlDumpOption {
-  id: string;
-  sourceUrl: string;
-  label?: string | null;
-}
-
-interface PlaybookRunFormValues {
-  playbookId: string;
-  host: string;
-  url: string;
-  evidenceId: string;
-  entityId: string;
-  ip: string;
-  email: string;
-  hash: string;
-  handle: string;
-}
-
-const SEED_TEXT_FIELDS = [
-  {
-    kind: "host",
-    name: "host",
-    placeholder: "example.com",
-    label: "Seed host",
-    className: "h-8 min-w-[8rem] flex-1 text-xs sm:max-w-[10rem]",
-  },
-  {
-    kind: "ip",
-    name: "ip",
-    placeholder: "1.2.3.4",
-    label: "Seed IP",
-    className: "h-8 min-w-[8rem] flex-1 font-mono text-xs sm:max-w-[10rem]",
-  },
-  {
-    kind: "email",
-    name: "email",
-    placeholder: "name@example.com",
-    label: "Seed email",
-    className: "h-8 min-w-[10rem] flex-1 text-xs sm:max-w-[14rem]",
-  },
-  {
-    kind: "hash",
-    name: "hash",
-    placeholder: "sha256…",
-    label: "Seed hash",
-    className: "h-8 min-w-[10rem] flex-1 font-mono text-xs sm:max-w-[16rem]",
-  },
-  {
-    kind: "handle",
-    name: "handle",
-    placeholder: "username",
-    label: "Seed handle",
-    className: "h-8 min-w-[8rem] flex-1 text-xs sm:max-w-[10rem]",
-  },
-] as const satisfies readonly {
-  kind: PlaybookSeedKind;
-  name: keyof PlaybookRunFormValues;
-  placeholder: string;
-  label: string;
-  className: string;
-}[];
 
 export interface PlaybookRunVars {
   playbookId: string;
@@ -379,202 +320,13 @@ export function JobPlaybookRunForm({
                     </label>
                   </PageFilterMenu>
                 </div>
-                {layout === "stacked" ? (
-                  <div className="grid w-full grid-cols-2 gap-2">
-                    <div className="flex min-w-0 flex-col gap-2">
-                      {SEED_TEXT_FIELDS.filter((field) =>
-                        view.needs.includes(field.kind)
-                      ).map((spec) => (
-                        <form.Field key={spec.name} name={spec.name}>
-                          {(field) => (
-                            <Input
-                              className={cn(
-                                "h-8 w-full text-xs",
-                                spec.name === "ip" || spec.name === "hash"
-                                  ? "font-mono"
-                                  : null
-                              )}
-                              placeholder={spec.placeholder}
-                              value={field.state.value}
-                              onBlur={field.handleBlur}
-                              onChange={(e) => {
-                                field.handleChange(e.target.value);
-                              }}
-                              aria-label={spec.label}
-                            />
-                          )}
-                        </form.Field>
-                      ))}
-                      {view.pickUrlDump ? (
-                        <form.Field name="evidenceId">
-                          {(field) => (
-                            <FieldSelect
-                              className="w-full"
-                              contentClassName="w-max min-w-(--anchor-width) max-w-[min(24rem,calc(100vw-2rem))]"
-                              value={field.state.value}
-                              onValueChange={(id) => {
-                                field.handleChange(id);
-                                const row = urlDumps.find((d) => d.id === id);
-                                form.setFieldValue("url", row?.sourceUrl ?? "");
-                              }}
-                              aria-label="URL dump Evidence"
-                              disabled={urlDumps.length === 0}
-                              placeholder="Select URL dump…"
-                              options={urlDumps.map((d) => ({
-                                value: d.id,
-                                label:
-                                  trimmedOrUndefined(d.label) ?? d.sourceUrl,
-                              }))}
-                            />
-                          )}
-                        </form.Field>
-                      ) : (
-                        <>
-                          {view.needsUrl ? (
-                            <form.Field name="url">
-                              {(field) => (
-                                <Input
-                                  className="h-8 w-full text-xs"
-                                  placeholder="Host or domain name"
-                                  value={field.state.value}
-                                  onBlur={field.handleBlur}
-                                  onChange={(e) => {
-                                    field.handleChange(e.target.value);
-                                  }}
-                                  aria-label="Seed URL"
-                                />
-                              )}
-                            </form.Field>
-                          ) : null}
-                          {view.needsEvidence ? (
-                            <form.Field name="evidenceId">
-                              {(field) => (
-                                <Input
-                                  className="h-8 w-full font-mono text-xs"
-                                  placeholder="Evidence id"
-                                  value={field.state.value}
-                                  onBlur={field.handleBlur}
-                                  onChange={(e) => {
-                                    field.handleChange(e.target.value);
-                                  }}
-                                  aria-label="Seed Evidence id"
-                                />
-                              )}
-                            </form.Field>
-                          ) : null}
-                        </>
-                      )}
-                    </div>
-                    <form.Field name="entityId">
-                      {(field) => (
-                        <EntityCombobox
-                          entities={entities}
-                          value={field.state.value}
-                          onValueChange={(id) => {
-                            field.handleChange(id);
-                          }}
-                          emptyLabel="No entity"
-                          aria-label="Attach to entity"
-                          hideWhenEmpty
-                          className="w-full"
-                        />
-                      )}
-                    </form.Field>
-                  </div>
-                ) : (
-                  <>
-                    {SEED_TEXT_FIELDS.filter((field) =>
-                      view.needs.includes(field.kind)
-                    ).map((spec) => (
-                      <form.Field key={spec.name} name={spec.name}>
-                        {(field) => (
-                          <Input
-                            className={spec.className}
-                            placeholder={spec.placeholder}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => {
-                              field.handleChange(e.target.value);
-                            }}
-                            aria-label={spec.label}
-                          />
-                        )}
-                      </form.Field>
-                    ))}
-                    {view.pickUrlDump ? (
-                      <form.Field name="evidenceId">
-                        {(field) => (
-                          <FieldSelect
-                            className="min-w-[12rem] flex-1 sm:max-w-xs"
-                            contentClassName="w-max min-w-(--anchor-width) max-w-[min(24rem,calc(100vw-2rem))]"
-                            value={field.state.value}
-                            onValueChange={(id) => {
-                              field.handleChange(id);
-                              const row = urlDumps.find((d) => d.id === id);
-                              form.setFieldValue("url", row?.sourceUrl ?? "");
-                            }}
-                            aria-label="URL dump Evidence"
-                            disabled={urlDumps.length === 0}
-                            placeholder="Select URL dump…"
-                            options={urlDumps.map((d) => ({
-                              value: d.id,
-                              label: trimmedOrUndefined(d.label) ?? d.sourceUrl,
-                            }))}
-                          />
-                        )}
-                      </form.Field>
-                    ) : (
-                      <>
-                        {view.needsUrl ? (
-                          <form.Field name="url">
-                            {(field) => (
-                              <Input
-                                className="h-8 min-w-[10rem] flex-1 text-xs sm:max-w-xs"
-                                placeholder="Host or domain name"
-                                value={field.state.value}
-                                onBlur={field.handleBlur}
-                                onChange={(e) => {
-                                  field.handleChange(e.target.value);
-                                }}
-                                aria-label="Seed URL"
-                              />
-                            )}
-                          </form.Field>
-                        ) : null}
-                        {view.needsEvidence ? (
-                          <form.Field name="evidenceId">
-                            {(field) => (
-                              <Input
-                                className="h-8 min-w-[12rem] flex-1 font-mono text-xs sm:max-w-xs"
-                                placeholder="Evidence id"
-                                value={field.state.value}
-                                onBlur={field.handleBlur}
-                                onChange={(e) => {
-                                  field.handleChange(e.target.value);
-                                }}
-                                aria-label="Seed Evidence id"
-                              />
-                            )}
-                          </form.Field>
-                        ) : null}
-                      </>
-                    )}
-                    <form.Field name="entityId">
-                      {(field) => (
-                        <EntityCombobox
-                          entities={entities}
-                          value={field.state.value}
-                          onValueChange={(id) => {
-                            field.handleChange(id);
-                          }}
-                          emptyLabel="No entity"
-                          aria-label="Attach to entity"
-                          hideWhenEmpty
-                        />
-                      )}
-                    </form.Field>
-                  </>
-                )}
+                <PlaybookSeedFields
+                  layout={layout}
+                  view={view}
+                  urlDumps={urlDumps}
+                  entities={entities}
+                  form={form}
+                />
                 <div
                   className={
                     layout === "stacked" ? "flex w-full justify-end" : undefined

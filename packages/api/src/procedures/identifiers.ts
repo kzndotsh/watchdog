@@ -10,6 +10,7 @@ import {
   confidenceTierSchema,
   identifierStatusSchema,
   identifierTypeSchema,
+  identifierUpdateFieldsSchema,
 } from "@watchdog/schemas";
 
 import { authed, graphChildWrite } from "../os";
@@ -34,8 +35,14 @@ export const list = authed
     })
   )
   .output(z.array(identifierSchema))
-  .handler(async ({ input }) =>
-    runApp(listIdentifiersForEntityEffect(input.caseId, input.entityId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      listIdentifiersForEntityEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.entityId
+      )
+    )
   );
 
 export const listForCase = authed
@@ -47,8 +54,10 @@ export const listForCase = authed
   })
   .input(z.object({ caseId: z.uuid() }))
   .output(z.array(caseIdentifierSchema))
-  .handler(async ({ input }) =>
-    runApp(listIdentifiersForCaseEffect(input.caseId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      listIdentifiersForCaseEffect(input.caseId, context.actor.organizationId)
+    )
   );
 
 export const create = graphChildWrite
@@ -74,7 +83,14 @@ export const create = graphChildWrite
     })
   )
   .output(identifierSchema)
-  .handler(async ({ input }) => runApp(createIdentifierEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      createIdentifierEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );
 
 export const update = graphChildWrite
   .route({
@@ -84,18 +100,20 @@ export const update = graphChildWrite
     tags: ["identifiers"],
   })
   .input(
-    z.object({
-      caseId: z.uuid(),
-      identifierId: z.uuid(),
-      value: z.string().optional(),
-      platform: z.string().optional(),
-      type: identifierTypeSchema.optional(),
-      status: identifierStatusSchema.optional(),
-      confidence: confidenceTierSchema.optional(),
-      notes: z.string().optional(),
-      evidenceIds: z.array(z.uuid()).optional(),
-      userOverride: userOverrideSchema,
-    })
+    z
+      .object({
+        caseId: z.uuid(),
+        identifierId: z.uuid(),
+        userOverride: userOverrideSchema,
+      })
+      .extend(identifierUpdateFieldsSchema.shape)
   )
   .output(identifierSchema)
-  .handler(async ({ input }) => runApp(updateIdentifierEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      updateIdentifierEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );

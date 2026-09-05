@@ -17,9 +17,9 @@ async function swallowCancelled(promise: Promise<unknown>): Promise<void> {
   try {
     await promise;
   } catch (error: unknown) {
-    if (isCancelledError(error)) return;
-    if (import.meta.env.DEV) {
-      console.warn("[warm-query]", error);
+    // Fire-and-forget warm: CancelledError is expected on SSR/HMR teardown.
+    if (!isCancelledError(error)) {
+      /* ignore */
     }
   }
 }

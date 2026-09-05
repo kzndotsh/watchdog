@@ -6,7 +6,12 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { claimsRepo, db, evidenceRepo, graphWritesRepo } from "@watchdog/db";
-import { TEST_ACTOR_ID, buildClaimCreateOp, testId } from "@watchdog/test-kit";
+import {
+  TEST_ACTOR_ID,
+  buildClaimCreateOp,
+  testId,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
 
 describe("writeGraphFromAgent", () => {
@@ -22,6 +27,7 @@ describe("writeGraphFromAgent", () => {
     const written = await runDomain(
       writeGraphFromAgentEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
         userOverride: true,
@@ -57,6 +63,7 @@ describe("writeGraphFromAgent", () => {
     ];
     const input = {
       caseId: cased.id,
+      organizationId: TEST_ORGANIZATION_ID,
       actorId: TEST_ACTOR_ID,
       actorLabel: TEST_ACTOR_ID,
       userOverride: true as const,
@@ -82,6 +89,7 @@ describe("writeGraphFromAgent", () => {
       runDomain(
         writeGraphFromAgentEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           actorId: TEST_ACTOR_ID,
           actorLabel: TEST_ACTOR_ID,
           userOverride: true,
@@ -102,6 +110,7 @@ describe("writeGraphFromAgent", () => {
       const entity = await seedEntity(db, cased.id, { id: testId(22) });
       const input = {
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
         userOverride: true as const,

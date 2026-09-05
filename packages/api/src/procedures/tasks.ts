@@ -30,9 +30,9 @@ export const list = authed
   })
   .input(taskFiltersSchema)
   .output(taskSchema.array())
-  .handler(async ({ input }) =>
+  .handler(async ({ input, context }) =>
     runApp(
-      listTasksForCaseEffect(input.caseId, {
+      listTasksForCaseEffect(input.caseId, context.actor.organizationId, {
         entityId: input.entityId,
         status: input.status,
         unattachedOnly: input.unattachedOnly,
@@ -49,8 +49,14 @@ export const get = authed
   })
   .input(taskIdInputSchema)
   .output(taskSchema)
-  .handler(async ({ input }) =>
-    runApp(getTaskInCaseEffect(input.caseId, input.taskId))
+  .handler(async ({ input, context }) =>
+    runApp(
+      getTaskInCaseEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.taskId
+      )
+    )
   );
 
 export const create = authed
@@ -64,7 +70,13 @@ export const create = authed
   .input(taskCreateInputSchema)
   .output(taskSchema)
   .handler(async ({ input, context }) =>
-    runApp(createTaskEffect({ ...input, actorId: context.actor.userId }))
+    runApp(
+      createTaskEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
+      })
+    )
   );
 
 export const update = authed
@@ -77,7 +89,13 @@ export const update = authed
   .input(taskUpdateInputSchema)
   .output(taskSchema)
   .handler(async ({ input, context }) =>
-    runApp(updateTaskEffect({ ...input, actorId: context.actor.userId }))
+    runApp(
+      updateTaskEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
+      })
+    )
   );
 
 export const remove = authed
@@ -91,7 +109,12 @@ export const remove = authed
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(
-      deleteTaskEffect(input.caseId, input.taskId, context.actor.userId)
+      deleteTaskEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.taskId,
+        context.actor.userId
+      )
     );
     return { ok: true as const };
   });
@@ -105,4 +128,11 @@ export const reorder = authed
   })
   .input(taskReorderInputSchema)
   .output(taskSchema.array())
-  .handler(async ({ input }) => runApp(reorderTasksEffect(input)));
+  .handler(async ({ input, context }) =>
+    runApp(
+      reorderTasksEffect({
+        ...input,
+        organizationId: context.actor.organizationId,
+      })
+    )
+  );

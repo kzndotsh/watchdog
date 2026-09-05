@@ -176,7 +176,8 @@ export {
   type UpdateEdgeInput,
 } from "./graph/edges";
 export {
-  assertCaseExistsEffect,
+  assertCaseExistsUncheckedEffect,
+  assertCaseInOrgEffect,
   assertEntityInCaseEffect,
 } from "./graph/patch/guards";
 export {
@@ -250,6 +251,7 @@ export {
   type EntityExport,
 } from "./infra/export";
 export {
+  ExportIOError,
   writeEntityExportEffect,
   writeCaseExportEffect,
   scheduleCaseExportEffect,

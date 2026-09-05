@@ -37,14 +37,11 @@ describe("scheduleCaseExportEffect", () => {
     });
 
     const writeExport = () =>
-      Effect.tryPromise({
-        try: async () => {
-          calls += 1;
-          if (calls === 1) {
-            await firstGate;
-          }
-        },
-        catch: (error) => error,
+      Effect.gen(function* writeExportGen() {
+        calls += 1;
+        if (calls === 1) {
+          yield* Effect.promise(() => firstGate);
+        }
       });
 
     const caseId = testId(99);

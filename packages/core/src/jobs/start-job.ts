@@ -20,7 +20,7 @@ import {
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
 import {
-  assertCaseExistsEffect,
+  assertCaseInOrgEffect,
   assertEntityInCaseEffect,
 } from "../graph/patch/guards";
 import { errorMessage } from "../infra/domain-error";
@@ -44,6 +44,7 @@ const CANCELLABLE_STATUSES = new Set<JobStatus>([
 
 export interface StartJobInput {
   caseId: string;
+  organizationId: string;
   capabilityId: string;
   input: JsonObject;
   actorId: string;
@@ -133,7 +134,7 @@ export function startJobEffect(
   input: StartJobInput
 ): Effect.Effect<JobRecord, DomainTag> {
   return Effect.gen(function* startJobGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const cap = yield* Effect.try({
       try: () => requireCapability(input.capabilityId),
       catch: (error) => new NotFoundError({ resource: errorMessage(error) }),
@@ -186,10 +187,11 @@ export function startJobEffect(
 }
 
 export function listJobsForCaseEffect(
-  caseId: string
+  caseId: string,
+  organizationId: string
 ): Effect.Effect<JobListRecord[], DomainTag> {
   return Effect.gen(function* listJobsGen() {
-    yield* assertCaseExistsEffect(caseId);
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const rows = yield* tryDb(() => jobsRepo.listForCase(db, caseId));
     const users = yield* loadActorUsersEffect(
       rows.map(({ job }) => job.actorId)
@@ -202,32 +204,32 @@ export function listJobsForCaseEffect(
 
 export function getJobForCaseEffect(
   caseId: string,
+  organizationId: string,
   jobId: string
 ): Effect.Effect<JobRecord, DomainTag> {
-  return tryDb(() => jobsRepo.getInCase(db, caseId, jobId)).pipe(
-    Effect.flatMap((row) => {
-      if (!row) {
-        return new NotFoundError({ resource: "Job not found" });
-      }
-      return loadActorUsersEffect([row.job.actorId]).pipe(
-        Effect.map((users) =>
-          toJobRecord(row.job, row.playbookId, row.playbookRunStatus, users)
-        )
-      );
-    })
-  );
+  return Effect.gen(function* getJobForCaseGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const row = yield* tryDb(() => jobsRepo.getInCase(db, caseId, jobId));
+    if (!row) {
+      return yield* new NotFoundError({ resource: "Job not found" });
+    }
+    const users = yield* loadActorUsersEffect([row.job.actorId]);
+    return toJobRecord(row.job, row.playbookId, row.playbookRunStatus, users);
+  });
 }
 
-interface EntityListOpts3 {
+interface CancelJobOpts {
   actorId?: string;
 }
 
 export function cancelJobEffect(
   caseId: string,
+  organizationId: string,
   jobId: string,
-  opts?: EntityListOpts3
+  opts?: CancelJobOpts
 ): Effect.Effect<JobRecord, DomainTag> {
   return Effect.gen(function* cancelJobGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const row = yield* tryDb(() => jobsRepo.getInCase(db, caseId, jobId));
     if (!row) {
       return yield* new NotFoundError({ resource: "Job not found" });

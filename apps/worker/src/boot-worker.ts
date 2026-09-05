@@ -52,7 +52,18 @@ function logWorkerError(scope: string, message: string, error: unknown): void {
 
 function reconcileWorkerStartupEffect(): Effect.Effect<void> {
   return Effect.gen(function* reconcileWorkerStartupGen() {
-    const stale = yield* reconcileStaleJobsEffect();
+    const stale = yield* reconcileStaleJobsEffect().pipe(
+      Effect.catchCause((cause) =>
+        Effect.sync(() => {
+          logWorkerError(
+            "worker.reconcile",
+            "stale job reconcile failed",
+            Cause.squash(cause)
+          );
+          return 0;
+        })
+      )
+    );
     if (stale > 0) {
       emitOnce("worker.reconcile", {
         message: `reconciled ${stale} stale running Job(s)`,
@@ -60,7 +71,18 @@ function reconcileWorkerStartupEffect(): Effect.Effect<void> {
       });
     }
 
-    const stuckPlaybooks = yield* reconcileStuckPlaybookRunsEffect();
+    const stuckPlaybooks = yield* reconcileStuckPlaybookRunsEffect().pipe(
+      Effect.catchCause((cause) =>
+        Effect.sync(() => {
+          logWorkerError(
+            "worker.reconcile",
+            "stuck playbook reconcile failed",
+            Cause.squash(cause)
+          );
+          return 0;
+        })
+      )
+    );
     if (stuckPlaybooks > 0) {
       emitOnce("worker.reconcile", {
         message: `reconciled ${stuckPlaybooks} stuck playbook run(s)`,

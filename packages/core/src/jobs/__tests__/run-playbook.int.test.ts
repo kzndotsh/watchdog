@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -8,7 +7,7 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { casesRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-kit/db";
 
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
@@ -23,6 +22,7 @@ describe("runPlaybook", () => {
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         sourceUrl: "https://mailhost.test/",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -31,6 +31,7 @@ describe("runPlaybook", () => {
     const result = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         playbookId: "url-capture",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -53,6 +54,7 @@ describe("runPlaybook", () => {
     const result = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         playbookId: "host-footprint",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -76,6 +78,7 @@ describe("runPlaybook", () => {
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         sourceUrl: "https://mailhost.test/",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -85,6 +88,7 @@ describe("runPlaybook", () => {
       runDomain(
         runPlaybookEffect({
           caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
           playbookId: "url-capture-ai",
           actorId: TEST_ACTOR_ID,
           actorLabel: TEST_ACTOR_ID,
@@ -105,6 +109,7 @@ describe("runPlaybook", () => {
     const result = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         playbookId: "host-enumerate",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -121,6 +126,7 @@ describe("runPlaybook", () => {
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         sourceUrl: "https://mailhost.test/",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -129,6 +135,7 @@ describe("runPlaybook", () => {
     const result = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         playbookId: "url-capture",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -142,7 +149,7 @@ describe("runPlaybook", () => {
     expect(enrich?.capabilityId).toBe("network.url.enrich");
     if (enrich === undefined) throw new TypeError("expected enrich job");
     await jobsRepo.update(db, enrich.id, { status: "succeeded" });
-    await Effect.runPromise(
+    await runDomain(
       advancePlaybookRunEffect({
         caseId: cased.id,
         playbookRunId: result.playbookRunId,
@@ -164,6 +171,7 @@ describe("cancelPlaybookRun", () => {
     const started = await runDomain(
       runPlaybookEffect({
         caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
         playbookId: "host-footprint",
         actorId: TEST_ACTOR_ID,
         actorLabel: TEST_ACTOR_ID,
@@ -178,7 +186,11 @@ describe("cancelPlaybookRun", () => {
     });
 
     const cancelled = await runDomain(
-      cancelPlaybookRunEffect(cased.id, started.playbookRunId)
+      cancelPlaybookRunEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        started.playbookRunId
+      )
     );
     expect(cancelled.cancelledJobIds.length).toBeGreaterThan(0);
 

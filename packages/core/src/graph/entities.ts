@@ -12,7 +12,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertCaseExistsEffect } from "./patch/guards";
+import { assertCaseInOrgEffect } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
 
 export interface EntityRecord {
@@ -29,6 +29,7 @@ export interface EntityRecord {
 
 export interface CreateEntityInput {
   caseId: string;
+  organizationId: string;
   kind: EntityKind;
   name: string;
   slug: string;
@@ -36,6 +37,7 @@ export interface CreateEntityInput {
 
 export interface UpdateEntityFieldsInput {
   caseId: string;
+  organizationId: string;
   entityId: string;
   kind?: EntityKind;
   name?: string;
@@ -58,24 +60,31 @@ function toRecord(row: EntityRow): EntityRecord {
 }
 
 export function listEntitiesForCaseEffect(
-  caseId: string
+  caseId: string,
+  organizationId: string
 ): Effect.Effect<EntityRecord[], DomainTag> {
-  return tryDb(() => entitiesRepo.listForCase(db, caseId)).pipe(
-    Effect.map((rows) => rows.map(toRecord))
-  );
+  return Effect.gen(function* listEntitiesGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const rows = yield* tryDb(() => entitiesRepo.listForCase(db, caseId));
+    return rows.map(toRecord);
+  });
 }
 
 export function getEntityByCaseSlugEffect(
   caseId: string,
+  organizationId: string,
   slug: string
 ): Effect.Effect<EntityRecord, DomainTag> {
-  return tryDb(() => entitiesRepo.getByCaseSlug(db, caseId, slug)).pipe(
-    Effect.flatMap((row) =>
-      row
-        ? Effect.succeed(toRecord(row))
-        : new NotFoundError({ resource: "Entity not found" })
-    )
-  );
+  return Effect.gen(function* getEntityByCaseSlugGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const row = yield* tryDb(() =>
+      entitiesRepo.getByCaseSlug(db, caseId, slug)
+    );
+    if (!row) {
+      return yield* new NotFoundError({ resource: "Entity not found" });
+    }
+    return toRecord(row);
+  });
 }
 
 export function createEntityEffect(
@@ -83,7 +92,7 @@ export function createEntityEffect(
 ): Effect.Effect<EntityRecord, DomainTag> {
   const conflictReason = `Slug "${input.slug}" already exists in this Case`;
   return Effect.gen(function* createEntityGen() {
-    yield* assertCaseExistsEffect(input.caseId);
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       entitiesRepo.getByCaseSlug(db, input.caseId, input.slug)
     );
@@ -120,6 +129,7 @@ export function updateEntityFieldsEffect(
   input: UpdateEntityFieldsInput
 ): Effect.Effect<EntityRecord, DomainTag> {
   return Effect.gen(function* updateEntityGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const existing = yield* tryDb(() =>
       entitiesRepo.getInCase(db, input.caseId, input.entityId)
     );

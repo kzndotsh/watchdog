@@ -5,6 +5,9 @@ import {
   createCaseEffect,
   getCaseByIdEffect,
   listCasesEffect,
+  listEntitiesForCaseEffect,
+  listEvidenceForCaseEffect,
+  listJobsForCaseEffect,
   runDomain,
 } from "@watchdog/core";
 import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
@@ -52,5 +55,31 @@ describe("case organization isolation", () => {
     );
     const afterCreate = await runDomain(listCasesEffect(OTHER_ORG_ID));
     expect(afterCreate.map((row) => row.id)).toEqual([theirs.id]);
+  });
+
+  it("returns not_found for foreign-org case child lists", async () => {
+    const theirs = await seedCase(testDb, {
+      name: "Foreign child",
+      slug: "foreign-child-iso",
+      organizationId: OTHER_ORG_ID,
+    });
+
+    await expect(
+      runDomain(listJobsForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+    );
+
+    await expect(
+      runDomain(listEntitiesForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+    );
+
+    await expect(
+      runDomain(listEvidenceForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+    );
   });
 });

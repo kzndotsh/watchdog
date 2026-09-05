@@ -5,21 +5,21 @@ import {
 } from "@tanstack/react-query";
 import { KeyRoundIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { SettingsCredentialsDialogs } from "@/domains/settings/components/settings-credentials-dialogs";
 import {
-  closeConfigureDialog,
-  closeDeleteDialog,
-  handleCredentialSaved,
-  handleDeleteConfirm,
-  openConfigureCredential,
-  openDeleteCredential,
+  bindConfigureOpenChange,
+  bindConfigureSlot,
+  bindCredentialSaved,
+  bindDeleteConfirm,
+  bindDeleteOpenChange,
+  bindDeleteSlot,
+  handleCredentialDeleted,
+  handleCredentialDeleteError,
 } from "@/domains/settings/components/settings-credentials-handlers";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { deleteCredentialFn } from "@/domains/settings/settings.functions";
-import { cn, errMessage } from "@/lib/utils";
-import { invalidateAfterCredentialMutation } from "@/shared/lib/query-invalidation";
+import { cn } from "@/lib/utils";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
@@ -28,14 +28,6 @@ import { Card, CardContent } from "@/shared/ui/shadcn/card";
 import { Separator } from "@/shared/ui/shadcn/separator";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { CredentialSlot } from "@watchdog/core";
-
-function configureSlot(slotName: string, onConfigure: (name: string) => void) {
-  onConfigure(slotName);
-}
-
-function deleteSlot(slotName: string, onDelete: (name: string) => void) {
-  onDelete(slotName);
-}
 
 function CredentialSlotRow({
   slot,
@@ -71,7 +63,7 @@ function CredentialSlotRow({
           size="sm"
           variant="outline"
           onClick={() => {
-            configureSlot(slot.name, onConfigure);
+            onConfigure(slot.name);
           }}
         >
           {slot.configured ? "Update" : "Connect"}
@@ -82,7 +74,7 @@ function CredentialSlotRow({
             size="sm"
             variant="ghost"
             onClick={() => {
-              deleteSlot(slot.name, onDelete);
+              onDelete(slot.name);
             }}
           >
             Remove
@@ -129,6 +121,30 @@ function CredentialSlotGroup({
   );
 }
 
+function partitionCredentialSlots(slots: CredentialSlot[]): {
+  connected: CredentialSlot[];
+  disconnected: CredentialSlot[];
+} {
+  const connected: CredentialSlot[] = [];
+  const disconnected: CredentialSlot[] = [];
+  for (const slot of slots) {
+    if (slot.configured) connected.push(slot);
+    else disconnected.push(slot);
+  }
+  return { connected, disconnected };
+}
+
+function findSlotByName(
+  slots: CredentialSlot[],
+  name: string | null
+): CredentialSlot | null {
+  if (name === null) return null;
+  for (const slot of slots) {
+    if (slot.name === name) return slot;
+  }
+  return null;
+}
+
 export function SettingsCredentialsForm() {
   const queryClient = useQueryClient();
   const { data: slots } = useSuspenseQuery(credentialsListQuery());
@@ -140,20 +156,29 @@ export function SettingsCredentialsForm() {
 
   const deleteMutation = useMutation({
     mutationFn: async (name: string) => deleteCredentialFn({ data: { name } }),
-    onSuccess: async () => {
-      toast.success("Credential removed");
-      setDeleteTarget(null);
-      await invalidateAfterCredentialMutation(queryClient);
-    },
+    onSuccess: () => void handleCredentialDeleted(queryClient, setDeleteTarget),
     onError: (e) => {
-      setDeleteError(errMessage(e, "Delete failed"));
+      handleCredentialDeleteError(e, setDeleteError);
     },
   });
 
-  const configureSlotRow = slots.find((s) => s.name === configureName) ?? null;
-  const deleteSlotRow = slots.find((s) => s.name === deleteTarget) ?? null;
-  const connected = slots.filter((s) => s.configured);
-  const disconnected = slots.filter((s) => !s.configured);
+  const configureSlotRow = findSlotByName(slots, configureName);
+  const deleteSlotRow = findSlotByName(slots, deleteTarget);
+  const { connected, disconnected } = partitionCredentialSlots(slots);
+
+  const onConfigureSlot = bindConfigureSlot(setError, setConfigureName);
+  const onDeleteSlot = bindDeleteSlot(setDeleteError, setDeleteTarget);
+  const onConfigureOpenChange = bindConfigureOpenChange(setConfigureName);
+  const onCredentialSaved = bindCredentialSaved(queryClient, setError);
+  const onDeleteOpenChange = bindDeleteOpenChange(
+    deleteMutation.isPending,
+    setDeleteTarget,
+    setDeleteError
+  );
+  const onDeleteConfirm = bindDeleteConfirm(
+    deleteTarget,
+    deleteMutation.mutate
+  );
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
@@ -175,22 +200,14 @@ export function SettingsCredentialsForm() {
           <CredentialSlotGroup
             title="Connected"
             slots={connected}
-            onConfigure={(name) => {
-              openConfigureCredential(name, setError, setConfigureName);
-            }}
-            onDelete={(name) => {
-              openDeleteCredential(name, setDeleteError, setDeleteTarget);
-            }}
+            onConfigure={onConfigureSlot}
+            onDelete={onDeleteSlot}
           />
           <CredentialSlotGroup
             title="Not connected"
             slots={disconnected}
-            onConfigure={(name) => {
-              openConfigureCredential(name, setError, setConfigureName);
-            }}
-            onDelete={(name) => {
-              openDeleteCredential(name, setDeleteError, setDeleteTarget);
-            }}
+            onConfigure={onConfigureSlot}
+            onDelete={onDeleteSlot}
           />
         </>
       )}
@@ -198,28 +215,15 @@ export function SettingsCredentialsForm() {
       <SettingsCredentialsDialogs
         configureSlot={configureSlotRow}
         configureOpen={configureName !== null}
-        onConfigureOpenChange={(open) => {
-          closeConfigureDialog(open, setConfigureName);
-        }}
-        onCredentialSaved={() => {
-          handleCredentialSaved(queryClient, setError);
-        }}
+        onConfigureOpenChange={onConfigureOpenChange}
+        onCredentialSaved={onCredentialSaved}
         onCredentialError={setError}
         deleteOpen={deleteTarget !== null}
         deletePending={deleteMutation.isPending}
         deleteSlot={deleteSlotRow}
         deleteError={deleteError}
-        onDeleteOpenChange={(open) => {
-          closeDeleteDialog(
-            open,
-            deleteMutation.isPending,
-            setDeleteTarget,
-            setDeleteError
-          );
-        }}
-        onDeleteConfirm={() => {
-          handleDeleteConfirm(deleteTarget, deleteMutation.mutate);
-        }}
+        onDeleteOpenChange={onDeleteOpenChange}
+        onDeleteConfirm={onDeleteConfirm}
       />
     </div>
   );

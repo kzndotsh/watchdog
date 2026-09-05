@@ -65,7 +65,7 @@ interface Props {
   initial?: EdgeRecord | null;
   center: { id: string; name: string; kind: EntityKind };
   entities: ConnectionPeerOption[];
-  evidenceOptions: EvidenceOption[];
+  evidenceOptions: readonly EvidenceOption[];
   busy?: boolean;
   error?: string | null;
   onSubmit: (values: ConnectionFormValues) => void | Promise<void>;

@@ -26,6 +26,7 @@ import {
   type IdentifierCollision,
 } from "../graph/identifier-collisions";
 import { applyPatchEffect } from "../graph/patch/apply-patch";
+import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
@@ -144,9 +145,11 @@ function toRecord(
 
 export function listProposalsForCaseEffect(
   caseId: string,
+  organizationId: string,
   opts?: { status?: ProposalStatus }
 ): Effect.Effect<ProposalRecord[], DomainTag> {
   return Effect.gen(function* listProposalsForCaseGen() {
+    yield* assertCaseInOrgEffect(caseId, organizationId);
     const rows = yield* tryDb(() =>
       proposalsRepo.listForCase(db, caseId, opts)
     );
@@ -218,6 +221,7 @@ export function getProposalForCaseEffect(
 
 export function acceptProposalEffect(input: {
   caseId: string;
+  organizationId: string;
   proposalId: string;
   actorId: string;
   confidence?: ConfidenceTier;
@@ -225,6 +229,7 @@ export function acceptProposalEffect(input: {
   attestationText?: string;
 }): Effect.Effect<ProposalRecord, DomainTag> {
   return Effect.gen(function* acceptProposalGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
     const shared = [...new Set(input.sharedEvidenceIds)];
     const updated = yield* transact((tx) =>
       Effect.gen(function* acceptProposalTx() {
@@ -291,49 +296,53 @@ export function acceptProposalEffect(input: {
 
 export function rejectProposalEffect(input: {
   caseId: string;
+  organizationId: string;
   proposalId: string;
   actorId: string;
   reason?: string;
 }): Effect.Effect<ProposalRecord, DomainTag> {
-  return transact((tx) =>
-    Effect.gen(function* rejectProposalTx() {
-      const existing = yield* tryDb(() =>
-        proposalsRepo.lockInCase(tx, input.caseId, input.proposalId)
-      );
-      if (!existing) {
-        return yield* new NotFoundError({ resource: "Proposal not found" });
-      }
+  return Effect.gen(function* rejectProposalGen() {
+    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    return yield* transact((tx) =>
+      Effect.gen(function* rejectProposalTx() {
+        const existing = yield* tryDb(() =>
+          proposalsRepo.lockInCase(tx, input.caseId, input.proposalId)
+        );
+        if (!existing) {
+          return yield* new NotFoundError({ resource: "Proposal not found" });
+        }
 
-      const rejected = yield* tryDb(() =>
-        proposalsRepo.reject(tx, input.caseId, input.proposalId, {
-          rejectReason: trimmedOrNull(input.reason),
-          decidedBy: input.actorId,
-          decidedAt: new Date(),
-        })
-      );
+        const rejected = yield* tryDb(() =>
+          proposalsRepo.reject(tx, input.caseId, input.proposalId, {
+            rejectReason: trimmedOrNull(input.reason),
+            decidedBy: input.actorId,
+            decidedAt: new Date(),
+          })
+        );
 
-      if (!rejected) {
-        return yield* new ConflictError({
-          reason: `Proposal is already ${existing.status}`,
+        if (!rejected) {
+          return yield* new ConflictError({
+            reason: `Proposal is already ${existing.status}`,
+          });
+        }
+
+        yield* tryDb(() =>
+          recordRejectedFingerprints({
+            caseId: input.caseId,
+            proposalId: rejected.id,
+            patch: rejected.patch,
+            tx,
+          })
+        );
+
+        return toRecord(rejected, {
+          users: yield* loadActorUsersEffect(
+            [rejected.createdBy, rejected.decidedBy].filter(
+              (id): id is string => typeof id === "string" && id !== ""
+            )
+          ),
         });
-      }
-
-      yield* tryDb(() =>
-        recordRejectedFingerprints({
-          caseId: input.caseId,
-          proposalId: rejected.id,
-          patch: rejected.patch,
-          tx,
-        })
-      );
-
-      return toRecord(rejected, {
-        users: yield* loadActorUsersEffect(
-          [rejected.createdBy, rejected.decidedBy].filter(
-            (id): id is string => typeof id === "string" && id !== ""
-          )
-        ),
-      });
-    })
-  );
+      })
+    );
+  });
 }

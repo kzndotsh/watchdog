@@ -16,11 +16,31 @@ import {
   type DomainTag,
 } from "../../infra/tagged-errors";
 
-export function assertCaseExistsEffect(
+/**
+ * Existence-only check for trusted worker/export paths where the case id
+ * already came from a job or child row. Prefer {@link assertCaseInOrgEffect}
+ * on API / actor-facing entrypoints.
+ */
+export function assertCaseExistsUncheckedEffect(
   caseId: string,
   exec: DbExec = db
 ): Effect.Effect<void, DomainTag> {
   return tryDb(() => casesRepo.getByIdUnchecked(exec, caseId)).pipe(
+    Effect.flatMap((row) =>
+      row
+        ? Effect.void
+        : new NotFoundError({ resource: "Case not found" })
+    )
+  );
+}
+
+/** Org-scoped case gate for API / actor-facing entrypoints. */
+export function assertCaseInOrgEffect(
+  caseId: string,
+  organizationId: string,
+  exec: DbExec = db
+): Effect.Effect<void, DomainTag> {
+  return tryDb(() => casesRepo.getById(exec, caseId, organizationId)).pipe(
     Effect.flatMap((row) =>
       row
         ? Effect.void
