@@ -34,7 +34,8 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `seed*` | Persist via real repos (`seedCase`, `seedGraphWrite`, `seedFindingSuppression`, `seedPlaybookRun`, …) |
 | `testId(seed)` | `testId(1)` → `11111111-1111-4111-8111-000000000001` |
 | `withTestTx(fn)` | Always-rollback transaction |
-| `resetTestDb()` | `TRUNCATE` public tables (tests that must COMMIT) |
+| `resetTestDb()` | `TRUNCATE` public tables (tests that must COMMIT); keeps `auth.*` |
+| `resetE2eDb()` | Playwright only: `TRUNCATE` public + `auth` so each signup bootstraps an org |
 | `expect*` | Assert inside an existing `it` |
 | `it<Behavior>(…)` | Factory that calls `it()` (`itRejectsIncompleteReport`, `itRunsCollectCap`) |
 | `createCapRunHarness` | Fake `CapContext` (upload / credentials) for Cap `run()` |
@@ -81,7 +82,7 @@ One behavior per spec file. Prefer `expect.poll` over sleeps. Seed graph state t
 
 Parser unit tests for the harness stay in `e2e/**/*.test.ts` (Vitest `e2e-parser` project).
 
-Each Playwright test runs after an automatic `_resetDb` fixture truncates `watchdog_e2e`. Tag specs with `@smoke`, `@custody`, or `@journey`. Import `test` and `expect` from `e2e/fixtures/test.ts`. Run `pnpm test:e2e:smoke` for the fast gate; `pnpm exec vitest run --project e2e-parser` for harness-only unit tests.
+Each Playwright test runs after an automatic `_resetDb` fixture that calls `resetE2eDb()` (public + `auth` on `watchdog_e2e`) and clears cookies — so every signup is a first-user bootstrap. Tag specs with `@smoke`, `@custody`, or `@journey`. Import `test` and `expect` from `e2e/fixtures/test.ts`. Run `pnpm test:e2e:smoke` for the fast gate; `pnpm exec vitest run --project e2e-parser` for harness-only unit tests.
 
 ## Adding an e2e spec
 

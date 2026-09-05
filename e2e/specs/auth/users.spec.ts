@@ -11,13 +11,18 @@ test.describe("Auth users (instance admin)", () => {
 
       await page.goto("/settings?tab=users");
       await waitForHydrated(page);
-      await expect(page.getByRole("heading", { name: "Users" })).toBeVisible({
+      const usersPanel = page
+        .locator("section")
+        .filter({ hasText: "Install accounts" });
+      await expect(
+        usersPanel.getByRole("heading", { name: "Users" })
+      ).toBeVisible({
         timeout: 30_000,
       });
       await expect(
-        page.getByText(`e2e.${stamp}@mailhost.test`, { exact: false })
+        usersPanel.getByText(`e2e.${stamp}@mailhost.test`, { exact: false })
       ).toBeVisible();
-      await expect(page.getByText("Impersonate")).toHaveCount(0);
+      await expect(usersPanel.getByText("Impersonate")).toHaveCount(0);
     }
   );
 });

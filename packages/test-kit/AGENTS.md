@@ -19,7 +19,7 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 | `@watchdog/test-kit` | `testId`, `TEST_ACTOR_ID`, `TEST_ORGANIZATION_ID`, `build*` patch fixtures |
 | `@watchdog/test-kit/fc` | fast-check (unit/property only) |
 | `@watchdog/test-kit/fixtures` | ids without Postgres |
-| `@watchdog/test-kit/db` | `testDb`, `resetTestDb`, `withTestTx`, `seed*` |
+| `@watchdog/test-kit/db` | `testDb`, `resetTestDb`, `resetE2eDb`, `withTestTx`, `seed*` |
 | `@watchdog/test-kit/http` | `http`, `HttpResponse`, `mockServer`, `mockJson` |
 | `@watchdog/test-kit/it` | `itRejectsIncompleteReport`, `itRunsCollectCap`, `createCapRunHarness`, `runCap` |
 
@@ -29,7 +29,8 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 | --- | --- |
 | `build*` for in-memory values; `seed*` via real repos | Raw SQL seeds that hide repo contract breaks |
 | `withTestTx` when the code under test takes `tx` (truncates, then always rolls back `fn`) | Assume service-level `db.transaction()` sees an uncommitted test tx |
-| `resetTestDb()` for Accept / job / race tests that must COMMIT | Truncate `auth.*` or drizzle migration tables |
+| `resetTestDb()` for Accept / job / race tests that must COMMIT | Truncate `auth.*` or drizzle migration tables from integration tests |
+| `resetE2eDb()` from Playwright only (`e2e/support/db-reset`) — wipes `public` + `auth` | Call `resetE2eDb` from `*.int.test.ts` (keeps seeded auth users) |
 | `itRejectsIncompleteReport` for Cap interpret shape | Copy-paste the same reject body into 58 files |
 | `itRunsCollectCap` for Collect `run()` (3 Caps max unless `run()` is not `defineCollectCap`) | One MSW `run()` file per vendor Cap |
 | Import `@watchdog/test-kit/db` from integration tests | Import `/db` from unit/property tests |

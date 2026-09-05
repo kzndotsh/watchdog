@@ -3,7 +3,7 @@ import { sql, TransactionRollbackError } from "drizzle-orm";
 import { db, type DbTx } from "@watchdog/db";
 
 /**
- * Wipe public Case Graph tables (keeps drizzle migrations).
+ * Wipe public Case Graph tables (keeps drizzle migrations + `auth.*`).
  * Used when a test must COMMIT (races, service-level `db.transaction`).
  */
 export async function resetTestDb(): Promise<void> {
@@ -18,6 +18,33 @@ export async function resetTestDb(): Promise<void> {
       FROM pg_tables
       WHERE schemaname = 'public'
         AND tablename NOT LIKE '__drizzle%';
+      IF stmts IS NOT NULL THEN
+        EXECUTE stmts;
+      END IF;
+    END $$;
+  `);
+}
+
+/**
+ * Wipe public + Better Auth (`auth.*`) for Playwright.
+ * Each e2e signup must be a true first-user bootstrap; leaving orgs across
+ * tests leaves later users without membership → oRPC Forbidden.
+ * Do not use from integration tests — those keep `auth.*` via `seedAuthUser`.
+ */
+export async function resetE2eDb(): Promise<void> {
+  await db.execute(sql`
+    DO $$
+    DECLARE
+      stmts text;
+    BEGIN
+      SELECT 'TRUNCATE TABLE ' || string_agg(format('%I.%I', schemaname, tablename), ', ')
+        || ' CASCADE'
+      INTO stmts
+      FROM pg_tables
+      WHERE (
+          (schemaname = 'public' AND tablename NOT LIKE '__drizzle%')
+          OR schemaname = 'auth'
+        );
       IF stmts IS NOT NULL THEN
         EXECUTE stmts;
       END IF;
