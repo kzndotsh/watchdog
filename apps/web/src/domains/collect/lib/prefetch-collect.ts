@@ -114,9 +114,10 @@ export function prefetchCollectEvidenceBlobWhenSelected(
         selectedId
       );
     } catch (error: unknown) {
-      if (isCancelledError(error)) return;
-      if (import.meta.env.DEV) {
-        console.warn("[prefetchCollectEvidenceBlobWhenSelected]", error);
+      // Fire-and-forget: CancelledError is expected on route teardown; other
+      // failures are non-blocking for selection UX.
+      if (!isCancelledError(error)) {
+        /* ignore */
       }
     }
   })();
@@ -171,9 +172,8 @@ export function warmCollectQueries(
         ensureCollectEvidenceBlobWhenSelected(queryClient, caseId, selectedId),
       ]);
     } catch (error: unknown) {
-      if (isCancelledError(error)) return;
-      if (import.meta.env.DEV) {
-        console.warn("[warmCollectQueries] job detail prefetch", error);
+      if (!isCancelledError(error)) {
+        /* ignore */
       }
     }
   })();
