@@ -252,6 +252,7 @@ export {
   type EntityExport,
 } from "./infra/export";
 export {
+  ExportIOError,
   writeEntityExportEffect,
   writeCaseExportEffect,
   scheduleCaseExportEffect,
