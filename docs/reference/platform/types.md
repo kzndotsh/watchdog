@@ -30,7 +30,8 @@ Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs 
                          (no policy re-exports; `MAX_UPLOAD_BYTES` is the one
                           schemas value re-exported, via infra/blob.ts)
 @watchdog/api         ← oRPC procedure I/O (composes schemas atoms)
-@watchdog/client      ← generated OpenAPI contract + createWatchdogClient (CLI/agents)
+@watchdog/contract    ← generated OpenAPI + minified router JSON (client artifact)
+@watchdog/client      ← createWatchdogClient over @watchdog/contract (CLI/agents)
 @watchdog/cli         ← `wd` over client (+ authenticated file fetch for Case Export)
 apps/web domains      ← types.ts: domain mutation Zod + DTOs (import schemas atoms;
                          do not re-export vocab)

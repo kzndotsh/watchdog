@@ -18,7 +18,7 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Controllers call `@watchdog/co
 | Do | Don’t |
 | --- | --- |
 | Map `DomainTag` → HTTP via `toOrpcError` / `runApp` | Leak raw DB rows / drizzle types on the wire |
-| Keep Zod inputs next to procedures | Hand-edit `packages/client/src/generated/` |
+| Keep Zod inputs next to procedures | Hand-edit `packages/contract/src/generated/` |
 | Call core services | Import `@watchdog/db` repos from procedures |
 
 ## Gotchas
@@ -42,7 +42,7 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Controllers call `@watchdog/co
 
 | Need | File |
 | --- | --- |
-| Generated client | [`packages/client/AGENTS.md`](../client/AGENTS.md) |
+| Generated client | [`packages/client/AGENTS.md`](../client/AGENTS.md) · [`packages/contract/AGENTS.md`](../contract/AGENTS.md) |
 | Core services | [`packages/core/AGENTS.md`](../core/AGENTS.md) |
 | Playbooks | [`docs/reference/platform/caps-lexicon.md`](../../docs/reference/platform/caps-lexicon.md) |
 | Process logging | [`packages/log/AGENTS.md`](../log/AGENTS.md) · [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md) |

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "rootDir": "src"
+  },
+  "include": [
+    "src/index.ts",
+    "src/generated/contract.json",
+    "src/generated/openapi.json"
+  ],
+  "exclude": [
+    "src/generated/app-router.ts",
+    "src/**/__tests__/**",
+    "src/**/*.test.ts"
+  ]
+}

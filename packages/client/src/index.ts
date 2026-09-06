@@ -3,11 +3,10 @@ import type { ContractRouterClient } from "@orpc/contract";
 import type { JsonifiedClient } from "@orpc/openapi-client";
 import { OpenAPILink } from "@orpc/openapi-client/fetch";
 
-import type { AppRouter } from "@watchdog/api";
+import { contract } from "@watchdog/contract";
+import type { AppRouter } from "@watchdog/contract/app-router";
 
-import contract from "./generated/contract.json" with { type: "json" };
-
-export default contract;
+export type { AppRouter } from "@watchdog/contract/app-router";
 export type WatchdogClient = JsonifiedClient<ContractRouterClient<AppRouter>>;
 
 export interface CreateWatchdogClientOptions {
@@ -30,7 +29,7 @@ function resolveBaseUrl(explicit?: string): string {
 
 /**
  * Typed OpenAPI client for agents/CLI.
- * Regenerated contract: `pnpm --filter @watchdog/client generate`.
+ * Regenerated contract: `pnpm generate:client` → `@watchdog/contract`.
  */
 export function createWatchdogClient(
   opts: CreateWatchdogClientOptions

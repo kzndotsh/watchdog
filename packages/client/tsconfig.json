@@ -8,8 +8,7 @@
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
-    "types": ["node"],
-    "rootDir": "src"
+    "types": ["node"]
   },
   "include": ["src"],
   "exclude": ["src/**/__tests__/**", "src/**/*.test.ts"]

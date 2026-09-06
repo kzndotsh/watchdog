@@ -51,7 +51,7 @@ Signal-era field work + build principles confirm this north star and Phases 0–
 | Finding suppression | **done** | Core fingerprints + structured `from_cache` / `suppressed_count` chips in Collect/Triage |
 | Playbooks | **mid** | Linear `PLAYBOOKS` + API/CLI `runPlaybook` + Jobs Cap/Playbook form; depth/opts later |
 | Export md / zip / shadow | **done** | UI + file routes + `wd export zip | md` + worker sync |
-| OpenAPI / CLI | **strong** | Typed `@watchdog/client` + agent-first `wd` (compact JSON; graph-child; credentials; evidence hide/restore/download/process/enrich; `apiKeyAuth`). Web-only leftovers: Active Case cookie. `@watchdog/contract` deferred (Phase 2) |
+| OpenAPI / CLI | **strong** | Typed `@watchdog/client` over `@watchdog/contract` + agent-first `wd` (compact JSON; graph-child; credentials; evidence hide/restore/download/process/enrich; `apiKeyAuth`). Web-only leftovers: Active Case cookie. Full contract-first (design ahead of handlers) still Phase 2 |
 | Agent Proposal create / graph write | **done** | Propose → Triage; `graph write` → Graph @ unverified + `graph_writes` (atomic tx, idempotency); child writes need `--user-override` |
 | MCP | **missing** | Phase 2+ |
 | Web automated tests | **pyramid** | Packages+worker unit; web lib+component in jsdom; Postgres integration; tagged Playwright suite (`e2e/specs/`, 18 tests) |
@@ -128,7 +128,7 @@ Only when Case load or workflow demands it.
 - `network.*.monitor` (baseline snapshot vs next Job → CHANGE/NEW/GONE) — needs scheduled Jobs
 - Cross-entity correlation Cap (`shares_ip_with` / shared NS/MX) — Caps cannot read the Case; Triage identifier-collision warn is the shipped 80%
 - External tools hub (link-out, not Caps)
-- **`@watchdog/contract` (contract-first oRPC)** — earn when agents/MCP must not depend on `@watchdog/api` even for types, or API surface is designed ahead of handlers. Until then: router SoT + `minifyContractRouter` → `@watchdog/client`
+- **`@watchdog/contract` (contract-first oRPC)** — generated artifact package earned; design-ahead-of-handlers still Phase 2. Until then: router SoT + `minifyContractRouter` → `@watchdog/contract` → `@watchdog/client`
 
 ### Also track (ops / parity debt)
 

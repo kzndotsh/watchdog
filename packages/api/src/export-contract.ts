@@ -6,7 +6,7 @@ import { minifyContractRouter } from "@orpc/contract";
 import { generateOpenAPISpec } from "./openapi";
 import { router } from "./router";
 
-/** Export minified oRPC contract and OpenAPI JSON for @watchdog/client. */
+/** Export minified oRPC contract and OpenAPI JSON for @watchdog/contract. */
 export async function exportContract(outDir: string): Promise<void> {
   mkdirSync(outDir, { recursive: true });
 

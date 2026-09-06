@@ -31,7 +31,7 @@ Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference)
 | Command                | Artifact                              |
 | ---------------------- | ------------------------------------- |
 | `pnpm generate:caps`   | `packages/caps/capabilities.gen.json` |
-| `pnpm generate:client` | `packages/client/src/generated/`      |
+| `pnpm generate:client` | `packages/contract/src/generated/`    |
 | `pnpm generate-routes` | `apps/web` route tree                 |
 
 CI fails if regen output drifts from committed files.

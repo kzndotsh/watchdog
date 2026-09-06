@@ -88,6 +88,7 @@ jobs:
             api:
               - 'packages/api/**'
               - 'packages/client/**'
+              - 'packages/contract/**'
               - 'packages/core/**'
             web:
               - 'apps/web/**'
@@ -184,7 +185,7 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.api == 'true' || needs.changes.outputs.config == 'true'
         run: |
           pnpm generate:client
-          git diff --exit-code -- packages/client/src/generated/ \
+          git diff --exit-code -- packages/contract/src/generated/ \
             || (echo "client contract out of date — run pnpm generate:client" && exit 1)
 
       - name: Repo layer contract

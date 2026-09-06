@@ -2,7 +2,7 @@
 
 > Scope: `packages/client` (inherits root AGENTS.md)
 
-Typed HTTP SDK for `/api/v1` (generated OpenAPI + `createWatchdogClient`). Used by CLI and agents.
+Typed HTTP SDK for `/api/v1` (generated OpenAPI via `@watchdog/contract` + `createWatchdogClient`). Used by CLI and agents.
 
 ## Commands
 
@@ -14,8 +14,8 @@ Typed HTTP SDK for `/api/v1` (generated OpenAPI + `createWatchdogClient`). Used 
 
 ## Rules
 
-- Runtime must not import handlers from `@watchdog/api` — `import type { AppRouter }` only for casting.
-- After API route/input changes: `pnpm generate:client` (commit `src/generated/*`).
+- Depend on `@watchdog/contract` only for the router artifact — never `@watchdog/api`.
+- After API route/input changes: `pnpm generate:client` (commit `packages/contract/src/generated/*`).
 - Prefer this client over hand-rolled `fetch`.
-- Tests cover `createWatchdogClient` (base URL slash-strip + `x-api-key`). Do not unit-test `src/generated/`.
-- Case Export zip/md are **not** on the oRPC contract — CLI uses authenticated file `fetch` + `x-api-key` (see `packages/cli`).
+- Tests cover `createWatchdogClient` (base URL slash-strip + `x-api-key`). Do not unit-test contract generated JSON.
+- Case Export zip/md are **not** on the oRPC contract — CLI uses authenticated file `fetch` + `x-api-key` (see `apps/cli`).
