@@ -29,3 +29,5 @@ minimumReleaseAgeExclude:
   - "@effect/tsgo-win32-arm64@0.39.1"
   - "@effect/tsgo-win32-x64@0.39.1"
   - "@effect/tsgo@0.39.1"
+  - "@better-auth-ui/core@1.7.23"
+  - "@better-auth-ui/react@1.7.23"

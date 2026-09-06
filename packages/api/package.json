@@ -23,7 +23,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^26.4.1",
     "@watchdog/test-kit": "workspace:*",
     "tsx": "^4.23.13",
     "typescript": "7.0.2"
