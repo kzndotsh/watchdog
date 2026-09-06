@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { createTransport } from "nodemailer";
 
 export async function sendSmtpMail(input: {
   host: string;
@@ -10,7 +10,7 @@ export async function sendSmtpMail(input: {
   subject: string;
   text: string;
 }): Promise<void> {
-  const transporter = nodemailer.createTransport({
+  const transporter = createTransport({
     host: input.host,
     port: input.port,
     secure: input.port === 465,

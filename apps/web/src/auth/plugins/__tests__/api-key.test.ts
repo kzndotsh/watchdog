@@ -7,7 +7,7 @@ const coreFactory = vi.hoisted(() =>
   }))
 );
 
-vi.mock("@better-auth-ui/core/plugins", () => ({
+vi.mock("@better-auth-ui/core/plugins/api-key", () => ({
   apiKeyPlugin: Object.assign(() => coreFactory(), { id: "apiKey" }),
 }));
 

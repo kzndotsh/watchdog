@@ -1,4 +1,4 @@
-import { sessionOptions } from "@better-auth-ui/react";
+import { sessionOptions } from "@better-auth-ui/core";
 import type { QueryClient } from "@tanstack/react-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
 
@@ -18,8 +18,8 @@ import { authClient } from "@/auth/client";
 export function ensureAppSession(queryClient: QueryClient) {
   return createIsomorphicFn()
     .server(async () => {
-      const { ensureSession: ensureSessionServer } =
-        await import("@better-auth-ui/react/server");
+      const { ensureSessionServer } =
+        await import("@better-auth-ui/core/server");
       const { getRequestHeaders } =
         await import("@tanstack/react-start/server");
       const { auth } = await import("@/auth/server");

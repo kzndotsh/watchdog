@@ -2,7 +2,7 @@ import { createAuthPlugin } from "@better-auth-ui/core";
 import {
   type ApiKeyPluginOptions,
   apiKeyPlugin as coreApiKeyPlugin,
-} from "@better-auth-ui/core/plugins";
+} from "@better-auth-ui/core/plugins/api-key";
 
 export const apiKeyPlugin = createAuthPlugin(
   coreApiKeyPlugin.id,

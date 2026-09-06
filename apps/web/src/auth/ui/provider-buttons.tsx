@@ -1,7 +1,9 @@
 "use client"
 
+import { getProviderId } from "@better-auth-ui/core"
 import { useAuth } from "@better-auth-ui/react"
 import { useMemo } from "react"
+import type { SocialProvider } from "better-auth/social-providers"
 
 import { cn } from "@/lib/utils"
 import { ProviderButton } from "./provider-button"
@@ -46,8 +48,8 @@ export function ProviderButtons({
     >
       {socialProviders?.map((provider) => (
         <ProviderButton
-          key={provider}
-          provider={provider}
+          key={getProviderId(provider)}
+          provider={getProviderId(provider) as SocialProvider}
           display={
             resolvedSocialLayout === "vertical"
               ? "full"

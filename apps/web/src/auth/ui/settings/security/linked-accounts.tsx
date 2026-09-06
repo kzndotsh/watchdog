@@ -1,6 +1,8 @@
 "use client"
 
+import { getProviderId } from "@better-auth-ui/core"
 import { useAuth, useListAccounts } from "@better-auth-ui/react"
+import type { SocialProvider } from "better-auth/social-providers"
 import { Card, CardContent } from "@/shared/ui/shadcn/card"
 import { Separator } from "@/shared/ui/shadcn/separator"
 import { Skeleton } from "@/shared/ui/shadcn/skeleton"
@@ -39,20 +41,22 @@ export function LinkedAccounts({ className }: LinkedAccountsProps) {
 
   const availableProviders =
     multipleAccountsPerProvider === false
-      ? socialProviders?.filter((p) => !linkedProviderIds.has(p))
+      ? socialProviders?.filter(
+          (provider) => !linkedProviderIds.has(getProviderId(provider))
+        )
       : socialProviders
 
   const allRows = [
     ...(linkedAccounts?.map((account) => ({
       key: account.id,
       account,
-      provider: account.providerId
+      provider: account.providerId as SocialProvider,
     })) ?? []),
     ...(availableProviders?.map((provider) => ({
-      key: provider,
+      key: getProviderId(provider),
       account: undefined,
-      provider
-    })) ?? [])
+      provider: getProviderId(provider) as SocialProvider,
+    })) ?? []),
   ]
 
   return (
@@ -65,7 +69,7 @@ export function LinkedAccounts({ className }: LinkedAccountsProps) {
         <CardContent className="p-0">
           {isPending
             ? socialProviders?.map((provider, index) => (
-                <div key={provider}>
+                <div key={getProviderId(provider)}>
                   {index > 0 && <Separator />}
                   <AccountRowSkeleton />
                 </div>

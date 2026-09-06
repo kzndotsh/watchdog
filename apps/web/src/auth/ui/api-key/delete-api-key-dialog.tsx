@@ -1,13 +1,13 @@
-import { apiKeyPlugin } from "@better-auth-ui/core/plugins"
-import {
-  type ApiKeyAuthClient,
-  type ListedApiKey,
-  useAuth,
-  useAuthPlugin,
-  useDeleteApiKey
-} from "@better-auth-ui/react"
+import type {
+  ApiKeyAuthClient,
+  ListedApiKey,
+} from "@better-auth-ui/core/plugins/api-key"
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
+import { useDeleteApiKey } from "@better-auth-ui/react/plugins/api-key"
 import { Key } from "lucide-react"
 import { useState } from "react"
+
+import { apiKeyPlugin } from "@/auth/plugins/api-key"
 
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog"
 import { errMessage } from "@/lib/utils"
