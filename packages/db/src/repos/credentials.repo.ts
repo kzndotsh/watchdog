@@ -11,7 +11,9 @@ export const credentialMetaColumns = {
 } as const;
 
 export type CredentialMetaRow = {
-  [K in keyof typeof credentialMetaColumns]: (typeof credentials.$inferSelect)[K &
+  [
+    K in keyof typeof credentialMetaColumns
+  ]: (typeof credentials.$inferSelect)[K &
     keyof typeof credentials.$inferSelect];
 };
 

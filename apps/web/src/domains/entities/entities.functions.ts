@@ -12,37 +12,33 @@ import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 
 export const listEntitiesFn = createServerFn({ method: "GET" })
   .validator(caseIdInputSchema)
-  .handler(
-    async ({ data, context }): Promise<EntityRecord[]> =>
-      orpcFromContext(context).entities.list({
-        caseId: data.caseId,
-      })
+  .handler(async ({ data, context }): Promise<EntityRecord[]> =>
+    orpcFromContext(context).entities.list({
+      caseId: data.caseId,
+    })
   );
 
 export const getEntityBySlugFn = createServerFn({ method: "GET" })
   .validator(caseSlugInputSchema)
-  .handler(
-    async ({ data, context }): Promise<EntityRecord | null> =>
-      orpcNullIfNotFound(
-        orpcFromContext(context).entities.get({
-          caseId: data.caseId,
-          slug: data.slug,
-        })
-      )
+  .handler(async ({ data, context }): Promise<EntityRecord | null> =>
+    orpcNullIfNotFound(
+      orpcFromContext(context).entities.get({
+        caseId: data.caseId,
+        slug: data.slug,
+      })
+    )
   );
 
 export const createEntityFn = createServerFn({ method: "POST" })
   .validator(createEntityInputSchema)
-  .handler(
-    async ({ data, context }): Promise<EntityRecord> =>
-      orpcFromContext(context).entities.create(data)
+  .handler(async ({ data, context }): Promise<EntityRecord> =>
+    orpcFromContext(context).entities.create(data)
   );
 
 export const updateEntityFieldsFn = createServerFn({ method: "POST" })
   .validator(updateEntityFieldsInputSchema)
-  .handler(
-    async ({ data, context }): Promise<EntityRecord> =>
-      orpcFromContext(context).entities.update(data)
+  .handler(async ({ data, context }): Promise<EntityRecord> =>
+    orpcFromContext(context).entities.update(data)
   );
 
 export const deleteEntityFn = createServerFn({ method: "POST" })

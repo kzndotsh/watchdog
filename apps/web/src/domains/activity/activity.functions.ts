@@ -8,7 +8,6 @@ import { orpcFromContext } from "@/lib/orpc.server";
 
 export const listRecentActivityFn = createServerFn({ method: "GET" })
   .validator(listRecentActivityInputSchema)
-  .handler(
-    async ({ data, context }): Promise<ActivityItem[]> =>
-      orpcFromContext(context).activity.listRecent(data)
+  .handler(async ({ data, context }): Promise<ActivityItem[]> =>
+    orpcFromContext(context).activity.listRecent(data)
   );

@@ -16,13 +16,12 @@ export const listCredentialsFn = createServerFn({ method: "GET" }).handler(
 
 export const putCredentialFn = createServerFn({ method: "POST" })
   .validator(putCredentialInputSchema)
-  .handler(
-    async ({ data, context }): Promise<CredentialSlot> =>
-      orpcFromContext(context).credentials.put({
-        name: data.name,
-        secret: data.secret,
-        label: data.label,
-      })
+  .handler(async ({ data, context }): Promise<CredentialSlot> =>
+    orpcFromContext(context).credentials.put({
+      name: data.name,
+      secret: data.secret,
+      label: data.label,
+    })
   );
 
 export const deleteCredentialFn = createServerFn({ method: "POST" })
