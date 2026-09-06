@@ -186,15 +186,16 @@ function CollectWithCase({
           >
             <CollectDetail
               row={ws.selected}
+              job={ws.jobsWs.detailJob}
               caseId={active.id}
-              evidence={ws.evidence}
               jobs={ws.jobs}
               entities={ws.entities}
               entityNameById={ws.entityNameById}
               allowThirdPartyEgress={active.allowThirdPartyEgress}
               evidenceActions={ws.intake.evidenceActions}
-              focusRunId={ws.selection.focusRunId}
-              recipeStepCountByPlaybookId={ws.recipeStepCountByPlaybookId}
+              evidenceTitleById={ws.evidenceTitleById}
+              runSiblings={ws.jobsWs.runSiblings}
+              recipeTotal={ws.recipeTotal}
               busy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
               onCancel={ws.jobsWs.handleCancel}
               onCancelPlaybook={

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { collectDetailPending } from "@/domains/collect/lib/collect-detail-pending";
@@ -13,10 +13,9 @@ import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
 import { useIntakeActions } from "@/domains/intake/hooks/use-intake-actions";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
-import { jobDetailQuery, jobsListQuery } from "@/domains/jobs/queries";
+import { jobsListQuery } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
-import { listPending } from "@/shared/lib/list-pending";
 import {
   bindCasesChangedInvalidation,
   invalidateAfterEvidenceMutation,
@@ -128,8 +127,7 @@ export function useCollectWorkspace({
 
   const jobsWs = useJobsWorkspace(caseId, {
     jobId:
-      selection.focusRunId ??
-      (selected?.evidence === null ? selected?.id : undefined),
+      resolveCollectJobDetailId(selected, selection.focusRunId) ?? undefined,
     onJobIdChange: onIdChange,
     caps,
     jobs,
@@ -170,21 +168,31 @@ export function useCollectWorkspace({
     intake.onUrl(...args);
   };
 
+  const evidenceTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ev of evidence) {
+      map.set(ev.id, index.titleForEvidence(ev.id) ?? ev.kind);
+    }
+    return map;
+  }, [evidence, index]);
+
+  const recipeTotal = useMemo(() => {
+    const jobRow =
+      selected !== null && selected.evidence === null ? selected : null;
+    return jobRow === null
+      ? undefined
+      : (recipeStepCountByPlaybookId?.get(
+          jobRow.runs[0]?.job.playbookId ?? ""
+        ) ?? jobRow.recipe?.total);
+  }, [selected, recipeStepCountByPlaybookId]);
+
   const detailIsJobRow =
     selected !== null && selected.evidence === null && selected.runs.length > 0;
-  const detailJobId = resolveCollectJobDetailId(selected, selection.focusRunId);
-  const jobDetailQueryState = useQuery({
-    ...jobDetailQuery(caseId, detailJobId ?? ""),
-    enabled: detailJobId !== null && detailIsJobRow,
-  });
-  const jobDetailPending = listPending(jobDetailQueryState, {
-    enabled: detailJobId !== null && detailIsJobRow,
-  });
   const detailPending = collectDetailPending({
     selected,
     queueCorePending,
     detailIsJobRow,
-    jobDetailPending,
+    jobDetailPending: jobsWs.detailPending,
   });
 
   const retryQueue = useCallback(() => {
@@ -225,6 +233,8 @@ export function useCollectWorkspace({
     selection,
     selected,
     entityNameById,
+    evidenceTitleById,
+    recipeTotal,
     queuePending,
     queuePlaceholder,
     queueLoadError,

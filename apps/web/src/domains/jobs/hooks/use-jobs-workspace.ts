@@ -22,6 +22,7 @@ import {
 import type { CapListItem } from "@/domains/jobs/types";
 import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import { listPending } from "@/shared/lib/list-pending";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 
 const STUCK_JOB_MS = 60_000;
@@ -84,14 +85,24 @@ export function useJobsWorkspace(
     () => queue.find((j) => j.id === selectedId) ?? null,
     [queue, selectedId]
   );
-  const { data: selectedDetail } = useQuery({
+  const detailEnabled = Boolean(selectedId);
+  const {
+    data: selectedDetail,
+    isFetched,
+    isLoading,
+    isError,
+  } = useQuery({
     ...jobDetailQuery(caseId, selectedId ?? ""),
-    enabled: Boolean(selectedId),
+    enabled: detailEnabled,
   });
   const detailJob =
     selectedId !== null && selectedDetail?.id === selectedId
       ? selectedDetail
       : null;
+  const detailPending = listPending(
+    { isFetched, isError, isLoading },
+    { enabled: detailEnabled }
+  );
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -228,6 +239,7 @@ export function useJobsWorkspace(
     selectedId,
     selectedListRow,
     detailJob,
+    detailPending,
     stuckJobs,
     error,
     setError,

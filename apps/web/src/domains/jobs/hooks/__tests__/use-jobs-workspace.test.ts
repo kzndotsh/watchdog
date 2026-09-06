@@ -130,25 +130,59 @@ useMutationMock.mockImplementation(() => {
   return intakeMutations[idx] ?? startMutation;
 });
 
+function idleQuery(data: unknown) {
+  return {
+    data,
+    isPending: false,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+  };
+}
+
 function renderWorkspace({
   jobId,
   jobs = [listJob()],
   queue = jobs,
+  detailQuery,
 }: {
   jobId?: string;
   jobs?: JobListRecord[];
   queue?: JobListRecord[];
+  detailQuery?: {
+    data?: JobRecord;
+    isFetched: boolean;
+    isLoading: boolean;
+    isError: boolean;
+  };
 } = {}) {
   useQueryMock.mockImplementation(
     (options: { queryKey?: unknown[]; enabled?: boolean }) => {
       if (options.enabled === false) {
-        return { data: undefined, isPending: false };
+        return {
+          data: undefined,
+          isPending: false,
+          isFetched: false,
+          isLoading: false,
+          isError: false,
+        };
       }
       const key = options.queryKey ?? [];
       if (key[2] === "detail") {
-        return { data: detailJob({ id: String(key[3]) }) };
+        if (detailQuery) {
+          return {
+            ...detailQuery,
+            data:
+              detailQuery.data ??
+              (detailQuery.isLoading
+                ? undefined
+                : detailJob({ id: String(key[3]) })),
+            isPending: detailQuery.isLoading,
+          };
+        }
+        return idleQuery(detailJob({ id: String(key[3]) }));
       }
-      return { data: undefined, isPending: false };
+      return idleQuery(undefined);
     }
   );
 
@@ -192,7 +226,33 @@ describe("useJobsWorkspace", () => {
 
     expect(result.current.selectedId).toBe(JOB_ID);
     expect(result.current.detailJob?.id).toBe(JOB_ID);
+    expect(result.current.detailPending).toBe(false);
     expect(result.current.selectionOutOfSync).toBe(false);
+  });
+
+  it("reports detailPending while the job detail query is loading", () => {
+    const { result } = renderWorkspace({
+      jobId: JOB_ID,
+      detailQuery: {
+        data: undefined,
+        isFetched: false,
+        isLoading: true,
+        isError: false,
+      },
+    });
+
+    expect(result.current.detailPending).toBe(true);
+    expect(result.current.detailJob).toBeNull();
+  });
+
+  it("does not report detailPending when the detail query is disabled", () => {
+    const { result } = renderWorkspace({
+      jobs: [],
+      queue: [],
+    });
+
+    expect(result.current.selectedId).toBeNull();
+    expect(result.current.detailPending).toBe(false);
   });
 
   it("flags selection drift against the URL job id", () => {
