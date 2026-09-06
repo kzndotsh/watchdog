@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  buildCollectIndex,
-  jobsForRole,
-  producingCapFromRow,
-} from "@/domains/collect/lib/collect-index";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@/domains/jobs/jobs.functions";
 import { testId } from "@watchdog/test-kit";
 
+import {
+  collectRowForEvidence,
+  jobsForRole,
+  producingCapFromRow,
+} from "../evidence-runs.ts";
 import {
   evidenceHasEnrichableUrl,
   evidenceHint,
@@ -101,9 +101,7 @@ describe("intake evidence helpers", () => {
     expect(
       evidenceHasEnrichableUrl(evidence({ sourceUrl: ENRICHABLE_SOURCE }))
     ).toBe(true);
-    expect(
-      producingCapFromRow(buildCollectIndex([], []).rowById(testId(40)))
-    ).toBeNull();
+    expect(producingCapFromRow(null)).toBeNull();
   });
 
   it("groups process and enrich jobs for an evidence row", () => {
@@ -127,10 +125,7 @@ describe("intake evidence helpers", () => {
       ],
       status: "succeeded",
     });
-    const collectRow = buildCollectIndex(
-      [row],
-      [processJob, enrichJob]
-    ).rowById(row.id);
+    const collectRow = collectRowForEvidence(row, [processJob, enrichJob]);
 
     expect(jobsForRole(collectRow, "process")).toEqual([processJob]);
     expect(jobsForRole(collectRow, "enrich")).toEqual([enrichJob]);

@@ -2,11 +2,6 @@ import { DownloadIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  buildCollectIndex,
-  jobsForRole,
-  producingCapFromRow,
-} from "@/domains/collect/lib/collect-index";
-import {
   EvidenceDetailHeader,
   EvidenceHeaderActions,
 } from "@/domains/intake/components/evidence-detail-header";
@@ -19,6 +14,11 @@ import {
   evidenceTitle,
   latestEnrichOutput,
 } from "@/domains/intake/lib/evidence";
+import {
+  collectRowForEvidence,
+  jobsForRole,
+  producingCapFromRow,
+} from "@/domains/intake/lib/evidence-runs";
 import { processRunCardDomId } from "@/domains/intake/lib/process-run-card-dom";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
@@ -318,11 +318,11 @@ export function EvidenceDetail({
   // change, so this only needs to compute the initial tab once per evidence.
   const collectRow = useMemo(() => {
     if (!evidence) return null;
-    return buildCollectIndex([evidence], jobs).rowById(evidence.id);
+    return collectRowForEvidence(evidence, jobs);
   }, [evidence, jobs]);
   const [tab, setTab] = useState<DetailTab>(() => {
     if (!evidence) return "content";
-    const row = buildCollectIndex([evidence], jobs).rowById(evidence.id);
+    const row = collectRowForEvidence(evidence, jobs);
     const enrichJobs = jobsForRole(row, "enrich");
     if (latestEnrichOutput(enrichJobs) !== null) return "output";
     const hasJobs =

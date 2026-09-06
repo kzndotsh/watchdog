@@ -1,15 +1,11 @@
-import type {
-  CollectIndex,
-  CollectRow,
-  CollectRunRole,
-} from "@/domains/collect/types";
+import type { CollectIndex, CollectRow } from "@/domains/collect/types";
 import { evidenceTitle } from "@/domains/intake/lib/evidence";
+import { assignJobsToEvidence } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@/domains/jobs/jobs.functions";
 
 import {
   appendUnassignedJobRows,
-  assignJobsToEvidence,
   seedEvidenceMaps,
   seedEvidenceRows,
 } from "./collect-index-build";
@@ -58,22 +54,4 @@ export function buildCollectIndex(
       return titleForEvidenceMap.get(evidenceId) ?? null;
     },
   };
-}
-
-export function jobsForRole(
-  row: CollectRow | null,
-  role: CollectRunRole
-): JobListRecord[] {
-  if (row === null) return [];
-  const jobs: JobListRecord[] = [];
-  for (const run of row.runs) {
-    if (run.role === role) jobs.push(run.job);
-  }
-  return jobs;
-}
-
-export function producingCapFromRow(
-  row: CollectRow | null
-): JobListRecord | null {
-  return jobsForRole(row, "collect")[0] ?? null;
 }

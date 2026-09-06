@@ -11,7 +11,6 @@ import { isOpenJobStatus } from "@watchdog/schemas";
 
 import {
   classifyRun,
-  jobLinksEvidence,
   landedEvidenceIds,
   shouldStayStandaloneJob,
 } from "./collect-index-jobs";
@@ -36,35 +35,6 @@ export function seedEvidenceMaps(
     titleForEvidenceMap.set(row.id, titleFor(row));
   }
   return { evidenceById, titleForEvidenceMap };
-}
-
-export function assignJobsToEvidence(
-  evidence: readonly EvidenceRecord[],
-  jobs: readonly JobListRecord[]
-): {
-  readonly runsByEvidenceId: Map<string, CollectRun[]>;
-  readonly assignedJobIds: Set<string>;
-} {
-  const assignedJobIds = new Set<string>();
-  const runsByEvidenceId = new Map<string, CollectRun[]>();
-  for (const row of evidence) {
-    runsByEvidenceId.set(row.id, []);
-  }
-
-  for (const job of jobs) {
-    if (shouldStayStandaloneJob(job)) {
-      continue;
-    }
-    for (const row of evidence) {
-      if (!jobLinksEvidence(job, row.id)) continue;
-      const bucket = runsByEvidenceId.get(row.id);
-      if (bucket === undefined) continue;
-      bucket.push({ job, role: classifyRun(job) });
-      assignedJobIds.add(job.id);
-    }
-  }
-
-  return { runsByEvidenceId, assignedJobIds };
 }
 
 export function seedEvidenceRows(
