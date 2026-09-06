@@ -131,7 +131,7 @@ Output is compact JSON so it pipes into `jq`; add `--table` when a human is read
 wd jobs playbook -c 0b8f… --id host-footprint --host example.com
 ```
 
-Agents propose by default. `wd graph write` skips Triage, but it needs an explicit `--user-override`, still lands at `unverified`, and records a row in `graph_writes`.
+Agents propose by default. `wd graph write` skips Triage: it always sends `userOverride: true` (no flag), still lands at `unverified`, and records a row in `graph_writes`. Child nouns (`claims`, `identifiers`, …) still need `--user-override`.
 
 ## Capabilities
 
@@ -154,7 +154,8 @@ Every Cap declares its egress (29 make no third-party call at all) and tags itse
 ```
 apps/
 ├── web/                  TanStack Start UI + oRPC handlers (RPC + OpenAPI)
-└── worker/               pg-boss consumer that executes Cap jobs
+├── worker/               pg-boss consumer that executes Cap jobs
+└── cli/                  The `wd` binary (compiled to dist/), every noun the API exposes
 packages/
 ├── env/                  T3 Env boot secrets, depends on nothing
 ├── schemas/              Zod contracts, PatchOp, vocabulary
@@ -165,8 +166,8 @@ packages/
 ├── cap-sdk/              Cap SPI: defineCapability, CapContext
 ├── tools/                Dumb fetch/parse helpers, no Graph types
 ├── api/                  oRPC router, Zod procedures
+├── contract/             Generated OpenAPI / minified router for clients
 ├── client/               Typed SDK for /api/v1, generated from OpenAPI
-├── cli/                  The `wd` binary, every noun the API exposes
 ├── ai/                   LLM providers + structuredExtract, never writes Graph
 ├── log/                  evlog process logging, NDJSON + stdout
 └── test-kit/             Dev-only fixtures, Postgres harness, MSW

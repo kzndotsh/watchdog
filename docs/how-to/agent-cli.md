@@ -16,9 +16,9 @@ WD_API_URL=http://localhost:3000/api/v1
 WD_API_KEY=<key-from-settings>
 ```
 
-4. `wd --help` works without a key; authenticated verbs need both vars.
+4. After `pnpm install` and `pnpm build:cli`, `wd` is on PATH (`pnpm exec wd` / `node_modules/.bin/wd`). `wd --help` works without a key; authenticated verbs need both vars. From the repo root, dotenv picks up `.env`.
 
-Regenerate client after API changes: `pnpm generate:client`. `@watchdog/api`, `@watchdog/client`, and `@watchdog/cli` typecheck with workspace TypeScript **7.0.2** — keep `"typescript": "7.0.2"` in those `package.json` files; do not float `^6`.
+Regenerate client after API changes: `pnpm generate:client` (writes `@watchdog/contract`). `@watchdog/api`, `@watchdog/client`, `@watchdog/contract`, and `@watchdog/cli` typecheck with workspace TypeScript **7.0.2** — keep `"typescript": "7.0.2"` in those `package.json` files; do not float `^6`.
 
 ## Interactive API docs
 
@@ -54,7 +54,7 @@ Full rules: [`../reference/contracts/agent-ingress.md`](../reference/contracts/a
 | `export` | `wd export zip` · `wd export md` (binary routes + `x-api-key`) |
 | `caps` | `wd caps list` · `wd caps playbooks` |
 
-Package detail: [`../../packages/cli/AGENTS.md`](../../packages/cli/AGENTS.md). oRPC layout: [`../reference/platform/jobs-orpc.md`](../reference/platform/jobs-orpc.md).
+Package detail: [`../../apps/cli/AGENTS.md`](../../apps/cli/AGENTS.md). oRPC layout: [`../reference/platform/jobs-orpc.md`](../reference/platform/jobs-orpc.md).
 
 ## Output contract
 

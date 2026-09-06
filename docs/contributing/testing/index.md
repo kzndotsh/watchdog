@@ -27,7 +27,7 @@ pnpm --filter @watchdog/db check:repos
 
 | Tier | Where | Isolation |
 | --- | --- | --- |
-| Unit | `packages/*/src/**/__tests__/**/*.test.ts` + worker | Pure; `SKIP_ENV_VALIDATION=1` |
+| Unit | `packages/*/src/**/__tests__/**/*.test.ts` + `apps/worker` + `apps/cli` | Pure; `SKIP_ENV_VALIDATION=1` |
 | Property | `*.property.test.ts` under `packages/*` or `apps/*` | fast-check via `@watchdog/test-kit/fc` |
 | Component | `apps/web/src/**/__tests__/**` (`*.test.ts` + `*.component.test.tsx`) | jsdom + Testing Library |
 | Integration | `*.int.test.ts` under `packages/*` or `apps/*` | `watchdog_test`; `withTestTx` or `resetTestDb` |
@@ -36,11 +36,11 @@ pnpm --filter @watchdog/db check:repos
 
 Sibling `__tests__/` next to source. Shared builders/harness: `@watchdog/test-kit` (`/fc`, `/fixtures`, `/db`, `/http`, `/it`). **E2E prereqs:** Postgres + MinIO (`just up` or `just test-db` + `just docker-up`). Playwright starts web on port **3300** (does not reuse `:3000`) and the worker with `pnpm --filter @watchdog/worker start`: not `dev`/`tsx watch`, which would kill a daily worker watching the same files. Each browser test wipes `watchdog_e2e` public + `auth` (and cookies) via the auto `_resetDb` fixture before running. NixOS: enter `nix develop` so Chromium comes from the flake; CI installs Playwright's own Chromium.
 
-**Web lib tests run in the component project** (jsdom), not `pnpm test:unit`. Unit is packages + worker only.
+**Web lib tests run in the component project** (jsdom), not `pnpm test:unit`. Unit is packages + worker + CLI.
 
 Collect Caps ship `__tests__/interpret.test.ts`. Do not add a `run()` file per Cap: prove `report.json` + interpret via `itRunsCollectCap` (`@watchdog/test-kit/it`) on **three** Caps (`network.dns.lookup`, `web.url.unshorten`, `threat.virustotal.lookup`). Special `run()` (not `defineCollectCap`): `evidence.harvest`, `evidence.extract.ai`, `network.url.enrich`, `evidence.file.analyze`, `evidence.eml.analyze`. Web does not re-test Cap handlers. MSW: import `http` / `HttpResponse` / `mockServer` / `mockJson` from `@watchdog/test-kit/http`, not `msw`. Effect unit tests that sleep or use Layers: `it.effect` from `@effect/vitest` (TestClock is provided). Examples: `apps/worker/src/__tests__/cancel-poll.test.ts`, `packages/policy/src/__tests__/patch-gates.test.ts`.
 
-CLI unit tests cover `--help`, custody envelopes (`CUSTODY` without `--user-override` on identifier/edge/event/question writes), and `loadPatch`. Generated `packages/contract/src/generated/` is CI regen, not a test target.
+CLI unit tests live under `apps/cli/src/**/__tests__/` and cover `--help`, custody envelopes (`CUSTODY` without `--user-override` on identifier/edge/event/question writes), and `loadPatch`. Generated `packages/contract/src/generated/` is CI regen, not a test target.
 
 Playwright suite under `e2e/specs/` (**9 files**): `@journey` core loop; `@custody` Accept gates; `@smoke` auth (sign-up, invite accept, instance-admin Users), cases, Collect paste, Triage reject, and per-route navigation smoke (+ dossier). Harness: `e2e/support/`, `e2e/api/`, `e2e/fixtures/test.ts` (import `test`/`expect` here: not `@playwright/test`), `e2e/pages/`.
 

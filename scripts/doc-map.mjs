@@ -53,15 +53,19 @@ export const DOC_MAP = [
   },
   {
     id: "api-client",
-    code: [/^packages\/api\//, /^packages\/client\//],
-    docs: ["docs/reference/platform/jobs-orpc.md", "docs/how-to/agent-cli.md"],
+    code: [/^packages\/api\//, /^packages\/client\//, /^packages\/contract\//],
+    docs: [
+      "docs/reference/platform/jobs-orpc.md",
+      "docs/how-to/agent-cli.md",
+      "packages/contract/AGENTS.md",
+    ],
     strict: false,
-    note: "Skip when only packages/client/src/generated/ changes",
+    note: "Skip when only packages/contract/src/generated/ changes",
   },
   {
     id: "cli",
-    code: [/^packages\/cli\//],
-    docs: ["docs/how-to/agent-cli.md", "packages/cli/AGENTS.md"],
+    code: [/^apps\/cli\//],
+    docs: ["docs/how-to/agent-cli.md", "apps/cli/AGENTS.md"],
     strict: true,
   },
   {
@@ -81,7 +85,7 @@ export const DOC_MAP = [
  * @returns {boolean}
  */
 export function isGeneratedClientOnly(rel) {
-  return rel.startsWith("packages/client/src/generated/");
+  return rel.startsWith("packages/contract/src/generated/");
 }
 
 /**
@@ -95,7 +99,9 @@ export function matchRules(changedRelPaths) {
     if (rule.id === "api-client") {
       const nonGenerated = changedRelPaths.filter(
         (p) =>
-          (p.startsWith("packages/api/") || p.startsWith("packages/client/")) &&
+          (p.startsWith("packages/api/") ||
+            p.startsWith("packages/client/") ||
+            p.startsWith("packages/contract/")) &&
           !isGeneratedClientOnly(p)
       );
       if (nonGenerated.length === 0) continue;

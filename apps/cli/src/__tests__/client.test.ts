@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@watchdog/env/cli", () => ({
+vi.mock("../env", () => ({
   loadCliEnv: vi.fn(() => ({
     WD_API_URL: "http://127.0.0.1:3000",
     WD_API_KEY: "test-key",

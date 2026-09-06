@@ -1,7 +1,4 @@
-#!/usr/bin/env tsx
 import { defineCommand, runMain } from "citty";
-
-import { loadCliEnv } from "@watchdog/env/cli";
 
 import { api, emit, wrapCommandTree } from "./client";
 import { capsCmd } from "./commands/caps";
@@ -18,6 +15,7 @@ import { identifiersCmd } from "./commands/identifiers";
 import { jobsCmd } from "./commands/jobs";
 import { proposalsCmd } from "./commands/proposals";
 import { questionsCmd } from "./commands/questions";
+import { loadCliEnv } from "./env";
 import { CliExitError, fail, handleCliError } from "./io";
 
 const ROOT_COMMANDS = [

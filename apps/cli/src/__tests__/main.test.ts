@@ -16,7 +16,7 @@ vi.mock("../client", async (importOriginal) => {
   };
 });
 
-vi.mock("@watchdog/env/cli", () => ({
+vi.mock("../env", () => ({
   loadCliEnv: vi.fn(),
 }));
 

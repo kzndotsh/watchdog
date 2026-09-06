@@ -14,7 +14,7 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Local infra (Postgres + MinIO + migrate) | `just up` · `just docker-up` (containers only) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
-| Dev | `just dev` · `pnpm dev:web` · `pnpm dev:worker` |
+| Dev | `just dev` · `pnpm dev:web` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
 | Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix + agents + docs + effect-edges + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
@@ -45,7 +45,7 @@ Watchdog runtime conventions (run* edges, JobFibers, Cap `run`, browser policy) 
 
 ## Sub-AGENTS directory
 
-**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `packages/{db,core,api,caps,cap-sdk,env,cli,client,policy,schemas,ai,tools,log,test-kit}`.
+**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `apps/cli`, `packages/{db,core,api,caps,cap-sdk,env,client,contract,policy,schemas,ai,tools,log,test-kit}`.
 
 ## Agent Skills
 
@@ -70,7 +70,7 @@ Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.
 | Postgres = Case Graph SoT; Export is a projection | Hand-edit Export as a second SoT | [`ingress`](docs/reference/contracts/ingress.md) · `audit-contract` |
 | Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | [`ingress`](docs/reference/contracts/ingress.md) · [`custody`](docs/reference/contracts/custody.md) |
 | Agents/CLI default: propose; graph write needs `userOverride` → Graph @ `unverified` + `graph_writes` | Silent machine Graph writes; mid-build verbs (<!-- check:agents allow-banned --> promote / Scratch / Door A / Candidate theater) | [`agent-ingress`](docs/reference/contracts/agent-ingress.md) |
-| Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | — (hook: `secrets-guard`) |
+| Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | — |
 | Chrome: Queue + Detail | Console / Tape / Panel / Pane / Rail / Strip | — |
 | Process logs via `@watchdog/log` (evlog NDJSON) | Secrets/Evidence body in logs; treat evlog as Graph audit | [`evlog`](docs/reference/contracts/evlog.md) |
 | Extend the tracked packages/apps | Extend `_legacy-*` | — |

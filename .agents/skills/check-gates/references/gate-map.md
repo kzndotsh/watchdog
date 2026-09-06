@@ -22,9 +22,9 @@ ds/agents/docs → unit/component → integration → e2e.
 | `apps/web/**` | `pnpm --filter @watchdog/web ds:check`, `pnpm test:component`, `pnpm doctor:react` (advisory; CI Advisory job, does not fail **Check**). CI also runs full `pnpm test:e2e` — locally use `pnpm test:e2e:smoke` unless `e2e/` is dirty or the user asked for full e2e |
 | `apps/web/src/**`, `apps/web/scripts/**` | plus `pnpm check:docs-affected:strict` (lefthook) |
 | `packages/caps/**` | `pnpm generate:caps` then `git diff --exit-code -- packages/caps/capabilities.gen.json`; `check:docs-affected:strict` |
-| `packages/api/**`, `packages/client/**`, `packages/core/**` | `pnpm generate:client` then `git diff --exit-code -- packages/client/src/generated/`; `check:docs-affected:strict` for api/client (lefthook; not core) |
+| `packages/api/**`, `packages/client/**`, `packages/contract/**`, `packages/core/**` | `pnpm generate:client` then `git diff --exit-code -- packages/contract/src/generated/`; `check:docs-affected:strict` for api/client/contract (lefthook; not core) |
 | `packages/db/**` | `pnpm --filter @watchdog/db check:repos` |
-| `packages/cli/**` | `check:docs-affected:strict` (doc-map); TS rows above |
+| `apps/cli/**` | `check:docs-affected:strict` (doc-map); TS rows above; `pnpm --filter @watchdog/cli build` when bin/dist changes |
 | `e2e/**`, `playwright.config.ts` | `pnpm exec vitest run --project e2e-parser`; `pnpm test:e2e` (or `pnpm test:e2e:smoke` for harness-only); `check:docs-affected:strict` |
 | `package.json`, lockfile, `pnpm-workspace.yaml`, `vitest.config.ts`, `knip.ts`, `oxlint.config.ts`, `oxfmt.config.ts`, `.github/**`, `scripts/**` | full set — treat as config |
 

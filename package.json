@@ -5,7 +5,9 @@
   "scripts": {
     "dev:web": "pnpm --filter @watchdog/web dev",
     "dev:worker": "pnpm --filter @watchdog/worker dev",
+    "dev:cli": "pnpm --filter @watchdog/cli dev",
     "build": "pnpm --filter @watchdog/web build",
+    "build:cli": "pnpm --filter @watchdog/cli build",
     "check": "ultracite check --disable-nested-config",
     "fix": "ultracite fix --disable-nested-config",
     "doctor:react": "react-doctor apps/web --verbose -y --blocking none",
@@ -45,6 +47,7 @@
     "prepare": "effect-tsgo patch --oxlint"
   },
   "dependencies": {
+    "@watchdog/cli": "workspace:*",
     "effect": "4.0.0-rc.112"
   },
   "devDependencies": {

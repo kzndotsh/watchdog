@@ -15,7 +15,7 @@ const watchdogIgnores = [
   "reports/**",
   "templates/**",
   "**/routeTree.gen.ts",
-  "packages/client/src/generated/**",
+  "packages/contract/src/generated/**",
   "packages/caps/capabilities.gen.json",
   "packages/db/drizzle/**",
   "**/dist/**",
@@ -407,6 +407,57 @@ export default defineConfig({
         "typescript/no-unsafe-assignment": "off",
         "typescript/no-deprecated": "off",
         "typescript/unbound-method": "off",
+      },
+    },
+    {
+      // CLI is HTTP-only — never pull server packages or process logs.
+      files: ["apps/cli/src/**/*.{ts,tsx}"],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "@watchdog/core",
+                message: "CLI talks HTTP via @watchdog/client only.",
+              },
+              {
+                name: "@watchdog/db",
+                message: "CLI talks HTTP via @watchdog/client only.",
+              },
+              {
+                name: "@watchdog/api",
+                message: "CLI talks HTTP via @watchdog/client only.",
+              },
+              {
+                name: "@watchdog/log",
+                message:
+                  "CLI stdout is the agent JSON contract — do not use @watchdog/log.",
+              },
+              {
+                name: "@watchdog/env",
+                message: "CLI owns WD_API_* in apps/cli/src/env.ts.",
+              },
+              {
+                name: "@watchdog/env/server",
+                message: "CLI owns WD_API_* in apps/cli/src/env.ts.",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      // CLI build/pack scripts: Node ESM + progress logs.
+      files: ["apps/cli/scripts/**/*.mjs"],
+      rules: {
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "effecttsgo/global-console": "off",
       },
     },
     {

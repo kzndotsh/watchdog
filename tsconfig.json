@@ -19,10 +19,13 @@
       ],
       "@watchdog/caps/*": ["./packages/caps/src/*"],
 
-      "@watchdog/cli/*": ["./packages/cli/src/*"],
+      "@watchdog/cli/*": ["./apps/cli/src/*"],
 
       "@watchdog/client": ["./packages/client/src/index.ts"],
       "@watchdog/client/*": ["./packages/client/src/*"],
+
+      "@watchdog/contract": ["./packages/contract/src/index.ts"],
+      "@watchdog/contract/*": ["./packages/contract/src/*"],
 
       "@watchdog/core": ["./packages/core/src/index.ts"],
       "@watchdog/core/blob": ["./packages/core/src/infra/blob.ts"],

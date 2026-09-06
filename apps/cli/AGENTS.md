@@ -1,14 +1,16 @@
-# CLI package (`@watchdog/cli`)
+# CLI app (`@watchdog/cli`)
 
-> Scope: `packages/cli` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
+> Scope: `apps/cli` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-`wd` CLI — talks to the API via `@watchdog/client` only (no direct DB). Binary export uses authenticated `fetch` (not on the oRPC contract).
+`wd` CLI — talks to the API via `@watchdog/client` only (no direct DB). Binary export uses authenticated `fetch` (not on the oRPC contract). After `pnpm install` + `pnpm --filter @watchdog/cli build`, `wd` is on PATH via the root workspace link.
 
 ## Commands
 
 | Task | Command |
 | --- | --- |
-| Run locally | `pnpm --filter @watchdog/cli start -- <args>` |
+| Run (dev) | `pnpm exec wd -- <args>` · `pnpm --filter @watchdog/cli dev -- <args>` |
+| Build | `pnpm --filter @watchdog/cli build` (esbuild single ESM → `dist/main.js`; workspace packages inlined) |
+| Pack proof | `pnpm --filter @watchdog/cli pack:smoke` · `--live` with `WD_API_*` |
 | Typecheck | `pnpm --filter @watchdog/cli typecheck` (workspace TypeScript **7.0.2**; exact pin in `package.json`) |
 | Unit tests | `pnpm test:unit` |
 
@@ -23,7 +25,7 @@
 | `jobs` | list/start/cancel + `get` / `playbook` / `cancel-playbook`. `wd jobs playbook` seeds: `--host --url --evidence --ip --email --hash --handle` plus `--entity`. Start queues step 0 only. |
 | `caps list` / `caps playbooks` | Cap catalog + playbook list |
 | `credentials` | `list` / `put` (`--stdin` / `--secret-env`) / `delete` |
-| `proposals` / `graph write` | Default agent path vs escape hatch |
+| `proposals` / `graph write` | Default agent path vs escape hatch (`graph write` always sends `userOverride: true`; no `--user-override` flag) |
 
 Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 
@@ -39,13 +41,14 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 
 ### Env
 
-- `WD_API_URL` (default local) + `WD_API_KEY` via `loadCliEnv()` — validated on first API use, not on `--help`.
+- `WD_API_URL` (default `http://localhost:3000/api/v1`) + `WD_API_KEY` via `loadCliEnv()` in `src/env.ts` — validated on first API use, not on `--help`.
+- Dotenv loads from **cwd** (then parent walk). Never hardcodes the monorepo path. From repo root, the existing `.env` still applies.
 
 ## Boundaries
 
 | Do | Don’t |
 | --- | --- |
-| Use `createWatchdogClient` + `loadCliEnv()` | Import `@watchdog/core` / `@watchdog/db` |
+| Use `createWatchdogClient` + `loadCliEnv()` | Import `@watchdog/core` / `@watchdog/db` / `@watchdog/api` / `@watchdog/env` / `@watchdog/log` |
 | Default: proposals (`wd proposals create`) | Silent Graph writes |
 | Child Graph writes: `--user-override` + refuse `confirmed` | Set `confirmed` on claims/identifiers/edges from CLI |
 | Inbox Accept may set `confirmed` (`wd proposals accept --confidence`) | Treat Accept and child-write custody as the same rule |
@@ -64,7 +67,7 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 
 ## See also / External References
 
-| Need        | File                                               |
-| ----------- | -------------------------------------------------- |
-| HTTP client | [`packages/client/AGENTS.md`](../client/AGENTS.md) |
-| CLI env     | [`packages/env/AGENTS.md`](../env/AGENTS.md)       |
+| Need        | File                                                           |
+| ----------- | -------------------------------------------------------------- |
+| HTTP client | [`packages/client/AGENTS.md`](../../packages/client/AGENTS.md) |
+| CLI env     | `src/env.ts`                                                   |

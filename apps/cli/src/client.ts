@@ -1,5 +1,6 @@
 import { createWatchdogClient, type WatchdogClient } from "@watchdog/client";
-import { loadCliEnv } from "@watchdog/env/cli";
+
+import { loadCliEnv } from "./env";
 
 export { emit, emitList, emitOk, fail, truncText, wrapCommandTree } from "./io";
 

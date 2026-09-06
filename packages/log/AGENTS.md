@@ -15,7 +15,7 @@ Process logging via evlog (NDJSON + stdout). Contract SoT: [`docs/reference/cont
 
 | Do | Don't |
 | --- | --- |
-| Init once per process (`initWatchdogLogger`) | Depend from `packages/cli` or `packages/client` (stdout is the agent contract) |
+| Init once per process (`initWatchdogLogger`) | Depend from `apps/cli` or `packages/client` (stdout is the agent contract) |
 | Use ALS (`peekRequestLogger` / `runWithRequestLogger`) under Start middleware | Call `createFsDrain().flush()` (no flush API; awaits per event) |
 | Shape Cap Job events with `jobWideEventFields` from `JobRunOutcome` | — |
 | Bridge Effect.log via `evlogEffectLoggerLayer` | Treat Effect log lines as Graph audit |

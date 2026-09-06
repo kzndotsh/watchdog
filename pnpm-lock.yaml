@@ -19,6 +19,9 @@ importers:
 
   .:
     dependencies:
+      '@watchdog/cli':
+        specifier: workspace:*
+        version: link:apps/cli
       effect:
         specifier: 4.0.0-rc.112
         version: 4.0.0-rc.112
@@ -80,6 +83,37 @@ importers:
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
+
+  apps/cli:
+    dependencies:
+      '@watchdog/client':
+        specifier: workspace:*
+        version: link:../../packages/client
+      '@watchdog/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
+      citty:
+        specifier: ^0.2.2
+        version: 0.2.2
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+      zod:
+        specifier: ^4.4.3
+        version: 4.5.4
+    devDependencies:
+      '@types/node':
+        specifier: ^26.4.1
+        version: 26.4.1
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+      tsx:
+        specifier: ^4.23.13
+        version: 4.23.13
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
 
   apps/web:
     dependencies:
@@ -447,31 +481,6 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
-  packages/cli:
-    dependencies:
-      '@watchdog/client':
-        specifier: workspace:*
-        version: link:../client
-      '@watchdog/env':
-        specifier: workspace:*
-        version: link:../env
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
-      citty:
-        specifier: ^0.2.2
-        version: 0.2.2
-    devDependencies:
-      '@types/node':
-        specifier: ^26.4.1
-        version: 26.4.1
-      tsx:
-        specifier: ^4.23.13
-        version: 4.23.13
-      typescript:
-        specifier: 7.0.2
-        version: 7.0.2
-
   packages/client:
     dependencies:
       '@orpc/client':
@@ -483,9 +492,18 @@ importers:
       '@orpc/openapi-client':
         specifier: ^1.15.0
         version: 1.15.0(@opentelemetry/api@1.9.1)
-      '@watchdog/api':
+      '@watchdog/contract':
         specifier: workspace:*
-        version: link:../api
+        version: link:../contract
+    devDependencies:
+      '@types/node':
+        specifier: ^26.4.1
+        version: 26.4.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
+  packages/contract:
     devDependencies:
       '@types/node':
         specifier: ^26.4.1

@@ -25,4 +25,4 @@
 ## Pure prep
 
 - `parseAgentPatch` + `assertPatchShape` (policy). Cap Jobs still set `agentSourced=false`.
-- CLI output: compact JSON by default; see [`packages/cli/AGENTS.md`](../../../packages/cli/AGENTS.md).
+- CLI output: compact JSON by default; see [`apps/cli/AGENTS.md`](../../../apps/cli/AGENTS.md).

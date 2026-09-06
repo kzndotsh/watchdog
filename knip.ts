@@ -42,6 +42,8 @@ const config: KnipConfig = {
         "e2e/**/*.ts",
         "scripts/**/*.{mjs,js,ts}",
       ],
+      // Root depends on @watchdog/cli so `pnpm exec wd` / node_modules/.bin/wd work.
+      ignoreDependencies: ["@watchdog/cli"],
     },
     "apps/web": {
       entry: [
@@ -69,6 +71,16 @@ const config: KnipConfig = {
       entry: ["src/main.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
+    "apps/cli": {
+      entry: [
+        "src/main.ts",
+        "scripts/build.mjs",
+        "scripts/pack-smoke.mjs",
+        "src/**/__tests__/**/*.test.ts",
+        "src/commands/__tests__/**/*.test.ts",
+      ],
+      project: ["src/**/*.ts", "scripts/**/*.{ts,mjs}"],
+    },
     "packages/ai": {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
@@ -85,11 +97,11 @@ const config: KnipConfig = {
       entry: ["src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/cli": {
-      entry: ["src/main.ts", "src/**/__tests__/**/*.test.ts"],
+    "packages/client": {
+      entry: ["src/index.ts"],
       project: ["src/**/*.ts"],
     },
-    "packages/client": {
+    "packages/contract": {
       entry: ["src/index.ts"],
       project: ["src/**/*.ts", "!src/generated/**"],
     },

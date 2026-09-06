@@ -37,7 +37,7 @@ const ROOTS = [
   "packages/caps/src",
   "packages/ai/src",
   "packages/db/src",
-  "packages/cli/src",
+  "apps/cli/src",
   "packages/log/src",
   "apps/worker/src",
   "apps/web/src",

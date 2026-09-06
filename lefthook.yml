@@ -16,7 +16,7 @@ pre-commit:
         - "**/*.{ts,tsx,js,mjs,json,yml,yaml,md}"
       exclude:
         - "**/routeTree.gen.ts"
-        - "packages/client/src/generated/**"
+        - "packages/contract/src/generated/**"
         - "packages/caps/capabilities.gen.json"
         - "apps/web/src/shared/ui/shadcn/**"
       run: pnpm fix
@@ -42,6 +42,7 @@ pre-commit:
         - "packages/caps/**"
         - "packages/api/**"
         - "packages/client/**"
+        - "apps/cli/**"
         - "e2e/**"
         - "playwright.config.ts"
       run: pnpm check:docs-affected:strict
