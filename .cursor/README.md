@@ -6,7 +6,7 @@
 
 | Path | What | Why it's here and not `.agents/` |
 | --- | --- | --- |
-| [`hooks/`](hooks/) | `secrets-guard.sh`, `stop-gate.mjs`, `validate-on-edit.mjs`, `run-node.sh` | Cursor-specific hook runtime; no portable hook spec exists |
+| [`hooks/`](hooks/) | `stop-gate.mjs`, `validate-on-edit.mjs`, `run-node.sh` | Cursor-specific hook runtime; no portable hook spec exists |
 | [`hooks.json`](hooks.json) | Hook registration (events, timeouts, `failClosed`) | Same — Cursor-only config format |
 | `README.md` | This file | — |
 
@@ -16,7 +16,6 @@ Portable agent-facing content lives outside `.cursor/`: `AGENTS.md` (root + nest
 
 | Event | Script | Fails closed? | Does |
 | --- | --- | --- | --- |
-| `beforeReadFile` | [`secrets-guard.sh`](hooks/secrets-guard.sh) | **Yes** | Denies reads of `.env*`, `*.pem`/`*.key`, SSH keys, `credentials.json` before the model sees them. Pure POSIX `sh` — needs no `node`. |
 | `afterFileEdit` | [`validate-on-edit.mjs`](hooks/validate-on-edit.mjs) via [`run-node.sh`](hooks/run-node.sh) | No | Re-runs `check-agents.mjs --strict` on `AGENTS.md` edits, `check:docs` on `docs/**` edits, or `validate-agents.mjs` on edits under [`.agents/skills/`](../.agents/skills/) or this file. Failures print to stderr only — the `stop` hook is what surfaces findings to the agent. |
 | `stop` | [`stop-gate.mjs`](hooks/stop-gate.mjs) via [`run-node.sh`](hooks/run-node.sh) | No | Scoped to files changed this turn: lints them (`oxlint`, filtered from a repo-wide run — type-aware mode needs the whole project graph), runs `ds:ban` if web UI paths are dirty, runs agent-skills / `AGENTS.md` / **docs** validators when those paths are dirty, and **warns** on doc-affect misses (`check-docs-affected --warn`). `loop_limit: 2` — surfaces a finding at most twice per turn, then lets the agent stop rather than looping forever on something it can't fix. |
 
