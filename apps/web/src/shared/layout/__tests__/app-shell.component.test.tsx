@@ -5,6 +5,11 @@ vi.mock("@/domains/search/components/search-chrome", () => ({
   SearchChrome: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="search-chrome">{children}</div>
   ),
+  AppInsetContextMenu: ({ children }: { children: React.ReactNode }) => (
+    <div id="app-main" data-testid="app-inset-context-menu">
+      {children}
+    </div>
+  ),
 }));
 
 vi.mock("@/shared/layout/app-sidebar", () => ({

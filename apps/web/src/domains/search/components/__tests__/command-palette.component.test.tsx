@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Suspense } from "react";
+import { Suspense, useMemo, type ReactNode } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
+import type { AppAction } from "@/shared/lib/app-action";
 import { testId } from "@watchdog/test-kit";
 
 class ResizeObserverMock {
@@ -54,6 +56,33 @@ const ACTIVE: CaseRecord = {
   allowThirdPartyEgress: false,
 };
 
+const EMPTY_APP_ACTIONS: readonly AppAction[] = [];
+
+function SearchUiStub({
+  children,
+  paletteCommands = EMPTY_APP_ACTIONS,
+}: {
+  children: ReactNode;
+  paletteCommands?: readonly AppAction[];
+}) {
+  const value = useMemo(
+    () => ({
+      openPalette: vi.fn(),
+      togglePalette: vi.fn(),
+      openShortcuts: vi.fn(),
+      chromeActions: EMPTY_APP_ACTIONS,
+      paletteCommands,
+    }),
+    [paletteCommands]
+  );
+
+  return (
+    <SearchUiContext.Provider value={value}>
+      {children}
+    </SearchUiContext.Provider>
+  );
+}
+
 function renderPalette(
   open = true,
   queryResult: {
@@ -78,9 +107,11 @@ function renderPalette(
 
   return render(
     <QueryClientProvider client={client}>
-      <Suspense fallback={null}>
-        <CommandPalette open={open} onOpenChange={vi.fn()} />
-      </Suspense>
+      <SearchUiStub>
+        <Suspense fallback={null}>
+          <CommandPalette open={open} onOpenChange={vi.fn()} />
+        </Suspense>
+      </SearchUiStub>
     </QueryClientProvider>
   );
 }
@@ -92,6 +123,50 @@ describe("CommandPalette", () => {
     expect(
       screen.getByPlaceholderText("Search entities, evidence, tasks…")
     ).toBeInTheDocument();
+  });
+
+  it("shows Commands from SearchChrome paletteCommands when idle", () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    useSuspenseQueryMock.mockReturnValue({
+      data: { active: ACTIVE, cases: [ACTIVE] },
+    });
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      isFetching: false,
+      isError: false,
+    });
+
+    render(
+      <QueryClientProvider client={client}>
+        <SearchUiStub
+          paletteCommands={[
+            {
+              id: "toggle-sidebar",
+              label: "Toggle sidebar",
+              group: "app",
+              run: vi.fn(),
+            },
+            {
+              id: "shortcuts",
+              label: "Shortcuts",
+              group: "app",
+              run: vi.fn(),
+            },
+          ]}
+        >
+          <Suspense fallback={null}>
+            <CommandPalette open onOpenChange={vi.fn()} />
+          </Suspense>
+        </SearchUiStub>
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByText("Commands")).toBeInTheDocument();
+    expect(screen.getByText("Toggle sidebar")).toBeInTheDocument();
+    expect(screen.getByText("Shortcuts")).toBeInTheDocument();
+    expect(screen.queryByText("Search…")).not.toBeInTheDocument();
   });
 
   it("shows entity hits after debounced search input", async () => {
@@ -115,6 +190,7 @@ describe("CommandPalette", () => {
       isFetching: false,
       isError: false,
     });
+
     fireEvent.change(
       screen.getByPlaceholderText("Search entities, evidence, tasks…"),
       { target: { value: "ta" } }

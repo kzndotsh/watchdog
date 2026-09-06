@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { casesContextQuery } from "@/domains/cases/queries";
+import { useSearchUi } from "@/domains/search/hooks/use-search-ui";
 import { jumpNavItems } from "@/domains/search/lib/jump-nav";
 import { searchCaseQuery } from "@/domains/search/queries";
 import {
@@ -12,6 +13,7 @@ import {
 import { errMessage } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
+import { ActionShortcutChord, MENU_KBD_CLASS } from "@/shared/ui/action-list";
 import {
   Command,
   CommandDialog,
@@ -36,6 +38,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const { paletteCommands: commandActions } = useSearchUi();
 
   const { data: casesCtx } = useSuspenseQuery({
     ...casesContextQuery(),
@@ -139,25 +142,60 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <CommandEmpty>{emptyMessage}</CommandEmpty>
 
           {showResults ? null : (
-            <CommandGroup heading="Jump to">
-              {jumpItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <CommandItem
-                    key={item.to}
-                    value={`jump ${item.label}`}
-                    onSelect={() => {
-                      closeThen(() => {
-                        void navigate({ to: item.to });
-                      });
-                    }}
-                  >
-                    <Icon />
-                    <span>{item.label}</span>
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
+            <>
+              <CommandGroup heading="Jump to">
+                {jumpItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <CommandItem
+                      key={item.to}
+                      value={`jump ${item.label}`}
+                      onSelect={() => {
+                        closeThen(() => {
+                          void navigate({ to: item.to });
+                        });
+                      }}
+                    >
+                      <Icon />
+                      <span>{item.label}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+              {commandActions.length > 0 ? (
+                <>
+                  <CommandSeparator />
+                  <CommandGroup heading="Commands">
+                    {commandActions.map((action) => {
+                      const Icon = action.icon;
+                      return (
+                        <CommandItem
+                          key={action.id}
+                          value={`command ${action.label} ${action.keywords ?? ""}`}
+                          disabled={action.disabled}
+                          onSelect={() => {
+                            closeThen(() => {
+                              action.run();
+                            });
+                          }}
+                        >
+                          {Icon ? <Icon /> : null}
+                          <span>{action.label}</span>
+                          {action.shortcut ? (
+                            <CommandShortcut className="tracking-normal">
+                              <ActionShortcutChord
+                                chord={action.shortcut}
+                                kbdClassName={MENU_KBD_CLASS}
+                              />
+                            </CommandShortcut>
+                          ) : null}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </>
+              ) : null}
+            </>
           )}
 
           {resultHits && resultHits.entities.length > 0 ? (

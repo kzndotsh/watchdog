@@ -27,6 +27,8 @@ describe("useSearchUi", () => {
       openPalette: vi.fn(),
       togglePalette: vi.fn(),
       openShortcuts: vi.fn(),
+      chromeActions: [],
+      paletteCommands: [],
     };
     render(
       <SearchUiContext value={value}>

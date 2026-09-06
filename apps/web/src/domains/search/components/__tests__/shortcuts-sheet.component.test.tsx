@@ -9,7 +9,7 @@ describe("ShortcutsSheet", () => {
     render(<ShortcutsSheet open onOpenChange={vi.fn()} />);
 
     expect(
-      screen.getByRole("heading", { name: "Keyboard shortcuts" })
+      screen.getByRole("heading", { name: "Shortcuts" })
     ).toBeInTheDocument();
     expect(
       screen.getByText(

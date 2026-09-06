@@ -30,7 +30,7 @@ export const HOTKEYS = [
   },
   {
     id: "shortcuts",
-    label: "Keyboard shortcuts",
+    label: "Shortcuts",
     chord: "?",
     description: "Open this shortcuts list",
   },

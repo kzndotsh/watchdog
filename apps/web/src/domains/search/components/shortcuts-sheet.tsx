@@ -1,4 +1,5 @@
-import { HOTKEYS, modKeyLabel } from "@/shared/lib/hotkeys";
+import { HOTKEYS } from "@/shared/lib/hotkeys";
+import { ActionShortcutChord } from "@/shared/ui/action-list";
 import {
   Dialog,
   DialogContent,
@@ -6,25 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/shadcn/dialog";
-import { Kbd, KbdGroup } from "@/shared/ui/shadcn/kbd";
 
 interface ShortcutsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-function ChordDisplay({ chord }: { chord: string }) {
-  const mod = modKeyLabel();
-  if (chord.startsWith("Mod+")) {
-    const rest = chord.slice("Mod+".length);
-    return (
-      <KbdGroup>
-        <Kbd>{mod}</Kbd>
-        <Kbd>{rest}</Kbd>
-      </KbdGroup>
-    );
-  }
-  return <Kbd>{chord}</Kbd>;
 }
 
 export function ShortcutsSheet({ open, onOpenChange }: ShortcutsSheetProps) {
@@ -32,7 +18,7 @@ export function ShortcutsSheet({ open, onOpenChange }: ShortcutsSheetProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Keyboard shortcuts</DialogTitle>
+          <DialogTitle>Shortcuts</DialogTitle>
           <DialogDescription>
             Mod+K then type to search the Active Case or jump to a page.
           </DialogDescription>
@@ -47,7 +33,7 @@ export function ShortcutsSheet({ open, onOpenChange }: ShortcutsSheetProps) {
                 <div className="font-medium">{entry.label}</div>
                 <div className="text-muted-foreground">{entry.description}</div>
               </div>
-              <ChordDisplay chord={entry.chord} />
+              <ActionShortcutChord chord={entry.chord} />
             </li>
           ))}
         </ul>

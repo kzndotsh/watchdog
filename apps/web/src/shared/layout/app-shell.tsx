@@ -1,6 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 
-import { SearchChrome } from "@/domains/search/components/search-chrome";
+import {
+  AppInsetContextMenu,
+  SearchChrome,
+} from "@/domains/search/components/search-chrome";
 import { AppSidebar } from "@/shared/layout/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/shared/ui/shadcn/sidebar";
 
@@ -21,9 +24,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </a>
         <AppSidebar />
         <SidebarInset className="min-h-0 overflow-hidden">
-          <div id="app-main" className="flex min-h-0 flex-1 flex-col">
-            {children}
-          </div>
+          <AppInsetContextMenu>{children}</AppInsetContextMenu>
         </SidebarInset>
       </SearchChrome>
     </SidebarProvider>

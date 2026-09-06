@@ -36,6 +36,12 @@ function SearchUiProbe() {
       <button type="button" onClick={ui.openShortcuts}>
         Open shortcuts
       </button>
+      <span data-testid="chrome-ids">
+        {ui.chromeActions.map((a) => a.id).join(",")}
+      </span>
+      <span data-testid="palette-ids">
+        {ui.paletteCommands.map((a) => a.id).join(",")}
+      </span>
     </div>
   );
 }
@@ -56,6 +62,13 @@ describe("SearchChrome", () => {
 
     await screen.getByRole("button", { name: "Open shortcuts" }).click();
     expect(screen.getByTestId("shortcuts-open")).toBeInTheDocument();
+
+    expect(screen.getByTestId("chrome-ids")).toHaveTextContent(
+      "command-palette,toggle-sidebar,shortcuts"
+    );
+    expect(screen.getByTestId("palette-ids")).toHaveTextContent(
+      "toggle-sidebar,shortcuts"
+    );
   });
 
   it("registers global hotkey bindings for palette, sidebar, and shortcuts", () => {
