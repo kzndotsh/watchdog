@@ -11,7 +11,7 @@ description: >-
   pnpm typecheck") — just run it.
 metadata:
   owner: watchdog
-  sources: package.json, lefthook.yml, .github/workflows/ci.yml, AGENTS.md
+  sources: package.json, lefthook.yml, .github/workflows/ci.yml, AGENTS.md, docs/contributing/ci-gates.md
 ---
 
 # Check gates
@@ -21,54 +21,25 @@ Closes the loop lefthook and CI only open: run, read failure, fix, rerun.
 ## Outcomes
 
 - **Clean** — every applicable gate passes; report which ones ran.
-- **Changed** — files were fixed to pass a gate; list what changed and
-  which gate forced it.
-- **Blocked** — a gate fails for a reason this skill cannot fix (missing
-  service, ambiguous product decision); report the failure verbatim and
-  stop instead of guessing.
+- **Changed** — files were fixed to pass a gate; list what changed and which gate forced it.
+- **Blocked** — a gate fails for a reason this skill cannot fix (missing service, ambiguous product decision); report the failure verbatim and stop instead of guessing.
 
 ## Edit scope
 
-May edit any file a failing gate points at, to make that gate pass. Does
-not change gate configuration (`lefthook.yml`, `package.json`, CI) unless
-asked to.
-
-## Gate map
-
-| Changed paths | Run |
-| --- | --- |
-| any `*.ts` / `*.tsx` | `pnpm check`, `pnpm typecheck`, `pnpm check:effect-edges:strict`, `pnpm knip` |
-| `AGENTS.md` anywhere | `pnpm check:agents:strict` |
-| `docs/**`, `scripts/doc-map.mjs`, `scripts/check-docs*.mjs` | `pnpm check:docs:strict`, `pnpm check:docs-affected:strict` |
-| `.agents/skills/**`, `.cursor/README.md` | `pnpm validate:agents` |
-| `apps/web/**` | `pnpm --filter @watchdog/web ds:check`, `pnpm test:component`, `pnpm doctor:react` (advisory) |
-| `packages/caps/**` | `pnpm generate:caps` then `git diff --exit-code -- packages/caps/capabilities.gen.json` |
-| `packages/api/**`, `packages/client/**`, `packages/core/**` | `pnpm generate:client` then `git diff --exit-code -- packages/client/src/generated/` |
-| `packages/db/**` | `pnpm --filter @watchdog/db check:repos` |
-| `e2e/**`, `playwright.config.ts` | `pnpm exec vitest run --project e2e-parser`, `pnpm test:e2e` (or `pnpm test:e2e:smoke` for harness-only edits) |
-| anything under `packages/`, `apps/` | `pnpm test:unit`, `pnpm test:property` |
-| `package.json`, lockfile, workspace/config files | full gate set — treat as if everything changed |
-
-Mirrors [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) path
-filters and [`lefthook.yml`](../../lefthook.yml); if they diverge, CI wins.
-Pre-commit runs `pnpm fix` (format/lint autofix), not `pnpm check`.
+May edit any file a failing gate points at, to make that gate pass. Does not change gate configuration (`lefthook.yml`, `package.json`, CI) unless asked to.
 
 ## Instructions
 
-1. Get the changed-file list: `git status --porcelain` for uncommitted
-   work, or `git diff --name-only <base>...HEAD` for a branch.
-2. Match each path against the Gate map; union the commands across matches.
+1. Get the changed-file list: `git status --porcelain` for uncommitted work, or `git diff --name-only <base>...HEAD` for a branch.
+2. Load [gate-map.md](references/gate-map.md) and union the commands for those paths.
 3. Run fastest first — lint/typecheck before tests.
 4. On failure, read the actual error output before editing.
 5. Fix, then rerun only the gate that failed.
-6. Stop and report Blocked after a fix attempt does not resolve the same
-   gate twice.
+6. Stop and report Blocked after a fix attempt does not resolve the same gate twice.
 
 ## Gotchas
 
-- `generate:caps` / `generate:client` fail on drift — run the generator;
-  do not hand-edit generated output.
-- `check:docs-affected:strict` needs paired doc touches in the same commit
-  (or `docs:allow-affect — reason` / `DOCS_ALLOW_AFFECT=1` when split).
-- `pnpm --filter @watchdog/db check:repos` is mechanical only; passing is
-  not the same as satisfying review-only repo rules in `packages/db/AGENTS.md`.
+- `generate:caps` / `generate:client` fail on drift — run the generator; do not hand-edit generated output.
+- `check:docs-affected:strict` needs paired doc touches in the same commit (or `docs:allow-affect — reason` / `DOCS_ALLOW_AFFECT=1` when split). It also runs on mapped **code** paths, not only `docs/**`.
+- `pnpm --filter @watchdog/db check:repos` is mechanical only; passing is not the same as satisfying review-only repo rules in `packages/db/AGENTS.md`.
+- `pnpm doctor:react` is advisory. Desloppify is CI-on-main advisory only.
