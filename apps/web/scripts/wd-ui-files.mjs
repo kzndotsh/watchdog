@@ -5,6 +5,8 @@
  */
 export const WD_UI_FILES = [
   "src/shared/ui/active-tab-body.tsx",
+  "src/shared/ui/action-list.tsx",
+  "src/shared/ui/actions-context-menu.tsx",
   "src/shared/ui/actor-mention.tsx",
   "src/shared/ui/artifact-body-from-content.ts",
   "src/shared/ui/artifact-preview.tsx",
@@ -80,6 +82,7 @@ export const WD_UI_FILES = [
   "src/shared/ui/status-dot.tsx",
   "src/shared/ui/stack-pending-fallback.tsx",
   "src/shared/ui/tab-count.tsx",
+  "src/shared/ui/target-actions-host.tsx",
   "src/shared/ui/task-board-shell.ts",
   "src/shared/ui/timeline-spine.tsx",
   "src/shared/ui/triage-detail-skeleton.tsx",
@@ -136,6 +139,7 @@ export const WD_UI_FIXTURE_REQUIRED = [
   "ActorMention",
   "ExternalUrl",
   "RowActionsMenu",
+  "DropdownActionItems",
   "TimelineSpine",
   "QueueSkeleton",
   "SearchField",

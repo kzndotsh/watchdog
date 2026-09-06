@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 
 import { GuideSection, Specimen } from "@/routes/_protected/ui/-guide-chrome";
+import { DropdownActionItems } from "@/shared/ui/action-list";
 import { ActiveTabBody, SuspenseTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
@@ -27,7 +28,12 @@ import { RichTextEditor } from "@/shared/ui/rich-text";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
+import { Button } from "@/shared/ui/shadcn/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/shared/ui/shadcn/dropdown-menu";
 import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
 import { StatusDot } from "@/shared/ui/status-dot";
@@ -46,7 +52,7 @@ const DEMO_EXTERNAL_HREF = ["https", "://example.com/evidence"].join("");
 const SAMPLE_ID = "8680fa38-0c1d-4e2f-9a3b-595335c1d2e3";
 const SAMPLE_SHA =
   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-const SAMPLE_AT = new Date(Date.now() - 86_400_000).toISOString();
+const SAMPLE_AT = "2026-09-05T12:00:00.000Z";
 
 interface AtomEntry {
   name: string;
@@ -311,14 +317,69 @@ const ATOM_CATALOG: AtomEntry[] = [
   },
   {
     name: "RowActionsMenu",
-    blurb: "Hover-reveal row menu — parent needs group.",
+    blurb: "Hover-reveal row menu — parent needs group; prefer actions=.",
     render: () => (
       <div className="group flex items-center gap-2">
         <span className="text-sm">Row</span>
-        <RowActionsMenu label="Row actions">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-        </RowActionsMenu>
+        <RowActionsMenu
+          label="Row actions"
+          actions={[
+            {
+              id: "edit",
+              label: "Edit",
+              group: "target",
+              run: () => {
+                /* specimen */
+              },
+            },
+            {
+              id: "delete",
+              label: "Delete",
+              group: "target",
+              destructive: true,
+              run: () => {
+                /* specimen */
+              },
+            },
+          ]}
+        />
       </div>
+    ),
+  },
+  {
+    name: "DropdownActionItems",
+    blurb: "AppAction[] → menu items (shared with ContextMenu).",
+    render: () => (
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={<Button type="button" size="sm" variant="outline" />}
+        >
+          Open
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownActionItems
+            actions={[
+              {
+                id: "copy",
+                label: "Copy link",
+                group: "target",
+                run: () => {
+                  /* specimen */
+                },
+              },
+              {
+                id: "delete",
+                label: "Delete",
+                group: "target",
+                destructive: true,
+                run: () => {
+                  /* specimen */
+                },
+              },
+            ]}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
     ),
   },
   {

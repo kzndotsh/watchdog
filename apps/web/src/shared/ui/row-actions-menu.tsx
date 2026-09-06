@@ -2,6 +2,8 @@ import { MoreHorizontalIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import type { AppAction } from "@/shared/lib/app-action";
+import { DropdownActionItems } from "@/shared/ui/action-list";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   DropdownMenu,
@@ -10,19 +12,20 @@ import {
 } from "@/shared/ui/shadcn/dropdown-menu";
 
 /**
- * Hover-reveal row actions menu — `MoreHorizontal` trigger + `DropdownMenu`.
- * Caller owns the `DropdownMenuItem`s (actions differ per row type); this
- * atom only extracts the repeated trigger button + reveal-on-hover chrome.
- * Parent row must have `group` for the hover reveal to apply.
+ * Hover-reveal row actions — `MoreHorizontal` + `DropdownMenu`.
+ * Prefer `actions`; `children` for call sites not yet on AppAction.
+ * Parent row needs `group` for hover reveal.
  */
 export function RowActionsMenu({
   label,
   className,
   children,
+  actions,
 }: {
   label: string;
   className?: string;
-  children: ReactNode;
+  children?: ReactNode;
+  actions?: readonly AppAction[];
 }) {
   return (
     <DropdownMenu>
@@ -42,7 +45,9 @@ export function RowActionsMenu({
       >
         <MoreHorizontalIcon className="size-3.5" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">{children}</DropdownMenuContent>
+      <DropdownMenuContent align="end">
+        {actions ? <DropdownActionItems actions={actions} /> : children}
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 }
