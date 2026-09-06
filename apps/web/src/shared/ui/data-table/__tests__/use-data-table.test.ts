@@ -15,6 +15,6 @@ describe("useDataTable", () => {
     );
 
     expect(result.current.table.getRowModel().rows).toHaveLength(1);
-    expect(result.current.table.getState().pagination.pageSize).toBe(10);
+    expect(result.current.table.state.pagination.pageSize).toBe(10);
   });
 });

@@ -1,5 +1,5 @@
 import { flexRender } from "@tanstack/react-table";
-import type { Table as TanstackTable } from "@tanstack/react-table";
+import type { ReactTable, RowData } from "@tanstack/react-table";
 import type {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
@@ -30,6 +30,8 @@ import {
 } from "@/shared/ui/shadcn/table";
 import { TABLE_BODY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons";
 
+import type { DataTableFeatures } from "./table-features";
+
 /**
  * Portaled menus unmount before click — arm on pointerdown so leftover
  * clicks on the row do not navigate.
@@ -55,12 +57,14 @@ function shouldIgnoreRowClick(target: EventTarget | null): boolean {
   );
 }
 
-function DataTableBodyRow<TData>({
+function DataTableBodyRow<TData extends RowData>({
   row,
   onRowClick,
   getRowActions,
 }: {
-  row: ReturnType<TanstackTable<TData>["getRowModel"]>["rows"][number];
+  row: ReturnType<
+    ReactTable<DataTableFeatures, TData>["getRowModel"]
+  >["rows"][number];
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
 }) {
@@ -108,7 +112,7 @@ function DataTableBodyRow<TData>({
   return <TableRow {...rowProps}>{cells}</TableRow>;
 }
 
-function renderTableBodyRows<TData>({
+function renderTableBodyRows<TData extends RowData>({
   pending,
   skeletonRows,
   leafColumns,
@@ -120,9 +124,11 @@ function renderTableBodyRows<TData>({
 }: {
   pending: boolean;
   skeletonRows: number;
-  leafColumns: ReturnType<TanstackTable<TData>["getVisibleLeafColumns"]>;
+  leafColumns: ReturnType<
+    ReactTable<DataTableFeatures, TData>["getVisibleLeafColumns"]
+  >;
   hasRows: boolean;
-  table: TanstackTable<TData>;
+  table: ReactTable<DataTableFeatures, TData>;
   onRowClick?: (row: TData) => void;
   getRowActions?: (row: TData) => readonly AppAction[];
   emptyText: string;
@@ -169,8 +175,8 @@ function renderTableBodyRows<TData>({
   );
 }
 
-interface Props<TData> {
-  table: TanstackTable<TData>;
+interface Props<TData extends RowData> {
+  table: ReactTable<DataTableFeatures, TData>;
   emptyText?: string;
   className?: string;
   onRowClick?: (row: TData) => void;
@@ -185,7 +191,7 @@ interface Props<TData> {
   pendingLabel?: string;
 }
 
-export function DataTable<TData>({
+export function DataTable<TData extends RowData>({
   table,
   emptyText = "No results.",
   className,

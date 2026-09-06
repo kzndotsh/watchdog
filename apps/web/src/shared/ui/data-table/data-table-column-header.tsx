@@ -1,10 +1,12 @@
-import type { Column } from "@tanstack/react-table";
+import type { Column, RowData } from "@tanstack/react-table";
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-interface Props<TData, TValue> {
-  column: Column<TData, TValue>;
+import type { DataTableFeatures } from "./table-features";
+
+interface Props<TData extends RowData, TValue> {
+  column: Column<DataTableFeatures, TData, TValue>;
   title: string;
   className?: string;
 }
@@ -32,7 +34,7 @@ function SortGlyph({ sorted }: { sorted: false | "asc" | "desc" }) {
   }
 }
 
-export function DataTableColumnHeader<TData, TValue>({
+export function DataTableColumnHeader<TData extends RowData, TValue>({
   column,
   title,
   className,

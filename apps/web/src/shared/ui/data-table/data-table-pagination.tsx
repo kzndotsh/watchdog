@@ -1,17 +1,21 @@
-import type { Table } from "@tanstack/react-table";
+import type { ReactTable, RowData } from "@tanstack/react-table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 import { Button } from "@/shared/ui/shadcn/button";
 
-interface Props<TData> {
-  table: Table<TData>;
+import type { DataTableFeatures } from "./table-features";
+
+interface Props<TData extends RowData> {
+  table: ReactTable<DataTableFeatures, TData>;
 }
 
-export function DataTablePagination<TData>({ table }: Props<TData>) {
+export function DataTablePagination<TData extends RowData>({
+  table,
+}: Props<TData>) {
   const pageCount = table.getPageCount();
   if (pageCount <= 1) return null;
 
-  const page = table.getState().pagination.pageIndex;
+  const page = table.state.pagination.pageIndex;
 
   return (
     <div className="text-muted-foreground flex items-center justify-between px-1 py-2 text-xs">

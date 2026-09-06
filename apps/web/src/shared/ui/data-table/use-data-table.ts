@@ -1,25 +1,25 @@
 import {
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import type {
-  ColumnDef,
-  ColumnFiltersState,
-  FilterFn,
-  OnChangeFn,
-  SortingState,
-  Table,
-  TableMeta,
-  VisibilityState,
+  useTable,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type FilterFn,
+  type OnChangeFn,
+  type ReactTable,
+  type RowData,
+  type ColumnVisibilityState,
+  type SortingState,
+  type TableMeta,
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-export interface UseDataTableOptions<TData, TMeta = Record<string, unknown>> {
+import { dataTableFeatures, type DataTableFeatures } from "./table-features";
+
+export interface UseDataTableOptions<
+  TData extends RowData,
+  TMeta = Record<string, unknown>,
+> {
   data: TData[];
-  columns: ColumnDef<TData>[];
+  columns: ColumnDef<DataTableFeatures, TData>[];
   meta?: TMeta;
   getRowId?: (row: TData) => string;
   initialSorting?: SortingState;
@@ -27,14 +27,17 @@ export interface UseDataTableOptions<TData, TMeta = Record<string, unknown>> {
   onGlobalFilterChange?: OnChangeFn<string>;
   columnFilters?: ColumnFiltersState;
   onColumnFiltersChange?: OnChangeFn<ColumnFiltersState>;
-  globalFilterFn?: FilterFn<TData>;
+  globalFilterFn?: FilterFn<DataTableFeatures, TData>;
   pageSize?: number;
 }
 
-export function useDataTable<TData, TMeta = Record<string, unknown>>(
+export function useDataTable<
+  TData extends RowData,
+  TMeta = Record<string, unknown>,
+>(
   options: UseDataTableOptions<TData, TMeta>
 ): {
-  table: Table<TData>;
+  table: ReactTable<DataTableFeatures, TData>;
 } {
   const {
     data,
@@ -55,7 +58,8 @@ export function useDataTable<TData, TMeta = Record<string, unknown>>(
     []
   );
   const [internalGlobalFilter, setInternalGlobalFilter] = useState("");
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] =
+    useState<ColumnVisibilityState>({});
 
   const columnFilters = controlledColumnFilters ?? internalFilters;
   const onColumnFiltersChange =
@@ -64,19 +68,16 @@ export function useDataTable<TData, TMeta = Record<string, unknown>>(
   const onGlobalFilterChange =
     controlledOnGlobalFilterChange ?? setInternalGlobalFilter;
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     columns,
     data,
     // Call-site TMeta is checked by UseDataTableOptions; TanStack's TableMeta is module-aug only.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- bridge generic TMeta into TanStack's empty TableMeta slot
-    meta: meta as TableMeta<TData> | undefined,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    meta: meta as TableMeta<DataTableFeatures, TData> | undefined,
     getRowId,
     globalFilterFn,
-    initialState: { pagination: { pageSize } },
+    initialState: { pagination: { pageIndex: 0, pageSize } },
     onColumnFiltersChange,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange,

@@ -1,4 +1,4 @@
-import type { Column, Table } from "@tanstack/react-table";
+import type { Column, ReactTable } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -29,15 +29,19 @@ vi.mock("@/shared/ui/shadcn/dropdown-menu", () => ({
 }));
 
 import { DataTableViewOptions } from "@/shared/ui/data-table/data-table-view-options";
+import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 
-function mockColumn(id: string, visible: boolean): Column<unknown> {
+function mockColumn(
+  id: string,
+  visible: boolean
+): Column<DataTableFeatures, Record<string, unknown>> {
   return {
     id,
     getCanHide: () => true,
     getIsVisible: () => visible,
     toggleVisibility: vi.fn(),
     columnDef: { meta: { label: id } },
-  } as unknown as Column<unknown>;
+  } as unknown as Column<DataTableFeatures, Record<string, unknown>>;
 }
 
 describe("DataTableViewOptions", () => {
@@ -48,7 +52,7 @@ describe("DataTableViewOptions", () => {
         mockColumn("status", false),
       ],
       resetColumnVisibility: vi.fn(),
-    } as unknown as Table<unknown>;
+    } as unknown as ReactTable<DataTableFeatures, Record<string, unknown>>;
 
     render(<DataTableViewOptions table={table} />);
 

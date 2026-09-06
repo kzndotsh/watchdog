@@ -25,6 +25,7 @@ import {
   EditableTextCell,
   type EditableSelectOption,
 } from "@/shared/ui/data-table";
+import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
@@ -105,50 +106,50 @@ export interface IdentifierTableMeta {
 }
 
 function identifierMeta(
-  ctx: Pick<CellContext<IdentifierRecord, unknown>, "table">
+  ctx: Pick<CellContext<DataTableFeatures, IdentifierRecord>, "table">
 ): IdentifierTableMeta {
-  return ctx.table.options.meta as IdentifierTableMeta;
+  return ctx.table.options.meta as unknown as IdentifierTableMeta;
 }
 
 function valueColumnHeader({
   column,
-}: HeaderContext<IdentifierRecord, unknown>) {
+}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Value" />;
 }
 
 function typeColumnHeader({
   column,
-}: HeaderContext<IdentifierRecord, unknown>) {
+}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Type" />;
 }
 
 function platformColumnHeader({
   column,
-}: HeaderContext<IdentifierRecord, unknown>) {
+}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Platform" />;
 }
 
 function statusColumnHeader({
   column,
-}: HeaderContext<IdentifierRecord, unknown>) {
+}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Status" />;
 }
 
 function confidenceColumnHeader({
   column,
-}: HeaderContext<IdentifierRecord, unknown>) {
+}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Confidence" />;
 }
 
 function evidenceColumnHeader({
   column,
-}: HeaderContext<IdentifierRecord, unknown>) {
+}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
   return <DataTableColumnHeader column={column} title="Evidence" />;
 }
 
 function notesColumnHeader({
   column,
-}: HeaderContext<IdentifierRecord, unknown>) {
+}: HeaderContext<DataTableFeatures, IdentifierRecord>) {
   return (
     <DataTableColumnHeader
       column={column}
@@ -159,7 +160,7 @@ function notesColumnHeader({
 }
 
 function renderIdentifierValueCell(
-  ctx: CellContext<IdentifierRecord, unknown>
+  ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
@@ -180,7 +181,9 @@ function renderIdentifierValueCell(
   );
 }
 
-function renderIdentifierTypeCell(ctx: CellContext<IdentifierRecord, unknown>) {
+function renderIdentifierTypeCell(
+  ctx: CellContext<DataTableFeatures, IdentifierRecord>
+) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
   return (
@@ -203,7 +206,7 @@ function renderIdentifierTypeCell(ctx: CellContext<IdentifierRecord, unknown>) {
 }
 
 function renderIdentifierPlatformCell(
-  ctx: CellContext<IdentifierRecord, unknown>
+  ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
@@ -223,7 +226,7 @@ function renderIdentifierPlatformCell(
 }
 
 function renderIdentifierStatusCell(
-  ctx: CellContext<IdentifierRecord, unknown>
+  ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
@@ -242,7 +245,7 @@ function renderIdentifierStatusCell(
 }
 
 function renderIdentifierConfidenceCell(
-  ctx: CellContext<IdentifierRecord, unknown>
+  ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
@@ -264,7 +267,7 @@ function renderIdentifierConfidenceCell(
 }
 
 function renderIdentifierEvidenceCell(
-  ctx: CellContext<IdentifierRecord, unknown>
+  ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
@@ -279,7 +282,7 @@ function renderIdentifierEvidenceCell(
 }
 
 function renderIdentifierNotesCell(
-  ctx: CellContext<IdentifierRecord, unknown>
+  ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
@@ -295,7 +298,7 @@ function renderIdentifierNotesCell(
 }
 
 function renderIdentifierActionsCell(
-  ctx: CellContext<IdentifierRecord, unknown>
+  ctx: CellContext<DataTableFeatures, IdentifierRecord>
 ) {
   const row = ctx.row.original;
   const meta = identifierMeta(ctx);
@@ -309,7 +312,10 @@ function renderIdentifierActionsCell(
   );
 }
 
-export const dossierIdentifierColumns: ColumnDef<IdentifierRecord>[] = [
+export const dossierIdentifierColumns: ColumnDef<
+  DataTableFeatures,
+  IdentifierRecord
+>[] = [
   {
     accessorKey: "value",
     header: valueColumnHeader,
