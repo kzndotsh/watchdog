@@ -21,7 +21,7 @@
     "postgres": "^3.4.9"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^26.4.1",
     "@watchdog/test-kit": "workspace:*",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
