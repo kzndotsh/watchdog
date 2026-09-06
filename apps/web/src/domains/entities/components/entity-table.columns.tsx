@@ -12,6 +12,7 @@ import type {
   CreateEntityConnectionInput,
   UpdateEntityConnectionInput,
 } from "@/domains/entities/lib/edge-write";
+import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
 import type { EntityRecord } from "@/domains/entities/types";
 import {
   DataTableColumnHeader,
@@ -22,10 +23,6 @@ import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { NotesIconCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/shared/ui/shadcn/dropdown-menu";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { ENTITY_KIND_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import { entityKindSchema, type EntityKind } from "@watchdog/schemas";
@@ -235,38 +232,10 @@ function renderActionsCell(ctx: CellContext<EntityRecord, unknown>) {
   const meta = entityMeta(ctx);
   return (
     <div className="flex justify-end">
-      <RowActionsMenu label={`Actions for ${row.name}`}>
-        <DropdownMenuItem
-          onClick={() => {
-            meta.onOpenEntity(row);
-          }}
-        >
-          Open entity
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            meta.onCopyEntityLink(row);
-          }}
-        >
-          Copy link
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            meta.onCopyEntityMarkdown(row);
-          }}
-        >
-          Copy Markdown
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-destructive"
-          onClick={() => {
-            meta.onDeleteEntity(row);
-          }}
-        >
-          Delete
-        </DropdownMenuItem>
-      </RowActionsMenu>
+      <RowActionsMenu
+        label={`Actions for ${row.name}`}
+        actions={entityRowActions(row, meta)}
+      />
     </div>
   );
 }

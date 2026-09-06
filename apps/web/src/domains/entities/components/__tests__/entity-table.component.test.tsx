@@ -76,7 +76,7 @@ const ACTIVE: CaseRecord = {
 function mockEntityTable() {
   useEntityTableMock.mockReturnValue({
     rows: [{ id: testId(1), name: "Alpha Entity", slug: "alpha" }],
-    table: {},
+    table: { options: { meta: {} } },
     columns: [{ id: "name" }],
     createForm: {
       Field: () => null,

@@ -84,7 +84,7 @@ const ACTIVE: CaseRecord = {
 function mockIdentifiersTable() {
   useIdentifiersTableMock.mockReturnValue({
     rows: [],
-    table: {},
+    table: { options: { meta: {} } },
     columns: [{ id: "value" }],
     createForm: {},
     search: "",

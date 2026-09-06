@@ -13,6 +13,7 @@ import {
   tryCommitIdentifierType,
   tryCommitIdentifierValue,
 } from "@/domains/entities/lib/commit-identifier-field";
+import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import {
   CONFIRMED_REQUIRES_EVIDENCE_HINT,
   isConfirmedBlocked,
@@ -34,10 +35,6 @@ import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evide
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/shared/ui/shadcn/dropdown-menu";
 import { CONFIDENCE_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import {
   confidenceTierSchema,
@@ -309,31 +306,10 @@ function renderActionsCell(ctx: CellContext<CaseIdentifierRecord, unknown>) {
   const meta = identifiersMeta(ctx);
   return (
     <div className="flex justify-end">
-      <RowActionsMenu label={`Actions for ${row.value}`}>
-        <DropdownMenuItem
-          onClick={() => {
-            meta.onOpenSubject(row);
-          }}
-        >
-          Open identifier
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            meta.onCopyValue(row.value);
-          }}
-        >
-          Copy value
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-destructive"
-          onClick={() => {
-            meta.onDeleteIdentifier(row);
-          }}
-        >
-          Delete
-        </DropdownMenuItem>
-      </RowActionsMenu>
+      <RowActionsMenu
+        label={`Actions for ${row.value}`}
+        actions={identifierRowActions(row, meta)}
+      />
     </div>
   );
 }

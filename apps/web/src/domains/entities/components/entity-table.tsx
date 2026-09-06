@@ -1,11 +1,15 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
+import { useCallback } from "react";
 
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
+import type { EntityTableMeta } from "@/domains/entities/components/entity-table.columns";
 import { useEntityTable } from "@/domains/entities/hooks/use-entity-table";
+import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
+import type { EntityRecord } from "@/domains/entities/types";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
@@ -53,6 +57,13 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
     deleteTarget,
     setDeleteTarget,
   } = useEntityTable(active);
+
+  const getRowActions = useCallback(
+    (row: EntityRecord) =>
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack TableMeta slot
+      entityRowActions(row, table.options.meta as EntityTableMeta),
+    [table.options.meta]
+  );
 
   const appendRow = composing ? (
     <DataTableComposerRow>
@@ -202,6 +213,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
         appendRow={appendRow}
         pending={pending}
         pendingLabel="Loading entities table"
+        getRowActions={getRowActions}
         onRowClick={(row) => {
           onRowClick(row);
         }}

@@ -1,13 +1,16 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
+import type { IdentifiersTableMeta } from "@/domains/entities/components/identifiers-table.columns";
 import { useIdentifiersTable } from "@/domains/entities/hooks/use-identifiers-table";
+import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
+import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
@@ -65,6 +68,13 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
   } = useIdentifiersTable(active);
   const queryClient = useQueryClient();
   const [bulkOpen, setBulkOpen] = useState(false);
+
+  const getRowActions = useCallback(
+    (row: CaseIdentifierRecord) =>
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack TableMeta slot
+      identifierRowActions(row, table.options.meta as IdentifiersTableMeta),
+    [table.options.meta]
+  );
 
   const appendRow = composing ? (
     <IdentifierComposerAppend
@@ -233,6 +243,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
           appendRow={appendRow}
           pending={pending}
           pendingLabel="Loading identifiers table"
+          getRowActions={getRowActions}
           onRowClick={onRowClick}
         />
       </div>
