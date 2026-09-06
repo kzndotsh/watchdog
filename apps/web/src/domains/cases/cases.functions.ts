@@ -36,13 +36,12 @@ export const getCasesContextFn = createServerFn({ method: "GET" }).handler(
 
 export const getCaseByIdFn = createServerFn({ method: "GET" })
   .validator(z.object({ caseId: uuidSchema }))
-  .handler(
-    async ({ data, context }): Promise<CaseRecord | null> =>
-      orpcNullIfNotFound(
-        orpcFromContext(context).cases.get({
-          caseId: data.caseId,
-        })
-      )
+  .handler(async ({ data, context }): Promise<CaseRecord | null> =>
+    orpcNullIfNotFound(
+      orpcFromContext(context).cases.get({
+        caseId: data.caseId,
+      })
+    )
   );
 
 export const getCaseBySlugFn = createServerFn({ method: "GET" })
@@ -76,18 +75,17 @@ export const createCaseFn = createServerFn({ method: "POST" })
 
 export const updateCaseFn = createServerFn({ method: "POST" })
   .validator(updateCaseInputSchema)
-  .handler(
-    async ({ data, context }): Promise<CaseRecord> =>
-      orpcFromContext(context).cases.update({
-        caseId: data.id,
-        ...(data.name === undefined ? {} : { name: data.name }),
-        ...(data.description === undefined
-          ? {}
-          : { description: data.description }),
-        ...(data.allowThirdPartyEgress === undefined
-          ? {}
-          : { allowThirdPartyEgress: data.allowThirdPartyEgress }),
-      })
+  .handler(async ({ data, context }): Promise<CaseRecord> =>
+    orpcFromContext(context).cases.update({
+      caseId: data.id,
+      ...(data.name === undefined ? {} : { name: data.name }),
+      ...(data.description === undefined
+        ? {}
+        : { description: data.description }),
+      ...(data.allowThirdPartyEgress === undefined
+        ? {}
+        : { allowThirdPartyEgress: data.allowThirdPartyEgress }),
+    })
   );
 
 export const deleteCaseFn = createServerFn({ method: "POST" })

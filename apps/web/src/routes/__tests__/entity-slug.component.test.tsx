@@ -86,7 +86,7 @@ describe("entity slug route", () => {
   });
 
   it("throws notFound when the entity slug does not exist", async () => {
-    const ensureQueryData = vi
+    const query = vi
       .fn()
       .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
       .mockResolvedValueOnce(null);
@@ -95,7 +95,7 @@ describe("entity slug route", () => {
 
     await expect(
       loader({
-        context: { queryClient: { ensureQueryData } },
+        context: { queryClient: { query } },
         params: { entitySlug: "missing" },
         location: { search: {} },
       } as never)

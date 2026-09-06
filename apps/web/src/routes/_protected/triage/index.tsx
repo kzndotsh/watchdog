@@ -5,6 +5,7 @@ import { z } from "zod";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { Triage } from "@/domains/triage/components/triage";
 import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { PROPOSAL_STATUSES, uuidSchema } from "@watchdog/schemas";
 
 const routeApi = getRouteApi("/_protected/triage/");
@@ -39,7 +40,10 @@ export const Route = createFileRoute("/_protected/triage/")({
     status: z.enum(PROPOSAL_STATUSES).optional(),
   }),
   loader: async ({ context: { queryClient } }) => {
-    const { active } = await queryClient.ensureQueryData(casesContextQuery());
+    const { active } = await ensureAppQueryData(
+      queryClient,
+      casesContextQuery()
+    );
     if (active) warmTriageQueries(queryClient, active.id);
   },
   // Thin loader — shell paints immediately; queue body Suspense fills proposals.

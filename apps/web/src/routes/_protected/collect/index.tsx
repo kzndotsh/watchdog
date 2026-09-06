@@ -10,6 +10,7 @@ import {
   ensureCollectQueueQueries,
   warmCollectCatalogQueries,
 } from "@/domains/collect/lib/prefetch-collect";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { uuidSchema } from "@watchdog/schemas";
 
 const routeApi = getRouteApi("/_protected/collect/");
@@ -36,7 +37,10 @@ export const Route = createFileRoute("/_protected/collect/")({
   validateSearch: z.object({ id: uuidSchema.optional() }),
   loaderDeps: ({ search: { id } }) => ({ id }),
   loader: async ({ context: { queryClient }, deps: { id } }) => {
-    const { active } = await queryClient.ensureQueryData(casesContextQuery());
+    const { active } = await ensureAppQueryData(
+      queryClient,
+      casesContextQuery()
+    );
     if (active) {
       await ensureCollectQueueQueries(queryClient, active.id);
       if (id) {

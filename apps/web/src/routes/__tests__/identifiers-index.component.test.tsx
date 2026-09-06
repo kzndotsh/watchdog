@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -32,20 +33,20 @@ const ACTIVE = {
 
 describe("identifiers index route", () => {
   it("prefetches identifier, entity, and evidence queries for the active case", async () => {
-    const ensureQueryData = vi
-      .fn()
+    const client = new QueryClient();
+    const query = vi
+      .spyOn(client, "query")
       .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
-      .mockResolvedValue([]);
-    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
+      .mockResolvedValue(undefined);
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: { ensureQueryData, prefetchQuery } },
+      context: { queryClient: client },
     } as never);
+    await Promise.resolve();
 
-    expect(ensureQueryData).toHaveBeenCalledTimes(3);
-    expect(prefetchQuery).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalledTimes(4);
   });
 
   it("renders the identifiers page", () => {

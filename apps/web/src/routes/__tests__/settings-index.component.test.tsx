@@ -93,14 +93,14 @@ import { Route } from "@/routes/_protected/settings/index";
 
 describe("settings index route", () => {
   it("prefetches credentials in the loader", async () => {
-    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
+    const query = vi.fn().mockResolvedValue(undefined);
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: { prefetchQuery } },
+      context: { queryClient: { query } },
     } as never);
 
-    expect(prefetchQuery).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalledTimes(1);
   });
 
   it("renders the account settings panel by default", () => {

@@ -15,12 +15,12 @@ import { proposalsByStatusQuery } from "@/domains/triage/queries";
 
 describe("warmCaseOverviewQueries", () => {
   it("prefetches the overview dashboard queries for a case", () => {
-    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
-    const client = { prefetchQuery } as unknown as QueryClient;
+    const query = vi.fn().mockResolvedValue(undefined);
+    const client = { query } as unknown as QueryClient;
 
     warmCaseOverviewQueries(client, "case-1");
 
-    const prefetchedKeys = prefetchQuery.mock.calls.map(
+    const prefetchedKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
     expect(prefetchedKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
@@ -33,6 +33,6 @@ describe("warmCaseOverviewQueries", () => {
     expect(prefetchedKeys).toContainEqual(
       proposalsByStatusQuery("case-1", "pending").queryKey
     );
-    expect(prefetchQuery).toHaveBeenCalledTimes(6);
+    expect(query).toHaveBeenCalledTimes(6);
   });
 });

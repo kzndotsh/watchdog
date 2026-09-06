@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -32,18 +33,20 @@ const ACTIVE = {
 
 describe("entities index route", () => {
   it("prefetches entity and edge queries when a case is active", async () => {
-    const ensureQueryData = vi
-      .fn()
+    const client = new QueryClient();
+    const query = vi
+      .spyOn(client, "query")
       .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
       .mockResolvedValue([]);
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: { ensureQueryData } },
+      context: { queryClient: client },
     } as never);
+    await Promise.resolve();
 
-    expect(ensureQueryData).toHaveBeenCalledTimes(3);
+    expect(query).toHaveBeenCalledTimes(3);
   });
 
   it("renders the entity table page", () => {

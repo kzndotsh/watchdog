@@ -12,6 +12,7 @@ import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { Button } from "@/shared/ui/shadcn/button";
 
 const routeApi = getRouteApi("/_protected/entities/$entitySlug");
@@ -92,11 +93,15 @@ export const Route = createFileRoute("/_protected/entities/$entitySlug")({
   // Path params rematch on their own; return stable deps so `?tab=` doesn't re-run the loader.
   loaderDeps: () => ({}),
   loader: async ({ context: { queryClient }, params, location }) => {
-    const { active } = await queryClient.ensureQueryData(casesContextQuery());
+    const { active } = await ensureAppQueryData(
+      queryClient,
+      casesContextQuery()
+    );
     if (!active) return;
 
     // Block only on the entity — shell (title / tabs) can paint from this.
-    const entity = await queryClient.ensureQueryData(
+    const entity = await ensureAppQueryData(
+      queryClient,
       entityBySlugQuery(active.id, params.entitySlug)
     );
     if (!entity) {

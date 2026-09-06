@@ -8,7 +8,6 @@ import { orpcFromContext } from "@/lib/orpc.server";
 
 export const searchCaseFn = createServerFn({ method: "GET" })
   .validator(searchCaseInputSchema)
-  .handler(
-    async ({ data, context }): Promise<SearchCaseResult> =>
-      orpcFromContext(context).search.case(data)
+  .handler(async ({ data, context }): Promise<SearchCaseResult> =>
+    orpcFromContext(context).search.case(data)
   );

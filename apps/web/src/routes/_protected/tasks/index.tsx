@@ -4,6 +4,7 @@ import { z } from "zod";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { TasksPage } from "@/domains/tasks/components/tasks-page";
 import { warmTasksQueries } from "@/domains/tasks/lib/prefetch-tasks";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { uuidSchema } from "@watchdog/schemas";
 
 const routeApi = getRouteApi("/_protected/tasks/");
@@ -19,7 +20,10 @@ export const Route = createFileRoute("/_protected/tasks/")({
   }),
   loaderDeps: ({ search: { entityId } }) => ({ entityId }),
   loader: async ({ context: { queryClient }, deps: { entityId } }) => {
-    const { active } = await queryClient.ensureQueryData(casesContextQuery());
+    const { active } = await ensureAppQueryData(
+      queryClient,
+      casesContextQuery()
+    );
     if (!active) return;
     warmTasksQueries(
       queryClient,

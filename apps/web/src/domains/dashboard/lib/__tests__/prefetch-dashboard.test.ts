@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth/server", () => ({
@@ -13,30 +13,29 @@ import { tasksListQuery } from "@/domains/tasks/queries";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
 
 describe("warmDashboardQueries", () => {
-  it("always warms recent activity", () => {
-    const ensureQueryData = vi.fn().mockResolvedValue(undefined);
-    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
-    const client = { ensureQueryData, prefetchQuery } as unknown as QueryClient;
+  it("always warms recent activity", async () => {
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
     warmDashboardQueries(client, null);
+    await Promise.resolve();
 
-    expect(ensureQueryData).toHaveBeenCalledWith(
+    expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: recentActivityQuery().queryKey,
-        revalidateIfStale: true,
       })
     );
-    expect(prefetchQuery).not.toHaveBeenCalled();
+    expect(query).toHaveBeenCalledTimes(1);
   });
 
-  it("prefetches case-scoped dashboard panels when active case is set", () => {
-    const ensureQueryData = vi.fn().mockResolvedValue(undefined);
-    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
-    const client = { ensureQueryData, prefetchQuery } as unknown as QueryClient;
+  it("prefetches case-scoped dashboard panels when active case is set", async () => {
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
     warmDashboardQueries(client, "case-1");
+    await Promise.resolve();
 
-    const prefetchedKeys = prefetchQuery.mock.calls.map(
+    const prefetchedKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
     expect(prefetchedKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
@@ -45,6 +44,6 @@ describe("warmDashboardQueries", () => {
     );
     expect(prefetchedKeys).toContainEqual(jobsListQuery("case-1").queryKey);
     expect(prefetchedKeys).toContainEqual(tasksListQuery("case-1").queryKey);
-    expect(prefetchQuery).toHaveBeenCalledTimes(4);
+    expect(query).toHaveBeenCalledTimes(5);
   });
 });

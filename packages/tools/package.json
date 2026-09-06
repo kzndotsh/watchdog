@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "effect": "4.0.0-rc.112",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
