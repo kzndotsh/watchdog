@@ -1,10 +1,11 @@
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 
+import { connectionRowActions } from "@/domains/dossier/lib/connection-row-actions";
 import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
 import { cn } from "@/lib/utils";
 import { EntityMention } from "@/shared/ui/entity-mention";
-import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
+import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { ConfidenceBadge, predicateLabel } from "@/shared/ui/vocab";
 
 function ConnectionRow({
@@ -16,11 +17,31 @@ function ConnectionRow({
   onEdit: (edge: EdgeRecord) => void;
   onRemove: (edgeId: string) => void;
 }) {
+  const navigate = useNavigate();
   const peerLabel = edge.peerName || edge.peerId.slice(0, 8);
+  const actions = useMemo(
+    () =>
+      connectionRowActions(edge, {
+        onOpenPeer: (row) => {
+          void navigate({
+            to: "/entities/$entitySlug",
+            params: { entitySlug: row.peerSlug },
+            search: { tab: "connections" },
+          });
+        },
+        onEdit,
+        onRemove,
+      }),
+    [edge, navigate, onEdit, onRemove]
+  );
 
   return (
     <li className="group">
-      <div className="hover:bg-muted/40 flex items-start gap-2 px-3 py-2.5 transition-colors">
+      <TargetActionsHost
+        actions={actions}
+        label={`Actions for ${peerLabel}`}
+        className="hover:bg-muted/40 flex items-start gap-2 px-3 py-2.5 transition-colors"
+      >
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-2">
             <span className="text-muted-foreground shrink-0 text-xs">
@@ -43,36 +64,7 @@ function ConnectionRow({
             </p>
           ) : null}
         </div>
-
-        <RowActionsMenu label={`Actions for ${peerLabel}`}>
-          <DropdownMenuItem
-            render={
-              <Link
-                to="/entities/$entitySlug"
-                params={{ entitySlug: edge.peerSlug }}
-                search={{ tab: "connections" }}
-              />
-            }
-          >
-            Open peer
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              onEdit(edge);
-            }}
-          >
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => {
-              onRemove(edge.id);
-            }}
-          >
-            Remove
-          </DropdownMenuItem>
-        </RowActionsMenu>
-      </div>
+      </TargetActionsHost>
     </li>
   );
 }

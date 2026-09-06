@@ -78,7 +78,6 @@ export function edgesToEgoFlow({
         kind: center.kind,
         slug: center.slug,
         isCenter: true,
-        showMenu: false,
       },
     },
     ...peers.map((peer, index) => ({
@@ -89,7 +88,6 @@ export function edgesToEgoFlow({
         kind: peer.peerKind,
         slug: peer.peerSlug,
         isCenter: false,
-        showMenu: true,
       },
     })),
   ];

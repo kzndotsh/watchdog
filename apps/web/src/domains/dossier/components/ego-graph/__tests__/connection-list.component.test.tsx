@@ -8,6 +8,7 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
     <a href={to}>{children}</a>
   ),
+  useNavigate: () => vi.fn(),
 }));
 
 import { CompactConnectionList } from "@/domains/dossier/components/ego-graph/connection-list";

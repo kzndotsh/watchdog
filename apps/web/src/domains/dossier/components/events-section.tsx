@@ -9,6 +9,7 @@ import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
+import { eventRowActions } from "@/domains/dossier/lib/event-row-actions";
 import type { DossierSectionProps } from "@/domains/dossier/types";
 import {
   createEventFn,
@@ -18,16 +19,15 @@ import {
 import { eventsListQuery } from "@/domains/entities/events/queries";
 import { cn, errMessage } from "@/lib/utils";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Calendar } from "@/shared/ui/shadcn/calendar";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
 import { Input } from "@/shared/ui/shadcn/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/ui/shadcn/popover";
+import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 
 interface EventFormValues {
@@ -298,8 +298,14 @@ function EventDisplayRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const actions = eventRowActions({ onEdit, onDelete });
+
   return (
-    <div className="flex items-start justify-between gap-2">
+    <TargetActionsHost
+      actions={actions}
+      label="Event actions"
+      className="flex items-start justify-between gap-2"
+    >
       <div className="min-w-0 flex-1">
         <time className="text-muted-foreground block font-mono text-sm">
           {when}
@@ -309,13 +315,7 @@ function EventDisplayRow({
         </time>
         <p className="text-foreground mt-0.5 text-base leading-snug">{what}</p>
       </div>
-      <RowActionsMenu label="Event actions" className="mt-0.5">
-        <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
-        <DropdownMenuItem className="text-destructive" onClick={onDelete}>
-          Delete
-        </DropdownMenuItem>
-      </RowActionsMenu>
-    </div>
+    </TargetActionsHost>
   );
 }
 

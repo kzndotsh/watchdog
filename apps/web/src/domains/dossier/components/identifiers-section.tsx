@@ -1,6 +1,6 @@
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
@@ -24,10 +24,13 @@ import {
   createIdentifierFn,
   updateIdentifierFn,
 } from "@/domains/entities/identifiers/identifiers.functions";
+import type { IdentifierRecord } from "@/domains/entities/identifiers/identifiers.functions";
 import { identifiersListQuery } from "@/domains/entities/identifiers/queries";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
+import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
+import type { AppAction } from "@/shared/lib/app-action";
 import {
   DataTable,
   DataTableAddRow,
@@ -159,24 +162,33 @@ export function IdentifiersSection({
     })(e);
   }
 
-  const tableMeta: IdentifierTableMeta = {
-    updateField,
-    evidenceOptions,
-    onEvidenceClick,
-    saveEvidence,
-    onCopyValue: (value) => {
-      void (async () => {
-        try {
-          await copyIdentifierValue(value);
-        } catch {
-          toast.error("Couldn't copy");
-        }
-      })();
-    },
-    onDeleteIdentifier: (row) => {
-      setDeleteTarget({ id: row.id, type: row.type, value: row.value });
-    },
-  };
+  const tableMeta = useMemo<IdentifierTableMeta>(
+    () => ({
+      updateField,
+      evidenceOptions,
+      onEvidenceClick,
+      saveEvidence,
+      onCopyValue: (value) => {
+        void (async () => {
+          try {
+            await copyIdentifierValue(value);
+          } catch {
+            toast.error("Couldn't copy");
+          }
+        })();
+      },
+      onDeleteIdentifier: (row) => {
+        setDeleteTarget({ id: row.id, type: row.type, value: row.value });
+      },
+    }),
+    [evidenceOptions, onEvidenceClick, saveEvidence, updateField]
+  );
+
+  const getRowActions = useCallback(
+    (row: IdentifierRecord): readonly AppAction[] =>
+      identifierRowActions(row, tableMeta),
+    [tableMeta]
+  );
 
   const identifierColumns = dossierIdentifierColumns;
 
@@ -263,6 +275,7 @@ export function IdentifiersSection({
             table={table}
             emptyText="No identifiers."
             appendRow={appendRow}
+            getRowActions={getRowActions}
           />
           <DataTablePagination table={table} />
         </div>

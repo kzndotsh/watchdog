@@ -1,15 +1,15 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
 import { cn } from "@/lib/utils";
+import type { AppAction } from "@/shared/lib/app-action";
 import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
 import { GRAPH_CANVAS_FIT_PADDING } from "@/shared/ui/graph/graph-layout";
 import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
 import { predicateLabel } from "@/shared/ui/vocab";
 
 import { edgesToEgoFlow, type EgoEntityRef } from "./edges-to-flow";
-import { EgoNodeMenu, type EgoMenuNode } from "./ego-node-menu";
 
 export function EgoNeighborhoodCanvas({
   center,
@@ -25,62 +25,76 @@ export function EgoNeighborhoodCanvas({
   onEditEdge?: (edgeId: string) => void;
 }) {
   const navigate = useNavigate();
-  const [menu, setMenu] = useState<{
-    x: number;
-    y: number;
-    node: EgoMenuNode;
-  } | null>(null);
 
   const flow = useMemo(
     () => edgesToEgoFlow({ center, edges }),
     [center, edges]
   );
 
-  const openMenu = useCallback((node: GraphNode, x: number, y: number) => {
-    setMenu({
-      x,
-      y,
-      node: {
-        id: node.id,
-        label: node.data.label,
-        slug: node.data.slug,
-      },
-    });
-  }, []);
+  const getNodeActions = useCallback(
+    (node: GraphNode): readonly AppAction[] => {
+      if (node.id === center.id) return [];
+
+      const connections = flow.edges.flatMap((edge) => {
+        if (edge.source !== node.id && edge.target !== node.id) {
+          return [];
+        }
+        return [
+          {
+            edgeId: edge.data?.edgeId ?? edge.id,
+            label: predicateLabel(edge.data?.predicate ?? "", "out"),
+          },
+        ];
+      });
+
+      const target: AppAction[] = [
+        {
+          id: "ego-open",
+          label: "Open dossier",
+          group: "target",
+          run: () => {
+            void navigate({
+              to: "/entities/$entitySlug",
+              params: { entitySlug: node.data.slug },
+              search: { tab: "connections" },
+            });
+          },
+        },
+      ];
+
+      if (onEditEdge) {
+        for (const connection of connections) {
+          target.push({
+            id: `ego-edit-${connection.edgeId}`,
+            label:
+              connections.length === 1
+                ? "Edit connection…"
+                : `Edit: ${connection.label}`,
+            group: "target",
+            run: () => {
+              onEditEdge(connection.edgeId);
+            },
+          });
+        }
+      }
+
+      return target;
+    },
+    [center.id, flow.edges, navigate, onEditEdge]
+  );
 
   const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: GraphNode) => {
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        target.closest("[data-entity-menu]")
-      ) {
-        event.preventDefault();
-        event.stopPropagation();
-        openMenu(node, event.clientX, event.clientY);
-        return;
-      }
+    (_event: React.MouseEvent, node: GraphNode) => {
       if (node.id === center.id) {
         return;
       }
-      setMenu(null);
       void navigate({
         to: "/entities/$entitySlug",
         params: { entitySlug: node.data.slug },
         search: { tab: "connections" },
       });
     },
-    [center.id, navigate, openMenu]
-  );
-
-  const onNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: GraphNode) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (node.id === center.id) return;
-      openMenu(node, event.clientX, event.clientY);
-    },
-    [center.id, openMenu]
+    [center.id, navigate]
   );
 
   const onEdgeClick = useCallback(
@@ -114,32 +128,9 @@ export function EgoNeighborhoodCanvas({
         minZoom={0.3}
         fitPadding={fillHeight ? GRAPH_CANVAS_FIT_PADDING : 0.32}
         onNodeClick={onNodeClick}
-        onNodeContextMenu={onNodeContextMenu}
+        getNodeActions={getNodeActions}
         onEdgeClick={onEdgeClick}
-        onPaneClick={() => {
-          setMenu(null);
-        }}
       />
-      {menu ? (
-        <EgoNodeMenu
-          x={menu.x}
-          y={menu.y}
-          node={menu.node}
-          connections={flow.edges
-            .filter(
-              (edge) =>
-                edge.source === menu.node.id || edge.target === menu.node.id
-            )
-            .map((edge) => ({
-              edgeId: edge.data?.edgeId ?? edge.id,
-              label: predicateLabel(edge.data?.predicate ?? "", "out"),
-            }))}
-          onClose={() => {
-            setMenu(null);
-          }}
-          onEditEdge={onEditEdge}
-        />
-      ) : null}
     </div>
   );
 }

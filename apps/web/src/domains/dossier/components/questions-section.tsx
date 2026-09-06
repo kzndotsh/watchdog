@@ -9,6 +9,10 @@ import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-se
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import type { DossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
+import {
+  openQuestionRowActions,
+  resolvedQuestionRowActions,
+} from "@/domains/dossier/lib/question-row-actions";
 import type { DossierSectionProps } from "@/domains/dossier/types";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import {
@@ -21,11 +25,10 @@ import {
 import { cn, errMessage } from "@/lib/utils";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { Button } from "@/shared/ui/shadcn/button";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 
 function qIndex(i: number): string {
@@ -390,7 +393,24 @@ function OpenQuestionRow({
 
   return (
     <QuestionNode>
-      <div className="flex items-start justify-between gap-2">
+      <TargetActionsHost
+        actions={
+          resolving
+            ? []
+            : openQuestionRowActions({
+                onEdit: () => {
+                  onResolvingChange(null);
+                  editor.handleOpenEdit(question.id);
+                },
+                onResolve: () => {
+                  editor.handleCloseEdit();
+                  onResolvingChange(question.id);
+                },
+              })
+        }
+        label="Question actions"
+        className="flex items-start justify-between gap-2"
+      >
         <div className="min-w-0 flex-1">
           <QuestionLine
             label={label}
@@ -416,39 +436,19 @@ function OpenQuestionRow({
           ) : null}
         </div>
         {resolving ? null : (
-          <div className="flex shrink-0 items-start gap-0.5">
-            <button
-              type="button"
-              title="Mark resolved"
-              className="text-muted-foreground hover:text-foreground mt-0.5 rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-              onClick={() => {
-                editor.handleCloseEdit();
-                onResolvingChange(question.id);
-              }}
-            >
-              <CheckIcon className="size-3.5" />
-            </button>
-            <RowActionsMenu label="Question actions">
-              <DropdownMenuItem
-                onClick={() => {
-                  onResolvingChange(null);
-                  editor.handleOpenEdit(question.id);
-                }}
-              >
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  editor.handleCloseEdit();
-                  onResolvingChange(question.id);
-                }}
-              >
-                Resolve
-              </DropdownMenuItem>
-            </RowActionsMenu>
-          </div>
+          <button
+            type="button"
+            title="Mark resolved"
+            className="text-muted-foreground hover:text-foreground mt-0.5 rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+            onClick={() => {
+              editor.handleCloseEdit();
+              onResolvingChange(question.id);
+            }}
+          >
+            <CheckIcon className="size-3.5" />
+          </button>
         )}
-      </div>
+      </TargetActionsHost>
     </QuestionNode>
   );
 }
@@ -492,7 +492,16 @@ function ResolvedQuestionRow({
 
   return (
     <QuestionNode resolved>
-      <div className="flex items-start justify-between gap-2">
+      <TargetActionsHost
+        actions={resolvedQuestionRowActions({
+          onEdit: () => {
+            editor.handleOpenEdit(question.id);
+          },
+          onReopen,
+        })}
+        label="Question actions"
+        className="flex items-start justify-between gap-2"
+      >
         <div className="min-w-0 flex-1">
           <QuestionLine
             label={label}
@@ -506,17 +515,7 @@ function ResolvedQuestionRow({
             <QuestionNote note={question.resolvedNote} resolved />
           ) : null}
         </div>
-        <RowActionsMenu label="Question actions">
-          <DropdownMenuItem
-            onClick={() => {
-              editor.handleOpenEdit(question.id);
-            }}
-          >
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onReopen}>Reopen</DropdownMenuItem>
-        </RowActionsMenu>
-      </div>
+      </TargetActionsHost>
     </QuestionNode>
   );
 }
@@ -675,7 +674,7 @@ export function QuestionsSection({
                   });
                 }}
                 onReopen={() => {
-                  void reopenMutation.mutateAsync(row.id);
+                  reopenMutation.mutate(row.id);
                 }}
               />
             ))}

@@ -16,6 +16,10 @@ import {
   type ClaimFormValues,
 } from "@/domains/dossier/lib/claim-form";
 import {
+  claimRowActions,
+  type ClaimRowActionKind,
+} from "@/domains/dossier/lib/claim-row-actions";
+import {
   CONFIRMED_REQUIRES_EVIDENCE,
   CONFIRMED_REQUIRES_EVIDENCE_HINT,
   isConfirmedBlocked,
@@ -36,14 +40,13 @@ import {
   FormInlineError,
   FormInlineWarning,
 } from "@/shared/ui/form-inline-message";
-import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { Button } from "@/shared/ui/shadcn/button";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";
 import type { RetractKind } from "@watchdog/schemas";
 
-type ClaimAction = "contest" | "disprove" | "retract";
+type ClaimAction = ClaimRowActionKind;
 type ActionState = { claimId: string; action: ClaimAction } | null;
 
 const ACTION_TO_KIND: Record<ClaimAction, RetractKind> = {
@@ -542,101 +545,80 @@ export function ClaimsSection({
       ) : null}
 
       <ol className="flex flex-col gap-2">
-        {rows.map((row, i) => (
-          <li key={row.id} className="group flex flex-col gap-1.5">
-            <div className="flex items-start gap-2 text-sm">
-              <span className="text-muted-foreground w-4 shrink-0 pt-0.5 text-xs tabular-nums">
-                {i + 1}.
-              </span>
-              <div className="min-w-0 flex-1">
-                {editor.editId === row.id ? (
-                  <ClaimComposer
-                    key={row.id}
-                    defaultValues={claimDefaultsFromRow(row)}
-                    evidenceOptions={evidenceOptions}
-                    shell="inline"
-                    submitLabel="Save"
-                    onCancel={editor.handleCloseEdit}
-                    onError={editor.handleError}
-                    onSubmit={async (value) => {
-                      await updateMutation.mutateAsync({
-                        claimId: row.id,
-                        value,
-                      });
-                    }}
-                  />
-                ) : (
-                  <p className="leading-snug break-words whitespace-pre-wrap">
-                    {row.text}
-                  </p>
-                )}
-                <div className="text-label-sm mt-1 flex flex-wrap items-center gap-1.5">
-                  <ClaimClassBadge claimClass={row.class} />
-                  <ConfidenceBadge confidence={row.confidence} />
-                  {row.evidenceIds.length > 0 ? (
-                    <span className="flex flex-wrap gap-1">
-                      {row.evidenceIds.map((id) => (
-                        <ClickableIdChip
-                          key={id}
-                          value={id}
-                          onClick={onEvidenceClick}
-                        />
-                      ))}
-                    </span>
-                  ) : null}
+        {rows.map((row, i) => {
+          const actions = claimRowActions(row, {
+            onEdit: openEdit,
+            onAction: openAction,
+          });
+          return (
+            <li key={row.id} className="group flex flex-col gap-1.5">
+              <TargetActionsHost
+                actions={editor.editId === row.id ? [] : actions}
+                label="Claim actions"
+                className="flex items-start gap-2 text-sm"
+              >
+                <span className="text-muted-foreground w-4 shrink-0 pt-0.5 text-xs tabular-nums">
+                  {i + 1}.
+                </span>
+                <div className="min-w-0 flex-1">
+                  {editor.editId === row.id ? (
+                    <ClaimComposer
+                      key={row.id}
+                      defaultValues={claimDefaultsFromRow(row)}
+                      evidenceOptions={evidenceOptions}
+                      shell="inline"
+                      submitLabel="Save"
+                      onCancel={editor.handleCloseEdit}
+                      onError={editor.handleError}
+                      onSubmit={async (value) => {
+                        await updateMutation.mutateAsync({
+                          claimId: row.id,
+                          value,
+                        });
+                      }}
+                    />
+                  ) : (
+                    <p className="leading-snug break-words whitespace-pre-wrap">
+                      {row.text}
+                    </p>
+                  )}
+                  <div className="text-label-sm mt-1 flex flex-wrap items-center gap-1.5">
+                    <ClaimClassBadge claimClass={row.class} />
+                    <ConfidenceBadge confidence={row.confidence} />
+                    {row.evidenceIds.length > 0 ? (
+                      <span className="flex flex-wrap gap-1">
+                        {row.evidenceIds.map((id) => (
+                          <ClickableIdChip
+                            key={id}
+                            value={id}
+                            onClick={onEvidenceClick}
+                          />
+                        ))}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-              <RowActionsMenu label="Claim actions">
-                <DropdownMenuItem
-                  onClick={() => {
-                    openEdit(row);
-                  }}
-                >
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    openAction(row.id, "contest");
-                  }}
-                >
-                  Contest
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    openAction(row.id, "disprove");
-                  }}
-                >
-                  Disprove
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() => {
-                    openAction(row.id, "retract");
-                  }}
-                >
-                  Retract
-                </DropdownMenuItem>
-              </RowActionsMenu>
-            </div>
+              </TargetActionsHost>
 
-            {actionState?.claimId === row.id ? (
-              <ClaimActionForm
-                key={`${row.id}-${actionState.action}`}
-                caseId={caseId}
-                claimId={row.id}
-                action={actionState.action}
-                onCancel={() => {
-                  setActionState(null);
-                }}
-                onError={editor.handleError}
-                onSaved={async () => {
-                  setActionState(null);
-                  await invalidate();
-                }}
-              />
-            ) : null}
-          </li>
-        ))}
+              {actionState?.claimId === row.id ? (
+                <ClaimActionForm
+                  key={`${row.id}-${actionState.action}`}
+                  caseId={caseId}
+                  claimId={row.id}
+                  action={actionState.action}
+                  onCancel={() => {
+                    setActionState(null);
+                  }}
+                  onError={editor.handleError}
+                  onSaved={async () => {
+                    setActionState(null);
+                    await invalidate();
+                  }}
+                />
+              ) : null}
+            </li>
+          );
+        })}
       </ol>
     </DossierSection>
   );
