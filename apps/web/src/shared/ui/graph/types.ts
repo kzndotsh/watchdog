@@ -9,8 +9,6 @@ export interface EntityNodeData {
   kind: EntityKind;
   slug: string;
   isCenter: boolean;
-  /** Ego peer ⋯ menu. */
-  showMenu?: boolean;
 }
 
 export interface PredicateEdgeData {

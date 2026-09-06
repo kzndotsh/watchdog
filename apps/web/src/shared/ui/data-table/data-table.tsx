@@ -1,6 +1,10 @@
 import { flexRender } from "@tanstack/react-table";
 import type { Table as TanstackTable } from "@tanstack/react-table";
-import type { ReactNode } from "react";
+import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from "react";
 /**
  * TanStack table shell — `table-fixed` + `<colgroup>` from column `size`.
  *
@@ -8,9 +12,13 @@ import type { ReactNode } from "react";
  * cell under the mounted header. Never wrap table bodies in `PendingRegion`
  * (flex skeleton rows misalign with the column grid). See
  * `docs/reference/web/ui/tables.md`.
+ *
+ * Optional `getRowActions` wraps body rows in a ContextMenu (editables skipped).
  */
 
 import { cn } from "@/lib/utils";
+import type { AppAction } from "@/shared/lib/app-action";
+import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 import {
   Table,
@@ -47,6 +55,59 @@ function shouldIgnoreRowClick(target: EventTarget | null): boolean {
   );
 }
 
+function DataTableBodyRow<TData>({
+  row,
+  onRowClick,
+  getRowActions,
+}: {
+  row: ReturnType<TanstackTable<TData>["getRowModel"]>["rows"][number];
+  onRowClick?: (row: TData) => void;
+  getRowActions?: (row: TData) => readonly AppAction[];
+}) {
+  const cells = row.getVisibleCells().map((cell) => (
+    <TableCell key={cell.id} className="min-w-0 overflow-hidden">
+      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    </TableCell>
+  ));
+
+  const rowProps = {
+    className: onRowClick ? "group cursor-pointer" : "group",
+    onPointerDown: onRowClick
+      ? (e: ReactPointerEvent<HTMLTableRowElement>) => {
+          if (e.button !== 0) return;
+          e.currentTarget.dataset.wdRowClickArmed = shouldIgnoreRowClick(
+            e.target
+          )
+            ? "0"
+            : "1";
+        }
+      : undefined,
+    onClick: onRowClick
+      ? (e: ReactMouseEvent<HTMLTableRowElement>) => {
+          const armed = e.currentTarget.dataset.wdRowClickArmed === "1";
+          e.currentTarget.dataset.wdRowClickArmed = "";
+          if (!armed) return;
+          if (shouldIgnoreRowClick(e.target)) return;
+          onRowClick(row.original);
+        }
+      : undefined,
+  };
+
+  const actions = getRowActions?.(row.original);
+  if (actions && actions.length > 0) {
+    return (
+      <ActionsContextMenu
+        actions={actions}
+        trigger={<TableRow {...rowProps} />}
+      >
+        {cells}
+      </ActionsContextMenu>
+    );
+  }
+
+  return <TableRow {...rowProps}>{cells}</TableRow>;
+}
+
 function renderTableBodyRows<TData>({
   pending,
   skeletonRows,
@@ -54,6 +115,7 @@ function renderTableBodyRows<TData>({
   hasRows,
   table,
   onRowClick,
+  getRowActions,
   emptyText,
 }: {
   pending: boolean;
@@ -62,6 +124,7 @@ function renderTableBodyRows<TData>({
   hasRows: boolean;
   table: TanstackTable<TData>;
   onRowClick?: (row: TData) => void;
+  getRowActions?: (row: TData) => readonly AppAction[];
   emptyText: string;
 }) {
   if (pending) {
@@ -82,41 +145,16 @@ function renderTableBodyRows<TData>({
   }
 
   if (hasRows) {
-    return table.getRowModel().rows.map((row) => (
-      <TableRow
-        key={row.id}
-        className={onRowClick ? "group cursor-pointer" : "group"}
-        onPointerDown={
-          onRowClick
-            ? (e) => {
-                if (e.button !== 0) return;
-                e.currentTarget.dataset.wdRowClickArmed = shouldIgnoreRowClick(
-                  e.target
-                )
-                  ? "0"
-                  : "1";
-              }
-            : undefined
-        }
-        onClick={
-          onRowClick
-            ? (e) => {
-                const armed = e.currentTarget.dataset.wdRowClickArmed === "1";
-                e.currentTarget.dataset.wdRowClickArmed = "";
-                if (!armed) return;
-                if (shouldIgnoreRowClick(e.target)) return;
-                onRowClick(row.original);
-              }
-            : undefined
-        }
-      >
-        {row.getVisibleCells().map((cell) => (
-          <TableCell key={cell.id} className="min-w-0 overflow-hidden">
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </TableCell>
-        ))}
-      </TableRow>
-    ));
+    return table
+      .getRowModel()
+      .rows.map((row) => (
+        <DataTableBodyRow
+          key={row.id}
+          row={row}
+          onRowClick={onRowClick}
+          getRowActions={getRowActions}
+        />
+      ));
   }
 
   return (
@@ -136,6 +174,8 @@ interface Props<TData> {
   emptyText?: string;
   className?: string;
   onRowClick?: (row: TData) => void;
+  /** Row ContextMenu actions (target only — chrome lives on inset). */
+  getRowActions?: (row: TData) => readonly AppAction[];
   /** Extra row(s) appended after data rows — used for inline add composers. */
   appendRow?: ReactNode;
   /** When true, tbody renders skeleton rows; colgroup + header stay mounted. */
@@ -150,6 +190,7 @@ export function DataTable<TData>({
   emptyText = "No results.",
   className,
   onRowClick,
+  getRowActions,
   appendRow,
   pending = false,
   skeletonRows = TABLE_BODY_SKELETON_ROW_COUNT,
@@ -209,6 +250,7 @@ export function DataTable<TData>({
             hasRows,
             table,
             onRowClick,
+            getRowActions,
             emptyText,
           })}
           {appendRow}

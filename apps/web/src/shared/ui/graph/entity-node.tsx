@@ -1,21 +1,21 @@
-import { MoreHorizontalIcon } from "lucide-react";
-
+import type { AppAction } from "@/shared/lib/app-action";
 import { cn } from "@/lib/utils";
 import { kindBorder } from "@/shared/ui/graph/graph-styles";
 import { ENTITY_NODE_SHELL_CLASS } from "@/shared/ui/graph/entity-node-chrome";
 import type { EntityNodeData } from "@/shared/ui/graph/types";
-import { Button } from "@/shared/ui/shadcn/button";
+import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { KindBadge } from "@/shared/ui/vocab";
 
 export function EntityNode({
   data,
   selected = false,
+  actions,
 }: {
   data: EntityNodeData;
   selected?: boolean;
+  actions?: readonly AppAction[];
 }) {
   const border = kindBorder(data.kind);
-  const showMenu = data.showMenu === true;
 
   return (
     <div
@@ -35,17 +35,12 @@ export function EntityNode({
             <KindBadge kind={data.kind} className="text-chip" />
           </div>
         </div>
-        {showMenu ? (
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="size-6 shrink-0"
-            aria-label="Node actions"
-            data-entity-menu=""
-          >
-            <MoreHorizontalIcon className="size-3.5" />
-          </Button>
+        {actions && actions.length > 0 ? (
+          <RowActionsMenu
+            label="Node actions"
+            actions={actions}
+            className="opacity-100"
+          />
         ) : null}
       </div>
     </div>

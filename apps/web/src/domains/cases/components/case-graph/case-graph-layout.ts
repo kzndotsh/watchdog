@@ -68,7 +68,6 @@ export function caseGraphLayout({
         kind: entity.kind,
         slug: entity.slug,
         isCenter: false,
-        showMenu: false,
       },
     };
   });

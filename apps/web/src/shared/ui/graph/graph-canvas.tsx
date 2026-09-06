@@ -3,16 +3,22 @@
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
 } from "react";
 
+import type { AppAction } from "@/shared/lib/app-action";
+import { filterActionsForSurface } from "@/shared/lib/app-action";
 import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
+import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import {
   GRAPH_CANVAS_BG_CLASS,
   graphCanvasDotStyle,
@@ -29,6 +35,87 @@ import {
   type GraphTransform,
 } from "@/shared/ui/graph/graph-layout";
 import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
+
+function GraphNodeHitTarget({
+  node,
+  nodesDraggable,
+  actions,
+  suppressNodeClickRef,
+  onNodePointerDown,
+  onNodePointerMove,
+  onNodePointerUp,
+  onNodeClick,
+}: {
+  node: GraphNode;
+  nodesDraggable: boolean;
+  actions: readonly AppAction[];
+  suppressNodeClickRef: RefObject<string | null>;
+  onNodePointerDown: (
+    event: ReactPointerEvent<HTMLDivElement>,
+    node: GraphNode
+  ) => void;
+  onNodePointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onNodePointerUp: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onNodeClick?: (event: ReactMouseEvent, node: GraphNode) => void;
+}) {
+  const dropdownActions = filterActionsForSurface(actions, "dropdown");
+  const shellProps = {
+    "data-graph-node": "",
+    role: "button" as const,
+    tabIndex: 0,
+    "aria-label": node.data.label,
+    className: cn(
+      "absolute",
+      nodesDraggable && "cursor-grab active:cursor-grabbing select-none"
+    ),
+    style: {
+      left: node.position.x,
+      top: node.position.y,
+    },
+    onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => {
+      onNodePointerDown(event, node);
+    },
+    onPointerMove: onNodePointerMove,
+    onPointerUp: onNodePointerUp,
+    onPointerCancel: onNodePointerUp,
+    onKeyDown: (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+      event.preventDefault();
+      event.currentTarget.click();
+    },
+    onClick: (event: ReactMouseEvent<HTMLDivElement>) => {
+      event.stopPropagation();
+      if (suppressNodeClickRef.current === node.id) {
+        suppressNodeClickRef.current = null;
+        return;
+      }
+      onNodeClick?.(event, node);
+    },
+  };
+
+  if (actions.length > 0) {
+    return (
+      <ActionsContextMenu
+        actions={actions}
+        trigger={<div {...shellProps} />}
+      >
+        <EntityNode
+          data={node.data}
+          selected={node.selected}
+          actions={dropdownActions}
+        />
+      </ActionsContextMenu>
+    );
+  }
+
+  return (
+    <div {...shellProps}>
+      <EntityNode data={node.data} selected={node.selected} />
+    </div>
+  );
+}
 
 function clampZoom(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -70,7 +157,7 @@ export function GraphCanvas({
   fitPadding = GRAPH_CANVAS_FIT_PADDING,
   nodesDraggable = true,
   onNodeClick,
-  onNodeContextMenu,
+  getNodeActions,
   onEdgeClick,
   onPaneClick,
 }: {
@@ -82,7 +169,8 @@ export function GraphCanvas({
   fitPadding?: number;
   nodesDraggable?: boolean;
   onNodeClick?: (event: ReactMouseEvent, node: GraphNode) => void;
-  onNodeContextMenu?: (event: ReactMouseEvent, node: GraphNode) => void;
+  /** Optional ContextMenu + ⋯ actions; Case overview omits. */
+  getNodeActions?: (node: GraphNode) => readonly AppAction[];
   onEdgeClick?: (event: ReactMouseEvent, edge: GraphEdge) => void;
   onPaneClick?: () => void;
 }) {
@@ -210,6 +298,9 @@ export function GraphCanvas({
     };
   }, [fitToContainer, hydrated]);
 
+  const applyTransformEvent = useEffectEvent(applyTransform);
+  const fitToContainerEvent = useEffectEvent(fitToContainer);
+
   useEffect(() => {
     const element = containerRef.current;
     if (!element || !hydrated) {
@@ -220,7 +311,7 @@ export function GraphCanvas({
       event.preventDefault();
       const rect = element.getBoundingClientRect();
       const deltaY = normalizeWheelDelta(event);
-      applyTransform((current) =>
+      applyTransformEvent((current) =>
         zoomAtPoint(
           current,
           {
@@ -245,7 +336,7 @@ export function GraphCanvas({
 
       if (event.key === "=" || event.key === "+") {
         event.preventDefault();
-        applyTransform((current) =>
+        applyTransformEvent((current) =>
           zoomAtPoint(current, center, -1, minZoom, maxZoom)
         );
         return;
@@ -253,7 +344,7 @@ export function GraphCanvas({
 
       if (event.key === "-") {
         event.preventDefault();
-        applyTransform((current) =>
+        applyTransformEvent((current) =>
           zoomAtPoint(current, center, 1, minZoom, maxZoom)
         );
         return;
@@ -261,7 +352,7 @@ export function GraphCanvas({
 
       if (event.key === "0") {
         event.preventDefault();
-        fitToContainer();
+        fitToContainerEvent();
       }
     };
 
@@ -271,7 +362,7 @@ export function GraphCanvas({
       element.removeEventListener("wheel", zoomFromWheel);
       window.removeEventListener("keydown", zoomFromKeyboard);
     };
-  }, [applyTransform, fitToContainer, hydrated, maxZoom, minZoom]);
+  }, [hydrated, maxZoom, minZoom]);
 
   const onNodePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, node: GraphNode) => {
@@ -476,47 +567,17 @@ export function GraphCanvas({
           </svg>
 
           {displayNodes.map((node) => (
-            <div
+            <GraphNodeHitTarget
               key={node.id}
-              data-graph-node=""
-              role="button"
-              tabIndex={0}
-              aria-label={node.data.label}
-              className={cn(
-                "absolute",
-                nodesDraggable && "cursor-grab active:cursor-grabbing select-none"
-              )}
-              style={{
-                left: node.position.x,
-                top: node.position.y,
-              }}
-              onPointerDown={(event) => {
-                onNodePointerDown(event, node);
-              }}
-              onPointerMove={onNodePointerMove}
-              onPointerUp={onNodePointerUp}
-              onPointerCancel={onNodePointerUp}
-              onKeyDown={(event) => {
-                if (event.key !== "Enter" && event.key !== " ") {
-                  return;
-                }
-                event.preventDefault();
-                event.currentTarget.click();
-              }}
-              onClick={(event) => {
-                event.stopPropagation();
-                if (suppressNodeClickRef.current === node.id) {
-                  suppressNodeClickRef.current = null;
-                  return;
-                }
-                onNodeClick?.(event, node);
-              }}
-              onContextMenu={(event) => {
-                onNodeContextMenu?.(event, node);
-              }}
-            >
-              <EntityNode data={node.data} selected={node.selected} />
-            </div>
+              node={node}
+              nodesDraggable={nodesDraggable}
+              actions={getNodeActions?.(node) ?? []}
+              suppressNodeClickRef={suppressNodeClickRef}
+              onNodePointerDown={onNodePointerDown}
+              onNodePointerMove={onNodePointerMove}
+              onNodePointerUp={onNodePointerUp}
+              onNodeClick={onNodeClick}
+            />
           ))}
         </div>
       ) : (
