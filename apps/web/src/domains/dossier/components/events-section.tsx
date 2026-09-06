@@ -330,6 +330,42 @@ export function EventsSection({
 
   const editor = useDossierSectionEditor();
 
+  const createMutation = useMutation({
+    mutationFn: async (value: EventFormValues) =>
+      createEventFn({
+        data: {
+          caseId,
+          entityId,
+          when: value.when,
+          what: value.what,
+          where: value.where || undefined,
+        },
+      }),
+    onSuccess: async () => {
+      editor.handleStopAdding();
+      await invalidate();
+      toast.success("Event added");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (input: { eventId: string; value: EventFormValues }) =>
+      updateEventFn({
+        data: {
+          caseId,
+          eventId: input.eventId,
+          when: input.value.when,
+          what: input.value.what,
+          where: input.value.where || undefined,
+        },
+      }),
+    onSuccess: async () => {
+      editor.handleCloseEdit();
+      await invalidate();
+      toast.success("Event updated");
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (eventId: string) =>
       deleteEventFn({ data: { caseId, eventId } }),
@@ -385,18 +421,7 @@ export function EventsSection({
                 onCancel={editor.handleStopAdding}
                 onError={editor.handleError}
                 onSubmit={async (value) => {
-                  await createEventFn({
-                    data: {
-                      caseId,
-                      entityId,
-                      when: value.when,
-                      what: value.what,
-                      where: value.where || undefined,
-                    },
-                  });
-                  editor.handleStopAdding();
-                  await invalidate();
-                  toast.success("Event added");
+                  await createMutation.mutateAsync(value);
                 }}
               />
             </TimelineNode>
@@ -416,18 +441,10 @@ export function EventsSection({
                   onCancel={editor.handleCloseEdit}
                   onError={editor.handleError}
                   onSubmit={async (value) => {
-                    await updateEventFn({
-                      data: {
-                        caseId,
-                        eventId: row.id,
-                        when: value.when,
-                        what: value.what,
-                        where: value.where || undefined,
-                      },
+                    await updateMutation.mutateAsync({
+                      eventId: row.id,
+                      value,
                     });
-                    editor.handleCloseEdit();
-                    await invalidate();
-                    toast.success("Event updated");
                   }}
                 />
               ) : (

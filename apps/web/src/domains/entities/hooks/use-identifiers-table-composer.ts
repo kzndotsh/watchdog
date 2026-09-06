@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,25 +27,14 @@ interface IdentifierComposerSubmitContext {
   queryClient: QueryClient;
   setComposing: Dispatch<SetStateAction<boolean>>;
   setSubmitError: Dispatch<SetStateAction<string | null>>;
+  createIdentifier: (value: IdentifierCreateValues) => Promise<unknown>;
 }
 
 async function submitIdentifierCreate(
   ctx: IdentifierComposerSubmitContext,
   value: IdentifierCreateValues
 ): Promise<void> {
-  const platform = normalizeIdentifierPlatform(value.platform);
-  await createIdentifierFn({
-    data: {
-      caseId: ctx.caseId,
-      entityId: value.entityId,
-      type: value.type,
-      value: value.value.trim(),
-      platform: platform || undefined,
-      status: value.status,
-      confidence: value.confidence,
-      evidenceIds: value.evidenceIds,
-    },
-  });
+  await ctx.createIdentifier(value);
   toast.success("Identifier added");
   await invalidateAfterEntityChanged(ctx.queryClient, ctx.caseId, {
     entityId: value.entityId,
@@ -127,11 +117,30 @@ export function useIdentifiersTableComposer(
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
 
+  const createMutation = useMutation({
+    mutationFn: async (value: IdentifierCreateValues) => {
+      const platform = normalizeIdentifierPlatform(value.platform);
+      return createIdentifierFn({
+        data: {
+          caseId,
+          entityId: value.entityId,
+          type: value.type,
+          value: value.value.trim(),
+          platform: platform || undefined,
+          status: value.status,
+          confidence: value.confidence,
+          evidenceIds: value.evidenceIds,
+        },
+      });
+    },
+  });
+
   const submitContext: IdentifierComposerSubmitContext = {
     caseId,
     queryClient,
     setComposing,
     setSubmitError,
+    createIdentifier: (value) => createMutation.mutateAsync(value),
   };
 
   const createForm = useIdentifierCreateForm(

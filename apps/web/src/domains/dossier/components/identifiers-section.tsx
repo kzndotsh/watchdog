@@ -4,18 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
-import {
-  HANDLE_REQUIRES_PLATFORM,
-  isHandleWithoutPlatform,
-  dossierIdentifierColumns,
-  type IdentifierFieldUpdate,
-  type IdentifierTableMeta,
-} from "@/domains/dossier/components/identifiers-section.cells";
-import {
-  IdentifierComposerAppend,
-  identifierCreateCanSubmit,
-  useIdentifierCreateForm,
-} from "@/domains/dossier/components/identifiers-section.composer";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
@@ -39,6 +27,18 @@ import {
   useDataTable,
 } from "@/shared/ui/data-table";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
+import {
+  HANDLE_REQUIRES_PLATFORM,
+  isHandleWithoutPlatform,
+  dossierIdentifierColumns,
+  type IdentifierFieldUpdate,
+  type IdentifierTableMeta,
+} from "@/shared/ui/identifiers/identifier-cells";
+import {
+  IdentifierComposerAppend,
+  identifierCreateCanSubmit,
+  useIdentifierCreateForm,
+} from "@/shared/ui/identifiers/identifier-composer";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   normalizeIdentifierPlatform,
@@ -74,17 +74,17 @@ export function IdentifiersSection({
   } | null>(null);
   const lockedEntity = { id: entity.id, name: entity.name, slug: entity.slug };
 
-  const createForm = useIdentifierCreateForm(async ({ value, reset }) => {
-    if (!identifierCreateCanSubmit(value)) {
-      if (isHandleWithoutPlatform(value.type, value.platform)) {
-        setSubmitError(HANDLE_REQUIRES_PLATFORM);
-      }
-      return;
-    }
-    setSubmitError(null);
-    try {
+  const createMutation = useMutation({
+    mutationFn: async (value: {
+      type: IdentifierType;
+      value: string;
+      platform: string;
+      status: IdentifierStatus;
+      confidence: ConfidenceTier;
+      evidenceIds: string[];
+    }) => {
       const platform = normalizeIdentifierPlatform(value.platform);
-      await createIdentifierFn({
+      return createIdentifierFn({
         data: {
           caseId,
           entityId,
@@ -96,10 +96,25 @@ export function IdentifiersSection({
           evidenceIds: value.evidenceIds,
         },
       });
+    },
+    onSuccess: async () => {
       toast.success("Identifier added");
+      await invalidate();
+    },
+  });
+
+  const createForm = useIdentifierCreateForm(async ({ value, reset }) => {
+    if (!identifierCreateCanSubmit(value)) {
+      if (isHandleWithoutPlatform(value.type, value.platform)) {
+        setSubmitError(HANDLE_REQUIRES_PLATFORM);
+      }
+      return;
+    }
+    setSubmitError(null);
+    try {
+      await createMutation.mutateAsync(value);
       reset();
       setComposing(false);
-      await invalidate();
     } catch (error) {
       setSubmitError(errMessage(error, "Failed to add"));
     }
