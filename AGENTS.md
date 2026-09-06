@@ -49,7 +49,7 @@ Watchdog runtime conventions (run* edges, JobFibers, Cap `run`, browser policy) 
 
 ## Agent Skills
 
-Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per-package (e.g. [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/)) — readable by Cursor, Claude Code, and Codex. Load explicitly by name (`/audit-contract`, `/check-gates`, `/create-cap`, `/effect`); do not rely on auto-selection. `pnpm validate:agents` gates their structure and frontmatter in CI. See [`.cursor/README.md`](.cursor/README.md) for the full catalog and the retirement criterion.
+Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per-package (e.g. [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/)) — readable by Cursor, Claude Code, and Codex. Load explicitly by name (`/audit-contract`, `/check-gates`, `/finalize`, `/create-cap`, `/effect`); do not rely on auto-selection. `pnpm validate:agents` gates their structure and frontmatter in CI. See [`.cursor/README.md`](.cursor/README.md) for the full catalog and the retirement criterion.
 
 ## Where to Look
 

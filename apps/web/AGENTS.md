@@ -2,7 +2,7 @@
 
 ## Skill Loading
 
-No `apps/web`-scoped skill exists yet. Root-level Agent Skills in [`.agents/skills/`](../../.agents/skills/) (`audit-contract`, `check-gates`) apply here too. Load explicitly (`/audit-contract`, `/check-gates`) rather than relying on auto-selection.
+No `apps/web`-scoped skill exists yet. Root-level Agent Skills in [`.agents/skills/`](../../.agents/skills/) (`audit-contract`, `check-gates`, `finalize`) apply here too. Load explicitly (`/audit-contract`, `/check-gates`, `/finalize`) rather than relying on auto-selection.
 
 <!-- intent-skills:end -->
 
