@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import {
-  authFields,
-  cliFields,
-  databaseFields,
-  s3Fields,
-  smtpFields,
-} from "../fragments";
+import { authFields, databaseFields, s3Fields, smtpFields } from "../fragments";
 
 describe("env fragments", () => {
   it("fails closed on a short auth secret", () => {
@@ -35,12 +29,5 @@ describe("env fragments", () => {
   it("treats SMTP as optional", () => {
     const parsed = z.object(smtpFields).safeParse({});
     expect(parsed.success).toBe(true);
-  });
-
-  it("requires WD_API_KEY", () => {
-    const parsed = z.object(cliFields).safeParse({
-      WD_API_URL: "http://localhost:3000/api/v1",
-    });
-    expect(parsed.success).toBe(false);
   });
 });

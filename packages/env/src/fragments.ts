@@ -5,7 +5,6 @@ import { loadRepoEnv } from "./load";
 loadRepoEnv();
 
 const DEFAULT_AUTH_URL = "http://127.0.0.1:3000";
-const DEFAULT_API_URL = "http://localhost:3000/api/v1";
 
 /** Shared Zod field groups — compose per entrypoint `createEnv`. */
 
@@ -53,11 +52,6 @@ export const vaultFields = {
 
 export const exportFields = {
   WD_EXPORT_DIR: z.string().min(1).optional(),
-};
-
-export const cliFields = {
-  WD_API_URL: z.url().default(DEFAULT_API_URL),
-  WD_API_KEY: z.string().min(1),
 };
 
 export const nodeEnvFields = {

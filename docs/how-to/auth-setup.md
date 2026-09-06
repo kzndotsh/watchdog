@@ -38,7 +38,7 @@ Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated).
 
 1. Settings → **API Keys** → create a key.
 2. In `.env` (or shell): `WD_API_URL=http://localhost:3000/api/v1`, `WD_API_KEY=<key>`.
-3. `wd --help` works without a key; authenticated verbs need both vars (`@watchdog/env/cli`).
+3. `wd --help` works without a key; authenticated verbs need both vars (`loadCliEnv()` in `@watchdog/cli`).
 
 ## See also
 
