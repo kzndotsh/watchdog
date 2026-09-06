@@ -14,10 +14,10 @@
 | `@watchdog/policy` | schemas | db, caps, core, api, apps, tools, cap-sdk, ai |
 | `@watchdog/db` | schemas, **env** (runtime); drizzle-kit via dotenv: see [`packages/db/AGENTS.md`](../../../packages/db/AGENTS.md). Owns **schema + `repos`** (SQL only). | caps, core, api, apps |
 | `@watchdog/ai` | schemas | db, caps, core |
-| `@watchdog/cap-sdk` | schemas | db, caps, core, api, apps, tools |
+| `@watchdog/cap-sdk` | schemas, **tools** | db, caps, core, api, apps |
 | `@watchdog/tools` | schemas (only if needed; prefer zero) | db, caps, core, ai, cap-sdk, api, apps |
 | `@watchdog/caps` | schemas, ai, **cap-sdk**, **tools** | **db**, core, api, apps |
-| `@watchdog/core` | db (**repos only**: no `drizzle-orm`), caps, cap-sdk, schemas, **policy**, **env**, **log** | api, apps: layout: `jobs/` · `cases/` · `proposals/` · `graph/` · `tasks/` · `search/` · `activity/` · `evidence/` · `infra/`; worker imports `@watchdog/core/worker` |
+| `@watchdog/core` | db (**repos only**: no `drizzle-orm`), caps, cap-sdk, schemas, **policy**, **env**, **log**, **tools** | api, apps: layout: `jobs/` · `cases/` · `proposals/` · `graph/` · `tasks/` · `search/` · `activity/` · `evidence/` · `infra/`; worker imports `@watchdog/core/worker` |
 | `@watchdog/log` | (nothing in-workspace; pin `evlog`) | apps, cli, client, core, api, db, caps, … |
 | `@watchdog/api` | core (+ schemas), **caps** (catalog descriptors only), **log** (`ApiContext.log?`) | apps, **db**, drizzle-orm |
 | `@watchdog/contract` | (nothing in-workspace at runtime; generated JSON) | api, core, db, apps, **log** (type entry `app-router` aliases live API `AppRouter` in-monorepo only) |
