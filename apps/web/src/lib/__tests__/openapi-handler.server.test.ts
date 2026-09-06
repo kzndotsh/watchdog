@@ -22,6 +22,10 @@ vi.mock("@orpc/openapi/plugins", () => ({
   OpenAPIReferencePlugin: vi.fn(),
 }));
 
+vi.mock("@orpc/json-schema", () => ({
+  SmartCoercionPlugin: vi.fn(),
+}));
+
 vi.mock("@orpc/zod/zod4", () => ({
   ZodToJsonSchemaConverter: vi.fn(),
 }));
@@ -32,6 +36,7 @@ vi.mock("@/lib/api-cors.server", () => ({
 
 vi.mock("@watchdog/api", () => ({
   router: {},
+  openApiSpecGenerateOptions: () => ({}),
 }));
 
 vi.mock("@/auth/api-context.server", () => ({
