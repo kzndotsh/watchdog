@@ -61,7 +61,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
   const getRowActions = useCallback(
     (row: EntityRecord) =>
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack TableMeta slot
-      entityRowActions(row, table.options.meta as EntityTableMeta),
+      entityRowActions(row, table.options.meta as unknown as EntityTableMeta),
     [table.options.meta]
   );
 

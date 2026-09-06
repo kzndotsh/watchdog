@@ -97,6 +97,7 @@ export const WD_UI_FILES = [
   "src/shared/ui/data-table/editable-text-cell.tsx",
   "src/shared/ui/data-table/index.ts",
   "src/shared/ui/data-table/table-composer.tsx",
+  "src/shared/ui/data-table/table-features.ts",
   "src/shared/ui/data-table/use-data-table.ts",
   "src/shared/ui/vocab/capability.tsx",
   "src/shared/ui/vocab/confidence.tsx",

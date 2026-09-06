@@ -6,6 +6,7 @@ import {
   entityTableColumns,
 } from "@/domains/entities/components/entity-table.columns";
 import type { EntityRecord } from "@/domains/entities/types";
+import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import { testId } from "@watchdog/test-kit";
 
 const ENTITY: EntityRecord = {
@@ -20,8 +21,8 @@ const ENTITY: EntityRecord = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
-function asRow(entity: EntityRecord): Row<EntityRecord> {
-  return { original: entity } as Row<EntityRecord>;
+function asRow(entity: EntityRecord): Row<DataTableFeatures, EntityRecord> {
+  return { original: entity } as Row<DataTableFeatures, EntityRecord>;
 }
 
 describe("entity-table.columns", () => {

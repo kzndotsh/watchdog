@@ -19,6 +19,7 @@ import {
   EditableSelectCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
+import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { NotesIconCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
@@ -27,7 +28,7 @@ import { WithTooltip } from "@/shared/ui/timestamp";
 import { ENTITY_KIND_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import { entityKindSchema, type EntityKind } from "@watchdog/schemas";
 
-export const entityGlobalFilterFn: FilterFn<EntityRecord> = (
+export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRecord> = (
   row,
   _id,
   filterValue
@@ -67,9 +68,9 @@ export interface EntityTableMeta {
 }
 
 function entityMeta(
-  ctx: Pick<CellContext<EntityRecord, unknown>, "table">
+  ctx: Pick<CellContext<DataTableFeatures, EntityRecord>, "table">
 ): EntityTableMeta {
-  return ctx.table.options.meta as EntityTableMeta;
+  return ctx.table.options.meta as unknown as EntityTableMeta;
 }
 
 function arrayIncludesFilter(value: unknown, cell: string): boolean {
@@ -85,29 +86,39 @@ function filterByKind(
   return arrayIncludesFilter(value, row.original.kind);
 }
 
-function nameColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
+function nameColumnHeader({
+  column,
+}: HeaderContext<DataTableFeatures, EntityRecord>) {
   return <DataTableColumnHeader column={column} title="Name" />;
 }
 
-function kindColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
+function kindColumnHeader({
+  column,
+}: HeaderContext<DataTableFeatures, EntityRecord>) {
   return <DataTableColumnHeader column={column} title="Kind" />;
 }
 
-function summaryColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
+function summaryColumnHeader({
+  column,
+}: HeaderContext<DataTableFeatures, EntityRecord>) {
   return <DataTableColumnHeader column={column} title="Summary" />;
 }
 
 function connectionsColumnHeader({
   column,
-}: HeaderContext<EntityRecord, unknown>) {
+}: HeaderContext<DataTableFeatures, EntityRecord>) {
   return <DataTableColumnHeader column={column} title="Connections" />;
 }
 
-function updatedColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
+function updatedColumnHeader({
+  column,
+}: HeaderContext<DataTableFeatures, EntityRecord>) {
   return <DataTableColumnHeader column={column} title="Updated" />;
 }
 
-function notesColumnHeader({ column }: HeaderContext<EntityRecord, unknown>) {
+function notesColumnHeader({
+  column,
+}: HeaderContext<DataTableFeatures, EntityRecord>) {
   return (
     <DataTableColumnHeader
       column={column}
@@ -126,7 +137,7 @@ function formatFullLocalDateTime(iso: string): string {
   });
 }
 
-function renderNameCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   const row = ctx.row.original;
   return (
     <div className="flex min-w-0 items-center gap-1.5">
@@ -138,7 +149,7 @@ function renderNameCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
-function renderKindCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderKindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   const row = ctx.row.original;
   const meta = entityMeta(ctx);
   return (
@@ -155,7 +166,9 @@ function renderKindCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
-function renderConnectionsCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderConnectionsCell(
+  ctx: CellContext<DataTableFeatures, EntityRecord>
+) {
   const row = ctx.row.original;
   const meta = entityMeta(ctx);
   return (
@@ -169,7 +182,7 @@ function renderConnectionsCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
-function renderSummaryCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderSummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   const row = ctx.row.original;
   const meta = entityMeta(ctx);
   return (
@@ -186,7 +199,7 @@ function renderSummaryCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
-function renderNotesCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderNotesCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   const row = ctx.row.original;
   const meta = entityMeta(ctx);
   return (
@@ -201,7 +214,9 @@ function renderNotesCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
-function renderUpdatedAtCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderUpdatedAtCell(
+  ctx: CellContext<DataTableFeatures, EntityRecord>
+) {
   const { updatedAt, createdAt } = ctx.row.original;
   if (!updatedAt) {
     return <span className="text-muted-foreground text-label-mono-sm">—</span>;
@@ -227,7 +242,7 @@ function renderUpdatedAtCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
-function renderActionsCell(ctx: CellContext<EntityRecord, unknown>) {
+function renderActionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   const row = ctx.row.original;
   const meta = entityMeta(ctx);
   return (
@@ -240,66 +255,67 @@ function renderActionsCell(ctx: CellContext<EntityRecord, unknown>) {
   );
 }
 
-export const entityTableColumns: ColumnDef<EntityRecord>[] = [
-  {
-    accessorKey: "name",
-    header: nameColumnHeader,
-    cell: renderNameCell,
-    meta: { label: "Name" },
-    enableHiding: false,
-    size: 150,
-    minSize: 100,
-  },
-  {
-    accessorKey: "kind",
-    header: kindColumnHeader,
-    cell: renderKindCell,
-    filterFn: filterByKind,
-    meta: { label: "Kind" },
-    size: 100,
-    minSize: 90,
-  },
-  {
-    accessorKey: "summary",
-    header: summaryColumnHeader,
-    cell: renderSummaryCell,
-    meta: { label: "Summary" },
-    size: 280,
-  },
-  {
-    id: "connections",
-    header: connectionsColumnHeader,
-    cell: renderConnectionsCell,
-    enableSorting: false,
-    meta: { label: "Connections" },
-    size: 280,
-    minSize: 200,
-  },
-  {
-    accessorKey: "notes",
-    header: notesColumnHeader,
-    cell: renderNotesCell,
-    enableSorting: false,
-    meta: { label: "Notes" },
-    size: 52,
-    minSize: 48,
-  },
-  {
-    accessorKey: "updatedAt",
-    header: updatedColumnHeader,
-    cell: renderUpdatedAtCell,
-    meta: { label: "Updated" },
-    size: 100,
-    minSize: 90,
-  },
-  {
-    id: "actions",
-    header: () => <span className="sr-only">Actions</span>,
-    cell: renderActionsCell,
-    enableSorting: false,
-    enableHiding: false,
-    meta: { label: "Actions" },
-    size: 48,
-    minSize: 48,
-  },
-];
+export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRecord>[] =
+  [
+    {
+      accessorKey: "name",
+      header: nameColumnHeader,
+      cell: renderNameCell,
+      meta: { label: "Name" },
+      enableHiding: false,
+      size: 150,
+      minSize: 100,
+    },
+    {
+      accessorKey: "kind",
+      header: kindColumnHeader,
+      cell: renderKindCell,
+      filterFn: filterByKind,
+      meta: { label: "Kind" },
+      size: 100,
+      minSize: 90,
+    },
+    {
+      accessorKey: "summary",
+      header: summaryColumnHeader,
+      cell: renderSummaryCell,
+      meta: { label: "Summary" },
+      size: 280,
+    },
+    {
+      id: "connections",
+      header: connectionsColumnHeader,
+      cell: renderConnectionsCell,
+      enableSorting: false,
+      meta: { label: "Connections" },
+      size: 280,
+      minSize: 200,
+    },
+    {
+      accessorKey: "notes",
+      header: notesColumnHeader,
+      cell: renderNotesCell,
+      enableSorting: false,
+      meta: { label: "Notes" },
+      size: 52,
+      minSize: 48,
+    },
+    {
+      accessorKey: "updatedAt",
+      header: updatedColumnHeader,
+      cell: renderUpdatedAtCell,
+      meta: { label: "Updated" },
+      size: 100,
+      minSize: 90,
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      cell: renderActionsCell,
+      enableSorting: false,
+      enableHiding: false,
+      meta: { label: "Actions" },
+      size: 48,
+      minSize: 48,
+    },
+  ];

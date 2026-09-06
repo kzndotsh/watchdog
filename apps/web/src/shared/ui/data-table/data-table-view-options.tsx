@@ -1,4 +1,4 @@
-import type { Table } from "@tanstack/react-table";
+import type { ReactTable, RowData } from "@tanstack/react-table";
 import { Settings2Icon } from "lucide-react";
 
 import { Button } from "@/shared/ui/shadcn/button";
@@ -12,11 +12,15 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/shadcn/dropdown-menu";
 
-interface Props<TData> {
-  table: Table<TData>;
+import type { DataTableFeatures } from "./table-features";
+
+interface Props<TData extends RowData> {
+  table: ReactTable<DataTableFeatures, TData>;
 }
 
-export function DataTableViewOptions<TData>({ table }: Props<TData>) {
+export function DataTableViewOptions<TData extends RowData>({
+  table,
+}: Props<TData>) {
   const columns = table.getAllColumns().filter((col) => col.getCanHide());
   const visibleCount = columns.filter((col) => col.getIsVisible()).length;
   const totalCount = columns.length;

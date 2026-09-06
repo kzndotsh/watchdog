@@ -71,8 +71,11 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
 
   const getRowActions = useCallback(
     (row: CaseIdentifierRecord) =>
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack TableMeta slot
-      identifierRowActions(row, table.options.meta as IdentifiersTableMeta),
+      identifierRowActions(
+        row,
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- TanStack TableMeta slot
+        table.options.meta as unknown as IdentifiersTableMeta
+      ),
     [table.options.meta]
   );
 

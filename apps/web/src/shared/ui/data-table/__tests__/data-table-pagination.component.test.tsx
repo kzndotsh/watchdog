@@ -1,20 +1,26 @@
-import type { Table } from "@tanstack/react-table";
+import type { ReactTable } from "@tanstack/react-table";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DataTablePagination } from "@/shared/ui/data-table/data-table-pagination";
+import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 
-function mockTable(overrides: Partial<Table<unknown>> = {}): Table<unknown> {
+function mockTable(
+  overrides: Partial<
+    ReactTable<DataTableFeatures, Record<string, unknown>>
+  > = {}
+): ReactTable<DataTableFeatures, Record<string, unknown>> {
   return {
     getPageCount: () => 3,
     getState: () => ({ pagination: { pageIndex: 0 } }),
+    state: { pagination: { pageIndex: 0, pageSize: 25 } },
     getFilteredRowModel: () => ({ rows: [{}, {}, {}] }),
     getCanPreviousPage: () => false,
     getCanNextPage: () => true,
     previousPage: vi.fn(),
     nextPage: vi.fn(),
     ...overrides,
-  } as unknown as Table<unknown>;
+  } as unknown as ReactTable<DataTableFeatures, Record<string, unknown>>;
 }
 
 describe("DataTablePagination", () => {

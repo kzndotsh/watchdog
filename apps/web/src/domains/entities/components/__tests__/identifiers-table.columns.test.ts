@@ -6,6 +6,7 @@ import {
   identifiersGlobalFilterFn,
 } from "@/domains/entities/components/identifiers-table.columns";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
+import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import { testId } from "@watchdog/test-kit";
 
 const ROW: CaseIdentifierRecord = {
@@ -23,8 +24,10 @@ const ROW: CaseIdentifierRecord = {
   evidenceIds: [],
 };
 
-function asRow(record: CaseIdentifierRecord): Row<CaseIdentifierRecord> {
-  return { original: record } as Row<CaseIdentifierRecord>;
+function asRow(
+  record: CaseIdentifierRecord
+): Row<DataTableFeatures, CaseIdentifierRecord> {
+  return { original: record } as Row<DataTableFeatures, CaseIdentifierRecord>;
 }
 
 describe("identifiers-table.columns", () => {
