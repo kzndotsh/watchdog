@@ -5,10 +5,13 @@ import { useRef } from "react";
 import { createCaseFn } from "@/domains/cases/cases.functions";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseList } from "@/domains/cases/hooks/use-case-list";
+import { caseCardActions } from "@/domains/cases/lib/case-card-actions";
 import type { CaseRecord } from "@/domains/cases/types";
 import { cn, errMessage, nextAutoSlug, slugifyName } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
+import { filterActionsForSurface } from "@/shared/lib/app-action";
+import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import {
   CASE_CARD_ACTIVE_CLASS,
   CASE_CARD_MIN_HEIGHT_CLASS,
@@ -32,7 +35,6 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/shadcn/alert-dialog";
 import { Button } from "@/shared/ui/shadcn/button";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
 import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
@@ -54,13 +56,23 @@ function CaseCard({
   onSetActiveOnly: () => void;
   onDelete: () => void;
 }) {
+  const actions = caseCardActions(caseRow, {
+    onOpen: onWork,
+    onSetActiveOnly: isActive ? undefined : onSetActiveOnly,
+    onDelete,
+    selecting,
+  });
+  const dropdownActions = filterActionsForSurface(actions, "dropdown");
+  const shellClass = cn(
+    CASE_CARD_SHELL_CLASS,
+    "group flex h-full min-h-36 flex-col gap-3 p-5",
+    isActive && CASE_CARD_ACTIVE_CLASS
+  );
+
   return (
-    <div
-      className={cn(
-        CASE_CARD_SHELL_CLASS,
-        "group flex h-full min-h-36 flex-col gap-3 p-5",
-        isActive && CASE_CARD_ACTIVE_CLASS
-      )}
+    <ActionsContextMenu
+      actions={actions}
+      trigger={<div className={shellClass} />}
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1 space-y-0.5">
@@ -77,16 +89,11 @@ function CaseCard({
             Active
           </DetailStatusChip>
         ) : null}
-        <RowActionsMenu label="Case actions" className="opacity-100">
-          {isActive ? null : (
-            <DropdownMenuItem disabled={selecting} onClick={onSetActiveOnly}>
-              Set as active case
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem className="text-destructive" onClick={onDelete}>
-            Delete
-          </DropdownMenuItem>
-        </RowActionsMenu>
+        <RowActionsMenu
+          label="Case actions"
+          className="opacity-100"
+          actions={dropdownActions}
+        />
       </div>
 
       {caseRow.description ? (
@@ -109,7 +116,7 @@ function CaseCard({
       >
         Open
       </Button>
-    </div>
+    </ActionsContextMenu>
   );
 }
 
