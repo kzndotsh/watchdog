@@ -7,7 +7,7 @@ import {
 import {
   CONFIRMED_REQUIRES_EVIDENCE,
   CONFIRMED_REQUIRES_EVIDENCE_HINT,
-} from "@/domains/dossier/lib/confirmed-evidence";
+} from "@/shared/lib/confirmed-evidence";
 
 const BASE: ConnectionFormValues = {
   peerId: "peer-1",

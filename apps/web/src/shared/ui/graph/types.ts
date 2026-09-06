@@ -37,9 +37,3 @@ export interface GraphEdge {
   };
   selected?: boolean;
 }
-
-/** @deprecated Use {@link GraphNode}. */
-export type EntityFlowNode = GraphNode;
-
-/** @deprecated Use {@link GraphEdge}. */
-export type PredicateFlowEdge = GraphEdge;

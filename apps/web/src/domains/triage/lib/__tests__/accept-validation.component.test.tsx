@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@/domains/dossier/lib/confirmed-evidence";
 import { AcceptGateMessage } from "@/domains/triage/components/accept-gate-message";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@/shared/lib/confirmed-evidence";
 
 describe("AcceptGateMessage", () => {
   it("shows the confirmed-requires-evidence text when the gate is blocked", async () => {

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { claimEvidenceIdsValidator } from "../claim-form.ts";
 import {
   CONFIRMED_REQUIRES_EVIDENCE,
   isConfirmedBlocked,
-} from "../confirmed-evidence.ts";
+} from "@/shared/lib/confirmed-evidence";
+
+import { claimEvidenceIdsValidator } from "../claim-form.ts";
 
 describe("isConfirmedBlocked", () => {
   it("blocks confirmed with zero evidence", () => {

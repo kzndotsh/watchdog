@@ -2,13 +2,12 @@
 import { useForm } from "@tanstack/react-form";
 import { useEffect, useMemo, type SubmitEvent } from "react";
 
-import { EvidencePicker } from "@/domains/dossier/components/evidence-picker";
+import type { EvidenceOption } from "@/domains/dossier/types";
+import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
 import {
   CONFIRMED_REQUIRES_EVIDENCE,
   isConfirmedBlocked,
-} from "@/domains/dossier/lib/confirmed-evidence";
-import type { EvidenceOption } from "@/domains/dossier/types";
-import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
+} from "@/shared/lib/confirmed-evidence";
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
@@ -16,6 +15,7 @@ import {
   FormInlineError,
   FormInlineWarning,
 } from "@/shared/ui/form-inline-message";
+import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   Dialog,

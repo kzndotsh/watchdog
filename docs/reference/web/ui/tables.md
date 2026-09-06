@@ -14,7 +14,7 @@ This page defines the column-sizing and DataTable pending contract.
 | `min-w-0 overflow-hidden` on cells; truncate in the cell | Let `min-width: auto` fight the colgroup |
 | Raw preview tables: same `<colgroup>` percentages that sum to 100% | Widths only on `<th>` |
 
-Surfaces: Entities (`entity-table.columns.tsx`), Identifiers (`identifiers-table.columns.tsx` + dossier `identifiers-section.cells.tsx`), bulk-add preview (`PREVIEW_COLUMNS` in the dialog). Queues / boards / ColumnMapper grids are not tables.
+Surfaces: Entities (`entity-table.columns.tsx`), Identifiers (`identifiers-table.columns.tsx` + `shared/ui/identifiers/identifier-cells.tsx`), bulk-add preview (`PREVIEW_COLUMNS` in the dialog). Queues / boards / ColumnMapper grids are not tables.
 
 ## Tables
 

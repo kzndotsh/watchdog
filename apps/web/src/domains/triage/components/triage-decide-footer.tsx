@@ -1,11 +1,5 @@
 import { CheckIcon, GaugeIcon, XIcon } from "lucide-react";
 
-import {
-  EvidenceCiteChips,
-  EvidencePicker,
-  EvidenceSlotSkeleton,
-} from "@/domains/dossier/components/evidence-picker";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@/domains/dossier/lib/confirmed-evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { AcceptGateMessage } from "@/domains/triage/components/accept-gate-message";
 import type {
@@ -22,10 +16,16 @@ import {
   type DecideEvidenceMode,
 } from "@/domains/triage/lib/decide-header-view";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@/shared/lib/confirmed-evidence";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
+import {
+  EvidenceCiteChips,
+  EvidencePicker,
+  EvidenceSlotSkeleton,
+} from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
 import { WithTooltip } from "@/shared/ui/timestamp";

@@ -20,7 +20,6 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `ComposerShell` | Muted bordered composer surface | Add/edit dossier forms | Callouts / dashed rows | : | canonical | yes | muted |
 | `ConfidenceSelect` | Confidence Select: CONTROL chrome (same density as FieldSelect) | Graph / Accept confidence | Display-only chips | `ConfidenceBadge` | canonical | yes | : |
 | `control-chrome` | Shared dense field + menu tokens (`h-8` / `text-xs` / `rounded-md`) | SearchField · Select · Combobox | Freestyle control heights | : | canonical | no | : |
-| `CopyControl` | Copy-to-clipboard control | Standalone copy affordance | Inside opaque ids | `IdChip copyable` | unused | indirect | : |
 | `DestructiveConfirmDialog` | Type-to-confirm destroy | Irreversible deletes | Soft cancels | AlertDialog | canonical | no | destructive |
 | `DetailEmpty` | Select-none Detail empty: quiet, no dashed frame | No queue selection | Loading / blank slate | `InlineLoading` · `EmptyState` | canonical | yes | muted |
 | `DetailFooter` | Bottom CTA bar for Detail | Accept / Cancel / Harvest · Enrich | Identity / meta | `DetailHeader` | canonical | yes | : |
@@ -43,8 +42,8 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `EntityMention` | Entity name (optional dossier link) | Inline entity refs (dossier connection list) | Row-click tables / Entities Connections chips (nested `<a>` fights row nav) | static name / chip text | canonical | yes | : |
 | `ActorMention` | Optional `By` prefix + AtSign glyph + handle (`api-key:…` unprefixed); no chip | Job / Evidence / Triage / Activity actor | Entity names · opaque ids | `EntityMention` · `IdChip` | canonical | yes | : |
 | `EditableSuggestCell` | Commit-on-pick suggest cell (uncontrolled selection: avoids snap-back to the stale saved value) | Inline table freeform+suggest | Forms | `EditableTextCell` · `FieldCombobox` | canonical | no | : |
-| `EvidencePicker` | Dense multi-select Case Evidence (chip-height Add/+ · checklist popover; `layout="panel"` for parent shells; options as `readonly EvidenceOption[]`; label helper `evidenceLabel` in `shared/ui/intake/evidence-option.ts`) | Dossier composers · identifier Link · Triage | Job cite display | `EvidenceCiteChips` | **domain** (`dossier/components/evidence-picker.tsx` re-exports `shared/ui`) | no | : |
-| `EvidenceCiteChips` | Read-only Job/proposal cite chips | Triage decide band | Multi-select | `EvidencePicker` | **domain** (same file) | no | : |
+| `EvidencePicker` | Dense multi-select Case Evidence (chip-height Add/+ · checklist popover; `layout="panel"` for parent shells; options as `readonly EvidenceOption[]`; label helper `evidenceLabel` in `shared/ui/intake/evidence-option.ts`) | Dossier composers · identifier Link · Triage | Job cite display | `EvidenceCiteChips` | canonical (`shared/ui/intake/evidence-picker.tsx`) | no | : |
+| `EvidenceCiteChips` | Read-only Job/proposal cite chips | Triage decide band | Multi-select | `EvidencePicker` | canonical (same file) | no | : |
 | `EvidenceDetailSkeleton` | Evidence/Collect Detail skeleton: header · tabs · `ArtifactPreviewSkeleton` · `DetailFooter` | Collect/Triage detail data-slot | Static shell / select-none empty | generic header/body blocks | canonical | no | : |
 | `FetchErrorAlert` | Load-failure banner | Route / region fetch fail | Field validation | `FormInlineError` | canonical | yes | destructive |
 | `FieldSelect` | Dense string Select: CONTROL chrome | Cap / playbook / kind pickers | Native `<select>` · enum-specific atoms | `ConfidenceSelect` · `FieldCombobox` | canonical | yes | : |
@@ -52,7 +51,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `FormInlineError` | Field / form inline error | Mutation / validation errors | Load failures | `FetchErrorAlert` | canonical | yes | destructive |
 | `FormInlineWarning` | Field / form inline warning | Soft confirm / evidence hints | Hard errors | `FormInlineError` | canonical | yes | warning |
 | `FormSection` | Settings fieldset card (`ACCENT_CARD_SURFACE`) | Auth/settings forms | Queue composers | `ComposerShell` | canonical | no | : |
-| `IdChip` | Opaque id/hash mono chip (whole-chip copy when `copyable`; `full` skips truncate) | UUIDs / hashes | Human labels | `MiddleTruncate` · `CopyControl` | canonical | yes | chip |
+| `IdChip` | Opaque id/hash mono chip (whole-chip copy when `copyable`; `full` skips truncate) | UUIDs / hashes | Human labels | `MiddleTruncate` | canonical | yes | chip |
 | `IdentifierNotesCell` / `NotesIconCell` | Sticky-note icon → right Sheet + `RichTextEditor` Markdown (blur/close autosave) | Identifier + Entity table Notes columns (`/identifiers` · `/entities` · Dossier Identifiers) | Inline Notes cells · entity Summary/Notes tabs | `RichTextEditor` | canonical | no | : |
 | `InlineLoading` | Spinner + label region wait | In-flight Detail / panel | Full-page pending | `RoutePending` | canonical | yes | : |
 | `JsonView` | Collapsible JSON tree | Structured artifacts | Syntax-highlighted dumps | `CodeBlock` | canonical | no | : |
@@ -66,8 +65,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `QueueRow` (+ Title/Meta) | Queue hit-target row | Homogeneous work lists | Card stacks | : | canonical | yes | : |
 | `RecentActivity` | Dashboard Activity: header + case filter + ScrollArea feed (lives in vertical resizable panel) | Dashboard Activity panel | Page-level dump / paste | `ScrollArea` · `ResizablePanelGroup` | **domain** (`dashboard/components/recent-activity.tsx`) | no | : |
 | `RelativeTime` | Relative + tooltip absolute | Queue/activity times | Exact wall clock alone | `LocalDateTime` | canonical | yes | : |
-| `RichTextEditor` | Plate Markdown editor (marks · headings · lists); toolbar state helpers in `rich-text-toolbar-controls.lib.ts` | Dossier Summary / Notes · Edit dialog prose | Claim/identifier note fields · Plate JSON persistence | `Textarea` · `RichTextViewer` | canonical | yes | : |
-| `RichTextViewer` | Read-only Plate Markdown render | Future Proof / manuscript preview | Editable prose | `RichTextEditor` | canonical | no | : |
+| `RichTextEditor` | Plate Markdown editor (marks · headings · lists); toolbar state helpers in `rich-text-toolbar-controls.lib.ts` | Dossier Summary / Notes · Edit dialog prose | Claim/identifier note fields · Plate JSON persistence | `Textarea` | canonical | yes | : |
 | `RowActionsMenu` | Hover-reveal row actions | Dossier row menus · Entities / Identifiers table Actions column · graph node ⋯ · Cases cards | Page toolbars | DropdownMenu | canonical | yes | : |
 | `DropdownActionItems` / `ContextActionItems` | `AppAction[]` → menu items | Shared ⋯ / right-click / factories | Ad-hoc `DropdownMenuItem` when a factory exists | : | canonical | yes | : |
 | `ActionsContextMenu` | ContextMenu + editable capture skip | Table rows · inset fallback · graph nodes · Cases cards | Dropdown-only ⋯ | ContextMenu | canonical | no | : |
@@ -83,7 +81,6 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `BoardSkeleton` | Task board column/card skeleton | `PendingRegion` fallback for task board | Full page chrome | : | canonical | yes | : |
 | `CardGridSkeleton` | Case grid slot skeleton | `PendingRegion` fallback for cases grid | Full page chrome | : | canonical | yes | : |
 | `case-card-shell` | Shared case grid card/create shell class tokens | `CaseList` · `CardGridSkeleton` | Ad-hoc case card chrome | : | canonical | no | : |
-| `DossierBodySkeleton` | Alias of `StackBodySkeleton` | Legacy import | Prefer `StackBodySkeleton` | : | deprecated | yes | : |
 | `SplitView` | Queue \| Detail split | Console surfaces | Stacked pages | : | canonical | yes | : |
 | `StatusDot` | Lifecycle color dot | Live job rows | Full status label | `StatusBadge` | canonical | yes | `--status-*` |
 | `TabCount` | Count pill on tabs / last crumb | Tab labels · `PageHeader count=` | Queue headers · `/ N entities` copy | `QueueHeader` count | canonical | no | : |

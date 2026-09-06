@@ -5,7 +5,6 @@ import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
-import { EvidencePicker } from "@/domains/dossier/components/evidence-picker";
 import { ClaimClassSelect } from "@/domains/dossier/components/graph-field-selects";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
@@ -19,11 +18,6 @@ import {
   claimRowActions,
   type ClaimRowActionKind,
 } from "@/domains/dossier/lib/claim-row-actions";
-import {
-  CONFIRMED_REQUIRES_EVIDENCE,
-  CONFIRMED_REQUIRES_EVIDENCE_HINT,
-  isConfirmedBlocked,
-} from "@/domains/dossier/lib/confirmed-evidence";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import {
   createClaimFn,
@@ -33,6 +27,11 @@ import {
 } from "@/domains/entities/claims/claims.functions";
 import { claimsListQuery } from "@/domains/entities/claims/queries";
 import { cn, errMessage } from "@/lib/utils";
+import {
+  CONFIRMED_REQUIRES_EVIDENCE,
+  CONFIRMED_REQUIRES_EVIDENCE_HINT,
+  isConfirmedBlocked,
+} from "@/shared/lib/confirmed-evidence";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
@@ -40,6 +39,7 @@ import {
   FormInlineError,
   FormInlineWarning,
 } from "@/shared/ui/form-inline-message";
+import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";

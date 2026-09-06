@@ -5,7 +5,7 @@ import {
   EvidenceCiteChips,
   EvidencePicker,
   EvidenceSlotSkeleton,
-} from "@/domains/dossier/components/evidence-picker";
+} from "@/shared/ui/intake/evidence-picker";
 import { testId } from "@watchdog/test-kit";
 
 const OPTION = {

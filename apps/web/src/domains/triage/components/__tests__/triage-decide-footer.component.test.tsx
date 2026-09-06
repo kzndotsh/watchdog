@@ -10,7 +10,7 @@ import type {
 import type { ProposalRecord } from "@watchdog/core";
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/domains/dossier/components/evidence-picker", () => ({
+vi.mock("@/shared/ui/intake/evidence-picker", () => ({
   EvidencePicker: () => <div>Evidence picker</div>,
   EvidenceCiteChips: () => <div>Evidence cites</div>,
   EvidenceSlotSkeleton: ({ mode }: { mode: string }) => (

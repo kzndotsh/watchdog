@@ -1,4 +1,4 @@
-import { isConfirmedBlocked } from "@/domains/dossier/lib/confirmed-evidence";
+import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import type { ConfidenceTier } from "@watchdog/schemas";
 
 export function totalEvidenceCount(
