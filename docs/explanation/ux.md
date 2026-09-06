@@ -3,7 +3,7 @@
 **What this is:** how investigators _use_ Watchdog: information architecture, flows, empty/error meaning, copy, experience debt.  
 **What this is not:** tokens, atoms, or component naming: that is [`docs/reference/web/UI.md`](../../docs/reference/web/UI.md). Product intent, personas, and doctrine live in [`PRODUCT.md`](product.md).
 
-Last updated: 2026-09-05 (Detail strip ink + By @actor; skeleton queue day headers)
+Last updated: 2026-09-06 (target-only context menus + chrome on inset; Commands from `paletteCommands`)
 
 ## Product principle
 
@@ -35,7 +35,8 @@ Operate mode: task clarity over surprise. Surfaces earn their chrome; don't inve
 4. **Dossier**: open entity → Overview (BLUF Summary via Plate Markdown + scan) / Notes (full-height Plate) / Claims / ids / connections / evidence / events / questions / **Tasks**; trail is folder + `{name} / Entities / {name}` (`EntityKindGlyph` + blur-save name as last crumb) or **Edit** → `DossierEditDialog` (name / kind / summary / notes Markdown); click Case → Overview; click Entities → table. Evidence tab dumps onto this subject + peek via Drawer. Questions: inline edit (open + resolved), resolve, reopen.
 5. **Case scope**: Active Case is cookie-scoped (not in URL for Work/graph nouns); all work is Case-bound. Sidebar: WATCHDOG logo → Dashboard (`/`); **Search…** (Mod+K) above Case; under Case: flat Overview / Entities / Identifiers / Graph. Case Overview (`/cases/$caseSlug`) is the case dashboard (stats / activity / settings); Manage **Cases** **Open** sets Active and lands on Overview (**Set as active case** stays in the card menu). Legacy `/cases/$uuid` and `?tab=` bookmarks redirect.
 6. **Tasks**: case-scoped work items (not Graph writes). `/tasks` is kanban-only (fixed status columns; drag across columns changes status; drag within a column reorders via `position`; lane quick-create + header New task → full dialog). Optional `?entityId=` filter. Due dates are calendar-day only. Dossier **Tasks** tab = entity-scoped board (`density="split"`).
-7. **Command palette**: Mod+K (or sidebar Search) opens a shell-mounted palette. Idle = Jump to pages. Type ≥2 chars → Active Case `searchCase` hits (Entities, Identifiers, Evidence, Tasks, Jobs, pending Triage) plus Cases (switch + Overview). `?` opens the Shortcuts sheet; Mod+B toggles the sidebar.
+7. **Command palette**: Mod+K (or sidebar Search) opens a shell-mounted palette. Idle = Jump to pages + **Commands** (sidebar toggle, shortcuts — same chrome `AppAction`s as inset right-click, excluding open-palette). Type ≥2 chars → Active Case `searchCase` hits (Entities, Identifiers, Evidence, Tasks, Jobs, pending Triage) plus Cases (switch + Overview). `?` opens the Shortcuts sheet; Mod+B toggles the sidebar.
+8. **Context menu**: Right-click is innermost-wins. Target menus (table rows, dossier section rows, task cards, Cases cards, ego nodes) are **target actions only**; inset `#app-main` owns app chrome (Search / Sidebar / Shortcuts). ⋯ menus share the same target `AppAction` list (DropdownMenu). Editable fields (`input` / `textarea` / contenteditable) keep the native browser menu. Case overview `/graph` intentionally has no node menu.
 
 ### Triage Accept (product rules)
 
@@ -137,10 +138,11 @@ UI/engineering debt (tokens, atom extract, `variant="panel"` rename) lives in gi
 | Triage | Strong | Accept/Reject parity with Collect run chrome; Reject explains FP memory; identifier collision Alert (warn, don't block) |
 | Dossier | Mixed | PageHeader trail folder + `{name} / Entities / {name}` (`EntityKindGlyph` + editable last crumb); line tabs (`below=`); **Edit** → `DossierEditDialog` (name/kind/summary/notes); **Tasks** tab (entity-scoped kanban, split density); Connections = outbound/inbound list + read-only 1-hop canvas + dialog CRUD (`clampEdgePhrase` on peer change); Evidence tab dumps File/Paste/URL (Entity locked) + list + Drawer peek; `EvidencePicker` on composers / `EvidenceCiteChips` on Job cites; Overview BLOT still dense |
 | Entities / Cases | Fine | Entities: dense DataTable (+ Connections). Identifiers: Active-Case table (`/identifiers`) with in-place create + bulk-add paste/map. Graph: `/graph` preview. Cases (Manage): create / Open / export. Case Overview: dashboard only (no Tasks tab). |
-| Tasks | Fine | `/tasks` kanban (dnd-kit); drag changes status **and** within-column order (`position`); lane quick-create; `TaskFormDialog` create/edit; date-only due; Task ≠ Graph write |
+| Tasks | Fine | `/tasks` kanban (dnd-kit); drag changes status **and** within-column order (`position`); lane quick-create; `TaskFormDialog` create/edit; card ⋯ / right-click Open + Delete; date-only due; Task ≠ Graph write |
 | Dashboard | Strong | Trail last crumb **Dashboard**. Stat cards 3×2 (Proposals pending / Tasks overdue / Tasks due soon / Jobs running / Entities / Cases); Triage + Due panels (dashed empty); Activity = vertical resizable panel + `ScrollArea` (cross-case, case filter); sidebar owns Case switch / nav / Mod+K Search; dump stays on Collect |
 | Settings | Fine | Sidebar sections (Account / Security / Team / Users / API Keys / Credentials); Cap credentials Connect dialog + vault; Team invite is organization membership; Users is instance-admin Disable/Enable |
-| Command palette | Strong | Mod+K shell palette: Jump to + Active Case search (entities / ids / evidence / tasks / jobs / pending Triage) + Cases switch; `?` Shortcuts; Mod+B sidebar |
+| Command palette | Strong | Mod+K shell palette: Jump to + Commands (`paletteCommands`) + Active Case search (entities / ids / evidence / tasks / jobs / pending Triage) + Cases switch; `?` Shortcuts; Mod+B sidebar |
+| Context menu | Strong | Right-click: target menus are target-only; inset owns chrome; ⋯ shares target actions; editables keep native menu; tables + dossier sections + task cards + Cases cards + ego graph; case `/graph` omits |
 
 ## UX PR checklist
 

@@ -38,7 +38,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `EmptyState` | blank-slate / no-results / cleared: quiet chrome (no built-in dashed frame) | Queue or blank slate; dossier panel parents may add dashed border | Select-none Detail | `DetailEmpty` | canonical | yes | : |
 | `EntityNode` | Entity card (kind border + optional ⋯ menu) | Graph canvases (ego + case overview) | Non-graph lists | `EntityMention` | canonical | no | `--kind-*` |
 | `GraphEdgePath` | Floating bezier + predicate label | Graph canvases | Tables / lists | : | canonical | no | `--confidence-*` |
-| `GraphCanvas` | CSS dot grid + pan/zoom + fit-view | Ego + case overview canvases | Custom physics / layout | domain layout helpers | canonical | no | : |
+| `GraphCanvas` | CSS dot grid + pan/zoom + fit-view; optional `getNodeActions` → ContextMenu + ⋯ | Ego + case overview canvases (case omits `getNodeActions`) | Custom physics / layout | domain layout helpers | canonical | no | : |
 | `GraphCanvasSkeleton` | Hand graph skeleton layout | Graph loading region / `/ui` specimen | Primary graph runtime | `GraphCanvas` | canonical | yes | : |
 | `EntityMention` | Entity name (optional dossier link) | Inline entity refs (dossier connection list) | Row-click tables / Entities Connections chips (nested `<a>` fights row nav) | static name / chip text | canonical | yes | : |
 | `ActorMention` | Optional `By` prefix + AtSign glyph + handle (`api-key:…` unprefixed); no chip | Job / Evidence / Triage / Activity actor | Entity names · opaque ids | `EntityMention` · `IdChip` | canonical | yes | : |
@@ -68,7 +68,10 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `RelativeTime` | Relative + tooltip absolute | Queue/activity times | Exact wall clock alone | `LocalDateTime` | canonical | yes | : |
 | `RichTextEditor` | Plate Markdown editor (marks · headings · lists); toolbar state helpers in `rich-text-toolbar-controls.lib.ts` | Dossier Summary / Notes · Edit dialog prose | Claim/identifier note fields · Plate JSON persistence | `Textarea` · `RichTextViewer` | canonical | yes | : |
 | `RichTextViewer` | Read-only Plate Markdown render | Future Proof / manuscript preview | Editable prose | `RichTextEditor` | canonical | no | : |
-| `RowActionsMenu` | Hover-reveal row actions | Dossier row menus · Entities / Identifiers table Actions column | Page toolbars | DropdownMenu | canonical | yes | : |
+| `RowActionsMenu` | Hover-reveal row actions | Dossier row menus · Entities / Identifiers table Actions column · graph node ⋯ · Cases cards | Page toolbars | DropdownMenu | canonical | yes | : |
+| `DropdownActionItems` / `ContextActionItems` | `AppAction[]` → menu items | Shared ⋯ / right-click / factories | Ad-hoc `DropdownMenuItem` when a factory exists | : | canonical | yes | : |
+| `ActionsContextMenu` | ContextMenu + editable capture skip | Table rows · inset fallback · graph nodes · Cases cards | Dropdown-only ⋯ | ContextMenu | canonical | no | : |
+| `TargetActionsHost` | ContextMenu shell + trailing ⋯ for a target `AppAction[]` | Dossier Connections / Claims / Events / Questions rows | Tables (use `getRowActions`) · Cases (manual header ⋯) | `ActionsContextMenu` · `RowActionsMenu` | canonical | no | : |
 | `SearchField` | Named search input: CONTROL chrome | Filters / toolbars | Debounced fetch inside atom | : | canonical | yes | : |
 | `SectionHeaderBar` | Title + count + trailing | Sections / day groups | Page headers | `Page` header | canonical | no | : |
 | `SectionLabel` | Small meta section label (normal case) | Field / meta captions · dossier section titles | Page titles | : | canonical | yes | meta |

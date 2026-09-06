@@ -1,6 +1,6 @@
 ---
 document_created: 2026-07-30T01:30
-document_updated: 2026-09-05T09:10
+document_updated: 2026-09-06T12:20
 ---
 
 # SCENARIOS: Day-0 investigator journeys
@@ -118,7 +118,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Identifiers table | shipped | `/identifiers`: Active-Case browse + inline edit + evidence + in-place create (Value first after Entity); **Bulk add** paste/map dialog (default Entity fills empty Entity cells; mapped name/slug miss → **Not found** / **Ambiguous**; preview cells editable; `confirmed` → `unverified`); row click → Dossier Identifiers |
 | Bulk add identifiers | shipped | Same two-stage dialog on `/identifiers` and Dossier Identifiers (paste, then left/right match). Default Entity fills empty Entity cells; a mapped name/slug miss shows **Not found** / **Ambiguous** on the Entity cell (picker stays empty). Preview cells are editable (empty Type/Platform = **: **). Dossier locks Entity. Type deferred from column/values. `validateIdentifierWrite` (incl. handle→platform) marks rows invalid. No Evidence / no `confirmed` from paste. |
 | Case graph page | shipped | `/graph`: case-wide preview (`CaseGraphCanvas`); Graph Studio still Phase 2 |
-| Tasks CRUD + kanban | shipped | `/tasks` kanban only; drag across columns changes status; drag within a column persists `position` via `reorderTasks`; optional entity link (`?entityId=`); Dossier Tasks = entity-scoped board; Case Overview has no Tasks tab (stat tile → `/tasks`); not a Graph write |
+| Tasks CRUD + kanban | shipped | `/tasks` kanban only; drag across columns changes status; drag within a column persists `position` via `reorderTasks`; optional entity link (`?entityId=`); card ⋯ / right-click Open + Delete; Dossier Tasks = entity-scoped board; Case Overview has no Tasks tab (stat tile → `/tasks`); not a Graph write |
 | allowThirdPartyEgress toggle | shipped | Case overview settings; also `PATCH /cases/{id}` / `wd cases update --allow-third-party-egress` |
 | Case-wide identifiers / edges reads | shipped | `GET /cases/{caseId}/identifiers`, `GET /cases/{caseId}/edges` (aggregate views; invalidate with entity change; no CLI parity in v1) |
 | Entity rename (display name) | shipped | Dossier last-crumb blur-save (`KindBadge` + `EditableTextCell`); `PATCH …/entities/{entityId}` name; slug unchanged |
@@ -142,11 +142,17 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | --- | --- | --- |
 | Mod+K opens command palette | shipped | Toggle; works in editable fields; sidebar Search… trigger |
 | Jump to pages (idle) | shipped | Dashboard + Case nav + Work/Manage/Config (no Dev /ui) |
+| Commands group (idle) | shipped | `SearchUi` `paletteCommands` (Toggle sidebar, Shortcuts); open-palette omitted by construction |
 | Type entity name → dossier | shipped | ≥2 chars; Active Case only; Enter → `/entities/$slug` |
 | Identifier / Evidence / Task / Job / Triage hits | shipped | Deep links: identifiers tab, `?id=` (Collect Evidence or Job), `?entityId=` (Tasks), `?proposalId=` (Triage) |
 | Cases group switches Active | shipped | Sets cookie + opens Overview |
-| `?` Shortcuts sheet | shipped | Global list only (no per-surface matrices) |
-| Mod+B toggles sidebar | shipped | Via shared hotkey registry (not shadcn-only listener) |
+| `?` Shortcuts sheet | shipped | Global list only (no per-surface matrices); HOTKEYS catalog stays static |
+| Mod+B toggles sidebar | shipped | Via `useGlobalHotkeys` in `SearchChrome` (not shadcn-only listener) |
+| Entities/Identifiers row context menu | shipped | Same labels as ⋯; target-only; editables keep native menu; Dossier Identifiers included |
+| Ego graph node menu | shipped | ContextMenu + ⋯ DropdownMenu from `getNodeActions`; Case overview graph omits |
+| Dossier section row menus | shipped | Connections / Claims / Events / Questions: `AppAction` factories + ContextMenu + ⋯ |
+| Cases card menu | shipped | Open / Set as active / Delete via `caseCardActions` (⋯ + right-click) |
+| Task card menu | shipped | Open + Delete via `taskCardActions` (⋯ + right-click); dialog Delete still works |
 
 ---
 
