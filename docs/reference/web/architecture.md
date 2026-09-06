@@ -38,7 +38,7 @@ Query cache + loaders + Active Case cookie + SSE: see [`data.md`](data.md).
 
 ## Web oRPC wiring
 
-- **RPC:** `src/routes/api/rpc.$.ts` → `RPCHandler` prefix `/api/rpc`.
+- **Web UI:** ServerFns → in-process `createRouterClient` (`src/lib/orpc.server.ts` / `orpcForActor`). No browser HTTP oRPC mount.
 - **OpenAPI:** `src/routes/api/v1.ts` + `v1.$.ts` → `OpenAPIHandler` prefix `/api/v1` (Bearer + `x-api-key` + session). Spec `/api/v1/spec.json`.
 - Auth context: Better Auth session → `ApiActor` (`src/auth/api-context.server.ts`); identify fields for logs live there (one `getSession`).
 - ServerFns: `src/lib/orpc.server.ts` in-process client (`orpcForActor`): preferred path for domain I/O; injects ALS `log` from Start middleware. Case Export zip/md = authenticated file routes (API key OK): not oRPC.

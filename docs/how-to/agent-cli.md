@@ -27,7 +27,7 @@ Regenerate client after API changes: `pnpm generate:client` (writes `@watchdog/c
 | `/api/v1/`          | Scalar UI (session or API key) |
 | `/api/v1/spec.json` | OpenAPI JSON                   |
 
-Browser RPC for the web app uses `/api/rpc` (not the CLI path).
+Web UI uses in-process ServerFns (`createRouterClient`), not HTTP oRPC. Agents and CLI use `/api/v1`.
 
 ## Ingress (summary)
 

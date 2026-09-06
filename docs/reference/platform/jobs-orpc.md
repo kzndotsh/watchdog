@@ -16,7 +16,7 @@ One boss per process: web/API via `enqueueCapJobEffect` / `ensureBossProducerEff
 ## oRPC
 
 - Router: `packages/api` (`@watchdog/api`): Zod procedures; business logic in `@watchdog/core`; SQL in `@watchdog/db` `repos`.
-- **RPC (web):** `apps/web` `src/routes/api/rpc.$.ts` → `RPCHandler` prefix `/api/rpc`.
+- **Web UI:** in-process `createRouterClient` via ServerFns (`orpcForActor`). No browser HTTP oRPC / `/api/rpc` mount.
 - **OpenAPI (agents/CLI):** `apps/web` `src/routes/api/v1.ts` + `v1.$.ts` → `OpenAPIHandler` prefix `/api/v1`.
   - Spec: `GET /api/v1/spec.json`
   - Scalar: `GET /api/v1/`
