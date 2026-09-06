@@ -4,12 +4,7 @@ import {
   type AdditionalFieldValue,
   parseAdditionalFieldValue
 } from "@better-auth-ui/core"
-import {
-  type UsernameAuthClient,
-  useAuth,
-  useSession,
-  useUpdateUser
-} from "@better-auth-ui/react"
+import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react"
 import { type SyntheticEvent, useState } from "react"
 import { toast } from "sonner"
 
@@ -36,7 +31,7 @@ export type UserProfileProps = {
  */
 export function UserProfile({ className }: UserProfileProps) {
   const { additionalFields, authClient, localization } = useAuth()
-  const { data: session } = useSession(authClient as UsernameAuthClient)
+  const { data: session } = useSession(authClient)
 
   const { mutate: updateUser, isPending } = useUpdateUser(authClient, {
     onSuccess: () => toast.success(localization.settings.profileUpdatedSuccess)

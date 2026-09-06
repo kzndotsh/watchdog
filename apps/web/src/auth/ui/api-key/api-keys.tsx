@@ -1,11 +1,9 @@
-import { apiKeyPlugin } from "@better-auth-ui/core/plugins"
-import {
-  type ApiKeyAuthClient,
-  useAuth,
-  useAuthPlugin,
-  useListApiKeys
-} from "@better-auth-ui/react"
+import type { ApiKeyAuthClient } from "@better-auth-ui/core/plugins/api-key"
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
+import { useListApiKeys } from "@better-auth-ui/react/plugins/api-key"
 import { useState } from "react"
+
+import { apiKeyPlugin } from "@/auth/plugins/api-key"
 
 import { Button } from "@/shared/ui/shadcn/button"
 import { Card, CardContent } from "@/shared/ui/shadcn/card"

@@ -1,10 +1,11 @@
 "use client"
 
-import { apiKeyPlugin } from "@better-auth-ui/core/plugins"
 import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
 import { Check, Copy, Key } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+
+import { apiKeyPlugin } from "@/auth/plugins/api-key"
 
 import { errMessage } from "@/lib/utils"
 

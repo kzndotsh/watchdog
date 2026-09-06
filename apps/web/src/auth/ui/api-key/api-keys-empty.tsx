@@ -1,6 +1,7 @@
-import { apiKeyPlugin } from "@better-auth-ui/core/plugins"
 import { useAuthPlugin } from "@better-auth-ui/react"
 import { Key } from "lucide-react"
+
+import { apiKeyPlugin } from "@/auth/plugins/api-key"
 
 import { Button } from "@/shared/ui/shadcn/button"
 import { Card, CardContent } from "@/shared/ui/shadcn/card"

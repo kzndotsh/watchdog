@@ -12,15 +12,15 @@ vi.mock("@tanstack/react-start", () => ({
   }),
 }));
 
-vi.mock("@better-auth-ui/react", () => ({
-  sessionOptions: vi.fn(() => ({ queryKey: ["session"] })),
+vi.mock("@better-auth-ui/core", () => ({
+  sessionOptions: vi.fn(() => ({ queryKey: ["session"], queryFn: vi.fn() })),
 }));
 
 vi.mock("@/auth/client", () => ({
   authClient: {},
 }));
 
-import { sessionOptions } from "@better-auth-ui/react";
+import { sessionOptions } from "@better-auth-ui/core";
 
 import { ensureAppSession } from "@/auth/ensure-session";
 
