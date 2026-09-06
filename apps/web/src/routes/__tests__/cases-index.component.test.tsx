@@ -22,17 +22,15 @@ import { Route } from "@/routes/_protected/cases/index";
 
 describe("cases index route", () => {
   it("prefetches cases context in the loader", async () => {
-    const ensureQueryData = vi
-      .fn()
-      .mockResolvedValue({ active: null, cases: [] });
+    const query = vi.fn().mockResolvedValue({ active: null, cases: [] });
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: { ensureQueryData } },
+      context: { queryClient: { query } },
     } as never);
 
-    expect(ensureQueryData).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalledTimes(1);
   });
 
   it("renders the case list page", () => {

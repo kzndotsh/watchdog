@@ -21,6 +21,7 @@ import {
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { Button } from "@/shared/ui/shadcn/button";
 import { uuidSchema } from "@watchdog/schemas";
 
@@ -85,7 +86,7 @@ async function healActiveCaseToOverview(
   if (!isCurrentOverviewSlug(caseSlug)) return;
 
   const epoch = getActiveCaseHealEpoch();
-  const ctx = await queryClient.ensureQueryData(casesContextQuery());
+  const ctx = await ensureAppQueryData(queryClient, casesContextQuery());
   if (healAborted(epoch, caseSlug)) return;
 
   if (ctx.active?.id === caseRow.id) {
@@ -109,7 +110,8 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
   loader: async ({ context: { queryClient }, params, deps }) => {
     // Legacy bookmarks used /cases/$caseId — redirect to slug.
     if (uuidSchema.safeParse(params.caseSlug).success) {
-      const byId = await queryClient.ensureQueryData(
+      const byId = await ensureAppQueryData(
+        queryClient,
         caseByIdQuery(params.caseSlug)
       );
       if (!byId) {
@@ -125,7 +127,8 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
       });
     }
 
-    const caseRow = await queryClient.ensureQueryData(
+    const caseRow = await ensureAppQueryData(
+      queryClient,
       caseBySlugQuery(params.caseSlug)
     );
     if (!caseRow) {

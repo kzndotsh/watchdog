@@ -28,7 +28,7 @@ export function ensureAppSession(queryClient: QueryClient) {
       });
     })
     .client(async () =>
-      queryClient.fetchQuery({
+      queryClient.query({
         ...sessionOptions(authClient),
         staleTime: 0,
       })

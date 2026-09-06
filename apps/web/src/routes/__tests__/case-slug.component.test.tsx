@@ -84,7 +84,7 @@ describe("case slug route", () => {
   });
 
   it("redirects legacy uuid paths to slug routes", async () => {
-    const ensureQueryData = vi
+    const query = vi
       .fn()
       .mockResolvedValueOnce({ id: CASE_ID, slug: "alpha", name: "Alpha" });
 
@@ -92,7 +92,7 @@ describe("case slug route", () => {
 
     await expect(
       loader({
-        context: { queryClient: { ensureQueryData } },
+        context: { queryClient: { query } },
         params: { caseSlug: CASE_ID },
         deps: {},
       } as never)

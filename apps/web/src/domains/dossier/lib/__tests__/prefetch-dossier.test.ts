@@ -10,7 +10,7 @@ import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
 describe("warmDossierQueries", () => {
   it("prefetches shared dossier lists and entities for connections tab", () => {
     const client = new QueryClient();
-    const prefetch = vi.spyOn(client, "prefetchQuery");
+    const prefetch = vi.spyOn(client, "query");
 
     warmDossierQueries(client, "case-1", "entity-1", "connections");
 
@@ -22,7 +22,7 @@ describe("warmDossierQueries", () => {
 
   it("skips entities list prefetch for notes-only tab", () => {
     const client = new QueryClient();
-    const prefetch = vi.spyOn(client, "prefetchQuery");
+    const prefetch = vi.spyOn(client, "query");
 
     warmDossierQueries(client, "case-1", "entity-1", "notes");
 

@@ -65,23 +65,21 @@ describe("triage index route", () => {
   });
 
   it("warms triage queries when a case is active", async () => {
-    const ensureQueryData = vi
+    const query = vi
       .fn()
       .mockResolvedValue({ active: ACTIVE, cases: [ACTIVE] });
-    const queryClient = { ensureQueryData };
+    const queryClient = { query };
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({ context: { queryClient } } as never);
 
-    expect(ensureQueryData).toHaveBeenCalledTimes(1);
+    expect(query).toHaveBeenCalledTimes(1);
     expect(warmTriageQueriesMock).toHaveBeenCalledWith(queryClient, ACTIVE.id);
   });
 
   it("does not warm triage queries without an active case", async () => {
-    const ensureQueryData = vi
-      .fn()
-      .mockResolvedValue({ active: null, cases: [] });
-    const queryClient = { ensureQueryData };
+    const query = vi.fn().mockResolvedValue({ active: null, cases: [] });
+    const queryClient = { query };
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({ context: { queryClient } } as never);

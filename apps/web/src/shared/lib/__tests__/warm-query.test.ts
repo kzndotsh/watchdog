@@ -7,9 +7,9 @@ import {
 } from "@/shared/lib/warm-query";
 
 describe("warm-query", () => {
-  it("swallows CancelledError from ensureQueryData", async () => {
+  it("swallows CancelledError from ensureAppQueryData", async () => {
     const client = {
-      ensureQueryData: vi
+      query: vi
         .fn()
         .mockRejectedValue(
           Object.assign(new Error("CancelledError"), { name: "CancelledError" })
@@ -18,12 +18,12 @@ describe("warm-query", () => {
 
     warmEnsureQueryData(client, { queryKey: ["test"] });
     await Promise.resolve();
-    expect(client.ensureQueryData).toHaveBeenCalledOnce();
+    expect(client.query).toHaveBeenCalledOnce();
   });
 
-  it("swallows CancelledError from prefetchQuery", async () => {
+  it("swallows CancelledError from warmPrefetchQuery", async () => {
     const client = {
-      prefetchQuery: vi
+      query: vi
         .fn()
         .mockRejectedValue(
           Object.assign(new Error("CancelledError"), { name: "CancelledError" })
@@ -32,6 +32,6 @@ describe("warm-query", () => {
 
     warmPrefetchQuery(client, { queryKey: ["test"] });
     await Promise.resolve();
-    expect(client.prefetchQuery).toHaveBeenCalledOnce();
+    expect(client.query).toHaveBeenCalledOnce();
   });
 });

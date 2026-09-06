@@ -14,13 +14,13 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 
 describe("ensureGraphQueries", () => {
   it("loads entities and edges for the active case", async () => {
-    const ensureQueryData = vi.fn().mockResolvedValue(undefined);
-    const client = { ensureQueryData } as unknown as QueryClient;
+    const query = vi.fn().mockResolvedValue(undefined);
+    const client = { query } as unknown as QueryClient;
 
     await ensureGraphQueries(client, "case-1");
 
-    expect(ensureQueryData).toHaveBeenCalledTimes(2);
-    const ensuredKeys = ensureQueryData.mock.calls.map(
+    expect(query).toHaveBeenCalledTimes(2);
+    const ensuredKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
     expect(ensuredKeys).toEqual([
@@ -32,13 +32,13 @@ describe("ensureGraphQueries", () => {
 
 describe("warmGraphQueries", () => {
   it("prefetches entities and edges without blocking", () => {
-    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
-    const client = { prefetchQuery } as unknown as QueryClient;
+    const query = vi.fn().mockResolvedValue(undefined);
+    const client = { query } as unknown as QueryClient;
 
     warmGraphQueries(client, "case-1");
 
-    expect(prefetchQuery).toHaveBeenCalledTimes(2);
-    const prefetchedKeys = prefetchQuery.mock.calls.map(
+    expect(query).toHaveBeenCalledTimes(2);
+    const prefetchedKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
     expect(prefetchedKeys).toEqual([

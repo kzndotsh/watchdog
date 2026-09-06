@@ -16,6 +16,7 @@ import {
 } from "@/domains/jobs/queries";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import {
+  ensureAppQueryData,
   warmEnsureQueryData,
   warmPrefetchQuery,
 } from "@/shared/lib/warm-query";
@@ -33,8 +34,8 @@ async function resolveCollectSelectionRow(
   selectedId: string
 ): Promise<{ row: CollectRow | null; focusRunId: string | null }> {
   const [evidence, jobs] = await Promise.all([
-    queryClient.ensureQueryData(evidenceListQuery(caseId)),
-    queryClient.ensureQueryData(jobsListQuery(caseId)),
+    ensureAppQueryData(queryClient, evidenceListQuery(caseId)),
+    ensureAppQueryData(queryClient, jobsListQuery(caseId)),
   ]);
   const index = buildCollectIndex(evidence, jobs);
   const selection = resolveCollectSelection(
@@ -54,9 +55,9 @@ export async function ensureCollectQueueQueries(
   caseId: string
 ): Promise<void> {
   await Promise.all([
-    queryClient.ensureQueryData(evidenceListQuery(caseId)),
-    queryClient.ensureQueryData(jobsListQuery(caseId)),
-    queryClient.ensureQueryData(entitiesListQuery(caseId)),
+    ensureAppQueryData(queryClient, evidenceListQuery(caseId)),
+    ensureAppQueryData(queryClient, jobsListQuery(caseId)),
+    ensureAppQueryData(queryClient, entitiesListQuery(caseId)),
   ]);
 }
 
@@ -73,7 +74,7 @@ export async function ensureCollectJobDetailWhenSelected(
   );
   const jobId = resolveCollectJobDetailId(row, focusRunId);
   if (jobId !== null) {
-    await queryClient.ensureQueryData(jobDetailQuery(caseId, jobId));
+    await ensureAppQueryData(queryClient, jobDetailQuery(caseId, jobId));
   }
 }
 
@@ -90,7 +91,8 @@ export async function ensureCollectEvidenceBlobWhenSelected(
   );
   const evidenceRow = row?.evidence ?? null;
   if (evidenceRow === null || !evidenceNeedsBlobText(evidenceRow)) return;
-  await queryClient.ensureQueryData(
+  await ensureAppQueryData(
+    queryClient,
     artifactContentQuery({
       source: "evidence",
       caseId,

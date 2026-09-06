@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-const fetchQuery = vi.fn();
+const query = vi.fn();
 
 vi.mock("@tanstack/react-start", () => ({
   createIsomorphicFn: () => ({
@@ -26,13 +26,13 @@ import { ensureAppSession } from "@/auth/ensure-session";
 
 describe("ensureAppSession", () => {
   it("client path fetches the session query with staleTime 0", async () => {
-    fetchQuery.mockResolvedValue({ user: { id: "user-1" } });
-    const queryClient = { fetchQuery } as unknown as QueryClient;
+    query.mockResolvedValue({ user: { id: "user-1" } });
+    const queryClient = { query } as unknown as QueryClient;
 
     await ensureAppSession(queryClient);
 
     expect(sessionOptions).toHaveBeenCalled();
-    expect(fetchQuery).toHaveBeenCalledWith(
+    expect(query).toHaveBeenCalledWith(
       expect.objectContaining({ staleTime: 0 })
     );
   });

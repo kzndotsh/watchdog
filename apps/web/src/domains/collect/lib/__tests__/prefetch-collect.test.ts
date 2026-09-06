@@ -1,4 +1,7 @@
-import type { QueryClient } from "@tanstack/react-query";
+import {
+  QueryClient,
+  type QueryClient as QueryClientType,
+} from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth/server", () => ({
@@ -25,13 +28,13 @@ import { credentialsListQuery } from "@/domains/settings/queries";
 
 describe("ensureCollectQueueQueries", () => {
   it("awaits evidence, jobs, and entities together", async () => {
-    const ensureQueryData = vi.fn().mockResolvedValue(undefined);
-    const client = { ensureQueryData } as unknown as QueryClient;
+    const query = vi.fn().mockResolvedValue(undefined);
+    const client = { query } as unknown as QueryClientType;
 
     await ensureCollectQueueQueries(client, "case-1");
 
-    expect(ensureQueryData).toHaveBeenCalledTimes(3);
-    const ensuredKeys = ensureQueryData.mock.calls.map(
+    expect(query).toHaveBeenCalledTimes(3);
+    const ensuredKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
     expect(ensuredKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
@@ -41,14 +44,14 @@ describe("ensureCollectQueueQueries", () => {
 });
 
 describe("warmCollectCatalogQueries", () => {
-  it("revalidates catalogs and prefetches hidden evidence in the background", () => {
-    const ensureQueryData = vi.fn().mockResolvedValue(undefined);
-    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
-    const client = { ensureQueryData, prefetchQuery } as unknown as QueryClient;
+  it("revalidates catalogs and prefetches hidden evidence in the background", async () => {
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
     warmCollectCatalogQueries(client, "case-1");
+    await Promise.resolve();
 
-    const ensuredKeys = ensureQueryData.mock.calls.map(
+    const ensuredKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
     expect(ensuredKeys).toContainEqual(capabilitiesListQuery().queryKey);
@@ -56,8 +59,8 @@ describe("warmCollectCatalogQueries", () => {
     expect(ensuredKeys).toContainEqual(credentialsListQuery().queryKey);
     expect(ensuredKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
     expect(ensuredKeys).toContainEqual(jobsListQuery("case-1").queryKey);
-    expect(ensureQueryData).toHaveBeenCalledTimes(5);
-    expect(prefetchQuery).toHaveBeenCalledWith(
+    expect(query).toHaveBeenCalledTimes(6);
+    expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: evidenceListQuery("case-1", { hiddenOnly: true }).queryKey,
       })
@@ -68,7 +71,7 @@ describe("warmCollectCatalogQueries", () => {
 describe("ensureCollectEvidenceBlobWhenSelected", () => {
   it("awaits artifact content for uri-backed json evidence", async () => {
     const evidenceId = "00000000-0000-4000-8000-000000000010";
-    const ensureQueryData = vi
+    const query = vi
       .fn()
       .mockImplementation((options: { queryKey: readonly unknown[] }) => {
         const key = options.queryKey[0];
@@ -86,11 +89,11 @@ describe("ensureCollectEvidenceBlobWhenSelected", () => {
         if (key === "artifact") return Promise.resolve({ text: '{"ok":true}' });
         return Promise.resolve(undefined);
       });
-    const client = { ensureQueryData } as unknown as QueryClient;
+    const client = { query } as unknown as QueryClientType;
 
     await ensureCollectEvidenceBlobWhenSelected(client, "case-1", evidenceId);
 
-    expect(ensureQueryData).toHaveBeenCalledWith(
+    expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: artifactContentQuery({
           source: "evidence",
@@ -107,7 +110,7 @@ describe("warmCollectQueries", () => {
   it("prefetches job detail when selectedId resolves to a job-only row", async () => {
     const jobId = "00000000-0000-4000-8000-000000000001";
     const runId = "00000000-0000-4000-8000-000000000002";
-    const ensureQueryData = vi
+    const query = vi
       .fn()
       .mockImplementation((options: { queryKey: readonly unknown[] }) => {
         const key = options.queryKey[0];
@@ -128,11 +131,11 @@ describe("warmCollectQueries", () => {
         }
         return Promise.resolve(undefined);
       });
-    const client = { ensureQueryData } as unknown as QueryClient;
+    const client = { query } as unknown as QueryClientType;
 
     await ensureCollectJobDetailWhenSelected(client, "case-1", runId);
 
-    expect(ensureQueryData).toHaveBeenCalledWith(
+    expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: jobDetailQuery("case-1", jobId).queryKey,
       })
@@ -140,13 +143,12 @@ describe("warmCollectQueries", () => {
   });
 
   it("delegates catalog warm to warmCollectCatalogQueries", () => {
-    const ensureQueryData = vi.fn().mockResolvedValue(undefined);
-    const prefetchQuery = vi.fn().mockResolvedValue(undefined);
-    const client = { ensureQueryData, prefetchQuery } as unknown as QueryClient;
+    const query = vi.fn().mockResolvedValue(undefined);
+    const client = { query } as unknown as QueryClientType;
 
     warmCollectQueries(client, "case-1");
 
-    expect(ensureQueryData).toHaveBeenCalled();
-    expect(prefetchQuery).toHaveBeenCalled();
+    expect(query).toHaveBeenCalled();
+    expect(query).toHaveBeenCalled();
   });
 });

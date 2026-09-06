@@ -38,10 +38,10 @@ const ACTIVE = {
 
 describe("protected dashboard index route", () => {
   it("warms dashboard queries from the loader", async () => {
-    const ensureQueryData = vi
+    const query = vi
       .fn()
       .mockResolvedValue({ active: ACTIVE, cases: [ACTIVE] });
-    const queryClient = { ensureQueryData };
+    const queryClient = { query };
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({ context: { queryClient } } as never);
