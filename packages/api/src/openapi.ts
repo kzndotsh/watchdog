@@ -1,4 +1,7 @@
-import { OpenAPIGenerator } from "@orpc/openapi";
+import {
+  OpenAPIGenerator,
+  type OpenAPIGeneratorGenerateOptions,
+} from "@orpc/openapi";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 
 import { router } from "./router";
@@ -7,8 +10,11 @@ const generator = new OpenAPIGenerator({
   schemaConverters: [new ZodToJsonSchemaConverter()],
 });
 
-export async function generateOpenAPISpec(baseUrl = "/api/v1") {
-  return await generator.generate(router, {
+/** Shared OpenAPI info / security for committed spec and Scalar. */
+export function openApiSpecGenerateOptions(
+  baseUrl = "/api/v1"
+): OpenAPIGeneratorGenerateOptions {
+  return {
     info: {
       title: "Watchdog API",
       version: "0.1.0",
@@ -39,5 +45,9 @@ export async function generateOpenAPISpec(baseUrl = "/api/v1") {
         },
       },
     },
-  });
+  };
+}
+
+export async function generateOpenAPISpec(baseUrl = "/api/v1") {
+  return await generator.generate(router, openApiSpecGenerateOptions(baseUrl));
 }
