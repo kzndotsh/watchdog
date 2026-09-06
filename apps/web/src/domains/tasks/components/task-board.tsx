@@ -46,6 +46,7 @@ interface Props {
   items: TaskRecord[];
   selectedId?: string | null;
   onSelect: (task: TaskRecord) => void;
+  onDelete?: (task: TaskRecord) => void;
   onCommitDrop: (
     task: TaskRecord,
     status: TaskStatus,
@@ -73,6 +74,7 @@ export function TaskBoard({
   items,
   selectedId,
   onSelect,
+  onDelete,
   onCommitDrop,
   onQuickCreate,
   quickCreateBusy,
@@ -306,6 +308,7 @@ export function TaskBoard({
               items={byColumn[col]}
               selectedId={selectedId}
               onSelect={onSelect}
+              onDelete={onDelete}
               onQuickCreate={onQuickCreate}
               quickCreateBusy={quickCreateBusy}
               entityById={entityById}

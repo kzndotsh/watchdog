@@ -24,6 +24,9 @@ export function DossierTasksSection({ caseId, entityId }: DossierSectionProps) {
         items={ws.tasks}
         selectedId={ws.selected?.id}
         onSelect={ws.handleSelect}
+        onDelete={(task) => {
+          void ws.handleDelete(task);
+        }}
         onCommitDrop={ws.handleCommitDrop}
         onQuickCreate={ws.handleQuickCreate}
         quickCreateBusy={ws.quickCreateBusy}

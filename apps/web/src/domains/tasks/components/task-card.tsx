@@ -1,11 +1,21 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarIcon, GripVerticalIcon } from "lucide-react";
+import {
+  useMemo,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+} from "react";
 
 import { isTaskDueOverdue } from "@/domains/tasks/lib/due-date";
+import { taskCardActions } from "@/domains/tasks/lib/task-card-actions";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
 import { cn } from "@/lib/utils";
+import { filterActionsForSurface } from "@/shared/lib/app-action";
+import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 import {
   TASK_PRIORITY_TONE_MAP,
@@ -19,6 +29,7 @@ interface Props {
   task: TaskRecord;
   selected?: boolean;
   onSelect: (task: TaskRecord) => void;
+  onDelete?: (task: TaskRecord) => void;
   entityById?: Map<string, TaskEntityLabel>;
   dragDisabled?: boolean;
 }
@@ -120,6 +131,7 @@ export function TaskCard({
   task,
   selected,
   onSelect,
+  onDelete,
   entityById,
   dragDisabled,
 }: Props) {
@@ -142,50 +154,120 @@ export function TaskCard({
     task.entityId && entityById ? entityById.get(task.entityId) : undefined;
   const overdue = isTaskDueOverdue(task.dueDate, task.status);
 
-  return (
-    <button
-      type="button"
-      ref={setNodeRef}
-      style={{
-        transform: isDragging ? undefined : CSS.Transform.toString(transform),
-        transition: isDragging ? undefined : transition,
-      }}
-      className={cn(
-        TASK_CARD_SHELL_CLASS,
-        "group cursor-grab touch-none text-left active:cursor-grabbing",
-        !isDragging && "overflow-hidden",
-        selected && !isDragging && "ring-foreground/25 ring-1",
-        isDragging &&
-          "border-primary/70 bg-primary/5 border-dashed shadow-none",
-        done && !isDragging && "opacity-80"
-      )}
-      onClick={() => {
-        onSelect(task);
-      }}
-      {...attributes}
-      {...listeners}
+  const actions = useMemo(
+    () =>
+      onDelete
+        ? taskCardActions(task, {
+            onOpen: onSelect,
+            onDelete,
+          })
+        : [],
+    [onDelete, onSelect, task]
+  );
+  const dropdownActions = filterActionsForSurface(actions, "dropdown");
+
+  const shellClassName = cn(
+    TASK_CARD_SHELL_CLASS,
+    "group cursor-grab touch-none text-left active:cursor-grabbing",
+    !isDragging && "overflow-hidden",
+    selected && !isDragging && "ring-foreground/25 ring-1",
+    isDragging && "border-primary/70 bg-primary/5 border-dashed shadow-none",
+    done && !isDragging && "opacity-80"
+  );
+
+  const shellStyle = {
+    transform: isDragging ? undefined : CSS.Transform.toString(transform),
+    transition: isDragging ? undefined : transition,
+  };
+
+  function selectFromCard() {
+    onSelect(task);
+  }
+
+  function onCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+    event.preventDefault();
+    selectFromCard();
+  }
+
+  const inner = (
+    <div
+      className={cn("flex min-w-0 flex-1 gap-1.5", isDragging && "invisible")}
     >
-      <div
-        className={cn("flex min-w-0 flex-1 gap-1.5", isDragging && "invisible")}
-      >
-        {task.priority ? (
-          <span
-            aria-hidden
-            className={cn(
-              "absolute inset-y-0 left-0 w-0.5",
-              priorityRailClass(task.priority)
-            )}
-          />
-        ) : null}
+      {task.priority ? (
         <span
           aria-hidden
-          className="text-muted-foreground mt-0.5 shrink-0 opacity-25 group-hover:opacity-60"
+          className={cn(
+            "absolute inset-y-0 left-0 w-0.5",
+            priorityRailClass(task.priority)
+          )}
+        />
+      ) : null}
+      <span
+        aria-hidden
+        className="text-muted-foreground mt-0.5 shrink-0 opacity-25 group-hover:opacity-60"
+      >
+        <GripVerticalIcon className="size-3.5" />
+      </span>
+      <TaskCardBody task={task} entity={entity} overdue={overdue} />
+      {dropdownActions.length > 0 && !isDragging ? (
+        // oxlint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- stop ⋯ pointer from selecting/dragging the card
+        <div
+          className="shrink-0 self-start"
+          onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
+            event.stopPropagation();
+          }}
+          onClick={(event: MouseEvent<HTMLDivElement>) => {
+            event.stopPropagation();
+          }}
         >
-          <GripVerticalIcon className="size-3.5" />
-        </span>
-        <TaskCardBody task={task} entity={entity} overdue={overdue} />
-      </div>
-    </button>
+          <RowActionsMenu label="Task actions" actions={dropdownActions} />
+        </div>
+      ) : null}
+    </div>
+  );
+
+  if (actions.length > 0) {
+    return (
+      <ActionsContextMenu
+        actions={actions}
+        trigger={
+          <div
+            ref={setNodeRef}
+            style={shellStyle}
+            className={shellClassName}
+            onClick={selectFromCard}
+            onKeyDown={onCardKeyDown}
+            {...attributes}
+            {...listeners}
+            role="button"
+            tabIndex={0}
+            aria-label={task.title}
+          />
+        }
+      >
+        {inner}
+      </ActionsContextMenu>
+    );
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={shellStyle}
+      className={shellClassName}
+      onClick={selectFromCard}
+      onKeyDown={onCardKeyDown}
+      {...attributes}
+      {...listeners}
+      role="button"
+      tabIndex={0}
+      aria-label={task.title}
+    >
+      {inner}
+    </div>
   );
 }
 

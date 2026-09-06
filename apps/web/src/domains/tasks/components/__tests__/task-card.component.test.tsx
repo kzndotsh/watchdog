@@ -65,6 +65,18 @@ describe("TaskCard", () => {
     expect(onSelect).toHaveBeenCalledWith(TASK);
   });
 
+  it("exposes Delete in the card actions menu", async () => {
+    const onSelect = vi.fn();
+    const onDelete = vi.fn();
+
+    render(<TaskCard task={TASK} onSelect={onSelect} onDelete={onDelete} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Task actions" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    expect(onDelete).toHaveBeenCalledWith(TASK);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it("strikes through done tasks", () => {
     render(<TaskCard task={{ ...TASK, status: "done" }} onSelect={vi.fn()} />);
 

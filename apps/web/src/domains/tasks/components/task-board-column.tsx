@@ -23,6 +23,7 @@ interface Props {
   items: TaskRecord[];
   selectedId?: string | null;
   onSelect: (task: TaskRecord) => void;
+  onDelete?: (task: TaskRecord) => void;
   onQuickCreate?: (status: TaskStatus, title: string) => void | Promise<void>;
   quickCreateBusy?: boolean;
   entityById?: Map<string, TaskEntityLabel>;
@@ -55,6 +56,7 @@ export function TaskBoardColumn({
   items,
   selectedId,
   onSelect,
+  onDelete,
   onQuickCreate,
   quickCreateBusy = false,
   entityById,
@@ -138,6 +140,7 @@ export function TaskBoardColumn({
                   task={item}
                   selected={selectedId === item.id}
                   onSelect={onSelect}
+                  onDelete={onDelete}
                   entityById={entityById}
                 />
               );

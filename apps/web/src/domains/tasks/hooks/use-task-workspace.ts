@@ -150,17 +150,20 @@ export function useTaskWorkspace(
   });
 
   const deleteMut = useMutation({
-    mutationFn: async () => {
-      if (!selected) throw new Error("No task");
-      return deleteTaskFn({ data: { caseId, taskId: selected.id } });
-    },
-    onSuccess: async () => {
-      setSelected(null);
+    mutationFn: async (taskId: string) =>
+      deleteTaskFn({ data: { caseId, taskId } }),
+    onSuccess: async (_data, taskId) => {
+      if (selected?.id === taskId) {
+        setSelected(null);
+      }
+      setFormError(null);
       toast.success("Task deleted");
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
-      setFormError(errMessage(e, "Delete failed"));
+      const message = errMessage(e, "Delete failed");
+      setFormError(message);
+      toast.error(message);
     },
   });
 
@@ -261,8 +264,10 @@ export function useTaskWorkspace(
     handleUpdate: async (values: TaskFormValues) => {
       await updateMut.mutateAsync(values);
     },
-    handleDelete: async () => {
-      await deleteMut.mutateAsync();
+    handleDelete: async (task?: TaskRecord) => {
+      const taskId = task?.id ?? selected?.id;
+      if (!taskId) throw new Error("No task");
+      await deleteMut.mutateAsync(taskId);
     },
     handleQuickCreate: async (status: TaskStatus, title: string) => {
       await quickCreateMut.mutateAsync({ status, title });
