@@ -7,11 +7,18 @@ import { z } from "zod";
 const DEFAULT_API_URL = "http://localhost:3000/api/v1";
 
 const cliEnvSchema = z.object({
-  WD_API_URL: z.url().default(DEFAULT_API_URL),
-  WD_API_KEY: z.string().min(1),
+  WD_API_URL: z.string().trim().pipe(z.url()).default(DEFAULT_API_URL),
+  WD_API_KEY: z.string().trim().min(1),
 });
 
 export type CliEnv = z.infer<typeof cliEnvSchema>;
+
+export class CliConfigError extends Error {
+  constructor() {
+    super("CLI configuration is invalid or incomplete");
+    this.name = "CliConfigError";
+  }
+}
 
 let dotenvLoaded = false;
 let cached: CliEnv | null = null;
@@ -44,10 +51,14 @@ function loadDotenvFromCwd(): void {
 export function loadCliEnv(): CliEnv {
   if (cached !== null) return cached;
   loadDotenvFromCwd();
-  cached = cliEnvSchema.parse({
+  const parsed = cliEnvSchema.safeParse({
     WD_API_URL: process.env.WD_API_URL,
     WD_API_KEY: process.env.WD_API_KEY,
   });
+  if (!parsed.success) {
+    throw new CliConfigError();
+  }
+  cached = parsed.data;
   return cached;
 }
 

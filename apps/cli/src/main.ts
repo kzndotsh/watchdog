@@ -16,7 +16,7 @@ import { jobsCmd } from "./commands/jobs";
 import { proposalsCmd } from "./commands/proposals";
 import { questionsCmd } from "./commands/questions";
 import { loadCliEnv } from "./env";
-import { CliExitError, fail, handleCliError } from "./io";
+import { CliExitError, handleCliError } from "./io";
 
 const ROOT_COMMANDS = [
   "cases",
@@ -58,17 +58,7 @@ export const wdMain = defineCommand({
     questions: questionsCmd,
   },
   run: async () => {
-    try {
-      loadCliEnv();
-    } catch {
-      fail("CONFIG", "Set WD_API_KEY (and optional WD_API_URL) to use wd.", {
-        help: [
-          "export WD_API_KEY=<key>",
-          "wd --help",
-          `commands: ${ROOT_COMMANDS.join(", ")}`,
-        ],
-      });
-    }
+    loadCliEnv();
     const cases = await api().cases.list();
     emit({
       bin: "wd",

@@ -88,6 +88,22 @@ describe("wd smoke", () => {
     assertCliError(firstJson(stdout), "UNKNOWN_FLAG");
   });
 
+  it("accepts glued short case flag values", () => {
+    const { stdout } = runWd(
+      ["entities", "list", "-c00000000-0000-4000-8000-000000000001"],
+      {
+        WD_API_KEY: "test-key",
+        WD_API_URL: "http://127.0.0.1:9/api/v1",
+      }
+    );
+    const body = firstJson(stdout);
+    const record = asObject(body);
+    if (Reflect.get(record, "ok") === false) {
+      const error = asObject(Reflect.get(record, "error"));
+      expect(Reflect.get(error, "code")).not.toBe("UNKNOWN_FLAG");
+    }
+  });
+
   it("refuses confirmed child writes with custody envelope", () => {
     const { status, stdout } = runWd(
       [

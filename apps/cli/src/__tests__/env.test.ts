@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { loadCliEnv, resetCliEnvForTests } from "../env";
+import { CliConfigError, loadCliEnv, resetCliEnvForTests } from "../env";
 
 describe("loadCliEnv", () => {
   afterEach(() => {
@@ -16,7 +16,7 @@ describe("loadCliEnv", () => {
 
   it("requires WD_API_KEY on first use", () => {
     Reflect.deleteProperty(process.env, "WD_API_KEY");
-    expect(() => loadCliEnv()).toThrow();
+    expect(() => loadCliEnv()).toThrow(CliConfigError);
   });
 
   it("defaults WD_API_URL when only the key is set", () => {
@@ -25,5 +25,19 @@ describe("loadCliEnv", () => {
     const env = loadCliEnv();
     expect(env.WD_API_KEY).toBe("test-key");
     expect(env.WD_API_URL).toBe("http://localhost:3000/api/v1");
+  });
+
+  it("trims whitespace from WD_API_KEY and WD_API_URL", () => {
+    process.env.WD_API_KEY = "  test-key  ";
+    process.env.WD_API_URL = "  http://localhost:3000/api/v1  ";
+    const env = loadCliEnv();
+    expect(env.WD_API_KEY).toBe("test-key");
+    expect(env.WD_API_URL).toBe("http://localhost:3000/api/v1");
+  });
+
+  it("throws CliConfigError for an invalid WD_API_URL", () => {
+    process.env.WD_API_KEY = "test-key";
+    process.env.WD_API_URL = "not-a-url";
+    expect(() => loadCliEnv()).toThrow(CliConfigError);
   });
 });

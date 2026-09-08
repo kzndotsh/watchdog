@@ -43,14 +43,24 @@ export function asBoolean(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
 }
 
-/** Drop empty/undefined string fields when building API patches. */
+/** True when a CLI string flag was passed with non-whitespace content. */
+export function hasCliText(value: unknown): value is string {
+  return typeof value === "string" && value.trim() !== "";
+}
+
+/** Drop empty/undefined string fields when building API patches (trims strings). */
 export function pickDefined(
   input: Record<string, unknown>
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(input)) {
     if (value === undefined) continue;
-    if (typeof value === "string" && value === "") continue;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed === "") continue;
+      out[key] = trimmed;
+      continue;
+    }
     out[key] = value;
   }
   return out;

@@ -1,5 +1,7 @@
 import type { ArgsDef, CommandContext, CommandDef } from "citty";
 
+import { CliConfigError } from "./env";
+
 function camelCase(input: string): string {
   return input.replaceAll(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 }
@@ -237,9 +239,12 @@ function assertKnownFlags(ctx: {
       continue;
     }
 
-    // Short flags: -c or -abc
+    // Short flags: -c, -abc, or -c<value>
     const body = token.slice(1).split("=")[0] ?? "";
     if (body.length === 0) continue;
+    if (body.length > 1 && allowed.has(body[0])) {
+      continue;
+    }
     for (const ch of body) {
       if (!allowed.has(ch)) {
         fail("UNKNOWN_FLAG", `Unknown flag -${ch}`, {
@@ -300,9 +305,16 @@ function taggedErrorEnvelope(error: unknown): {
   }
 }
 
+const CONFIG_HELP = ["export WD_API_KEY=<key>", "wd --help"];
+
 export function handleCliError(error: unknown): never {
   if (error instanceof CliExitError) {
     process.exit(error.exitCode);
+  }
+  if (error instanceof CliConfigError) {
+    fail("CONFIG", "Set WD_API_KEY (and optional WD_API_URL) to use wd.", {
+      help: CONFIG_HELP,
+    });
   }
   if (debugEnabled()) {
     process.stderr.write(
