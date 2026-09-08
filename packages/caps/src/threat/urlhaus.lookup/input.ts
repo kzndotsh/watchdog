@@ -1,8 +1,10 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, optionalUuidSchema } from "@watchdog/schemas";
+import { urlhausQuerySeedSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const urlhausLookupInput = z.object({
-  query: nonEmptyTrimmed.describe("URL, host, or file hash (MD5/SHA256)"),
+  query: urlhausQuerySeedSchema.describe(
+    "URL, host, or file hash (MD5/SHA256)"
+  ),
   entityId: optionalUuidSchema,
 });

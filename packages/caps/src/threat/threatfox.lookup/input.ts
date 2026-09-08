@@ -1,8 +1,11 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, optionalUuidSchema } from "@watchdog/schemas";
+import {
+  threatfoxQuerySeedSchema,
+  optionalUuidSchema,
+} from "@watchdog/schemas";
 
 export const threatfoxLookupInput = z.object({
-  query: nonEmptyTrimmed.describe("IP, domain, or IOC string"),
+  query: threatfoxQuerySeedSchema.describe("IP, domain, or IOC string"),
   entityId: optionalUuidSchema,
 });

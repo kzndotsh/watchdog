@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, optionalUuidSchema } from "@watchdog/schemas";
+import { githubHandleSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const githubLookupInput = z.object({
-  handle: nonEmptyTrimmed.describe("GitHub handle"),
+  handle: githubHandleSeedSchema.describe("GitHub handle"),
   entityId: optionalUuidSchema,
 });

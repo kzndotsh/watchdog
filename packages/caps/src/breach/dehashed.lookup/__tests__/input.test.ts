@@ -11,4 +11,10 @@ describe("dehashed.lookup input", () => {
       })
     ).toMatchObject({ query: "alice@example.com" });
   });
+
+  it("rejects invalid query seeds", () => {
+    expect(() =>
+      dehashedLookupInput.parse({ query: "not valid @ @" })
+    ).toThrow();
+  });
 });

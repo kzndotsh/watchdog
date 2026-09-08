@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, optionalUuidSchema } from "@watchdog/schemas";
+import { ipOrHostSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const mnemonicLookupInput = z.object({
-  query: nonEmptyTrimmed.describe("IP or domain"),
+  query: ipOrHostSeedSchema.describe("IP or domain"),
   entityId: optionalUuidSchema,
 });

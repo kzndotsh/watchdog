@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, optionalUuidSchema } from "@watchdog/schemas";
+import { ipOrHostSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const leakixLookupInput = z.object({
-  query: nonEmptyTrimmed.describe("IP or host"),
+  query: ipOrHostSeedSchema.describe("IP or host"),
   entityId: optionalUuidSchema,
 });

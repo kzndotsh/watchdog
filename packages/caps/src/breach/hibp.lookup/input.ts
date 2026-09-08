@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, optionalUuidSchema } from "@watchdog/schemas";
+import { emailSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const hibpLookupInput = z.object({
-  email: nonEmptyTrimmed.describe("Email"),
+  email: emailSeedSchema.describe("Email"),
   entityId: optionalUuidSchema,
 });
