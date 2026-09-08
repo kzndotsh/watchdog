@@ -1,6 +1,8 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
 const { loadCapReportEffect } = vi.hoisted(() => ({
   loadCapReportEffect: vi.fn(),
 }));
@@ -65,5 +67,73 @@ describe("interpret stage", () => {
     );
 
     expect(result.interpretError).toContain("No report.json");
+  });
+
+  it("trims padded interpret summary", async () => {
+    loadCapReportEffect.mockReturnValueOnce(
+      Effect.succeed({ report: { ok: true } })
+    );
+    const entityId = testId(20);
+    const runtime = { evidenceSnapshot: undefined } as CollectRuntime;
+    const state = {
+      cap: {
+        interpret: vi.fn().mockReturnValue({
+          summary: "  dns ok  ",
+          patch: [
+            {
+              op: "create",
+              resource: "claim",
+              id: testId(21),
+              data: {
+                entityId,
+                text: "observed",
+                class: "observation",
+              },
+            },
+          ],
+        }),
+      },
+      input: {},
+    } as PreflightState;
+
+    const result = await Effect.runPromise(
+      interpretStageEffect(state, [], runtime, {
+        proposalId: null,
+        resultSummary: null,
+      })
+    );
+
+    expect(result.resultSummary).toBe("dns ok");
+    expect(result.interpretError).toBeNull();
+  });
+
+  it("passes trimmed snapshot text length to interpret", async () => {
+    const interpret = vi.fn().mockReturnValue({
+      summary: null,
+      patch: [],
+      markSourceProcessed: false,
+    });
+    loadCapReportEffect.mockReturnValueOnce(
+      Effect.succeed({ report: { ok: true } })
+    );
+    const runtime = {
+      evidenceSnapshot: { text: "   \n  ", entityId: null },
+    } as CollectRuntime;
+    const state = {
+      cap: { interpret },
+      input: {},
+    } as PreflightState;
+
+    await Effect.runPromise(
+      interpretStageEffect(state, [], runtime, {
+        proposalId: null,
+        resultSummary: null,
+      })
+    );
+
+    expect(interpret).toHaveBeenCalledWith(
+      { ok: true },
+      expect.objectContaining({ snapshotTextChars: 0 })
+    );
   });
 });

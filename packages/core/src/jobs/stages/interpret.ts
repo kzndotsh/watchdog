@@ -2,6 +2,7 @@ import { Effect, Result } from "effect";
 
 import type { JobArtifact, JobHandoff } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 
 import { tryParsePatch } from "../../graph/patch/patch";
 import { readArtifactBytesEffect } from "../../infra/blob";
@@ -88,21 +89,22 @@ export function interpretStageEffect(
           try: () =>
             interpretFn(loaded.report, {
               input: state.input,
-              ...(runtime.evidenceSnapshot?.entityId !== undefined &&
-              runtime.evidenceSnapshot.entityId !== ""
+              ...(runtime.evidenceSnapshot?.entityId
                 ? { snapshotEntityId: runtime.evidenceSnapshot.entityId }
                 : {}),
               ...(runtime.evidenceSnapshot
-                ? { snapshotTextChars: runtime.evidenceSnapshot.text.length }
+                ? {
+                    snapshotTextChars:
+                      runtime.evidenceSnapshot.text.trim().length,
+                  }
                 : {}),
             }),
           catch: (error) =>
             new InvalidError({
-              reason:
-                error instanceof Error ? error.message : errorMessage(error),
+              reason: errorMessage(error),
             }),
         });
-        resultSummary = interpreted.summary ?? null;
+        resultSummary = trimmedOrUndefined(interpreted.summary) ?? null;
         markSourceProcessed = interpreted.markSourceProcessed;
         const parsedPatch = tryParsePatch(interpreted.patch);
         if (parsedPatch.ok) {
