@@ -8,13 +8,14 @@ import {
   type PlaybookRunVars,
 } from "@/domains/jobs/components/job-playbook-run-form";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 
 export interface CollectRunFormPanelProps {
   runMode: CollectRunMode;
   playbooks: PlaybookListItem[];
   caps: CapListItem[];
   urlDumps: { id: string; sourceUrl: string; label: string | null }[];
-  entities: { id: string; name: string }[];
+  entities: EntityOption[];
   allowThirdPartyEgress: boolean;
   configuredCredentials: Set<string>;
   runError: string | null;

@@ -1,12 +1,12 @@
 import type { CollectRow, CollectRun } from "@/domains/collect/types";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
 import {
   groupJobsForQueue,
   playbookRunProgress,
   playbookRunStatus,
   type JobQueueEntry,
 } from "@/domains/jobs/lib/status";
+import type { JobListRecord } from "@/domains/jobs/types";
 import { isOpenJobStatus } from "@watchdog/schemas";
 
 import {
@@ -18,6 +18,8 @@ import {
   buildEvidenceRow,
   buildJobRow,
   entityIdFromJobInput,
+  jobActivityAt,
+  latestJobActivityAt,
   sortRunsNewestFirst,
 } from "./collect-index-rows";
 
@@ -41,11 +43,18 @@ export function seedEvidenceRows(
   evidence: readonly EvidenceRecord[],
   runsByEvidenceId: ReadonlyMap<string, CollectRun[]>,
   rowsById: Map<string, CollectRow>,
-  jobIdToRowId: Map<string, string>
+  jobIdToRowId: Map<string, string>,
+  evidenceTitleById?: ReadonlyMap<string, string>,
+  entityTitleById?: ReadonlyMap<string, string>
 ): void {
   for (const row of evidence) {
     const runs = sortRunsNewestFirst(runsByEvidenceId.get(row.id) ?? []);
-    const collectRow = buildEvidenceRow(row, runs);
+    const collectRow = buildEvidenceRow(
+      row,
+      runs,
+      evidenceTitleById,
+      entityTitleById
+    );
     rowsById.set(row.id, collectRow);
     jobIdToRowId.set(row.id, row.id);
     for (const run of runs) {
@@ -57,6 +66,9 @@ export function seedEvidenceRows(
 function appendPlaybookGroup(
   entry: Extract<JobQueueEntry, { kind: "playbook" }>,
   recipeStepsByPlaybookId: ReadonlyMap<string, number> | undefined,
+  playbookTitleById: ReadonlyMap<string, string> | undefined,
+  evidenceTitleById: ReadonlyMap<string, string> | undefined,
+  entityTitleById: ReadonlyMap<string, string> | undefined,
   assignedJobIds: Set<string>,
   rowsById: Map<string, CollectRow>,
   jobIdToRowId: Map<string, string>
@@ -81,11 +93,14 @@ function appendPlaybookGroup(
   }
   const row = buildJobRow(entry.runId, sortRunsNewestFirst(runs), {
     evidence: null,
-    when: anchor.createdAt,
+    when: latestJobActivityAt(steps),
     entityId: entityIdFromJobInput(anchor.input),
     playbookRunId: entry.runId,
+    playbookTitle: playbookTitleById?.get(entry.playbookId) ?? null,
+    evidenceTitleById,
+    entityTitleById,
     recipe: {
-      step: progress.done + (isOpenJobStatus(status) ? 1 : progress.done),
+      step: progress.done + (isOpenJobStatus(status) ? 1 : 0),
       total: progress.total,
     },
   });
@@ -99,6 +114,8 @@ function appendPlaybookGroup(
 function appendStandaloneJob(
   job: JobListRecord,
   evidenceById: ReadonlyMap<string, EvidenceRecord>,
+  evidenceTitleById: ReadonlyMap<string, string> | undefined,
+  entityTitleById: ReadonlyMap<string, string> | undefined,
   assignedJobIds: Set<string>,
   rowsById: Map<string, CollectRow>,
   jobIdToRowId: Map<string, string>
@@ -109,9 +126,11 @@ function appendStandaloneJob(
   const row = buildJobRow(job.id, runs, {
     evidence:
       landed.length === 1 ? (evidenceById.get(landed[0] ?? "") ?? null) : null,
-    when: job.createdAt,
+    when: jobActivityAt(job),
     entityId: entityIdFromJobInput(job.input),
     playbookRunId: null,
+    evidenceTitleById,
+    entityTitleById,
     recipe: null,
   });
   rowsById.set(job.id, row);
@@ -128,16 +147,25 @@ function appendOrphanJob(
   job: JobListRecord,
   assignedJobIds: Set<string>,
   rowsById: Map<string, CollectRow>,
-  jobIdToRowId: Map<string, string>
+  jobIdToRowId: Map<string, string>,
+  playbookTitleById?: ReadonlyMap<string, string>,
+  evidenceTitleById?: ReadonlyMap<string, string>,
+  entityTitleById?: ReadonlyMap<string, string>
 ): void {
   if (assignedJobIds.has(job.id)) return;
   const runs: CollectRun[] = [{ job, role: classifyRun(job) }];
   assignedJobIds.add(job.id);
   const row = buildJobRow(job.id, runs, {
     evidence: null,
-    when: job.createdAt,
+    when: jobActivityAt(job),
     entityId: entityIdFromJobInput(job.input),
     playbookRunId: job.playbookRunId,
+    playbookTitle:
+      job.playbookId !== null && job.playbookId !== ""
+        ? (playbookTitleById?.get(job.playbookId) ?? null)
+        : null,
+    evidenceTitleById,
+    entityTitleById,
     recipe: null,
   });
   rowsById.set(job.id, row);
@@ -150,7 +178,10 @@ export function appendUnassignedJobRows(
   evidenceById: ReadonlyMap<string, EvidenceRecord>,
   rowsById: Map<string, CollectRow>,
   jobIdToRowId: Map<string, string>,
-  recipeStepsByPlaybookId: ReadonlyMap<string, number> | undefined
+  recipeStepsByPlaybookId: ReadonlyMap<string, number> | undefined,
+  playbookTitleById?: ReadonlyMap<string, string>,
+  evidenceTitleById?: ReadonlyMap<string, string>,
+  entityTitleById?: ReadonlyMap<string, string>
 ): void {
   const unassigned = jobs.filter((job) => !assignedJobIds.has(job.id));
   const grouped = groupJobsForQueue(unassigned);
@@ -160,6 +191,9 @@ export function appendUnassignedJobRows(
       appendPlaybookGroup(
         entry,
         recipeStepsByPlaybookId,
+        playbookTitleById,
+        evidenceTitleById,
+        entityTitleById,
         assignedJobIds,
         rowsById,
         jobIdToRowId
@@ -172,6 +206,8 @@ export function appendUnassignedJobRows(
       appendStandaloneJob(
         job,
         evidenceById,
+        evidenceTitleById,
+        entityTitleById,
         assignedJobIds,
         rowsById,
         jobIdToRowId
@@ -179,6 +215,14 @@ export function appendUnassignedJobRows(
       continue;
     }
 
-    appendOrphanJob(job, assignedJobIds, rowsById, jobIdToRowId);
+    appendOrphanJob(
+      job,
+      assignedJobIds,
+      rowsById,
+      jobIdToRowId,
+      playbookTitleById,
+      evidenceTitleById,
+      entityTitleById
+    );
   }
 }

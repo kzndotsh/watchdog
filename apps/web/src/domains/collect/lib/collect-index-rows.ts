@@ -5,10 +5,13 @@ import {
   rowTitle,
 } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord } from "@/domains/jobs/types";
+import { parseTrimmedCaseId } from "@watchdog/schemas";
 
 export {
   buildEvidenceRow,
+  jobActivityAt,
+  latestJobActivityAt,
   sortRunsNewestFirst,
 } from "@/domains/intake/lib/evidence-runs";
 
@@ -21,13 +24,21 @@ export function buildJobRow(
     entityId: string | null;
     playbookRunId: string | null;
     recipe: CollectRow["recipe"];
+    playbookTitle?: string | null;
+    evidenceTitleById?: ReadonlyMap<string, string>;
+    entityTitleById?: ReadonlyMap<string, string>;
   }
 ): CollectRow {
   const anchor = runs[0]?.job ?? null;
+  const rowOpts = {
+    playbookTitle: opts.playbookTitle,
+    evidenceTitleById: opts.evidenceTitleById,
+    entityTitleById: opts.entityTitleById,
+  };
   return {
     id,
-    title: rowTitle(opts.evidence, anchor),
-    hint: rowHint(opts.evidence, runs, anchor),
+    title: rowTitle(opts.evidence, anchor, rowOpts),
+    hint: rowHint(opts.evidence, runs, anchor, rowOpts),
     state: rowState(opts.evidence, runs),
     when: opts.when,
     entityId: opts.entityId,
@@ -41,5 +52,6 @@ export function buildJobRow(
 export function entityIdFromJobInput(
   input: JobListRecord["input"]
 ): string | null {
-  return typeof input.entityId === "string" ? input.entityId : null;
+  if (typeof input?.entityId !== "string") return null;
+  return parseTrimmedCaseId(input.entityId);
 }

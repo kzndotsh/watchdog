@@ -62,7 +62,7 @@ export function CollectQueueBody({
         items="items"
         query={filters.q}
         onClearFilters={() => {
-          onFiltersChange(EMPTY_COLLECT_FILTERS);
+          onFiltersChange({ ...EMPTY_COLLECT_FILTERS, q: filters.q });
         }}
       />
     );

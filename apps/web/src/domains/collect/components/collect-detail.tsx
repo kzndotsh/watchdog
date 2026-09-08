@@ -2,7 +2,7 @@ import type { CollectRow } from "@/domains/collect/types";
 import { EvidenceDetail } from "@/domains/intake/components/evidence-detail";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import { JobDetail } from "@/domains/jobs/components/job-detail";
-import type { JobListRecord, JobRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord, JobRecord } from "@/domains/jobs/types";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 
@@ -16,6 +16,7 @@ export interface CollectDetailProps {
   allowThirdPartyEgress: boolean;
   evidenceActions: IntakeEvidenceActions;
   evidenceTitleById: ReadonlyMap<string, string>;
+  entityTitleById: ReadonlyMap<string, string>;
   runSiblings: readonly JobListRecord[];
   recipeTotal?: number;
   busy: boolean;
@@ -34,6 +35,7 @@ export function CollectDetail({
   allowThirdPartyEgress,
   evidenceActions,
   evidenceTitleById,
+  entityTitleById,
   runSiblings,
   recipeTotal,
   busy,
@@ -74,6 +76,7 @@ export function CollectDetail({
       job={job}
       runSiblings={[...runSiblings]}
       evidenceTitleById={evidenceTitleById}
+      entityTitleById={entityTitleById}
       recipeTotal={recipeTotal}
       busy={busy}
       onCancel={onCancel}

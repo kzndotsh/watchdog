@@ -6,7 +6,7 @@ import { CollectDetail } from "@/domains/collect/components/collect-detail";
 import type { CollectRow } from "@/domains/collect/types";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord, JobRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord, JobRecord } from "@/domains/jobs/types";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -146,6 +146,7 @@ function renderDetail(
       allowThirdPartyEgress={false}
       evidenceActions={actions()}
       evidenceTitleById={new Map()}
+      entityTitleById={new Map()}
       runSiblings={[step1]}
       recipeTotal={2}
       busy={false}
@@ -181,6 +182,7 @@ describe("CollectDetail", () => {
         allowThirdPartyEgress={false}
         evidenceActions={actions()}
         evidenceTitleById={new Map()}
+        entityTitleById={new Map()}
         runSiblings={[step1]}
         recipeTotal={2}
         busy={false}

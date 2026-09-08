@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCollectIndex } from "@/domains/collect/lib/collect-index";
+import {
+  buildCollectIndex,
+  collectIndexOptionsFromPlaybooks,
+} from "@/domains/collect/lib/collect-index";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord } from "@/domains/jobs/types";
 import { testId } from "@watchdog/test-kit";
 
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
@@ -28,7 +31,7 @@ function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
 }
 
 function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
-  return {
+  const row: JobListRecord = {
     id: testId(11),
     caseId: testId(10),
     capabilityId: "network.dns.lookup",
@@ -55,6 +58,10 @@ function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
     playbookFanIndex: 0,
     ...overrides,
   };
+  if (overrides.createdAt !== undefined && overrides.updatedAt === undefined) {
+    row.updatedAt = overrides.createdAt;
+  }
+  return row;
 }
 
 describe("buildCollectIndex", () => {
@@ -93,6 +100,19 @@ describe("buildCollectIndex", () => {
     expect(index.rowById(running.id)?.id).toBe(running.id);
   });
 
+  it("trims padded entityId on standalone job rows", () => {
+    const entityId = testId(99);
+    const running = job({
+      id: testId(12),
+      status: "running",
+      evidenceIds: [],
+      input: { host: "example.com", entityId: `  ${entityId}  ` },
+      createdAt: "2026-01-04T00:00:00.000Z",
+    });
+    const index = buildCollectIndex([], [running]);
+    expect(index.rows[0]?.entityId).toBe(entityId);
+  });
+
   it("collapses a landed Cap into the Evidence row and keeps rowById(jobId)", () => {
     const landedEvidence = evidence({
       id: testId(41),
@@ -121,18 +141,21 @@ describe("buildCollectIndex", () => {
       id: testId(14),
       evidenceIds: [row.id],
       createdAt: "2026-01-06T00:00:00.000Z",
+      updatedAt: "2026-01-06T00:00:00.000Z",
     });
     const enrichJob = job({
       id: testId(15),
       capabilityId: "network.url.enrich",
       input: { sourceEvidenceId: row.id },
       createdAt: "2026-01-06T00:00:01.000Z",
+      updatedAt: "2026-01-06T00:00:01.000Z",
     });
     const processJob = job({
       id: testId(16),
       capabilityId: "evidence.harvest",
       evidenceIds: [row.id],
       createdAt: "2026-01-06T00:00:02.000Z",
+      updatedAt: "2026-01-06T00:00:02.000Z",
     });
     const index = buildCollectIndex([row], [collectJob, enrichJob, processJob]);
 
@@ -153,6 +176,7 @@ describe("buildCollectIndex", () => {
       playbookStep: 1,
       status: "succeeded",
       createdAt: "2026-01-07T00:00:00.000Z",
+      updatedAt: "2026-01-07T00:00:00.000Z",
     });
     const step2 = job({
       id: testId(18),
@@ -161,6 +185,7 @@ describe("buildCollectIndex", () => {
       playbookStep: 2,
       status: "running",
       createdAt: "2026-01-07T00:00:01.000Z",
+      updatedAt: "2026-01-07T00:00:01.000Z",
     });
     const index = buildCollectIndex([], [step1, step2], {
       recipeStepsByPlaybookId: new Map([["domain-sweep", 5]]),
@@ -175,6 +200,151 @@ describe("buildCollectIndex", () => {
     });
     expect(index.rows[0]?.runs).toHaveLength(2);
     expect(index.rowById(step2.id)?.id).toBe(runId);
+    expect(index.rows[0]?.recipe).toEqual({ step: 2, total: 5 });
+    expect(index.rows[0]?.title).toBe("Domain Sweep");
+    expect(index.rows[0]?.hint).toBe("Step 3 · DNS Lookup — example.com");
+  });
+
+  it("orders playbook rows by latest step activity, not step-0 createdAt", () => {
+    const runId = testId(93);
+    const step0 = job({
+      id: testId(24),
+      playbookRunId: runId,
+      playbookId: "domain-sweep",
+      playbookStep: 0,
+      status: "succeeded",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    const step1 = job({
+      id: testId(25),
+      playbookRunId: runId,
+      playbookId: "domain-sweep",
+      playbookStep: 1,
+      status: "running",
+      createdAt: "2026-01-01T00:00:01.000Z",
+      updatedAt: "2026-01-08T12:00:00.000Z",
+    });
+    const staleSolo = job({
+      id: testId(26),
+      status: "succeeded",
+      createdAt: "2026-01-05T00:00:00.000Z",
+      updatedAt: "2026-01-05T00:00:00.000Z",
+    });
+    const index = buildCollectIndex([], [step0, step1, staleSolo]);
+
+    expect(index.rows[0]?.id).toBe(runId);
+    expect(index.rows[0]?.when).toBe("2026-01-08T12:00:00.000Z");
+  });
+
+  it("orders solo job rows by updatedAt when it is newer than createdAt", () => {
+    const older = job({
+      id: testId(27),
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    const bumped = job({
+      id: testId(28),
+      status: "running",
+      createdAt: "2026-01-02T00:00:00.000Z",
+      updatedAt: "2026-01-09T00:00:00.000Z",
+    });
+    const index = buildCollectIndex([], [older, bumped]);
+
+    expect(index.rows[0]?.id).toBe(bumped.id);
+    expect(index.rows[0]?.when).toBe("2026-01-09T00:00:00.000Z");
+  });
+
+  it("titles solo collect jobs from referenced evidence label", () => {
+    const source = evidence({ id: testId(47), label: "Vendor Report PDF" });
+    const solo = job({
+      id: testId(48),
+      capabilityId: "network.shodan.lookup",
+      input: { evidenceId: source.id },
+      status: "running",
+      evidenceIds: [],
+    });
+    const index = buildCollectIndex([source], [solo]);
+    expect(index.rows.find((row) => row.id === solo.id)?.title).toBe(
+      "Shodan Lookup — Vendor Report PDF"
+    );
+  });
+
+  it("titles solo jobs from entityTitleById when input references entityId", () => {
+    const entityId = testId(51);
+    const solo = job({
+      id: testId(52),
+      capabilityId: "network.shodan.lookup",
+      input: { entityId },
+      status: "running",
+      evidenceIds: [],
+    });
+    const index = buildCollectIndex([], [solo], {
+      entityTitleById: new Map([[entityId, "Acme Corp"]]),
+    });
+    expect(index.rows.find((row) => row.id === solo.id)?.title).toBe(
+      "Shodan Lookup — Acme Corp"
+    );
+  });
+
+  it("titles solo jobs from evidenceTitleById when source row is not indexed", () => {
+    const hiddenId = testId(49);
+    const solo = job({
+      id: testId(50),
+      capabilityId: "evidence.harvest",
+      input: { evidenceId: hiddenId },
+      status: "running",
+      evidenceIds: [],
+    });
+    const index = buildCollectIndex([], [solo], {
+      evidenceTitleById: new Map([[hiddenId, "Hidden dump"]]),
+    });
+    expect(index.rows.find((row) => row.id === solo.id)?.title).toBe(
+      "Harvest — Hidden dump"
+    );
+    expect(index.titleForEvidence(hiddenId)).toBe("Hidden dump");
+  });
+
+  it("prefers catalog playbook titles when provided", () => {
+    const runId = testId(92);
+    const step = job({
+      id: testId(23),
+      playbookRunId: runId,
+      playbookId: "domain-sweep",
+      playbookStep: 1,
+      status: "running",
+    });
+    const index = buildCollectIndex([], [step], {
+      playbookTitleById: new Map([["domain-sweep", "Domain footprint"]]),
+    });
+    expect(index.rows[0]?.title).toBe("Domain footprint");
+  });
+
+  it("shows full recipe progress when a playbook run is finished", () => {
+    const runId = testId(91);
+    const step1 = job({
+      id: testId(21),
+      playbookRunId: runId,
+      playbookId: "domain-sweep",
+      playbookStep: 1,
+      playbookRunStatus: "finished",
+      status: "succeeded",
+      createdAt: "2026-01-07T00:00:00.000Z",
+    });
+    const step2 = job({
+      id: testId(22),
+      playbookRunId: runId,
+      playbookId: "domain-sweep",
+      playbookStep: 2,
+      playbookRunStatus: "finished",
+      status: "succeeded",
+      createdAt: "2026-01-07T00:00:01.000Z",
+    });
+    const index = buildCollectIndex([], [step1, step2], {
+      recipeStepsByPlaybookId: new Map([["domain-sweep", 5]]),
+    });
+
+    expect(index.rows[0]?.recipe).toEqual({ step: 5, total: 5 });
   });
 
   it("keeps a parent run row when a harvest lands multiple Evidence rows", () => {
@@ -190,6 +360,35 @@ describe("buildCollectIndex", () => {
 
     expect(index.rows.some((row) => row.id === harvest.id)).toBe(true);
     expect(index.rowById(harvest.id)?.runs[0]?.job.id).toBe(harvest.id);
+  });
+
+  it("marks blocked Cap-only rows as blocked, not queued", () => {
+    const blocked = job({
+      id: testId(15),
+      status: "blocked",
+      evidenceIds: [],
+      createdAt: "2026-01-04T02:00:00.000Z",
+    });
+    const index = buildCollectIndex([], [blocked]);
+
+    expect(index.rows[0]?.state).toBe("blocked");
+  });
+
+  it("marks cancelled Cap-only rows as cancelled, not failed", () => {
+    const cancelled = job({
+      id: testId(14),
+      status: "cancelled",
+      evidenceIds: [],
+      createdAt: "2026-01-04T01:00:00.000Z",
+    });
+    const index = buildCollectIndex([], [cancelled]);
+
+    expect(index.rows).toHaveLength(1);
+    expect(index.rows[0]).toMatchObject({
+      id: cancelled.id,
+      state: "cancelled",
+      evidence: null,
+    });
   });
 
   it("marks processed Evidence as landed", () => {
@@ -222,5 +421,17 @@ describe("buildCollectIndex", () => {
       state: "hidden",
       runs: [expect.objectContaining({ job: processJob, role: "process" })],
     });
+  });
+});
+
+describe("collectIndexOptionsFromPlaybooks", () => {
+  it("maps catalog ids to titles and step counts", () => {
+    const opts = collectIndexOptionsFromPlaybooks([
+      { id: "host-footprint", title: "Host Footprint", steps: [{}, {}] },
+    ]);
+    expect(opts.playbookTitleById?.get("host-footprint")).toBe(
+      "Host Footprint"
+    );
+    expect(opts.recipeStepsByPlaybookId?.get("host-footprint")).toBe(2);
   });
 });

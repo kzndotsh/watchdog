@@ -4,8 +4,9 @@ import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EMPTY_COLLECT_FILTERS } from "@/domains/collect/types";
+import { evidenceTitleMapFromRecords } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord, JobRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord, JobRecord } from "@/domains/jobs/types";
 import { testId } from "@watchdog/test-kit";
 
 const cancelJobFn = vi.hoisted(() => vi.fn());
@@ -25,28 +26,22 @@ vi.mock("@/domains/jobs/jobs.functions", () => ({
   listJobsFn: vi.fn(),
   listCapabilitiesFn: vi.fn(),
   listPlaybooksFn: vi.fn(),
-  getArtifactContentFn: vi.fn(),
 }));
 
-vi.mock("@/domains/jobs/queries", () => ({
-  refreshJobsAfterMutation: vi.fn().mockResolvedValue(undefined),
-  jobDetailQuery: (caseId: string, jobId: string) => ({
-    queryKey: ["jobs", caseId, "detail", jobId],
-    queryFn: async () => getJobFn({ data: { caseId, jobId } }),
-  }),
-  jobsListQuery: (caseId: string) => ({
-    queryKey: ["jobs", caseId],
-  }),
-  jobsKeys: {
-    all: (caseId: string) => ["jobs", caseId],
-    detail: (caseId: string, jobId: string) => [
-      "jobs",
-      caseId,
-      "detail",
-      jobId,
-    ],
-  },
+vi.mock("@/shared/lib/query-invalidation", () => ({
+  bindCasesChangedInvalidation: vi.fn(() => () => undefined),
+  invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
+  invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
 }));
+
+vi.mock("@/domains/jobs/queries", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/domains/jobs/queries")>();
+  return {
+    ...actual,
+    refreshJobsAfterMutation: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 vi.mock("@/domains/intake/queries", () => ({
   evidenceListQuery: (caseId: string, opts?: { hiddenOnly?: boolean }) => ({
@@ -56,11 +51,6 @@ vi.mock("@/domains/intake/queries", () => ({
 
 vi.mock("@/shared/hooks/use-live-events", () => ({
   useLiveEvents: vi.fn(),
-}));
-
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  bindCasesChangedInvalidation: vi.fn(() => () => undefined),
-  invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/domains/collect/lib/prefetch-collect", () => ({
@@ -101,6 +91,12 @@ vi.mock("@/domains/collect/hooks/use-collect-queue-data", () => ({
 }));
 
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
+import { refreshJobsAfterMutation } from "@/domains/jobs/queries";
+import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import {
+  invalidateAfterEntityChanged,
+  invalidateAfterEvidenceMutation,
+} from "@/shared/lib/query-invalidation";
 
 const CASE_ID = testId(10);
 const UNRELATED_ID = testId(11);
@@ -201,19 +197,24 @@ const step2 = listJob({
 function mockQueue(opts?: {
   jobs?: JobListRecord[];
   evidence?: EvidenceRecord[];
+  filters?: Partial<typeof EMPTY_COLLECT_FILTERS>;
 }) {
   const jobs = opts?.jobs ?? [unrelatedJob, step1, step2];
   const evidenceRows = opts?.evidence ?? [];
   useCollectQueueDataMock.mockReturnValue({
-    filters: EMPTY_COLLECT_FILTERS,
+    filters: { ...EMPTY_COLLECT_FILTERS, ...opts?.filters },
     setFilters: vi.fn(),
     evidence: evidenceRows,
     evidenceRows,
+    hiddenEvidenceRows: [],
+    evidenceTitleById: evidenceTitleMapFromRecords(evidenceRows),
     jobs,
     entities: [],
     urlDumps: [],
     configuredCredentials: new Set<string>(),
-    recipeStepCountByPlaybookId: new Map([[PLAYBOOK_ID, 2]]),
+    credentialsLoadError: null,
+    credentialsError: false,
+    credentialsPending: false,
     queueCorePending: false,
     queuePending: false,
     queuePlaceholder: false,
@@ -222,6 +223,7 @@ function mockQueue(opts?: {
     evidenceError: false,
     hiddenEvidenceError: false,
     jobsError: false,
+    entitiesError: false,
   });
 }
 
@@ -295,7 +297,90 @@ describe("useCollectWorkspace job-id adapter", () => {
 
     expect(result.current.selected?.id).toBe(EVIDENCE_ID);
     expect(result.current.selected?.evidence?.id).toBe(EVIDENCE_ID);
-    expect(result.current.jobsWs.selectedId).not.toBe(EVIDENCE_ID);
-    expect(result.current.jobsWs.selectedId).not.toBe(PLAYBOOK_RUN_ID);
+    expect(result.current.jobsWs.selectedId).toBeNull();
+    expect(result.current.jobsWs.selectedId).not.toBe(UNRELATED_ID);
+  });
+
+  it("keeps url sync when the url id matches a focused playbook step", () => {
+    const { result } = renderCollect(STEP1_ID);
+
+    expect(result.current.jobsWs.selectedId).toBe(STEP1_ID);
+    expect(result.current.urlSyncOutOfDate).toBe(false);
+  });
+
+  it("excludes unassigned jobs from the index when hiddenOnly is enabled", () => {
+    const hidden = evidence({
+      id: testId(60),
+      deletedAt: "2026-01-05T00:00:00.000Z",
+    });
+    mockQueue({
+      jobs: [unrelatedJob, step1, step2],
+      evidence: [hidden],
+      filters: { hiddenOnly: true },
+    });
+    const { result } = renderCollect();
+
+    expect(result.current.indexRows).toHaveLength(1);
+    expect(result.current.indexRows[0]?.id).toBe(testId(60));
+    expect(result.current.visibleRows).toHaveLength(1);
+  });
+
+  it("invalidates entity lists on entity_changed live events", () => {
+    renderCollect(PLAYBOOK_RUN_ID);
+
+    const collectLiveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === CASE_ID);
+    const onEvent = collectLiveCall?.[1];
+    expect(onEvent).toBeTypeOf("function");
+    onEvent?.({
+      type: "entity_changed",
+      caseId: CASE_ID,
+    });
+
+    expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      CASE_ID
+    );
+  });
+
+  it("invalidates evidence on evidence_changed live events", () => {
+    renderCollect(PLAYBOOK_RUN_ID);
+
+    const collectLiveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === CASE_ID);
+    const onEvent = collectLiveCall?.[1];
+    onEvent?.({
+      type: "evidence_changed",
+      caseId: CASE_ID,
+      evidenceId: EVIDENCE_ID,
+    });
+
+    expect(invalidateAfterEvidenceMutation).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      CASE_ID
+    );
+  });
+
+  it("refreshes jobs on job_update live events without invalidating evidence", () => {
+    renderCollect(PLAYBOOK_RUN_ID);
+
+    const collectLiveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === CASE_ID);
+    const onEvent = collectLiveCall?.[1];
+    onEvent?.({
+      type: "job_update",
+      caseId: CASE_ID,
+      jobId: STEP1_ID,
+      status: "running",
+    });
+
+    expect(refreshJobsAfterMutation).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      CASE_ID
+    );
+    expect(invalidateAfterEvidenceMutation).not.toHaveBeenCalled();
   });
 });

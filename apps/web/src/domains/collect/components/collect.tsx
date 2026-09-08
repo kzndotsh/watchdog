@@ -1,7 +1,8 @@
-import { useQuery, useSuspenseQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link, Navigate } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import {
   CollectDumpButtons,
@@ -19,8 +20,12 @@ import {
   playbooksListQuery,
 } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
+import { errMessage } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { InlineLoading } from "@/shared/ui/inline-loading";
 import { PendingRegion } from "@/shared/ui/pending-region";
@@ -31,11 +36,17 @@ import { Separator } from "@/shared/ui/shadcn/separator";
 import { CollectDetailSkeleton } from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
 
+const EMPTY_CAPS: CapListItem[] = [];
+const EMPTY_PLAYBOOKS: PlaybookListItem[] = [];
+
 function CollectWithCase({
   active,
   caps,
   playbooks,
   runCatalogPending,
+  runCatalogPlaceholder,
+  runCatalogLoadError,
+  onRetryRunCatalog,
   urlId,
   onIdChange,
 }: {
@@ -43,6 +54,9 @@ function CollectWithCase({
   caps: CapListItem[];
   playbooks: PlaybookListItem[];
   runCatalogPending: boolean;
+  runCatalogPlaceholder: boolean;
+  runCatalogLoadError: string | null;
+  onRetryRunCatalog: () => void;
   urlId?: string;
   onIdChange: (next: string | null) => void;
 }) {
@@ -59,6 +73,50 @@ function CollectWithCase({
   const handleRunModeChange = ws.setRunMode;
   const handleDumpOpenChange = ws.setDumpModal;
   const handleRetryQueue = ws.retryQueue;
+  const runFormLoadError = runCatalogLoadError ?? ws.credentialsLoadError;
+  const runFormPending = runCatalogPending || ws.credentialsPending;
+  const handleRetryRunForm = () => {
+    onRetryRunCatalog();
+    ws.retryCredentials();
+  };
+  const handleEntityIdChange = ws.intake.setEntityId;
+  const handleFiles = ws.intake.onFiles;
+  const handlePaste = ws.intake.onPaste;
+  const handleUrl = ws.intake.onUrl;
+
+  let runFormBody: ReactNode;
+  if (runFormLoadError) {
+    runFormBody = (
+      <FetchErrorAlert error={runFormLoadError} onRetry={handleRetryRunForm} />
+    );
+  } else if (runFormPending) {
+    runFormBody = <InlineLoading label="Loading caps and playbooks…" />;
+  } else {
+    runFormBody = (
+      <div
+        className={placeholderDeemphasisClass(
+          (runCatalogPlaceholder || ws.credentialsPending) && !runFormPending
+        )}
+      >
+        <CollectRunFormPanel
+          runMode={ws.runMode}
+          playbooks={playbooks}
+          caps={caps}
+          urlDumps={ws.urlDumps}
+          entities={ws.entities}
+          allowThirdPartyEgress={active.allowThirdPartyEgress}
+          configuredCredentials={ws.configuredCredentials}
+          runError={ws.jobsWs.error}
+          onRunPlaybook={async (input) => {
+            await ws.jobsWs.handleRunPlaybook(input);
+          }}
+          onRunCap={async (input) => {
+            await ws.jobsWs.handleRunCap(input);
+          }}
+        />
+      </div>
+    );
+  }
 
   const ingressActions = (
     <div className="flex items-center gap-2">
@@ -71,26 +129,7 @@ function CollectWithCase({
         runMode={ws.runMode}
         onRunModeChange={handleRunModeChange}
       >
-        {runCatalogPending ? (
-          <InlineLoading label="Loading caps and playbooks…" />
-        ) : (
-          <CollectRunFormPanel
-            runMode={ws.runMode}
-            playbooks={playbooks}
-            caps={caps}
-            urlDumps={ws.urlDumps}
-            entities={ws.entities}
-            allowThirdPartyEgress={active.allowThirdPartyEgress}
-            configuredCredentials={ws.configuredCredentials}
-            runError={ws.jobsWs.error}
-            onRunPlaybook={async (input) => {
-              await ws.jobsWs.handleRunPlaybook(input);
-            }}
-            onRunCap={async (input) => {
-              await ws.jobsWs.handleRunCap(input);
-            }}
-          />
-        )}
+        {runFormBody}
       </CollectRunPopover>
     </div>
   );
@@ -128,10 +167,10 @@ function CollectWithCase({
         uploadStatus={ws.intake.uploadStatus}
         entities={ws.entities}
         entityId={ws.intake.entityId}
-        onEntityIdChange={ws.handleEntityIdChange}
-        onFiles={ws.handleFiles}
-        onPaste={ws.handlePaste}
-        onUrl={ws.handleUrl}
+        onEntityIdChange={handleEntityIdChange}
+        onFiles={handleFiles}
+        onPaste={handlePaste}
+        onUrl={handleUrl}
       />
       {ws.jobsWs.stuckJobs.length > 0 ? (
         <Alert variant="destructive" className="mx-4 mt-2">
@@ -184,27 +223,41 @@ function CollectWithCase({
             fallback={<CollectDetailSkeleton />}
             className="flex h-full min-h-0 flex-col"
           >
-            <CollectDetail
-              row={ws.selected}
-              job={ws.jobsWs.detailJob}
-              caseId={active.id}
-              jobs={ws.jobs}
-              entities={ws.entities}
-              entityNameById={ws.entityNameById}
-              allowThirdPartyEgress={active.allowThirdPartyEgress}
-              evidenceActions={ws.intake.evidenceActions}
-              evidenceTitleById={ws.evidenceTitleById}
-              runSiblings={ws.jobsWs.runSiblings}
-              recipeTotal={ws.recipeTotal}
-              busy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
-              onCancel={ws.jobsWs.handleCancel}
-              onCancelPlaybook={
-                ws.jobsWs.hasPlaybookRun
-                  ? ws.jobsWs.handleCancelPlaybook
-                  : undefined
-              }
-              cancelPlaybookBusy={ws.jobsWs.cancelPlaybookBusy}
-            />
+            {ws.jobsWs.detailLoadError ? (
+              <FetchErrorAlert
+                error={ws.jobsWs.detailLoadError}
+                onRetry={ws.jobsWs.handleRetryDetail}
+              />
+            ) : (
+              <div
+                className={placeholderDeemphasisClass(
+                  ws.detailPlaceholder && !ws.detailPending
+                )}
+              >
+                <CollectDetail
+                  row={ws.selected}
+                  job={ws.jobsWs.detailJob}
+                  caseId={active.id}
+                  jobs={ws.jobs}
+                  entities={ws.entities}
+                  entityNameById={ws.entityNameById}
+                  allowThirdPartyEgress={active.allowThirdPartyEgress}
+                  evidenceActions={ws.intake.evidenceActions}
+                  evidenceTitleById={ws.evidenceTitleById}
+                  entityTitleById={ws.entityTitleById}
+                  runSiblings={ws.jobsWs.runSiblings}
+                  recipeTotal={ws.recipeTotal}
+                  busy={ws.jobsWs.cancelBusy || ws.jobsWs.cancelPlaybookBusy}
+                  onCancel={ws.jobsWs.handleCancel}
+                  onCancelPlaybook={
+                    ws.jobsWs.hasPlaybookRun
+                      ? ws.jobsWs.handleCancelPlaybook
+                      : undefined
+                  }
+                  cancelPlaybookBusy={ws.jobsWs.cancelPlaybookBusy}
+                />
+              </div>
+            )}
           </PendingRegion>
         }
       />
@@ -219,44 +272,82 @@ export function Collect({
   urlId?: string;
   onIdChange: (next: string | null) => void;
 }) {
-  const [{ data: casesCtx }] = useSuspenseQueries({
-    queries: [casesContextQuery()],
-  });
-  const { data: caps = [], isPending: capsPending } = useQuery(
-    capabilitiesListQuery()
-  );
-  const { data: playbooks = [], isPending: playbooksPending } =
-    useQuery(playbooksListQuery());
-  const runCatalogPending = capsPending || playbooksPending;
+  const {
+    active,
+    pending: casesPending,
+    loadError: casesLoadError,
+    retry: retryCases,
+  } = useCasesContext();
+  const capsQuery = useQuery(capabilitiesListQuery());
+  const playbooksQuery = useQuery(playbooksListQuery());
+  const caps = capsQuery.data ?? EMPTY_CAPS;
+  const playbooks = playbooksQuery.data ?? EMPTY_PLAYBOOKS;
+  const runCatalogPending =
+    listPending(capsQuery) || listPending(playbooksQuery);
+  const runCatalogPlaceholder =
+    capsQuery.isPlaceholderData || playbooksQuery.isPlaceholderData;
+  const runCatalogLoadError =
+    capsQuery.isError || playbooksQuery.isError
+      ? errMessage(
+          capsQuery.error ?? playbooksQuery.error,
+          "Failed to load caps and playbooks"
+        )
+      : null;
+  const retryRunCatalog = () => {
+    if (capsQuery.isError) void capsQuery.refetch();
+    if (playbooksQuery.isError) void playbooksQuery.refetch();
+  };
+
+  let body: ReactNode;
+  if (casesLoadError) {
+    body = <FetchErrorAlert error={casesLoadError} onRetry={retryCases} />;
+  } else if (casesPending) {
+    body = (
+      <PendingRegion
+        loading
+        label="Loading active case"
+        fallback={<CollectDetailSkeleton />}
+      >
+        {null}
+      </PendingRegion>
+    );
+  } else if (active) {
+    body = (
+      <CollectWithCase
+        active={active}
+        caps={caps}
+        playbooks={playbooks}
+        runCatalogPending={runCatalogPending}
+        runCatalogPlaceholder={runCatalogPlaceholder}
+        runCatalogLoadError={runCatalogLoadError}
+        onRetryRunCatalog={retryRunCatalog}
+        urlId={urlId}
+        onIdChange={onIdChange}
+      />
+    );
+  } else {
+    body = (
+      <EmptyState
+        intent="blank-slate"
+        items="cases"
+        title="No Active Case"
+        description={
+          <>
+            <Link to="/cases" className="underline">
+              Select a Case
+            </Link>{" "}
+            to collect material.
+          </>
+        }
+      />
+    );
+  }
 
   return (
     <Page density="split">
       <PageHeader />
 
-      {casesCtx.active ? (
-        <CollectWithCase
-          active={casesCtx.active}
-          caps={caps}
-          playbooks={playbooks}
-          runCatalogPending={runCatalogPending}
-          urlId={urlId}
-          onIdChange={onIdChange}
-        />
-      ) : (
-        <EmptyState
-          intent="blank-slate"
-          items="cases"
-          title="No Active Case"
-          description={
-            <>
-              <Link to="/cases" className="underline">
-                Select a Case
-              </Link>{" "}
-              to collect material.
-            </>
-          }
-        />
-      )}
+      {body}
     </Page>
   );
 }

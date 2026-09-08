@@ -17,8 +17,8 @@ import {
 } from "@/domains/collect/lib/prefetch-collect";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
+import { artifactContentQuery } from "@/domains/jobs/artifact-queries";
 import {
-  artifactContentQuery,
   capabilitiesListQuery,
   jobDetailQuery,
   jobsListQuery,
@@ -27,17 +27,20 @@ import {
 import { credentialsListQuery } from "@/domains/settings/queries";
 
 describe("ensureCollectQueueQueries", () => {
-  it("awaits evidence, jobs, and entities together", async () => {
+  it("awaits active and hidden evidence, jobs, and entities together", async () => {
     const query = vi.fn().mockResolvedValue(undefined);
     const client = { query } as unknown as QueryClientType;
 
     await ensureCollectQueueQueries(client, "case-1");
 
-    expect(query).toHaveBeenCalledTimes(3);
+    expect(query).toHaveBeenCalledTimes(4);
     const ensuredKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
     expect(ensuredKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
+    expect(ensuredKeys).toContainEqual(
+      evidenceListQuery("case-1", { hiddenOnly: true }).queryKey
+    );
     expect(ensuredKeys).toContainEqual(jobsListQuery("case-1").queryKey);
     expect(ensuredKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
   });
@@ -79,6 +82,7 @@ describe("ensureCollectEvidenceBlobWhenSelected", () => {
           return Promise.resolve([
             {
               id: evidenceId,
+              kind: "file",
               text: null,
               uri: "s3://bucket/key",
               mime: "application/json",
@@ -86,6 +90,7 @@ describe("ensureCollectEvidenceBlobWhenSelected", () => {
           ]);
         }
         if (key === "jobs") return Promise.resolve([]);
+        if (key === "playbooks") return Promise.resolve([]);
         if (key === "artifact") return Promise.resolve({ text: '{"ok":true}' });
         return Promise.resolve(undefined);
       });
@@ -129,6 +134,7 @@ describe("warmCollectQueries", () => {
             },
           ]);
         }
+        if (key === "playbooks") return Promise.resolve([]);
         return Promise.resolve(undefined);
       });
     const client = { query } as unknown as QueryClientType;
@@ -142,13 +148,24 @@ describe("warmCollectQueries", () => {
     );
   });
 
-  it("delegates catalog warm to warmCollectCatalogQueries", () => {
-    const query = vi.fn().mockResolvedValue(undefined);
-    const client = { query } as unknown as QueryClientType;
+  it("delegates catalog warm to warmCollectCatalogQueries", async () => {
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
     warmCollectQueries(client, "case-1");
+    await Promise.resolve();
 
     expect(query).toHaveBeenCalled();
-    expect(query).toHaveBeenCalled();
+  });
+
+  it("ignores whitespace-only selectedId for selection warm", async () => {
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
+
+    warmCollectQueries(client, "case-1", { selectedId: "   " });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(query).toHaveBeenCalledTimes(6);
   });
 });

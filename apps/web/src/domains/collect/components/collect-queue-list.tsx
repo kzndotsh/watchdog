@@ -10,10 +10,15 @@ import {
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { DisplayStatus } from "@/shared/ui/vocab";
 
-function collectStateToDisplayStatus(state: CollectState): DisplayStatus {
+function collectStateToDisplayStatus(
+  state: Exclude<CollectState, "hidden">
+): DisplayStatus {
   switch (state) {
     case "queued": {
       return "queued";
+    }
+    case "blocked": {
+      return "blocked";
     }
     case "running": {
       return "running";
@@ -27,7 +32,7 @@ function collectStateToDisplayStatus(state: CollectState): DisplayStatus {
     case "failed": {
       return "failed";
     }
-    case "hidden": {
+    case "cancelled": {
       return "cancelled";
     }
     default: {
@@ -38,7 +43,7 @@ function collectStateToDisplayStatus(state: CollectState): DisplayStatus {
 }
 
 function collectStateIsLive(state: CollectState): boolean {
-  return state === "queued" || state === "running";
+  return state === "queued" || state === "running" || state === "blocked";
 }
 
 export interface CollectQueueListProps {
@@ -72,10 +77,17 @@ export function CollectQueueList({
                   }}
                   className="py-2"
                   trailing={
-                    <StatusDot
-                      status={collectStateToDisplayStatus(row.state)}
-                      pulse={row.state === "running"}
-                    />
+                    row.state === "hidden" ? (
+                      <span
+                        aria-label="Hidden"
+                        className="bg-muted-foreground/40 inline-flex size-2 shrink-0 rounded-full"
+                      />
+                    ) : (
+                      <StatusDot
+                        status={collectStateToDisplayStatus(row.state)}
+                        pulse={row.state === "running"}
+                      />
+                    )
                   }
                 >
                   <div className="flex min-w-0 items-center gap-1.5">

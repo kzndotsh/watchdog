@@ -1,15 +1,18 @@
 import type { ReactNode } from "react";
 import { useId } from "react";
 
-import { isCollectFiltered } from "@/domains/collect/lib/collect-filters";
+import {
+  applyCollectFilterToggle,
+  isCollectFiltered,
+} from "@/domains/collect/lib/collect-filters";
 import {
   COLLECT_STATE_FACET_OPTIONS,
   EMPTY_COLLECT_FILTERS,
   type CollectFilters,
   type CollectState,
 } from "@/domains/collect/types";
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
 import { capabilityFacetOptions } from "@/domains/jobs/lib/status";
+import type { JobListRecord } from "@/domains/jobs/types";
 import {
   PageFilterMenu,
   type PageFilterChip,
@@ -132,10 +135,9 @@ export function CollectQueueToolbar({
                       id={hiddenOnlyId}
                       checked={filters.hiddenOnly}
                       onCheckedChange={(value) => {
-                        onFiltersChange({
-                          ...filters,
-                          hiddenOnly: value,
-                        });
+                        onFiltersChange(
+                          applyCollectFilterToggle(filters, "hiddenOnly", value)
+                        );
                       }}
                     />
                     <FieldLabel className="mb-0">Hidden</FieldLabel>
@@ -148,10 +150,13 @@ export function CollectQueueToolbar({
                       id={unprocessedOnlyId}
                       checked={filters.unprocessedOnly}
                       onCheckedChange={(value) => {
-                        onFiltersChange({
-                          ...filters,
-                          unprocessedOnly: value,
-                        });
+                        onFiltersChange(
+                          applyCollectFilterToggle(
+                            filters,
+                            "unprocessedOnly",
+                            value
+                          )
+                        );
                       }}
                     />
                     <FieldLabel className="mb-0">Unprocessed</FieldLabel>
@@ -164,10 +169,13 @@ export function CollectQueueToolbar({
                       id={unattachedOnlyId}
                       checked={filters.unattachedOnly}
                       onCheckedChange={(value) => {
-                        onFiltersChange({
-                          ...filters,
-                          unattachedOnly: value,
-                        });
+                        onFiltersChange(
+                          applyCollectFilterToggle(
+                            filters,
+                            "unattachedOnly",
+                            value
+                          )
+                        );
                       }}
                     />
                     <FieldLabel className="mb-0">Unattached</FieldLabel>
@@ -205,7 +213,7 @@ export function CollectQueueToolbar({
               </div>
               {capOptions.length > 0 ? (
                 <div className="space-y-2">
-                  <Label>Capability</Label>
+                  <Label>Cap / playbook</Label>
                   <div className="flex max-h-40 flex-col gap-2 overflow-y-auto">
                     {capOptions.map((opt) => {
                       const checked = selectedCapabilityIds.has(opt.value);
@@ -227,7 +235,7 @@ export function CollectQueueToolbar({
                               });
                             }}
                           />
-                          <span className="font-mono text-xs">{opt.label}</span>
+                          <span className="truncate text-xs">{opt.label}</span>
                         </label>
                       );
                     })}

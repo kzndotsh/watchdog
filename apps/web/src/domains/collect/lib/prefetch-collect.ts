@@ -1,24 +1,27 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { resolveCollectSelection } from "@/domains/collect/lib/collect-filters";
-import { buildCollectIndex } from "@/domains/collect/lib/collect-index";
+import {
+  buildCollectIndex,
+  collectIndexOptionsFromPlaybooks,
+} from "@/domains/collect/lib/collect-index";
 import { resolveCollectJobDetailId } from "@/domains/collect/lib/collect-job-detail";
 import type { CollectRow } from "@/domains/collect/types";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import { evidenceNeedsBlobText } from "@/domains/intake/hooks/use-evidence-blob.queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
+import { artifactContentQuery } from "@/domains/jobs/artifact-queries";
 import {
-  artifactContentQuery,
   capabilitiesListQuery,
   jobDetailQuery,
   jobsListQuery,
   playbooksListQuery,
 } from "@/domains/jobs/queries";
 import { credentialsListQuery } from "@/domains/settings/queries";
+import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import {
   ensureAppQueryData,
   warmEnsureQueryData,
-  warmPrefetchQuery,
 } from "@/shared/lib/warm-query";
 
 function isCancelledError(error: unknown): boolean {
@@ -33,11 +36,16 @@ async function resolveCollectSelectionRow(
   caseId: string,
   selectedId: string
 ): Promise<{ row: CollectRow | null; focusRunId: string | null }> {
-  const [evidence, jobs] = await Promise.all([
+  const [evidence, jobs, playbooks] = await Promise.all([
     ensureAppQueryData(queryClient, evidenceListQuery(caseId)),
     ensureAppQueryData(queryClient, jobsListQuery(caseId)),
+    ensureAppQueryData(queryClient, playbooksListQuery()),
   ]);
-  const index = buildCollectIndex(evidence, jobs);
+  const index = buildCollectIndex(
+    evidence,
+    jobs,
+    collectIndexOptionsFromPlaybooks(playbooks)
+  );
   const selection = resolveCollectSelection(
     selectedId,
     (id) => index.rowById(id),
@@ -56,6 +64,10 @@ export async function ensureCollectQueueQueries(
 ): Promise<void> {
   await Promise.all([
     ensureAppQueryData(queryClient, evidenceListQuery(caseId)),
+    ensureAppQueryData(
+      queryClient,
+      evidenceListQuery(caseId, { hiddenOnly: true })
+    ),
     ensureAppQueryData(queryClient, jobsListQuery(caseId)),
     ensureAppQueryData(queryClient, entitiesListQuery(caseId)),
   ]);
@@ -150,10 +162,10 @@ export function warmCollectCatalogQueries(
     ...jobsListQuery(caseId),
     revalidateIfStale: true,
   });
-  warmPrefetchQuery(
-    queryClient,
-    evidenceListQuery(caseId, { hiddenOnly: true })
-  );
+  warmEnsureQueryData(queryClient, {
+    ...evidenceListQuery(caseId, { hiddenOnly: true }),
+    revalidateIfStale: true,
+  });
 }
 
 /** Fire-and-forget warm — prefer `ensureCollectQueueQueries` in the loader. */
@@ -164,14 +176,22 @@ export function warmCollectQueries(
 ): void {
   warmCollectCatalogQueries(queryClient, caseId);
 
-  const selectedId = opts?.selectedId;
-  if (selectedId === undefined || selectedId === "") return;
+  const scopedSelectedId = scopeOptionalUuid(opts?.selectedId);
+  if (scopedSelectedId === undefined) return;
 
   void (async () => {
     try {
       await Promise.all([
-        ensureCollectJobDetailWhenSelected(queryClient, caseId, selectedId),
-        ensureCollectEvidenceBlobWhenSelected(queryClient, caseId, selectedId),
+        ensureCollectJobDetailWhenSelected(
+          queryClient,
+          caseId,
+          scopedSelectedId
+        ),
+        ensureCollectEvidenceBlobWhenSelected(
+          queryClient,
+          caseId,
+          scopedSelectedId
+        ),
       ]);
     } catch (error: unknown) {
       if (!isCancelledError(error)) {
