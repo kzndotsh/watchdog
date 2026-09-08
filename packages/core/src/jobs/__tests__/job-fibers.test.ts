@@ -22,4 +22,17 @@ describe("JobFibers layer", () => {
       ).pipe(Effect.provide(JobFibers.layer))
     );
   });
+
+  it("setReason does not overwrite an existing abort reason", async () => {
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* setReasonNoOverwriteGen() {
+          const fibers = yield* JobFibers;
+          fibers.setReason("race-job", "cancel");
+          fibers.setReason("race-job", "timeout");
+          expect(fibers.peekReason("race-job")).toBe("cancel");
+        })
+      ).pipe(Effect.provide(JobFibers.layer))
+    );
+  });
 });

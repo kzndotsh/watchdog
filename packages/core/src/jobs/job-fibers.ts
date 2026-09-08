@@ -36,7 +36,9 @@ export class JobFibers extends Context.Service<JobFibers, JobFibersApi>()(
         listIds: () => [...map].map(([jobId]) => jobId),
         peekReason: (jobId) => abortReasons.get(jobId),
         setReason: (jobId, reason) => {
-          abortReasons.set(jobId, reason);
+          if (!abortReasons.has(jobId)) {
+            abortReasons.set(jobId, reason);
+          }
         },
         clearReason: (jobId) => {
           abortReasons.delete(jobId);
