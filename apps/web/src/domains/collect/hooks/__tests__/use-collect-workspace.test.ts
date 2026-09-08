@@ -32,16 +32,8 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   bindCasesChangedInvalidation: vi.fn(() => () => undefined),
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
   invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
+  invalidateAfterJobMutation: vi.fn().mockResolvedValue(undefined),
 }));
-
-vi.mock("@/domains/jobs/queries", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/domains/jobs/queries")>();
-  return {
-    ...actual,
-    refreshJobsAfterMutation: vi.fn().mockResolvedValue(undefined),
-  };
-});
 
 vi.mock("@/domains/intake/queries", () => ({
   evidenceListQuery: (caseId: string, opts?: { hiddenOnly?: boolean }) => ({
@@ -91,11 +83,11 @@ vi.mock("@/domains/collect/hooks/use-collect-queue-data", () => ({
 }));
 
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
-import { refreshJobsAfterMutation } from "@/domains/jobs/queries";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import {
   invalidateAfterEntityChanged,
   invalidateAfterEvidenceMutation,
+  invalidateAfterJobMutation,
 } from "@/shared/lib/query-invalidation";
 
 const CASE_ID = testId(10);
@@ -377,7 +369,7 @@ describe("useCollectWorkspace job-id adapter", () => {
       status: "running",
     });
 
-    expect(refreshJobsAfterMutation).toHaveBeenCalledWith(
+    expect(invalidateAfterJobMutation).toHaveBeenCalledWith(
       expect.any(QueryClient),
       CASE_ID
     );

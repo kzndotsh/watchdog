@@ -17,8 +17,11 @@ vi.mock("@/domains/jobs/jobs.functions", () => ({
   cancelPlaybookFn: vi.fn(),
 }));
 
+vi.mock("@/shared/lib/query-invalidation", () => ({
+  invalidateAfterJobMutation: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/domains/jobs/queries", () => ({
-  refreshJobsAfterMutation: vi.fn().mockResolvedValue(undefined),
   jobDetailQuery: (caseId: string, jobId: string) => ({
     queryKey: ["jobs", caseId, "detail", jobId],
   }),

@@ -24,10 +24,7 @@ import { useIntakeActions } from "@/domains/intake/hooks/use-intake-actions";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
 import { normalizedPlaybookRunId } from "@/domains/jobs/lib/status";
-import {
-  jobsListQuery,
-  refreshJobsAfterMutation,
-} from "@/domains/jobs/queries";
+import { jobsListQuery } from "@/domains/jobs/queries";
 import type {
   CapListItem,
   JobListRecord,
@@ -40,6 +37,7 @@ import {
   bindCasesChangedInvalidation,
   invalidateAfterEntityChanged,
   invalidateAfterEvidenceMutation,
+  invalidateAfterJobMutation,
 } from "@/shared/lib/query-invalidation";
 import {
   entitySearchHaystackMapFromRows,
@@ -240,7 +238,7 @@ export function useCollectWorkspace({
 
   useLiveEvents(caseId, (event) => {
     if (event.type === "job_update") {
-      void refreshJobsAfterMutation(queryClient, caseId);
+      void invalidateAfterJobMutation(queryClient, caseId);
     }
     if (event.type === "evidence_changed") {
       void invalidateAfterEvidenceMutation(queryClient, caseId);

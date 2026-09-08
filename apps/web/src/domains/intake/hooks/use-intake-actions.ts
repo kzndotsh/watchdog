@@ -15,9 +15,11 @@ import {
   evidenceScopeInputSchema,
   processEvidenceInputSchema,
 } from "@/domains/intake/types";
-import { refreshJobsAfterMutation } from "@/domains/jobs/queries";
 import { errMessage } from "@/lib/utils";
-import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
+import {
+  invalidateAfterEvidenceMutation,
+  invalidateAfterJobMutation,
+} from "@/shared/lib/query-invalidation";
 
 type IntakePending = null | {
   kind: "harvest" | "extract" | "enrich";
@@ -84,7 +86,7 @@ export function useIntakeActions({
       toast.success(
         input.ai === true ? "Extract (AI) job started" : "Harvest job started"
       );
-      await refreshJobsAfterMutation(queryClient, caseId);
+      await invalidateAfterJobMutation(queryClient, caseId);
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {
@@ -103,7 +105,7 @@ export function useIntakeActions({
     onSuccess: async (_result, id) => {
       onEvidenceIdChange(id);
       toast.success("Enrich job started");
-      await refreshJobsAfterMutation(queryClient, caseId);
+      await invalidateAfterJobMutation(queryClient, caseId);
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {

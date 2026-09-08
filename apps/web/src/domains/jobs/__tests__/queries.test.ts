@@ -1,4 +1,3 @@
-import type { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -15,19 +14,13 @@ vi.mock("@/domains/jobs/jobs.functions", () => ({
   listPlaybooksFn: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  invalidateAfterJobMutation: vi.fn(),
-}));
-
 import {
   capabilitiesListQuery,
   jobDetailQuery,
   jobsKeys,
   jobsListQuery,
   playbooksListQuery,
-  refreshJobsAfterMutation,
 } from "@/domains/jobs/queries";
-import { invalidateAfterJobMutation } from "@/shared/lib/query-invalidation";
 
 describe("jobs queries", () => {
   it("builds case-scoped job and artifact keys", () => {
@@ -129,11 +122,5 @@ describe("jobs queries", () => {
       previousData
     );
     expect(placeholderTwo(previousData, jobOneQuery as never)).toBeUndefined();
-  });
-
-  it("delegates refreshJobsAfterMutation to the shared invalidation contract", async () => {
-    const client = {} as QueryClient;
-    await refreshJobsAfterMutation(client, "case-1");
-    expect(invalidateAfterJobMutation).toHaveBeenCalledWith(client, "case-1");
   });
 });

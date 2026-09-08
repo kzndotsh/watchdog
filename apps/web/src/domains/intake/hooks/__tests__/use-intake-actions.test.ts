@@ -17,12 +17,9 @@ vi.mock("@/domains/intake/intake.functions", () => ({
   attachEvidenceEntityFn: vi.fn(),
 }));
 
-vi.mock("@/domains/jobs/queries", () => ({
-  refreshJobsAfterMutation: vi.fn().mockResolvedValue(undefined),
-}));
-
 vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
+  invalidateAfterJobMutation: vi.fn().mockResolvedValue(undefined),
 }));
 
 const useDumpEvidenceMock = vi.hoisted(() => vi.fn());

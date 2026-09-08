@@ -1,5 +1,4 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { QueryClient } from "@tanstack/react-query";
 
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
 import {
@@ -16,7 +15,6 @@ import {
   scopeJobDetail,
   scopeJobDetailEnabled,
 } from "@/shared/lib/query-ingress";
-import { invalidateAfterJobMutation } from "@/shared/lib/query-invalidation";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import {
   GC_REALTIME,
@@ -83,11 +81,3 @@ export const playbooksListQuery = () => {
     placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };
-
-/** Jobs workspace freshness — SSE `job_update` is the follow-up path; no timed retries. */
-export async function refreshJobsAfterMutation(
-  queryClient: QueryClient,
-  caseId: string
-): Promise<void> {
-  await invalidateAfterJobMutation(queryClient, caseId);
-}
