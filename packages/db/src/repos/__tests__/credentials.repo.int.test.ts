@@ -34,4 +34,36 @@ describe("credentialsRepo", () => {
       ).toBe(true);
     });
   });
+
+  it("trims padded labels on create and update", async () => {
+    await withTestTx(async (tx) => {
+      const created = await credentialsRepo.create(tx, {
+        userId: TEST_ACTOR_ID,
+        name: "TRIMMED_LABEL_KEY",
+        ciphertext: Buffer.from("bytes"),
+        label: "  WhoisXML  ",
+      });
+      expect(created?.label).toBe("WhoisXML");
+
+      const id = created?.id;
+      expect(id).toBeTruthy();
+      const updated = await credentialsRepo.update(tx, id!, {
+        ciphertext: Buffer.from("bytes2"),
+        label: "  Updated  ",
+      });
+      expect(updated?.label).toBe("Updated");
+
+      const blanked = await credentialsRepo.update(tx, id!, {
+        ciphertext: Buffer.from("bytes3"),
+        label: "   ",
+      });
+      expect(blanked?.label).toBe(null);
+
+      await credentialsRepo.deleteByName(
+        tx,
+        TEST_ACTOR_ID,
+        "TRIMMED_LABEL_KEY"
+      );
+    });
+  });
 });

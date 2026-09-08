@@ -20,6 +20,22 @@ describe("usersRepo.getByIds", () => {
     });
   });
 
+  it("trims padded ids before lookup", async () => {
+    await withTestTx(async (tx) => {
+      const id = crypto.randomUUID();
+      await seedAuthUser(tx, {
+        id,
+        name: "Grace",
+        email: `grace-${id}@mailhost.test`,
+      });
+
+      const rows = await usersRepo.getByIds(tx, [`  ${id}  `]);
+      expect(rows).toEqual([
+        { id, name: "Grace", email: `grace-${id}@mailhost.test` },
+      ]);
+    });
+  });
+
   it("returns an empty list when no ids are given", async () => {
     const rows = await usersRepo.getByIds(db, []);
     expect(rows).toEqual([]);

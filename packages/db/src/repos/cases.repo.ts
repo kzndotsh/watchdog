@@ -1,8 +1,16 @@
 import { and, asc, eq, ilike, or } from "drizzle-orm";
 
+import {
+  slugifyName,
+  trimmedOrNull,
+  trimmedOrUndefined,
+} from "@watchdog/schemas";
+
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";
-import { containsPattern } from "./_ilike";
+import { entitySlugIlikePatterns } from "./_ilike";
+import { clampSearchLimit } from "./_limits";
+import { trimResourceId } from "./_scoped-ids";
 
 export const caseColumns = {
   id: cases.id,
@@ -34,6 +42,33 @@ function inOrg(organizationId: string) {
   return eq(cases.organizationId, organizationId);
 }
 
+function caseNameForWrite(name: string): string | undefined {
+  return trimmedOrUndefined(name);
+}
+
+function caseSlugForWrite(slug: string): string | undefined {
+  const normalized = slugifyName(slug);
+  return normalized === "" ? undefined : normalized;
+}
+
+function casePatchForWrite(patch: CasePatch): CasePatch | null {
+  const next: CasePatch = { ...patch };
+  if (patch.name !== undefined) {
+    const name = caseNameForWrite(patch.name);
+    if (name === undefined) return null;
+    next.name = name;
+  }
+  if (patch.slug !== undefined) {
+    const slug = caseSlugForWrite(patch.slug);
+    if (slug === undefined) return null;
+    next.slug = slug;
+  }
+  if (patch.description !== undefined) {
+    next.description = trimmedOrNull(patch.description);
+  }
+  return next;
+}
+
 export const casesRepo = {
   async list(exec: DbExec, organizationId: string): Promise<CaseRow[]> {
     return exec
@@ -57,8 +92,11 @@ export const casesRepo = {
     term: string,
     limit: number
   ): Promise<CaseRow[]> {
-    const pattern = containsPattern(term);
-    if (pattern === null) return [];
+    const safeLimit = clampSearchLimit(limit);
+    const slugPatterns = entitySlugIlikePatterns(term);
+    if (slugPatterns.length === 0) return [];
+    const pattern = slugPatterns[0];
+    const slugMatches = slugPatterns.map((p) => ilike(cases.slug, p));
     return exec
       .select(caseColumns)
       .from(cases)
@@ -67,13 +105,13 @@ export const casesRepo = {
           inOrg(organizationId),
           or(
             ilike(cases.name, pattern),
-            ilike(cases.slug, pattern),
+            ...slugMatches,
             ilike(cases.description, pattern)
           )
         )
       )
       .orderBy(asc(cases.name))
-      .limit(limit);
+      .limit(safeLimit);
   },
 
   async getById(
@@ -81,21 +119,38 @@ export const casesRepo = {
     id: string,
     organizationId: string
   ): Promise<CaseRow | null> {
+    const scopedId = trimResourceId(id);
+    if (scopedId === undefined) return null;
     const [row] = await exec
       .select(caseColumns)
       .from(cases)
-      .where(and(eq(cases.id, id), inOrg(organizationId)))
+      .where(and(eq(cases.id, scopedId), inOrg(organizationId)))
       .limit(1);
     return row ?? null;
   },
 
   /** Worker / export internals: case id already came from a trusted job or child row. */
   async getByIdUnchecked(exec: DbExec, id: string): Promise<CaseRow | null> {
+    const scopedId = trimResourceId(id);
+    if (scopedId === undefined) return null;
     const [row] = await exec
       .select(caseColumns)
       .from(cases)
-      .where(eq(cases.id, id))
+      .where(eq(cases.id, scopedId))
       .limit(1);
+    return row ?? null;
+  },
+
+  /** Serialize proposal ingress for a Case (suppress + insert). */
+  async lockById(exec: DbExec, id: string): Promise<CaseRow | null> {
+    const scopedId = trimResourceId(id);
+    if (scopedId === undefined) return null;
+    const [row] = await exec
+      .select(caseColumns)
+      .from(cases)
+      .where(eq(cases.id, scopedId))
+      .limit(1)
+      .for("update");
     return row ?? null;
   },
 
@@ -104,10 +159,12 @@ export const casesRepo = {
     slug: string,
     organizationId: string
   ): Promise<CaseRow | null> {
+    const scopedSlug = caseSlugForWrite(slug);
+    if (scopedSlug === undefined) return null;
     const [row] = await exec
       .select(caseColumns)
       .from(cases)
-      .where(and(eq(cases.slug, slug), inOrg(organizationId)))
+      .where(and(eq(cases.slug, scopedSlug), inOrg(organizationId)))
       .limit(1);
     return row ?? null;
   },
@@ -117,18 +174,28 @@ export const casesRepo = {
     exec: DbExec,
     slug: string
   ): Promise<CaseRow | null> {
+    const scopedSlug = caseSlugForWrite(slug);
+    if (scopedSlug === undefined) return null;
     const [row] = await exec
       .select(caseColumns)
       .from(cases)
-      .where(eq(cases.slug, slug))
+      .where(eq(cases.slug, scopedSlug))
       .limit(1);
     return row ?? null;
   },
 
   async create(exec: DbExec, values: NewCase): Promise<CaseRow | null> {
+    const name = caseNameForWrite(values.name);
+    const slug = caseSlugForWrite(values.slug);
+    if (name === undefined || slug === undefined) return null;
     const [created] = await exec
       .insert(cases)
-      .values(values)
+      .values({
+        ...values,
+        name,
+        slug,
+        description: trimmedOrNull(values.description),
+      })
       .returning(caseColumns);
     return created ?? null;
   },
@@ -139,10 +206,14 @@ export const casesRepo = {
     organizationId: string,
     patch: CasePatch
   ): Promise<CaseRow | null> {
+    const scopedId = trimResourceId(id);
+    if (scopedId === undefined) return null;
+    const normalizedPatch = casePatchForWrite(patch);
+    if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(cases)
-      .set(patch)
-      .where(and(eq(cases.id, id), inOrg(organizationId)))
+      .set(normalizedPatch)
+      .where(and(eq(cases.id, scopedId), inOrg(organizationId)))
       .returning(caseColumns);
     return updated ?? null;
   },
@@ -152,9 +223,11 @@ export const casesRepo = {
     id: string,
     organizationId: string
   ): Promise<CaseRow | null> {
+    const scopedId = trimResourceId(id);
+    if (scopedId === undefined) return null;
     const [deleted] = await exec
       .delete(cases)
-      .where(and(eq(cases.id, id), inOrg(organizationId)))
+      .where(and(eq(cases.id, scopedId), inOrg(organizationId)))
       .returning(caseColumns);
     return deleted ?? null;
   },

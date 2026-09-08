@@ -1,5 +1,7 @@
 import { inArray } from "drizzle-orm";
 
+import { normalizeUuidList } from "@watchdog/schemas";
+
 import type { DbExec } from "../exec";
 import { user } from "../schema/auth";
 
@@ -11,8 +13,8 @@ export interface UserDisplayRow {
 
 export const usersRepo = {
   async getByIds(exec: DbExec, ids: string[]): Promise<UserDisplayRow[]> {
-    if (ids.length === 0) return [];
-    const unique = [...new Set(ids)];
+    const unique = normalizeUuidList(ids);
+    if (unique.length === 0) return [];
     return exec
       .select({
         id: user.id,

@@ -1,7 +1,10 @@
 import { and, eq } from "drizzle-orm";
 
+import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
+
 import type { DbExec } from "../exec";
 import { credentials } from "../schema/credentials";
+import { trimResourceId } from "./_scoped-ids";
 
 export const credentialMetaColumns = {
   id: credentials.id,
@@ -36,10 +39,14 @@ export const credentialsRepo = {
     userId: string,
     name: string
   ): Promise<string | null> {
+    const scopedName = trimmedOrUndefined(name);
+    if (scopedName === undefined) return null;
     const [row] = await exec
       .select({ id: credentials.id })
       .from(credentials)
-      .where(and(eq(credentials.userId, userId), eq(credentials.name, name)))
+      .where(
+        and(eq(credentials.userId, userId), eq(credentials.name, scopedName))
+      )
       .limit(1);
     return row?.id ?? null;
   },
@@ -49,10 +56,14 @@ export const credentialsRepo = {
     userId: string,
     name: string
   ): Promise<Buffer | null> {
+    const scopedName = trimmedOrUndefined(name);
+    if (scopedName === undefined) return null;
     const [row] = await exec
       .select({ ciphertext: credentials.ciphertext })
       .from(credentials)
-      .where(and(eq(credentials.userId, userId), eq(credentials.name, name)))
+      .where(
+        and(eq(credentials.userId, userId), eq(credentials.name, scopedName))
+      )
       .limit(1);
     return row?.ciphertext ?? null;
   },
@@ -61,9 +72,13 @@ export const credentialsRepo = {
     exec: DbExec,
     values: NewCredential
   ): Promise<CredentialMetaRow | null> {
+    const scopedName = trimmedOrUndefined(values.name);
+    if (scopedName === undefined) return null;
+    const label =
+      values.label === undefined ? undefined : trimmedOrNull(values.label);
     const [created] = await exec
       .insert(credentials)
-      .values(values)
+      .values({ ...values, name: scopedName, label })
       .returning(credentialMetaColumns);
     return created ?? null;
   },
@@ -74,13 +89,14 @@ export const credentialsRepo = {
     values: {
       ciphertext: Buffer;
       label: string | null;
-      updatedAt: Date;
     }
   ): Promise<CredentialMetaRow | null> {
+    const scopedId = trimResourceId(credentialId);
+    if (scopedId === undefined) return null;
     const [updated] = await exec
       .update(credentials)
-      .set(values)
-      .where(eq(credentials.id, credentialId))
+      .set({ ...values, label: trimmedOrNull(values.label) })
+      .where(eq(credentials.id, scopedId))
       .returning(credentialMetaColumns);
     return updated ?? null;
   },
@@ -90,9 +106,13 @@ export const credentialsRepo = {
     userId: string,
     name: string
   ): Promise<boolean> {
+    const scopedName = trimmedOrUndefined(name);
+    if (scopedName === undefined) return false;
     const deleted = await exec
       .delete(credentials)
-      .where(and(eq(credentials.userId, userId), eq(credentials.name, name)))
+      .where(
+        and(eq(credentials.userId, userId), eq(credentials.name, scopedName))
+      )
       .returning({ id: credentials.id });
     return deleted.length > 0;
   },
