@@ -23,6 +23,7 @@ export const hackertargetLookup = defineCollectCap({
   consumes: [{ kind: "ip" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
     { kind: "identifier", type: "domain" },
   ],
   jobPolicy: {
