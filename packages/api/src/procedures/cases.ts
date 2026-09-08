@@ -7,6 +7,7 @@ import {
   listCasesEffect,
   updateCaseEffect,
 } from "@watchdog/core";
+import { deleteCaseInputSchema } from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
@@ -35,7 +36,7 @@ export const get = authed
     summary: "Get case by id",
     tags: ["cases"],
   })
-  .input(z.object({ caseId: z.uuid() }))
+  .input(deleteCaseInputSchema)
   .output(caseSchema)
   .handler(async ({ input, context }) =>
     runApp(getCaseByIdEffect(input.caseId, context.actor.organizationId))
@@ -93,7 +94,7 @@ export const remove = authed
     summary: "Delete a case and cascaded graph / jobs / evidence",
     tags: ["cases"],
   })
-  .input(z.object({ caseId: z.uuid() }))
+  .input(deleteCaseInputSchema)
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(

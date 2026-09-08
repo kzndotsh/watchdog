@@ -4,13 +4,17 @@ import { describe, expect, it, vi } from "vitest";
 
 import { NotFoundError } from "@watchdog/core";
 
-const { listCasesEffect, getCaseByIdEffect, createCaseEffect } = vi.hoisted(
-  () => ({
-    listCasesEffect: vi.fn(),
-    getCaseByIdEffect: vi.fn(),
-    createCaseEffect: vi.fn(),
-  })
-);
+const {
+  listCasesEffect,
+  getCaseByIdEffect,
+  createCaseEffect,
+  updateCaseEffect,
+} = vi.hoisted(() => ({
+  listCasesEffect: vi.fn(),
+  getCaseByIdEffect: vi.fn(),
+  createCaseEffect: vi.fn(),
+  updateCaseEffect: vi.fn(),
+}));
 
 vi.mock("@watchdog/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core")>();
@@ -19,12 +23,12 @@ vi.mock("@watchdog/core", async (importOriginal) => {
     listCasesEffect,
     getCaseByIdEffect,
     createCaseEffect,
-    updateCaseEffect: vi.fn(),
+    updateCaseEffect,
     deleteCaseEffect: vi.fn(),
   };
 });
 
-import { create, get, list } from "../cases";
+import { create, get, list, update } from "../cases";
 
 const actor = {
   userId: "u1",
@@ -108,5 +112,51 @@ describe("cases procedures", () => {
     await expect(client.create({ name: "Beta" })).resolves.toMatchObject({
       slug: "beta",
     });
+  });
+
+  it("rejects an empty case update body", async () => {
+    const client = createRouterClient(
+      { update },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.update({ caseId: sampleCase.id })
+    ).rejects.toMatchObject({
+      message: "Input validation failed",
+      cause: {
+        issues: [{ message: "At least one field is required" }],
+      },
+    });
+  });
+
+  it("allows description-only null updates to clear the description", async () => {
+    updateCaseEffect.mockReturnValueOnce(
+      Effect.succeed({
+        ...sampleCase,
+        description: null,
+      })
+    );
+
+    const client = createRouterClient(
+      { update },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.update({ caseId: sampleCase.id, description: null })
+    ).resolves.toMatchObject({ description: null });
   });
 });
