@@ -7,7 +7,15 @@ import {
   resolveQuestionEffect,
   updateQuestionEffect,
 } from "@watchdog/core";
+import {
+  createQuestionInputSchema,
+  entityScopeInputSchema,
+  questionScopeInputSchema,
+  resolveQuestionInputSchema,
+  updateQuestionInputSchema,
+} from "@watchdog/schemas";
 
+import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
 import { questionSchema, userOverrideSchema } from "../schemas";
@@ -19,12 +27,7 @@ export const list = authed
     summary: "List questions for an entity",
     tags: ["questions"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-    })
-  )
+  .input(entityScopeInputSchema)
   .output(z.array(questionSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -44,19 +47,12 @@ export const create = graphChildWrite
     tags: ["questions"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-      text: z.string().min(1),
-      userOverride: userOverrideSchema,
-    })
-  )
+  .input(createQuestionInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(questionSchema)
   .handler(async ({ input, context }) =>
     runApp(
       createQuestionEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -69,20 +65,12 @@ export const update = graphChildWrite
     summary: "Update a question",
     tags: ["questions"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      questionId: z.uuid(),
-      text: z.string().min(1).optional(),
-      resolvedNote: z.string().nullable().optional(),
-      userOverride: userOverrideSchema,
-    })
-  )
+  .input(updateQuestionInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(questionSchema)
   .handler(async ({ input, context }) =>
     runApp(
       updateQuestionEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -96,10 +84,7 @@ export const resolve = graphChildWrite
     tags: ["questions"],
   })
   .input(
-    z.object({
-      caseId: z.uuid(),
-      questionId: z.uuid(),
-      resolvedNote: z.string().optional(),
+    resolveQuestionInputSchema.extend({
       userOverride: userOverrideSchema,
     })
   )
@@ -107,7 +92,7 @@ export const resolve = graphChildWrite
   .handler(async ({ input, context }) =>
     runApp(
       resolveQuestionEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -121,9 +106,7 @@ export const reopen = graphChildWrite
     tags: ["questions"],
   })
   .input(
-    z.object({
-      caseId: z.uuid(),
-      questionId: z.uuid(),
+    questionScopeInputSchema.extend({
       userOverride: userOverrideSchema,
     })
   )
@@ -131,7 +114,7 @@ export const reopen = graphChildWrite
   .handler(async ({ input, context }) =>
     runApp(
       reopenQuestionEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
