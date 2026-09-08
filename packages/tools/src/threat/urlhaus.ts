@@ -6,6 +6,10 @@ import { mapToolsCatch } from "../errors/map-tools-tag";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import {
+  assertHttpUrlScheme,
+  normalizeHttpUrl,
+} from "../http/normalize-http-url";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -34,7 +38,10 @@ function classifyQuery(raw: string): {
   const trimmed = raw.trim();
   if (HASH_RE.test(trimmed))
     return { kind: "hash", value: trimmed.toLowerCase() };
-  if (/^https?:\/\//i.test(trimmed)) return { kind: "url", value: trimmed };
+  if (/^https?:\/\//i.test(trimmed)) {
+    assertHttpUrlScheme(trimmed);
+    return { kind: "url", value: normalizeHttpUrl(trimmed) };
+  }
   const classified = classifyIpOrHost(trimmed);
   return { kind: "host", value: classified.value };
 }

@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
 import {
   MissingCredentialError,
   ValidationVendorError,
@@ -9,6 +10,10 @@ import {
 } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import {
+  assertHttpUrlScheme,
+  normalizeHttpUrl,
+} from "../http/normalize-http-url";
 import { isRecord } from "../parse/coerce";
 
 export const safebrowsingMatchSchema = z.object({
@@ -53,10 +58,17 @@ export function fetchSafebrowsingLookupEffect(
   options?: SafebrowsingOptions
 ): Effect.Effect<SafebrowsingLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchSafebrowsingLookupGen() {
-    const url = urlRaw.trim();
-    if (!url) {
-      return yield* new ValidationVendorError({ message: "url required" });
-    }
+    const url = yield* Effect.try({
+      try: () => {
+        const trimmed = urlRaw.trim();
+        if (!trimmed) {
+          throw new ValidationVendorError({ message: "url required" });
+        }
+        assertHttpUrlScheme(trimmed);
+        return normalizeHttpUrl(trimmed);
+      },
+      catch: mapToolsCatch,
+    });
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({

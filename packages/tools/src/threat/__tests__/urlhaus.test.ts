@@ -2,6 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchUrlhausLookupEffect,
@@ -139,6 +140,22 @@ describe("urlhaus", () => {
         Effect.provide(toolsHttpClientLayer),
         Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
       )
+  );
+
+  it.effect("fetchUrlhausLookupEffect rejects non-http(s) URL queries", () =>
+    Effect.gen(function* rejectBadSchemeGen() {
+      const outcome = yield* Effect.result(
+        fetchUrlhausLookupEffect(
+          ["javascript", ":alert(1)"].join(""),
+          "test-key",
+          AbortSignal.timeout(5000)
+        )
+      );
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
   it.effect("fetchUrlhausLookupEffect rejects invalid host queries", () =>

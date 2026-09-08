@@ -5,6 +5,7 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/tools-error";
+import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import {
   isBlockedUnshortenUrl,
   isRedirectResponse,
@@ -119,9 +120,16 @@ export function fetchUnshortenEffect(
   options: UnshortenOptions
 ): Effect.Effect<UnshortenSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchUnshortenGen() {
+    const startUrl = yield* Effect.try({
+      try: () => {
+        assertHttpUrlScheme(url);
+        return normalizeHttpUrl(url);
+      },
+      catch: mapToolsCatch,
+    });
     const maxHops = options.maxHops ?? 10;
     const chain: { url: string; status: number }[] = [];
-    let current = url;
+    let current = startUrl;
     let error: string | undefined;
 
     for (let i = 0; i < maxHops; i += 1) {
@@ -158,10 +166,10 @@ export function fetchUnshortenEffect(
       error = `Redirect hop limit exceeded (${maxHops})`;
     }
 
-    const finalUrl = resolvedFinalUrl(chain, current, url);
+    const finalUrl = resolvedFinalUrl(chain, current, startUrl);
 
     return unshortenSnapshotSchema.parse({
-      url,
+      url: startUrl,
       queriedAt: new Date().toISOString(),
       chain,
       finalUrl,

@@ -2,8 +2,10 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchBytesEffect } from "./fetch-bytes";
+import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 
 export const OEMBED_VENDORS = [
   "youtube",
@@ -145,12 +147,19 @@ export function fetchOembedEffect(
 ): Effect.Effect<OembedSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchOembedGen() {
     const queriedAt = new Date().toISOString();
-    const vendor = matchOembedVendor(url);
+    const normalized = yield* Effect.try({
+      try: () => {
+        assertHttpUrlScheme(url);
+        return normalizeHttpUrl(url);
+      },
+      catch: mapToolsCatch,
+    });
+    const vendor = matchOembedVendor(normalized);
     if (vendor === null) {
-      return emptySnap(url, queriedAt, "Unsupported oEmbed host");
+      return emptySnap(normalized, queriedAt, "Unsupported oEmbed host");
     }
 
-    const endpoint = oembedEndpoint(vendor, url);
+    const endpoint = oembedEndpoint(vendor, normalized);
     const res = yield* fetchBytesEffect(endpoint, signal, {
       userAgent: options.userAgent,
       maxBytes: MAX_OEMBED_BYTES,
@@ -158,7 +167,7 @@ export function fetchOembedEffect(
     });
     if (!res.ok) {
       return emptySnap(
-        url,
+        normalized,
         queriedAt,
         res.error ?? `HTTP ${res.status}`,
         vendor
@@ -167,14 +176,19 @@ export function fetchOembedEffect(
 
     const parsed = parseJsonBytes(res.bytes);
     if (parsed === undefined) {
-      return emptySnap(url, queriedAt, "Invalid oEmbed JSON", vendor);
+      return emptySnap(normalized, queriedAt, "Invalid oEmbed JSON", vendor);
     }
 
     const json = oembedJsonSchema.safeParse(parsed);
     if (!json.success) {
-      return emptySnap(url, queriedAt, "Unexpected oEmbed JSON shape", vendor);
+      return emptySnap(
+        normalized,
+        queriedAt,
+        "Unexpected oEmbed JSON shape",
+        vendor
+      );
     }
 
-    return snapshotFromJson(url, queriedAt, vendor, json.data);
+    return snapshotFromJson(normalized, queriedAt, vendor, json.data);
   });
 }

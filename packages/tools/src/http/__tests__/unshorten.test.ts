@@ -6,10 +6,11 @@ import {
   expect,
   it,
 } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../http-client-layer";
 import { isBlockedEgressHost } from "../unshorten-guards";
 import { fetchUnshortenEffect, isBlockedUnshortenUrl } from "../unshorten.ts";
@@ -48,6 +49,24 @@ describe("fetchUnshortenEffect", () => {
       );
       expect(snap.finalUrl).toBe("https://mailhost.test/final");
       expect(snap.hopCount).toBe(1);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
+  it.effect("rejects non-http(s) URLs before probing", () =>
+    Effect.gen(function* rejectBadSchemeGen() {
+      const outcome = yield* Effect.result(
+        fetchUnshortenEffect(
+          "file:///etc/passwd",
+          new AbortController().signal,
+          {
+            userAgent: "watchdog-test",
+          }
+        )
+      );
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
