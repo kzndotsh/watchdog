@@ -24,6 +24,14 @@ export class TriagePage extends BasePage {
 
   async setConfidence(label: "Confirmed" | "Possible" | "Unverified") {
     await this.page.getByRole("combobox", { name: "Confidence" }).click();
-    await this.page.getByRole("option", { name: label }).click();
+    // Confidence options live in a portaled listbox (not under the combobox node).
+    // Proposal queue rows are also role=option and can substring-match "confirmed".
+    await this.page
+      .getByRole("listbox")
+      .filter({
+        has: this.page.getByRole("option", { name: "Possible", exact: true }),
+      })
+      .getByRole("option", { name: label, exact: true })
+      .click();
   }
 }
