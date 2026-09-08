@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  invitationPreviewQuery,
+  invitationPreviewSchema,
   inviteSignUpBody,
 } from "@/auth/invite-signup-schemas";
 
@@ -10,7 +10,7 @@ const INVITATION_ID = "550e8400-e29b-41d4-a716-446655440099";
 describe("invite-signup-schemas", () => {
   it("trims padded invitation id on preview query", () => {
     expect(
-      invitationPreviewQuery.parse({ id: `  ${INVITATION_ID}  ` }).id
+      invitationPreviewSchema.parse({ id: `  ${INVITATION_ID}  ` }).id
     ).toBe(INVITATION_ID);
   });
 

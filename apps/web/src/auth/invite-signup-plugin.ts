@@ -1,5 +1,5 @@
 import { invitationPreviewEndpoint } from "@/auth/invitation-preview-endpoint";
-import { inviteSignUpEndpoint } from "@/auth/invite-sign-up-endpoint";
+import { inviteSignUpEndpoint } from "@/auth/invite-signup-endpoint";
 
 export function inviteSignupPlugin() {
   return {

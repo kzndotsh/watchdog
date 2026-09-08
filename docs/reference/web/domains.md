@@ -111,7 +111,7 @@ Auth is not a domain noun: it lives under `src/auth/`:
 | Path | Owns |
 | --- | --- |
 | `auth/` runtime (`client`, `server`, `session.server`, `ensure-session`, `middleware`, …) | Better Auth + route/API session; ServerFn `requireAuth` is wired globally in `src/start.ts` (not per domain `*.functions.ts`) |
-| `auth/invite-signup-*.ts` + `invite-sign-up-*.ts` | Invite accept / sign-up plugin, schemas, endpoint, and flow helpers (split from a single mega-module) |
+| `auth/invite-signup-*.ts` | Invite accept / sign-up plugin, schemas, endpoint, and flow helpers |
 | `auth/ui/` | BA UI account/security/sign-in views (vendor-shaped) |
 | `auth/plugins/` | BA UI plugin wiring (e.g. API keys) |
 | `domains/settings` | Settings shell + Cap credentials UI: BA account/security live under `auth/ui/` |

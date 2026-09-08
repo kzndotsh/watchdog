@@ -5,13 +5,13 @@ import {
   requirePendingInvitation,
   throwInvitationNotFound,
 } from "@/auth/invite-signup-helpers";
-import { invitationPreviewQuery } from "@/auth/invite-signup-schemas";
+import { invitationPreviewSchema } from "@/auth/invite-signup-schemas";
 
 export const invitationPreviewEndpoint = createAuthEndpoint(
   "/organization/invitation-preview",
   {
     method: "GET",
-    query: invitationPreviewQuery,
+    query: invitationPreviewSchema,
   },
   async (ctx) => {
     const adapter = getOrgAdapter(ctx.context);

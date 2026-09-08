@@ -6,7 +6,7 @@ import {
   assertNoExistingSession,
   createCredentialUser,
   establishInviteSession,
-} from "@/auth/invite-sign-up-flow";
+} from "@/auth/invite-signup-flow";
 import {
   assertPasswordLength,
   requirePendingInvitation,
