@@ -499,6 +499,8 @@ export type { SearchCaseInput, SearchCaseResult } from "./search";
 export type { PlaybookSeedInput } from "./playbook-seed";
 export { playbookSeedInputSchema } from "./playbook-seed";
 
+export { hostSeedSchema, ipSeedSchema } from "./cap-seed";
+
 export {
   SEARCH_MIN_QUERY_LENGTH,
   searchCaseCaseHitSchema,
