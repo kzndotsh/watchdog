@@ -11,6 +11,7 @@ import {
   ipOrHostSeedSchema,
   ipSeedSchema,
   keybaseQuerySeedSchema,
+  pgpQuerySeedSchema,
   threatfoxQuerySeedSchema,
   urlhausQuerySeedSchema,
 } from "../cap-seed";
@@ -99,5 +100,13 @@ describe("cap seed schemas", () => {
   it("keybaseQuerySeedSchema accepts usernames and domains", () => {
     expect(keybaseQuerySeedSchema.parse("@alice")).toBe("alice");
     expect(keybaseQuerySeedSchema.parse("example.com")).toBe("example.com");
+  });
+
+  it("pgpQuerySeedSchema accepts emails and fingerprints", () => {
+    expect(pgpQuerySeedSchema.parse("  ada@example.com ")).toBe(
+      "ada@example.com"
+    );
+    expect(pgpQuerySeedSchema.parse("ABCD".repeat(4))).toBe("ABCD".repeat(4));
+    expect(() => pgpQuerySeedSchema.parse("not-valid")).toThrow();
   });
 });

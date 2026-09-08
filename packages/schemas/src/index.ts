@@ -510,6 +510,7 @@ export {
   ipOrHostSeedSchema,
   ipSeedSchema,
   keybaseQuerySeedSchema,
+  pgpQuerySeedSchema,
   threatfoxQuerySeedSchema,
   urlhausQuerySeedSchema,
 } from "./cap-seed";

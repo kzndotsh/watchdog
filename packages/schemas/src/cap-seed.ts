@@ -192,3 +192,19 @@ export const keybaseQuerySeedSchema = seedStringSchema(
   parseKeybaseQuerySeed,
   "Invalid Keybase query seed."
 );
+
+function parsePgpQuerySeed(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (trimmed.includes("@")) {
+    const email = validateIdentifierValue("email", trimmed);
+    return email.ok ? email.value : null;
+  }
+  const pgp = validateIdentifierValue("pgp", trimmed);
+  return pgp.ok ? pgp.value : null;
+}
+
+/** PGP keyserver query seed — email, fingerprint, or key id. */
+export const pgpQuerySeedSchema = seedStringSchema(
+  parsePgpQuerySeed,
+  "Invalid PGP query seed."
+);
