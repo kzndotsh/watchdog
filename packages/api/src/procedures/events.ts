@@ -6,7 +6,14 @@ import {
   listEventsForEntityEffect,
   updateEventEffect,
 } from "@watchdog/core";
+import {
+  createEventInputSchema,
+  entityScopeInputSchema,
+  eventScopeInputSchema,
+  updateEventInputSchema,
+} from "@watchdog/schemas";
 
+import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
 import { eventSchema, userOverrideSchema } from "../schemas";
@@ -18,12 +25,7 @@ export const list = authed
     summary: "List timeline events for an entity",
     tags: ["events"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-    })
-  )
+  .input(entityScopeInputSchema)
   .output(z.array(eventSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -43,21 +45,12 @@ export const create = graphChildWrite
     tags: ["events"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-      when: z.string().min(1),
-      what: z.string().min(1),
-      where: z.string().optional(),
-      userOverride: userOverrideSchema,
-    })
-  )
+  .input(createEventInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(eventSchema)
   .handler(async ({ input, context }) =>
     runApp(
       createEventEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -70,29 +63,12 @@ export const update = graphChildWrite
     summary: "Update a timeline event",
     tags: ["events"],
   })
-  .input(
-    z
-      .object({
-        caseId: z.uuid(),
-        eventId: z.uuid(),
-        when: z.string().min(1).optional(),
-        what: z.string().min(1).optional(),
-        where: z.string().optional(),
-        userOverride: userOverrideSchema,
-      })
-      .refine(
-        (data) =>
-          data.when !== undefined ||
-          data.what !== undefined ||
-          data.where !== undefined,
-        { message: "At least one field is required" }
-      )
-  )
+  .input(updateEventInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(eventSchema)
   .handler(async ({ input, context }) =>
     runApp(
       updateEventEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -106,9 +82,7 @@ export const remove = graphChildWrite
     tags: ["events"],
   })
   .input(
-    z.object({
-      caseId: z.uuid(),
-      eventId: z.uuid(),
+    eventScopeInputSchema.extend({
       userOverride: userOverrideSchema,
     })
   )
