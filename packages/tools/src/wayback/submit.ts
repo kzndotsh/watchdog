@@ -3,9 +3,9 @@ import type { HttpClient } from "effect/unstable/http";
 
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { normalizeWaybackUrl } from "./normalize-url";
 import {
   archiveSubmitSnapshotSchema,
   type ArchiveSubmitSnapshot,
@@ -17,23 +17,6 @@ export {
   type ArchiveSubmitSnapshot,
   type ArchiveSubmitResult,
 } from "./submit-schema";
-
-function normalizeSubmitUrl(raw: string): string {
-  const trimmed = raw.trim();
-  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed)
-    ? trimmed
-    : `https://${trimmed}`;
-  let parsed: URL;
-  try {
-    parsed = new URL(withScheme);
-  } catch {
-    throw validationToolsError(`Invalid URL: ${raw}`);
-  }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw validationToolsError(`URL must use http or https: ${raw}`);
-  }
-  return parsed.href;
-}
 
 /**
  * Push a URL to Wayback Save Page Now.
@@ -50,7 +33,7 @@ export function submitWaybackSaveEffect(
 ): Effect.Effect<ArchiveSubmitSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* submitWaybackSaveGen() {
     const target = yield* Effect.try({
-      try: () => normalizeSubmitUrl(url),
+      try: () => normalizeWaybackUrl(url),
       catch: mapToolsCatch,
     });
     const saveUrl = `https://web.archive.org/save/${target}`;

@@ -1,9 +1,11 @@
 import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { normalizeWaybackUrl } from "./normalize-url";
 import {
   waybackFetchSnapshotSchema,
   waybackLookupSnapshotSchema,
@@ -83,9 +85,13 @@ export function fetchWaybackLookupEffect(
   options: WaybackLookupOptions
 ): Effect.Effect<WaybackLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchWaybackLookupGen() {
+    const normalizedUrl = yield* Effect.try({
+      try: () => normalizeWaybackUrl(url),
+      catch: mapToolsCatch,
+    });
     const limit = options.limit ?? 25;
     const params = new URLSearchParams({
-      url,
+      url: normalizedUrl,
       output: "json",
       fl: "timestamp,original,statuscode,mimetype,digest",
       limit: String(limit),
@@ -99,12 +105,12 @@ export function fetchWaybackLookupEffect(
       url: `${CDX}?${params.toString()}`,
       signal,
       service: "Wayback CDX",
-      subject: url,
+      subject: normalizedUrl,
       init: { headers: { "User-Agent": options.userAgent } },
     });
     if (!isUnknownArray(payload) || payload.length === 0) {
       return waybackLookupSnapshotSchema.parse({
-        url,
+        url: normalizedUrl,
         queriedAt: new Date().toISOString(),
         source: "web.archive.org/cdx",
         rows: [],
@@ -112,10 +118,10 @@ export function fetchWaybackLookupEffect(
       });
     }
 
-    const rows = parseCdxRows(payload, url);
+    const rows = parseCdxRows(payload, normalizedUrl);
 
     return waybackLookupSnapshotSchema.parse({
-      url,
+      url: normalizedUrl,
       queriedAt: new Date().toISOString(),
       source: "web.archive.org/cdx",
       rows,
@@ -153,7 +159,11 @@ export function fetchWaybackSnapshotEffect(
   options: CdxOptions
 ): Effect.Effect<WaybackFetchSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchWaybackSnapshotGen() {
-    const archiveUrl = waybackArchiveUrl(timestamp, url);
+    const normalizedUrl = yield* Effect.try({
+      try: () => normalizeWaybackUrl(url),
+      catch: mapToolsCatch,
+    });
+    const archiveUrl = waybackArchiveUrl(timestamp, normalizedUrl);
     const maxBytes = options.maxBytes ?? 512_000;
     const res = yield* fetchBytesEffect(archiveUrl, signal, {
       userAgent: options.userAgent,
@@ -162,7 +172,7 @@ export function fetchWaybackSnapshotEffect(
     });
     const bodyPreview = new TextDecoder().decode(res.bytes).slice(0, 8000);
     return waybackFetchSnapshotSchema.parse({
-      url,
+      url: normalizedUrl,
       timestamp,
       archiveUrl,
       queriedAt: new Date().toISOString(),

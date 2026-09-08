@@ -10,7 +10,10 @@ import { Effect, Result } from "effect";
 
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 
-import { HttpVendorError } from "../../errors/tagged-errors";
+import {
+  HttpVendorError,
+  ValidationVendorError,
+} from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { fetchWaybackLookupEffect } from "../cdx.ts";
 
@@ -26,6 +29,22 @@ describe("fetchWaybackLookupEffect", () => {
   afterAll(() => {
     mockServer.close();
   });
+
+  it.effect("rejects non-http(s) URL schemes", () =>
+    Effect.gen(function* rejectBadSchemeGen() {
+      const badUrl = ["javascript", ":alert(1)"].join("");
+      const outcome = yield* Effect.result(
+        fetchWaybackLookupEffect(badUrl, new AbortController().signal, {
+          userAgent: "watchdog-test",
+        })
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 
   it.effect("returns empty rows on HTTP 200 with no snapshots", () =>
     Effect.gen(function* fetchWaybackLookupEmptyGen() {
