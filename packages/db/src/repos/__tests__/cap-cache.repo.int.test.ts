@@ -1,7 +1,9 @@
+import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { seedCase, withTestTx } from "@watchdog/test-kit/db";
+import { seedCase, seedJob, withTestTx } from "@watchdog/test-kit/db";
 
+import { jobs } from "../../schema/jobs.ts";
 import { capCacheRepo } from "../cap-cache.repo.ts";
 
 describe("capCacheRepo", () => {
@@ -85,6 +87,92 @@ describe("capCacheRepo", () => {
         now
       );
       expect(hit?.resultSummary).toBe("case-a");
+    });
+  });
+
+  it("trims padded case id on lookupActive", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const now = new Date();
+      await capCacheRepo.upsert(tx, {
+        caseId: cased.id,
+        capabilityId: "network.dns.lookup",
+        inputHash: "hash-padded",
+        jobId: "11111111-1111-4111-8111-000000000099",
+        artifacts: [],
+        resultSummary: "padded",
+        ttlMs: 60_000,
+        createdAt: now,
+        expiresAt: new Date(now.getTime() + 60_000),
+      });
+
+      const hit = await capCacheRepo.lookupActive(
+        tx,
+        `  ${cased.id}  `,
+        "network.dns.lookup",
+        "hash-padded",
+        now
+      );
+      expect(hit?.resultSummary).toBe("padded");
+    });
+  });
+
+  it("trims padded resultSummary on upsert", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const now = new Date();
+      await capCacheRepo.upsert(tx, {
+        caseId: cased.id,
+        capabilityId: "network.dns.lookup",
+        inputHash: "hash-summary",
+        jobId: "11111111-1111-4111-8111-000000000088",
+        artifacts: [],
+        resultSummary: "  trimmed summary  ",
+        ttlMs: 60_000,
+        createdAt: now,
+        expiresAt: new Date(now.getTime() + 60_000),
+      });
+
+      const hit = await capCacheRepo.lookupActive(
+        tx,
+        cased.id,
+        "network.dns.lookup",
+        "hash-summary",
+        now
+      );
+      expect(hit?.resultSummary).toBe("trimmed summary");
+    });
+  });
+
+  it("returns stored job evidenceIds without filtering invalid entries", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const job = await seedJob(tx, cased.id);
+      await tx
+        .update(jobs)
+        .set({ evidenceIds: ["not-a-uuid"] })
+        .where(eq(jobs.id, job.id));
+      const now = new Date();
+      await capCacheRepo.upsert(tx, {
+        caseId: cased.id,
+        capabilityId: "network.dns.lookup",
+        inputHash: "hash-evidence",
+        jobId: job.id,
+        artifacts: [],
+        resultSummary: "with-evidence",
+        ttlMs: 60_000,
+        createdAt: now,
+        expiresAt: new Date(now.getTime() + 60_000),
+      });
+
+      const hit = await capCacheRepo.lookupActive(
+        tx,
+        cased.id,
+        "network.dns.lookup",
+        "hash-evidence",
+        now
+      );
+      expect(hit?.evidenceIds).toEqual(["not-a-uuid"]);
     });
   });
 });

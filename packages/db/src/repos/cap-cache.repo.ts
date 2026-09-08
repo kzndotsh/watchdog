@@ -1,8 +1,11 @@
 import { and, eq, gt } from "drizzle-orm";
 
+import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
+
 import type { DbExec } from "../exec";
 import { capCache } from "../schema/cap-cache";
 import { jobs, type JobArtifact } from "../schema/jobs";
+import { trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type CapCacheRow = typeof capCache.$inferSelect;
 
@@ -33,6 +36,16 @@ export const capCacheRepo = {
     inputHash: string,
     now: Date
   ): Promise<CapCacheLookup | null> {
+    const scopedCaseId = trimCaseId(caseId);
+    const scopedCapabilityId = trimmedOrUndefined(capabilityId);
+    const scopedInputHash = trimmedOrUndefined(inputHash);
+    if (
+      scopedCaseId === undefined ||
+      scopedCapabilityId === undefined ||
+      scopedInputHash === undefined
+    ) {
+      return null;
+    }
     const [row] = await exec
       .select({
         artifacts: capCache.artifacts,
@@ -44,9 +57,9 @@ export const capCacheRepo = {
       .leftJoin(jobs, eq(capCache.jobId, jobs.id))
       .where(
         and(
-          eq(capCache.caseId, caseId),
-          eq(capCache.capabilityId, capabilityId),
-          eq(capCache.inputHash, inputHash),
+          eq(capCache.caseId, scopedCaseId),
+          eq(capCache.capabilityId, scopedCapabilityId),
+          eq(capCache.inputHash, scopedInputHash),
           gt(capCache.expiresAt, now)
         )
       )
@@ -63,15 +76,35 @@ export const capCacheRepo = {
   },
 
   async upsert(exec: DbExec, values: UpsertCapCacheValues): Promise<void> {
+    const scopedCaseId = trimCaseId(values.caseId);
+    const scopedCapabilityId = trimmedOrUndefined(values.capabilityId);
+    const scopedInputHash = trimmedOrUndefined(values.inputHash);
+    const scopedJobId = trimResourceId(values.jobId);
+    if (
+      scopedCaseId === undefined ||
+      scopedCapabilityId === undefined ||
+      scopedInputHash === undefined ||
+      scopedJobId === undefined
+    ) {
+      return;
+    }
+    const resultSummary = trimmedOrNull(values.resultSummary);
     await exec
       .insert(capCache)
-      .values(values)
+      .values({
+        ...values,
+        caseId: scopedCaseId,
+        capabilityId: scopedCapabilityId,
+        inputHash: scopedInputHash,
+        jobId: scopedJobId,
+        resultSummary,
+      })
       .onConflictDoUpdate({
         target: [capCache.caseId, capCache.capabilityId, capCache.inputHash],
         set: {
-          jobId: values.jobId,
+          jobId: scopedJobId,
           artifacts: values.artifacts,
-          resultSummary: values.resultSummary,
+          resultSummary,
           ttlMs: values.ttlMs,
           createdAt: values.createdAt,
           expiresAt: values.expiresAt,
