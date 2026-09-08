@@ -9,7 +9,6 @@ export function SettingsCredentialsDialogs({
   configureOpen,
   onConfigureOpenChange,
   onCredentialSaved,
-  onCredentialError,
   deleteOpen,
   deletePending,
   deleteSlot,
@@ -21,7 +20,6 @@ export function SettingsCredentialsDialogs({
   configureOpen: boolean;
   onConfigureOpenChange: (open: boolean) => void;
   onCredentialSaved: () => void;
-  onCredentialError: (message: string) => void;
   deleteOpen: boolean;
   deletePending: boolean;
   deleteSlot: CredentialSlot | null;
@@ -37,7 +35,6 @@ export function SettingsCredentialsDialogs({
         open={configureOpen}
         onOpenChange={onConfigureOpenChange}
         onSaved={onCredentialSaved}
-        onError={onCredentialError}
       />
 
       <DestructiveConfirmDialog

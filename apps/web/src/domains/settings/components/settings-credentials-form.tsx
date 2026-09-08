@@ -1,10 +1,6 @@
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { SettingsCredentialsDialogs } from "@/domains/settings/components/settings-credentials-dialogs";
 import {
@@ -19,15 +15,23 @@ import {
 } from "@/domains/settings/components/settings-credentials-handlers";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { deleteCredentialFn } from "@/domains/settings/settings.functions";
-import { cn } from "@/lib/utils";
+import { deleteCredentialInputSchema } from "@/domains/settings/types";
+import { cn, errMessage } from "@/lib/utils";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Card, CardContent } from "@/shared/ui/shadcn/card";
 import { Separator } from "@/shared/ui/shadcn/separator";
+import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { CredentialSlot } from "@watchdog/core";
+
+const EMPTY_CREDENTIAL_SLOTS: CredentialSlot[] = [];
 
 function CredentialSlotRow({
   slot,
@@ -41,7 +45,7 @@ function CredentialSlotRow({
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <StatusDot
-        status={slot.configured ? "succeeded" : "queued"}
+        status={slot.configured ? "succeeded" : "pending"}
         tooltip={false}
         className="mt-0.5"
       />
@@ -147,7 +151,13 @@ function findSlotByName(
 
 export function SettingsCredentialsForm() {
   const queryClient = useQueryClient();
-  const { data: slots } = useSuspenseQuery(credentialsListQuery());
+  const credentialsQuery = useQuery(credentialsListQuery());
+  const slots = credentialsQuery.data ?? EMPTY_CREDENTIAL_SLOTS;
+  const credentialsPending = listPending(credentialsQuery);
+  const credentialsLoadError = credentialsQuery.isError
+    ? errMessage(credentialsQuery.error, "Failed to load credentials")
+    : null;
+  const credentialsPlaceholder = isQueryPlaceholderData(credentialsQuery);
 
   const [error, setError] = useState<string | null>(null);
   const [configureName, setConfigureName] = useState<string | null>(null);
@@ -155,7 +165,8 @@ export function SettingsCredentialsForm() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const deleteMutation = useMutation({
-    mutationFn: async (name: string) => deleteCredentialFn({ data: { name } }),
+    mutationFn: async (name: string) =>
+      deleteCredentialFn({ data: deleteCredentialInputSchema.parse({ name }) }),
     onSuccess: () => void handleCredentialDeleted(queryClient, setDeleteTarget),
     onError: (e) => {
       handleCredentialDeleteError(e, setDeleteError);
@@ -165,6 +176,17 @@ export function SettingsCredentialsForm() {
   const configureSlotRow = findSlotByName(slots, configureName);
   const deleteSlotRow = findSlotByName(slots, deleteTarget);
   const { connected, disconnected } = partitionCredentialSlots(slots);
+
+  useEffect(() => {
+    if (
+      configureName !== null &&
+      configureSlotRow === null &&
+      !credentialsPlaceholder
+    ) {
+      setConfigureName(null);
+      setError("That credential slot is no longer available.");
+    }
+  }, [configureName, configureSlotRow, credentialsPlaceholder]);
 
   const onConfigureSlot = bindConfigureSlot(setError, setConfigureName);
   const onDeleteSlot = bindDeleteSlot(setDeleteError, setDeleteTarget);
@@ -179,6 +201,21 @@ export function SettingsCredentialsForm() {
     deleteTarget,
     deleteMutation.mutate
   );
+
+  if (credentialsLoadError) {
+    return (
+      <FetchErrorAlert
+        error={credentialsLoadError}
+        onRetry={() => {
+          void credentialsQuery.refetch();
+        }}
+      />
+    );
+  }
+
+  if (credentialsPending) {
+    return stackPendingFallback(1);
+  }
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
@@ -196,7 +233,12 @@ export function SettingsCredentialsForm() {
           </CardContent>
         </Card>
       ) : (
-        <>
+        <div
+          className={cn(
+            "flex flex-col gap-6",
+            placeholderDeemphasisClass(credentialsPlaceholder)
+          )}
+        >
           <CredentialSlotGroup
             title="Connected"
             slots={connected}
@@ -209,7 +251,7 @@ export function SettingsCredentialsForm() {
             onConfigure={onConfigureSlot}
             onDelete={onDeleteSlot}
           />
-        </>
+        </div>
       )}
 
       <SettingsCredentialsDialogs
@@ -217,7 +259,6 @@ export function SettingsCredentialsForm() {
         configureOpen={configureName !== null}
         onConfigureOpenChange={onConfigureOpenChange}
         onCredentialSaved={onCredentialSaved}
-        onCredentialError={setError}
         deleteOpen={deleteTarget !== null}
         deletePending={deleteMutation.isPending}
         deleteSlot={deleteSlotRow}

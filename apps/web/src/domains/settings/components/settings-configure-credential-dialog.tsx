@@ -3,6 +3,7 @@ import { Eye, EyeOff, KeyRoundIcon } from "lucide-react";
 import { useState, type SyntheticEvent } from "react";
 
 import { putCredentialFn } from "@/domains/settings/settings.functions";
+import { putCredentialInputSchema } from "@/domains/settings/types";
 import { errMessage } from "@/lib/utils";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
@@ -45,15 +46,14 @@ export function ConfigureCredentialDialog({
   open,
   onOpenChange,
   onSaved,
-  onError,
 }: {
   slot: CredentialSlot | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
-  onError: (message: string) => void;
 }) {
   const [secretVisible, setSecretVisible] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const configured = slot?.configured ?? false;
 
   const form = useForm({
@@ -62,19 +62,29 @@ export function ConfigureCredentialDialog({
       if (!slot) return;
       const secret = value.secret.trim();
       if (!secret) return;
+      setSaveError(null);
       try {
-        await putCredentialFn({ data: { name: slot.name, secret } });
+        await putCredentialFn({
+          data: putCredentialInputSchema.parse({
+            name: slot.name,
+            secret,
+          }),
+        });
         resetConfigureForm(form, setSecretVisible);
+        setSaveError(null);
         onOpenChange(false);
         onSaved();
       } catch (error) {
-        onError(errMessage(error, "Save failed"));
+        setSaveError(errMessage(error, "Save failed"));
       }
     },
   });
 
   function handleOpenChange(next: boolean) {
-    if (!next) resetConfigureForm(form, setSecretVisible);
+    if (!next) {
+      resetConfigureForm(form, setSecretVisible);
+      setSaveError(null);
+    }
     onOpenChange(next);
   }
 
@@ -113,7 +123,7 @@ export function ConfigureCredentialDialog({
           {slot ? (
             <div className="bg-muted/40 ring-foreground/8 flex items-center gap-2.5 rounded-md px-3 py-2.5 ring-1">
               <StatusDot
-                status={configured ? "succeeded" : "queued"}
+                status={configured ? "succeeded" : "pending"}
                 tooltip={false}
               />
               <div className="min-w-0 flex-1">
@@ -174,6 +184,8 @@ export function ConfigureCredentialDialog({
               </Field>
             )}
           </form.Field>
+
+          <FormInlineError>{saveError}</FormInlineError>
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={form.state.isSubmitting}>

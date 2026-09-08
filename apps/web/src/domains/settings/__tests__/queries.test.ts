@@ -17,10 +17,12 @@ describe("settings queries", () => {
   });
 
   it("uses stable stale and gc tiers for credentials list", () => {
-    expect(credentialsListQuery()).toMatchObject({
+    const query = credentialsListQuery();
+    expect(query).toMatchObject({
       queryKey: credentialsKeys.all,
       staleTime: STALE_STABLE,
       gcTime: GC_STABLE,
     });
+    expect(query.placeholderData).toBeTypeOf("function");
   });
 });

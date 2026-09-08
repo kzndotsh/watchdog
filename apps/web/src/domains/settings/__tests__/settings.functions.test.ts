@@ -35,7 +35,7 @@ interface ServerDataContext<T> {
 
 describe("settings.functions", () => {
   it("lists credentials through oRPC", async () => {
-    const slots = [{ name: "shodan", label: "Primary" }];
+    const slots = [{ name: "SHODAN_API_KEY", label: "Shodan" }];
     credentialsApi.list.mockResolvedValue(slots);
 
     await expect(
@@ -48,7 +48,7 @@ describe("settings.functions", () => {
   });
 
   it("puts and deletes credentials through oRPC", async () => {
-    const slot = { name: "shodan", label: "Primary" };
+    const slot = { name: "SHODAN_API_KEY", label: "Shodan" };
     credentialsApi.put.mockResolvedValue(slot);
     credentialsApi.delete.mockResolvedValue(undefined);
 
@@ -62,7 +62,11 @@ describe("settings.functions", () => {
           }>
         ) => Promise<unknown>
       )({
-        data: { name: "shodan", secret: "abc", label: "Primary" },
+        data: {
+          name: "SHODAN_API_KEY",
+          secret: "abc",
+          label: "Shodan",
+        },
         context: {},
       })
     ).resolves.toEqual(slot);
@@ -72,8 +76,10 @@ describe("settings.functions", () => {
         deleteCredentialFn as unknown as (
           input: ServerDataContext<{ name: string }>
         ) => Promise<{ ok: true }>
-      )({ data: { name: "shodan" }, context: {} })
+      )({ data: { name: "SHODAN_API_KEY" }, context: {} })
     ).resolves.toEqual({ ok: true });
-    expect(credentialsApi.delete).toHaveBeenCalledWith({ name: "shodan" });
+    expect(credentialsApi.delete).toHaveBeenCalledWith({
+      name: "SHODAN_API_KEY",
+    });
   });
 });

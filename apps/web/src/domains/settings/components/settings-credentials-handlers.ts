@@ -38,13 +38,13 @@ export function openDeleteCredential(
   setDeleteTarget(name);
 }
 
-export function handleCredentialSaved(
+export async function handleCredentialSaved(
   queryClient: QueryClient,
   setError: (message: string | null) => void
-): void {
+): Promise<void> {
   setError(null);
   toast.success("Credential saved");
-  void invalidateAfterCredentialMutation(queryClient);
+  await invalidateAfterCredentialMutation(queryClient);
 }
 
 export function handleDeleteConfirm(
@@ -105,7 +105,7 @@ export function bindCredentialSaved(
   setError: (message: string | null) => void
 ): () => void {
   return () => {
-    handleCredentialSaved(queryClient, setError);
+    void handleCredentialSaved(queryClient, setError);
   };
 }
 
