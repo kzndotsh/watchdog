@@ -3,8 +3,7 @@ import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { createTtlCache } from "../cache/ttl-memory";
-import { normalizeIp } from "../dns/reverse";
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { normalizeIp, normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
@@ -79,10 +78,7 @@ export function fetchTorExitLookupEffect(
   options?: TorExitOptions
 ): Effect.Effect<TorExitLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchTorExitLookupGen() {
-    const ip = yield* Effect.try({
-      try: () => normalizeIp(ipRaw),
-      catch: mapToolsCatch,
-    });
+    const ip = yield* normalizeIpEffect(ipRaw);
     const ua =
       options?.userAgent ?? watchdogUserAgent("network.tor_exit.lookup");
 

@@ -62,7 +62,7 @@ export function fetchWhoxyWhoisEffect(
     url.searchParams.set("key", key);
     url.searchParams.set("whois", host);
 
-    const { status, body } = yield* fetchJsonObjectEffect({
+    const { body } = yield* fetchJsonObjectEffect({
       url,
       signal,
       service: "Whoxy",
@@ -110,7 +110,7 @@ export function fetchWhoxyWhoisEffect(
     return whoxyLookupSnapshotSchema.parse({
       host,
       queriedAt: new Date().toISOString(),
-      status,
+      status: statusNum,
       ok,
       registrarName,
       createDate:

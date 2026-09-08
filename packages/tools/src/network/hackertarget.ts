@@ -2,8 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
@@ -77,10 +76,7 @@ export function fetchHackertargetReverseIpEffect(
   options?: HackertargetOptions
 ): Effect.Effect<HackertargetLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHackertargetReverseIpGen() {
-    const ip = yield* Effect.try({
-      try: () => normalizeIp(ipRaw),
-      catch: mapToolsCatch,
-    });
+    const ip = yield* normalizeIpEffect(ipRaw);
     const limit = options?.limit ?? 200;
     const ua =
       options?.userAgent ?? watchdogUserAgent("network.hackertarget.lookup");

@@ -2,8 +2,8 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
+import { normalizeIpEffect } from "../dns/reverse";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { isRecord, recordRows } from "../parse/coerce";
@@ -57,13 +57,14 @@ export function fetchCensysHostEffect(
   options?: { userAgent?: string }
 ): Effect.Effect<CensysLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCensysHostGen() {
-    const ip = normalizeIp(ipRaw);
+    const ip = yield* normalizeIpEffect(ipRaw);
     const id = apiId.trim();
     const secret = apiSecret.trim();
-    if (!id || !secret) {
-      return yield* new ValidationVendorError({
-        message: "CENSYS_API_ID and CENSYS_API_SECRET required",
-      });
+    if (!id) {
+      return yield* new MissingCredentialError({ slot: "CENSYS_API_ID" });
+    }
+    if (!secret) {
+      return yield* new MissingCredentialError({ slot: "CENSYS_API_SECRET" });
     }
 
     const ua = options?.userAgent ?? watchdogUserAgent("network.censys.lookup");

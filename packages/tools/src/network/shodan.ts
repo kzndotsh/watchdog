@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
@@ -78,7 +78,7 @@ export function fetchShodanHostEffect(
   options?: ShodanOptions
 ): Effect.Effect<ShodanLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchShodanHostGen() {
-    const ip = normalizeIp(ipRaw);
+    const ip = yield* normalizeIpEffect(ipRaw);
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({ slot: "SHODAN_API_KEY" });

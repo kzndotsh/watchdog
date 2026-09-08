@@ -2,11 +2,11 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { asString } from "../parse/coerce";
+import { asBool, asString } from "../parse/coerce";
 
 export const ipinfoLookupSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -46,7 +46,7 @@ export function fetchIpinfoLookupEffect(
     if (!token) {
       return yield* new MissingCredentialError({ slot: "IPINFO_API_TOKEN" });
     }
-    const ip = normalizeIp(ipRaw);
+    const ip = yield* normalizeIpEffect(ipRaw);
     const ua = options?.userAgent ?? watchdogUserAgent("network.ipinfo.lookup");
 
     const url = new URL(`https://ipinfo.io/${ip}/json`);
@@ -67,7 +67,7 @@ export function fetchIpinfoLookupEffect(
       ip,
       queriedAt: new Date().toISOString(),
       source: "ipinfo.io",
-      found: typeof body.bogon !== "boolean",
+      found: asBool(body.bogon) !== true,
       hostname: asString(body.hostname),
       city: asString(body.city),
       region: asString(body.region),

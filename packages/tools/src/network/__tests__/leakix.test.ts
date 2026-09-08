@@ -40,4 +40,30 @@ describe("leakix", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect("fetchLeakixLookupEffect treats empty 200 as found", () =>
+    Effect.gen(function* fetchLeakixEmptyGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ Services: [], Leaks: [] }), {
+            status: 200,
+          })
+        )
+      );
+
+      const snap = yield* fetchLeakixLookupEffect(
+        "8.8.8.8",
+        "test-key",
+        AbortSignal.timeout(5000)
+      );
+
+      expect(snap.found).toBe(true);
+      expect(snap.serviceCount).toBe(0);
+      expect(snap.leakCount).toBe(0);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

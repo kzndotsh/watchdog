@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
@@ -127,7 +127,7 @@ export function fetchIpctlLookupEffect(
   options?: IpctlOptions
 ): Effect.Effect<IpctlLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchIpctlLookupGen() {
-    const ip = normalizeIp(ipRaw);
+    const ip = yield* normalizeIpEffect(ipRaw);
     const ua = options?.userAgent ?? watchdogUserAgent("network.ipctl.lookup");
 
     const url = `https://api.ipctl.io/v1/ip/${encodeURIComponent(ip)}`;

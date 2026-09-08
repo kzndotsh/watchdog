@@ -103,14 +103,8 @@ export function parseMnemonicPdnsBody(
       answer,
       rrtype,
       times: timesRaw === null ? null : Math.trunc(timesRaw),
-      firstSeenAt:
-        msToIso(row.firstSeenTimestamp) ??
-        msToIso(row.firstSeen) ??
-        msToIso(row.firstSeenTimestamp),
-      lastSeenAt:
-        msToIso(row.lastSeenTimestamp) ??
-        msToIso(row.lastSeen) ??
-        msToIso(row.lastSeenTimestamp),
+      firstSeenAt: msToIso(row.firstSeenTimestamp) ?? msToIso(row.firstSeen),
+      lastSeenAt: msToIso(row.lastSeenTimestamp) ?? msToIso(row.lastSeen),
     });
 
     if (kind === "ip") {

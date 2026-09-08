@@ -109,7 +109,7 @@ export function fetchLeakixLookupEffect(
       kind,
       queriedAt: new Date().toISOString(),
       source: "leakix.net",
-      found: services.length > 0 || leaks.length > 0,
+      found: true,
       serviceCount: services.length,
       leakCount: leaks.length,
       protocols: [...protocols].slice(0, MAX_PROTOCOLS),

@@ -32,6 +32,28 @@ describe("mnemonic parse", () => {
     expect(snap.records[0]?.lastSeenAt).toBe("2025-01-01T00:00:00.000Z");
     expect(snap.domains).toContain("dns.google");
   });
+
+  it("falls back to firstSeen / lastSeen when Timestamp fields are absent", () => {
+    const snap = parseMnemonicPdnsBody(
+      "8.8.8.8",
+      "ip",
+      "2026-01-01T00:00:00.000Z",
+      {
+        responseCode: 200,
+        data: [
+          {
+            query: "dns.google",
+            answer: "8.8.8.8",
+            rrtype: "A",
+            firstSeen: 1_609_459_200_000,
+            lastSeen: 1_735_689_600_000,
+          },
+        ],
+      }
+    );
+    expect(snap.records[0]?.firstSeenAt).toBe("2021-01-01T00:00:00.000Z");
+    expect(snap.records[0]?.lastSeenAt).toBe("2025-01-01T00:00:00.000Z");
+  });
 });
 
 describe("ipctl parse", () => {

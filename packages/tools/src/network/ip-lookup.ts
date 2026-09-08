@@ -2,8 +2,7 @@ import { Effect } from "effect";
 import { z } from "zod";
 
 import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
-import { normalizeIp } from "../dns/reverse";
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import {
   originLookupName,
@@ -50,10 +49,7 @@ export function fetchIpLookupEffect(
   signal: AbortSignal
 ): Effect.Effect<IpLookupSnapshot, ToolsTag> {
   return Effect.gen(function* fetchIpLookupGen() {
-    const ip = yield* Effect.try({
-      try: () => normalizeIp(ipRaw),
-      catch: mapToolsCatch,
-    });
+    const ip = yield* normalizeIpEffect(ipRaw);
     return yield* runAbortableResolver(
       signal,
       "IP lookup aborted",

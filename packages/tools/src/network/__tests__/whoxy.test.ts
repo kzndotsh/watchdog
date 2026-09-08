@@ -31,6 +31,7 @@ describe("whoxy", () => {
       );
 
       expect(whoxyLookupSnapshotSchema.parse(snap).ok).toBe(true);
+      expect(snap.status).toBe(1);
       expect(snap.registrarName).toBe("Example Registrar");
     }).pipe(
       Effect.provide(toolsHttpClientLayer),
