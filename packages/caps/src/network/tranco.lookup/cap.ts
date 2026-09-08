@@ -21,7 +21,10 @@ export const trancoLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   consumes: [{ kind: "host" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "domain" },
+  ],
   jobPolicy: {
     cacheTtlMs: 24 * 60 * 60_000,
   },

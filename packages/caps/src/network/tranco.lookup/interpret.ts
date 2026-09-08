@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { trancoLookupInput } from "./input";
 import type { TrancoLookupSnapshot } from "./report-schema";
 
@@ -21,9 +22,10 @@ export function interpretTrancoLookupReport(
   report: TrancoLookupSnapshot,
   opts: CapInterpretOpts<TrancoInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "Tranco ranking captured; no Entity to attach Claim",
+    batches: [...querySeedBatches(report.domain, "domain")],
+    claimText: summarize(report),
+    noEntitySummary: "Tranco ranking captured; no Entity to attach Identifiers",
   });
 }

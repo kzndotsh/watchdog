@@ -32,19 +32,23 @@ describe("interpret", () => {
     ranksCount: 0,
   };
 
-  it("interpretTrancoLookupReport proposes observation Claim with rank", () => {
+  it("interpretTrancoLookupReport proposes domain Identifier + observation Claim", () => {
     const result = interpretTrancoLookupReport(foundFixture, {
       input: { host: foundFixture.domain, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/rank 12345/);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.data.type).toBe("domain");
+    expect(result.patch[0]?.data.value).toBe("example.com");
+    expect(result.patch[1]?.resource).toBe("claim");
+    expect(claimText(result, 1)).toMatch(/rank 12345/);
   });
 
   it("interpretTrancoLookupReport reports out-of-top-1M softly", () => {
     const result = interpretTrancoLookupReport(notFoundFixture, {
       input: { host: notFoundFixture.domain, entityId },
     });
-    expect(claimText(result, 0)).toMatch(/not in the top-1M/);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(claimText(result, 1)).toMatch(/not in the top-1M/);
   });
 
   itRejectsIncompleteReport(
