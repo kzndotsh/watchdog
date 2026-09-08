@@ -189,6 +189,20 @@ export function defineCapability<TSchema extends z.ZodType>(
 ): CapabilityDef<TSchema> {
   if (!def.id.trim()) throw new Error("Capability id is required");
   if (!def.title.trim()) throw new Error("Capability title is required");
+  if (def.timeoutMs !== undefined && def.timeoutMs <= 0) {
+    throw new Error("Capability timeoutMs must be positive");
+  }
+  for (const spec of def.credentials ?? []) {
+    if ("anyOf" in spec) {
+      if (!spec.anyOf.some((name) => name.trim() !== "")) {
+        throw new Error(
+          "Capability credential anyOf must name at least one slot"
+        );
+      }
+    } else if (spec.name.trim() === "") {
+      throw new Error("Capability credential name is required");
+    }
+  }
   return def;
 }
 
@@ -197,5 +211,6 @@ export const DEFAULT_CAP_TIMEOUT_MS = 120_000;
 
 /** Effective Cap abort timeout (explicit or default). */
 export function capTimeoutMs(cap: { timeoutMs?: number }): number {
-  return cap.timeoutMs ?? DEFAULT_CAP_TIMEOUT_MS;
+  const ms = cap.timeoutMs ?? DEFAULT_CAP_TIMEOUT_MS;
+  return ms > 0 ? ms : DEFAULT_CAP_TIMEOUT_MS;
 }

@@ -108,7 +108,7 @@ function serializeJobPolicy(
   if (policy.linkEvidenceFromInput) {
     out.linkEvidenceFromInput = [...policy.linkEvidenceFromInput];
   }
-  return out;
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 function serializeCredentials(

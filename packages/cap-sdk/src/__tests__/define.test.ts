@@ -37,6 +37,30 @@ describe("defineCapability", () => {
     ).toThrow(/title is required/);
   });
 
+  it("rejects non-positive timeoutMs", () => {
+    expect(() =>
+      defineCapability({
+        id: "test.cap",
+        title: "Test",
+        input,
+        timeoutMs: 0,
+        run: () => Effect.succeed({ artifacts: [] }),
+      })
+    ).toThrow(/timeoutMs must be positive/);
+  });
+
+  it("rejects blank credential names", () => {
+    expect(() =>
+      defineCapability({
+        id: "test.cap",
+        title: "Test",
+        input,
+        credentials: [{ name: "  " }],
+        run: () => Effect.succeed({ artifacts: [] }),
+      })
+    ).toThrow(/credential name is required/);
+  });
+
   it("returns the same object with id and title", () => {
     const def = {
       id: "test.cap",
@@ -59,6 +83,10 @@ describe("capTimeoutMs", () => {
   it("uses the declared timeoutMs", () => {
     expect(capTimeoutMs({ timeoutMs: 12_000 })).toBe(12_000);
   });
+
+  it("falls back when timeoutMs is non-positive", () => {
+    expect(capTimeoutMs({ timeoutMs: 0 })).toBe(DEFAULT_CAP_TIMEOUT_MS);
+  });
 });
 
 describe("toCapDescriptor", () => {
@@ -74,6 +102,18 @@ describe("toCapDescriptor", () => {
     const descriptor = toCapDescriptor(cap);
     expect(descriptor.timeoutMs).toBe(9000);
     expect(descriptor.credentials).toEqual([{ name: "SHODAN_API_KEY" }]);
+  });
+
+  it("omits empty jobPolicy objects from the descriptor", () => {
+    const cap = defineCapability({
+      id: "test.policy",
+      title: "Policy",
+      input,
+      jobPolicy: {},
+      run: () => Effect.succeed({ artifacts: [] }),
+    });
+    const descriptor = toCapDescriptor(cap);
+    expect(descriptor.jobPolicy).toBeUndefined();
   });
 });
 
