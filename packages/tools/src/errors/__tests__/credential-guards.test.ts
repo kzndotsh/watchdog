@@ -23,6 +23,7 @@ import { fetchThreatfoxLookupEffect } from "../../threat/threatfox";
 import { fetchUrlhausLookupEffect } from "../../threat/urlhaus";
 import { fetchVirusTotalLookupEffect } from "../../threat/virustotal";
 import { fetchXforceLookupEffect } from "../../threat/xforce";
+import { fetchWhoisXmlEffect } from "../../whois/whoisxml";
 import { MissingCredentialError } from "../tagged-errors";
 
 const signal = () => AbortSignal.timeout(5000);
@@ -169,6 +170,12 @@ const guardCases = [
     slot: "WHOXY_API_KEY",
     run: () =>
       fetchWhoxyWhoisEffect("example.com", "", signal()).pipe(Effect.flip),
+  },
+  {
+    name: "whoisxml",
+    slot: "WHOIS_API_KEY",
+    run: () =>
+      fetchWhoisXmlEffect("example.com", "", signal()).pipe(Effect.flip),
   },
   {
     name: "c99",
