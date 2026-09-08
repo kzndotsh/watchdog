@@ -1,9 +1,9 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
@@ -23,12 +23,14 @@ import {
   DataTableViewOptions,
 } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
 import { SearchField } from "@/shared/ui/search-field";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
 import { Label } from "@/shared/ui/shadcn/label";
+import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_STATUS_OPTIONS,
@@ -62,6 +64,8 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
     evidenceOptions,
     pending,
     identifiersPlaceholder,
+    identifiersLoadError,
+    retryTable,
     caseId,
     deleteTarget,
     setDeleteTarget,
@@ -240,15 +244,19 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
       />
 
       <div className={placeholderDeemphasisClass(identifiersPlaceholder)}>
-        <DataTable
-          table={table}
-          emptyText={emptyText}
-          appendRow={appendRow}
-          pending={pending}
-          pendingLabel="Loading identifiers table"
-          getRowActions={getRowActions}
-          onRowClick={onRowClick}
-        />
+        {identifiersLoadError ? (
+          <FetchErrorAlert error={identifiersLoadError} onRetry={retryTable} />
+        ) : (
+          <DataTable
+            table={table}
+            emptyText={emptyText}
+            appendRow={appendRow}
+            pending={pending}
+            pendingLabel="Loading identifiers table"
+            getRowActions={getRowActions}
+            onRowClick={onRowClick}
+          />
+        )}
       </div>
       <DataTablePagination table={table} />
       <BulkAddIdentifiersDialog
@@ -268,6 +276,8 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
                 id: deleteTarget.id,
                 type: deleteTarget.type,
                 value: deleteTarget.value,
+                entityId: deleteTarget.entityId,
+                entitySlug: deleteTarget.entitySlug,
               }
             : null
         }
@@ -281,9 +291,27 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
 }
 
 export function IdentifiersPage() {
-  const { data: casesCtx } = useSuspenseQuery(casesContextQuery());
+  const { active, pending, loadError, retry } = useCasesContext();
 
-  if (!casesCtx.active) {
+  if (loadError) {
+    return (
+      <Page>
+        <PageHeader />
+        <FetchErrorAlert error={loadError} onRetry={retry} />
+      </Page>
+    );
+  }
+
+  if (pending) {
+    return (
+      <Page>
+        <PageHeader />
+        {stackPendingFallback(1)}
+      </Page>
+    );
+  }
+
+  if (!active) {
     return (
       <Page>
         <PageHeader />
@@ -304,5 +332,5 @@ export function IdentifiersPage() {
     );
   }
 
-  return <IdentifiersActive active={casesCtx.active} />;
+  return <IdentifiersActive active={active} />;
 }

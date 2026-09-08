@@ -1,4 +1,9 @@
-import { IDENTIFIER_TYPES, type IdentifierType } from "@watchdog/schemas";
+import {
+  IDENTIFIER_TYPES,
+  parseOptionalTrimmedUuid,
+  slugifyName,
+  type IdentifierType,
+} from "@watchdog/schemas";
 
 import type {
   IdentifierPasteEntity,
@@ -36,28 +41,32 @@ export function matchPasteEntity(
   raw: string,
   entities: readonly IdentifierPasteEntity[],
   fallbackId: string
-): { id: string; name: string } | { error: string } {
+): { id: string; name: string; slug: string } | { error: string } {
   const needle = raw.trim();
+  const scopedFallbackId = parseOptionalTrimmedUuid(fallbackId);
   if (needle === "") {
-    if (fallbackId === "") return { error: "Entity is required" };
-    const fallback = entities.find((e) => e.id === fallbackId);
+    if (scopedFallbackId === undefined) return { error: "Entity is required" };
+    const fallback = entities.find((e) => e.id === scopedFallbackId);
     if (fallback === undefined) return { error: "Entity is required" };
-    return { id: fallback.id, name: fallback.name };
+    return { id: fallback.id, name: fallback.name, slug: fallback.slug };
   }
 
   const lower = needle.toLowerCase();
-  const byName = entities.filter((e) => e.name.toLowerCase() === lower);
+  const byName = entities.filter((e) => e.name.trim().toLowerCase() === lower);
   if (byName.length > 1) return { error: "Entity is ambiguous" };
   if (byName.length === 1) {
     const [hit] = byName;
-    return { id: hit.id, name: hit.name };
+    return { id: hit.id, name: hit.name, slug: hit.slug };
   }
 
-  const bySlug = entities.filter((e) => e.slug.toLowerCase() === lower);
+  const bySlug = entities.filter((e) => {
+    const slugNeedle = slugifyName(needle);
+    return slugNeedle !== "" && e.slug === slugNeedle;
+  });
   if (bySlug.length > 1) return { error: "Entity is ambiguous" };
   if (bySlug.length === 1) {
     const [hit] = bySlug;
-    return { id: hit.id, name: hit.name };
+    return { id: hit.id, name: hit.name, slug: hit.slug };
   }
 
   return { error: "Entity not found" };

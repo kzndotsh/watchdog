@@ -9,6 +9,7 @@ import {
   type EntityRecord,
 } from "@/domains/entities/types";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
+import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 
 export const listEntitiesFn = createServerFn({ method: "GET" })
   .validator(caseIdInputSchema)
@@ -20,14 +21,16 @@ export const listEntitiesFn = createServerFn({ method: "GET" })
 
 export const getEntityBySlugFn = createServerFn({ method: "GET" })
   .validator(caseSlugInputSchema)
-  .handler(async ({ data, context }): Promise<EntityRecord | null> =>
-    orpcNullIfNotFound(
+  .handler(async ({ data, context }): Promise<EntityRecord | null> => {
+    const slug = normalizeEntitySlug(data.slug);
+    if (slug === undefined) return null;
+    return orpcNullIfNotFound(
       orpcFromContext(context).entities.get({
         caseId: data.caseId,
-        slug: data.slug,
+        slug,
       })
-    )
-  );
+    );
+  });
 
 export const createEntityFn = createServerFn({ method: "POST" })
   .validator(createEntityInputSchema)

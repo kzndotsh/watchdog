@@ -50,7 +50,10 @@ describe("EntityConnectionsCell", () => {
             edgeId: testId(3),
             peerId: testId(2),
             peerName: "John Doe",
+            peerSlug: "john",
             peerKind: "person",
+            peerSummary: null,
+            peerNotes: null,
             predicate: "associate_of",
             direction: "out",
             notes: null,
@@ -61,7 +64,10 @@ describe("EntityConnectionsCell", () => {
             edgeId: testId(4),
             peerId: testId(5),
             peerName: "Acme",
+            peerSlug: "acme",
             peerKind: "org",
+            peerSummary: null,
+            peerNotes: null,
             predicate: "associate_of",
             direction: "in",
             notes: null,
@@ -88,5 +94,39 @@ describe("EntityConnectionsCell", () => {
     ).toHaveAttribute("title", "Associate of Acme");
     expect(screen.getByText("John Doe")).toBeInTheDocument();
     expect(screen.getByText("Acme")).toBeInTheDocument();
+  });
+
+  it("falls back to peer slug when the peer has no display name", () => {
+    render(
+      <EntityConnectionsCell
+        entity={ENTITY}
+        peers={[
+          {
+            edgeId: testId(6),
+            peerId: testId(7),
+            peerName: "",
+            peerSlug: "acme-corp",
+            peerKind: "org",
+            peerSummary: null,
+            peerNotes: null,
+            predicate: "hosted_on",
+            direction: "out",
+            notes: null,
+            fromId: ENTITY.id,
+            toId: testId(7),
+          },
+        ]}
+        entityOptions={[]}
+        onCreate={vi.fn()}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("acme-corp")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Edit connection Hosted on acme-corp/i,
+      })
+    ).toHaveAttribute("title", "Hosted on acme-corp");
   });
 });

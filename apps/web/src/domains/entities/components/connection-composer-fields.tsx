@@ -11,6 +11,7 @@ import {
   preferredEdgePhrase,
 } from "@/shared/ui/vocab/edge-predicate";
 import type { EntityKind } from "@watchdog/schemas";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
 interface Props {
   centerKind: EntityKind;
@@ -31,7 +32,8 @@ export function ConnectionComposerFields({
   onChange,
   disabled = false,
 }: Props) {
-  const peer = peerOptions.find((o) => o.id === values.peerId);
+  const scopedPeerId = parseOptionalTrimmedUuid(values.peerId) ?? "";
+  const peer = peerOptions.find((o) => o.id === scopedPeerId);
   const phraseOptions = edgePhraseOptions(
     peer?.kind
       ? { fromKind: centerKind, toKind: peer.kind }
@@ -41,9 +43,10 @@ export function ConnectionComposerFields({
     parseEdgePhraseValue(values.phraseValue)?.predicate === "related_to";
 
   function setPeer(peerId: string) {
-    const nextPeer = peerOptions.find((o) => o.id === peerId);
+    const scopedId = parseOptionalTrimmedUuid(peerId) ?? "";
+    const nextPeer = peerOptions.find((o) => o.id === scopedId);
     if (!nextPeer?.kind) {
-      onChange({ ...values, peerId, phraseValue: "" });
+      onChange({ ...values, peerId: scopedId, phraseValue: "" });
       return;
     }
     const peerKind = nextPeer.kind;
@@ -57,7 +60,7 @@ export function ConnectionComposerFields({
       );
       onChange({
         ...values,
-        peerId,
+        peerId: scopedId,
         phraseValue: edgePhraseValue(clamped.predicate, clamped.orientation),
       });
       return;
@@ -65,7 +68,7 @@ export function ConnectionComposerFields({
     const preferred = preferredEdgePhrase(centerKind, peerKind);
     onChange({
       ...values,
-      peerId,
+      peerId: scopedId,
       phraseValue: preferred?.value ?? "",
     });
   }

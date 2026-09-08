@@ -7,9 +7,15 @@ export interface ConnectionComposerValues {
 }
 
 export function connectionComposerIssues(
-  values: ConnectionComposerValues
+  values: ConnectionComposerValues,
+  centerEntityId?: string
 ): string | null {
-  if (!values.peerId) return "Select a peer entity";
+  const peerId = values.peerId.trim();
+  if (peerId === "") return "Select a peer entity";
+  const scopedCenterId = centerEntityId?.trim();
+  if (scopedCenterId !== undefined && peerId === scopedCenterId) {
+    return "Cannot connect an entity to itself";
+  }
   const parsed = parseEdgePhraseValue(values.phraseValue);
   if (!parsed) return "Select a relationship";
   if (parsed.predicate === "related_to" && !values.notes.trim()) {

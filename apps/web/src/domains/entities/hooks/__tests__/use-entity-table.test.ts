@@ -32,6 +32,10 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/shared/hooks/use-live-events", () => ({
+  useLiveEvents: vi.fn(),
+}));
+
 vi.mock("@tanstack/react-form", () => ({
   useForm: () => ({
     reset: vi.fn(),
@@ -68,13 +72,15 @@ const ACTIVE: CaseRecord = {
   allowThirdPartyEgress: false,
 };
 
-function queryResult(data: unknown) {
+function queryResult(data: unknown, overrides: Record<string, unknown> = {}) {
   return {
     data,
     isFetched: true,
     isLoading: false,
     isError: false,
     isPlaceholderData: false,
+    refetch: vi.fn(),
+    ...overrides,
   };
 }
 
@@ -113,5 +119,36 @@ describe("useEntityTable", () => {
       result.current.openComposer();
     });
     expect(result.current.composing).toBe(true);
+  });
+
+  it("surfaces tableLoadError when entity queries fail", () => {
+    useQueryMock.mockImplementation(
+      (options: { queryKey?: readonly unknown[] }) => {
+        const key = options.queryKey?.[0];
+        if (key === "entities") {
+          return queryResult(undefined, {
+            isError: true,
+            error: new Error("entities down"),
+          });
+        }
+        if (key === "edges") return queryResult([]);
+        return queryResult([]);
+      }
+    );
+    useMutationMock.mockReturnValue({
+      mutate: vi.fn(),
+      mutateAsync: vi.fn().mockResolvedValue(undefined),
+      isPending: false,
+    });
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const { result } = renderHook(() => useEntityTable(ACTIVE), {
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryClientProvider, { client }, children),
+    });
+
+    expect(result.current.tableLoadError).toBe("entities down");
   });
 });

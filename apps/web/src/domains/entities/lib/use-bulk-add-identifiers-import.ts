@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { createIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
+import { createIdentifierInputSchema } from "@/domains/entities/identifiers/types";
 import {
   identifierPasteRowKey,
   isIdentifierPasteRowImportable,
@@ -43,20 +44,19 @@ export function useBulkAddIdentifiersImport(options: {
           continue;
         }
         try {
-          // oxlint-disable-next-line eslint/no-await-in-loop, react-doctor/async-await-in-loop -- sequential partial success
-          await createIdentifierFn({
-            data: {
-              caseId,
-              entityId: row.entityId,
-              type: row.type,
-              value: row.value,
-              platform: row.platform === "" ? undefined : row.platform,
-              status: row.status,
-              confidence: row.confidence,
-            },
+          const data = createIdentifierInputSchema.parse({
+            caseId,
+            entityId: row.entityId,
+            type: row.type,
+            value: row.value,
+            platform: row.platform === "" ? undefined : row.platform,
+            status: row.status,
+            confidence: row.confidence,
           });
+          // oxlint-disable-next-line eslint/no-await-in-loop, react-doctor/async-await-in-loop -- sequential partial success
+          await createIdentifierFn({ data });
           imported += 1;
-          importedEntityIds.push(row.entityId);
+          importedEntityIds.push(data.entityId);
         } catch (error) {
           failed.push({
             sourceIndex: row.sourceIndex,

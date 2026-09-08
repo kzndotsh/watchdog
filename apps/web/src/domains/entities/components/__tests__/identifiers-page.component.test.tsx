@@ -56,14 +56,18 @@ vi.mock("@/shared/ui/data-table", () => ({
   DataTableViewOptions: () => null,
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useCasesContextMock = vi.hoisted(() => vi.fn());
 const useIdentifiersTableMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
+  useCasesContext: () => useCasesContextMock(),
+}));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQueryClient: actual.useQueryClient,
   };
 });
 
@@ -116,8 +120,14 @@ function mockIdentifiersTable() {
 
 describe("IdentifiersPage", () => {
   it("prompts for an active case when none is selected", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: { cases: [], active: null },
+    useCasesContextMock.mockReturnValue({
+      casesCtx: { cases: [], active: null },
+      cases: [],
+      active: null,
+      pending: false,
+      loadError: null,
+      retry: vi.fn(),
+      placeholder: false,
     });
 
     render(<IdentifiersPage />);
@@ -132,8 +142,14 @@ describe("IdentifiersPage", () => {
 
   it("renders identifier toolbar controls and opens bulk dialog", async () => {
     const user = userEvent.setup();
-    useSuspenseQueryMock.mockReturnValue({
-      data: { cases: [ACTIVE], active: ACTIVE },
+    useCasesContextMock.mockReturnValue({
+      casesCtx: { cases: [ACTIVE], active: ACTIVE },
+      cases: [ACTIVE],
+      active: ACTIVE,
+      pending: false,
+      loadError: null,
+      retry: vi.fn(),
+      placeholder: false,
     });
     mockIdentifiersTable();
 

@@ -3,6 +3,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { deleteIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
+import { deleteIdentifierInputSchema } from "@/domains/entities/identifiers/types";
+import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import {
@@ -15,11 +17,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/shadcn/alert-dialog";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 
 export interface DeleteIdentifierTarget {
   id: string;
   type: string;
   value: string;
+  entityId: string;
+  entitySlug?: string;
 }
 
 export function DeleteIdentifierDialog({
@@ -40,12 +45,23 @@ export function DeleteIdentifierDialog({
 
   const deleteMutation = useMutation({
     mutationFn: async (identifierId: string) =>
-      deleteIdentifierFn({ data: { caseId, identifierId } }),
+      deleteIdentifierFn({
+        data: deleteIdentifierInputSchema.parse({ caseId, identifierId }),
+      }),
     onSuccess: async () => {
       if (!target) return;
       setError(null);
       onOpenChange(false);
-      await invalidateAfterEntityChanged(queryClient, caseId);
+      await invalidateAfterEntityChanged(
+        queryClient,
+        caseId,
+        entityChangedOpts(
+          queryClient,
+          caseId,
+          target.entityId,
+          target.entitySlug
+        )
+      );
       toast.success("Identifier deleted");
       onDeleted?.(target);
     },
@@ -72,7 +88,7 @@ export function DeleteIdentifierDialog({
           <AlertDialogTitle>Delete identifier</AlertDialogTitle>
           <AlertDialogDescription>
             {target
-              ? `Remove ${target.type} “${displayValue}” from this Case. Evidence stays attached to the Case.`
+              ? `Remove ${kindLabel(target.type)} “${displayValue}” from this Case. Evidence stays attached to the Case.`
               : "Remove this identifier from the Case."}
           </AlertDialogDescription>
         </AlertDialogHeader>

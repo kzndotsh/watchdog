@@ -89,5 +89,76 @@ describe("connection composer + edge write", () => {
     expect(updated.edgeId).toBe("11111111-1111-4111-8111-000000000036");
     expect(updated.confidence).toBe("possible");
     expect(updated.predicate).toBe("owns");
+    expect(updated.notes).toBeUndefined();
+  });
+
+  it("clears notes when core.notes is blank", () => {
+    const updated = buildUpdateEdgeData({
+      caseId: "11111111-1111-4111-8111-000000000010",
+      centerId: "11111111-1111-4111-8111-000000000020",
+      edgeId: "11111111-1111-4111-8111-000000000036",
+      existing: {
+        fromId: "11111111-1111-4111-8111-000000000020",
+        toId: "11111111-1111-4111-8111-000000000021",
+        peerId: "11111111-1111-4111-8111-000000000021",
+      },
+      core: {
+        peerId: "11111111-1111-4111-8111-000000000021",
+        predicate: "owns",
+        orientation: "forward",
+        notes: "  ",
+      },
+    });
+    expect(updated.notes).toBeNull();
+  });
+
+  it("includes an empty evidenceIds array to clear attachments", () => {
+    const updated = buildUpdateEdgeData({
+      caseId: "11111111-1111-4111-8111-000000000010",
+      centerId: "11111111-1111-4111-8111-000000000020",
+      edgeId: "11111111-1111-4111-8111-000000000036",
+      existing: {
+        fromId: "11111111-1111-4111-8111-000000000020",
+        toId: "11111111-1111-4111-8111-000000000021",
+        peerId: "11111111-1111-4111-8111-000000000021",
+      },
+      core: {
+        peerId: "11111111-1111-4111-8111-000000000021",
+        predicate: "owns",
+        orientation: "forward",
+      },
+      evidenceIds: [],
+    });
+    expect(updated.evidenceIds).toEqual([]);
+  });
+
+  it("normalizes padded evidenceIds on create", () => {
+    const evidenceId = "11111111-1111-4111-8111-000000000099";
+    const created = buildCreateEdgeData({
+      caseId: "11111111-1111-4111-8111-000000000010",
+      centerId: "11111111-1111-4111-8111-000000000020",
+      core: {
+        peerId: "11111111-1111-4111-8111-000000000021",
+        predicate: "owns",
+        orientation: "forward",
+      },
+      evidenceIds: [`  ${evidenceId}  `, "  "],
+    });
+    expect(created.evidenceIds).toEqual([evidenceId]);
+  });
+
+  it("rejects invalid evidenceIds on create", () => {
+    expect(() =>
+      buildCreateEdgeData({
+        caseId: "11111111-1111-4111-8111-000000000010",
+        centerId: "11111111-1111-4111-8111-000000000020",
+        core: {
+          peerId: "11111111-1111-4111-8111-000000000021",
+          predicate: "owns",
+          orientation: "forward",
+        },
+        evidenceIds: ["not-a-uuid"],
+      })
+    ).toThrow();
   });
 });

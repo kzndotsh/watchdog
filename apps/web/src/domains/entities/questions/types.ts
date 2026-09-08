@@ -1,50 +1,28 @@
-import { z } from "zod";
+import type { z } from "zod";
 
 import type { QuestionRecord as CoreQuestionRecord } from "@watchdog/core";
 import {
-  nonEmptyTrimmed,
-  optionalTrimmedSchema,
-  trimmedOrNull,
-  uuidSchema,
+  createQuestionInputSchema,
+  questionScopeInputSchema,
+  resolveQuestionInputSchema,
+  updateQuestionInputSchema,
 } from "@watchdog/schemas";
 
 export type QuestionRecord = CoreQuestionRecord;
 
-export const entityScopeInputSchema = z.object({
-  caseId: uuidSchema,
-  entityId: uuidSchema,
-});
-export type EntityScopeInput = z.output<typeof entityScopeInputSchema>;
+export {
+  entityScopeInputSchema,
+  type EntityScopeInput,
+} from "@watchdog/schemas";
 
-export const createQuestionInputSchema = z.object({
-  caseId: uuidSchema,
-  entityId: uuidSchema,
-  text: nonEmptyTrimmed,
-});
+export { createQuestionInputSchema };
 export type CreateQuestionInput = z.output<typeof createQuestionInputSchema>;
 
-export const resolveQuestionInputSchema = z.object({
-  caseId: uuidSchema,
-  questionId: uuidSchema,
-  resolvedNote: optionalTrimmedSchema,
-});
+export { resolveQuestionInputSchema };
 export type ResolveQuestionInput = z.output<typeof resolveQuestionInputSchema>;
 
-export const questionScopeInputSchema = z.object({
-  caseId: uuidSchema,
-  questionId: uuidSchema,
-});
+export { questionScopeInputSchema };
 export type QuestionScopeInput = z.output<typeof questionScopeInputSchema>;
 
-export const updateQuestionInputSchema = z.object({
-  caseId: uuidSchema,
-  questionId: uuidSchema,
-  text: nonEmptyTrimmed.optional(),
-  resolvedNote: z
-    .union([z.string(), z.null()])
-    .optional()
-    .transform((value) =>
-      value === undefined ? undefined : trimmedOrNull(value)
-    ),
-});
+export { updateQuestionInputSchema };
 export type UpdateQuestionInput = z.output<typeof updateQuestionInputSchema>;

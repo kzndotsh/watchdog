@@ -1,5 +1,7 @@
 import {
+  entityDisplayLabel,
   normalizeIdentifierPlatform,
+  parseOptionalTrimmedUuid,
   validateIdentifierWrite,
   type IdentifierType,
 } from "@watchdog/schemas";
@@ -115,13 +117,19 @@ function resolveShared(opts: {
   let entityError: string | null = null;
   if (lockEntity) {
     entityId = lockEntity.id;
-    entityName = lockEntity.name;
+    entityName = entityDisplayLabel({
+      name: lockEntity.name,
+      slug: lockEntity.slug,
+    });
   } else {
     const matched = matchPasteEntity(rawEntity, entities, defaults.entityId);
     if ("error" in matched) entityError = matched.error;
     else {
       entityId = matched.id;
-      entityName = matched.name;
+      entityName = entityDisplayLabel({
+        name: matched.name,
+        slug: matched.slug,
+      });
     }
   }
 
@@ -295,15 +303,19 @@ function applyRowOverride(
   let entityName = row.entityName;
   let entityError = row.entityError;
   if (patch.entityId !== undefined) {
-    if (patch.entityId === "") {
+    const scopedEntityId = parseOptionalTrimmedUuid(patch.entityId);
+    if (scopedEntityId === undefined) {
       entityId = null;
       entityName = null;
       entityError = "Entity is required";
     } else {
-      const entity = entities.find((e) => e.id === patch.entityId);
+      const entity = entities.find((e) => e.id === scopedEntityId);
       if (entity !== undefined) {
         entityId = entity.id;
-        entityName = entity.name;
+        entityName = entityDisplayLabel({
+          name: entity.name,
+          slug: entity.slug,
+        });
         entityError = null;
       }
     }

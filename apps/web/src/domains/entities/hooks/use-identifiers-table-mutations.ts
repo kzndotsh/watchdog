@@ -4,6 +4,8 @@ import { toast } from "sonner";
 
 import { updateIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
+import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
+import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import type { IdentifierFieldUpdate } from "@/shared/ui/identifiers/identifier-cells";
@@ -25,7 +27,9 @@ interface UpdateIdentifierVars {
 }
 
 function updateIdentifierFields(caseId: string, input: UpdateIdentifierVars) {
-  return updateIdentifierFn({ data: { caseId, ...input } });
+  return updateIdentifierFn({
+    data: buildUpdateIdentifierData(caseId, input),
+  });
 }
 
 async function onIdentifierUpdated(
@@ -36,9 +40,13 @@ async function onIdentifierUpdated(
 ): Promise<void> {
   toast.success("Updated");
   const row = rows.find((entry) => entry.id === identifierId);
-  await invalidateAfterEntityChanged(queryClient, caseId, {
-    entityId: row?.entityId,
-  });
+  await invalidateAfterEntityChanged(
+    queryClient,
+    caseId,
+    row === undefined
+      ? undefined
+      : entityChangedOpts(queryClient, caseId, row.entityId, row.entitySlug)
+  );
 }
 
 function onIdentifierUpdateError(error: unknown): void {

@@ -29,5 +29,28 @@ describe("events types schemas", () => {
         what: "Follow-up call",
       }).what
     ).toBe("Follow-up call");
+
+    expect(
+      updateEventInputSchema.parse({
+        caseId: testId(10),
+        eventId: testId(1),
+        what: "Only what changed",
+      }).what
+    ).toBe("Only what changed");
+
+    expect(
+      updateEventInputSchema.safeParse({
+        caseId: testId(10),
+        eventId: testId(1),
+      }).success
+    ).toBe(false);
+
+    expect(
+      updateEventInputSchema.parse({
+        caseId: testId(10),
+        eventId: testId(1),
+        where: null,
+      }).where
+    ).toBeNull();
   });
 });

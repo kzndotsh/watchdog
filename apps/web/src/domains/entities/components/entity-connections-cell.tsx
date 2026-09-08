@@ -27,6 +27,7 @@ import {
   parseEdgePhraseValue,
   predicateLabel,
 } from "@/shared/ui/vocab/edge-predicate";
+import { entityDisplayLabel } from "@watchdog/schemas";
 import type { EdgeOrientation } from "@watchdog/schemas";
 
 const MAX_VISIBLE_CHIPS = 2;
@@ -119,7 +120,7 @@ export function EntityConnectionsCell({
   }
 
   async function handleSave() {
-    const issue = connectionComposerIssues(form);
+    const issue = connectionComposerIssues(form, entity.id);
     if (issue) {
       setSaveError(issue);
       return;
@@ -182,8 +183,12 @@ export function EntityConnectionsCell({
         ) : (
           <>
             {visible.map((peer) => {
+              const peerLabel = entityDisplayLabel({
+                name: peer.peerName,
+                slug: peer.peerSlug,
+              });
               const label = predicateLabel(peer.predicate, peer.direction);
-              const phrase = `${label} ${peer.peerName}`;
+              const phrase = `${label} ${peerLabel}`;
               const DirectionIcon =
                 peer.direction === "out" ? ArrowUpRightIcon : ArrowDownLeftIcon;
               return (
@@ -205,7 +210,7 @@ export function EntityConnectionsCell({
                     aria-hidden
                   />
                   <span className="min-w-0 truncate font-medium">
-                    {peer.peerName}
+                    {peerLabel}
                   </span>
                 </button>
               );
@@ -241,7 +246,7 @@ export function EntityConnectionsCell({
               size="sm"
               className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-0"
               disabled={addDisabled}
-              aria-label={`Add connection for ${entity.name}`}
+              aria-label={`Add connection for ${entityDisplayLabel(entity)}`}
               title="Add connection"
               onClick={(e) => {
                 e.preventDefault();
@@ -255,21 +260,27 @@ export function EntityConnectionsCell({
         <PopoverContent align="end" className="w-80 gap-2.5">
           {peers.length > 0 && (mode.kind === "browse" || overflow > 0) ? (
             <div className="flex max-h-28 flex-col gap-1 overflow-y-auto border-b pb-2">
-              {peers.map((peer) => (
-                <button
-                  key={peer.edgeId}
-                  type="button"
-                  className="hover:bg-muted/50 flex min-w-0 items-baseline gap-1.5 rounded-sm px-1 py-0.5 text-left text-xs"
-                  onClick={() => {
-                    openEdit(peer);
-                  }}
-                >
-                  <span className="text-muted-foreground shrink-0">
-                    {predicateLabel(peer.predicate, peer.direction)}
-                  </span>
-                  <span className="truncate font-medium">{peer.peerName}</span>
-                </button>
-              ))}
+              {peers.map((peer) => {
+                const peerLabel = entityDisplayLabel({
+                  name: peer.peerName,
+                  slug: peer.peerSlug,
+                });
+                return (
+                  <button
+                    key={peer.edgeId}
+                    type="button"
+                    className="hover:bg-muted/50 flex min-w-0 items-baseline gap-1.5 rounded-sm px-1 py-0.5 text-left text-xs"
+                    onClick={() => {
+                      openEdit(peer);
+                    }}
+                  >
+                    <span className="text-muted-foreground shrink-0">
+                      {predicateLabel(peer.predicate, peer.direction)}
+                    </span>
+                    <span className="truncate font-medium">{peerLabel}</span>
+                  </button>
+                );
+              })}
             </div>
           ) : null}
 

@@ -33,11 +33,12 @@ import {
   IDENTIFIER_PLATFORM_OPTIONS,
   IDENTIFIER_STATUS_OPTIONS,
   IDENTIFIER_TYPE_OPTIONS,
+  identifierPlatformOptionMatchesQuery,
 } from "@/shared/ui/vocab";
 import {
-  confidenceTierSchema,
-  identifierStatusSchema,
-  identifierTypeSchema,
+  trimmedConfidenceTierSchema,
+  trimmedIdentifierStatusSchema,
+  trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
 } from "@watchdog/schemas";
 
@@ -233,7 +234,9 @@ export function BulkAddIdentifiersPreviewTable({
                     onCommit={(next) => {
                       setRowPatch(row, {
                         type:
-                          next === "" ? null : identifierTypeSchema.parse(next),
+                          next === ""
+                            ? null
+                            : trimmedIdentifierTypeSchema.parse(next),
                       });
                     }}
                   />
@@ -242,6 +245,7 @@ export function BulkAddIdentifiersPreviewTable({
                   <EditableSuggestCell
                     value={row.platform}
                     options={IDENTIFIER_PLATFORM_OPTIONS}
+                    filter={identifierPlatformOptionMatchesQuery}
                     placeholder="—"
                     aria-label="Platform"
                     disabled={busy}
@@ -260,7 +264,7 @@ export function BulkAddIdentifiersPreviewTable({
                     disabled={busy}
                     onCommit={(next) => {
                       setRowPatch(row, {
-                        status: identifierStatusSchema.parse(next),
+                        status: trimmedIdentifierStatusSchema.parse(next),
                       });
                     }}
                   />
@@ -273,7 +277,7 @@ export function BulkAddIdentifiersPreviewTable({
                     disabled={busy}
                     onCommit={(next) => {
                       setRowPatch(row, {
-                        confidence: confidenceTierSchema.parse(next),
+                        confidence: trimmedConfidenceTierSchema.parse(next),
                       });
                     }}
                   />

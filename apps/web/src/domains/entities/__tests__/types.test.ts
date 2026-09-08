@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createEntityInputSchema } from "@/domains/entities/types";
+import {
+  createEntityInputSchema,
+  updateEntityFieldsInputSchema,
+} from "@/domains/entities/types";
 
 const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -15,14 +18,14 @@ describe("createEntityInputSchema", () => {
     expect(parsed.name).toBe("Jane Doe");
   });
 
-  it("trims an explicit slug", () => {
+  it("normalizes an explicit slug", () => {
     const parsed = createEntityInputSchema.parse({
       caseId: CASE_ID,
       kind: "org",
       name: "Acme Corp",
-      slug: "  acme  ",
+      slug: "  Alpha Corp  ",
     });
-    expect(parsed.slug).toBe("acme");
+    expect(parsed.slug).toBe("alpha-corp");
   });
 
   it("falls back to slugifyName when slug is whitespace", () => {
@@ -33,5 +36,19 @@ describe("createEntityInputSchema", () => {
       slug: "   ",
     });
     expect(parsed.slug).toBe("jane-doe");
+  });
+});
+
+describe("updateEntityFieldsInputSchema", () => {
+  const entityId = "550e8400-e29b-41d4-a716-446655440010";
+
+  it("clears summary when an empty string is sent", () => {
+    expect(
+      updateEntityFieldsInputSchema.parse({
+        caseId: CASE_ID,
+        entityId,
+        summary: "",
+      }).summary
+    ).toBeNull();
   });
 });

@@ -1,6 +1,9 @@
 import {
+  CONFIDENCE_TIER_LABELS,
   CONFIDENCE_TIERS,
+  IDENTIFIER_STATUS_LABELS,
   IDENTIFIER_STATUSES,
+  IDENTIFIER_TYPE_LABELS,
   IDENTIFIER_TYPES,
   type ConfidenceTier,
   type IdentifierStatus,
@@ -22,19 +25,6 @@ export const IDENTIFIER_PASTE_TARGETS = [
 
 export type IdentifierPasteTarget = (typeof IDENTIFIER_PASTE_TARGETS)[number];
 
-const TYPE_LABELS: Record<IdentifierType, string> = {
-  email: "Email",
-  handle: "Handle",
-  phone: "Phone",
-  url: "URL",
-  domain: "Domain",
-  ip: "IP",
-  crypto: "Crypto",
-  pgp: "PGP",
-  credential: "Credential",
-  other: "Other",
-};
-
 export const IDENTIFIER_PASTE_TARGET_LABELS: Record<
   IdentifierPasteTarget,
   string
@@ -42,7 +32,7 @@ export const IDENTIFIER_PASTE_TARGET_LABELS: Record<
   skip: "Skip",
   entity: "Entity",
   value: "Value (infer type)",
-  ...TYPE_LABELS,
+  ...IDENTIFIER_TYPE_LABELS,
   type: "Type",
   platform: "Platform",
   status: "Status",
@@ -100,18 +90,6 @@ export interface IdentifierPasteTable {
   truncated: boolean;
   rawDataCount: number;
 }
-
-const STATUS_LABELS: Record<IdentifierStatus, string> = {
-  current: "Current",
-  former: "Former",
-  unknown: "Unknown",
-};
-
-const CONFIDENCE_LABELS: Record<ConfidenceTier, string> = {
-  unverified: "Unverified",
-  possible: "Possible",
-  confirmed: "Confirmed",
-};
 
 export const FIELD_ALIASES: Record<string, IdentifierPasteTarget> = {
   value: "value",
@@ -185,9 +163,18 @@ function buildTokenMap<T extends string>(
   return map;
 }
 
-export const TYPE_BY_TOKEN = buildTokenMap(IDENTIFIER_TYPES, TYPE_LABELS);
-const STATUS_BY_TOKEN = buildTokenMap(IDENTIFIER_STATUSES, STATUS_LABELS);
-const CONFIDENCE_BY_TOKEN = buildTokenMap(CONFIDENCE_TIERS, CONFIDENCE_LABELS);
+export const TYPE_BY_TOKEN = buildTokenMap(
+  IDENTIFIER_TYPES,
+  IDENTIFIER_TYPE_LABELS
+);
+const STATUS_BY_TOKEN = buildTokenMap(
+  IDENTIFIER_STATUSES,
+  IDENTIFIER_STATUS_LABELS
+);
+const CONFIDENCE_BY_TOKEN = buildTokenMap(
+  CONFIDENCE_TIERS,
+  CONFIDENCE_TIER_LABELS
+);
 
 export function parsePasteTypeToken(raw: string): IdentifierType | null {
   return TYPE_BY_TOKEN.get(raw.trim().toLowerCase()) ?? null;

@@ -12,6 +12,7 @@ import type {
   CreateEntityConnectionInput,
   UpdateEntityConnectionInput,
 } from "@/domains/entities/lib/edge-write";
+import { entityMatchesQuery } from "@/domains/entities/lib/entity-options";
 import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
 import type { EntityRecord } from "@/domains/entities/types";
 import {
@@ -26,25 +27,40 @@ import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { ENTITY_KIND_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
-import { entityKindSchema, type EntityKind } from "@watchdog/schemas";
+import {
+  entityDisplayLabel,
+  trimmedEntityKindSchema,
+  type EntityKind,
+} from "@watchdog/schemas";
 
 export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRecord> = (
   row,
   _id,
   filterValue
 ) => {
-  const q = String(filterValue ?? "")
-    .toLowerCase()
-    .trim();
+  const raw = String(filterValue ?? "");
+  const q = raw.toLowerCase().trim();
   if (!q) return true;
   const e = row.original;
-  return (
-    e.name.toLowerCase().includes(q) ||
-    e.slug.toLowerCase().includes(q) ||
-    e.kind.toLowerCase().includes(q) ||
+  if (
+    entityMatchesQuery(e, raw) ||
     (e.summary ?? "").toLowerCase().includes(q) ||
     (e.notes ?? "").toLowerCase().includes(q)
-  );
+  ) {
+    return true;
+  }
+  const meta = row.table.options.meta as unknown as EntityTableMeta | undefined;
+  const peers = meta?.peersByEntityId?.get(e.id) ?? [];
+  return peers.some((peer) => {
+    if (entityMatchesQuery({ name: peer.peerName, slug: peer.peerSlug }, raw)) {
+      return true;
+    }
+    return (
+      (peer.peerSummary ?? "").toLowerCase().includes(q) ||
+      (peer.peerNotes ?? "").toLowerCase().includes(q) ||
+      (peer.notes ?? "").toLowerCase().includes(q)
+    );
+  });
 };
 
 export interface EntityTableMeta {
@@ -139,11 +155,12 @@ function formatFullLocalDateTime(iso: string): string {
 
 function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   const row = ctx.row.original;
+  const label = entityDisplayLabel(row);
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <EntityKindGlyph kind={row.kind} />
       <span className="block min-w-0 truncate text-sm font-medium">
-        {row.name}
+        {label}
       </span>
     </div>
   );
@@ -158,7 +175,7 @@ function renderKindCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
       options={ENTITY_KIND_OPTIONS}
       aria-label="Entity kind"
       onCommit={(next) => {
-        const kind = entityKindSchema.parse(next);
+        const kind = trimmedEntityKindSchema.parse(next);
         if (kind === row.kind) return;
         meta.updateKind(row.id, kind);
       }}
@@ -192,7 +209,8 @@ function renderSummaryCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
       aria-label="Summary"
       onCommit={(next) => {
         const trimmed = next.trim();
-        if (trimmed === (row.summary ?? "")) return;
+        const current = (row.summary ?? "").trim();
+        if (trimmed === current) return;
         meta.updateSummary(row.id, trimmed);
       }}
     />
@@ -248,7 +266,7 @@ function renderActionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   return (
     <div className="flex justify-end">
       <RowActionsMenu
-        label={`Actions for ${row.name}`}
+        label={`Actions for ${entityDisplayLabel(row)}`}
         actions={entityRowActions(row, meta)}
       />
     </div>
@@ -258,7 +276,8 @@ function renderActionsCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
 export const entityTableColumns: ColumnDef<DataTableFeatures, EntityRecord>[] =
   [
     {
-      accessorKey: "name",
+      id: "name",
+      accessorFn: (row) => entityDisplayLabel(row),
       header: nameColumnHeader,
       cell: renderNameCell,
       meta: { label: "Name" },

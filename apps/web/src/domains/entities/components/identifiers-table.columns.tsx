@@ -13,6 +13,7 @@ import {
   tryCommitIdentifierType,
   tryCommitIdentifierValue,
 } from "@/domains/entities/lib/commit-identifier-field";
+import { entityMatchesQuery } from "@/domains/entities/lib/entity-options";
 import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import {
   CONFIRMED_REQUIRES_EVIDENCE_HINT,
@@ -36,31 +37,43 @@ import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evide
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { CONFIDENCE_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
 import {
-  confidenceTierSchema,
-  identifierStatusSchema,
-  identifierTypeSchema,
+  CONFIDENCE_OPTIONS,
+  EntityKindGlyph,
+  confidenceLabel,
+  identifierPlatformOptionMatchesQuery,
+  statusLabel,
+} from "@/shared/ui/vocab";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import {
+  trimmedConfidenceTierSchema,
+  entityDisplayLabel,
+  identifierPlatformSearchHaystack,
+  trimmedIdentifierStatusSchema,
+  trimmedIdentifierTypeSchema,
 } from "@watchdog/schemas";
 
 export const identifiersGlobalFilterFn: FilterFn<
   DataTableFeatures,
   CaseIdentifierRecord
 > = (row, _id, filterValue) => {
-  const q = String(filterValue ?? "")
-    .toLowerCase()
-    .trim();
+  const raw = String(filterValue ?? "");
+  const q = raw.toLowerCase().trim();
   if (!q) return true;
   const r = row.original;
   return (
     r.value.toLowerCase().includes(q) ||
-    r.entityName.toLowerCase().includes(q) ||
-    r.entitySlug.toLowerCase().includes(q) ||
-    r.platform.toLowerCase().includes(q) ||
+    entityMatchesQuery({ name: r.entityName, slug: r.entitySlug }, raw) ||
+    (r.entitySummary ?? "").toLowerCase().includes(q) ||
+    (r.entityNotes ?? "").toLowerCase().includes(q) ||
+    identifierPlatformSearchHaystack(r.platform).includes(q) ||
     (r.notes ?? "").toLowerCase().includes(q) ||
     r.type.toLowerCase().includes(q) ||
+    kindLabel(r.type).toLowerCase().includes(q) ||
     r.status.toLowerCase().includes(q) ||
-    r.confidence.toLowerCase().includes(q)
+    statusLabel(r.status).toLowerCase().includes(q) ||
+    r.confidence.toLowerCase().includes(q) ||
+    confidenceLabel(r.confidence).toLowerCase().includes(q)
   );
 };
 
@@ -172,7 +185,9 @@ function renderEntityCell(
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <EntityKindGlyph kind={row.entityKind} />
-      <span className="truncate text-xs font-medium">{row.entityName}</span>
+      <span className="truncate text-xs font-medium">
+        {entityDisplayLabel({ name: row.entityName, slug: row.entitySlug })}
+      </span>
     </div>
   );
 }
@@ -188,7 +203,7 @@ function renderTypeCell(
       options={TYPE_OPTIONS}
       aria-label="Type"
       onCommit={(next) => {
-        const type = identifierTypeSchema.parse(next);
+        const type = trimmedIdentifierTypeSchema.parse(next);
         if (type === row.type) return;
         const committed = tryCommitIdentifierType(
           type,
@@ -233,6 +248,7 @@ function renderPlatformCell(
     <EditableSuggestCell
       value={row.platform}
       options={PLATFORM_OPTIONS}
+      filter={identifierPlatformOptionMatchesQuery}
       placeholder="Platform"
       aria-label="Platform"
       onCommit={(next) => {
@@ -256,7 +272,7 @@ function renderStatusCell(
       options={STATUS_OPTIONS}
       aria-label="Status"
       onCommit={(next) => {
-        const status = identifierStatusSchema.parse(next);
+        const status = trimmedIdentifierStatusSchema.parse(next);
         if (status === row.status) return;
         meta.updateField(row.id, { status });
       }}
@@ -275,7 +291,7 @@ function renderConfidenceCell(
       options={CONFIDENCE_OPTIONS}
       aria-label="Confidence"
       onCommit={(next) => {
-        const confidence = confidenceTierSchema.parse(next);
+        const confidence = trimmedConfidenceTierSchema.parse(next);
         if (confidence === row.confidence) return;
         if (isConfirmedBlocked(confidence, row.evidenceIds)) {
           toast.error(CONFIRMED_REQUIRES_EVIDENCE_HINT);
@@ -338,7 +354,8 @@ export const identifiersTableColumns: ColumnDef<
 >[] = [
   {
     id: "entity",
-    accessorFn: (row) => row.entityName,
+    accessorFn: (row) =>
+      entityDisplayLabel({ name: row.entityName, slug: row.entitySlug }),
     header: entityColumnHeader,
     cell: renderEntityCell,
     meta: { label: "Entity" },

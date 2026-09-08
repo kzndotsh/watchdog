@@ -28,4 +28,36 @@ describe("questions queries", () => {
       gcTime: GC_DEFAULT,
     });
   });
+
+  it("keeps placeholder data only for the same entity list key", () => {
+    const entityOne = questionsListQuery("case-1", "ent-1");
+    const entityTwo = questionsListQuery("case-1", "ent-2");
+    const placeholderOne = entityOne.placeholderData;
+    const placeholderTwo = entityTwo.placeholderData;
+    expect(typeof placeholderOne).toBe("function");
+    expect(typeof placeholderTwo).toBe("function");
+    if (
+      typeof placeholderOne !== "function" ||
+      typeof placeholderTwo !== "function"
+    ) {
+      return;
+    }
+
+    const previousData = [{ id: "question-1" }] as never;
+    const entityOneQuery = { queryKey: questionsKeys.all("case-1", "ent-1") };
+    const entityTwoQuery = { queryKey: questionsKeys.all("case-1", "ent-2") };
+
+    expect(placeholderOne(previousData, entityOneQuery as never)).toEqual(
+      previousData
+    );
+    expect(
+      placeholderOne(previousData, entityTwoQuery as never)
+    ).toBeUndefined();
+    expect(placeholderTwo(previousData, entityTwoQuery as never)).toEqual(
+      previousData
+    );
+    expect(
+      placeholderTwo(previousData, entityOneQuery as never)
+    ).toBeUndefined();
+  });
 });

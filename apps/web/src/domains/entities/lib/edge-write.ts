@@ -1,13 +1,20 @@
-import type {
-  CreateEdgeInput,
-  UpdateEdgeInput,
+import {
+  createEdgeInputSchema,
+  updateEdgeInputSchema,
+  type CreateEdgeInput,
+  type UpdateEdgeInput,
 } from "@/domains/entities/edges/types";
 import type {
   EdgeOrientation,
   EdgePredicate,
   ConfidenceTier,
 } from "@watchdog/schemas";
-import { resolveEdgeEndpoints } from "@watchdog/schemas";
+import {
+  parseTrimmedCaseId,
+  resolveEdgeEndpoints,
+  trimmedOrNull,
+  trimmedOrUndefined,
+} from "@watchdog/schemas";
 
 /** Shared create/update core (table + dossier). */
 export interface ConnectionWriteCore {
@@ -17,6 +24,14 @@ export interface ConnectionWriteCore {
   notes?: string;
 }
 
+function scopedPeerId(peerId: string): string {
+  const scoped = parseTrimmedCaseId(peerId);
+  if (scoped === null) {
+    throw new Error("peerId must be a valid UUID");
+  }
+  return scoped;
+}
+
 export function buildCreateEdgeData(opts: {
   caseId: string;
   centerId: string;
@@ -24,23 +39,26 @@ export function buildCreateEdgeData(opts: {
   confidence?: ConfidenceTier;
   evidenceIds?: string[];
 }): CreateEdgeInput {
+  const peerId = scopedPeerId(opts.core.peerId);
   const { fromId, toId } = resolveEdgeEndpoints({
     entityId: opts.centerId,
-    peerId: opts.core.peerId,
+    peerId,
     predicate: opts.core.predicate,
     orientation: opts.core.orientation,
   });
-  const notes = opts.core.notes?.trim();
-  return {
+  const notes = trimmedOrUndefined(opts.core.notes);
+  return createEdgeInputSchema.parse({
     caseId: opts.caseId,
     fromId,
     toId,
     predicate: opts.core.predicate,
     confidence: opts.confidence ?? "unverified",
     viewEntityId: opts.centerId,
-    notes: notes === "" ? undefined : notes,
-    ...(opts.evidenceIds ? { evidenceIds: opts.evidenceIds } : {}),
-  };
+    ...(notes === undefined ? {} : { notes }),
+    ...(opts.evidenceIds === undefined
+      ? {}
+      : { evidenceIds: opts.evidenceIds }),
+  });
 }
 
 export function buildUpdateEdgeData(opts: {
@@ -52,9 +70,10 @@ export function buildUpdateEdgeData(opts: {
   confidence?: ConfidenceTier;
   evidenceIds?: string[];
 }): UpdateEdgeInput {
+  const peerId = scopedPeerId(opts.core.peerId);
   const { fromId, toId } = resolveEdgeEndpoints({
     entityId: opts.centerId,
-    peerId: opts.core.peerId,
+    peerId,
     predicate: opts.core.predicate,
     orientation: opts.core.orientation,
     existing: opts.existing,
@@ -66,15 +85,17 @@ export function buildUpdateEdgeData(opts: {
     fromId,
     toId,
     predicate: opts.core.predicate,
-    notes: opts.core.notes?.trim() ? opts.core.notes.trim() : "",
   };
+  if (opts.core.notes !== undefined) {
+    patch.notes = trimmedOrNull(opts.core.notes);
+  }
   if (opts.confidence !== undefined) {
     patch.confidence = opts.confidence;
   }
-  if (opts.evidenceIds) {
+  if (opts.evidenceIds !== undefined) {
     patch.evidenceIds = opts.evidenceIds;
   }
-  return patch;
+  return updateEdgeInputSchema.parse(patch);
 }
 
 /** Compact table DTO (unverified, no evidence). */

@@ -12,14 +12,16 @@ import {
 } from "@/domains/entities/components/identifiers-table.columns";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
+import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
+import { mergeEvidenceRecords } from "@/domains/intake/lib/evidence";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { errMessage } from "@/lib/utils";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
 import { listPending } from "@/shared/lib/list-pending";
 import { useDataTable } from "@/shared/ui/data-table";
-import type { EntityOption } from "@/shared/ui/entity-combobox";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import {
   confidenceLabel,
@@ -49,15 +51,6 @@ function evidenceOptionsFromRows(evidence: EvidenceRecord[]): EvidenceOption[] {
     label: e.label,
     sourceUrl: e.sourceUrl,
     sha256: e.sha256,
-  }));
-}
-
-function entityOptionsFromRows(entities: EntityRecord[]): EntityOption[] {
-  return entities.map((e) => ({
-    id: e.id,
-    name: e.name,
-    kind: e.kind,
-    slug: e.slug,
   }));
 }
 
@@ -146,6 +139,8 @@ function identifiersTableEmptyText(rowCount: number): string {
     : "No identifiers match your filters.";
 }
 
+const EMPTY_ENTITIES: EntityRecord[] = [];
+
 function buildIdentifiersTableMeta(
   mutations: IdentifiersTableMutations,
   evidenceOptions: EvidenceOption[],
@@ -171,13 +166,37 @@ export function useIdentifiersTableState(
 ) {
   const navigate = useNavigate();
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
-  const evidenceQuery = useQuery(evidenceListQuery(active.id));
+  const activeEvidenceQuery = useQuery(evidenceListQuery(active.id));
+  const hiddenEvidenceQuery = useQuery(
+    evidenceListQuery(active.id, { hiddenOnly: true })
+  );
   const pending =
     identifiersPending ||
     listPending(entitiesQuery) ||
-    listPending(evidenceQuery);
+    listPending(activeEvidenceQuery) ||
+    listPending(hiddenEvidenceQuery);
+  const auxiliaryLoadError =
+    !pending &&
+    (entitiesQuery.isError ||
+      activeEvidenceQuery.isError ||
+      hiddenEvidenceQuery.isError)
+      ? errMessage(
+          entitiesQuery.error ??
+            activeEvidenceQuery.error ??
+            hiddenEvidenceQuery.error,
+          "Failed to load identifier context"
+        )
+      : null;
+  const auxiliaryPlaceholder =
+    entitiesQuery.isPlaceholderData ||
+    activeEvidenceQuery.isPlaceholderData ||
+    hiddenEvidenceQuery.isPlaceholderData;
   const entities = entitiesQuery.data;
-  const evidence = evidenceQuery.data;
+  const evidence = useMemo(
+    () =>
+      mergeEvidenceRecords(activeEvidenceQuery.data, hiddenEvidenceQuery.data),
+    [activeEvidenceQuery.data, hiddenEvidenceQuery.data]
+  );
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<IdentifierType[]>([]);
@@ -187,12 +206,12 @@ export function useIdentifiersTableState(
   );
 
   const evidenceOptions = useMemo(
-    () => evidenceOptionsFromRows(evidence ?? []),
+    () => evidenceOptionsFromRows(evidence),
     [evidence]
   );
 
   const entityOptions = useMemo(
-    () => entityOptionsFromRows(entities ?? []),
+    () => entityOptionsFromRecords(entities ?? EMPTY_ENTITIES),
     [entities]
   );
 
@@ -288,5 +307,12 @@ export function useIdentifiersTableState(
     onRowClick,
     entityOptions,
     evidenceOptions,
+    auxiliaryPlaceholder,
+    auxiliaryLoadError,
+    retryAuxiliary: () => {
+      if (entitiesQuery.isError) void entitiesQuery.refetch();
+      if (activeEvidenceQuery.isError) void activeEvidenceQuery.refetch();
+      if (hiddenEvidenceQuery.isError) void hiddenEvidenceQuery.refetch();
+    },
   };
 }

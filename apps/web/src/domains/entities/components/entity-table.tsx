@@ -1,9 +1,8 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 import { useCallback } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-dialog";
 import type { EntityTableMeta } from "@/domains/entities/components/entity-table.columns";
@@ -13,6 +12,7 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import {
   DataTable,
   DataTableAddRow,
@@ -24,14 +24,16 @@ import {
   TableComposerInput,
 } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { SearchField } from "@/shared/ui/search-field";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
 import { Label } from "@/shared/ui/shadcn/label";
 import { TableCell } from "@/shared/ui/shadcn/table";
-import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
-import { entityKindSchema, ENTITY_KINDS } from "@watchdog/schemas";
+import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
+import { ENTITY_KIND_LABELS, ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
+import { trimmedEntityKindSchema, ENTITY_KINDS } from "@watchdog/schemas";
 
 function EntityTableActive({ active }: { active: CaseRecord }) {
   const {
@@ -53,6 +55,9 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
     emptyText,
     onRowClick,
     pending,
+    tableLoadError,
+    retryTable,
+    entitiesPlaceholder,
     caseId,
     deleteTarget,
     setDeleteTarget,
@@ -99,7 +104,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
               value={field.state.value}
               options={ENTITY_KIND_OPTIONS}
               onCommit={(next) => {
-                field.handleChange(entityKindSchema.parse(next));
+                field.handleChange(trimmedEntityKindSchema.parse(next));
               }}
               disabled={createForm.state.isSubmitting}
               onKeyDown={onComposerKey}
@@ -195,7 +200,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
                             );
                           }}
                         />
-                        {k}
+                        {ENTITY_KIND_LABELS[k]}
                       </label>
                     );
                   })}
@@ -207,17 +212,23 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
         trailing={<DataTableViewOptions table={table} />}
       />
 
-      <DataTable
-        table={table}
-        emptyText={emptyText}
-        appendRow={appendRow}
-        pending={pending}
-        pendingLabel="Loading entities table"
-        getRowActions={getRowActions}
-        onRowClick={(row) => {
-          onRowClick(row);
-        }}
-      />
+      <div className={placeholderDeemphasisClass(entitiesPlaceholder)}>
+        {tableLoadError ? (
+          <FetchErrorAlert error={tableLoadError} onRetry={retryTable} />
+        ) : (
+          <DataTable
+            table={table}
+            emptyText={emptyText}
+            appendRow={appendRow}
+            pending={pending}
+            pendingLabel="Loading entities table"
+            getRowActions={getRowActions}
+            onRowClick={(row) => {
+              onRowClick(row);
+            }}
+          />
+        )}
+      </div>
       <DataTablePagination table={table} />
 
       <DeleteEntityDialog
@@ -233,9 +244,27 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
 }
 
 export function EntityTable() {
-  const { data: casesCtx } = useSuspenseQuery(casesContextQuery());
+  const { active, pending, loadError, retry } = useCasesContext();
 
-  if (!casesCtx.active) {
+  if (loadError) {
+    return (
+      <Page>
+        <PageHeader />
+        <FetchErrorAlert error={loadError} onRetry={retry} />
+      </Page>
+    );
+  }
+
+  if (pending) {
+    return (
+      <Page>
+        <PageHeader />
+        {stackPendingFallback(1)}
+      </Page>
+    );
+  }
+
+  if (!active) {
     return (
       <Page>
         <PageHeader />
@@ -256,5 +285,5 @@ export function EntityTable() {
     );
   }
 
-  return <EntityTableActive active={casesCtx.active} />;
+  return <EntityTableActive active={active} />;
 }

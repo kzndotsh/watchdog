@@ -4,6 +4,7 @@ import {
   createClaimInputSchema,
   listClaimsInputSchema,
   retractClaimInputSchema,
+  updateClaimInputSchema,
 } from "@/domains/entities/claims/types";
 
 const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
@@ -36,5 +37,25 @@ describe("claim input schemas", () => {
         reason: "Wrong target",
       }).kind
     ).toBe("retracted");
+  });
+
+  it("trims padded UUIDs on list input", () => {
+    expect(
+      listClaimsInputSchema.parse({
+        caseId: `  ${CASE_ID}  `,
+        entityId: `  ${ENTITY_ID}  `,
+      })
+    ).toEqual({
+      caseId: CASE_ID,
+      entityId: ENTITY_ID,
+      includeRetracted: false,
+    });
+  });
+
+  it("rejects empty claim update input", () => {
+    expect(
+      updateClaimInputSchema.safeParse({ caseId: CASE_ID, claimId: CLAIM_ID })
+        .success
+    ).toBe(false);
   });
 });

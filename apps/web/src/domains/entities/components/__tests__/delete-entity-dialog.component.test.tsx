@@ -47,4 +47,20 @@ describe("DeleteEntityDialog", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/cannot be undone/i)).toBeInTheDocument();
   });
+
+  it("uses slug in confirmation copy when the entity name is blank", () => {
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <DeleteEntityDialog
+          caseId={testId(10)}
+          entity={{ id: testId(1), name: "  ", slug: "unnamed-host" }}
+          open
+          onOpenChange={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByText(/Delete “unnamed-host”/)).toBeInTheDocument();
+  });
 });

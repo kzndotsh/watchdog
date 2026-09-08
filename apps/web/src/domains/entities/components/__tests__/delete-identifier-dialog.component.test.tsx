@@ -18,6 +18,8 @@ const TARGET = {
   id: testId(1),
   type: "email",
   value: "user@example.com",
+  entityId: testId(2),
+  entitySlug: "alpha",
 };
 
 function renderDialog(open = true) {
@@ -41,7 +43,7 @@ describe("DeleteIdentifierDialog", () => {
       screen.getByRole("heading", { name: "Delete identifier" })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Remove email “user@example.com” from this Case/)
+      screen.getByText(/Remove Email “user@example.com” from this Case/)
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
   });

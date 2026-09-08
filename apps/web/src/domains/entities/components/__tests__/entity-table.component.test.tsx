@@ -48,14 +48,25 @@ vi.mock("@/shared/ui/data-table", () => ({
   TableComposerInput: () => null,
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 const useEntityTableMock = vi.hoisted(() => vi.fn());
+
+function queryLoaded<T>(data: T) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  };
+}
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
   };
 });
 
@@ -108,9 +119,7 @@ function mockEntityTable() {
 
 describe("EntityTable", () => {
   it("prompts for an active case when none is selected", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: { cases: [], active: null },
-    });
+    useQueryMock.mockReturnValue(queryLoaded({ cases: [], active: null }));
 
     render(<EntityTable />);
     expect(screen.getByRole("link", { name: "Select a case" })).toHaveAttribute(
@@ -118,13 +127,13 @@ describe("EntityTable", () => {
       "/cases"
     );
     expect(screen.queryByLabelText("Search entities")).not.toBeInTheDocument();
-    expect(useSuspenseQueryMock).toHaveBeenCalled();
+    expect(useQueryMock).toHaveBeenCalled();
   });
 
   it("renders entity search and create controls for the active case", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: { cases: [ACTIVE], active: ACTIVE },
-    });
+    useQueryMock.mockReturnValue(
+      queryLoaded({ cases: [ACTIVE], active: ACTIVE })
+    );
     mockEntityTable();
 
     const client = new QueryClient();

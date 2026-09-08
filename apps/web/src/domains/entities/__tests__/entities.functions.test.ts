@@ -105,4 +105,22 @@ describe("entities.functions", () => {
     expect(entitiesApi.create).toHaveBeenCalled();
     expect(entitiesApi.update).toHaveBeenCalled();
   });
+
+  it("trims padded entity slug before lookup", async () => {
+    entitiesApi.get.mockResolvedValue(ENTITY);
+
+    await (
+      getEntityBySlugFn as unknown as (
+        input: ServerDataContext<{ caseId: string; slug: string }>
+      ) => Promise<unknown>
+    )({
+      data: { caseId: testId(10), slug: "  alpha  " },
+      context: {},
+    });
+
+    expect(entitiesApi.get).toHaveBeenCalledWith({
+      caseId: testId(10),
+      slug: "alpha",
+    });
+  });
 });

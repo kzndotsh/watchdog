@@ -5,6 +5,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { createIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
+import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
+import { buildCreateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { tableComposerKeyDown } from "@/shared/ui/data-table";
@@ -36,9 +38,11 @@ async function submitIdentifierCreate(
 ): Promise<void> {
   await ctx.createIdentifier(value);
   toast.success("Identifier added");
-  await invalidateAfterEntityChanged(ctx.queryClient, ctx.caseId, {
-    entityId: value.entityId,
-  });
+  await invalidateAfterEntityChanged(
+    ctx.queryClient,
+    ctx.caseId,
+    entityChangedOpts(ctx.queryClient, ctx.caseId, value.entityId)
+  );
 }
 
 async function handleIdentifierCreateSubmit(
@@ -121,16 +125,15 @@ export function useIdentifiersTableComposer(
     mutationFn: async (value: IdentifierCreateValues) => {
       const platform = normalizeIdentifierPlatform(value.platform);
       return createIdentifierFn({
-        data: {
-          caseId,
+        data: buildCreateIdentifierData(caseId, {
           entityId: value.entityId,
           type: value.type,
-          value: value.value.trim(),
+          value: value.value,
           platform: platform || undefined,
           status: value.status,
           confidence: value.confidence,
           evidenceIds: value.evidenceIds,
-        },
+        }),
       });
     },
   });

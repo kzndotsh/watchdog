@@ -16,15 +16,18 @@ import {
   type CreateEntityConnectionInput,
   type UpdateEntityConnectionInput,
 } from "@/domains/entities/lib/edge-write";
-import { errMessage, slugifyName } from "@/lib/utils";
+import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
+import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
+import { createEntityInputSchema } from "@/domains/entities/types";
+import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import type { EntityKind } from "@watchdog/schemas";
 
 interface UpdateEntityVars {
   entityId: string;
   kind?: EntityKind;
-  summary?: string;
-  notes?: string;
+  summary?: string | null;
+  notes?: string | null;
 }
 
 interface ConnectionVars {
@@ -39,22 +42,21 @@ interface ConnectionUpdateVars {
 
 function updateEntityFields(caseId: string, vars: UpdateEntityVars) {
   return updateEntityFieldsFn({
-    data: {
-      caseId,
-      entityId: vars.entityId,
-      ...(vars.kind === undefined ? {} : { kind: vars.kind }),
-      ...(vars.summary === undefined ? {} : { summary: vars.summary }),
-      ...(vars.notes === undefined ? {} : { notes: vars.notes }),
-    },
+    data: buildUpdateEntityFieldsData(caseId, vars),
   });
 }
 
 async function onEntityFieldsUpdated(
   queryClient: QueryClient,
-  caseId: string
+  caseId: string,
+  entityId: string
 ): Promise<void> {
   toast.success("Updated");
-  await invalidateAfterEntityChanged(queryClient, caseId);
+  await invalidateAfterEntityChanged(
+    queryClient,
+    caseId,
+    entityChangedOpts(queryClient, caseId, entityId)
+  );
 }
 
 function onEntityFieldsError(error: unknown): void {
@@ -77,9 +79,11 @@ async function onConnectionCreated(
   centerId: string
 ): Promise<void> {
   toast.success("Connection added");
-  await invalidateAfterEntityChanged(queryClient, caseId, {
-    entityId: centerId,
-  });
+  await invalidateAfterEntityChanged(
+    queryClient,
+    caseId,
+    entityChangedOpts(queryClient, caseId, centerId)
+  );
 }
 
 function updateEntityConnection(caseId: string, vars: ConnectionUpdateVars) {
@@ -104,9 +108,11 @@ async function onConnectionUpdated(
   centerId: string
 ): Promise<void> {
   toast.success("Connection updated");
-  await invalidateAfterEntityChanged(queryClient, caseId, {
-    entityId: centerId,
-  });
+  await invalidateAfterEntityChanged(
+    queryClient,
+    caseId,
+    entityChangedOpts(queryClient, caseId, centerId)
+  );
 }
 
 async function createEntityRecord(
@@ -115,16 +121,19 @@ async function createEntityRecord(
   name: string,
   kind: EntityKind
 ): Promise<void> {
-  await createEntityFn({
-    data: {
+  const created = await createEntityFn({
+    data: createEntityInputSchema.parse({
       caseId,
       kind,
       name,
-      slug: slugifyName(name),
-    },
+    }),
   });
   toast.success("Entity created");
-  await invalidateAfterEntityChanged(queryClient, caseId);
+  await invalidateAfterEntityChanged(
+    queryClient,
+    caseId,
+    entityChangedOpts(queryClient, caseId, created.id, created.slug)
+  );
 }
 
 function buildEntityTableMutationHandlers(
@@ -169,7 +178,8 @@ export function useEntityTableMutations(caseId: string) {
   const updateMutation = useMutation({
     mutationFn: async (vars: UpdateEntityVars) =>
       updateEntityFields(caseId, vars),
-    onSuccess: async () => onEntityFieldsUpdated(queryClient, caseId),
+    onSuccess: async (_data, vars) =>
+      onEntityFieldsUpdated(queryClient, caseId, vars.entityId),
     onError: onEntityFieldsError,
   });
 
@@ -178,6 +188,9 @@ export function useEntityTableMutations(caseId: string) {
       createEntityConnection(caseId, vars),
     onSuccess: async (_data, vars) =>
       onConnectionCreated(queryClient, caseId, vars.centerId),
+    onError: (error) => {
+      toast.error(errMessage(error, "Connection failed"));
+    },
   });
 
   const connectionUpdateMutation = useMutation({
@@ -185,6 +198,9 @@ export function useEntityTableMutations(caseId: string) {
       updateEntityConnection(caseId, vars),
     onSuccess: async (_data, vars) =>
       onConnectionUpdated(queryClient, caseId, vars.centerId),
+    onError: (error) => {
+      toast.error(errMessage(error, "Connection update failed"));
+    },
   });
 
   const createEntity = async (name: string, kind: EntityKind) =>

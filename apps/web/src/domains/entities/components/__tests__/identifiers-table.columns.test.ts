@@ -15,6 +15,8 @@ const ROW: CaseIdentifierRecord = {
   entityName: "Alpha Entity",
   entitySlug: "alpha",
   entityKind: "person",
+  entitySummary: null,
+  entityNotes: null,
   type: "email",
   platform: "",
   value: "user@example.com",
@@ -45,6 +47,93 @@ describe("identifiers-table.columns", () => {
     ).toBe(true);
     expect(
       identifiersGlobalFilterFn(asRow(ROW), "value", "missing", () => {})
+    ).toBe(false);
+  });
+
+  it("filters rows by owning entity summary and notes", () => {
+    expect(
+      identifiersGlobalFilterFn(
+        asRow({
+          ...ROW,
+          entitySummary: "Lead subject in the fraud thread",
+        }),
+        "value",
+        "fraud thread",
+        () => {}
+      )
+    ).toBe(true);
+    expect(
+      identifiersGlobalFilterFn(
+        asRow({
+          ...ROW,
+          entityNotes: "Mailbox tied to the fraud thread",
+        }),
+        "value",
+        "fraud thread",
+        () => {}
+      )
+    ).toBe(true);
+  });
+
+  it("filters identifiers by slug when entity name is blank", () => {
+    expect(
+      identifiersGlobalFilterFn(
+        asRow({ ...ROW, entityName: "  ", entitySlug: "alpha-corp" }),
+        "value",
+        "alpha-corp",
+        () => {}
+      )
+    ).toBe(true);
+    expect(
+      identifiersGlobalFilterFn(
+        asRow({ ...ROW, entityName: "", entitySlug: "alpha-corp" }),
+        "value",
+        "Alpha Corp",
+        () => {}
+      )
+    ).toBe(true);
+  });
+
+  it("sorts entity column by display label", () => {
+    const entityCol = identifiersTableColumns.find(
+      (column) => column.id === "entity"
+    );
+    expect(entityCol).toBeDefined();
+    if (entityCol === undefined) return;
+    expect("accessorFn" in entityCol && entityCol.accessorFn).toBeTypeOf(
+      "function"
+    );
+    if (!("accessorFn" in entityCol) || entityCol.accessorFn === undefined) {
+      return;
+    }
+    expect(
+      entityCol.accessorFn(
+        {
+          ...ROW,
+          entityName: "  ",
+          entitySlug: "alpha-corp",
+        },
+        0
+      )
+    ).toBe("alpha-corp");
+  });
+
+  it("filters rows by platform display label", () => {
+    expect(
+      identifiersGlobalFilterFn(
+        asRow({ ...ROW, type: "handle", platform: "twitter", value: "@ada" }),
+        "value",
+        "X / Twitter",
+        () => {}
+      )
+    ).toBe(true);
+    expect(
+      identifiersGlobalFilterFn(
+        asRow({ ...ROW, type: "handle", platform: "twitter", value: "@ada" }),
+        "value",
+        "missing-platform",
+        () => {}
+      )
     ).toBe(false);
   });
 

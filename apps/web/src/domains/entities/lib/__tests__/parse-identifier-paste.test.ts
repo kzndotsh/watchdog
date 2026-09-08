@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
 import {
   PASTE_ROW_CAP,
   applyIdentifierPasteRowOverrides,
@@ -15,14 +17,18 @@ import {
 const HTTPS = ["https", "://"].join("");
 
 describe("parse-identifier-paste", () => {
+  const E1 = testId(1);
+  const E2 = testId(2);
+  const E3 = testId(3);
+
   const ENTITIES: IdentifierPasteEntity[] = [
-    { id: "e1", name: "Alice", slug: "alice" },
-    { id: "e2", name: "Bob", slug: "bob" },
-    { id: "e3", name: "Alice", slug: "alice-alt" },
+    { id: E1, name: "Alice", slug: "alice" },
+    { id: E2, name: "Bob", slug: "bob" },
+    { id: E3, name: "Alice", slug: "alice-alt" },
   ];
 
   const DEFAULTS: IdentifierPasteDefaults = {
-    entityId: "e2",
+    entityId: E2,
     type: null,
     platform: "",
   };
@@ -68,7 +74,7 @@ describe("parse-identifier-paste", () => {
       entities: ENTITIES,
     });
     expect(rows.length).toBe(1);
-    expect(rows[0]?.entityId).toBe("e2");
+    expect(rows[0]?.entityId).toBe(E2);
     expect(rows[0]?.type).toBe("email");
     expect(rows[0]?.value).toBe("user@example.com");
     expect(rows[0]?.confidence).toBe("possible");
@@ -88,7 +94,7 @@ describe("parse-identifier-paste", () => {
     });
     expect(rows[0]?.value).toBe("ada@example.com");
     expect(rows[0]?.type).toBe("email");
-    expect(rows[0]?.entityId).toBe("e2");
+    expect(rows[0]?.entityId).toBe(E2);
   });
 
   it("infers url vs domain; strong phone and bare digits stay distinct", () => {
@@ -117,10 +123,10 @@ describe("parse-identifier-paste", () => {
     expect(rows.length).toBe(2);
     expect(rows[0]?.type).toBe("email");
     expect(rows[0]?.value).toBe("a@b.com");
-    expect(rows[0]?.entityId).toBe("e2");
+    expect(rows[0]?.entityId).toBe(E2);
     expect(rows[1]?.type).toBe("phone");
     expect(rows[1]?.value).toBe("+15551212");
-    expect(rows[1]?.entityId).toBe("e2");
+    expect(rows[1]?.entityId).toBe(E2);
   });
 
   it("platform-named header maps to handle + platform", () => {
@@ -142,11 +148,11 @@ describe("parse-identifier-paste", () => {
     const rows = resolve("entity,value\nbob,a@b.com", {
       defaults: { ...DEFAULTS, entityId: "" },
       entities: [
-        { id: "e1", name: "Alice", slug: "alice" },
-        { id: "e2", name: "Robert", slug: "bob" },
+        { id: E1, name: "Alice", slug: "alice" },
+        { id: E2, name: "Robert", slug: "bob" },
       ],
     });
-    expect(rows[0]?.entityId).toBe("e2");
+    expect(rows[0]?.entityId).toBe(E2);
     expect(rows[0]?.error).toBe(null);
   });
 
@@ -186,9 +192,9 @@ describe("parse-identifier-paste", () => {
 
   it("lockEntity ignores a mapped Entity column", () => {
     const rows = resolve("entity,value\nBob,a@b.com", {
-      lockEntity: { id: "e1", name: "Alice", slug: "alice" },
+      lockEntity: { id: E1, name: "Alice", slug: "alice" },
     });
-    expect(rows[0]?.entityId).toBe("e1");
+    expect(rows[0]?.entityId).toBe(E1);
     expect(rows[0]?.entityName).toBe("Alice");
     expect(rows[0]?.error).toBe(null);
   });
@@ -208,7 +214,7 @@ describe("parse-identifier-paste", () => {
 
   it("handle without platform is a row error", () => {
     const rows = resolve("alice", {
-      defaults: { entityId: "e2", type: "handle", platform: "" },
+      defaults: { entityId: E2, type: "handle", platform: "" },
     });
     expect(rows[0]?.type).toBe("handle");
     expect(rows[0]?.error).toBe("platform is required when type is handle");
@@ -216,7 +222,7 @@ describe("parse-identifier-paste", () => {
 
   it("bad email is a row error", () => {
     const rows = resolve("not-an-email", {
-      defaults: { entityId: "e1", type: "email", platform: "" },
+      defaults: { entityId: E1, type: "email", platform: "" },
     });
     expect(rows[0]?.type).toBe("email");
     expect(rows[0]?.error ?? "").toMatch(/Invalid email/i);
@@ -224,7 +230,7 @@ describe("parse-identifier-paste", () => {
 
   it("handle uses default platform", () => {
     const rows = resolve("alice", {
-      defaults: { entityId: "e2", type: "handle", platform: "Twitter" },
+      defaults: { entityId: E2, type: "handle", platform: "Twitter" },
     });
     expect(rows[0]?.platform).toBe("twitter");
     expect(rows[0]?.error).toBe(null);
@@ -308,7 +314,7 @@ describe("parse-identifier-paste", () => {
   it("parses a markdown table", () => {
     const rows = resolve("| Name | Email |\n| --- | --- |\n| Bob | a@b.com |");
     expect(rows.length).toBe(1);
-    expect(rows[0]?.entityId).toBe("e2");
+    expect(rows[0]?.entityId).toBe(E2);
     expect(rows[0]?.type).toBe("email");
     expect(rows[0]?.value).toBe("a@b.com");
   });
@@ -364,10 +370,10 @@ describe("parse-identifier-paste", () => {
     expect(first).toBeTruthy();
     const overridden = applyIdentifierPasteRowOverrides(
       rows,
-      new Map([[identifierPasteRowKey(first), { entityId: "e1" }]]),
+      new Map([[identifierPasteRowKey(first), { entityId: E1 }]]),
       ENTITIES
     );
-    expect(overridden[0]?.entityId).toBe("e1");
+    expect(overridden[0]?.entityId).toBe(E1);
     expect(overridden[0]?.entityName).toBe("Alice");
     expect(overridden[0]?.entityError).toBe(null);
     expect(overridden[0]?.error).toBe(null);
@@ -375,23 +381,23 @@ describe("parse-identifier-paste", () => {
 
   it("entity override re-dedups after a row changes entity", () => {
     const rows = resolve("a@b.com\na@b.com", {
-      defaults: { ...DEFAULTS, entityId: "e2" },
+      defaults: { ...DEFAULTS, entityId: E2 },
     });
     expect(rows[1]?.error).toBe("Duplicate of an earlier row");
     const second = rows[1];
     expect(second).toBeTruthy();
     const overridden = applyIdentifierPasteRowOverrides(
       rows,
-      new Map([[identifierPasteRowKey(second), { entityId: "e1" }]]),
+      new Map([[identifierPasteRowKey(second), { entityId: E1 }]]),
       ENTITIES
     );
-    expect(overridden[1]?.entityId).toBe("e1");
+    expect(overridden[1]?.entityId).toBe(E1);
     expect(overridden[1]?.error).toBe(null);
   });
 
   it("field override can set type and value", () => {
     const rows = resolve("alice", {
-      defaults: { entityId: "e2", type: "handle", platform: "twitter" },
+      defaults: { entityId: E2, type: "handle", platform: "twitter" },
     });
     const first = rows[0];
     expect(first).toBeTruthy();

@@ -25,6 +25,11 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
+  invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/shared/hooks/use-live-events", () => ({
+  useLiveEvents: vi.fn(),
 }));
 
 vi.mock("@/shared/ui/identifiers/identifier-composer", () => ({
@@ -54,6 +59,11 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { useIdentifiersTable } from "@/domains/entities/hooks/use-identifiers-table";
+import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import {
+  invalidateAfterEntityChanged,
+  invalidateAfterEvidenceMutation,
+} from "@/shared/lib/query-invalidation";
 
 const ACTIVE: CaseRecord = {
   id: testId(10),
@@ -119,5 +129,42 @@ describe("useIdentifiersTable", () => {
     expect(result.current.composing).toBe(true);
     expect(useMutationMock).toHaveBeenCalled();
     expect(result.current.typeFilter).toEqual([]);
+  });
+
+  it("invalidates evidence options on evidence_changed live events", () => {
+    renderHookWithClient();
+
+    const liveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === ACTIVE.id);
+    const onEvent = liveCall?.[1];
+    expect(onEvent).toBeTypeOf("function");
+    onEvent?.({
+      type: "evidence_changed",
+      caseId: ACTIVE.id,
+    });
+
+    expect(invalidateAfterEvidenceMutation).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      ACTIVE.id
+    );
+  });
+
+  it("invalidates identifiers on entity_changed live events", () => {
+    renderHookWithClient();
+
+    const liveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === ACTIVE.id);
+    const onEvent = liveCall?.[1];
+    onEvent?.({
+      type: "entity_changed",
+      caseId: ACTIVE.id,
+    });
+
+    expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      ACTIVE.id
+    );
   });
 });

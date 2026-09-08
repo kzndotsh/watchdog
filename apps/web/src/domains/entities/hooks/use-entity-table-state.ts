@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
@@ -11,27 +11,34 @@ import {
   type EntityTableMeta,
 } from "@/domains/entities/components/entity-table.columns";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
+import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import { connectionPeersByEntityId } from "@/domains/entities/lib/connection-peers";
 import {
   copyEntityLink,
   copyEntityMarkdown,
 } from "@/domains/entities/lib/entity-export";
+import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
+import { errMessage } from "@/lib/utils";
+import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
 import { listPending } from "@/shared/lib/list-pending";
+import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { useDataTable } from "@/shared/ui/data-table";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
+import { ENTITY_KIND_LABELS } from "@/shared/ui/vocab";
+import type { EntityKind } from "@watchdog/schemas";
 
 import type { useEntityTableMutations } from "./use-entity-table-mutations";
 
 type EntityTableMutations = ReturnType<typeof useEntityTableMutations>;
 
+const EMPTY_ENTITIES: EntityRecord[] = [];
+const EMPTY_EDGES: CaseEdgeRecord[] = [];
+
 function entityRowId(row: EntityRecord): string {
   return row.id;
-}
-
-function entityOptionsFromRows(rows: EntityRecord[]) {
-  return rows.map((e) => ({ id: e.id, name: e.name, kind: e.kind }));
 }
 
 function kindColumnFilters(kindFilter: string[]) {
@@ -52,13 +59,19 @@ function kindFilterClearHandler(
   };
 }
 
+function entityKindFilterLabel(kind: string): string {
+  return kind in ENTITY_KIND_LABELS
+    ? ENTITY_KIND_LABELS[kind as EntityKind]
+    : kind;
+}
+
 function kindFilterChip(
   kind: string,
   setKindFilter: Dispatch<SetStateAction<string[]>>
 ): PageFilterChip {
   return {
     id: `kind:${kind}`,
-    label: kind,
+    label: entityKindFilterLabel(kind),
     onClear: kindFilterClearHandler(setKindFilter, kind),
   };
 }
@@ -79,7 +92,7 @@ function entityTableEmptyText(rowCount: number): string {
 function buildEntityTableMeta(
   mutations: EntityTableMutations,
   peersByEntityId: ReturnType<typeof connectionPeersByEntityId>,
-  entityOptions: ReturnType<typeof entityOptionsFromRows>,
+  entityOptions: EntityOption[],
   actions: Pick<
     EntityTableMeta,
     | "onOpenEntity"
@@ -106,22 +119,49 @@ export function useEntityTableState(
   onDeleteEntity: (entity: EntityRecord) => void
 ) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
   const edgesQuery = useQuery(edgesForCaseQuery(active.id));
   const pending = listPending(entitiesQuery) || listPending(edgesQuery);
+  const tableLoadError =
+    !pending && (entitiesQuery.isError || edgesQuery.isError)
+      ? errMessage(
+          entitiesQuery.error ?? edgesQuery.error,
+          "Failed to load entities"
+        )
+      : null;
+  const entitiesPlaceholder =
+    entitiesQuery.isPlaceholderData || edgesQuery.isPlaceholderData;
   const rows = entitiesQuery.data;
   const caseEdges = edgesQuery.data;
+
+  useLiveEvents(active.id, (event) => {
+    if (event.type === "entity_changed") {
+      void invalidateAfterEntityChanged(queryClient, active.id);
+    }
+  });
 
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<string[]>([]);
 
+  const entityTextById = useMemo(() => {
+    const map = new Map<
+      string,
+      { summary: string | null; notes: string | null }
+    >();
+    for (const entity of rows ?? EMPTY_ENTITIES) {
+      map.set(entity.id, { summary: entity.summary, notes: entity.notes });
+    }
+    return map;
+  }, [rows]);
+
   const peersByEntityId = useMemo(
-    () => connectionPeersByEntityId(caseEdges ?? []),
-    [caseEdges]
+    () => connectionPeersByEntityId(caseEdges ?? EMPTY_EDGES, entityTextById),
+    [caseEdges, entityTextById]
   );
 
   const entityOptions = useMemo(
-    () => entityOptionsFromRows(rows ?? []),
+    () => entityOptionsFromRecords(rows ?? EMPTY_ENTITIES),
     [rows]
   );
 
@@ -144,8 +184,8 @@ export function useEntityTableState(
     void (async () => {
       try {
         await copyEntityLink(entity.slug);
-      } catch {
-        toast.error("Copy failed");
+      } catch (error: unknown) {
+        toast.error(errMessage(error, "Copy failed"));
       }
     })();
   }, []);
@@ -155,8 +195,8 @@ export function useEntityTableState(
       void (async () => {
         try {
           await copyEntityMarkdown(active.id, entity.slug);
-        } catch {
-          toast.error("Copy failed");
+        } catch (error: unknown) {
+          toast.error(errMessage(error, "Copy failed"));
         }
       })();
     },
@@ -183,7 +223,7 @@ export function useEntityTableState(
   );
 
   const { table } = useDataTable({
-    data: rows ?? [],
+    data: rows ?? EMPTY_ENTITIES,
     columns: entityTableColumns,
     meta: tableMeta,
     getRowId: entityRowId,
@@ -213,8 +253,14 @@ export function useEntityTableState(
   );
 
   return {
-    rows: rows ?? [],
+    rows: rows ?? EMPTY_ENTITIES,
     pending,
+    tableLoadError,
+    retryTable: () => {
+      if (entitiesQuery.isError) void entitiesQuery.refetch();
+      if (edgesQuery.isError) void edgesQuery.refetch();
+    },
+    entitiesPlaceholder,
     table,
     search,
     setSearch,

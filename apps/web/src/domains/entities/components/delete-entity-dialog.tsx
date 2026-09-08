@@ -4,10 +4,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { deleteEntityFn } from "@/domains/entities/entities.functions";
-import type { EntityRecord } from "@/domains/entities/types";
+import {
+  deleteEntityInputSchema,
+  type EntityRecord,
+} from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
+import { entityDisplayLabel } from "@watchdog/schemas";
 
 export function DeleteEntityDialog({
   caseId,
@@ -27,7 +31,9 @@ export function DeleteEntityDialog({
 
   const deleteMutation = useMutation({
     mutationFn: async (entityId: string) =>
-      deleteEntityFn({ data: { caseId, entityId } }),
+      deleteEntityFn({
+        data: deleteEntityInputSchema.parse({ caseId, entityId }),
+      }),
     onSuccess: async () => {
       if (!entity) return;
       setError(null);
@@ -41,6 +47,8 @@ export function DeleteEntityDialog({
     },
   });
 
+  const displayName = entity === null ? null : entityDisplayLabel(entity);
+
   return (
     <DestructiveConfirmDialog
       open={open}
@@ -50,12 +58,12 @@ export function DeleteEntityDialog({
       }}
       title="Delete entity"
       description={
-        entity
-          ? `Delete “${entity.name}” and its identifiers, claims, events, connections, and questions. Evidence and tasks stay in the Case but lose this subject link.`
+        displayName
+          ? `Delete “${displayName}” and its identifiers, claims, events, connections, and questions. Evidence and tasks stay in the Case but lose this subject link.`
           : undefined
       }
       confirmLabel="Delete entity"
-      verificationPhrase={entity?.name ?? ""}
+      verificationPhrase={displayName ?? ""}
       verificationLabel="Type the entity name"
       irreversibility="Deleting this entity cannot be undone."
       media={<UserRoundIcon />}
