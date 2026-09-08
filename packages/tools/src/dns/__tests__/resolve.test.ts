@@ -52,6 +52,26 @@ describe("resolveDnsRecords", () => {
     })
   );
 
+  it.effect("dedupes equivalent IPv6 AAAA answers", () =>
+    Effect.gen(function* resolveDnsRecordsIpv6DedupeGen() {
+      mockResolver.resolve4.mockResolvedValueOnce([]);
+      mockResolver.resolve6.mockResolvedValueOnce([
+        "2001:0db8:0000:0000:0000:0000:0000:0001",
+        "2001:db8::1",
+      ]);
+      mockResolver.resolveMx.mockResolvedValueOnce([]);
+      mockResolver.resolveTxt.mockResolvedValueOnce([]);
+      mockResolver.resolveNs.mockResolvedValueOnce([]);
+
+      const records = yield* resolveDnsRecordsEffect(
+        "example.com",
+        AbortSignal.timeout(5000)
+      );
+
+      expect(records.aaaa).toEqual(["2001:0db8:0000:0000:0000:0000:0000:0001"]);
+    })
+  );
+
   it.effect("resolveDnsRecordsEffect rejects IP literals", () =>
     Effect.gen(function* resolveDnsRecordsRejectIpGen() {
       const outcome = yield* Effect.result(

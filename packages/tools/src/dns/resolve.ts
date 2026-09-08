@@ -5,6 +5,7 @@ import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
+import { dedupeResolvedIps } from "./reverse";
 import { dnsRecordsSchema, type DnsRecords } from "./schema";
 
 export type { DnsRecords };
@@ -68,8 +69,8 @@ export function resolveDnsRecordsEffect(
           );
           return dnsRecordsSchema.parse({
             host: normalizedHost,
-            a,
-            aaaa,
+            a: dedupeResolvedIps(a),
+            aaaa: dedupeResolvedIps(aaaa),
             mx,
             txt,
             ns,

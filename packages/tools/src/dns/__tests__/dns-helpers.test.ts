@@ -1,7 +1,11 @@
 import { Effect, Result } from "effect";
 import { describe, it, expect } from "vitest";
 
-import { normalizeIp, normalizeIpEffect } from "../reverse.ts";
+import {
+  normalizeIp,
+  normalizeIpEffect,
+  dedupeResolvedIps,
+} from "../reverse.ts";
 import { classifyTxtRecord } from "../txt-inventory.ts";
 
 describe("dns-helpers", () => {
@@ -25,5 +29,16 @@ describe("dns-helpers", () => {
       Effect.result(normalizeIpEffect("bad"))
     );
     expect(Result.isFailure(bad)).toBe(true);
+  });
+
+  it("dedupeResolvedIps canonicalizes equivalent IPv6 answers", () => {
+    expect(
+      dedupeResolvedIps([
+        "2001:0db8:0000:0000:0000:0000:0000:0001",
+        "2001:db8::1",
+        "8.8.8.8",
+        "8.8.8.8",
+      ])
+    ).toEqual(["2001:0db8:0000:0000:0000:0000:0000:0001", "8.8.8.8"]);
   });
 });

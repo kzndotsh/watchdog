@@ -6,6 +6,7 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
+import { expandIpv6 } from "../network/ip-lookup-cymru";
 import {
   assertNotAborted,
   dnsOrEmpty,
@@ -37,6 +38,27 @@ export function normalizeIpEffect(
     try: () => normalizeIp(raw),
     catch: mapToolsCatch,
   });
+}
+
+/** Dedupe DNS A/AAAA answers; canonicalize equivalent IPv6 spellings. */
+export function dedupeResolvedIps(ips: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of ips) {
+    try {
+      const normalized = normalizeIp(raw);
+      const key =
+        isIP(normalized) === 6
+          ? expandIpv6(normalized).toLowerCase()
+          : normalized;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(key);
+    } catch {
+      /* skip malformed DNS answers */
+    }
+  }
+  return out;
 }
 
 function snapshotFromHostnames(
