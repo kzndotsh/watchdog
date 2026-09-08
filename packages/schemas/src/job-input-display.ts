@@ -30,7 +30,7 @@ export const JOB_INPUT_EVIDENCE_ID_KEYS = [
   "sourceEvidenceId",
 ] as const;
 
-export const JOB_INPUT_ENTITY_ID_KEYS = ["entityId"] as const;
+const JOB_INPUT_ENTITY_ID_KEYS = ["entityId"] as const;
 
 const JOB_INPUT_SKIP_FALLBACK_KEYS = new Set<string>([
   ...JOB_INPUT_EVIDENCE_ID_KEYS,

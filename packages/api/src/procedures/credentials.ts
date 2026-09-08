@@ -7,7 +7,7 @@ import {
 } from "@watchdog/core";
 import {
   deleteCredentialInputSchema,
-  putCredentialFieldsSchema,
+  putCredentialInputSchema,
 } from "@watchdog/schemas";
 
 import { authed } from "../os";
@@ -33,7 +33,7 @@ export const put = authed
     summary: "Create or replace a credential secret",
     tags: ["credentials"],
   })
-  .input(putCredentialFieldsSchema)
+  .input(putCredentialInputSchema)
   .output(credentialSlotSchema)
   .handler(async ({ input, context }) =>
     runApp(

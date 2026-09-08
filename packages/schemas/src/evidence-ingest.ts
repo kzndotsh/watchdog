@@ -57,8 +57,6 @@ export const listEvidenceInputSchema = caseScopeInputSchema
     }
   );
 
-export type ListEvidenceInput = z.output<typeof listEvidenceInputSchema>;
-
 export const attachEvidenceEntityInputSchema = evidenceScopeInputSchema.extend({
   entityId: nullableUuidSchema,
 });

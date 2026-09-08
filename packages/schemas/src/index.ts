@@ -371,7 +371,6 @@ export type { PutCredentialInput } from "./credential-put";
 export type { DeleteCredentialInput } from "./credential-put";
 export {
   deleteCredentialInputSchema,
-  putCredentialFieldsSchema,
   putCredentialInputSchema,
 } from "./credential-put";
 export type { CreateEntityFieldsInput } from "./entity-create";

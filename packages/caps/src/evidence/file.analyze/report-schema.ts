@@ -6,5 +6,3 @@ import { processExtractDraftSchema } from "@watchdog/ai";
 export const fileAnalyzeReportSchema = processExtractDraftSchema.extend({
   sha256: z.string().min(1),
 });
-
-export type FileAnalyzeReport = z.output<typeof fileAnalyzeReportSchema>;

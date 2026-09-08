@@ -103,14 +103,6 @@ export async function loadEntityDisplayMapsForProposalPatches(
   return buildEntityDisplayMaps(combined);
 }
 
-export async function loadEntityNameMap(
-  caseId: string,
-  entityIds: readonly string[]
-): Promise<Record<string, string>> {
-  const maps = await loadEntityDisplayMapsForIds(caseId, entityIds);
-  return maps.entityNames;
-}
-
 export function entityIdsFromPatches(
   patches: readonly { patch: readonly PatchOp[] }[]
 ): string[] {

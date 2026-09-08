@@ -18,7 +18,7 @@ export {
   entityScopeInputSchema,
   type CaseScopeInput,
   type EntityScopeInput,
-} from "@/domains/entities/lib/scope-schemas";
+} from "@watchdog/schemas";
 
 export { createIdentifierInputSchema };
 export type CreateIdentifierInput = z.input<typeof createIdentifierInputSchema>;

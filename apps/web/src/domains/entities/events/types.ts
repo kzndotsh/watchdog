@@ -12,7 +12,7 @@ export type EventRecord = CoreEventRecord;
 export {
   entityScopeInputSchema,
   type EntityScopeInput,
-} from "@/domains/entities/lib/scope-schemas";
+} from "@watchdog/schemas";
 
 export { createEventInputSchema };
 export type CreateEventInput = z.output<typeof createEventInputSchema>;

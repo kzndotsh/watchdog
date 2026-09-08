@@ -6,7 +6,6 @@ import type {
 } from "@watchdog/core";
 import {
   createEdgeInputSchema,
-  deleteEdgeInputSchema,
   edgeScopeInputSchema,
   updateEdgeInputSchema,
 } from "@watchdog/schemas";
@@ -29,6 +28,3 @@ export type EdgeScopeInput = z.output<typeof edgeScopeInputSchema>;
 
 export { updateEdgeInputSchema };
 export type UpdateEdgeInput = z.input<typeof updateEdgeInputSchema>;
-
-export { deleteEdgeInputSchema };
-export type DeleteEdgeInput = z.output<typeof deleteEdgeInputSchema>;

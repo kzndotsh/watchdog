@@ -4,7 +4,6 @@ import {
   claimClassSchema,
   confidenceTierSchema,
   createCaseFieldsSchema,
-  credentialNameSchema,
   edgePredicateSchema,
   entityKindSchema,
   evidenceKindSchema,
@@ -26,13 +25,8 @@ export const userOverrideSchema = z
   .optional()
   .describe("Required as true when authenticating with an API key.");
 
-export { credentialNameSchema };
-
 export {
   activityItemSchema,
-  confidenceTierSchema,
-  jsonObjectSchema,
-  proposalStatusSchema,
   searchCaseResultSchema,
   taskSchema,
 } from "@watchdog/schemas";

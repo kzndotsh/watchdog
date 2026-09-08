@@ -11,7 +11,6 @@ import {
   catalogIdMatchesSearch,
   patchOpHeadline,
   patchOpSearchText,
-  proposalEntityId as coreProposalEntityId,
   proposalEntityName as coreProposalEntityName,
   proposalEntitySlug as coreProposalEntitySlug,
   slugifyName,
@@ -77,11 +76,6 @@ function proposalDisplayOpts(row: ProposalRecord) {
     entityNames: row.entityNames,
     entitySlugs: row.entitySlugs,
   };
-}
-
-/** Entity id for proposal chrome (first cited entity with display maps, else first cited). */
-export function proposalEntityId(row: ProposalRecord): string | null {
-  return coreProposalEntityId(proposalDisplayOpts(row));
 }
 
 /** Entity display label from patch ops that cite an entity. */

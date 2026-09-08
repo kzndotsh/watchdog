@@ -93,11 +93,6 @@ export function evidenceFilterHaystack(
     .toLowerCase();
 }
 
-/** Lowercase haystack for picker/checklist text filter. */
-export function evidencePickerFilterHaystack(row: EvidenceOption): string {
-  return evidenceFilterHaystack(row);
-}
-
 export function evidenceMatchesPickerFilter(
   row: EvidenceOption,
   query: string
