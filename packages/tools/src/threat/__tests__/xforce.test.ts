@@ -1,11 +1,49 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { fetchXforceLookupEffect, xforceLookupSnapshotSchema } from "../xforce";
 
 describe("xforce", () => {
+  it.effect("rejects non-http(s) URL queries", () =>
+    Effect.gen(function* rejectBadSchemeGen() {
+      const outcome = yield* Effect.result(
+        fetchXforceLookupEffect(
+          "file:///etc/passwd",
+          "key",
+          "pass",
+          new AbortController().signal
+        )
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
+  it.effect("rejects javascript URL schemes", () =>
+    Effect.gen(function* rejectJavascriptSchemeGen() {
+      const badUrl = ["javascript", ":alert(1)"].join("");
+      const outcome = yield* Effect.result(
+        fetchXforceLookupEffect(
+          badUrl,
+          "key",
+          "pass",
+          new AbortController().signal
+        )
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
   it.effect("fetchXforceLookupEffect maps IP reputation reports", () =>
     Effect.gen(function* fetchXforceLookupGen() {
       vi.stubGlobal(
