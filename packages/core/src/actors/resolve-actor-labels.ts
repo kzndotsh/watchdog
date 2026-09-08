@@ -1,15 +1,19 @@
 import { Effect } from "effect";
 
 import { db, usersRepo, type UserDisplayRow } from "@watchdog/db";
+import { normalizeUuidList } from "@watchdog/schemas";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 import { formatActorLabel, type ActorUser } from "./format-actor-label";
 
 export function loadActorUsersEffect(
-  actorIds: Iterable<string>
+  actorIds: Iterable<string | null | undefined>
 ): Effect.Effect<Map<string, ActorUser>, DomainTag> {
-  const ids = [...new Set(actorIds)].filter((id) => id !== "");
+  const ids = normalizeUuidList(actorIds);
+  if (ids.length === 0) {
+    return Effect.succeed(new Map<string, ActorUser>());
+  }
   return tryDb(() => usersRepo.getByIds(db, ids)).pipe(
     Effect.map((rows: UserDisplayRow[]) => {
       const map = new Map<string, ActorUser>();

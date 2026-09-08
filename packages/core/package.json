@@ -5,6 +5,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./blob": "./src/infra/blob.ts",
+    "./job-display": "./src/jobs/job-display.ts",
+    "./proposal-display": "./src/proposals/proposal-display.ts",
     "./worker": "./src/worker-entry.ts"
   },
   "scripts": {

@@ -28,6 +28,7 @@ export {
 export {
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
+  reconcileOrphanedQueuedJobsEffect,
 } from "./jobs/reconcile-stale-jobs";
 export {
   actorHandleFromUser,
@@ -54,6 +55,12 @@ export {
   type AgentGraphWriteResult,
 } from "./proposals/agent-ingress";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
+export {
+  capabilityIdLabel,
+  jobActivityLabel,
+  playbookIdLabel,
+  summarizeJobInput,
+} from "./jobs/job-display";
 export {
   executeJobOnMap,
   type JobRunOutcome,
@@ -211,6 +218,10 @@ export {
   type ConfirmFileUploadInput,
   type CreateAttestationInput,
 } from "./evidence/evidence";
+export {
+  evidenceDisplayLabel,
+  evidenceKindLabel,
+} from "./evidence/evidence-display";
 export type { DbTx, DbExec } from "@watchdog/db";
 export {
   DomainError,
@@ -237,8 +248,10 @@ export { runDomain } from "./infra/run-domain";
 export {
   notifyEvent,
   notifyEntityChangedEffect,
+  notifyEvidenceChangedEffect,
   notifyTaskChangedEffect,
   notifyProposalCreatedEffect,
+  notifyProposalQueueChangedEffect,
   notifyJobUpdateEffect,
   listenForEvents,
   isWatchdogEvent,
@@ -294,3 +307,7 @@ export {
   type SearchCaseProposalHit,
   type SearchCaseCaseHit,
 } from "./search/search-case";
+export {
+  listCapabilitiesEffect,
+  listPlaybookDescriptorsEffect,
+} from "./caps/catalog";
