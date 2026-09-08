@@ -6,7 +6,8 @@ describe("entitiesKeys", () => {
   it("builds case-scoped list and slug detail keys", () => {
     expect(entitiesKeys.all("case-1")).toEqual(["entities", "case-1"]);
     expect(entitiesKeys.detail("case-1", "alpha")).toEqual([
-      "entity",
+      "entities",
+      "detail",
       "case-1",
       "alpha",
     ]);

@@ -276,7 +276,9 @@ describe("usePageTrail", () => {
     renderHook(() => usePageTrail());
 
     const entityCall = useQueryMock.mock.calls.find(
-      (call) => call[0]?.queryKey?.[0] === "entity"
+      (call) =>
+        call[0]?.queryKey?.[0] === "entities" &&
+        call[0]?.queryKey?.[1] === "detail"
     );
     expect(entityCall?.[0]).toMatchObject({ enabled: false });
   });
