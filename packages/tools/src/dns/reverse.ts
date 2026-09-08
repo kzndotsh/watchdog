@@ -27,6 +27,9 @@ export function normalizeIp(raw: string): string {
   if (!isIP(trimmed)) {
     throw validationToolsError(`Invalid IP address: ${raw}`);
   }
+  if (isIP(trimmed) === 6) {
+    return canonicalIpLiteral(trimmed);
+  }
   return trimmed;
 }
 

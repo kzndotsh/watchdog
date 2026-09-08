@@ -22,6 +22,13 @@ describe("dns-helpers", () => {
     expect(() => normalizeIp("not-an-ip")).toThrow(/Invalid IP/);
   });
 
+  it("normalizeIp canonicalizes equivalent IPv6 spellings", () => {
+    expect(normalizeIp("2001:0db8:0000:0000:0000:0000:0000:0001")).toBe(
+      "2001:db8::1"
+    );
+    expect(normalizeIp("2001:db8::1")).toBe("2001:db8::1");
+  });
+
   it("normalizeIpEffect maps invalid input to ToolsTag", async () => {
     const ok = await Effect.runPromise(normalizeIpEffect("8.8.8.8"));
     expect(ok).toBe("8.8.8.8");
