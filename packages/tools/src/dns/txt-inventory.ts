@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import type { ToolsTag } from "../errors/tagged-errors";
 import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
+import { normalizeDnsLookupHostEffect } from "./resolve";
 import {
   txtInventorySnapshotSchema,
   type TxtInventorySnapshot,
@@ -163,20 +164,26 @@ export function fetchTxtInventoryEffect(
   host: string,
   signal: AbortSignal
 ): Effect.Effect<TxtInventorySnapshot, ToolsTag> {
-  return runAbortableResolver(signal, "TXT inventory aborted", (resolver) =>
-    Effect.gen(function* fetchTxtInventoryGen() {
-      const chunks = yield* dnsOrEmpty(
-        () => resolver.resolveTxt(host),
-        [] as string[][]
-      );
-      const records = flattenTxt(chunks);
-      const tokens = records.map(classifyRecord);
-      return txtInventorySnapshotSchema.parse({
-        host,
-        queriedAt: new Date().toISOString(),
-        records,
-        tokens,
-      });
-    })
-  );
+  return Effect.gen(function* fetchTxtInventoryOuterGen() {
+    const normalizedHost = yield* normalizeDnsLookupHostEffect(host);
+    return yield* runAbortableResolver(
+      signal,
+      "TXT inventory aborted",
+      (resolver) =>
+        Effect.gen(function* fetchTxtInventoryGen() {
+          const chunks = yield* dnsOrEmpty(
+            () => resolver.resolveTxt(normalizedHost),
+            [] as string[][]
+          );
+          const records = flattenTxt(chunks);
+          const tokens = records.map(classifyRecord);
+          return txtInventorySnapshotSchema.parse({
+            host: normalizedHost,
+            queriedAt: new Date().toISOString(),
+            records,
+            tokens,
+          });
+        })
+    );
+  });
 }
