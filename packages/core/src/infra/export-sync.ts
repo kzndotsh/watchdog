@@ -118,7 +118,7 @@ function writeUriEvidenceFileEffect(
         });
       })
     ),
-    Effect.orElseSucceed("skipped" as const)
+    Effect.orElseSucceed(() => "skipped" as const)
   );
 }
 

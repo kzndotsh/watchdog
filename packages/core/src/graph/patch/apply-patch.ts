@@ -82,7 +82,7 @@ function applyOpEffect(
       default: {
         const _exhaustive: never = op.resource;
         return yield* new InvalidError({
-          reason: `Unhandled resource: ${JSON.stringify(_exhaustive)}`,
+          reason: `Unhandled resource: ${String(_exhaustive)}`,
         });
       }
     }

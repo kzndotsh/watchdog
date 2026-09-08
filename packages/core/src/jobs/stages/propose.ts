@@ -15,7 +15,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../../infra/tagged-errors";
-import { suppressKnownFindings } from "../../proposals/finding-suppress";
+import { suppressKnownFindingsEffect } from "../../proposals/finding-suppress";
 
 export interface ProposeResult {
   proposalId: string | null;
@@ -78,8 +78,10 @@ export function suppressAndProposeStageEffect(
         return yield* new NotFoundError({ resource: "Case not found" });
       }
 
-      const { kept, suppressed } = yield* tryDb(() =>
-        suppressKnownFindings(input.caseId, input.patch, tx)
+      const { kept, suppressed } = yield* suppressKnownFindingsEffect(
+        input.caseId,
+        input.patch,
+        tx
       );
       if (input.onSuppressed !== undefined && suppressed > 0) {
         yield* Effect.sync(() => {

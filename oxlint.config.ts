@@ -49,6 +49,7 @@ const effecttsgoTier1Warn = {
   "effecttsgo/catch-to-ignore": "warn",
   "effecttsgo/extends-native-error": "warn",
   "effecttsgo/try-catch-in-effect-gen": "warn",
+  "effecttsgo/prefer-schema-over-json": "warn",
 } as const;
 
 const watchdogIgnores = [
@@ -444,13 +445,6 @@ export default defineConfig({
         "packages/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
       ],
       rules: effecttsgoOff,
-    },
-    {
-      // Promise graph fingerprint scan — Effect migration deferred.
-      files: ["packages/core/src/proposals/finding-suppress.ts"],
-      rules: {
-        "effecttsgo/async-function": "off",
-      },
     },
     {
       // Job pipeline + evidence: promise chains avoid desloppify async_no_await churn.

@@ -4,8 +4,8 @@ import {
   createClaimEffect,
   createEventEffect,
   createIdentifierEffect,
-  suppressKnownFindings,
   runDomain,
+  suppressKnownFindingsEffect,
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
 import { fingerprintPatchOp } from "@watchdog/schemas";
@@ -25,7 +25,7 @@ import {
   seedProposal,
 } from "@watchdog/test-kit/db";
 
-describe("suppressKnownFindings", () => {
+describe("suppressKnownFindingsEffect", () => {
   beforeEach(async () => {
     await resetTestDb();
   });
@@ -37,7 +37,7 @@ describe("suppressKnownFindings", () => {
       id: testId(29),
     });
     await seedProposal(db, cased.id, [op]);
-    const result = await suppressKnownFindings(cased.id, [op]);
+    const result = await runDomain(suppressKnownFindingsEffect(cased.id, [op]));
     expect(result.kept).toHaveLength(0);
     expect(result.suppressed).toBe(1);
   });
@@ -58,10 +58,12 @@ describe("suppressKnownFindings", () => {
       proposalId,
     });
 
-    const result = await suppressKnownFindings(cased.id, [
-      op,
-      buildClaimCreateOp(entity.id, "Fresh", { id: testId(31) }),
-    ]);
+    const result = await runDomain(
+      suppressKnownFindingsEffect(cased.id, [
+        op,
+        buildClaimCreateOp(entity.id, "Fresh", { id: testId(31) }),
+      ])
+    );
     expect(result.suppressed).toBe(1);
     expect(result.kept).toHaveLength(1);
     expect(result.kept[0]?.data.text).toBe("Fresh");
@@ -80,9 +82,13 @@ describe("suppressKnownFindings", () => {
         class: "observation",
       })
     );
-    const result = await suppressKnownFindings(cased.id, [
-      buildClaimCreateOp(entity.id, "Ada observed a host", { id: testId(32) }),
-    ]);
+    const result = await runDomain(
+      suppressKnownFindingsEffect(cased.id, [
+        buildClaimCreateOp(entity.id, "Ada observed a host", {
+          id: testId(32),
+        }),
+      ])
+    );
     expect(result.kept).toHaveLength(0);
     expect(result.suppressed).toBe(1);
   });
@@ -100,9 +106,13 @@ describe("suppressKnownFindings", () => {
         class: "observation",
       })
     );
-    const result = await suppressKnownFindings(cased.id, [
-      buildClaimCreateOp(entity.id, "Ada Observed A Host", { id: testId(37) }),
-    ]);
+    const result = await runDomain(
+      suppressKnownFindingsEffect(cased.id, [
+        buildClaimCreateOp(entity.id, "Ada Observed A Host", {
+          id: testId(37),
+        }),
+      ])
+    );
     expect(result.kept).toHaveLength(0);
     expect(result.suppressed).toBe(1);
   });
@@ -120,11 +130,13 @@ describe("suppressKnownFindings", () => {
         class: "observation",
       })
     );
-    const result = await suppressKnownFindings(cased.id, [
-      buildClaimCreateOp(`  ${entity.id}  `, "Ada observed a host", {
-        id: testId(34),
-      }),
-    ]);
+    const result = await runDomain(
+      suppressKnownFindingsEffect(cased.id, [
+        buildClaimCreateOp(`  ${entity.id}  `, "Ada observed a host", {
+          id: testId(34),
+        }),
+      ])
+    );
     expect(result.kept).toHaveLength(0);
     expect(result.suppressed).toBe(1);
   });
@@ -136,11 +148,13 @@ describe("suppressKnownFindings", () => {
       slug: "alpha-corp",
       name: "Alpha Corp",
     });
-    const result = await suppressKnownFindings(cased.id, [
-      buildEntityCreateOp("Alpha Corp", "  Alpha Corp  ", "org", {
-        id: testId(35),
-      }),
-    ]);
+    const result = await runDomain(
+      suppressKnownFindingsEffect(cased.id, [
+        buildEntityCreateOp("Alpha Corp", "  Alpha Corp  ", "org", {
+          id: testId(35),
+        }),
+      ])
+    );
     expect(result.kept).toHaveLength(0);
     expect(result.suppressed).toBe(1);
   });
@@ -159,12 +173,14 @@ describe("suppressKnownFindings", () => {
         status: "unknown",
       })
     );
-    const result = await suppressKnownFindings(cased.id, [
-      buildIdentifierCreateOp(entity.id, "  email  ", "ada@mailhost.test", {
-        id: testId(36),
-        data: { platform: "" },
-      }),
-    ]);
+    const result = await runDomain(
+      suppressKnownFindingsEffect(cased.id, [
+        buildIdentifierCreateOp(entity.id, "  email  ", "ada@mailhost.test", {
+          id: testId(36),
+          data: { platform: "" },
+        }),
+      ])
+    );
     expect(result.kept).toHaveLength(0);
     expect(result.suppressed).toBe(1);
   });
@@ -184,7 +200,7 @@ describe("suppressKnownFindings", () => {
     const op = buildEventCreateOp(entity.id, "1815-12-10", "Born", {
       id: testId(33),
     });
-    const result = await suppressKnownFindings(cased.id, [op]);
+    const result = await runDomain(suppressKnownFindingsEffect(cased.id, [op]));
     expect(result.kept).toHaveLength(1);
   });
 });

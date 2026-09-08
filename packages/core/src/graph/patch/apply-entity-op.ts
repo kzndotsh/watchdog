@@ -132,7 +132,7 @@ export function applyEntityOpEffect(
       return;
     }
     return yield* new InvalidError({
-      reason: `entity does not support op: ${JSON.stringify(op.op)}`,
+      reason: `entity does not support op: ${String(op.op)}`,
     });
   });
 }

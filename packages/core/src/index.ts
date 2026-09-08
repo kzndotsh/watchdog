@@ -43,8 +43,8 @@ export {
   type ApplyPatchTx,
 } from "./graph/patch/apply-patch";
 export {
-  suppressKnownFindings,
-  recordRejectedFingerprints,
+  suppressKnownFindingsEffect,
+  recordRejectedFingerprintsEffect,
 } from "./proposals/finding-suppress";
 export { parseAgentPatchEffect } from "./graph/patch/parse-agent-patch";
 export {

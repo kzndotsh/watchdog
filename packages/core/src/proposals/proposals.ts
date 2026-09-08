@@ -52,7 +52,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { recordRejectedFingerprints } from "./finding-suppress";
+import { recordRejectedFingerprintsEffect } from "./finding-suppress";
 
 export interface ProposalRecord {
   id: string;
@@ -443,14 +443,12 @@ export function rejectProposalEffect(input: {
           });
         }
 
-        yield* tryDb(() =>
-          recordRejectedFingerprints({
-            caseId: scopedCaseId,
-            proposalId: row.id,
-            patch: row.patch,
-            tx,
-          })
-        );
+        yield* recordRejectedFingerprintsEffect({
+          caseId: scopedCaseId,
+          proposalId: row.id,
+          patch: row.patch,
+          tx,
+        });
 
         return row;
       })

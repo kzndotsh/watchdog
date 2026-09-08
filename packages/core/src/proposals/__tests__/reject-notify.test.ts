@@ -7,7 +7,7 @@ const {
   getInCase,
   listNamesByIdsInCase,
   listIdentifiersForCase,
-  recordRejectedFingerprints,
+  recordRejectedFingerprintsEffect,
   notifyEvent,
 } = vi.hoisted(() => ({
   lockInCase: vi.fn(),
@@ -15,7 +15,7 @@ const {
   getInCase: vi.fn(),
   listNamesByIdsInCase: vi.fn().mockResolvedValue([]),
   listIdentifiersForCase: vi.fn().mockResolvedValue([]),
-  recordRejectedFingerprints: vi.fn(),
+  recordRejectedFingerprintsEffect: vi.fn(),
   notifyEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -36,8 +36,8 @@ vi.mock("@watchdog/db", () => ({
 }));
 
 vi.mock("../finding-suppress", () => ({
-  recordRejectedFingerprints: (...args: unknown[]) =>
-    recordRejectedFingerprints(...args),
+  recordRejectedFingerprintsEffect: (...args: unknown[]) =>
+    recordRejectedFingerprintsEffect(...args),
 }));
 
 vi.mock("../../graph/patch/guards", () => ({
@@ -92,7 +92,7 @@ describe("rejectProposalEffect", () => {
       capabilityId: "network.dns.lookup",
       playbookId: null,
     });
-    recordRejectedFingerprints.mockResolvedValueOnce(undefined);
+    recordRejectedFingerprintsEffect.mockReturnValueOnce(Effect.void);
 
     await Effect.runPromise(
       rejectProposalEffect({

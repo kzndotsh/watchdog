@@ -2,9 +2,8 @@ import { Effect } from "effect";
 
 import type { PatchOp } from "@watchdog/schemas";
 
-import { tryDb } from "../../infra/postgres-effect";
 import type { DomainTag } from "../../infra/tagged-errors";
-import { suppressKnownFindings } from "../../proposals/finding-suppress";
+import { suppressKnownFindingsEffect } from "../../proposals/finding-suppress";
 import type { JobLog } from "./helpers";
 
 export interface SuppressResult {
@@ -21,7 +20,7 @@ export function suppressStageEffect(
   if (patch.length === 0) {
     return Effect.succeed({ kept: [], suppressed: 0 });
   }
-  return tryDb(() => suppressKnownFindings(caseId, patch)).pipe(
+  return suppressKnownFindingsEffect(caseId, patch).pipe(
     Effect.tap(({ suppressed }) =>
       Effect.sync(() => {
         if (suppressed > 0) {

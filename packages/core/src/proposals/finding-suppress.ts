@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   claimsRepo,
   db,
@@ -27,13 +29,16 @@ import {
   type PatchOp,
 } from "@watchdog/schemas";
 
-function markExistingInGraph(
+import { tryDb } from "../infra/postgres-effect";
+import type { DomainTag } from "../infra/tagged-errors";
+
+function markExistingInGraphEffect(
   exec: DbExec,
   caseId: string,
   fps: { op: PatchOp; fp: string }[],
   known: Set<string>
-): Promise<void> {
-  return (async () => {
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* markExistingInGraphGen() {
     const unchecked = fps.filter((x) => !known.has(x.fp));
     if (unchecked.length === 0) {
       return;
@@ -83,10 +88,8 @@ function markExistingInGraph(
         })
       );
       if (entityIds.length > 0) {
-        const rows = await identifiersRepo.listNaturalKeysInCase(
-          exec,
-          caseId,
-          entityIds
+        const rows = yield* tryDb(() =>
+          identifiersRepo.listNaturalKeysInCase(exec, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.type}\0${r.platform}\0${r.value}`)
@@ -131,10 +134,8 @@ function markExistingInGraph(
         })
       );
       if (entityIds.length > 0) {
-        const rows = await claimsRepo.listTextKeysInCase(
-          exec,
-          caseId,
-          entityIds
+        const rows = yield* tryDb(() =>
+          claimsRepo.listTextKeysInCase(exec, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
@@ -161,10 +162,8 @@ function markExistingInGraph(
         edgeOps.flatMap((x) => patchOpRelatedEntityIds(x.op))
       );
       if (entityIds.length > 0) {
-        const rows = await edgesRepo.listNaturalKeysInCase(
-          exec,
-          caseId,
-          entityIds
+        const rows = yield* tryDb(() =>
+          edgesRepo.listNaturalKeysInCase(exec, caseId, entityIds)
         );
         const keys = new Set(
           rows
@@ -207,10 +206,8 @@ function markExistingInGraph(
         })
       );
       if (entityIds.length > 0) {
-        const rows = await questionsRepo.listTextKeysInCase(
-          exec,
-          caseId,
-          entityIds
+        const rows = yield* tryDb(() =>
+          questionsRepo.listTextKeysInCase(exec, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
@@ -245,7 +242,9 @@ function markExistingInGraph(
         ),
       ];
       if (slugs.length > 0) {
-        const rows = await entitiesRepo.listSlugsInCase(exec, caseId, slugs);
+        const rows = yield* tryDb(() =>
+          entitiesRepo.listSlugsInCase(exec, caseId, slugs)
+        );
         const keys = new Set(rows.map((r) => r.slug));
         for (const { op, fp } of entityOps) {
           const slug =
@@ -254,23 +253,23 @@ function markExistingInGraph(
         }
       }
     }
-  })();
+  });
 }
 
 /**
  * Drop ops whose fingerprint already exists in the Graph, a pending Proposal,
  * or finding_suppressions (rejected FP memory).
  */
-export function suppressKnownFindings(
+export function suppressKnownFindingsEffect(
   caseId: string,
   patch: PatchOp[],
   exec: DbExec = db
-): Promise<{ kept: PatchOp[]; suppressed: number }> {
+): Effect.Effect<{ kept: PatchOp[]; suppressed: number }, DomainTag> {
   if (patch.length === 0) {
-    return Promise.resolve({ kept: [], suppressed: 0 });
+    return Effect.succeed({ kept: [], suppressed: 0 });
   }
 
-  return (async () => {
+  return Effect.gen(function* suppressKnownFindingsGen() {
     const fps = patch.map((op) => ({
       op,
       fp: fingerprintPatchOp(op),
@@ -278,19 +277,17 @@ export function suppressKnownFindings(
 
     const known = new Set<string>();
 
-    // Rejected / suppressed memory
     const fpList = fps.map((x) => x.fp).filter((x): x is string => Boolean(x));
     if (fpList.length > 0) {
-      const fingerprints = await findingSuppressionsRepo.listFingerprints(
-        exec,
-        caseId,
-        fpList
+      const fingerprints = yield* tryDb(() =>
+        findingSuppressionsRepo.listFingerprints(exec, caseId, fpList)
       );
       for (const fp of fingerprints) known.add(fp);
     }
 
-    // Pending proposals
-    const pending = await proposalsRepo.listPendingPatches(exec, caseId);
+    const pending = yield* tryDb(() =>
+      proposalsRepo.listPendingPatches(exec, caseId)
+    );
     for (const row of pending) {
       for (const op of row.patch) {
         const fp = fingerprintPatchOp(op);
@@ -298,8 +295,7 @@ export function suppressKnownFindings(
       }
     }
 
-    // Graph existence
-    await markExistingInGraph(
+    yield* markExistingInGraphEffect(
       exec,
       caseId,
       fps.filter((x): x is { op: PatchOp; fp: string } => Boolean(x.fp)),
@@ -316,15 +312,15 @@ export function suppressKnownFindings(
       kept.push(op);
     }
     return { kept, suppressed };
-  })();
+  });
 }
 
-export function recordRejectedFingerprints(input: {
+export function recordRejectedFingerprintsEffect(input: {
   caseId: string;
   proposalId: string;
   patch: PatchOp[];
   tx?: DbTx;
-}): Promise<void> {
+}): Effect.Effect<void, DomainTag> {
   const rows = input.patch
     .map((op) => fingerprintPatchOp(op))
     .filter((fp): fp is string => Boolean(fp))
@@ -334,7 +330,9 @@ export function recordRejectedFingerprints(input: {
       reason: "rejected",
       proposalId: input.proposalId,
     }));
-  if (rows.length === 0) return Promise.resolve();
+  if (rows.length === 0) return Effect.void;
   const exec = input.tx ?? db;
-  return findingSuppressionsRepo.insertMany(exec, rows).then(() => {});
+  return tryDb(() => findingSuppressionsRepo.insertMany(exec, rows)).pipe(
+    Effect.asVoid
+  );
 }

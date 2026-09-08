@@ -3,12 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { PatchOp } from "@watchdog/schemas";
 
-const { suppressKnownFindings } = vi.hoisted(() => ({
-  suppressKnownFindings: vi.fn(),
+const { suppressKnownFindingsEffect } = vi.hoisted(() => ({
+  suppressKnownFindingsEffect: vi.fn(),
 }));
 
 vi.mock("../../../proposals/finding-suppress", () => ({
-  suppressKnownFindings,
+  suppressKnownFindingsEffect,
 }));
 
 import { createJobLog } from "../helpers";
@@ -20,7 +20,7 @@ describe("suppressStage", () => {
       suppressStageEffect("case-1", [], createJobLog())
     );
     expect(result).toEqual({ kept: [], suppressed: 0 });
-    expect(suppressKnownFindings).not.toHaveBeenCalled();
+    expect(suppressKnownFindingsEffect).not.toHaveBeenCalled();
   });
 
   it("logs when findings are suppressed", async () => {
@@ -31,10 +31,12 @@ describe("suppressStage", () => {
         data: { type: "email", value: "a@b.com" },
       },
     ];
-    suppressKnownFindings.mockResolvedValueOnce({
-      kept: [],
-      suppressed: 1,
-    });
+    suppressKnownFindingsEffect.mockReturnValueOnce(
+      Effect.succeed({
+        kept: [],
+        suppressed: 1,
+      })
+    );
     const jobLog = createJobLog();
     const result = await Effect.runPromise(
       suppressStageEffect("case-1", patch, jobLog)
