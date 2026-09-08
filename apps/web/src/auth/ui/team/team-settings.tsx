@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { authClient } from "@/auth/client";
 import { buildInvitationAcceptUrl, invitationAcceptPath } from "@/auth/invitation-url";
 import { canManageTeam, INVITE_ROLE_OPTIONS } from "@/auth/org-roles";
-import { errMessage } from "@/lib/utils";
+import { errMessage, cn } from "@/lib/utils";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormSection } from "@/shared/ui/form-section";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
@@ -18,6 +18,10 @@ import { Field } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import { Label } from "@/shared/ui/shadcn/label";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 interface OrgMember {
   id: string;
@@ -32,6 +36,9 @@ interface OrgInvitation {
   role: string;
   status: string;
 }
+
+const EMPTY_MEMBERS: OrgMember[] = [];
+const EMPTY_INVITATIONS: OrgInvitation[] = [];
 
 const TEAM_QUERY_KEY = ["auth-org", "team"] as const;
 
@@ -56,8 +63,8 @@ async function loadTeam() {
       invitationsResult.error.message || "Could not load invitations"
     );
   }
-  const members = membersResult.data?.members ?? [];
-  const invitations = (invitationsResult.data ?? []).filter(
+  const members = membersResult.data?.members ?? EMPTY_MEMBERS;
+  const invitations = (invitationsResult.data ?? EMPTY_INVITATIONS).filter(
     (row) => row.status === "pending"
   );
   return { members: members as OrgMember[], invitations: invitations as OrgInvitation[] };
@@ -69,6 +76,7 @@ export function TeamSettings() {
   const teamQuery = useQuery({
     queryKey: TEAM_QUERY_KEY,
     queryFn: loadTeam,
+    placeholderData: placeholderDataForQueryKey(TEAM_QUERY_KEY),
   });
 
   const [email, setEmail] = useState("");
@@ -138,7 +146,7 @@ export function TeamSettings() {
     },
   });
 
-  if (teamQuery.isPending) {
+  if (listPending(teamQuery)) {
     return (
       <div className="flex justify-center py-8">
         <Spinner />
@@ -146,19 +154,27 @@ export function TeamSettings() {
     );
   }
 
-  if (teamQuery.error) {
+  if (teamQuery.isError) {
     return (
-      <p className="text-destructive text-sm">
-        {errMessage(teamQuery.error, "Could not load team")}
-      </p>
+      <FetchErrorAlert
+        error={errMessage(teamQuery.error, "Could not load team")}
+        onRetry={() => {
+          void teamQuery.refetch();
+        }}
+      />
     );
   }
 
-  const members = teamQuery.data?.members ?? [];
-  const invitations = teamQuery.data?.invitations ?? [];
+  const members = teamQuery.data?.members ?? EMPTY_MEMBERS;
+  const invitations = teamQuery.data?.invitations ?? EMPTY_INVITATIONS;
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div
+      className={cn(
+        "max-w-2xl space-y-6",
+        placeholderDeemphasisClass(teamQuery.isPlaceholderData)
+      )}
+    >
       {manage ? (
         <form
           onSubmit={(event) => {

@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@/shared/ui/shadcn/button"
 import { Card, CardContent } from "@/shared/ui/shadcn/card"
 import { Spinner } from "@/shared/ui/shadcn/spinner"
-import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
+import { formatRelativeTime } from "@/shared/ui/relative-time.lib"
 
 export type ActiveSessionProps = {
   activeSession: Session
@@ -16,10 +16,10 @@ export type ActiveSessionProps = {
 /**
  * Render a single active session row with device info and revoke control.
  *
- * Shows the session's browser, OS, IP, user agent, and creation time. The current session is marked
+ * Shows the session's browser, OS, IP, and creation time. The current session is marked
  * and navigates to sign-out on click, while other sessions can be revoked individually.
  *
- * @param session - The session object containing id, token, userAgent, ipAddress, and createdAt
+ * @param activeSession - The session object containing id, token, userAgent, ipAddress, and createdAt
  * @returns A JSX element containing the active session row
  */
 export function ActiveSession({ activeSession }: ActiveSessionProps) {
@@ -57,9 +57,6 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
 
           <span className="text-xs text-muted-foreground truncate">
             {activeSession.ipAddress || "No IP"}
-            {activeSession.userAgent
-              ? ` · ${activeSession.userAgent}`
-              : ""}
           </span>
 
           {isCurrentSession ? (

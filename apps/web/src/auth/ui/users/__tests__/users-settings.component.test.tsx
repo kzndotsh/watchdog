@@ -112,4 +112,19 @@ describe("UsersSettings", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "Impersonate" })).not.toBeInTheDocument();
   });
+
+  it("shows retry when the users query fails", async () => {
+    useSession.mockReturnValue({
+      data: { user: { id: "u-admin", role: "admin" } },
+    });
+    listUsers.mockResolvedValue({
+      data: null,
+      error: { message: "forbidden" },
+    });
+
+    render(wrap(<UsersSettings />));
+
+    expect(await screen.findByText("forbidden")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
 });

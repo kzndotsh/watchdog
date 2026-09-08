@@ -61,9 +61,9 @@ export function ResetPassword({ className }: ResetPasswordProps) {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search)
-    const token = searchParams.get("token") as string
+    const token = searchParams.get("token")?.trim() ?? ""
 
-    if (!token) {
+    if (token === "") {
       toast.error(localization.auth.invalidResetPasswordToken)
       navigate({ to: `${basePaths.auth}/${viewPaths.auth.signIn}` })
     }
@@ -78,9 +78,9 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     e.preventDefault()
 
     const searchParams = new URLSearchParams(window.location.search)
-    const token = searchParams.get("token") as string
+    const token = searchParams.get("token")?.trim() ?? ""
 
-    if (!token) {
+    if (token === "") {
       toast.error(localization.auth.invalidResetPasswordToken)
       navigate({ to: `${basePaths.auth}/${viewPaths.auth.signIn}` })
       return

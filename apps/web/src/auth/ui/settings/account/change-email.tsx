@@ -40,7 +40,7 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
 
     const formData = new FormData(e.currentTarget)
     changeEmail({
-      newEmail: formData.get("email") as string,
+      newEmail: (formData.get("email") as string).trim(),
       callbackURL: `${baseURL}/${viewPaths.settings.account}`
     })
   }

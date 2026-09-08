@@ -18,12 +18,18 @@ import { Field, FieldGroup } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import { Label } from "@/shared/ui/shadcn/label";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   const { data: session, isPending: sessionPending } = useSession(authClient);
+  const previewQueryKey = ["invitation-preview", invitationId] as const;
   const previewQuery = useQuery({
-    queryKey: ["invitation-preview", invitationId],
+    queryKey: previewQueryKey,
     queryFn: () => fetchInvitationPreview(invitationId),
+    placeholderData: placeholderDataForQueryKey(previewQueryKey),
   });
 
   const [name, setName] = useState("");
@@ -46,7 +52,7 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
     mutationFn: () =>
       inviteSignUp({
         invitationId,
-        name,
+        name: name.trim(),
         password,
       }),
     onSuccess: () => {
@@ -54,7 +60,7 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
     },
   });
 
-  if (previewQuery.isPending || sessionPending) {
+  if (listPending(previewQuery) || sessionPending) {
     return (
       <div className="flex justify-center py-10">
         <Spinner />
@@ -62,12 +68,21 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
     );
   }
 
-  if (previewQuery.error || !previewQuery.data) {
+  if (previewQuery.isError) {
+    return (
+      <FetchErrorAlert
+        error={errMessage(previewQuery.error, "Could not load invitation")}
+        onRetry={() => {
+          void previewQuery.refetch();
+        }}
+      />
+    );
+  }
+
+  if (!previewQuery.data) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>
-          {errMessage(previewQuery.error, "Invitation not found or expired.")}
-        </AlertDescription>
+        <AlertDescription>Invitation not found or expired.</AlertDescription>
       </Alert>
     );
   }
@@ -88,7 +103,9 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
       : null);
 
   return (
-    <Card>
+    <Card
+      className={placeholderDeemphasisClass(previewQuery.isPlaceholderData)}
+    >
       <CardHeader>
         <CardTitle>Join {preview.organizationName}</CardTitle>
       </CardHeader>

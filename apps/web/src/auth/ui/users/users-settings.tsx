@@ -6,11 +6,15 @@ import { toast } from "sonner";
 
 import { authClient } from "@/auth/client";
 import { isInstanceAdmin } from "@/auth/instance-admin";
-import { errMessage } from "@/lib/utils";
+import { errMessage, cn } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 const USERS_QUERY_KEY = ["auth-admin", "users"] as const;
 
@@ -22,6 +26,8 @@ interface ListedUser {
   banned?: boolean | null;
 }
 
+const EMPTY_USERS: ListedUser[] = [];
+
 async function loadUsers(): Promise<ListedUser[]> {
   const { data, error } = await authClient.admin.listUsers({
     query: { limit: 100, sortBy: "createdAt", sortDirection: "asc" },
@@ -29,7 +35,7 @@ async function loadUsers(): Promise<ListedUser[]> {
   if (error) {
     throw new Error(error.message || "Could not load users");
   }
-  return (data?.users ?? []) as ListedUser[];
+  return (data?.users ?? EMPTY_USERS) as ListedUser[];
 }
 
 function roleLabel(role: string | null | undefined): string {
@@ -43,6 +49,7 @@ export function UsersSettings() {
   const usersQuery = useQuery({
     queryKey: USERS_QUERY_KEY,
     queryFn: loadUsers,
+    placeholderData: placeholderDataForQueryKey(USERS_QUERY_KEY),
   });
 
   const invalidate = () =>
@@ -86,7 +93,7 @@ export function UsersSettings() {
     },
   });
 
-  if (usersQuery.isPending) {
+  if (listPending(usersQuery)) {
     return (
       <div className="flex justify-center py-8">
         <Spinner />
@@ -94,15 +101,18 @@ export function UsersSettings() {
     );
   }
 
-  if (usersQuery.error) {
+  if (usersQuery.isError) {
     return (
-      <p className="text-destructive text-sm">
-        {errMessage(usersQuery.error, "Could not load users")}
-      </p>
+      <FetchErrorAlert
+        error={errMessage(usersQuery.error, "Could not load users")}
+        onRetry={() => {
+          void usersQuery.refetch();
+        }}
+      />
     );
   }
 
-  const users = usersQuery.data ?? [];
+  const users = usersQuery.data ?? EMPTY_USERS;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -110,7 +120,12 @@ export function UsersSettings() {
         title="Users"
         description="Install accounts. Organization membership is on Team. Disable blocks sign-in and ends sessions."
       >
-        <ul className="divide-y">
+        <ul
+          className={cn(
+            "divide-y",
+            placeholderDeemphasisClass(usersQuery.isPlaceholderData)
+          )}
+        >
           {users.map((row) => {
             const disabled = Boolean(row.banned);
             const isSelf = row.id === selfId;

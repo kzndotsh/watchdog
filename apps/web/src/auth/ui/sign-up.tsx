@@ -122,8 +122,8 @@ export function SignUp({
 
     const formData = new FormData(e.currentTarget)
     // `emailAndPassword.name === false` hides the name field and submits "".
-    const name = (formData.get("name") as string | null) ?? ""
-    const email = formData.get("email") as string
+    const name = ((formData.get("name") as string | null) ?? "").trim()
+    const email = (formData.get("email") as string).trim()
 
     if (emailAndPassword?.confirmPassword && password !== confirmPassword) {
       toast.error(localization.auth.passwordsDoNotMatch)

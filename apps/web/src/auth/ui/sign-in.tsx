@@ -107,7 +107,7 @@ export function SignIn({
     e.preventDefault()
 
     const formData = new FormData(e.currentTarget)
-    const email = formData.get("email") as string
+    const email = (formData.get("email") as string).trim()
     const rememberMe = formData.get("rememberMe") === "on"
 
     signInEmail({

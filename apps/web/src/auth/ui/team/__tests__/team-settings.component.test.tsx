@@ -95,4 +95,20 @@ describe("TeamSettings", () => {
 
     expect(await screen.findByRole("button", { name: "Invite" })).toBeInTheDocument();
   });
+
+  it("shows retry when the team query fails", async () => {
+    useSession.mockReturnValue({
+      data: { user: { id: "u-owner", email: "owner@mailhost.test" } },
+    });
+    listMembers.mockResolvedValue({
+      data: null,
+      error: { message: "network down" },
+    });
+    listInvitations.mockResolvedValue({ data: [], error: null });
+
+    render(wrap(<TeamSettings />));
+
+    expect(await screen.findByText("network down")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
 });

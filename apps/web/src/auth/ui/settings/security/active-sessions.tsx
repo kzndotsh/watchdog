@@ -26,9 +26,16 @@ export function ActiveSessions({ className }: ActiveSessionsProps) {
 
   const { data: sessions, isPending } = useListSessions(authClient)
 
-  const activeSessions = [...(sessions ?? [])].sort((activeSession) =>
-    activeSession.id === session?.session.id ? -1 : 1
-  )
+  const currentToken = session?.session.token
+
+  const activeSessions = [...(sessions ?? [])].sort((a, b) => {
+    const aCurrent = a.token === currentToken
+    const bCurrent = b.token === currentToken
+    if (aCurrent !== bCurrent) return aCurrent ? -1 : 1
+    const aAt = a.createdAt ? Date.parse(String(a.createdAt)) : 0
+    const bAt = b.createdAt ? Date.parse(String(b.createdAt)) : 0
+    return bAt - aAt
+  })
 
   return (
     <div>
