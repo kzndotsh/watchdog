@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 
 import type { CapInterpretResult } from "@watchdog/cap-sdk";
 import {
-  validateIdentifierValue,
   validateIdentifierWrite,
   type IdentifierType,
 } from "@watchdog/schemas";
@@ -18,6 +17,7 @@ import {
   INVALID_COLLECT_ENTITY_SUMMARY,
   resolveCollectEntityId,
 } from "./resolve-collect-entity-id";
+import { validatedIdentifierValue } from "./validated-identifier-value";
 
 export interface IdentifierBatch {
   type: IdentifierType;
@@ -99,11 +99,11 @@ export function interpretIdentifierBatches(opts: {
     let added = 0;
     for (const raw of valuesForBatch(batch)) {
       if (raw === null || raw === undefined || raw === "") continue;
-      const parsed = validateIdentifierValue(batch.type, raw);
-      if (!parsed.ok) continue;
+      const value = validatedIdentifierValue(batch.type, raw);
+      if (value === null) continue;
       const written = validateIdentifierWrite({
         type: batch.type,
-        value: parsed.value,
+        value,
         platform: batch.platform ?? "",
       });
       if (!written.ok) continue;
@@ -114,7 +114,6 @@ export function interpretIdentifierBatches(opts: {
       );
       if (seen.has(key)) continue;
       seen.add(key);
-      const { value } = written;
       patch.push({
         op: "create",
         resource: "identifier",
@@ -122,7 +121,7 @@ export function interpretIdentifierBatches(opts: {
         data: {
           entityId,
           type: written.type,
-          value,
+          value: written.value,
           ...(written.platform ? { platform: written.platform } : {}),
         },
       });
