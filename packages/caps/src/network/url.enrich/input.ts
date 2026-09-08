@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { httpUrlSchema, uuidSchema } from "@watchdog/schemas";
+import { httpUrlSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const networkUrlEnrichInput = z.object({
   url: httpUrlSchema.describe("URL to enrich"),
-  sourceEvidenceId: uuidSchema.optional(),
-  entityId: uuidSchema.optional(),
+  sourceEvidenceId: optionalUuidSchema,
+  entityId: optionalUuidSchema,
 });

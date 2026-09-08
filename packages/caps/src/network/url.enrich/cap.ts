@@ -35,7 +35,7 @@ export const urlEnrich = defineCapability({
   },
   run: (ctx) =>
     Effect.gen(function* urlEnrichRun() {
-      const url = ctx.input.url.trim();
+      const url = ctx.input.url;
       ctx.log(`enrich ${url}`);
 
       const live = yield* ingestRemotePageEffect({
