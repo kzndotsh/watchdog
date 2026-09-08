@@ -77,4 +77,19 @@ describe("certspotter", () => {
       expect(snap.domains).toContain("api.example.com");
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
+
+  it.effect("fetchCertspotterLookupEffect fails on error payloads", () =>
+    Effect.gen(function* fetchCertspotterErrorGen() {
+      mockServer.use(
+        http.get("https://api.certspotter.com/v1/issuances", () =>
+          HttpResponse.json({ error: "rate limited" })
+        )
+      );
+
+      const outcome = yield* Effect.result(
+        fetchCertspotterLookupEffect("example.com", AbortSignal.timeout(5000))
+      );
+      expect(outcome._tag).toBe("Failure");
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 });

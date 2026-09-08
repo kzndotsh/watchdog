@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import type { ToolsTag } from "../errors/tagged-errors";
+import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
@@ -134,7 +134,22 @@ export function fetchCertspotterLookupEffect(
       },
     });
 
-    const rows = Array.isArray(body) ? body : [];
+    if (!Array.isArray(body)) {
+      if (isRecord(body)) {
+        const message = asString(body.error) || asString(body.message);
+        if (message) {
+          return yield* new ParseVendorError({
+            service: "Cert Spotter",
+            subject: host,
+          });
+        }
+      }
+      return yield* new ParseVendorError({
+        service: "Cert Spotter",
+        subject: host,
+      });
+    }
+    const rows = body;
     const { issuances, domains } = collectIssuances(rows, limit);
 
     return certspotterLookupSnapshotSchema.parse({

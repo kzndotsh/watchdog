@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { extractDomainsFromNameValue, parseCrtShJson } from "../crtsh.ts";
+import {
+  extractDomainsFromNameValue,
+  domainMatchesHost,
+  parseCrtShJson,
+} from "../crtsh.ts";
 
 describe("crtsh", () => {
   it("extractDomainsFromNameValue splits SANs and strips wildcards", () => {
@@ -18,5 +22,11 @@ describe("crtsh", () => {
     );
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ common_name: "a.example.com" });
+  });
+
+  it("does not treat single-label hosts as domain suffixes", () => {
+    expect(domainMatchesHost("evil.com", "com")).toBe(false);
+    expect(domainMatchesHost("com", "com")).toBe(true);
+    expect(domainMatchesHost("api.example.com", "example.com")).toBe(true);
   });
 });

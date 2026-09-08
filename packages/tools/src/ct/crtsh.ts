@@ -67,8 +67,9 @@ function entryFromRow(row: unknown): CtCertEntry | null {
   });
 }
 
-function domainMatchesHost(domain: string, normalized: string): boolean {
-  return domain.endsWith(`.${normalized}`) || domain === normalized;
+export function domainMatchesHost(domain: string, normalized: string): boolean {
+  if (!normalized.includes(".")) return domain === normalized;
+  return domain === normalized || domain.endsWith(`.${normalized}`);
 }
 
 function addEntryDomains(
