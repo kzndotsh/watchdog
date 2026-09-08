@@ -6,15 +6,16 @@ import {
   listProposalsForCaseEffect,
   rejectProposalEffect,
 } from "@watchdog/core";
-import { patchOpSchema } from "@watchdog/schemas";
+import {
+  acceptProposalInputSchema,
+  createProposalInputSchema,
+  listProposalsInputSchema,
+  rejectProposalInputSchema,
+} from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import {
-  confidenceTierSchema,
-  proposalSchema,
-  proposalStatusSchema,
-} from "../schemas";
+import { proposalSchema } from "../schemas";
 
 export const create = authed
   .route({
@@ -22,15 +23,9 @@ export const create = authed
     path: "/cases/{caseId}/proposals",
     summary: "Create an agent Proposal (Inbox)",
     tags: ["inbox"],
+    successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      patch: z.array(patchOpSchema).min(1),
-      summary: z.string().optional(),
-      evidenceIds: z.array(z.uuid()).optional(),
-    })
-  )
+  .input(createProposalInputSchema)
   .output(proposalSchema)
   .handler(async ({ input, context }) => {
     const { proposal } = await runApp(
@@ -53,12 +48,7 @@ export const listForCase = authed
     summary: "List proposals for a case",
     tags: ["inbox"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      status: proposalStatusSchema.optional(),
-    })
-  )
+  .input(listProposalsInputSchema)
   .output(z.array(proposalSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -77,15 +67,7 @@ export const accept = authed
     summary: "Accept a pending Proposal",
     tags: ["inbox"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      proposalId: z.uuid(),
-      confidence: confidenceTierSchema.optional(),
-      sharedEvidenceIds: z.array(z.uuid()).optional().default([]),
-      attestationText: z.string().optional(),
-    })
-  )
+  .input(acceptProposalInputSchema)
   .output(proposalSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -108,13 +90,7 @@ export const reject = authed
     summary: "Reject a pending Proposal",
     tags: ["inbox"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      proposalId: z.uuid(),
-      reason: z.string().optional(),
-    })
-  )
+  .input(rejectProposalInputSchema)
   .output(proposalSchema)
   .handler(async ({ input, context }) =>
     runApp(
