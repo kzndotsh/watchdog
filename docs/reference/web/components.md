@@ -121,6 +121,9 @@ Canonical unions: [`packages/schemas/src/vocab.ts`](../../../packages/schemas/sr
 | `EdgePredicate` | `predicateLabel` / `edgePhraseOptions` (+ `group`); `preferredEdgePhrase` / `clampEdgePhrase` | Exhaustive Record; inverses = display only (`inverseLabel`); Combobox groups from schema `EDGE_PREDICATE_GROUPS` |
 | `PatchOp` | `PatchOpBadge` + `PATCH_RESOURCE_META` | Domain tones |
 | Capability id | `CapabilityLabel` / `capabilityLabel` | Catalog title |
+| Playbook id | `playbookLabel` | Catalog title or title-cased id |
+| Job headline | `jobHeadlineLabel` | Playbook when set, else capability |
+| Proposal headline | `proposalHeadlineLabel` / `proposalSourceLabel` | Summary, then playbook/cap + entity |
 
 Fictional tokens (`probable`, `active`/`dormant`/`merged`, vault kinds, `--severity-*`) purged from types + CSS.
 

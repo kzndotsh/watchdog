@@ -54,7 +54,7 @@ Call these from mutations and SSE: do not scatter ad-hoc `invalidateQueries` key
 - `invalidateAfterCaseSwitch`
 - `invalidateAfterJobMutation` (optional staggered retry when worker lag matters)
 - `invalidateAfterProposalAccept`
-- `invalidateAfterProposalQueueChange` (Reject / `proposal_created`)
+- `invalidateAfterProposalQueueChange` (accept/reject / `proposal_created` / `proposal_queue_changed`)
 - `invalidateAfterEntityChanged` (soft-invalidates `entities` + `edges`/`identifiers` **prefixes** so case-wide `forCase` lists refresh denormalized labels; entity-scoped claims/events/questions when `entityId` set)
 - `invalidateAfterTaskMutation`
 - `invalidateEvidence` / `invalidateCredentials`
@@ -111,10 +111,11 @@ Hook: `shared/hooks/use-live-events` → `useLiveEvents(caseId, onEvent)` → `E
 
 | Type | Contract |
 | --- | --- |
-| `job_update` | `invalidateAfterJobMutation` |
+| `job_update` | `invalidateAfterJobMutation` (+ evidence on Collect / Case overview / Dossier where jobs touch intake) |
 | `proposal_created` | `invalidateAfterProposalQueueChange` (workspace flips to pending-only, same as first paint) |
-| `entity_changed` | `invalidateAfterEntityChanged` |
-| `task_changed` | `invalidateAfterTaskMutation` |
+| `proposal_queue_changed` | `invalidateAfterProposalQueueChange` (accept/reject from another tab or CLI) |
+
+Web handlers use `isProposalQueueLiveEvent` from `@watchdog/schemas` for both inbox queue types. | `entity_changed` | `invalidateAfterEntityChanged` | | `evidence_changed` | `invalidateAfterEvidenceMutation` | | `task_changed` | `invalidateAfterTaskMutation` |
 
 Cross-case **Activity** on Dashboard (`recentActivityQuery` / `GET /activity/recent`) has no dedicated SSE type. Soft-invalidate `activityKeys.all` from task / job / proposal / evidence named contracts (same as live Dashboard handlers). Do not invent a workspace-wide SSE channel just for this feed.
 
