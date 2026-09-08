@@ -8,12 +8,14 @@ import {
   updateIdentifierEffect,
 } from "@watchdog/core";
 import {
-  confidenceTierSchema,
-  identifierStatusSchema,
-  identifierTypeSchema,
-  identifierUpdateFieldsSchema,
+  caseScopeInputSchema,
+  createIdentifierInputSchema,
+  deleteIdentifierInputSchema,
+  entityScopeInputSchema,
+  updateIdentifierInputSchema,
 } from "@watchdog/schemas";
 
+import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
 import {
@@ -29,12 +31,7 @@ export const list = authed
     summary: "List identifiers for an entity",
     tags: ["identifiers"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-    })
-  )
+  .input(entityScopeInputSchema)
   .output(z.array(identifierSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -53,7 +50,7 @@ export const listForCase = authed
     summary: "List all identifiers in a case",
     tags: ["identifiers"],
   })
-  .input(z.object({ caseId: z.uuid() }))
+  .input(caseScopeInputSchema)
   .output(z.array(caseIdentifierSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -70,24 +67,13 @@ export const create = graphChildWrite
     successStatus: 201,
   })
   .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-      type: identifierTypeSchema,
-      value: z.string().min(1),
-      confidence: confidenceTierSchema,
-      platform: z.string().optional(),
-      status: identifierStatusSchema.default("unknown"),
-      notes: z.string().optional(),
-      evidenceIds: z.array(z.uuid()).optional(),
-      userOverride: userOverrideSchema,
-    })
+    createIdentifierInputSchema.extend({ userOverride: userOverrideSchema })
   )
   .output(identifierSchema)
   .handler(async ({ input, context }) =>
     runApp(
       createIdentifierEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -101,19 +87,13 @@ export const update = graphChildWrite
     tags: ["identifiers"],
   })
   .input(
-    z
-      .object({
-        caseId: z.uuid(),
-        identifierId: z.uuid(),
-        userOverride: userOverrideSchema,
-      })
-      .extend(identifierUpdateFieldsSchema.shape)
+    updateIdentifierInputSchema.extend({ userOverride: userOverrideSchema })
   )
   .output(identifierSchema)
   .handler(async ({ input, context }) =>
     runApp(
       updateIdentifierEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -127,11 +107,7 @@ export const remove = graphChildWrite
     tags: ["identifiers"],
   })
   .input(
-    z.object({
-      caseId: z.uuid(),
-      identifierId: z.uuid(),
-      userOverride: userOverrideSchema,
-    })
+    deleteIdentifierInputSchema.extend({ userOverride: userOverrideSchema })
   )
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {

@@ -21,7 +21,7 @@ vi.mock("@watchdog/core", async (importOriginal) => {
   };
 });
 
-import { list, remove } from "../identifiers";
+import { create, list, remove, update } from "../identifiers";
 
 const actor = {
   userId: "u1",
@@ -91,5 +91,83 @@ describe("identifiers procedures", () => {
       actor.organizationId,
       identifierId
     );
+  });
+
+  it("rejects whitespace-only identifier values on create", async () => {
+    const client = createRouterClient(
+      { create },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.create({
+        caseId,
+        entityId: "00000000-0000-4000-8000-000000000010",
+        type: "email",
+        value: "   ",
+        confidence: "unverified",
+        userOverride: true,
+      })
+    ).rejects.toMatchObject({
+      message: "Input validation failed",
+    });
+  });
+
+  it("rejects handle identifiers without a platform on create", async () => {
+    const client = createRouterClient(
+      { create },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.create({
+        caseId,
+        entityId: "00000000-0000-4000-8000-000000000010",
+        type: "handle",
+        value: "alice",
+        confidence: "unverified",
+        userOverride: true,
+      })
+    ).rejects.toMatchObject({
+      message: "Input validation failed",
+    });
+  });
+
+  it("rejects an empty identifier update body", async () => {
+    const client = createRouterClient(
+      { update },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.update({
+        caseId,
+        identifierId,
+        userOverride: true,
+      })
+    ).rejects.toMatchObject({
+      message: "Input validation failed",
+      cause: {
+        issues: [{ message: "At least one field is required" }],
+      },
+    });
   });
 });
