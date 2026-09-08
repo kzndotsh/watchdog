@@ -1,7 +1,8 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
+import { MissingCredentialError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchHudsonrockLookupEffect,
@@ -9,6 +10,23 @@ import {
 } from "../hudsonrock";
 
 describe("hudsonrock", () => {
+  it.effect("fetchHudsonrockLookupEffect requires HUDSONROCK_API_KEY", () =>
+    Effect.gen(function* missingKeyGen() {
+      const outcome = yield* Effect.result(
+        fetchHudsonrockLookupEffect(
+          "alice@mailhost.test",
+          "",
+          AbortSignal.timeout(5000)
+        )
+      );
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
+        expect(outcome.failure.slot).toBe("HUDSONROCK_API_KEY");
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
   it("parses empty lookup snapshots", () => {
     const snap = hudsonrockLookupSnapshotSchema.parse({
       query: "alice@mailhost.test",

@@ -2,7 +2,10 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
-import { ValidationVendorError } from "../../errors/tagged-errors";
+import {
+  MissingCredentialError,
+  ValidationVendorError,
+} from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   dehashedEntrySchema,
@@ -26,6 +29,23 @@ function postBodyQuery(
 }
 
 describe("dehashed", () => {
+  it.effect("fetchDehashedLookupEffect requires DEHASHED_API_KEY", () =>
+    Effect.gen(function* missingKeyGen() {
+      const outcome = yield* Effect.result(
+        fetchDehashedLookupEffect(
+          "alice@mailhost.test",
+          "",
+          AbortSignal.timeout(5000)
+        )
+      );
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
+        expect(outcome.failure.slot).toBe("DEHASHED_API_KEY");
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
   it("parses entry and snapshot schemas", () => {
     const entry = dehashedEntrySchema.parse({
       databaseName: "ExampleDump",
