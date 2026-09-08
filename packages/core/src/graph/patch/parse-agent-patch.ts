@@ -1,6 +1,6 @@
 import { Effect, Result } from "effect";
 import { assertPatchShape } from "@watchdog/policy";
-import { trimmedOrNull, type PatchOp } from "@watchdog/schemas";
+import { parseGraphUuidList, trimmedOrNull, type PatchOp } from "@watchdog/schemas";
 
 import { tryParsePatch } from "./patch";
 
@@ -37,11 +37,16 @@ export function parseAgentPatchEffect(input: {
       return { ok: false, error: "patch must not be empty" };
     }
 
+    const evidenceIds = parseGraphUuidList(input.evidenceIds ?? []);
+    if (evidenceIds === null) {
+      return { ok: false, error: "evidenceIds contains an invalid UUID" };
+    }
+
     return {
       ok: true,
       patch: parsed.patch,
       summary: trimmedOrNull(input.summary),
-      evidenceIds: [...new Set(input.evidenceIds)],
+      evidenceIds,
     };
   });
 }

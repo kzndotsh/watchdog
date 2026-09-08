@@ -109,5 +109,32 @@ describe("parse-agent-patch", () => {
     }
   });
 
+  it("parseAgentPatch trims and dedupes evidence ids", () => {
+    const plan = parseAgentPatch({
+      patch: claimPatch(),
+      evidenceIds: [
+        " 22222222-2222-4222-8222-222222222222 ",
+        "22222222-2222-4222-8222-222222222222",
+        "  ",
+      ],
+    });
+    expect(plan.ok).toBe(true);
+    if (plan.ok) {
+      expect(plan.evidenceIds).toEqual([
+        "22222222-2222-4222-8222-222222222222",
+      ]);
+    }
+  });
+
+  it("parseAgentPatch rejects invalid evidence ids", () => {
+    const plan = parseAgentPatch({
+      patch: claimPatch(),
+      evidenceIds: ["22222222-2222-4222-8222-222222222222", "not-a-uuid"],
+    });
+    expect(plan.ok).toBe(false);
+    if (!plan.ok) {
+      expect(plan.error).toMatch(/invalid UUID/i);
+    }
+  });
 });
 
