@@ -107,4 +107,17 @@ describe("interpretWhoisSnapshot", () => {
     expect(result.patch[0]?.data.type).toBe("email");
     expect(result.patch[1]?.resource).toBe("claim");
   });
+
+  it("treats whitespace-only entityId as missing", () => {
+    const soon = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+    const result = interpretWhoisSnapshot({
+      report: { ...fixture, expiresAt: soon },
+      entityId: "   ",
+      claimLabel: "WHOIS",
+      noEntitySummary: "none",
+      nowMs: Date.now(),
+    });
+    expect(result.patch).toEqual([]);
+    expect(result.summary).toBe("none");
+  });
 });
