@@ -48,7 +48,7 @@ describe("whoisxml", () => {
       expect(Result.isFailure(outcome)).toBe(true);
       if (Result.isFailure(outcome)) {
         expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure.slot).toBe("WHOISXML_API_KEY");
+        expect(outcome.failure.slot).toBe("WHOIS_API_KEY");
       }
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );

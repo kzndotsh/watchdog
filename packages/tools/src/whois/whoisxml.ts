@@ -82,7 +82,7 @@ export function fetchWhoisXmlEffect(
   return Effect.gen(function* fetchWhoisXmlGen() {
     const key = apiKey.trim();
     if (!key) {
-      return yield* new MissingCredentialError({ slot: "WHOISXML_API_KEY" });
+      return yield* new MissingCredentialError({ slot: "WHOIS_API_KEY" });
     }
     const url = new URL("https://www.whoisxmlapi.com/whoisserver/WhoisService");
     url.searchParams.set("apiKey", key);
