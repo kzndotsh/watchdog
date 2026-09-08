@@ -123,6 +123,7 @@ export function useJobsWorkspace(
     isError,
     error: detailQueryError,
     refetch: refetchDetail,
+    isFetching: detailFetching,
     isPlaceholderData: detailPlaceholder,
   } = useQuery({
     ...detailQueryOptions,
@@ -137,7 +138,7 @@ export function useJobsWorkspace(
     { enabled: detailQueryEnabled }
   );
   const detailLoadError =
-    selectedId !== null && !detailPending && isError
+    selectedId !== null && !detailPending && !detailFetching && isError
       ? errMessage(detailQueryError, "Failed to load job detail")
       : null;
 

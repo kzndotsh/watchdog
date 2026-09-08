@@ -22,11 +22,17 @@ export function useEvidenceBlob(
     listPending(downloadQuery, { enabled: downloadQueryEnabled }) ||
     listPending(blobQuery, { enabled: blobQueryEnabled });
   const downloadLoadError =
-    !contentPending && downloadQueryEnabled && downloadQuery.isError
+    !contentPending &&
+    !downloadQuery.isFetching &&
+    downloadQueryEnabled &&
+    downloadQuery.isError
       ? errMessage(downloadQuery.error, "Failed to load download URL")
       : null;
   const blobLoadError =
-    !contentPending && blobQueryEnabled && blobQuery.isError
+    !contentPending &&
+    !blobQuery.isFetching &&
+    blobQueryEnabled &&
+    blobQuery.isError
       ? errMessage(blobQuery.error, "Failed to load evidence content")
       : null;
 

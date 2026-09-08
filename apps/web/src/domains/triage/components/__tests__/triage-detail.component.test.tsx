@@ -159,4 +159,32 @@ describe("TriageDetail", () => {
       evidenceLoadError: null,
     });
   });
+
+  it("hides evidence load errors while refetching after a failure", () => {
+    useQueryMock.mockImplementation(() => ({
+      data: [],
+      isFetched: true,
+      isLoading: false,
+      isFetching: true,
+      isError: true,
+      isSuccess: false,
+      isPlaceholderData: false,
+      error: new Error("Active evidence failed"),
+    }));
+
+    render(
+      <TriageDetail
+        proposal={PROPOSAL}
+        caseId={testId(10)}
+        pending={false}
+        error={null}
+        onAccept={vi.fn()}
+        onReject={vi.fn()}
+      />
+    );
+
+    expect(triagePatchBodyProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      evidenceLoadError: null,
+    });
+  });
 });

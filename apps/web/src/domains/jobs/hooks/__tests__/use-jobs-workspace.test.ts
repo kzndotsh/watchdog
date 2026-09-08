@@ -170,6 +170,7 @@ function renderWorkspace({
     data?: JobRecord;
     isFetched: boolean;
     isLoading: boolean;
+    isFetching?: boolean;
     isError: boolean;
     error?: Error;
   };
@@ -287,6 +288,22 @@ describe("useJobsWorkspace", () => {
     expect(result.current.detailPending).toBe(false);
     expect(result.current.detailJob).toBeNull();
     expect(result.current.detailLoadError).toBe("network down");
+  });
+
+  it("hides detailLoadError while refetching after a failure", () => {
+    const { result } = renderWorkspace({
+      jobId: JOB_ID,
+      detailQuery: {
+        data: undefined,
+        isFetched: true,
+        isLoading: false,
+        isFetching: true,
+        isError: true,
+        error: new Error("network down"),
+      },
+    });
+
+    expect(result.current.detailLoadError).toBeNull();
   });
 
   it("does not report detailPending when the detail query is disabled", () => {

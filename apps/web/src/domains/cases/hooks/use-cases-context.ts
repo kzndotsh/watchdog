@@ -26,7 +26,7 @@ export function useCasesContext(options?: UseCasesContextOptions) {
     active: casesCtx?.active ?? null,
     pending,
     loadError:
-      !pending && query.isError
+      !pending && !query.isFetching && query.isError
         ? errMessage(query.error, "Failed to load cases")
         : null,
     retry: () => {

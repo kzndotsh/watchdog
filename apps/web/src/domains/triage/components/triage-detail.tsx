@@ -70,6 +70,8 @@ export function TriageDetail({
     });
   const evidenceLoadError =
     !evidenceLoading &&
+    !activeEvidenceQuery.isFetching &&
+    !hiddenEvidenceQuery.isFetching &&
     (activeEvidenceQuery.isError || hiddenEvidenceQuery.isError)
       ? errMessage(
           activeEvidenceQuery.error ??

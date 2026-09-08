@@ -54,6 +54,23 @@ describe("useCasesContext", () => {
     expect(refetch).toHaveBeenCalled();
   });
 
+  it("hides load errors while refetching after a failure", () => {
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      isFetched: true,
+      isLoading: false,
+      isFetching: true,
+      isError: true,
+      error: new Error("cases down"),
+      isPlaceholderData: false,
+      refetch: vi.fn(),
+    });
+
+    const { result } = renderHook(() => useCasesContext());
+
+    expect(result.current.loadError).toBeNull();
+  });
+
   it("passes silentError meta when requested", () => {
     useQueryMock.mockReturnValue({
       data: { cases: [], active: null },

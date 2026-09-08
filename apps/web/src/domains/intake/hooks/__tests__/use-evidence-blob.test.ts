@@ -181,6 +181,48 @@ describe("useEvidenceBlob", () => {
     expect(result.current.contentLoadError).toBe("blob unavailable");
   });
 
+  it("hides contentLoadError while refetching after a failure", () => {
+    useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
+      const key = options.queryKey ?? [];
+      if (key[0] === "artifact" && key[1] === "evidence") {
+        return {
+          data: undefined,
+          isFetched: true,
+          isLoading: false,
+          isFetching: true,
+          isError: true,
+          error: new Error("blob unavailable"),
+          refetch: vi.fn(),
+        };
+      }
+      if (key[0] === "evidence" && key[2] === "download") {
+        return {
+          data: { url: null },
+          isFetched: true,
+          isLoading: false,
+          isError: false,
+          refetch: vi.fn(),
+        };
+      }
+      return {
+        data: undefined,
+        isFetched: true,
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      };
+    });
+
+    const row = evidence({
+      text: null,
+      uri: "s3://bucket/key",
+      mime: "text/plain",
+    });
+    const { result } = renderHook(() => useEvidenceBlob(testId(10), row));
+
+    expect(result.current.contentLoadError).toBeNull();
+  });
+
   it("defers contentLoadError while the sibling query is still pending", () => {
     useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
       const key = options.queryKey ?? [];
