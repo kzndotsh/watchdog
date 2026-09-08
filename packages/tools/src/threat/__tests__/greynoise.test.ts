@@ -93,4 +93,29 @@ describe("greynoise", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect(
+    "fetchGreynoiseCommunityEffect encodes IPv6 in the request path",
+    () =>
+      Effect.gen(function* fetchGreynoiseIpv6PathGen() {
+        const fetchMock = vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ ip: "2001:db8::1", noise: false }), {
+            status: 200,
+          })
+        );
+        vi.stubGlobal("fetch", fetchMock);
+
+        yield* fetchGreynoiseCommunityEffect(
+          "2001:db8::1",
+          AbortSignal.timeout(5000)
+        );
+
+        expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+          "2001%3Adb8%3A%3A1"
+        );
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

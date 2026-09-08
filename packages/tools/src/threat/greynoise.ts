@@ -57,7 +57,7 @@ export function fetchGreynoiseCommunityEffect(
     if (key) headers.key = key;
 
     const { status, body } = yield* fetchJsonObjectEffect({
-      url: `https://api.greynoise.io/v3/community/${ip}`,
+      url: `https://api.greynoise.io/v3/community/${encodeURIComponent(ip)}`,
       init: {
         method: "GET",
         headers,

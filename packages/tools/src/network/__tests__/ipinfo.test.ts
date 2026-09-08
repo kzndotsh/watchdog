@@ -91,4 +91,28 @@ describe("ipinfo", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect("fetchIpinfoLookupEffect encodes IPv6 in the request path", () =>
+    Effect.gen(function* ipinfoIpv6PathGen() {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ city: "Test" }), { status: 200 })
+        );
+      vi.stubGlobal("fetch", fetchMock);
+
+      yield* fetchIpinfoLookupEffect(
+        "2001:db8::1",
+        "token",
+        AbortSignal.timeout(5000)
+      );
+
+      expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+        "2001%3Adb8%3A%3A1"
+      );
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

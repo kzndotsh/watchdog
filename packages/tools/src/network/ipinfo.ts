@@ -49,7 +49,7 @@ export function fetchIpinfoLookupEffect(
     const ip = yield* normalizeIpEffect(ipRaw);
     const ua = options?.userAgent ?? watchdogUserAgent("network.ipinfo.lookup");
 
-    const url = new URL(`https://ipinfo.io/${ip}/json`);
+    const url = new URL(`https://ipinfo.io/${encodeURIComponent(ip)}/json`);
     url.searchParams.set("token", token);
 
     const { body } = yield* fetchJsonObjectEffect({
