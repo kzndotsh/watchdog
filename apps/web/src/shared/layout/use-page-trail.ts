@@ -41,7 +41,9 @@ export function usePageTrail(): {
     ...casesContextQuery(),
     meta: { silentError: true },
   });
-  const casesLoadError = casesQuery.isError ?? false;
+  const casesPending = listPending(casesQuery);
+  const casesLoadError =
+    !casesPending && !casesQuery.isFetching && casesQuery.isError;
   const activeCase = casesLoadError ? null : (casesQuery.data?.active ?? null);
   const routeCase =
     casesLoadError || params.caseSlug === undefined
@@ -63,8 +65,15 @@ export function usePageTrail(): {
     meta: { silentError: true },
   });
 
+  const entityPending = listPending(entityQuery, {
+    enabled: entityQueryEnabled,
+  });
   const entityLoadError = Boolean(
-    activeCase?.id && params.entitySlug && entityQuery.isError
+    activeCase?.id &&
+    params.entitySlug &&
+    !entityPending &&
+    !entityQuery.isFetching &&
+    entityQuery.isError
   );
 
   let items = buildPageTrail({
@@ -91,12 +100,7 @@ export function usePageTrail(): {
     (casesLoadError &&
       (items.at(-1)?.id === "case" || items.at(-1)?.id === "entity"));
 
-  const pendingLast =
-    entityQueryEnabled &&
-    listPending(entityQuery, {
-      enabled: entityQueryEnabled,
-    }) &&
-    !entityQuery.data;
+  const pendingLast = entityQueryEnabled && entityPending && !entityQuery.data;
 
   return {
     items,

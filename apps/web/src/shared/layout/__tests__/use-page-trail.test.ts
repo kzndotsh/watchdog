@@ -127,6 +127,7 @@ describe("usePageTrail", () => {
           isFetched: true,
           isError: true,
           isLoading: false,
+          isFetching: false,
         };
       }
     );
@@ -136,6 +137,44 @@ describe("usePageTrail", () => {
     expect(result.current.pendingLast).toBe(false);
     expect(result.current.errorLast).toBe(true);
     expect(result.current.items.at(-1)?.label).toBe("Unavailable");
+  });
+
+  it("defers dossier unavailable while entity query refetches", () => {
+    routerStateMock.mockImplementation(
+      ({ select }: { select: (state: unknown) => unknown }) =>
+        select({
+          location: { pathname: "/entities/acme" },
+          matches: [{ params: { entitySlug: "acme" } }],
+        })
+    );
+    useQueryMock.mockImplementation(
+      (query: { queryKey?: readonly unknown[] }) => {
+        if (query.queryKey?.[0] === "cases") {
+          return {
+            data: {
+              active: { id: testId(1), slug: "alpha", name: "Alpha" },
+              cases: [{ id: testId(1), slug: "alpha", name: "Alpha" }],
+            },
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isFetching: false,
+          };
+        }
+        return {
+          data: undefined,
+          isFetched: true,
+          isError: true,
+          isLoading: false,
+          isFetching: true,
+        };
+      }
+    );
+
+    const { result } = renderHook(() => usePageTrail());
+
+    expect(result.current.errorLast).toBe(false);
+    expect(result.current.items.at(-1)?.label).not.toBe("Unavailable");
   });
 
   it("labels the case crumb unavailable when cases context fetch fails", () => {
@@ -154,6 +193,7 @@ describe("usePageTrail", () => {
             isFetched: true,
             isError: true,
             isLoading: false,
+            isFetching: false,
           };
         }
         return {
@@ -187,6 +227,7 @@ describe("usePageTrail", () => {
             isFetched: true,
             isError: true,
             isLoading: false,
+            isFetching: false,
           };
         }
         return {
