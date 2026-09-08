@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { db, graphWritesRepo, type GraphWriteRow } from "@watchdog/db";
 import { trimmedOrNull } from "@watchdog/schemas";
 
+import { requireActorIdEffect } from "../actors/require-actor-id";
 import {
   labelForActor,
   loadActorUsersEffect,
@@ -16,6 +17,7 @@ import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import {
   notifyEntityChangedEffect,
+  notifyEvidenceChangedEffect,
   notifyProposalCreatedEffect,
 } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
@@ -26,8 +28,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { proposeStageEffect } from "../jobs/stages/propose";
-import { suppressKnownFindings } from "./finding-suppress";
+import { suppressAndProposeStageEffect } from "../jobs/stages/propose";
 import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
 
 export interface GraphWriteRecord {
@@ -47,8 +48,10 @@ export function listGraphWritesForCaseEffect(
   organizationId: string
 ): Effect.Effect<GraphWriteRecord[], DomainTag> {
   return Effect.gen(function* listGraphWritesGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() => graphWritesRepo.listForCase(db, caseId));
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const rows = yield* tryDb(() =>
+      graphWritesRepo.listForCase(db, scopedCaseId)
+    );
     const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
     return rows.map((row) => ({
       id: row.id,
@@ -91,6 +94,7 @@ export function createAgentProposalEffect(input: {
   evidenceIds?: string[];
 }): Effect.Effect<{ proposal: ProposalRecord }, DomainTag> {
   return Effect.gen(function* createAgentProposalGen() {
+    const actorId = yield* requireActorIdEffect(input.actorId);
     const plan = yield* parseAgentPatchEffect({
       patch: input.patch,
       summary: input.summary,
@@ -100,39 +104,38 @@ export function createAgentProposalEffect(input: {
       return yield* new InvalidError({ reason: plan.error });
     }
 
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
-    yield* assertEvidenceIdsInCaseEffect(input.caseId, plan.evidenceIds);
-
-    const { kept, suppressed } = yield* tryDb(() =>
-      suppressKnownFindings(input.caseId, plan.patch)
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
     );
-    if (kept.length === 0) {
-      if (suppressed > 0) {
+    yield* assertEvidenceIdsInCaseEffect(scopedCaseId, plan.evidenceIds);
+
+    const proposed = yield* suppressAndProposeStageEffect({
+      caseId: scopedCaseId,
+      patch: plan.patch,
+      resultSummary: plan.summary,
+      attachEvidenceIds: plan.evidenceIds,
+      agentSourced: true,
+      createdBy: actorId,
+    });
+
+    if (proposed.kept.length === 0) {
+      if (proposed.suppressedCount > 0) {
         return yield* new ConflictError({
-          reason: `All ${suppressed} finding(s) already known or previously rejected — no Proposal`,
+          reason: `All ${proposed.suppressedCount} finding(s) already known or previously rejected — no Proposal`,
         });
       }
       return yield* new InvalidError({ reason: "patch produced no findings" });
     }
-
-    const proposed = yield* proposeStageEffect({
-      caseId: input.caseId,
-      kept,
-      suppressed,
-      resultSummary: plan.summary,
-      attachEvidenceIds: plan.evidenceIds,
-      agentSourced: true,
-      createdBy: input.actorId,
-    });
 
     if (proposed.proposalId === null || proposed.proposalId === "") {
       return yield* new InvalidError({ reason: "Failed to create Proposal" });
     }
 
     const proposalId = proposed.proposalId;
-    yield* notifyProposalCreatedEffect(input.caseId, proposalId);
+    yield* notifyProposalCreatedEffect(scopedCaseId, proposalId);
 
-    const proposal = yield* getProposalForCaseEffect(input.caseId, proposalId);
+    const proposal = yield* getProposalForCaseEffect(scopedCaseId, proposalId);
     if (!proposal) {
       return yield* new NotFoundError({
         resource: "Proposal created but not readable",
@@ -160,8 +163,9 @@ export function writeGraphFromAgentEffect(input: {
       });
     }
 
-    const users = yield* loadActorUsersEffect([input.actorId]);
-    const actorLabel = labelForActor(input.actorId, users, input.actorLabel);
+    const actorId = yield* requireActorIdEffect(input.actorId);
+    const users = yield* loadActorUsersEffect([actorId]);
+    const actorLabel = labelForActor(actorId, users, input.actorLabel);
 
     const plan = yield* parseAgentPatchEffect({
       patch: input.patch,
@@ -172,15 +176,18 @@ export function writeGraphFromAgentEffect(input: {
       return yield* new InvalidError({ reason: plan.error });
     }
 
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
-    yield* assertEvidenceIdsInCaseEffect(input.caseId, plan.evidenceIds);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    yield* assertEvidenceIdsInCaseEffect(scopedCaseId, plan.evidenceIds);
 
     const idempotencyKey = trimmedOrNull(input.idempotencyKey);
     if (idempotencyKey !== null) {
       const existingId = yield* tryDb(() =>
         findGraphWriteByIdempotency({
-          caseId: input.caseId,
-          actorId: input.actorId,
+          caseId: scopedCaseId,
+          actorId,
           idempotencyKey,
         })
       );
@@ -202,9 +209,9 @@ export function writeGraphFromAgentEffect(input: {
 
           if (plan.summary !== null && plan.summary !== "") {
             const attestation = yield* createAttestationEffect({
-              caseId: input.caseId,
+              caseId: scopedCaseId,
               text: plan.summary,
-              actorId: input.actorId,
+              actorId,
               label: "Agent graph write",
               tx,
             });
@@ -213,8 +220,8 @@ export function writeGraphFromAgentEffect(input: {
 
           const write = yield* tryDb(() =>
             graphWritesRepo.create(tx, {
-              caseId: input.caseId,
-              actorId: input.actorId,
+              caseId: scopedCaseId,
+              actorId,
               actorLabel: input.actorLabel ?? null,
               channel: "agent_write",
               userOverridden: true,
@@ -232,7 +239,7 @@ export function writeGraphFromAgentEffect(input: {
           }
 
           yield* applyPatchEffect({
-            caseId: input.caseId,
+            caseId: scopedCaseId,
             patch: plan.patch,
             confidence: "unverified",
             sharedEvidenceIds,
@@ -262,8 +269,8 @@ export function writeGraphFromAgentEffect(input: {
           }
           const existingId = yield* tryDb(() =>
             findGraphWriteByIdempotency({
-              caseId: input.caseId,
-              actorId: input.actorId,
+              caseId: scopedCaseId,
+              actorId,
               idempotencyKey,
             })
           );
@@ -284,7 +291,10 @@ export function writeGraphFromAgentEffect(input: {
     );
 
     if (!result.replayed) {
-      yield* notifyEntityChangedEffect(input.caseId);
+      yield* notifyEntityChangedEffect(scopedCaseId);
+      if (plan.summary !== null && plan.summary !== "") {
+        yield* notifyEvidenceChangedEffect(scopedCaseId);
+      }
     }
 
     return result;

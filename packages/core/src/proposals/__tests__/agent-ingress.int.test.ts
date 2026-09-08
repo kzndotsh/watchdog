@@ -104,6 +104,36 @@ describe("writeGraphFromAgent", () => {
     expect(rows).toHaveLength(0);
   });
 
+  it("rejects blank actorId", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(23) });
+
+    await expect(
+      runDomain(
+        writeGraphFromAgentEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          actorId: "   ",
+          actorLabel: TEST_ACTOR_ID,
+          userOverride: true,
+          patch: [
+            buildClaimCreateOp(entity.id, "Should not write", {
+              id: testId(33),
+            }),
+          ],
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) =>
+        DomainError.is(error) &&
+        error.code === "invalid" &&
+        error.message === "actorId is required"
+    );
+
+    const rows = await graphWritesRepo.listForCase(db, cased.id);
+    expect(rows).toHaveLength(0);
+  });
+
   describe("concurrency", () => {
     it("returns the same writeId when two calls share a key", async () => {
       const cased = await seedCase(db);

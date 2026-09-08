@@ -11,27 +11,44 @@ import type {
   PatchOp,
   ProposalStatus,
 } from "@watchdog/schemas";
-import { trimmedOrNull } from "@watchdog/schemas";
+import {
+  normalizeUuidList,
+  parseGraphUuidList,
+  patchOpRelatedEntityIds,
+  trimmedOrNull,
+  trimmedOrUndefined,
+} from "@watchdog/schemas";
 
+import { requireActorIdEffect } from "../actors/require-actor-id";
 import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
+import { buildEntityDisplayMaps } from "../entities/entity-display";
 import {
   assertEvidenceIdsInCaseEffect,
   createAttestationEffect,
+  parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
 import {
   loadIdentifierCollisionsEffect,
   type IdentifierCollision,
 } from "../graph/identifier-collisions";
 import { applyPatchEffect } from "../graph/patch/apply-patch";
-import { assertCaseInOrgEffect } from "../graph/patch/guards";
-import { notifyEntityChangedEffect } from "../infra/events";
+import {
+  assertCaseInOrgEffect,
+  requireTrimmedGraphId,
+} from "../graph/patch/guards";
+import {
+  notifyEntityChangedEffect,
+  notifyEvidenceChangedEffect,
+  notifyProposalQueueChangedEffect,
+} from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
+  InvalidError,
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
@@ -42,6 +59,7 @@ export interface ProposalRecord {
   caseId: string;
   jobId: string | null;
   capabilityId: string | null;
+  playbookId: string | null;
   status: ProposalStatus;
   patch: PatchOp[];
   summary: string | null;
@@ -66,6 +84,10 @@ export interface ProposalRecord {
   entityNames?: Record<string, string>;
   /** entityId → dossier slug map for display links */
   entitySlugs?: Record<string, string>;
+  /** entityId → summary text for queue search */
+  entitySummaries?: Record<string, string>;
+  /** entityId → notes text for queue search */
+  entityNotes?: Record<string, string>;
   /** Identifier ops whose type+value already exist on another Entity. */
   identifierCollisions?: IdentifierCollision[];
 }
@@ -73,37 +95,44 @@ export interface ProposalRecord {
 function entityIdsFromPatch(patch: PatchOp[]): Set<string> {
   const entityIds = new Set<string>();
   for (const op of patch) {
-    const d = op.data as Record<string, unknown>;
-    if (typeof d.entityId === "string") entityIds.add(d.entityId);
-    if (typeof d.fromId === "string") entityIds.add(d.fromId);
-    if (typeof d.toId === "string") entityIds.add(d.toId);
+    for (const entityId of patchOpRelatedEntityIds(op)) {
+      entityIds.add(entityId);
+    }
   }
   return entityIds;
 }
 
 function loadEntityDisplayMapsEffect(
+  caseId: string,
   entityIds: Iterable<string>
 ): Effect.Effect<
   {
     entityNames: Record<string, string>;
     entitySlugs: Record<string, string>;
+    entitySummaries: Record<string, string>;
+    entityNotes: Record<string, string>;
   },
   DomainTag
 > {
   const ids = [...entityIds];
   if (ids.length === 0) {
-    return Effect.succeed({ entityNames: {}, entitySlugs: {} });
+    return Effect.succeed({
+      entityNames: {},
+      entitySlugs: {},
+      entitySummaries: {},
+      entityNotes: {},
+    });
   }
-  return tryDb(() => entitiesRepo.listNamesByIds(db, ids)).pipe(
-    Effect.map((ents) => {
-      const entityNames: Record<string, string> = {};
-      const entitySlugs: Record<string, string> = {};
-      for (const e of ents) {
-        entityNames[e.id] = e.name;
-        entitySlugs[e.id] = e.slug;
-      }
-      return { entityNames, entitySlugs };
-    })
+  return tryDb(() => entitiesRepo.listNamesByIdsInCase(db, caseId, ids)).pipe(
+    Effect.map((ents) => buildEntityDisplayMaps(ents))
+  );
+}
+
+function normalizePatchForWire(patch: PatchOp[]): PatchOp[] {
+  return patch.map((op) =>
+    op.evidenceIds === undefined
+      ? op
+      : { ...op, evidenceIds: normalizeUuidList(op.evidenceIds) }
   );
 }
 
@@ -112,7 +141,10 @@ function toRecord(
   opts?: {
     entityNames?: Record<string, string>;
     entitySlugs?: Record<string, string>;
+    entitySummaries?: Record<string, string>;
+    entityNotes?: Record<string, string>;
     capabilityId?: string | null;
+    playbookId?: string | null;
     identifierCollisions?: IdentifierCollision[];
     users?: ReadonlyMap<string, { name: string; email: string }>;
   }
@@ -123,11 +155,12 @@ function toRecord(
     caseId: row.caseId,
     jobId: row.jobId,
     capabilityId: opts?.capabilityId ?? null,
+    playbookId: opts?.playbookId ?? null,
     status: row.status,
-    patch: row.patch,
+    patch: normalizePatchForWire(row.patch),
     summary: row.summary,
     suppressedCount: row.suppressedCount,
-    evidenceIds: row.evidenceIds ?? [],
+    evidenceIds: normalizeUuidList(row.evidenceIds ?? []),
     rejectReason: row.rejectReason,
     decidedBy: row.decidedBy,
     decidedByLabel: row.decidedBy ? labelForActor(row.decidedBy, users) : null,
@@ -139,8 +172,57 @@ function toRecord(
     createdByLabel: row.createdBy ? labelForActor(row.createdBy, users) : null,
     entityNames: opts?.entityNames ?? {},
     entitySlugs: opts?.entitySlugs ?? {},
+    entitySummaries: opts?.entitySummaries ?? {},
+    entityNotes: opts?.entityNotes ?? {},
     identifierCollisions: opts?.identifierCollisions ?? [],
   };
+}
+
+function enrichProposalRecordEffect(
+  proposal: ProposalRow,
+  linked?: {
+    capabilityId: string | null;
+    playbookId: string | null;
+  }
+): Effect.Effect<ProposalRecord, DomainTag> {
+  return Effect.gen(function* enrichProposalRecordGen() {
+    let capabilityId: string | null = null;
+    let playbookId: string | null = null;
+    if (linked) {
+      capabilityId = linked.capabilityId;
+      playbookId = linked.playbookId;
+    } else {
+      const joined = yield* tryDb(() =>
+        proposalsRepo.getInCase(db, proposal.caseId, proposal.id)
+      );
+      capabilityId = joined?.capabilityId ?? null;
+      playbookId = joined?.playbookId ?? null;
+    }
+
+    const { entityNames, entitySlugs, entitySummaries, entityNotes } =
+      yield* loadEntityDisplayMapsEffect(
+        proposal.caseId,
+        entityIdsFromPatch(proposal.patch)
+      );
+    const collisionsByIndex = yield* loadIdentifierCollisionsEffect(
+      proposal.caseId,
+      [proposal.patch]
+    );
+    const users = yield* loadActorUsersEffect([
+      proposal.createdBy,
+      proposal.decidedBy,
+    ]);
+    return toRecord(proposal, {
+      entityNames,
+      entitySlugs,
+      entitySummaries,
+      entityNotes,
+      capabilityId,
+      playbookId,
+      identifierCollisions: collisionsByIndex[0] ?? [],
+      users,
+    });
+  });
 }
 
 export function listProposalsForCaseEffect(
@@ -149,9 +231,9 @@ export function listProposalsForCaseEffect(
   opts?: { status?: ProposalStatus }
 ): Effect.Effect<ProposalRecord[], DomainTag> {
   return Effect.gen(function* listProposalsForCaseGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const rows = yield* tryDb(() =>
-      proposalsRepo.listForCase(db, caseId, opts)
+      proposalsRepo.listForCase(db, scopedCaseId, opts)
     );
 
     const entityIds = new Set<string>();
@@ -161,27 +243,26 @@ export function listProposalsForCaseEffect(
       }
     }
 
-    const { entityNames, entitySlugs } =
-      yield* loadEntityDisplayMapsEffect(entityIds);
+    const { entityNames, entitySlugs, entitySummaries, entityNotes } =
+      yield* loadEntityDisplayMapsEffect(scopedCaseId, entityIds);
 
     const collisionsByIndex = yield* loadIdentifierCollisionsEffect(
-      caseId,
+      scopedCaseId,
       rows.map(({ proposal }) => proposal.patch)
     );
 
     const users = yield* loadActorUsersEffect(
-      rows.flatMap(({ proposal }) =>
-        [proposal.createdBy, proposal.decidedBy].filter(
-          (id): id is string => typeof id === "string" && id !== ""
-        )
-      )
+      rows.flatMap(({ proposal }) => [proposal.createdBy, proposal.decidedBy])
     );
 
-    return rows.map(({ proposal, capabilityId }, i) =>
+    return rows.map(({ proposal, capabilityId, playbookId }, i) =>
       toRecord(proposal, {
         entityNames,
         entitySlugs,
+        entitySummaries,
+        entityNotes,
         capabilityId,
+        playbookId,
         identifierCollisions: collisionsByIndex[i] ?? [],
         users,
       })
@@ -194,27 +275,18 @@ export function getProposalForCaseEffect(
   proposalId: string
 ): Effect.Effect<ProposalRecord | null, DomainTag> {
   return Effect.gen(function* getProposalForCaseGen() {
+    const scopedCaseId = yield* requireTrimmedGraphId(caseId, "Case not found");
+    const normalizedProposalId = yield* requireTrimmedGraphId(
+      proposalId,
+      "Proposal not found"
+    );
     const row = yield* tryDb(() =>
-      proposalsRepo.getInCase(db, caseId, proposalId)
+      proposalsRepo.getInCase(db, scopedCaseId, normalizedProposalId)
     );
     if (!row) return null;
-    const collisionsByIndex = yield* loadIdentifierCollisionsEffect(caseId, [
-      row.proposal.patch,
-    ]);
-    const { entityNames, entitySlugs } = yield* loadEntityDisplayMapsEffect(
-      entityIdsFromPatch(row.proposal.patch)
-    );
-    const users = yield* loadActorUsersEffect(
-      [row.proposal.createdBy, row.proposal.decidedBy].filter(
-        (id): id is string => typeof id === "string" && id !== ""
-      )
-    );
-    return toRecord(row.proposal, {
-      entityNames,
-      entitySlugs,
+    return yield* enrichProposalRecordEffect(row.proposal, {
       capabilityId: row.capabilityId,
-      identifierCollisions: collisionsByIndex[0] ?? [],
-      users,
+      playbookId: row.playbookId,
     });
   });
 }
@@ -229,12 +301,23 @@ export function acceptProposalEffect(input: {
   attestationText?: string;
 }): Effect.Effect<ProposalRecord, DomainTag> {
   return Effect.gen(function* acceptProposalGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
-    const shared = [...new Set(input.sharedEvidenceIds)];
+    const actorId = yield* requireActorIdEffect(input.actorId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const proposalId = yield* requireTrimmedGraphId(
+      input.proposalId,
+      "Proposal not found"
+    );
+    const shared = yield* parseGraphEvidenceIdsEffect(
+      input.sharedEvidenceIds ?? []
+    );
+    const attestationText = trimmedOrUndefined(input.attestationText);
     const updated = yield* transact((tx) =>
       Effect.gen(function* acceptProposalTx() {
         const pending = yield* tryDb(() =>
-          proposalsRepo.lockInCase(tx, input.caseId, input.proposalId)
+          proposalsRepo.lockInCase(tx, scopedCaseId, proposalId)
         );
         if (!pending) {
           return yield* new NotFoundError({ resource: "Proposal not found" });
@@ -245,33 +328,60 @@ export function acceptProposalEffect(input: {
           });
         }
 
-        yield* assertEvidenceIdsInCaseEffect(input.caseId, shared, tx);
-
+        const proposalEvidenceParsed = parseGraphUuidList(
+          pending.evidenceIds ?? []
+        );
+        if (proposalEvidenceParsed === null) {
+          return yield* new InvalidError({
+            reason: "Proposal evidenceIds contains an invalid UUID",
+          });
+        }
+        const proposalEvidence = proposalEvidenceParsed;
+        for (const op of pending.patch) {
+          const raw = op.evidenceIds ?? [];
+          const hasNonEmpty = raw.some(
+            (id) => typeof id === "string" && id.trim() !== ""
+          );
+          if (!hasNonEmpty) continue;
+          if (parseGraphUuidList(raw) === null) {
+            return yield* new InvalidError({
+              reason: "Proposal patch contains an invalid evidence id",
+            });
+          }
+        }
         const sharedInTx = [...shared];
-        const attestationText = input.attestationText?.trim();
-        if (attestationText !== undefined && attestationText !== "") {
+        if (attestationText !== undefined) {
           const attestation = yield* createAttestationEffect({
-            caseId: input.caseId,
+            caseId: scopedCaseId,
             text: attestationText,
-            actorId: input.actorId,
+            actorId,
             tx,
           });
           sharedInTx.push(attestation.id);
         }
 
+        const allShared = parseGraphUuidList([
+          ...sharedInTx,
+          ...proposalEvidence,
+        ]);
+        if (allShared === null) {
+          return yield* new InvalidError({
+            reason: "One or more Evidence ids are invalid",
+          });
+        }
+        yield* assertEvidenceIdsInCaseEffect(scopedCaseId, allShared, tx);
+
         yield* applyPatchEffect({
-          caseId: input.caseId,
+          caseId: scopedCaseId,
           patch: pending.patch,
           confidence: input.confidence,
-          sharedEvidenceIds: [
-            ...new Set([...sharedInTx, ...(pending.evidenceIds ?? [])]),
-          ],
+          sharedEvidenceIds: allShared,
           tx,
         });
 
         const accepted = yield* tryDb(() =>
-          proposalsRepo.accept(tx, input.proposalId, {
-            decidedBy: input.actorId,
+          proposalsRepo.accept(tx, scopedCaseId, proposalId, {
+            decidedBy: actorId,
             decidedAt: new Date(),
           })
         );
@@ -284,13 +394,12 @@ export function acceptProposalEffect(input: {
         return accepted;
       })
     );
-    yield* notifyEntityChangedEffect(input.caseId);
-    const users = yield* loadActorUsersEffect(
-      [updated.createdBy, updated.decidedBy].filter(
-        (id): id is string => typeof id === "string" && id !== ""
-      )
-    );
-    return toRecord(updated, { users });
+    yield* notifyEntityChangedEffect(scopedCaseId);
+    yield* notifyProposalQueueChangedEffect(scopedCaseId);
+    if (attestationText !== undefined) {
+      yield* notifyEvidenceChangedEffect(scopedCaseId);
+    }
+    return yield* enrichProposalRecordEffect(updated);
   });
 }
 
@@ -302,25 +411,33 @@ export function rejectProposalEffect(input: {
   reason?: string;
 }): Effect.Effect<ProposalRecord, DomainTag> {
   return Effect.gen(function* rejectProposalGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
-    return yield* transact((tx) =>
+    const actorId = yield* requireActorIdEffect(input.actorId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const proposalId = yield* requireTrimmedGraphId(
+      input.proposalId,
+      "Proposal not found"
+    );
+    const rejected = yield* transact((tx) =>
       Effect.gen(function* rejectProposalTx() {
         const existing = yield* tryDb(() =>
-          proposalsRepo.lockInCase(tx, input.caseId, input.proposalId)
+          proposalsRepo.lockInCase(tx, scopedCaseId, proposalId)
         );
         if (!existing) {
           return yield* new NotFoundError({ resource: "Proposal not found" });
         }
 
-        const rejected = yield* tryDb(() =>
-          proposalsRepo.reject(tx, input.caseId, input.proposalId, {
+        const row = yield* tryDb(() =>
+          proposalsRepo.reject(tx, scopedCaseId, proposalId, {
             rejectReason: trimmedOrNull(input.reason),
-            decidedBy: input.actorId,
+            decidedBy: actorId,
             decidedAt: new Date(),
           })
         );
 
-        if (!rejected) {
+        if (!row) {
           return yield* new ConflictError({
             reason: `Proposal is already ${existing.status}`,
           });
@@ -328,21 +445,17 @@ export function rejectProposalEffect(input: {
 
         yield* tryDb(() =>
           recordRejectedFingerprints({
-            caseId: input.caseId,
-            proposalId: rejected.id,
-            patch: rejected.patch,
+            caseId: scopedCaseId,
+            proposalId: row.id,
+            patch: row.patch,
             tx,
           })
         );
 
-        return toRecord(rejected, {
-          users: yield* loadActorUsersEffect(
-            [rejected.createdBy, rejected.decidedBy].filter(
-              (id): id is string => typeof id === "string" && id !== ""
-            )
-          ),
-        });
+        return row;
       })
     );
+    yield* notifyProposalQueueChangedEffect(scopedCaseId);
+    return yield* enrichProposalRecordEffect(rejected);
   });
 }

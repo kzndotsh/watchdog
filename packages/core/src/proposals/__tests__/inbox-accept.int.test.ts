@@ -4,6 +4,7 @@ import {
   DomainError,
   acceptProposalEffect,
   createAgentProposalEffect,
+  listProposalsForCaseEffect,
   rejectProposalEffect,
   runDomain,
 } from "@watchdog/core";
@@ -14,9 +15,10 @@ import {
   evidenceRepo,
   findingSuppressionsRepo,
   identifiersRepo,
+  proposals,
   proposalsRepo,
 } from "@watchdog/db";
-import { fingerprintPatchOp } from "@watchdog/schemas";
+import { fingerprintPatchOp, entityDisplayLabel } from "@watchdog/schemas";
 import {
   TEST_ACTOR_ID,
   buildClaimCreateOp,
@@ -55,6 +57,9 @@ describe("acceptProposal", () => {
       })
     );
     expect(accepted.status).toBe("accepted");
+    expect(accepted.entityNames?.[entity.id]).toBe(
+      entityDisplayLabel({ name: entity.name, slug: entity.slug })
+    );
 
     const claims = await claimsRepo.listForEntity(db, entity.id);
     expect(claims.some((row) => row.text === "Ada observed a host")).toBe(true);
@@ -141,6 +146,46 @@ describe("acceptProposal", () => {
       })
     );
     expect(rejected.status).toBe("rejected");
+  });
+
+  it("rejects blank actorId on accept and reject", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(25) });
+    const { id: proposalId } = await seedProposal(db, cased.id, [
+      buildClaimCreateOp(entity.id, "Actor gate", { id: testId(38) }),
+    ]);
+
+    await expect(
+      runDomain(
+        acceptProposalEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          proposalId,
+          actorId: "   ",
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) =>
+        DomainError.is(error) &&
+        error.code === "invalid" &&
+        error.message === "actorId is required"
+    );
+
+    await expect(
+      runDomain(
+        rejectProposalEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          proposalId,
+          actorId: "   ",
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) =>
+        DomainError.is(error) &&
+        error.code === "invalid" &&
+        error.message === "actorId is required"
+    );
   });
 
   it("records reject fingerprints so the next propose is a conflict", async () => {
@@ -247,6 +292,31 @@ describe("acceptProposal", () => {
     expect(links.get(claimId)).toEqual([evidence.id]);
   });
 
+  it("ignores whitespace-only attestation text on accept", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(64) });
+    const claimId = testId(65);
+    const { id: proposalId } = await seedProposal(db, cased.id, [
+      buildClaimCreateOp(entity.id, "No attestation", { id: claimId }),
+    ]);
+
+    await runDomain(
+      acceptProposalEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        proposalId,
+        actorId: TEST_ACTOR_ID,
+        confidence: "unverified",
+        attestationText: "   ",
+      })
+    );
+
+    const evidence = await evidenceRepo.listForCase(db, cased.id);
+    expect(evidence.some((row) => row.kind === "attestation")).toBe(false);
+    const links = await evidenceLinksRepo.listForClaims(db, [claimId]);
+    expect(links.get(claimId) ?? []).toEqual([]);
+  });
+
   it("creates attestation evidence from the accept summary paste", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(29) });
@@ -351,5 +421,102 @@ describe("acceptProposal", () => {
         expect(wrote).toBe(false);
       }
     });
+  });
+
+  it("rejects accept when stored proposal evidenceIds are invalid", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(63) });
+    const [row] = await db
+      .insert(proposals)
+      .values({
+        caseId: cased.id,
+        status: "pending",
+        patch: [buildClaimCreateOp(entity.id, "observed", { id: testId(64) })],
+        evidenceIds: ["not-a-uuid"],
+        suppressedCount: 0,
+        agentSourced: false,
+        userOverridden: false,
+      })
+      .returning({ id: proposals.id });
+
+    await expect(
+      runDomain(
+        acceptProposalEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          proposalId: row.id,
+          actorId: TEST_ACTOR_ID,
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) =>
+        DomainError.is(error) &&
+        error.code === "invalid" &&
+        error.message === "Proposal evidenceIds contains an invalid UUID"
+    );
+  });
+
+  it("rejects accept when stored patch op evidenceIds are invalid", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(65) });
+    const [row] = await db
+      .insert(proposals)
+      .values({
+        caseId: cased.id,
+        status: "pending",
+        patch: [
+          buildClaimCreateOp(entity.id, "observed", {
+            id: testId(66),
+            evidenceIds: ["not-a-uuid"],
+          }),
+        ],
+        evidenceIds: [],
+        suppressedCount: 0,
+        agentSourced: false,
+        userOverridden: false,
+      })
+      .returning({ id: proposals.id });
+
+    await expect(
+      runDomain(
+        acceptProposalEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          proposalId: row.id,
+          actorId: TEST_ACTOR_ID,
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) =>
+        DomainError.is(error) &&
+        error.code === "invalid" &&
+        error.message === "Proposal patch contains an invalid evidence id"
+    );
+  });
+});
+
+describe("listProposalsForCase", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("normalizes padded evidence ids on proposal wire records", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(60) });
+    const evidenceId = testId(61);
+    await seedEvidence(db, cased.id, { id: evidenceId });
+    const op = buildClaimCreateOp(entity.id, "observed", {
+      id: testId(62),
+      evidenceIds: [`  ${evidenceId}  `],
+    });
+    await seedProposal(db, cased.id, [op], {
+      evidenceIds: [`  ${evidenceId}  `],
+    });
+
+    const listed = await runDomain(
+      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID)
+    );
+    expect(listed[0]?.evidenceIds).toEqual([evidenceId]);
+    expect(listed[0]?.patch[0]?.evidenceIds).toEqual([evidenceId]);
   });
 });

@@ -7,19 +7,28 @@ import {
   identifiersRepo,
   proposalsRepo,
   questionsRepo,
+  type DbExec,
   type DbTx,
 } from "@watchdog/db";
 import { isOneOf } from "@watchdog/policy";
 import {
-  EDGE_PREDICATES,
   IDENTIFIER_TYPES,
+  edgePatchFingerprintKey,
   fingerprintPatchOp,
+  normalizeUuidList,
   normalizeIdentifierPlatform,
+  normalizeIdentifierTypeInput,
   normalizeIdentifierValue,
+  patchOpEntityId,
+  patchOpRelatedEntityIds,
+  parseTrimmedCaseId,
+  slugifyName,
+  trimmedOrUndefined,
   type PatchOp,
 } from "@watchdog/schemas";
 
 function markExistingInGraph(
+  exec: DbExec,
   caseId: string,
   fps: { op: PatchOp; fp: string }[],
   known: Set<string>
@@ -67,16 +76,15 @@ function markExistingInGraph(
     }
 
     if (identifierOps.length > 0) {
-      const entityIds = [
-        ...new Set(
-          identifierOps
-            .map((x) => x.op.data.entityId)
-            .filter((id): id is string => typeof id === "string")
-        ),
-      ];
+      const entityIds = normalizeUuidList(
+        identifierOps.flatMap((x) => {
+          const entityId = patchOpEntityId(x.op);
+          return entityId === undefined ? [] : [entityId];
+        })
+      );
       if (entityIds.length > 0) {
         const rows = await identifiersRepo.listNaturalKeysInCase(
-          db,
+          exec,
           caseId,
           entityIds
         );
@@ -85,10 +93,21 @@ function markExistingInGraph(
         );
         for (const { op, fp } of identifierOps) {
           const d = op.data;
-          const entityId = typeof d.entityId === "string" ? d.entityId : null;
-          const typeRaw = typeof d.type === "string" ? d.type : null;
-          const valueRaw = typeof d.value === "string" ? d.value : null;
-          if (entityId === null || typeRaw === null || valueRaw === null)
+          const entityId = patchOpEntityId(op);
+          const typeRaw =
+            typeof d.type === "string"
+              ? normalizeIdentifierTypeInput(d.type)
+              : undefined;
+          const valueRaw =
+            typeof d.value === "string"
+              ? trimmedOrUndefined(d.value)
+              : undefined;
+          if (
+            entityId === undefined ||
+            typeRaw === undefined ||
+            typeRaw === "" ||
+            valueRaw === undefined
+          )
             continue;
           if (!isOneOf(typeRaw, IDENTIFIER_TYPES)) continue;
           const type = typeRaw;
@@ -105,23 +124,29 @@ function markExistingInGraph(
     }
 
     if (claimOps.length > 0) {
-      const entityIds = [
-        ...new Set(
-          claimOps
-            .map((x) => x.op.data.entityId)
-            .filter((id): id is string => typeof id === "string")
-        ),
-      ];
+      const entityIds = normalizeUuidList(
+        claimOps.flatMap((x) => {
+          const entityId = patchOpEntityId(x.op);
+          return entityId === undefined ? [] : [entityId];
+        })
+      );
       if (entityIds.length > 0) {
-        const rows = await claimsRepo.listTextKeysInCase(db, caseId, entityIds);
-        const keys = new Set(rows.map((r) => `${r.entityId}\0${r.text}`));
+        const rows = await claimsRepo.listTextKeysInCase(
+          exec,
+          caseId,
+          entityIds
+        );
+        const keys = new Set(
+          rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
+        );
         for (const { op, fp } of claimOps) {
-          const entityId =
-            typeof op.data.entityId === "string" ? op.data.entityId : null;
+          const entityId = patchOpEntityId(op);
           const text =
-            typeof op.data.text === "string" ? op.data.text.trim() : null;
+            typeof op.data.text === "string"
+              ? (trimmedOrUndefined(op.data.text)?.toLowerCase() ?? null)
+              : null;
           if (
-            entityId !== null &&
+            entityId !== undefined &&
             text !== null &&
             keys.has(`${entityId}\0${text}`)
           ) {
@@ -132,56 +157,72 @@ function markExistingInGraph(
     }
 
     if (edgeOps.length > 0) {
-      const fromIds = [
-        ...new Set(
-          edgeOps
-            .map((x) => x.op.data.fromId)
-            .filter((id): id is string => typeof id === "string")
-        ),
-      ];
-      if (fromIds.length > 0) {
-        const rows = await edgesRepo.listNaturalKeysInCase(db, caseId, fromIds);
+      const entityIds = normalizeUuidList(
+        edgeOps.flatMap((x) => patchOpRelatedEntityIds(x.op))
+      );
+      if (entityIds.length > 0) {
+        const rows = await edgesRepo.listNaturalKeysInCase(
+          exec,
+          caseId,
+          entityIds
+        );
         const keys = new Set(
-          rows.map((r) => `${r.fromId}\0${r.toId}\0${r.predicate}`)
+          rows
+            .map((row) =>
+              edgePatchFingerprintKey({
+                fromId: row.fromId,
+                toId: row.toId,
+                predicate: row.predicate,
+                notes: row.notes,
+              })
+            )
+            .filter((key): key is string => key !== null)
         );
         for (const { op, fp } of edgeOps) {
-          const fromId =
-            typeof op.data.fromId === "string" ? op.data.fromId : null;
-          const toId = typeof op.data.toId === "string" ? op.data.toId : null;
-          const predicateRaw =
-            typeof op.data.predicate === "string" ? op.data.predicate : null;
-          if (fromId === null || toId === null || predicateRaw === null)
-            continue;
-          if (!isOneOf(predicateRaw, EDGE_PREDICATES)) {
-            continue;
-          }
-          if (keys.has(`${fromId}\0${toId}\0${predicateRaw}`)) known.add(fp);
+          const key = edgePatchFingerprintKey({
+            fromId:
+              typeof op.data.fromId === "string"
+                ? (parseTrimmedCaseId(op.data.fromId) ?? "")
+                : "",
+            toId:
+              typeof op.data.toId === "string"
+                ? (parseTrimmedCaseId(op.data.toId) ?? "")
+                : "",
+            predicate:
+              typeof op.data.predicate === "string"
+                ? (trimmedOrUndefined(op.data.predicate) ?? "")
+                : "",
+            notes: op.data.notes,
+          });
+          if (key !== null && keys.has(key)) known.add(fp);
         }
       }
     }
 
     if (questionOps.length > 0) {
-      const entityIds = [
-        ...new Set(
-          questionOps
-            .map((x) => x.op.data.entityId)
-            .filter((id): id is string => typeof id === "string")
-        ),
-      ];
+      const entityIds = normalizeUuidList(
+        questionOps.flatMap((x) => {
+          const entityId = patchOpEntityId(x.op);
+          return entityId === undefined ? [] : [entityId];
+        })
+      );
       if (entityIds.length > 0) {
         const rows = await questionsRepo.listTextKeysInCase(
-          db,
+          exec,
           caseId,
           entityIds
         );
-        const keys = new Set(rows.map((r) => `${r.entityId}\0${r.text}`));
+        const keys = new Set(
+          rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
+        );
         for (const { op, fp } of questionOps) {
-          const entityId =
-            typeof op.data.entityId === "string" ? op.data.entityId : null;
+          const entityId = patchOpEntityId(op);
           const text =
-            typeof op.data.text === "string" ? op.data.text.trim() : null;
+            typeof op.data.text === "string"
+              ? (trimmedOrUndefined(op.data.text)?.toLowerCase() ?? null)
+              : null;
           if (
-            entityId !== null &&
+            entityId !== undefined &&
             text !== null &&
             keys.has(`${entityId}\0${text}`)
           ) {
@@ -196,18 +237,20 @@ function markExistingInGraph(
         ...new Set(
           entityOps
             .map((x) =>
-              typeof x.op.data.slug === "string" ? x.op.data.slug.trim() : null
+              typeof x.op.data.slug === "string"
+                ? slugifyName(x.op.data.slug)
+                : null
             )
-            .filter((s): s is string => Boolean(s))
+            .filter((s): s is string => s !== "")
         ),
       ];
       if (slugs.length > 0) {
-        const rows = await entitiesRepo.listSlugsInCase(db, caseId, slugs);
+        const rows = await entitiesRepo.listSlugsInCase(exec, caseId, slugs);
         const keys = new Set(rows.map((r) => r.slug));
         for (const { op, fp } of entityOps) {
           const slug =
-            typeof op.data.slug === "string" ? op.data.slug.trim() : null;
-          if (slug !== null && keys.has(slug)) known.add(fp);
+            typeof op.data.slug === "string" ? slugifyName(op.data.slug) : "";
+          if (slug !== "" && keys.has(slug)) known.add(fp);
         }
       }
     }
@@ -220,7 +263,8 @@ function markExistingInGraph(
  */
 export function suppressKnownFindings(
   caseId: string,
-  patch: PatchOp[]
+  patch: PatchOp[],
+  exec: DbExec = db
 ): Promise<{ kept: PatchOp[]; suppressed: number }> {
   if (patch.length === 0) {
     return Promise.resolve({ kept: [], suppressed: 0 });
@@ -238,7 +282,7 @@ export function suppressKnownFindings(
     const fpList = fps.map((x) => x.fp).filter((x): x is string => Boolean(x));
     if (fpList.length > 0) {
       const fingerprints = await findingSuppressionsRepo.listFingerprints(
-        db,
+        exec,
         caseId,
         fpList
       );
@@ -246,7 +290,7 @@ export function suppressKnownFindings(
     }
 
     // Pending proposals
-    const pending = await proposalsRepo.listPendingPatches(db, caseId);
+    const pending = await proposalsRepo.listPendingPatches(exec, caseId);
     for (const row of pending) {
       for (const op of row.patch) {
         const fp = fingerprintPatchOp(op);
@@ -256,6 +300,7 @@ export function suppressKnownFindings(
 
     // Graph existence
     await markExistingInGraph(
+      exec,
       caseId,
       fps.filter((x): x is { op: PatchOp; fp: string } => Boolean(x.fp)),
       known
