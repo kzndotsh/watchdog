@@ -38,7 +38,7 @@ Vendored shadcn overlays live in `shared/ui/shadcn/`. **Dialog** is Watchdog-cus
 | Primitive | Use when | Watchdog contract |
 | --- | --- | --- |
 | **Dialog** (`dialog.tsx`) | Create/edit forms, multi-field flows, dismissible overlays (Cases New Case, task form, dossier edit, bulk add) | `rounded-md`; `bg-card` + `border-border` + `shadow-lg` (not `popover` + ring); scrim `bg-background/75`; dense `p-3` / `gap-3`; title `text-heading-section`; description `text-copy-sm`; header `gap-1 pr-7` (close inset); footer plain `flex` + `gap-1.5` — **sm** buttons (`h-7` / `text-xs`), **no** full-width `border-t` chrome bar; motion `duration-(--duration-panel)`; default `sm:max-w-md` (override per surface, e.g. bulk add `max-w-5xl`) |
-| **AlertDialog** | Blocking confirm, medium-stakes cancel (`DestructiveConfirmDialog` for irreversible) | Stock shadcn layout (footer chrome bar retained) |
+| **AlertDialog** | Blocking confirm, medium-stakes cancel (`DestructiveConfirmDialog` for irreversible) | Stock shadcn layout (footer chrome bar); description `text-copy-sm` |
 | **Sheet** | Right-side notes / long editors | Slide-over; shares popover palette |
 | **Popover** | Filters, compact pickers, table cells | Dense `p-2.5`; set `modal` when clicks must not pass through rows |
 

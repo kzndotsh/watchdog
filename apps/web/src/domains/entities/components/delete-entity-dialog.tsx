@@ -59,7 +59,7 @@ export function DeleteEntityDialog({
       title="Delete entity"
       description={
         displayName
-          ? `Delete “${displayName}” and its identifiers, claims, events, connections, and questions. Evidence and tasks stay in the Case but lose this subject link.`
+          ? `Deletes ${displayName} and all graph content tied to it. Evidence and tasks remain in the Case.`
           : undefined
       }
       confirmLabel="Delete entity"

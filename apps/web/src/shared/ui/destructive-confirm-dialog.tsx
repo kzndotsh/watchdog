@@ -86,8 +86,8 @@ export function DestructiveConfirmDialog({
         onOpenChange(next);
       }}
     >
-      <AlertDialogContent className={cn("gap-5 sm:max-w-md", className)}>
-        <div className="flex flex-col gap-1.5 text-left">
+      <AlertDialogContent className={cn("gap-3 sm:max-w-xl", className)}>
+        <div className="flex flex-col gap-2.5 text-left">
           <AlertDialogTitle className="flex items-center gap-2">
             {media ? (
               <span className="bg-destructive/10 text-destructive inline-flex size-8 shrink-0 items-center justify-center rounded-md *:size-4">

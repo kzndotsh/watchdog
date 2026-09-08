@@ -42,7 +42,7 @@ describe("DeleteEntityDialog", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /Delete “Alpha Entity” and its identifiers, claims, events, connections, and questions/
+        /Deletes Alpha Entity and all graph content tied to it\. Evidence and tasks remain in the Case\./
       )
     ).toBeInTheDocument();
     expect(screen.getByText(/cannot be undone/i)).toBeInTheDocument();
@@ -61,6 +61,6 @@ describe("DeleteEntityDialog", () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText(/Delete “unnamed-host”/)).toBeInTheDocument();
+    expect(screen.getByText(/Deletes unnamed-host/)).toBeInTheDocument();
   });
 });
