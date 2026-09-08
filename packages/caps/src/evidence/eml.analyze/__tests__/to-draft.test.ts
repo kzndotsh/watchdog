@@ -32,4 +32,26 @@ describe("emlAnalyzeToDraft", () => {
     ).toBe(true);
     expect(draft.claims[0]?.text).toMatch(/Hello/);
   });
+
+  it("drops invalid harvested emails and urls from the draft", () => {
+    const draft = emlAnalyzeToDraft({
+      evidenceId: testId(41),
+      queriedAt: "2026-01-01T00:00:00.000Z",
+      headers: {},
+      from: null,
+      to: null,
+      subject: null,
+      messageId: null,
+      date: null,
+      receivedChain: [],
+      urls: ["ftp://bad.example", "https://mailhost.test/note"],
+      emails: ["not-an-email", "ada@mailhost.test"],
+      bodyPreview: null,
+    });
+    expect(draft.identifiers).toHaveLength(2);
+    expect(draft.identifiers).toEqual([
+      { type: "email", value: "ada@mailhost.test" },
+      { type: "url", value: "https://mailhost.test/note" },
+    ]);
+  });
 });

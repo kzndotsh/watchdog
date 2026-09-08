@@ -3,7 +3,6 @@ import { randomUUID } from "node:crypto";
 import { isEmptyDraft, type ProcessExtractDraft } from "@watchdog/ai";
 import {
   normalizeIdentifierPlatform,
-  normalizeIdentifierValue,
   parseTrimmedCaseId,
   trimmedOrUndefined,
   validateIdentifierWrite,
@@ -11,11 +10,11 @@ import {
   type PatchOp,
 } from "@watchdog/schemas";
 
-import { eligibleCtDomains } from "../../lib/collect/eligible-domain-hosts";
 import {
   INVALID_COLLECT_ENTITY_SUMMARY,
   resolveCollectEntityId,
 } from "../../lib/collect/resolve-collect-entity-id";
+import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 
 export interface DraftToPatchOpsCtx {
   evidenceId: string;
@@ -79,11 +78,7 @@ function identifierValueForDraft(
   type: IdentifierType,
   raw: string
 ): string | null {
-  if (type === "domain") {
-    const [host] = eligibleCtDomains([raw]);
-    return host ?? null;
-  }
-  return normalizeIdentifierValue(type, raw);
+  return validatedIdentifierValue(type, raw);
 }
 
 function identifierToPatchOp(

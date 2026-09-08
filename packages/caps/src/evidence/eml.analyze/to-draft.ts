@@ -1,18 +1,29 @@
 import type { ProcessExtractDraft } from "@watchdog/ai";
 import type { EmlAnalyzeSnapshot } from "@watchdog/tools";
 
+import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
+
+function draftIdentifier(
+  type: "email" | "url",
+  value: string
+): ProcessExtractDraft["identifiers"][number] | null {
+  const validated = validatedIdentifierValue(type, value);
+  if (validated === null) return null;
+  return { type, value: validated };
+}
+
 export function emlAnalyzeToDraft(
   snap: EmlAnalyzeSnapshot
 ): ProcessExtractDraft {
   const identifiers: ProcessExtractDraft["identifiers"] = [
-    ...snap.emails.map((value) => ({
-      type: "email" as const,
-      value,
-    })),
-    ...snap.urls.map((value) => ({
-      type: "url" as const,
-      value,
-    })),
+    ...snap.emails.flatMap((value) => {
+      const row = draftIdentifier("email", value);
+      return row === null ? [] : [row];
+    }),
+    ...snap.urls.flatMap((value) => {
+      const row = draftIdentifier("url", value);
+      return row === null ? [] : [row];
+    }),
   ];
   const claims: ProcessExtractDraft["claims"] = [
     {
