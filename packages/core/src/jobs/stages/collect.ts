@@ -24,13 +24,21 @@ import { tryDb } from "../../infra/postgres-effect";
 import { logSwallowed } from "../../infra/process-log";
 import {
   domainMessageOf,
+  InvalidError,
   NotFoundError,
   type DomainTag,
 } from "../../infra/tagged-errors";
 import { getCredentialEffect, hasCredentialEffect } from "../../infra/vault";
 import { hashCapInput, lookupCapCacheEffect } from "../cap-cache";
 import { artifactsHaveCapReport } from "../load-cap-report";
-import { inputString, linkedEvidenceId, type JobLog } from "./helpers";
+import {
+  inputGraphUuid,
+  inputGraphUuidStrict,
+  inputString,
+  linkedEvidenceId,
+  parseStoredJobEvidenceIds,
+  type JobLog,
+} from "./helpers";
 import type { PreflightState } from "./preflight";
 
 export interface CollectRuntime {
@@ -61,17 +69,27 @@ function packSnapshotIfNeededEffect(
     const none: EvidenceSnapshot | undefined = undefined;
     return Effect.succeed(none);
   }
-  const evidenceId = inputString(state.input, "evidenceId");
-  if (evidenceId === undefined || evidenceId === "") {
-    return Effect.die(
-      new Error("jobPolicy.needsEvidenceSnapshot requires input.evidenceId")
-    );
+  const rawEvidence = inputGraphUuid(state.input, "evidenceId");
+  if (rawEvidence === undefined) {
+    const present = inputString(state.input, "evidenceId") !== undefined;
+    return new InvalidError({
+      reason: present
+        ? "input.evidenceId must be a valid UUID"
+        : "jobPolicy.needsEvidenceSnapshot requires input.evidenceId",
+    });
   }
-  const entityId = inputString(state.input, "entityId");
+  const evidenceId = rawEvidence;
+  const entityParsed = inputGraphUuidStrict(state.input, "entityId");
+  if (entityParsed === null) {
+    return new InvalidError({
+      reason: "input.entityId must be a valid UUID",
+    });
+  }
+  const entityId = entityParsed;
   return packEvidenceSnapshotEffect({
     caseId: state.job.caseId,
     evidenceId,
-    ...(entityId !== undefined && entityId !== "" ? { entityId } : {}),
+    ...(entityId === undefined ? {} : { entityId }),
   }).pipe(
     Effect.tap((snapshot) =>
       Effect.sync(() => {
@@ -212,14 +230,19 @@ function lookupCacheHitEffect(
       return null;
     }
     const artifacts = hit.artifacts;
-    const evidenceIds = [...(hit.evidenceIds ?? [])];
+    const evidenceParsed = parseStoredJobEvidenceIds(hit.evidenceIds);
+    if (!evidenceParsed.ok) {
+      jobLog.log("cache hit skipped — evidence ids invalid");
+      return null;
+    }
+    const evidenceIds = evidenceParsed.ids;
     jobLog.log(
       `cache hit (ttl=${cacheTtlMs}ms) — reusing artifacts from prior Job${
         hit.jobId === null ? "" : ` ${hit.jobId}`
       }`
     );
     yield* tryDb(() =>
-      jobsRepo.update(db, state.jobId, {
+      jobsRepo.updateInCase(db, state.job.caseId, state.jobId, {
         output: artifacts,
         evidenceIds,
         logs: jobLog.lines,
