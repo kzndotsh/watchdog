@@ -2,14 +2,24 @@ import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
-import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas";
+import {
+  MAX_UPLOAD_BYTES,
+  confirmFileUploadInputSchema,
+  mimeInputSchema,
+  presignUploadInputSchema,
+  sha256HexSchema,
+} from "@watchdog/schemas";
 
 import { api } from "./client";
+import { fail } from "./io";
+import { pickDefined } from "./noun";
 
 const PUT_TIMEOUT_MINUTES = 5;
 const SECONDS_PER_MINUTE = 60;
 const MS_PER_SECOND = 1000;
 const PUT_TIMEOUT_MS = PUT_TIMEOUT_MINUTES * SECONDS_PER_MINUTE * MS_PER_SECOND;
+
+const UPLOAD_HELP = ["wd evidence file -c <caseId> <path>"];
 
 const MIME_BY_EXT: Record<string, string> = {
   ".csv": "text/csv",
@@ -29,9 +39,9 @@ const MIME_BY_EXT: Record<string, string> = {
 };
 
 function guessMime(filePath: string, override?: string): string {
-  const trimmedOverride = override?.trim();
-  if (trimmedOverride !== undefined && trimmedOverride !== "")
-    return trimmedOverride;
+  if (override !== undefined) {
+    return mimeInputSchema.parse(override);
+  }
   const ext = path.extname(filePath).toLowerCase();
   return MIME_BY_EXT[ext] ?? "application/octet-stream";
 }
@@ -50,27 +60,47 @@ async function readEvidenceFile(filePath: string): Promise<Buffer> {
         ? String(error.code)
         : "";
     if (code === "ENOENT") {
-      throw new Error(`File not found: ${filePath}`, { cause: error });
+      fail("USAGE", `File not found: ${filePath}`, { help: UPLOAD_HELP });
     }
-    throw error;
+    const message =
+      error instanceof Error ? error.message : "failed to read file metadata";
+    fail("UPLOAD_FAILED", message, { help: UPLOAD_HELP });
   }
 
   if (!info.isFile()) {
-    throw new Error(`Not a file: ${filePath}`);
+    fail("USAGE", `Not a file: ${filePath}`, { help: UPLOAD_HELP });
   }
   if (info.size < 1) {
-    throw new Error("File is empty");
+    fail("USAGE", "File is empty", { help: UPLOAD_HELP });
   }
   if (info.size > MAX_UPLOAD_BYTES) {
-    throw new Error(`File exceeds ${MAX_UPLOAD_BYTES} byte limit`);
+    fail("USAGE", `File exceeds ${MAX_UPLOAD_BYTES} byte limit`, {
+      help: UPLOAD_HELP,
+    });
   }
 
-  const buf = await readFile(filePath);
+  let buf: Buffer;
+  try {
+    buf = await readFile(filePath);
+  } catch (error) {
+    const code =
+      error !== null && typeof error === "object" && "code" in error
+        ? String(error.code)
+        : "";
+    if (code === "ENOENT") {
+      fail("USAGE", `File not found: ${filePath}`, { help: UPLOAD_HELP });
+    }
+    const message =
+      error instanceof Error ? error.message : "failed to read file";
+    fail("UPLOAD_FAILED", message, { help: UPLOAD_HELP });
+  }
   if (buf.byteLength < 1) {
-    throw new Error("File is empty");
+    fail("USAGE", "File is empty", { help: UPLOAD_HELP });
   }
   if (buf.byteLength > MAX_UPLOAD_BYTES) {
-    throw new Error(`File exceeds ${MAX_UPLOAD_BYTES} byte limit`);
+    fail("USAGE", `File exceeds ${MAX_UPLOAD_BYTES} byte limit`, {
+      help: UPLOAD_HELP,
+    });
   }
   return buf;
 }
@@ -90,13 +120,15 @@ export async function uploadEvidenceFile(input: UploadEvidenceFileInput) {
   const name = path.basename(input.path);
   const byteLength = buf.byteLength;
 
-  const put = await api().evidence.presign({
+  const presign = presignUploadInputSchema.parse({
     caseId: input.caseId,
     sha256,
     mime,
     byteLength,
     name,
   });
+
+  const put = await api().evidence.presign(presign);
 
   let res: Response;
   try {
@@ -115,30 +147,33 @@ export async function uploadEvidenceFile(input: UploadEvidenceFileInput) {
     }
     const cause =
       error instanceof Error ? error.message : "unknown connection error";
-    throw new Error(
+    return fail(
+      "UPLOAD_FAILED",
       `MinIO upload failed (cannot reach ${host}): ${cause}. Presigned URLs use the server's S3_ENDPOINT, not WD_API_URL.`,
-      { cause: error }
+      { help: UPLOAD_HELP }
     );
   }
 
   if (!res.ok) {
-    throw new Error(`MinIO upload failed (${res.status})`);
+    return fail("UPLOAD_FAILED", `MinIO upload failed (${res.status})`, {
+      help: UPLOAD_HELP,
+    });
   }
 
   try {
-    return await api().evidence.confirmFile({
-      caseId: input.caseId,
-      uri: put.uri,
-      sha256: put.sha256,
-      mime: put.mime,
-      byteLength: put.byteLength,
-      ...(input.label !== undefined && input.label !== ""
-        ? { label: input.label }
-        : {}),
-      ...(input.entityId !== undefined && input.entityId !== ""
-        ? { entityId: input.entityId }
-        : {}),
-    });
+    return await api().evidence.confirmFile(
+      confirmFileUploadInputSchema.parse({
+        caseId: input.caseId,
+        uri: put.uri,
+        sha256: put.sha256,
+        mime: put.mime,
+        byteLength: put.byteLength,
+        ...pickDefined({
+          label: input.label,
+          entityId: input.entityId,
+        }),
+      })
+    );
   } catch (error) {
     const hint =
       `Confirm failed — object may be orphaned in MinIO. Retry with matching metadata:\n` +
@@ -146,6 +181,7 @@ export async function uploadEvidenceFile(input: UploadEvidenceFileInput) {
       `  sha256=${put.sha256}\n` +
       `  mime=${put.mime}\n` +
       `  byteLength=${put.byteLength}`;
-    throw new Error(hint, { cause: error });
+    const detail = error instanceof Error ? error.message : String(error);
+    return fail("UPLOAD_FAILED", `${hint}\n${detail}`, { help: UPLOAD_HELP });
   }
 }

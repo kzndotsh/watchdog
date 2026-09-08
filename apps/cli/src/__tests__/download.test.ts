@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import { describe, expect, it, vi } from "vitest";
 
 const fsMocks = vi.hoisted(() => ({
@@ -51,5 +53,26 @@ describe("downloadToFile", () => {
       "/tmp/case-export.zip",
       Buffer.from("payload")
     );
+  });
+
+  it("falls back to cwd filename when outPath is whitespace-only", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response("payload", {
+          status: 200,
+          headers: {
+            "content-disposition": 'attachment; filename="case-export.zip"',
+          },
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const outPath = await downloadToFile({
+      urlPath: "/cases/case-1/export.zip",
+      outPath: "   ",
+      fallbackFilename: "fallback.zip",
+    });
+
+    expect(outPath).toBe(path.join(process.cwd(), "case-export.zip"));
   });
 });

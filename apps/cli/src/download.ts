@@ -69,9 +69,10 @@ export async function downloadToFile(
     res.headers.get("content-disposition"),
     input.fallbackFilename
   );
+  const outPathArg = input.outPath?.trim();
   const outPath =
-    input.outPath !== undefined && input.outPath !== ""
-      ? input.outPath
+    outPathArg !== undefined && outPathArg !== ""
+      ? outPathArg
       : path.join(process.cwd(), filename);
 
   const buf = Buffer.from(await res.arrayBuffer());
