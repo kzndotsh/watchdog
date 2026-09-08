@@ -9,6 +9,7 @@ import { normalizeIp, normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { expandIpv6 } from "../network/ip-lookup-cymru";
 
 export const fireholLookupSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -78,10 +79,14 @@ export function parseIpv6ExactLine(line: string): string | null {
     slash === -1 ? 128 : Math.trunc(Number(trimmed.slice(slash + 1)));
   if (!isIPv6(addr) || prefix !== 128) return null;
   try {
-    return normalizeIp(addr);
+    return expandIpv6(normalizeIp(addr));
   } catch {
     return null;
   }
+}
+
+function fireholIpv6Key(ip: string): string {
+  return expandIpv6(ip);
 }
 
 function ipInCidrList(ipInt: number, entries: CidrEntry[]): boolean {
@@ -150,7 +155,11 @@ export function fetchFireholLookupEffect(
     if (isIPv4(ip)) {
       found = ipInCidrList(ipv4ToInt(ip), list.v4);
     } else if (isIPv6(ip)) {
-      found = list.v6.has(ip);
+      try {
+        found = list.v6.has(fireholIpv6Key(ip));
+      } catch {
+        found = list.v6.has(ip);
+      }
     }
 
     return fireholLookupSnapshotSchema.parse({

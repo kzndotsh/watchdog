@@ -3,12 +3,14 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { normalizeIp } from "../../dns/reverse.ts";
+import { expandIpv6 } from "../../network/ip-lookup-cymru.ts";
 import { isRecord } from "../../parse/coerce.ts";
 import { parseTxtAnswer } from "../cymru-mhr.ts";
 import { parseDshieldBody } from "../dshield.ts";
 import { parseFeodoEntries } from "../feodo.ts";
 import { parseIpv6ExactLine } from "../firehol.ts";
-import { parseGreedybearIocValues } from "../greedybear.ts";
+import { parseGreedybearIocValues, greedybearIocKey } from "../greedybear.ts";
 import { hashlookupSnapshotSchema } from "../hashlookup.ts";
 
 function loadFixture(name: string): unknown {
@@ -59,6 +61,15 @@ describe("greedybear parse", () => {
     expect(values.has("1.2.3.4")).toBe(true);
     expect(values.has("evil.example")).toBe(true);
   });
+
+  it("canonicalizes equivalent IPv6 spellings", () => {
+    const values = parseGreedybearIocValues({
+      iocs: [{ value: "2001:db8::1" }],
+    });
+    expect(
+      values?.has(greedybearIocKey("2001:0db8:0000:0000:0000:0000:0000:0001"))
+    ).toBe(true);
+  });
 });
 
 describe("feodo parse", () => {
@@ -75,6 +86,17 @@ describe("firehol parse", () => {
   it("keeps exact IPv6 /128 rows", () => {
     expect(parseIpv6ExactLine("2001:db8::1")).not.toBeNull();
     expect(parseIpv6ExactLine("2001:db8::/32")).toBeNull();
+  });
+
+  it("stores expanded IPv6 keys for membership checks", () => {
+    const key = parseIpv6ExactLine("2001:db8::1");
+    expect(key).toBe(expandIpv6("2001:db8::1"));
+    const set = new Set([key]);
+    expect(
+      set.has(
+        expandIpv6(normalizeIp("2001:0db8:0000:0000:0000:0000:0000:0001"))
+      )
+    ).toBe(true);
   });
 });
 
