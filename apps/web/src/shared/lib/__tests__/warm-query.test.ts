@@ -34,4 +34,17 @@ describe("warm-query", () => {
     await Promise.resolve();
     expect(client.query).toHaveBeenCalledOnce();
   });
+
+  it("logs non-cancellation errors from warmEnsureQueryData", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const client = {
+      query: vi.fn().mockRejectedValue(new Error("network down")),
+    } as unknown as QueryClient;
+
+    warmEnsureQueryData(client, { queryKey: ["test"] });
+    await vi.waitUntil(() => errorSpy.mock.calls.length > 0);
+
+    expect(errorSpy).toHaveBeenCalledWith("[warm-query]", expect.any(Error));
+    errorSpy.mockRestore();
+  });
 });

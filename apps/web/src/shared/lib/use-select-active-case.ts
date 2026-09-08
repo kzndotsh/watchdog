@@ -2,7 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
-import type { CaseRecord } from "@/domains/cases/types";
+import {
+  setActiveCaseIdInputSchema,
+  type CaseRecord,
+} from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import {
   finalizeActiveCaseSwitch,
@@ -10,6 +13,7 @@ import {
   optimisticActiveCaseSwitch,
   rollbackActiveCaseSwitch,
 } from "@/shared/lib/active-case-switch";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
 type NavigateFn = (opts: {
   to: string;
@@ -31,7 +35,9 @@ export function useSelectActiveCase(input: {
 
   return useMutation({
     mutationFn: async (caseId: string) => {
-      await setActiveCaseIdFn({ data: { caseId } });
+      await setActiveCaseIdFn({
+        data: setActiveCaseIdInputSchema.parse({ caseId }),
+      });
       return caseId;
     },
     onMutate: async (caseId) =>
@@ -41,7 +47,12 @@ export function useSelectActiveCase(input: {
       toast.error(errMessage(err, "Failed to switch case"));
     },
     onSuccess: async (caseId, _vars, ctx) => {
-      const next = ctx?.next ?? input.cases.find((c) => c.id === caseId);
+      const scopedCaseId = parseOptionalTrimmedUuid(caseId);
+      const next =
+        ctx?.next ??
+        (scopedCaseId === undefined
+          ? undefined
+          : input.cases.find((c) => c.id === scopedCaseId));
       if (next && input.navigateToOverview && input.navigate) {
         await input.navigate({
           to: "/cases/$caseSlug",

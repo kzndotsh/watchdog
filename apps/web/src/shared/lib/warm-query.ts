@@ -36,7 +36,8 @@ async function swallowCancelled(promise: Promise<unknown>): Promise<void> {
   } catch (error: unknown) {
     // Fire-and-forget warm: CancelledError is expected on SSR/HMR teardown.
     if (!isCancelledError(error)) {
-      /* ignore */
+      // oxlint-disable-next-line effecttsgo/global-console -- browser prefetch diagnostics; covered by warm-query.test.ts
+      console.error("[warm-query]", error);
     }
   }
 }

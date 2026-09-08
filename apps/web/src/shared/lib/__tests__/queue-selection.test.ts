@@ -16,4 +16,14 @@ describe("resolveQueueSelection", () => {
       resolveQueueSelection("new", [{ id: "a" }], { holdMissingUrlId: true })
     ).toBe("new");
   });
+
+  it("trims padded URL ids before matching rows", () => {
+    expect(resolveQueueSelection("  b  ", [{ id: "a" }, { id: "b" }])).toBe(
+      "b"
+    );
+  });
+
+  it("treats whitespace-only URL id as absent", () => {
+    expect(resolveQueueSelection("   ", [{ id: "a" }])).toBe("a");
+  });
 });

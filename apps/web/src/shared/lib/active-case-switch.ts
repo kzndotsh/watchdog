@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
 import { isCaseOverviewPath } from "./case-path";
 import { invalidateAfterCaseSwitch } from "./query-invalidation";
@@ -12,7 +13,9 @@ export function optimisticActiveCaseSwitch(
   cases: CaseRecord[],
   caseId: string
 ): Promise<{ prev: CasesContext | undefined; next: CaseRecord | undefined }> {
-  const next = cases.find((c) => c.id === caseId);
+  const scopedId = parseOptionalTrimmedUuid(caseId);
+  const next =
+    scopedId === undefined ? undefined : cases.find((c) => c.id === scopedId);
   if (!next) {
     return Promise.resolve({ prev: undefined, next: undefined });
   }
@@ -73,7 +76,10 @@ export function navigateAfterActiveCaseSwitch(input: {
       })
     ).then(() => {});
   }
-  if (input.pathname === "/tasks" && input.entityId) {
+  if (
+    input.pathname === "/tasks" &&
+    parseOptionalTrimmedUuid(input.entityId) !== undefined
+  ) {
     return Promise.resolve(
       input.navigate({ to: "/tasks", search: {}, replace: true })
     ).then(() => {});

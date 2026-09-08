@@ -19,9 +19,11 @@ vi.mock("@/shared/lib/active-case-switch", () => ({
 
 import { useSelectActiveCase } from "../use-select-active-case";
 
+const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
+
 const cases: CaseRecord[] = [
   {
-    id: "case-1",
+    id: CASE_ID,
     name: "Alpha",
     slug: "alpha",
     description: null,
@@ -44,11 +46,11 @@ describe("useSelectActiveCase", () => {
       ),
     });
 
-    result.current.mutate("case-1");
+    result.current.mutate(CASE_ID);
 
     await waitFor(() => {
       expect(setActiveCaseIdFn).toHaveBeenCalledWith({
-        data: { caseId: "case-1" },
+        data: { caseId: CASE_ID },
       });
     });
   });

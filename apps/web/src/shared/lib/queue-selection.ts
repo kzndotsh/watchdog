@@ -11,9 +11,16 @@ export function resolveQueueSelection(
   rows: readonly { id: string }[],
   opts?: { holdMissingUrlId?: boolean }
 ): string | null {
-  if (urlId !== undefined) {
-    if (rows.some((r) => r.id === urlId)) return urlId;
-    if (opts?.holdMissingUrlId) return urlId;
+  const normalizedUrlId =
+    urlId === undefined
+      ? undefined
+      : (() => {
+          const trimmed = urlId.trim();
+          return trimmed === "" ? undefined : trimmed;
+        })();
+  if (normalizedUrlId !== undefined) {
+    if (rows.some((r) => r.id === normalizedUrlId)) return normalizedUrlId;
+    if (opts?.holdMissingUrlId) return normalizedUrlId;
   }
   return rows[0]?.id ?? null;
 }
