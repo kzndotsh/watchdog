@@ -52,6 +52,27 @@ describe("interpret", () => {
     expect(claimText(result, 1)).toMatch(/LinkedIn/);
   });
 
+  it("summarizes truncated breach samples with (+N more)", () => {
+    const breaches = Array.from({ length: 15 }, (_, index) => ({
+      name: `Breach${index}`,
+      title: `Breach ${index}`,
+      domain: "example.com",
+      breachDate: "2020-01-01",
+      pwnCount: 1,
+      dataClasses: ["Email addresses"],
+    }));
+    const result = interpretHibpLookupReport(
+      {
+        ...fixture,
+        breachCount: 15,
+        breaches,
+      },
+      { input: { email: "bob@example.com", entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/15 breach\(es\)/);
+    expect(claimText(result, 1)).toMatch(/\+3 more/);
+  });
+
   itRejectsIncompleteReport(
     hibpLookup,
     { email: "a@b.com" },
