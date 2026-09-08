@@ -499,7 +499,20 @@ export type { SearchCaseInput, SearchCaseResult } from "./search";
 export type { PlaybookSeedInput } from "./playbook-seed";
 export { playbookSeedInputSchema } from "./playbook-seed";
 
-export { hostSeedSchema, ipSeedSchema } from "./cap-seed";
+export {
+  breachQuerySeedSchema,
+  dehashedQuerySeedSchema,
+  emailSeedSchema,
+  githubHandleSeedSchema,
+  hashSeedSchema,
+  hostSeedSchema,
+  iocIndicatorSeedSchema,
+  ipOrHostSeedSchema,
+  ipSeedSchema,
+  keybaseQuerySeedSchema,
+  threatfoxQuerySeedSchema,
+  urlhausQuerySeedSchema,
+} from "./cap-seed";
 
 export {
   SEARCH_MIN_QUERY_LENGTH,
