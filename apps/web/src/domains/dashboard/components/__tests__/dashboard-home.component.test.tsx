@@ -49,30 +49,27 @@ vi.mock("@/domains/dashboard/components/recent-activity", () => ({
   RecentActivity: () => <div>Recent activity panel</div>,
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
-const useSuspenseQueriesMock = vi.hoisted(() => vi.fn());
+const useCasesContextMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
-    useSuspenseQueries: (options: { queries: unknown[] }) =>
-      useSuspenseQueriesMock(options),
-  };
-});
+vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
+  useCasesContext: () => useCasesContextMock(),
+}));
 
 import { DashboardHome } from "@/domains/dashboard/components/dashboard-home";
 
 function renderDashboard(active: null | { id: string }) {
-  useSuspenseQueriesMock.mockReturnValue([
-    {
-      data: {
-        cases: active ? [{ id: active.id, slug: "alpha", name: "Alpha" }] : [],
-        active,
-      },
+  useCasesContextMock.mockReturnValue({
+    casesCtx: {
+      cases: active ? [{ id: active.id, slug: "alpha", name: "Alpha" }] : [],
+      active,
     },
-  ]);
+    cases: active ? [{ id: active.id, slug: "alpha", name: "Alpha" }] : [],
+    active,
+    pending: false,
+    loadError: null,
+    retry: vi.fn(),
+    placeholder: false,
+  });
 
   const client = new QueryClient();
   return render(
@@ -97,6 +94,6 @@ describe("DashboardHome", () => {
     expect(
       screen.getByText(/Select a Case in the sidebar to see pending proposals/)
     ).toBeVisible();
-    expect(useSuspenseQueriesMock).toHaveBeenCalled();
+    expect(useCasesContextMock).toHaveBeenCalled();
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord } from "@/domains/jobs/types";
 import type { TaskRecord } from "@/domains/tasks/types";
 import { testId } from "@watchdog/test-kit";
 
@@ -36,6 +36,20 @@ function job(status: JobListRecord["status"]): JobListRecord {
 }
 
 describe("dashboard selectors", () => {
+  it("counts live jobs by queue entry, not raw step rows", () => {
+    const runId = testId(14);
+    const playbookSteps: JobListRecord[] = [0, 1].map((step) => ({
+      ...job("queued"),
+      id: testId(20 + step),
+      playbookRunId: runId,
+      playbookId: "host-footprint-lite",
+      playbookStep: step,
+      status: step === 1 ? "running" : "succeeded",
+    }));
+    expect(countLiveJobs([job("queued"), job("succeeded")])).toBe(1);
+    expect(countLiveJobs(playbookSteps)).toBe(1);
+  });
+
   it("counts live jobs and due tasks", () => {
     expect(countLiveJobs([job("queued"), job("succeeded")])).toBe(1);
     const overdue: TaskRecord = {

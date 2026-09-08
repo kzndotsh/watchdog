@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 
 import { isTaskDueOverdue } from "@/domains/tasks/lib/due-date";
 import type { TaskRecord } from "@/domains/tasks/types";
+import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { cn } from "@/lib/utils";
-import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
@@ -39,7 +39,7 @@ function TriageBody({
   return (
     <ul className="border-border divide-border divide-y overflow-hidden rounded-md border">
       {proposals.map((p) => {
-        const summary = p.summary?.trim();
+        const title = proposalTitle(p);
         return (
           <li key={p.id}>
             <Link
@@ -48,13 +48,7 @@ function TriageBody({
               className="hover:bg-muted/40 flex items-start justify-between gap-3 px-3 py-2.5 text-sm transition-colors"
             >
               <span className="min-w-0">
-                {summary ? (
-                  <span className="line-clamp-2 font-medium">{summary}</span>
-                ) : (
-                  <span className="font-medium">
-                    Proposal <IdChip value={p.id} />
-                  </span>
-                )}
+                <span className="line-clamp-2 font-medium">{title}</span>
               </span>
               <RelativeTime
                 value={p.createdAt}
@@ -93,7 +87,10 @@ function DueBody({
           <li key={task.id}>
             <Link
               to="/tasks"
-              search={task.entityId ? { entityId: task.entityId } : undefined}
+              search={{
+                taskId: task.id,
+                ...(task.entityId ? { entityId: task.entityId } : {}),
+              }}
               className="hover:bg-muted/40 flex items-start justify-between gap-3 px-3 py-2.5 text-sm transition-colors"
             >
               <span className="min-w-0">

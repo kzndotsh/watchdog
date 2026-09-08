@@ -5,10 +5,7 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
-import {
-  warmEnsureQueryData,
-  warmPrefetchQuery,
-} from "@/shared/lib/warm-query";
+import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 
 /** Warm Dashboard panels / activity without blocking shell paint. */
 export function warmDashboardQueries(
@@ -20,11 +17,21 @@ export function warmDashboardQueries(
     revalidateIfStale: true,
   });
   if (activeCaseId === null) return;
-  warmPrefetchQuery(queryClient, entitiesListQuery(activeCaseId));
-  warmPrefetchQuery(
-    queryClient,
-    proposalsByStatusQuery(activeCaseId, "pending")
-  );
-  warmPrefetchQuery(queryClient, jobsListQuery(activeCaseId));
-  warmPrefetchQuery(queryClient, tasksListQuery(activeCaseId));
+
+  warmEnsureQueryData(queryClient, {
+    ...entitiesListQuery(activeCaseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...proposalsByStatusQuery(activeCaseId, "pending"),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...jobsListQuery(activeCaseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...tasksListQuery(activeCaseId),
+    revalidateIfStale: true,
+  });
 }

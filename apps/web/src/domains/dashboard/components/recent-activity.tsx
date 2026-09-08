@@ -1,15 +1,27 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Suspense, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { recentActivityQuery } from "@/domains/activity/queries";
 import type { ActivityItem, ActivityKind } from "@/domains/activity/types";
 import type { CaseRecord } from "@/domains/cases/types";
-import { cn } from "@/lib/utils";
+import { errMessage } from "@/lib/utils";
+import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import {
+  invalidateAfterEntityChanged,
+  invalidateAfterEvidenceMutation,
+  invalidateAfterJobMutation,
+  invalidateAfterProposalQueueChange,
+  invalidateAfterTaskMutation,
+} from "@/shared/lib/query-invalidation";
+import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { stackPendingFallback } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { resolveSelectValue } from "@/shared/ui/control-chrome";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
@@ -29,10 +41,13 @@ import {
   JOB_STATUSES,
   PROPOSAL_STATUSES,
   TASK_STATUSES,
+  activityKindLabel,
+  isProposalQueueLiveEvent,
   type TaskStatus,
 } from "@watchdog/schemas";
 
 const ALL_CASES = "__all__";
+const EMPTY_ACTIVITY_ITEMS: ActivityItem[] = [];
 
 function isTaskStatus(value: string): value is TaskStatus {
   return (TASK_STATUSES as readonly string[]).includes(value);
@@ -105,7 +120,7 @@ function ActivityRows({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-muted-foreground text-chip uppercase">
-                    {item.kind}
+                    {activityKindLabel(item.kind)}
                   </span>
                   <span className="text-foreground text-chip font-medium uppercase">
                     {item.action}
@@ -197,9 +212,54 @@ function RecentActivityList({
   caseSlugById: ReadonlyMap<string, string>;
   onClearFilter: () => void;
 }) {
-  const { data: items, isFetching } = useSuspenseQuery(
+  const queryClient = useQueryClient();
+  const activityQuery = useQuery(
     recentActivityQuery(caseId ? { caseId } : undefined)
   );
+  const activityPending = listPending(activityQuery);
+  const activityLoadError =
+    !activityPending && activityQuery.isError
+      ? errMessage(activityQuery.error, "Failed to load recent activity")
+      : null;
+  const items = activityQuery.data ?? EMPTY_ACTIVITY_ITEMS;
+  const activityPlaceholder = isQueryPlaceholderData(activityQuery);
+  const liveCaseIds = useMemo(
+    () => caseId ?? [...caseSlugById.keys()],
+    [caseId, caseSlugById]
+  );
+
+  useLiveEvents(liveCaseIds.length > 0 ? liveCaseIds : null, (event) => {
+    if (event.type === "job_update") {
+      void invalidateAfterJobMutation(queryClient, event.caseId);
+    }
+    if (event.type === "evidence_changed") {
+      void invalidateAfterEvidenceMutation(queryClient, event.caseId);
+    }
+    if (isProposalQueueLiveEvent(event)) {
+      void invalidateAfterProposalQueueChange(queryClient, event.caseId);
+    }
+    if (event.type === "task_changed") {
+      void invalidateAfterTaskMutation(queryClient, event.caseId);
+    }
+    if (event.type === "entity_changed") {
+      void invalidateAfterEntityChanged(queryClient, event.caseId);
+    }
+  });
+
+  if (activityLoadError) {
+    return (
+      <FetchErrorAlert
+        error={activityLoadError}
+        onRetry={() => {
+          void activityQuery.refetch();
+        }}
+      />
+    );
+  }
+
+  if (activityPending) {
+    return stackPendingFallback(1);
+  }
 
   if (items.length === 0) {
     if (caseId) {
@@ -224,12 +284,7 @@ function RecentActivityList({
   }
 
   return (
-    <div
-      className={cn(
-        "transition-opacity duration-150",
-        isFetching && "opacity-60"
-      )}
-    >
+    <div className={placeholderDeemphasisClass(activityPlaceholder)}>
       <ActivityRows
         items={items}
         showCaseLink={caseId === null}
@@ -239,9 +294,29 @@ function RecentActivityList({
   );
 }
 
-export function RecentActivity({ cases }: { cases: CaseRecord[] }) {
-  const [caseId, setCaseId] = useState<string | null>(null);
-  const caseSlugById = new Map(cases.map((c) => [c.id, c.slug] as const));
+export function RecentActivity({
+  cases,
+  activityCaseId,
+  onActivityCaseChange,
+}: {
+  cases: CaseRecord[];
+  activityCaseId?: string;
+  onActivityCaseChange?: (next: string | null) => void;
+}) {
+  const [internalCaseId, setInternalCaseId] = useState<string | null>(null);
+  const controlled = onActivityCaseChange !== undefined;
+  const caseId = controlled ? (activityCaseId ?? null) : internalCaseId;
+  const setCaseId = controlled ? onActivityCaseChange : setInternalCaseId;
+  const caseSlugById = useMemo(
+    () => new Map(cases.map((c) => [c.id, c.slug] as const)),
+    [cases]
+  );
+
+  useEffect(() => {
+    if (caseId !== null && !cases.some((c) => c.id === caseId)) {
+      setCaseId(null);
+    }
+  }, [cases, caseId, setCaseId]);
 
   return (
     <section
@@ -294,15 +369,13 @@ export function RecentActivity({ cases }: { cases: CaseRecord[] }) {
       />
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex min-h-full flex-col pr-3">
-          <Suspense fallback={stackPendingFallback(1)}>
-            <RecentActivityList
-              caseId={caseId}
-              caseSlugById={caseSlugById}
-              onClearFilter={() => {
-                setCaseId(null);
-              }}
-            />
-          </Suspense>
+          <RecentActivityList
+            caseId={caseId}
+            caseSlugById={caseSlugById}
+            onClearFilter={() => {
+              setCaseId(null);
+            }}
+          />
         </div>
       </ScrollArea>
     </section>

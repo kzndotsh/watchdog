@@ -11,9 +11,18 @@ export interface MetricTile {
   tone?: "default" | "warn" | "muted";
 }
 
-export function MetricsSection({ tiles }: { tiles: MetricTile[] }) {
+export function MetricsSection({
+  tiles,
+  className,
+}: {
+  tiles: MetricTile[];
+  className?: string;
+}) {
   return (
-    <section aria-label="Overview" className="grid grid-cols-3 gap-2">
+    <section
+      aria-label="Overview"
+      className={cn("grid grid-cols-3 gap-2", className)}
+    >
       {tiles.map((tile) => (
         <Link
           key={tile.id}

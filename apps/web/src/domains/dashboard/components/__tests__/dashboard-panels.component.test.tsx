@@ -28,9 +28,24 @@ import {
 const PROPOSAL = {
   id: "prop-1",
   caseId: "case-1",
+  jobId: null,
+  capabilityId: null,
+  playbookId: null,
+  status: "pending",
+  patch: [],
   summary: "Link entity A to B",
+  suppressedCount: 0,
+  evidenceIds: [],
+  rejectReason: null,
+  decidedBy: null,
+  decidedAt: null,
   createdAt: "2026-01-02T00:00:00.000Z",
-} as ProposalRecord;
+  agentSourced: false,
+  userOverridden: false,
+  createdBy: null,
+  createdByLabel: null,
+  decidedByLabel: null,
+} satisfies ProposalRecord;
 
 const TASK: TaskRecord = {
   id: "task-1",
@@ -60,6 +75,30 @@ describe("DashboardTriageSection", () => {
     expect(
       screen.getByRole("link", { name: /Link entity A to B/ })
     ).toHaveAttribute("href", "/triage?proposalId=prop-1");
+  });
+
+  it("uses proposal title when summary is empty", () => {
+    const proposal = {
+      ...PROPOSAL,
+      id: "prop-2",
+      summary: null,
+      capabilityId: "network.shodan.lookup",
+      patch: [],
+    } as ProposalRecord;
+    render(<DashboardTriageSection hasCase proposals={[proposal]} />);
+    expect(screen.getByText("Shodan Lookup")).toBeInTheDocument();
+  });
+
+  it("uses proposal title when summary is blank", () => {
+    const proposal = {
+      ...PROPOSAL,
+      id: "prop-3",
+      summary: "",
+      capabilityId: "network.shodan.lookup",
+      patch: [],
+    } as ProposalRecord;
+    render(<DashboardTriageSection hasCase proposals={[proposal]} />);
+    expect(screen.getByText("Shodan Lookup")).toBeInTheDocument();
   });
 });
 

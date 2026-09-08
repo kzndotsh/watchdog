@@ -1,7 +1,7 @@
-import { useSuspenseQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, type ReactNode } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import {
   DashboardDueTasksSection,
@@ -20,25 +20,36 @@ import {
   selectRecentProposals,
 } from "@/domains/dashboard/lib/selectors";
 import { entitiesListQuery } from "@/domains/entities/queries";
+import type { EntityRecord } from "@/domains/entities/types";
 import { jobsListQuery } from "@/domains/jobs/queries";
+import type { JobListRecord } from "@/domains/jobs/types";
 import { tasksListQuery } from "@/domains/tasks/queries";
+import type { TaskRecord } from "@/domains/tasks/types";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
+import { errMessage, cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { Page, PageHeader } from "@/shared/layout/page";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import {
   bindCasesChangedInvalidation,
+  invalidateAfterEntityChanged,
+  invalidateAfterEvidenceMutation,
   invalidateAfterJobMutation,
   invalidateAfterProposalQueueChange,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { stackPendingFallback } from "@/shared/ui/active-tab-body";
-import { RegionBoundary } from "@/shared/ui/region-boundary";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/shared/ui/shadcn/resizable";
+import type { ProposalRecord } from "@watchdog/core";
+import { isProposalQueueLiveEvent } from "@watchdog/schemas";
 
 const OVERVIEW_DEFAULT = "68%";
 const ACTIVITY_DEFAULT = "32%";
@@ -127,6 +138,20 @@ function DashboardIdle({ caseCount }: { caseCount: number }) {
   );
 }
 
+function dashboardActiveQueries(caseId: string) {
+  return [
+    proposalsByStatusQuery(caseId, "pending"),
+    jobsListQuery(caseId),
+    tasksListQuery(caseId),
+    entitiesListQuery(caseId),
+  ] as const;
+}
+
+const EMPTY_PROPOSALS: ProposalRecord[] = [];
+const EMPTY_JOBS: JobListRecord[] = [];
+const EMPTY_TASKS: TaskRecord[] = [];
+const EMPTY_ENTITIES: EntityRecord[] = [];
+
 function DashboardActive({
   active,
   caseCount,
@@ -135,29 +160,40 @@ function DashboardActive({
   caseCount: number;
 }) {
   const queryClient = useQueryClient();
-  const [
-    { data: pendingProposals },
-    { data: jobsRaw },
-    { data: tasksRaw },
-    { data: entities },
-  ] = useSuspenseQueries({
-    queries: [
-      proposalsByStatusQuery(active.id, "pending"),
-      jobsListQuery(active.id),
-      tasksListQuery(active.id),
-      entitiesListQuery(active.id),
-    ],
+  const queryResults = useQueries({
+    queries: dashboardActiveQueries(active.id),
   });
+  const [pendingProposalsQuery, jobsQuery, tasksQuery, entitiesQuery] =
+    queryResults;
+  const overviewPending = queryResults.some((query) => listPending(query));
+  const overviewLoadError =
+    !overviewPending && queryResults.some((query) => query.isError)
+      ? errMessage(
+          queryResults.find((query) => query.isError)?.error,
+          "Failed to load dashboard overview"
+        )
+      : null;
+  const overviewPlaceholder = anyQueryPlaceholderData(queryResults);
+  const pendingProposals = pendingProposalsQuery.data ?? EMPTY_PROPOSALS;
+  const jobsRaw = jobsQuery.data ?? EMPTY_JOBS;
+  const tasksRaw = tasksQuery.data ?? EMPTY_TASKS;
+  const entities = entitiesQuery.data ?? EMPTY_ENTITIES;
 
   useLiveEvents(active.id, (event) => {
     if (event.type === "job_update") {
       void invalidateAfterJobMutation(queryClient, active.id);
     }
-    if (event.type === "proposal_created") {
+    if (isProposalQueueLiveEvent(event)) {
       void invalidateAfterProposalQueueChange(queryClient, active.id);
     }
     if (event.type === "task_changed") {
       void invalidateAfterTaskMutation(queryClient, active.id);
+    }
+    if (event.type === "entity_changed") {
+      void invalidateAfterEntityChanged(queryClient, active.id);
+    }
+    if (event.type === "evidence_changed") {
+      void invalidateAfterEvidenceMutation(queryClient, active.id);
     }
   });
 
@@ -167,18 +203,48 @@ function DashboardActive({
   );
   const dueTasks = useMemo(() => selectDueTasks(tasksRaw), [tasksRaw]);
 
-  const tiles = buildOverviewTiles(caseCount, {
-    proposalsPending: pendingProposals.length,
-    tasksOverdue: countOverdueTasks(tasksRaw),
-    tasksDueSoon: countNearDueTasks(tasksRaw),
-    jobsRunning: countLiveJobs(jobsRaw),
-    entities: entities.length,
-  });
+  const tiles = buildOverviewTiles(
+    caseCount,
+    overviewPending
+      ? null
+      : {
+          proposalsPending: pendingProposals.length,
+          tasksOverdue: countOverdueTasks(tasksRaw),
+          tasksDueSoon: countNearDueTasks(tasksRaw),
+          jobsRunning: countLiveJobs(jobsRaw),
+          entities: entities.length,
+        }
+  );
+
+  if (overviewLoadError) {
+    return (
+      <FetchErrorAlert
+        error={overviewLoadError}
+        onRetry={() => {
+          for (const query of queryResults) {
+            if (query.isError) void query.refetch();
+          }
+        }}
+      />
+    );
+  }
+
+  if (overviewPending) {
+    return stackPendingFallback(2);
+  }
 
   return (
     <>
-      <MetricsSection tiles={tiles} />
-      <div className="grid min-h-0 gap-6 lg:grid-cols-2 lg:items-start">
+      <MetricsSection
+        tiles={tiles}
+        className={placeholderDeemphasisClass(overviewPlaceholder)}
+      />
+      <div
+        className={cn(
+          "grid min-h-0 gap-6 lg:grid-cols-2 lg:items-start",
+          placeholderDeemphasisClass(overviewPlaceholder)
+        )}
+      >
         <DashboardTriageSection hasCase proposals={proposals} />
         <DashboardDueTasksSection hasCase tasks={dueTasks} />
       </div>
@@ -194,11 +260,7 @@ function DashboardOverview({
   caseCount: number;
 }) {
   if (active) {
-    return (
-      <RegionBoundary fallback={stackPendingFallback(2)}>
-        <DashboardActive active={active} caseCount={caseCount} />
-      </RegionBoundary>
-    );
+    return <DashboardActive active={active} caseCount={caseCount} />;
   }
   return <DashboardIdle caseCount={caseCount} />;
 }
@@ -271,14 +333,41 @@ function DashboardSplit({
   );
 }
 
-export function DashboardHome() {
+export function DashboardHome({
+  activityCaseId,
+  onActivityCaseChange,
+}: {
+  activityCaseId?: string;
+  onActivityCaseChange?: (next: string | null) => void;
+} = {}) {
   const queryClient = useQueryClient();
-  const [{ data: casesCtx }] = useSuspenseQueries({
-    queries: [casesContextQuery()],
-  });
-  const active = casesCtx.active;
+  const {
+    active,
+    cases,
+    pending: casesPending,
+    loadError: casesLoadError,
+    retry: retryCases,
+  } = useCasesContext();
 
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
+
+  if (casesLoadError) {
+    return (
+      <Page density="split">
+        <PageHeader />
+        <FetchErrorAlert error={casesLoadError} onRetry={retryCases} />
+      </Page>
+    );
+  }
+
+  if (casesPending) {
+    return (
+      <Page density="split">
+        <PageHeader />
+        {stackPendingFallback(2)}
+      </Page>
+    );
+  }
 
   return (
     <Page density="split">
@@ -286,12 +375,15 @@ export function DashboardHome() {
 
       <DashboardSplit
         overview={
-          <DashboardOverview
-            active={active}
-            caseCount={casesCtx.cases.length}
+          <DashboardOverview active={active} caseCount={cases.length} />
+        }
+        activity={
+          <RecentActivity
+            cases={cases}
+            activityCaseId={activityCaseId}
+            onActivityCaseChange={onActivityCaseChange}
           />
         }
-        activity={<RecentActivity cases={casesCtx.cases} />}
       />
     </Page>
   );
