@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+const INVITATION_ID = "00000000-0000-4000-8000-000000000001";
+
 const useParamsMock = vi.hoisted(() =>
-  vi.fn(() => ({ invitationId: "inv-test-1" }))
+  vi.fn(() => ({ invitationId: INVITATION_ID }))
 );
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -31,21 +33,30 @@ import { Route } from "@/routes/auth/accept-invitation.$invitationId";
 
 describe("accept-invitation route", () => {
   it("passes invitationId from params into AcceptInvitation", () => {
-    useParamsMock.mockReturnValue({ invitationId: "inv-test-1" });
+    useParamsMock.mockReturnValue({ invitationId: INVITATION_ID });
     const Page = Route.options.component!;
     render(<Page />);
     expect(screen.getByText("Watchdog mark")).toBeInTheDocument();
     expect(
-      screen.getByText("Accept invitation inv-test-1")
+      screen.getByText(`Accept invitation ${INVITATION_ID}`)
     ).toBeInTheDocument();
   });
 
   it("trims padded invitationId from params", () => {
-    useParamsMock.mockReturnValue({ invitationId: "  inv-test-1  " });
+    useParamsMock.mockReturnValue({
+      invitationId: `  ${INVITATION_ID}  `,
+    });
     const Page = Route.options.component!;
     render(<Page />);
     expect(
-      screen.getByText("Accept invitation inv-test-1")
+      screen.getByText(`Accept invitation ${INVITATION_ID}`)
     ).toBeInTheDocument();
+  });
+
+  it("shows an error for invalid invitation ids", () => {
+    useParamsMock.mockReturnValue({ invitationId: "not-a-uuid" });
+    const Page = Route.options.component!;
+    render(<Page />);
+    expect(screen.getByText("Invitation link is invalid")).toBeInTheDocument();
   });
 });
