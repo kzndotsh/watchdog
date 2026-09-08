@@ -1,10 +1,10 @@
 import type { ProcessExtractDraft } from "@watchdog/ai";
 import {
   normalizeIdentifierPlatform,
-  normalizeIdentifierValue,
   type IdentifierType,
 } from "@watchdog/schemas";
 
+import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 import * as P from "./harvest-patterns";
 
 export type DraftId = ProcessExtractDraft["identifiers"][number];
@@ -129,7 +129,8 @@ export function pushId(
     opts?.platform !== undefined && opts.platform !== ""
       ? normalizeIdentifierPlatform(opts.platform)
       : "";
-  const normalized = normalizeIdentifierValue(type, value);
+  const normalized = validatedIdentifierValue(type, value);
+  if (normalized === null) return;
   const key = uniqKey(type, platform, normalized);
   if (seen.has(key)) return;
   const typeCount = list.filter((i) => i.type === type).length;

@@ -48,4 +48,13 @@ describe("harvest-helpers", () => {
     pushId(list, seen, "email", "alice@mailhost.test", "src");
     expect(list).toHaveLength(1);
   });
+
+  it("pushId deduplicates equivalent IPv6 spellings", () => {
+    const seen = new Set<string>();
+    const list: Parameters<typeof pushId>[0] = [];
+    pushId(list, seen, "ip", "2001:0db8:0000:0000:0000:0000:0000:0001", "src");
+    pushId(list, seen, "ip", "2001:db8::1", "src");
+    expect(list).toHaveLength(1);
+    expect(list[0]?.value).toBe("2001:db8::1");
+  });
 });
