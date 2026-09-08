@@ -4,6 +4,7 @@ export {
   seedAuthUser,
   seedCase,
   seedEntity,
+  seedEntityBlankDisplayName,
   seedEvidence,
   seedFindingSuppression,
   seedGraphWrite,

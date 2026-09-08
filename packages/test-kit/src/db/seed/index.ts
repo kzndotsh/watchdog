@@ -1,6 +1,6 @@
 export { seedAuthUser } from "./auth-user.ts";
 export { seedCase } from "./case.ts";
-export { seedEntity } from "./entity.ts";
+export { seedEntity, seedEntityBlankDisplayName } from "./entity.ts";
 export { seedEvidence } from "./evidence.ts";
 export { seedFindingSuppression } from "./suppression.ts";
 export { seedGraphWrite } from "./graph-write.ts";

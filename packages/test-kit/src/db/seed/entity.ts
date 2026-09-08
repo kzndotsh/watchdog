@@ -1,4 +1,5 @@
 import {
+  entities,
   entitiesRepo,
   type DbExec,
   type EntityRow,
@@ -26,6 +27,30 @@ export async function seedEntity(
   });
   if (!created) {
     throw new Error("seedEntity failed");
+  }
+  return created;
+}
+
+/** Legacy rows with blank display names (repo create rejects these at ingress). */
+export async function seedEntityBlankDisplayName(
+  exec: DbExec,
+  caseId: string,
+  overrides: Partial<NewEntity> & { slug: string }
+): Promise<EntityRow> {
+  const [created] = await exec
+    .insert(entities)
+    .values({
+      id: overrides.id ?? testId(10),
+      caseId,
+      kind: overrides.kind ?? "person",
+      name: overrides.name ?? "",
+      slug: overrides.slug,
+      summary: overrides.summary ?? null,
+      notes: overrides.notes ?? null,
+    })
+    .returning();
+  if (!created) {
+    throw new Error("seedEntityBlankDisplayName failed");
   }
   return created;
 }

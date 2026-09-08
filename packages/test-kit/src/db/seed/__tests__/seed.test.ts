@@ -130,6 +130,15 @@ describe("test-kit db seeds", () => {
     expect(mocks.createProposal).toHaveBeenCalled();
   });
 
+  it("seedProposal preserves explicit null summary", async () => {
+    mocks.createProposal.mockResolvedValueOnce({ id: "prop-2" });
+    await seedProposal(exec, "case-1", [], { summary: null });
+    expect(mocks.createProposal).toHaveBeenCalledWith(
+      exec,
+      expect.objectContaining({ summary: null })
+    );
+  });
+
   it("seedFindingSuppression inserts suppression rows", async () => {
     mocks.insertManySuppression.mockResolvedValueOnce(undefined);
     await seedFindingSuppression(exec, {

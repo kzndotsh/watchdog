@@ -12,7 +12,10 @@ export async function seedProposal(
     caseId,
     status: overridesResolved.status ?? "pending",
     patch,
-    summary: overridesResolved.summary ?? "test proposal",
+    summary:
+      overridesResolved.summary === undefined
+        ? "test proposal"
+        : overridesResolved.summary,
     suppressedCount: overridesResolved.suppressedCount,
     evidenceIds: overridesResolved.evidenceIds ?? [],
     jobId: overridesResolved.jobId,
