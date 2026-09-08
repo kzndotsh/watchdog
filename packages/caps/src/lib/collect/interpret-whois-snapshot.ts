@@ -7,6 +7,10 @@ import {
   interpretIdentifierBatches,
   type IdentifierBatch,
 } from "./interpret-identifier-batches";
+import {
+  resolveCollectEntityId,
+  INVALID_COLLECT_ENTITY_SUMMARY,
+} from "./resolve-collect-entity-id";
 
 /** Alert when expiry is in the past or within this window. */
 const WHOIS_EXPIRY_ALERT_MS = 90 * 24 * 60 * 60 * 1000;
@@ -38,16 +42,23 @@ export function interpretWhoisSnapshot(opts: {
   nowMs?: number;
   extraBatches?: readonly IdentifierBatch[];
 }): CapInterpretResult {
+  const entityId = resolveCollectEntityId(opts.entityId);
+  if (entityId === null) {
+    return { patch: [], summary: INVALID_COLLECT_ENTITY_SUMMARY };
+  }
   const text = summarizeWhois(opts.claimLabel, opts.report);
   const result = interpretIdentifierBatches({
-    entityId: opts.entityId,
+    entityId,
     batches: opts.extraBatches ?? [],
     claimText: text,
     noEntitySummary: opts.noEntitySummary,
   });
-  const entityId = opts.entityId;
   const expiresAt = opts.report.expiresAt;
-  if (!entityId || !expiresAt || !isWhoisExpirySoon(expiresAt, opts.nowMs)) {
+  if (
+    entityId === undefined ||
+    !expiresAt ||
+    !isWhoisExpirySoon(expiresAt, opts.nowMs)
+  ) {
     return result;
   }
   return {
