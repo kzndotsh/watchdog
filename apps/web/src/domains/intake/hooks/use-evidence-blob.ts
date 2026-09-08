@@ -18,12 +18,15 @@ export function useEvidenceBlob(
 
   const blobPlaceholder =
     downloadQuery.isPlaceholderData || blobQuery.isPlaceholderData;
+  const contentPending =
+    listPending(downloadQuery, { enabled: downloadQueryEnabled }) ||
+    listPending(blobQuery, { enabled: blobQueryEnabled });
   const downloadLoadError =
-    downloadQueryEnabled && downloadQuery.isError
+    !contentPending && downloadQueryEnabled && downloadQuery.isError
       ? errMessage(downloadQuery.error, "Failed to load download URL")
       : null;
   const blobLoadError =
-    blobQueryEnabled && blobQuery.isError
+    !contentPending && blobQueryEnabled && blobQuery.isError
       ? errMessage(blobQuery.error, "Failed to load evidence content")
       : null;
 

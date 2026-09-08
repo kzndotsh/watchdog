@@ -181,6 +181,48 @@ describe("useEvidenceBlob", () => {
     expect(result.current.contentLoadError).toBe("blob unavailable");
   });
 
+  it("defers contentLoadError while the sibling query is still pending", () => {
+    useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
+      const key = options.queryKey ?? [];
+      if (key[0] === "artifact" && key[1] === "evidence") {
+        return {
+          data: undefined,
+          isFetched: false,
+          isLoading: true,
+          isError: false,
+          refetch: vi.fn(),
+        };
+      }
+      if (key[0] === "evidence" && key[2] === "download") {
+        return {
+          data: undefined,
+          isFetched: true,
+          isLoading: false,
+          isError: true,
+          error: new Error("download unavailable"),
+          refetch: vi.fn(),
+        };
+      }
+      return {
+        data: undefined,
+        isFetched: true,
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      };
+    });
+
+    const row = evidence({
+      text: null,
+      uri: "s3://bucket/key",
+      mime: "text/plain",
+    });
+    const { result } = renderHook(() => useEvidenceBlob(testId(10), row));
+
+    expect(result.current.loadingBlob).toBe(true);
+    expect(result.current.contentLoadError).toBeNull();
+  });
+
   it("does not fetch blob or download when case id is not a graph uuid", () => {
     useQueryMock.mockImplementation(
       (options: { queryKey?: unknown[]; enabled?: boolean }) => ({

@@ -83,20 +83,20 @@ export function useCollectQueueData(caseId: string) {
       jobsPlaceholder ||
       entitiesPlaceholder ||
       credentialsPlaceholder;
-  const queueLoadError = (
-    filters.hiddenOnly
+  const queueLoadError =
+    !queuePending &&
+    (filters.hiddenOnly
       ? hiddenEvidenceError || entitiesError
-      : evidenceError || jobsError || entitiesError
-  )
-    ? errMessage(
-        evidenceLoadError ??
-          hiddenEvidenceLoadError ??
-          jobsLoadError ??
-          entitiesLoadError ??
-          null,
-        "Failed to load collect queue"
-      )
-    : null;
+      : evidenceError || jobsError || entitiesError)
+      ? errMessage(
+          evidenceLoadError ??
+            hiddenEvidenceLoadError ??
+            jobsLoadError ??
+            entitiesLoadError ??
+            null,
+          "Failed to load collect queue"
+        )
+      : null;
 
   const evidence = filters.hiddenOnly ? hiddenEvidenceRows : evidenceRows;
   const jobs = useMemo(() => sortJobQueue(jobsRaw), [jobsRaw]);
