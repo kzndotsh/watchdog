@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { dueDateToIso, isoToDateInput, isTaskDueOverdue } from "../due-date.ts";
-import { EMPTY_TASK_FORM, taskFormIssues } from "../task-form.ts";
+import {
+  EMPTY_TASK_FORM,
+  normalizeTaskForm,
+  taskFormIssues,
+} from "../task-form.ts";
 
 describe("task due-date", () => {
   it("round-trips a calendar day", () => {
@@ -19,5 +23,19 @@ describe("task-form", () => {
     expect(
       taskFormIssues({ ...EMPTY_TASK_FORM, title: "Follow up WHOIS" })
     ).toEqual([]);
+  });
+
+  it("normalizes trimmed title and collapses blank description", () => {
+    expect(
+      normalizeTaskForm({
+        ...EMPTY_TASK_FORM,
+        title: "  Follow up  ",
+        description: "   ",
+      })
+    ).toEqual({
+      ...EMPTY_TASK_FORM,
+      title: "Follow up",
+      description: "",
+    });
   });
 });

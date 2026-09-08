@@ -24,6 +24,7 @@ import {
 } from "@/shared/ui/vocab";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import type { TaskPriority } from "@watchdog/schemas";
+import { entityDisplayLabel } from "@watchdog/schemas";
 
 interface Props {
   task: TaskRecord;
@@ -67,6 +68,9 @@ function TaskCardBody({
   const done = task.status === "done";
   const dropped = task.status === "dropped";
   const hasFooter = Boolean(entity) || Boolean(task.dueDate);
+  const entityLabel = entity
+    ? entityDisplayLabel({ name: entity.name, slug: entity.slug })
+    : null;
 
   return (
     <div className="min-w-0 flex-1">
@@ -99,14 +103,14 @@ function TaskCardBody({
             entity ? "justify-between" : "justify-end"
           )}
         >
-          {entity ? (
+          {entity && entityLabel ? (
             <KindBadge
               kind={entity.kind}
               size="sm"
               className="max-w-[10rem] min-w-0"
-              title={entity.name}
+              title={entityLabel}
             >
-              <span className="truncate">{entity.name}</span>
+              <span className="truncate">{entityLabel}</span>
             </KindBadge>
           ) : null}
 

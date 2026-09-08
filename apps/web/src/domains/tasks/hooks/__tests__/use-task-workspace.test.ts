@@ -22,6 +22,7 @@ vi.mock("@/shared/hooks/use-live-events", () => ({
 }));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
+  invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
   invalidateAfterTaskMutation: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -53,12 +54,17 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
+import { defaultsFromTask } from "@/domains/tasks/lib/task-form";
 import {
   createTaskFn,
   reorderTasksFn,
   updateTaskFn,
 } from "@/domains/tasks/tasks.functions";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import {
+  invalidateAfterEntityChanged,
+  invalidateAfterTaskMutation,
+} from "@/shared/lib/query-invalidation";
 
 const CASE_ID = testId(10);
 const ENTITY_ID = testId(30);
@@ -95,6 +101,7 @@ function mockQueries() {
           isFetched: true,
           isLoading: false,
           isError: false,
+          refetch: vi.fn(),
         };
       }
       if (key === "entities") {
@@ -110,9 +117,16 @@ function mockQueries() {
           isFetched: true,
           isLoading: false,
           isError: false,
+          refetch: vi.fn(),
         };
       }
-      return { data: [], isFetched: true, isLoading: false, isError: false };
+      return {
+        data: [],
+        isFetched: true,
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      };
     }
   );
 }
@@ -127,8 +141,17 @@ describe("useTaskWorkspace", () => {
     expect(result.current.entityById.get(ENTITY_ID)).toEqual({
       id: ENTITY_ID,
       name: "Target Alpha",
+      slug: "target-alpha",
       kind: "person",
     });
+    expect(result.current.entities).toEqual([
+      {
+        id: ENTITY_ID,
+        name: "Target Alpha",
+        slug: "target-alpha",
+        kind: "person",
+      },
+    ]);
   });
 
   it("opens create dialog and tracks selected tasks", () => {
@@ -167,14 +190,33 @@ describe("useTaskWorkspace", () => {
     });
 
     expect(createTaskFn).toHaveBeenCalledWith({
-      data: {
+      data: expect.objectContaining({
         caseId: CASE_ID,
         title: "New task",
         status: "backlog",
         entityId: ENTITY_ID,
-      },
+      }),
     });
     expect(useLiveEvents).toHaveBeenCalledWith(null, expect.any(Function));
+  });
+
+  it("trims padded entity scope before listing tasks", () => {
+    mockQueries();
+
+    renderHook(
+      () =>
+        useTaskWorkspace(CASE_ID, {
+          entityId: `  ${ENTITY_ID}  `,
+          live: false,
+        }),
+      { wrapper }
+    );
+
+    expect(useQueryMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["tasks", CASE_ID, { entityId: ENTITY_ID }],
+      })
+    );
   });
 
   it("commits drops by updating status then reordering", async () => {
@@ -203,6 +245,116 @@ describe("useTaskWorkspace", () => {
         caseId: CASE_ID,
         status: "in_progress",
         orderedIds: [TASK_ID],
+      },
+    });
+  });
+
+  it("invalidates entity labels on entity_changed live events", () => {
+    mockQueries();
+
+    renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
+
+    const liveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === CASE_ID);
+    const onEvent = liveCall?.[1];
+    onEvent?.({
+      type: "entity_changed",
+      caseId: CASE_ID,
+    });
+
+    expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      CASE_ID
+    );
+  });
+
+  it("invalidates tasks on task_changed live events", () => {
+    mockQueries();
+
+    renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
+
+    const liveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === CASE_ID);
+    const onEvent = liveCall?.[1];
+    onEvent?.({
+      type: "task_changed",
+      caseId: CASE_ID,
+    });
+
+    expect(invalidateAfterTaskMutation).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      CASE_ID
+    );
+  });
+
+  it("surfaces tasksLoadError when the tasks query fails", () => {
+    useQueryMock.mockImplementation(
+      (options: { queryKey?: readonly unknown[] }) => {
+        const key = options.queryKey?.[0];
+        if (key === "tasks") {
+          return {
+            data: undefined,
+            isFetched: true,
+            isLoading: false,
+            isError: true,
+            error: new Error("tasks unavailable"),
+            refetch: vi.fn(),
+          };
+        }
+        if (key === "entities") {
+          return {
+            data: [],
+            isFetched: true,
+            isLoading: false,
+            isError: false,
+            refetch: vi.fn(),
+          };
+        }
+        return {
+          data: [],
+          isFetched: true,
+          isLoading: false,
+          isError: false,
+          refetch: vi.fn(),
+        };
+      }
+    );
+
+    const { result } = renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
+
+    expect(result.current.pending).toBe(false);
+    expect(result.current.tasksLoadError).toBe("tasks unavailable");
+  });
+
+  it("clears task description when update receives whitespace-only text", async () => {
+    mockQueries();
+    vi.mocked(updateTaskFn).mockResolvedValue({ ...TASK, description: null });
+
+    const { result } = renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
+
+    act(() => {
+      result.current.handleSelect(TASK);
+    });
+
+    await act(async () => {
+      await result.current.handleUpdate({
+        ...defaultsFromTask(TASK),
+        description: "   ",
+      });
+    });
+
+    expect(updateTaskFn).toHaveBeenCalledWith({
+      data: {
+        caseId: CASE_ID,
+        taskId: TASK_ID,
+        title: TASK.title,
+        description: null,
+        status: TASK.status,
+        priority: null,
+        dueDate: null,
+        entityId: ENTITY_ID,
       },
     });
   });

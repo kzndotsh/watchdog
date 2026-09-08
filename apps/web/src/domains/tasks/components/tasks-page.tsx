@@ -1,8 +1,8 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
+import { useEffect } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import { TaskBoard } from "@/domains/tasks/components/task-board";
 import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
@@ -10,17 +10,38 @@ import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import { cn } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/shadcn/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
 
 interface Props {
   entityId?: string;
+  taskId?: string;
+  onTaskIdChange?: (next?: string) => void;
 }
 
-function TasksActive({ active, entityId }: Props & { active: CaseRecord }) {
+function TasksActive({
+  active,
+  entityId,
+  taskId,
+  onTaskIdChange,
+}: Props & { active: CaseRecord }) {
   const ws = useTaskWorkspace(active.id, { entityId });
+
+  useEffect(() => {
+    const normalizedTaskId = scopeOptionalUuid(taskId);
+    if (!normalizedTaskId || ws.pending) return;
+    const task = ws.tasks.find((row) => row.id === normalizedTaskId);
+    if (!task) {
+      onTaskIdChange?.();
+      return;
+    }
+    ws.handleSelect(task);
+    onTaskIdChange?.();
+  }, [taskId, ws, onTaskIdChange]);
 
   return (
     <Page density="split" className="gap-3">
@@ -46,25 +67,32 @@ function TasksActive({ active, entityId }: Props & { active: CaseRecord }) {
         fallback={<BoardSkeleton />}
         className="flex min-h-0 min-w-0 flex-1 flex-col"
       >
-        <div
-          className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col",
-            placeholderDeemphasisClass(ws.tasksPlaceholder)
-          )}
-        >
-          <TaskBoard
-            items={ws.tasks}
-            selectedId={ws.selected?.id}
-            onSelect={ws.handleSelect}
-            onDelete={(task) => {
-              void ws.handleDelete(task);
-            }}
-            onCommitDrop={ws.handleCommitDrop}
-            onQuickCreate={ws.handleQuickCreate}
-            quickCreateBusy={ws.quickCreateBusy}
-            entityById={ws.entityById}
+        {ws.tasksLoadError ? (
+          <FetchErrorAlert
+            error={ws.tasksLoadError}
+            onRetry={ws.handleRetryBoard}
           />
-        </div>
+        ) : (
+          <div
+            className={cn(
+              "flex min-h-0 min-w-0 flex-1 flex-col",
+              placeholderDeemphasisClass(ws.tasksPlaceholder)
+            )}
+          >
+            <TaskBoard
+              items={ws.tasks}
+              selectedId={ws.selected?.id}
+              onSelect={ws.handleSelect}
+              onDelete={(task) => {
+                void ws.handleDelete(task);
+              }}
+              onCommitDrop={ws.handleCommitDrop}
+              onQuickCreate={ws.handleQuickCreate}
+              quickCreateBusy={ws.quickCreateBusy}
+              entityById={ws.entityById}
+            />
+          </div>
+        )}
       </PendingRegion>
 
       <TaskFormDialog
@@ -96,10 +124,34 @@ function TasksActive({ active, entityId }: Props & { active: CaseRecord }) {
   );
 }
 
-export function TasksPage({ entityId }: Props) {
-  const { data: casesCtx } = useSuspenseQuery(casesContextQuery());
+export function TasksPage({ entityId, taskId, onTaskIdChange }: Props) {
+  const { active, pending, loadError, retry } = useCasesContext();
 
-  if (!casesCtx.active) {
+  if (loadError) {
+    return (
+      <Page>
+        <PageHeader />
+        <FetchErrorAlert error={loadError} onRetry={retry} />
+      </Page>
+    );
+  }
+
+  if (pending) {
+    return (
+      <Page>
+        <PageHeader />
+        <PendingRegion
+          loading
+          label="Loading active case"
+          fallback={<BoardSkeleton />}
+        >
+          {null}
+        </PendingRegion>
+      </Page>
+    );
+  }
+
+  if (!active) {
     return (
       <Page>
         <PageHeader />
@@ -122,9 +174,11 @@ export function TasksPage({ entityId }: Props) {
 
   return (
     <TasksActive
-      key={casesCtx.active.id}
-      active={casesCtx.active}
+      key={active.id}
+      active={active}
       entityId={entityId}
+      taskId={taskId}
+      onTaskIdChange={onTaskIdChange}
     />
   );
 }

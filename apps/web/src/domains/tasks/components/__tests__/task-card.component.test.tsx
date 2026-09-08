@@ -45,6 +45,7 @@ const TASK: TaskRecord = {
 const ENTITY: TaskEntityLabel = {
   id: testId(30),
   name: "Target Alpha",
+  slug: "target-alpha",
   kind: "person",
 };
 
@@ -81,6 +82,16 @@ describe("TaskCard", () => {
     render(<TaskCard task={{ ...TASK, status: "done" }} onSelect={vi.fn()} />);
 
     expect(screen.getByText("Verify alias")).toHaveClass("line-through");
+  });
+
+  it("falls back to entity slug when the entity name is blank", () => {
+    const entityById = new Map([
+      [ENTITY.id, { ...ENTITY, name: "  ", slug: "unnamed-target" }],
+    ]);
+
+    render(<TaskCard task={TASK} onSelect={vi.fn()} entityById={entityById} />);
+
+    expect(screen.getByText("unnamed-target")).toBeInTheDocument();
   });
 });
 

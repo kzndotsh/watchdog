@@ -6,6 +6,7 @@ export type TaskRecord = CoreTaskRecord;
 export interface TaskEntityLabel {
   id: string;
   name: string;
+  slug: string;
   kind: EntityKind;
 }
 

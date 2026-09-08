@@ -127,3 +127,41 @@ export function resolveDropOverId(
   if (overId !== activeId) return overId;
   return lastHoverId ?? overId;
 }
+
+/**
+ * Expand entity-scoped board reorder into the full case column order the API
+ * expects. Non-entity tasks keep their relative slots; entity tasks take the
+ * visible drag order.
+ */
+export function mergeEntityScopedColumnOrder(
+  allTasks: readonly TaskRecord[],
+  status: TaskStatus,
+  entityId: string,
+  visibleOrderedIds: readonly string[]
+): string[] {
+  const column = allTasks.filter((row) => row.status === status);
+  const queue = [...visibleOrderedIds];
+  const result: string[] = [];
+
+  for (const row of column) {
+    if (row.entityId === entityId) {
+      const next = queue.shift();
+      if (next === undefined) continue;
+      result.push(next);
+      continue;
+    }
+    result.push(row.id);
+  }
+
+  for (const id of queue) {
+    if (!result.includes(id)) result.push(id);
+  }
+
+  for (const row of column) {
+    if (row.entityId === entityId && !result.includes(row.id)) {
+      result.push(row.id);
+    }
+  }
+
+  return result;
+}

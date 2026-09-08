@@ -1,17 +1,14 @@
 import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog-form";
-import { EntityCombobox } from "@/shared/ui/entity-combobox";
+import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
 import { TASK_PRIORITY_OPTIONS, TASK_STATUS_OPTIONS } from "@/shared/ui/vocab";
-import { taskPrioritySchema, taskStatusSchema } from "@watchdog/schemas";
-
-interface EntityOption {
-  id: string;
-  name: string;
-  kind?: "person" | "infra" | "org";
-}
+import {
+  trimmedTaskPrioritySchema,
+  trimmedTaskStatusSchema,
+} from "@watchdog/schemas";
 
 export function TaskFormFields({
   form,
@@ -69,7 +66,7 @@ export function TaskFormFields({
                 value={field.state.value}
                 options={TASK_STATUS_OPTIONS}
                 onValueChange={(next) => {
-                  field.handleChange(taskStatusSchema.parse(next));
+                  field.handleChange(trimmedTaskStatusSchema.parse(next));
                 }}
                 disabled={busy}
                 aria-label="Task status"
@@ -90,7 +87,7 @@ export function TaskFormFields({
                 ]}
                 onValueChange={(next) => {
                   field.handleChange(
-                    next === "" ? "" : taskPrioritySchema.parse(next)
+                    next === "" ? "" : trimmedTaskPrioritySchema.parse(next)
                   );
                 }}
                 disabled={busy}

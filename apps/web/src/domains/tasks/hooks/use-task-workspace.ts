@@ -2,9 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
-import { dueDateToIso } from "@/domains/tasks/lib/due-date";
+import type { EntityRecord } from "@/domains/entities/types";
+import { mergeEntityScopedColumnOrder } from "@/domains/tasks/lib/task-board-dnd";
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
+import { EMPTY_TASK_FORM } from "@/domains/tasks/lib/task-form";
+import {
+  buildCreateTaskData,
+  buildTaskStatusUpdateData,
+  buildUpdateTaskData,
+} from "@/domains/tasks/lib/task-write";
 import { tasksKeys, tasksListQuery } from "@/domains/tasks/queries";
 import {
   createTaskFn,
@@ -13,11 +21,23 @@ import {
   updateTaskFn,
 } from "@/domains/tasks/tasks.functions";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
+import {
+  deleteTaskInputSchema,
+  reorderTasksInputSchema,
+} from "@/domains/tasks/types";
 import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
-import { invalidateAfterTaskMutation } from "@/shared/lib/query-invalidation";
+import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
+import {
+  invalidateAfterEntityChanged,
+  invalidateAfterTaskMutation,
+} from "@/shared/lib/query-invalidation";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import type { TaskStatus } from "@watchdog/schemas";
+
+const EMPTY_TASKS: TaskRecord[] = [];
+const EMPTY_ENTITIES: EntityRecord[] = [];
 
 export interface UseTaskWorkspaceOptions {
   entityId?: string;
@@ -29,25 +49,37 @@ export function useTaskWorkspace(
   caseId: string,
   options: UseTaskWorkspaceOptions = {}
 ) {
-  const { entityId, live = true } = options;
+  const { entityId: rawEntityId, live = true } = options;
+  const scopedEntityId = scopeOptionalUuid(rawEntityId);
   const qc = useQueryClient();
   const filters = useMemo(
-    () => (entityId ? { entityId } : undefined),
-    [entityId]
+    () => (scopedEntityId ? { entityId: scopedEntityId } : undefined),
+    [scopedEntityId]
   );
 
   const tasksQuery = useQuery(tasksListQuery(caseId, filters));
   const entitiesQuery = useQuery(entitiesListQuery(caseId));
   const pending = listPending(tasksQuery) || listPending(entitiesQuery);
-  const tasks = tasksQuery.data ?? [];
-  const entities = entitiesQuery.data ?? [];
-  const tasksPlaceholder = tasksQuery.isPlaceholderData;
+  const tasksLoadError =
+    !pending && (tasksQuery.isError || entitiesQuery.isError)
+      ? errMessage(
+          tasksQuery.error ?? entitiesQuery.error,
+          "Failed to load tasks"
+        )
+      : null;
+  const tasks = tasksQuery.data ?? EMPTY_TASKS;
+  const entityOptions = useMemo(
+    () => entityOptionsFromRecords(entitiesQuery.data ?? EMPTY_ENTITIES),
+    [entitiesQuery.data]
+  );
+  const tasksPlaceholder =
+    tasksQuery.isPlaceholderData || entitiesQuery.isPlaceholderData;
 
   const entityById = useMemo(() => {
     const map = new Map<string, TaskEntityLabel>();
-    const rows = entitiesQuery.data ?? [];
+    const rows = entitiesQuery.data ?? EMPTY_ENTITIES;
     for (const e of rows) {
-      map.set(e.id, { id: e.id, name: e.name, kind: e.kind });
+      map.set(e.id, { id: e.id, name: e.name, slug: e.slug, kind: e.kind });
     }
     return map;
   }, [entitiesQuery.data]);
@@ -60,6 +92,9 @@ export function useTaskWorkspace(
   useLiveEvents(live ? caseId : null, (event) => {
     if (event.type === "task_changed") {
       void invalidateAfterTaskMutation(qc, caseId);
+    }
+    if (event.type === "entity_changed") {
+      void invalidateAfterEntityChanged(qc, caseId);
     }
   });
 
@@ -82,15 +117,7 @@ export function useTaskWorkspace(
   const createMut = useMutation({
     mutationFn: async (values: TaskFormValues) =>
       createTaskFn({
-        data: {
-          caseId,
-          title: values.title,
-          description: values.description || undefined,
-          status: values.status,
-          priority: values.priority === "" ? null : values.priority,
-          dueDate: dueDateToIso(values.dueDate),
-          entityId: values.entityId === "" ? null : values.entityId,
-        },
+        data: buildCreateTaskData(caseId, values),
       }),
     onSuccess: async () => {
       setCreateOpen(false);
@@ -106,12 +133,15 @@ export function useTaskWorkspace(
   const quickCreateMut = useMutation({
     mutationFn: async (vars: { status: TaskStatus; title: string }) =>
       createTaskFn({
-        data: {
+        data: buildCreateTaskData(
           caseId,
-          title: vars.title,
-          status: vars.status,
-          entityId: entityId ?? null,
-        },
+          {
+            ...EMPTY_TASK_FORM,
+            title: vars.title,
+            status: vars.status,
+          },
+          { entityId: scopedEntityId ?? null }
+        ),
       }),
     onSuccess: async () => {
       toast.success("Task created");
@@ -126,16 +156,7 @@ export function useTaskWorkspace(
     mutationFn: async (values: TaskFormValues) => {
       if (!selected) throw new Error("No task");
       return updateTaskFn({
-        data: {
-          caseId,
-          taskId: selected.id,
-          title: values.title,
-          description: values.description || null,
-          status: values.status,
-          priority: values.priority === "" ? null : values.priority,
-          dueDate: dueDateToIso(values.dueDate),
-          entityId: values.entityId === "" ? null : values.entityId,
-        },
+        data: buildUpdateTaskData(caseId, selected.id, values),
       });
     },
     onSuccess: async () => {
@@ -151,7 +172,9 @@ export function useTaskWorkspace(
 
   const deleteMut = useMutation({
     mutationFn: async (taskId: string) =>
-      deleteTaskFn({ data: { caseId, taskId } }),
+      deleteTaskFn({
+        data: deleteTaskInputSchema.parse({ caseId, taskId }),
+      }),
     onSuccess: async (_data, taskId) => {
       if (selected?.id === taskId) {
         setSelected(null);
@@ -170,11 +193,7 @@ export function useTaskWorkspace(
   const statusMut = useMutation({
     mutationFn: async (vars: { task: TaskRecord; status: TaskStatus }) =>
       updateTaskFn({
-        data: {
-          caseId,
-          taskId: vars.task.id,
-          status: vars.status,
-        },
+        data: buildTaskStatusUpdateData(caseId, vars.task.id, vars.status),
       }),
     onMutate: async ({ task, status }) => {
       await qc.cancelQueries({ queryKey: tasksKeys.all(caseId) });
@@ -211,11 +230,11 @@ export function useTaskWorkspace(
   const reorderMut = useMutation({
     mutationFn: async (vars: { status: TaskStatus; orderedIds: string[] }) =>
       reorderTasksFn({
-        data: {
+        data: reorderTasksInputSchema.parse({
           caseId,
           status: vars.status,
           orderedIds: vars.orderedIds,
-        },
+        }),
       }),
     onError: (e) => {
       toast.error(errMessage(e, "Reorder failed"));
@@ -238,16 +257,31 @@ export function useTaskWorkspace(
     if (task.status !== status) {
       await statusMut.mutateAsync({ task, status });
     }
-    await reorderMut.mutateAsync({ status, orderedIds });
+    let reorderIds = orderedIds;
+    if (scopedEntityId !== undefined) {
+      const allTasks = await ensureAppQueryData(qc, tasksListQuery(caseId));
+      reorderIds = mergeEntityScopedColumnOrder(
+        allTasks,
+        status,
+        scopedEntityId,
+        orderedIds
+      );
+    }
+    await reorderMut.mutateAsync({ status, orderedIds: reorderIds });
   }
 
   return {
     tasks,
-    entities,
+    entities: entityOptions,
     pending,
+    tasksLoadError,
+    handleRetryBoard: () => {
+      if (tasksQuery.isError) void tasksQuery.refetch();
+      if (entitiesQuery.isError) void entitiesQuery.refetch();
+    },
     tasksPlaceholder,
     entityById,
-    entityId,
+    entityId: scopedEntityId,
     selected,
     formError,
     createOpen,

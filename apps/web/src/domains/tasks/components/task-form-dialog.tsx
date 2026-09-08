@@ -4,6 +4,7 @@ import { TaskFormDialogFooter } from "@/domains/tasks/components/task-form-dialo
 import { useTaskFormDialog } from "@/domains/tasks/components/use-task-form-dialog";
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
 import type { TaskRecord } from "@/domains/tasks/types";
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   Dialog,
@@ -12,12 +13,6 @@ import {
   DialogTitle,
 } from "@/shared/ui/shadcn/dialog";
 import type { TaskStatus } from "@watchdog/schemas";
-
-interface EntityOption {
-  id: string;
-  name: string;
-  kind?: "person" | "infra" | "org";
-}
 
 interface BaseProps {
   open: boolean;

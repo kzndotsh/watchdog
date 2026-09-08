@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { Suspense } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
@@ -46,15 +45,26 @@ vi.mock("@/shared/ui/skeletons", () => ({
   BoardSkeleton: () => <div>Loading tasks</div>,
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 const useTaskWorkspaceMock = vi.hoisted(() => vi.fn());
 const openCreateMock = vi.hoisted(() => vi.fn());
+
+function queryLoaded<T>(data: T) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  };
+}
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
   };
 });
 
@@ -79,18 +89,14 @@ function renderPage(entityId?: string) {
 
   return render(
     <QueryClientProvider client={client}>
-      <Suspense fallback={null}>
-        <TasksPage entityId={entityId} />
-      </Suspense>
+      <TasksPage entityId={entityId} />
     </QueryClientProvider>
   );
 }
 
 describe("TasksPage", () => {
   it("prompts for an active case when none is selected", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: { cases: [], active: null },
-    });
+    useQueryMock.mockReturnValue(queryLoaded({ cases: [], active: null }));
 
     renderPage();
 
@@ -102,9 +108,9 @@ describe("TasksPage", () => {
   });
 
   it("renders the task board and new-task action for the active case", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: { cases: [ACTIVE], active: ACTIVE },
-    });
+    useQueryMock.mockReturnValue(
+      queryLoaded({ cases: [ACTIVE], active: ACTIVE })
+    );
     useTaskWorkspaceMock.mockReturnValue({
       tasks: [{ id: testId(20) }],
       entities: [],
@@ -138,5 +144,52 @@ describe("TasksPage", () => {
     expect(useTaskWorkspaceMock).toHaveBeenCalledWith(ACTIVE.id, {
       entityId: undefined,
     });
+  });
+
+  it("opens the requested task from search deep links", () => {
+    const taskId = testId(20);
+    const handleSelect = vi.fn();
+    useQueryMock.mockReturnValue(
+      queryLoaded({ cases: [ACTIVE], active: ACTIVE })
+    );
+    useTaskWorkspaceMock.mockReturnValue({
+      tasks: [{ id: taskId, title: "Follow up" }],
+      pending: false,
+      entities: [],
+      entityById: new Map(),
+      selected: null,
+      formError: null,
+      createOpen: false,
+      createStatus: "backlog",
+      createBusy: false,
+      updateBusy: false,
+      quickCreateBusy: false,
+      openCreate: openCreateMock,
+      handleSelect,
+      closeSelected: vi.fn(),
+      handleCreateOpenChange: vi.fn(),
+      handleCreate: vi.fn(),
+      handleUpdate: vi.fn(),
+      handleDelete: vi.fn(),
+      handleCommitDrop: vi.fn(),
+      handleQuickCreate: vi.fn(),
+      tasksPlaceholder: false,
+    });
+    const onTaskIdChange = vi.fn();
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <TasksPage taskId={taskId} onTaskIdChange={onTaskIdChange} />
+      </QueryClientProvider>
+    );
+
+    expect(handleSelect).toHaveBeenCalledWith({
+      id: taskId,
+      title: "Follow up",
+    });
+    expect(onTaskIdChange).toHaveBeenCalled();
   });
 });
