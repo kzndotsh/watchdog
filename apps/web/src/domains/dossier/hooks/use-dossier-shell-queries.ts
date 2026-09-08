@@ -16,10 +16,10 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import { tasksListQuery } from "@/domains/tasks/queries";
 import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
+import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 
 import {
   anyQueryPending,
-  anyQueryPlaceholder,
   dataOrEmpty,
   dossierTabCounts,
   evidenceRecordMap,
@@ -83,7 +83,7 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     activeEvidenceQuery,
     hiddenEvidenceQuery,
   ]);
-  const countsPlaceholder = anyQueryPlaceholder([
+  const countsPlaceholder = anyQueryPlaceholderData([
     claimsQuery,
     identifiersQuery,
     edgesQuery,

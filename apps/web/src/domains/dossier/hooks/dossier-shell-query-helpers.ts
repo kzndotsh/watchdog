@@ -32,15 +32,6 @@ export function anyQueryPending(
   return false;
 }
 
-export function anyQueryPlaceholder(
-  queries: readonly Pick<UseQueryResult, "isPlaceholderData">[]
-): boolean {
-  for (const query of queries) {
-    if (query.isPlaceholderData) return true;
-  }
-  return false;
-}
-
 export function evidenceRecordMap(
   evidenceAll: readonly EvidenceRecord[]
 ): Map<string, EvidenceRecord> {
