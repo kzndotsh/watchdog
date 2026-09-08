@@ -3,10 +3,13 @@ import { Effect } from "effect";
 import type { JobHandoff } from "@watchdog/db";
 
 import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
-import { notifyProposalCreatedEffect } from "../../infra/events";
+import {
+  notifyJobUpdateEffect,
+  notifyProposalCreatedEffect,
+} from "../../infra/events";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { setJobStatusEffect } from "../set-job-status";
-import { inputString, type JobLog } from "./helpers";
+import { linkedEvidenceIdStrict, type JobLog } from "./helpers";
 import type { PreflightState } from "./preflight";
 
 interface FinishInput {
@@ -45,7 +48,7 @@ export function finishEffect(
         finishedAt: new Date(),
         ...(input.handoff ? { handoff: input.handoff } : {}),
       },
-      { unlessCancelled: true, notify: true, caseId: state.job.caseId }
+      { unlessCancelled: true, notify: false, caseId: state.job.caseId }
     );
 
     if (!finished) {
@@ -55,11 +58,6 @@ export function finishEffect(
       return "cancelled" as const;
     }
 
-    if (input.proposalId !== null && input.interpretError === null) {
-      const proposalId = input.proposalId;
-      yield* notifyProposalCreatedEffect(state.job.caseId, proposalId);
-    }
-
     if (
       state.policy.markEvidenceProcessed === true &&
       input.interpretError === null
@@ -67,13 +65,31 @@ export function finishEffect(
       const shouldMark =
         input.markSourceProcessed === true ||
         (input.markSourceProcessed === undefined && Boolean(input.proposalId));
-      const evidenceId = inputString(state.input, "evidenceId");
-      if (shouldMark && evidenceId !== undefined && evidenceId !== "") {
+      const evidenceId = linkedEvidenceIdStrict(
+        state.input,
+        state.policy.linkEvidenceFromInput ?? ["evidenceId"]
+      );
+      if (shouldMark && evidenceId === null) {
+        yield* Effect.sync(() => {
+          jobLog.log(
+            "skipped mark processed: linked evidence id is not a valid UUID"
+          );
+        });
+      }
+      if (shouldMark && evidenceId !== undefined && evidenceId !== null) {
         yield* markEvidenceProcessedEffect({
           caseId: state.job.caseId,
           evidenceId,
         });
       }
+    }
+
+    // SSE after DB writes so clients refetch committed state (processedAt included).
+    yield* notifyJobUpdateEffect(state.job.caseId, state.jobId, "succeeded");
+
+    if (input.proposalId !== null && input.interpretError === null) {
+      const proposalId = input.proposalId;
+      yield* notifyProposalCreatedEffect(state.job.caseId, proposalId);
     }
 
     return "succeeded" as const;

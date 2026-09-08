@@ -8,18 +8,20 @@ import type {
 } from "@watchdog/cap-sdk";
 import { requireCapability } from "@watchdog/caps";
 import { db, jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
-import { isJsonObject } from "@watchdog/schemas";
+import { parseTrimmedCaseId } from "@watchdog/schemas";
 
 import { errorMessage } from "../../infra/domain-error";
 import { tryDb } from "../../infra/postgres-effect";
 import { logProcess } from "../../infra/process-log";
 import type { DomainTag } from "../../infra/tagged-errors";
+import { InvalidError, domainMessageOf } from "../../infra/tagged-errors";
 import {
   evaluateCapAvailabilityEffect,
   formatCapAvailabilityError,
 } from "../cap-availability";
+import { parseValidatedCapInputEffect } from "../cap-input";
 import { setJobStatusEffect } from "../set-job-status";
-import { failJobEffect } from "./helpers";
+import { failJobEffect, jobEvidenceIdsForReuse } from "./helpers";
 
 export interface PreflightState {
   jobId: string;
@@ -72,24 +74,24 @@ function convergeReclaimStopEffect(
       status: "succeeded",
       finishedAt: job.finishedAt ?? new Date(),
     },
-    { unlessCancelled: true }
+    { unlessCancelled: true, notify: true, caseId: job.caseId }
   ).pipe(Effect.asVoid);
 }
 
 function loadCapOrStopEffect(
   jobId: string,
-  capabilityId: string
+  capabilityId: string,
+  caseId: string
 ): Effect.Effect<CapLoadResult, DomainTag> {
   return Effect.gen(function* loadCapOrStopGen() {
     const cap = yield* Effect.result(
       Effect.try({
         try: () => requireCapability(capabilityId),
-        catch: (error) =>
-          error instanceof Error ? error : new Error(errorMessage(error)),
+        catch: (error) => new InvalidError({ reason: errorMessage(error) }),
       })
     );
     if (Result.isFailure(cap)) {
-      yield* failJobEffect(jobId, errorMessage(cap.failure));
+      yield* failJobEffect(jobId, domainMessageOf(cap.failure), { caseId });
       return { kind: "stop" as const, reason: "unknown_capability" as const };
     }
     return { kind: "ready" as const, cap: cap.success };
@@ -99,23 +101,17 @@ function loadCapOrStopEffect(
 function parseCapInputOrStopEffect(
   jobId: string,
   cap: CapabilityDef<z.ZodType>,
-  rawInput: unknown
+  rawInput: unknown,
+  caseId: string
 ): Effect.Effect<CapInputResult, DomainTag> {
-  return Effect.gen(function* parseCapInputOrStopGen() {
-    const parsed = cap.input.safeParse(rawInput);
-    if (!parsed.success) {
-      yield* failJobEffect(jobId, `Invalid input: ${parsed.error.message}`);
-      return { kind: "stop" as const, reason: "invalid_input" as const };
-    }
-    if (!isJsonObject(parsed.data)) {
-      yield* failJobEffect(
-        jobId,
-        "Invalid input: parsed input was not a JSON object"
-      );
-      return { kind: "stop" as const, reason: "invalid_input" as const };
-    }
-    return { kind: "ready" as const, input: parsed.data };
-  });
+  return parseValidatedCapInputEffect(cap, rawInput).pipe(
+    Effect.map((input) => ({ kind: "ready" as const, input })),
+    Effect.catchTag("InvalidError", (error) =>
+      failJobEffect(jobId, error.reason, { caseId }).pipe(
+        Effect.as({ kind: "stop" as const, reason: "invalid_input" as const })
+      )
+    )
+  );
 }
 
 function enforceCapAvailabilityOrStopEffect(
@@ -137,7 +133,9 @@ function enforceCapAvailabilityOrStopEffect(
     if (result.ok) {
       return { kind: "ready" as const, allowThirdPartyEgress };
     }
-    yield* failJobEffect(jobId, formatCapAvailabilityError(result, cap.id));
+    yield* failJobEffect(jobId, formatCapAvailabilityError(result, cap.id), {
+      caseId: job.caseId,
+    });
     return {
       kind: "stop" as const,
       reason:
@@ -153,12 +151,21 @@ function preparePreflightReadyEffect(
   job: JobRow
 ): Effect.Effect<PreflightResult, DomainTag> {
   return Effect.gen(function* preparePreflightReadyGen() {
-    const capOrStop = yield* loadCapOrStopEffect(jobId, job.capabilityId);
+    const capOrStop = yield* loadCapOrStopEffect(
+      jobId,
+      job.capabilityId,
+      job.caseId
+    );
     if (capOrStop.kind === "stop") return capOrStop;
     const { cap } = capOrStop;
     const policy = cap.jobPolicy ?? {};
 
-    const inputOrStop = yield* parseCapInputOrStopEffect(jobId, cap, job.input);
+    const inputOrStop = yield* parseCapInputOrStopEffect(
+      jobId,
+      cap,
+      job.input,
+      job.caseId
+    );
     if (inputOrStop.kind === "stop") return inputOrStop;
     const { input } = inputOrStop;
 
@@ -171,7 +178,7 @@ function preparePreflightReadyEffect(
 
     const reclaimArtifacts =
       Array.isArray(job.output) && job.output.length > 0 ? job.output : null;
-    const reclaimEvidenceIds = job.evidenceIds ?? [];
+    const reclaimEvidenceIds = jobEvidenceIdsForReuse(job.evidenceIds);
 
     const markedRunning = yield* setJobStatusEffect(
       jobId,
@@ -180,7 +187,12 @@ function preparePreflightReadyEffect(
         startedAt: job.startedAt ?? new Date(),
         ...(reclaimArtifacts ? {} : { logs: [] as string[] }),
       },
-      { unlessCancelled: true, onlyStatuses: ["queued", "running"] }
+      {
+        unlessCancelled: true,
+        onlyStatuses: ["queued", "running"],
+        notify: true,
+        caseId: job.caseId,
+      }
     );
     if (!markedRunning) {
       return { kind: "stop" as const, reason: "cancelled" as const };
@@ -212,10 +224,17 @@ export function preflightEffect(
   jobId: string
 ): Effect.Effect<PreflightResult, DomainTag> {
   return Effect.gen(function* preflightGen() {
-    const job = yield* tryDb(() => jobsRepo.get(db, jobId));
+    const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
+    if (normalizedJobId === undefined) {
+      return { kind: "stop" as const, reason: "not_found" as const };
+    }
+
+    const job = yield* tryDb(() => jobsRepo.get(db, normalizedJobId));
     if (!job) {
       yield* Effect.sync(() => {
-        logProcess("preflight", `Job not found: ${jobId}`, { jobId });
+        logProcess("preflight", `Job not found: ${normalizedJobId}`, {
+          jobId: normalizedJobId,
+        });
       });
       return { kind: "stop" as const, reason: "not_found" as const };
     }
@@ -226,10 +245,10 @@ export function preflightEffect(
     }
 
     if (job.proposalId !== null && job.status === "running") {
-      yield* convergeReclaimStopEffect(jobId, job);
+      yield* convergeReclaimStopEffect(normalizedJobId, job);
       return { kind: "stop" as const, reason: "reclaim_converged" as const };
     }
 
-    return yield* preparePreflightReadyEffect(jobId, job);
+    return yield* preparePreflightReadyEffect(normalizedJobId, job);
   });
 }

@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import {
   decidePlaybookAdvance,
+  requireCapability,
   requirePlaybook,
   normalizePlaybookStep,
   predecessorFromJob,
@@ -16,14 +17,16 @@ import {
 import {
   isJsonObject,
   isOpenJobStatus,
+  parseTrimmedCaseId,
   type JsonObject,
 } from "@watchdog/schemas";
 
 import { notifyJobUpdateEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
-import type { DomainTag } from "../../infra/tagged-errors";
+import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
+import { parseValidatedCapInputEffect } from "../cap-input";
 
 interface ReleasedJob {
   id: string;
@@ -32,6 +35,7 @@ interface ReleasedJob {
 
 interface AdvanceOutcome {
   jobs: ReleasedJob[];
+  abandonedJobIds: string[];
   caseId: string | undefined;
 }
 
@@ -86,26 +90,38 @@ function enqueueStepJobsEffect(opts: {
   inputs: JsonObject[];
 }): Effect.Effect<ReleasedJob[], DomainTag> {
   const { tx, run, playbookRunId, jobs, step, capabilityId, inputs } = opts;
+  const cap = requireCapability(capabilityId);
   return Effect.gen(function* enqueueStepJobsGen() {
     const created: ReleasedJob[] = [];
     yield* Effect.forEach(
       inputs.map((jobInput, fanIndex) => ({ jobInput, fanIndex })),
       ({ jobInput, fanIndex }) =>
         Effect.gen(function* enqueueOneStepJob() {
+          const normalizedInput = yield* parseValidatedCapInputEffect(
+            cap,
+            jobInput
+          );
           const existing = jobs.find(
             (j) => j.playbookStep === step && j.playbookFanIndex === fanIndex
           );
           if (existing) {
             if (existing.status === "blocked") {
-              yield* tryDb(() =>
-                jobsRepo.update(tx, existing.id, {
-                  input: jobInput,
-                  status: "queued",
-                })
+              const updated = yield* tryDb(() =>
+                jobsRepo.updateInCase(
+                  tx,
+                  run.caseId,
+                  existing.id,
+                  {
+                    input: normalizedInput,
+                    status: "queued",
+                  },
+                  { onlyStatuses: ["blocked"] }
+                )
               );
+              if (!updated) return;
               created.push({
-                id: existing.id,
-                capabilityId: existing.capabilityId,
+                id: updated.id,
+                capabilityId: updated.capabilityId,
               });
             }
             return;
@@ -114,7 +130,7 @@ function enqueueStepJobsEffect(opts: {
             jobsRepo.create(tx, {
               caseId: run.caseId,
               capabilityId,
-              input: jobInput,
+              input: normalizedInput,
               status: "queued",
               actorId: run.actorId,
               actorLabel: run.actorLabel,
@@ -125,11 +141,9 @@ function enqueueStepJobsEffect(opts: {
             })
           );
           if (!row) {
-            return yield* Effect.die(
-              new Error(
-                `Failed to create playbook Job at step ${step} · ${fanIndex}`
-              )
-            );
+            return yield* new InvalidError({
+              reason: `Failed to create playbook Job at step ${step} · ${fanIndex}`,
+            });
           }
           created.push({ id: row.id, capabilityId: row.capabilityId });
         }),
@@ -143,7 +157,8 @@ export function advancePlaybookRunEffect(input: {
   playbookRunId: string;
   caseId?: string;
 }): Effect.Effect<void, DomainTag> {
-  const { playbookRunId } = input;
+  const playbookRunId = parseTrimmedCaseId(input.playbookRunId) ?? undefined;
+  if (playbookRunId === undefined) return Effect.void;
   return Effect.gen(function* advancePlaybookRunGen() {
     const outcome = yield* transact((tx) =>
       Effect.gen(function* advancePlaybookTx() {
@@ -153,6 +168,7 @@ export function advancePlaybookRunEffect(input: {
         if (!run || run.status !== "running") {
           return {
             jobs: [] as ReleasedJob[],
+            abandonedJobIds: [],
             caseId: input.caseId,
           } satisfies AdvanceOutcome;
         }
@@ -176,14 +192,22 @@ export function advancePlaybookRunEffect(input: {
 
         switch (decision.kind) {
           case "wait": {
-            return { jobs: [], caseId: run.caseId } satisfies AdvanceOutcome;
+            return {
+              jobs: [],
+              abandonedJobIds: [],
+              caseId: run.caseId,
+            } satisfies AdvanceOutcome;
           }
           case "finish": {
             yield* maybeFinishPlaybookRunEffect(tx, playbookRunId);
-            return { jobs: [], caseId: run.caseId } satisfies AdvanceOutcome;
+            return {
+              jobs: [],
+              abandonedJobIds: [],
+              caseId: run.caseId,
+            } satisfies AdvanceOutcome;
           }
           case "abandon": {
-            yield* tryDb(() =>
+            const abandonedJobIds = yield* tryDb(() =>
               jobsRepo.abandonBlockedForPlaybook(
                 tx,
                 playbookRunId,
@@ -191,7 +215,11 @@ export function advancePlaybookRunEffect(input: {
               )
             );
             yield* maybeFinishPlaybookRunEffect(tx, playbookRunId);
-            return { jobs: [], caseId: run.caseId } satisfies AdvanceOutcome;
+            return {
+              jobs: [],
+              abandonedJobIds,
+              caseId: run.caseId,
+            } satisfies AdvanceOutcome;
           }
           case "enqueue": {
             const def = normalizePlaybookStep(playbook.steps[decision.step]);
@@ -206,6 +234,7 @@ export function advancePlaybookRunEffect(input: {
             });
             return {
               jobs: created,
+              abandonedJobIds: [],
               caseId: run.caseId,
             } satisfies AdvanceOutcome;
           }
@@ -220,5 +249,11 @@ export function advancePlaybookRunEffect(input: {
     const caseId = outcome.caseId ?? input.caseId;
     if (caseId === undefined) return;
     yield* enqueueReleasedEffect(caseId, playbookRunId, outcome.jobs);
+    if (outcome.abandonedJobIds.length === 0) return;
+    yield* Effect.forEach(
+      outcome.abandonedJobIds,
+      (jobId) => notifyJobUpdateEffect(caseId, jobId, "cancelled"),
+      { concurrency: "unbounded" }
+    );
   });
 }

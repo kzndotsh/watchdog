@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PatchOp } from "@watchdog/schemas";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 const { create } = vi.hoisted(() => ({
   create: vi.fn(),
@@ -15,10 +16,14 @@ vi.mock("@watchdog/db", () => ({
 import { proposeStageEffect } from "../propose";
 
 describe("proposeStage", () => {
+  const caseId = testId(1);
+  const jobId = testId(2);
+  const evidenceId = testId(3);
+
   it("returns null proposalId when patch is empty", async () => {
     const result = await Effect.runPromise(
       proposeStageEffect({
-        caseId: "case-1",
+        caseId,
         kept: [],
         suppressed: 2,
         resultSummary: "none new",
@@ -31,7 +36,7 @@ describe("proposeStage", () => {
   });
 
   it("creates pending proposal with evidence attached", async () => {
-    create.mockResolvedValueOnce({ id: "prop-1" });
+    create.mockResolvedValueOnce({ id: testId(4) });
     const kept: PatchOp[] = [
       {
         op: "create",
@@ -42,24 +47,159 @@ describe("proposeStage", () => {
 
     const result = await Effect.runPromise(
       proposeStageEffect({
-        caseId: "case-1",
+        caseId,
         kept,
         suppressed: 0,
         resultSummary: "found claim",
-        attachEvidenceIds: ["ev-1"],
-        jobId: "job-1",
+        attachEvidenceIds: [evidenceId],
+        jobId,
       })
     );
 
-    expect(result.proposalId).toBe("prop-1");
+    expect(result.proposalId).toBe(testId(4));
     expect(create).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        caseId: "case-1",
-        jobId: "job-1",
+        caseId,
+        jobId,
         status: "pending",
-        evidenceIds: ["ev-1"],
+        evidenceIds: [evidenceId],
       })
     );
+  });
+
+  it("trims padded attach evidence ids before insert", async () => {
+    create.mockResolvedValueOnce({ id: testId(5) });
+    const kept: PatchOp[] = [
+      {
+        op: "create",
+        resource: "claim",
+        data: { text: "observation", class: "observation" },
+      },
+    ];
+
+    await Effect.runPromise(
+      proposeStageEffect({
+        caseId,
+        kept,
+        suppressed: 0,
+        resultSummary: "found claim",
+        attachEvidenceIds: [`  ${evidenceId}  `, evidenceId],
+      })
+    );
+
+    expect(create).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        evidenceIds: [evidenceId],
+      })
+    );
+  });
+
+  it("trims padded createdBy before insert", async () => {
+    create.mockResolvedValueOnce({ id: testId(6) });
+    const kept: PatchOp[] = [
+      {
+        op: "create",
+        resource: "claim",
+        data: { text: "observation", class: "observation" },
+      },
+    ];
+
+    await Effect.runPromise(
+      proposeStageEffect({
+        caseId,
+        kept,
+        suppressed: 0,
+        resultSummary: "found claim",
+        attachEvidenceIds: [evidenceId],
+        createdBy: `  ${TEST_ACTOR_ID}  `,
+      })
+    );
+
+    expect(create).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        createdBy: TEST_ACTOR_ID,
+      })
+    );
+  });
+
+  it("stores null createdBy when only whitespace is provided", async () => {
+    create.mockResolvedValueOnce({ id: testId(7) });
+    const kept: PatchOp[] = [
+      {
+        op: "create",
+        resource: "claim",
+        data: { text: "observation", class: "observation" },
+      },
+    ];
+
+    await Effect.runPromise(
+      proposeStageEffect({
+        caseId,
+        kept,
+        suppressed: 0,
+        resultSummary: "found claim",
+        attachEvidenceIds: [evidenceId],
+        createdBy: "   ",
+      })
+    );
+
+    expect(create).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        createdBy: null,
+      })
+    );
+  });
+
+  it("returns null proposalId when repo create misses", async () => {
+    create.mockResolvedValueOnce(null);
+    const kept: PatchOp[] = [
+      {
+        op: "create",
+        resource: "claim",
+        data: { text: "observation", class: "observation" },
+      },
+    ];
+
+    const result = await Effect.runPromise(
+      proposeStageEffect({
+        caseId,
+        kept,
+        suppressed: 0,
+        resultSummary: "found claim",
+        attachEvidenceIds: [evidenceId],
+        createdBy: TEST_ACTOR_ID,
+      })
+    );
+
+    expect(result.proposalId).toBeNull();
+  });
+
+  it("rejects invalid attach evidence ids", async () => {
+    const kept: PatchOp[] = [
+      {
+        op: "create",
+        resource: "claim",
+        data: { text: "observation", class: "observation" },
+      },
+    ];
+
+    await expect(
+      Effect.runPromise(
+        proposeStageEffect({
+          caseId,
+          kept,
+          suppressed: 0,
+          resultSummary: "found claim",
+          attachEvidenceIds: [evidenceId, "not-a-uuid"],
+        })
+      )
+    ).rejects.toMatchObject({
+      _tag: "InvalidError",
+      reason: "attachEvidenceIds contains an invalid UUID",
+    });
   });
 });
