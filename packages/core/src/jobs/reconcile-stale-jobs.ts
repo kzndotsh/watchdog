@@ -1,4 +1,4 @@
-import { Cause, Effect } from "effect";
+import { Cause, Effect, Result } from "effect";
 
 import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas";
@@ -7,11 +7,15 @@ import { errorMessage } from "../infra/domain-error";
 import { tryDb } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
 import type { DomainTag } from "../infra/tagged-errors";
+import { enqueueCapJobEffect } from "./boss";
 import { advancePlaybookRunEffect } from "./stages/chain";
 import { failJobEffect } from "./stages/helpers";
 import { capExpireSeconds } from "./timeouts";
 
 const STALE_ERROR = "worker restarted while this Job was running";
+
+/** Avoid re-enqueueing jobs still in the normal web→boss handoff window. */
+const ORPHAN_QUEUED_GRACE_MS = 120_000;
 
 type StaleJobRow = Awaited<ReturnType<typeof jobsRepo.listRunning>>[number];
 
@@ -29,10 +33,11 @@ function capExpireOrUnknown(
 
 function abandonPlaybook(
   jobId: string,
-  playbookRunId: string | null
+  playbookRunId: string | null,
+  caseId: string
 ): Effect.Effect<void> {
   if (playbookRunId === null) return Effect.void;
-  return advancePlaybookRunEffect({ playbookRunId }).pipe(
+  return advancePlaybookRunEffect({ playbookRunId, caseId }).pipe(
     Effect.catchCause((cause) =>
       Effect.sync(() => {
         logSwallowed("reconcile.abandon", Cause.squash(cause), { jobId });
@@ -50,15 +55,16 @@ function reconcileStaleJobEffect(
     if (!cap.ok) {
       yield* failJobEffect(
         row.id,
-        `Unknown Capability ${row.capabilityId}: ${cap.message}`
+        `Unknown Capability ${row.capabilityId}: ${cap.message}`,
+        { caseId: row.caseId }
       );
-      yield* abandonPlaybook(row.id, row.playbookRunId);
+      yield* abandonPlaybook(row.id, row.playbookRunId, row.caseId);
       return true;
     }
-    const ageMs = now - row.updatedAt.getTime();
+    const ageMs = now - (row.startedAt ?? row.updatedAt).getTime();
     if (ageMs < cap.expireSeconds * 1000) return false;
-    yield* failJobEffect(row.id, STALE_ERROR);
-    yield* abandonPlaybook(row.id, row.playbookRunId);
+    yield* failJobEffect(row.id, STALE_ERROR, { caseId: row.caseId });
+    yield* abandonPlaybook(row.id, row.playbookRunId, row.caseId);
     return true;
   });
 }
@@ -78,6 +84,38 @@ export function reconcileStaleJobsEffect(): Effect.Effect<number, DomainTag> {
       { concurrency: "unbounded" }
     );
     return results.filter(Boolean).length;
+  });
+}
+
+/**
+ * Re-enqueue product Jobs left `queued` without a pg-boss delivery (enqueue
+ * failed after commit). `singletonKey` on send makes repeat enqueue safe.
+ */
+export function reconcileOrphanedQueuedJobsEffect(): Effect.Effect<
+  number,
+  DomainTag
+> {
+  return Effect.gen(function* reconcileOrphanedQueuedJobsGen() {
+    const updatedBefore = new Date(Date.now() - ORPHAN_QUEUED_GRACE_MS);
+    const rows = yield* tryDb(() =>
+      jobsRepo.listQueuedStale(db, updatedBefore)
+    );
+    let enqueued = 0;
+    for (const row of rows) {
+      const outcome = yield* Effect.result(
+        enqueueCapJobEffect(row.id, row.capabilityId)
+      );
+      if (Result.isFailure(outcome)) {
+        yield* Effect.sync(() => {
+          logSwallowed("reconcile.orphan_queued", outcome.failure, {
+            jobId: row.id,
+          });
+        });
+        continue;
+      }
+      enqueued += 1;
+    }
+    return enqueued;
   });
 }
 

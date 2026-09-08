@@ -12,13 +12,20 @@ import {
   type SeedValues,
 } from "@watchdog/caps";
 import { casesRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 
+import {
+  optionalActorId,
+  requireActorIdEffect,
+} from "../actors/require-actor-id";
+import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
-  assertEvidenceInCaseEffect,
+  requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import { errorMessage } from "../infra/domain-error";
+import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
@@ -30,8 +37,12 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import { hasCredentialEffect } from "../infra/vault";
-import { enqueueCapJobEffect } from "./boss";
-import { toJobRecord, type JobRecord } from "./start-job";
+import { parseValidatedCapInputEffect } from "./cap-input";
+import {
+  enqueueCreatedJobEffect,
+  toJobRecord,
+  type JobRecord,
+} from "./start-job";
 
 export interface RunPlaybookInput {
   caseId: string;
@@ -60,11 +71,11 @@ function assertSeedAnchorsInCaseEffect(
   seed: SeedValues
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* assertSeedAnchorsInCaseGen() {
-    if (seed.entityId !== undefined && seed.entityId !== "") {
+    if (seed.entityId !== undefined) {
       yield* assertEntityInCaseEffect(caseId, seed.entityId);
     }
-    if (seed.evidenceId !== undefined && seed.evidenceId !== "") {
-      yield* assertEvidenceInCaseEffect(caseId, seed.evidenceId);
+    if (seed.evidenceId !== undefined) {
+      yield* assertEvidenceIdsInCaseEffect(caseId, [seed.evidenceId]);
     }
   });
 }
@@ -132,11 +143,18 @@ export function runPlaybookEffect(
   input: RunPlaybookInput
 ): Effect.Effect<PlaybookRunResult, DomainTag> {
   return Effect.gen(function* runPlaybookGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
-    const playbook = yield* loadPlaybookEffect(input.playbookId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const playbookId = trimmedOrUndefined(input.playbookId);
+    if (playbookId === undefined) {
+      return yield* new InvalidError({ reason: "Playbook id is required" });
+    }
+    const playbook = yield* loadPlaybookEffect(playbookId);
     const { seed } = input;
 
-    yield* assertSeedAnchorsInCaseEffect(input.caseId, seed);
+    yield* assertSeedAnchorsInCaseEffect(scopedCaseId, seed);
 
     const plan = planPlaybook(playbook, seed);
     if ("kind" in plan) {
@@ -144,13 +162,14 @@ export function runPlaybookEffect(
     }
 
     const descriptor = toPlaybookDescriptor(playbook);
+    const actorId = yield* requireActorIdEffect(input.actorId);
     const present = yield* presentCredentialNamesEffect(
-      input.actorId,
+      actorId,
       credentialNamesFromDescriptor(descriptor)
     );
 
     const caseRow = yield* tryDb(() =>
-      casesRepo.getById(db, input.caseId, input.organizationId)
+      casesRepo.getById(db, scopedCaseId, input.organizationId)
     );
     yield* ensurePlaybookRunnable(
       descriptor,
@@ -165,11 +184,11 @@ export function runPlaybookEffect(
       Effect.gen(function* runPlaybookTx() {
         const run = yield* tryDb(() =>
           playbookRunsRepo.create(tx, {
-            caseId: input.caseId,
+            caseId: scopedCaseId,
             playbookId: playbook.id,
             seed: seedJson,
             status: "running",
-            actorId: input.actorId,
+            actorId,
             actorLabel: input.actorLabel ?? null,
           })
         );
@@ -179,13 +198,18 @@ export function runPlaybookEffect(
           });
         }
 
+        const stepCap = requireCapability(plan.step.capabilityId);
+        const stepInput = yield* parseValidatedCapInputEffect(
+          stepCap,
+          plan.step.input
+        );
         const row = yield* tryDb(() =>
           jobsRepo.create(tx, {
-            caseId: input.caseId,
+            caseId: scopedCaseId,
             capabilityId: plan.step.capabilityId,
-            input: plan.step.input,
+            input: stepInput,
             status: "queued",
-            actorId: input.actorId,
+            actorId,
             actorLabel: input.actorLabel ?? null,
             logs: [],
             playbookRunId: run.id,
@@ -205,7 +229,12 @@ export function runPlaybookEffect(
 
     yield* Effect.forEach(
       result.jobRows.filter((row) => row.status === "queued"),
-      (row) => enqueueCapJobEffect(row.id, row.capabilityId),
+      (row) => enqueueCreatedJobEffect(scopedCaseId, row, row.capabilityId),
+      { concurrency: "unbounded" }
+    );
+    yield* Effect.forEach(
+      result.jobRows.filter((row) => row.status === "queued"),
+      (row) => notifyJobUpdateEffect(scopedCaseId, row.id, "queued"),
       { concurrency: "unbounded" }
     );
 
@@ -235,14 +264,18 @@ export function cancelPlaybookRunEffect(
   opts?: CancelPlaybookRunOpts
 ): Effect.Effect<CancelPlaybookRunResult, DomainTag> {
   return Effect.gen(function* cancelPlaybookRunGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedPlaybookRunId = yield* requireTrimmedGraphId(
+      playbookRunId,
+      "Playbook run not found"
+    );
     const now = new Date();
     const result = yield* transact((tx) =>
       Effect.gen(function* cancelPlaybookTx() {
         const run = yield* tryDb(() =>
-          playbookRunsRepo.lock(tx, playbookRunId)
+          playbookRunsRepo.lock(tx, normalizedPlaybookRunId)
         );
-        if (!run || run.caseId !== caseId) {
+        if (!run || run.caseId !== scopedCaseId) {
           return yield* new NotFoundError({
             resource: "Playbook run not found",
           });
@@ -254,32 +287,48 @@ export function cancelPlaybookRunEffect(
         }
 
         yield* tryDb(() =>
-          playbookRunsRepo.setStatus(tx, playbookRunId, "cancelled", now)
+          playbookRunsRepo.setStatus(
+            tx,
+            normalizedPlaybookRunId,
+            "cancelled",
+            now
+          )
         );
 
         const cancellable = yield* tryDb(() =>
-          jobsRepo.listCancellableForPlaybookRun(tx, caseId, playbookRunId)
+          jobsRepo.listCancellableForPlaybookRun(
+            tx,
+            scopedCaseId,
+            normalizedPlaybookRunId
+          )
         );
         const updatedIds = yield* Effect.forEach(
           cancellable,
-          (row) => tryDb(() => jobsRepo.cancelCancellable(tx, row.id, now)),
+          (row) =>
+            tryDb(() =>
+              jobsRepo.cancelCancellableInCase(tx, scopedCaseId, row.id, now)
+            ),
           { concurrency: "unbounded" }
         );
         const cancelledJobIds = updatedIds.filter((id): id is string =>
           Boolean(id)
         );
-        return { playbookRunId, cancelledJobIds };
+        return { playbookRunId: normalizedPlaybookRunId, cancelledJobIds };
       })
     );
-    if (opts?.actorId) {
+    const logActorId = optionalActorId(opts?.actorId);
+    if (logActorId) {
       yield* Effect.sync(() => {
         logProcess("playbook.cancel", "Playbook run cancelled", {
-          caseId,
-          playbookRunId,
-          actorId: opts.actorId,
+          caseId: scopedCaseId,
+          playbookRunId: normalizedPlaybookRunId,
+          actorId: logActorId,
           cancelledJobCount: result.cancelledJobIds.length,
         });
       });
+    }
+    for (const jobId of result.cancelledJobIds) {
+      yield* notifyJobUpdateEffect(scopedCaseId, jobId, "cancelled");
     }
     return result;
   });

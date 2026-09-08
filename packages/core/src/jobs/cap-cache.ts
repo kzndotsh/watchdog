@@ -3,13 +3,11 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 
 import { capCacheRepo, db, type JobArtifact } from "@watchdog/db";
+import { isJsonObject, normalizeJobInput } from "@watchdog/schemas";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
-
-function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
+import { isPlainRecord } from "./stages/helpers";
 
 function sortedRecord(input: Record<string, unknown>): Record<string, unknown> {
   const sorted: Record<string, unknown> = {};
@@ -19,10 +17,15 @@ function sortedRecord(input: Record<string, unknown>): Record<string, unknown> {
   return sorted;
 }
 
+function capInputForHash(input: unknown): unknown {
+  return isJsonObject(input) ? normalizeJobInput(input) : input;
+}
+
 export function hashCapInput(input: unknown): string {
-  const body = isPlainRecord(input)
-    ? JSON.stringify(sortedRecord(input))
-    : JSON.stringify(input);
+  const scoped = capInputForHash(input);
+  const body = isPlainRecord(scoped)
+    ? JSON.stringify(sortedRecord(scoped))
+    : JSON.stringify(scoped);
   return createHash("sha256").update(body).digest("hex");
 }
 

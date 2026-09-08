@@ -52,6 +52,8 @@ export function evaluateCapAvailabilityEffect(input: {
   actorId: string;
   caseId: string;
   cap: CapabilityDef<z.ZodType>;
+  /** When set, skips a separate case read (use under case row lock). */
+  allowThirdPartyEgress?: boolean;
 }): Effect.Effect<
   {
     allowThirdPartyEgress: boolean;
@@ -78,10 +80,12 @@ export function evaluateCapAvailabilityEffect(input: {
       { concurrency: "unbounded" }
     );
 
-    const caseRow = yield* tryDb(() =>
-      casesRepo.getByIdUnchecked(db, input.caseId)
-    );
-    const allowThirdPartyEgress = caseRow?.allowThirdPartyEgress ?? false;
+    const caseRow =
+      input.allowThirdPartyEgress === undefined
+        ? yield* tryDb(() => casesRepo.getByIdUnchecked(db, input.caseId))
+        : null;
+    const allowThirdPartyEgress =
+      input.allowThirdPartyEgress ?? caseRow?.allowThirdPartyEgress ?? false;
     return {
       allowThirdPartyEgress,
       result: checkCapabilityAvailability(
@@ -105,6 +109,7 @@ export function assertCapAvailabilityEffect(input: {
   actorId: string;
   caseId: string;
   cap: CapabilityDef<z.ZodType>;
+  allowThirdPartyEgress?: boolean;
 }): Effect.Effect<void, DomainTag> {
   return evaluateCapAvailabilityEffect(input).pipe(
     Effect.flatMap(({ result }) => {

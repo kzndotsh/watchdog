@@ -2,11 +2,18 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   cancelPlaybookRunEffect,
+  DomainError,
   dumpUrlEffect,
   runPlaybookEffect,
   runDomain,
 } from "@watchdog/core";
-import { casesRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import {
+  casesRepo,
+  db,
+  evidenceRepo,
+  jobsRepo,
+  playbookRunsRepo,
+} from "@watchdog/db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-kit/db";
 
@@ -47,6 +54,69 @@ describe("runPlaybook", () => {
 
     const run = await playbookRunsRepo.get(db, result.playbookRunId);
     expect(run?.status).toBe("running");
+  });
+
+  it("rejects whitespace-only playbook id", async () => {
+    const cased = await seedCase(db);
+    await expect(
+      runDomain(
+        runPlaybookEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          playbookId: "   ",
+          actorId: TEST_ACTOR_ID,
+          seed: { host: "mailhost.test" },
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+    );
+  });
+
+  it("rejects invalid seed evidenceId before insert", async () => {
+    const cased = await seedCase(db);
+    await expect(
+      runDomain(
+        runPlaybookEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          playbookId: "url-capture",
+          actorId: TEST_ACTOR_ID,
+          seed: {
+            url: "https://mailhost.test/",
+            evidenceId: "not-a-uuid",
+          },
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+    );
+
+    const jobs = await jobsRepo.listForCase(db, cased.id);
+    expect(jobs).toHaveLength(0);
+  });
+
+  it("rejects invalid seed entityId before insert", async () => {
+    const cased = await seedCase(db);
+    await expect(
+      runDomain(
+        runPlaybookEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          playbookId: "host-footprint",
+          actorId: TEST_ACTOR_ID,
+          seed: {
+            host: "mailhost.test",
+            entityId: "bad-entity-id",
+          },
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+    );
+
+    const jobs = await jobsRepo.listForCase(db, cased.id);
+    expect(jobs).toHaveLength(0);
   });
 
   it("host-footprint queues only the first DNS step", async () => {
@@ -202,5 +272,36 @@ describe("cancelPlaybookRun", () => {
       started.playbookRunId
     );
     expect(members.some((j) => j.status === "blocked")).toBe(false);
+  });
+
+  it("accepts hidden evidence in the playbook seed", async () => {
+    const cased = await seedCase(db);
+    const dumped = await runDomain(
+      dumpUrlEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        sourceUrl: "https://hidden-seed.test/",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+      })
+    );
+    await evidenceRepo.softDelete(db, cased.id, dumped.id);
+
+    const result = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "url-capture",
+        actorId: TEST_ACTOR_ID,
+        actorLabel: TEST_ACTOR_ID,
+        seed: {
+          url: "https://hidden-seed.test/",
+          evidenceId: dumped.id,
+        },
+      })
+    );
+
+    expect(result.jobs).toHaveLength(1);
+    expect(result.jobs[0]?.status).toBe("queued");
   });
 });

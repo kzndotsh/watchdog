@@ -2,16 +2,17 @@ import { Effect } from "effect";
 
 import { db, jobsRepo, type JobPatch, type JobRow } from "@watchdog/db";
 import type { JobStatus } from "@watchdog/schemas";
+import { parseTrimmedCaseId } from "@watchdog/schemas";
 
 import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
 interface SetJobStatusOpts {
+  caseId: string;
   unlessCancelled?: boolean;
   onlyStatuses?: JobStatus[];
   notify?: boolean;
-  caseId?: string;
 }
 
 type JobStatusPatch = JobPatch & { status: JobStatus };
@@ -24,26 +25,29 @@ type JobStatusPatch = JobPatch & { status: JobStatus };
 export function setJobStatusEffect(
   jobId: string,
   patch: JobStatusPatch,
-  opts?: SetJobStatusOpts
+  opts: SetJobStatusOpts
 ): Effect.Effect<JobRow | null, DomainTag> {
   return Effect.gen(function* setJobStatusGen() {
+    const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
+    const scopedCaseId = parseTrimmedCaseId(opts.caseId) ?? undefined;
+    if (normalizedJobId === undefined || scopedCaseId === undefined) {
+      return null;
+    }
+    const updateOpts = {
+      unlessCancelled: opts?.unlessCancelled,
+      onlyStatuses: opts?.onlyStatuses,
+    };
     const updated = yield* tryDb(() =>
-      jobsRepo.update(
+      jobsRepo.updateInCase(
         db,
-        jobId,
+        scopedCaseId,
+        normalizedJobId,
         { ...patch },
-        {
-          unlessCancelled: opts?.unlessCancelled,
-          onlyStatuses: opts?.onlyStatuses,
-        }
+        updateOpts
       )
     );
     if (updated && opts?.notify === true) {
-      yield* notifyJobUpdateEffect(
-        opts.caseId ?? updated.caseId,
-        jobId,
-        patch.status
-      );
+      yield* notifyJobUpdateEffect(scopedCaseId, normalizedJobId, patch.status);
     }
     return updated;
   });

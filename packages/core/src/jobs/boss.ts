@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { PgBoss } from "pg-boss";
 
 import { env } from "@watchdog/env/server";
+import { parseTrimmedCaseId } from "@watchdog/schemas";
 
 import { errorMessage } from "../infra/domain-error";
 import { logProcess, logSwallowed } from "../infra/process-log";
@@ -16,13 +17,12 @@ export interface CapJobPayload {
 }
 
 export function isCapJobPayload(value: unknown): value is CapJobPayload {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "jobId" in value &&
-    typeof value.jobId === "string" &&
-    value.jobId.length > 0
-  );
+  if (typeof value !== "object" || value === null || !("jobId" in value)) {
+    return false;
+  }
+  const jobId = value.jobId;
+  if (typeof jobId !== "string") return false;
+  return parseTrimmedCaseId(jobId) !== null;
 }
 
 export type BossHandle = PgBoss;
@@ -126,12 +126,17 @@ export function enqueueCapJobEffect(
   capabilityId: string
 ): Effect.Effect<void, InvalidError> {
   return Effect.gen(function* enqueueCapJobGen() {
+    const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
+    if (normalizedJobId === undefined) {
+      return yield* new InvalidError({ reason: "Job id must not be blank" });
+    }
     const boss = yield* bossForEnqueueEffect();
-    const payload: CapJobPayload = { jobId };
+    const payload: CapJobPayload = { jobId: normalizedJobId };
     yield* Effect.tryPromise({
       try: () =>
         boss.send(CAP_JOB_QUEUE, payload, {
           expireInSeconds: capExpireSeconds(capabilityId),
+          singletonKey: normalizedJobId,
         }),
       catch: mapBossCatch,
     });
