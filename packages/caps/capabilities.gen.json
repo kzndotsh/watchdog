@@ -51,6 +51,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -114,6 +122,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -177,6 +193,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -530,6 +550,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      },
+      {
+        "kind": "identifier",
+        "type": "email"
       }
     ],
     "useCases": [
@@ -825,6 +853,10 @@
       },
       {
         "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
         "type": "domain"
       }
     ],
@@ -892,6 +924,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       },
       {
         "kind": "identifier",
@@ -988,9 +1024,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL to scan",
           "type": "string",
-          "format": "uri",
-          "description": "URL to scan"
+          "format": "uri"
         },
         "entityId": {
           "type": "string",
@@ -1016,9 +1052,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL to scan",
           "type": "string",
-          "format": "uri",
-          "description": "URL to scan"
+          "format": "uri"
         },
         "visibility": {
           "type": "string",
@@ -1051,6 +1087,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -1383,6 +1423,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -1455,6 +1503,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -1533,6 +1589,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -1601,6 +1665,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -1664,6 +1732,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -1685,9 +1757,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL to enrich",
           "type": "string",
-          "format": "uri",
-          "description": "URL to enrich"
+          "format": "uri"
         },
         "sourceEvidenceId": {
           "type": "string",
@@ -1710,9 +1782,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL to enrich",
           "type": "string",
-          "format": "uri",
-          "description": "URL to enrich"
+          "format": "uri"
         }
       },
       "required": [
@@ -1755,9 +1827,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         },
         "entityId": {
           "type": "string",
@@ -1780,9 +1852,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         }
       },
       "required": [
@@ -1802,6 +1874,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -1823,13 +1899,12 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         },
         "timestamp": {
-          "type": "string",
-          "minLength": 1
+          "type": "string"
         },
         "entityId": {
           "type": "string",
@@ -1847,9 +1922,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         }
       },
       "required": [
@@ -1869,6 +1944,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -1889,9 +1968,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL to archive",
           "type": "string",
-          "minLength": 1,
-          "description": "URL to archive"
+          "format": "uri"
         },
         "entityId": {
           "type": "string",
@@ -1909,9 +1988,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL to archive",
           "type": "string",
-          "minLength": 1,
-          "description": "URL to archive"
+          "format": "uri"
         }
       },
       "required": [
@@ -1935,6 +2014,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -2000,6 +2083,10 @@
       },
       {
         "kind": "identifier",
+        "type": "domain"
+      },
+      {
+        "kind": "identifier",
         "type": "url"
       }
     ],
@@ -2022,9 +2109,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         },
         "entityId": {
           "type": "string",
@@ -2042,9 +2129,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         }
       },
       "required": [
@@ -2067,6 +2154,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -2087,9 +2178,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         },
         "entityId": {
           "type": "string",
@@ -2107,9 +2198,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         }
       },
       "required": [
@@ -2132,6 +2223,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -2152,9 +2247,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "Media URL",
           "type": "string",
-          "minLength": 1,
-          "description": "Media URL"
+          "format": "uri"
         },
         "entityId": {
           "type": "string",
@@ -2172,9 +2267,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "Media URL",
           "type": "string",
-          "minLength": 1,
-          "description": "Media URL"
+          "format": "uri"
         }
       },
       "required": [
@@ -2268,6 +2363,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "email"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -2416,6 +2519,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "email"
+      },
+      {
+        "kind": "identifier",
+        "type": "pgp"
       }
     ],
     "useCases": [
@@ -2483,6 +2594,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "handle"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -2720,6 +2839,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "email"
       }
     ],
     "useCases": [
@@ -2798,6 +2921,18 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      },
+      {
+        "kind": "identifier",
+        "type": "email"
       }
     ],
     "useCases": [
@@ -3028,6 +3163,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -3100,6 +3243,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -3175,6 +3326,18 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -3253,6 +3416,22 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "other"
       }
     ],
     "useCases": [
@@ -3325,6 +3504,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "other"
       }
     ],
     "useCases": [
@@ -3396,6 +3579,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -3468,6 +3655,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -3540,6 +3731,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "other"
       }
     ],
     "useCases": [
@@ -3606,6 +3801,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -3672,6 +3871,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -3738,6 +3941,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "other"
       }
     ],
     "useCases": [
@@ -3801,6 +4008,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -3874,6 +4085,18 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -3900,9 +4123,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         },
         "entityId": {
           "type": "string",
@@ -3920,9 +4143,9 @@
       "type": "object",
       "properties": {
         "url": {
+          "description": "URL",
           "type": "string",
-          "minLength": 1,
-          "description": "URL"
+          "format": "uri"
         }
       },
       "required": [
@@ -3946,6 +4169,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -4024,6 +4251,18 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
+      },
+      {
+        "kind": "identifier",
+        "type": "url"
       }
     ],
     "useCases": [
@@ -4101,6 +4340,14 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
+      },
+      {
+        "kind": "identifier",
+        "type": "domain"
       }
     ],
     "useCases": [
@@ -4168,6 +4415,10 @@
       {
         "kind": "evidence",
         "evidenceKind": "file"
+      },
+      {
+        "kind": "identifier",
+        "type": "ip"
       }
     ],
     "useCases": [
@@ -4197,10 +4448,10 @@
       "type": "object",
       "properties": {
         "evidenceId": {
+          "description": "Evidence id",
           "type": "string",
           "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Evidence id"
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         },
         "entityId": {
           "type": "string",
@@ -4218,10 +4469,10 @@
       "type": "object",
       "properties": {
         "evidenceId": {
+          "description": "Evidence id",
           "type": "string",
           "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Evidence id"
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         }
       },
       "required": [
@@ -4275,10 +4526,10 @@
       "type": "object",
       "properties": {
         "evidenceId": {
+          "description": "Evidence id",
           "type": "string",
           "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Evidence id"
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         },
         "entityId": {
           "type": "string",
@@ -4286,8 +4537,7 @@
           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         },
         "model": {
-          "type": "string",
-          "minLength": 1
+          "type": "string"
         }
       },
       "required": [
@@ -4300,10 +4550,10 @@
       "type": "object",
       "properties": {
         "evidenceId": {
+          "description": "Evidence id",
           "type": "string",
           "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Evidence id"
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         }
       },
       "required": [
@@ -4370,10 +4620,10 @@
       "type": "object",
       "properties": {
         "evidenceId": {
+          "description": "Evidence id",
           "type": "string",
           "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Evidence id"
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         },
         "entityId": {
           "type": "string",
@@ -4391,10 +4641,10 @@
       "type": "object",
       "properties": {
         "evidenceId": {
+          "description": "Evidence id",
           "type": "string",
           "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Evidence id"
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         }
       },
       "required": [
@@ -4439,10 +4689,10 @@
       "type": "object",
       "properties": {
         "evidenceId": {
+          "description": "Evidence id",
           "type": "string",
           "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Evidence id"
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         },
         "entityId": {
           "type": "string",
@@ -4460,10 +4710,10 @@
       "type": "object",
       "properties": {
         "evidenceId": {
+          "description": "Evidence id",
           "type": "string",
           "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Evidence id"
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         }
       },
       "required": [
