@@ -8,11 +8,19 @@ import {
   runPlaybookEffect,
   startJobEffect,
 } from "@watchdog/core";
+import {
+  cancelJobInputSchema,
+  cancelPlaybookInputSchema,
+  getJobInputSchema,
+  listJobsInputSchema,
+  startJobInputSchema,
+  startPlaybookInputSchema,
+} from "@watchdog/schemas";
 
 import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { jobListSchema, jobSchema, jsonObjectSchema } from "../schemas";
+import { jobListSchema, jobSchema } from "../schemas";
 
 export const listForCase = authed
   .route({
@@ -21,7 +29,7 @@ export const listForCase = authed
     summary: "List jobs for a case",
     tags: ["jobs"],
   })
-  .input(z.object({ caseId: z.uuid() }))
+  .input(listJobsInputSchema)
   .output(z.array(jobListSchema))
   .handler(async ({ input, context }) =>
     runApp(listJobsForCaseEffect(input.caseId, context.actor.organizationId))
@@ -34,7 +42,7 @@ export const get = authed
     summary: "Get a job by id (includes logs)",
     tags: ["jobs"],
   })
-  .input(z.object({ caseId: z.uuid(), jobId: z.uuid() }))
+  .input(getJobInputSchema)
   .output(jobSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -54,13 +62,7 @@ export const start = authed
     tags: ["jobs"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      capabilityId: z.string().min(1),
-      input: jsonObjectSchema.default({}),
-    })
-  )
+  .input(startJobInputSchema)
   .output(jobSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -82,12 +84,7 @@ export const cancel = authed
     summary: "Cancel a queued, running, or blocked Job",
     tags: ["jobs"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      jobId: z.uuid(),
-    })
-  )
+  .input(cancelJobInputSchema)
   .output(jobSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -105,22 +102,7 @@ export const startPlaybook = authed
     tags: ["jobs"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      playbookId: z.string().min(1),
-      seed: z.object({
-        host: z.string().optional(),
-        url: z.string().optional(),
-        evidenceId: z.uuid().optional(),
-        entityId: z.uuid().optional(),
-        ip: z.string().optional(),
-        email: z.string().optional(),
-        hash: z.string().optional(),
-        handle: z.string().optional(),
-      }),
-    })
-  )
+  .input(startPlaybookInputSchema)
   .output(
     z.object({
       playbookId: z.string(),
@@ -148,12 +130,7 @@ export const cancelPlaybook = authed
     summary: "Cancel a playbook run (queued and running members)",
     tags: ["jobs"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      playbookRunId: z.uuid(),
-    })
-  )
+  .input(cancelPlaybookInputSchema)
   .output(
     z.object({
       playbookRunId: z.uuid(),
