@@ -5,12 +5,13 @@ import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import { claimsKeys } from "@/domains/entities/claims/queries";
 import { edgesKeys } from "@/domains/entities/edges/queries";
+import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { eventsKeys } from "@/domains/entities/events/queries";
 import { identifiersKeys } from "@/domains/entities/identifiers/queries";
-import { entitiesKeys } from "@/domains/entities/queries";
 import { questionsKeys } from "@/domains/entities/questions/queries";
 import { evidenceKeys } from "@/domains/intake/queries";
 import { jobsKeys } from "@/domains/jobs/jobs-keys";
+import { searchKeys } from "@/domains/search/queries";
 import { credentialsKeys } from "@/domains/settings/queries";
 import { tasksKeys } from "@/domains/tasks/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
@@ -32,7 +33,11 @@ async function softInvalidate(
 export async function invalidateAfterCaseSwitch(
   client: QueryClient
 ): Promise<void> {
-  await client.invalidateQueries({ queryKey: casesKeys.all });
+  await softInvalidate(client, casesKeys.all);
+  await Promise.all([
+    softInvalidate(client, activityKeys.all),
+    softInvalidate(client, searchKeys.all),
+  ]);
 }
 
 export async function invalidateAfterJobMutation(
@@ -40,7 +45,10 @@ export async function invalidateAfterJobMutation(
   caseId: string
 ): Promise<void> {
   await softInvalidate(client, jobsKeys.all(caseId));
-  await softInvalidate(client, activityKeys.all);
+  await Promise.all([
+    softInvalidate(client, activityKeys.all),
+    softInvalidate(client, searchKeys.all),
+  ]);
 }
 
 export async function invalidateAfterProposalAccept(
@@ -55,7 +63,10 @@ export async function invalidateAfterProposalAccept(
   await softInvalidate(client, eventsKeys.prefix(caseId));
   await softInvalidate(client, identifiersKeys.prefix(caseId));
   await softInvalidate(client, questionsKeys.prefix(caseId));
-  await softInvalidate(client, activityKeys.all);
+  await Promise.all([
+    softInvalidate(client, activityKeys.all),
+    softInvalidate(client, searchKeys.all),
+  ]);
 }
 
 export async function invalidateAfterProposalQueueChange(
@@ -63,7 +74,10 @@ export async function invalidateAfterProposalQueueChange(
   caseId: string
 ): Promise<void> {
   await softInvalidate(client, proposalsKeys.all(caseId));
-  await softInvalidate(client, activityKeys.all);
+  await Promise.all([
+    softInvalidate(client, activityKeys.all),
+    softInvalidate(client, searchKeys.all),
+  ]);
 }
 
 export async function invalidateAfterEntityChanged(
@@ -78,6 +92,9 @@ export async function invalidateAfterEntityChanged(
   await Promise.all([
     softInvalidate(client, edgesKeys.prefix(caseId)),
     softInvalidate(client, identifiersKeys.prefix(caseId)),
+    softInvalidate(client, proposalsKeys.all(caseId)),
+    softInvalidate(client, activityKeys.all),
+    softInvalidate(client, searchKeys.all),
   ]);
   if (opts?.entityId) {
     await Promise.all([
@@ -93,7 +110,10 @@ export async function invalidateAfterTaskMutation(
   caseId: string
 ): Promise<void> {
   await softInvalidate(client, tasksKeys.all(caseId));
-  await softInvalidate(client, activityKeys.all);
+  await Promise.all([
+    softInvalidate(client, activityKeys.all),
+    softInvalidate(client, searchKeys.all),
+  ]);
 }
 
 export async function invalidateAfterEvidenceMutation(
@@ -101,7 +121,10 @@ export async function invalidateAfterEvidenceMutation(
   caseId: string
 ): Promise<void> {
   await softInvalidate(client, evidenceKeys.all(caseId));
-  await softInvalidate(client, activityKeys.all);
+  await Promise.all([
+    softInvalidate(client, activityKeys.all),
+    softInvalidate(client, searchKeys.all),
+  ]);
 }
 
 export async function invalidateAfterCredentialMutation(

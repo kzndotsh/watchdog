@@ -8,12 +8,14 @@ vi.mock("@/auth/server", () => ({
 import { activityKeys } from "@/domains/activity/queries";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
-import { entitiesKeys } from "@/domains/entities/queries";
+import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { jobsKeys } from "@/domains/jobs/queries";
+import { searchKeys } from "@/domains/search/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
 import {
   bindCasesChangedInvalidation,
   invalidateAfterCaseSwitch,
+  invalidateAfterEntityChanged,
   invalidateAfterJobMutation,
   invalidateAfterProposalAccept,
 } from "@/shared/lib/query-invalidation";
@@ -26,11 +28,32 @@ function mockClient(): QueryClient {
 }
 
 describe("query invalidation contracts", () => {
-  it("invalidateAfterCaseSwitch targets the cases root key", async () => {
+  it("invalidateAfterCaseSwitch refreshes cases, activity, and search", async () => {
     const client = mockClient();
     await invalidateAfterCaseSwitch(client);
     expect(client.invalidateQueries).toHaveBeenCalledWith({
       queryKey: casesKeys.all,
+      refetchType: "none",
+    });
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: activityKeys.all,
+      refetchType: "none",
+    });
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: searchKeys.all,
+      refetchType: "none",
+    });
+    expect(client.refetchQueries).toHaveBeenCalledWith({
+      queryKey: casesKeys.all,
+      type: "active",
+    });
+    expect(client.refetchQueries).toHaveBeenCalledWith({
+      queryKey: activityKeys.all,
+      type: "active",
+    });
+    expect(client.refetchQueries).toHaveBeenCalledWith({
+      queryKey: searchKeys.all,
+      type: "active",
     });
   });
 
@@ -49,6 +72,10 @@ describe("query invalidation contracts", () => {
       queryKey: activityKeys.all,
       refetchType: "none",
     });
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: searchKeys.all,
+      refetchType: "none",
+    });
   });
 
   it("invalidateAfterProposalAccept refreshes graph and inbox slices", async () => {
@@ -62,6 +89,27 @@ describe("query invalidation contracts", () => {
       queryKey: entitiesKeys.all("case-1"),
       refetchType: "none",
     });
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: searchKeys.all,
+      refetchType: "none",
+    });
+  });
+
+  it("invalidateAfterEntityChanged refreshes proposals and activity", async () => {
+    const client = mockClient();
+    await invalidateAfterEntityChanged(client, "case-1");
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: proposalsKeys.all("case-1"),
+      refetchType: "none",
+    });
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: activityKeys.all,
+      refetchType: "none",
+    });
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: searchKeys.all,
+      refetchType: "none",
+    });
   });
 
   it("bindCasesChangedInvalidation listens for case switch events", async () => {
@@ -71,6 +119,7 @@ describe("query invalidation contracts", () => {
     await vi.waitFor(() => {
       expect(client.invalidateQueries).toHaveBeenCalledWith({
         queryKey: casesKeys.all,
+        refetchType: "none",
       });
     });
     unbind();
