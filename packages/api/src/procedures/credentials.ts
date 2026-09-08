@@ -5,6 +5,10 @@ import {
   listCredentialSlotsEffect,
   putCredentialSlotEffect,
 } from "@watchdog/core";
+import {
+  deleteCredentialInputSchema,
+  putCredentialFieldsSchema,
+} from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
@@ -29,13 +33,7 @@ export const put = authed
     summary: "Create or replace a credential secret",
     tags: ["credentials"],
   })
-  .input(
-    z.object({
-      name: z.string().min(1),
-      secret: z.string().min(1),
-      label: z.string().optional(),
-    })
-  )
+  .input(putCredentialFieldsSchema)
   .output(credentialSlotSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -55,7 +53,7 @@ export const remove = authed
     summary: "Delete a credential by name",
     tags: ["credentials"],
   })
-  .input(z.object({ name: z.string().min(1) }))
+  .input(deleteCredentialInputSchema)
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(deleteCredentialEffect(context.actor.userId, input.name));

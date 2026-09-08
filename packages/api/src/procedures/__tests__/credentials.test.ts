@@ -16,7 +16,7 @@ vi.mock("@watchdog/core", async (importOriginal) => {
   };
 });
 
-import { list } from "../credentials";
+import { list, put } from "../credentials";
 
 const actor = {
   userId: "u1",
@@ -52,5 +52,27 @@ describe("credentials procedures", () => {
 
     await expect(client.list()).resolves.toHaveLength(1);
     expect(listCredentialSlotsEffect).toHaveBeenCalledWith("u1");
+  });
+
+  it("rejects invalid credential names at ingress", async () => {
+    const client = createRouterClient(
+      { put },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.put({
+        name: "shodan",
+        secret: "secret",
+      })
+    ).rejects.toMatchObject({
+      message: "Input validation failed",
+    });
   });
 });
