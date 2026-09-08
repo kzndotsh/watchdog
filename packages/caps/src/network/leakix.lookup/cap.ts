@@ -24,7 +24,11 @@ export const leakixLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "LEAKIX_API_KEY" }],
   consumes: [{ kind: "ip" }, { kind: "host" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -32,7 +36,7 @@ export const leakixLookup = defineCollectCap({
   reportLabel: "leakix.lookup",
   fetch: (ctx) =>
     Effect.gen(function* leakixLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`LeakIX ${query}`);
       const key = yield* ctx.getCredential("LEAKIX_API_KEY");
       const snap = yield* fetchLeakixLookupEffect(query, key, ctx.signal, {
