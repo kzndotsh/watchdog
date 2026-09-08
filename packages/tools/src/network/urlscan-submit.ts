@@ -2,9 +2,13 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
+import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { normalizeHttpUrl } from "../http/normalize-http-url";
+import { isBlockedUnshortenUrl } from "../http/unshorten-guards";
 
 export const urlscanSubmitVisibilitySchema = z.enum([
   "public",
@@ -46,7 +50,16 @@ export function submitUrlscanEffect(
     if (!key) {
       return yield* new MissingCredentialError({ slot: "URLSCAN_API_KEY" });
     }
-    const target = url.trim();
+    const target = yield* Effect.try({
+      try: () => {
+        const normalized = normalizeHttpUrl(url);
+        if (isBlockedUnshortenUrl(normalized)) {
+          throw validationToolsError(`Blocked URL (private/loopback): ${url}`);
+        }
+        return normalized;
+      },
+      catch: mapToolsCatch,
+    });
     const ua =
       options?.userAgent ?? watchdogUserAgent("network.urlscan.submit");
 
