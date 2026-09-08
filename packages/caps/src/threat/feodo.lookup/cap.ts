@@ -25,7 +25,10 @@ export const feodoLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "THREATFOX_API_KEY", optional: true }],
   consumes: [{ kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },

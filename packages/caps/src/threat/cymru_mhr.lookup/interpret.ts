@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { hashSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { cymruMhrLookupInput } from "./input";
 import type { CymruMhrLookupSnapshot } from "./report-schema";
 
@@ -28,10 +29,11 @@ export function interpretCymruMhrLookupReport(
   report: CymruMhrLookupSnapshot,
   opts: CapInterpretOpts<CymruMhrInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
+    batches: hashSeedBatch(report.hash),
+    claimText: summarize(report),
     noEntitySummary:
-      "Team Cymru MHR lookup captured; no Entity to attach Claim",
+      "Team Cymru MHR lookup captured; no Entity to attach Identifiers",
   });
 }

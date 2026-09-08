@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { feodoLookupInput } from "./input";
 import type { FeodoLookupSnapshot } from "./report-schema";
 
@@ -24,9 +25,11 @@ export function interpretFeodoLookupReport(
   report: FeodoLookupSnapshot,
   opts: CapInterpretOpts<FeodoInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "Feodo Tracker lookup captured; no Entity to attach Claim",
+    batches: [...ipSeedBatch(report.ip)],
+    claimText: summarize(report),
+    noEntitySummary:
+      "Feodo Tracker lookup captured; no Entity to attach Identifiers",
   });
 }

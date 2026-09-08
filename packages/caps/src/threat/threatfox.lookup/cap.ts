@@ -24,7 +24,12 @@ export const threatfoxLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "THREATFOX_API_KEY" }],
   consumes: [{ kind: "ip" }, { kind: "host" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -32,7 +37,7 @@ export const threatfoxLookup = defineCollectCap({
   reportLabel: "threatfox.lookup",
   fetch: (ctx) =>
     Effect.gen(function* threatfoxLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`ThreatFox ${query}`);
       const key = yield* ctx.getCredential("THREATFOX_API_KEY");
       const snap = yield* fetchThreatfoxLookupEffect(query, key, ctx.signal, {

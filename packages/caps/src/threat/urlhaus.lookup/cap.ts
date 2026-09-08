@@ -24,7 +24,13 @@ export const urlhausLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "THREATFOX_API_KEY" }],
   consumes: [{ kind: "url" }, { kind: "host" }, { kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "url" },
+    { kind: "identifier", type: "domain" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "other" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -32,7 +38,7 @@ export const urlhausLookup = defineCollectCap({
   reportLabel: "urlhaus.lookup",
   fetch: (ctx) =>
     Effect.gen(function* urlhausLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`URLhaus ${query}`);
       const key = yield* ctx.getCredential("THREATFOX_API_KEY");
       const snap = yield* fetchUrlhausLookupEffect(query, key, ctx.signal, {

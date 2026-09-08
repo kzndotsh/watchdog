@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { urlSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { safebrowsingLookupInput } from "./input";
 import type { SafebrowsingLookupSnapshot } from "./report-schema";
 
@@ -21,9 +22,11 @@ export function interpretSafebrowsingLookupReport(
   report: SafebrowsingLookupSnapshot,
   opts: CapInterpretOpts<SafebrowsingInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "Safe Browsing lookup captured; no Entity to attach Claim",
+    batches: [...urlSeedBatch(report.url)],
+    claimText: summarize(report),
+    noEntitySummary:
+      "Safe Browsing lookup captured; no Entity to attach Identifiers",
   });
 }

@@ -23,7 +23,10 @@ export const bgprankingLookup = defineCollectCap({
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },

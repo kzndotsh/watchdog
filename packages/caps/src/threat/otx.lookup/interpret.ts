@@ -2,15 +2,25 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { otxLookupInput } from "./input";
 import type { OtxLookupSnapshot } from "./report-schema";
 
 type OtxInput = z.infer<typeof otxLookupInput>;
 
+function otxSeedBatches(
+  report: OtxLookupSnapshot
+): ReturnType<typeof querySeedBatches> {
+  if (report.kind === "url") {
+    return querySeedBatches(report.query, "url");
+  }
+  return querySeedBatches(report.query, report.kind);
+}
+
 function summarize(report: OtxLookupSnapshot): string {
   if (!report.found) {
-    return `OTX (AlienVault) for ${report.query}: no pulse hits`;
+    return `OTX (AlienVault) for ${report.query}: indicator not indexed`;
   }
   const families =
     report.malwareFamilies.length > 0
@@ -28,9 +38,10 @@ export function interpretOtxLookupReport(
   report: OtxLookupSnapshot,
   opts: CapInterpretOpts<OtxInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "OTX lookup captured; no Entity to attach Claim",
+    batches: [...otxSeedBatches(report)],
+    claimText: summarize(report),
+    noEntitySummary: "OTX lookup captured; no Entity to attach Identifiers",
   });
 }

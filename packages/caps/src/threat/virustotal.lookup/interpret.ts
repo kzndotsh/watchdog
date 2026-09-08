@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { virusTotalLookupInput } from "./input";
 import type { VirusTotalLookupSnapshot } from "./report-schema";
 
@@ -10,7 +11,7 @@ type VirusTotalInput = z.infer<typeof virusTotalLookupInput>;
 
 function summarize(report: VirusTotalLookupSnapshot): string {
   if (!report.found) {
-    return `VirusTotal for ${report.query}: not found`;
+    return `VirusTotal for ${report.query}: not indexed in VirusTotal`;
   }
   const parts: string[] = [`VirusTotal for ${report.query}`];
   if (report.reputation !== null) {
@@ -40,9 +41,11 @@ export function interpretVirusTotalLookupReport(
   report: VirusTotalLookupSnapshot,
   opts: CapInterpretOpts<VirusTotalInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "VirusTotal lookup completed; no Entity to attach Claim",
+    batches: [...querySeedBatches(report.query, report.kind)],
+    claimText: summarize(report),
+    noEntitySummary:
+      "VirusTotal lookup completed; no Entity to attach Identifiers",
   });
 }

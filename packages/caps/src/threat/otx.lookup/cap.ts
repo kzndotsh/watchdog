@@ -24,7 +24,12 @@ export const otxLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "OTX_API_KEY" }],
   consumes: [{ kind: "ip" }, { kind: "host" }, { kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -32,7 +37,7 @@ export const otxLookup = defineCollectCap({
   reportLabel: "otx.lookup",
   fetch: (ctx) =>
     Effect.gen(function* otxLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`OTX ${query}`);
       const key = yield* ctx.getCredential("OTX_API_KEY");
       const snap = yield* fetchOtxLookupEffect(query, key, ctx.signal, {

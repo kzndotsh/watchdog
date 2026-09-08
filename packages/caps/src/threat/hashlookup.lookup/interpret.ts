@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { hashSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { hashlookupLookupInput } from "./input";
 import type { HashlookupSnapshot } from "./report-schema";
 
@@ -25,9 +26,11 @@ export function interpretHashlookupLookupReport(
   report: HashlookupSnapshot,
   opts: CapInterpretOpts<HashlookupInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "CIRCL hashlookup captured; no Entity to attach Claim",
+    batches: hashSeedBatch(report.hash),
+    claimText: summarize(report),
+    noEntitySummary:
+      "CIRCL hashlookup captured; no Entity to attach Identifiers",
   });
 }

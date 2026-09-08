@@ -29,12 +29,28 @@ describe("interpret", () => {
     const result = interpretHoneydbLookupReport(fixture, {
       input: { ip: fixture.ip, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/HoneyDB/);
-    expect(claimText(result, 0)).toMatch(/threat-listed/);
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/HoneyDB/);
+    expect(claimText(result, 1)).toMatch(/threat-listed/);
+    expect(claimText(result, 1)).toMatch(/ASN=4134/);
   });
 
-  it("misses when HoneyDB has not seen the IP", () => {
+  it("summarizes clean indexed IPs without threat signals", () => {
+    const result = interpretHoneydbLookupReport(
+      {
+        ...fixture,
+        found: true,
+        isThreat: false,
+        isTor: false,
+        internetScanner: false,
+        historyEventCount: 0,
+      },
+      { input: { ip: fixture.ip, entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/no threat indicators/);
+  });
+
+  it("misses when HoneyDB has not indexed the IP", () => {
     const result = interpretHoneydbLookupReport(
       {
         ...fixture,
@@ -44,7 +60,7 @@ describe("interpret", () => {
       },
       { input: { ip: fixture.ip, entityId } }
     );
-    expect(claimText(result, 0)).toMatch(/not seen/);
+    expect(claimText(result, 1)).toMatch(/not indexed/);
   });
 
   itRejectsIncompleteReport(

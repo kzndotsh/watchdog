@@ -50,16 +50,16 @@ describe("interpret", () => {
     const result = interpretDshieldLookupReport(foundFixture, {
       input: { ip: foundFixture.ip, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/attacks=34/);
-    expect(claimText(result, 0)).toMatch(/CHINANET-BACKBONE/);
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/attacks=34/);
+    expect(claimText(result, 1)).toMatch(/CHINANET-BACKBONE/);
   });
 
   it("interpretDshieldLookupReport reports no sightings softly", () => {
     const result = interpretDshieldLookupReport(notFoundFixture, {
       input: { ip: notFoundFixture.ip, entityId },
     });
-    expect(claimText(result, 0)).toMatch(/no honeypot sightings/);
+    expect(claimText(result, 1)).toMatch(/no honeypot sightings/);
   });
 
   itRejectsIncompleteReport(

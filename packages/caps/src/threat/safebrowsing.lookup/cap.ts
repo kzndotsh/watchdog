@@ -24,7 +24,10 @@ export const safebrowsingLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "GOOGLE_SAFEBROWSING_API_KEY" }],
   consumes: [{ kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -32,7 +35,7 @@ export const safebrowsingLookup = defineCollectCap({
   reportLabel: "safebrowsing.lookup",
   fetch: (ctx) =>
     Effect.gen(function* safebrowsingLookupFetch() {
-      const url = ctx.input.url.trim();
+      const url = ctx.input.url;
       ctx.log(`Safe Browsing ${url}`);
       const key = yield* ctx.getCredential("GOOGLE_SAFEBROWSING_API_KEY");
       const snap = yield* fetchSafebrowsingLookupEffect(url, key, ctx.signal, {

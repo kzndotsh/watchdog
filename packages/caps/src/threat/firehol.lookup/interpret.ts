@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { fireholLookupInput } from "./input";
 import type { FireholLookupSnapshot } from "./report-schema";
 
@@ -19,10 +20,11 @@ export function interpretFireholLookupReport(
   report: FireholLookupSnapshot,
   opts: CapInterpretOpts<FireholInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
+    batches: [...ipSeedBatch(report.ip)],
+    claimText: summarize(report),
     noEntitySummary:
-      "FireHOL blocklist check captured; no Entity to attach Claim",
+      "FireHOL blocklist check captured; no Entity to attach Identifiers",
   });
 }

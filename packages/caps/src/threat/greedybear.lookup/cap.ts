@@ -23,7 +23,11 @@ export const greedybearLookup = defineCollectCap({
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "ip" }, { kind: "host" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -31,7 +35,7 @@ export const greedybearLookup = defineCollectCap({
   reportLabel: "greedybear.lookup",
   fetch: (ctx) =>
     Effect.gen(function* greedybearLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`GreedyBear ${query}`);
       const snap = yield* fetchGreedybearLookupEffect(query, ctx.signal, {
         userAgent: UA,

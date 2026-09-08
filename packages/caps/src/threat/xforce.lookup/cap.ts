@@ -24,7 +24,12 @@ export const xforceLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "XFORCE_API_KEY" }, { name: "XFORCE_API_PASSWORD" }],
   consumes: [{ kind: "ip" }, { kind: "host" }, { kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -32,7 +37,7 @@ export const xforceLookup = defineCollectCap({
   reportLabel: "xforce.lookup",
   fetch: (ctx) =>
     Effect.gen(function* xforceLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`X-Force ${query}`);
       const key = yield* ctx.getCredential("XFORCE_API_KEY");
       const password = yield* ctx.getCredential("XFORCE_API_PASSWORD");

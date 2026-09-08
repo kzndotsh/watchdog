@@ -27,10 +27,41 @@ describe("interpret", () => {
     const result = interpretOtxLookupReport(fixture, {
       input: { query: "1.2.3.4", entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/OTX \(AlienVault\)/);
-    expect(claimText(result, 0)).toMatch(/Emotet/);
-    expect(claimText(result, 0)).toMatch(/pulses: Emotet campaign/);
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/OTX \(AlienVault\)/);
+    expect(claimText(result, 1)).toMatch(/Emotet/);
+    expect(claimText(result, 1)).toMatch(/pulses: Emotet campaign/);
+  });
+
+  it("summarizes zero-pulse lookups as found", () => {
+    const result = interpretOtxLookupReport(
+      {
+        ...fixture,
+        found: true,
+        pulseCount: 0,
+        pulseNames: [],
+        malwareFamilies: [],
+      },
+      { input: { query: "8.8.8.8", entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/0 pulse\(s\)/);
+    expect(claimText(result, 1)).not.toMatch(/not indexed/);
+  });
+
+  it("seeds URL lookups as url Identifiers", () => {
+    const result = interpretOtxLookupReport(
+      {
+        ...fixture,
+        query: "https://evil.example/path",
+        kind: "url",
+      },
+      { input: { query: "https://evil.example/path", entityId } }
+    );
+    expect(
+      result.patch.some(
+        (p) => p.resource === "identifier" && p.data.type === "url"
+      )
+    ).toBe(true);
   });
 
   itRejectsIncompleteReport(

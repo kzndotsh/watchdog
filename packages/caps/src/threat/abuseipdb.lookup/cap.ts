@@ -24,7 +24,11 @@ export const abuseIpdbLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "ABUSEIPDB_API_KEY" }],
   consumes: [{ kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },

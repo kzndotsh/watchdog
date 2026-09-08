@@ -27,9 +27,23 @@ describe("interpret", () => {
     const result = interpretXforceLookupReport(fixture, {
       input: { query: "1.2.3.4", entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/X-Force/);
-    expect(claimText(result, 0)).toMatch(/score=7\.2/);
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/X-Force/);
+    expect(claimText(result, 1)).toMatch(/score=7\.2/);
+  });
+
+  it("interpretXforceLookupReport reports 404 as not indexed", () => {
+    const result = interpretXforceLookupReport(
+      {
+        ...fixture,
+        found: false,
+        score: null,
+        cats: {},
+        malwareCount: 0,
+      },
+      { input: { query: "1.2.3.4", entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/not indexed/);
   });
 
   itRejectsIncompleteReport(

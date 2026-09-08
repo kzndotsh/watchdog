@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, uuidSchema } from "@watchdog/schemas";
+import { httpUrlSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const safebrowsingLookupInput = z.object({
-  url: nonEmptyTrimmed.describe("URL"),
-  entityId: uuidSchema.optional(),
+  url: httpUrlSchema.describe("URL"),
+  entityId: optionalUuidSchema,
 });

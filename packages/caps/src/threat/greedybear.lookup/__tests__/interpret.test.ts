@@ -27,15 +27,15 @@ describe("interpret", () => {
     const result = interpretGreedybearLookupReport(foundFixture, {
       input: { query: foundFixture.query, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/seen scanning honeypots/);
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/seen scanning honeypots/);
   });
 
   it("interpretGreedybearLookupReport reports non-membership", () => {
     const result = interpretGreedybearLookupReport(notFoundFixture, {
       input: { query: notFoundFixture.query, entityId },
     });
-    expect(claimText(result, 0)).toMatch(/not seen scanning honeypots/);
+    expect(claimText(result, 1)).toMatch(/not seen scanning honeypots/);
   });
 
   itRejectsIncompleteReport(

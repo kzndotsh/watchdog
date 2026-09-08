@@ -21,7 +21,10 @@ export const cymruMhrLookup = defineCollectCap({
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "hash" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "other" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
@@ -29,7 +32,7 @@ export const cymruMhrLookup = defineCollectCap({
   reportLabel: "cymru_mhr.lookup",
   fetch: (ctx) =>
     Effect.gen(function* cymruMhrLookupFetch() {
-      const hash = ctx.input.hash.trim();
+      const hash = ctx.input.hash;
       ctx.log(`Team Cymru MHR ${hash}`);
       const snap = yield* fetchCymruMhrLookupEffect(hash, ctx.signal);
       ctx.log(`found=${snap.found} detectionPct=${snap.detectionPct ?? "n/a"}`);

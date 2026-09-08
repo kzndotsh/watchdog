@@ -24,7 +24,11 @@ export const virusTotalLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "VIRUSTOTAL_API_KEY" }],
   consumes: [{ kind: "ip" }, { kind: "host" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -32,7 +36,7 @@ export const virusTotalLookup = defineCollectCap({
   reportLabel: "virustotal.lookup",
   fetch: (ctx) =>
     Effect.gen(function* virusTotalLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`VirusTotal ${query}`);
       const key = yield* ctx.getCredential("VIRUSTOTAL_API_KEY");
       const snap = yield* fetchVirusTotalLookupEffect(query, key, ctx.signal, {

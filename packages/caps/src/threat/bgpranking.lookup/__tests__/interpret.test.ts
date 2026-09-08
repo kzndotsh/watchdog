@@ -27,7 +27,7 @@ describe("interpret", () => {
     ip: "1.2.3.4",
     queriedAt: "2026-01-01T00:00:00.000Z",
     source: "bgpranking-ng.circl.lu" as const,
-    found: false,
+    found: true,
     asn: null,
     asnDescription: null,
     asnRank: null,
@@ -38,16 +38,24 @@ describe("interpret", () => {
     const result = interpretBgprankingLookupReport(foundFixture, {
       input: { ip: foundFixture.ip, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/AS5577/);
-    expect(claimText(result, 0)).toMatch(/ROOT, LU/);
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/AS5577/);
+    expect(claimText(result, 1)).toMatch(/ROOT, LU/);
   });
 
   it("interpretBgprankingLookupReport reports unmapped ASN softly", () => {
     const result = interpretBgprankingLookupReport(unmappedFixture, {
       input: { ip: unmappedFixture.ip, entityId },
     });
-    expect(claimText(result, 0)).toMatch(/unmapped/);
+    expect(claimText(result, 1)).toMatch(/unmapped/);
+  });
+
+  it("interpretBgprankingLookupReport reports not indexed when lookup missed", () => {
+    const result = interpretBgprankingLookupReport(
+      { ...unmappedFixture, found: false },
+      { input: { ip: unmappedFixture.ip, entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/not indexed/);
   });
 
   itRejectsIncompleteReport(

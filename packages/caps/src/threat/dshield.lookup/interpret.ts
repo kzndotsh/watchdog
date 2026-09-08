@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { dshieldLookupInput } from "./input";
 import type { DshieldLookupSnapshot } from "./report-schema";
 
@@ -32,9 +33,11 @@ export function interpretDshieldLookupReport(
   report: DshieldLookupSnapshot,
   opts: CapInterpretOpts<DshieldInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "SANS ISC DShield captured; no Entity to attach Claim",
+    batches: [...ipSeedBatch(report.ip)],
+    claimText: summarize(report),
+    noEntitySummary:
+      "SANS ISC DShield captured; no Entity to attach Identifiers",
   });
 }

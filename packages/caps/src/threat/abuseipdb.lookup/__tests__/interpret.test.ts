@@ -29,16 +29,49 @@ describe("interpret", () => {
     countryCode: "US",
   };
 
-  it("interpretAbuseIpdbLookupReport proposes domain Identifier + Claim", () => {
+  it("interpretAbuseIpdbLookupReport proposes ip + domain Identifiers + Claim", () => {
     const result = interpretAbuseIpdbLookupReport(fixture, {
       input: { ip: "203.0.113.10", entityId },
     });
     expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("domain");
+    expect(result.patch[0]?.data.type).toBe("ip");
+    expect(result.patch[0]?.data.value).toBe("203.0.113.10");
+    expect(result.patch[1]?.resource).toBe("identifier");
+    expect(result.patch[1]?.data.type).toBe("domain");
+    expect(result.patch[2]?.resource).toBe("claim");
+    expect(claimText(result, 2)).toMatch(/confidence=42%/);
+    expect(claimText(result, 2)).toMatch(/reports=15/);
+    expect(claimText(result, 2)).toMatch(/isp=Example ISP/);
+  });
+
+  it("proposes seed ip Identifier when found but domain is missing", () => {
+    const result = interpretAbuseIpdbLookupReport(
+      { ...fixture, domain: null },
+      { input: { ip: "203.0.113.10", entityId } }
+    );
+    expect(result.patch.filter((op) => op.resource === "identifier")).toEqual([
+      expect.objectContaining({
+        resource: "identifier",
+        data: { type: "ip", value: "203.0.113.10", entityId },
+      }),
+    ]);
     expect(result.patch[1]?.resource).toBe("claim");
     expect(claimText(result, 1)).toMatch(/confidence=42%/);
-    expect(claimText(result, 1)).toMatch(/reports=15/);
-    expect(claimText(result, 1)).toMatch(/isp=Example ISP/);
+  });
+
+  it("summarizes zero-report lookups with found=true", () => {
+    const result = interpretAbuseIpdbLookupReport(
+      {
+        ...fixture,
+        abuseConfidenceScore: 0,
+        totalReports: 0,
+        numDistinctUsers: 0,
+        isWhitelisted: true,
+      },
+      { input: { ip: "8.8.8.8", entityId } }
+    );
+    expect(claimText(result, 2)).toMatch(/reports=0/);
+    expect(claimText(result, 2)).toMatch(/whitelisted/);
   });
 
   itRejectsIncompleteReport(

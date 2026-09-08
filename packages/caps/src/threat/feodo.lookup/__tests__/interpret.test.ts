@@ -27,8 +27,8 @@ describe("interpret", () => {
     const result = interpretFeodoLookupReport(fixture, {
       input: { ip: "1.2.3.4", entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/Dridex/);
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/Dridex/);
   });
 
   itRejectsIncompleteReport(feodoLookup, { ip: "1.2.3.4" }, { ip: "1.2.3.4" });

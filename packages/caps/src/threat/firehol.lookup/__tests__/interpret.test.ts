@@ -26,15 +26,15 @@ describe("interpret", () => {
     const result = interpretFireholLookupReport(listedFixture, {
       input: { ip: listedFixture.ip, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/is listed/);
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/is listed/);
   });
 
   it("interpretFireholLookupReport reports non-membership", () => {
     const result = interpretFireholLookupReport(notListedFixture, {
       input: { ip: notListedFixture.ip, entityId },
     });
-    expect(claimText(result, 0)).toMatch(/is not listed/);
+    expect(claimText(result, 1)).toMatch(/is not listed/);
   });
 
   itRejectsIncompleteReport(

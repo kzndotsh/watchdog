@@ -1,14 +1,15 @@
 import { Effect } from "effect";
 
-import { fetchDshieldLookupEffect, normalizeIp } from "@watchdog/tools";
+import {
+  DSHIELD_USER_AGENT,
+  fetchDshieldLookupEffect,
+  normalizeIp,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dshieldLookupInput } from "./input";
 import { interpretDshieldLookupReport } from "./interpret";
 import { dshieldLookupSnapshotSchema } from "./report-schema";
-
-const UA =
-  "Watchdog/1.0 (+threat.dshield.lookup; OSINT; contact: osint@watchdog.invalid)";
 
 export const dshieldLookup = defineCollectCap({
   id: "threat.dshield.lookup",
@@ -24,7 +25,10 @@ export const dshieldLookup = defineCollectCap({
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -35,7 +39,7 @@ export const dshieldLookup = defineCollectCap({
       const ip = normalizeIp(ctx.input.ip);
       ctx.log(`DShield ${ip}`);
       const snap = yield* fetchDshieldLookupEffect(ip, ctx.signal, {
-        userAgent: UA,
+        userAgent: DSHIELD_USER_AGENT,
       });
       ctx.log(
         `found=${snap.found} attacks=${snap.attacks ?? "n/a"} count=${snap.count ?? "n/a"}`

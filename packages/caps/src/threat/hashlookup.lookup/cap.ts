@@ -23,7 +23,10 @@ export const hashlookupLookup = defineCollectCap({
   useCases: ["Passive", "Footprint"],
   egress: "third_party",
   consumes: [{ kind: "hash" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "other" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
@@ -31,7 +34,7 @@ export const hashlookupLookup = defineCollectCap({
   reportLabel: "hashlookup.lookup",
   fetch: (ctx) =>
     Effect.gen(function* hashlookupLookupFetch() {
-      const hash = ctx.input.hash.trim();
+      const hash = ctx.input.hash;
       ctx.log(`CIRCL hashlookup ${hash}`);
       const snap = yield* fetchHashlookupEffect(hash, ctx.signal, {
         userAgent: UA,

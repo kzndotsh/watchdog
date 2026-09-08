@@ -30,20 +30,24 @@ describe("interpret", () => {
     detectionPct: null,
   };
 
-  it("interpretCymruMhrLookupReport proposes observation Claim with detection rate", () => {
+  it("interpretCymruMhrLookupReport proposes hash Identifier + observation Claim", () => {
     const result = interpretCymruMhrLookupReport(foundFixture, {
       input: { hash: foundFixture.hash, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/known malware hash/);
-    expect(claimText(result, 0)).toMatch(/28%/);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.data.type).toBe("other");
+    expect(result.patch[0]?.data.value).toBe(foundFixture.hash);
+    expect(result.patch[1]?.resource).toBe("claim");
+    expect(claimText(result, 1)).toMatch(/known malware hash/);
+    expect(claimText(result, 1)).toMatch(/28%/);
   });
 
   it("interpretCymruMhrLookupReport reports not-found softly", () => {
     const result = interpretCymruMhrLookupReport(notFoundFixture, {
       input: { hash: notFoundFixture.hash, entityId },
     });
-    expect(claimText(result, 0)).toMatch(/not in the malware hash registry/);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(claimText(result, 1)).toMatch(/not in the malware hash registry/);
   });
 
   itRejectsIncompleteReport(

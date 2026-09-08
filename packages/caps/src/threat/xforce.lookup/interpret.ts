@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { xforceLookupInput } from "./input";
 import type { XforceLookupSnapshot } from "./report-schema";
 
@@ -10,7 +11,7 @@ type XforceInput = z.infer<typeof xforceLookupInput>;
 
 function summarize(report: XforceLookupSnapshot): string {
   if (!report.found) {
-    return `IBM X-Force Exchange for ${report.query}: no report on file`;
+    return `IBM X-Force Exchange for ${report.query}: not indexed`;
   }
   const parts: string[] = [];
   if (report.score !== null) parts.push(`score=${report.score}`);
@@ -25,9 +26,10 @@ export function interpretXforceLookupReport(
   report: XforceLookupSnapshot,
   opts: CapInterpretOpts<XforceInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "X-Force lookup captured; no Entity to attach Claim",
+    batches: [...querySeedBatches(report.query, report.kind)],
+    claimText: summarize(report),
+    noEntitySummary: "X-Force lookup captured; no Entity to attach Identifiers",
   });
 }

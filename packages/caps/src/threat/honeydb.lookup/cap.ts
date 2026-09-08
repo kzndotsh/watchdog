@@ -24,7 +24,10 @@ export const honeydbLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "HONEYDB_API_ID" }, { name: "HONEYDB_API_KEY" }],
   consumes: [{ kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },

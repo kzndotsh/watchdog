@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { greedybearLookupInput } from "./input";
 import type { GreedybearLookupSnapshot } from "./report-schema";
 
@@ -19,9 +20,11 @@ export function interpretGreedybearLookupReport(
   report: GreedybearLookupSnapshot,
   opts: CapInterpretOpts<GreedybearInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "GreedyBear lookup captured; no Entity to attach Claim",
+    batches: [...querySeedBatches(report.query, report.kind)],
+    claimText: summarize(report),
+    noEntitySummary:
+      "GreedyBear lookup captured; no Entity to attach Identifiers",
   });
 }

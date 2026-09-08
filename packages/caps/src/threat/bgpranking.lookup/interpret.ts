@@ -2,14 +2,18 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { bgprankingLookupInput } from "./input";
 import type { BgprankingLookupSnapshot } from "./report-schema";
 
 type BgprankingInput = z.infer<typeof bgprankingLookupInput>;
 
 function summarize(report: BgprankingLookupSnapshot): string {
-  if (!report.found || report.asn === null) {
+  if (!report.found) {
+    return `CIRCL BGP Ranking for ${report.ip}: not indexed`;
+  }
+  if (report.asn === null) {
     return `CIRCL BGP Ranking for ${report.ip}: ASN unmapped`;
   }
   const desc = report.asnDescription ? ` (${report.asnDescription})` : "";
@@ -25,9 +29,11 @@ export function interpretBgprankingLookupReport(
   report: BgprankingLookupSnapshot,
   opts: CapInterpretOpts<BgprankingInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "CIRCL BGP Ranking captured; no Entity to attach Claim",
+    batches: [...ipSeedBatch(report.ip)],
+    claimText: summarize(report),
+    noEntitySummary:
+      "CIRCL BGP Ranking captured; no Entity to attach Identifiers",
   });
 }
