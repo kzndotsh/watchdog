@@ -15,8 +15,8 @@ import {
   SEARCH_MIN_QUERY_LENGTH,
   type SearchCaseResult,
 } from "@/domains/search/types";
-import { errMessage } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import { ActionShortcutChord, MENU_KBD_CLASS } from "@/shared/ui/action-list";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -159,11 +159,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   })();
 
   const resultHits = showResults && !isError ? hits : null;
-  const paletteLoadError =
-    casesLoadError ??
-    (showResults && isError && !isFetching && !pendingDebounce
-      ? errMessage(error, "Search failed")
-      : null);
+  const searchLoadError = showResults
+    ? queryLoadError(
+        { isError, isFetching, error },
+        pendingDebounce,
+        "Search failed"
+      )
+    : null;
+  const paletteLoadError = casesLoadError ?? searchLoadError;
   const retryPaletteLoad = () => {
     if (casesLoadError) {
       retryCases();

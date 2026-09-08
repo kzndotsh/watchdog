@@ -16,9 +16,10 @@ import {
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { deleteCredentialFn } from "@/domains/settings/settings.functions";
 import { deleteCredentialInputSchema } from "@/domains/settings/types";
-import { cn, errMessage } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
@@ -154,10 +155,11 @@ export function SettingsCredentialsForm() {
   const credentialsQuery = useQuery(credentialsListQuery());
   const slots = credentialsQuery.data ?? EMPTY_CREDENTIAL_SLOTS;
   const credentialsPending = listPending(credentialsQuery);
-  const credentialsLoadError =
-    credentialsQuery.isError && !credentialsQuery.isFetching
-      ? errMessage(credentialsQuery.error, "Failed to load credentials")
-      : null;
+  const credentialsLoadError = queryLoadError(
+    credentialsQuery,
+    credentialsPending,
+    "Failed to load credentials"
+  );
   const credentialsPlaceholder = isQueryPlaceholderData(credentialsQuery);
 
   const [error, setError] = useState<string | null>(null);
