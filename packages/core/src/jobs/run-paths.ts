@@ -1,6 +1,6 @@
 import { Cause, Effect } from "effect";
 
-import { db, jobsRepo, playbookRunsRepo, type JobRow } from "@watchdog/db";
+import { db, jobsRepo, type JobRow } from "@watchdog/db";
 
 import { errorMessage } from "../infra/domain-error";
 import { logSwallowed } from "../infra/process-log";
@@ -28,12 +28,17 @@ function logPlaybookAdvanceFailureEffect(
       jobLog.log(`playbook advance failed: ${msg}`);
     });
     yield* Effect.tryPromise({
-      try: () => jobsRepo.update(db, jobId, { logs: jobLog.lines }),
-      catch: (persistError: unknown) => {
-        logSwallowed("playbook.advance_log", persistError, { jobId });
-        return new Error("playbook.advance_log");
-      },
-    }).pipe(Effect.catch(() => Effect.void));
+      try: () =>
+        jobsRepo.updateInCase(db, caseId, jobId, { logs: jobLog.lines }),
+      catch: (error) => error,
+    }).pipe(
+      Effect.tapError((persistError) =>
+        Effect.sync(() => {
+          logSwallowed("playbook.advance_log", persistError, { jobId });
+        })
+      ),
+      Effect.ignore
+    );
     yield* Effect.sync(() => {
       logSwallowed("playbook.advance", advanceError, {
         jobId,
@@ -82,27 +87,7 @@ export function runSucceededPathEffect(opts: {
           caseId: state.job.caseId,
           playbookRunId,
           jobLog,
-        }).pipe(
-          Effect.andThen(
-            Effect.tryPromise({
-              try: () =>
-                playbookRunsRepo.setStatus(
-                  db,
-                  playbookRunId,
-                  "cancelled",
-                  new Date(),
-                  { onlyStatuses: ["running"] }
-                ),
-              catch: (cancelError: unknown) => {
-                logSwallowed("playbook.advance_cancel", cancelError, {
-                  jobId,
-                  playbookRunId,
-                });
-                return new Error("playbook.advance_cancel");
-              },
-            }).pipe(Effect.catch(() => Effect.void))
-          )
-        )
+        })
       )
     );
   });
@@ -113,7 +98,7 @@ export function runFailedPathEffect(opts: {
   error: unknown;
   jobLog: ReturnType<typeof createJobLog>;
   playbookRunId: JobRow["playbookRunId"];
-  caseId?: string;
+  caseId: string;
 }): Effect.Effect<void> {
   const { jobId, error, jobLog, playbookRunId, caseId } = opts;
   const msg = errorMessage(error);
@@ -121,7 +106,9 @@ export function runFailedPathEffect(opts: {
     yield* Effect.sync(() => {
       jobLog.log(`run failed: ${msg}`);
     });
-    yield* failJobEffect(jobId, msg, jobLog.lines).pipe(Effect.orDie);
+    yield* failJobEffect(jobId, msg, { caseId }, jobLog.lines).pipe(
+      Effect.orDie
+    );
     if (playbookRunId === null) return;
     yield* advancePlaybookRunEffect({ playbookRunId, caseId }).pipe(
       Effect.catchCause((cause) =>

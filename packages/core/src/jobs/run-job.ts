@@ -14,6 +14,7 @@ import {
 
 import { capTimeoutMs } from "@watchdog/cap-sdk";
 import { db, jobsRepo, type JobRow } from "@watchdog/db";
+import { isOpenJobStatus } from "@watchdog/schemas";
 import { isToolsTag, taggedToToolsError, type ToolsTag } from "@watchdog/tools";
 
 import { tryDb } from "../infra/postgres-effect";
@@ -44,8 +45,7 @@ import {
   type PreflightState,
   type PreflightStopReason,
 } from "./stages/preflight";
-import { proposeStageEffect } from "./stages/propose";
-import { suppressStageEffect } from "./stages/suppress";
+import { suppressAndProposeStageEffect } from "./stages/propose";
 
 export { JobFibers, type JobAbortReason };
 
@@ -181,13 +181,15 @@ function handlePreflightDomainErrorEffect(
   return Effect.gen(function* handlePreflightDomainErrorGen() {
     const row = yield* tryDb(() => jobsRepo.get(db, jobId)).pipe(Effect.orDie);
     const jobLog = createJobLog(row?.logs ?? []);
-    yield* runFailedPathEffect({
-      jobId,
-      error: pipelineErrorMessage(error),
-      jobLog,
-      playbookRunId: row?.playbookRunId ?? null,
-      caseId: row?.caseId,
-    });
+    if (row) {
+      yield* runFailedPathEffect({
+        jobId,
+        error: pipelineErrorMessage(error),
+        jobLog,
+        playbookRunId: row.playbookRunId ?? null,
+        caseId: row.caseId,
+      });
+    }
     return {
       outcome: "failed" as const,
       durationMs: Date.now() - started,
@@ -247,19 +249,34 @@ function proposeFromInterpretEffect(
   }
 
   return Effect.gen(function* proposeFromInterpretGen() {
-    const { kept, suppressed } = yield* suppressStageEffect(
-      state.job.caseId,
-      interpreted.patch,
-      jobLog
-    );
-    const proposed = yield* proposeStageEffect({
+    const proposed = yield* suppressAndProposeStageEffect({
       caseId: state.job.caseId,
+      patch: interpreted.patch,
       jobId: state.jobId,
-      kept,
-      suppressed,
       resultSummary: interpreted.resultSummary,
       attachEvidenceIds,
+      createdBy: state.job.actorId,
+      onSuppressed: (suppressed) => {
+        if (suppressed > 0) {
+          jobLog.log(`suppressed ${suppressed} known/rejected finding(s)`);
+        }
+      },
     });
+    if (
+      proposed.kept.length > 0 &&
+      (proposed.proposalId === null || proposed.proposalId === "")
+    ) {
+      jobLog.log("propose failed: Failed to create Proposal");
+      return {
+        proposalId: null,
+        suppressedCount: proposed.suppressedCount,
+        interpreted: {
+          ...interpreted,
+          resultSummary: proposed.resultSummary,
+          interpretError: "Failed to create Proposal",
+        },
+      };
+    }
     return {
       proposalId: proposed.proposalId,
       suppressedCount: proposed.suppressedCount,
@@ -552,16 +569,18 @@ export function executeJobOnMap(
       return exit.value;
     }
     if (Cause.hasInterruptsOnly(exit.cause)) {
-      // Sticky interrupt Exit: onExitIf persists when runReadyJob ran.
-      // Preflight-only interrupt still needs a terminal write.
       const reason = fibers.peekReason(jobId) ?? "cancel";
-      yield* failJobEffect(
-        jobId,
-        reason === "timeout" ? "timeout" : "aborted"
-      ).pipe(Effect.orDie);
       const row = yield* tryDb(() => jobsRepo.get(db, jobId)).pipe(
         Effect.orDie
       );
+      if (row && isOpenJobStatus(row.status)) {
+        yield* failJobEffect(
+          jobId,
+          reason === "timeout" ? "timeout" : "aborted",
+          { caseId: row.caseId },
+          row.logs ?? []
+        ).pipe(Effect.orDie);
+      }
       fibers.clearReason(jobId);
       return jobOutcomeFromInterrupt(reason, row, started);
     }

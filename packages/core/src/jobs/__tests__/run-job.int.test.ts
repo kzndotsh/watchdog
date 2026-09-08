@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
 import { capCacheRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
 import {
   resetTestDb,
   seedCase,
@@ -35,6 +36,12 @@ function fakeCollected(
         name: "dns-example.com.json",
         mime: "application/json",
         uri: "case/art.json",
+        sha256: sha(),
+      },
+      {
+        name: REPORT_JSON_ARTIFACT,
+        mime: "application/json",
+        uri: "case/report.json",
         sha256: sha(),
       },
     ],
@@ -105,6 +112,72 @@ describe("reconcileStaleJobs", () => {
     const row = await jobsRepo.get(db, job.id);
     expect(row?.status).toBe("running");
   });
+
+  it("reclaims from startedAt when updatedAt was refreshed mid-run", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, {
+      capabilityId: "network.dns.lookup",
+      status: "running",
+    });
+    await jobsRepo.update(db, job.id, {
+      startedAt: new Date(Date.now() - 48 * 3600 * 1000),
+      updatedAt: new Date(),
+    });
+
+    const failedCount = await runDomain(reconcileStaleJobsEffect());
+    expect(failedCount).toBeGreaterThan(0);
+
+    const row = await jobsRepo.get(db, job.id);
+    expect(row?.status).toBe("failed");
+  });
+});
+
+describe("reconcileOrphanedQueuedJobs", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("listQueuedStale returns only queued jobs past the grace window", async () => {
+    const cased = await seedCase(db);
+    const stale = await seedJob(db, cased.id, { status: "queued" });
+    await jobsRepo.update(db, stale.id, {
+      updatedAt: new Date(Date.now() - 3 * 60 * 1000),
+    });
+    const fresh = await seedJob(db, cased.id, { status: "queued" });
+    await jobsRepo.update(db, fresh.id, { updatedAt: new Date() });
+
+    const rows = await jobsRepo.listQueuedStale(
+      db,
+      new Date(Date.now() - 120_000)
+    );
+    expect(rows.map((row) => row.id).sort()).toEqual([stale.id]);
+  });
+
+  it("listQueuedStale skips queued jobs on finished playbook runs", async () => {
+    const cased = await seedCase(db);
+    const run = await seedPlaybookRun(db, cased.id, {
+      playbookId: "host-footprint",
+      seed: { host: "example.com" },
+      status: "cancelled",
+    });
+    const orphan = await seedJob(db, cased.id, {
+      status: "queued",
+      playbookRunId: run.id,
+    });
+    await jobsRepo.update(db, orphan.id, {
+      updatedAt: new Date(Date.now() - 3 * 60 * 1000),
+    });
+    const standalone = await seedJob(db, cased.id, { status: "queued" });
+    await jobsRepo.update(db, standalone.id, {
+      updatedAt: new Date(Date.now() - 3 * 60 * 1000),
+    });
+
+    const rows = await jobsRepo.listQueuedStale(
+      db,
+      new Date(Date.now() - 120_000)
+    );
+    expect(rows.map((row) => row.id)).toEqual([standalone.id]);
+  });
 });
 
 describe("reconcileStuckPlaybookRuns", () => {
@@ -169,6 +242,7 @@ describe("runFailedPath", () => {
         error: new Error("boom"),
         jobLog: createJobLog(),
         playbookRunId: job.playbookRunId,
+        caseId: cased.id,
       })
     );
 
@@ -204,6 +278,7 @@ describe("runFailedPath", () => {
         error: new Error("enrich failed"),
         jobLog: createJobLog(),
         playbookRunId: run.id,
+        caseId: cased.id,
       })
     );
 
@@ -244,6 +319,42 @@ describe("runSucceededPath", () => {
       new Date()
     );
     expect(hit?.jobId).toBe(job.id);
+  });
+
+  it("skips cache when interpret cap artifacts lack report.json", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    const jobLog = createJobLog();
+    const collected = fakeCollected(jobLog, {
+      artifacts: [
+        {
+          name: "dns-example.com.json",
+          mime: "application/json",
+          uri: "case/art.json",
+          sha256: sha(),
+        },
+      ],
+    });
+
+    await Effect.runPromise(
+      runSucceededPathEffect({
+        jobId: job.id,
+        state: await dnsState(job.id),
+        collected,
+        resultSummary: "ok",
+        interpretError: null,
+        jobLog,
+      })
+    );
+
+    const hit = await capCacheRepo.lookupActive(
+      db,
+      cased.id,
+      "network.dns.lookup",
+      "input-hash-1",
+      new Date()
+    );
+    expect(hit).toBeNull();
   });
 
   it("skips cache when interpretError is set", async () => {
