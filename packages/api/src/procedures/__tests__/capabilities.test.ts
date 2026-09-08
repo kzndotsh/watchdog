@@ -1,15 +1,22 @@
 import { createRouterClient } from "@orpc/server";
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listCapabilities, listPlaybookDescriptors } = vi.hoisted(() => ({
-  listCapabilities: vi.fn(),
-  listPlaybookDescriptors: vi.fn(),
-}));
+const { listCapabilitiesEffect, listPlaybookDescriptorsEffect } = vi.hoisted(
+  () => ({
+    listCapabilitiesEffect: vi.fn(),
+    listPlaybookDescriptorsEffect: vi.fn(),
+  })
+);
 
-vi.mock("@watchdog/caps", () => ({
-  listCapabilities,
-  listPlaybookDescriptors,
-}));
+vi.mock("@watchdog/core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core")>();
+  return {
+    ...actual,
+    listCapabilitiesEffect,
+    listPlaybookDescriptorsEffect,
+  };
+});
 
 import { list, listPlaybooksProc } from "../capabilities";
 
@@ -22,26 +29,30 @@ const actor = {
 
 describe("capabilities procedures", () => {
   it("lists capabilities and playbooks", async () => {
-    listCapabilities.mockResolvedValueOnce([
-      {
-        id: "network.dns.lookup",
-        version: "1",
-        title: "DNS Lookup",
-        egress: "third_party",
-        input: {},
-        inputForm: {},
-      },
-    ]);
-    listPlaybookDescriptors.mockResolvedValueOnce([
-      {
-        id: "seed-dns",
-        title: "Seed DNS",
-        description: "Lookup host",
-        seedKinds: ["host"],
-        steps: ["network.dns.lookup"],
-        requires: { credentials: [], egress: "third_party", flags: [] },
-      },
-    ]);
+    listCapabilitiesEffect.mockReturnValueOnce(
+      Effect.succeed([
+        {
+          id: "network.dns.lookup",
+          version: "1",
+          title: "DNS Lookup",
+          egress: "third_party",
+          input: {},
+          inputForm: {},
+        },
+      ])
+    );
+    listPlaybookDescriptorsEffect.mockReturnValueOnce(
+      Effect.succeed([
+        {
+          id: "seed-dns",
+          title: "Seed DNS",
+          description: "Lookup host",
+          seedKinds: ["host"],
+          steps: ["network.dns.lookup"],
+          requires: { credentials: [], egress: "third_party", flags: [] },
+        },
+      ])
+    );
 
     const client = createRouterClient(
       { list, listPlaybooks: listPlaybooksProc },

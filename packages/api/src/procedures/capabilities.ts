@@ -1,8 +1,9 @@
-import { Effect } from "effect";
 import { z } from "zod";
 
-import { listCapabilities, listPlaybookDescriptors } from "@watchdog/caps";
-import { mapDomainCatch } from "@watchdog/core";
+import {
+  listCapabilitiesEffect,
+  listPlaybookDescriptorsEffect,
+} from "@watchdog/core";
 import { jsonObjectSchema, PLAYBOOK_SEED_KINDS } from "@watchdog/schemas";
 
 import { authed } from "../os";
@@ -75,14 +76,7 @@ export const list = authed
     tags: ["capabilities"],
   })
   .output(z.array(capabilitySchema))
-  .handler(async () =>
-    runApp(
-      Effect.tryPromise({
-        try: async () => listCapabilities(),
-        catch: mapDomainCatch,
-      })
-    )
-  );
+  .handler(async () => runApp(listCapabilitiesEffect()));
 
 export const listPlaybooksProc = authed
   .route({
@@ -92,11 +86,4 @@ export const listPlaybooksProc = authed
     tags: ["capabilities"],
   })
   .output(z.array(playbookSchema))
-  .handler(async () =>
-    runApp(
-      Effect.tryPromise({
-        try: async () => listPlaybookDescriptors(),
-        catch: mapDomainCatch,
-      })
-    )
-  );
+  .handler(async () => runApp(listPlaybookDescriptorsEffect()));
