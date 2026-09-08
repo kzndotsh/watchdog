@@ -5,6 +5,7 @@ import type { WhoisSnapshot } from "@watchdog/tools";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import { interpretWhoisSnapshot } from "../../lib/collect/interpret-whois-snapshot";
+import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { whoxyLookupInput } from "./input";
 import type { WhoxyLookupSnapshot } from "./report-schema";
 
@@ -44,6 +45,11 @@ export function interpretWhoxyLookupReport(
     entityId: opts.input.entityId,
     claimLabel: "Whoxy",
     noEntitySummary: NO_ENTITY,
-    extraBatches: [{ type: "email", values: [report.registrantEmail] }],
+    extraBatches: [
+      ...querySeedBatches(report.host, "domain"),
+      ...(report.registrantEmail
+        ? querySeedBatches(report.registrantEmail, "email")
+        : []),
+    ],
   });
 }

@@ -30,7 +30,7 @@ describe("interpret", () => {
     rawStatus: 1,
   };
 
-  it("interpretWhoxyLookupReport proposes Claim, expiry Event, and registrant email", () => {
+  it("interpretWhoxyLookupReport proposes domain, registrant email, Claim, and expiry Event", () => {
     const result = interpretWhoxyLookupReport(fixture, {
       input: { host: "example.com", entityId },
     });
@@ -38,10 +38,12 @@ describe("interpret", () => {
     expect(types).toContain("identifier");
     expect(types).toContain("claim");
     expect(types).toContain("event");
-    expect(
-      result.patch.find((p) => p.resource === "identifier")?.data.type
-    ).toBe("email");
-    expect(claimText(result, 1)).toMatch(/Example Registrar/);
+    const identifierTypes = result.patch
+      .filter((p) => p.resource === "identifier")
+      .map((p) => p.data.type);
+    expect(identifierTypes).toContain("domain");
+    expect(identifierTypes).toContain("email");
+    expect(claimText(result, 2)).toMatch(/Example Registrar/);
   });
 
   it("interpretWhoxyLookupReport miss is an observation Claim", () => {

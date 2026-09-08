@@ -24,7 +24,11 @@ export const whoxyLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "WHOXY_API_KEY" }],
   consumes: [{ kind: "host" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "domain" },
+    { kind: "identifier", type: "email" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
