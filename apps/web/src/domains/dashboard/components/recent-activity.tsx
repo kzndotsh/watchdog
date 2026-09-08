@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { recentActivityQuery } from "@/domains/activity/queries";
 import type { ActivityItem, ActivityKind } from "@/domains/activity/types";
 import type { CaseRecord } from "@/domains/cases/types";
-import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -16,6 +15,7 @@ import {
   invalidateAfterProposalQueueChange,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { stackPendingFallback } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
@@ -217,10 +217,11 @@ function RecentActivityList({
     recentActivityQuery(caseId ? { caseId } : undefined)
   );
   const activityPending = listPending(activityQuery);
-  const activityLoadError =
-    !activityPending && activityQuery.isError
-      ? errMessage(activityQuery.error, "Failed to load recent activity")
-      : null;
+  const activityLoadError = queryLoadError(
+    activityQuery,
+    activityPending,
+    "Failed to load recent activity"
+  );
   const items = activityQuery.data ?? EMPTY_ACTIVITY_ITEMS;
   const activityPlaceholder = isQueryPlaceholderData(activityQuery);
   const liveCaseIds = useMemo(

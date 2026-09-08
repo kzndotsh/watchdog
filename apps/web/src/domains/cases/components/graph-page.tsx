@@ -8,12 +8,12 @@ import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
-import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { GraphCanvasLoadingRegion } from "@/shared/ui/graph/graph-canvas-skeleton";
@@ -33,13 +33,11 @@ function GraphCanvasBody({
   const entitiesQuery = useQuery(entitiesListQuery(caseId));
   const edgesQuery = useQuery(edgesForCaseQuery(caseId));
   const graphPending = listPending(entitiesQuery) || listPending(edgesQuery);
-  const graphLoadError =
-    !graphPending && (entitiesQuery.isError || edgesQuery.isError)
-      ? errMessage(
-          entitiesQuery.error ?? edgesQuery.error,
-          "Failed to load graph"
-        )
-      : null;
+  const graphLoadError = combinedQueryLoadError(
+    [entitiesQuery, edgesQuery],
+    graphPending,
+    "Failed to load graph"
+  );
   const graphPlaceholder =
     entitiesQuery.isPlaceholderData || edgesQuery.isPlaceholderData;
 

@@ -14,8 +14,11 @@ import { sortJobQueue } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import type { JobListRecord } from "@/domains/jobs/types";
 import { credentialsListQuery } from "@/domains/settings/queries";
-import { errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
+import {
+  combinedQueryLoadError,
+  queryLoadError,
+} from "@/shared/lib/query-load-error";
 import type { CredentialSlot } from "@watchdog/core";
 
 const EMPTY_EVIDENCE_ROWS: EvidenceRecord[] = [];
@@ -41,19 +44,16 @@ export function useCollectQueueData(caseId: string) {
     data: evidenceRows = EMPTY_EVIDENCE_ROWS,
     isPlaceholderData: evidencePlaceholder,
     isError: evidenceError,
-    error: evidenceLoadError,
   } = evidenceQuery;
   const {
     data: hiddenEvidenceRows = EMPTY_EVIDENCE_ROWS,
     isPlaceholderData: hiddenEvidencePlaceholder,
     isError: hiddenEvidenceError,
-    error: hiddenEvidenceLoadError,
   } = hiddenEvidenceQuery;
   const {
     data: jobsRaw = EMPTY_JOB_ROWS,
     isFetching: jobsListFetching,
     isError: jobsError,
-    error: jobsLoadError,
     isPlaceholderData: jobsPlaceholder,
   } = jobsQuery;
   const credentialsQuery = useQuery(credentialsListQuery());
@@ -61,13 +61,12 @@ export function useCollectQueueData(caseId: string) {
     data: credentialSlots = EMPTY_CREDENTIAL_SLOTS,
     isPlaceholderData: credentialsPlaceholder,
     isError: credentialsError,
-    error: credentialsLoadError,
   } = credentialsQuery;
   const {
     data: entities = EMPTY_ENTITIES,
     isPlaceholderData: entitiesPlaceholder,
+    isError: entitiesError,
   } = entitiesQuery;
-  const { isError: entitiesError, error: entitiesLoadError } = entitiesQuery;
 
   const [filters, setFilters] = useState<CollectFilters>(EMPTY_COLLECT_FILTERS);
 
@@ -83,20 +82,17 @@ export function useCollectQueueData(caseId: string) {
       jobsPlaceholder ||
       entitiesPlaceholder ||
       credentialsPlaceholder;
-  const queueLoadError =
-    !queuePending &&
-    (filters.hiddenOnly
-      ? hiddenEvidenceError || entitiesError
-      : evidenceError || jobsError || entitiesError)
-      ? errMessage(
-          evidenceLoadError ??
-            hiddenEvidenceLoadError ??
-            jobsLoadError ??
-            entitiesLoadError ??
-            null,
-          "Failed to load collect queue"
-        )
-      : null;
+  const queueLoadError = filters.hiddenOnly
+    ? combinedQueryLoadError(
+        [hiddenEvidenceQuery, entitiesQuery],
+        queuePending,
+        "Failed to load collect queue"
+      )
+    : combinedQueryLoadError(
+        [evidenceQuery, jobsQuery, entitiesQuery],
+        queuePending,
+        "Failed to load collect queue"
+      );
 
   const evidence = filters.hiddenOnly ? hiddenEvidenceRows : evidenceRows;
   const jobs = useMemo(() => sortJobQueue(jobsRaw), [jobsRaw]);
@@ -108,10 +104,11 @@ export function useCollectQueueData(caseId: string) {
     return names;
   }, [credentialSlots]);
   const credentialsPending = listPending(credentialsQuery);
-  const credentialsLoadErrorMessage =
-    credentialsError && !credentialsQuery.isFetching
-      ? errMessage(credentialsLoadError, "Failed to load credentials")
-      : null;
+  const credentialsLoadErrorMessage = queryLoadError(
+    credentialsQuery,
+    credentialsPending,
+    "Failed to load credentials"
+  );
   const urlDumps = useMemo((): CollectUrlDump[] => {
     const dumps: CollectUrlDump[] = [];
     for (const row of evidenceRows) {

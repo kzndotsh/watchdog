@@ -108,4 +108,40 @@ describe("useCollectQueueData", () => {
 
     expect(result.current.credentialsLoadError).toBeNull();
   });
+
+  it("defers queueLoadError while queue queries are refetching", () => {
+    useQueryMock.mockImplementation(
+      (options: { queryKey?: readonly unknown[] }) => {
+        const key = options.queryKey ?? [];
+        if (key[0] === "evidence" && key[3] === "active") {
+          return {
+            data: undefined,
+            isFetched: true,
+            isLoading: false,
+            isError: true,
+            error: new Error("Evidence unavailable"),
+            isPlaceholderData: false,
+            isFetching: true,
+          };
+        }
+        if (key[0] === "jobs") {
+          return loadedQuery([]);
+        }
+        if (key[0] === "entities") {
+          return loadedQuery([]);
+        }
+        if (key[0] === "evidence" && key[3] === "hidden") {
+          return loadedQuery([]);
+        }
+        if (key[0] === "credentials") {
+          return loadedQuery([]);
+        }
+        return loadedQuery([]);
+      }
+    );
+
+    const { result } = renderHook(() => useCollectQueueData(testId(10)));
+
+    expect(result.current.queueLoadError).toBeNull();
+  });
 });

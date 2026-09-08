@@ -28,11 +28,11 @@ import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
-import { errMessage } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import {
   normalizeEntitySlug,
@@ -449,10 +449,11 @@ function DossierWithActiveCase({
   }
   const entityQuery = useQuery(entityBySlugQuery(active.id, scopedEntitySlug));
   const entityPending = listPending(entityQuery);
-  const entityLoadError =
-    !entityPending && !entityQuery.isFetching && entityQuery.isError
-      ? errMessage(entityQuery.error, "Failed to load entity")
-      : null;
+  const entityLoadError = queryLoadError(
+    entityQuery,
+    entityPending,
+    "Failed to load entity"
+  );
   const entity = entityQuery.data;
   const entityPlaceholder = isQueryPlaceholderData(entityQuery);
 
