@@ -86,4 +86,13 @@ describe("triage index route", () => {
 
     expect(warmTriageQueriesMock).not.toHaveBeenCalled();
   });
+
+  it("trims padded proposal status in validateSearch", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { status?: string };
+    };
+    expect(validateSearch.parse({ status: "  pending  " })).toEqual({
+      status: "pending",
+    });
+  });
 });

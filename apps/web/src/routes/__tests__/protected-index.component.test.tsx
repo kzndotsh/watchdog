@@ -13,6 +13,10 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   return {
     ...actual,
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
+    getRouteApi: () => ({
+      useSearch: () => ({}),
+      useNavigate: () => vi.fn(),
+    }),
   };
 });
 

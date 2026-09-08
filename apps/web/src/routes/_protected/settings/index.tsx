@@ -8,7 +8,7 @@ import {
   UsersIcon,
   WrenchIcon,
 } from "lucide-react";
-import { Suspense, useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { z } from "zod";
 
 import { authClient } from "@/auth/client";
@@ -27,8 +27,8 @@ import {
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
-import { warmPrefetchQuery } from "@/shared/lib/warm-query";
-import { stackPendingFallback } from "@/shared/ui/active-tab-body";
+import { normalizeRouteSegment } from "@/shared/lib/route-slug";
+import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
 
 const routeApi = getRouteApi("/_protected/settings/");
@@ -74,9 +74,11 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
 ];
 
 function parseSettingsTab(value: unknown): SettingsTab | undefined {
-  if (typeof value !== "string") return undefined;
+  const slug =
+    typeof value === "string" ? normalizeRouteSegment(value) : undefined;
+  if (slug === undefined) return undefined;
   for (const tab of SETTINGS_TABS) {
-    if (tab === value) return tab;
+    if (tab === slug) return tab;
   }
   return undefined;
 }
@@ -131,11 +133,7 @@ function SettingsPanel({
       return <UsersSettings />;
     }
     case "credentials": {
-      return (
-        <Suspense fallback={stackPendingFallback(1)}>
-          <SettingsCredentialsForm />
-        </Suspense>
-      );
+      return <SettingsCredentialsForm />;
     }
     default: {
       const _exhaustive: never = tab;
@@ -169,6 +167,16 @@ function SettingsPage() {
     [navigate]
   );
 
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("tab");
+    if (raw !== null && raw !== "" && tabSearch === undefined) {
+      void navigate({
+        search: (prev) => ({ ...prev, tab: undefined }),
+        replace: true,
+      });
+    }
+  }, [navigate, tabSearch]);
+
   return (
     <Page>
       <PageHeader />
@@ -193,7 +201,10 @@ export const Route = createFileRoute("/_protected/settings/")({
   loaderDeps: () => ({}),
   loader: async ({ context: { queryClient } }) => {
     // Warm credentials for the Credentials tab; shell does not need them to paint.
-    warmPrefetchQuery(queryClient, credentialsListQuery());
+    warmEnsureQueryData(queryClient, {
+      ...credentialsListQuery(),
+      revalidateIfStale: true,
+    });
   },
   errorComponent: RouteError,
   component: SettingsPage,

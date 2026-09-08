@@ -9,6 +9,7 @@ vi.mock("@/auth/server", () => ({
 }));
 
 const useSearchMock = vi.hoisted(() => vi.fn(() => ({ entityId: undefined })));
+const useNavigateMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -18,6 +19,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
     getRouteApi: () => ({
       useSearch: useSearchMock,
+      useNavigate: useNavigateMock,
     }),
   };
 });
@@ -54,7 +56,7 @@ describe("tasks index route", () => {
     } as never);
     await Promise.resolve();
 
-    expect(query).toHaveBeenCalledTimes(3);
+    expect(query).toHaveBeenCalledTimes(4);
   });
 
   it("renders the tasks page with the entity filter", () => {

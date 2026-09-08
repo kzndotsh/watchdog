@@ -12,10 +12,12 @@ import { createApiContext } from "@/auth/api-context.server";
 import { runApp } from "@watchdog/api";
 import {
   getCaseByIdEffect,
+  evidenceDisplayLabel,
   readArtifactBytesEffect,
   renderCaseExportEffect,
   type DomainTag,
 } from "@watchdog/core";
+import type { EvidenceKind } from "@watchdog/schemas";
 
 function safeFilename(label: string): string {
   return (
@@ -57,11 +59,17 @@ function evidenceZipPartEffect(
     sourceUrl: string | null;
     mime: string | null;
     text: string | null;
-    kind: string;
+    kind: EvidenceKind;
   }
 ): Effect.Effect<EvidenceZipPart> {
   const prefix = ev.id.slice(0, 8);
-  const labelBase = safeFilename(ev.label ?? ev.sourceUrl ?? ev.id.slice(0, 8));
+  const labelBase = safeFilename(
+    evidenceDisplayLabel({
+      label: ev.label,
+      kind: ev.kind,
+      sourceUrl: ev.sourceUrl,
+    })
+  );
   if (ev.uri) {
     const uri = ev.uri;
     return readArtifactBytesEffect(uri).pipe(

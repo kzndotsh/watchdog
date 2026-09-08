@@ -6,7 +6,11 @@ import { casesContextQuery } from "@/domains/cases/queries";
 import { Triage } from "@/domains/triage/components/triage";
 import { warmTriageQueries } from "@/domains/triage/lib/prefetch-triage";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { PROPOSAL_STATUSES, uuidSchema } from "@watchdog/schemas";
+import {
+  optionalUuidSchema,
+  optionalProposalStatusSchema,
+  type ProposalStatus,
+} from "@watchdog/schemas";
 
 const routeApi = getRouteApi("/_protected/triage/");
 
@@ -25,19 +29,32 @@ function TriagePage() {
     },
     [navigate]
   );
+  const onStatusSearchChange = useCallback(
+    (next: ProposalStatus | undefined) => {
+      void navigate({
+        search: (prev) => ({
+          ...prev,
+          status: next,
+        }),
+        replace: true,
+      });
+    },
+    [navigate]
+  );
   return (
     <Triage
       proposalId={proposalId}
       initialStatus={status}
       onProposalIdChange={onProposalIdChange}
+      onStatusSearchChange={onStatusSearchChange}
     />
   );
 }
 
 export const Route = createFileRoute("/_protected/triage/")({
   validateSearch: z.object({
-    proposalId: uuidSchema.optional(),
-    status: z.enum(PROPOSAL_STATUSES).optional(),
+    proposalId: optionalUuidSchema,
+    status: optionalProposalStatusSchema,
   }),
   loader: async ({ context: { queryClient } }) => {
     const { active } = await ensureAppQueryData(
@@ -46,6 +63,6 @@ export const Route = createFileRoute("/_protected/triage/")({
     );
     if (active) warmTriageQueries(queryClient, active.id);
   },
-  // Thin loader — shell paints immediately; queue body Suspense fills proposals.
+  // Thin loader — shell paints immediately; triage queue handles pending/errors inline.
   component: TriagePage,
 });

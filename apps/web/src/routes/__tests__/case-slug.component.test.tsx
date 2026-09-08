@@ -110,4 +110,49 @@ describe("case slug route", () => {
     render(<Page />);
     expect(screen.getByText(`Case overview ${CASE_ID}`)).toBeInTheDocument();
   });
+
+  it("trims padded legacy overview tabs in validateSearch", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "  graph  " })).toEqual({
+      tab: "graph",
+    });
+    expect(validateSearch.parse({ tab: "  unknown  " })).toEqual({});
+  });
+
+  it("redirects padded legacy overview tabs to first-class routes", async () => {
+    const caseRow = {
+      id: CASE_ID,
+      slug: "alpha",
+      name: "Alpha",
+      description: null,
+      allowThirdPartyEgress: false,
+    };
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce(caseRow)
+      .mockResolvedValueOnce({ active: caseRow, cases: [caseRow] });
+
+    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+
+    await expect(
+      loader({
+        context: {
+          queryClient: {
+            query,
+            invalidateQueries: vi.fn(),
+            setQueryData: vi.fn(),
+          },
+        },
+        params: { caseSlug: "alpha" },
+        deps: { tab: "graph" },
+      } as never)
+    ).rejects.toEqual(
+      expect.objectContaining({
+        to: "/graph",
+        replace: true,
+      })
+    );
+  });
 });

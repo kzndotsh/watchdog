@@ -46,7 +46,7 @@ describe("identifiers index route", () => {
     } as never);
     await Promise.resolve();
 
-    expect(query).toHaveBeenCalledTimes(4);
+    expect(query).toHaveBeenCalledTimes(5);
   });
 
   it("renders the identifiers page", () => {

@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -93,11 +94,12 @@ import { Route } from "@/routes/_protected/settings/index";
 
 describe("settings index route", () => {
   it("prefetches credentials in the loader", async () => {
-    const query = vi.fn().mockResolvedValue(undefined);
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
     await loader({
-      context: { queryClient: { query } },
+      context: { queryClient: client },
     } as never);
 
     expect(query).toHaveBeenCalledTimes(1);
@@ -118,6 +120,15 @@ describe("settings index route", () => {
     render(<Page />);
     expect(screen.getByText("Settings shell credentials")).toBeInTheDocument();
     expect(screen.getByText("Credentials form")).toBeInTheDocument();
+  });
+
+  it("trims padded settings tab in validateSearch", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "  credentials  " })).toEqual({
+      tab: "credentials",
+    });
   });
 
   it("denies the users panel when the session is not install admin", () => {

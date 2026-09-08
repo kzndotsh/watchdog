@@ -18,9 +18,17 @@ import {
   casesContextQuery,
   casesKeys,
 } from "@/domains/cases/queries";
-import type { CaseRecord, CasesContext } from "@/domains/cases/types";
+import {
+  setActiveCaseIdInputSchema,
+  type CaseRecord,
+  type CasesContext,
+} from "@/domains/cases/types";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
+import {
+  normalizeEntitySlug,
+  normalizeRouteSegment,
+} from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { Button } from "@/shared/ui/shadcn/button";
 import { uuidSchema } from "@watchdog/schemas";
@@ -40,8 +48,25 @@ function isLegacyTab(value: string): value is LegacyTab {
   return value in LEGACY_TAB_REDIRECT;
 }
 
+function parseLegacyTab(value: unknown): LegacyTab | undefined {
+  const slug =
+    typeof value === "string" ? normalizeRouteSegment(value) : undefined;
+  if (slug !== undefined && isLegacyTab(slug)) {
+    return slug;
+  }
+  return undefined;
+}
+
+const caseOverviewSearchSchema = z.object({
+  tab: z
+    .unknown()
+    .transform((value) => parseLegacyTab(value))
+    .optional(),
+});
+
 function CaseNotFound() {
-  const { caseSlug } = routeApi.useParams();
+  const { caseSlug: rawCaseSlug } = routeApi.useParams();
+  const caseSlug = normalizeEntitySlug(rawCaseSlug) ?? rawCaseSlug;
 
   return (
     <Page>
@@ -93,7 +118,9 @@ async function healActiveCaseToOverview(
     return;
   }
 
-  await setActiveCaseIdFn({ data: { caseId: caseRow.id } });
+  await setActiveCaseIdFn({
+    data: setActiveCaseIdInputSchema.parse({ caseId: caseRow.id }),
+  });
   if (healAborted(epoch, caseSlug)) return;
 
   await queryClient.invalidateQueries({
@@ -105,14 +132,20 @@ async function healActiveCaseToOverview(
 }
 
 export const Route = createFileRoute("/_protected/cases/$caseSlug")({
-  validateSearch: z.object({ tab: z.string().optional() }),
+  validateSearch: caseOverviewSearchSchema,
   loaderDeps: ({ search }) => ({ tab: search.tab }),
   loader: async ({ context: { queryClient }, params, deps }) => {
+    const caseSlug = normalizeEntitySlug(params.caseSlug);
+    if (caseSlug === undefined) {
+      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
+      throw notFound();
+    }
+
     // Legacy bookmarks used /cases/$caseId — redirect to slug.
-    if (uuidSchema.safeParse(params.caseSlug).success) {
+    if (uuidSchema.safeParse(caseSlug).success) {
       const byId = await ensureAppQueryData(
         queryClient,
-        caseByIdQuery(params.caseSlug)
+        caseByIdQuery(caseSlug)
       );
       if (!byId) {
         // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
@@ -129,7 +162,7 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
 
     const caseRow = await ensureAppQueryData(
       queryClient,
-      caseBySlugQuery(params.caseSlug)
+      caseBySlugQuery(caseSlug)
     );
     if (!caseRow) {
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
@@ -137,8 +170,8 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
     }
 
     // Legacy overview tabs → first-class Active-Case routes.
-    if (deps.tab && isLegacyTab(deps.tab)) {
-      await healActiveCaseToOverview(queryClient, caseRow, params.caseSlug);
+    if (deps.tab) {
+      await healActiveCaseToOverview(queryClient, caseRow, caseSlug);
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router redirect() throws
       throw redirect({
         to: LEGACY_TAB_REDIRECT[deps.tab],
@@ -147,7 +180,7 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
     }
 
     // Heal Active Case cookie to match the overview URL.
-    await healActiveCaseToOverview(queryClient, caseRow, params.caseSlug);
+    await healActiveCaseToOverview(queryClient, caseRow, caseSlug);
 
     queryClient.setQueryData(caseByIdQuery(caseRow.id).queryKey, caseRow);
     warmCaseOverviewQueries(queryClient, caseRow.id);

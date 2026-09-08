@@ -11,7 +11,7 @@ import {
   warmCollectCatalogQueries,
 } from "@/domains/collect/lib/prefetch-collect";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { uuidSchema } from "@watchdog/schemas";
+import { optionalUuidSchema } from "@watchdog/schemas";
 
 const routeApi = getRouteApi("/_protected/collect/");
 
@@ -34,7 +34,7 @@ function CollectPage() {
 }
 
 export const Route = createFileRoute("/_protected/collect/")({
-  validateSearch: z.object({ id: uuidSchema.optional() }),
+  validateSearch: z.object({ id: optionalUuidSchema }),
   loaderDeps: ({ search: { id } }) => ({ id }),
   loader: async ({ context: { queryClient }, deps: { id } }) => {
     const { active } = await ensureAppQueryData(

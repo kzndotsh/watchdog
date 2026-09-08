@@ -58,6 +58,7 @@ vi.mock("@/shared/layout/page", () => ({
   ),
 }));
 
+import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
 import { Route } from "@/routes/_protected/entities/$entitySlug";
 
 const ACTIVE = {
@@ -111,5 +112,38 @@ describe("entity slug route", () => {
     const Page = Route.options.component!;
     render(<Page />);
     expect(screen.getByText("Dossier target (overview)")).toBeInTheDocument();
+  });
+
+  it("trims padded dossier tab in validateSearch", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "  claims  " })).toEqual({
+      tab: "claims",
+    });
+  });
+
+  it("prefetches a trimmed dossier tab from padded search", async () => {
+    const entity = { id: testId(20), slug: "target" };
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ active: ACTIVE, cases: [ACTIVE] })
+      .mockResolvedValueOnce(entity);
+    const warmMock = vi.mocked(warmDossierQueries);
+    warmMock.mockClear();
+
+    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+    await loader({
+      context: { queryClient: { query } },
+      params: { entitySlug: "target" },
+      location: { search: { tab: "  claims  " } },
+    } as never);
+
+    expect(warmMock).toHaveBeenCalledWith(
+      expect.anything(),
+      ACTIVE.id,
+      entity.id,
+      "claims"
+    );
   });
 });

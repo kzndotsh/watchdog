@@ -17,6 +17,7 @@ import {
   corsPreflightResponse,
 } from "@/lib/api-cors.server";
 import { casesRepo, db, isWatchdogEvent, listenForEvents } from "@watchdog/db";
+import { parseSseCaseIdParam } from "@watchdog/schemas";
 
 export const Route = createFileRoute("/api/events")({
   server: {
@@ -34,8 +35,14 @@ export const Route = createFileRoute("/api/events")({
         }
 
         const url = new URL(request.url);
-        const caseId = url.searchParams.get("caseId") ?? null;
-        if (caseId) {
+        const caseIdParsed = parseSseCaseIdParam(
+          url.searchParams.get("caseId")
+        );
+        if (!caseIdParsed.ok) {
+          return new Response("Bad Request", { status: 400 });
+        }
+        const caseId = caseIdParsed.value.caseId;
+        if (caseId !== null) {
           const scoped = await casesRepo.getById(db, caseId, organizationId);
           if (!scoped) {
             return new Response("Not Found", { status: 404 });

@@ -68,4 +68,26 @@ describe("auth path route", () => {
     render(<Page />);
     expect(screen.getByText("Auth view sign-in")).toBeInTheDocument();
   });
+
+  it("trims padded auth path params before rendering", () => {
+    useParamsMock.mockReturnValue({ path: "  sign-in  " });
+    const Page = Route.options.component!;
+    render(<Page />);
+    expect(screen.getByText("Auth view sign-in")).toBeInTheDocument();
+  });
+
+  it("accepts padded sign-in in beforeLoad", async () => {
+    vi.mocked(ensureAppSession).mockResolvedValue(null);
+
+    await expect(
+      Route.options.beforeLoad!({
+        params: { path: "  sign-in  " },
+        context: { queryClient: {} },
+      } as never)
+    ).resolves.toEqual(
+      expect.objectContaining({
+        allowSignup: expect.anything(),
+      })
+    );
+  });
 });

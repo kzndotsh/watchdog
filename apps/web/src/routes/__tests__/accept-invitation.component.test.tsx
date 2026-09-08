@@ -39,4 +39,13 @@ describe("accept-invitation route", () => {
       screen.getByText("Accept invitation inv-test-1")
     ).toBeInTheDocument();
   });
+
+  it("trims padded invitationId from params", () => {
+    useParamsMock.mockReturnValue({ invitationId: "  inv-test-1  " });
+    const Page = Route.options.component!;
+    render(<Page />);
+    expect(
+      screen.getByText("Accept invitation inv-test-1")
+    ).toBeInTheDocument();
+  });
 });
