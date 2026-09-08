@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ProposalRecord } from "@watchdog/core";
 import { testId } from "@watchdog/test-kit";
@@ -12,8 +12,13 @@ vi.mock("@/domains/triage/components/triage-decide-header", () => ({
   TriageDecideHeader: () => <div>Triage decide header</div>,
 }));
 
+const triagePatchBodyProps = vi.hoisted(() => vi.fn());
+
 vi.mock("@/domains/triage/components/triage-patch-body", () => ({
-  TriagePatchBody: () => <div>Triage patch body</div>,
+  TriagePatchBody: (props: { evidenceLoadError: string | null }) => {
+    triagePatchBodyProps(props);
+    return <div>Triage patch body</div>;
+  },
 }));
 
 vi.mock("@/domains/triage/hooks/use-triage-detail-forms", () => ({
@@ -72,6 +77,10 @@ const PROPOSAL: ProposalRecord = {
 };
 
 describe("TriageDetail", () => {
+  beforeEach(() => {
+    triagePatchBodyProps.mockClear();
+  });
+
   it("shows empty detail copy when nothing is selected", () => {
     useQueryMock.mockReturnValue(fetchedEvidenceQuery());
     render(
@@ -104,5 +113,50 @@ describe("TriageDetail", () => {
     expect(screen.getByText("Triage patch body")).toBeInTheDocument();
     expect(screen.queryByText("Select a proposal")).not.toBeInTheDocument();
     expect(useQueryMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("defers evidence load errors until both evidence queries settle", () => {
+    useQueryMock.mockImplementation(
+      (opts: { queryKey?: readonly unknown[] }) => {
+        const hiddenOnly = opts.queryKey?.[3] === "hidden";
+        if (hiddenOnly) {
+          return {
+            data: undefined,
+            isFetched: false,
+            isLoading: true,
+            isError: false,
+            isSuccess: false,
+            isPlaceholderData: false,
+            error: null,
+          };
+        }
+        return {
+          data: undefined,
+          isFetched: true,
+          isLoading: false,
+          isError: true,
+          isSuccess: false,
+          isPlaceholderData: false,
+          error: new Error("Active evidence failed"),
+        };
+      }
+    );
+
+    render(
+      <TriageDetail
+        proposal={PROPOSAL}
+        caseId={testId(10)}
+        pending={false}
+        error={null}
+        onAccept={vi.fn()}
+        onReject={vi.fn()}
+      />
+    );
+
+    expect(triagePatchBodyProps).toHaveBeenCalled();
+    expect(triagePatchBodyProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      evidenceLoading: true,
+      evidenceLoadError: null,
+    });
   });
 });

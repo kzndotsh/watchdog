@@ -61,8 +61,16 @@ export function TriageDetail({
   const evidencePlaceholder =
     activeEvidenceQuery.isPlaceholderData ||
     hiddenEvidenceQuery.isPlaceholderData;
+  const evidenceLoading =
+    listPending(activeEvidenceQuery, {
+      enabled: queryEnabledFlag(activeEvidenceQueryOptions.enabled),
+    }) ||
+    listPending(hiddenEvidenceQuery, {
+      enabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
+    });
   const evidenceLoadError =
-    activeEvidenceQuery.isError || hiddenEvidenceQuery.isError
+    !evidenceLoading &&
+    (activeEvidenceQuery.isError || hiddenEvidenceQuery.isError)
       ? errMessage(
           activeEvidenceQuery.error ??
             hiddenEvidenceQuery.error ??
@@ -110,14 +118,7 @@ export function TriageDetail({
         linkedIds={linkedIds}
         caseEvidence={caseEvidence}
         missingJobEvidenceCount={missingJobEvidenceCount}
-        evidenceLoading={
-          listPending(activeEvidenceQuery, {
-            enabled: queryEnabledFlag(activeEvidenceQueryOptions.enabled),
-          }) ||
-          listPending(hiddenEvidenceQuery, {
-            enabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
-          })
-        }
+        evidenceLoading={evidenceLoading}
         evidencePlaceholder={evidencePlaceholder}
         evidenceById={evidenceById}
         evidenceLoadError={evidenceLoadError}
