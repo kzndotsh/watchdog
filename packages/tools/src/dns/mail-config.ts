@@ -8,6 +8,7 @@ import {
   mailConfigSnapshotSchema,
   type MailConfigSnapshot,
 } from "./mail-config-schema";
+import { normalizeDnsLookupHostEffect } from "./resolve";
 
 export { mailConfigSnapshotSchema, type MailConfigSnapshot };
 
@@ -50,55 +51,58 @@ export function fetchMailConfigEffect(
   signal: AbortSignal,
   options?: MailConfigOptions
 ): Effect.Effect<MailConfigSnapshot, ToolsTag> {
-  return runAbortableResolver(
-    signal,
-    "Mail config lookup aborted",
-    (resolver) =>
-      Effect.gen(function* fetchMailConfigGen() {
-        const selectors = options?.dkimSelectors ?? DEFAULT_DKIM_SELECTORS;
-        const [mx, txtRoot, txtDmarc, ...dkimResults] = yield* Effect.all(
-          [
-            dnsOrEmpty(
-              () => resolver.resolveMx(host),
-              [] as { exchange: string; priority: number }[]
-            ),
-            resolveTxtFlatEffect(resolver, host),
-            resolveTxtFlatEffect(resolver, `_dmarc.${host}`),
-            ...selectors.map((selector) =>
-              resolveTxtFlatEffect(
-                resolver,
-                `${selector}._domainkey.${host}`
-              ).pipe(
-                Effect.map((records) => ({
-                  selector,
-                  present: records.some((r) => /v=DKIM1/i.test(r)),
-                  records,
-                }))
-              )
-            ),
-          ],
-          { concurrency: "unbounded" }
-        );
+  return Effect.gen(function* fetchMailConfigOuterGen() {
+    const normalizedHost = yield* normalizeDnsLookupHostEffect(host);
+    return yield* runAbortableResolver(
+      signal,
+      "Mail config lookup aborted",
+      (resolver) =>
+        Effect.gen(function* fetchMailConfigGen() {
+          const selectors = options?.dkimSelectors ?? DEFAULT_DKIM_SELECTORS;
+          const [mx, txtRoot, txtDmarc, ...dkimResults] = yield* Effect.all(
+            [
+              dnsOrEmpty(
+                () => resolver.resolveMx(normalizedHost),
+                [] as { exchange: string; priority: number }[]
+              ),
+              resolveTxtFlatEffect(resolver, normalizedHost),
+              resolveTxtFlatEffect(resolver, `_dmarc.${normalizedHost}`),
+              ...selectors.map((selector) =>
+                resolveTxtFlatEffect(
+                  resolver,
+                  `${selector}._domainkey.${normalizedHost}`
+                ).pipe(
+                  Effect.map((records) => ({
+                    selector,
+                    present: records.some((r) => /v=DKIM1/i.test(r)),
+                    records,
+                  }))
+                )
+              ),
+            ],
+            { concurrency: "unbounded" }
+          );
 
-        const spfRecords = txtRoot.filter((r) => /v=spf1/i.test(r));
-        const dmarcRecords = txtDmarc.filter((r) => /v=DMARC1/i.test(r));
-        const found = dkimResults.filter((d) => d.present);
+          const spfRecords = txtRoot.filter((r) => /v=spf1/i.test(r));
+          const dmarcRecords = txtDmarc.filter((r) => /v=DMARC1/i.test(r));
+          const found = dkimResults.filter((d) => d.present);
 
-        const snap: MailConfigSnapshot = {
-          host,
-          queriedAt: new Date().toISOString(),
-          mx: mx
-            .map((m) => ({ exchange: m.exchange, priority: m.priority }))
-            .sort((a, b) => a.priority - b.priority),
-          spf: { present: spfRecords.length > 0, records: spfRecords },
-          dmarc: { present: dmarcRecords.length > 0, records: dmarcRecords },
-          dkim: {
-            selectorsTried: [...selectors],
-            found,
-          },
-          txt: txtRoot,
-        };
-        return mailConfigSnapshotSchema.parse(snap);
-      })
-  );
+          const snap: MailConfigSnapshot = {
+            host: normalizedHost,
+            queriedAt: new Date().toISOString(),
+            mx: mx
+              .map((m) => ({ exchange: m.exchange, priority: m.priority }))
+              .sort((a, b) => a.priority - b.priority),
+            spf: { present: spfRecords.length > 0, records: spfRecords },
+            dmarc: { present: dmarcRecords.length > 0, records: dmarcRecords },
+            dkim: {
+              selectorsTried: [...selectors],
+              found,
+            },
+            txt: txtRoot,
+          };
+          return mailConfigSnapshotSchema.parse(snap);
+        })
+    );
+  });
 }

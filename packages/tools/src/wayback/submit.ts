@@ -1,7 +1,9 @@
 import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
+import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import {
@@ -16,10 +18,21 @@ export {
   type ArchiveSubmitResult,
 } from "./submit-schema";
 
-function ensureHttpUrl(raw: string): string {
+function normalizeSubmitUrl(raw: string): string {
   const trimmed = raw.trim();
-  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+  let parsed: URL;
+  try {
+    parsed = new URL(withScheme);
+  } catch {
+    throw validationToolsError(`Invalid URL: ${raw}`);
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw validationToolsError(`URL must use http or https: ${raw}`);
+  }
+  return parsed.href;
 }
 
 /**
@@ -36,7 +49,10 @@ export function submitWaybackSaveEffect(
   options?: SubmitOptions
 ): Effect.Effect<ArchiveSubmitSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* submitWaybackSaveGen() {
-    const target = ensureHttpUrl(url);
+    const target = yield* Effect.try({
+      try: () => normalizeSubmitUrl(url),
+      catch: mapToolsCatch,
+    });
     const saveUrl = `https://web.archive.org/save/${target}`;
     const ua = options?.userAgent ?? watchdogUserAgent("archive.url.submit");
 

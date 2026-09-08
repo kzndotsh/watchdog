@@ -6,10 +6,11 @@ import {
   expect,
   it,
 } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { submitWaybackSaveEffect } from "../submit.ts";
 
@@ -23,6 +24,20 @@ describe("submitWaybackSaveEffect", () => {
   afterAll(() => {
     mockServer.close();
   });
+
+  it.effect("rejects non-http(s) URL schemes", () =>
+    Effect.gen(function* rejectBadSchemeGen() {
+      const badUrl = ["javascript", ":alert(1)"].join("");
+      const outcome = yield* Effect.result(
+        submitWaybackSaveEffect(badUrl, new AbortController().signal)
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 
   it.effect("treats HTTP 429 as accepted (status < 500)", () =>
     Effect.gen(function* submitWayback429Gen() {

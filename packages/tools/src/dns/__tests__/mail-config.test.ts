@@ -1,6 +1,8 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { vi } from "vitest";
+
+import { ValidationVendorError } from "../../errors/tagged-errors";
 
 const { mockResolver } = vi.hoisted(() => ({
   mockResolver: {
@@ -46,6 +48,19 @@ describe("fetchMailConfig", () => {
       expect(snap.host).toBe("example.com");
       expect(snap.spf.present).toBe(true);
       expect(snap.mx[0]?.exchange).toBe("mx.example.com");
+    })
+  );
+
+  it.effect("fetchMailConfigEffect rejects invalid hostnames", () =>
+    Effect.gen(function* rejectInvalidHostGen() {
+      const outcome = yield* Effect.result(
+        fetchMailConfigEffect("not a host!", AbortSignal.timeout(5000))
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
     })
   );
 });
