@@ -29,6 +29,31 @@ describe("mnemonic", () => {
     expect(snap.records[0]?.times).toBe(12);
   });
 
+  it("parseMnemonicPdnsBody dedupes equivalent IPv6 answers", () => {
+    const snap = parseMnemonicPdnsBody(
+      "dns.google",
+      "domain",
+      "2026-01-01T00:00:00.000Z",
+      {
+        responseCode: 200,
+        data: [
+          {
+            query: "dns.google",
+            answer: "2001:0db8:0000:0000:0000:0000:0000:0001",
+            rrtype: "AAAA",
+          },
+          {
+            query: "dns.google",
+            answer: "2001:db8::1",
+            rrtype: "AAAA",
+          },
+        ],
+      }
+    );
+
+    expect(snap.ips).toEqual(["2001:0db8:0000:0000:0000:0000:0000:0001"]);
+  });
+
   it("parseMnemonicPdnsBody rejects resource-limit responses", () => {
     expect(() =>
       parseMnemonicPdnsBody(

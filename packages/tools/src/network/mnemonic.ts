@@ -12,6 +12,7 @@ import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asNumber, asStringEmpty as asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
+import { expandIpv6 } from "./ip-lookup-cymru";
 
 export const mnemonicRecordSchema = z.object({
   query: z.string(),
@@ -47,6 +48,18 @@ function msToIso(value: unknown): string | null {
 function rrtypeOf(row: Record<string, unknown>): string | null {
   const raw = asString(row.rrtype) || asString(row.rrType);
   return raw === "" ? null : raw.toLowerCase();
+}
+
+function mnemonicIpDedupeKey(raw: string): string | null {
+  try {
+    const ip = normalizeIp(raw);
+    if (isIP(ip) === 6) {
+      return expandIpv6(ip).toLowerCase();
+    }
+    return ip;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -120,14 +133,10 @@ export function parseMnemonicPdnsBody(
         /* skip */
       }
     } else if (rrtype === "a" || rrtype === "aaaa" || isIP(answer)) {
-      try {
-        const ip = normalizeIp(answer);
-        if (!seenIp.has(ip)) {
-          seenIp.add(ip);
-          ips.push(ip);
-        }
-      } catch {
-        /* skip */
+      const ipKey = mnemonicIpDedupeKey(answer);
+      if (ipKey !== null && !seenIp.has(ipKey)) {
+        seenIp.add(ipKey);
+        ips.push(ipKey);
       }
     } else if (rrtype === "cname" || rrtype === "ns" || rrtype === "mx") {
       try {
