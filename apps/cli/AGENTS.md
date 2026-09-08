@@ -36,7 +36,7 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 - **`--full`:** restore untruncated / full fields (list projections are minimal by default).
 - **`--raw`:** bare path/URL for `export` / `evidence download` (shell `$(…)`).
 - **`--json`:** no-op (JSON is default).
-- **`help[]`:** ≤3 next-step templates on lists/empty/errors; disable with `WD_CLI_HELP=0`. Built via `list-help.ts` (`caseListHelp` / `entityListHelp`); `readStdin` lives in `load-patch.ts`.
+- **`help[]`:** ≤3 next-step templates on lists/empty/errors; disable with `WD_CLI_HELP=0`. Built via `list-help.ts` (`caseListHelp` / `entityListHelp`); `readStdin` lives in `load-patch.ts`. `display.ts` re-exports only symbols other commands import (`capEgressLabel`, `capabilityIdLabel`, `evidenceTitleMapFromRows`).
 - **`WD_CLI_DEBUG=1`:** print stacks on stderr.
 
 ### Env

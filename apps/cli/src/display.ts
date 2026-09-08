@@ -15,7 +15,6 @@ import {
   RETRACT_KIND_LABELS,
   entityDisplayLabel,
   evidenceDisplayLabel,
-  evidenceIdsFromJobInputs,
   evidenceTitleMapFromRows,
   jobStatusSchema,
   pickPlaybookAggregateStatus,
@@ -28,13 +27,7 @@ import {
   titleCase,
 } from "@watchdog/schemas";
 
-export {
-  capEgressLabel,
-  capabilityIdLabel,
-  evidenceIdsFromJobInputs,
-  evidenceTitleMapFromRows,
-  playbookIdLabel,
-};
+export { capEgressLabel, capabilityIdLabel, evidenceTitleMapFromRows };
 
 function labelFromMap(value: string, labels: Record<string, string>): string {
   return labels[value] ?? titleCase(value);
@@ -88,8 +81,6 @@ export function capKindLabel(kind: string | null | undefined): string {
 
 /** Short label for evidence rows — shared with core/web via schemas. */
 export { evidenceDisplayLabel };
-/** @deprecated Use `evidenceDisplayLabel`. */
-export const evidenceActivityLabel = evidenceDisplayLabel;
 
 /** Short human subject for a Job input. */
 export const jobInputSubject = summarizeJobInput;
