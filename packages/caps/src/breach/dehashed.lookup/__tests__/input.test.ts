@@ -13,8 +13,6 @@ describe("dehashed.lookup input", () => {
   });
 
   it("rejects invalid query seeds", () => {
-    expect(() =>
-      dehashedLookupInput.parse({ query: "not valid @ @" })
-    ).toThrow();
+    expect(() => dehashedLookupInput.parse({ query: "foo OR bar" })).toThrow();
   });
 });
