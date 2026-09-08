@@ -40,12 +40,16 @@ import {
   PopoverTrigger,
 } from "@/shared/ui/shadcn/popover";
 import { TableCell } from "@/shared/ui/shadcn/table";
-import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
-  confidenceTierSchema,
-  identifierStatusSchema,
-  identifierTypeSchema,
+  identifierPlatformOptionMatchesQuery,
+  CONFIDENCE_OPTIONS,
+} from "@/shared/ui/vocab";
+import {
+  trimmedConfidenceTierSchema,
+  trimmedIdentifierStatusSchema,
+  trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
+  parseOptionalTrimmedUuid,
   validateIdentifierWrite,
   type ConfidenceTier,
   type IdentifierStatus,
@@ -77,7 +81,12 @@ export function identifierCreateCanSubmit(
   ) {
     return false;
   }
-  if (opts?.requireEntity && values.entityId === "") return false;
+  if (
+    opts?.requireEntity &&
+    parseOptionalTrimmedUuid(values.entityId) === undefined
+  ) {
+    return false;
+  }
   if (isConfirmedBlocked(values.confidence, values.evidenceIds)) return false;
   return true;
 }
@@ -333,7 +342,7 @@ function TypeField({
             value={field.state.value}
             options={TYPE_OPTIONS}
             onCommit={(v) => {
-              field.handleChange(identifierTypeSchema.parse(v));
+              field.handleChange(trimmedIdentifierTypeSchema.parse(v));
             }}
             disabled={form.state.isSubmitting}
             onKeyDown={onKeyDown}
@@ -396,6 +405,7 @@ export function IdentifierComposerAppend({
             <EditableSuggestCell
               value={field.state.value}
               options={PLATFORM_OPTIONS}
+              filter={identifierPlatformOptionMatchesQuery}
               onCommit={(v) => {
                 field.handleChange(normalizeIdentifierPlatform(v));
               }}
@@ -414,7 +424,7 @@ export function IdentifierComposerAppend({
               value={field.state.value}
               options={STATUS_OPTIONS}
               onCommit={(v) => {
-                field.handleChange(identifierStatusSchema.parse(v));
+                field.handleChange(trimmedIdentifierStatusSchema.parse(v));
               }}
               disabled={form.state.isSubmitting}
               onKeyDown={onKeyDown}
@@ -430,7 +440,7 @@ export function IdentifierComposerAppend({
               value={field.state.value}
               options={CONFIDENCE_OPTIONS}
               onCommit={(v) => {
-                field.handleChange(confidenceTierSchema.parse(v));
+                field.handleChange(trimmedConfidenceTierSchema.parse(v));
               }}
               disabled={form.state.isSubmitting}
               onKeyDown={onKeyDown}

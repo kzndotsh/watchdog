@@ -4,9 +4,14 @@ import type { ComponentType } from "react";
 import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
 import type { VocabTone } from "@/shared/ui/vocab/vocab-badge";
 import {
+  CLAIM_CLASS_LABELS,
   ENTITY_KINDS,
+  ENTITY_KIND_LABELS,
+  EVIDENCE_KIND_LABELS,
   IDENTIFIER_PLATFORMS,
+  IDENTIFIER_TYPE_LABELS,
   IDENTIFIER_TYPES,
+  identifierPlatformSearchHaystack,
   type ClaimClass,
   type EntityKind,
   type EvidenceKind,
@@ -16,11 +21,7 @@ import {
 /** Entity / evidence / identifier kinds — not claim classes. */
 export type KindValue = EntityKind | EvidenceKind | IdentifierType;
 
-export const ENTITY_KIND_LABELS: Record<EntityKind, string> = {
-  person: "Person",
-  infra: "Infra",
-  org: "Org",
-};
+export { CLAIM_CLASS_LABELS, ENTITY_KIND_LABELS, IDENTIFIER_TYPE_LABELS };
 
 export const ENTITY_KIND_ICONS = {
   person: UserIcon,
@@ -44,33 +45,6 @@ export const ENTITY_KIND_ICON_SIZE: Record<EntityKindIconSize, string> = {
 export function isEntityKind(value: string): value is EntityKind {
   return value in ENTITY_KIND_LABELS;
 }
-
-const EVIDENCE_KIND_LABELS: Record<EvidenceKind, string> = {
-  file: "File",
-  url_archive: "URL Archive",
-  attestation: "Attestation",
-  other: "Other",
-};
-
-export const IDENTIFIER_TYPE_LABELS: Record<IdentifierType, string> = {
-  email: "Email",
-  handle: "Handle",
-  phone: "Phone",
-  url: "URL",
-  domain: "Domain",
-  ip: "IP",
-  crypto: "Crypto",
-  pgp: "PGP",
-  credential: "Credential",
-  other: "Other",
-};
-
-export const CLAIM_CLASS_LABELS: Record<ClaimClass, string> = {
-  observation: "Observation",
-  assessment: "Assessment",
-  allegation: "Allegation",
-  other: "Other",
-};
 
 const ENTITY_KIND_TONES: Record<EntityKind, VocabTone> = {
   person: {
@@ -192,6 +166,16 @@ export const IDENTIFIER_PLATFORM_OPTIONS = IDENTIFIER_PLATFORMS.map((p) => ({
   value: p.slug,
   label: p.label,
 }));
+
+/** Platform picker filter — slug, label, and aliases (aligned with DB search). */
+export function identifierPlatformOptionMatchesQuery(
+  option: { value: string; label: string },
+  query: string
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (q === "") return true;
+  return identifierPlatformSearchHaystack(option.value).includes(q);
+}
 
 function isKindValue(value: string): value is KindValue {
   return value in KIND_LABELS;

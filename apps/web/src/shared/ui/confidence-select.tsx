@@ -13,7 +13,7 @@ import {
 import { CONFIDENCE_LABELS } from "@/shared/ui/vocab";
 import {
   CONFIDENCE_TIERS,
-  confidenceTierSchema,
+  trimmedConfidenceTierSchema,
   type ConfidenceTier,
 } from "@watchdog/schemas";
 
@@ -40,7 +40,7 @@ export function ConfidenceSelect({
       onValueChange={(next) => {
         const raw = resolveSelectValue(next);
         if (raw === null) return;
-        onChange(confidenceTierSchema.parse(raw));
+        onChange(trimmedConfidenceTierSchema.parse(raw));
       }}
     >
       <SelectTrigger

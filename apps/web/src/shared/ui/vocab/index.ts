@@ -28,6 +28,7 @@ export {
   ENTITY_KIND_OPTIONS,
   IDENTIFIER_TYPE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,
+  identifierPlatformOptionMatchesQuery,
 } from "@/shared/ui/vocab/kind.lib";
 
 export {
@@ -43,6 +44,17 @@ export { PatchOpBadge } from "@/shared/ui/vocab/patch-op";
 export { PATCH_RESOURCE_META } from "@/shared/ui/vocab/patch-op.lib";
 
 export { capabilityLabel } from "@/shared/ui/vocab/capability";
+
+export { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
+
+export { jobHeadlineLabel } from "@/shared/ui/vocab/job";
+
+export { playbookLabel } from "@/shared/ui/vocab/playbook";
+
+export {
+  proposalHeadlineLabel,
+  proposalSourceLabel,
+} from "@/shared/ui/vocab/proposal";
 
 export { TaskStatusBadge } from "@/shared/ui/vocab/task-status";
 export {

@@ -39,4 +39,28 @@ describe("EntityCombobox", () => {
     );
     expect(screen.getByPlaceholderText("No entity")).toBeInTheDocument();
   });
+
+  it("falls back to slug when name is blank", () => {
+    render(
+      <EntityCombobox
+        entities={[{ id: "ent-1", name: "", slug: "acme-corp", kind: "org" }]}
+        value="ent-1"
+        onValueChange={() => {}}
+        allowEmpty={false}
+      />
+    );
+    expect(screen.getByDisplayValue("acme-corp")).toBeInTheDocument();
+  });
+
+  it("matches a padded entity id", () => {
+    render(
+      <EntityCombobox
+        entities={[{ id: "ent-1", name: "Jane Doe", kind: "person" }]}
+        value="  ent-1  "
+        onValueChange={() => {}}
+        allowEmpty={false}
+      />
+    );
+    expect(screen.getByDisplayValue("Jane Doe")).toBeInTheDocument();
+  });
 });

@@ -2,8 +2,12 @@ import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
 import type { VocabTone } from "@/shared/ui/vocab/vocab-badge";
 import {
   IDENTIFIER_STATUSES,
+  IDENTIFIER_STATUS_LABELS,
   JOB_STATUSES,
+  JOB_STATUS_LABELS,
   PROPOSAL_STATUSES,
+  PROPOSAL_STATUS_LABELS,
+  RETRACT_KIND_LABELS,
   type IdentifierStatus,
   type JobStatus,
   type ProposalStatus,
@@ -17,44 +21,20 @@ export type DisplayStatus =
   | RetractKind
   | IdentifierStatus;
 
-const JOB_LABELS: Record<JobStatus, string> = {
-  queued: "Queued",
-  running: "Running",
-  blocked: "Blocked",
-  succeeded: "Succeeded",
-  failed: "Failed",
-  cancelled: "Cancelled",
-};
-
-const PROPOSAL_LABELS: Record<ProposalStatus, string> = {
-  pending: "Pending",
-  accepted: "Accepted",
-  rejected: "Rejected",
-};
-
-const RETRACT_LABELS: Record<RetractKind, string> = {
-  retracted: "Retracted",
-  contested: "Contested",
-  disproved: "Disproved",
-};
-
-const IDENTIFIER_STATUS_LABELS: Record<IdentifierStatus, string> = {
-  current: "Current",
-  former: "Former",
-  unknown: "Unknown",
-};
-
 export const STATUS_LABELS: Record<DisplayStatus, string> = {
-  ...JOB_LABELS,
-  ...PROPOSAL_LABELS,
-  ...RETRACT_LABELS,
+  ...JOB_STATUS_LABELS,
+  ...PROPOSAL_STATUS_LABELS,
+  ...RETRACT_KIND_LABELS,
   ...IDENTIFIER_STATUS_LABELS,
 };
 
-export const JOB_STATUS_OPTIONS = optionsFromLabels(JOB_STATUSES, JOB_LABELS);
+export const JOB_STATUS_OPTIONS = optionsFromLabels(
+  JOB_STATUSES,
+  JOB_STATUS_LABELS
+);
 export const PROPOSAL_STATUS_OPTIONS = optionsFromLabels(
   PROPOSAL_STATUSES,
-  PROPOSAL_LABELS
+  PROPOSAL_STATUS_LABELS
 );
 export const IDENTIFIER_STATUS_OPTIONS = optionsFromLabels(
   IDENTIFIER_STATUSES,
@@ -71,8 +51,8 @@ export const STATUS_TONES: Record<DisplayStatus, VocabTone> = {
     high: "bg-status-running text-primary-foreground",
   },
   blocked: {
-    low: "bg-status-queued-bg text-status-queued-fg",
-    high: "bg-status-queued text-primary-foreground",
+    low: "bg-warning/10 text-warning",
+    high: "bg-warning text-warning-foreground",
   },
   succeeded: {
     low: "bg-status-succeeded-bg text-status-succeeded-fg",
@@ -128,7 +108,7 @@ export const STATUS_TONES: Record<DisplayStatus, VocabTone> = {
 export const STATUS_DOT: Record<DisplayStatus, string> = {
   queued: "bg-status-queued",
   running: "bg-status-running",
-  blocked: "bg-status-queued",
+  blocked: "bg-warning",
   succeeded: "bg-status-succeeded",
   failed: "bg-status-failed",
   cancelled: "bg-status-cancelled",

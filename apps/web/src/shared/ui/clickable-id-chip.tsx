@@ -6,12 +6,14 @@ import { IdChip } from "@/shared/ui/id-chip";
  */
 export function ClickableIdChip({
   value,
+  display,
   onClick,
   head = 8,
   tail = 0,
   className,
 }: {
   value: string;
+  display?: string;
   onClick?: (value: string) => void;
   head?: number;
   tail?: number;
@@ -20,6 +22,7 @@ export function ClickableIdChip({
   return (
     <IdChip
       value={value}
+      display={display}
       head={head}
       tail={tail}
       className={className}

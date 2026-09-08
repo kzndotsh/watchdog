@@ -1,6 +1,9 @@
 import { cn } from "@/lib/utils";
 import { CONTROL_HEIGHT } from "@/shared/ui/control-chrome";
-import type { FieldSelectOption } from "@/shared/ui/field-select";
+import {
+  fieldComboboxMatchesQuery,
+  type FieldComboboxOption,
+} from "@/shared/ui/field-combobox.lib";
 import {
   Combobox,
   ComboboxCollection,
@@ -13,10 +16,7 @@ import {
   ComboboxList,
 } from "@/shared/ui/shadcn/combobox";
 
-export type FieldComboboxOption = FieldSelectOption & {
-  /** When set on any option, list renders under ComboboxGroup headings. */
-  group?: string;
-};
+export type { FieldComboboxOption } from "@/shared/ui/field-combobox.lib";
 
 interface FieldComboboxGroup {
   value: string;
@@ -78,6 +78,9 @@ export function FieldCombobox({
       value={selected}
       items={groups ?? flat}
       itemToStringLabel={(opt: FieldComboboxOption) => opt.label}
+      filter={(item, query) =>
+        item ? fieldComboboxMatchesQuery(item, query) : true
+      }
       disabled={disabled}
       onValueChange={(next: FieldComboboxOption | null, details) => {
         // Closed list + selection: Base UI stops Escape unless we allow it —

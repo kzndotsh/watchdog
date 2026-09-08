@@ -1,9 +1,6 @@
 import type { ComponentProps } from "react";
 
-import {
-  PATCH_OP_LABELS,
-  PATCH_OP_TONES,
-} from "@/shared/ui/vocab/patch-op.lib";
+import { PATCH_OP_TONES, patchOpLabel } from "@/shared/ui/vocab/patch-op.lib";
 import { VocabBadge } from "@/shared/ui/vocab/vocab-badge";
 import type { PatchOp } from "@watchdog/schemas";
 
@@ -25,7 +22,7 @@ export function PatchOpBadge({
 }: PatchOpBadgeProps) {
   return (
     <VocabBadge
-      label={PATCH_OP_LABELS[op]}
+      label={patchOpLabel(op)}
       tone={PATCH_OP_TONES[op]}
       contrast={contrast}
       className={className}

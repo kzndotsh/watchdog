@@ -1,12 +1,12 @@
 import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
 import type { VocabTone } from "@/shared/ui/vocab/vocab-badge";
-import { CONFIDENCE_TIERS, type ConfidenceTier } from "@watchdog/schemas";
+import {
+  CONFIDENCE_TIERS,
+  CONFIDENCE_TIER_LABELS,
+  type ConfidenceTier,
+} from "@watchdog/schemas";
 
-export const CONFIDENCE_LABELS: Record<ConfidenceTier, string> = {
-  unverified: "Unverified",
-  possible: "Possible",
-  confirmed: "Confirmed",
-};
+export const CONFIDENCE_LABELS = CONFIDENCE_TIER_LABELS;
 
 export const CONFIDENCE_TONES: Record<ConfidenceTier, VocabTone> = {
   confirmed: {

@@ -18,7 +18,7 @@ export interface UseDataTableOptions<
   TData extends RowData,
   TMeta = Record<string, unknown>,
 > {
-  data: TData[];
+  data: readonly TData[];
   columns: ColumnDef<DataTableFeatures, TData>[];
   meta?: TMeta;
   getRowId?: (row: TData) => string;

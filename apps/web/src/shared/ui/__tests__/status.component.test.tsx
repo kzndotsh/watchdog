@@ -12,6 +12,8 @@ describe("status vocab", () => {
   it("maps display statuses to labels and dot classes", () => {
     expect(statusLabel("running")).toBe(STATUS_LABELS.running);
     expect(STATUS_DOT.failed).toContain("status-failed");
+    expect(STATUS_DOT.blocked).toBe("bg-warning");
+    expect(STATUS_DOT.queued).not.toBe(STATUS_DOT.running);
   });
 
   it("renders status badge copy", () => {

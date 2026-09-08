@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from "react";
 
+import { entityMatchesQuery } from "@/domains/entities/lib/entity-options";
 import { cn } from "@/lib/utils";
 import { CONTROL_CELL_SHELL, CONTROL_HEIGHT } from "@/shared/ui/control-chrome";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/shared/ui/shadcn/combobox";
 import { EntityKindIcon } from "@/shared/ui/vocab";
 import type { EntityKind } from "@watchdog/schemas";
+import { entityDisplayLabel, trimmedOrUndefined } from "@watchdog/schemas";
 
 export interface EntityOption {
   id: string;
@@ -79,13 +81,20 @@ export function EntityCombobox({
     ...(allowEmpty ? [emptyOpt] : []),
     ...entities.map((ent) => ({
       value: ent.id,
-      label: ent.name,
+      label: entityDisplayLabel({
+        name: ent.name,
+        slug: ent.slug ?? "",
+      }),
       kind: ent.kind,
     })),
   ];
 
+  const scopedValue = trimmedOrUndefined(value) ?? "";
+
   const selected =
-    value === "" ? null : (options.find((o) => o.value === value) ?? null);
+    scopedValue === ""
+      ? null
+      : (options.find((o) => o.value === scopedValue) ?? null);
 
   return (
     <Combobox
@@ -93,6 +102,14 @@ export function EntityCombobox({
       items={options}
       itemToStringLabel={(opt) => opt.label}
       disabled={disabled}
+      filter={(item, query) => {
+        if (!item || item.value === "") {
+          const q = query.trim().toLowerCase();
+          return q === "" || emptyLabel.toLowerCase().includes(q);
+        }
+        const entity = entities.find((ent) => ent.id === item.value);
+        return entity ? entityMatchesQuery(entity, query) : true;
+      }}
       onValueChange={(next, details) => {
         if (details.reason === "escape-key") {
           details.allowPropagation();
@@ -104,7 +121,7 @@ export function EntityCombobox({
     >
       <ComboboxInput
         showTrigger
-        showClear={showClear ?? (allowEmpty && Boolean(value))}
+        showClear={showClear ?? (allowEmpty && Boolean(scopedValue))}
         aria-label={ariaLabel}
         aria-invalid={ariaInvalid}
         placeholder={placeholder ?? emptyLabel}

@@ -18,6 +18,8 @@ const VALUE_TOOLTIP_CLASS =
 
 interface IdChipProps {
   value: string;
+  /** Visible label when it differs from the opaque `value` (tooltip still shows `value`). */
+  display?: string;
   /** When true, the whole chip copies the full value. */
   copyable?: boolean;
   onCopied?: (value: string) => void;
@@ -44,6 +46,7 @@ interface IdChipProps {
  */
 export function IdChip({
   value,
+  display,
   copyable = false,
   onCopied,
   onPreview,
@@ -60,6 +63,7 @@ export function IdChip({
   const t = tail ?? dims.tail;
   const preview = onPreview !== undefined;
   const interactive = copyable || preview;
+  const shown = display?.trim() ? display.trim() : value;
 
   const chrome = cn(
     "border-border/60 bg-muted/60 inline-flex w-fit max-w-full min-w-0 gap-1 rounded-md border pl-1.5 [font-variant-ligatures:none]",
@@ -73,16 +77,24 @@ export function IdChip({
   );
 
   const label = full ? (
-    <span className="text-muted-foreground font-mono leading-none break-all">
-      {value}
+    <span
+      className={cn(
+        "text-muted-foreground leading-none break-all",
+        shown === value ? "font-mono" : undefined
+      )}
+    >
+      {shown}
     </span>
   ) : (
     <MiddleTruncate
-      value={value}
+      value={shown}
       head={h}
       tail={t}
       nativeTitle={false}
-      className="text-muted-foreground min-w-0 leading-none"
+      className={cn(
+        "text-muted-foreground min-w-0 leading-none",
+        shown === value ? undefined : "font-sans"
+      )}
     />
   );
 
@@ -136,16 +148,21 @@ export function IdChip({
   }
 
   if (preview) {
+    const previewTip =
+      shown === value ? "Preview evidence" : `${shown}\n${value}`;
     return (
       <WithTooltip
-        content="Preview evidence"
+        content={previewTip}
         wrapSpan
         className="inline-flex max-w-full"
+        contentClassName={shown === value ? undefined : VALUE_TOOLTIP_CLASS}
       >
         <button
           type="button"
           data-slot="id-chip"
-          aria-label="Preview evidence"
+          aria-label={
+            shown === value ? "Preview evidence" : `Preview evidence: ${shown}`
+          }
           className={chrome}
           onClick={() => {
             onPreview(value);

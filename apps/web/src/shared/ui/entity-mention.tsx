@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { entityDisplayLabel, trimmedOrUndefined } from "@watchdog/schemas";
 
 type NameSize = "sm" | "md";
 
@@ -28,6 +29,12 @@ export function EntityMention({
   nameClassName?: string;
   trailing?: ReactNode;
 }) {
+  const scopedSlug = trimmedOrUndefined(slug);
+  const label =
+    scopedSlug === undefined
+      ? name.trim()
+      : entityDisplayLabel({ name, slug: scopedSlug });
+
   const nameEl = (
     <span
       className={cn(
@@ -36,7 +43,7 @@ export function EntityMention({
         nameClassName
       )}
     >
-      {name}
+      {label}
     </span>
   );
 
@@ -47,10 +54,10 @@ export function EntityMention({
         className
       )}
     >
-      {slug ? (
+      {scopedSlug ? (
         <Link
           to="/entities/$entitySlug"
-          params={{ entitySlug: slug }}
+          params={{ entitySlug: scopedSlug }}
           search={tab ? { tab } : undefined}
           className="hover:underline"
         >

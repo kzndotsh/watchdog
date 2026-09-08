@@ -1,20 +1,16 @@
 import type { DisplayStatus } from "@/shared/ui/vocab/status.lib";
 import { optionsFromLabels } from "@/shared/ui/vocab/title-case";
-import { TASK_STATUSES, type TaskStatus } from "@watchdog/schemas";
-
-const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  backlog: "Backlog",
-  in_progress: "In Progress",
-  blocked: "Blocked",
-  done: "Done",
-  dropped: "Dropped",
-};
+import {
+  TASK_STATUSES,
+  TASK_STATUS_LABELS,
+  type TaskStatus,
+} from "@watchdog/schemas";
 
 /** Map task statuses onto existing `--status-*` token tones. */
 export const TASK_STATUS_TONE_MAP: Record<TaskStatus, DisplayStatus> = {
   backlog: "pending",
   in_progress: "running",
-  blocked: "queued",
+  blocked: "blocked",
   done: "succeeded",
   dropped: "cancelled",
 };

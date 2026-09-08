@@ -48,6 +48,21 @@ vi.mock("@/shared/ui/shadcn/combobox", () => ({
 }));
 
 import { FieldCombobox } from "@/shared/ui/field-combobox";
+import { fieldComboboxMatchesQuery } from "@/shared/ui/field-combobox.lib";
+
+describe("fieldComboboxMatchesQuery", () => {
+  it("matches label, value, and group text", () => {
+    const option = {
+      value: "primary_domain:forward",
+      label: "Primary domain",
+      group: "Infrastructure",
+    };
+    expect(fieldComboboxMatchesQuery(option, "primary")).toBe(true);
+    expect(fieldComboboxMatchesQuery(option, "forward")).toBe(true);
+    expect(fieldComboboxMatchesQuery(option, "infra")).toBe(true);
+    expect(fieldComboboxMatchesQuery(option, "missing")).toBe(false);
+  });
+});
 
 describe("FieldCombobox", () => {
   it("commits the selected option value", () => {

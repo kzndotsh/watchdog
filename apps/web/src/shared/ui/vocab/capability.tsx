@@ -1,5 +1,5 @@
 /* oxlint-disable react/only-export-components -- label helpers (no React components) */
-import { titleCase } from "@/shared/ui/vocab/title-case";
+import { capabilityIdLabel } from "@watchdog/schemas";
 
 /**
  * Human label for a capability id.
@@ -13,10 +13,7 @@ export function capabilityLabel(
   if (title !== undefined && title !== null && title.trim() !== "") {
     return title.trim();
   }
-  if (!capabilityId) return "";
-  const parts = capabilityId.split(".");
-  const rest = parts.slice(1).join(" ");
-  return rest === "" ? capabilityId : titleCase(rest);
+  return capabilityIdLabel(capabilityId);
 }
 
 /** Presentational span — parent supplies optional catalog title. */

@@ -3,14 +3,14 @@ import { describe, expect, it } from "vitest";
 
 import { PatchOpBadge } from "@/shared/ui/vocab/patch-op";
 import {
-  PATCH_OP_LABELS,
   patchOpLabel,
   PATCH_RESOURCE_META,
 } from "@/shared/ui/vocab/patch-op.lib";
+import { patchOpVerbLabel } from "@watchdog/schemas";
 
 describe("patch-op vocab", () => {
   it("labels patch operations and resources", () => {
-    expect(patchOpLabel("create")).toBe(PATCH_OP_LABELS.create);
+    expect(patchOpLabel("create")).toBe(patchOpVerbLabel("create"));
     expect(PATCH_RESOURCE_META.claim.label).toBe("Claim");
   });
 

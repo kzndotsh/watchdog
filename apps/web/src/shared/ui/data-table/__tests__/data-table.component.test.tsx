@@ -4,6 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 import { DataTable } from "@/shared/ui/data-table/data-table";
 import { useDataTable } from "@/shared/ui/data-table/use-data-table";
 
+vi.mock("@/shared/hooks/use-hydrated", () => ({
+  useHydrated: vi.fn(() => true),
+}));
+
+import { useHydrated } from "@/shared/hooks/use-hydrated";
+
 function TableHarness({
   onRowClick,
 }: {
@@ -74,5 +80,29 @@ describe("DataTable", () => {
     const tbody = document.querySelector("tbody");
     expect(tbody?.querySelectorAll("tr")).toHaveLength(2);
     expect(tbody?.querySelectorAll("td")).toHaveLength(4);
+  });
+
+  it("suppresses pending skeleton before hydration to match SSR markup", () => {
+    vi.mocked(useHydrated).mockReturnValueOnce(false);
+
+    function PendingTable() {
+      const { table } = useDataTable({
+        data: [],
+        columns: [{ accessorKey: "name", header: "Name" }],
+      });
+      return (
+        <DataTable
+          table={table}
+          pending
+          pendingLabel="Loading rows"
+          emptyText="Nothing here"
+        />
+      );
+    }
+
+    render(<PendingTable />);
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByText("Nothing here")).toBeInTheDocument();
   });
 });

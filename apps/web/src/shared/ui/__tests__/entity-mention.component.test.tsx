@@ -27,4 +27,21 @@ describe("EntityMention", () => {
     const link = screen.getByRole("link", { name: "Alice" });
     expect(link).toHaveAttribute("href", "/entities/$entitySlug/alice");
   });
+
+  it("falls back to slug when name is blank", () => {
+    render(<EntityMention name="" slug="acme-corp" />);
+    const link = screen.getByRole("link", { name: "acme-corp" });
+    expect(link).toHaveAttribute("href", "/entities/$entitySlug/acme-corp");
+  });
+
+  it("trims whitespace from name when slug is omitted", () => {
+    render(<EntityMention name="  Alice  " />);
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
+
+  it("trims padded slug before linking", () => {
+    render(<EntityMention name="Alice" slug="  alice  " />);
+    const link = screen.getByRole("link", { name: "Alice" });
+    expect(link).toHaveAttribute("href", "/entities/$entitySlug/alice");
+  });
 });

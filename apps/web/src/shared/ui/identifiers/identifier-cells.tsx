@@ -36,11 +36,12 @@ import {
   IDENTIFIER_PLATFORM_OPTIONS,
   IDENTIFIER_STATUS_OPTIONS,
   IDENTIFIER_TYPE_OPTIONS,
+  identifierPlatformOptionMatchesQuery,
 } from "@/shared/ui/vocab";
 import {
-  confidenceTierSchema,
-  identifierStatusSchema,
-  identifierTypeSchema,
+  trimmedConfidenceTierSchema,
+  trimmedIdentifierStatusSchema,
+  trimmedIdentifierTypeSchema,
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
@@ -192,7 +193,7 @@ function renderIdentifierTypeCell(
       options={TYPE_OPTIONS}
       aria-label="Type"
       onCommit={(next) => {
-        const type = identifierTypeSchema.parse(next);
+        const type = trimmedIdentifierTypeSchema.parse(next);
         const committed = tryCommitIdentifierType(
           type,
           row.value,
@@ -214,6 +215,7 @@ function renderIdentifierPlatformCell(
     <EditableSuggestCell
       value={row.platform}
       options={PLATFORM_OPTIONS}
+      filter={identifierPlatformOptionMatchesQuery}
       placeholder="Platform"
       aria-label="Platform"
       onCommit={(next) => {
@@ -237,7 +239,7 @@ function renderIdentifierStatusCell(
       aria-label="Status"
       onCommit={(next) => {
         meta.updateField(row.id, {
-          status: identifierStatusSchema.parse(next),
+          status: trimmedIdentifierStatusSchema.parse(next),
         });
       }}
     />
@@ -255,7 +257,7 @@ function renderIdentifierConfidenceCell(
       options={CONFIDENCE_OPTIONS}
       aria-label="Confidence"
       onCommit={(next) => {
-        const confidence = confidenceTierSchema.parse(next);
+        const confidence = trimmedConfidenceTierSchema.parse(next);
         if (isConfirmedBlocked(confidence, row.evidenceIds)) {
           toast.error(CONFIRMED_REQUIRES_EVIDENCE_HINT);
           return;

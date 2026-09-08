@@ -11,6 +11,7 @@ describe("task-status vocab", () => {
   it("maps task statuses to labels and status tones", () => {
     expect(taskStatusLabel("in_progress")).toBe("In Progress");
     expect(TASK_STATUS_TONE_MAP.done).toBe("succeeded");
+    expect(TASK_STATUS_TONE_MAP.blocked).toBe("blocked");
   });
 
   it("renders task status badge copy", () => {

@@ -8,6 +8,7 @@ import {
 } from "@/shared/ui/detail-status-chip";
 import {
   evidenceLabel,
+  evidenceMatchesPickerFilter,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
@@ -144,12 +145,10 @@ function EvidenceChecklist({
   idPrefix: string;
 }) {
   const showFilter = options.length > FILTER_THRESHOLD;
-  const q = filter.trim().toLowerCase();
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const filteredOptions =
-    q === ""
-      ? options
-      : options.filter((row) => evidenceLabel(row).toLowerCase().includes(q));
+  const filteredOptions = options.filter((row) =>
+    evidenceMatchesPickerFilter(row, filter)
+  );
 
   if (options.length === 0) {
     return (

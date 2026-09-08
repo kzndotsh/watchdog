@@ -35,6 +35,15 @@ function resolveTyped(
   return t;
 }
 
+function defaultSuggestFilter(
+  option: EditableSuggestOption,
+  query: string
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (q === "") return true;
+  return option.label.toLowerCase().includes(q);
+}
+
 /**
  * Free-type cell with filterable suggestions (replaces HTML datalist).
  * Commits on pick, blur, or Enter — custom values allowed.
@@ -48,6 +57,7 @@ export function EditableSuggestCell({
   className,
   placeholder,
   emptyText = "No matches.",
+  filter,
   "aria-label": ariaLabel,
   onKeyDown: externalKeyDown,
 }: {
@@ -58,6 +68,7 @@ export function EditableSuggestCell({
   className?: string;
   placeholder?: string;
   emptyText?: string;
+  filter?: (option: EditableSuggestOption, query: string) => boolean;
   "aria-label"?: string;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
 }) {
@@ -93,6 +104,9 @@ export function EditableSuggestCell({
         onInputValueChange={setInputValue}
         items={items}
         itemToStringLabel={(opt: EditableSuggestOption) => opt.label}
+        filter={(item, query) =>
+          item ? (filter ?? defaultSuggestFilter)(item, query) : true
+        }
         isItemEqualToValue={(a, b) => a.value === b.value}
         disabled={disabled}
         onValueChange={(next: EditableSuggestOption | null, details) => {

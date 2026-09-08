@@ -17,6 +17,7 @@ import type {
  */
 
 import { cn } from "@/lib/utils";
+import { useHydrated } from "@/shared/hooks/use-hydrated";
 import type { AppAction } from "@/shared/lib/app-action";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { Skeleton } from "@/shared/ui/shadcn/skeleton";
@@ -202,6 +203,9 @@ export function DataTable<TData extends RowData>({
   skeletonRows = TABLE_BODY_SKELETON_ROW_COUNT,
   pendingLabel = "Loading table",
 }: Props<TData>) {
+  const hydrated = useHydrated();
+  // Query pending can disagree between SSR and the dehydrated client cache.
+  const showPending = hydrated && pending;
   const leafColumns = table.getVisibleLeafColumns();
   const hasRows = table.getRowModel().rows.length > 0;
   const totalSize = Math.max(
@@ -211,14 +215,14 @@ export function DataTable<TData extends RowData>({
 
   return (
     <div
-      aria-busy={pending || undefined}
+      aria-busy={showPending || undefined}
       className={cn(
         "overflow-hidden rounded-lg border text-xs",
         "[&_tbody_tr]:h-10 [&_td]:py-1 [&_th]:h-8",
         className
       )}
     >
-      {pending ? (
+      {showPending ? (
         <span className="sr-only" role="status">
           {pendingLabel}
         </span>
@@ -250,7 +254,7 @@ export function DataTable<TData extends RowData>({
         </TableHeader>
         <TableBody>
           {renderTableBodyRows({
-            pending,
+            pending: showPending,
             skeletonRows,
             leafColumns,
             hasRows,

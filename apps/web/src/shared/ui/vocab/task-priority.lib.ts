@@ -1,13 +1,10 @@
 import type { DisplayStatus } from "@/shared/ui/vocab/status.lib";
 import { optionsFromLabels } from "@/shared/ui/vocab/title-case";
-import { TASK_PRIORITIES, type TaskPriority } from "@watchdog/schemas";
-
-const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-  urgent: "Urgent",
-};
+import {
+  TASK_PRIORITIES,
+  TASK_PRIORITY_LABELS,
+  type TaskPriority,
+} from "@watchdog/schemas";
 
 /** Map priorities onto existing `--status-*` token tones. */
 export const TASK_PRIORITY_TONE_MAP: Record<TaskPriority, DisplayStatus> = {
