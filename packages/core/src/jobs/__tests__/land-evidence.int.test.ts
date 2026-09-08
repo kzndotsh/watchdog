@@ -1,7 +1,8 @@
 import { Effect } from "effect";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
+import * as dbModule from "@watchdog/db";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-kit/db";
 
@@ -140,5 +141,78 @@ describe("landEvidence", () => {
 
     const rows = await evidenceRepo.listForCase(db, cased.id);
     expect(rows).toHaveLength(0);
+  });
+
+  it("emits evidence_changed after landing new artifacts", async () => {
+    const notifySpy = vi
+      .spyOn(dbModule, "notifyEvent")
+      .mockResolvedValue(undefined);
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+
+    await Effect.runPromise(
+      landEvidenceEffect(await stateFor(job.id), collected())
+    );
+
+    await vi.waitFor(() => {
+      expect(notifySpy).toHaveBeenCalledWith({
+        type: "evidence_changed",
+        caseId: cased.id,
+      });
+    });
+    notifySpy.mockRestore();
+  });
+
+  it("does not emit evidence_changed when only linking source evidence", async () => {
+    const notifySpy = vi
+      .spyOn(dbModule, "notifyEvent")
+      .mockResolvedValue(undefined);
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+    const sourceId = "11111111-1111-4111-8111-000000000077";
+
+    await Effect.runPromise(
+      landEvidenceEffect(
+        await stateFor(job.id),
+        collected({
+          artifacts: [
+            {
+              name: "report.json",
+              mime: "application/json",
+              uri: "case/report.json",
+              sha256: sha(),
+            },
+          ],
+          runtime: {
+            ...collected().runtime,
+            linkedSource: sourceId,
+          },
+        })
+      )
+    );
+
+    expect(notifySpy).not.toHaveBeenCalled();
+    notifySpy.mockRestore();
+  });
+
+  it("does not emit evidence_changed when reusing cached evidence ids", async () => {
+    const notifySpy = vi
+      .spyOn(dbModule, "notifyEvent")
+      .mockResolvedValue(undefined);
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, { status: "running" });
+
+    await Effect.runPromise(
+      landEvidenceEffect(
+        await stateFor(job.id),
+        collected({
+          fromCache: true,
+          evidenceIds: ["11111111-1111-4111-8111-000000000098"],
+        })
+      )
+    );
+
+    expect(notifySpy).not.toHaveBeenCalled();
+    notifySpy.mockRestore();
   });
 });

@@ -13,4 +13,22 @@ describe("cap-cache", () => {
   it("hashCapInput stringifies non-record inputs", () => {
     expect(hashCapInput("plain")).toMatch(/^[a-f0-9]{64}$/);
   });
+
+  it("hashCapInput normalizes padded graph id fields", () => {
+    const entityId = "00000000-0000-4000-8000-000000000001";
+    const evidenceId = "00000000-0000-4000-8000-000000000099";
+    const canonical = hashCapInput({
+      entityId,
+      evidenceId,
+      host: "example.com",
+    });
+    expect(
+      hashCapInput({
+        entityId: `  ${entityId}  `,
+        evidenceId: `  ${evidenceId}  `,
+        sourceEvidenceId: "   ",
+        host: "example.com",
+      })
+    ).toBe(canonical);
+  });
 });

@@ -86,4 +86,39 @@ describe("finish", () => {
     const landed = rows.find((row) => row.id === evidence.id);
     expect(landed?.processedAt).not.toBeNull();
   });
+
+  it("stamps processedAt using linkEvidenceFromInput field order", async () => {
+    const cased = await seedCase(db);
+    const evidence = await seedEvidence(db, cased.id, { kind: "file" });
+    const job = await seedJob(db, cased.id, {
+      capabilityId: "evidence.harvest",
+      status: "running",
+      input: { sourceEvidenceId: evidence.id },
+    });
+
+    const state = await harvestState(job.id);
+    state.policy = {
+      markEvidenceProcessed: true,
+      linkEvidenceFromInput: ["sourceEvidenceId", "evidenceId"],
+    };
+    state.input = { sourceEvidenceId: evidence.id };
+
+    const outcome = await Effect.runPromise(
+      finishEffect({
+        state,
+        jobLog: createJobLog(),
+        proposalId: null,
+        resultSummary: "harvested",
+        fromCache: false,
+        suppressedCount: 0,
+        interpretError: null,
+        markSourceProcessed: true,
+      })
+    );
+    expect(outcome).toBe("succeeded");
+
+    const rows = await evidenceRepo.listForCase(db, cased.id);
+    const landed = rows.find((row) => row.id === evidence.id);
+    expect(landed?.processedAt).not.toBeNull();
+  });
 });
