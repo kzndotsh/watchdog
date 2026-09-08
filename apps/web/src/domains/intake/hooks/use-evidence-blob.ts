@@ -1,6 +1,6 @@
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 
 import {
   buildEvidenceBlobState,
@@ -21,20 +21,20 @@ export function useEvidenceBlob(
   const contentPending =
     listPending(downloadQuery, { enabled: downloadQueryEnabled }) ||
     listPending(blobQuery, { enabled: blobQueryEnabled });
-  const downloadLoadError =
-    !contentPending &&
-    !downloadQuery.isFetching &&
-    downloadQueryEnabled &&
-    downloadQuery.isError
-      ? errMessage(downloadQuery.error, "Failed to load download URL")
-      : null;
-  const blobLoadError =
-    !contentPending &&
-    !blobQuery.isFetching &&
-    blobQueryEnabled &&
-    blobQuery.isError
-      ? errMessage(blobQuery.error, "Failed to load evidence content")
-      : null;
+  const downloadLoadError = downloadQueryEnabled
+    ? queryLoadError(
+        downloadQuery,
+        contentPending,
+        "Failed to load download URL"
+      )
+    : null;
+  const blobLoadError = blobQueryEnabled
+    ? queryLoadError(
+        blobQuery,
+        contentPending,
+        "Failed to load evidence content"
+      )
+    : null;
 
   return {
     ...buildEvidenceBlobState({

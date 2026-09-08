@@ -36,6 +36,7 @@ import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 import {
   playbookSeedInputSchema,
@@ -138,9 +139,17 @@ export function useJobsWorkspace(
     { enabled: detailQueryEnabled }
   );
   const detailLoadError =
-    selectedId !== null && !detailPending && !detailFetching && isError
-      ? errMessage(detailQueryError, "Failed to load job detail")
-      : null;
+    selectedId === null
+      ? null
+      : queryLoadError(
+          {
+            isError,
+            isFetching: detailFetching,
+            error: detailQueryError,
+          },
+          detailPending,
+          "Failed to load job detail"
+        );
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
