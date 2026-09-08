@@ -45,5 +45,29 @@ describe("interpret", () => {
     expectNoConfidenceOnPatch(result);
   });
 
+  it("proposes profile url only when blog is missing", () => {
+    const result = interpretGithubLookupReport(
+      { ...fixture, blog: null },
+      { input: { handle: "octocat", entityId } }
+    );
+    const urls = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "url"
+    );
+    expect(urls).toHaveLength(1);
+    expect(urls[0]?.data.value).toBe("https://github.com/octocat");
+  });
+
+  it("proposes the queried handle when the profile is not found", () => {
+    const result = interpretGithubLookupReport(
+      { ...fixture, found: false, url: null, blog: null },
+      { input: { handle: "octocat", entityId } }
+    );
+    expect(result.patch.length).toBe(2);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.data.type).toBe("handle");
+    expect(result.patch[0]?.data.value).toBe("octocat");
+    expect(result.patch[1]?.resource).toBe("claim");
+  });
+
   itRejectsIncompleteReport(githubLookup, { handle: "x" }, { handle: "x" });
 });

@@ -26,7 +26,11 @@ export const pgpLookup = defineCollectCap({
     { kind: "identifier", type: "email" },
     { kind: "identifier", type: "pgp" },
   ],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "email" },
+    { kind: "identifier", type: "pgp" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
@@ -34,7 +38,7 @@ export const pgpLookup = defineCollectCap({
   reportLabel: "pgp.lookup",
   fetch: (ctx) =>
     Effect.gen(function* pgpLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`PGP lookup ${query}`);
       const snap = yield* fetchPgpLookupEffect(query, ctx.signal, {
         userAgent: UA,

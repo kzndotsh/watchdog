@@ -57,6 +57,25 @@ describe("interpret", () => {
     expectNoConfidenceOnPatch(result);
   });
 
+  it("lands username query as handle Identifier when not found", () => {
+    const result = interpretKeybaseLookupReport(
+      {
+        ...fixture,
+        found: false,
+        username: null,
+        profileUrl: null,
+        proofs: [],
+        pgpFingerprints: [],
+      },
+      { input: { query: "chris", entityId } }
+    );
+    expectProposesIdentifier(result, { type: "handle", value: "chris" });
+    const urls = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "url"
+    );
+    expect(urls).toHaveLength(0);
+  });
+
   it("lands domain query as domain Identifier", () => {
     const result = interpretKeybaseLookupReport(
       {

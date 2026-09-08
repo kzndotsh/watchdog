@@ -19,7 +19,11 @@ export const emailLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   consumes: [{ kind: "identifier", type: "email" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "email" },
+    { kind: "identifier", type: "domain" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -27,7 +31,7 @@ export const emailLookup = defineCollectCap({
   reportLabel: "email.lookup",
   fetch: (ctx) =>
     Effect.gen(function* emailLookupFetch() {
-      const email = ctx.input.email.trim();
+      const email = ctx.input.email;
       ctx.log(`email lookup ${email}`);
       const snap = yield* fetchEmailLookupEffect(email, ctx.signal);
       ctx.log(

@@ -36,7 +36,7 @@ export const keybaseLookup = defineCollectCap({
   reportLabel: "keybase.lookup",
   fetch: (ctx) =>
     Effect.gen(function* keybaseLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`Keybase ${query}`);
       const snap = yield* fetchKeybaseLookupEffect(query, ctx.signal, {
         userAgent: UA,

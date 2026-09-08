@@ -34,7 +34,7 @@ export const gravatarLookup = defineCollectCap({
   reportLabel: "gravatar.lookup",
   fetch: (ctx) =>
     Effect.gen(function* gravatarLookupFetch() {
-      const email = ctx.input.email.trim();
+      const email = ctx.input.email;
       ctx.log(`Gravatar ${email}`);
       const snap = yield* fetchGravatarLookupEffect(email, ctx.signal, {
         userAgent: UA,

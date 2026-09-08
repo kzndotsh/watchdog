@@ -25,7 +25,11 @@ export const githubLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "GITHUB_TOKEN", optional: true }],
   consumes: [{ kind: "identifier", type: "handle" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "handle" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
@@ -33,7 +37,7 @@ export const githubLookup = defineCollectCap({
   reportLabel: "github.lookup",
   fetch: (ctx) =>
     Effect.gen(function* githubLookupFetch() {
-      const handle = ctx.input.handle.trim();
+      const handle = ctx.input.handle;
       ctx.log(`GitHub lookup ${handle}`);
       const token = yield* optionalCapCredential(ctx, "GITHUB_TOKEN");
       const snap = yield* fetchGithubUserEffect(handle, ctx.signal, {

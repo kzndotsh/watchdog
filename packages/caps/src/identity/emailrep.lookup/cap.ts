@@ -35,7 +35,7 @@ export const emailrepLookup = defineCollectCap({
   reportLabel: "emailrep.lookup",
   fetch: (ctx) =>
     Effect.gen(function* emailrepLookupFetch() {
-      const email = ctx.input.email.trim();
+      const email = ctx.input.email;
       ctx.log(`EmailRep ${email}`);
       const key = yield* ctx.getCredential("EMAILREP_API_KEY");
       const snap = yield* fetchEmailrepLookupEffect(email, ctx.signal, {

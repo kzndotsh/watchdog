@@ -51,6 +51,33 @@ describe("interpret", () => {
     expect(handles).toHaveLength(0);
   });
 
+  it("summarizes reputation=none with zero references as found", () => {
+    const result = interpretEmailrepLookupReport(
+      {
+        ...fixture,
+        email: "bsheffield432@gmail.com",
+        found: true,
+        reputation: "none",
+        suspicious: true,
+        references: 0,
+        credentialsLeaked: false,
+        dataBreach: false,
+        profiles: [],
+        firstSeen: "never",
+        lastSeen: "never",
+        freeProvider: true,
+        spoofable: true,
+      },
+      { input: { email: "bsheffield432@gmail.com", entityId } }
+    );
+    expectProposesIdentifier(result, {
+      type: "email",
+      value: "bsheffield432@gmail.com",
+    });
+    expect(claimText(result, 1)).toMatch(/reputation=none/);
+    expect(claimText(result, 1)).not.toMatch(/no record/);
+  });
+
   it("miss still lands seed email", () => {
     const result = interpretEmailrepLookupReport(
       { ...fixture, found: false, reputation: null, references: null },

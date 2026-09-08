@@ -67,6 +67,23 @@ describe("interpret", () => {
     expect(claimText(result, 1)).toMatch(/no public profile/);
   });
 
+  it("notes truncated handle batch when over 40", () => {
+    const accounts = Array.from({ length: 42 }, (_, i) => ({
+      shortname: "web",
+      url: `https://site-${i}.example.com/p`,
+      username: `user-${i}`,
+    }));
+    const result = interpretGravatarLookupReport(
+      { ...fixture, accounts },
+      { input: { email: fixture.email, entityId } }
+    );
+    expect(String(result.summary)).toMatch(/showing 40 of 43 handles/);
+    const handles = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "handle"
+    );
+    expect(handles).toHaveLength(40);
+  });
+
   it("notes truncated URL batch when over 40", () => {
     const accounts = Array.from({ length: 41 }, (_, i) => ({
       shortname: "web",

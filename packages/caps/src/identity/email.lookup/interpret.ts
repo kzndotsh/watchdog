@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { emailLookupInput } from "./input";
 import type { EmailLookupSnapshot } from "./report-schema";
 
@@ -27,8 +28,8 @@ export function interpretEmailLookupReport(
   return interpretIdentifierBatches({
     entityId: opts.input.entityId,
     batches: [
-      { type: "email", values: [report.email] },
-      { type: "domain", values: [report.domain] },
+      ...querySeedBatches(report.email, "email"),
+      ...querySeedBatches(report.domain, "domain"),
     ],
     claimText: summarize(report),
     noEntitySummary: "Email lookup captured; no Entity to attach Identifiers",

@@ -3,6 +3,10 @@ import type { z } from "zod";
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import {
+  URL_IDENTIFIER_BATCH_LIMIT,
+  urlValuesBatch,
+} from "../../lib/collect/query-seed-batches";
 import type { githubLookupInput } from "./input";
 import type { GithubUserSnapshot } from "./report-schema";
 
@@ -29,13 +33,18 @@ export function interpretGithubLookupReport(
     batches: [
       {
         type: "handle",
-        values: report.found ? [report.handle] : [],
+        values: [report.handle],
         platform: "github",
       },
-      {
-        type: "url",
-        values: report.found ? [report.url, report.blog] : [],
-      },
+      ...urlValuesBatch(
+        report.found
+          ? [report.url, report.blog].filter(
+              (value): value is string =>
+                value !== null && value !== undefined && value !== ""
+            )
+          : [],
+        { limit: URL_IDENTIFIER_BATCH_LIMIT }
+      ),
     ],
     claimText: summarize(report),
     noEntitySummary: "GitHub lookup completed; no Entity to attach",
