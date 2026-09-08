@@ -11,6 +11,7 @@ import {
   edgePredicateAllowsKinds,
   type ConfidenceTier,
   type PatchOp,
+  trimmedOrNull,
 } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
@@ -22,7 +23,9 @@ import {
 import {
   requireDomainEnumEffect,
   requireDomainStringEffect,
+  requireDomainUuidEffect,
 } from "./apply-patch-helpers";
+import { assertEvidenceLinkedEffect } from "./guards";
 
 export function applyEdgeOpEffect(
   tx: DbTx,
@@ -37,14 +40,15 @@ export function applyEdgeOpEffect(
         reason: "edge supports create/upsert",
       });
     }
-    const fromId = yield* requireDomainStringEffect(op.data, "fromId");
-    const toId = yield* requireDomainStringEffect(op.data, "toId");
+    const fromId = yield* requireDomainUuidEffect(op.data, "fromId");
+    const toId = yield* requireDomainUuidEffect(op.data, "toId");
     const predicate = yield* requireDomainEnumEffect(
       yield* requireDomainStringEffect(op.data, "predicate"),
       EDGE_PREDICATES,
       "edge predicate"
     );
-    const notes = typeof op.data.notes === "string" ? op.data.notes : null;
+    const notes =
+      typeof op.data.notes === "string" ? trimmedOrNull(op.data.notes) : null;
     const fromEntity = yield* tryDb(() =>
       entitiesRepo.getInCase(tx, caseId, fromId)
     );
@@ -59,6 +63,11 @@ export function applyEdgeOpEffect(
     if (!edgePredicateAllowsKinds(predicate, fromEntity.kind, toEntity.kind)) {
       return yield* new InvalidError({
         reason: `${predicate} is not allowed for ${fromEntity.kind} → ${toEntity.kind}`,
+      });
+    }
+    if (fromId === toId) {
+      return yield* new InvalidError({
+        reason: "Edge cannot link an Entity to itself",
       });
     }
     if (!confidence) {
@@ -79,19 +88,25 @@ export function applyEdgeOpEffect(
         })
       );
       if (existing) {
-        yield* tryDb(() =>
-          edgesRepo.update(tx, existing.id, {
+        const updated = yield* tryDb(() =>
+          edgesRepo.updateInCase(tx, caseId, existing.id, {
             confidence,
             notes,
           })
         );
-        yield* tryDb(() =>
+        if (!updated) {
+          return yield* new NotFoundError({
+            resource: "Edge not found in this Case",
+          });
+        }
+        const linked = yield* tryDb(() =>
           evidenceLinksRepo.linkEdge(tx, existing.id, evidenceIds)
         );
+        yield* assertEvidenceLinkedEffect(linked);
         return;
       }
     }
-    yield* tryDb(() =>
+    const created = yield* tryDb(() =>
       edgesRepo.create(tx, {
         id: op.id,
         fromId,
@@ -101,6 +116,12 @@ export function applyEdgeOpEffect(
         notes,
       })
     );
-    yield* tryDb(() => evidenceLinksRepo.linkEdge(tx, op.id, evidenceIds));
+    if (!created) {
+      return yield* new InvalidError({ reason: "Failed to create Edge" });
+    }
+    const linked = yield* tryDb(() =>
+      evidenceLinksRepo.linkEdge(tx, created.id, evidenceIds)
+    );
+    yield* assertEvidenceLinkedEffect(linked);
   });
 }

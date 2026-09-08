@@ -7,11 +7,11 @@ import {
 } from "@watchdog/db";
 import {
   IDENTIFIER_STATUSES,
-  IDENTIFIER_TYPES,
   validateIdentifierWrite,
   type ConfidenceTier,
   type IdentifierStatus,
   type PatchOp,
+  trimmedOrNull,
 } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
@@ -19,8 +19,9 @@ import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import {
   requireDomainEnumEffect,
   requireDomainStringEffect,
+  requireDomainUuidEffect,
 } from "./apply-patch-helpers";
-import { assertEntityInCaseEffect } from "./guards";
+import { assertEntityInCaseEffect, assertEvidenceLinkedEffect } from "./guards";
 
 export function applyIdentifierOpEffect(
   tx: DbTx,
@@ -35,31 +36,27 @@ export function applyIdentifierOpEffect(
         reason: "identifier supports create/upsert",
       });
     }
-    const entityId = yield* requireDomainStringEffect(op.data, "entityId");
+    const entityId = yield* requireDomainUuidEffect(op.data, "entityId");
     yield* assertEntityInCaseEffect(caseId, entityId, tx);
-    const type = yield* requireDomainEnumEffect(
-      yield* requireDomainStringEffect(op.data, "type"),
-      IDENTIFIER_TYPES,
-      "identifier type"
-    );
     const written = validateIdentifierWrite({
-      type,
+      type: yield* requireDomainStringEffect(op.data, "type"),
       value: yield* requireDomainStringEffect(op.data, "value"),
       platform: typeof op.data.platform === "string" ? op.data.platform : "",
     });
     if (!written.ok) {
       return yield* new InvalidError({ reason: written.message });
     }
-    const { value, platform } = written;
+    const { type, value, platform } = written;
     const status =
       typeof op.data.status === "string"
         ? yield* requireDomainEnumEffect(
-            op.data.status,
+            yield* requireDomainStringEffect(op.data, "status"),
             IDENTIFIER_STATUSES,
             "identifier status"
           )
         : ("unknown" satisfies IdentifierStatus);
-    const notes = typeof op.data.notes === "string" ? op.data.notes : null;
+    const notes =
+      typeof op.data.notes === "string" ? trimmedOrNull(op.data.notes) : null;
     if (!confidence) {
       return yield* new InvalidError({
         reason: "confidence required for identifier",
@@ -76,20 +73,26 @@ export function applyIdentifierOpEffect(
         })
       );
       if (existing) {
-        yield* tryDb(() =>
-          identifiersRepo.update(tx, existing.id, {
+        const updated = yield* tryDb(() =>
+          identifiersRepo.updateInCase(tx, caseId, existing.id, {
             confidence,
             status,
             notes,
           })
         );
-        yield* tryDb(() =>
+        if (!updated) {
+          return yield* new InvalidError({
+            reason: "Failed to update Identifier",
+          });
+        }
+        const linked = yield* tryDb(() =>
           evidenceLinksRepo.linkIdentifier(tx, existing.id, evidenceIds)
         );
+        yield* assertEvidenceLinkedEffect(linked);
         return;
       }
     }
-    yield* tryDb(() =>
+    const created = yield* tryDb(() =>
       identifiersRepo.create(tx, {
         id: op.id,
         entityId,
@@ -101,8 +104,12 @@ export function applyIdentifierOpEffect(
         notes,
       })
     );
-    yield* tryDb(() =>
-      evidenceLinksRepo.linkIdentifier(tx, op.id, evidenceIds)
+    if (!created) {
+      return yield* new InvalidError({ reason: "Failed to create Identifier" });
+    }
+    const linked = yield* tryDb(() =>
+      evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
     );
+    yield* assertEvidenceLinkedEffect(linked);
   });
 }

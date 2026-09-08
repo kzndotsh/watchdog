@@ -5,7 +5,7 @@ import type { PatchOp } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
-import { requireDomainStringEffect } from "./apply-patch-helpers";
+import { requireDomainStringEffect, requireDomainUuidEffect } from "./apply-patch-helpers";
 import { assertEntityInCaseEffect } from "./guards";
 
 export function applyQuestionOpEffect(
@@ -19,10 +19,10 @@ export function applyQuestionOpEffect(
         reason: "question only supports create",
       });
     }
-    const entityId = yield* requireDomainStringEffect(op.data, "entityId");
+    const entityId = yield* requireDomainUuidEffect(op.data, "entityId");
     yield* assertEntityInCaseEffect(caseId, entityId, tx);
     const text = yield* requireDomainStringEffect(op.data, "text");
-    yield* tryDb(() =>
+    const created = yield* tryDb(() =>
       questionsRepo.create(tx, {
         id: op.id,
         entityId,
@@ -30,5 +30,8 @@ export function applyQuestionOpEffect(
         status: "open",
       })
     );
+    if (!created) {
+      return yield* new InvalidError({ reason: "Failed to create Question" });
+    }
   });
 }

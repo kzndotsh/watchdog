@@ -13,8 +13,9 @@ import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import {
   requireDomainEnumEffect,
   requireDomainStringEffect,
+  requireDomainUuidEffect,
 } from "./apply-patch-helpers";
-import { assertEntityInCaseEffect } from "./guards";
+import { assertEntityInCaseEffect, assertEvidenceLinkedEffect } from "./guards";
 
 export function applyClaimOpEffect(
   tx: DbTx,
@@ -29,13 +30,13 @@ export function applyClaimOpEffect(
         reason: "claim only supports create",
       });
     }
-    const entityId = yield* requireDomainStringEffect(op.data, "entityId");
+    const entityId = yield* requireDomainUuidEffect(op.data, "entityId");
     yield* assertEntityInCaseEffect(caseId, entityId, tx);
     const text = yield* requireDomainStringEffect(op.data, "text");
     const claimClass =
       typeof op.data.class === "string"
         ? yield* requireDomainEnumEffect(
-            op.data.class,
+            yield* requireDomainStringEffect(op.data, "class"),
             CLAIM_CLASSES,
             "claim class"
           )
@@ -45,7 +46,7 @@ export function applyClaimOpEffect(
         reason: "confidence required for claim",
       });
     }
-    yield* tryDb(() =>
+    const created = yield* tryDb(() =>
       claimsRepo.create(tx, {
         id: op.id,
         entityId,
@@ -54,6 +55,12 @@ export function applyClaimOpEffect(
         confidence,
       })
     );
-    yield* tryDb(() => evidenceLinksRepo.linkClaim(tx, op.id, evidenceIds));
+    if (!created) {
+      return yield* new InvalidError({ reason: "Failed to create Claim" });
+    }
+    const linked = yield* tryDb(() =>
+      evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)
+    );
+    yield* assertEvidenceLinkedEffect(linked);
   });
 }
