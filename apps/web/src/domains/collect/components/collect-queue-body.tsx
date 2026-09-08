@@ -42,10 +42,23 @@ export function CollectQueueBody({
   onFiltersChange,
   onIdChange,
 }: CollectQueueBodyProps) {
+  if (queuePending) {
+    return (
+      <PendingRegion
+        loading
+        label="Loading collect queue"
+        fallback={
+          <CollectQueueSkeleton rows={COLLECT_QUEUE_SKELETON_ROW_COUNT} />
+        }
+      >
+        {null}
+      </PendingRegion>
+    );
+  }
   if (queueLoadError !== null) {
     return <FetchErrorAlert error={queueLoadError} onRetry={onRetryQueue} />;
   }
-  if (!queuePending && indexRows.length === 0) {
+  if (indexRows.length === 0) {
     return (
       <EmptyState
         intent="blank-slate"
@@ -55,7 +68,7 @@ export function CollectQueueBody({
       />
     );
   }
-  if (!queuePending && visibleRows.length === 0) {
+  if (visibleRows.length === 0) {
     return (
       <EmptyState
         intent="no-results"
@@ -68,20 +81,12 @@ export function CollectQueueBody({
     );
   }
   return (
-    <PendingRegion
-      loading={queuePending}
-      label="Loading collect queue"
-      fallback={
-        <CollectQueueSkeleton rows={COLLECT_QUEUE_SKELETON_ROW_COUNT} />
-      }
-    >
-      <div className={placeholderDeemphasisClass(queuePlaceholder)}>
-        <CollectQueueList
-          rows={visibleRows}
-          selectedId={selectionRowId}
-          onSelect={onIdChange}
-        />
-      </div>
-    </PendingRegion>
+    <div className={placeholderDeemphasisClass(queuePlaceholder)}>
+      <CollectQueueList
+        rows={visibleRows}
+        selectedId={selectionRowId}
+        onSelect={onIdChange}
+      />
+    </div>
   );
 }
