@@ -1,8 +1,16 @@
 import { defineCommand } from "citty";
 
+import {
+  createEventInputSchema,
+  entityScopeInputSchema,
+  eventScopeInputSchema,
+  updateEventInputSchema,
+} from "@watchdog/schemas";
+
 import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import { requireUserOverride, userOverrideArg } from "../custody";
-import { resolveEntityId } from "../ids";
+import { enrichEventDisplay } from "../display";
+import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
 import {
   asBoolean,
   caseArg,
@@ -13,6 +21,7 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 
 const LIST_COLUMNS = ["id", "when", "what", "where"];
 
@@ -31,10 +40,12 @@ export const eventsCmd = defineNounCommand({
   required: ["case", "entity"],
   usageHelp: ["wd events list -c <caseId> --entity <slug>"],
   list: async (args) => {
-    const caseId = String(args.case);
+    const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().events.list({ caseId, entityId });
+    const rows = await api().events.list(
+      entityScopeInputSchema.parse({ caseId, entityId })
+    );
     const full = args.full === true;
     emitList({
       items: rows.map((r) => ({
@@ -72,16 +83,20 @@ export const eventsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
-        const entityId = await resolveEntityId(args.case, args.entity);
-        const row = await api().events.create({
-          caseId: args.case,
+        const caseId = requireCaseId(args.case);
+        const entityId = await resolveEntityId(caseId, args.entity);
+        const payload = createEventInputSchema.parse({
+          caseId,
           entityId,
           when: args.when,
           what: args.what,
-          userOverride: true,
           ...pickDefined({ where: args.where }),
         });
-        emit(row);
+        const row = await api().events.create({
+          ...payload,
+          userOverride: true,
+        });
+        emit(enrichEventDisplay(row));
       },
     }),
     update: defineCommand({
@@ -99,33 +114,46 @@ export const eventsCmd = defineNounCommand({
         },
         when: { type: "string", description: "When (freeform / ISO)" },
         what: { type: "string", description: "What happened" },
-        where: { type: "string", description: "Optional where" },
+        where: {
+          type: "string",
+          description: "Optional where (empty to clear)",
+        },
         ...userOverrideArg,
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
-        if (
-          args.when === undefined &&
-          args.what === undefined &&
-          args.where === undefined
-        ) {
+        const caseId = requireCaseId(args.case);
+        const eventId = requireUuid(args.event, "Event ID");
+        const touchesWhen = args.when !== undefined;
+        const touchesWhat = args.what !== undefined;
+        const touchesWhere = args.where !== undefined;
+        if (!touchesWhen && !touchesWhat && !touchesWhere) {
           fail("USAGE", "Provide at least one of --when, --what, or --where", {
             help: [
-              `wd events update -c ${args.case} ${args.event} --when "…" --user-override`,
+              `wd events update -c ${caseId} ${eventId} --when "…" --user-override`,
+            ],
+          });
+        }
+        const where = parseOptionalNullableTrimmedPatch(args.where);
+        const parsed = updateEventInputSchema.safeParse({
+          caseId,
+          eventId,
+          ...(touchesWhen ? { when: args.when } : {}),
+          ...(touchesWhat ? { what: args.what } : {}),
+          ...(where === undefined ? {} : { where }),
+        });
+        if (!parsed.success) {
+          fail("USAGE", "Provide at least one of --when, --what, or --where", {
+            help: [
+              `wd events update -c ${caseId} ${eventId} --when "…" --user-override`,
             ],
           });
         }
         const row = await api().events.update({
-          caseId: args.case,
-          eventId: args.event,
+          ...parsed.data,
           userOverride: true,
-          ...pickDefined({
-            when: args.when,
-            what: args.what,
-            where: args.where,
-          }),
         });
-        emit(row);
+        emit(enrichEventDisplay(row));
       },
     }),
     delete: defineCommand({
@@ -145,16 +173,19 @@ export const eventsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
+        const scope = eventScopeInputSchema.parse({
+          caseId: requireCaseId(args.case),
+          eventId: requireUuid(args.event, "Event ID"),
+        });
         if (args["dry-run"]) {
-          emitOk({ dryRun: true, deleted: true, id: args.event });
+          emitOk({ dryRun: true, deleted: true, id: scope.eventId });
           return;
         }
         await api().events.delete({
-          caseId: args.case,
-          eventId: args.event,
+          ...scope,
           userOverride: true,
         });
-        emitOk({ deleted: true, id: args.event });
+        emitOk({ deleted: true, id: scope.eventId });
       },
     }),
   },

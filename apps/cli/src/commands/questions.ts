@@ -1,19 +1,28 @@
 import { defineCommand } from "citty";
 
-import { api, emit, emitList, truncText } from "../client";
+import {
+  createQuestionInputSchema,
+  entityScopeInputSchema,
+  questionScopeInputSchema,
+  resolveQuestionInputSchema,
+  updateQuestionInputSchema,
+} from "@watchdog/schemas";
+
+import { api, emit, emitList, fail, truncText } from "../client";
 import { requireUserOverride, userOverrideArg } from "../custody";
-import { resolveEntityId } from "../ids";
+import { displayStatusLabel, enrichQuestionDisplay } from "../display";
+import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
 import {
   asBoolean,
   caseArg,
   defineNounCommand,
   entityArg,
-  pickDefined,
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 
-const LIST_COLUMNS = ["id", "text", "status"];
+const LIST_COLUMNS = ["id", "text", "status", "statusLabel"];
 
 function listHelp(caseId: string, entity: string): string[] {
   return [
@@ -32,16 +41,19 @@ export const questionsCmd = defineNounCommand({
   required: ["case", "entity"],
   usageHelp: ["wd questions list -c <caseId> --entity <slug>"],
   list: async (args) => {
-    const caseId = String(args.case);
+    const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().questions.list({ caseId, entityId });
+    const rows = await api().questions.list(
+      entityScopeInputSchema.parse({ caseId, entityId })
+    );
     const full = args.full === true;
     emitList({
       items: rows.map((r) => ({
         id: r.id,
         text: truncText(r.text, full),
         status: r.status,
+        statusLabel: displayStatusLabel(r.status),
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
@@ -66,14 +78,18 @@ export const questionsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
-        const entityId = await resolveEntityId(args.case, args.entity);
-        const row = await api().questions.create({
-          caseId: args.case,
+        const caseId = requireCaseId(args.case);
+        const entityId = await resolveEntityId(caseId, args.entity);
+        const payload = createQuestionInputSchema.parse({
+          caseId,
           entityId,
           text: args.text,
+        });
+        const row = await api().questions.create({
+          ...payload,
           userOverride: true,
         });
-        emit(row);
+        emit(enrichQuestionDisplay(row));
       },
     }),
     update: defineCommand({
@@ -98,21 +114,36 @@ export const questionsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
-        let resolvedNote: string | null | undefined;
-        if (args.note === undefined) {
-          resolvedNote = undefined;
-        } else {
-          const trimmed = args.note.trim();
-          resolvedNote = trimmed === "" ? null : trimmed;
+        const caseId = requireCaseId(args.case);
+        const questionId = requireUuid(args.question, "Question ID");
+        const touchesText = args.text !== undefined;
+        const touchesNote = args.note !== undefined;
+        if (!touchesText && !touchesNote) {
+          fail("USAGE", "Provide --text and/or --note", {
+            help: [
+              `wd questions update -c ${caseId} ${questionId} --text "…" --user-override`,
+            ],
+          });
         }
-        const row = await api().questions.update({
-          caseId: args.case,
-          questionId: args.question,
-          userOverride: true,
-          ...pickDefined({ text: args.text }),
+        const resolvedNote = parseOptionalNullableTrimmedPatch(args.note);
+        const parsed = updateQuestionInputSchema.safeParse({
+          caseId,
+          questionId,
+          ...(touchesText ? { text: args.text } : {}),
           ...(resolvedNote === undefined ? {} : { resolvedNote }),
         });
-        emit(row);
+        if (!parsed.success) {
+          fail("USAGE", "Provide --text and/or --note", {
+            help: [
+              `wd questions update -c ${caseId} ${questionId} --text "…" --user-override`,
+            ],
+          });
+        }
+        const row = await api().questions.update({
+          ...parsed.data,
+          userOverride: true,
+        });
+        emit(enrichQuestionDisplay(row));
       },
     }),
     resolve: defineCommand({
@@ -135,13 +166,18 @@ export const questionsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
+        const caseId = requireCaseId(args.case);
+        const questionId = requireUuid(args.question, "Question ID");
+        const resolvedNote = parseOptionalNullableTrimmedPatch(args.note);
         const row = await api().questions.resolve({
-          caseId: args.case,
-          questionId: args.question,
+          ...resolveQuestionInputSchema.parse({
+            caseId,
+            questionId,
+            ...(resolvedNote === undefined ? {} : { resolvedNote }),
+          }),
           userOverride: true,
-          ...pickDefined({ resolvedNote: args.note }),
         });
-        emit(row);
+        emit(enrichQuestionDisplay(row));
       },
     }),
     reopen: defineCommand({
@@ -160,12 +196,15 @@ export const questionsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
+        const scope = questionScopeInputSchema.parse({
+          caseId: requireCaseId(args.case),
+          questionId: requireUuid(args.question, "Question ID"),
+        });
         const row = await api().questions.reopen({
-          caseId: args.case,
-          questionId: args.question,
+          ...scope,
           userOverride: true,
         });
-        emit(row);
+        emit(enrichQuestionDisplay(row));
       },
     }),
   },

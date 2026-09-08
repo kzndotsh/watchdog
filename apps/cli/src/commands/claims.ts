@@ -1,19 +1,36 @@
 import { defineCommand } from "citty";
 
 import {
-  claimClassSchema,
-  confidenceTierSchema,
-  retractKindSchema,
+  createClaimInputSchema,
+  listClaimsInputSchema,
+  optionalClaimClassSchema,
+  retractClaimInputSchema,
+  trimmedClaimClassSchema,
+  trimmedConfidenceTierSchema,
+  trimmedRetractKindSchema,
+  updateClaimInputSchema,
 } from "@watchdog/schemas";
 
-import { api, emit, emitList, emitOk, truncText } from "../client";
+import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import {
+  guardChildWriteConfidence,
   refuseConfirmed,
   requireUserOverride,
   userOverrideArg,
 } from "../custody";
+import {
+  claimClassLabel,
+  confidenceLabel,
+  enrichClaimDisplay,
+} from "../display";
 import { withExamples } from "../examples";
-import { parseIdList, resolveEntityId } from "../ids";
+import {
+  parseIdList,
+  parsePatchIdList,
+  requireCaseId,
+  requireUuid,
+  resolveEntityId,
+} from "../ids";
 import {
   asBoolean,
   caseArg,
@@ -24,8 +41,17 @@ import {
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
 
-const LIST_COLUMNS = ["id", "confidence", "class", "text", "retracted"];
+const LIST_COLUMNS = [
+  "id",
+  "confidence",
+  "confidenceLabel",
+  "class",
+  "classLabel",
+  "text",
+  "retracted",
+];
 
 function listHelp(caseId: string, entity: string): string[] {
   return [
@@ -50,20 +76,24 @@ export const claimsCmd = defineNounCommand({
   required: ["case", "entity"],
   usageHelp: ["wd claims list -c <caseId> --entity <slug>"],
   list: async (args) => {
-    const caseId = String(args.case);
+    const caseId = requireCaseId(args.case);
     const entity = String(args.entity);
     const entityId = await resolveEntityId(caseId, entity);
-    const rows = await api().claims.list({
-      caseId,
-      entityId,
-      includeRetracted: asBoolean(args.retracted) ?? false,
-    });
+    const rows = await api().claims.list(
+      listClaimsInputSchema.parse({
+        caseId,
+        entityId,
+        includeRetracted: asBoolean(args.retracted) ?? false,
+      })
+    );
     const full = args.full === true;
     emitList({
       items: rows.map((r) => ({
         id: r.id,
         confidence: r.confidence,
+        confidenceLabel: confidenceLabel(r.confidence),
         class: r.class,
+        classLabel: claimClassLabel(r.class),
         text: truncText(r.text, full),
         retracted: r.retracted,
       })),
@@ -102,19 +132,35 @@ export const claimsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
-        refuseConfirmed(confidenceTierSchema.parse(args.confidence));
-        const entityId = await resolveEntityId(args.case, args.entity);
+        const caseId = requireCaseId(args.case);
+        const confidence = parseCliEnum(
+          trimmedConfidenceTierSchema,
+          args.confidence,
+          "--confidence",
+          [
+            `wd claims create -c ${caseId} --entity ${args.entity} --text "…" --confidence unverified --user-override`,
+          ]
+        );
+        refuseConfirmed(confidence);
+        const entityId = await resolveEntityId(caseId, args.entity);
         const evidenceIds = parseIdList(args.evidence);
-        const row = await api().claims.create({
-          caseId: args.case,
+        const payload = createClaimInputSchema.parse({
+          caseId,
           entityId,
           text: args.text,
-          confidence: confidenceTierSchema.parse(args.confidence),
-          class: claimClassSchema.parse(args.class),
-          userOverride: true,
+          confidence,
+          class: parseCliEnum(
+            trimmedClaimClassSchema,
+            args.class,
+            "claim class"
+          ),
           ...pickDefined({ evidenceIds }),
         });
-        emit(row);
+        const row = await api().claims.create({
+          ...payload,
+          userOverride: true,
+        });
+        emit(enrichClaimDisplay(row));
       },
     }),
     update: defineCommand({
@@ -143,28 +189,41 @@ export const claimsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
-        refuseConfirmed(confidenceTierSchema.parse(args.confidence));
-        const evidenceIds = parseIdList(args.evidence);
-        const classValue =
-          args.class !== undefined && args.class !== ""
-            ? claimClassSchema.parse(args.class)
-            : undefined;
-        const confidenceValue =
-          args.confidence !== undefined && args.confidence !== ""
-            ? confidenceTierSchema.parse(args.confidence)
-            : undefined;
-        const row = await api().claims.update({
-          caseId: args.case,
-          claimId: args.claim,
-          userOverride: true,
-          ...pickDefined({
-            text: args.text,
-            class: classValue,
-            confidence: confidenceValue,
-            evidenceIds,
-          }),
+        const caseId = requireCaseId(args.case);
+        const claimId = requireUuid(args.claim, "Claim ID");
+        const confidenceValue = guardChildWriteConfidence(args.confidence);
+        const evidenceIds = parsePatchIdList(args.evidence);
+        const classValue = parseOptionalCliEnum(
+          optionalClaimClassSchema,
+          args.class,
+          "claim class"
+        );
+        const parsed = updateClaimInputSchema.safeParse({
+          caseId,
+          claimId,
+          ...(args.text === undefined ? {} : { text: args.text }),
+          ...(classValue === undefined ? {} : { class: classValue }),
+          ...(confidenceValue === undefined
+            ? {}
+            : { confidence: confidenceValue }),
+          ...(evidenceIds === undefined ? {} : { evidenceIds }),
         });
-        emit(row);
+        if (!parsed.success) {
+          fail(
+            "USAGE",
+            "Provide at least one of --text, --class, --confidence, or --evidence",
+            {
+              help: [
+                `wd claims update -c ${caseId} ${claimId} --text "…" --user-override`,
+              ],
+            }
+          );
+        }
+        const row = await api().claims.update({
+          ...parsed.data,
+          userOverride: true,
+        });
+        emit(enrichClaimDisplay(row));
       },
     }),
     retract: defineCommand({
@@ -194,19 +253,35 @@ export const claimsCmd = defineNounCommand({
       },
       run: async ({ args }) => {
         requireUserOverride(args["user-override"]);
-        const kind = retractKindSchema.parse(args.kind);
+        const caseId = requireCaseId(args.case);
+        const claimId = requireUuid(args.claim, "Claim ID");
+        const payload = retractClaimInputSchema.parse({
+          caseId,
+          claimId,
+          kind: parseCliEnum(
+            trimmedRetractKindSchema,
+            args.kind,
+            "retract kind",
+            [
+              `wd claims retract -c ${caseId} ${claimId} --kind <kind> --reason "…" --user-override`,
+            ]
+          ),
+          reason: args.reason,
+        });
         if (args["dry-run"]) {
-          emitOk({ dryRun: true, id: args.claim, kind, reason: args.reason });
+          emitOk({
+            dryRun: true,
+            id: claimId,
+            kind: payload.kind,
+            reason: payload.reason,
+          });
           return;
         }
         const row = await api().claims.retract({
-          caseId: args.case,
-          claimId: args.claim,
-          kind,
-          reason: args.reason,
+          ...payload,
           userOverride: true,
         });
-        emit(row);
+        emit(enrichClaimDisplay(row));
       },
     }),
   },
