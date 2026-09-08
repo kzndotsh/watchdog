@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect, Result } from "effect";
 
-import { tlsAuditSnapshotSchema } from "../audit";
+import { ValidationVendorError } from "../../errors/tagged-errors";
+import { fetchTlsAuditEffect, tlsAuditSnapshotSchema } from "../audit";
 
 describe("tls audit schema", () => {
   it("parses TLS audit snapshots", () => {
@@ -24,4 +26,17 @@ describe("tls audit schema", () => {
     });
     expect(snap.authorized).toBe(true);
   });
+
+  it.effect("rejects private and loopback hosts", () =>
+    Effect.gen(function* rejectPrivateHostGen() {
+      const outcome = yield* Effect.result(
+        fetchTlsAuditEffect("127.0.0.1", new AbortController().signal)
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    })
+  );
 });

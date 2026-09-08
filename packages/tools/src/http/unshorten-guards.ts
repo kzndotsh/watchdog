@@ -86,6 +86,19 @@ function isBlockedIpv4(host: string): boolean {
   return isPrivateIpv4(host.split(".").map(Number));
 }
 
+function probeOriginForHost(host: string): string {
+  const trimmed = host.trim();
+  if (isIP(trimmed) === 6) return `https://[${trimmed}]/`;
+  return `https://${trimmed}/`;
+}
+
+/** Block private, loopback, link-local, and CGNAT hosts before active egress. */
+export function isBlockedEgressHost(host: string): boolean {
+  const trimmed = host.trim();
+  if (!trimmed) return true;
+  return isBlockedUnshortenUrl(probeOriginForHost(trimmed));
+}
+
 /** Block private, loopback, link-local, and CGNAT hop URLs. */
 export function isBlockedUnshortenUrl(raw: string): boolean {
   const hostname = parseUrlHostname(raw);

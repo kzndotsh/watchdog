@@ -4,6 +4,8 @@ import { Effect } from "effect";
 
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
+import { validationToolsError } from "../errors/tools-error";
+import { isBlockedEgressHost } from "../http/unshorten-guards";
 import { snapshotFromTlsSocket } from "./audit-cert";
 import { tlsAuditSnapshotSchema, type TlsAuditSnapshot } from "./audit-schema";
 
@@ -83,8 +85,21 @@ export function fetchTlsAuditEffect(
   const port = options?.port ?? 443;
   const servername = options?.servername ?? host;
 
-  return Effect.tryPromise({
-    try: () => connectTlsAudit(host, port, servername, signal),
-    catch: mapToolsCatch,
+  return Effect.gen(function* fetchTlsAuditGen() {
+    yield* Effect.try({
+      try: () => {
+        if (isBlockedEgressHost(host)) {
+          throw validationToolsError(
+            `Blocked host (private/loopback): ${host}`
+          );
+        }
+      },
+      catch: mapToolsCatch,
+    });
+
+    return yield* Effect.tryPromise({
+      try: () => connectTlsAudit(host, port, servername, signal),
+      catch: mapToolsCatch,
+    });
   });
 }

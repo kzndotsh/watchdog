@@ -11,6 +11,7 @@ import { Effect } from "effect";
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 
 import { toolsHttpClientLayer } from "../http-client-layer";
+import { isBlockedEgressHost } from "../unshorten-guards";
 import { fetchUnshortenEffect, isBlockedUnshortenUrl } from "../unshorten.ts";
 
 describe("fetchUnshortenEffect", () => {
@@ -102,5 +103,12 @@ describe("fetchUnshortenEffect", () => {
     const scriptUrl = "javascript:alert(1)";
     expect(isBlockedUnshortenUrl(scriptUrl)).toBe(true);
     expect(isBlockedUnshortenUrl("file:///etc/passwd")).toBe(true);
+  });
+
+  it("blocks private hosts for active egress probes", () => {
+    expect(isBlockedEgressHost("127.0.0.1")).toBe(true);
+    expect(isBlockedEgressHost("10.0.0.1")).toBe(true);
+    expect(isBlockedEgressHost("::1")).toBe(true);
+    expect(isBlockedEgressHost("example.com")).toBe(false);
   });
 });
