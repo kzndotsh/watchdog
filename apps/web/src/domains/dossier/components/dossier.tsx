@@ -450,7 +450,7 @@ function DossierWithActiveCase({
   const entityQuery = useQuery(entityBySlugQuery(active.id, scopedEntitySlug));
   const entityPending = listPending(entityQuery);
   const entityLoadError =
-    !entityPending && entityQuery.isError
+    !entityPending && !entityQuery.isFetching && entityQuery.isError
       ? errMessage(entityQuery.error, "Failed to load entity")
       : null;
   const entity = entityQuery.data;
