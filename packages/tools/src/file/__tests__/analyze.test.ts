@@ -12,4 +12,10 @@ describe("analyzeFileBytes", () => {
     expect(snap.mimeGuess).toBe("image/jpeg");
     expect(snap.byteLength).toBe(4);
   });
+
+  it("trims padded evidenceId", () => {
+    const id = testId(41);
+    const snap = analyzeFileBytes(`  ${id}  `, new Uint8Array([0x00]));
+    expect(snap.evidenceId).toBe(id);
+  });
 });

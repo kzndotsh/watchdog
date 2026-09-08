@@ -12,6 +12,17 @@ describe("classifyBreachQuery", () => {
     });
     expect(classifyBreachQuery("8.8.8.8").kind).toBe("ip");
   });
+
+  it("falls back to username for invalid email shapes", () => {
+    expect(classifyBreachQuery("foo@")).toEqual({
+      kind: "username",
+      value: "foo@",
+    });
+    expect(classifyBreachQuery("@bar")).toEqual({
+      kind: "username",
+      value: "@bar",
+    });
+  });
 });
 
 describe("classifyIpOrHost", () => {
@@ -20,6 +31,19 @@ describe("classifyIpOrHost", () => {
       kind: "domain",
       value: "mailhost.test",
     });
+  });
+
+  it("classifies bracketed IPv6 literals as IP", () => {
+    expect(classifyIpOrHost("[::1]")).toEqual({ kind: "ip", value: "::1" });
+    expect(classifyIpOrHost("[2001:db8::1]:443")).toEqual({
+      kind: "ip",
+      value: "2001:db8::1",
+    });
+  });
+
+  it("rejects invalid hostnames", () => {
+    expect(() => classifyIpOrHost("not a host!")).toThrow(/Invalid hostname/);
+    expect(() => classifyIpOrHost("")).toThrow(/Invalid hostname/);
   });
 });
 

@@ -21,4 +21,10 @@ describe("analyzeEmlText", () => {
     expect(snap.urls.some((url) => url.includes("mailhost.test"))).toBe(true);
     expect(snap.emails).toContain("ada@mailhost.test");
   });
+
+  it("trims padded evidenceId", () => {
+    const id = testId(41);
+    const snap = analyzeEmlText(`  ${id}  `, "Subject: x\n\nbody");
+    expect(snap.evidenceId).toBe(id);
+  });
 });

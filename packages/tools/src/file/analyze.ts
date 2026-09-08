@@ -128,13 +128,14 @@ export function analyzeFileBytes(
   evidenceId: string,
   bytes: Uint8Array
 ): FileAnalyzeSnapshot {
+  const id = evidenceId.trim();
   const magic = detectMagic(bytes);
   const asLatin = new TextDecoder("latin1").decode(
     bytes.slice(0, Math.min(bytes.length, 256_000))
   );
 
   return fileAnalyzeSnapshotSchema.parse({
-    evidenceId,
+    evidenceId: id,
     queriedAt: new Date().toISOString(),
     byteLength: bytes.length,
     sha256: createHash("sha256").update(bytes).digest("hex"),

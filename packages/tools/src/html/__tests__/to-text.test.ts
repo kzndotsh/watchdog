@@ -4,6 +4,7 @@ import {
   extractOutboundFromHtml,
   extractOutboundFromMarkdown,
   formatLinksMarkdownSection,
+  htmlToText,
   resolveHref,
 } from "../to-text.ts";
 
@@ -60,5 +61,10 @@ describe("to-text", () => {
     expect(section).toMatch(/## Outbound links/);
     expect(section).toMatch(/https:\/\/wiki\.example\.org\/wiki\/Guide/);
     expect(section).toMatch(/a@b\.co/);
+  });
+
+  it("htmlToText ignores invalid numeric entities instead of throwing", () => {
+    expect(htmlToText("<p>&#55296; safe &#65; text</p>")).toBe("safe A text");
+    expect(htmlToText("<p>&#9999999; hello</p>")).toBe("hello");
   });
 });

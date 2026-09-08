@@ -106,6 +106,19 @@ export function formatLinksMarkdownSection(input: {
   return lines.join("\n");
 }
 
+function decodeNumericEntity(raw: string): string {
+  const code = Number(raw);
+  if (
+    !Number.isInteger(code) ||
+    code < 0 ||
+    code > 0x10_ff_ff ||
+    (code >= 0xd8_00 && code <= 0xdf_ff)
+  ) {
+    return "";
+  }
+  return String.fromCodePoint(code);
+}
+
 export function htmlToText(html: string): string {
   let s = html;
   s = s.replaceAll(/<script[\s\S]*?<\/script>/gi, " ");
@@ -123,10 +136,7 @@ export function htmlToText(html: string): string {
     .replaceAll(/&gt;/gi, ">")
     .replaceAll(/&quot;/gi, '"')
     .replaceAll(/&#39;/gi, "'")
-    .replaceAll(/&#(\d+);/g, (_, n) => {
-      const code = Number(n);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : "";
-    });
+    .replaceAll(/&#(\d+);/g, (_, n: string) => decodeNumericEntity(n));
   s = s
     .split("\n")
     .map((line) => line.replaceAll(/[ \t]+/g, " ").trim())

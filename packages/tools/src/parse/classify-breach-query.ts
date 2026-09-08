@@ -1,3 +1,4 @@
+import { normalizeEmail } from "../identity/email-lookup";
 import { classifyIpOrHost } from "./classify-ip-or-host";
 
 export type BreachQueryKind = "email" | "ip" | "domain" | "username";
@@ -9,7 +10,12 @@ export function classifyBreachQuery(raw: string): {
 } {
   const trimmed = raw.trim();
   if (trimmed.includes("@")) {
-    return { kind: "email", value: trimmed.toLowerCase() };
+    try {
+      const { email } = normalizeEmail(trimmed);
+      return { kind: "email", value: email };
+    } catch {
+      return { kind: "username", value: trimmed };
+    }
   }
   try {
     return classifyIpOrHost(trimmed);

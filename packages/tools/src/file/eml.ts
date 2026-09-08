@@ -78,11 +78,12 @@ export function analyzeEmlText(
   evidenceId: string,
   text: string
 ): EmlAnalyzeSnapshot {
+  const id = evidenceId.trim();
   const { headerBlock, body } = splitHeaderBody(text);
   const { headers, receivedChain } = parseHeaderBlock(headerBlock);
 
   return emlAnalyzeSnapshotSchema.parse({
-    evidenceId,
+    evidenceId: id,
     queriedAt: new Date().toISOString(),
     headers,
     from: headers.from ?? null,

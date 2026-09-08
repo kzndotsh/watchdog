@@ -55,28 +55,68 @@ export function taggedToToolsError(error: ToolsTag): ToolsError {
 }
 
 /** Map a thrown `ToolsError` into the tagged family. `aborted` is not a tag. */
+function parseRateLimitedMessage(message: string): {
+  service: string;
+  subject: string;
+} {
+  const match = /^(.+) rate-limited for (.+)$/.exec(message);
+  if (match) {
+    return { service: match[1], subject: match[2] };
+  }
+  return { service: "tools", subject: message };
+}
+
+function parseHttpErrorMessage(
+  message: string,
+  status: number
+): { service: string } {
+  const match = /^(.+) HTTP (\d+)$/.exec(message);
+  if (match && Number(match[2]) === status) {
+    return { service: match[1] };
+  }
+  return { service: "tools" };
+}
+
+function parseParseErrorMessage(message: string): {
+  service: string;
+  subject: string;
+} {
+  const match = /^(.+) response for (.+) was not a JSON object$/.exec(message);
+  if (match) {
+    return { service: match[1], subject: match[2] };
+  }
+  return { service: "tools", subject: message };
+}
+
+function parseMissingApiKeySlot(message: string): string {
+  const match = /^(.+) required$/.exec(message);
+  return match?.[1] ?? message;
+}
+
 function toolsErrorToTagged(error: ToolsError): ToolsTag {
   switch (error.code) {
     case "rate_limited": {
-      return new RateLimitedError({
-        service: error.message,
-        subject: error.message,
-      });
+      const { service, subject } = parseRateLimitedMessage(error.message);
+      return new RateLimitedError({ service, subject });
     }
     case "http_error": {
+      const { service } = parseHttpErrorMessage(
+        error.message,
+        error.status ?? 0
+      );
       return new HttpVendorError({
-        service: error.message,
+        service,
         status: error.status ?? 0,
       });
     }
     case "parse_error": {
-      return new ParseVendorError({
-        service: "tools",
-        subject: error.message,
-      });
+      const { service, subject } = parseParseErrorMessage(error.message);
+      return new ParseVendorError({ service, subject });
     }
     case "missing_api_key": {
-      return new MissingCredentialError({ slot: error.message });
+      return new MissingCredentialError({
+        slot: parseMissingApiKeySlot(error.message),
+      });
     }
     case "validation_error": {
       return new ValidationVendorError({ message: error.message });

@@ -4,9 +4,15 @@ import { mapToolsCatch, taggedToToolsError } from "../map-tools-tag";
 import {
   HttpVendorError,
   MissingCredentialError,
+  RateLimitedError,
   ValidationVendorError,
 } from "../tagged-errors";
-import { ToolsError } from "../tools-error";
+import {
+  httpToolsError,
+  missingApiKey,
+  rateLimitedToolsError,
+  ToolsError,
+} from "../tools-error";
 
 describe("mapToolsCatch", () => {
   it("keeps tagged vendor errors", () => {
@@ -23,6 +29,24 @@ describe("mapToolsCatch", () => {
   it("rethrows abort-like errors", () => {
     const abort = new DOMException("aborted", "AbortError");
     expect(() => mapToolsCatch(abort)).toThrow(abort);
+  });
+
+  it("round-trips structured rate_limited ToolsError fields", () => {
+    const mapped = mapToolsCatch(rateLimitedToolsError("Censys", "8.8.8.8"));
+    expect(mapped).toBeInstanceOf(RateLimitedError);
+    expect(mapped).toMatchObject({ service: "Censys", subject: "8.8.8.8" });
+  });
+
+  it("round-trips structured http_error ToolsError fields", () => {
+    const mapped = mapToolsCatch(httpToolsError("Shodan", 401));
+    expect(mapped).toBeInstanceOf(HttpVendorError);
+    expect(mapped).toMatchObject({ service: "Shodan", status: 401 });
+  });
+
+  it("round-trips missing_api_key ToolsError slot name", () => {
+    const mapped = mapToolsCatch(missingApiKey("SHODAN_API_KEY"));
+    expect(mapped).toBeInstanceOf(MissingCredentialError);
+    expect(mapped).toMatchObject({ slot: "SHODAN_API_KEY" });
   });
 });
 

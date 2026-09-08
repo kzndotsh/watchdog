@@ -151,14 +151,14 @@ function collectCdxHits(
 
 function fetchCdxHitsForIndexEffect(
   index: CollinfoIndex,
-  host: string,
+  urlPattern: string,
   limit: number,
   signal: AbortSignal,
   ua: string
 ): Effect.Effect<string, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCdxHitsForIndexGen() {
     const url = new URL(index.cdxApi);
-    url.searchParams.set("url", `*.${host}/*`);
+    url.searchParams.set("url", urlPattern);
     url.searchParams.set("output", "json");
     url.searchParams.set("limit", String(Math.min(limit, 50)));
 
@@ -226,17 +226,21 @@ export function fetchCommoncrawlLookupEffect(
     for (const index of indexes) {
       if (hits.length >= limit) break;
 
-      const text = yield* fetchCdxHitsForIndexEffect(
-        index,
-        host,
-        limit - hits.length,
-        signal,
-        ua
-      );
-      if (text === "") continue;
+      for (const pattern of [`${host}/*`, `*.${host}/*`]) {
+        if (hits.length >= limit) break;
 
-      const cdxRows = parseCommoncrawlCdxText(text);
-      collectCdxHits(cdxRows, index.id, limit, hits, urls, seenUrl);
+        const text = yield* fetchCdxHitsForIndexEffect(
+          index,
+          pattern,
+          limit - hits.length,
+          signal,
+          ua
+        );
+        if (text === "") continue;
+
+        const cdxRows = parseCommoncrawlCdxText(text);
+        collectCdxHits(cdxRows, index.id, limit, hits, urls, seenUrl);
+      }
     }
 
     return commoncrawlLookupSnapshotSchema.parse({

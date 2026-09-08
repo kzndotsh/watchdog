@@ -14,6 +14,7 @@ export {
 export {
   fetchDnsReverseEffect,
   normalizeIp,
+  normalizeIpEffect,
   dnsReverseSnapshotSchema,
   type DnsReverseSnapshot,
 } from "./dns/reverse";
@@ -303,6 +304,7 @@ export {
   type BgprankingLookupSnapshot,
 } from "./threat/bgpranking";
 export {
+  DSHIELD_USER_AGENT,
   fetchDshieldLookupEffect,
   parseDshieldBody,
   dshieldLookupSnapshotSchema,
