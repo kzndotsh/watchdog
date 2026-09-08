@@ -27,14 +27,37 @@ describe("interpret", () => {
     hostnames: ["dns.google"],
   };
 
-  it("interpretCensysLookupReport proposes hostname Identifiers + Claim", () => {
+  it("interpretCensysLookupReport proposes IP + hostname Identifiers + Claim", () => {
     const result = interpretCensysLookupReport(fixture, {
       input: { ip: "8.8.8.8", entityId },
     });
     expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("domain");
-    expect(claimText(result, 1)).toMatch(/15169/);
-    expect(claimText(result, 1)).toMatch(/HTTPS/);
+    expect(result.patch[0]?.data.type).toBe("ip");
+    expect(result.patch[0]?.data.value).toBe("8.8.8.8");
+    expect(result.patch[1]?.resource).toBe("identifier");
+    expect(result.patch[1]?.data.type).toBe("domain");
+    expect(claimText(result, 2)).toMatch(/15169/);
+    expect(claimText(result, 2)).toMatch(/HTTPS/);
+  });
+
+  it("summarizes not-indexed hosts separately from empty hits", () => {
+    const result = interpretCensysLookupReport(
+      {
+        ...fixture,
+        found: false,
+        status: 404,
+        asn: null,
+        asName: null,
+        asCountryCode: null,
+        countryCode: null,
+        city: null,
+        ports: [],
+        serviceNames: [],
+        hostnames: [],
+      },
+      { input: { ip: fixture.ip, entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/not indexed/);
   });
 
   itRejectsIncompleteReport(censysLookup, { ip: "8.8.8.8" }, { ip: "8.8.8.8" });

@@ -24,7 +24,11 @@ export const censysLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "CENSYS_API_ID" }, { name: "CENSYS_API_SECRET" }],
   consumes: [{ kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
