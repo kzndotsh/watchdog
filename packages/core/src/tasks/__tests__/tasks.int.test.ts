@@ -41,6 +41,43 @@ describe("createTask", () => {
     expect(listed.some((row) => row.id === created.id)).toBe(true);
   });
 
+  it("rejects whitespace-only task title", async () => {
+    const cased = await seedCase(db);
+    await expect(
+      runDomain(
+        createTaskEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          title: "   ",
+          actorId: TEST_ACTOR_ID,
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+    );
+  });
+
+  it("omits blank actorId from activity events", async () => {
+    const cased = await seedCase(db);
+    const created = await runDomain(
+      createTaskEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        title: "No actor",
+        actorId: "   ",
+      })
+    );
+    const events = await activityEventsRepo.recent(db, {
+      organizationId: TEST_ORGANIZATION_ID,
+      caseId: cased.id,
+      limit: 10,
+    });
+    const createdEvent = events.find(
+      (row) => row.action === "created" && row.subjectId === created.id
+    );
+    expect(createdEvent?.actorId).toBeNull();
+  });
+
   it("writes an activity event when status changes", async () => {
     const cased = await seedCase(db);
     const created = await runDomain(
@@ -67,6 +104,56 @@ describe("createTask", () => {
     });
     expect(events.some((row) => row.action === "status_changed")).toBe(true);
     expect(events.every((row) => row.actorId === TEST_ACTOR_ID)).toBe(true);
+  });
+
+  it("trims padded entityId on create", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, {
+      id: testId(21),
+      slug: "target",
+    });
+    const created = await runDomain(
+      createTaskEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        title: "Trim entity",
+        entityId: `  ${entity.id}  `,
+        actorId: TEST_ACTOR_ID,
+      })
+    );
+    expect(created.entityId).toBe(entity.id);
+
+    const listed = await runDomain(
+      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+        entityId: `  ${entity.id}  `,
+      })
+    );
+    expect(listed.some((row) => row.id === created.id)).toBe(true);
+  });
+
+  it("trims padded dueDate on create and treats whitespace-only as null", async () => {
+    const cased = await seedCase(db);
+    const created = await runDomain(
+      createTaskEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        title: "Due soon",
+        dueDate: "  2026-06-15T12:00:00.000Z  ",
+        actorId: TEST_ACTOR_ID,
+      })
+    );
+    expect(created.dueDate).toBe("2026-06-15T12:00:00.000Z");
+
+    const cleared = await runDomain(
+      updateTaskEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        taskId: created.id,
+        dueDate: "   ",
+        actorId: TEST_ACTOR_ID,
+      })
+    );
+    expect(cleared.dueDate).toBe(null);
   });
 
   it("rejects an entity from another case", async () => {
@@ -139,5 +226,41 @@ describe("createTask", () => {
       })
     );
     expect(listed.map((row) => row.id)).toEqual([second.id, first.id]);
+  });
+
+  it("assigns distinct positions for concurrent creates", async () => {
+    const cased = await seedCase(db);
+    const [first, second] = await Promise.all([
+      runDomain(
+        createTaskEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          title: "Concurrent A",
+          actorId: TEST_ACTOR_ID,
+        })
+      ),
+      runDomain(
+        createTaskEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          title: "Concurrent B",
+          actorId: TEST_ACTOR_ID,
+        })
+      ),
+    ]);
+    expect(first.position).not.toBe(second.position);
+  });
+
+  it("rejects entityId with unattachedOnly", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id);
+    await expect(
+      runDomain(
+        listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+          entityId: entity.id,
+          unattachedOnly: true,
+        })
+      )
+    ).rejects.toBeInstanceOf(DomainError);
   });
 });
