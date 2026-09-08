@@ -32,10 +32,11 @@ describe("interpretIpLookupReport", () => {
     const result = interpretIpLookupReport(fixture, {
       input: { ip: "8.8.8.8", entityId },
     });
-    expect(result.patch).toHaveLength(1);
-    expect(result.patch[0]?.resource).toBe("claim");
-    expect(claimText(result, 0)).toMatch(/15169/);
-    expect(claimText(result, 0)).toMatch(/GOOGLE/);
+    expect(result.patch).toHaveLength(2);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.data.type).toBe("ip");
+    expect(claimText(result, 1)).toMatch(/15169/);
+    expect(claimText(result, 1)).toMatch(/GOOGLE/);
     expectNoConfidenceOnPatch(result);
   });
 
@@ -52,8 +53,20 @@ describe("interpretIpLookupReport", () => {
       },
       { input: { ip: "8.8.8.8", entityId } }
     );
-    expect(result.patch).toHaveLength(1);
-    expect(claimText(result, 0)).toMatch(/no Cymru ASN data/);
+    expect(result.patch).toHaveLength(2);
+    expect(claimText(result, 1)).toMatch(/no Cymru ASN data/);
+  });
+
+  it("lists every ASN when multiple origins are present", () => {
+    const result = interpretIpLookupReport(
+      {
+        ...fixture,
+        asns: ["15169", "64512"],
+        asn: "15169",
+      },
+      { input: { ip: "8.8.8.8", entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/ASNs=15169,64512/);
   });
 
   it("emits an empty patch when entityId is omitted", () => {

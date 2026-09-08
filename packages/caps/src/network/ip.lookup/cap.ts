@@ -19,7 +19,10 @@ export const ipLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   consumes: [{ kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
