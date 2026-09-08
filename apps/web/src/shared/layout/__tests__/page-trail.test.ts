@@ -7,7 +7,7 @@ import {
 } from "../page-trail.ts";
 
 const CASE = { name: "Boy Moment", slug: "boy-moment" };
-const ENTITY = { name: "Ada" };
+const ENTITY = { name: "Ada", slug: "ada" };
 
 const BASE_TRAIL_INPUT = {
   activeCase: CASE,
@@ -104,6 +104,15 @@ describe("buildPageTrail", () => {
       pathname: "/entities/ada",
     });
     expect(labels(items)).toEqual(["Boy Moment", "Entities", "ada"]);
+  });
+
+  it("dossier falls back to slug when entity name is blank", () => {
+    const items = buildPageTrail({
+      ...BASE_TRAIL_INPUT,
+      pathname: "/entities/acme-corp",
+      entity: { name: "", slug: "acme-corp" },
+    });
+    expect(labels(items)).toEqual(["Boy Moment", "Entities", "acme-corp"]);
   });
 
   it("settings and style guide omit Case", () => {

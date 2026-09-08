@@ -4,6 +4,9 @@ import { useRouterState } from "@tanstack/react-router";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import { buildPageTrail, type TrailItem } from "@/shared/layout/page-trail";
+import { listPending } from "@/shared/lib/list-pending";
+import { queryEnabledFlag } from "@/shared/lib/query-enabled";
+import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 
 function trailParams(matches: readonly { params: Record<string, unknown> }[]): {
   caseSlug?: string;
@@ -11,9 +14,13 @@ function trailParams(matches: readonly { params: Record<string, unknown> }[]): {
 } {
   const merged: { caseSlug?: string; entitySlug?: string } = {};
   for (const { params } of matches) {
-    if (typeof params.caseSlug === "string") merged.caseSlug = params.caseSlug;
+    if (typeof params.caseSlug === "string") {
+      const scoped = normalizeEntitySlug(params.caseSlug);
+      if (scoped !== undefined) merged.caseSlug = scoped;
+    }
     if (typeof params.entitySlug === "string") {
-      merged.entitySlug = params.entitySlug;
+      const scoped = normalizeEntitySlug(params.entitySlug);
+      if (scoped !== undefined) merged.entitySlug = scoped;
     }
   }
   return merged;
@@ -22,38 +29,79 @@ function trailParams(matches: readonly { params: Record<string, unknown> }[]): {
 export function usePageTrail(): {
   items: TrailItem[];
   pendingLast: boolean;
+  placeholderLast: boolean;
+  errorLast: boolean;
 } {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const params = useRouterState({
     select: (s) => trailParams(s.matches),
   });
 
-  const casesQuery = useQuery(casesContextQuery());
-  const activeCase = casesQuery.data?.active ?? null;
+  const casesQuery = useQuery({
+    ...casesContextQuery(),
+    meta: { silentError: true },
+  });
+  const casesLoadError = casesQuery.isError ?? false;
+  const activeCase = casesLoadError ? null : (casesQuery.data?.active ?? null);
   const routeCase =
-    params.caseSlug === undefined
+    casesLoadError || params.caseSlug === undefined
       ? null
       : (casesQuery.data?.cases.find((row) => row.slug === params.caseSlug) ??
         (activeCase?.slug === params.caseSlug ? activeCase : null));
 
+  const entityQueryOptions = entityBySlugQuery(
+    activeCase?.id ?? "",
+    params.entitySlug ?? ""
+  );
+  const entityQueryEnabled =
+    queryEnabledFlag(entityQueryOptions.enabled) &&
+    Boolean(activeCase?.id && params.entitySlug);
+
   const entityQuery = useQuery({
-    ...entityBySlugQuery(activeCase?.id ?? "", params.entitySlug ?? ""),
-    enabled: Boolean(activeCase?.id && params.entitySlug),
+    ...entityQueryOptions,
+    enabled: entityQueryEnabled,
+    meta: { silentError: true },
   });
 
-  const items = buildPageTrail({
+  const entityLoadError = Boolean(
+    activeCase?.id && params.entitySlug && entityQuery.isError
+  );
+
+  let items = buildPageTrail({
     pathname,
     activeCase,
     routeCase,
     entity: entityQuery.data ?? null,
   });
+  if (casesLoadError) {
+    const last = items.at(-1);
+    if (last?.id === "case" || last?.id === "entity") {
+      items = [...items.slice(0, -1), { ...last, label: "Unavailable" }];
+    }
+  }
+  if (entityLoadError) {
+    const last = items.at(-1);
+    if (last?.id === "entity") {
+      items = [...items.slice(0, -1), { ...last, label: "Unavailable" }];
+    }
+  }
 
-  const pendingLast = Boolean(
-    activeCase?.id &&
-    params.entitySlug &&
-    entityQuery.isPending &&
-    !entityQuery.data
-  );
+  const errorLast =
+    entityLoadError ||
+    (casesLoadError &&
+      (items.at(-1)?.id === "case" || items.at(-1)?.id === "entity"));
 
-  return { items, pendingLast };
+  const pendingLast =
+    entityQueryEnabled &&
+    listPending(entityQuery, {
+      enabled: entityQueryEnabled,
+    }) &&
+    !entityQuery.data;
+
+  return {
+    items,
+    pendingLast,
+    placeholderLast: entityQuery.isPlaceholderData,
+    errorLast,
+  };
 }

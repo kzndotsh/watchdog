@@ -2,12 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { FolderIcon } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
 import type {
   CountOnTrailId,
   TrailItem,
   TrailTo,
 } from "@/shared/layout/page-trail";
 import { usePageTrail } from "@/shared/layout/use-page-trail";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -83,10 +85,14 @@ function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
 function LastCrumb({
   current,
   pendingLast,
+  placeholderLast,
+  errorLast,
   item,
 }: {
   current?: ReactNode;
   pendingLast: boolean;
+  placeholderLast: boolean;
+  errorLast: boolean;
   item: TrailItem;
 }) {
   if (current === undefined) {
@@ -96,7 +102,11 @@ function LastCrumb({
     return (
       <BreadcrumbPage
         aria-label={item.id === "case" ? `Case ${item.label}` : undefined}
-        className="text-foreground inline-flex max-w-[16rem] min-w-0 items-center gap-1 text-xs font-semibold tracking-tight"
+        className={cn(
+          "text-foreground inline-flex max-w-[16rem] min-w-0 items-center gap-1 text-xs font-semibold tracking-tight",
+          placeholderDeemphasisClass(placeholderLast),
+          errorLast && "text-destructive"
+        )}
       >
         <CrumbFace item={item} />
       </BreadcrumbPage>
@@ -121,7 +131,7 @@ export function AppBreadcrumbs({
   count?: number;
   countOn?: CountOnTrailId;
 }) {
-  const { items, pendingLast } = usePageTrail();
+  const { items, pendingLast, placeholderLast, errorLast } = usePageTrail();
   const last = items.at(-1);
   const ancestors = items.slice(0, -1);
 
@@ -145,7 +155,13 @@ export function AppBreadcrumbs({
           </Fragment>
         ))}
         <BreadcrumbItem className="min-w-0">
-          <LastCrumb current={current} pendingLast={pendingLast} item={last} />
+          <LastCrumb
+            current={current}
+            pendingLast={pendingLast}
+            placeholderLast={placeholderLast}
+            errorLast={errorLast}
+            item={last}
+          />
           {count !== undefined && countOn === last.id ? (
             <TabCount n={count} />
           ) : null}

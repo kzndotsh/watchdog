@@ -25,5 +25,5 @@ export interface PageTrailInput {
   activeCase: { name: string; slug: string } | null;
   /** Case named by `/cases/$caseSlug` (may differ from Active Case). */
   routeCase: { name: string; slug: string } | null;
-  entity: { name: string } | null;
+  entity: { name: string; slug: string } | null;
 }

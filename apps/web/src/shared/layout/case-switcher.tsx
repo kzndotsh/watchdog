@@ -1,12 +1,14 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Suspense, useEffect } from "react";
+import { useEffect } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { SidebarGroupLabel, useSidebar } from "@/shared/ui/shadcn/sidebar";
 import { Skeleton } from "@/shared/ui/shadcn/skeleton";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 
 import {
   CaseSwitcherCollapsed,
@@ -23,7 +25,8 @@ function CaseSwitcherSkeleton() {
   );
 }
 
-function CaseSwitcherReady() {
+/** Sidebar workspace control — active Case (cookie) + switcher + case nav. */
+export function CaseSwitcher() {
   const { state, isMobile } = useSidebar();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -36,24 +39,18 @@ function CaseSwitcherReady() {
         "entityId" in search
       ) {
         const value: unknown = search.entityId;
-        if (typeof value === "string") return value;
+        if (typeof value === "string") return trimmedOrUndefined(value);
       }
       // oxlint-disable-next-line unicorn/no-useless-undefined -- select must return string | undefined
       return undefined;
     },
   });
   const queryClient = useQueryClient();
-  const { data } = useSuspenseQuery({
-    ...casesContextQuery(),
-    meta: { silentError: true },
+  const { cases, active, pending, loadError, retry } = useCasesContext({
+    silentError: true,
   });
 
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
-
-  const cases = data.cases;
-  const activeId = data.active?.id ?? "";
-  const active = data.active;
-  const collapsed = state === "collapsed" && !isMobile;
 
   const selectMutation = useSelectActiveCase({
     cases,
@@ -61,6 +58,24 @@ function CaseSwitcherReady() {
     entityId,
     navigate,
   });
+
+  if (pending) {
+    return <CaseSwitcherSkeleton />;
+  }
+
+  if (loadError) {
+    return (
+      <>
+        <SidebarGroupLabel>Case</SidebarGroupLabel>
+        <div className="px-2 py-1">
+          <FetchErrorAlert error={loadError} onRetry={retry} />
+        </div>
+      </>
+    );
+  }
+
+  const activeId = active?.id ?? "";
+  const collapsed = state === "collapsed" && !isMobile;
 
   function selectCase(id: string) {
     if (id === activeId) return;
@@ -90,14 +105,5 @@ function CaseSwitcherReady() {
       collapsed={collapsed}
       onSelectCase={selectCase}
     />
-  );
-}
-
-/** Sidebar workspace control — active Case (cookie) + switcher + case nav. */
-export function CaseSwitcher() {
-  return (
-    <Suspense fallback={<CaseSwitcherSkeleton />}>
-      <CaseSwitcherReady />
-    </Suspense>
   );
 }

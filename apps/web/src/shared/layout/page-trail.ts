@@ -1,3 +1,5 @@
+import { entityDisplayLabel } from "@watchdog/schemas";
+
 import type { PageTrailInput, TrailItem, TrailTo } from "./page-trail.types";
 
 export type {
@@ -55,7 +57,13 @@ function buildEntitiesTrail(
   if (next === undefined) {
     return withCase(input.activeCase, [current("entities", "Entities")]);
   }
-  const entityName = input.entity?.name ?? next;
+  const entityName =
+    input.entity === null
+      ? next
+      : entityDisplayLabel({
+          name: input.entity.name,
+          slug: input.entity.slug,
+        });
   return withCase(input.activeCase, [
     link("entities", "Entities", { to: "/entities" }),
     current("entity", entityName),
