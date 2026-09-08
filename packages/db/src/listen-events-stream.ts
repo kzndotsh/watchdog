@@ -25,9 +25,8 @@ export function listenForEventsStream(
       (listener) =>
         Effect.tryPromise({
           try: () => listener.end(),
-          catch: (error) =>
-            new Error(error instanceof Error ? error.message : String(error)),
-        }).pipe(Effect.catch(() => Effect.void))
+          catch: (error) => error,
+        }).pipe(Effect.ignore)
     )
   );
 }

@@ -70,6 +70,7 @@ Repos take `exec` first. Outside a TX pass `db`; inside pass `tx`. This **invert
 - **`auth.auth_event`**: append-only auth process rows (`session.created` + IP/UA). Insert via `insertAuthEvent` / `onAuthSessionCreated` in `src/auth/`, not a Graph repo. Not Graph audit and not an SSE notify source. Wipe keeps `auth.*`.
 - **Cases by id:** `casesRepo.getById(exec, id, organizationId)` is the default (org filter). `getByIdUnchecked` is only for worker/export internals where the Case id already came from a trusted Job or child row — core mirrors this with `assertCaseInOrgEffect` vs `assertCaseExistsUncheckedEffect`.
 - **Search `ilike`**: escape user terms in `src/repos/_ilike.ts` (`containsPattern`); do not concatenate `%` in repo callers.
+- **Scoped ids:** `repos/_scoped-ids.ts` trims + validates Case/graph UUIDs via `parseTrimmedCaseId`; blank or invalid → repo miss (`[]` / `null`). Activity org filter uses the same rule in `_org-case-filter.ts`.
 - Postgres `53300`: usually Vite/tsx HMR leaking pools — singleton + `idle_timeout` stay; do **not** raise pool `max` (stays 10); restart vite + worker if needed.
 - `@effect/sql-pg@4.0.0-rc.112` exists, but Drizzle schema/migrations stay SoT. Core wraps repo Promise calls with `Effect.tryPromise` + `mapPostgresCatch` — do not dual-write through `@effect/sql-pg`.
 

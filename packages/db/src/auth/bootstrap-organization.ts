@@ -19,6 +19,7 @@ async function membershipOrgId(
     .select({ organizationId: member.organizationId })
     .from(member)
     .where(eq(member.userId, userId))
+    .orderBy(member.createdAt)
     .limit(1);
   return row?.organizationId ?? null;
 }
