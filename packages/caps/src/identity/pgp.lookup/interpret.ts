@@ -1,13 +1,13 @@
 import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-import { validateIdentifierValue } from "@watchdog/schemas";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   identifierTruncationNote,
   querySeedBatches,
 } from "../../lib/collect/query-seed-batches";
+import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 import type { pgpLookupInput } from "./input";
 import type { PgpLookupSnapshot } from "./report-schema";
 
@@ -26,17 +26,17 @@ export function interpretPgpLookupReport(
   report: PgpLookupSnapshot,
   opts: CapInterpretOpts<PgpInput>
 ): CapInterpretResult {
-  const emailSeed = validateIdentifierValue("email", report.query);
-  const pgpSeed = validateIdentifierValue("pgp", report.query);
+  const emailValue = validatedIdentifierValue("email", report.query);
+  const pgpValue = validatedIdentifierValue("pgp", report.query);
   const pgpValues = [
-    ...(pgpSeed.ok ? [pgpSeed.value] : []),
+    ...(pgpValue === null ? [] : [pgpValue]),
     ...report.keys.map((key) => key.fingerprint),
   ];
 
   return interpretIdentifierBatches({
     entityId: opts.input.entityId,
     batches: [
-      ...(emailSeed.ok ? querySeedBatches(emailSeed.value, "email") : []),
+      ...(emailValue === null ? [] : querySeedBatches(emailValue, "email")),
       { type: "pgp", values: pgpValues, limit: PGP_KEY_LIMIT },
     ],
     claimText: summarize(report),

@@ -1,7 +1,6 @@
 import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-import { validateIdentifierValue } from "@watchdog/schemas";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
@@ -11,6 +10,7 @@ import {
   querySeedBatches,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
+import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 import type { threatfoxLookupInput } from "./input";
 import type { ThreatfoxLookupSnapshot } from "./report-schema";
 
@@ -73,14 +73,11 @@ export function interpretThreatfoxLookupReport(
     if (kind === null) continue;
     const value = kind === "ip" ? stripPortFromIpIoc(ioc.ioc) : ioc.ioc;
     if (value.trim() === "") continue;
-    if (kind === "domain" && (value.includes("*") || value.startsWith("*."))) {
-      continue;
-    }
-    const parsed = validateIdentifierValue(kind, value);
-    if (!parsed.ok) continue;
+    const normalized = validatedIdentifierValue(kind, value);
+    if (normalized === null) continue;
     eligibleTotal += 1;
     if (collected >= IOC_LIMIT) continue;
-    buckets[kind].push(parsed.value);
+    buckets[kind].push(normalized);
     collected += 1;
   }
 

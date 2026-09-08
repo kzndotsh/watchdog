@@ -44,7 +44,7 @@ describe("querySeedBatches", () => {
     ]);
   });
 
-  it("normalizes email seeds via validateIdentifierValue", () => {
+  it("normalizes email seeds via validatedIdentifierValue", () => {
     expect(querySeedBatches("Alice@Example.COM", "email")).toEqual([
       { type: "email", values: ["alice@example.com"] },
     ]);

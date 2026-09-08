@@ -1,7 +1,8 @@
-import { validateIdentifierValue } from "@watchdog/schemas";
+import type { IdentifierType } from "@watchdog/schemas";
 
-import { eligibleCtDomains, withSeedHost } from "./eligible-domain-hosts";
+import { withSeedHost } from "./eligible-domain-hosts";
 import type { IdentifierBatch } from "./interpret-identifier-batches";
+import { validatedIdentifierValue } from "./validated-identifier-value";
 
 export type QuerySeedKind =
   | "ip"
@@ -32,11 +33,43 @@ function batchValueCount(batches: readonly IdentifierBatch[]): number {
   return batches.reduce((count, batch) => count + batch.values.length, 0);
 }
 
+function pushUniqueValidated(
+  seen: Set<string>,
+  values: string[],
+  type: IdentifierType,
+  raw: string
+): void {
+  const value = validatedIdentifierValue(type, raw);
+  if (value === null || seen.has(value)) return;
+  seen.add(value);
+  values.push(value);
+}
+
+function valuesBatch(
+  type: IdentifierType,
+  raws: readonly string[],
+  opts?: { limit?: number }
+): readonly IdentifierBatch[] {
+  const values: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of raws) {
+    pushUniqueValidated(seen, values, type, raw);
+  }
+  if (values.length === 0) return [];
+  return [
+    {
+      type,
+      values,
+      ...(opts?.limit === undefined ? {} : { limit: opts.limit }),
+    },
+  ];
+}
+
 /** Single-batch helper for caps that consume one IP seed. */
 export function ipSeedBatch(ip: string): readonly IdentifierBatch[] {
-  const parsed = validateIdentifierValue("ip", ip);
-  if (!parsed.ok) return [];
-  return [{ type: "ip", values: [parsed.value] }];
+  const value = validatedIdentifierValue("ip", ip);
+  if (value === null) return [];
+  return [{ type: "ip", values: [value] }];
 }
 
 /** Multi-value IP batch — dedupes and skips invalid addresses. */
@@ -44,22 +77,7 @@ export function ipValuesBatch(
   ips: readonly string[],
   opts?: { limit?: number }
 ): readonly IdentifierBatch[] {
-  const values: string[] = [];
-  const seen = new Set<string>();
-  for (const ip of ips) {
-    const parsed = validateIdentifierValue("ip", ip);
-    if (!parsed.ok || seen.has(parsed.value)) continue;
-    seen.add(parsed.value);
-    values.push(parsed.value);
-  }
-  if (values.length === 0) return [];
-  return [
-    {
-      type: "ip",
-      values,
-      ...(opts?.limit === undefined ? {} : { limit: opts.limit }),
-    },
-  ];
+  return valuesBatch("ip", ips, opts);
 }
 
 /** Multi-value domain batch — dedupes and skips invalid hostnames. */
@@ -67,22 +85,7 @@ export function domainValuesBatch(
   domains: readonly string[],
   opts?: { limit?: number }
 ): readonly IdentifierBatch[] {
-  const values: string[] = [];
-  const seen = new Set<string>();
-  for (const domain of eligibleCtDomains(domains)) {
-    const parsed = validateIdentifierValue("domain", domain);
-    if (!parsed.ok || seen.has(parsed.value)) continue;
-    seen.add(parsed.value);
-    values.push(parsed.value);
-  }
-  if (values.length === 0) return [];
-  return [
-    {
-      type: "domain",
-      values,
-      ...(opts?.limit === undefined ? {} : { limit: opts.limit }),
-    },
-  ];
+  return valuesBatch("domain", domains, opts);
 }
 
 /** Multi-value email batch — dedupes and skips invalid addresses. */
@@ -90,29 +93,14 @@ export function emailValuesBatch(
   emails: readonly string[],
   opts?: { limit?: number }
 ): readonly IdentifierBatch[] {
-  const values: string[] = [];
-  const seen = new Set<string>();
-  for (const email of emails) {
-    const parsed = validateIdentifierValue("email", email);
-    if (!parsed.ok || seen.has(parsed.value)) continue;
-    seen.add(parsed.value);
-    values.push(parsed.value);
-  }
-  if (values.length === 0) return [];
-  return [
-    {
-      type: "email",
-      values,
-      ...(opts?.limit === undefined ? {} : { limit: opts.limit }),
-    },
-  ];
+  return valuesBatch("email", emails, opts);
 }
 
 /** Single-batch helper for caps that consume one URL seed. */
 export function urlSeedBatch(url: string): readonly IdentifierBatch[] {
-  const parsed = validateIdentifierValue("url", url);
-  if (!parsed.ok) return [];
-  return [{ type: "url", values: [parsed.value] }];
+  const value = validatedIdentifierValue("url", url);
+  if (value === null) return [];
+  return [{ type: "url", values: [value] }];
 }
 
 /** Multi-value URL batch — dedupes and skips invalid URLs. */
@@ -120,22 +108,7 @@ export function urlValuesBatch(
   urls: readonly string[],
   opts?: { limit?: number }
 ): readonly IdentifierBatch[] {
-  const values: string[] = [];
-  const seen = new Set<string>();
-  for (const url of urls) {
-    const parsed = validateIdentifierValue("url", url);
-    if (!parsed.ok || seen.has(parsed.value)) continue;
-    seen.add(parsed.value);
-    values.push(parsed.value);
-  }
-  if (values.length === 0) return [];
-  return [
-    {
-      type: "url",
-      values,
-      ...(opts?.limit === undefined ? {} : { limit: opts.limit }),
-    },
-  ];
+  return valuesBatch("url", urls, opts);
 }
 
 /** Eligible domain Identifiers after wildcard filtering and validation. */
@@ -170,9 +143,9 @@ export function eligibleEmailCount(emails: readonly string[]): number {
 
 /** File-hash playbook seeds map to `other` Identifiers (no dedicated hash type). */
 export function hashSeedBatch(hash: string): readonly IdentifierBatch[] {
-  const parsed = validateIdentifierValue("other", hash);
-  if (!parsed.ok) return [];
-  return [{ type: "other", values: [parsed.value] }];
+  const value = validatedIdentifierValue("other", hash);
+  if (value === null) return [];
+  return [{ type: "other", values: [value] }];
 }
 
 /** Propose the queried indicator when kind maps to a graph Identifier type. */
@@ -182,11 +155,11 @@ export function querySeedBatches(
 ): readonly IdentifierBatch[] {
   if (kind === "other") return [];
   if (kind === "hash") {
-    const parsed = validateIdentifierValue("other", query);
-    if (!parsed.ok) return [];
-    return [{ type: "other", values: [parsed.value] }];
+    const value = validatedIdentifierValue("other", query);
+    if (value === null) return [];
+    return [{ type: "other", values: [value] }];
   }
-  const parsed = validateIdentifierValue(kind, query);
-  if (!parsed.ok) return [];
-  return [{ type: kind, values: [parsed.value] }];
+  const value = validatedIdentifierValue(kind, query);
+  if (value === null) return [];
+  return [{ type: kind, values: [value] }];
 }
