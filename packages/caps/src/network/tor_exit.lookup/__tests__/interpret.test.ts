@@ -21,19 +21,23 @@ describe("interpret", () => {
 
   const nonExitFixture = { ...exitFixture, isExit: false };
 
-  it("interpretTorExitLookupReport flags a current Tor exit node", () => {
+  it("interpretTorExitLookupReport proposes ip Identifier + observation Claim", () => {
     const result = interpretTorExitLookupReport(exitFixture, {
       input: { ip: exitFixture.ip, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/is a current Tor exit node/);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.data.type).toBe("ip");
+    expect(result.patch[0]?.data.value).toBe("1.2.3.4");
+    expect(result.patch[1]?.resource).toBe("claim");
+    expect(claimText(result, 1)).toMatch(/is a current Tor exit node/);
   });
 
   it("interpretTorExitLookupReport reports non-membership", () => {
     const result = interpretTorExitLookupReport(nonExitFixture, {
       input: { ip: nonExitFixture.ip, entityId },
     });
-    expect(claimText(result, 0)).toMatch(/is not a current Tor exit node/);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(claimText(result, 1)).toMatch(/is not a current Tor exit node/);
   });
 
   itRejectsIncompleteReport(

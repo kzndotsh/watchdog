@@ -2,7 +2,8 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { torExitLookupInput } from "./input";
 import type { TorExitLookupSnapshot } from "./report-schema";
 
@@ -19,9 +20,11 @@ export function interpretTorExitLookupReport(
   report: TorExitLookupSnapshot,
   opts: CapInterpretOpts<TorExitInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "Tor exit-list check captured; no Entity to attach Claim",
+    batches: [...ipSeedBatch(report.ip)],
+    claimText: summarize(report),
+    noEntitySummary:
+      "Tor exit-list check captured; no Entity to attach Identifiers",
   });
 }
