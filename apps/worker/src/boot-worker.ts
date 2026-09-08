@@ -305,7 +305,7 @@ function onExportEventListenError(
   requestWorkerShutdown("LISTEN", ctx, shutdownGate);
 }
 
-function exportEventsProgram(
+function exportEventsEffect(
   ctx: WorkerShutdownContext,
   shutdownGate: Deferred.Deferred<true>
 ) {
@@ -482,6 +482,6 @@ export const bootWorkerEffect = Effect.scoped(
       bindWorkerShutdown(shutdownCtx, shutdownGate);
     });
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
-    return yield* exportEventsProgram(shutdownCtx, shutdownGate);
+    return yield* exportEventsEffect(shutdownCtx, shutdownGate);
   })
 );
