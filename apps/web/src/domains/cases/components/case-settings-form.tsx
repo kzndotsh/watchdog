@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { updateCaseFn } from "@/domains/cases/cases.functions";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import { writeCaseRecordCache } from "@/domains/cases/lib/case-cache";
+import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
 import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
@@ -42,9 +43,9 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
   const updateMutation = useMutation({
     mutationFn: async (vars: {
       name?: string;
-      description?: string;
+      description?: string | null;
       allowThirdPartyEgress?: boolean;
-    }) => updateCaseFn({ data: { id: caseId, ...vars } }),
+    }) => updateCaseFn({ data: buildUpdateCaseData(caseId, vars) }),
     onSuccess: async (updated) => {
       writeCaseRecordCache(queryClient, updated, { slug: caseRow.slug });
       notifyCasesChanged();
@@ -107,7 +108,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
             const prev = (caseRow.description ?? "").trim();
             if (next !== prev) {
               updateMutation.mutate({
-                description: next || undefined,
+                description: next,
               });
             }
           }}

@@ -23,16 +23,13 @@ vi.mock("@/domains/cases/components/case-settings-form", () => ({
   CaseSettingsForm: () => <div>Case settings form</div>,
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
-const useSuspenseQueriesMock = vi.hoisted(() => vi.fn());
+const useQueriesMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
-    useSuspenseQueries: (options: { queries: unknown[] }) =>
-      useSuspenseQueriesMock(options),
+    useQueries: (options: { queries: unknown[] }) => useQueriesMock(options),
   };
 });
 
@@ -46,16 +43,40 @@ const CASE: CaseRecord = {
   allowThirdPartyEgress: false,
 };
 
+function mockOverviewQueries(opts?: { errored?: boolean }) {
+  const base = {
+    data: [],
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  };
+  return [
+    opts?.errored
+      ? {
+          ...base,
+          data: undefined,
+          isError: true,
+          error: new Error("overview stats failed"),
+        }
+      : base,
+    base,
+    base,
+    base,
+    base,
+  ];
+}
+
 function renderTab(
   entities: Parameters<typeof CaseOverviewTab>[0]["entities"] = [],
-  identifiers: Parameters<typeof CaseOverviewTab>[0]["identifiers"] = []
+  identifiers: Parameters<typeof CaseOverviewTab>[0]["identifiers"] = [],
+  opts?: { errored?: boolean }
 ) {
-  useSuspenseQueriesMock.mockReturnValue([
-    { data: [] },
-    { data: [] },
-    { data: [] },
-    { data: [] },
-  ]);
+  useQueriesMock.mockImplementation((options: { queries: unknown[] }) => {
+    expect(options.queries).toHaveLength(5);
+    return mockOverviewQueries(opts);
+  });
 
   const client = new QueryClient();
   return render(
@@ -101,5 +122,11 @@ describe("CaseOverviewTab", () => {
     renderTab();
     expect(screen.getByText("Nothing yet")).toBeInTheDocument();
     expect(screen.getByText("Case settings form")).toBeInTheDocument();
+  });
+
+  it("shows a retryable error when overview stats fail to load", () => {
+    renderTab([], [], { errored: true });
+    expect(screen.getByText("overview stats failed")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 });

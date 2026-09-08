@@ -1,26 +1,57 @@
-import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
-import { buildCaseOverviewActivity } from "@/domains/cases/lib/overview-activity";
+import {
+  buildCaseOverviewActivity,
+  CASE_OVERVIEW_ACTIVITY_LIMIT,
+  jobEntityLabelsForActivity,
+} from "@/domains/cases/lib/overview-activity";
 import type { CaseRecord } from "@/domains/cases/types";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
+import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import type { EntityRecord } from "@/domains/entities/types";
 import { evidenceListQuery } from "@/domains/intake/queries";
-import { LIVE_STATUSES } from "@/domains/jobs/lib/status";
+import type { EvidenceRecord } from "@/domains/intake/types";
+import { countLiveJobs } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
+import type { JobListRecord } from "@/domains/jobs/types";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
-import { cn } from "@/lib/utils";
+import { errMessage, cn } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import {
+  invalidateAfterEntityChanged,
+  invalidateAfterEvidenceMutation,
   invalidateAfterJobMutation,
   invalidateAfterProposalQueueChange,
+  invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import type { ProposalRecord } from "@watchdog/core";
+import { activityKindLabel, isProposalQueueLiveEvent } from "@watchdog/schemas";
+
+function caseOverviewQueries(caseId: string) {
+  return [
+    edgesForCaseQuery(caseId),
+    evidenceListQuery(caseId),
+    evidenceListQuery(caseId, { hiddenOnly: true }),
+    jobsListQuery(caseId),
+    proposalsByStatusQuery(caseId, "pending"),
+  ] as const;
+}
+
+const EMPTY_EDGES: CaseEdgeRecord[] = [];
+const EMPTY_EVIDENCE: EvidenceRecord[] = [];
+const EMPTY_JOBS: JobListRecord[] = [];
+const EMPTY_PROPOSALS: ProposalRecord[] = [];
 
 interface StatTile {
   id: string;
@@ -42,104 +73,151 @@ export function CaseOverviewTab({
   entities,
   identifiers,
   listsPending = false,
+  listsPlaceholder = false,
 }: {
   caseId: string;
   caseRow: CaseRecord;
   entities: EntityRecord[];
   identifiers: CaseIdentifierRecord[];
   listsPending?: boolean;
+  listsPlaceholder?: boolean;
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [
-    { data: edges },
-    { data: evidence },
-    { data: jobs },
-    { data: pendingProposals },
-  ] = useSuspenseQueries({
-    queries: [
-      edgesForCaseQuery(caseId),
-      evidenceListQuery(caseId),
-      jobsListQuery(caseId),
-      proposalsByStatusQuery(caseId, "pending"),
-    ],
+  const queryResults = useQueries({
+    queries: caseOverviewQueries(caseId),
   });
+  const [
+    edgesQuery,
+    evidenceQuery,
+    hiddenEvidenceQuery,
+    jobsQuery,
+    pendingProposalsQuery,
+  ] = queryResults;
+  const edges = edgesQuery.data ?? EMPTY_EDGES;
+  const evidence = evidenceQuery.data ?? EMPTY_EVIDENCE;
+  const hiddenEvidence = hiddenEvidenceQuery.data ?? EMPTY_EVIDENCE;
+  const jobs = jobsQuery.data ?? EMPTY_JOBS;
+  const pendingProposals = pendingProposalsQuery.data ?? EMPTY_PROPOSALS;
+  const overviewPending = queryResults.some((query) => listPending(query));
+  const overviewLoadError =
+    !overviewPending && queryResults.some((query) => query.isError)
+      ? errMessage(
+          queryResults.find((query) => query.isError)?.error,
+          "Failed to load case overview"
+        )
+      : null;
+  const statsPending = listsPending || overviewPending;
+  const overviewPlaceholder =
+    listsPlaceholder || anyQueryPlaceholderData(queryResults);
 
   useLiveEvents(caseId, (event) => {
     if (event.type === "job_update") {
       void invalidateAfterJobMutation(queryClient, caseId);
     }
-    if (event.type === "proposal_created") {
+    if (isProposalQueueLiveEvent(event)) {
       void invalidateAfterProposalQueueChange(queryClient, caseId);
+    }
+    if (event.type === "entity_changed") {
+      void invalidateAfterEntityChanged(queryClient, caseId);
+    }
+    if (event.type === "task_changed") {
+      void invalidateAfterTaskMutation(queryClient, caseId);
+    }
+    if (event.type === "evidence_changed") {
+      void invalidateAfterEvidenceMutation(queryClient, caseId);
     }
   });
 
-  const liveJobs = useMemo(
-    () => jobs.filter((j) => LIVE_STATUSES.has(j.status)),
-    [jobs]
-  );
+  const liveJobCount = useMemo(() => countLiveJobs(jobs), [jobs]);
 
   const tiles: StatTile[] = useMemo(
     () => [
       {
         id: "entities",
         label: "Entities",
-        value: listsPending ? "—" : entities.length,
+        value: statsPending ? "—" : entities.length,
         to: "/entities",
       },
       {
         id: "identifiers",
         label: "Identifiers",
-        value: listsPending ? "—" : identifiers.length,
+        value: statsPending ? "—" : identifiers.length,
         to: "/identifiers",
       },
       {
         id: "connections",
         label: "Connections",
-        value: edges.length,
+        value: statsPending ? "—" : edges.length,
         to: "/graph",
       },
       {
         id: "evidence",
         label: "Evidence",
-        value: evidence.length,
+        value: statsPending ? "—" : evidence.length,
         to: "/collect",
       },
       {
         id: "live",
         label: "Live jobs",
-        value: liveJobs.length,
+        value: statsPending ? "—" : liveJobCount,
         to: "/collect",
       },
       {
         id: "inbox",
         label: "Pending proposals",
-        value: pendingProposals.length,
-        tone: pendingProposals.length > 0 ? "warn" : undefined,
+        value: statsPending ? "—" : pendingProposals.length,
+        tone: !statsPending && pendingProposals.length > 0 ? "warn" : undefined,
         to: "/triage",
       },
     ],
     [
-      listsPending,
+      statsPending,
       entities.length,
       identifiers.length,
       edges.length,
       evidence.length,
-      liveJobs.length,
+      liveJobCount,
       pendingProposals.length,
     ]
   );
 
+  const entityLabels = useMemo(
+    () => jobEntityLabelsForActivity(jobs, entities),
+    [entities, jobs]
+  );
+
   const activity = useMemo(
-    () => buildCaseOverviewActivity(evidence, jobs, pendingProposals),
-    [evidence, jobs, pendingProposals]
+    () =>
+      buildCaseOverviewActivity(
+        evidence,
+        jobs,
+        pendingProposals,
+        CASE_OVERVIEW_ACTIVITY_LIMIT,
+        hiddenEvidence,
+        entityLabels
+      ),
+    [evidence, hiddenEvidence, jobs, pendingProposals, entityLabels]
   );
 
   return (
     <div className="flex flex-col gap-6">
+      {overviewLoadError ? (
+        <FetchErrorAlert
+          error={overviewLoadError}
+          onRetry={() => {
+            for (const query of queryResults) {
+              if (query.isError) void query.refetch();
+            }
+          }}
+        />
+      ) : null}
       <section
         aria-label="Case stats"
-        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+        className={cn(
+          "grid gap-2 sm:grid-cols-2 lg:grid-cols-3",
+          placeholderDeemphasisClass(overviewPlaceholder)
+        )}
       >
         {tiles.map((tile) => {
           const className = cn(
@@ -186,7 +264,12 @@ export function CaseOverviewTab({
         })}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,22rem)]">
+      <div
+        className={cn(
+          "grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,22rem)]",
+          placeholderDeemphasisClass(overviewPlaceholder)
+        )}
+      >
         <section aria-label="Recent activity" className="min-w-0">
           <h2 className="text-label-sm text-muted-foreground mb-2 font-medium">
             Recent activity
@@ -206,10 +289,11 @@ export function CaseOverviewTab({
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <div className="min-w-0">
                       <span className="text-muted-foreground text-chip mr-1.5 uppercase">
-                        {item.kind}
+                        {activityKindLabel(item.kind)}
                       </span>
                       <Link
                         to={item.href.to}
+                        search={item.href.search}
                         className="text-sm font-medium underline-offset-2 hover:underline"
                       >
                         {item.label}

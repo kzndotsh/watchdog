@@ -1,18 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
-import { listPending } from "@/shared/lib/list-pending";
+import { slugifyName } from "@watchdog/schemas";
 
 import { useCaseListActions } from "./use-case-list-actions";
+import { useCasesContext } from "./use-cases-context";
 
 function caseMatchesSearch(c: CaseRecord, query: string): boolean {
   const q = query.toLowerCase().trim();
   if (!q) return true;
+  const slugNeedle = slugifyName(query);
   return (
     c.name.toLowerCase().includes(q) ||
     c.slug.toLowerCase().includes(q) ||
+    (slugNeedle !== "" && c.slug === slugNeedle) ||
     (c.description ?? "").toLowerCase().includes(q)
   );
 }
@@ -43,21 +44,22 @@ function caseListGhostCount(
 }
 
 export function useCaseList() {
-  const casesQuery = useQuery(casesContextQuery());
-  const pending = listPending(casesQuery);
-  const casesCtx = casesQuery.data;
-  const cases = casesCtx?.cases ?? [];
-  const activeId = casesCtx?.active?.id ?? "";
+  const {
+    cases,
+    active,
+    pending,
+    loadError: casesLoadError,
+    retry: retryCases,
+    placeholder: casesPlaceholder,
+  } = useCasesContext();
+  const activeId = active?.id ?? "";
 
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CaseRecord | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () => filterCases(casesQuery.data?.cases ?? [], search),
-    [casesQuery.data, search]
-  );
+  const filtered = useMemo(() => filterCases(cases, search), [cases, search]);
 
   const actions = useCaseListActions(
     activeId,
@@ -73,6 +75,9 @@ export function useCaseList() {
     activeId,
     cases,
     pending,
+    casesLoadError,
+    retryCases,
+    casesPlaceholder,
     search,
     setSearch,
     filtered,

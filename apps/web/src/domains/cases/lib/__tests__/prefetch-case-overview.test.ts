@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth/server", () => ({
@@ -14,25 +14,29 @@ import { jobsListQuery } from "@/domains/jobs/queries";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
 
 describe("warmCaseOverviewQueries", () => {
-  it("prefetches the overview dashboard queries for a case", () => {
-    const query = vi.fn().mockResolvedValue(undefined);
-    const client = { query } as unknown as QueryClient;
+  it("warms the overview dashboard queries for a case", async () => {
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
     warmCaseOverviewQueries(client, "case-1");
+    await Promise.resolve();
 
-    const prefetchedKeys = query.mock.calls.map(
+    const warmedKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
-    expect(prefetchedKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
-    expect(prefetchedKeys).toContainEqual(
+    expect(warmedKeys).toContainEqual(entitiesListQuery("case-1").queryKey);
+    expect(warmedKeys).toContainEqual(
       identifiersForCaseQuery("case-1").queryKey
     );
-    expect(prefetchedKeys).toContainEqual(edgesForCaseQuery("case-1").queryKey);
-    expect(prefetchedKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
-    expect(prefetchedKeys).toContainEqual(jobsListQuery("case-1").queryKey);
-    expect(prefetchedKeys).toContainEqual(
+    expect(warmedKeys).toContainEqual(edgesForCaseQuery("case-1").queryKey);
+    expect(warmedKeys).toContainEqual(evidenceListQuery("case-1").queryKey);
+    expect(warmedKeys).toContainEqual(
+      evidenceListQuery("case-1", { hiddenOnly: true }).queryKey
+    );
+    expect(warmedKeys).toContainEqual(jobsListQuery("case-1").queryKey);
+    expect(warmedKeys).toContainEqual(
       proposalsByStatusQuery("case-1", "pending").queryKey
     );
-    expect(query).toHaveBeenCalledTimes(6);
+    expect(query).toHaveBeenCalledTimes(7);
   });
 });

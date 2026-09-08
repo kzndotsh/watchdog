@@ -5,12 +5,17 @@ import { toast } from "sonner";
 
 import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
-import type { CaseRecord } from "@/domains/cases/types";
+import {
+  setActiveCaseIdInputSchema,
+  type CaseRecord,
+} from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 
 function selectActiveCase(caseId: string) {
-  return setActiveCaseIdFn({ data: { caseId } });
+  return setActiveCaseIdFn({
+    data: setActiveCaseIdInputSchema.parse({ caseId }),
+  });
 }
 
 async function onCaseSelected(queryClient: ReturnType<typeof useQueryClient>) {

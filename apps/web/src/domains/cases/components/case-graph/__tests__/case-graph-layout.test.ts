@@ -84,6 +84,22 @@ describe("case-graph-layout", () => {
     expect(operated!.position.y).toBeGreaterThan(operator!.position.y);
   });
 
+  it("falls back to slug when an entity name is blank", () => {
+    const flow = caseGraphLayout({
+      entities: [
+        {
+          id: "11111111-1111-4111-8111-111111111111",
+          name: "  ",
+          slug: "unnamed-host",
+          kind: "infra",
+        },
+      ],
+      edges: [],
+    });
+
+    expect(flow.nodes[0]?.data.label).toBe("unnamed-host");
+  });
+
   it("keeps symmetric predicates on the same layer", () => {
     const ranks = computeDirectedNodeRanks(
       ["a", "b"],

@@ -17,6 +17,21 @@ describe("case input schemas", () => {
     expect(parsed.slug).toBe("alpha-case");
   });
 
+  it("normalizes an explicit create slug", () => {
+    expect(
+      createCaseInputSchema.parse({
+        name: "Alpha Case",
+        slug: "  Alpha Corp  ",
+      }).slug
+    ).toBe("alpha-corp");
+  });
+
+  it("rejects invalid explicit create slugs", () => {
+    expect(() =>
+      createCaseInputSchema.parse({ name: "Alpha Case", slug: "!!!" })
+    ).toThrow();
+  });
+
   it("normalizes empty active case ids to null", () => {
     expect(setActiveCaseIdInputSchema.parse({ caseId: "" }).caseId).toBeNull();
     expect(
@@ -27,16 +42,39 @@ describe("case input schemas", () => {
     );
   });
 
+  it("rejects invalid active case ids", () => {
+    expect(
+      setActiveCaseIdInputSchema.safeParse({ caseId: "case-1" }).success
+    ).toBe(false);
+  });
+
   it("parses delete case input", () => {
-    expect(deleteCaseInputSchema.parse({ id: CASE_ID }).id).toBe(CASE_ID);
+    expect(deleteCaseInputSchema.parse({ caseId: CASE_ID }).caseId).toBe(
+      CASE_ID
+    );
   });
 
   it("parses partial update case input", () => {
     expect(
       updateCaseInputSchema.parse({
-        id: CASE_ID,
+        caseId: CASE_ID,
         allowThirdPartyEgress: true,
       }).allowThirdPartyEgress
     ).toBe(true);
+  });
+
+  it("rejects empty update case input", () => {
+    expect(updateCaseInputSchema.safeParse({ caseId: CASE_ID }).success).toBe(
+      false
+    );
+  });
+
+  it("clears description when an empty string is sent", () => {
+    expect(
+      updateCaseInputSchema.parse({
+        caseId: CASE_ID,
+        description: "",
+      }).description
+    ).toBeNull();
   });
 });

@@ -6,11 +6,12 @@ import { createCaseFn } from "@/domains/cases/cases.functions";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseList } from "@/domains/cases/hooks/use-case-list";
 import { caseCardActions } from "@/domains/cases/lib/case-card-actions";
-import type { CaseRecord } from "@/domains/cases/types";
-import { cn, errMessage, nextAutoSlug, slugifyName } from "@/lib/utils";
+import { createCaseInputSchema, type CaseRecord } from "@/domains/cases/types";
+import { cn, errMessage, nextAutoSlug } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { filterActionsForSurface } from "@/shared/lib/app-action";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import {
   CASE_CARD_ACTIVE_CLASS,
@@ -20,6 +21,7 @@ import {
 } from "@/shared/ui/case-card-shell";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
@@ -158,15 +160,13 @@ function CreateCaseDialog({
   const form = useForm({
     defaultValues: { name: "", slug: "", description: "" },
     onSubmit: async ({ value }) => {
-      const nextName = value.name.trim();
-      if (!nextName) return;
       try {
         await createCaseFn({
-          data: {
-            name: nextName,
-            slug: (value.slug || slugifyName(nextName)).trim(),
-            description: value.description.trim() || undefined,
-          },
+          data: createCaseInputSchema.parse({
+            name: value.name,
+            slug: value.slug || undefined,
+            description: value.description || undefined,
+          }),
         });
         form.reset();
         lastNameRef.current = "";
@@ -336,6 +336,9 @@ function CaseListHeaderActions({
 
 function CaseListGrid({
   pending,
+  casesLoadError,
+  onRetryCases,
+  casesPlaceholder,
   casesLength,
   filtered,
   activeId,
@@ -349,6 +352,9 @@ function CaseListGrid({
   onCreate,
 }: {
   pending: boolean;
+  casesLoadError: string | null;
+  onRetryCases: () => void;
+  casesPlaceholder: boolean;
   casesLength: number;
   filtered: CaseRecord[];
   activeId: string;
@@ -361,6 +367,14 @@ function CaseListGrid({
   onDeleteCase: (caseRow: CaseRecord) => void;
   onCreate: () => void;
 }) {
+  if (casesLoadError) {
+    return (
+      <div className="min-h-0 flex-1">
+        <FetchErrorAlert error={casesLoadError} onRetry={onRetryCases} />
+      </div>
+    );
+  }
+
   if (casesLength > 0 && filtered.length === 0 && !pending) {
     return (
       <EmptyState
@@ -374,7 +388,12 @@ function CaseListGrid({
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div
+      className={cn(
+        "min-h-0 flex-1 overflow-y-auto",
+        placeholderDeemphasisClass(!pending && casesPlaceholder)
+      )}
+    >
       <PendingRegion
         loading={pending}
         label="Loading cases"
@@ -417,6 +436,9 @@ export function CaseList() {
     filtered,
     ghostCount,
     pending,
+    casesLoadError,
+    retryCases,
+    casesPlaceholder,
     submitError,
     createOpen,
     setCreateOpen,
@@ -457,6 +479,9 @@ export function CaseList() {
 
       <CaseListGrid
         pending={pending}
+        casesLoadError={casesLoadError}
+        onRetryCases={retryCases}
+        casesPlaceholder={casesPlaceholder}
         casesLength={cases.length}
         filtered={filtered}
         activeId={activeId}

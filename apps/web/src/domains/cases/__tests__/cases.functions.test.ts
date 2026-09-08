@@ -2,8 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@tanstack/react-start", () => ({
   createServerFn: () => ({
-    validator: () => ({
-      handler: (fn: unknown) => fn,
+    validator: (schema: { parse: (value: unknown) => unknown }) => ({
+      handler:
+        (fn: (input: { data: unknown; context: unknown }) => unknown) =>
+        (input: { data: unknown; context: unknown }) =>
+          fn({ ...input, data: schema.parse(input.data) }),
     }),
     handler: (fn: unknown) => fn,
   }),
@@ -95,6 +98,21 @@ describe("cases.functions", () => {
     expect(row).toEqual(CASE_B);
   });
 
+  it("trims padded case slug before lookup", async () => {
+    casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
+
+    const row = await (
+      getCaseBySlugFn as unknown as (
+        input: ServerDataContext<{ caseSlug: string }>
+      ) => Promise<CaseRecord | null>
+    )({
+      data: { caseSlug: "  beta  " },
+      context: {},
+    });
+
+    expect(row).toEqual(CASE_B);
+  });
+
   it("rejects setting an active case id that does not exist", async () => {
     casesApi.get.mockResolvedValue(null);
 
@@ -117,9 +135,9 @@ describe("cases.functions", () => {
 
     await (
       deleteCaseFn as unknown as (
-        input: ServerDataContext<{ id: string }>
+        input: ServerDataContext<{ caseId: string }>
       ) => Promise<void>
-    )({ data: { id: CASE_A.id }, context: {} });
+    )({ data: { caseId: CASE_A.id }, context: {} });
 
     expect(casesApi.delete).toHaveBeenCalledWith({ caseId: CASE_A.id });
     expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_B.id);

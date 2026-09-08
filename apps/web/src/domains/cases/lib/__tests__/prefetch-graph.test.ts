@@ -1,4 +1,4 @@
-import type { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth/server", () => ({
@@ -31,17 +31,18 @@ describe("ensureGraphQueries", () => {
 });
 
 describe("warmGraphQueries", () => {
-  it("prefetches entities and edges without blocking", () => {
-    const query = vi.fn().mockResolvedValue(undefined);
-    const client = { query } as unknown as QueryClient;
+  it("warms entities and edges without blocking", async () => {
+    const client = new QueryClient();
+    const query = vi.spyOn(client, "query").mockResolvedValue(undefined);
 
     warmGraphQueries(client, "case-1");
+    await Promise.resolve();
 
     expect(query).toHaveBeenCalledTimes(2);
-    const prefetchedKeys = query.mock.calls.map(
+    const warmedKeys = query.mock.calls.map(
       ([options]) => (options as { queryKey: readonly unknown[] }).queryKey
     );
-    expect(prefetchedKeys).toEqual([
+    expect(warmedKeys).toEqual([
       entitiesListQuery("case-1").queryKey,
       edgesForCaseQuery("case-1").queryKey,
     ]);

@@ -6,17 +6,39 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
-import { warmPrefetchQuery } from "@/shared/lib/warm-query";
+import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 
 /** Warm Case Overview dashboard lists without blocking navigation. */
 export function warmCaseOverviewQueries(
   queryClient: QueryClient,
   caseId: string
 ): void {
-  warmPrefetchQuery(queryClient, entitiesListQuery(caseId));
-  warmPrefetchQuery(queryClient, identifiersForCaseQuery(caseId));
-  warmPrefetchQuery(queryClient, edgesForCaseQuery(caseId));
-  warmPrefetchQuery(queryClient, evidenceListQuery(caseId));
-  warmPrefetchQuery(queryClient, jobsListQuery(caseId));
-  warmPrefetchQuery(queryClient, proposalsByStatusQuery(caseId, "pending"));
+  warmEnsureQueryData(queryClient, {
+    ...entitiesListQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...identifiersForCaseQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...edgesForCaseQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...evidenceListQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...evidenceListQuery(caseId, { hiddenOnly: true }),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...jobsListQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...proposalsByStatusQuery(caseId, "pending"),
+    revalidateIfStale: true,
+  });
 }

@@ -3,6 +3,7 @@ import type {
   EdgePredicate,
   EntityKind,
 } from "@watchdog/schemas";
+import { entityDisplayLabel } from "@watchdog/schemas";
 
 import {
   GRAPH_NODE_HEIGHT,
@@ -48,7 +49,9 @@ export function caseGraphLayout({
     (edge) => entityIdSet.has(edge.fromId) && entityIdSet.has(edge.toId)
   );
 
-  const labels = new Map(entities.map((entity) => [entity.id, entity.name]));
+  const labels = new Map(
+    entities.map((entity) => [entity.id, entityDisplayLabel(entity)])
+  );
   const ranks = computeDirectedNodeRanks(entityIds, scopedEdges);
   const positions = placeLayeredGraphNodes({
     nodeIds: entityIds,
@@ -64,7 +67,7 @@ export function caseGraphLayout({
       width: GRAPH_NODE_WIDTH,
       height: GRAPH_NODE_HEIGHT,
       data: {
-        label: entity.name,
+        label: entityDisplayLabel(entity),
         kind: entity.kind,
         slug: entity.slug,
         isCenter: false,

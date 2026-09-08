@@ -88,6 +88,7 @@ function casesQueryResult(data: {
     isFetched: true,
     isLoading: false,
     isError: false,
+    isPlaceholderData: false,
   };
 }
 

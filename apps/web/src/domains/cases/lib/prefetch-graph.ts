@@ -2,15 +2,24 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import { entitiesListQuery } from "@/domains/entities/queries";
-import { warmPrefetchQuery, ensureAppQueryData } from "@/shared/lib/warm-query";
+import {
+  warmEnsureQueryData,
+  ensureAppQueryData,
+} from "@/shared/lib/warm-query";
 
 /** Warm graph canvas queries without blocking navigation. */
 export function warmGraphQueries(
   queryClient: QueryClient,
   caseId: string
 ): void {
-  warmPrefetchQuery(queryClient, entitiesListQuery(caseId));
-  warmPrefetchQuery(queryClient, edgesForCaseQuery(caseId));
+  warmEnsureQueryData(queryClient, {
+    ...entitiesListQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...edgesForCaseQuery(caseId),
+    revalidateIfStale: true,
+  });
 }
 
 /** Block until graph data is in cache — tests and explicit preload only. */
