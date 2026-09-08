@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
+import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   domainValuesBatch,
@@ -89,13 +90,13 @@ export function interpretThreatfoxLookupReport(
         : querySeedBatches(report.query, report.kind)),
       ...ipValuesBatch(
         report.kind === "ip"
-          ? buckets.ip.filter((value) => value !== report.query)
+          ? filterRelatedIdentifiers("ip", report.query, buckets.ip)
           : buckets.ip,
         { limit: IOC_LIMIT }
       ),
       ...domainValuesBatch(
         report.kind === "domain"
-          ? buckets.domain.filter((value) => value !== report.query)
+          ? filterRelatedIdentifiers("domain", report.query, buckets.domain)
           : buckets.domain,
         { limit: IOC_LIMIT }
       ),

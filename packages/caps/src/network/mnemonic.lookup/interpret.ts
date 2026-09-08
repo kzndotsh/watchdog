@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
+import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   DOMAIN_IDENTIFIER_BATCH_LIMIT,
@@ -48,11 +49,11 @@ export function interpretMnemonicLookupReport(
 ): CapInterpretResult {
   const domainValues =
     report.kind === "domain"
-      ? report.domains.filter((value) => value !== report.query)
+      ? filterRelatedIdentifiers("domain", report.query, report.domains)
       : report.domains;
   const ipValues =
     report.kind === "ip"
-      ? report.ips.filter((value) => value !== report.query)
+      ? filterRelatedIdentifiers("ip", report.query, report.ips)
       : report.ips;
 
   return interpretIdentifierBatches({

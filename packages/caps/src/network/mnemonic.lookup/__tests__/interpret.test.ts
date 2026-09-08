@@ -86,6 +86,20 @@ describe("interpret", () => {
     expect(ipIds[0]?.data.value).toBe("2001:db8::1");
   });
 
+  it("omits related-ip claim text when the only PDNS IP is the seed spelling", () => {
+    const result = interpretMnemonicLookupReport(
+      {
+        ...fixture,
+        kind: "ip",
+        query: "2001:0db8:0000:0000:0000:0000:0000:0001",
+        ips: ["2001:db8::1"],
+        domains: [],
+      },
+      { input: { query: "2001:0db8:0000:0000:0000:0000:0000:0001", entityId } }
+    );
+    expect(String(result.summary)).not.toMatch(/related IP/i);
+  });
+
   it("notes domain truncation in the claim when PDNS domains exceed the cap", () => {
     const domains = Array.from(
       { length: 85 },

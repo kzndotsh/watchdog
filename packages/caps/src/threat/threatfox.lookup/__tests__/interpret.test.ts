@@ -141,6 +141,45 @@ describe("interpret", () => {
       { input: { query: "2001:db8::1", entityId } }
     );
     expectProposesIdentifier(result, { type: "ip", value: "2001:db8::1" });
+    expect(
+      result.patch.filter((p) => p.resource === "identifier")
+    ).toHaveLength(1);
+  });
+
+  it("does not double-count the seed when IOC spelling differs", () => {
+    const result = interpretThreatfoxLookupReport(
+      {
+        ...fixture,
+        query: "2001:0db8:0000:0000:0000:0000:0000:0001",
+        kind: "ip",
+        iocs: [
+          {
+            id: "5",
+            ioc: "2001:db8::1",
+            iocType: "ipv6",
+            threatType: "botnet_cc",
+            malware: "win.test",
+            malwarePrintable: "Test",
+            confidenceLevel: 50,
+            firstSeen: null,
+            lastSeen: null,
+            tags: [],
+          },
+        ],
+      },
+      {
+        input: {
+          query: "2001:0db8:0000:0000:0000:0000:0000:0001",
+          entityId,
+        },
+      }
+    );
+    expect(
+      result.patch.filter(
+        (p) => p.resource === "identifier" && p.data.type === "ip"
+      )
+    ).toHaveLength(1);
+    expect(claimText(result, 1)).toMatch(/1 IOC\(s\)/);
   });
 
   it("does not let invalid IOCs consume the proposal budget", () => {

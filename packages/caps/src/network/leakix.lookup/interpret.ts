@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
+import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   DOMAIN_IDENTIFIER_BATCH_LIMIT,
@@ -47,7 +48,7 @@ export function interpretLeakixLookupReport(
 ): CapInterpretResult {
   const hostnames =
     report.kind === "domain"
-      ? report.hostnames.filter((value) => value !== report.query)
+      ? filterRelatedIdentifiers("domain", report.query, report.hostnames)
       : report.hostnames;
 
   return interpretIdentifierBatches({
