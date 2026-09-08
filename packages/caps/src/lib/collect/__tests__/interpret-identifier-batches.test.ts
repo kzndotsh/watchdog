@@ -160,4 +160,16 @@ describe("interpret-identifier-batches", () => {
     expect(ids).toHaveLength(1);
     expect(ids[0]?.data.value).toBe("www.example.com");
   });
+
+  it("uses domain batch default limit of 80 when limit is omitted", () => {
+    const domains = Array.from({ length: 81 }, (_, i) => `h${i}.example.com`);
+    const result = interpretIdentifierBatches({
+      entityId,
+      batches: [{ type: "domain", values: domains }],
+      claimText: "summary",
+      noEntitySummary: "none",
+    });
+    const ids = result.patch.filter((op) => op.resource === "identifier");
+    expect(ids).toHaveLength(80);
+  });
 });

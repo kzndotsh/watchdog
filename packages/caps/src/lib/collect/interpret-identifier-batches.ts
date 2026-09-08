@@ -9,6 +9,12 @@ import {
 
 import { eligibleCtDomains } from "./eligible-domain-hosts";
 import {
+  DOMAIN_IDENTIFIER_BATCH_LIMIT,
+  EMAIL_IDENTIFIER_BATCH_LIMIT,
+  HANDLE_IDENTIFIER_BATCH_LIMIT,
+  URL_IDENTIFIER_BATCH_LIMIT,
+} from "./query-seed-batches";
+import {
   INVALID_COLLECT_ENTITY_SUMMARY,
   resolveCollectEntityId,
 } from "./resolve-collect-entity-id";
@@ -17,8 +23,37 @@ export interface IdentifierBatch {
   type: IdentifierType;
   values: readonly (string | null | undefined)[];
   platform?: string;
-  /** Max Identifier ops for this batch (default 40). */
+  /** Max Identifier ops for this batch (type-specific default when omitted). */
   limit?: number;
+}
+
+function defaultIdentifierBatchLimit(type: IdentifierType): number {
+  switch (type) {
+    case "domain": {
+      return DOMAIN_IDENTIFIER_BATCH_LIMIT;
+    }
+    case "url": {
+      return URL_IDENTIFIER_BATCH_LIMIT;
+    }
+    case "email": {
+      return EMAIL_IDENTIFIER_BATCH_LIMIT;
+    }
+    case "handle": {
+      return HANDLE_IDENTIFIER_BATCH_LIMIT;
+    }
+    case "ip":
+    case "phone":
+    case "crypto":
+    case "pgp":
+    case "credential":
+    case "other": {
+      return 40;
+    }
+    default: {
+      const _exhaustive: never = type;
+      return _exhaustive;
+    }
+  }
 }
 
 function valuesForBatch(
@@ -60,7 +95,7 @@ export function interpretIdentifierBatches(opts: {
   const seen = new Set<string>();
 
   for (const batch of opts.batches) {
-    const limit = batch.limit ?? 40;
+    const limit = batch.limit ?? defaultIdentifierBatchLimit(batch.type);
     let added = 0;
     for (const raw of valuesForBatch(batch)) {
       if (raw === null || raw === undefined || raw === "") continue;
