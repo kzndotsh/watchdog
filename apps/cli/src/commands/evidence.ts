@@ -2,20 +2,36 @@ import { readFileSync } from "node:fs";
 
 import { defineCommand } from "citty";
 
+import {
+  dumpPasteInputSchema,
+  dumpUrlInputSchema,
+  evidenceScopeInputSchema,
+  listEvidenceInputSchema,
+  nonEmptyTrimmed,
+  processEvidenceInputSchema,
+} from "@watchdog/schemas";
+
 import { api, emit, emitList, emitOk, fail, truncText } from "../client";
+import {
+  evidenceKindLabel,
+  enrichEvidenceDisplay,
+  enrichJobDisplay,
+} from "../display";
 import { withExamples } from "../examples";
-import { resolveEntityId } from "../ids";
+import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
+import { jobInputTitlesForJobs } from "../job-evidence-titles";
 import {
   asBoolean,
   caseArg,
   defineNounCommand,
   dryRunArg,
+  hasCliText,
   pickDefined,
   requiredCaseArg,
 } from "../noun";
 import { uploadEvidenceFile } from "../upload-file";
 
-const LIST_COLUMNS = ["id", "kind", "label", "captured"];
+const LIST_COLUMNS = ["id", "kind", "kindLabel", "label", "captured"];
 
 function readStdin(): string {
   return readFileSync(0, "utf-8");
@@ -24,6 +40,7 @@ function readStdin(): string {
 function listHelp(caseId: string): string[] {
   return [
     `wd evidence paste -c ${caseId} -b "…"`,
+    `wd evidence file -c ${caseId} <path>`,
     `wd evidence process -c ${caseId} <evidenceId>`,
     `wd evidence enrich -c ${caseId} <evidenceId>`,
   ];
@@ -52,18 +69,28 @@ export const evidenceCmd = defineNounCommand({
   required: ["case"],
   usageHelp: ["wd evidence list -c <caseId>"],
   list: async (args) => {
-    const caseId = String(args.case);
-    const rows = await api().evidence.list({
+    const caseId = requireCaseId(args.case);
+    const parsed = listEvidenceInputSchema.safeParse({
       caseId,
       unprocessedOnly: asBoolean(args.unprocessed) ?? false,
       unattachedOnly: asBoolean(args.unattached) ?? false,
       hiddenOnly: asBoolean(args.hidden) ?? false,
     });
+    if (!parsed.success) {
+      fail(
+        "USAGE",
+        parsed.error.issues[0]?.message ??
+          "hidden is mutually exclusive with unprocessed and unattached",
+        { help: listHelp(caseId) }
+      );
+    }
+    const rows = await api().evidence.list(parsed.data);
     const full = args.full === true;
     emitList({
       items: rows.map((r) => ({
         id: r.id,
         kind: r.kind,
+        kindLabel: evidenceKindLabel(r.kind),
         label: truncText(r.label ?? "—", full),
         captured: r.capturedAt.slice(0, 16),
       })),
@@ -109,6 +136,7 @@ export const evidenceCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
+        const caseId = requireCaseId(args.case);
         let body = args.body === "-" ? undefined : args.body;
         const wantsStdin = args.stdin || args.body === "-";
         if (
@@ -117,24 +145,28 @@ export const evidenceCmd = defineNounCommand({
         ) {
           body = readStdin();
         }
-        if (body === undefined || body === "") {
-          fail("USAGE", "Provide --body or --stdin", {
+        if (body === undefined || !hasCliText(body)) {
+          fail("USAGE", "Provide --body or --stdin (body must not be blank)", {
             help: [
-              `wd evidence paste -c ${args.case} -b "text"`,
-              `echo "text" | wd evidence paste -c ${args.case} --stdin`,
+              `wd evidence paste -c ${caseId} -b "text"`,
+              `echo "text" | wd evidence paste -c ${caseId} --stdin`,
             ],
           });
         }
-        const entityId =
-          args.entity !== undefined && args.entity !== ""
-            ? await resolveEntityId(args.case, args.entity)
-            : undefined;
-        const row = await api().evidence.createPaste({
-          caseId: args.case,
+        const entityId = hasCliText(args.entity)
+          ? await resolveEntityId(caseId, args.entity)
+          : undefined;
+        const fields = dumpPasteInputSchema.parse({
+          caseId,
           body,
-          ...pickDefined({ label: args.label, sourceUrl: args.url, entityId }),
+          ...pickDefined({
+            label: args.label,
+            sourceUrl: args.url,
+            entityId,
+          }),
         });
-        emit(row);
+        const row = await api().evidence.createPaste(fields);
+        emit(enrichEvidenceDisplay(row));
       },
     }),
     url: defineCommand({
@@ -154,16 +186,22 @@ export const evidenceCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const entityId =
-          args.entity !== undefined && args.entity !== ""
-            ? await resolveEntityId(args.case, args.entity)
-            : undefined;
-        const row = await api().evidence.createUrl({
-          caseId: args.case,
+        const caseId = requireCaseId(args.case);
+        const entityId = hasCliText(args.entity)
+          ? await resolveEntityId(caseId, args.entity)
+          : undefined;
+        const fieldsParsed = dumpUrlInputSchema.safeParse({
+          caseId,
           sourceUrl: args.source,
           ...pickDefined({ label: args.label, entityId }),
         });
-        emit(row);
+        if (!fieldsParsed.success) {
+          fail("USAGE", "URL must be http or https", {
+            help: [`wd evidence url -c ${caseId} https://example.com`],
+          });
+        }
+        const row = await api().evidence.createUrl(fieldsParsed.data);
+        emit(enrichEvidenceDisplay(row));
       },
     }),
     file: defineCommand({
@@ -191,16 +229,17 @@ export const evidenceCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const entityId =
-          args.entity !== undefined && args.entity !== ""
-            ? await resolveEntityId(args.case, args.entity)
-            : undefined;
+        const caseId = requireCaseId(args.case);
+        const filePath = nonEmptyTrimmed.parse(args.path);
+        const entityId = hasCliText(args.entity)
+          ? await resolveEntityId(caseId, args.entity)
+          : undefined;
         const row = await uploadEvidenceFile({
-          caseId: args.case,
-          path: args.path,
+          caseId,
+          path: filePath,
           ...pickDefined({ label: args.label, entityId, mime: args.mime }),
         });
-        emit(row);
+        emit(enrichEvidenceDisplay(row));
       },
     }),
     hide: defineCommand({
@@ -218,15 +257,15 @@ export const evidenceCmd = defineNounCommand({
         ...dryRunArg,
       },
       run: async ({ args }) => {
+        const caseId = requireCaseId(args.case);
+        const evidenceId = requireUuid(args.evidence, "Evidence ID");
+        const scope = evidenceScopeInputSchema.parse({ caseId, evidenceId });
         if (args["dry-run"]) {
-          emitOk({ dryRun: true, hidden: true, id: args.evidence });
+          emitOk({ dryRun: true, hidden: true, id: scope.evidenceId });
           return;
         }
-        const row = await api().evidence.softDelete({
-          caseId: args.case,
-          evidenceId: args.evidence,
-        });
-        emit({ ...row, hidden: true, id: args.evidence });
+        await api().evidence.softDelete(scope);
+        emitOk({ hidden: true, id: scope.evidenceId });
       },
     }),
     restore: defineCommand({
@@ -243,11 +282,11 @@ export const evidenceCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const row = await api().evidence.restore({
-          caseId: args.case,
-          evidenceId: args.evidence,
-        });
-        emit({ ...row, restored: true, id: args.evidence });
+        const caseId = requireCaseId(args.case);
+        const evidenceId = requireUuid(args.evidence, "Evidence ID");
+        const scope = evidenceScopeInputSchema.parse({ caseId, evidenceId });
+        await api().evidence.restore(scope);
+        emitOk({ restored: true, id: scope.evidenceId });
       },
     }),
     download: defineCommand({
@@ -269,13 +308,13 @@ export const evidenceCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const row = await api().evidence.downloadUrl({
-          caseId: args.case,
-          evidenceId: args.evidence,
-        });
+        const caseId = requireCaseId(args.case);
+        const evidenceId = requireUuid(args.evidence, "Evidence ID");
+        const scope = evidenceScopeInputSchema.parse({ caseId, evidenceId });
+        const row = await api().evidence.downloadUrl(scope);
         if (row.url === null) {
           fail("NOT_DOWNLOADABLE", "No downloadable blob for this evidence", {
-            help: [`wd evidence list -c ${args.case}`],
+            help: [`wd evidence list -c ${caseId}`],
           });
         }
         if (args.raw) {
@@ -310,12 +349,20 @@ export const evidenceCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const row = await api().evidence.process({
-          caseId: args.case,
-          evidenceId: args.evidence,
-          ai: args.ai,
-        });
-        emit(row);
+        const caseId = requireCaseId(args.case);
+        const evidenceId = requireUuid(args.evidence, "Evidence ID");
+        const row = await api().evidence.process(
+          processEvidenceInputSchema.parse({
+            caseId,
+            evidenceId,
+            ai: args.ai,
+          })
+        );
+        const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
+          caseId,
+          [row]
+        );
+        emit(enrichJobDisplay(row, evidenceTitles, entityTitles));
       },
     }),
     enrich: defineCommand({
@@ -329,11 +376,15 @@ export const evidenceCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const row = await api().evidence.enrich({
-          caseId: args.case,
-          evidenceId: args.evidence,
-        });
-        emit(row);
+        const caseId = requireCaseId(args.case);
+        const evidenceId = requireUuid(args.evidence, "Evidence ID");
+        const scope = evidenceScopeInputSchema.parse({ caseId, evidenceId });
+        const row = await api().evidence.enrich(scope);
+        const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
+          caseId,
+          [row]
+        );
+        emit(enrichJobDisplay(row, evidenceTitles, entityTitles));
       },
     }),
   },

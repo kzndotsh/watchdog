@@ -1,21 +1,33 @@
 import { defineCommand } from "citty";
 
-import { confidenceTierSchema, proposalStatusSchema } from "@watchdog/schemas";
+import {
+  acceptProposalInputSchema,
+  createProposalInputSchema,
+  listProposalsInputSchema,
+  rejectProposalInputSchema,
+  trimmedConfidenceTierSchema,
+  trimmedProposalStatusSchema,
+} from "@watchdog/schemas";
 
 import { api, emit, emitList, emitOk, truncText } from "../client";
+import {
+  displayStatusLabel,
+  enrichProposalDisplay,
+  proposalListSummary,
+} from "../display";
 import { withExamples } from "../examples";
-import { parseIdList } from "../ids";
+import { parseIdList, requireCaseId, requireUuid } from "../ids";
 import { loadPatch } from "../load-patch";
 import {
   asBoolean,
   caseArg,
   defineNounCommand,
   dryRunArg,
-  pickDefined,
   requiredCaseArg,
 } from "../noun";
+import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
 
-const LIST_COLUMNS = ["id", "status", "summary", "created"];
+const LIST_COLUMNS = ["id", "status", "statusLabel", "summary", "created"];
 
 function listHelp(caseId: string): string[] {
   return [
@@ -38,17 +50,23 @@ export const proposalsCmd = defineNounCommand({
   required: ["case"],
   usageHelp: ["wd proposals list -c <caseId>"],
   list: async (args) => {
-    const caseId = String(args.case);
-    const rows = await api().proposals.listForCase({
-      caseId,
-      status: proposalStatusSchema.parse(args.status ?? "pending"),
-    });
+    const caseId = requireCaseId(args.case);
+    const status = parseCliEnum(
+      trimmedProposalStatusSchema,
+      typeof args.status === "string" ? args.status : "pending",
+      "proposal status",
+      [`wd proposals list -c ${caseId} -s pending`]
+    );
+    const rows = await api().proposals.listForCase(
+      listProposalsInputSchema.parse({ caseId, status })
+    );
     const full = args.full === true;
     emitList({
       items: rows.map((r) => ({
         id: r.id,
         status: r.status,
-        summary: truncText(r.summary ?? "—", full),
+        statusLabel: displayStatusLabel(r.status),
+        summary: truncText(proposalListSummary(r), full),
         created: r.createdAt.slice(0, 16),
       })),
       columns: LIST_COLUMNS,
@@ -87,14 +105,18 @@ export const proposalsCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
+        const caseId = requireCaseId(args.case);
         const patch = loadPatch(args);
         const evidenceIds = parseIdList(args.evidence);
-        const row = await api().proposals.create({
-          caseId: args.case,
-          patch,
-          ...pickDefined({ summary: args.summary, evidenceIds }),
-        });
-        emit(row);
+        const row = await api().proposals.create(
+          createProposalInputSchema.parse({
+            caseId,
+            patch,
+            summary: args.summary,
+            evidenceIds,
+          })
+        );
+        emit(enrichProposalDisplay(row));
       },
     }),
     accept: defineCommand({
@@ -110,18 +132,35 @@ export const proposalsCmd = defineNounCommand({
           type: "string",
           description: "Confidence tier (unverified|possible|confirmed)",
         },
+        sharedEvidence: {
+          type: "string",
+          description: "Shared evidence UUID (comma-separated)",
+        },
+        attestation: {
+          type: "string",
+          description: "Attestation text stored when accepting",
+        },
       },
       run: async ({ args }) => {
-        const confidence =
-          args.confidence !== undefined && args.confidence !== ""
-            ? confidenceTierSchema.parse(args.confidence)
-            : undefined;
-        const row = await api().proposals.accept({
-          caseId: args.case,
-          proposalId: args.proposal,
-          ...pickDefined({ confidence }),
-        });
-        emit(row);
+        const caseId = requireCaseId(args.case);
+        const proposalId = requireUuid(args.proposal, "Proposal ID");
+        const confidence = parseOptionalCliEnum(
+          trimmedConfidenceTierSchema,
+          args.confidence,
+          "--confidence (unverified|possible|confirmed)",
+          [`wd proposals accept -c ${caseId} ${proposalId}`]
+        );
+        const sharedEvidenceIds = parseIdList(args.sharedEvidence);
+        const row = await api().proposals.accept(
+          acceptProposalInputSchema.parse({
+            caseId,
+            proposalId,
+            confidence,
+            sharedEvidenceIds,
+            attestationText: args.attestation,
+          })
+        );
+        emit(enrichProposalDisplay(row));
       },
     }),
     reject: defineCommand({
@@ -141,16 +180,20 @@ export const proposalsCmd = defineNounCommand({
         ...dryRunArg,
       },
       run: async ({ args }) => {
+        const caseId = requireCaseId(args.case);
+        const proposalId = requireUuid(args.proposal, "Proposal ID");
         if (args["dry-run"]) {
-          emitOk({ dryRun: true, id: args.proposal, rejected: true });
+          emitOk({ dryRun: true, id: proposalId, rejected: true });
           return;
         }
-        const row = await api().proposals.reject({
-          caseId: args.case,
-          proposalId: args.proposal,
-          ...pickDefined({ reason: args.reason }),
-        });
-        emit(row);
+        const row = await api().proposals.reject(
+          rejectProposalInputSchema.parse({
+            caseId,
+            proposalId,
+            reason: args.reason,
+          })
+        );
+        emit(enrichProposalDisplay(row));
       },
     }),
   },

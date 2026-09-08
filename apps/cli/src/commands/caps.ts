@@ -1,9 +1,20 @@
 import { defineCommand } from "citty";
 
+import { titleCase } from "@watchdog/schemas";
+
 import { api, emitList } from "../client";
+import { capEgressLabel, capKindLabel, capabilityIdLabel } from "../display";
 import { asBoolean, defineNounCommand } from "../noun";
 
-const LIST_COLUMNS = ["id", "kind", "egress", "title", "description"];
+const LIST_COLUMNS = [
+  "id",
+  "kind",
+  "kindLabel",
+  "egress",
+  "egressLabel",
+  "title",
+  "description",
+];
 const LIST_HELP = [
   "wd jobs start -c <caseId> --cap <capId>",
   "wd caps playbooks",
@@ -20,7 +31,15 @@ export const capsCmd = defineNounCommand({
   list: async (args) => {
     const rows = await api().capabilities.list();
     emitList({
-      items: rows,
+      items: rows.map((r) => ({
+        id: r.id,
+        kind: r.kind,
+        kindLabel: capKindLabel(r.kind),
+        egress: r.egress,
+        egressLabel: capEgressLabel(r.egress),
+        title: r.title,
+        description: r.description,
+      })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       help: LIST_HELP,
@@ -50,8 +69,8 @@ export const capsCmd = defineNounCommand({
           items: rows.map((r) => ({
             id: r.id,
             title: r.title,
-            seeds: r.seedKinds.join(","),
-            steps: r.steps.join(" → "),
+            seeds: r.seedKinds.map((kind) => titleCase(kind)).join(", "),
+            steps: r.steps.map(capabilityIdLabel).join(" → "),
           })),
           columns: PLAYBOOK_COLUMNS,
           table: args.table,

@@ -1,17 +1,44 @@
 import { defineCommand } from "citty";
 
-import { isJsonObject } from "@watchdog/schemas";
+import {
+  cancelJobInputSchema,
+  cancelPlaybookInputSchema,
+  getJobInputSchema,
+  isJsonObject,
+  jobInputObjectSchema,
+  listJobsInputSchema,
+  playbookSeedInputSchema,
+  startJobInputSchema,
+  startPlaybookInputSchema,
+  trimmedOrUndefined,
+} from "@watchdog/schemas";
 
 import { api, emit, emitList, fail, truncText } from "../client";
-import { resolveEntityId } from "../ids";
+import {
+  collapseJobListRows,
+  enrichCancelPlaybookDisplay,
+  enrichJobDisplay,
+  enrichPlaybookRunDisplay,
+} from "../display";
+import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
+import { jobInputTitlesForJobs } from "../job-evidence-titles";
 import {
   asBoolean,
   caseArg,
   defineNounCommand,
+  hasCliText,
   requiredCaseArg,
 } from "../noun";
 
-const LIST_COLUMNS = ["id", "cap", "status", "created"];
+const LIST_COLUMNS = [
+  "id",
+  "cap",
+  "capLabel",
+  "subject",
+  "status",
+  "statusLabel",
+  "updated",
+];
 
 function listHelp(caseId: string): string[] {
   return [
@@ -26,14 +53,20 @@ export const jobsCmd = defineNounCommand({
   required: ["case"],
   usageHelp: ["wd jobs list -c <caseId>"],
   list: async (args) => {
-    const caseId = String(args.case);
-    const rows = await api().jobs.listForCase({ caseId });
+    const caseId = requireCaseId(args.case);
+    const rows = await api().jobs.listForCase(
+      listJobsInputSchema.parse({ caseId })
+    );
+    const collapsed = collapseJobListRows(rows);
+    const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
+      caseId,
+      collapsed
+    );
     emitList({
-      items: rows.map((r) => ({
-        id: r.id,
-        cap: r.capabilityId,
-        status: r.status,
-        created: r.createdAt.slice(0, 16),
+      items: collapsed.map((r) => ({
+        ...enrichJobDisplay(r, evidenceTitles, entityTitles),
+        cap: r.playbookId ?? r.capabilityId,
+        updated: (r.updatedAt ?? r.createdAt).slice(0, 16),
       })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
@@ -56,15 +89,24 @@ export const jobsCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const row = await api().jobs.get({
-          caseId: args.case,
-          jobId: args.job,
+        const scope = getJobInputSchema.parse({
+          caseId: requireCaseId(args.case),
+          jobId: requireUuid(args.job, "Job ID"),
         });
+        const row = await api().jobs.get(scope);
+        const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
+          scope.caseId,
+          [row]
+        );
+        const enriched = enrichJobDisplay(row, evidenceTitles, entityTitles);
         if (args.full) {
-          emit(row);
+          emit(enriched);
           return;
         }
-        emit({ ...row, logs: truncText(row.logs.join("\n"), false) });
+        emit({
+          ...enriched,
+          logs: truncText(row.logs.join("\n"), false),
+        });
       },
     }),
     start: defineCommand({
@@ -80,40 +122,66 @@ export const jobsCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        let input: Record<string, unknown>;
-        try {
-          const parsed: unknown = JSON.parse(args.input);
-          if (!isJsonObject(parsed)) {
-            throw new Error("--input must be a JSON object");
-          }
-          input = parsed;
-        } catch {
-          fail("USAGE", "--input must be valid JSON", {
+        const caseId = requireCaseId(args.case);
+        if (!hasCliText(args.cap)) {
+          fail("USAGE", "--cap must not be blank", {
             help: [
-              `wd jobs start -c ${args.case} --cap network.dns.lookup -i '{"host":"example.com"}'`,
+              `wd jobs start -c ${caseId} --cap network.dns.lookup -i '{"host":"example.com"}'`,
             ],
           });
         }
-        const row = await api().jobs.start({
-          caseId: args.case,
-          capabilityId: args.cap,
-          input,
-        });
-        emit(row);
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(args.input.trim());
+        } catch {
+          fail("USAGE", "--input must be valid JSON", {
+            help: [
+              `wd jobs start -c ${caseId} --cap network.dns.lookup -i '{"host":"example.com"}'`,
+            ],
+          });
+        }
+        if (!isJsonObject(parsed)) {
+          fail("USAGE", "--input must be a JSON object", {
+            help: [
+              `wd jobs start -c ${caseId} --cap network.dns.lookup -i '{"host":"example.com"}'`,
+            ],
+          });
+        }
+        const input = jobInputObjectSchema.parse(parsed);
+        const row = await api().jobs.start(
+          startJobInputSchema.parse({
+            caseId,
+            capabilityId: args.cap,
+            input,
+          })
+        );
+        const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
+          caseId,
+          [row]
+        );
+        emit(enrichJobDisplay(row, evidenceTitles, entityTitles));
       },
     }),
     cancel: defineCommand({
-      meta: { name: "cancel", description: "Cancel a queued/running job" },
+      meta: {
+        name: "cancel",
+        description: "Cancel a queued, running, or blocked job",
+      },
       args: {
         ...requiredCaseArg,
         job: { type: "positional", description: "Job ID", required: true },
       },
       run: async ({ args }) => {
-        const row = await api().jobs.cancel({
-          caseId: args.case,
-          jobId: args.job,
+        const scope = cancelJobInputSchema.parse({
+          caseId: requireCaseId(args.case),
+          jobId: requireUuid(args.job, "Job ID"),
         });
-        emit(row);
+        const row = await api().jobs.cancel(scope);
+        const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
+          scope.caseId,
+          [row]
+        );
+        emit(enrichJobDisplay(row, evidenceTitles, entityTitles));
       },
     }),
     playbook: defineCommand({
@@ -141,26 +209,62 @@ export const jobsCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const seed: Record<string, string> = {};
-        if (args.host !== undefined && args.host !== "") seed.host = args.host;
-        if (args.url !== undefined && args.url !== "") seed.url = args.url;
-        if (args.evidence !== undefined && args.evidence !== "")
-          seed.evidenceId = args.evidence;
-        if (args.ip !== undefined && args.ip !== "") seed.ip = args.ip;
-        if (args.email !== undefined && args.email !== "")
-          seed.email = args.email;
-        if (args.hash !== undefined && args.hash !== "") seed.hash = args.hash;
-        if (args.handle !== undefined && args.handle !== "")
-          seed.handle = args.handle;
-        if (args.entity !== undefined && args.entity !== "") {
-          seed.entityId = await resolveEntityId(args.case, args.entity);
+        const caseId = requireCaseId(args.case);
+        if (!hasCliText(args.id)) {
+          fail("USAGE", "Playbook id must not be blank", {
+            help: [
+              `wd jobs playbook -c ${caseId} --id host-footprint --host example.com`,
+            ],
+          });
         }
-        const row = await api().jobs.startPlaybook({
-          caseId: args.case,
-          playbookId: args.id,
-          seed,
-        });
-        emit(row);
+        const seed: Record<string, string> = {};
+        const host = trimmedOrUndefined(args.host);
+        const url = trimmedOrUndefined(args.url);
+        const evidenceRaw = trimmedOrUndefined(args.evidence);
+        const ip = trimmedOrUndefined(args.ip);
+        const email = trimmedOrUndefined(args.email);
+        const hash = trimmedOrUndefined(args.hash);
+        const handle = trimmedOrUndefined(args.handle);
+        const entity = trimmedOrUndefined(args.entity);
+        if (host !== undefined) seed.host = host;
+        if (url !== undefined) seed.url = url;
+        if (evidenceRaw !== undefined) {
+          seed.evidenceId = requireUuid(evidenceRaw, "Evidence ID");
+        }
+        if (ip !== undefined) seed.ip = ip;
+        if (email !== undefined) seed.email = email;
+        if (hash !== undefined) seed.hash = hash;
+        if (handle !== undefined) seed.handle = handle;
+        if (entity !== undefined) {
+          seed.entityId = await resolveEntityId(caseId, entity);
+        }
+        if (Object.keys(seed).length === 0) {
+          fail("USAGE", "At least one playbook seed is required", {
+            help: [
+              `wd jobs playbook -c ${caseId} --id host-footprint --host example.com`,
+            ],
+          });
+        }
+        const parsedSeed = playbookSeedInputSchema.safeParse(seed);
+        if (!parsedSeed.success) {
+          fail("USAGE", "Invalid playbook seed (check URL is http/https)", {
+            help: [
+              `wd jobs playbook -c ${caseId} --id host-footprint --host example.com`,
+            ],
+          });
+        }
+        const row = await api().jobs.startPlaybook(
+          startPlaybookInputSchema.parse({
+            caseId,
+            playbookId: args.id,
+            seed: parsedSeed.data,
+          })
+        );
+        const { evidenceTitles, entityTitles } = await jobInputTitlesForJobs(
+          caseId,
+          row.jobs
+        );
+        emit(enrichPlaybookRunDisplay(row, evidenceTitles, entityTitles));
       },
     }),
     "cancel-playbook": defineCommand({
@@ -177,11 +281,12 @@ export const jobsCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const row = await api().jobs.cancelPlaybook({
-          caseId: args.case,
-          playbookRunId: args.run,
+        const scope = cancelPlaybookInputSchema.parse({
+          caseId: requireCaseId(args.case),
+          playbookRunId: requireUuid(args.run, "Playbook run ID"),
         });
-        emit(row);
+        const row = await api().jobs.cancelPlaybook(scope);
+        emit(enrichCancelPlaybookDisplay(row));
       },
     }),
   },
