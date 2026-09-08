@@ -31,6 +31,7 @@ function pendingProposal(
     caseId: testId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
+    playbookId: null,
     status: "pending",
     patch: [
       {
@@ -100,6 +101,19 @@ describe("TriageDecideHeader", () => {
     const link = screen.getByText("DNS Lookup");
     expect(link).toHaveAttribute("data-search-id", jobId);
     expect(link.closest("a")).toHaveAttribute("href", "/collect");
+  });
+
+  it("trims padded jobId before linking to Collect", () => {
+    const jobId = testId(99);
+    render(
+      <TriageDecideHeader
+        proposal={pendingProposal({ jobId: `  ${jobId}  ` })}
+        linkedIds={[]}
+      />
+    );
+
+    const link = screen.getByText("DNS Lookup");
+    expect(link).toHaveAttribute("data-search-id", jobId);
   });
 
   it("shows reject reason for decided proposals", () => {

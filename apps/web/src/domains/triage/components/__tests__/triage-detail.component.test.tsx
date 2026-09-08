@@ -38,11 +38,22 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 import { TriageDetail } from "@/domains/triage/components/triage-detail";
 
+function fetchedEvidenceQuery(data: unknown[] = []) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isSuccess: true,
+  };
+}
+
 const PROPOSAL: ProposalRecord = {
   id: testId(50),
   caseId: testId(10),
   jobId: null,
   capabilityId: "network.dns.lookup",
+  playbookId: null,
   status: "pending",
   patch: [],
   summary: "dns",
@@ -62,7 +73,7 @@ const PROPOSAL: ProposalRecord = {
 
 describe("TriageDetail", () => {
   it("shows empty detail copy when nothing is selected", () => {
-    useQueryMock.mockReturnValue({ data: [], isError: false, isSuccess: true });
+    useQueryMock.mockReturnValue(fetchedEvidenceQuery());
     render(
       <TriageDetail
         proposal={null}
@@ -74,11 +85,11 @@ describe("TriageDetail", () => {
       />
     );
     expect(screen.getByText("Select a proposal")).toBeInTheDocument();
-    expect(useQueryMock).toHaveBeenCalled();
+    expect(useQueryMock.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
   it("renders decide header and patch body for a selected proposal", () => {
-    useQueryMock.mockReturnValue({ data: [], isError: false, isSuccess: true });
+    useQueryMock.mockReturnValue(fetchedEvidenceQuery());
     render(
       <TriageDetail
         proposal={PROPOSAL}
@@ -92,5 +103,6 @@ describe("TriageDetail", () => {
     expect(screen.getByText("Triage decide header")).toBeInTheDocument();
     expect(screen.getByText("Triage patch body")).toBeInTheDocument();
     expect(screen.queryByText("Select a proposal")).not.toBeInTheDocument();
+    expect(useQueryMock.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 });

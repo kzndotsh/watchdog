@@ -20,6 +20,7 @@ function proposal(patch: ProposalRecord["patch"]): ProposalRecord {
     caseId: testId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
+    playbookId: null,
     status: "pending",
     patch,
     summary: null,
@@ -141,6 +142,21 @@ describe("TriagePatchBody", () => {
         ])}
       />
     );
+    expect(screen.getByRole("button", { name: "Accept" })).toBeEnabled();
+  });
+
+  it("renders when proposal patch is missing", () => {
+    render(
+      <Harness
+        confidence="unverified"
+        row={{
+          ...proposal([]),
+          patch: undefined as unknown as ProposalRecord["patch"],
+          summary: "Queued enrichment",
+        }}
+      />
+    );
+    expect(screen.getByText("Queued enrichment")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Accept" })).toBeEnabled();
   });
 });

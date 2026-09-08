@@ -33,14 +33,6 @@ export function useTriageDetailForms(
     },
   });
 
-  const [prevProposalId, setPrevProposalId] = useState(proposal?.id ?? null);
-  if ((proposal?.id ?? null) !== prevProposalId) {
-    setPrevProposalId(proposal?.id ?? null);
-    acceptForm.reset();
-    rejectForm.reset();
-    setRejecting(false);
-  }
-
   const linkedIds = useMemo(
     () => (proposal ? collectProposalEvidenceIds(proposal) : []),
     [proposal]

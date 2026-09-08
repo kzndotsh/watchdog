@@ -10,6 +10,7 @@ const PROPOSAL: ProposalRecord = {
   caseId: testId(10),
   jobId: null,
   capabilityId: "network.dns.lookup",
+  playbookId: null,
   status: "pending",
   patch: [
     {
@@ -53,6 +54,7 @@ describe("TriageQueueList", () => {
       screen.getByRole("listbox", { name: "Proposals" })
     ).toBeInTheDocument();
     expect(screen.getByRole("option", { selected: true })).toBeInTheDocument();
-    expect(screen.getByText(/1 claim · 1 ev/)).toBeInTheDocument();
+    expect(screen.getByText("dns lookup")).toBeInTheDocument();
+    expect(screen.getByText(/1 Claim · 1 ev/)).toBeInTheDocument();
   });
 });

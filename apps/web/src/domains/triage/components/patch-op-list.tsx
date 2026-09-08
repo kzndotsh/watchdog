@@ -2,58 +2,15 @@ import { Link } from "@tanstack/react-router";
 
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidenceIdsForOp, evidenceLabel } from "@/domains/triage/lib/evidence";
+import { summarizePatchOpData } from "@/domains/triage/lib/patch-op-summary";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { IdChip } from "@/shared/ui/id-chip";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import { Button } from "@/shared/ui/shadcn/button";
 import { PATCH_RESOURCE_META, PatchOpBadge } from "@/shared/ui/vocab";
-import type { JsonObject, PatchOp } from "@watchdog/schemas";
-
-type Resource = PatchOp["resource"];
+import type { PatchOp } from "@watchdog/schemas";
 
 const EMPTY_IDS: string[] = [];
-
-/** Safely stringify an unknown patch-data field without `[object Object]` noise. */
-function stringifyField(value: unknown, fallback = ""): string {
-  if (value === undefined || value === null) return fallback;
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  return JSON.stringify(value);
-}
-
-function summarizeData(resource: Resource, data: JsonObject): string {
-  switch (resource) {
-    case "claim": {
-      return stringifyField(data.text, JSON.stringify(data));
-    }
-    case "identifier": {
-      const type = stringifyField(data.type);
-      const value = stringifyField(data.value);
-      const platform = data.platform
-        ? ` (${stringifyField(data.platform)})`
-        : "";
-      return `${type}${platform}: ${value}`;
-    }
-    case "edge": {
-      return stringifyField(data.predicate, "related_to");
-    }
-    case "event": {
-      return `${stringifyField(data.when)} — ${stringifyField(data.what)}`.trim();
-    }
-    case "question": {
-      return stringifyField(data.text, JSON.stringify(data));
-    }
-    case "entity": {
-      return `${stringifyField(data.kind)}: ${stringifyField(data.name)}`;
-    }
-    default: {
-      const _exhaustive: never = resource;
-      return JSON.stringify(_exhaustive);
-    }
-  }
-}
 
 /**
  * Evidence shared by the whole patch (proposal shared ids, or the intersection
@@ -139,7 +96,7 @@ function PatchOpRow({
   invalid?: boolean;
 }) {
   const meta = PATCH_RESOURCE_META[op.resource];
-  const summary = summarizeData(op.resource, op.data);
+  const summary = summarizePatchOpData(op.resource, op.data);
 
   return (
     <div className="border-border flex flex-col gap-1.5 border-b px-2.5 py-2 last:border-b-0">

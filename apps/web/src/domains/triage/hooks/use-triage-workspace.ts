@@ -1,14 +1,11 @@
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
 
 import {
   filterTriageQueue,
   PENDING_TRIAGE_FILTERS,
+  proposalPatch,
   type TriageQueueFilters,
 } from "@/domains/triage/lib/filters";
 import { allProposalsQuery } from "@/domains/triage/queries";
@@ -16,16 +13,31 @@ import {
   acceptProposalFn,
   rejectProposalFn,
 } from "@/domains/triage/triage.functions";
-import type { AcceptFormValues } from "@/domains/triage/types";
+import {
+  acceptProposalInputSchema,
+  rejectProposalInputSchema,
+  type AcceptFormValues,
+} from "@/domains/triage/types";
 import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import { listPending } from "@/shared/lib/list-pending";
+import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import {
+  invalidateAfterEvidenceMutation,
   invalidateAfterProposalAccept,
   invalidateAfterProposalQueueChange,
 } from "@/shared/lib/query-invalidation";
+import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
+import type { ProposalRecord } from "@watchdog/core";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
-import type { ProposalStatus } from "@watchdog/schemas";
+import {
+  isProposalQueueLiveEvent,
+  trimmedOrNull,
+  type ProposalStatus,
+} from "@watchdog/schemas";
+
+const EMPTY_PROPOSALS: ProposalRecord[] = [];
 
 export interface UseTriageWorkspaceOptions {
   proposalId?: string;
@@ -54,7 +66,14 @@ export function useTriageWorkspace(
   }: UseTriageWorkspaceOptions
 ) {
   const queryClient = useQueryClient();
-  const { data: allProposals } = useSuspenseQuery(allProposalsQuery(caseId));
+  const proposalsQuery = useQuery(allProposalsQuery(caseId));
+  const allProposals = proposalsQuery.data ?? EMPTY_PROPOSALS;
+  const proposalsPlaceholder = isQueryPlaceholderData(proposalsQuery);
+  const proposalsPending = listPending(proposalsQuery);
+  const proposalsLoadError =
+    !proposalsPending && proposalsQuery.isError
+      ? errMessage(proposalsQuery.error, "Failed to load proposals")
+      : null;
 
   const [internalFilters, setInternalFilters] = useState<TriageQueueFilters>(
     () =>
@@ -89,16 +108,30 @@ export function useTriageWorkspace(
     [allProposals]
   );
 
-  const selectedId = resolveQueueSelection(proposalId, rows);
-  const selected = useMemo(
-    () => rows.find((r) => r.id === selectedId) ?? null,
-    [rows, selectedId]
-  );
+  const normalizedProposalId = scopeOptionalUuid(proposalId);
+
+  const selectedId = resolveQueueSelection(normalizedProposalId, rows, {
+    holdMissingUrlId:
+      normalizedProposalId !== undefined &&
+      allProposals.some((row) => row.id === normalizedProposalId),
+  });
+  const selected = useMemo(() => {
+    const fromRows = rows.find((r) => r.id === selectedId);
+    if (fromRows) return fromRows;
+    if (selectedId === null) return null;
+    return allProposals.find((r) => r.id === selectedId) ?? null;
+  }, [rows, selectedId, allProposals]);
 
   useLiveEvents(caseId, (event) => {
-    if (event.type === "proposal_created") {
+    if (isProposalQueueLiveEvent(event)) {
       setFilters((prev) => ({ ...PENDING_TRIAGE_FILTERS, q: prev.q }));
       void invalidateAfterProposalQueueChange(queryClient, caseId);
+    }
+    if (event.type === "entity_changed") {
+      void invalidateAfterProposalQueueChange(queryClient, caseId);
+    }
+    if (event.type === "evidence_changed") {
+      void invalidateAfterEvidenceMutation(queryClient, caseId);
     }
   });
 
@@ -113,15 +146,15 @@ export function useTriageWorkspace(
   const acceptMutation = useMutation({
     mutationFn: async (values: AcceptFormValues) => {
       if (!selected) throw new Error("Nothing selected");
-      const needs = patchNeedsConfidence(selected.patch);
+      const needs = patchNeedsConfidence(proposalPatch(selected));
       return acceptProposalFn({
-        data: {
+        data: acceptProposalInputSchema.parse({
           caseId,
           proposalId: selected.id,
           confidence: needs ? values.confidence : undefined,
           sharedEvidenceIds: values.evidenceIds,
-          attestationText: values.attestationText.trim() || undefined,
-        },
+          attestationText: values.attestationText,
+        }),
       });
     },
     onSuccess: async () => {
@@ -138,11 +171,11 @@ export function useTriageWorkspace(
     mutationFn: async (reason: string) => {
       if (!selected) throw new Error("Nothing selected");
       return rejectProposalFn({
-        data: {
+        data: rejectProposalInputSchema.parse({
           caseId,
           proposalId: selected.id,
-          reason: reason.trim() || undefined,
-        },
+          reason,
+        }),
       });
     },
     onSuccess: async () => {
@@ -157,6 +190,12 @@ export function useTriageWorkspace(
 
   return {
     allProposals,
+    proposalsPlaceholder,
+    proposalsPending,
+    proposalsLoadError,
+    handleRetryProposals: () => {
+      void proposalsQuery.refetch();
+    },
     rows,
     filters,
     setFilters,
@@ -166,7 +205,7 @@ export function useTriageWorkspace(
     error,
     setError,
     pending: acceptMutation.isPending || rejectMutation.isPending,
-    selectionOutOfSync: (proposalId ?? null) !== selectedId,
+    selectionOutOfSync: trimmedOrNull(proposalId) !== selectedId,
     handleAccept: (values: AcceptFormValues) => {
       setError(null);
       acceptMutation.mutate(values);

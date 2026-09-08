@@ -52,18 +52,33 @@ vi.mock("@/shared/ui/split-view", () => ({
   ),
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
-const useSuspenseQueriesMock = vi.hoisted(() => vi.fn());
+const useCasesContextMock = vi.hoisted(() => vi.fn());
 const useQueryMock = vi.hoisted(() => vi.fn());
 const useTriageWorkspaceMock = vi.hoisted(() => vi.fn());
+
+function mockCasesContextLoaded(
+  active: CaseRecord | null,
+  cases: CaseRecord[] = active ? [active] : []
+) {
+  useCasesContextMock.mockReturnValue({
+    casesCtx: { cases, active },
+    cases,
+    active,
+    pending: false,
+    loadError: null,
+    retry: vi.fn(),
+    placeholder: false,
+  });
+}
+
+vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
+  useCasesContext: () => useCasesContextMock(),
+}));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
-    useSuspenseQueries: (options: { queries: unknown[] }) =>
-      useSuspenseQueriesMock(options),
     useQuery: (...args: unknown[]) => useQueryMock(...args),
   };
 });
@@ -89,6 +104,10 @@ const ACTIVE: CaseRecord = {
 function mockWorkspace() {
   useTriageWorkspaceMock.mockReturnValue({
     allProposals: [{ id: testId(50) }],
+    proposalsPlaceholder: false,
+    proposalsPending: false,
+    proposalsLoadError: null,
+    handleRetryProposals: vi.fn(),
     rows: [{ id: testId(50) }],
     filters: { q: "", statuses: ["pending"] },
     setFilters: vi.fn(),
@@ -105,9 +124,7 @@ function mockWorkspace() {
 
 describe("Triage", () => {
   it("prompts for an active case when none is selected", () => {
-    useSuspenseQueriesMock.mockReturnValue([
-      { data: { cases: [], active: null } },
-    ]);
+    mockCasesContextLoaded(null);
 
     render(<Triage onProposalIdChange={vi.fn()} />);
     expect(screen.getByText("No Active Case")).toBeInTheDocument();
@@ -116,14 +133,11 @@ describe("Triage", () => {
       "/cases"
     );
     expect(screen.queryByText("Triage queue toolbar")).not.toBeInTheDocument();
-    expect(useSuspenseQueriesMock).toHaveBeenCalled();
+    expect(useCasesContextMock).toHaveBeenCalled();
   });
 
   it("renders queue chrome for the active case", () => {
-    useSuspenseQueriesMock.mockReturnValue([
-      { data: { cases: [ACTIVE], active: ACTIVE } },
-    ]);
-    useQueryMock.mockReturnValue({ data: 1, isPending: false });
+    mockCasesContextLoaded(ACTIVE);
     mockWorkspace();
 
     const client = new QueryClient();
@@ -139,6 +153,6 @@ describe("Triage", () => {
     expect(screen.getByTestId("split-list")).toBeInTheDocument();
     expect(screen.getByTestId("split-detail")).toBeInTheDocument();
     expect(useTriageWorkspaceMock).toHaveBeenCalled();
-    expect(useSuspenseQueriesMock).toHaveBeenCalled();
+    expect(useCasesContextMock).toHaveBeenCalled();
   });
 });

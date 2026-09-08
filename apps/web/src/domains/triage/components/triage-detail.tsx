@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
+import { mergeEvidenceRecords } from "@/domains/intake/lib/evidence";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { TriageDecideHeader } from "@/domains/triage/components/triage-decide-header";
@@ -9,6 +10,8 @@ import { useTriageDetailForms } from "@/domains/triage/hooks/use-triage-detail-f
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import type { AcceptFormValues } from "@/domains/triage/types";
 import { errMessage } from "@/lib/utils";
+import { listPending } from "@/shared/lib/list-pending";
+import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 
 interface TriageDetailProps {
@@ -19,10 +22,6 @@ interface TriageDetailProps {
   onAccept: (values: AcceptFormValues) => void;
   onReject: (reason: string) => void;
 }
-
-// Stable reference so `useMemo`s keyed on it don't invalidate every render
-// while the query is still loading.
-const EMPTY_EVIDENCE: EvidenceRecord[] = [];
 
 /**
  * Triage Detail — context strip header + patch ledger + decide footer.
@@ -42,15 +41,35 @@ export function TriageDetail({
   const { acceptForm, rejectForm, linkedIds, rejecting, setRejecting } =
     useTriageDetailForms(proposal, onAccept, onReject);
 
-  const evidenceQuery = useQuery({
-    ...evidenceListQuery(caseId),
-    enabled: Boolean(caseId),
+  const activeEvidenceQueryOptions = evidenceListQuery(caseId);
+  const activeEvidenceQuery = useQuery({
+    ...activeEvidenceQueryOptions,
     meta: { silentError: true },
   });
-  const caseEvidence = evidenceQuery.data ?? EMPTY_EVIDENCE;
-  const evidenceLoadError = evidenceQuery.isError
-    ? errMessage(evidenceQuery.error, "Failed to load evidence")
-    : null;
+  const hiddenEvidenceQueryOptions = evidenceListQuery(caseId, {
+    hiddenOnly: true,
+  });
+  const hiddenEvidenceQuery = useQuery({
+    ...hiddenEvidenceQueryOptions,
+    meta: { silentError: true },
+  });
+  const caseEvidence = useMemo(
+    () =>
+      mergeEvidenceRecords(activeEvidenceQuery.data, hiddenEvidenceQuery.data),
+    [activeEvidenceQuery.data, hiddenEvidenceQuery.data]
+  );
+  const evidencePlaceholder =
+    activeEvidenceQuery.isPlaceholderData ||
+    hiddenEvidenceQuery.isPlaceholderData;
+  const evidenceLoadError =
+    activeEvidenceQuery.isError || hiddenEvidenceQuery.isError
+      ? errMessage(
+          activeEvidenceQuery.error ??
+            hiddenEvidenceQuery.error ??
+            new Error("Failed to load evidence"),
+          "Failed to load evidence"
+        )
+      : null;
 
   const evidenceById = useMemo(() => {
     const map = new Map<string, EvidenceRecord>();
@@ -65,9 +84,10 @@ export function TriageDetail({
         .filter((row): row is EvidenceRecord => Boolean(row)),
     [linkedIds, evidenceById]
   );
-  const missingJobEvidenceCount = evidenceQuery.isSuccess
-    ? linkedIds.length - jobEvidence.length
-    : 0;
+  const missingJobEvidenceCount =
+    activeEvidenceQuery.isSuccess && hiddenEvidenceQuery.isSuccess
+      ? linkedIds.length - jobEvidence.length
+      : 0;
 
   if (!proposal) {
     return (
@@ -90,9 +110,21 @@ export function TriageDetail({
         linkedIds={linkedIds}
         caseEvidence={caseEvidence}
         missingJobEvidenceCount={missingJobEvidenceCount}
-        evidenceLoading={evidenceQuery.isPending}
+        evidenceLoading={
+          listPending(activeEvidenceQuery, {
+            enabled: queryEnabledFlag(activeEvidenceQueryOptions.enabled),
+          }) ||
+          listPending(hiddenEvidenceQuery, {
+            enabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
+          })
+        }
+        evidencePlaceholder={evidencePlaceholder}
         evidenceById={evidenceById}
         evidenceLoadError={evidenceLoadError}
+        onRetryEvidence={() => {
+          if (activeEvidenceQuery.isError) void activeEvidenceQuery.refetch();
+          if (hiddenEvidenceQuery.isError) void hiddenEvidenceQuery.refetch();
+        }}
         pending={pending}
         error={error}
         rejecting={rejecting}

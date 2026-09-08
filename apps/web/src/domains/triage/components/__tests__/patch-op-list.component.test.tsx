@@ -42,4 +42,28 @@ describe("PatchOpList", () => {
     expect(screen.getByText("Observed alias")).toBeInTheDocument();
     expect(screen.getByText("Open in Collect")).toBeInTheDocument();
   });
+
+  it("labels entity and identifier patch ops", () => {
+    render(
+      <PatchOpList
+        patch={[
+          {
+            id: testId(2),
+            op: "create",
+            resource: "entity",
+            data: { kind: "person", name: "Acme" },
+          },
+          {
+            id: testId(3),
+            op: "create",
+            resource: "identifier",
+            data: { type: "email", value: "ops@acme.test" },
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("Person: Acme")).toBeInTheDocument();
+    expect(screen.getByText("Email: ops@acme.test")).toBeInTheDocument();
+  });
 });

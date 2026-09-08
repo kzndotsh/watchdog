@@ -2,10 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { allProposalsQuery } from "@/domains/triage/queries";
-import {
-  warmEnsureQueryData,
-  warmPrefetchQuery,
-} from "@/shared/lib/warm-query";
+import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 
 /** Warm Triage queue + detail evidence without blocking shell paint. */
 export function warmTriageQueries(
@@ -16,5 +13,12 @@ export function warmTriageQueries(
     ...allProposalsQuery(caseId),
     revalidateIfStale: true,
   });
-  warmPrefetchQuery(queryClient, evidenceListQuery(caseId));
+  warmEnsureQueryData(queryClient, {
+    ...evidenceListQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...evidenceListQuery(caseId, { hiddenOnly: true }),
+    revalidateIfStale: true,
+  });
 }

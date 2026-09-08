@@ -15,6 +15,12 @@ describe("triage input schemas", () => {
       CASE_ID
     );
     expect(
+      listProposalsInputSchema.parse({
+        caseId: CASE_ID,
+        status: "  pending  ",
+      }).status
+    ).toBe("pending");
+    expect(
       acceptProposalInputSchema.parse({
         caseId: CASE_ID,
         proposalId: PROPOSAL_ID,
@@ -28,5 +34,22 @@ describe("triage input schemas", () => {
         reason: "Duplicate",
       }).reason
     ).toBe("Duplicate");
+  });
+
+  it("trims padded evidence ids on accept", () => {
+    const evidenceId = "770e8400-e29b-41d4-a716-446655440002";
+    expect(
+      acceptProposalInputSchema.parse({
+        caseId: CASE_ID,
+        proposalId: PROPOSAL_ID,
+        sharedEvidenceIds: [`  ${evidenceId}  `],
+        attestationText: "  reviewed  ",
+      })
+    ).toEqual({
+      caseId: CASE_ID,
+      proposalId: PROPOSAL_ID,
+      sharedEvidenceIds: [evidenceId],
+      attestationText: "reviewed",
+    });
   });
 });

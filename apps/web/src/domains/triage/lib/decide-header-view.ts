@@ -1,10 +1,11 @@
 import {
   proposalEntityName,
   proposalEntitySlug,
+  proposalPatch,
   proposalTitle,
 } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
-import { capabilityLabel } from "@/shared/ui/vocab";
+import { proposalSourceLabel } from "@/shared/ui/vocab";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import type { ProposalStatus } from "@watchdog/schemas";
 
@@ -56,8 +57,9 @@ export function buildDecideHeaderView(input: {
   const isPending = proposal.status === "pending";
   const entityName = proposalEntityName(proposal);
   const entitySlug = proposalEntitySlug(proposal);
-  const capLabel = capabilityLabel(proposal.capabilityId) || null;
-  const needsConfidence = isPending && patchNeedsConfidence(proposal.patch);
+  const capLabel = proposalSourceLabel(proposal) || null;
+  const needsConfidence =
+    isPending && patchNeedsConfidence(proposalPatch(proposal));
   const hasJobCites = linkedIds.length > 0;
 
   let decideMode: DecideMode;

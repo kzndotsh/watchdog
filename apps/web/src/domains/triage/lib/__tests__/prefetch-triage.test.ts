@@ -27,5 +27,10 @@ describe("warmTriageQueries", () => {
         queryKey: evidenceListQuery("case-1").queryKey,
       })
     );
+    expect(query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: evidenceListQuery("case-1", { hiddenOnly: true }).queryKey,
+      })
+    );
   });
 });

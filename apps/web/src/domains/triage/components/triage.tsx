@@ -1,12 +1,8 @@
-import {
-  useQuery,
-  useQueryClient,
-  useSuspenseQueries,
-} from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import { TriageDetail } from "@/domains/triage/components/triage-detail";
 import { TriageQueueList } from "@/domains/triage/components/triage-queue-list";
@@ -15,17 +11,17 @@ import { useTriageWorkspace } from "@/domains/triage/hooks/use-triage-workspace"
 import {
   EMPTY_TRIAGE_FILTERS,
   isTriagePendingOnlyFilters,
-  PENDING_TRIAGE_FILTERS,
+  triageStatusesFromSearch,
+  triageStatusSearchParam,
   type TriageQueueFilters,
 } from "@/domains/triage/lib/filters";
-import { allProposalsQuery } from "@/domains/triage/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueShell } from "@/shared/ui/queue-shell";
-import { RegionBoundary } from "@/shared/ui/region-boundary";
 import { Button } from "@/shared/ui/shadcn/button";
 import { SplitView } from "@/shared/ui/split-view";
 import { TriageSplitPendingFallback } from "@/shared/ui/triage-split-pending-fallback";
@@ -83,23 +79,14 @@ function TriageQueueEmptyState({
 
 function TriageActive({
   active,
-  proposalId,
-  filters,
-  onFiltersChange,
+  ws,
   onProposalIdChange,
 }: {
   active: CaseRecord;
-  proposalId?: string;
-  filters: TriageQueueFilters;
-  onFiltersChange: (next: TriageQueueFilters) => void;
+  ws: ReturnType<typeof useTriageWorkspace>;
   onProposalIdChange: (next: string | null) => void;
 }) {
   const queryClient = useQueryClient();
-  const ws = useTriageWorkspace(active.id, {
-    proposalId,
-    filters,
-    onFiltersChange,
-  });
 
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
@@ -136,24 +123,28 @@ function TriageActive({
               />
             }
           >
-            {ws.rows.length === 0 ? (
-              <TriageQueueEmptyState
-                hasAnyProposals={ws.allProposals.length > 0}
-                pendingOnly={isTriagePendingOnlyFilters(ws.filters)}
-                filters={ws.filters}
-                onClearFilters={() => {
-                  ws.setFilters(EMPTY_TRIAGE_FILTERS);
-                }}
-              />
-            ) : (
-              <TriageQueueList
-                proposals={ws.rows}
-                selectedId={ws.selectedId}
-                onSelect={(id) => {
-                  onProposalIdChange(id);
-                }}
-              />
-            )}
+            <div
+              className={placeholderDeemphasisClass(ws.proposalsPlaceholder)}
+            >
+              {ws.rows.length === 0 ? (
+                <TriageQueueEmptyState
+                  hasAnyProposals={ws.allProposals.length > 0}
+                  pendingOnly={isTriagePendingOnlyFilters(ws.filters)}
+                  filters={ws.filters}
+                  onClearFilters={() => {
+                    ws.setFilters(EMPTY_TRIAGE_FILTERS);
+                  }}
+                />
+              ) : (
+                <TriageQueueList
+                  proposals={ws.rows}
+                  selectedId={ws.selectedId}
+                  onSelect={(id) => {
+                    onProposalIdChange(id);
+                  }}
+                />
+              )}
+            </div>
           </QueueShell>
         }
         detail={
@@ -161,6 +152,7 @@ function TriageActive({
             <div className="h-full" aria-hidden />
           ) : (
             <TriageDetail
+              key={ws.selected?.id ?? "empty"}
               proposal={ws.selected}
               caseId={active.id}
               pending={ws.pending}
@@ -180,45 +172,70 @@ function TriageWithCase({
   proposalId,
   initialStatus,
   onProposalIdChange,
+  onStatusSearchChange,
 }: {
   active: CaseRecord;
   proposalId?: string;
   initialStatus?: ProposalStatus;
   onProposalIdChange: (next: string | null) => void;
+  onStatusSearchChange?: (status: ProposalStatus | undefined) => void;
 }) {
-  const [filters, setFilters] = useState<TriageQueueFilters>(() =>
-    initialStatus
-      ? { q: "", statuses: [initialStatus] }
-      : PENDING_TRIAGE_FILTERS
+  const [filters, setFilters] = useState<TriageQueueFilters>(() => ({
+    q: "",
+    statuses: triageStatusesFromSearch(initialStatus),
+  }));
+
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      statuses: triageStatusesFromSearch(initialStatus),
+    }));
+  }, [initialStatus]);
+
+  const handleFiltersChange = useCallback(
+    (next: TriageQueueFilters) => {
+      setFilters(next);
+      onStatusSearchChange?.(triageStatusSearchParam(next));
+    },
+    [onStatusSearchChange]
   );
-  const {
-    data: pendingCount,
-    isPending: pendingCountPending,
-    isPlaceholderData: proposalsPlaceholder,
-  } = useQuery({
-    ...allProposalsQuery(active.id),
-    select: (all) => all.filter((row) => row.status === "pending").length,
+  const ws = useTriageWorkspace(active.id, {
+    proposalId,
+    filters,
+    onFiltersChange: handleFiltersChange,
   });
+
+  let body: ReactNode;
+  if (ws.proposalsLoadError) {
+    body = (
+      <FetchErrorAlert
+        error={ws.proposalsLoadError}
+        onRetry={ws.handleRetryProposals}
+      />
+    );
+  } else if (ws.proposalsPending) {
+    body = <TriageSplitPendingFallback />;
+  } else {
+    body = (
+      <TriageActive
+        active={active}
+        ws={ws}
+        onProposalIdChange={onProposalIdChange}
+      />
+    );
+  }
 
   return (
     <>
-      <div className={placeholderDeemphasisClass(proposalsPlaceholder)}>
+      <div className={placeholderDeemphasisClass(ws.proposalsPlaceholder)}>
         <TriageQueueToolbar
           filters={filters}
-          onFiltersChange={setFilters}
-          pendingCount={pendingCountPending ? undefined : pendingCount}
+          onFiltersChange={handleFiltersChange}
+          pendingCount={ws.proposalsPending ? undefined : ws.pendingCount}
         />
       </div>
 
-      <RegionBoundary fallback={<TriageSplitPendingFallback />}>
-        <TriageActive
-          active={active}
-          proposalId={proposalId}
-          filters={filters}
-          onFiltersChange={setFilters}
-          onProposalIdChange={onProposalIdChange}
-        />
-      </RegionBoundary>
+      {body}
     </>
   );
 }
@@ -227,41 +244,58 @@ export function Triage({
   proposalId,
   initialStatus,
   onProposalIdChange,
+  onStatusSearchChange,
 }: {
   proposalId?: string;
   initialStatus?: ProposalStatus;
   onProposalIdChange: (next: string | null) => void;
+  onStatusSearchChange?: (status: ProposalStatus | undefined) => void;
 }) {
-  const [{ data: casesCtx }] = useSuspenseQueries({
-    queries: [casesContextQuery()],
-  });
+  const {
+    active,
+    pending: casesPending,
+    loadError: casesLoadError,
+    retry: retryCases,
+  } = useCasesContext();
+
+  let body: ReactNode;
+  if (casesLoadError) {
+    body = <FetchErrorAlert error={casesLoadError} onRetry={retryCases} />;
+  } else if (casesPending) {
+    body = <TriageSplitPendingFallback />;
+  } else if (active) {
+    body = (
+      <TriageWithCase
+        active={active}
+        proposalId={proposalId}
+        initialStatus={initialStatus}
+        onProposalIdChange={onProposalIdChange}
+        onStatusSearchChange={onStatusSearchChange}
+      />
+    );
+  } else {
+    body = (
+      <EmptyState
+        intent="blank-slate"
+        items="cases"
+        title="No Active Case"
+        description={
+          <>
+            <Link to="/cases" className="underline">
+              Select a Case
+            </Link>{" "}
+            to review proposals.
+          </>
+        }
+      />
+    );
+  }
 
   return (
     <Page density="split">
       <PageHeader />
 
-      {casesCtx.active ? (
-        <TriageWithCase
-          active={casesCtx.active}
-          proposalId={proposalId}
-          initialStatus={initialStatus}
-          onProposalIdChange={onProposalIdChange}
-        />
-      ) : (
-        <EmptyState
-          intent="blank-slate"
-          items="cases"
-          title="No Active Case"
-          description={
-            <>
-              <Link to="/cases" className="underline">
-                Select a Case
-              </Link>{" "}
-              to review proposals.
-            </>
-          }
-        />
-      )}
+      {body}
     </Page>
   );
 }

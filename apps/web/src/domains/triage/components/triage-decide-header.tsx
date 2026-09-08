@@ -8,6 +8,7 @@ import {
 import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { cn } from "@/lib/utils";
+import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import {
@@ -26,7 +27,8 @@ function ProducingCapLink({
   jobId: string | null | undefined;
   label: string;
 }) {
-  if (jobId === null || jobId === undefined || jobId === "") {
+  const scopedJobId = scopeOptionalUuid(jobId);
+  if (scopedJobId === undefined) {
     return <span>{label}</span>;
   }
   return (
@@ -34,7 +36,7 @@ function ProducingCapLink({
       nativeButton={false}
       variant="link"
       className="text-foreground/80 h-auto min-h-0 p-0 text-xs font-normal underline-offset-2 hover:underline"
-      render={<Link to="/collect" search={{ id: jobId }} />}
+      render={<Link to="/collect" search={{ id: scopedJobId }} />}
     >
       {label}
     </Button>

@@ -1,7 +1,23 @@
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
-import { PROPOSAL_STATUS_OPTIONS, capabilityLabel } from "@/shared/ui/vocab";
-import type { ProposalStatus } from "@watchdog/schemas";
-import { patchOpEntityId } from "@watchdog/schemas";
+import {
+  PROPOSAL_STATUS_OPTIONS,
+  capabilityLabel,
+  PATCH_RESOURCE_META,
+  playbookLabel,
+  proposalHeadlineLabel,
+  statusLabel,
+} from "@/shared/ui/vocab";
+import {
+  catalogIdMatchesSearch,
+  patchOpHeadline,
+  patchOpSearchText,
+  proposalEntityId as coreProposalEntityId,
+  proposalEntityName as coreProposalEntityName,
+  proposalEntitySlug as coreProposalEntitySlug,
+  slugifyName,
+  type PatchOp,
+  type ProposalStatus,
+} from "@watchdog/schemas";
 
 export interface TriageQueueFilters {
   q: string;
@@ -32,55 +48,120 @@ export function isTriagePendingOnlyFilters(
   );
 }
 
-export const STATUS_FACET_OPTIONS = PROPOSAL_STATUS_OPTIONS;
-
-/** Entity id from the first patch op that cites an entityId. */
-export function proposalEntityId(row: ProposalRecord): string | null {
-  const entityId = row.patch
-    .map((op) => patchOpEntityId(op))
-    .find((id): id is string => id !== undefined);
-  return entityId ?? null;
+/** Map queue filters to `?status=` — pending-only omits the param (default view). */
+export function triageStatusSearchParam(
+  filters: TriageQueueFilters
+): ProposalStatus | undefined {
+  if (isTriagePendingOnlyFilters(filters)) return undefined;
+  if (filters.statuses.length === 1) return filters.statuses[0];
+  return undefined;
 }
 
-/** Entity display name from the first patch op that cites an entityId. */
+/** Seed status facet from validated search — absent means pending-only. */
+export function triageStatusesFromSearch(
+  status?: ProposalStatus
+): ProposalStatus[] {
+  if (status) return [status];
+  return PENDING_TRIAGE_FILTERS.statuses;
+}
+
+export const STATUS_FACET_OPTIONS = PROPOSAL_STATUS_OPTIONS;
+
+export function proposalPatch(row: ProposalRecord): PatchOp[] {
+  return row.patch ?? [];
+}
+
+function proposalDisplayOpts(row: ProposalRecord) {
+  return {
+    patch: proposalPatch(row),
+    entityNames: row.entityNames,
+    entitySlugs: row.entitySlugs,
+  };
+}
+
+/** Entity id for proposal chrome (first cited entity with display maps, else first cited). */
+export function proposalEntityId(row: ProposalRecord): string | null {
+  return coreProposalEntityId(proposalDisplayOpts(row));
+}
+
+/** Entity display label from patch ops that cite an entity. */
 export function proposalEntityName(row: ProposalRecord): string | null {
-  const entityId = proposalEntityId(row);
-  if (!entityId) return null;
-  const name = row.entityNames?.[entityId];
-  return name !== undefined && name !== "" ? name : null;
+  return coreProposalEntityName(proposalDisplayOpts(row));
 }
 
 /** Dossier slug for the header entity, when known. */
 export function proposalEntitySlug(row: ProposalRecord): string | null {
-  const entityId = proposalEntityId(row);
-  if (!entityId) return null;
-  const slug = row.entitySlugs?.[entityId];
-  return slug !== undefined && slug !== "" ? slug : null;
+  return coreProposalEntitySlug(proposalDisplayOpts(row));
 }
 
 /** Short title for a proposal row / Detail header. */
 export function proposalTitle(row: ProposalRecord): string {
-  const entityName = proposalEntityName(row);
-  const cap = capabilityLabel(row.capabilityId) || null;
+  const headline = proposalHeadlineLabel({
+    summary: row.summary,
+    capabilityId: row.capabilityId,
+    playbookId: row.playbookId,
+    entityName: proposalEntityName(row),
+  });
+  if (headline !== "") return headline;
+  const patch = proposalPatch(row);
+  if (!patch.length) return "Proposal";
 
-  if (cap && entityName) return `${cap} · ${entityName}`;
-  if (cap) return cap;
-  if (entityName) return entityName;
-  if (!row.patch.length) return "Proposal";
-
-  const first = row.patch[0];
-  return first ? `${first.op} ${first.resource}` : "Proposal";
+  const first = patch[0];
+  return first ? patchOpHeadline(first) : "Proposal";
 }
 
-/** Compact “2 claims, 1 edge” summary of patch ops. */
+/** Compact “2 Claims, 1 Connection” summary of patch ops. */
+function patchResourceCountLabel(
+  resource: PatchOp["resource"],
+  count: number
+): string {
+  const label = PATCH_RESOURCE_META[resource].label;
+  if (count === 1) return label;
+  if (resource === "entity") return "Entities";
+  return `${label}s`;
+}
+
+function isPatchResource(resource: string): resource is PatchOp["resource"] {
+  return resource in PATCH_RESOURCE_META;
+}
+
 export function opLabel(patch: ProposalRecord["patch"]): string {
-  const counts: Record<string, number> = {};
-  for (const op of patch) {
+  const counts: Partial<Record<PatchOp["resource"], number>> = {};
+  for (const op of patch ?? []) {
     counts[op.resource] = (counts[op.resource] ?? 0) + 1;
   }
   return Object.entries(counts)
-    .map(([r, n]) => `${n} ${r}${n > 1 ? "s" : ""}`)
+    .map(([resource, count]) => {
+      if (!isPatchResource(resource)) return "";
+      return `${count} ${patchResourceCountLabel(resource, count)}`;
+    })
+    .filter((line) => line !== "")
     .join(", ");
+}
+
+/** Lowercase haystack from patch op bodies (claim text, identifier values, …). */
+function patchSearchHaystack(patch: ProposalRecord["patch"]): string {
+  return (patch ?? [])
+    .map((op) => patchOpSearchText(op))
+    .join(" ")
+    .toLowerCase();
+}
+
+/** Lowercase haystack from cited entity summary/notes maps. */
+function entityTextHaystack(
+  summaries: Record<string, string> | undefined,
+  notes: Record<string, string> | undefined
+): string {
+  const parts: string[] = [];
+  for (const value of Object.values(summaries ?? {})) {
+    const trimmed = value.trim();
+    if (trimmed !== "") parts.push(trimmed);
+  }
+  for (const value of Object.values(notes ?? {})) {
+    const trimmed = value.trim();
+    if (trimmed !== "") parts.push(trimmed);
+  }
+  return parts.join(" ").toLowerCase();
 }
 
 export function filterTriageQueue(
@@ -89,19 +170,60 @@ export function filterTriageQueue(
 ): ProposalRecord[] {
   let out = proposals;
   if (filters.statuses.length > 0) {
-    out = out.filter((p) => filters.statuses.includes(p.status));
+    const statuses = new Set(filters.statuses);
+    out = out.filter((p) => statuses.has(p.status));
   }
   if (filters.q.trim()) {
     const q = filters.q.toLowerCase().trim();
+    const slugQ = slugifyName(filters.q);
     out = out.filter((p) => {
       const summary = (p.summary ?? "").toLowerCase();
       const cap = (p.capabilityId ?? "").toLowerCase();
-      const ops = opLabel(p.patch).toLowerCase();
+      const capLabel = capabilityLabel(p.capabilityId ?? "").toLowerCase();
+      const capHaystack = catalogIdMatchesSearch(p.capabilityId, q);
+      const playbook = (p.playbookId ?? "").toLowerCase();
+      const playbookHaystack = catalogIdMatchesSearch(p.playbookId, q);
+      const playbookLabelStr = p.playbookId
+        ? playbookLabel(p.playbookId).toLowerCase()
+        : "";
+      const ops = opLabel(proposalPatch(p)).toLowerCase();
+      const patchOps = proposalPatch(p);
+      const opResources = patchOps
+        .map((op) => op.resource)
+        .join(" ")
+        .toLowerCase();
+      const entityName = (proposalEntityName(p) ?? "").toLowerCase();
+      const entitySlug = (proposalEntitySlug(p) ?? "").toLowerCase();
+      const entityText = entityTextHaystack(p.entitySummaries, p.entityNotes);
+      const title = proposalTitle(p).toLowerCase();
+      const patchBody = patchSearchHaystack(patchOps);
+      const status = p.status.toLowerCase();
+      const statusLabelStr = statusLabel(p.status).toLowerCase();
+      const rejectReason = (p.rejectReason ?? "").toLowerCase();
+      const createdBy = (p.createdByLabel ?? "").toLowerCase();
+      const decidedBy = (p.decidedByLabel ?? "").toLowerCase();
       return (
         p.id.toLowerCase().includes(q) ||
         summary.includes(q) ||
         cap.includes(q) ||
+        capHaystack ||
+        capLabel.includes(q) ||
+        playbook.includes(q) ||
+        playbookHaystack ||
+        playbookLabelStr.includes(q) ||
         ops.includes(q) ||
+        opResources.includes(q) ||
+        entityName.includes(q) ||
+        entitySlug.includes(q) ||
+        (slugQ !== "" && entitySlug.includes(slugQ)) ||
+        entityText.includes(q) ||
+        title.includes(q) ||
+        patchBody.includes(q) ||
+        status.includes(q) ||
+        statusLabelStr.includes(q) ||
+        rejectReason.includes(q) ||
+        createdBy.includes(q) ||
+        decidedBy.includes(q) ||
         (p.jobId ?? "").toLowerCase().includes(q)
       );
     });

@@ -1,4 +1,8 @@
-import { opLabel, proposalTitle } from "@/domains/triage/lib/filters";
+import {
+  opLabel,
+  proposalPatch,
+  proposalTitle,
+} from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
@@ -44,7 +48,7 @@ export function TriageQueueList({
                     {proposalTitle(row)}
                   </QueueRowTitle>
                   <span className="text-muted-foreground truncate text-xs">
-                    {opLabel(row.patch)}
+                    {opLabel(proposalPatch(row))}
                     {row.evidenceIds.length > 0
                       ? ` · ${row.evidenceIds.length} ev`
                       : ""}

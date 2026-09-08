@@ -26,6 +26,7 @@ function pendingProposal(
     caseId: testId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
+    playbookId: null,
     status: "pending",
     patch: [
       {

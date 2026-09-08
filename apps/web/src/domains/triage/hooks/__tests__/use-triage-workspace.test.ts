@@ -24,23 +24,29 @@ vi.mock("@/shared/hooks/use-live-events", () => ({
 }));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
+  invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
   invalidateAfterProposalAccept: vi.fn().mockResolvedValue(undefined),
   invalidateAfterProposalQueueChange: vi.fn().mockResolvedValue(undefined),
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: (...args: unknown[]) => useMutationMock(...args),
   };
 });
 
 import { useTriageWorkspace } from "@/domains/triage/hooks/use-triage-workspace";
+import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import {
+  invalidateAfterEvidenceMutation,
+  invalidateAfterProposalQueueChange,
+} from "@/shared/lib/query-invalidation";
 
 const PROPOSALS: ProposalRecord[] = [
   {
@@ -48,6 +54,7 @@ const PROPOSALS: ProposalRecord[] = [
     caseId: testId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
+    playbookId: null,
     status: "pending",
     patch: [],
     summary: "dns",
@@ -69,6 +76,7 @@ const PROPOSALS: ProposalRecord[] = [
     caseId: testId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
+    playbookId: null,
     status: "accepted",
     patch: [],
     summary: "done",
@@ -88,7 +96,14 @@ const PROPOSALS: ProposalRecord[] = [
 ];
 
 function renderWorkspace(proposalId?: string) {
-  useSuspenseQueryMock.mockReturnValue({ data: PROPOSALS });
+  useQueryMock.mockReturnValue({
+    data: PROPOSALS,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  });
   useMutationMock.mockReturnValue({
     mutate: vi.fn(),
     mutateAsync: vi.fn(),
@@ -112,6 +127,31 @@ describe("useTriageWorkspace", () => {
     expect(result.current.selectionOutOfSync).toBe(false);
   });
 
+  it("surfaces proposalsLoadError when the proposals query fails", () => {
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      isFetched: true,
+      isLoading: false,
+      isError: true,
+      error: new Error("proposals failed"),
+      isPlaceholderData: false,
+      refetch: vi.fn(),
+    });
+    useMutationMock.mockReturnValue({
+      mutate: vi.fn(),
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
+
+    const client = new QueryClient();
+    const { result } = renderHook(() => useTriageWorkspace(testId(10), {}), {
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryClientProvider, { client }, children),
+    });
+
+    expect(result.current.proposalsLoadError).toBe("proposals failed");
+  });
+
   it("clears search filters to show all proposals", () => {
     const { result } = renderWorkspace();
 
@@ -121,5 +161,70 @@ describe("useTriageWorkspace", () => {
 
     expect(result.current.rows).toHaveLength(2);
     expect(result.current.selectedId).toBe(testId(50));
+  });
+
+  it("holds URL proposal id when filtered out of the visible queue", () => {
+    const { result } = renderWorkspace(testId(51));
+
+    expect(result.current.rows).toHaveLength(1);
+    expect(result.current.rows[0]?.id).toBe(testId(50));
+    expect(result.current.selectedId).toBe(testId(51));
+    expect(result.current.selectionOutOfSync).toBe(false);
+    expect(result.current.selected?.id).toBe(testId(51));
+  });
+
+  it("invalidates evidence on evidence_changed live events", () => {
+    renderWorkspace();
+
+    const liveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === testId(10));
+    const onEvent = liveCall?.[1];
+    onEvent?.({
+      type: "evidence_changed",
+      caseId: testId(10),
+    });
+
+    expect(invalidateAfterEvidenceMutation).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      testId(10)
+    );
+  });
+
+  it("invalidates proposal queue on proposal_created live events", () => {
+    renderWorkspace();
+
+    const liveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === testId(10));
+    const onEvent = liveCall?.[1];
+    onEvent?.({
+      type: "proposal_created",
+      caseId: testId(10),
+      proposalId: testId(99),
+    });
+
+    expect(invalidateAfterProposalQueueChange).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      testId(10)
+    );
+  });
+
+  it("invalidates proposal queue on proposal_queue_changed live events", () => {
+    renderWorkspace();
+
+    const liveCall = vi
+      .mocked(useLiveEvents)
+      .mock.calls.find((call) => call[0] === testId(10));
+    const onEvent = liveCall?.[1];
+    onEvent?.({
+      type: "proposal_queue_changed",
+      caseId: testId(10),
+    });
+
+    expect(invalidateAfterProposalQueueChange).toHaveBeenCalledWith(
+      expect.any(QueryClient),
+      testId(10)
+    );
   });
 });

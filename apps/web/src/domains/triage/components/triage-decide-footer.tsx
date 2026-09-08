@@ -15,6 +15,7 @@ import {
   buildDecideHeaderView,
   type DecideEvidenceMode,
 } from "@/domains/triage/lib/decide-header-view";
+import { proposalPatch } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@/shared/lib/confirmed-evidence";
 import { ComposerShell } from "@/shared/ui/composer-shell";
@@ -294,7 +295,7 @@ export function TriageDecideFooter({
     linkedIds,
     rejecting,
   });
-  const needsConfidence = patchNeedsConfidence(proposal.patch);
+  const needsConfidence = patchNeedsConfidence(proposalPatch(proposal));
   const acceptBusy = pending && view.decideMode === "accepting";
 
   if (view.showRejectComposer) {
@@ -348,7 +349,7 @@ export function TriageDecideFooter({
                 evidenceIds,
                 linkedIds,
                 attestationText,
-                patch: proposal.patch,
+                patch: proposalPatch(proposal),
                 needsConfidence,
                 identifierCollisions: proposal.identifierCollisions,
               })

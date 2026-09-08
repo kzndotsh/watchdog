@@ -6,16 +6,24 @@ import type {
   TriageAcceptForm,
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
+import { proposalPatch } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
+import { cn } from "@/lib/utils";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/shadcn/alert";
-import { listInvalidIdentifierOps, patchOpText } from "@watchdog/schemas";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import {
+  listInvalidIdentifierOps,
+  normalizeUuidList,
+  patchOpText,
+} from "@watchdog/schemas";
 
 function summaryIsRedundant(proposal: ProposalRecord): boolean {
   const summary = proposal.summary?.trim();
   if (!summary) return true;
-  return proposal.patch.some((op) => {
+  return proposalPatch(proposal).some((op) => {
     if (op.resource !== "claim" && op.resource !== "question") return false;
     const text = patchOpText(op);
     return text !== undefined && text.trim() === summary;
@@ -31,8 +39,10 @@ interface TriagePatchBodyProps {
   caseEvidence: EvidenceRecord[];
   missingJobEvidenceCount: number;
   evidenceLoading: boolean;
+  evidencePlaceholder?: boolean;
   evidenceById: Map<string, EvidenceRecord>;
   evidenceLoadError: string | null;
+  onRetryEvidence?: () => void;
   pending: boolean;
   error: string | null;
   rejecting: boolean;
@@ -50,8 +60,10 @@ export function TriagePatchBody({
   caseEvidence,
   missingJobEvidenceCount,
   evidenceLoading,
+  evidencePlaceholder = false,
   evidenceById,
   evidenceLoadError,
+  onRetryEvidence,
   pending,
   error,
   rejecting,
@@ -61,12 +73,18 @@ export function TriagePatchBody({
 }: TriagePatchBodyProps) {
   const showSummary = !summaryIsRedundant(proposal);
   const collisions = proposal.identifierCollisions ?? [];
-  const invalidIdentifierOps = listInvalidIdentifierOps(proposal.patch);
+  const patch = proposalPatch(proposal);
+  const invalidIdentifierOps = listInvalidIdentifierOps(patch);
   const hasInvalidIdentifierOps = invalidIdentifierOps.length > 0;
 
   return (
     <>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      <div
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto px-4 py-3",
+          placeholderDeemphasisClass(evidencePlaceholder)
+        )}
+      >
         <div className="flex flex-col gap-3">
           {showSummary &&
           proposal.summary !== null &&
@@ -82,7 +100,10 @@ export function TriagePatchBody({
           ) : null}
 
           {evidenceLoadError ? (
-            <FetchErrorAlert error={evidenceLoadError} />
+            <FetchErrorAlert
+              error={evidenceLoadError}
+              onRetry={onRetryEvidence}
+            />
           ) : null}
 
           {hasInvalidIdentifierOps ? (
@@ -93,7 +114,7 @@ export function TriagePatchBody({
                   {invalidIdentifierOps.map((hit) => (
                     <li key={hit.opId}>
                       <span className="text-foreground font-medium">
-                        {hit.type}: {hit.value || "(empty)"}
+                        {kindLabel(hit.type)}: {hit.value || "(empty)"}
                       </span>
                       {" — "}
                       {hit.message}
@@ -112,7 +133,7 @@ export function TriagePatchBody({
                   {collisions.map((hit) => (
                     <li key={`${hit.opId}-${hit.entityId}`}>
                       <span className="text-foreground font-medium">
-                        {hit.type}: {hit.value}
+                        {kindLabel(hit.type)}: {hit.value}
                       </span>
                       {" on "}
                       <EntityMention
@@ -130,14 +151,13 @@ export function TriagePatchBody({
           <acceptForm.Subscribe selector={(state) => state.values.evidenceIds}>
             {(evidenceIds) => (
               <PatchOpList
-                patch={proposal.patch}
+                patch={patch}
                 collidingOpIds={collisions.map((hit) => hit.opId)}
                 invalidOpIds={invalidIdentifierOps.map((hit) => hit.opId)}
-                sharedEvidenceIds={
-                  evidenceIds.length > 0
-                    ? [...new Set([...proposal.evidenceIds, ...evidenceIds])]
-                    : proposal.evidenceIds
-                }
+                sharedEvidenceIds={normalizeUuidList([
+                  ...proposal.evidenceIds,
+                  ...evidenceIds,
+                ])}
                 evidenceById={evidenceById}
                 onEvidenceClick={onPreviewEvidenceChange}
                 jobId={proposal.jobId}
