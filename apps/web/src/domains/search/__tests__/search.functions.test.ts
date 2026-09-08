@@ -38,6 +38,8 @@ describe("search.functions", () => {
       jobs: [],
       proposals: [],
       cases: [],
+      evidenceLabels: {},
+      entityLabels: {},
     };
     searchCaseMock.mockResolvedValue(hits);
 

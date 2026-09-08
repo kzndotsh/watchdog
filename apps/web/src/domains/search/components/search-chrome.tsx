@@ -1,5 +1,5 @@
 import { KeyboardIcon, PanelLeftIcon, SearchIcon } from "lucide-react";
-import { Suspense, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import { CommandPalette } from "@/domains/search/components/command-palette";
 import { ShortcutsSheet } from "@/domains/search/components/shortcuts-sheet";
@@ -94,9 +94,7 @@ export function SearchChrome({ children }: { children: ReactNode }) {
   return (
     <SearchUiContext.Provider value={searchUi}>
       {children}
-      <Suspense fallback={null}>
-        <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-      </Suspense>
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <ShortcutsSheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </SearchUiContext.Provider>
   );

@@ -1,9 +1,14 @@
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { useSearchUi } from "@/domains/search/hooks/use-search-ui";
+import {
+  searchEvidenceHitLabel,
+  searchJobHitLabel,
+  searchProposalHitLabel,
+} from "@/domains/search/lib/hit-labels";
 import { jumpNavItems } from "@/domains/search/lib/jump-nav";
 import { searchCaseQuery } from "@/domains/search/queries";
 import {
@@ -14,6 +19,7 @@ import { errMessage } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import { ActionShortcutChord, MENU_KBD_CLASS } from "@/shared/ui/action-list";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import {
   Command,
   CommandDialog,
@@ -26,8 +32,31 @@ import {
   CommandShortcut,
 } from "@/shared/ui/shadcn/command";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
+import {
+  statusLabel,
+  taskPriorityLabel,
+  taskStatusLabel,
+} from "@/shared/ui/vocab";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { entityDisplayLabel } from "@watchdog/schemas";
 
 const DEBOUNCE_MS = 250;
+
+function taskHitShortcut(hit: {
+  status: SearchCaseResult["tasks"][number]["status"];
+  priority: SearchCaseResult["tasks"][number]["priority"];
+  entityName: string | null;
+}): string {
+  const status = taskStatusLabel(hit.status);
+  const priority =
+    hit.priority === null ? null : taskPriorityLabel(hit.priority);
+  if (hit.entityName) {
+    return priority === null
+      ? hit.entityName
+      : `${hit.entityName} · ${priority}`;
+  }
+  return priority === null ? status : `${status} · ${priority}`;
+}
 
 interface CommandPaletteProps {
   open: boolean;
@@ -40,11 +69,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const { paletteCommands: commandActions } = useSearchUi();
 
-  const { data: casesCtx } = useSuspenseQuery({
-    ...casesContextQuery(),
-    meta: { silentError: true },
-  });
-  const activeCaseId = casesCtx.active?.id ?? "";
+  const {
+    cases,
+    active: activeCase,
+    loadError: casesLoadError,
+    retry: retryCases,
+  } = useCasesContext({ silentError: true });
+  const activeCaseId = activeCase?.id ?? "";
   const jumpItems = jumpNavItems();
 
   useEffect(() => {
@@ -60,7 +91,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     };
   }, [query]);
 
-  const showResults = query.trim().length >= SEARCH_MIN_QUERY_LENGTH;
+  const queryReady = query.trim().length >= SEARCH_MIN_QUERY_LENGTH;
+  const debouncedReady =
+    debouncedQuery.trim().length >= SEARCH_MIN_QUERY_LENGTH;
+  const pendingDebounce = queryReady && query.trim() !== debouncedQuery.trim();
+  const showResults = debouncedReady && activeCaseId.length > 0;
   const searchQuery = searchCaseQuery(activeCaseId, debouncedQuery);
   const {
     data: hits,
@@ -68,13 +103,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     isPlaceholderData,
     isError,
     error,
+    refetch,
   } = useQuery({
     ...searchQuery,
-    enabled: open && showResults && searchQuery.enabled,
+    enabled: open && debouncedReady && searchQuery.enabled,
   });
 
   const switchCaseMutation = useSelectActiveCase({
-    cases: casesCtx.cases,
+    cases,
     navigate,
     navigateToOverview: true,
   });
@@ -104,7 +140,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     switchCaseMutation.mutate(hit.id);
   }
 
-  const busy = showResults && isFetching && !hits;
+  const busy = showResults && (pendingDebounce || (isFetching && !hits));
   const emptyMessage = (() => {
     if (busy) {
       return (
@@ -113,8 +149,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         </span>
       );
     }
-    if (isError) {
-      return errMessage(error, "Search failed");
+    if (debouncedReady && activeCaseId.length === 0) {
+      return "Select an active case to search.";
     }
     if (showResults) {
       return "No results found.";
@@ -122,7 +158,19 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     return "Type at least 2 characters to search.";
   })();
 
-  const resultHits = showResults ? hits : null;
+  const resultHits = showResults && !isError ? hits : null;
+  const paletteLoadError =
+    casesLoadError ??
+    (showResults && isError ? errMessage(error, "Search failed") : null);
+  const retryPaletteLoad = () => {
+    if (casesLoadError) {
+      retryCases();
+      return;
+    }
+    if (showResults && isError) {
+      void refetch();
+    }
+  };
 
   return (
     <CommandDialog
@@ -138,8 +186,19 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           value={query}
           onValueChange={setQuery}
         />
-        <CommandList className={placeholderDeemphasisClass(isPlaceholderData)}>
-          <CommandEmpty>{emptyMessage}</CommandEmpty>
+        <CommandList
+          className={placeholderDeemphasisClass(isPlaceholderData && !isError)}
+        >
+          {paletteLoadError ? (
+            <div className="px-3 py-2">
+              <FetchErrorAlert
+                error={paletteLoadError}
+                onRetry={retryPaletteLoad}
+              />
+            </div>
+          ) : (
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+          )}
 
           {showResults ? null : (
             <>
@@ -200,68 +259,86 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
           {resultHits && resultHits.entities.length > 0 ? (
             <CommandGroup heading="Entities">
-              {resultHits.entities.map((hit) => (
-                <CommandItem
-                  key={hit.id}
-                  value={`entity ${hit.name} ${hit.slug}`}
-                  onSelect={() => {
-                    closeThen(() => {
-                      void navigate({
-                        to: "/entities/$entitySlug",
-                        params: { entitySlug: hit.slug },
+              {resultHits.entities.map((hit) => {
+                const label = entityDisplayLabel(hit);
+                return (
+                  <CommandItem
+                    key={hit.id}
+                    value={`entity ${label} ${hit.slug}`}
+                    onSelect={() => {
+                      closeThen(() => {
+                        void navigate({
+                          to: "/entities/$entitySlug",
+                          params: { entitySlug: hit.slug },
+                        });
                       });
-                    });
-                  }}
-                >
-                  <span className="truncate">{hit.name}</span>
-                  <CommandShortcut>{hit.kind}</CommandShortcut>
-                </CommandItem>
-              ))}
+                    }}
+                  >
+                    <span className="truncate">{label}</span>
+                    <CommandShortcut>{kindLabel(hit.kind)}</CommandShortcut>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           ) : null}
 
           {resultHits && resultHits.identifiers.length > 0 ? (
             <CommandGroup heading="Identifiers">
-              {resultHits.identifiers.map((hit) => (
-                <CommandItem
-                  key={hit.id}
-                  value={`identifier ${hit.value} ${hit.entityName}`}
-                  onSelect={() => {
-                    closeThen(() => {
-                      void navigate({
-                        to: "/entities/$entitySlug",
-                        params: { entitySlug: hit.entitySlug },
-                        search: { tab: "identifiers" },
+              {resultHits.identifiers.map((hit) => {
+                const entityLabel = entityDisplayLabel({
+                  name: hit.entityName,
+                  slug: hit.entitySlug,
+                });
+                return (
+                  <CommandItem
+                    key={hit.id}
+                    value={`identifier ${hit.value} ${entityLabel} ${hit.entitySlug}`}
+                    onSelect={() => {
+                      closeThen(() => {
+                        void navigate({
+                          to: "/entities/$entitySlug",
+                          params: { entitySlug: hit.entitySlug },
+                          search: { tab: "identifiers" },
+                        });
                       });
-                    });
-                  }}
-                >
-                  <span className="truncate">{hit.value}</span>
-                  <CommandShortcut>{hit.entityName}</CommandShortcut>
-                </CommandItem>
-              ))}
+                    }}
+                  >
+                    <span className="truncate">{hit.value}</span>
+                    <CommandShortcut>
+                      {[kindLabel(hit.type), entityLabel]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </CommandShortcut>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           ) : null}
 
           {resultHits && resultHits.evidence.length > 0 ? (
             <CommandGroup heading="Evidence">
-              {resultHits.evidence.map((hit) => (
-                <CommandItem
-                  key={hit.id}
-                  value={`evidence ${hit.label ?? hit.id}`}
-                  onSelect={() => {
-                    closeThen(() => {
-                      void navigate({
-                        to: "/collect",
-                        search: { id: hit.id },
+              {resultHits.evidence.map((hit) => {
+                const label = searchEvidenceHitLabel(hit);
+                return (
+                  <CommandItem
+                    key={hit.id}
+                    value={`evidence ${label} ${hit.entityName ?? ""}`}
+                    onSelect={() => {
+                      closeThen(() => {
+                        void navigate({
+                          to: "/collect",
+                          search: { id: hit.id },
+                        });
                       });
-                    });
-                  }}
-                >
-                  <span className="truncate">{hit.label ?? hit.kind}</span>
-                  <CommandShortcut>{hit.kind}</CommandShortcut>
-                </CommandItem>
-              ))}
+                    }}
+                  >
+                    <span className="truncate">{label}</span>
+                    <CommandShortcut>
+                      {hit.entityName ?? kindLabel(hit.kind)}
+                    </CommandShortcut>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           ) : null}
 
@@ -270,18 +347,21 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               {resultHits.tasks.map((hit) => (
                 <CommandItem
                   key={hit.id}
-                  value={`task ${hit.title}`}
+                  value={`task ${hit.title} ${hit.entityName ?? ""}`}
                   onSelect={() => {
                     closeThen(() => {
                       void navigate({
                         to: "/tasks",
-                        search: hit.entityId ? { entityId: hit.entityId } : {},
+                        search: {
+                          ...(hit.entityId ? { entityId: hit.entityId } : {}),
+                          taskId: hit.id,
+                        },
                       });
                     });
                   }}
                 >
                   <span className="truncate">{hit.title}</span>
-                  <CommandShortcut>{hit.status}</CommandShortcut>
+                  <CommandShortcut>{taskHitShortcut(hit)}</CommandShortcut>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -289,46 +369,54 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
           {resultHits && resultHits.jobs.length > 0 ? (
             <CommandGroup heading="Jobs">
-              {resultHits.jobs.map((hit) => (
-                <CommandItem
-                  key={hit.id}
-                  value={`job ${hit.capabilityId}`}
-                  onSelect={() => {
-                    closeThen(() => {
-                      void navigate({
-                        to: "/collect",
-                        search: { id: hit.id },
+              {resultHits.jobs.map((hit) => {
+                const label = searchJobHitLabel(
+                  hit,
+                  resultHits.evidenceLabels,
+                  resultHits.entityLabels
+                );
+                return (
+                  <CommandItem
+                    key={hit.id}
+                    value={`job ${label} ${hit.playbookId ?? hit.capabilityId}`}
+                    onSelect={() => {
+                      closeThen(() => {
+                        void navigate({
+                          to: "/collect",
+                          search: { id: hit.id },
+                        });
                       });
-                    });
-                  }}
-                >
-                  <span className="truncate">{hit.capabilityId}</span>
-                  <CommandShortcut>{hit.status}</CommandShortcut>
-                </CommandItem>
-              ))}
+                    }}
+                  >
+                    <span className="truncate">{label}</span>
+                    <CommandShortcut>{statusLabel(hit.status)}</CommandShortcut>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           ) : null}
 
           {resultHits && resultHits.proposals.length > 0 ? (
             <CommandGroup heading="Triage">
-              {resultHits.proposals.map((hit) => (
-                <CommandItem
-                  key={hit.id}
-                  value={`proposal ${hit.summary ?? hit.id}`}
-                  onSelect={() => {
-                    closeThen(() => {
-                      void navigate({
-                        to: "/triage",
-                        search: { proposalId: hit.id },
+              {resultHits.proposals.map((hit) => {
+                const label = searchProposalHitLabel(hit);
+                return (
+                  <CommandItem
+                    key={hit.id}
+                    value={`proposal ${label} ${hit.playbookId ?? hit.capabilityId ?? hit.id}`}
+                    onSelect={() => {
+                      closeThen(() => {
+                        void navigate({
+                          to: "/triage",
+                          search: { proposalId: hit.id },
+                        });
                       });
-                    });
-                  }}
-                >
-                  <span className="truncate">
-                    {hit.summary ?? hit.capabilityId ?? "Proposal"}
-                  </span>
-                </CommandItem>
-              ))}
+                    }}
+                  >
+                    <span className="truncate">{label}</span>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           ) : null}
 
