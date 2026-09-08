@@ -3,8 +3,10 @@ import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import type { ToolsTag } from "../errors/tagged-errors";
+import { isToolsError } from "../errors/tools-error";
 import { extractTitle } from "../html/to-text";
 import { fetchBytesEffect } from "./fetch-bytes";
+import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import { isBlockedUnshortenUrl } from "./unshorten-guards";
 
 export const pageEnrichSnapshotSchema = z.object({
@@ -78,16 +80,50 @@ interface PageEnrichOptions {
   userAgent: string;
   maxBytes?: number;
 }
+
+function pageEnrichValidationError(
+  url: string,
+  message: string
+): PageEnrichSnapshot {
+  return pageEnrichSnapshotSchema.parse({
+    url,
+    finalUrl: url,
+    queriedAt: new Date().toISOString(),
+    status: 0,
+    ok: false,
+    title: null,
+    meta: {
+      description: null,
+      ogTitle: null,
+      ogDescription: null,
+      ogImage: null,
+      twitterCard: null,
+      canonical: null,
+    },
+    trackers: [],
+    error: message,
+  });
+}
+
 export function fetchPageEnrichEffect(
   url: string,
   signal: AbortSignal,
   options: PageEnrichOptions
 ): Effect.Effect<PageEnrichSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchPageEnrichGen() {
-    if (isBlockedUnshortenUrl(url)) {
+    let target: string;
+    try {
+      assertHttpUrlScheme(url);
+      target = normalizeHttpUrl(url);
+    } catch (error) {
+      const message = isToolsError(error) ? error.message : "Invalid URL";
+      return pageEnrichValidationError(url, message);
+    }
+
+    if (isBlockedUnshortenUrl(target)) {
       return pageEnrichSnapshotSchema.parse({
-        url,
-        finalUrl: url,
+        url: target,
+        finalUrl: target,
         queriedAt: new Date().toISOString(),
         status: 0,
         ok: false,
@@ -105,14 +141,14 @@ export function fetchPageEnrichEffect(
       });
     }
 
-    const res = yield* fetchBytesEffect(url, signal, {
+    const res = yield* fetchBytesEffect(target, signal, {
       userAgent: options.userAgent,
       maxBytes: options.maxBytes ?? 512_000,
       accept: "text/html,application/xhtml+xml,*/*",
     });
     if (!res.ok) {
       return pageEnrichSnapshotSchema.parse({
-        url,
+        url: target,
         finalUrl: res.finalUrl,
         queriedAt: new Date().toISOString(),
         status: res.status,
@@ -133,7 +169,7 @@ export function fetchPageEnrichEffect(
 
     if (isBlockedUnshortenUrl(res.finalUrl)) {
       return pageEnrichSnapshotSchema.parse({
-        url,
+        url: target,
         finalUrl: res.finalUrl,
         queriedAt: new Date().toISOString(),
         status: res.status,
@@ -161,7 +197,7 @@ export function fetchPageEnrichEffect(
     );
 
     return pageEnrichSnapshotSchema.parse({
-      url,
+      url: target,
       finalUrl: res.finalUrl,
       queriedAt: new Date().toISOString(),
       status: res.status,

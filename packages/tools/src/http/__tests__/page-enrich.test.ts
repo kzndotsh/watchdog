@@ -54,4 +54,16 @@ describe("fetchPageEnrichEffect", () => {
       expect(snap.error).toMatch(/Blocked URL/);
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
+
+  it.effect("rejects non-http(s) URLs before fetching", () =>
+    Effect.gen(function* fetchPageEnrichBadSchemeGen() {
+      const snap = yield* fetchPageEnrichEffect(
+        "file:///etc/passwd",
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
+      );
+      expect(snap.ok).toBe(false);
+      expect(snap.error).toMatch(/http or https/i);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 });
