@@ -13,6 +13,7 @@ import { Data, Effect, Fiber, SynchronizedRef } from "effect";
 
 import type { EvidenceRow } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
+import { evidenceDisplayLabel, parseTrimmedCaseId } from "@watchdog/schemas";
 
 import { readArtifactBytesEffect } from "./blob";
 import { errorMessage } from "./domain-error";
@@ -93,7 +94,13 @@ function writeUriEvidenceFileEffect(
   ev: EvidenceRow
 ): Effect.Effect<EvidenceWriteOutcome> {
   const prefix = ev.id.slice(0, 8);
-  const labelBase = safeFilename(ev.label ?? ev.sourceUrl ?? ev.id.slice(0, 8));
+  const labelBase = safeFilename(
+    evidenceDisplayLabel({
+      label: ev.label,
+      kind: ev.kind,
+      sourceUrl: ev.sourceUrl,
+    })
+  );
   if (!ev.uri) return Effect.succeed("skipped");
   const uri = ev.uri;
   return Effect.gen(function* writeUriEvidenceGen() {
@@ -120,7 +127,13 @@ function writeInlineEvidenceFileEffect(
   ev: EvidenceRow
 ): Effect.Effect<void, ExportIOError> {
   const prefix = ev.id.slice(0, 8);
-  const labelBase = safeFilename(ev.label ?? ev.sourceUrl ?? ev.id.slice(0, 8));
+  const labelBase = safeFilename(
+    evidenceDisplayLabel({
+      label: ev.label,
+      kind: ev.kind,
+      sourceUrl: ev.sourceUrl,
+    })
+  );
   const filename = `${prefix}--${labelBase}.txt`;
   if (ev.text === null || ev.text === undefined) return Effect.void;
   return writeEffect(nodePath.join(evidenceDir, filename), ev.text);
@@ -323,7 +336,9 @@ export function scheduleCaseExportEffect(
     id: string
   ) => Effect.Effect<void, ExportIOError> = writeCaseExportEffect
 ): Effect.Effect<void> {
-  return Effect.runSync(claimExportJoin(caseId, writeExport));
+  const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
+  if (normalizedCaseId === undefined) return Effect.void;
+  return Effect.runSync(claimExportJoin(normalizedCaseId, writeExport));
 }
 
 function exportDirForSlug(slug: string): string | null {

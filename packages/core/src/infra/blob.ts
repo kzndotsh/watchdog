@@ -56,7 +56,7 @@ export function sha256Hex(bytes: Uint8Array): string {
 }
 
 export function assertSha256Hex(value: string): string {
-  return sha256HexSchema.parse(value.trim().toLowerCase());
+  return sha256HexSchema.parse(value);
 }
 
 export function artifactUri(

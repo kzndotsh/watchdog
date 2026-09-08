@@ -39,7 +39,7 @@ function unknownRecordMessage(
 ): string {
   if (error instanceof Error) return error.message;
   if (typeof record.message === "string") return record.message;
-  return JSON.stringify(error) ?? "";
+  return JSON.stringify(error);
 }
 
 function matchesUniqueViolation(error: unknown, indexName: string): boolean {

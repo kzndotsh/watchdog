@@ -9,7 +9,7 @@ import { Data, Effect } from "effect";
 
 import { credentialsRepo, db } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
-import { trimmedOrNull } from "@watchdog/schemas";
+import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas";
 
 import { tryDb } from "./postgres-effect";
 import { InvalidError, NotFoundError, type DomainTag } from "./tagged-errors";
@@ -100,16 +100,14 @@ function toMeta(row: {
   };
 }
 
-const NAME_RE = /^[A-Z][A-Z0-9_]*$/;
-
 function requireCredentialName(name: string): Effect.Effect<string, DomainTag> {
-  const trimmed = name.trim();
-  if (!NAME_RE.test(trimmed)) {
+  const parsed = credentialNameSchema.safeParse(name);
+  if (!parsed.success) {
     return new InvalidError({
       reason: "Credential name must be SCREAMING_SNAKE (A-Z, 0-9, _)",
     });
   }
-  return Effect.succeed(trimmed);
+  return Effect.succeed(parsed.data);
 }
 
 /** Metadata only — never returns plaintext. */
@@ -174,7 +172,6 @@ export function putCredentialEffect(
     }
     const blob = seal(userKey(input.userId), secret);
     const label = trimmedOrNull(input.label);
-    const now = new Date();
     const existingId = yield* tryDb(() =>
       credentialsRepo.getIdByName(db, input.userId, name)
     );
@@ -183,11 +180,12 @@ export function putCredentialEffect(
         credentialsRepo.update(db, existingId, {
           ciphertext: blob,
           label,
-          updatedAt: now,
         })
       );
       if (!updated) {
-        return yield* Effect.die(new Error("Failed to update credential"));
+        return yield* new InvalidError({
+          reason: "Failed to update credential",
+        });
       }
       return toMeta(updated);
     }
@@ -200,7 +198,9 @@ export function putCredentialEffect(
       })
     );
     if (!created) {
-      return yield* Effect.die(new Error("Failed to create credential"));
+      return yield* new InvalidError({
+        reason: "Failed to create credential",
+      });
     }
     return toMeta(created);
   });

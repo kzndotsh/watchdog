@@ -22,6 +22,7 @@ import {
   type EntityPeerRow,
 } from "@watchdog/db";
 import type { EntityKind } from "@watchdog/schemas";
+import { entityDisplayLabel, parseTrimmedCaseId } from "@watchdog/schemas";
 
 import {
   appendClaimsSection,
@@ -55,7 +56,12 @@ export function renderEntityMarkdownEffect(
   peerMap?: Map<string, EntityPeerRow>
 ): Effect.Effect<EntityExport | null, DomainTag> {
   return Effect.gen(function* renderEntityMarkdownGen() {
-    const row = yield* tryDb(() => entitiesRepo.getWithCase(db, entityId));
+    const normalizedEntityId = parseTrimmedCaseId(entityId) ?? undefined;
+    if (normalizedEntityId === undefined) return null;
+
+    const row = yield* tryDb(() =>
+      entitiesRepo.getWithCase(db, normalizedEntityId)
+    );
     if (!row) return null;
 
     const [
@@ -68,12 +74,16 @@ export function renderEntityMarkdownEffect(
       peers,
     ] = yield* Effect.all(
       [
-        tryDb(() => claimsRepo.listForEntity(db, entityId)),
-        tryDb(() => identifiersRepo.listForEntity(db, entityId)),
-        tryDb(() => edgesRepo.listOutboundForEntity(db, entityId)),
-        tryDb(() => eventsRepo.listForEntity(db, entityId)),
-        tryDb(() => questionsRepo.listForEntity(db, entityId)),
-        tryDb(() => evidenceRepo.listForEntity(db, row.caseId, entityId)),
+        tryDb(() => claimsRepo.listForEntity(db, normalizedEntityId)),
+        tryDb(() => identifiersRepo.listForEntity(db, normalizedEntityId)),
+        tryDb(() =>
+          edgesRepo.listOutboundForEntity(db, row.caseId, normalizedEntityId)
+        ),
+        tryDb(() => eventsRepo.listForEntity(db, normalizedEntityId)),
+        tryDb(() => questionsRepo.listForEntity(db, normalizedEntityId)),
+        tryDb(() =>
+          evidenceRepo.listForEntity(db, row.caseId, normalizedEntityId)
+        ),
         peerMap
           ? Effect.succeed([] as EntityPeerRow[])
           : tryDb(() => entitiesRepo.listPeersForCase(db, row.caseId)),
@@ -90,7 +100,7 @@ export function renderEntityMarkdownEffect(
         caseSlug: row.caseSlug,
         entityId: row.id,
       }),
-      `# ${row.name}`,
+      `# ${entityDisplayLabel({ name: row.name, slug: row.slug })}`,
       "",
     ];
 
@@ -126,8 +136,13 @@ export function renderCaseExportEffect(
   caseId: string
 ): Effect.Effect<CaseExportResult, DomainTag> {
   return Effect.gen(function* renderCaseExportGen() {
+    const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
+    if (normalizedCaseId === undefined) {
+      return { files: new Map<string, string>(), evidenceRows: [] };
+    }
+
     const entityRows = yield* tryDb(() =>
-      entitiesRepo.listPeersForCase(db, caseId)
+      entitiesRepo.listPeersForCase(db, normalizedCaseId)
     );
     const peerMap = new Map(entityRows.map((e) => [e.id, e]));
     const mdFiles = new Map<string, string>();
@@ -147,9 +162,11 @@ export function renderCaseExportEffect(
     }
 
     const evidenceRows = yield* tryDb(() =>
-      evidenceRepo.listActiveForCaseAsc(db, caseId)
+      evidenceRepo.listActiveForCaseAsc(db, normalizedCaseId)
     );
-    const caseRow = yield* tryDb(() => casesRepo.getByIdUnchecked(db, caseId));
+    const caseRow = yield* tryDb(() =>
+      casesRepo.getByIdUnchecked(db, normalizedCaseId)
+    );
 
     if (caseRow) {
       const attestations = evidenceRows.filter(isAttestationExportRow);

@@ -121,7 +121,6 @@ describe("vault", () => {
     await credentialsRepo.update(db, id, {
       ciphertext: Buffer.from("too-short"),
       label: null,
-      updatedAt: new Date(),
     });
     await expect(
       runDomain(getCredentialEffect(TEST_ACTOR_ID, "WHOIS_API_KEY"))

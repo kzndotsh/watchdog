@@ -2,6 +2,7 @@ import { Data, Effect } from "effect";
 
 import { notifyEvent } from "@watchdog/db";
 import type { WatchdogEvent } from "@watchdog/db";
+import { watchdogEventSchema } from "@watchdog/schemas";
 
 import { logSwallowed } from "./process-log";
 
@@ -18,14 +19,19 @@ class NotifyFailed extends Data.TaggedError("NotifyFailed")<{
 }> {}
 
 function notifyWatchdogEventEffect(event: WatchdogEvent): Effect.Effect<void> {
+  const parsed = watchdogEventSchema.safeParse(event);
+  if (!parsed.success) {
+    return Effect.void;
+  }
+  const validated = parsed.data;
   return Effect.tryPromise({
-    try: () => notifyEvent(event),
+    try: () => notifyEvent(validated),
     catch: (cause) => new NotifyFailed({ cause }),
   }).pipe(
     Effect.tapError((error) =>
       Effect.sync(() => {
         logSwallowed("notify.watchdog_event", error.cause, {
-          type: event.type,
+          type: validated.type,
         });
       })
     ),
@@ -42,6 +48,21 @@ export function notifyEntityChangedEffect(caseId: string): Effect.Effect<void> {
     Effect.forkDetach({ startImmediately: true }),
     Effect.asVoid
   );
+}
+
+/**
+ * Fan-out after Evidence mutations (dump, attach, hide/restore). Collect and
+ * intake consumers invalidate evidence queries on receipt.
+ */
+export function notifyEvidenceChangedEffect(
+  caseId: string,
+  evidenceId?: string
+): Effect.Effect<void> {
+  return notifyWatchdogEventEffect(
+    evidenceId === undefined
+      ? { type: "evidence_changed", caseId }
+      : { type: "evidence_changed", caseId, evidenceId }
+  ).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
 }
 
 /**
@@ -67,6 +88,16 @@ export function notifyProposalCreatedEffect(
     type: "proposal_created",
     caseId,
     proposalId,
+  }).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
+}
+
+/** Fan-out after accept/reject — Triage and overview pending counts. */
+export function notifyProposalQueueChangedEffect(
+  caseId: string
+): Effect.Effect<void> {
+  return notifyWatchdogEventEffect({
+    type: "proposal_queue_changed",
+    caseId,
   }).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
 }
 
