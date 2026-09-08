@@ -4,6 +4,7 @@ import type { JobArtifact } from "@watchdog/db";
 
 import type { DomainTag } from "../../infra/tagged-errors";
 import { storeCapCacheEffect } from "../cap-cache";
+import { artifactsHaveCapReport } from "../load-cap-report";
 import type { CollectRuntime } from "./collect";
 import type { PreflightState } from "./preflight";
 
@@ -30,6 +31,9 @@ export function storeCacheStageEffect(
     input.reclaim ||
     input.interpretError !== null
   ) {
+    return Effect.void;
+  }
+  if (state.cap.interpret && !artifactsHaveCapReport(input.artifacts)) {
     return Effect.void;
   }
 

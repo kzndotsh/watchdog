@@ -41,7 +41,7 @@ export function loadCapReportEffect(
       try: () => parseJsonValue(text),
       catch: (error) =>
         new InvalidError({
-          reason: error instanceof Error ? error.message : errorMessage(error),
+          reason: errorMessage(error),
         }),
     });
     return { report, name: art.name };
