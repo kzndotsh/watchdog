@@ -30,4 +30,18 @@ describe("env fragments", () => {
     const parsed = z.object(smtpFields).safeParse({});
     expect(parsed.success).toBe(true);
   });
+
+  it("trims padded database and auth env strings", () => {
+    const db = z.object(databaseFields).parse({
+      DATABASE_URL: "  postgresql://localhost/watchdog  ",
+    });
+    expect(db.DATABASE_URL).toBe("postgresql://localhost/watchdog");
+
+    const auth = z.object(authFields).parse({
+      BETTER_AUTH_SECRET: "a".repeat(32).padEnd(34, " "),
+      BETTER_AUTH_URL: "  http://127.0.0.1:3000  ",
+    });
+    expect(auth.BETTER_AUTH_SECRET).toHaveLength(32);
+    expect(auth.BETTER_AUTH_URL).toBe("http://127.0.0.1:3000");
+  });
 });
