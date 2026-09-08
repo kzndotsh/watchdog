@@ -56,7 +56,7 @@ test.describe("Custody accept gates", () => {
       });
 
       await triagePage.goto("/triage");
-      await triagePage.selectProposalSummary("Ada observed a host");
+      await triagePage.selectProposalSummary("custody probe confirmed claim");
       await triagePage.setConfidence("Confirmed");
       await expect(
         page.getByText("confirmed requires at least 1 evidence item")
