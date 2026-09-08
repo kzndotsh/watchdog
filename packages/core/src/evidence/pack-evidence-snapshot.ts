@@ -3,7 +3,10 @@ import { Effect } from "effect";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
   ENRICHED_MD_ARTIFACT,
+  evidenceIdsFromJobInputs,
   evidenceSnapshotSchema,
+  parseTrimmedCaseId,
+  trimmedOrUndefined,
   URL_ENRICH_CAPABILITY_ID,
   type EvidenceSnapshot,
 } from "@watchdog/schemas";
@@ -11,6 +14,7 @@ import {
 import { readArtifactBytesEffect } from "../infra/blob";
 import { tryDb } from "../infra/postgres-effect";
 import { NotFoundError, type DomainTag } from "../infra/tagged-errors";
+import { parseStoredJobEvidenceIds } from "../jobs/stages/helpers";
 
 export const MAX_SNAPSHOT_CHARS = 80_000;
 
@@ -66,13 +70,12 @@ function loadEnrichOutputText(input: {
       )
     );
     for (const job of recent) {
-      const sourceId =
-        typeof job.input === "object" && job.input !== null
-          ? (job.input as { sourceEvidenceId?: string }).sourceEvidenceId
-          : undefined;
+      const inputIds = evidenceIdsFromJobInputs([job.input]);
+      const stored = parseStoredJobEvidenceIds(job.evidenceIds);
+      const evidenceIdsFromJob = stored.ok ? stored.ids : [];
       const linked =
-        sourceId === input.evidenceId ||
-        (job.evidenceIds?.includes(input.evidenceId) ?? false);
+        inputIds.includes(input.evidenceId) ||
+        evidenceIdsFromJob.includes(input.evidenceId);
       if (!linked) continue;
       const arts = job.output ?? [];
       const enriched =
@@ -122,15 +125,24 @@ export function packEvidenceSnapshotEffect(input: {
       fromEnrich !== null && fromEnrich.trim() !== ""
         ? fromEnrich
         : initialText;
-    const entityId = input.entityId ?? row.entityId ?? undefined;
+    let entityId: string | undefined;
+    if (input.entityId !== null && input.entityId !== undefined) {
+      entityId = parseTrimmedCaseId(input.entityId) ?? undefined;
+    } else if (row.entityId === null || row.entityId === undefined) {
+      entityId = undefined;
+    } else {
+      entityId = parseTrimmedCaseId(row.entityId) ?? undefined;
+    }
+    const label = trimmedOrUndefined(row.label ?? undefined);
+    const mime = trimmedOrUndefined(row.mime ?? undefined);
     return evidenceSnapshotSchema.parse({
       evidenceId: row.id,
       caseId: row.caseId,
-      ...(entityId !== undefined && entityId !== "" ? { entityId } : {}),
+      ...(entityId === undefined ? {} : { entityId }),
       kind: row.kind,
-      ...(row.label !== null && row.label !== "" ? { label: row.label } : {}),
+      ...(label === undefined ? {} : { label }),
       text: truncate(rawText),
-      ...(row.mime !== null && row.mime !== "" ? { mime: row.mime } : {}),
+      ...(mime === undefined ? {} : { mime }),
       sha256: row.sha256,
       uri: row.uri,
       packedAt: new Date().toISOString(),
