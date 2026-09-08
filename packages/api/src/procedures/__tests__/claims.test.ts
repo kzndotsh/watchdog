@@ -18,7 +18,7 @@ vi.mock("@watchdog/core", async (importOriginal) => {
   };
 });
 
-import { create, list } from "../claims";
+import { create, list, update } from "../claims";
 
 const actor = {
   userId: "u1",
@@ -93,5 +93,64 @@ describe("claims procedures", () => {
         userOverride: true,
       })
     ).resolves.toMatchObject({ text: "New claim" });
+    expect(createClaimEffect).toHaveBeenCalledWith({
+      caseId: "00000000-0000-4000-8000-000000000001",
+      entityId: "00000000-0000-4000-8000-000000000002",
+      text: "New claim",
+      confidence: "unverified",
+      class: "observation",
+      organizationId: "org-test",
+    });
+  });
+
+  it("rejects whitespace-only claim text on create", async () => {
+    const client = createRouterClient(
+      { create },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.create({
+        caseId: "00000000-0000-4000-8000-000000000001",
+        entityId: "00000000-0000-4000-8000-000000000002",
+        text: "   ",
+        confidence: "unverified",
+        userOverride: true,
+      })
+    ).rejects.toMatchObject({
+      message: "Input validation failed",
+    });
+  });
+
+  it("rejects an empty claim update body", async () => {
+    const client = createRouterClient(
+      { update },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.update({
+        caseId: "00000000-0000-4000-8000-000000000001",
+        claimId: claimRow.id,
+        userOverride: true,
+      })
+    ).rejects.toMatchObject({
+      message: "Input validation failed",
+      cause: {
+        issues: [{ message: "At least one field is required" }],
+      },
+    });
   });
 });

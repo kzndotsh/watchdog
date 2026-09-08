@@ -7,11 +7,13 @@ import {
   updateClaimEffect,
 } from "@watchdog/core";
 import {
-  claimClassSchema,
-  confidenceTierSchema,
-  retractKindSchema,
+  createClaimInputSchema,
+  listClaimsInputSchema,
+  retractClaimInputSchema,
+  updateClaimInputSchema,
 } from "@watchdog/schemas";
 
+import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
 import { claimSchema, userOverrideSchema } from "../schemas";
@@ -23,13 +25,7 @@ export const list = authed
     summary: "List claims for an entity",
     tags: ["claims"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-      includeRetracted: z.boolean().optional().default(false),
-    })
-  )
+  .input(listClaimsInputSchema)
   .output(z.array(claimSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -52,22 +48,12 @@ export const create = graphChildWrite
     tags: ["claims"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-      text: z.string().min(1),
-      confidence: confidenceTierSchema,
-      class: claimClassSchema.default("observation"),
-      evidenceIds: z.array(z.uuid()).optional(),
-      userOverride: userOverrideSchema,
-    })
-  )
+  .input(createClaimInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(claimSchema)
   .handler(async ({ input, context }) =>
     runApp(
       createClaimEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -80,22 +66,12 @@ export const update = graphChildWrite
     summary: "Update a claim",
     tags: ["claims"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      claimId: z.uuid(),
-      text: z.string().min(1).optional(),
-      class: claimClassSchema.optional(),
-      confidence: confidenceTierSchema.optional(),
-      evidenceIds: z.array(z.uuid()).optional(),
-      userOverride: userOverrideSchema,
-    })
-  )
+  .input(updateClaimInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(claimSchema)
   .handler(async ({ input, context }) =>
     runApp(
       updateClaimEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -108,21 +84,13 @@ export const retract = graphChildWrite
     summary: "Retract a claim",
     tags: ["claims"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      claimId: z.uuid(),
-      kind: retractKindSchema,
-      reason: z.string().min(1),
-      userOverride: userOverrideSchema,
-    })
-  )
+  .input(retractClaimInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(claimSchema)
   .handler(async ({ input, context }) =>
     runApp(
       retractClaimEffect(
         {
-          ...input,
+          ...withoutUserOverride(input),
           organizationId: context.actor.organizationId,
         },
         context.actor.userId
