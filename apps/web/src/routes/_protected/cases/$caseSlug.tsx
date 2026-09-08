@@ -25,6 +25,7 @@ import {
 } from "@/domains/cases/types";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
+import { RouteNotFoundCenter } from "@/shared/layout/route-not-found-center";
 import {
   normalizeEntitySlug,
   normalizeRouteSegment,
@@ -69,7 +70,7 @@ function CaseNotFound() {
   const caseSlug = normalizeEntitySlug(rawCaseSlug) ?? rawCaseSlug;
 
   return (
-    <Page>
+    <Page className="min-h-0">
       <PageHeader
         current="Not found"
         description={
@@ -78,9 +79,14 @@ function CaseNotFound() {
           </>
         }
       />
-      <Button nativeButton={false} render={<Link to="/cases" />}>
-        Back to Cases
-      </Button>
+      <RouteNotFoundCenter
+        title="Case not found"
+        description="Check the slug, or head back to Cases to pick another."
+      >
+        <Button nativeButton={false} render={<Link to="/cases" />}>
+          Back to Cases
+        </Button>
+      </RouteNotFoundCenter>
     </Page>
   );
 }

@@ -76,6 +76,9 @@ describe("case slug route", () => {
     render(<NotFound {...notFoundProps} />);
 
     expect(screen.getByText("Not found")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Case not found" })
+    ).toBeInTheDocument();
     expect(screen.getByText("missing")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to Cases" })).toHaveAttribute(
       "href",
