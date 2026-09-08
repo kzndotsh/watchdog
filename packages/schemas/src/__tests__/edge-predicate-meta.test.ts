@@ -4,6 +4,7 @@ import {
   EDGE_PREDICATES,
   EDGE_PREDICATE_META,
   edgePredicateAllowsKinds,
+  edgeRelatedToHasNotes,
   isEdgePredicate,
   parseEdgePhraseValue,
   predicateLabel,
@@ -79,6 +80,14 @@ describe("edge-predicate-meta", () => {
     );
   });
 
+  it("edgeRelatedToHasNotes requires notes for related_to", () => {
+    expect(edgeRelatedToHasNotes({ predicate: "related_to" })).toBe(false);
+    expect(
+      edgeRelatedToHasNotes({ predicate: "related_to", notes: "linked" })
+    ).toBe(true);
+    expect(edgeRelatedToHasNotes({ predicate: "same_as" })).toBe(true);
+  });
+
   it("edgePredicateAllowsKinds rejects invalid pairs", () => {
     expect(edgePredicateAllowsKinds("dns_via", "person", "person")).toBe(false);
     expect(edgePredicateAllowsKinds("dns_via", "infra", "infra")).toBe(true);
@@ -97,6 +106,10 @@ describe("edge-predicate-meta", () => {
     });
     expect(parseEdgePhraseValue("nope")).toBe(null);
     expect(parseEdgePhraseValue("operates:sideways")).toBe(null);
+    expect(parseEdgePhraseValue("  HOSTED_ON : inverse ")).toEqual({
+      predicate: "hosted_on",
+      orientation: "inverse",
+    });
   });
 
   it("resolveEdgeEndpoints maps orientation and preserves symmetric storage", () => {
@@ -125,5 +138,13 @@ describe("edge-predicate-meta", () => {
         existing: { fromId: "b", toId: "a", peerId: "b" },
       })
     ).toEqual({ fromId: "b", toId: "a" });
+    expect(
+      resolveEdgeEndpoints({
+        entityId: " a ",
+        peerId: " b ",
+        predicate: "operates",
+        orientation: "forward",
+      })
+    ).toEqual({ fromId: "a", toId: "b" });
   });
 });
