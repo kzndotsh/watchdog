@@ -98,27 +98,26 @@ export function fetchHibpBreachedAccountEffect(
       });
     }
 
-    const breaches: HibpBreach[] = recordRows(raw)
-      .slice(0, truncate)
-      .map((r) => {
-        const dataClasses = Array.isArray(r.DataClasses)
-          ? r.DataClasses.filter((x): x is string => typeof x === "string")
-          : [];
-        return hibpBreachSchema.parse({
-          name: typeof r.Name === "string" ? r.Name : "unknown",
-          title: typeof r.Title === "string" ? r.Title : null,
-          domain: typeof r.Domain === "string" ? r.Domain : null,
-          breachDate: typeof r.BreachDate === "string" ? r.BreachDate : null,
-          pwnCount: typeof r.PwnCount === "number" ? r.PwnCount : null,
-          dataClasses,
-        });
+    const rows = recordRows(raw);
+    const breaches: HibpBreach[] = rows.slice(0, truncate).map((r) => {
+      const dataClasses = Array.isArray(r.DataClasses)
+        ? r.DataClasses.filter((x): x is string => typeof x === "string")
+        : [];
+      return hibpBreachSchema.parse({
+        name: typeof r.Name === "string" ? r.Name : "unknown",
+        title: typeof r.Title === "string" ? r.Title : null,
+        domain: typeof r.Domain === "string" ? r.Domain : null,
+        breachDate: typeof r.BreachDate === "string" ? r.BreachDate : null,
+        pwnCount: typeof r.PwnCount === "number" ? r.PwnCount : null,
+        dataClasses,
       });
+    });
 
     return hibpLookupSnapshotSchema.parse({
       email: normalized,
       queriedAt: new Date().toISOString(),
-      found: breaches.length > 0,
-      breachCount: breaches.length,
+      found: rows.length > 0,
+      breachCount: rows.length,
       breaches,
       status,
     });

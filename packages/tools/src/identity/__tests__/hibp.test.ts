@@ -100,4 +100,40 @@ describe("hibp", () => {
         Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
       )
   );
+
+  it.effect(
+    "fetchHibpBreachedAccountEffect keeps total breachCount when truncating samples",
+    () =>
+      Effect.gen(function* fetchHibpTruncatedCountGen() {
+        const rows = Array.from({ length: 41 }, (_, index) => ({
+          Name: `Breach${index}`,
+          Title: `Breach ${index}`,
+          Domain: "mailhost.test",
+          BreachDate: "2020-01-01",
+          PwnCount: 1,
+          DataClasses: ["Email addresses"],
+        }));
+        vi.stubGlobal(
+          "fetch",
+          vi
+            .fn()
+            .mockResolvedValue(
+              new Response(JSON.stringify(rows), { status: 200 })
+            )
+        );
+
+        const snap = yield* fetchHibpBreachedAccountEffect(
+          "alice@mailhost.test",
+          "test-key",
+          AbortSignal.timeout(5000),
+          { truncate: 40 }
+        );
+
+        expect(snap.breachCount).toBe(41);
+        expect(snap.breaches).toHaveLength(40);
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });
