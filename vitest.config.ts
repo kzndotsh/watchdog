@@ -12,6 +12,7 @@ const webDomTestGlobs = [
   "apps/web/src/shared/lib/__tests__/hotkeys.test.ts",
   "apps/web/src/shared/lib/__tests__/query-client.test.ts",
   "apps/web/src/shared/lib/__tests__/query-invalidation.test.ts",
+  "apps/web/src/shared/lib/__tests__/query-enabled.test.ts",
   "apps/web/src/shared/layout/__tests__/use-page-trail.test.ts",
   "apps/web/src/shared/hooks/**/__tests__/**/*.test.ts",
   "apps/web/src/shared/ui/data-table/__tests__/use-data-table.test.ts",
