@@ -48,6 +48,22 @@ describe("interpret", () => {
     expect(claimText(result, ids.length)).toMatch(/atticus/);
   });
 
+  it("interpretOembedReport proposes handle from providerName when vendor is null", () => {
+    const result = interpretOembedReport(
+      { ...fixture, vendor: null },
+      { input: { url: fixture.url, entityId } }
+    );
+    const ids = result.patch.filter((p) => p.resource === "identifier");
+    expect(
+      ids.some(
+        (p) =>
+          p.data.type === "handle" &&
+          p.data.platform === "vimeo" &&
+          p.data.value === "@atticus"
+      )
+    ).toBeTruthy();
+  });
+
   it("interpretOembedReport empty patch without entityId", () => {
     const result = interpretOembedReport(fixture, {
       input: { url: fixture.url },

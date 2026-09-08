@@ -1,12 +1,23 @@
 import type { z } from "zod";
 
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
+import { normalizeIdentifierPlatform } from "@watchdog/schemas";
 import type { OembedSnapshot } from "@watchdog/tools";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import {
+  URL_IDENTIFIER_BATCH_LIMIT,
+  urlValuesBatch,
+} from "../../lib/collect/query-seed-batches";
 import type { mediaOembedInput } from "./input";
 
 type Input = z.infer<typeof mediaOembedInput>;
+
+function handlePlatform(report: OembedSnapshot): string | undefined {
+  if (report.vendor) return report.vendor;
+  const fromProvider = normalizeIdentifierPlatform(report.providerName ?? "");
+  return fromProvider === "" ? undefined : fromProvider;
+}
 
 function summarize(report: OembedSnapshot): string {
   const vendor = report.vendor ?? "unknown";
@@ -25,8 +36,9 @@ export function interpretOembedReport(
   report: OembedSnapshot,
   opts: CapInterpretOpts<Input>
 ): CapInterpretResult {
+  const platform = handlePlatform(report);
   const handleValues =
-    report.vendor && report.authorName
+    platform && report.authorName
       ? [
           report.authorName.startsWith("@")
             ? report.authorName
@@ -42,9 +54,9 @@ export function interpretOembedReport(
       {
         type: "handle",
         values: handleValues,
-        platform: report.vendor ?? undefined,
+        platform,
       },
-      { type: "url", values: urlValues },
+      ...urlValuesBatch(urlValues, { limit: URL_IDENTIFIER_BATCH_LIMIT }),
     ],
     claimText: summarize(report),
     noEntitySummary: "Media oEmbed captured; no Entity to attach",

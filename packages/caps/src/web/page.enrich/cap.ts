@@ -22,7 +22,10 @@ export const pageEnrich = defineCollectCap({
   flags: ["invasive"],
   useCases: ["Active"],
   consumes: [{ kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 15 * 60_000,
   },
@@ -30,7 +33,7 @@ export const pageEnrich = defineCollectCap({
   reportLabel: "page.enrich",
   fetch: (ctx) =>
     Effect.gen(function* pageEnrichFetch() {
-      const url = ctx.input.url.trim();
+      const url = ctx.input.url;
       ctx.log(`page enrich ${url}`);
       const snap = yield* fetchPageEnrichEffect(url, ctx.signal, {
         userAgent: UA,

@@ -35,7 +35,7 @@ export const mediaOembed = defineCollectCap({
   reportLabel: "media.oembed",
   fetch: (ctx) =>
     Effect.gen(function* mediaOembedFetch() {
-      const url = ctx.input.url.trim();
+      const url = ctx.input.url;
       ctx.log(`oEmbed ${url}`);
       const snap = yield* fetchOembedEffect(url, ctx.signal, { userAgent: UA });
       if (snap.error) {

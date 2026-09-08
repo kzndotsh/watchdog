@@ -23,13 +23,15 @@ describe("interpret", () => {
     hopCount: 1,
   };
 
-  it("interpretUnshortenReport proposes finalUrl Identifier + Claim", () => {
+  it("interpretUnshortenReport proposes seed + final URL Identifiers + Claim", () => {
     const result = interpretUnshortenReport(fixture, {
       input: { url: "https://t.co/abc", entityId },
     });
     const ids = result.patch.filter((p) => p.resource === "identifier");
-    expect(ids.map((p) => p.data.type)).toEqual(["url", "url"]);
-    expect(ids.map((p) => p.data.value)).toContain("https://example.com");
+    expect(ids.map((p) => p.data.value)).toEqual([
+      "https://t.co/abc",
+      "https://example.com",
+    ]);
     expect(claimText(result, 2)).toMatch(/1 hop\(s\)/);
   });
 

@@ -36,8 +36,45 @@ describe("interpret", () => {
     });
     expect(result.patch[0]?.resource).toBe("identifier");
     expect(result.patch[0]?.data.type).toBe("url");
+    const urls = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "url"
+    );
+    expect(urls).toHaveLength(1);
     expect(claimText(result, 1)).toMatch(/Example/);
     expect(claimText(result, 1)).toMatch(/google-analytics/);
+  });
+
+  it("includes canonical url when present", () => {
+    const result = interpretPageEnrichReport(
+      {
+        ...fixture,
+        meta: { ...fixture.meta, canonical: "https://example.com/canonical" },
+      },
+      { input: { url: "https://example.com/", entityId } }
+    );
+    const urls = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "url"
+    );
+    expect(urls).toHaveLength(2);
+  });
+
+  it("proposes both seed and final URLs after a redirect", () => {
+    const result = interpretPageEnrichReport(
+      {
+        ...fixture,
+        url: "https://t.co/abc",
+        finalUrl: "https://example.com/landing",
+      },
+      { input: { url: "https://t.co/abc", entityId } }
+    );
+    const urls = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "url"
+    );
+    expect(
+      urls
+        .map((p) => (typeof p.data.value === "string" ? p.data.value : ""))
+        .sort((a, b) => a.localeCompare(b))
+    ).toEqual(["https://example.com/landing", "https://t.co/abc"]);
   });
 
   itRejectsIncompleteReport(

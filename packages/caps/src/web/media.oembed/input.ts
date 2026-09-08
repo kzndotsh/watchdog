@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, uuidSchema } from "@watchdog/schemas";
+import { httpUrlSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const mediaOembedInput = z.object({
-  url: nonEmptyTrimmed.describe("Media URL"),
-  entityId: uuidSchema.optional(),
+  url: httpUrlSchema.describe("Media URL"),
+  entityId: optionalUuidSchema,
 });

@@ -23,7 +23,10 @@ export const urlUnshorten = defineCollectCap({
   flags: ["invasive"],
   useCases: ["Active"],
   consumes: [{ kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 10 * 60_000,
   },
@@ -31,7 +34,7 @@ export const urlUnshorten = defineCollectCap({
   reportLabel: "url.unshorten",
   fetch: (ctx) =>
     Effect.gen(function* urlUnshortenFetch() {
-      const url = ctx.input.url.trim();
+      const url = ctx.input.url;
       ctx.log(`unshorten ${url}`);
       const snap = yield* fetchUnshortenEffect(url, ctx.signal, {
         userAgent: UA,
