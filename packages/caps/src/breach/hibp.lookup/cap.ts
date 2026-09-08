@@ -24,7 +24,10 @@ export const hibpLookup = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "HIBP_API_KEY" }],
   consumes: [{ kind: "identifier", type: "email" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "email" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
@@ -32,7 +35,7 @@ export const hibpLookup = defineCollectCap({
   reportLabel: "hibp.lookup",
   fetch: (ctx) =>
     Effect.gen(function* hibpLookupFetch() {
-      const email = ctx.input.email.trim();
+      const email = ctx.input.email;
       ctx.log(`HIBP ${email}`);
       const key = yield* ctx.getCredential("HIBP_API_KEY");
       const snap = yield* fetchHibpBreachedAccountEffect(

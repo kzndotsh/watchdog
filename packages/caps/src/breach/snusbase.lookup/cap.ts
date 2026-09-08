@@ -36,7 +36,7 @@ export const snusbaseLookup = defineCollectCap({
   reportLabel: "snusbase.lookup",
   fetch: (ctx) =>
     Effect.gen(function* snusbaseLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`Snusbase ${query}`);
       const key = yield* ctx.getCredential("SNUSBASE_API_KEY");
       const snap = yield* fetchSnusbaseLookupEffect(query, key, ctx.signal, {

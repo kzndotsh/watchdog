@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   claimText,
+  expectProposesIdentifier,
   itRejectsIncompleteReport,
   testId,
 } from "@watchdog/test-kit";
@@ -38,14 +39,17 @@ describe("interpret", () => {
     status: 200,
   };
 
-  it("interpretHibpLookupReport proposes Claim only", () => {
+  it("interpretHibpLookupReport proposes email Identifier + Claim", () => {
     const result = interpretHibpLookupReport(fixture, {
       input: { email: "bob@example.com", entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(result.patch[0]?.resource).toBe("claim");
-    expect(claimText(result, 0)).toMatch(/Adobe/);
-    expect(claimText(result, 0)).toMatch(/LinkedIn/);
+    expectProposesIdentifier(result, {
+      type: "email",
+      value: "bob@example.com",
+    });
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/Adobe/);
+    expect(claimText(result, 1)).toMatch(/LinkedIn/);
   });
 
   itRejectsIncompleteReport(

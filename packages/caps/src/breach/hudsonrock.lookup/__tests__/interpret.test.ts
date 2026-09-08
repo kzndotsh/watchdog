@@ -22,15 +22,45 @@ describe("interpret", () => {
     newestDate: "2025-06-01",
   };
 
-  it("interpretHudsonrockLookupReport proposes observation Claim", () => {
+  it("interpretHudsonrockLookupReport proposes email Identifier + observation Claim", () => {
     const result = interpretHudsonrockLookupReport(fixture, {
       input: { query: fixture.query, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/Hudson Rock/);
-    expect(claimText(result, 0)).toMatch(/infostealer exposure/);
-    expect(claimText(result, 0)).toMatch(/2 exposure record\(s\)/);
-    expect(claimText(result, 0)).not.toMatch(/password/i);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.data.type).toBe("email");
+    expect(result.patch[0]?.data.value).toBe("victim@example.com");
+    expect(result.patch[1]?.resource).toBe("claim");
+    expect(claimText(result, 1)).toMatch(/Hudson Rock/);
+    expect(claimText(result, 1)).toMatch(/infostealer exposure/);
+    expect(claimText(result, 1)).toMatch(/2 exposure record\(s\)/);
+    expect(claimText(result, 1)).not.toMatch(/password/i);
+  });
+
+  it("summarizes zero-result lookups as found", () => {
+    const result = interpretHudsonrockLookupReport(
+      {
+        ...fixture,
+        found: true,
+        totalResults: 0,
+        newestDate: null,
+      },
+      { input: { query: fixture.query, entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/0 exposure record\(s\)/);
+    expect(claimText(result, 1)).not.toMatch(/not indexed/);
+  });
+
+  it("summarizes not-indexed queries separately from zero-hit lookups", () => {
+    const result = interpretHudsonrockLookupReport(
+      {
+        ...fixture,
+        found: false,
+        totalResults: 0,
+        newestDate: null,
+      },
+      { input: { query: fixture.query, entityId } }
+    );
+    expect(claimText(result, 1)).toMatch(/not indexed/);
   });
 
   itRejectsIncompleteReport(

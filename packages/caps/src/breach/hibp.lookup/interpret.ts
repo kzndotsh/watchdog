@@ -3,7 +3,8 @@ import type { z } from "zod";
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { HibpLookupSnapshot } from "@watchdog/tools";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { hibpLookupInput } from "./input";
 
 type HibpInput = z.infer<typeof hibpLookupInput>;
@@ -25,9 +26,10 @@ export function interpretHibpLookupReport(
   report: HibpLookupSnapshot,
   opts: CapInterpretOpts<HibpInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "HIBP lookup completed; no Entity to attach Claim",
+    batches: [...querySeedBatches(report.email, "email")],
+    claimText: summarize(report),
+    noEntitySummary: "HIBP lookup completed; no Entity to attach Identifiers",
   });
 }

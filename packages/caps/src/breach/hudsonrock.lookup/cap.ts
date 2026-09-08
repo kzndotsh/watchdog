@@ -28,7 +28,12 @@ export const hudsonrockLookup = defineCollectCap({
     { kind: "host" },
     { kind: "identifier", type: "email" },
   ],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+    { kind: "identifier", type: "email" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
@@ -36,7 +41,7 @@ export const hudsonrockLookup = defineCollectCap({
   reportLabel: "hudsonrock.lookup",
   fetch: (ctx) =>
     Effect.gen(function* hudsonrockLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`Hudson Rock ${query}`);
       const key = yield* ctx.getCredential("HUDSONROCK_API_KEY");
       const snap = yield* fetchHudsonrockLookupEffect(query, key, ctx.signal, {

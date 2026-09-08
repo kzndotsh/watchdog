@@ -36,7 +36,7 @@ export const dehashedLookup = defineCollectCap({
   reportLabel: "dehashed.lookup",
   fetch: (ctx) =>
     Effect.gen(function* dehashedLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`DeHashed ${query}`);
       const key = yield* ctx.getCredential("DEHASHED_API_KEY");
       const snap = yield* fetchDehashedLookupEffect(query, key, ctx.signal, {
