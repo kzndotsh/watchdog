@@ -50,6 +50,44 @@ describe("fetchUnshortenEffect", () => {
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
+  it.effect("reports an error when redirect hops exceed maxHops", () =>
+    Effect.gen(function* redirectLimitGen() {
+      mockServer.use(
+        http.head(
+          "https://hop.test/a",
+          () =>
+            new HttpResponse(null, {
+              status: 301,
+              headers: { location: "https://hop.test/b" },
+            })
+        ),
+        http.head(
+          "https://hop.test/b",
+          () =>
+            new HttpResponse(null, {
+              status: 301,
+              headers: { location: "https://hop.test/c" },
+            })
+        ),
+        http.head(
+          "https://hop.test/c",
+          () =>
+            new HttpResponse(null, {
+              status: 301,
+              headers: { location: "https://hop.test/d" },
+            })
+        )
+      );
+      const snap = yield* fetchUnshortenEffect(
+        "https://hop.test/a",
+        new AbortController().signal,
+        { userAgent: "watchdog-test", maxHops: 2 }
+      );
+      expect(snap.error).toBe("Redirect hop limit exceeded (2)");
+      expect(snap.chain).toHaveLength(2);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
   it("blocks private, loopback, link-local, and CGNAT hops", () => {
     expect(isBlockedUnshortenUrl("http://127.0.0.1/")).toBe(true);
     expect(isBlockedUnshortenUrl("http://10.0.0.1/")).toBe(true);
@@ -57,6 +95,12 @@ describe("fetchUnshortenEffect", () => {
     expect(isBlockedUnshortenUrl("http://169.254.1.1/")).toBe(true);
     expect(isBlockedUnshortenUrl("http://100.64.0.1/")).toBe(true);
     expect(isBlockedUnshortenUrl("http://[::1]/")).toBe(true);
+    expect(isBlockedUnshortenUrl("http://[::ffff:127.0.0.1]/")).toBe(true);
+    expect(isBlockedUnshortenUrl("http://[::fc00:1]/")).toBe(true);
     expect(isBlockedUnshortenUrl("https://example.com/")).toBe(false);
+    // oxlint-disable-next-line eslint/no-script-url -- intentional non-http URL for validation test
+    const scriptUrl = "javascript:alert(1)";
+    expect(isBlockedUnshortenUrl(scriptUrl)).toBe(true);
+    expect(isBlockedUnshortenUrl("file:///etc/passwd")).toBe(true);
   });
 });

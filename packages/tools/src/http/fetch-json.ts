@@ -1,4 +1,4 @@
-import { Effect, Schedule } from "effect";
+import { Effect, Result } from "effect";
 import { HttpBody, HttpClient } from "effect/unstable/http";
 import type { HttpMethod } from "effect/unstable/http/HttpMethod";
 
@@ -6,6 +6,7 @@ import {
   HttpVendorError,
   ParseVendorError,
   RateLimitedError,
+  ValidationVendorError,
   type ToolsTag,
 } from "../errors/tagged-errors";
 import { isRecord } from "../parse/coerce";
@@ -34,16 +35,38 @@ function parseRetryAfterMs(header: string | undefined): number | undefined {
   return Math.max(0, dateMs - Date.now());
 }
 
-const rateLimitRetry = Schedule.jittered(
-  Schedule.max([Schedule.exponential("200 millis"), Schedule.recurs(5)])
-);
+const MAX_RATE_LIMIT_RETRIES = 5;
+
+function retryAfterRateLimit<A, R>(
+  effect: Effect.Effect<A, ToolsTag, R>
+): Effect.Effect<A, ToolsTag, R> {
+  return Effect.gen(function* retryAfterRateLimitGen() {
+    let attempt = 0;
+    while (true) {
+      const result = yield* Effect.result(effect);
+      if (Result.isSuccess(result)) return result.success;
+      const error = result.failure;
+      if (
+        error._tag !== "RateLimitedError" ||
+        attempt >= MAX_RATE_LIMIT_RETRIES
+      ) {
+        return yield* error;
+      }
+      const fallbackMs = Math.min(200 * 2 ** attempt, 10_000);
+      const delayMs = error.retryAfterMs ?? fallbackMs;
+      yield* Effect.sleep(delayMs);
+      attempt += 1;
+    }
+  });
+}
 
 function mapHttpFailure(service: string) {
   return (error: unknown) => {
     if (
       error instanceof RateLimitedError ||
       error instanceof HttpVendorError ||
-      error instanceof ParseVendorError
+      error instanceof ParseVendorError ||
+      error instanceof ValidationVendorError
     ) {
       return error;
     }
@@ -146,8 +169,18 @@ export function fetchJsonUnknownEffect(
   const request = Effect.gen(function* fetchJsonRawGen() {
     const client = yield* HttpClient.HttpClient;
     const headers = headersFromInit(input.init);
-    const methodRaw = (input.init?.method ?? "GET").toUpperCase();
-    const method: HttpMethod = isHttpMethod(methodRaw) ? methodRaw : "GET";
+    const methodRaw = (input.init?.method ?? "GET").trim().toUpperCase();
+    if (!isHttpMethod(methodRaw)) {
+      return yield* new ValidationVendorError({
+        message: `unsupported HTTP method: ${methodRaw}`,
+      });
+    }
+    const method = methodRaw;
+    if (method === "OPTIONS" || method === "TRACE") {
+      return yield* new ValidationVendorError({
+        message: `unsupported HTTP method: ${method}`,
+      });
+    }
     const body = httpBodyFromInit(input.init, headers);
     const options = body === undefined ? { headers } : { headers, body };
     let res;
@@ -172,8 +205,6 @@ export function fetchJsonUnknownEffect(
         res = yield* client.head(requestUrl, { headers });
         break;
       }
-      case "OPTIONS":
-      case "TRACE":
       case "GET": {
         res = yield* client.get(requestUrl, { headers });
         break;
@@ -213,14 +244,7 @@ export function fetchJsonUnknownEffect(
   }).pipe(Effect.mapError(mapHttpFailure(input.service)));
 
   const retried =
-    input.retry === false
-      ? request
-      : request.pipe(
-          Effect.retry({
-            schedule: rateLimitRetry,
-            while: (error) => error._tag === "RateLimitedError",
-          })
-        );
+    input.retry === false ? request : retryAfterRateLimit(request);
 
   return retried.pipe(Effect.raceFirst(abortWhen(input.signal)));
 }

@@ -126,6 +126,14 @@ function snapshotFromJson(
 
 const MAX_OEMBED_BYTES = 64_000;
 
+function parseJsonBytes(bytes: Uint8Array): unknown {
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    return undefined;
+  }
+}
+
 interface OembedOptions {
   userAgent: string;
 }
@@ -157,10 +165,8 @@ export function fetchOembedEffect(
       );
     }
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(new TextDecoder().decode(res.bytes));
-    } catch {
+    const parsed = parseJsonBytes(res.bytes);
+    if (parsed === undefined) {
       return emptySnap(url, queriedAt, "Invalid oEmbed JSON", vendor);
     }
 

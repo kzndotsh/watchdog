@@ -149,6 +149,15 @@ export function fetchUnshortenEffect(
       break;
     }
 
+    const lastHop = chain.at(-1);
+    if (
+      error === undefined &&
+      lastHop !== undefined &&
+      isRedirectStatus(lastHop.status)
+    ) {
+      error = `Redirect hop limit exceeded (${maxHops})`;
+    }
+
     const finalUrl = resolvedFinalUrl(chain, current, url);
 
     return unshortenSnapshotSchema.parse({

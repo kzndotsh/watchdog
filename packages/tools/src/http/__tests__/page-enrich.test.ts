@@ -42,4 +42,16 @@ describe("fetchPageEnrichEffect", () => {
       expect(snap.ok).toBe(true);
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
+
+  it.effect("blocks private and loopback URLs", () =>
+    Effect.gen(function* fetchPageEnrichBlockedGen() {
+      const snap = yield* fetchPageEnrichEffect(
+        "http://127.0.0.1/page",
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
+      );
+      expect(snap.ok).toBe(false);
+      expect(snap.error).toMatch(/Blocked URL/);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 });

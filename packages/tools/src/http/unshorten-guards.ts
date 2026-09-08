@@ -1,10 +1,14 @@
 import { isIP, isIPv4 } from "node:net";
 
-const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+import { expandIpv6 } from "../network/ip-lookup-cymru";
 
 function parseUrlHostname(raw: string): string | null {
   try {
-    return new URL(raw).hostname.replace(/^\[/, "").replace(/\]$/, "");
+    const url = new URL(raw);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return null;
+    }
+    return url.hostname.replace(/^\[/, "").replace(/\]$/, "");
   } catch {
     return null;
   }
@@ -14,14 +18,54 @@ function isBlockedHostname(host: string): boolean {
   return host === "localhost" || host.endsWith(".localhost");
 }
 
-function isBlockedIpv6(host: string): boolean {
-  return (
-    host === "::1" ||
-    host.startsWith("fe80:") ||
-    host.startsWith("fc") ||
-    host.startsWith("fd")
-  );
+function embeddedIpv4FromMapped(host: string): string | null {
+  const dotted = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(host);
+  if (dotted?.[1] !== undefined && isIP(dotted[1]) === 4) {
+    return dotted[1];
+  }
+
+  try {
+    const expanded = expandIpv6(host.toLowerCase());
+    const parts = expanded
+      .split(":")
+      .map((hextet) => Number.parseInt(hextet, 16));
+    if (parts.length !== 8 || parts[5] !== 0xff_ff) return null;
+    const embedded = (parts[6] ?? 0) * 65_536 + (parts[7] ?? 0);
+    const octets = [
+      Math.floor(embedded / 16_777_216),
+      Math.floor(embedded / 65_536) % 256,
+      Math.floor(embedded / 256) % 256,
+      embedded % 256,
+    ];
+    const v4 = octets.join(".");
+    return isIP(v4) === 4 ? v4 : null;
+  } catch {
+    return null;
+  }
 }
+
+function isBlockedIpv6(host: string): boolean {
+  const lower = host.toLowerCase();
+  if (lower === "::1") return true;
+  if (lower.startsWith("fe80:")) return true;
+
+  try {
+    const expanded = expandIpv6(lower);
+    if (expanded === "0000:0000:0000:0000:0000:0000:0000:0001") {
+      return true;
+    }
+    for (const hextet of expanded.split(":")) {
+      const value = Number.parseInt(hextet, 16);
+      if (value >= 0xfc_00 && value <= 0xfd_ff) return true;
+      if (value >= 0xfe_80 && value <= 0xfe_bf) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 const PRIVATE_IPV4_RULES: ((a: number, b: number) => boolean)[] = [
   (a) => a === 10 || a === 127 || a === 0,
@@ -48,9 +92,16 @@ export function isBlockedUnshortenUrl(raw: string): boolean {
   if (hostname === null) return true;
   const host = hostname.toLowerCase();
   if (isBlockedHostname(host)) return true;
-  if (!isIP(host)) return false;
-  if (isBlockedIpv6(host)) return true;
-  return isBlockedIpv4(host);
+
+  const embeddedIpv4 = embeddedIpv4FromMapped(host);
+  if (embeddedIpv4 !== null) {
+    return isBlockedIpv4(embeddedIpv4);
+  }
+
+  const ipVersion = isIP(host);
+  if (ipVersion === 6) return isBlockedIpv6(host);
+  if (ipVersion === 4) return isBlockedIpv4(host);
+  return false;
 }
 
 export function isRedirectStatus(status: number): boolean {

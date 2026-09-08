@@ -56,6 +56,11 @@ function faviconSha256(favicon: FetchBytesResult): string | null {
   return createHash("sha256").update(favicon.bytes).digest("hex");
 }
 
+function securityTxtIsPresent(bodyPreview: string | null): boolean {
+  if (!bodyPreview) return false;
+  return /^contact:/im.test(bodyPreview);
+}
+
 export function buildHttpProbeSnapshot(input: {
   host: string;
   primary: ProbeHop;
@@ -78,7 +83,7 @@ export function buildHttpProbeSnapshot(input: {
     securityTxt: {
       url: input.securityTxtUrl,
       status: input.secTxt.status,
-      present: input.secTxt.ok && Boolean(bodyPreview?.includes("Contact:")),
+      present: input.secTxt.ok && securityTxtIsPresent(bodyPreview),
       bodyPreview,
     },
     favicon: {

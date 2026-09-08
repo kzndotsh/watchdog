@@ -54,4 +54,16 @@ describe("fetchHttpProbeEffect", () => {
       expect(snap.finalUrl).toMatch(/mailhost\.test/);
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
+
+  it.effect("blocks private and loopback hosts", () =>
+    Effect.gen(function* fetchHttpProbeBlockedGen() {
+      const snap = yield* fetchHttpProbeEffect(
+        "127.0.0.1",
+        new AbortController().signal,
+        { userAgent: "watchdog-test" }
+      );
+      expect(snap.ok).toBe(false);
+      expect(snap.error).toMatch(/Blocked host/);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 });

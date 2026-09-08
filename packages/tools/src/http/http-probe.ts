@@ -14,6 +14,7 @@ import {
   emptyHttpProbeSnapshot,
   type ProbeHop,
 } from "./http-probe-snapshot";
+import { isBlockedUnshortenUrl } from "./unshorten-guards";
 
 export { httpProbeSnapshotSchema, type HttpProbeSnapshot };
 
@@ -107,6 +108,13 @@ export function fetchHttpProbeEffect(
     let originBase = origins[0];
 
     for (const origin of origins) {
+      if (isBlockedUnshortenUrl(origin)) {
+        return emptyHttpProbeSnapshot(
+          host,
+          origin,
+          "Blocked host (private/loopback)"
+        );
+      }
       const attempt = yield* probeOriginEffect(
         origin,
         signal,
@@ -115,6 +123,13 @@ export function fetchHttpProbeEffect(
       if ("error" in attempt) {
         lastError = attempt.error;
         continue;
+      }
+      if (isBlockedUnshortenUrl(attempt.hop.finalUrl)) {
+        return emptyHttpProbeSnapshot(
+          host,
+          origin,
+          "Blocked redirect target (private/loopback)"
+        );
       }
       primary = attempt.hop;
       originBase = `${new URL(attempt.hop.finalUrl).origin}/`;
