@@ -90,6 +90,25 @@ interface CollinfoIndex {
   cdxApi: string;
 }
 
+const COMMONCRAWL_CDX_HOST = "index.commoncrawl.org";
+
+/** Reject collinfo CDX endpoints that are not on the Common Crawl index host. */
+export function assertCommonCrawlCdxApiUrl(cdxApi: string): string {
+  let url: URL;
+  try {
+    url = new URL(cdxApi);
+  } catch {
+    throw validationToolsError("Common Crawl: invalid CDX API URL");
+  }
+  if (url.protocol !== "https:") {
+    throw validationToolsError("Common Crawl: CDX API must use HTTPS");
+  }
+  if (url.hostname.toLowerCase() !== COMMONCRAWL_CDX_HOST) {
+    throw validationToolsError("Common Crawl: CDX API host not trusted");
+  }
+  return cdxApi;
+}
+
 function parseCollinfoIndexes(
   coll: unknown,
   indexCount: number
@@ -104,7 +123,7 @@ function parseCollinfoIndexes(
     const id = typeof row.id === "string" ? row.id : "";
     const cdxApi = typeof row["cdx-api"] === "string" ? row["cdx-api"] : "";
     if (!id || !cdxApi) continue;
-    indexes.push({ id, cdxApi });
+    indexes.push({ id, cdxApi: assertCommonCrawlCdxApiUrl(cdxApi) });
     if (indexes.length >= indexCount) break;
   }
 

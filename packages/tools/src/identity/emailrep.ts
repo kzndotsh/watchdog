@@ -8,6 +8,7 @@ import { parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asBool, asNumber, asString, isRecord } from "../parse/coerce";
+import { normalizeEmail } from "./email-lookup";
 
 export const emailrepLookupSnapshotSchema = z.object({
   email: z.string().min(1),
@@ -91,12 +92,10 @@ export function fetchEmailrepLookupEffect(
   options?: EmailrepOptions
 ): Effect.Effect<EmailrepLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchEmailrepLookupGen() {
-    const email = emailRaw.trim().toLowerCase();
-    if (!email.includes("@")) {
-      return yield* new ValidationVendorError({
-        message: `Invalid email: ${emailRaw}`,
-      });
-    }
+    const { email } = yield* Effect.try({
+      try: () => normalizeEmail(emailRaw),
+      catch: mapToolsCatch,
+    });
 
     const ua =
       options?.userAgent ?? watchdogUserAgent("identity.emailrep.lookup");
