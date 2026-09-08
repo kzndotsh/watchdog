@@ -19,7 +19,11 @@ export const dnsReverse = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   consumes: [{ kind: "ip" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
+    { kind: "identifier", type: "domain" },
+  ],
   jobPolicy: {
     cacheTtlMs: 30 * 60_000,
   },
