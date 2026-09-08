@@ -1,3 +1,8 @@
+import {
+  parseOptionalTrimmedUuid,
+  trimmedOrUndefined,
+} from "@watchdog/schemas";
+
 import type { CapListItem } from "../types";
 import { capPrimaryField, type CapPrimaryField } from "./cap-run-input";
 import {
@@ -68,7 +73,11 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
     configuredCredentials,
   } = input;
 
-  const selected = caps.find((c) => c.id === capabilityId);
+  const scopedCapabilityId = trimmedOrUndefined(capabilityId);
+  const selected =
+    scopedCapabilityId === undefined
+      ? undefined
+      : caps.find((c) => c.id === scopedCapabilityId);
   const needsEgress =
     (selected?.egress ?? "none") === "third_party" && !allowThirdPartyEgress;
   const missingCredentials = missingCredentialNames(
@@ -93,6 +102,6 @@ export function buildCapRunView(input: CapRunInput): CapRunView {
       hasInput: Boolean(runInput.trim()),
       hasCaps: caps.length > 0,
     }),
-    showEvidenceOnlyHint: entityId === "",
+    showEvidenceOnlyHint: parseOptionalTrimmedUuid(entityId) === undefined,
   };
 }

@@ -1,3 +1,6 @@
+import { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
+import { trimmedOrUndefined } from "@watchdog/schemas";
+
 import type { PlaybookListItem } from "../types";
 import {
   missingCredentialNames,
@@ -92,7 +95,11 @@ export function buildPlaybookSeedView(
     configuredCredentials,
   } = input;
 
-  const selected = playbooks.find((p) => p.id === playbookId) ?? playbooks[0];
+  const scopedPlaybookId = trimmedOrUndefined(playbookId);
+  const selected =
+    scopedPlaybookId === undefined
+      ? undefined
+      : playbooks.find((p) => p.id === scopedPlaybookId);
   const thirdPartyEgress =
     (selected?.requires.egress ?? "none") === "third_party";
   const needsEgress = thirdPartyEgress && !allowThirdPartyEgress;
@@ -119,8 +126,8 @@ export function buildPlaybookSeedView(
     missingCredentials,
     showEgressRow: thirdPartyEgress,
     egressLabel: needsEgress
-      ? "third party — enable on Case"
-      : "third party (Case allows)",
+      ? `${capEgressLabel("third_party")} — enable on Case`
+      : `${capEgressLabel("third_party")} (Case allows)`,
     canRun:
       Boolean(selected) &&
       seedOk &&

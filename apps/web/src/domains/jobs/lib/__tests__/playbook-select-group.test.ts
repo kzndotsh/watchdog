@@ -43,4 +43,13 @@ describe("playbook-select-group", () => {
     expect(playbookMatchesQuery(row, "network.dns")).toBe(true);
     expect(playbookMatchesQuery(row, "missing")).toBe(false);
   });
+
+  it("does not mutate the input playbook array when grouping", () => {
+    const catalog = [
+      playbook({ id: "z-playbook", title: "Zulu" }),
+      playbook({ id: "a-playbook", title: "Alpha" }),
+    ];
+    groupPlaybooksBySeed(catalog);
+    expect(catalog.map((row) => row.id)).toEqual(["z-playbook", "a-playbook"]);
+  });
 });

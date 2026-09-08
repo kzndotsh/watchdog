@@ -1,14 +1,12 @@
 import type { PlaybookListItem } from "@/domains/jobs/types";
+import {
+  PLAYBOOK_SEED_KIND_LABELS,
+  isPlaybookSeedKind,
+} from "@watchdog/schemas";
 
-const SEED_GROUP_LABELS: Record<string, string> = {
-  host: "Host",
-  url: "URL",
-  evidence: "Evidence",
-  ip: "IP",
-  email: "Email",
-  hash: "Hash",
-  handle: "Handle",
-};
+function playbookSeedGroupLabelForKey(seed: string): string {
+  return isPlaybookSeedKind(seed) ? PLAYBOOK_SEED_KIND_LABELS[seed] : seed;
+}
 
 export function playbookSeedGroup(playbook: PlaybookListItem): string {
   const seed = playbook.seedKinds[0];
@@ -17,8 +15,7 @@ export function playbookSeedGroup(playbook: PlaybookListItem): string {
 }
 
 export function playbookSeedGroupLabel(playbook: PlaybookListItem): string {
-  const seed = playbookSeedGroup(playbook);
-  return SEED_GROUP_LABELS[seed] ?? seed;
+  return playbookSeedGroupLabelForKey(playbookSeedGroup(playbook));
 }
 
 export function groupPlaybooksBySeed(
@@ -34,8 +31,8 @@ export function groupPlaybooksBySeed(
   return [...map.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([seed, list]) => ({
-      label: SEED_GROUP_LABELS[seed] ?? seed,
-      playbooks: list.sort((a, b) => a.title.localeCompare(b.title)),
+      label: playbookSeedGroupLabelForKey(seed),
+      playbooks: [...list].sort((a, b) => a.title.localeCompare(b.title)),
     }));
 }
 

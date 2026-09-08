@@ -27,6 +27,7 @@ import { Checkbox } from "@/shared/ui/shadcn/checkbox";
 import { Input } from "@/shared/ui/shadcn/input";
 import { Label } from "@/shared/ui/shadcn/label";
 import { WithTooltip } from "@/shared/ui/timestamp";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 
 const KIND_FILTERS = [
   { value: "", label: "All kinds" },
@@ -226,7 +227,7 @@ export function JobCapRunForm({
             });
             const seedHint =
               paste && paste.kind !== "unknown"
-                ? `Matched ${paste.kind}${paste.hostHint ? ` · ${paste.hostHint}` : ""}`
+                ? `Matched ${kindLabel(paste.kind)}${paste.hostHint ? ` · ${paste.hostHint}` : ""}`
                 : undefined;
 
             return (

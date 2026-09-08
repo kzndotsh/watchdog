@@ -23,7 +23,8 @@ describe("ArtifactContent", () => {
   it("renders artifact preview while content is loading", () => {
     useQueryMock.mockReturnValue({
       data: undefined,
-      isPending: true,
+      isFetched: false,
+      isLoading: true,
       isError: false,
     });
 
@@ -43,7 +44,8 @@ describe("ArtifactContent", () => {
   it("renders fetched text for job artifacts", () => {
     useQueryMock.mockReturnValue({
       data: { text: "artifact body" },
-      isPending: false,
+      isFetched: true,
+      isLoading: false,
       isError: false,
     });
 
@@ -60,10 +62,40 @@ describe("ArtifactContent", () => {
     expect(screen.getByText("artifact body")).toBeInTheDocument();
   });
 
+  it("shows a fetch error instead of a binary placeholder when content fails", () => {
+    const refetch = vi.fn();
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      isFetched: true,
+      isLoading: false,
+      isError: true,
+      error: new Error("storage unavailable"),
+      refetch,
+    });
+
+    render(
+      <ArtifactContent
+        caseId={testId(10)}
+        jobId={testId(11)}
+        sha256="abc123"
+        mime="text/plain"
+        name="report.txt"
+      />
+    );
+
+    expect(screen.getByText("storage unavailable")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Binary artifact — not renderable.")
+    ).not.toBeInTheDocument();
+    screen.getByRole("button", { name: "Retry" }).click();
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
   it("loads evidence-backed artifacts by evidence id", () => {
     useQueryMock.mockReturnValue({
       data: { text: "inline evidence" },
-      isPending: false,
+      isFetched: true,
+      isLoading: false,
       isError: false,
     });
 

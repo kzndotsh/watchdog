@@ -1,5 +1,8 @@
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import {
   isJsonObject,
+  normalizeJobInput,
+  parseOptionalTrimmedUuid,
   type JsonObject,
   type JsonValue,
 } from "@watchdog/schemas";
@@ -60,10 +63,16 @@ export function buildCapRunInput(
   entityId: string
 ): Record<string, string> {
   const { key } = capPrimaryField(inputForm);
-  return {
+  const scopedEntityId = parseOptionalTrimmedUuid(entityId);
+  const input = normalizeJobInput({
     [key]: value.trim(),
-    ...(entityId ? { entityId } : {}),
-  };
+    ...(scopedEntityId === undefined ? {} : { entityId: scopedEntityId }),
+  });
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(input)) {
+    if (typeof v === "string") out[k] = v;
+  }
+  return out;
 }
 
 export function formatCapIo(
@@ -74,15 +83,17 @@ export function formatCapIo(
   if (items === undefined || items.length === 0) return null;
   return items
     .map((c) => {
-      if (c.kind === "identifier" && c.type !== undefined && c.type !== "")
-        return `id:${c.type}`;
+      if (c.kind === "identifier" && c.type !== undefined && c.type !== "") {
+        return kindLabel(c.type);
+      }
       if (
         c.kind === "evidence" &&
         c.evidenceKind !== undefined &&
         c.evidenceKind !== ""
-      )
-        return `ev:${c.evidenceKind}`;
-      return c.kind;
+      ) {
+        return kindLabel(c.evidenceKind);
+      }
+      return kindLabel(c.kind);
     })
     .join(", ");
 }

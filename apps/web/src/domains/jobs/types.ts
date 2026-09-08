@@ -1,15 +1,26 @@
 import { z } from "zod";
 
 import {
-  jsonObjectSchema,
-  nonEmptyTrimmed,
-  uuidSchema,
+  cancelJobInputSchema,
+  cancelPlaybookInputSchema,
+  getJobInputSchema,
+  listJobsInputSchema,
+  sha256HexSchema,
+  startJobInputSchema,
+  startPlaybookInputSchema,
+  trimmedUuidSchema,
   type JsonObject,
   type JsonValue,
   type PlaybookSeedKind,
 } from "@watchdog/schemas";
 
 /** CapDescriptor wire shape from capabilities.list (serializable catalog). */
+export interface CapConsumeItem {
+  kind: string;
+  type?: string;
+  evidenceKind?: string;
+}
+
 export interface CapListItem {
   id: string;
   version: string;
@@ -19,11 +30,7 @@ export interface CapListItem {
   kind?: string;
   flags?: string[];
   egress: string;
-  consumes?: {
-    kind: string;
-    type?: string;
-    evidenceKind?: string;
-  }[];
+  consumes?: CapConsumeItem[];
   produces?: {
     kind: string;
     type?: string;
@@ -52,28 +59,16 @@ export function inputFormProperties(
   return props;
 }
 
-export const listJobsInputSchema = z.object({
-  caseId: uuidSchema,
-});
+export { listJobsInputSchema };
 export type ListJobsInput = z.output<typeof listJobsInputSchema>;
 
-export const getJobInputSchema = z.object({
-  caseId: uuidSchema,
-  jobId: uuidSchema,
-});
+export { getJobInputSchema };
 export type GetJobInput = z.output<typeof getJobInputSchema>;
 
-export const startJobInputSchema = z.object({
-  caseId: uuidSchema,
-  capabilityId: nonEmptyTrimmed,
-  input: jsonObjectSchema.default({}),
-});
+export { startJobInputSchema };
 export type StartJobInput = z.output<typeof startJobInputSchema>;
 
-export const cancelJobInputSchema = z.object({
-  caseId: uuidSchema,
-  jobId: uuidSchema,
-});
+export { cancelJobInputSchema };
 export type CancelJobInput = z.output<typeof cancelJobInputSchema>;
 
 /** PlaybookDescriptor wire shape from capabilities.listPlaybooks. */
@@ -90,26 +85,10 @@ export interface PlaybookListItem {
   };
 }
 
-export const startPlaybookInputSchema = z.object({
-  caseId: uuidSchema,
-  playbookId: nonEmptyTrimmed,
-  seed: z.object({
-    host: z.string().optional(),
-    url: z.string().optional(),
-    evidenceId: uuidSchema.optional(),
-    entityId: uuidSchema.optional(),
-    ip: z.string().optional(),
-    email: z.string().optional(),
-    hash: z.string().optional(),
-    handle: z.string().optional(),
-  }),
-});
+export { startPlaybookInputSchema };
 export type StartPlaybookInput = z.output<typeof startPlaybookInputSchema>;
 
-export const cancelPlaybookInputSchema = z.object({
-  caseId: uuidSchema,
-  playbookRunId: uuidSchema,
-});
+export { cancelPlaybookInputSchema };
 export type CancelPlaybookInput = z.output<typeof cancelPlaybookInputSchema>;
 
 const artifactMimeSchema = z
@@ -121,18 +100,20 @@ const artifactMimeSchema = z
 export const getArtifactContentInputSchema = z.discriminatedUnion("source", [
   z.object({
     source: z.literal("job"),
-    caseId: uuidSchema,
-    jobId: uuidSchema,
-    sha256: nonEmptyTrimmed,
+    caseId: trimmedUuidSchema,
+    jobId: trimmedUuidSchema,
+    sha256: sha256HexSchema,
     mime: artifactMimeSchema,
   }),
   z.object({
     source: z.literal("evidence"),
-    caseId: uuidSchema,
-    evidenceId: uuidSchema,
+    caseId: trimmedUuidSchema,
+    evidenceId: trimmedUuidSchema,
     mime: artifactMimeSchema,
   }),
 ]);
 export type GetArtifactContentInput = z.output<
   typeof getArtifactContentInputSchema
 >;
+
+export type { JobListRecord, JobRecord } from "@watchdog/core";

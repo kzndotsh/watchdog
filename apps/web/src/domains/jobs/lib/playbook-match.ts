@@ -1,36 +1,17 @@
 import { playbookSeedRequirements } from "@/domains/jobs/lib/playbook-seed-requirements";
 import type { PlaybookListItem } from "@/domains/jobs/types";
-import type { PlaybookSeedKind } from "@watchdog/schemas";
-
-const SEED_KIND_LABELS: Record<PlaybookSeedKind, string> = {
-  host: "Host",
-  url: "URL",
-  evidence: "Evidence",
-  ip: "IP",
-  email: "Email",
-  hash: "Hash",
-  handle: "Handle",
-};
-
-function isPlaybookSeedKind(value: string): value is PlaybookSeedKind {
-  return Object.hasOwn(SEED_KIND_LABELS, value);
-}
+import {
+  PLAYBOOK_SEED_KIND_LABELS,
+  PLAYBOOK_SEED_KINDS,
+  isPlaybookSeedKind,
+  type PlaybookSeedKind,
+} from "@watchdog/schemas";
 
 export const PLAYBOOK_SEED_FILTERS = [
   { value: "", label: "All seeds" },
-  ...(
-    [
-      "host",
-      "url",
-      "evidence",
-      "ip",
-      "email",
-      "hash",
-      "handle",
-    ] as const satisfies readonly PlaybookSeedKind[]
-  ).map((kind) => ({
+  ...PLAYBOOK_SEED_KINDS.map((kind) => ({
     value: kind,
-    label: SEED_KIND_LABELS[kind],
+    label: PLAYBOOK_SEED_KIND_LABELS[kind],
   })),
 ] as const;
 
@@ -110,17 +91,19 @@ export function playbookSeedFilterOptions(
   return [
     { value: "", label: "All seeds" },
     ...[...seeds]
-      .sort((a, b) => SEED_KIND_LABELS[a].localeCompare(SEED_KIND_LABELS[b]))
+      .sort((a, b) =>
+        PLAYBOOK_SEED_KIND_LABELS[a].localeCompare(PLAYBOOK_SEED_KIND_LABELS[b])
+      )
       .map((kind) => ({
         value: kind,
-        label: SEED_KIND_LABELS[kind],
+        label: PLAYBOOK_SEED_KIND_LABELS[kind],
       })),
   ];
 }
 
 export function playbookSeedFilterLabel(value: string): string {
   if (value === "") return "All seeds";
-  return isPlaybookSeedKind(value) ? SEED_KIND_LABELS[value] : value;
+  return isPlaybookSeedKind(value) ? PLAYBOOK_SEED_KIND_LABELS[value] : value;
 }
 
 export function playbookEgressFilterLabel(value: string): string {

@@ -17,6 +17,7 @@ import {
   ComboboxList,
   ComboboxSeparator,
 } from "@/shared/ui/shadcn/combobox";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 
 interface CapCapabilitySelectProps {
   caps: readonly CapListItem[];
@@ -112,9 +113,13 @@ export function CapCapabilitySelect({
     [caps]
   );
 
-  const selected = caps.find((c) => c.id === value) ?? null;
+  const scopedValue = trimmedOrUndefined(value) ?? "";
+
+  const selected = caps.find((c) => c.id === scopedValue) ?? null;
   const preview =
-    caps.find((c) => c.id === (highlightedId ?? value)) ?? selected ?? null;
+    caps.find((c) => c.id === (highlightedId ?? scopedValue)) ??
+    selected ??
+    null;
 
   return (
     <Combobox
@@ -124,7 +129,7 @@ export function CapCapabilitySelect({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        setHighlightedId(next ? value || null : null);
+        setHighlightedId(next ? scopedValue || null : null);
       }}
       itemToStringLabel={(cap) => (cap ? cap.title : "")}
       filter={(item, query) => {

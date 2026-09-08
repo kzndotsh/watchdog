@@ -80,6 +80,6 @@ describe("PlaybookSelect", () => {
 
     expect(screen.getByText("DNS only")).toBeInTheDocument();
     expect(screen.getByText("host-footprint-lite")).toBeInTheDocument();
-    expect(screen.getByText("network.dns.lookup")).toBeInTheDocument();
+    expect(screen.getByText("DNS Lookup")).toBeInTheDocument();
   });
 });

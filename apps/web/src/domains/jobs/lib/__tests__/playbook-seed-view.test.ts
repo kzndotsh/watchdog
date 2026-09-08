@@ -55,4 +55,43 @@ describe("playbook-seed-view", () => {
     expect(view.canRun).toBe(true);
     expect(view.missingCredentials).toBe(undefined);
   });
+
+  it("does not treat an empty playbook id as the first playbook", () => {
+    const view = buildPlaybookSeedView({
+      playbooks: [footprint],
+      playbookId: "",
+      host: "example.com",
+      url: "",
+      evidenceId: "",
+      ip: "",
+      email: "",
+      hash: "",
+      handle: "",
+      urlDumpCount: 0,
+      allowThirdPartyEgress: true,
+      configuredCredentials: new Set(["SHODAN_API_KEY"]),
+    });
+    expect(view.selected).toBeUndefined();
+    expect(view.canRun).toBe(false);
+    expect(view.blockedReason).toBe("No playbooks available");
+  });
+
+  it("matches a padded playbook id", () => {
+    const view = buildPlaybookSeedView({
+      playbooks: [footprint],
+      playbookId: `  ${footprint.id}  `,
+      host: "example.com",
+      url: "",
+      evidenceId: "",
+      ip: "",
+      email: "",
+      hash: "",
+      handle: "",
+      urlDumpCount: 0,
+      allowThirdPartyEgress: true,
+      configuredCredentials: new Set(["SHODAN_API_KEY"]),
+    });
+    expect(view.selected?.id).toBe(footprint.id);
+    expect(view.canRun).toBe(true);
+  });
 });

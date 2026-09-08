@@ -1,12 +1,31 @@
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord } from "@/domains/jobs/types";
+import { capabilityLabel, playbookLabel, statusLabel } from "@/shared/ui/vocab";
 import {
   JOB_STATUSES,
+  PLAYBOOK_AGGREGATE_STATUS_PRIORITY,
+  catalogIdMatchesSearch,
   isOpenJobStatus,
+  summarizeJobInput,
   type JobStatus,
   type PlaybookRunStatus,
 } from "@watchdog/schemas";
 
 export { JOB_STATUS_OPTIONS as STATUS_FACET_OPTIONS } from "@/shared/ui/vocab";
+export { summarizeJobInput };
+
+/** Trim playbook run id; blank / whitespace → null. */
+export function normalizedPlaybookRunId(
+  runId: string | null | undefined
+): string | null {
+  if (runId === null || runId === undefined) return null;
+  const trimmed = runId.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/** Latest activity instant for queue ordering and day grouping. */
+export function jobActivityAt(job: JobListRecord): string {
+  return job.updatedAt ?? job.createdAt;
+}
 
 export interface JobQueueFilters {
   q: string;
@@ -37,79 +56,45 @@ export function isLive(status: JobStatus): boolean {
 
 // ─── display helpers ─────────────────────────────────────────────────────────
 
-const INPUT_HINT_KEYS = [
-  "host",
-  "domain",
-  "target",
-  "query",
-  "url",
-  "name",
-] as const;
-const EVIDENCE_ID_KEYS = ["evidenceId", "sourceEvidenceId"] as const;
-const SKIP_FALLBACK_KEYS = new Set<string>([
-  ...EVIDENCE_ID_KEYS,
-  "entityId",
-  "caseId",
-  "jobId",
-]);
-
-/**
- * Short human subject for a Job input.
- * Prefer host/url-style fields; resolve Evidence ids via `evidenceTitleById`
- * when provided (Process / Enrich). Never surface bare UUIDs as the hint.
- */
-export function summarizeJobInput(
-  input: Record<string, unknown>,
-  evidenceTitleById?: ReadonlyMap<string, string>
-): string {
-  for (const key of INPUT_HINT_KEYS) {
-    const value = input[key];
-    if (typeof value === "string" && value.trim() !== "") {
-      return value.trim();
-    }
-  }
-
-  for (const key of EVIDENCE_ID_KEYS) {
-    const id = input[key];
-    if (typeof id !== "string" || id.trim() === "") continue;
-    const title = evidenceTitleById?.get(id)?.trim();
-    if (title !== undefined && title !== "") return title;
-  }
-
-  for (const [key, value] of Object.entries(input)) {
-    if (SKIP_FALLBACK_KEYS.has(key)) continue;
-    if (typeof value === "string" && value.trim() !== "") {
-      return value.trim().slice(0, 40);
-    }
-  }
-  return "";
-}
-
 // ─── filtering + sorting ─────────────────────────────────────────────────────
 
 export function filterJobQueue(
   jobs: JobListRecord[],
   filters: JobQueueFilters,
-  evidenceTitleById?: ReadonlyMap<string, string>
+  evidenceTitleById?: ReadonlyMap<string, string>,
+  entityTitleById?: ReadonlyMap<string, string>
 ): JobListRecord[] {
   let out = jobs;
   if (filters.statuses.length > 0) {
-    out = out.filter((j) => filters.statuses.includes(j.status));
+    const statuses = new Set(filters.statuses);
+    out = out.filter((j) => statuses.has(j.status));
   }
   if (filters.capabilityIds.length > 0) {
-    out = out.filter((j) => filters.capabilityIds.includes(j.capabilityId));
+    const capabilityIds = new Set(filters.capabilityIds);
+    out = out.filter(
+      (j) =>
+        capabilityIds.has(j.capabilityId) ||
+        (j.playbookId !== null && capabilityIds.has(j.playbookId))
+    );
   }
   if (filters.q.trim()) {
     const q = filters.q.toLowerCase().trim();
     out = out.filter(
       (j) =>
-        j.capabilityId.toLowerCase().includes(q) ||
+        catalogIdMatchesSearch(j.capabilityId, q) ||
+        capabilityLabel(j.capabilityId).toLowerCase().includes(q) ||
+        j.status.toLowerCase().includes(q) ||
+        statusLabel(j.status).toLowerCase().includes(q) ||
         j.id.toLowerCase().includes(q) ||
-        (j.playbookId ?? "").toLowerCase().includes(q) ||
-        summarizeJobInput(j.input, evidenceTitleById)
+        (j.playbookId !== null && catalogIdMatchesSearch(j.playbookId, q)) ||
+        (j.playbookId !== null &&
+          playbookLabel(j.playbookId).toLowerCase().includes(q)) ||
+        summarizeJobInput(j.input, evidenceTitleById, entityTitleById)
           .toLowerCase()
           .includes(q) ||
-        (j.resultSummary ?? "").toLowerCase().includes(q)
+        (j.resultSummary ?? "").toLowerCase().includes(q) ||
+        (j.error ?? "").toLowerCase().includes(q) ||
+        (j.interpretError ?? "").toLowerCase().includes(q)
     );
   }
   return out;
@@ -117,7 +102,7 @@ export function filterJobQueue(
 
 export function sortJobQueue(jobs: JobListRecord[]): JobListRecord[] {
   return [...jobs].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => Date.parse(jobActivityAt(b)) - Date.parse(jobActivityAt(a))
   );
 }
 
@@ -141,17 +126,20 @@ export function groupJobsForQueue(jobs: JobListRecord[]): JobQueueEntry[] {
   const entries: JobQueueEntry[] = [];
 
   for (const job of jobs) {
-    const runId = job.playbookRunId;
-    if (runId !== null && runId !== "") {
+    const runId = normalizedPlaybookRunId(job.playbookRunId);
+    if (runId !== null) {
       if (seenRuns.has(runId)) continue;
       seenRuns.add(runId);
       const steps = jobs
-        .filter((j) => j.playbookRunId === runId)
+        .filter((j) => normalizedPlaybookRunId(j.playbookRunId) === runId)
         .sort((a, b) => (a.playbookStep ?? 0) - (b.playbookStep ?? 0));
+      const playbookId =
+        steps.find((j) => j.playbookId !== null && j.playbookId !== "")
+          ?.playbookId ?? runId;
       entries.push({
         kind: "playbook",
         runId,
-        playbookId: job.playbookId ?? "playbook",
+        playbookId,
         playbookRunStatus: job.playbookRunStatus,
         steps,
       });
@@ -161,6 +149,15 @@ export function groupJobsForQueue(jobs: JobListRecord[]): JobQueueEntry[] {
   }
 
   return entries;
+}
+
+export function countLiveJobs(jobs: JobListRecord[]): number {
+  return groupJobsForQueue(jobs).filter((entry) => {
+    if (entry.kind === "playbook") {
+      return entry.steps.some((step) => LIVE_STATUSES.has(step.status));
+    }
+    return LIVE_STATUSES.has(entry.job.status);
+  }).length;
 }
 
 /** Aggregate status for a playbook run (live > blocked > failed > …). */
@@ -190,13 +187,9 @@ function finishedPlaybookRunStatus(steps: readonly JobListRecord[]): JobStatus {
   return "succeeded";
 }
 
-const LIVE_STEP_STATUS_PRIORITY: JobStatus[] = [
-  "running",
-  "queued",
-  "blocked",
-  "failed",
-  "cancelled",
-];
+const LIVE_STEP_STATUS_PRIORITY = PLAYBOOK_AGGREGATE_STATUS_PRIORITY.filter(
+  (status) => status !== "succeeded"
+);
 
 function livePlaybookRunStatus(
   steps: readonly JobListRecord[],
@@ -257,12 +250,22 @@ export function capabilityFacetOptions(
   const seen = new Set<string>();
   const out: { value: string; label: string }[] = [];
   for (const job of jobs) {
+    if (job.playbookId && !seen.has(job.playbookId)) {
+      seen.add(job.playbookId);
+      out.push({
+        value: job.playbookId,
+        label: playbookLabel(job.playbookId),
+      });
+    }
     if (!seen.has(job.capabilityId)) {
       seen.add(job.capabilityId);
-      out.push({ value: job.capabilityId, label: job.capabilityId });
+      out.push({
+        value: job.capabilityId,
+        label: capabilityLabel(job.capabilityId),
+      });
     }
   }
-  return out;
+  return out.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export function formatDuration(

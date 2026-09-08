@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { JobDetail } from "@/domains/jobs/components/job-detail";
-import type { JobRecord } from "@/domains/jobs/jobs.functions";
+import type { JobRecord } from "@/domains/jobs/types";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -88,6 +88,56 @@ describe("JobDetail", () => {
     await user.click(screen.getByRole("tab", { name: "Input" }));
 
     expect(screen.getByText("mailhost.test")).toBeInTheDocument();
+  });
+
+  it("shows playbook title and step capability for playbook jobs", () => {
+    render(
+      <JobDetail
+        job={jobRecord({
+          playbookId: "host-footprint",
+          playbookRunId: testId(12),
+          playbookStep: 0,
+          capabilityId: "network.dns.lookup",
+        })}
+        busy={false}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Host Footprint")).toBeInTheDocument();
+    expect(screen.getByText(/Step 1 ·/)).toBeInTheDocument();
+  });
+
+  it("shows playbook blocked hint for step 0 without blaming a prior step", () => {
+    render(
+      <JobDetail
+        job={jobRecord({
+          status: "blocked",
+          playbookId: "host-footprint",
+          playbookRunId: testId(12),
+          playbookStep: 0,
+          capabilityId: "network.shodan.lookup",
+          error: null,
+        })}
+        runSiblings={[
+          {
+            ...jobRecord({
+              status: "blocked",
+              playbookId: "host-footprint",
+              playbookRunId: testId(12),
+              playbookStep: 0,
+              capabilityId: "network.shodan.lookup",
+            }),
+          },
+        ]}
+        busy={false}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText("Blocked — waiting on credentials or setup.")
+    ).toBeInTheDocument();
   });
 
   it("links to inbox when a proposal was created", () => {

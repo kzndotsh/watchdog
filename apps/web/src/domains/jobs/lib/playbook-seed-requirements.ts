@@ -1,4 +1,5 @@
 import type { PlaybookSeedKind } from "@watchdog/schemas";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
 import type { PlaybookListItem } from "../types";
 
@@ -16,6 +17,10 @@ export interface PlaybookSeedRequirements {
 
 function seedFieldOk(required: boolean, value: string): boolean {
   return !required || Boolean(value.trim());
+}
+
+function seedUuidOk(required: boolean, value: string): boolean {
+  return !required || parseOptionalTrimmedUuid(value) !== undefined;
 }
 
 export function playbookSeedRequirements(
@@ -60,12 +65,16 @@ export function playbookSeedOk(input: {
     seedFieldOk(requirements.needsHandle, input.handle);
 
   if (requirements.pickUrlDump) {
-    return baseOk && Boolean(input.evidenceId.trim() && input.url.trim());
+    return (
+      baseOk &&
+      parseOptionalTrimmedUuid(input.evidenceId) !== undefined &&
+      Boolean(input.url.trim())
+    );
   }
 
   return (
     baseOk &&
     seedFieldOk(requirements.needsUrl, input.url) &&
-    seedFieldOk(requirements.needsEvidence, input.evidenceId)
+    seedUuidOk(requirements.needsEvidence, input.evidenceId)
   );
 }

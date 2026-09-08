@@ -19,6 +19,9 @@ import {
   ComboboxList,
   ComboboxSeparator,
 } from "@/shared/ui/shadcn/combobox";
+import { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
+import { capabilityLabel } from "@/shared/ui/vocab/capability";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 
 interface PlaybookSelectProps {
   playbooks: readonly PlaybookListItem[];
@@ -61,8 +64,8 @@ function PlaybookInfoCard({
       )}
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
         <dt className="text-muted-foreground">Steps</dt>
-        <dd className="font-mono text-[0.65rem] leading-snug">
-          {playbook.steps.join(" → ")}
+        <dd className="text-[0.65rem] leading-snug">
+          {playbook.steps.map((step) => capabilityLabel(step)).join(" → ")}
         </dd>
         <dt className="text-muted-foreground">Seed</dt>
         <dd className="leading-snug">{playbook.seedKinds.join(", ")}</dd>
@@ -71,8 +74,8 @@ function PlaybookInfoCard({
             <dt className="text-muted-foreground">Egress</dt>
             <dd>
               {allowThirdPartyEgress
-                ? "third party (Case allows)"
-                : "third party — enable on Case"}
+                ? `${capEgressLabel("third_party")} (Case allows)`
+                : `${capEgressLabel("third_party")} — enable on Case`}
             </dd>
           </>
         ) : null}
@@ -106,9 +109,11 @@ export function PlaybookSelect({
     [playbooks]
   );
 
-  const selected = playbooks.find((p) => p.id === value) ?? null;
+  const scopedValue = trimmedOrUndefined(value) ?? "";
+
+  const selected = playbooks.find((p) => p.id === scopedValue) ?? null;
   const preview =
-    playbooks.find((p) => p.id === (highlightedId ?? value)) ??
+    playbooks.find((p) => p.id === (highlightedId ?? scopedValue)) ??
     selected ??
     null;
 
@@ -120,7 +125,7 @@ export function PlaybookSelect({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        setHighlightedId(next ? value || null : null);
+        setHighlightedId(next ? scopedValue || null : null);
       }}
       itemToStringLabel={(playbook) => (playbook ? playbook.title : "")}
       filter={(item, query) => {

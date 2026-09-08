@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
 import type { CapListItem } from "../../types.ts";
 import { buildCapRunView } from "../cap-run-view.ts";
 
@@ -42,5 +44,37 @@ describe("cap-run-view", () => {
     });
     expect(view.canRun).toBe(true);
     expect(view.missingCredentials).toBe(undefined);
+  });
+
+  it("matches a padded capability id", () => {
+    const view = buildCapRunView({
+      caps: [shodan],
+      capabilityId: `  ${shodan.id}  `,
+      runInput: "example.com",
+      entityId: "",
+      allowThirdPartyEgress: true,
+      configuredCredentials: new Set(["SHODAN_API_KEY"]),
+    });
+    expect(view.selected?.id).toBe(shodan.id);
+    expect(view.canRun).toBe(true);
+  });
+
+  it("shows evidence-only hint when entity id is blank or whitespace", () => {
+    const base = {
+      caps: [shodan],
+      capabilityId: shodan.id,
+      runInput: "example.com",
+      allowThirdPartyEgress: true,
+      configuredCredentials: new Set(["SHODAN_API_KEY"]),
+    };
+    expect(
+      buildCapRunView({ ...base, entityId: "" }).showEvidenceOnlyHint
+    ).toBe(true);
+    expect(
+      buildCapRunView({ ...base, entityId: "   " }).showEvidenceOnlyHint
+    ).toBe(true);
+    expect(
+      buildCapRunView({ ...base, entityId: testId(20) }).showEvidenceOnlyHint
+    ).toBe(false);
   });
 });

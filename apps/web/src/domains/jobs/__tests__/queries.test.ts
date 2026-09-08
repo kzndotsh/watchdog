@@ -2,16 +2,13 @@ import type { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  GC_DEFAULT,
   GC_REALTIME,
   GC_STABLE,
-  STALE_DEFAULT,
   STALE_REALTIME,
   STALE_STABLE,
 } from "@/shared/lib/query-stale";
 
 vi.mock("@/domains/jobs/jobs.functions", () => ({
-  getArtifactContentFn: vi.fn(),
   getJobFn: vi.fn(),
   listCapabilitiesFn: vi.fn(),
   listJobsFn: vi.fn(),
@@ -23,7 +20,6 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
 }));
 
 import {
-  artifactContentQuery,
   capabilitiesListQuery,
   jobDetailQuery,
   jobsKeys,
@@ -75,60 +71,64 @@ describe("jobs queries", () => {
       staleTime: STALE_STABLE,
       gcTime: GC_STABLE,
     });
+    expect(capabilitiesListQuery().placeholderData).toBeTypeOf("function");
+    expect(playbooksListQuery().placeholderData).toBeTypeOf("function");
   });
 
-  it("enables artifact queries only when source ids are present", () => {
-    expect(
-      artifactContentQuery({
-        source: "job",
-        caseId: "case-1",
-        jobId: "job-1",
-        sha256: "",
-        mime: "text/plain",
-      })
-    ).toMatchObject({ enabled: false });
+  it("keeps placeholder data only for the same case key", () => {
+    const caseOne = jobsListQuery("case-1");
+    const caseTwo = jobsListQuery("case-2");
+    const placeholderOne = caseOne.placeholderData;
+    const placeholderTwo = caseTwo.placeholderData;
+    expect(typeof placeholderOne).toBe("function");
+    expect(typeof placeholderTwo).toBe("function");
+    if (
+      typeof placeholderOne !== "function" ||
+      typeof placeholderTwo !== "function"
+    ) {
+      return;
+    }
 
-    expect(
-      artifactContentQuery({
-        source: "job",
-        caseId: "case-1",
-        jobId: "job-1",
-        sha256: "deadbeef",
-        mime: "text/plain",
-      })
-    ).toMatchObject({
-      enabled: true,
-      queryKey: jobsKeys.jobArtifact(
-        "case-1",
-        "job-1",
-        "deadbeef",
-        "text/plain"
-      ),
-      staleTime: STALE_DEFAULT,
-      gcTime: GC_DEFAULT,
-      meta: { silentError: true },
-    });
+    const previousData = [{ id: "job-1" }] as never;
+    const caseOneQuery = { queryKey: jobsKeys.all("case-1") };
+    const caseTwoQuery = { queryKey: jobsKeys.all("case-2") };
 
-    expect(
-      artifactContentQuery({
-        source: "evidence",
-        caseId: "case-1",
-        evidenceId: "",
-        mime: "text/plain",
-      })
-    ).toMatchObject({ enabled: false });
+    expect(placeholderOne(previousData, caseOneQuery as never)).toEqual(
+      previousData
+    );
+    expect(placeholderOne(previousData, caseTwoQuery as never)).toBeUndefined();
+    expect(placeholderTwo(previousData, caseTwoQuery as never)).toEqual(
+      previousData
+    );
+    expect(placeholderTwo(previousData, caseOneQuery as never)).toBeUndefined();
+  });
 
-    expect(
-      artifactContentQuery({
-        source: "evidence",
-        caseId: "case-1",
-        evidenceId: "ev-1",
-        mime: "text/plain",
-      })
-    ).toMatchObject({
-      enabled: true,
-      queryKey: jobsKeys.evidenceArtifact("case-1", "ev-1", "text/plain"),
-    });
+  it("keeps placeholder data only for the same job detail key", () => {
+    const jobOne = jobDetailQuery("case-1", "job-1");
+    const jobTwo = jobDetailQuery("case-1", "job-2");
+    const placeholderOne = jobOne.placeholderData;
+    const placeholderTwo = jobTwo.placeholderData;
+    expect(typeof placeholderOne).toBe("function");
+    expect(typeof placeholderTwo).toBe("function");
+    if (
+      typeof placeholderOne !== "function" ||
+      typeof placeholderTwo !== "function"
+    ) {
+      return;
+    }
+
+    const previousData = { id: "job-1" } as never;
+    const jobOneQuery = { queryKey: jobsKeys.detail("case-1", "job-1") };
+    const jobTwoQuery = { queryKey: jobsKeys.detail("case-1", "job-2") };
+
+    expect(placeholderOne(previousData, jobOneQuery as never)).toEqual(
+      previousData
+    );
+    expect(placeholderOne(previousData, jobTwoQuery as never)).toBeUndefined();
+    expect(placeholderTwo(previousData, jobTwoQuery as never)).toEqual(
+      previousData
+    );
+    expect(placeholderTwo(previousData, jobOneQuery as never)).toBeUndefined();
   });
 
   it("delegates refreshJobsAfterMutation to the shared invalidation contract", async () => {

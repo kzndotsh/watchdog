@@ -2,17 +2,17 @@ import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
-import type { JobListRecord, JobRecord } from "@/domains/jobs/jobs.functions";
 import {
   artifactDefaultOpen,
   orderJobArtifacts,
 } from "@/domains/jobs/lib/artifacts";
 import {
   buildJobDetailView,
+  playbookBlockedWaitingMessage,
   type JobDetailTab,
   type JobDetailView,
 } from "@/domains/jobs/lib/job-detail-view";
-import { playbookWaitingOnNextStep } from "@/domains/jobs/lib/status";
+import type { JobListRecord, JobRecord } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
@@ -39,7 +39,14 @@ import {
 } from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
-import { StatusInk, capabilityLabel } from "@/shared/ui/vocab";
+import {
+  StatusInk,
+  capabilityLabel,
+  jobHeadlineLabel,
+  playbookLabel,
+  statusLabel,
+} from "@/shared/ui/vocab";
+import { STATUS_DOT } from "@/shared/ui/vocab/status.lib";
 
 const EMPTY_RUN_SIBLINGS: JobListRecord[] = [];
 
@@ -48,34 +55,13 @@ interface JobDetailProps {
   runSiblings?: JobListRecord[];
   /** Case Evidence titles keyed by id — resolve Process/Enrich input subjects. */
   evidenceTitleById?: ReadonlyMap<string, string>;
+  /** Entity display labels keyed by id — resolve entityId job inputs. */
+  entityTitleById?: ReadonlyMap<string, string>;
   recipeTotal?: number;
   busy: boolean;
   onCancel: () => void;
   onCancelPlaybook?: () => void;
   cancelPlaybookBusy?: boolean;
-}
-
-function spineDotClass(status: JobListRecord["status"]): string {
-  switch (status) {
-    case "succeeded": {
-      return "bg-success";
-    }
-    case "failed":
-    case "cancelled": {
-      return "bg-destructive";
-    }
-    case "running":
-    case "queued": {
-      return "bg-status-running";
-    }
-    case "blocked": {
-      return "bg-warning";
-    }
-    default: {
-      status satisfies never;
-      return "bg-muted-foreground/40";
-    }
-  }
 }
 
 function JobPlaybookSpine({
@@ -94,7 +80,7 @@ function JobPlaybookSpine({
   return (
     <div>
       <SectionLabel as="span" density="compact">
-        Playbook · {playbookId}
+        Playbook · {playbookLabel(playbookId)}
       </SectionLabel>
       <div className="mt-2">
         <TimelineSpine className="ml-2 pl-4">
@@ -106,13 +92,13 @@ function JobPlaybookSpine({
                 <TimelineDot
                   className={cn(
                     "top-1.5 left-[-1.3rem] size-2",
-                    spineDotClass(step.status)
+                    STATUS_DOT[step.status]
                   )}
                 />
                 <p className="text-xs font-medium">
                   {i + 1} · {capabilityLabel(step.capabilityId)}{" "}
                   <span className="text-muted-foreground font-normal">
-                    {step.status}
+                    {statusLabel(step.status)}
                   </span>
                 </p>
                 {isCurrent && blockedWaiting !== null ? (
@@ -219,8 +205,19 @@ function JobDetailHeader({
     <header className="border-border flex shrink-0 flex-col">
       <DetailContextHeader>
         <span className="text-foreground font-medium">
-          {capabilityLabel(job.capabilityId)}
+          {jobHeadlineLabel(job)}
         </span>
+        {job.playbookId ? (
+          <>
+            <DetailContextSep />
+            <span className="text-foreground/80">
+              {job.playbookStep === null
+                ? ""
+                : `Step ${job.playbookStep + 1} · `}
+              {capabilityLabel(job.capabilityId)}
+            </span>
+          </>
+        ) : null}
         {view.inputHint === "" ? null : (
           <>
             <span aria-hidden className="text-muted-foreground/60">
@@ -261,12 +258,6 @@ function JobDetailHeader({
           <>
             <DetailContextSep />
             <span>live</span>
-          </>
-        ) : null}
-        {view.showPlaybookChip ? (
-          <>
-            <DetailContextSep />
-            <span>playbook</span>
           </>
         ) : null}
         <DetailContextSep />
@@ -361,6 +352,7 @@ function JobDetailLoaded({
   job,
   runSiblings = EMPTY_RUN_SIBLINGS,
   evidenceTitleById,
+  entityTitleById,
   recipeTotal,
   busy,
   onCancel,
@@ -383,27 +375,12 @@ function JobDetailLoaded({
 
   const blockedWaiting = useMemo(() => {
     if (playbookSteps === null) return null;
-    if (job.status === "blocked") {
-      const step = job.playbookStep;
-      if (step === null) {
-        return "Waiting for the previous playbook step to succeed.";
-      }
-      const prev = playbookSteps.find((s) => s.playbookStep === step - 1);
-      if (prev?.capabilityId !== undefined && prev.capabilityId !== "") {
-        return `Blocked on ${capabilityLabel(prev.capabilityId)}`;
-      }
-      return "Blocked on previous step";
-    }
-    if (
-      playbookWaitingOnNextStep(
-        playbookSteps,
-        recipeTotal,
-        job.playbookRunStatus ?? null
-      )
-    ) {
-      return "Waiting to queue the next playbook step.";
-    }
-    return null;
+    return playbookBlockedWaitingMessage({
+      job,
+      playbookSteps,
+      recipeTotal,
+      playbookRunStatus: job.playbookRunStatus,
+    });
   }, [job, playbookSteps, recipeTotal]);
 
   const hasOutput =
@@ -426,8 +403,8 @@ function JobDetailLoaded({
 
   const view = buildJobDetailView({
     job,
-    playbookSteps,
     evidenceTitleById,
+    entityTitleById,
     onCancelPlaybook,
   });
 
@@ -523,6 +500,7 @@ export function JobDetail({
   job,
   runSiblings = EMPTY_RUN_SIBLINGS,
   evidenceTitleById,
+  entityTitleById,
   recipeTotal,
   busy,
   onCancel,
@@ -544,6 +522,7 @@ export function JobDetail({
       job={job}
       runSiblings={runSiblings}
       evidenceTitleById={evidenceTitleById}
+      entityTitleById={entityTitleById}
       recipeTotal={recipeTotal}
       busy={busy}
       onCancel={onCancel}

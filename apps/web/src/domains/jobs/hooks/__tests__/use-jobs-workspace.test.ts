@@ -3,8 +3,11 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { JobListRecord, JobRecord } from "@/domains/jobs/jobs.functions";
-import type { CapListItem } from "@/domains/jobs/types";
+import type {
+  JobListRecord,
+  JobRecord,
+  CapListItem,
+} from "@/domains/jobs/types";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/jobs/jobs.functions", () => ({
@@ -88,7 +91,7 @@ const CAP: CapListItem = {
 };
 
 function listJob(overrides: Partial<JobListRecord> = {}): JobListRecord {
-  return {
+  const row: JobListRecord = {
     id: JOB_ID,
     caseId: CASE_ID,
     capabilityId: "network.dns.lookup",
@@ -115,6 +118,10 @@ function listJob(overrides: Partial<JobListRecord> = {}): JobListRecord {
     playbookFanIndex: 0,
     ...overrides,
   };
+  if (overrides.createdAt !== undefined && overrides.updatedAt === undefined) {
+    row.updatedAt = overrides.createdAt;
+  }
+  return row;
 }
 
 function detailJob(overrides: Partial<JobRecord> = {}): JobRecord {
@@ -125,9 +132,19 @@ function detailJob(overrides: Partial<JobRecord> = {}): JobRecord {
   };
 }
 
-useMutationMock.mockImplementation(() => {
+useMutationMock.mockImplementation((options) => {
   const idx = (useMutationMock.mock.calls.length - 1) % intakeMutations.length;
-  return intakeMutations[idx] ?? startMutation;
+  const base = intakeMutations[idx] ?? startMutation;
+  return {
+    ...base,
+    mutateAsync: vi.fn(async (...args: unknown[]) => {
+      const result = await base.mutateAsync(...args);
+      if (options?.onSuccess) {
+        await options.onSuccess(result, args[0], undefined);
+      }
+      return result;
+    }),
+  };
 });
 
 function idleQuery(data: unknown) {
@@ -146,7 +163,7 @@ function renderWorkspace({
   queue = jobs,
   detailQuery,
 }: {
-  jobId?: string;
+  jobId?: string | null;
   jobs?: JobListRecord[];
   queue?: JobListRecord[];
   detailQuery?: {
@@ -154,6 +171,7 @@ function renderWorkspace({
     isFetched: boolean;
     isLoading: boolean;
     isError: boolean;
+    error?: Error;
   };
 } = {}) {
   useQueryMock.mockImplementation(
@@ -165,6 +183,7 @@ function renderWorkspace({
           isFetched: false,
           isLoading: false,
           isError: false,
+          refetch: vi.fn(),
         };
       }
       const key = options.queryKey ?? [];
@@ -174,13 +193,20 @@ function renderWorkspace({
             ...detailQuery,
             data:
               detailQuery.data ??
-              (detailQuery.isLoading
-                ? undefined
-                : detailJob({ id: String(key[3]) })),
+              (() => {
+                if (detailQuery.isLoading || detailQuery.isError) {
+                  return undefined;
+                }
+                return detailJob({ id: String(key[3]) });
+              })(),
             isPending: detailQuery.isLoading,
+            refetch: vi.fn(),
           };
         }
-        return idleQuery(detailJob({ id: String(key[3]) }));
+        return {
+          ...idleQuery(detailJob({ id: String(key[3]) })),
+          refetch: vi.fn(),
+        };
       }
       return idleQuery(undefined);
     }
@@ -243,6 +269,24 @@ describe("useJobsWorkspace", () => {
 
     expect(result.current.detailPending).toBe(true);
     expect(result.current.detailJob).toBeNull();
+    expect(result.current.detailLoadError).toBeNull();
+  });
+
+  it("surfaces detailLoadError when the job detail query fails", () => {
+    const { result } = renderWorkspace({
+      jobId: JOB_ID,
+      detailQuery: {
+        data: undefined,
+        isFetched: true,
+        isLoading: false,
+        isError: true,
+        error: new Error("network down"),
+      },
+    });
+
+    expect(result.current.detailPending).toBe(false);
+    expect(result.current.detailJob).toBeNull();
+    expect(result.current.detailLoadError).toBe("network down");
   });
 
   it("does not report detailPending when the detail query is disabled", () => {
@@ -253,6 +297,18 @@ describe("useJobsWorkspace", () => {
 
     expect(result.current.selectedId).toBeNull();
     expect(result.current.detailPending).toBe(false);
+  });
+
+  it("does not fall back to the first job when jobId is null", () => {
+    const unrelated = listJob({ id: testId(12) });
+    const { result } = renderWorkspace({
+      jobId: null,
+      jobs: [unrelated],
+      queue: [unrelated],
+    });
+
+    expect(result.current.selectedId).toBeNull();
+    expect(result.current.detailJob).toBeNull();
   });
 
   it("flags selection drift against the URL job id", () => {
@@ -266,7 +322,7 @@ describe("useJobsWorkspace", () => {
   });
 
   it("starts a cap run through the start mutation", async () => {
-    const { result } = renderWorkspace({ jobId: JOB_ID });
+    const { result, onJobIdChange } = renderWorkspace({ jobId: JOB_ID });
 
     await act(async () => {
       await result.current.handleRunCap({
@@ -281,6 +337,35 @@ describe("useJobsWorkspace", () => {
       runInput: "mailhost.test",
       entityId: "",
     });
+    expect(onJobIdChange).toHaveBeenCalledWith(JOB_ID);
+  });
+
+  it("selects playbookRunId after starting a playbook", async () => {
+    const playbookRunId = testId(50);
+    const stepJobId = testId(51);
+    const { result, onJobIdChange } = renderWorkspace({ jobId: null });
+    startPlaybookMutation.mutateAsync.mockResolvedValue({
+      playbookId: "host-footprint-lite",
+      playbookRunId,
+      jobs: [detailJob({ id: stepJobId, playbookRunId })],
+    });
+
+    await act(async () => {
+      await result.current.handleRunPlaybook({
+        playbookId: "host-footprint-lite",
+        host: "mailhost.test",
+        url: "",
+        evidenceId: "",
+        entityId: "",
+        ip: "",
+        email: "",
+        hash: "",
+        handle: "",
+      });
+    });
+
+    expect(onJobIdChange).toHaveBeenCalledWith(playbookRunId);
+    expect(onJobIdChange).not.toHaveBeenCalledWith(stepJobId);
   });
 
   it("cancels the selected job", () => {
@@ -309,5 +394,21 @@ describe("useJobsWorkspace", () => {
     });
 
     expect(result.current.stuckJobs.map((job) => job.id)).toEqual([testId(12)]);
+  });
+
+  it("does not flag recently re-queued jobs with stale createdAt", () => {
+    const requeued = listJob({
+      id: testId(12),
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T01:04:30.000Z",
+      status: "queued",
+    });
+    const { result } = renderWorkspace({
+      jobId: JOB_ID,
+      jobs: [requeued],
+      queue: [requeued],
+    });
+
+    expect(result.current.stuckJobs).toEqual([]);
   });
 });

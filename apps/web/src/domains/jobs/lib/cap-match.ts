@@ -1,4 +1,5 @@
 import type { CapListItem } from "@/domains/jobs/types";
+import { isUuidString } from "@watchdog/schemas";
 
 /** Jobs category label from Cap id first segment (`docs/reference/platform/caps-lexicon.md`). */
 const CAP_CATEGORY_LABELS: Record<string, string> = {
@@ -40,9 +41,6 @@ export interface PasteDetectResult {
   hostHint?: string;
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 const IPV4_RE =
   /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
 
@@ -61,7 +59,7 @@ function looksLikeIp(value: string): boolean {
 }
 
 function detectEvidenceOrIp(value: string): PasteDetectResult | null {
-  if (UUID_RE.test(value)) return { kind: "evidence", value };
+  if (isUuidString(value)) return { kind: "evidence", value };
   if (IPV4_RE.test(value) || (value.includes(":") && looksLikeIpv6(value))) {
     return { kind: "ip", value };
   }

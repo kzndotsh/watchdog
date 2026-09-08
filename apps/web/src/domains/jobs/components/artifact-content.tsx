@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 
+import { artifactContentQuery } from "@/domains/jobs/artifact-queries";
 import {
   artifactContentInput,
   artifactQueryText,
@@ -8,9 +9,13 @@ import {
   resolveArtifactHeaderAction,
   resolveArtifactTextContent,
 } from "@/domains/jobs/components/artifact-content-helpers";
-import { artifactContentQuery } from "@/domains/jobs/queries";
+import { cn, errMessage } from "@/lib/utils";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { artifactBodyFromContent } from "@/shared/ui/artifact-body-from-content";
 import { ArtifactPreview } from "@/shared/ui/artifact-preview";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { IdChip } from "@/shared/ui/id-chip";
 
 type ArtifactContentProps = {
@@ -57,28 +62,51 @@ export function ArtifactContent(props: ArtifactContentProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   const contentInput = artifactContentInput(props, mime);
-  const { data, isPending, isError } = useQuery({
-    ...artifactContentQuery(contentInput),
-    enabled: open,
+  const contentQueryOptions = artifactContentQuery(contentInput);
+  const contentQueryEnabled =
+    open && queryEnabledFlag(contentQueryOptions.enabled);
+  const contentQuery = useQuery({
+    ...contentQueryOptions,
+    enabled: contentQueryEnabled,
+  });
+  const contentPending = listPending(contentQuery, {
+    enabled: contentQueryEnabled,
   });
 
   const content = resolveArtifactTextContent(
     open,
-    isPending,
-    isError,
-    artifactQueryText(data)
+    contentPending,
+    contentQuery.isError,
+    artifactQueryText(contentQuery.data)
   );
   const shaChip = sha256Chip(artifactShaChipValue(sha256));
+  const body =
+    open && contentQuery.isError
+      ? {
+          kind: "custom" as const,
+          children: (
+            <FetchErrorAlert
+              error={errMessage(contentQuery.error, "Failed to load artifact")}
+              onRetry={() => {
+                void contentQuery.refetch();
+              }}
+            />
+          ),
+        }
+      : artifactBodyFromContent(content, mime);
 
   return (
     <ArtifactPreview
       name={name}
       mime={mime}
-      className={className}
+      className={cn(
+        className,
+        placeholderDeemphasisClass(contentQuery.isPlaceholderData)
+      )}
       open={open}
       onOpenChange={setOpen}
       headerAction={resolveArtifactHeaderAction(headerAction, shaChip)}
-      body={artifactBodyFromContent(content, mime)}
+      body={body}
     />
   );
 }

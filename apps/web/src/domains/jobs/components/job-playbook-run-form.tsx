@@ -79,7 +79,7 @@ export function JobPlaybookRunForm({
 
   const form = useForm({
     defaultValues: {
-      playbookId: playbooks[0]?.id ?? "host-footprint",
+      playbookId: playbooks[0]?.id ?? "",
       host: "",
       url: "",
       evidenceId: "",
@@ -113,7 +113,8 @@ export function JobPlaybookRunForm({
     const current = form.getFieldValue("playbookId");
     const next = clampSelectId(
       current,
-      visiblePlaybooks.map((p) => p.id)
+      visiblePlaybooks.map((p) => p.id),
+      { allowEmpty: true }
     );
     if (next !== null && next !== current) {
       form.setFieldValue("playbookId", next);
