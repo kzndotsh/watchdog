@@ -3,6 +3,7 @@ import { defineCommand } from "citty";
 import { emitOk, fail } from "../client";
 import { downloadToFile } from "../download";
 import { withExamples } from "../examples";
+import { requireCaseId, resolveEntitySlug } from "../ids";
 import { formatArgs, requiredCaseArg } from "../noun";
 
 function stamp(): string {
@@ -16,7 +17,10 @@ export const exportCmd = defineCommand({
   },
   run: () => {
     fail("USAGE", "Specify a subcommand: zip or md", {
-      help: ["wd export zip -c <caseId>", "wd export md -c <caseId> -e <slug>"],
+      help: [
+        "wd export zip -c <caseId>",
+        "wd export md -c <caseId> -e <slug|uuid>",
+      ],
     });
   },
   subCommands: {
@@ -41,10 +45,11 @@ export const exportCmd = defineCommand({
         ...formatArgs,
       },
       run: async ({ args }) => {
+        const caseId = requireCaseId(args.case);
         const outPath = await downloadToFile({
-          urlPath: `/cases/${args.case}/export.zip`,
+          urlPath: `/cases/${caseId}/export.zip`,
           outPath: args.out,
-          fallbackFilename: `${args.case}-${stamp()}.zip`,
+          fallbackFilename: `${caseId}-${stamp()}.zip`,
         });
         if (args.raw) {
           console.log(outPath);
@@ -63,7 +68,7 @@ export const exportCmd = defineCommand({
         entity: {
           type: "string",
           alias: "e",
-          description: "Entity slug",
+          description: "Entity slug or UUID",
           required: true,
         },
         out: {
@@ -74,14 +79,10 @@ export const exportCmd = defineCommand({
         ...formatArgs,
       },
       run: async ({ args }) => {
-        const slug = args.entity.trim();
-        if (slug === "") {
-          fail("USAGE", "--entity is required", {
-            help: [`wd export md -c ${args.case} -e <slug>`],
-          });
-        }
+        const caseId = requireCaseId(args.case);
+        const slug = await resolveEntitySlug(caseId, args.entity);
         const outPath = await downloadToFile({
-          urlPath: `/cases/${args.case}/entities/${encodeURIComponent(slug)}/export.md`,
+          urlPath: `/cases/${caseId}/entities/${encodeURIComponent(slug)}/export.md`,
           outPath: args.out,
           fallbackFilename: `${slug}-${stamp()}.md`,
         });

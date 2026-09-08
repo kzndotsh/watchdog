@@ -19,7 +19,7 @@
 | Noun | Notes |
 | --- | --- |
 | `cases` / `entities` | CRUD-ish; `cases update --name` regenerates slug; `cases delete` cascades Graph/Jobs/Evidence; `entities update` is summary/notes only (name/slug stay) |
-| `claims` / `identifiers` / `edges` / `events` / `questions` | `list` free; writes need `--user-override` |
+| `claims` / `identifiers` / `edges` / `events` / `questions` | `list` free; writes need `--user-override` (`edges update` partial patch like `events update`) |
 | `evidence` | list/paste/url/file + `hide` / `restore` / `download` + `process` / `enrich` |
 | `export zip` / `export md` | binary GETs via `x-api-key` |
 | `jobs` | list/start/cancel + `get` / `playbook` / `cancel-playbook`. `wd jobs playbook` seeds: `--host --url --evidence --ip --email --hash --handle` plus `--entity`. Start queues step 0 only. |
@@ -58,8 +58,10 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 
 - Evidence upload helpers live here; hashes/immutability still follow Intake rules.
 - `wd evidence process|enrich` is the Intake path (dedupe active Jobs; Enrich asserts http(s)). `wd jobs start --cap evidence.harvest` still works but skips that glue.
-- Export is outside `contract.json` — CLI checks `res.ok` before writing files.
+- `wd jobs start -i` must be a JSON **object** (not an array or bare string); parse errors vs shape errors return distinct USAGE messages.
 - `events update` accepts a partial patch — provide at least one of `--when`, `--what`, or `--where`.
+- `edges update` accepts a partial patch — provide at least one of `--from`/`--to`, `--predicate`, `--confidence`, `--notes`, `--evidence`, or `--entity` (`--from` and `--to` together).
+- Child-write **updates** (`identifiers` / `claims` / `edges`): `--notes ""` and `--evidence ""` clear those fields; omit the flag for no change. Creates still omit blank `--evidence`.
 - Destructive verbs support `--dry-run` (prints planned JSON only — does **not** validate against the API).
 - Paste body: `--body`, `-b -`, `--stdin`, or non-TTY stdin.
 - Breaking: `wd caps` → `wd caps list` (also content-first `wd caps`).
