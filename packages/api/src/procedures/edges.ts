@@ -7,8 +7,15 @@ import {
   listEdgesForEntityEffect,
   updateEdgeEffect,
 } from "@watchdog/core";
-import { confidenceTierSchema, edgePredicateSchema } from "@watchdog/schemas";
+import {
+  caseScopeInputSchema,
+  createEdgeInputSchema,
+  deleteEdgeInputSchema,
+  entityScopeInputSchema,
+  updateEdgeInputSchema,
+} from "@watchdog/schemas";
 
+import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
 import { caseEdgeSchema, edgeSchema, userOverrideSchema } from "../schemas";
@@ -20,12 +27,7 @@ export const list = authed
     summary: "List edges for an entity",
     tags: ["edges"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-    })
-  )
+  .input(entityScopeInputSchema)
   .output(z.array(edgeSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -44,7 +46,7 @@ export const listForCase = authed
     summary: "List all edges in a case",
     tags: ["edges"],
   })
-  .input(z.object({ caseId: z.uuid() }))
+  .input(caseScopeInputSchema)
   .output(z.array(caseEdgeSchema))
   .handler(async ({ input, context }) =>
     runApp(listEdgesForCaseEffect(input.caseId, context.actor.organizationId))
@@ -59,15 +61,7 @@ export const create = graphChildWrite
     successStatus: 201,
   })
   .input(
-    z.object({
-      caseId: z.uuid(),
-      fromId: z.uuid(),
-      toId: z.uuid(),
-      predicate: edgePredicateSchema,
-      confidence: confidenceTierSchema,
-      notes: z.string().optional(),
-      evidenceIds: z.array(z.uuid()).optional(),
-      viewEntityId: z.uuid().optional(),
+    createEdgeInputSchema.extend({
       userOverride: userOverrideSchema,
     })
   )
@@ -75,7 +69,7 @@ export const create = graphChildWrite
   .handler(async ({ input, context }) =>
     runApp(
       createEdgeEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -89,32 +83,12 @@ export const update = graphChildWrite
       "Update an edge (endpoints, predicate, notes, confidence, evidence)",
     tags: ["edges"],
   })
-  .input(
-    z
-      .object({
-        caseId: z.uuid(),
-        edgeId: z.uuid(),
-        viewEntityId: z.uuid().optional(),
-        fromId: z.uuid().optional(),
-        toId: z.uuid().optional(),
-        predicate: edgePredicateSchema.optional(),
-        confidence: confidenceTierSchema.optional(),
-        notes: z.string().optional(),
-        evidenceIds: z.array(z.uuid()).optional(),
-        userOverride: userOverrideSchema,
-      })
-      .refine(
-        (v) =>
-          (v.fromId === undefined && v.toId === undefined) ||
-          (v.fromId !== undefined && v.toId !== undefined),
-        { message: "fromId and toId must be sent together" }
-      )
-  )
+  .input(updateEdgeInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(edgeSchema)
   .handler(async ({ input, context }) =>
     runApp(
       updateEdgeEffect({
-        ...input,
+        ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
       })
     )
@@ -127,13 +101,7 @@ export const remove = graphChildWrite
     summary: "Delete an edge",
     tags: ["edges"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      edgeId: z.uuid(),
-      userOverride: userOverrideSchema,
-    })
-  )
+  .input(deleteEdgeInputSchema.extend({ userOverride: userOverrideSchema }))
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(
