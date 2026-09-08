@@ -27,18 +27,32 @@
 }
 
 /*
-  Field chrome — unlayered so it beats Tailwind utilities on stock
-  SelectTrigger (survives `shadcn add select` regenerating select.tsx).
+  Field focus chrome — unlayered so it beats Tailwind utilities on stock
+  shadcn triggers / inputs (survives `shadcn add` regenerating component files).
   Resting border comes from global `--border` / `--input` tokens (quiet mix).
   `.wd-field-trigger` = non-Select peers (EvidencePicker Add).
+
+  Select triggers: border tint + outer ring.
+  Writing fields: border tint only (no outer ring — avoids border + halo double line).
 */
 [data-slot="select-trigger"]:focus-visible,
 [data-slot="field-trigger"]:focus-visible,
 .wd-field-trigger:focus-visible {
   border-color: color-mix(in oklab, var(--ring) 50%, transparent);
+  outline: none;
   --tw-ring-width: 2px;
   --tw-ring-color: color-mix(in oklab, var(--ring) 30%, transparent);
   box-shadow: 0 0 0 var(--tw-ring-width) var(--tw-ring-color);
+}
+
+[data-slot="input"]:focus-visible,
+[data-slot="textarea"]:focus-visible,
+[data-slot="input-group"]:has([data-slot="input-group-control"]:focus-visible),
+[data-slot="combobox-chips"]:focus-within,
+[data-slot="rich-text-editor"]:focus-within {
+  border-color: color-mix(in oklab, var(--ring) 45%, transparent);
+  outline: none;
+  box-shadow: none;
 }
 
 [data-slot="select-trigger"][aria-invalid="true"],
@@ -150,41 +164,6 @@
 .dark [data-slot="tabs-trigger"][data-active],
 .dark [data-slot="tabs-trigger"][aria-selected="true"] {
   border-color: color-mix(in oklab, var(--input) 40%, transparent);
-}
-
-/*
-  Writing fields — thin focus instead of shadcn’s default ring-3 halo.
-  Unlayered so it beats utilities on input / textarea / rich-text / input-group.
-*/
-[data-slot="input"]:focus-visible,
-[data-slot="textarea"]:focus-visible {
-  border-color: color-mix(in oklab, var(--ring) 45%, transparent);
-  outline: none;
-  --tw-ring-width: 1px;
-  --tw-ring-color: color-mix(in oklab, var(--ring) 22%, transparent);
-  box-shadow: 0 0 0 var(--tw-ring-width) var(--tw-ring-color);
-}
-
-[data-slot="input-group"]:has([data-slot="input-group-control"]:focus-visible) {
-  border-color: color-mix(in oklab, var(--ring) 45%, transparent);
-  outline: none;
-  --tw-ring-width: 1px;
-  --tw-ring-color: color-mix(in oklab, var(--ring) 22%, transparent);
-  box-shadow: 0 0 0 var(--tw-ring-width) var(--tw-ring-color);
-}
-
-[data-slot="combobox-chips"]:focus-within {
-  border-color: color-mix(in oklab, var(--ring) 45%, transparent);
-  outline: none;
-  --tw-ring-width: 1px;
-  --tw-ring-color: color-mix(in oklab, var(--ring) 22%, transparent);
-  box-shadow: 0 0 0 var(--tw-ring-width) var(--tw-ring-color);
-}
-
-[data-slot="rich-text-editor"]:focus-within {
-  border-color: color-mix(in oklab, var(--ring) 40%, transparent);
-  outline: none;
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ring) 22%, transparent);
 }
 
 /* Contenteditable fills the surface so empty padding is clickable. */

@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { BriefcaseIcon, CheckIcon, DownloadIcon, PlusIcon } from "lucide-react";
+import { CheckIcon, DownloadIcon, PlusIcon } from "lucide-react";
 import { useRef } from "react";
 
 import { createCaseFn } from "@/domains/cases/cases.functions";
@@ -26,17 +26,15 @@ import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
 import { Button } from "@/shared/ui/shadcn/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/shadcn/dialog";
 import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
@@ -187,10 +185,10 @@ function CreateCaseDialog({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogContent className="data-[size=default]:sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
         <form
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-3"
           autoComplete="off"
           data-1p-ignore
           data-lpignore="true"
@@ -199,15 +197,12 @@ function CreateCaseDialog({
             void form.handleSubmit();
           }}
         >
-          <AlertDialogHeader>
-            <AlertDialogMedia>
-              <BriefcaseIcon />
-            </AlertDialogMedia>
-            <AlertDialogTitle>New Case</AlertDialogTitle>
-            <AlertDialogDescription>
-              Create a Case to scope graph, intake, and Cap runs.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+          <DialogHeader>
+            <DialogTitle>New Case</DialogTitle>
+            <DialogDescription>
+              Cases are an isolated workspace for managing your investigation.
+            </DialogDescription>
+          </DialogHeader>
 
           <form.Field
             name="name"
@@ -270,10 +265,17 @@ function CreateCaseDialog({
             )}
           </form.Field>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={form.state.isSubmitting}>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={form.state.isSubmitting}
+              onClick={() => {
+                handleOpenChange(false);
+              }}
+            >
               Cancel
-            </AlertDialogCancel>
+            </Button>
             <form.Subscribe
               selector={(state) => ({
                 canSubmit: state.canSubmit,
@@ -291,10 +293,10 @@ function CreateCaseDialog({
                 </Button>
               )}
             </form.Subscribe>
-          </AlertDialogFooter>
+          </DialogFooter>
         </form>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -32,7 +32,7 @@ Name the **layout kind**, then the **parts**. These are component/layout words: 
 | **Queue** | `QueueRow`, `QueueHeader`, `QueueFilterBar`, `{Domain}QueueList` |
 | **Detail** | `{Domain}Detail`, `DetailHeader`, `DetailFooter`, `DetailEmpty` |
 | **Section** | `DossierSection`, `FormSection`, … |
-| **Drawer** / **Dialog** | overlay primitives + domain wrappers |
+| **Drawer** / **Dialog** | `shadcn/dialog` (forms) · `AlertDialog` (confirm) · domain wrappers — see [`tokens.md`](tokens.md#overlay-primitives) |
 | **Toolbar** | `PageToolbar`, `{Domain}QueueToolbar` |
 
 **Bar** only in compounds (`QueueFilterBar`, `SectionHeaderBar`).

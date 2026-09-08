@@ -1,7 +1,9 @@
 // @ts-nocheck — shadcn vendor; excluded from project checks
+// Watchdog overlay primitive: card surface, dense spacing, no footer chrome bar.
+"use client";
+
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
-// @ts-nocheck — shadcn vendor; excluded from project checks
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -31,7 +33,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/50",
+        "fixed inset-0 isolate z-50 bg-background/75 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 duration-(--duration-panel)",
         className
       )}
       {...props}
@@ -53,19 +55,19 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "bg-popover text-popover-foreground ring-foreground/10 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg p-4 text-sm ring-1 outline-none sm:max-w-sm",
+          "bg-card text-card-foreground border-border fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-1.5rem)] -translate-x-1/2 -translate-y-1/2 gap-3 rounded-md border p-3 text-sm shadow-lg outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-(--duration-panel) sm:max-w-md",
           className
         )}
         {...props}
       >
         {children}
-        {showCloseButton && (
+        {showCloseButton ? (
           <DialogPrimitive.Close
             data-slot="dialog-close"
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="text-muted-foreground hover:text-foreground absolute top-2 right-2"
                 size="icon-sm"
               />
             }
@@ -73,7 +75,7 @@ function DialogContent({
             <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
-        )}
+        ) : null}
       </DialogPrimitive.Popup>
     </DialogPortal>
   );
@@ -83,7 +85,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex flex-col gap-1 pr-7 text-left", className)}
       {...props}
     />
   );
@@ -101,17 +103,17 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-lg border-t px-4 py-2.5 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-1.5 pt-1 sm:flex-row sm:justify-end [&_[data-slot=button]]:h-7! [&_[data-slot=button]]:gap-1! [&_[data-slot=button]]:px-2.5! [&_[data-slot=button]]:text-xs! [&_[data-slot=button]_svg:not([class*='size-'])]:size-3.5!",
         className
       )}
       {...props}
     >
       {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline" />}>
+      {showCloseButton ? (
+        <DialogPrimitive.Close render={<Button variant="outline" size="sm" />}>
           Close
         </DialogPrimitive.Close>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -120,10 +122,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn(
-        "font-heading text-base leading-none font-medium",
-        className
-      )}
+      className={cn("text-heading-section", className)}
       {...props}
     />
   );
@@ -137,7 +136,7 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        "text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3",
+        "text-copy-sm text-muted-foreground *:[a]:hover:text-foreground *:[a]:underline *:[a]:underline-offset-3",
         className
       )}
       {...props}
