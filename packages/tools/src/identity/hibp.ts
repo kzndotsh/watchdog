@@ -2,15 +2,16 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
 import {
   MissingCredentialError,
   ParseVendorError,
-  ValidationVendorError,
   type ToolsTag,
 } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { recordRows } from "../parse/coerce";
+import { normalizeEmail } from "./email-lookup";
 
 export const hibpBreachSchema = z.object({
   name: z.string(),
@@ -50,12 +51,10 @@ export function fetchHibpBreachedAccountEffect(
   options?: HibpOptions
 ): Effect.Effect<HibpLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHibpBreachedAccountGen() {
-    const normalized = email.trim().toLowerCase();
-    if (!normalized.includes("@")) {
-      return yield* new ValidationVendorError({
-        message: `Invalid email: ${email}`,
-      });
-    }
+    const { email: normalized } = yield* Effect.try({
+      try: () => normalizeEmail(email),
+      catch: mapToolsCatch,
+    });
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({ slot: "HIBP_API_KEY" });

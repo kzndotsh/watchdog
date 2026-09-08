@@ -1,7 +1,8 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchHibpBreachedAccountEffect,
@@ -20,6 +21,23 @@ describe("hibp", () => {
     });
     expect(snap.found).toBe(false);
   });
+
+  it.effect("fetchHibpBreachedAccountEffect rejects invalid emails", () =>
+    Effect.gen(function* rejectInvalidEmailGen() {
+      const outcome = yield* Effect.result(
+        fetchHibpBreachedAccountEffect(
+          "not-an-email",
+          "test-key",
+          AbortSignal.timeout(5000)
+        )
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 
   it.effect(
     "fetchHibpBreachedAccountEffect treats HTTP 404 as no breaches",
