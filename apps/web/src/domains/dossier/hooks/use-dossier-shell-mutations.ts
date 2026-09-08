@@ -5,14 +5,21 @@ import { toast } from "sonner";
 
 import type { DossierEditFormValues } from "@/domains/dossier/components/dossier-edit-dialog";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
+import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import {
   invalidateAfterEntityChanged,
+  invalidateAfterEvidenceMutation,
+  invalidateAfterJobMutation,
+  invalidateAfterProposalQueueChange,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
-import type { WatchdogEvent } from "@watchdog/schemas";
+import {
+  isProposalQueueLiveEvent,
+  type WatchdogEvent,
+} from "@watchdog/schemas";
 
 function handleDossierLiveEvent(
   queryClient: QueryClient,
@@ -25,6 +32,16 @@ function handleDossierLiveEvent(
       entityId: entity.id,
       slug: entity.slug,
     });
+  }
+  if (event.type === "job_update") {
+    void invalidateAfterJobMutation(queryClient, caseId);
+  }
+  if (event.type === "evidence_changed") {
+    void invalidateAfterEvidenceMutation(queryClient, caseId);
+  }
+  if (isProposalQueueLiveEvent(event)) {
+    void invalidateAfterProposalQueueChange(queryClient, caseId);
+    void invalidateAfterEvidenceMutation(queryClient, caseId);
   }
   if (event.type === "task_changed") {
     void invalidateAfterTaskMutation(queryClient, caseId);
@@ -64,7 +81,10 @@ async function invalidateDossierEntity(
 
 function renameEntity(ctx: EntityMutationContext, name: string) {
   return updateEntityFieldsFn({
-    data: { caseId: ctx.caseId, entityId: ctx.entity.id, name },
+    data: buildUpdateEntityFieldsData(ctx.caseId, {
+      entityId: ctx.entity.id,
+      name,
+    }),
   });
 }
 
@@ -79,14 +99,13 @@ function onRenameError(err: unknown): void {
 
 function editEntity(ctx: EntityMutationContext, values: DossierEditFormValues) {
   return updateEntityFieldsFn({
-    data: {
-      caseId: ctx.caseId,
+    data: buildUpdateEntityFieldsData(ctx.caseId, {
       entityId: ctx.entity.id,
       kind: values.kind,
       name: values.name,
       summary: values.summary,
       notes: values.notes,
-    },
+    }),
   });
 }
 

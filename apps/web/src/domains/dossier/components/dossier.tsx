@@ -1,9 +1,9 @@
-import { useQueryClient, useSuspenseQueries } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, notFound, useNavigate } from "@tanstack/react-router";
 import { PencilIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
-import { casesContextQuery } from "@/domains/cases/queries";
+import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
 import { ClaimsSection } from "@/domains/dossier/components/claims-section";
 import { ConnectionsSection } from "@/domains/dossier/components/connections-section";
@@ -11,14 +11,8 @@ import { DisproveSection } from "@/domains/dossier/components/disprove-section";
 import { DossierEditDialog } from "@/domains/dossier/components/dossier-edit-dialog";
 import { DossierExportMenu } from "@/domains/dossier/components/dossier-export-menu";
 import {
-  dossierClaimsFallback,
-  dossierConnectionsFallback,
   dossierEvidenceFallback,
-  dossierEventsFallback,
   dossierOverviewFallback,
-  dossierQuestionsFallback,
-  dossierIdentifiersFallback,
-  dossierNotesFallback,
 } from "@/domains/dossier/components/dossier-tab-pending";
 import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evidence-section";
 import { EventsSection } from "@/domains/dossier/components/events-section";
@@ -34,11 +28,20 @@ import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
+import { errMessage } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
-import { ActiveTabBody, SuspenseTabBody } from "@/shared/ui/active-tab-body";
+import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
+import {
+  normalizeEntitySlug,
+  normalizeRouteSegment,
+} from "@/shared/lib/route-slug";
+import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   Tabs,
@@ -77,8 +80,9 @@ function isDossierTab(value: string): value is DossierTab {
 }
 
 function parseDossierTab(value: string | undefined): DossierTab {
-  if (value !== undefined && isDossierTab(value)) {
-    return value;
+  const slug = value === undefined ? undefined : normalizeRouteSegment(value);
+  if (slug !== undefined && isDossierTab(slug)) {
+    return slug;
   }
   return "overview";
 }
@@ -86,17 +90,23 @@ function parseDossierTab(value: string | undefined): DossierTab {
 function DossierForEntity({
   caseId,
   entity,
+  entityPlaceholder,
   tab,
   onTabChange,
 }: {
   caseId: string;
   entity: EntityRecord;
+  entityPlaceholder: boolean;
   tab: DossierTab;
   onTabChange: (tab: DossierTab) => void;
 }) {
   const {
     evidenceAll,
     evidencePending,
+    evidencePlaceholder,
+    evidenceLoadError,
+    retryEvidence,
+    evidenceTitleById,
     previewEvidence,
     setPreviewEvidence,
     editOpen,
@@ -106,11 +116,33 @@ function DossierForEntity({
     handleEvidenceClick,
     counts,
     countsPending,
+    countsPlaceholder,
     renameMutation,
     editMutation,
   } = useDossierShell(caseId, entity);
   const navigate = useNavigate();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const tabCountClass = placeholderDeemphasisClass(countsPlaceholder);
+
+  let evidenceTabBody: ReactNode;
+  if (evidencePending) {
+    evidenceTabBody = dossierEvidenceFallback();
+  } else if (evidenceLoadError) {
+    evidenceTabBody = (
+      <FetchErrorAlert error={evidenceLoadError} onRetry={retryEvidence} />
+    );
+  } else {
+    evidenceTabBody = (
+      <EntityEvidenceSection
+        caseId={caseId}
+        entityId={entity.id}
+        evidenceOptions={evidenceAll}
+        evidencePlaceholder={evidencePlaceholder}
+        onEvidenceClick={handleEvidenceClick}
+        emptyPresentation="panel"
+      />
+    );
+  }
 
   return (
     <Page density={tab === "tasks" || tab === "notes" ? "split" : "default"}>
@@ -179,31 +211,45 @@ function DossierForEntity({
               <TabsTrigger value="notes">Notes</TabsTrigger>
               <TabsTrigger value="claims">
                 Claims
-                {countsPending ? null : <TabCount n={counts.claims} />}
+                {countsPending ? null : (
+                  <TabCount n={counts.claims} className={tabCountClass} />
+                )}
               </TabsTrigger>
               <TabsTrigger value="identifiers">
                 Identifiers
-                {countsPending ? null : <TabCount n={counts.identifiers} />}
+                {countsPending ? null : (
+                  <TabCount n={counts.identifiers} className={tabCountClass} />
+                )}
               </TabsTrigger>
               <TabsTrigger value="connections">
                 Connections
-                {countsPending ? null : <TabCount n={counts.connections} />}
+                {countsPending ? null : (
+                  <TabCount n={counts.connections} className={tabCountClass} />
+                )}
               </TabsTrigger>
               <TabsTrigger value="evidence">
                 Evidence
-                {countsPending ? null : <TabCount n={counts.evidence} />}
+                {countsPending ? null : (
+                  <TabCount n={counts.evidence} className={tabCountClass} />
+                )}
               </TabsTrigger>
               <TabsTrigger value="events">
                 Events
-                {countsPending ? null : <TabCount n={counts.events} />}
+                {countsPending ? null : (
+                  <TabCount n={counts.events} className={tabCountClass} />
+                )}
               </TabsTrigger>
               <TabsTrigger value="questions">
                 Questions
-                {countsPending ? null : <TabCount n={counts.questions} />}
+                {countsPending ? null : (
+                  <TabCount n={counts.questions} className={tabCountClass} />
+                )}
               </TabsTrigger>
               <TabsTrigger value="tasks">
                 Tasks
-                {countsPending ? null : <TabCount n={counts.tasks} />}
+                {countsPending ? null : (
+                  <TabCount n={counts.tasks} className={tabCountClass} />
+                )}
               </TabsTrigger>
             </TabsList>
           }
@@ -236,39 +282,39 @@ function DossierForEntity({
 
         <TabsContent value="overview">
           <ActiveTabBody active={tab === "overview"}>
-            <SuspenseTabBody fallback={dossierOverviewFallback()}>
-              <div className="flex flex-col gap-6">
-                <SummarySection
-                  key={`${entity.id}:${entity.updatedAt}`}
-                  caseId={caseId}
-                  entity={entity}
-                />
-                <ClaimsSection
-                  caseId={caseId}
-                  entityId={entity.id}
-                  entitySlug={entity.slug}
-                  evidenceOptions={evidenceAll}
-                  onEvidenceClick={handleEvidenceClick}
-                />
-                <IdentifiersSection
-                  caseId={caseId}
-                  entityId={entity.id}
-                  entitySlug={entity.slug}
-                  entity={entity}
-                  evidenceOptions={evidenceAll}
-                  onEvidenceClick={handleEvidenceClick}
-                />
-                <ConnectionsSection
-                  caseId={caseId}
-                  entityId={entity.id}
-                  entitySlug={entity.slug}
-                  entity={entity}
-                  evidenceOptions={evidenceAll}
-                  onEvidenceClick={handleEvidenceClick}
-                />
-                <DisproveSection caseId={caseId} entityId={entity.id} />
-              </div>
-            </SuspenseTabBody>
+            <div className="flex flex-col gap-6">
+              <SummarySection
+                key={`${entity.id}:${entity.updatedAt}`}
+                caseId={caseId}
+                entity={entity}
+                placeholder={entityPlaceholder}
+              />
+              <ClaimsSection
+                caseId={caseId}
+                entityId={entity.id}
+                entitySlug={entity.slug}
+                evidenceOptions={evidenceAll}
+                evidenceTitleById={evidenceTitleById}
+                onEvidenceClick={handleEvidenceClick}
+              />
+              <IdentifiersSection
+                caseId={caseId}
+                entityId={entity.id}
+                entitySlug={entity.slug}
+                entity={entity}
+                evidenceOptions={evidenceAll}
+                onEvidenceClick={handleEvidenceClick}
+              />
+              <ConnectionsSection
+                caseId={caseId}
+                entityId={entity.id}
+                entitySlug={entity.slug}
+                entity={entity}
+                evidenceOptions={evidenceAll}
+                onEvidenceClick={handleEvidenceClick}
+              />
+              <DisproveSection caseId={caseId} entityId={entity.id} />
+            </div>
           </ActiveTabBody>
         </TabsContent>
 
@@ -277,106 +323,86 @@ function DossierForEntity({
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <ActiveTabBody active={tab === "notes"}>
-            <SuspenseTabBody fallback={dossierNotesFallback()}>
-              <NotesSection
-                key={`${entity.id}:${entity.updatedAt}`}
-                caseId={caseId}
-                entity={entity}
-              />
-            </SuspenseTabBody>
+            <NotesSection
+              key={`${entity.id}:${entity.updatedAt}`}
+              caseId={caseId}
+              entity={entity}
+              placeholder={entityPlaceholder}
+            />
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="claims" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "claims"}>
-            <SuspenseTabBody fallback={dossierClaimsFallback()}>
-              <div className="flex flex-1 flex-col gap-6">
-                <ClaimsSection
-                  caseId={caseId}
-                  entityId={entity.id}
-                  entitySlug={entity.slug}
-                  evidenceOptions={evidenceAll}
-                  onEvidenceClick={handleEvidenceClick}
-                  emptyPresentation="panel"
-                />
-                <DisproveSection caseId={caseId} entityId={entity.id} />
-              </div>
-            </SuspenseTabBody>
+            <div className="flex flex-1 flex-col gap-6">
+              <ClaimsSection
+                caseId={caseId}
+                entityId={entity.id}
+                entitySlug={entity.slug}
+                evidenceOptions={evidenceAll}
+                evidenceTitleById={evidenceTitleById}
+                onEvidenceClick={handleEvidenceClick}
+                emptyPresentation="panel"
+              />
+              <DisproveSection caseId={caseId} entityId={entity.id} />
+            </div>
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="identifiers" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "identifiers"}>
-            <SuspenseTabBody fallback={dossierIdentifiersFallback()}>
-              <IdentifiersSection
-                caseId={caseId}
-                entityId={entity.id}
-                entitySlug={entity.slug}
-                entity={entity}
-                evidenceOptions={evidenceAll}
-                onEvidenceClick={handleEvidenceClick}
-                emptyPresentation="panel"
-              />
-            </SuspenseTabBody>
+            <IdentifiersSection
+              caseId={caseId}
+              entityId={entity.id}
+              entitySlug={entity.slug}
+              entity={entity}
+              evidenceOptions={evidenceAll}
+              onEvidenceClick={handleEvidenceClick}
+              emptyPresentation="panel"
+            />
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="connections" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "connections"}>
-            <SuspenseTabBody fallback={dossierConnectionsFallback()}>
-              <ConnectionsSection
-                caseId={caseId}
-                entityId={entity.id}
-                entitySlug={entity.slug}
-                entity={entity}
-                evidenceOptions={evidenceAll}
-                onEvidenceClick={handleEvidenceClick}
-                emptyPresentation="panel"
-                fillHeight
-              />
-            </SuspenseTabBody>
+            <ConnectionsSection
+              caseId={caseId}
+              entityId={entity.id}
+              entitySlug={entity.slug}
+              entity={entity}
+              evidenceOptions={evidenceAll}
+              onEvidenceClick={handleEvidenceClick}
+              emptyPresentation="panel"
+              fillHeight
+            />
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="evidence" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "evidence"}>
-            {evidencePending ? (
-              dossierEvidenceFallback()
-            ) : (
-              <EntityEvidenceSection
-                caseId={caseId}
-                entityId={entity.id}
-                evidenceOptions={evidenceAll}
-                onEvidenceClick={handleEvidenceClick}
-                emptyPresentation="panel"
-              />
-            )}
+            {evidenceTabBody}
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="events" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "events"}>
-            <SuspenseTabBody fallback={dossierEventsFallback()}>
-              <EventsSection
-                caseId={caseId}
-                entityId={entity.id}
-                entitySlug={entity.slug}
-                emptyPresentation="panel"
-              />
-            </SuspenseTabBody>
+            <EventsSection
+              caseId={caseId}
+              entityId={entity.id}
+              entitySlug={entity.slug}
+              emptyPresentation="panel"
+            />
           </ActiveTabBody>
         </TabsContent>
 
         <TabsContent value="questions" className="flex flex-1 flex-col">
           <ActiveTabBody active={tab === "questions"}>
-            <SuspenseTabBody fallback={dossierQuestionsFallback()}>
-              <QuestionsSection
-                caseId={caseId}
-                entityId={entity.id}
-                entitySlug={entity.slug}
-                emptyPresentation="panel"
-              />
-            </SuspenseTabBody>
+            <QuestionsSection
+              caseId={caseId}
+              entityId={entity.id}
+              entitySlug={entity.slug}
+              emptyPresentation="panel"
+            />
           </ActiveTabBody>
         </TabsContent>
 
@@ -416,10 +442,44 @@ function DossierWithActiveCase({
   tab: DossierTab;
   onTabChange: (tab: DossierTab) => void;
 }) {
-  const [{ data: entity }] = useSuspenseQueries({
-    queries: [entityBySlugQuery(active.id, entitySlug)],
-  });
-  if (entity === null) {
+  const scopedEntitySlug = normalizeEntitySlug(entitySlug);
+  if (scopedEntitySlug === undefined) {
+    // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
+    throw notFound({ data: { caseName: active.name } });
+  }
+  const entityQuery = useQuery(entityBySlugQuery(active.id, scopedEntitySlug));
+  const entityPending = listPending(entityQuery);
+  const entityLoadError =
+    !entityPending && entityQuery.isError
+      ? errMessage(entityQuery.error, "Failed to load entity")
+      : null;
+  const entity = entityQuery.data;
+  const entityPlaceholder = isQueryPlaceholderData(entityQuery);
+
+  if (entityLoadError) {
+    return (
+      <Page>
+        <PageHeader />
+        <FetchErrorAlert
+          error={entityLoadError}
+          onRetry={() => {
+            void entityQuery.refetch();
+          }}
+        />
+      </Page>
+    );
+  }
+
+  if (entityPending) {
+    return (
+      <Page>
+        <PageHeader />
+        {dossierOverviewFallback()}
+      </Page>
+    );
+  }
+
+  if (entity === null || entity === undefined) {
     // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
     throw notFound({ data: { caseName: active.name, entitySlug } });
   }
@@ -428,6 +488,7 @@ function DossierWithActiveCase({
     <DossierForEntity
       caseId={active.id}
       entity={entity}
+      entityPlaceholder={entityPlaceholder}
       tab={tab}
       onTabChange={onTabChange}
     />
@@ -444,13 +505,34 @@ export function Dossier({
   onTabChange: (tab: DossierTab) => void;
 }) {
   const queryClient = useQueryClient();
-  const [{ data: casesCtx }] = useSuspenseQueries({
-    queries: [casesContextQuery()],
-  });
+  const {
+    active,
+    pending: casesPending,
+    loadError: casesLoadError,
+    retry: retryCases,
+  } = useCasesContext();
 
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
-  if (!casesCtx.active) {
+  if (casesLoadError) {
+    return (
+      <Page>
+        <PageHeader />
+        <FetchErrorAlert error={casesLoadError} onRetry={retryCases} />
+      </Page>
+    );
+  }
+
+  if (casesPending) {
+    return (
+      <Page>
+        <PageHeader />
+        {dossierOverviewFallback()}
+      </Page>
+    );
+  }
+
+  if (!active) {
     return (
       <Page>
         <PageHeader />
@@ -473,7 +555,7 @@ export function Dossier({
 
   return (
     <DossierWithActiveCase
-      active={casesCtx.active}
+      active={active}
       entitySlug={entitySlug}
       tab={parseDossierTab(tabProp)}
       onTabChange={onTabChange}

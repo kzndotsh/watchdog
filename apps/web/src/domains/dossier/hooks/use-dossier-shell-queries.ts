@@ -7,12 +7,19 @@ import { eventsListQuery } from "@/domains/entities/events/queries";
 import { identifiersListQuery } from "@/domains/entities/identifiers/queries";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import type { EntityRecord } from "@/domains/entities/types";
+import {
+  evidenceTitleMapFromRecords,
+  mergeEvidenceRecords,
+} from "@/domains/intake/lib/evidence";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { tasksListQuery } from "@/domains/tasks/queries";
+import { errMessage } from "@/lib/utils";
+import { listPending } from "@/shared/lib/list-pending";
 
 import {
   anyQueryPending,
+  anyQueryPlaceholder,
   dataOrEmpty,
   dossierTabCounts,
   evidenceRecordMap,
@@ -30,7 +37,10 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const entityTasksQuery = useQuery(
     tasksListQuery(caseId, { entityId: entity.id })
   );
-  const evidenceQuery = useQuery(evidenceListQuery(caseId));
+  const activeEvidenceQuery = useQuery(evidenceListQuery(caseId));
+  const hiddenEvidenceQuery = useQuery(
+    evidenceListQuery(caseId, { hiddenOnly: true })
+  );
 
   const claimsRaw = dataOrEmpty(claimsQuery.data);
   const identifiers = dataOrEmpty(identifiersQuery.data);
@@ -38,17 +48,53 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const events = dataOrEmpty(eventsQuery.data);
   const questions = dataOrEmpty(questionsQuery.data);
   const entityTasks = dataOrEmpty(entityTasksQuery.data);
-  const evidenceAll = dataOrEmpty(evidenceQuery.data);
-  const evidencePending = evidenceQuery.isPending;
+  const evidenceAll = useMemo(
+    () =>
+      mergeEvidenceRecords(activeEvidenceQuery.data, hiddenEvidenceQuery.data),
+    [activeEvidenceQuery.data, hiddenEvidenceQuery.data]
+  );
+  const evidencePending =
+    listPending(activeEvidenceQuery) || listPending(hiddenEvidenceQuery);
+  const evidencePlaceholder =
+    activeEvidenceQuery.isPlaceholderData ||
+    hiddenEvidenceQuery.isPlaceholderData;
+  const evidenceLoadError =
+    !evidencePending &&
+    (activeEvidenceQuery.isError || hiddenEvidenceQuery.isError)
+      ? errMessage(
+          activeEvidenceQuery.error ?? hiddenEvidenceQuery.error ?? null,
+          "Failed to load evidence"
+        )
+      : null;
+
+  const retryEvidence = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: evidenceListQuery(caseId).queryKey,
+    });
+    void queryClient.invalidateQueries({
+      queryKey: evidenceListQuery(caseId, { hiddenOnly: true }).queryKey,
+    });
+  }, [queryClient, caseId]);
 
   const countsPending = anyQueryPending([
-    claimsQuery.isPending,
-    identifiersQuery.isPending,
-    edgesQuery.isPending,
-    eventsQuery.isPending,
-    questionsQuery.isPending,
-    entityTasksQuery.isPending,
-    evidenceQuery.isPending,
+    claimsQuery,
+    identifiersQuery,
+    edgesQuery,
+    eventsQuery,
+    questionsQuery,
+    entityTasksQuery,
+    activeEvidenceQuery,
+    hiddenEvidenceQuery,
+  ]);
+  const countsPlaceholder = anyQueryPlaceholder([
+    claimsQuery,
+    identifiersQuery,
+    edgesQuery,
+    eventsQuery,
+    questionsQuery,
+    entityTasksQuery,
+    activeEvidenceQuery,
+    hiddenEvidenceQuery,
   ]);
 
   const [previewEvidence, setPreviewEvidence] = useState<EvidenceRecord | null>(
@@ -60,6 +106,11 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const evidenceMap = useMemo(
     () => evidenceRecordMap(evidenceAll),
     [evidenceAll]
+  );
+
+  const evidenceTitleById = useMemo(
+    () => evidenceTitleMapFromRecords([...evidenceMap.values()]),
+    [evidenceMap]
   );
 
   const handleEvidenceClick = useCallback(
@@ -103,6 +154,9 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     entityTasks,
     evidenceAll,
     evidencePending,
+    evidencePlaceholder,
+    evidenceLoadError,
+    retryEvidence,
     previewEvidence,
     setPreviewEvidence,
     editOpen,
@@ -110,8 +164,10 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     editError,
     setEditError,
     evidenceMap,
+    evidenceTitleById,
     handleEvidenceClick,
     counts,
     countsPending,
+    countsPlaceholder,
   };
 }

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { ConfidenceBadge, predicateLabel } from "@/shared/ui/vocab";
+import { entityDisplayLabel } from "@watchdog/schemas";
 
 function ConnectionRow({
   edge,
@@ -18,7 +19,10 @@ function ConnectionRow({
   onRemove: (edgeId: string) => void;
 }) {
   const navigate = useNavigate();
-  const peerLabel = edge.peerName || edge.peerId.slice(0, 8);
+  const peerLabel = entityDisplayLabel({
+    name: edge.peerName,
+    slug: edge.peerSlug,
+  });
   const actions = useMemo(
     () =>
       connectionRowActions(edge, {

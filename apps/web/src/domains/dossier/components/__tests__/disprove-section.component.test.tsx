@@ -9,17 +9,28 @@ vi.mock("@/auth/server", () => ({
   auth: {},
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
   };
 });
 
 import { DisproveSection } from "@/domains/dossier/components/disprove-section";
+
+function queryLoaded<T>(data: T) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  };
+}
 
 const RETRACTED: ClaimRecord = {
   id: testId(1),
@@ -36,7 +47,7 @@ const RETRACTED: ClaimRecord = {
 };
 
 function renderSection(claims: ClaimRecord[]) {
-  useSuspenseQueryMock.mockReturnValue({ data: claims });
+  useQueryMock.mockReturnValue(queryLoaded(claims));
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
@@ -58,5 +69,28 @@ describe("DisproveSection", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Former claim")).toHaveClass("line-through");
     expect(screen.getByText("Contradicted by intake")).toBeInTheDocument();
+  });
+
+  it("sorts retracted claims newest first", () => {
+    renderSection([
+      {
+        ...RETRACTED,
+        id: testId(2),
+        text: "Older retracted claim",
+        retractedAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        ...RETRACTED,
+        id: testId(3),
+        text: "Newer retracted claim",
+        retractedAt: "2026-02-01T00:00:00.000Z",
+      },
+    ]);
+
+    const labels = screen
+      .getAllByText(/retracted claim/i)
+      .map((node) => node.textContent ?? "");
+    expect(labels[0]).toContain("Newer retracted claim");
+    expect(labels[1]).toContain("Older retracted claim");
   });
 });

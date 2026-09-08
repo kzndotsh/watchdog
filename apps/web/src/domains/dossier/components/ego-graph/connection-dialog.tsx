@@ -4,6 +4,7 @@ import { useEffect, useMemo, type SubmitEvent } from "react";
 
 import type { EvidenceOption } from "@/domains/dossier/types";
 import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
+import { entityDisplayLabel } from "@/domains/entities/lib/connection-peers";
 import {
   CONFIRMED_REQUIRES_EVIDENCE,
   isConfirmedBlocked,
@@ -36,7 +37,8 @@ import {
   predicateLabel,
 } from "@/shared/ui/vocab";
 import {
-  confidenceTierSchema,
+  parseOptionalTrimmedUuid,
+  trimmedConfidenceTierSchema,
   type ConfidenceTier,
   type EdgeOrientation,
   type EdgePredicate,
@@ -46,6 +48,7 @@ import {
 export interface ConnectionPeerOption {
   id: string;
   name: string;
+  slug: string;
   kind: EntityKind;
 }
 
@@ -63,7 +66,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
   initial?: EdgeRecord | null;
-  center: { id: string; name: string; kind: EntityKind };
+  center: { id: string; name: string; slug: string; kind: EntityKind };
   entities: ConnectionPeerOption[];
   evidenceOptions: readonly EvidenceOption[];
   busy?: boolean;
@@ -100,9 +103,17 @@ function defaultsFromEdge(edge: EdgeRecord): ConnectionFormValues {
 }
 
 /** Shared create/edit validation for connection form. */
-export function connectionFormIssues(v: ConnectionFormValues): string[] {
+export function connectionFormIssues(
+  v: ConnectionFormValues,
+  centerEntityId?: string
+): string[] {
   const issues: string[] = [];
-  if (!v.peerId) issues.push("Select a peer entity");
+  const peerId = v.peerId.trim();
+  if (peerId === "") issues.push("Select a peer entity");
+  const scopedCenterId = centerEntityId?.trim();
+  if (scopedCenterId !== undefined && peerId === scopedCenterId) {
+    issues.push("Cannot connect an entity to itself");
+  }
   if (v.predicate === "related_to" && !v.notes.trim()) {
     issues.push("related_to needs a short why (notes)");
   }
@@ -128,8 +139,13 @@ export function ConnectionDialog({
     defaultValues:
       mode === "edit" && initial ? defaultsFromEdge(initial) : CREATE_DEFAULTS,
     onSubmit: async ({ value }) => {
-      if (connectionFormIssues(value).length > 0) return;
-      await onSubmit(value);
+      const normalized = {
+        ...value,
+        peerId: value.peerId.trim(),
+        notes: value.notes.trim(),
+      };
+      if (connectionFormIssues(normalized, center.id).length > 0) return;
+      await onSubmit(normalized);
     },
   });
 
@@ -145,6 +161,11 @@ export function ConnectionDialog({
     for (const e of entities) map.set(e.id, e);
     return map;
   }, [entities]);
+
+  const peerOptions = useMemo(
+    () => entities.filter((entity) => entity.id !== center.id),
+    [entities, center.id]
+  );
 
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
@@ -168,11 +189,13 @@ export function ConnectionDialog({
                 <Field>
                   <FieldLabel>Peer</FieldLabel>
                   <EntityCombobox
-                    entities={entities}
+                    entities={peerOptions}
                     value={field.state.value}
                     onValueChange={(next) => {
-                      field.handleChange(next);
-                      const peer = entitiesById.get(next);
+                      const peerId =
+                        parseOptionalTrimmedUuid(next) ?? next.trim();
+                      field.handleChange(peerId);
+                      const peer = entitiesById.get(peerId);
                       if (!peer) return;
                       const clamped = clampEdgePhrase(
                         center.kind,
@@ -200,7 +223,11 @@ export function ConnectionDialog({
               })}
             >
               {({ peerId, predicate, orientation }) => {
-                const peer = peerId ? entitiesById.get(peerId) : undefined;
+                const scopedPeerId =
+                  parseOptionalTrimmedUuid(peerId) ?? peerId.trim();
+                const peer = scopedPeerId
+                  ? entitiesById.get(scopedPeerId)
+                  : undefined;
                 const phrases = edgePhraseOptions(
                   peer
                     ? { fromKind: center.kind, toKind: peer.kind }
@@ -233,8 +260,8 @@ export function ConnectionDialog({
                     {peer ? (
                       <p className="text-muted-foreground text-xs">
                         {orientation === "forward"
-                          ? `${center.name} → ${predicateLabel(predicate, "out")} → ${peer.name}`
-                          : `${peer.name} → ${predicateLabel(predicate, "out")} → ${center.name}`}
+                          ? `${entityDisplayLabel(center)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(peer)}`
+                          : `${entityDisplayLabel(peer)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(center)}`}
                         {orientation === "inverse"
                           ? ` · here: ${predicateLabel(predicate, "in")}`
                           : null}
@@ -282,7 +309,7 @@ export function ConnectionDialog({
                     value={field.state.value}
                     options={CONFIDENCE_OPTIONS}
                     onValueChange={(v) => {
-                      field.handleChange(confidenceTierSchema.parse(v));
+                      field.handleChange(trimmedConfidenceTierSchema.parse(v));
                     }}
                     disabled={busy}
                     aria-label="Confidence"
@@ -309,7 +336,7 @@ export function ConnectionDialog({
 
           <form.Subscribe selector={(s) => s.values}>
             {(values) => {
-              const issues = connectionFormIssues(values).filter(
+              const issues = connectionFormIssues(values, center.id).filter(
                 (i) => i !== "Select a peer entity"
               );
               return issues.map((issue) => (
@@ -336,7 +363,7 @@ export function ConnectionDialog({
                 <Button
                   type="submit"
                   loading={busy}
-                  disabled={connectionFormIssues(values).length > 0}
+                  disabled={connectionFormIssues(values, center.id).length > 0}
                 >
                   {mode === "edit" ? "Save" : "Add"}
                 </Button>

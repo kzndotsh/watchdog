@@ -61,4 +61,16 @@ describe("CompactConnectionList", () => {
     );
     expect(container).toBeEmptyDOMElement();
   });
+
+  it("falls back to peer slug when name is empty", () => {
+    render(
+      <CompactConnectionList
+        outbound={[edge({ peerName: "", peerSlug: "acme-corp" })]}
+        inbound={[]}
+        onEdit={vi.fn()}
+        onRemove={vi.fn()}
+      />
+    );
+    expect(screen.getByText("acme-corp")).toBeInTheDocument();
+  });
 });

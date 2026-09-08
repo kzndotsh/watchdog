@@ -1,4 +1,7 @@
+import type { UseQueryResult } from "@tanstack/react-query";
+
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { listPending } from "@/shared/lib/list-pending";
 
 interface DossierTabCounts {
   claims: number;
@@ -17,9 +20,23 @@ export function dataOrEmpty<T>(data: readonly T[] | undefined): readonly T[] {
   return data;
 }
 
-export function anyQueryPending(flags: readonly boolean[]): boolean {
-  for (const flag of flags) {
-    if (flag) return true;
+export function anyQueryPending(
+  queries: readonly Pick<
+    UseQueryResult,
+    "isFetched" | "isError" | "isLoading"
+  >[]
+): boolean {
+  for (const query of queries) {
+    if (listPending(query)) return true;
+  }
+  return false;
+}
+
+export function anyQueryPlaceholder(
+  queries: readonly Pick<UseQueryResult, "isPlaceholderData">[]
+): boolean {
+  for (const query of queries) {
+    if (query.isPlaceholderData) return true;
   }
   return false;
 }

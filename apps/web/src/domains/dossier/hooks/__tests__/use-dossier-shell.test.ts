@@ -61,34 +61,89 @@ function renderShell() {
     (options: { queryKey: readonly unknown[] }) => {
       switch (options.queryKey[0]) {
         case "claims": {
-          return { data: [{ retracted: false }, { retracted: true }] };
+          return {
+            data: [{ retracted: false }, { retracted: true }],
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isPlaceholderData: false,
+          };
         }
         case "identifiers": {
-          return { data: [{ id: "id-1" }, { id: "id-2" }] };
+          return {
+            data: [{ id: "id-1" }, { id: "id-2" }],
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isPlaceholderData: false,
+          };
         }
         case "edges": {
-          return { data: [{ id: "edge-1" }] };
+          return {
+            data: [{ id: "edge-1" }],
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isPlaceholderData: false,
+          };
         }
         case "events": {
-          return { data: [{ id: "ev-1" }, { id: "ev-2" }, { id: "ev-3" }] };
+          return {
+            data: [{ id: "ev-1" }, { id: "ev-2" }, { id: "ev-3" }],
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isPlaceholderData: false,
+          };
         }
         case "questions": {
-          return { data: [{ status: "open" }, { status: "resolved" }] };
+          return {
+            data: [{ status: "open" }, { status: "resolved" }],
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isPlaceholderData: false,
+          };
         }
         case "tasks": {
-          return { data: [{ status: "todo" }, { status: "done" }] };
+          return {
+            data: [{ status: "todo" }, { status: "done" }],
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isPlaceholderData: false,
+          };
         }
         case "evidence": {
+          const scope = options.queryKey[3];
+          if (scope === "hidden") {
+            return {
+              data: [{ id: "hidden-evidence", entityId: null }],
+              isFetched: true,
+              isError: false,
+              isLoading: false,
+              isPlaceholderData: false,
+            };
+          }
           return {
             data: [
               { id: "evidence-1", entityId: ENTITY.id },
               { id: "evidence-2", entityId: testId(99) },
             ],
-            isPending: false,
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isPlaceholderData: false,
           };
         }
         default: {
-          return { data: [] };
+          return {
+            data: [],
+            isFetched: true,
+            isError: false,
+            isLoading: false,
+            isPlaceholderData: false,
+          };
         }
       }
     }
@@ -119,9 +174,60 @@ describe("useDossierShell", () => {
       result.current.handleEvidenceClick("evidence-1");
     });
     expect(result.current.previewEvidence?.id).toBe("evidence-1");
-    expect(result.current.evidenceAll).toHaveLength(2);
+    act(() => {
+      result.current.handleEvidenceClick("hidden-evidence");
+    });
+    expect(result.current.previewEvidence?.id).toBe("hidden-evidence");
+    expect(result.current.evidenceAll).toHaveLength(3);
     expect(result.current.evidencePending).toBe(false);
+    expect(result.current.countsPlaceholder).toBe(false);
     expect(result.current.editOpen).toBe(false);
     expect(useQueryMock).toHaveBeenCalled();
+  });
+
+  it("surfaces evidence load errors after queries settle", () => {
+    useQueryMock.mockImplementation(
+      (options: { queryKey: readonly unknown[] }) => {
+        if (options.queryKey[0] === "evidence") {
+          const scope = options.queryKey[3];
+          if (scope === "hidden") {
+            return {
+              data: undefined,
+              isFetched: true,
+              isError: false,
+              isLoading: false,
+              isPending: false,
+              isPlaceholderData: false,
+            };
+          }
+          return {
+            data: undefined,
+            isFetched: true,
+            isError: true,
+            error: new Error("network down"),
+            isLoading: false,
+            isPending: false,
+            isPlaceholderData: false,
+          };
+        }
+        return {
+          data: [],
+          isFetched: true,
+          isError: false,
+          isLoading: false,
+          isPending: false,
+          isPlaceholderData: false,
+        };
+      }
+    );
+
+    const client = new QueryClient();
+    const { result } = renderHook(() => useDossierShell(testId(10), ENTITY), {
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryClientProvider, { client }, children),
+    });
+
+    expect(result.current.evidenceLoadError).toBe("network down");
+    expect(result.current.evidencePending).toBe(false);
   });
 });

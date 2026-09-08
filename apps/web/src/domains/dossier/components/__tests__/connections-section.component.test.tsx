@@ -37,16 +37,13 @@ vi.mock(
   })
 );
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
-const useSuspenseQueriesMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
-    useSuspenseQueries: (options: { queries: unknown[] }) =>
-      useSuspenseQueriesMock(options),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: () => ({
       mutate: vi.fn(),
       mutateAsync: vi.fn(),
@@ -65,7 +62,23 @@ const ENTITY = {
 };
 
 function renderSection() {
-  useSuspenseQueriesMock.mockReturnValue([{ data: [] }, { data: [] }]);
+  useQueryMock
+    .mockReturnValueOnce({
+      data: [],
+      isFetched: true,
+      isLoading: false,
+      isError: false,
+      isPlaceholderData: false,
+      refetch: vi.fn(),
+    })
+    .mockReturnValueOnce({
+      data: [],
+      isFetched: true,
+      isLoading: false,
+      isError: false,
+      isPlaceholderData: false,
+      refetch: vi.fn(),
+    });
 
   const client = new QueryClient();
   return render(
@@ -91,6 +104,6 @@ describe("ConnectionsSection", () => {
     expect(
       screen.getByRole("heading", { name: "Connections" })
     ).toBeInTheDocument();
-    expect(useSuspenseQueriesMock).toHaveBeenCalled();
+    expect(useQueryMock).toHaveBeenCalled();
   });
 });

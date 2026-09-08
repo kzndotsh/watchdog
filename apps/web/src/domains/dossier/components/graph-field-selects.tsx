@@ -13,7 +13,7 @@ import {
 import { CLAIM_CLASS_LABELS } from "@/shared/ui/vocab";
 import {
   CLAIM_CLASSES,
-  claimClassSchema,
+  trimmedClaimClassSchema,
   type ClaimClass,
 } from "@watchdog/schemas";
 
@@ -39,7 +39,7 @@ export function ClaimClassSelect({
       onValueChange={(next) => {
         const raw = resolveSelectValue(next);
         if (raw === null) return;
-        onChange(claimClassSchema.parse(raw));
+        onChange(trimmedClaimClassSchema.parse(raw));
       }}
     >
       <SelectTrigger

@@ -14,7 +14,7 @@ describe("warmDossierQueries", () => {
 
     warmDossierQueries(client, "case-1", "entity-1", "connections");
 
-    expect(prefetch).toHaveBeenCalledTimes(8);
+    expect(prefetch).toHaveBeenCalledTimes(10);
     expect(
       prefetch.mock.calls.some(([query]) => query.queryKey[0] === "entities")
     ).toBe(true);
@@ -26,7 +26,7 @@ describe("warmDossierQueries", () => {
 
     warmDossierQueries(client, "case-1", "entity-1", "notes");
 
-    expect(prefetch).toHaveBeenCalledTimes(7);
+    expect(prefetch).toHaveBeenCalledTimes(9);
     expect(
       prefetch.mock.calls.some(([query]) => query.queryKey[0] === "entities")
     ).toBe(false);

@@ -1,13 +1,15 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { CheckIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
+import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import type { DossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
+import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
 import {
   openQuestionRowActions,
@@ -22,12 +24,20 @@ import {
   updateQuestionFn,
   type QuestionRecord,
 } from "@/domains/entities/questions/questions.functions";
+import {
+  createQuestionInputSchema,
+  questionScopeInputSchema,
+  resolveQuestionInputSchema,
+  updateQuestionInputSchema,
+} from "@/domains/entities/questions/types";
 import { cn, errMessage } from "@/lib/utils";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 
@@ -226,11 +236,11 @@ function ResolveForm({
   const resolveMutation = useMutation({
     mutationFn: async (resolvedNote: string | undefined) =>
       resolveQuestionFn({
-        data: {
+        data: resolveQuestionInputSchema.parse({
           caseId,
           questionId,
           resolvedNote,
-        },
+        }),
       }),
     onSuccess: async () => {
       await onSaved();
@@ -527,14 +537,22 @@ export function QuestionsSection({
   emptyPresentation = "inline",
 }: DossierSectionProps) {
   const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
-  const { data: rows } = useSuspenseQuery(questionsListQuery(caseId, entityId));
+  const {
+    data: rows,
+    placeholder,
+    pending,
+    loadError,
+    retry,
+  } = useDossierSectionQuery(questionsListQuery(caseId, entityId));
 
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const editor = useDossierSectionEditor();
 
   const createMutation = useMutation({
     mutationFn: async (text: string) =>
-      createQuestionFn({ data: { caseId, entityId, text } }),
+      createQuestionFn({
+        data: createQuestionInputSchema.parse({ caseId, entityId, text }),
+      }),
     onSuccess: async () => {
       editor.handleStopAdding();
       await invalidate();
@@ -549,14 +567,14 @@ export function QuestionsSection({
       resolvedNote?: string | null;
     }) =>
       updateQuestionFn({
-        data: {
+        data: updateQuestionInputSchema.parse({
           caseId,
           questionId: input.questionId,
           text: input.text,
           ...(input.resolvedNote === undefined
             ? {}
             : { resolvedNote: input.resolvedNote }),
-        },
+        }),
       }),
     onSuccess: async () => {
       editor.handleCloseEdit();
@@ -567,7 +585,9 @@ export function QuestionsSection({
 
   const reopenMutation = useMutation({
     mutationFn: async (questionId: string) =>
-      reopenQuestionFn({ data: { caseId, questionId } }),
+      reopenQuestionFn({
+        data: questionScopeInputSchema.parse({ caseId, questionId }),
+      }),
     onSuccess: async () => {
       editor.handleCloseEdit();
       editor.handleError(null);
@@ -583,104 +603,116 @@ export function QuestionsSection({
   const resolved = rows.filter((r) => r.status === "resolved");
 
   return (
-    <DossierSection
-      title="Questions"
-      empty={editor.isEmpty(rows.length)}
-      emptyPresentation={emptyPresentation}
-      emptyItems="questions"
-      emptyText="No questions — add what needs investigating."
-      emptyDescription="Capture what still needs investigating."
-      emptyAction={
+    <DossierSectionQueryGate
+      loadError={loadError}
+      pending={pending}
+      pendingFallback={
         emptyPresentation === "panel" ? (
-          <DossierSectionAddButton
-            variant="panel"
-            noun="question"
-            onClick={() => {
-              setResolvingId(null);
-              editor.handleStartAdding();
-            }}
-          />
-        ) : undefined
+          <DossierPanelSkeletonLayout variant="list" />
+        ) : null
       }
-      actions={
-        <DossierSectionAddButton
-          variant="ghost"
-          onClick={() => {
-            setResolvingId(null);
-            editor.handleToggleAdding();
-          }}
-        />
-      }
+      onRetry={retry}
     >
-      <FormInlineError>{editor.error}</FormInlineError>
-
-      {editor.adding ? (
-        <QuestionComposer
-          key="create"
-          onCancel={editor.handleStopAdding}
-          onError={editor.handleError}
-          onSubmit={async ({ text }) => {
-            await createMutation.mutateAsync(text);
-          }}
-        />
-      ) : null}
-
-      {open.length > 0 ? (
-        <TimelineSpine className="border-border/70 ml-1.5 pl-5">
-          {open.map((row, i) => (
-            <OpenQuestionRow
-              key={row.id}
-              caseId={caseId}
-              label={qIndex(i)}
-              question={row}
-              editor={editor}
-              resolvingId={resolvingId}
-              onResolvingChange={setResolvingId}
-              onSaveEdit={async (text) => {
-                await updateMutation.mutateAsync({
-                  questionId: row.id,
-                  text,
-                });
-              }}
-              onResolved={async () => {
+      <DossierSection
+        title="Questions"
+        className={placeholderDeemphasisClass(placeholder)}
+        empty={editor.isEmpty(rows.length)}
+        emptyPresentation={emptyPresentation}
+        emptyItems="questions"
+        emptyText="No questions — add what needs investigating."
+        emptyDescription="Capture what still needs investigating."
+        emptyAction={
+          emptyPresentation === "panel" ? (
+            <DossierSectionAddButton
+              variant="panel"
+              noun="question"
+              onClick={() => {
                 setResolvingId(null);
-                await invalidate();
+                editor.handleStartAdding();
               }}
             />
-          ))}
-        </TimelineSpine>
-      ) : null}
+          ) : undefined
+        }
+        actions={
+          <DossierSectionAddButton
+            variant="ghost"
+            onClick={() => {
+              setResolvingId(null);
+              editor.handleToggleAdding();
+            }}
+          />
+        }
+      >
+        <FormInlineError>{editor.error}</FormInlineError>
 
-      {resolved.length > 0 ? (
-        <div className="mt-4 flex flex-col gap-1">
-          <SectionLabel as="h4" density="compact">
-            Resolved
-          </SectionLabel>
-          <TimelineSpine
-            dashed={false}
-            className="border-border/30 ml-1.5 pl-5"
-          >
-            {resolved.map((row, i) => (
-              <ResolvedQuestionRow
+        {editor.adding ? (
+          <QuestionComposer
+            key="create"
+            onCancel={editor.handleStopAdding}
+            onError={editor.handleError}
+            onSubmit={async ({ text }) => {
+              await createMutation.mutateAsync(text);
+            }}
+          />
+        ) : null}
+
+        {open.length > 0 ? (
+          <TimelineSpine className="border-border/70 ml-1.5 pl-5">
+            {open.map((row, i) => (
+              <OpenQuestionRow
                 key={row.id}
-                label={qIndex(open.length + i)}
+                caseId={caseId}
+                label={qIndex(i)}
                 question={row}
                 editor={editor}
-                onSaveEdit={async (value) => {
+                resolvingId={resolvingId}
+                onResolvingChange={setResolvingId}
+                onSaveEdit={async (text) => {
                   await updateMutation.mutateAsync({
                     questionId: row.id,
-                    text: value.text,
-                    resolvedNote: value.resolvedNote,
+                    text,
                   });
                 }}
-                onReopen={() => {
-                  reopenMutation.mutate(row.id);
+                onResolved={async () => {
+                  setResolvingId(null);
+                  await invalidate();
                 }}
               />
             ))}
           </TimelineSpine>
-        </div>
-      ) : null}
-    </DossierSection>
+        ) : null}
+
+        {resolved.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-1">
+            <SectionLabel as="h4" density="compact">
+              Resolved
+            </SectionLabel>
+            <TimelineSpine
+              dashed={false}
+              className="border-border/30 ml-1.5 pl-5"
+            >
+              {resolved.map((row, i) => (
+                <ResolvedQuestionRow
+                  key={row.id}
+                  label={qIndex(open.length + i)}
+                  question={row}
+                  editor={editor}
+                  onSaveEdit={async (value) => {
+                    await updateMutation.mutateAsync({
+                      questionId: row.id,
+                      text: value.text,
+                      resolvedNote: value.resolvedNote,
+                    });
+                  }}
+                  onReopen={() => {
+                    reopenMutation.mutate(row.id);
+                  }}
+                />
+              ))}
+            </TimelineSpine>
+          </div>
+        ) : null}
+      </DossierSection>
+    </DossierSectionQueryGate>
   );
 }

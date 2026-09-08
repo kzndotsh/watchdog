@@ -24,13 +24,13 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: () => ({
       mutate: vi.fn(),
       mutateAsync: vi.fn(),
@@ -40,6 +40,17 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { QuestionsSection } from "@/domains/dossier/components/questions-section";
+
+function queryLoaded<T>(data: T) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  };
+}
 
 const OPEN: QuestionRecord = {
   id: testId(1),
@@ -58,7 +69,7 @@ const RESOLVED: QuestionRecord = {
 };
 
 function renderSection(questions: QuestionRecord[]) {
-  useSuspenseQueryMock.mockReturnValue({ data: questions });
+  useQueryMock.mockReturnValue(queryLoaded(questions));
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>

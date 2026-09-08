@@ -21,5 +21,7 @@ export interface DossierSectionProps {
 /** Sections that link Evidence chips in composers / rows. */
 export type DossierSectionWithEvidenceProps = DossierSectionProps & {
   evidenceOptions: readonly EvidenceOption[];
+  /** Resolve linked evidence ids to labels (includes hidden rows). */
+  evidenceTitleById?: ReadonlyMap<string, string>;
   onEvidenceClick?: (evidenceId: string) => void;
 };

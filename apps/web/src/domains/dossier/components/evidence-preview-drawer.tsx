@@ -1,8 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { DownloadIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { evidenceDownloadUrlQuery } from "@/domains/intake/queries";
+import { useEvidenceBlob } from "@/domains/intake/hooks/use-evidence-blob";
+import {
+  evidenceShowsInlineText,
+  evidenceTitle,
+} from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { cn } from "@/lib/utils";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ExternalUrl } from "@/shared/ui/external-url";
 import { IdChip } from "@/shared/ui/id-chip";
 import { MetaGrid, MetaGridItem, MetaRow } from "@/shared/ui/meta-row";
@@ -26,28 +32,29 @@ function EvidencePreviewBody({
   evidence: EvidenceRecord;
   caseId: string;
 }) {
-  const downloadQuery = useQuery({
-    ...evidenceDownloadUrlQuery(caseId, evidence.id),
-    enabled: Boolean(evidence.uri),
-  });
-  const downloadUrl = downloadQuery.data?.url ?? null;
-  const loadingUrl = downloadQuery.isPending && Boolean(evidence.uri);
+  const {
+    isImage,
+    downloadUrl,
+    loadingUrl,
+    resolvedText,
+    loadingBlob,
+    blobPlaceholder,
+  } = useEvidenceBlob(caseId, evidence);
 
-  const isImage = evidence.mime?.startsWith("image/") ?? false;
-  // Pastes land as kind=file + text/plain; attestations are text-shaped too.
-  // Structure-only: keep existing ?? chain (JSON mime bug is out of band).
-  const isText =
-    (evidence.kind === "attestation" || evidence.mime?.startsWith("text/")) ??
-    evidence.mime === "application/json";
+  const isText = evidenceShowsInlineText(evidence);
 
-  const title =
-    (evidence.label !== null && evidence.label !== ""
-      ? evidence.label
-      : undefined) ??
-    (evidence.sourceUrl !== null && evidence.sourceUrl !== ""
-      ? evidence.sourceUrl
-      : undefined) ??
-    "Untitled";
+  const title = evidenceTitle(evidence);
+
+  let textContent: ReactNode = null;
+  if (loadingBlob) {
+    textContent = <p className="text-muted-foreground text-xs">Loading…</p>;
+  } else if (resolvedText !== null && resolvedText !== "") {
+    textContent = (
+      <pre className="bg-muted max-h-64 overflow-y-auto rounded-md p-3 font-mono text-xs break-all whitespace-pre-wrap">
+        {resolvedText}
+      </pre>
+    );
+  }
 
   return (
     <>
@@ -68,7 +75,12 @@ function EvidencePreviewBody({
 
       <Separator />
 
-      <ScrollArea className="flex-1 px-5 py-4">
+      <ScrollArea
+        className={cn(
+          "flex-1 px-5 py-4",
+          placeholderDeemphasisClass(blobPlaceholder)
+        )}
+      >
         <div className="flex flex-col gap-4">
           <MetaGrid>
             <MetaGridItem label="Captured">
@@ -115,17 +127,12 @@ function EvidencePreviewBody({
             </div>
           ) : null}
 
-          {isText &&
-          evidence.text !== null &&
-          evidence.text !== undefined &&
-          evidence.text !== "" ? (
+          {isText ? (
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs font-medium">
                 Content
               </span>
-              <pre className="bg-muted max-h-64 overflow-y-auto rounded-md p-3 font-mono text-xs break-all whitespace-pre-wrap">
-                {evidence.text}
-              </pre>
+              {textContent}
             </div>
           ) : null}
         </div>

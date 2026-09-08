@@ -1,9 +1,11 @@
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
+import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
+import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
@@ -14,11 +16,14 @@ import {
 } from "@/domains/entities/identifiers/identifiers.functions";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/identifiers.functions";
 import { identifiersListQuery } from "@/domains/entities/identifiers/queries";
+import { createIdentifierInputSchema } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
 import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
+import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import type { AppAction } from "@/shared/lib/app-action";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import {
   DataTable,
   DataTableAddRow,
@@ -40,6 +45,7 @@ import {
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
 import { Button } from "@/shared/ui/shadcn/button";
+import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import {
   normalizeIdentifierPlatform,
   type ConfidenceTier,
@@ -61,9 +67,13 @@ export function IdentifiersSection({
   emptyPresentation = "inline",
 }: IdentifiersSectionProps) {
   const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
-  const { data: rows } = useSuspenseQuery(
-    identifiersListQuery(caseId, entityId)
-  );
+  const {
+    data: rows,
+    placeholder,
+    pending,
+    loadError,
+    retry,
+  } = useDossierSectionQuery(identifiersListQuery(caseId, entityId));
   const [composing, setComposing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -71,6 +81,8 @@ export function IdentifiersSection({
     id: string;
     type: string;
     value: string;
+    entityId: string;
+    entitySlug: string;
   } | null>(null);
   const lockedEntity = { id: entity.id, name: entity.name, slug: entity.slug };
 
@@ -85,16 +97,16 @@ export function IdentifiersSection({
     }) => {
       const platform = normalizeIdentifierPlatform(value.platform);
       return createIdentifierFn({
-        data: {
+        data: createIdentifierInputSchema.parse({
           caseId,
           entityId,
           type: value.type,
-          value: value.value.trim(),
+          value: value.value,
           platform: platform || undefined,
           status: value.status,
           confidence: value.confidence,
           evidenceIds: value.evidenceIds,
-        },
+        }),
       });
     },
     onSuccess: async () => {
@@ -135,7 +147,10 @@ export function IdentifiersSection({
       confidence?: ConfidenceTier;
       notes?: string;
       evidenceIds?: string[];
-    }) => updateIdentifierFn({ data: { caseId, ...input } }),
+    }) =>
+      updateIdentifierFn({
+        data: buildUpdateIdentifierData(caseId, input),
+      }),
     onSuccess: async () => {
       toast.success("Updated");
       await invalidate();
@@ -193,10 +208,23 @@ export function IdentifiersSection({
         })();
       },
       onDeleteIdentifier: (row) => {
-        setDeleteTarget({ id: row.id, type: row.type, value: row.value });
+        setDeleteTarget({
+          id: row.id,
+          type: row.type,
+          value: row.value,
+          entityId,
+          entitySlug: entity.slug,
+        });
       },
     }),
-    [evidenceOptions, onEvidenceClick, saveEvidence, updateField]
+    [
+      entity.slug,
+      entityId,
+      evidenceOptions,
+      onEvidenceClick,
+      saveEvidence,
+      updateField,
+    ]
   );
 
   const getRowActions = useCallback(
@@ -235,82 +263,94 @@ export function IdentifiersSection({
   const isEmpty = rows.length === 0 && !composing;
 
   return (
-    <>
-      <DossierSection
-        title="Identifiers"
-        empty={isEmpty}
-        emptyPresentation={emptyPresentation}
-        emptyItems="identifiers"
-        emptyText="No identifiers yet — add a handle, email, phone, or other ID."
-        emptyDescription="Add handles, emails, phones, and other IDs."
-        emptyAction={
-          emptyPresentation === "panel" ? (
-            <Button type="button" size="sm" onClick={openComposer}>
-              <PlusIcon className="size-3.5" />
-              Add identifier
-            </Button>
-          ) : undefined
-        }
-        actions={
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-6 gap-1 px-2 text-xs"
-              onClick={() => {
-                setBulkOpen(true);
-              }}
-            >
-              <ListPlusIcon className="size-3" />
-              Bulk add
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-6 gap-1 px-2 text-xs"
-              onClick={() => {
-                if (composing) {
-                  closeComposer();
-                } else {
-                  openComposer();
-                }
-              }}
-            >
-              <PlusIcon className="size-3" />
-              Add
-            </Button>
+    <DossierSectionQueryGate
+      loadError={loadError}
+      pending={pending}
+      pendingFallback={
+        emptyPresentation === "panel" ? (
+          <DossierPanelSkeletonLayout variant="table" />
+        ) : null
+      }
+      onRetry={retry}
+    >
+      <>
+        <DossierSection
+          title="Identifiers"
+          className={placeholderDeemphasisClass(placeholder)}
+          empty={isEmpty}
+          emptyPresentation={emptyPresentation}
+          emptyItems="identifiers"
+          emptyText="No identifiers yet — add a handle, email, phone, or other ID."
+          emptyDescription="Add handles, emails, phones, and other IDs."
+          emptyAction={
+            emptyPresentation === "panel" ? (
+              <Button type="button" size="sm" onClick={openComposer}>
+                <PlusIcon className="size-3.5" />
+                Add identifier
+              </Button>
+            ) : undefined
+          }
+          actions={
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-6 gap-1 px-2 text-xs"
+                onClick={() => {
+                  setBulkOpen(true);
+                }}
+              >
+                <ListPlusIcon className="size-3" />
+                Bulk add
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-6 gap-1 px-2 text-xs"
+                onClick={() => {
+                  if (composing) {
+                    closeComposer();
+                  } else {
+                    openComposer();
+                  }
+                }}
+              >
+                <PlusIcon className="size-3" />
+                Add
+              </Button>
+            </div>
+          }
+        >
+          <FormInlineError>{submitError}</FormInlineError>
+          <div className="flex flex-col gap-2">
+            <DataTable
+              table={table}
+              emptyText="No identifiers."
+              appendRow={appendRow}
+              getRowActions={getRowActions}
+            />
+            <DataTablePagination table={table} />
           </div>
-        }
-      >
-        <FormInlineError>{submitError}</FormInlineError>
-        <div className="flex flex-col gap-2">
-          <DataTable
-            table={table}
-            emptyText="No identifiers."
-            appendRow={appendRow}
-            getRowActions={getRowActions}
-          />
-          <DataTablePagination table={table} />
-        </div>
-      </DossierSection>
-      <BulkAddIdentifiersDialog
-        open={bulkOpen}
-        onOpenChange={setBulkOpen}
-        caseId={caseId}
-        entities={[lockedEntity]}
-        lockEntity={lockedEntity}
-        onImported={invalidate}
-      />
-      <DeleteIdentifierDialog
-        caseId={caseId}
-        target={deleteTarget}
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
-        }}
-      />
-    </>
+        </DossierSection>
+        <BulkAddIdentifiersDialog
+          open={bulkOpen}
+          onOpenChange={setBulkOpen}
+          caseId={caseId}
+          entities={[lockedEntity]}
+          lockEntity={lockedEntity}
+          onImported={invalidate}
+        />
+        <DeleteIdentifierDialog
+          caseId={caseId}
+          target={deleteTarget}
+          open={deleteTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+        />
+      </>
+    </DossierSectionQueryGate>
   );
 }

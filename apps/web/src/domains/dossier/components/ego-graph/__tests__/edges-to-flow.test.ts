@@ -67,4 +67,32 @@ describe("edgesToEgoFlow", () => {
     expect(flow.nodes).toHaveLength(1);
     expect(flow.edges).toHaveLength(1);
   });
+
+  it("falls back to center slug when the center name is blank", () => {
+    const flow = edgesToEgoFlow({
+      center: {
+        id: CENTER_ID,
+        name: "  ",
+        slug: "center-slug",
+        kind: "person",
+      },
+      edges: [edge({ peerName: "Peer", peerSlug: "peer" })],
+    });
+
+    expect(flow.nodes[0]?.data.label).toBe("center-slug");
+  });
+
+  it("falls back to peer slug when the peer name is blank", () => {
+    const flow = edgesToEgoFlow({
+      center: {
+        id: CENTER_ID,
+        name: "Center",
+        slug: "center",
+        kind: "person",
+      },
+      edges: [edge({ peerName: "  ", peerSlug: "acme-corp" })],
+    });
+
+    expect(flow.nodes[1]?.data.label).toBe("acme-corp");
+  });
 });

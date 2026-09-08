@@ -49,8 +49,15 @@ describe("ConnectionDialog", () => {
         open
         onOpenChange={vi.fn()}
         mode="create"
-        center={{ id: "center-1", name: "Alpha", kind: "person" }}
-        entities={[{ id: "peer-1", name: "Peer", kind: "person" }]}
+        center={{
+          id: "center-1",
+          name: "Alpha",
+          slug: "alpha",
+          kind: "person",
+        }}
+        entities={[
+          { id: "peer-1", name: "Peer", slug: "peer", kind: "person" },
+        ]}
         evidenceOptions={[]}
         onSubmit={vi.fn()}
       />

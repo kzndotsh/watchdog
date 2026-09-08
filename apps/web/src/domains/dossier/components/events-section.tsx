@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { format, isValid, parse } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
@@ -7,7 +7,9 @@ import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
+import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
+import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
 import { eventRowActions } from "@/domains/dossier/lib/event-row-actions";
 import type { DossierSectionProps } from "@/domains/dossier/types";
@@ -17,7 +19,13 @@ import {
   updateEventFn,
 } from "@/domains/entities/events/events.functions";
 import { eventsListQuery } from "@/domains/entities/events/queries";
+import {
+  createEventInputSchema,
+  eventScopeInputSchema,
+  updateEventInputSchema,
+} from "@/domains/entities/events/types";
 import { cn, errMessage } from "@/lib/utils";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Calendar } from "@/shared/ui/shadcn/calendar";
@@ -27,6 +35,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/ui/shadcn/popover";
+import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 
@@ -326,20 +335,26 @@ export function EventsSection({
   emptyPresentation = "inline",
 }: DossierSectionProps) {
   const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
-  const { data: rows } = useSuspenseQuery(eventsListQuery(caseId, entityId));
+  const {
+    data: rows,
+    placeholder,
+    pending,
+    loadError,
+    retry,
+  } = useDossierSectionQuery(eventsListQuery(caseId, entityId));
 
   const editor = useDossierSectionEditor();
 
   const createMutation = useMutation({
     mutationFn: async (value: EventFormValues) =>
       createEventFn({
-        data: {
+        data: createEventInputSchema.parse({
           caseId,
           entityId,
           when: value.when,
           what: value.what,
-          where: value.where || undefined,
-        },
+          where: value.where,
+        }),
       }),
     onSuccess: async () => {
       editor.handleStopAdding();
@@ -351,13 +366,13 @@ export function EventsSection({
   const updateMutation = useMutation({
     mutationFn: async (input: { eventId: string; value: EventFormValues }) =>
       updateEventFn({
-        data: {
+        data: updateEventInputSchema.parse({
           caseId,
           eventId: input.eventId,
           when: input.value.when,
           what: input.value.what,
-          where: input.value.where || undefined,
-        },
+          where: input.value.where,
+        }),
       }),
     onSuccess: async () => {
       editor.handleCloseEdit();
@@ -368,7 +383,9 @@ export function EventsSection({
 
   const deleteMutation = useMutation({
     mutationFn: async (eventId: string) =>
-      deleteEventFn({ data: { caseId, eventId } }),
+      deleteEventFn({
+        data: eventScopeInputSchema.parse({ caseId, eventId }),
+      }),
     onSuccess: async () => {
       await invalidate();
       toast.success("Event deleted");
@@ -381,90 +398,102 @@ export function EventsSection({
   const showSpine = editor.adding || rows.length > 0;
 
   return (
-    <DossierSection
-      title="Events"
-      empty={editor.isEmpty(rows.length)}
-      emptyPresentation={emptyPresentation}
-      emptyItems="events"
-      emptyText="No events yet — add a dated milestone."
-      emptyDescription="Add a dated milestone for this entity."
-      emptyAction={
+    <DossierSectionQueryGate
+      loadError={loadError}
+      pending={pending}
+      pendingFallback={
         emptyPresentation === "panel" ? (
-          <DossierSectionAddButton
-            variant="panel"
-            noun="event"
-            onClick={editor.handleStartAdding}
-          />
-        ) : undefined
+          <DossierPanelSkeletonLayout variant="timeline" />
+        ) : null
       }
-      actions={
-        <DossierSectionAddButton
-          variant="ghost"
-          onClick={editor.handleToggleAdding}
-        />
-      }
+      onRetry={retry}
     >
-      <FormInlineError>{editor.error}</FormInlineError>
+      <DossierSection
+        title="Events"
+        className={placeholderDeemphasisClass(placeholder)}
+        empty={editor.isEmpty(rows.length)}
+        emptyPresentation={emptyPresentation}
+        emptyItems="events"
+        emptyText="No events yet — add a dated milestone."
+        emptyDescription="Add a dated milestone for this entity."
+        emptyAction={
+          emptyPresentation === "panel" ? (
+            <DossierSectionAddButton
+              variant="panel"
+              noun="event"
+              onClick={editor.handleStartAdding}
+            />
+          ) : undefined
+        }
+        actions={
+          <DossierSectionAddButton
+            variant="ghost"
+            onClick={editor.handleToggleAdding}
+          />
+        }
+      >
+        <FormInlineError>{editor.error}</FormInlineError>
 
-      {showSpine ? (
-        <TimelineSpine className="ml-2 pl-4">
-          {editor.adding ? (
-            <TimelineNode provisional>
-              <EventNodeComposer
-                key="create"
-                defaultValues={{
-                  when: defaultWhen(),
-                  what: "",
-                  where: "",
-                }}
-                submitLabel="Add"
-                onCancel={editor.handleStopAdding}
-                onError={editor.handleError}
-                onSubmit={async (value) => {
-                  await createMutation.mutateAsync(value);
-                }}
-              />
-            </TimelineNode>
-          ) : null}
-
-          {rows.map((row) => (
-            <TimelineNode key={row.id}>
-              {editor.editId === row.id ? (
+        {showSpine ? (
+          <TimelineSpine className="ml-2 pl-4">
+            {editor.adding ? (
+              <TimelineNode provisional>
                 <EventNodeComposer
-                  key={row.id}
+                  key="create"
                   defaultValues={{
-                    when: row.when,
-                    what: row.what,
-                    where: row.where ?? "",
+                    when: defaultWhen(),
+                    what: "",
+                    where: "",
                   }}
-                  submitLabel="Save"
-                  onCancel={editor.handleCloseEdit}
+                  submitLabel="Add"
+                  onCancel={editor.handleStopAdding}
                   onError={editor.handleError}
                   onSubmit={async (value) => {
-                    await updateMutation.mutateAsync({
-                      eventId: row.id,
-                      value,
-                    });
+                    await createMutation.mutateAsync(value);
                   }}
                 />
-              ) : (
-                <EventDisplayRow
-                  when={row.when}
-                  what={row.what}
-                  where={row.where}
-                  onEdit={() => {
-                    editor.handleOpenEdit(row.id);
-                  }}
-                  onDelete={() => {
-                    editor.handleError(null);
-                    deleteMutation.mutate(row.id);
-                  }}
-                />
-              )}
-            </TimelineNode>
-          ))}
-        </TimelineSpine>
-      ) : null}
-    </DossierSection>
+              </TimelineNode>
+            ) : null}
+
+            {rows.map((row) => (
+              <TimelineNode key={row.id}>
+                {editor.editId === row.id ? (
+                  <EventNodeComposer
+                    key={row.id}
+                    defaultValues={{
+                      when: row.when,
+                      what: row.what,
+                      where: row.where ?? "",
+                    }}
+                    submitLabel="Save"
+                    onCancel={editor.handleCloseEdit}
+                    onError={editor.handleError}
+                    onSubmit={async (value) => {
+                      await updateMutation.mutateAsync({
+                        eventId: row.id,
+                        value,
+                      });
+                    }}
+                  />
+                ) : (
+                  <EventDisplayRow
+                    when={row.when}
+                    what={row.what}
+                    where={row.where}
+                    onEdit={() => {
+                      editor.handleOpenEdit(row.id);
+                    }}
+                    onDelete={() => {
+                      editor.handleError(null);
+                      deleteMutation.mutate(row.id);
+                    }}
+                  />
+                )}
+              </TimelineNode>
+            ))}
+          </TimelineSpine>
+        ) : null}
+      </DossierSection>
+    </DossierSectionQueryGate>
   );
 }

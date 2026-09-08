@@ -23,6 +23,9 @@ describe("connectionFormIssues", () => {
     expect(connectionFormIssues({ ...BASE, peerId: "" })).toContain(
       "Select a peer entity"
     );
+    expect(connectionFormIssues({ ...BASE, peerId: "   " })).toContain(
+      "Select a peer entity"
+    );
   });
 
   it("requires notes for related_to edges", () => {
@@ -33,6 +36,12 @@ describe("connectionFormIssues", () => {
         notes: "   ",
       })
     ).toContain("related_to needs a short why (notes)");
+  });
+
+  it("blocks self-linked connections", () => {
+    expect(
+      connectionFormIssues({ ...BASE, peerId: "center-1" }, "center-1")
+    ).toContain("Cannot connect an entity to itself");
   });
 
   it("blocks confirmed confidence without evidence", () => {

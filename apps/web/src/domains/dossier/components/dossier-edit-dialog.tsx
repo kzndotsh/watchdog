@@ -16,7 +16,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
-import { entityKindSchema, type EntityKind } from "@watchdog/schemas";
+import { trimmedEntityKindSchema, type EntityKind } from "@watchdog/schemas";
 
 export interface DossierEditFormValues {
   name: string;
@@ -114,7 +114,7 @@ export function DossierEditDialog({
                     value={field.state.value}
                     options={ENTITY_KIND_OPTIONS}
                     onValueChange={(next) => {
-                      field.handleChange(entityKindSchema.parse(next));
+                      field.handleChange(trimmedEntityKindSchema.parse(next));
                     }}
                     disabled={busy}
                     aria-label="Entity kind"

@@ -23,13 +23,13 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: (opts: { mutationFn: (...args: unknown[]) => unknown }) => ({
       mutate: vi.fn(),
       mutateAsync: vi.fn(async (input: unknown) => opts.mutationFn(input)),
@@ -54,8 +54,22 @@ const ACTIVE: ClaimRecord = {
   retractedAt: null,
 };
 
-function renderClaims(claims: ClaimRecord[]) {
-  useSuspenseQueryMock.mockReturnValue({ data: claims });
+function queryLoaded<T>(data: T) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  };
+}
+
+function renderClaims(
+  claims: ClaimRecord[],
+  opts?: { evidenceTitleById?: ReadonlyMap<string, string> }
+) {
+  useQueryMock.mockReturnValue(queryLoaded(claims));
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
@@ -64,6 +78,7 @@ function renderClaims(claims: ClaimRecord[]) {
         entityId={testId(20)}
         entitySlug="alpha"
         evidenceOptions={[]}
+        evidenceTitleById={opts?.evidenceTitleById}
       />
     </QueryClientProvider>
   );
@@ -83,6 +98,29 @@ describe("ClaimsSection", () => {
     expect(screen.getByText("Observed at the scene")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Claim actions" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows evidence titles on linked chips when provided", () => {
+    const evidenceId = testId(99);
+    const onEvidenceClick = vi.fn();
+    useQueryMock.mockReturnValue(
+      queryLoaded([{ ...ACTIVE, evidenceIds: [evidenceId] }])
+    );
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <ClaimsSection
+          caseId={testId(10)}
+          entityId={testId(20)}
+          entitySlug="alpha"
+          evidenceOptions={[]}
+          evidenceTitleById={new Map([[evidenceId, "leaked-db.csv"]])}
+          onEvidenceClick={onEvidenceClick}
+        />
+      </QueryClientProvider>
+    );
+    expect(
+      screen.getByRole("button", { name: "Preview evidence: leaked-db.csv" })
     ).toBeInTheDocument();
   });
 });

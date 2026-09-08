@@ -1,5 +1,5 @@
 import { ClipboardPasteIcon, FileUpIcon, LinkIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import type { DossierEmptyPresentation } from "@/domains/dossier/types";
@@ -9,9 +9,11 @@ import {
 } from "@/domains/intake/components/dump-dialogs";
 import { FileDropZone } from "@/domains/intake/components/file-drop-zone";
 import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
+import { evidenceTitle } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { IdChip } from "@/shared/ui/id-chip";
+import { evidenceSourceFootnote } from "@/shared/ui/intake/evidence-option";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { Button } from "@/shared/ui/shadcn/button";
 import { ButtonGroup } from "@/shared/ui/shadcn/button-group";
@@ -70,16 +72,24 @@ export function EntityEvidenceSection({
   caseId,
   entityId,
   evidenceOptions,
+  evidencePlaceholder = false,
   onEvidenceClick,
   emptyPresentation = "inline",
 }: {
   caseId: string;
   entityId: string;
   evidenceOptions: readonly EvidenceRecord[];
+  evidencePlaceholder?: boolean;
   onEvidenceClick?: (evidenceId: string) => void;
   emptyPresentation?: DossierEmptyPresentation;
 }) {
-  const rows = evidenceOptions.filter((r) => r.entityId === entityId);
+  const rows = useMemo(
+    () =>
+      evidenceOptions
+        .filter((r) => r.entityId === entityId)
+        .sort((a, b) => Date.parse(b.capturedAt) - Date.parse(a.capturedAt)),
+    [evidenceOptions, entityId]
+  );
   const isEmpty = rows.length === 0;
   const [dumpModal, setDumpModal] = useState<DumpModal | null>(null);
 
@@ -99,6 +109,7 @@ export function EntityEvidenceSection({
     <>
       <DossierSection
         title="Evidence"
+        className={placeholderDeemphasisClass(evidencePlaceholder)}
         empty={isEmpty}
         emptyPresentation={emptyPresentation}
         emptyItems="evidence"
@@ -138,7 +149,8 @@ export function EntityEvidenceSection({
           ) : null}
           <ul className="divide-border border-border divide-y overflow-hidden rounded-md border">
             {rows.map((row) => {
-              const label = row.label ?? row.sourceUrl ?? row.uri ?? "Untitled";
+              const label = evidenceTitle(row);
+              const sourceFootnote = evidenceSourceFootnote(row, label);
               const clickable = Boolean(onEvidenceClick);
               return (
                 <li key={row.id}>
@@ -149,7 +161,6 @@ export function EntityEvidenceSection({
                     className="hover:bg-muted/40 flex w-full flex-col gap-1 px-3 py-2.5 text-left transition-colors disabled:cursor-default disabled:hover:bg-transparent"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <IdChip value={row.id} head={8} tail={0} />
                       <KindBadge kind={row.kind} />
                       <span className="text-foreground min-w-0 truncate text-sm font-medium">
                         {label}
@@ -169,11 +180,11 @@ export function EntityEvidenceSection({
                         <span className="text-label-mono-sm">{row.mime}</span>
                       ) : null}
                       <RelativeTime value={row.capturedAt} />
-                      {row.sourceUrl !== null && row.sourceUrl !== "" ? (
+                      {sourceFootnote === null ? null : (
                         <span className="text-label-mono-sm truncate">
-                          {row.sourceUrl}
+                          {sourceFootnote}
                         </span>
-                      ) : null}
+                      )}
                     </div>
                   </button>
                 </li>

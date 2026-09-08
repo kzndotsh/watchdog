@@ -5,6 +5,7 @@ import {
   type GraphNode,
 } from "@/shared/ui/graph";
 import type { EntityKind } from "@watchdog/schemas";
+import { entityDisplayLabel } from "@watchdog/schemas";
 
 export type { GraphEdge, GraphNode } from "@/shared/ui/graph";
 
@@ -74,7 +75,7 @@ export function edgesToEgoFlow({
       id: center.id,
       position: radialPosition(0, peers.length, true),
       data: {
-        label: center.name,
+        label: entityDisplayLabel({ name: center.name, slug: center.slug }),
         kind: center.kind,
         slug: center.slug,
         isCenter: true,
@@ -84,7 +85,10 @@ export function edgesToEgoFlow({
       id: peer.peerId,
       position: radialPosition(index, peers.length, false),
       data: {
-        label: peer.peerName || peer.peerSlug,
+        label: entityDisplayLabel({
+          name: peer.peerName,
+          slug: peer.peerSlug,
+        }),
         kind: peer.peerKind,
         slug: peer.peerSlug,
         isCenter: false,

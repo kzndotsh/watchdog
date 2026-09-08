@@ -2,10 +2,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
+import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
-import { entitiesKeys } from "@/domains/entities/queries";
+import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { scopeCaseSlug } from "@/shared/lib/query-ingress";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { RichTextEditor } from "@/shared/ui/rich-text";
@@ -21,17 +24,22 @@ function useEntityProseFields(caseId: string, entity: EntityRecord) {
   const [error, setError] = useState<string | null>(null);
 
   const saveMutation = useMutation({
-    mutationFn: async (patch: { summary?: string; notes?: string }) =>
+    mutationFn: async (patch: {
+      summary?: string | null;
+      notes?: string | null;
+    }) =>
       updateEntityFieldsFn({
-        data: {
-          caseId,
+        data: buildUpdateEntityFieldsData(caseId, {
           entityId: entity.id,
-          summary: patch.summary ?? summary,
-          notes: patch.notes ?? notes,
-        },
+          ...patch,
+        }),
       }),
     onSuccess: async (next) => {
-      queryClient.setQueryData(entitiesKeys.detail(caseId, entity.slug), next);
+      const { scoped } = scopeCaseSlug(caseId, entity.slug);
+      queryClient.setQueryData(
+        entitiesKeys.detail(scoped.caseId, scoped.slug),
+        next
+      );
       await invalidateAfterEntityChanged(queryClient, caseId, {
         entityId: entity.id,
         slug: entity.slug,
@@ -50,8 +58,8 @@ function useEntityProseFields(caseId: string, entity: EntityRecord) {
     error,
     setError,
     saveMutation,
-    summaryDirty: summary !== (entity.summary ?? ""),
-    notesDirty: notes !== (entity.notes ?? ""),
+    summaryDirty: summary.trim() !== (entity.summary ?? "").trim(),
+    notesDirty: notes.trim() !== (entity.notes ?? "").trim(),
     editorKey: `${entity.id}:${entity.updatedAt}`,
   };
 }
@@ -60,14 +68,15 @@ function useEntityProseFields(caseId: string, entity: EntityRecord) {
 export function SummarySection({
   caseId,
   entity,
+  placeholder = false,
 }: {
   caseId: string;
   entity: EntityRecord;
+  placeholder?: boolean;
 }) {
   const {
     summary,
     setSummary,
-    notes,
     error,
     setError,
     saveMutation,
@@ -78,12 +87,13 @@ export function SummarySection({
   function onSave() {
     if (!summaryDirty) return;
     setError(null);
-    saveMutation.mutate({ summary, notes });
+    saveMutation.mutate({ summary });
   }
 
   return (
     <DossierSection
       title="Summary"
+      className={placeholderDeemphasisClass(placeholder)}
       actions={
         saveMutation.isPending ? (
           <span className="text-muted-foreground text-xs">Saving…</span>
@@ -107,12 +117,13 @@ export function SummarySection({
 export function NotesSection({
   caseId,
   entity,
+  placeholder = false,
 }: {
   caseId: string;
   entity: EntityRecord;
+  placeholder?: boolean;
 }) {
   const {
-    summary,
     notes,
     setNotes,
     error,
@@ -125,13 +136,14 @@ export function NotesSection({
   function onSave() {
     if (!notesDirty) return;
     setError(null);
-    saveMutation.mutate({ summary, notes });
+    saveMutation.mutate({ notes });
   }
 
   return (
     <DossierSection
       title="Notes"
       fill
+      className={placeholderDeemphasisClass(placeholder)}
       actions={
         saveMutation.isPending ? (
           <span className="text-muted-foreground text-xs">Saving…</span>

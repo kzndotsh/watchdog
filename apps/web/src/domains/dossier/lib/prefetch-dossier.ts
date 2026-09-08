@@ -8,7 +8,7 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { tasksListQuery } from "@/domains/tasks/queries";
-import { warmPrefetchQuery } from "@/shared/lib/warm-query";
+import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 
 export type DossierPrefetchTab =
   | "overview"
@@ -31,16 +31,47 @@ export function warmDossierQueries(
   entityId: string,
   tab: DossierPrefetchTab = "overview"
 ): void {
-  // Tab counts + overview share these — prefetch all lightly.
-  warmPrefetchQuery(queryClient, claimsListQuery(caseId, entityId));
-  warmPrefetchQuery(queryClient, identifiersListQuery(caseId, entityId));
-  warmPrefetchQuery(queryClient, edgesListQuery(caseId, entityId));
-  warmPrefetchQuery(queryClient, eventsListQuery(caseId, entityId));
-  warmPrefetchQuery(queryClient, questionsListQuery(caseId, entityId));
-  warmPrefetchQuery(queryClient, tasksListQuery(caseId, { entityId }));
-  warmPrefetchQuery(queryClient, evidenceListQuery(caseId));
+  warmEnsureQueryData(queryClient, {
+    ...claimsListQuery(caseId, entityId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...identifiersListQuery(caseId, entityId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...edgesListQuery(caseId, entityId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...eventsListQuery(caseId, entityId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...questionsListQuery(caseId, entityId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...tasksListQuery(caseId, { entityId }),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...tasksListQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...evidenceListQuery(caseId),
+    revalidateIfStale: true,
+  });
+  warmEnsureQueryData(queryClient, {
+    ...evidenceListQuery(caseId, { hiddenOnly: true }),
+    revalidateIfStale: true,
+  });
 
   if (tab === "connections" || tab === "overview") {
-    warmPrefetchQuery(queryClient, entitiesListQuery(caseId));
+    warmEnsureQueryData(queryClient, {
+      ...entitiesListQuery(caseId),
+      revalidateIfStale: true,
+    });
   }
 }

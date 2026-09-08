@@ -98,16 +98,19 @@ vi.mock("@/domains/tasks/components/dossier-tasks-section", () => ({
   DossierTasksSection: () => null,
 }));
 
-const resolveSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useCasesContextMock = vi.hoisted(() => vi.fn());
+const resolveQueryMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
+  useCasesContext: () => useCasesContextMock(),
+}));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => resolveSuspenseQueryMock(...args),
-    useSuspenseQueries: (options: {
-      queries: { queryKey: readonly unknown[] }[];
-    }) => options.queries.map((query) => resolveSuspenseQueryMock(query)),
+    useQuery: (...args: unknown[]) => resolveQueryMock(...args),
+    useQueryClient: actual.useQueryClient,
   };
 });
 
@@ -134,23 +137,26 @@ const ENTITY: EntityRecord = {
 };
 
 function renderDossier(active: typeof CASE | null) {
-  resolveSuspenseQueryMock.mockReset();
-  resolveSuspenseQueryMock.mockImplementation(
-    (options: { queryKey?: readonly unknown[] }) => {
-      const root = options.queryKey?.[0];
-      if (root === "cases") {
-        return {
-          data: active
-            ? { cases: [active], active }
-            : { cases: [], active: null },
-        };
-      }
-      if (root === "entity") {
-        return { data: ENTITY };
-      }
-      return { data: null };
-    }
-  );
+  useCasesContextMock.mockReturnValue({
+    casesCtx: active
+      ? { cases: [active], active }
+      : { cases: [], active: null },
+    cases: active ? [active] : [],
+    active,
+    pending: false,
+    loadError: null,
+    retry: vi.fn(),
+    placeholder: false,
+  });
+  resolveQueryMock.mockReset();
+  resolveQueryMock.mockReturnValue({
+    data: ENTITY,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  });
 
   const client = new QueryClient();
   return render(
@@ -196,9 +202,7 @@ describe("Dossier", () => {
     expect(screen.getByRole("tab", { name: /Questions/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Tasks/i })).toBeInTheDocument();
     expect(screen.getByRole("tablist")).toBeInTheDocument();
-    expect(resolveSuspenseQueryMock).toHaveBeenCalled();
-    expect(resolveSuspenseQueryMock.mock.calls.length).toBeGreaterThanOrEqual(
-      2
-    );
+    expect(useCasesContextMock).toHaveBeenCalled();
+    expect(resolveQueryMock).toHaveBeenCalled();
   });
 });

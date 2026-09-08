@@ -85,4 +85,35 @@ describe("EntityEvidenceSection", () => {
       screen.getByRole("group", { name: "Dump evidence" })
     ).toBeInTheDocument();
   });
+
+  it("sorts entity evidence newest captured first", () => {
+    render(
+      <EntityEvidenceSection
+        caseId={testId(10)}
+        entityId={ENTITY_ID}
+        evidenceOptions={[
+          evidence({
+            id: testId(41),
+            label: "Older dump",
+            capturedAt: "2026-01-01T00:00:00.000Z",
+          }),
+          evidence({
+            id: testId(42),
+            label: "Newer dump",
+            capturedAt: "2026-02-01T00:00:00.000Z",
+          }),
+        ]}
+        onEvidenceClick={vi.fn()}
+      />
+    );
+
+    const labels = screen
+      .getAllByRole("button")
+      .map((button) => button.textContent ?? "");
+    const newerIndex = labels.findIndex((text) => text.includes("Newer dump"));
+    const olderIndex = labels.findIndex((text) => text.includes("Older dump"));
+    expect(newerIndex).toBeGreaterThanOrEqual(0);
+    expect(olderIndex).toBeGreaterThanOrEqual(0);
+    expect(newerIndex).toBeLessThan(olderIndex);
+  });
 });

@@ -30,13 +30,13 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 
-const useSuspenseQueryMock = vi.hoisted(() => vi.fn());
+const useQueryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useSuspenseQuery: (...args: unknown[]) => useSuspenseQueryMock(...args),
+    useQuery: (...args: unknown[]) => useQueryMock(...args),
     useMutation: () => ({
       mutate: vi.fn(),
       mutateAsync: vi.fn(),
@@ -47,6 +47,17 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
 
+function queryLoaded<T>(data: T) {
+  return {
+    data,
+    isFetched: true,
+    isLoading: false,
+    isError: false,
+    isPlaceholderData: false,
+    refetch: vi.fn(),
+  };
+}
+
 const ENTITY = {
   id: testId(20),
   name: "Alpha",
@@ -54,7 +65,7 @@ const ENTITY = {
 };
 
 function renderSection() {
-  useSuspenseQueryMock.mockReturnValue({ data: [] });
+  useQueryMock.mockReturnValue(queryLoaded([]));
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
@@ -81,6 +92,6 @@ describe("IdentifiersSection", () => {
     expect(
       screen.getByRole("button", { name: "Bulk add" })
     ).toBeInTheDocument();
-    expect(useSuspenseQueryMock).toHaveBeenCalled();
+    expect(useQueryMock).toHaveBeenCalled();
   });
 });
