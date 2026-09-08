@@ -28,4 +28,17 @@ describe("whois shared helpers", () => {
     expect(parseWhoisDate(dates.registeredAt)).toBeTruthy();
     expect(parseWhoisDate(dates.expiresAt)).toBeTruthy();
   });
+
+  it("readRdapDates keeps earliest registration and latest expiration", () => {
+    const dates = readRdapDates({
+      events: [
+        { eventAction: "registration", eventDate: "2010-01-01T00:00:00Z" },
+        { eventAction: "registration", eventDate: "2000-01-01T00:00:00Z" },
+        { eventAction: "expiration", eventDate: "2025-01-01T00:00:00Z" },
+        { eventAction: "expiration", eventDate: "2030-01-01T00:00:00Z" },
+      ],
+    });
+    expect(dates.registeredAt).toBe("2000-01-01T00:00:00.000Z");
+    expect(dates.expiresAt).toBe("2030-01-01T00:00:00.000Z");
+  });
 });

@@ -51,10 +51,16 @@ export function readRdapDates(raw: Record<string, unknown>): {
         : "";
     const date = parseWhoisDate(event.eventDate);
     if (date === null) continue;
-    if (action === "registration" || action === "registered") {
+    if (
+      (action === "registration" || action === "registered") &&
+      (registeredAt === null || date < registeredAt)
+    ) {
       registeredAt = date;
     }
-    if (action === "expiration" || action === "expired") {
+    if (
+      (action === "expiration" || action === "expired") &&
+      (expiresAt === null || date > expiresAt)
+    ) {
       expiresAt = date;
     }
   }

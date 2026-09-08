@@ -2,8 +2,10 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 
 import type { ToolsTag } from "../errors/tagged-errors";
+import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import type { WhoisSnapshot } from "./schema";
+import { whoisSnapshotSchema } from "./schema";
 import {
   extractVcard,
   readRdapDates,
@@ -17,16 +19,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export function fetchRdapWhoisEffect(
   host: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  options?: { userAgent?: string }
 ): Effect.Effect<WhoisSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchRdapWhoisGen() {
+    const ua = options?.userAgent ?? watchdogUserAgent("network.whois.lookup");
     const { body: parsed } = yield* fetchJsonObjectEffect({
       url: `https://rdap.org/domain/${encodeURIComponent(host)}`,
       signal,
       service: "RDAP",
       subject: host,
       init: {
-        headers: { Accept: "application/rdap+json, application/json" },
+        headers: {
+          Accept: "application/rdap+json, application/json",
+          "User-Agent": ua,
+        },
       },
     });
     const raw = parsed;
@@ -50,7 +57,7 @@ export function fetchRdapWhoisEffect(
       : [];
     const status = whoisStatusList(raw.status);
     const { registeredAt, expiresAt } = readRdapDates(raw);
-    return {
+    return whoisSnapshotSchema.parse({
       host,
       source: "rdap",
       registrar,
@@ -60,6 +67,6 @@ export function fetchRdapWhoisEffect(
       registeredAt,
       expiresAt,
       raw,
-    };
+    });
   });
 }
