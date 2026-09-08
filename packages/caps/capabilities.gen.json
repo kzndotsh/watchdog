@@ -9,35 +9,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Resolve A/AAAA/MX/TXT/NS for a host — baseline footprint before WHOIS, mail config, or CT.",
     "dataSource": "system resolver",
@@ -80,35 +76,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "PTR hostnames for an IP. Names only — not ownership or definitive co-hosting.",
     "dataSource": "system resolver",
@@ -151,35 +143,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Team Cymru DNS IP→ASN and RIR-assigned country code. Country here is not GeoIP; use for routing context.",
     "dataSource": "Team Cymru DNS (origin.asn.cymru.com)",
@@ -218,35 +206,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "IP→BGP context (ASN, prefix, RPKI) with GeoIP labeled separately — modern BGPView-style footprint.",
     "dataSource": "api.ipctl.io",
@@ -289,35 +273,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IP address",
           "type": "string",
-          "minLength": 1,
-          "description": "IP address"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IP address",
           "type": "string",
-          "minLength": 1,
-          "description": "IP address"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Geo and org context for an IP (city/region/country, ASN org string). Complements Team Cymru ASN with GeoIP-style labels — not ownership.",
     "dataSource": "ipinfo.io",
@@ -369,35 +349,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "RDAP registration record for a hostname — registrar, dates, nameservers (free public path).",
     "dataSource": "RDAP",
@@ -432,35 +408,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Commercial WHOIS for a hostname when RDAP is thin or you need WhoisXML’s normalized fields.",
     "dataSource": "WhoisXML",
@@ -504,35 +476,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Commercial live WHOIS for a hostname — alternate paid registrar/contact view beside WhoisXML.",
     "dataSource": "api.whoxy.com",
@@ -584,14 +552,12 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "limit": {
           "type": "integer",
@@ -601,17 +567,16 @@
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         },
         "limit": {
           "type": "integer",
@@ -621,8 +586,7 @@
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Certificate Transparency hostnames related to a domain (crt.sh). Primary passive subdomain / SAN discovery.",
     "dataSource": "crt.sh",
@@ -661,35 +625,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Certificate Transparency issuances via Cert Spotter — second CT source beside crt.sh when you want another feed.",
     "dataSource": "api.certspotter.com/v1/issuances",
@@ -728,14 +688,12 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "realtime": {
           "type": "boolean"
@@ -743,23 +701,21 @@
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Paid subdomain finder for a domain — single commercial source, not a multi-engine enumerate.",
     "dataSource": "api.c99.nl/subdomainfinder",
@@ -808,35 +764,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Reverse-IP co-hostnames for an IP — cheap shared-hosting / neighbor discovery.",
     "dataSource": "api.hackertarget.com/reverseiplookup",
@@ -879,35 +831,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "IP or domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "IP or domain"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Historical PassiveDNS for an IP or domain. Past resolutions are not ownership.",
     "dataSource": "api.mnemonic.no/pdns/v3",
@@ -953,35 +901,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Search past public urlscan.io scans for a domain — not a live submit. Good for historical page/DOM fingerprints.",
     "dataSource": "urlscan.io/api/v1/search",
@@ -1025,13 +969,10 @@
       "properties": {
         "url": {
           "description": "URL to scan",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "visibility": {
           "type": "string",
@@ -1044,8 +985,7 @@
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1053,8 +993,7 @@
       "properties": {
         "url": {
           "description": "URL to scan",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "visibility": {
           "type": "string",
@@ -1067,8 +1006,7 @@
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Submit a URL for a live urlscan.io browser scan. Default visibility is unlisted — public scans can leak investigation interest.",
     "dataSource": "urlscan.io/api/v1/scan",
@@ -1113,35 +1051,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "MX / SPF / DMARC / common-selector DKIM posture for a hostname — how mail is supposed to be authenticated for this domain.",
     "dataSource": "system resolver",
@@ -1176,35 +1110,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Classify apex TXT into verification tokens, SaaS tenants, and mail-related hints — who claimed this domain in DNS.",
     "dataSource": "system resolver",
@@ -1239,9 +1169,9 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         },
         "port": {
           "description": "Port",
@@ -1250,30 +1180,26 @@
           "maximum": 9007199254740991
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Active TLS handshake against a host (default :443) — protocol, cert subject/issuer, and authorization result.",
     "dataSource": "TLS handshake",
@@ -1311,35 +1237,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Host",
           "type": "string",
-          "minLength": 1,
-          "description": "Host"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Active HTTP posture for a host: security headers, security.txt, favicon hash, CDN/WAF hints. One Cap for the origin surface.",
     "dataSource": "HTTP GET/HEAD",
@@ -1377,35 +1299,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Internet-wide host metadata for an IP (ports, banners, hostnames). Complements Censys / http_probe.",
     "dataSource": "api.shodan.io",
@@ -1457,35 +1375,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Internet-wide host view for an IP (services, certs, location labels). Complements Shodan with a different scan corpus.",
     "dataSource": "search.censys.io Legacy Search API v2",
@@ -1540,35 +1454,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP or host",
           "type": "string",
-          "minLength": 1,
-          "description": "IP or host"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP or host",
           "type": "string",
-          "minLength": 1,
-          "description": "IP or host"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Indexed exposed services and leak findings for an IP or host — open ports, misconfigs, and published leak hits.",
     "dataSource": "leakix.net",
@@ -1623,35 +1533,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Whether an IP currently appears on the Tor Project exit-address list — useful for noise vs. exit-node traffic.",
     "dataSource": "check.torproject.org/exit-addresses",
@@ -1690,35 +1596,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Research-grade top-sites popularity rank for a domain. Popularity context only — not ownership or malice.",
     "dataSource": "tranco-list.eu/api",
@@ -1758,24 +1660,18 @@
       "properties": {
         "url": {
           "description": "URL to enrich",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "sourceEvidenceId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1783,14 +1679,12 @@
       "properties": {
         "url": {
           "description": "URL to enrich",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Intake path for a URL seed: live fetch (prefer markdown) plus Wayback into Job Output. Process Caps turn that into Proposals.",
     "dataSource": "live fetch + Wayback CDX",
@@ -1828,13 +1722,10 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "limit": {
           "type": "integer",
@@ -1844,8 +1735,7 @@
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1853,14 +1743,12 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "List Wayback Machine snapshot timestamps for a URL — first pass for “was this page up then?” before fetching a body.",
     "dataSource": "web.archive.org/cdx",
@@ -1900,22 +1788,18 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "timestamp": {
           "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1923,14 +1807,12 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Pull the body of a Wayback snapshot for a URL (closest CDX hit when no timestamp). Use after Wayback history to inspect what the page actually said.",
     "dataSource": "web.archive.org",
@@ -1969,19 +1851,15 @@
       "properties": {
         "url": {
           "description": "URL to archive",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1989,14 +1867,12 @@
       "properties": {
         "url": {
           "description": "URL to archive",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Request Wayback Save Page Now for a URL. Creates a public archive record attributable to this Case — use when you need a fresh snapshot on the public web.",
     "dataSource": "web.archive.org/save",
@@ -2035,35 +1911,31 @@
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "host": {
+          "description": "Domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Domain"
+          "minLength": 1
         }
       },
       "required": [
         "host"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Search recent Common Crawl indexes for URLs under a domain — different corpus than Wayback; useful when archive.org is thin.",
     "dataSource": "index.commoncrawl.org",
@@ -2110,19 +1982,15 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2130,14 +1998,12 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Follow shortener redirect chains and record the hop path — reveals the final destination behind a short link.",
     "dataSource": "HTTP redirects",
@@ -2179,19 +2045,15 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2199,14 +2061,12 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Live HTML title, social/meta tags, and common tracker script hints — what the page claims about itself right now.",
     "dataSource": "live HTML",
@@ -2248,19 +2108,15 @@
       "properties": {
         "url": {
           "description": "Media URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2268,14 +2124,12 @@
       "properties": {
         "url": {
           "description": "Media URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Public oEmbed JSON for a media URL (YouTube, Vimeo, Flickr, SoundCloud, TikTok, Spotify) — author name/URL without scraping the page.",
     "dataSource": "vendor oEmbed endpoints",
@@ -2320,35 +2174,31 @@
       "type": "object",
       "properties": {
         "email": {
+          "description": "Email",
           "type": "string",
-          "minLength": 1,
-          "description": "Email"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "email"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "email": {
+          "description": "Email",
           "type": "string",
-          "minLength": 1,
-          "description": "Email"
+          "minLength": 1
         }
       },
       "required": [
         "email"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Email-seed pivot: mailbox-domain MX, SPF/DMARC presence, and provider hint. Lighter than full Mail config; seeds domain Identifiers from the address.",
     "dataSource": "system resolver",
@@ -2392,35 +2242,31 @@
       "type": "object",
       "properties": {
         "email": {
+          "description": "Email",
           "type": "string",
-          "minLength": 1,
-          "description": "Email"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "email"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "email": {
+          "description": "Email",
           "type": "string",
-          "minLength": 1,
-          "description": "Email"
+          "minLength": 1
         }
       },
       "required": [
         "email"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Aggregated reputation / suspiciousness signal for an email address (disposable, breach-adjacent, etc.). Context only — not proof of ownership.",
     "dataSource": "emailrep.io",
@@ -2469,35 +2315,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "Email, fingerprint, or key id",
           "type": "string",
-          "minLength": 1,
-          "description": "Email, fingerprint, or key id"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "Email, fingerprint, or key id",
           "type": "string",
-          "minLength": 1,
-          "description": "Email, fingerprint, or key id"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "HKP keyserver search by email, fingerprint, or key id. Useful for linking mailboxes to published keys.",
     "dataSource": "keys.openpgp.org / keyserver.ubuntu.com",
@@ -2548,35 +2390,31 @@
       "type": "object",
       "properties": {
         "handle": {
+          "description": "GitHub handle",
           "type": "string",
-          "minLength": 1,
-          "description": "GitHub handle"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "handle"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "handle": {
+          "description": "GitHub handle",
           "type": "string",
-          "minLength": 1,
-          "description": "GitHub handle"
+          "minLength": 1
         }
       },
       "required": [
         "handle"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Public GitHub user profile for a handle — display name, bio, and account metadata for identity linking.",
     "dataSource": "api.github.com",
@@ -2629,35 +2467,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "Keybase username or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Keybase username or domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "Keybase username or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Keybase username or domain"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Keybase username or domain-proof lookup — cross-platform proofs and PGP/crypto tips for identity graphing.",
     "dataSource": "keybase.io/_/api/1.0/user/lookup",
@@ -2716,35 +2550,31 @@
       "type": "object",
       "properties": {
         "email": {
+          "description": "Email",
           "type": "string",
-          "minLength": 1,
-          "description": "Email"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "email"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "email": {
+          "description": "Email",
           "type": "string",
-          "minLength": 1,
-          "description": "Email"
+          "minLength": 1
         }
       },
       "required": [
         "email"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Public Gravatar profile for an email (MD5 hash). Confirms a published avatar/profile exists; may surface a display-name handle.",
     "dataSource": "secure.gravatar.com",
@@ -2792,35 +2622,31 @@
       "type": "object",
       "properties": {
         "email": {
+          "description": "Email",
           "type": "string",
-          "minLength": 1,
-          "description": "Email"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "email"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "email": {
+          "description": "Email",
           "type": "string",
-          "minLength": 1,
-          "description": "Email"
+          "minLength": 1
         }
       },
       "required": [
         "email"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Have I Been Pwned breached-account metadata for an email. A hit means the address appeared in a breach dump — not proof of who controls it today.",
     "dataSource": "haveibeenpwned.com",
@@ -2868,35 +2694,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "Email, IP, or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Email, IP, or domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "Email, IP, or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "Email, IP, or domain"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Infostealer exposure for an email, IP, or domain: hit counts and newest compromise date. Does not return plaintext passwords or cookies.",
     "dataSource": "api.hudsonrock.com",
@@ -2958,35 +2780,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "Email, IP, domain, username, or freeform query",
           "type": "string",
-          "minLength": 1,
-          "description": "Email, IP, domain, username, or freeform query"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "Email, IP, domain, username, or freeform query",
           "type": "string",
-          "minLength": 1,
-          "description": "Email, IP, domain, username, or freeform query"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Paid breach-corpus search for an email, IP, domain, username, or freeform query. Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",
     "dataSource": "api.dehashed.com",
@@ -3036,35 +2854,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "Email, IP, domain, or username",
           "type": "string",
-          "minLength": 1,
-          "description": "Email, IP, domain, or username"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "Email, IP, domain, or username",
           "type": "string",
-          "minLength": 1,
-          "description": "Email, IP, domain, or username"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Paid breach/combolist corpus search for an email, IP, domain, or username (Snusbase). Evidence stores recovered emails, usernames, passwords, and hashes (capped sample); Claim summarizes a short sample for Accept.",
     "dataSource": "api.snusbase.com",
@@ -3114,35 +2928,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "IP or domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "IP or domain"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Multi-engine reputation for an IP or domain. Aggregation signal — not identity proof.",
     "dataSource": "virustotal.com API v3",
@@ -3197,35 +3007,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Community abuse reports and confidence for an IP. Reputation signal only — not ownership or definitive malice.",
     "dataSource": "api.abuseipdb.com",
@@ -3277,35 +3083,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP, domain, or IOC string",
           "type": "string",
-          "minLength": 1,
-          "description": "IP, domain, or IOC string"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP, domain, or IOC string",
           "type": "string",
-          "minLength": 1,
-          "description": "IP, domain, or IOC string"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Malware C2 and payload IOC search for an IP or domain. Distinct from AbuseIPDB IP reputation.",
     "dataSource": "threatfox-api.abuse.ch",
@@ -3364,35 +3166,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "URL, host, or file hash (MD5/SHA256)",
           "type": "string",
-          "minLength": 1,
-          "description": "URL, host, or file hash (MD5/SHA256)"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "URL, host, or file hash (MD5/SHA256)",
           "type": "string",
-          "minLength": 1,
-          "description": "URL, host, or file hash (MD5/SHA256)"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Whether a URL, host, or payload hash is listed as a malware distribution site / sample on URLhaus.",
     "dataSource": "urlhaus-api.abuse.ch",
@@ -3458,35 +3256,31 @@
       "type": "object",
       "properties": {
         "hash": {
+          "description": "MD5 or SHA256 file hash",
           "type": "string",
-          "minLength": 1,
-          "description": "MD5 or SHA256 file hash"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "hash"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "hash": {
+          "description": "MD5 or SHA256 file hash",
           "type": "string",
-          "minLength": 1,
-          "description": "MD5 or SHA256 file hash"
+          "minLength": 1
         }
       },
       "required": [
         "hash"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Malware sample metadata for a file hash (family/signature/tags). Lookup only — does not download samples.",
     "dataSource": "mb-api.abuse.ch",
@@ -3534,35 +3328,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Whether an IP is on Feodo Tracker’s recommended botnet C2 blocklist (Emotet/Dridex/QakBot-class). Membership only.",
     "dataSource": "feodotracker.abuse.ch",
@@ -3610,35 +3400,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Whether an IP is internet background noise and/or a known benign service (RIOT). Helps filter scanner chatter from targeted traffic.",
     "dataSource": "api.greynoise.io/v3/community",
@@ -3686,35 +3472,31 @@
       "type": "object",
       "properties": {
         "hash": {
+          "description": "MD5, SHA-1, SHA-256, or SHA-512 hex hash",
           "type": "string",
-          "minLength": 1,
-          "description": "MD5, SHA-1, SHA-256, or SHA-512 hex hash"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "hash"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "hash": {
+          "description": "MD5, SHA-1, SHA-256, or SHA-512 hex hash",
           "type": "string",
-          "minLength": 1,
-          "description": "MD5, SHA-1, SHA-256, or SHA-512 hex hash"
+          "minLength": 1
         }
       },
       "required": [
         "hash"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Known-file corpus check (NSRL-derived). A hit means “seen as known software,” not a malware verdict.",
     "dataSource": "hashlookup.circl.lu",
@@ -3756,35 +3538,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Malicious-activity rank for an IP’s origin ASN (CIRCL). Useful when judging how noisy the whole ASN is.",
     "dataSource": "bgpranking-ng.circl.lu",
@@ -3826,35 +3604,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "SANS ISC / DShield honeypot sightings for an IP — how often scanners/sensors have seen it attacking.",
     "dataSource": "isc.sans.edu/api",
@@ -3896,35 +3670,31 @@
       "type": "object",
       "properties": {
         "hash": {
+          "description": "MD5, SHA-1, or SHA-256 hex hash",
           "type": "string",
-          "minLength": 1,
-          "description": "MD5, SHA-1, or SHA-256 hex hash"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "hash"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "hash": {
+          "description": "MD5, SHA-1, or SHA-256 hex hash",
           "type": "string",
-          "minLength": 1,
-          "description": "MD5, SHA-1, or SHA-256 hex hash"
+          "minLength": 1
         }
       },
       "required": [
         "hash"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Malware Hash Registry: last-seen time and AV detection % for a file hash. Complements VirusTotal with a DNS-native check.",
     "dataSource": "hash.cymru.com (DNS)",
@@ -3966,35 +3736,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Whether an IP is in FireHOL level1 (composite of dshield, feodo, bogons, spamhaus_drop, etc.). Broad blocklist membership check.",
     "dataSource": "iplists.firehol.org/files/firehol_level1.netset",
@@ -4033,35 +3799,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP, domain, URL, or file hash",
           "type": "string",
-          "minLength": 1,
-          "description": "IP, domain, URL, or file hash"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP, domain, URL, or file hash",
           "type": "string",
-          "minLength": 1,
-          "description": "IP, domain, URL, or file hash"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Pulse membership and malware-family names for an IP, domain, URL, or hash from the OTX community.",
     "dataSource": "otx.alienvault.com",
@@ -4124,19 +3886,15 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4144,14 +3902,12 @@
       "properties": {
         "url": {
           "description": "URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       },
       "required": [
         "url"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Whether a URL hits Google’s malware / social-engineering / unwanted-software lists.",
     "dataSource": "safebrowsing.googleapis.com",
@@ -4199,35 +3955,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP, domain, URL, or file hash",
           "type": "string",
-          "minLength": 1,
-          "description": "IP, domain, URL, or file hash"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP, domain, URL, or file hash",
           "type": "string",
-          "minLength": 1,
-          "description": "IP, domain, URL, or file hash"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "IBM X-Force reputation / malware counts for an IP, URL, or file hash — alternate commercial TI view beside VT.",
     "dataSource": "exchange.xforce.ibmcloud.com",
@@ -4292,35 +4044,31 @@
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "IP or domain"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "query": {
+          "description": "IP or domain",
           "type": "string",
-          "minLength": 1,
-          "description": "IP or domain"
+          "minLength": 1
         }
       },
       "required": [
         "query"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Whether an IP or domain appears in GreedyBear’s recent honeypot-scanner feed (last ~3 days of observed scanners).",
     "dataSource": "greedybear.honeynet.org",
@@ -4369,35 +4117,31 @@
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "ip": {
+          "description": "IPv4 or IPv6",
           "type": "string",
-          "minLength": 1,
-          "description": "IPv4 or IPv6"
+          "minLength": 1
         }
       },
       "required": [
         "ip"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Honeypot sighting history and threat-list flags for an IP — network context plus whether sensors have watched it attack.",
     "dataSource": "honeydb.io",
@@ -4449,20 +4193,15 @@
       "properties": {
         "evidenceId": {
           "description": "Evidence id",
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "evidenceId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4470,15 +4209,12 @@
       "properties": {
         "evidenceId": {
           "description": "Evidence id",
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "evidenceId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Deterministic regex harvest of identifiers from Evidence text — fast first pass before or instead of AI extract.",
     "dataSource": "deterministic harvest",
@@ -4527,14 +4263,10 @@
       "properties": {
         "evidenceId": {
           "description": "Evidence id",
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "model": {
           "type": "string"
@@ -4542,8 +4274,7 @@
       },
       "required": [
         "evidenceId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4551,15 +4282,12 @@
       "properties": {
         "evidenceId": {
           "description": "Evidence id",
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "evidenceId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "LLM structured extract of identifiers, claims, and questions from held Evidence text when deterministic harvest is too shallow.",
     "dataSource": "LLM structured extract",
@@ -4621,20 +4349,15 @@
       "properties": {
         "evidenceId": {
           "description": "Evidence id",
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "evidenceId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4642,15 +4365,12 @@
       "properties": {
         "evidenceId": {
           "description": "Evidence id",
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "evidenceId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Structure held file Evidence (MIME/magic, light EXIF/PDF strings, sha256) into a findings draft for Inbox.",
     "dataSource": "local file bytes",
@@ -4690,20 +4410,15 @@
       "properties": {
         "evidenceId": {
           "description": "Evidence id",
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         },
         "entityId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "evidenceId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "inputForm": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4711,15 +4426,12 @@
       "properties": {
         "evidenceId": {
           "description": "Evidence id",
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          "type": "string"
         }
       },
       "required": [
         "evidenceId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "description": "Parse a held .eml into headers, Received chain, and harvested email/URL identifiers for Inbox review.",
     "dataSource": "local EML text",

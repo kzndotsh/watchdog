@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 
 import {
   breachQuerySeedSchema,
@@ -108,5 +109,28 @@ describe("cap seed schemas", () => {
     );
     expect(pgpQuerySeedSchema.parse("ABCD".repeat(4))).toBe("ABCD".repeat(4));
     expect(() => pgpQuerySeedSchema.parse("not-valid")).toThrow();
+  });
+
+  it("seed schemas are JSON Schema representable for cap inputForm", () => {
+    const schemas = [
+      hostSeedSchema,
+      ipSeedSchema,
+      emailSeedSchema,
+      ipOrHostSeedSchema,
+      hashSeedSchema,
+      breachQuerySeedSchema,
+      dehashedQuerySeedSchema,
+      urlhausQuerySeedSchema,
+      iocIndicatorSeedSchema,
+      threatfoxQuerySeedSchema,
+      githubHandleSeedSchema,
+      keybaseQuerySeedSchema,
+      pgpQuerySeedSchema,
+    ];
+    for (const schema of schemas) {
+      expect(() =>
+        z.toJSONSchema(schema, { unrepresentable: "any", io: "input" })
+      ).not.toThrow();
+    }
   });
 });

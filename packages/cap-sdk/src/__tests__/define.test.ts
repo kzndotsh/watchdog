@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { hostSeedSchema } from "@watchdog/schemas";
 import { ValidationVendorError } from "@watchdog/tools";
 
 import {
@@ -114,6 +115,17 @@ describe("toCapDescriptor", () => {
     });
     const descriptor = toCapDescriptor(cap);
     expect(descriptor.jobPolicy).toBeUndefined();
+  });
+
+  it("serializes transform-based seed fields for inputForm", () => {
+    const cap = defineCapability({
+      id: "test.seed",
+      title: "Seed",
+      input: z.object({ host: hostSeedSchema }),
+      run: () => Effect.succeed({ artifacts: [] }),
+    });
+    const descriptor = toCapDescriptor(cap);
+    expect(descriptor.inputForm.properties).toHaveProperty("host");
   });
 });
 

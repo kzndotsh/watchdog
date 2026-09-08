@@ -18,6 +18,12 @@ import type {
 
 const DEFAULT_FORM_OMIT = ["entityId"] as const;
 
+/** Cap input uses Zod transforms for normalization; JSON Schema uses input shape only. */
+const CAP_INPUT_JSON_SCHEMA_OPTS = {
+  unrepresentable: "any" as const,
+  io: "input" as const,
+};
+
 /** Wire-safe credential specs (mutable arrays for JSON / OpenAPI). */
 export type CapDescriptorCredential =
   | { name: string; optional?: boolean }
@@ -134,7 +140,9 @@ export function toCapDescriptor<TSchema extends ZodType>(
   def: CapabilityDef<TSchema>
 ): CapDescriptor {
   const formOmit = def.formOmit ?? DEFAULT_FORM_OMIT;
-  const input = asJsonObject(z.toJSONSchema(def.input));
+  const input = asJsonObject(
+    z.toJSONSchema(def.input, CAP_INPUT_JSON_SCHEMA_OPTS)
+  );
   const inputForm = omitFormKeys(input, formOmit);
 
   const descriptor: CapDescriptor = {
