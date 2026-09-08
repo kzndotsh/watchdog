@@ -42,7 +42,12 @@ export type IpctlLookupSnapshot = z.infer<typeof ipctlLookupSnapshotSchema>;
 function parseIpctlTags(data: Record<string, unknown>): string[] {
   if (Array.isArray(data.tags)) {
     return data.tags.flatMap((row) => {
-      const value = asString(row);
+      if (typeof row === "string") {
+        const value = asString(row);
+        return value === null ? [] : [value];
+      }
+      if (!isRecord(row)) return [];
+      const value = asString(row.name) ?? asString(row.tag);
       return value === null ? [] : [value];
     });
   }
