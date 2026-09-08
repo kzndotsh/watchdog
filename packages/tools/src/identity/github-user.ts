@@ -132,6 +132,11 @@ export function fetchGithubUserEffect(
       return notFoundGithubSnapshot(handle, authenticated);
     }
 
-    return githubUserFromBody(handle, body, status, authenticated);
+    const login = asString(body.login);
+    if (login === null) {
+      return notFoundGithubSnapshot(handle, authenticated);
+    }
+
+    return githubUserFromBody(login, body, status, authenticated);
   });
 }

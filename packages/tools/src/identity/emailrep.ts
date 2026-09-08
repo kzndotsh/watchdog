@@ -55,7 +55,8 @@ export function parseEmailrepBody(
     email,
     queriedAt,
     source: "emailrep.io",
-    found: references !== null && references > 0,
+    // EmailRep returns reputation + references (often 0) for valid lookups with no footprint.
+    found: asString(body.reputation) !== null,
     reputation: asString(body.reputation),
     suspicious: body.suspicious === true,
     references,

@@ -1,0 +1,17 @@
+{
+  "email": "bsheffield432@gmail.com",
+  "reputation": "none",
+  "suspicious": true,
+  "references": 0,
+  "details": {
+    "credentials_leaked": false,
+    "malicious_activity": false,
+    "data_breach": false,
+    "profiles": [],
+    "first_seen": "never",
+    "last_seen": "never",
+    "disposable": false,
+    "free_provider": true,
+    "spoofable": true
+  }
+}

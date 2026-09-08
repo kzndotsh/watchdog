@@ -33,6 +33,18 @@ describe("emailrep parse", () => {
     expect(snap.dataBreach).toBe(true);
     expect(snap.profiles).toEqual(["twitter", "github"]);
   });
+
+  it("treats reputation=none with references=0 as found", () => {
+    const snap = parseEmailrepBody(
+      "bsheffield432@gmail.com",
+      "2026-01-01T00:00:00.000Z",
+      loadFixture("emailrep-none.json")
+    );
+    expect(snap.found).toBe(true);
+    expect(snap.reputation).toBe("none");
+    expect(snap.references).toBe(0);
+    expect(snap.suspicious).toBe(true);
+  });
 });
 
 describe("keybase parse", () => {

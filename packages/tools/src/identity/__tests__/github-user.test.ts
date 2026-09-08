@@ -34,4 +34,30 @@ describe("github-user", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect(
+    "fetchGithubUserEffect treats HTTP 200 without login as not found",
+    () =>
+      Effect.gen(function* fetchGithubEmptyLoginGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi
+            .fn()
+            .mockResolvedValue(
+              new Response(JSON.stringify({}), { status: 200 })
+            )
+        );
+
+        const snap = yield* fetchGithubUserEffect(
+          "ghost",
+          AbortSignal.timeout(5000)
+        );
+
+        expect(snap.found).toBe(false);
+        expect(snap.handle).toBe("ghost");
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

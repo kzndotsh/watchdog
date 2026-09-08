@@ -98,17 +98,36 @@ export function parseGravatarBody(
     }
   }
 
+  const displayName = asString(entryRaw.displayName);
+  const preferredUsername = asString(entryRaw.preferredUsername);
+  const profileUrl = asString(entryRaw.profileUrl);
+  const location = asString(entryRaw.currentLocation);
+  const aboutMe = asString(entryRaw.aboutMe);
+
+  const hasHit =
+    displayName !== null ||
+    preferredUsername !== null ||
+    profileUrl !== null ||
+    location !== null ||
+    aboutMe !== null ||
+    emails.length > 0 ||
+    accounts.some(
+      (row) =>
+        row.shortname !== null || row.url !== null || row.username !== null
+    );
+  if (!hasHit) return emptyGravatar(email, hash, queriedAt);
+
   return gravatarLookupSnapshotSchema.parse({
     email,
     hash,
     queriedAt,
     source: "secure.gravatar.com",
     found: true,
-    displayName: asString(entryRaw.displayName),
-    preferredUsername: asString(entryRaw.preferredUsername),
-    profileUrl: asString(entryRaw.profileUrl),
-    location: asString(entryRaw.currentLocation),
-    aboutMe: asString(entryRaw.aboutMe),
+    displayName,
+    preferredUsername,
+    profileUrl,
+    location,
+    aboutMe,
     emails,
     accounts,
   });

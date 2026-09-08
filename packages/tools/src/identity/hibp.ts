@@ -119,7 +119,7 @@ export function fetchHibpBreachedAccountEffect(
       email: normalized,
       queriedAt: new Date().toISOString(),
       found: breaches.length > 0,
-      breachCount: raw.length,
+      breachCount: breaches.length,
       breaches,
       status,
     });

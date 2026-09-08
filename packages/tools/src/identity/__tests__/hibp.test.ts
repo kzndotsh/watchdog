@@ -43,4 +43,43 @@ describe("hibp", () => {
         Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
       )
   );
+
+  it.effect(
+    "fetchHibpBreachedAccountEffect aligns breachCount with parsed breaches",
+    () =>
+      Effect.gen(function* fetchHibpBreachedAccountCountGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi.fn().mockResolvedValue(
+            new Response(
+              JSON.stringify([
+                {
+                  Name: "BreachA",
+                  Title: "Breach A",
+                  Domain: "mailhost.test",
+                  BreachDate: "2020-01-01",
+                  PwnCount: 1,
+                  DataClasses: ["Email addresses"],
+                },
+                "not-an-object",
+              ]),
+              { status: 200 }
+            )
+          )
+        );
+
+        const snap = yield* fetchHibpBreachedAccountEffect(
+          "alice@mailhost.test",
+          "test-key",
+          AbortSignal.timeout(5000)
+        );
+
+        expect(snap.found).toBe(true);
+        expect(snap.breachCount).toBe(1);
+        expect(snap.breaches).toHaveLength(1);
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

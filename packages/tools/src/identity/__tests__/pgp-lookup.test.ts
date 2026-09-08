@@ -12,11 +12,12 @@ import {
 describe("pgp-lookup", () => {
   it("parseHkpMrIndex reads pub and uid lines", () => {
     const body = [
-      "pub:2048:22:ABCDEF0123456789:DEADBEEF:1609459200:0:",
+      "pub:404B72211DBE155213A5FE7F503DFDD1:1:1024:1104505339:::",
       "uid:Alice <alice@mailhost.test>",
     ].join("\n");
     const keys = parseHkpMrIndex(body);
-    expect(keys[0]?.fingerprint).toBe("DEADBEEF");
+    expect(keys[0]?.fingerprint).toBe("404B72211DBE155213A5FE7F503DFDD1");
+    expect(keys[0]?.created).toBe(new Date(1_104_505_339 * 1000).toISOString());
     expect(keys[0]?.uids[0]).toContain("alice@mailhost.test");
   });
 
@@ -30,7 +31,7 @@ describe("pgp-lookup", () => {
             .fn()
             .mockResolvedValue(
               new Response(
-                "pub:2048:22:ABCDEF0123456789:DEADBEEF:1609459200:0:\nuid:Alice",
+                "pub:404B72211DBE155213A5FE7F503DFDD1:1:1024:1104505339:::\nuid:Alice",
                 { status: 200 }
               )
             )

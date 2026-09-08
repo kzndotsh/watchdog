@@ -50,10 +50,10 @@ export function parseHkpMrIndex(body: string): PgpKeyHit[] {
       if (current !== null) keys.push(current);
       const parts = line.split(":");
       current = {
-        fingerprint: parts[4] ?? "",
+        fingerprint: parts[1] ?? "",
         uids: [],
-        created: epochIso(parts[5]),
-        expires: epochIso(parts[6]),
+        created: epochIso(parts[4]),
+        expires: epochIso(parts[5]),
       };
     } else if (line.startsWith("uid:") && current !== null) {
       const parts = line.split(":");

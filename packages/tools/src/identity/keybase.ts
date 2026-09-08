@@ -52,7 +52,7 @@ function classifyQuery(raw: string): {
     };
   }
   const username = trimmed.toLowerCase();
-  if (!/^[a-z0-9][a-z0-9_]{1,15}$/i.test(username)) {
+  if (!/^[a-z0-9][a-z0-9_]{0,15}$/i.test(username)) {
     throw validationToolsError(`Invalid Keybase query: ${raw}`);
   }
   return { kind: "username", value: username, param: "usernames" };
@@ -205,6 +205,27 @@ export function parseKeybaseBody(
     return name === null ? [] : [name];
   });
 
+  const proofs = proofsFromUser(first);
+  const pgpFingerprints = pgpFromUser(first);
+  const bitcoinAddresses = bitcoinFromUser(first);
+  const fullName = asString(profile.full_name);
+  const bio = asString(profile.bio);
+  const location = asString(profile.location);
+
+  const hasHit =
+    username !== null ||
+    fullName !== null ||
+    bio !== null ||
+    location !== null ||
+    proofs.some(
+      (row) =>
+        row.username !== null || row.url !== null || row.platform.length > 0
+    ) ||
+    pgpFingerprints.length > 0 ||
+    bitcoinAddresses.length > 0 ||
+    extraUsernames.length > 0;
+  if (!hasHit) return emptySnap(query, kind, queriedAt);
+
   return keybaseLookupSnapshotSchema.parse({
     query,
     kind,
@@ -212,13 +233,13 @@ export function parseKeybaseBody(
     source: "keybase.io/_/api/1.0/user/lookup",
     found: true,
     username,
-    fullName: asString(profile.full_name),
-    bio: asString(profile.bio),
-    location: asString(profile.location),
+    fullName,
+    bio,
+    location,
     profileUrl: username ? `https://keybase.io/${username}` : null,
-    proofs: proofsFromUser(first),
-    pgpFingerprints: pgpFromUser(first),
-    bitcoinAddresses: bitcoinFromUser(first),
+    proofs,
+    pgpFingerprints,
+    bitcoinAddresses,
     extraUsernames,
   });
 }
