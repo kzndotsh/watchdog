@@ -919,7 +919,8 @@
           "summary": "Create an agent Proposal (Inbox)",
           "tags": [
             "inbox"
-          ]
+          ],
+          "successStatus": 201
         }
       }
     },
@@ -1021,7 +1022,8 @@
           "summary": "Write Graph from agent (userOverride escape hatch)",
           "tags": [
             "graph"
-          ]
+          ],
+          "successStatus": 201
         }
       }
     }

@@ -88,8 +88,7 @@
             "name": "caseId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -188,8 +187,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -197,7 +195,8 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 2
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -337,12 +336,34 @@
                               "other"
                             ],
                             "type": "string"
+                          },
+                          "sourceUrl": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "entityName": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
                         },
                         "required": [
                           "id",
                           "label",
-                          "kind"
+                          "kind",
+                          "sourceUrl",
+                          "entityName"
                         ]
                       }
                     },
@@ -368,11 +389,37 @@
                             ],
                             "type": "string"
                           },
+                          "priority": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "low",
+                                  "medium",
+                                  "high",
+                                  "urgent"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "entityId": {
                             "anyOf": [
                               {
                                 "type": "string",
                                 "format": "uuid"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "entityName": {
+                            "anyOf": [
+                              {
+                                "type": "string"
                               },
                               {
                                 "type": "null"
@@ -384,7 +431,9 @@
                           "id",
                           "title",
                           "status",
-                          "entityId"
+                          "priority",
+                          "entityId",
+                          "entityName"
                         ]
                       }
                     },
@@ -420,13 +469,124 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "input": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "anyOf": [
+                                            {},
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "object",
+                                        "propertyNames": {
+                                          "type": "string"
+                                        },
+                                        "additionalProperties": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "boolean"
+                                      },
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "anyOf": [
+                                            {},
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "type": "object",
+                                        "propertyNames": {
+                                          "type": "string"
+                                        },
+                                        "additionalProperties": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "playbookId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
                         },
                         "required": [
                           "id",
                           "capabilityId",
                           "status",
-                          "resultSummary"
+                          "resultSummary",
+                          "input",
+                          "playbookId"
                         ]
                       }
                     },
@@ -458,12 +618,34 @@
                                 "type": "null"
                               }
                             ]
+                          },
+                          "playbookId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "entityName": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           }
                         },
                         "required": [
                           "id",
                           "summary",
-                          "capabilityId"
+                          "capabilityId",
+                          "playbookId",
+                          "entityName"
                         ]
                       }
                     },
@@ -489,6 +671,24 @@
                           "slug"
                         ]
                       }
+                    },
+                    "evidenceLabels": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "entityLabels": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -499,7 +699,9 @@
                     "tasks",
                     "jobs",
                     "proposals",
-                    "cases"
+                    "cases",
+                    "evidenceLabels",
+                    "entityLabels"
                   ]
                 }
               }
@@ -1140,8 +1342,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1202,8 +1403,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1218,7 +1418,14 @@
                     "type": "string"
                   },
                   "description": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "allowThirdPartyEgress": {
                     "type": "boolean"
@@ -1285,8 +1492,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1325,8 +1531,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1419,8 +1624,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1444,14 +1648,12 @@
                     "minLength": 1
                   },
                   "slug": {
-                    "type": "string",
-                    "minLength": 1
+                    "type": "string"
                   }
                 },
                 "required": [
                   "kind",
-                  "name",
-                  "slug"
+                  "name"
                 ]
               }
             }
@@ -1545,8 +1747,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -1554,8 +1755,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "minLength": 1
+              "type": "string"
             }
           }
         ],
@@ -1647,8 +1847,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -1656,8 +1855,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1681,10 +1879,24 @@
                     "minLength": 1
                   },
                   "summary": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "notes": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 }
               }
@@ -1777,8 +1989,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -1786,8 +1997,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -1826,8 +2036,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -1835,8 +2044,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -1976,8 +2184,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -1985,8 +2192,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -2022,12 +2228,12 @@
                   "evidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 },
                 "required": [
@@ -2163,8 +2369,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -2172,8 +2377,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -2208,12 +2412,12 @@
                   "evidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -2345,8 +2549,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -2354,8 +2557,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -2379,7 +2581,8 @@
                     "minLength": 1
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 },
                 "required": [
@@ -2515,8 +2718,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -2524,8 +2726,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -2632,8 +2833,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -2641,8 +2841,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -2698,12 +2897,12 @@
                   "evidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 },
                 "required": [
@@ -2817,8 +3016,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -2907,6 +3105,26 @@
                           "org"
                         ],
                         "type": "string"
+                      },
+                      "entitySummary": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "entityNotes": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -2921,7 +3139,9 @@
                       "evidenceIds",
                       "entityName",
                       "entitySlug",
-                      "entityKind"
+                      "entityKind",
+                      "entitySummary",
+                      "entityNotes"
                     ]
                   }
                 }
@@ -2944,8 +3164,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -2953,8 +3172,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -2965,14 +3183,19 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "userOverride": {
-                    "const": true
-                  },
                   "value": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                   },
                   "platform": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "type": {
                     "enum": [
@@ -3006,13 +3229,24 @@
                     "type": "string"
                   },
                   "notes": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "evidenceIds": {
                     "type": "array",
                     "items": {
                       "type": "string"
                     }
+                  },
+                  "userOverride": {
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -3119,8 +3353,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -3128,8 +3361,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -3141,7 +3373,8 @@
                 "type": "object",
                 "properties": {
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -3183,8 +3416,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -3192,8 +3424,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -3327,8 +3558,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -3464,8 +3694,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -3477,12 +3706,10 @@
                 "type": "object",
                 "properties": {
                   "fromId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   },
                   "toId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   },
                   "predicate": {
                     "enum": [
@@ -3520,16 +3747,15 @@
                   "evidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
                   },
                   "viewEntityId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 },
                 "required": [
@@ -3669,8 +3895,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -3678,8 +3903,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -3691,16 +3915,13 @@
                 "type": "object",
                 "properties": {
                   "viewEntityId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   },
                   "fromId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   },
                   "toId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   },
                   "predicate": {
                     "enum": [
@@ -3733,17 +3954,24 @@
                     "type": "string"
                   },
                   "notes": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "evidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -3875,8 +4103,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -3884,8 +4111,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -3897,7 +4123,8 @@
                 "type": "object",
                 "properties": {
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -3939,8 +4166,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -3948,8 +4174,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4014,8 +4239,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -4023,8 +4247,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4047,7 +4270,8 @@
                     "type": "string"
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 },
                 "required": [
@@ -4118,8 +4342,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -4127,8 +4350,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4148,10 +4370,18 @@
                     "minLength": 1
                   },
                   "where": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -4216,8 +4446,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -4225,8 +4454,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4238,7 +4466,8 @@
                 "type": "object",
                 "properties": {
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -4280,8 +4509,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -4289,8 +4517,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4359,8 +4586,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -4368,8 +4594,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4385,7 +4610,8 @@
                     "minLength": 1
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 },
                 "required": [
@@ -4459,8 +4685,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -4468,8 +4693,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4487,15 +4711,16 @@
                   "resolvedNote": {
                     "anyOf": [
                       {
-                        "type": "string"
+                        "type": "null"
                       },
                       {
-                        "type": "null"
+                        "type": "string"
                       }
                     ]
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -4566,8 +4791,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -4575,8 +4799,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4591,7 +4814,8 @@
                     "type": "string"
                   },
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -4662,8 +4886,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -4671,8 +4894,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4684,7 +4906,8 @@
                 "type": "object",
                 "properties": {
                   "userOverride": {
-                    "const": true
+                    "const": true,
+                    "description": "Required as true when authenticating with an API key."
                   }
                 }
               }
@@ -4755,16 +4978,14 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
             "name": "entityId",
             "in": "query",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -4917,8 +5138,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -4965,21 +5185,20 @@
                   "dueDate": {
                     "anyOf": [
                       {
-                        "type": "string"
+                        "type": "null"
                       },
                       {
-                        "type": "null"
+                        "type": "string"
                       }
                     ]
                   },
                   "entityId": {
                     "anyOf": [
                       {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "null"
                       },
                       {
-                        "type": "null"
+                        "type": "string"
                       }
                     ]
                   }
@@ -5112,8 +5331,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -5121,8 +5339,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -5245,8 +5462,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -5254,8 +5470,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -5273,10 +5488,10 @@
                   "description": {
                     "anyOf": [
                       {
-                        "type": "string"
+                        "type": "null"
                       },
                       {
-                        "type": "null"
+                        "type": "string"
                       }
                     ]
                   },
@@ -5309,21 +5524,20 @@
                   "dueDate": {
                     "anyOf": [
                       {
-                        "type": "string"
+                        "type": "null"
                       },
                       {
-                        "type": "null"
+                        "type": "string"
                       }
                     ]
                   },
                   "entityId": {
                     "anyOf": [
                       {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "null"
                       },
                       {
-                        "type": "null"
+                        "type": "string"
                       }
                     ]
                   }
@@ -5451,8 +5665,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -5460,8 +5673,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -5500,8 +5712,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -5525,8 +5736,7 @@
                   "orderedIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
                   }
                 },
@@ -5662,8 +5872,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -5874,8 +6083,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -5894,12 +6102,10 @@
                     "type": "string"
                   },
                   "sourceUrl": {
-                    "type": "string",
-                    "format": "uri"
+                    "type": "string"
                   },
                   "entityId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -6083,8 +6289,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -6096,8 +6301,7 @@
                 "type": "object",
                 "properties": {
                   "sourceUrl": {
-                    "type": "string",
-                    "format": "uri"
+                    "type": "string"
                   },
                   "label": {
                     "type": "string"
@@ -6106,8 +6310,7 @@
                     "type": "string"
                   },
                   "entityId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -6291,8 +6494,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -6300,8 +6502,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -6338,8 +6539,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -6347,8 +6547,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -6362,11 +6561,10 @@
                   "entityId": {
                     "anyOf": [
                       {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "null"
                       },
                       {
-                        "type": "null"
+                        "type": "string"
                       }
                     ]
                   }
@@ -6552,8 +6750,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -6561,8 +6758,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -6601,8 +6797,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -6614,17 +6809,15 @@
                 "type": "object",
                 "properties": {
                   "sha256": {
-                    "type": "string",
-                    "minLength": 1
+                    "type": "string"
                   },
                   "mime": {
-                    "type": "string",
-                    "minLength": 1
+                    "type": "string"
                   },
                   "byteLength": {
                     "type": "integer",
                     "minimum": -9007199254740991,
-                    "maximum": 9007199254740991,
+                    "maximum": 104857600,
                     "exclusiveMinimum": 0
                   },
                   "name": {
@@ -6709,8 +6902,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -6726,25 +6918,22 @@
                     "minLength": 1
                   },
                   "sha256": {
-                    "type": "string",
-                    "minLength": 1
+                    "type": "string"
                   },
                   "mime": {
-                    "type": "string",
-                    "minLength": 1
+                    "type": "string"
                   },
                   "byteLength": {
                     "type": "integer",
                     "minimum": -9007199254740991,
-                    "maximum": 9007199254740991,
+                    "maximum": 104857600,
                     "exclusiveMinimum": 0
                   },
                   "label": {
                     "type": "string"
                   },
                   "entityId": {
-                    "type": "string",
-                    "format": "uuid"
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -6931,8 +7120,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -6940,8 +7128,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -6987,8 +7174,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -6996,8 +7182,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -7381,8 +7566,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -7390,8 +7574,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -7759,8 +7942,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -8122,8 +8304,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -8596,8 +8777,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -8605,8 +8785,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -8974,8 +9153,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -8983,8 +9161,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -9352,8 +9529,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -9383,12 +9559,10 @@
                         "type": "string"
                       },
                       "evidenceId": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "string"
                       },
                       "entityId": {
-                        "type": "string",
-                        "format": "uuid"
+                        "type": "string"
                       },
                       "ip": {
                         "type": "string"
@@ -9796,8 +9970,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -9805,8 +9978,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -9854,8 +10026,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -9903,6 +10074,16 @@
                         ]
                       },
                       "capabilityId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "playbookId": {
                         "anyOf": [
                           {
                             "type": "string"
@@ -10047,13 +10228,7 @@
                                 ]
                               }
                             },
-                            "evidenceIds": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "format": "uuid"
-                              }
-                            }
+                            "evidenceIds": {}
                           },
                           "required": [
                             "op",
@@ -10172,6 +10347,24 @@
                           "type": "string"
                         }
                       },
+                      "entitySummaries": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "entityNotes": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
                       "identifierCollisions": {
                         "type": "array",
                         "items": {
@@ -10226,6 +10419,7 @@
                       "caseId",
                       "jobId",
                       "capabilityId",
+                      "playbookId",
                       "status",
                       "patch",
                       "summary",
@@ -10260,8 +10454,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -10298,8 +10491,7 @@
                           "type": "string"
                         },
                         "id": {
-                          "type": "string",
-                          "format": "uuid"
+                          "type": "string"
                         },
                         "data": {
                           "type": "object",
@@ -10389,8 +10581,7 @@
                         "evidenceIds": {
                           "type": "array",
                           "items": {
-                            "type": "string",
-                            "format": "uuid"
+                            "type": "string"
                           }
                         }
                       },
@@ -10408,8 +10599,7 @@
                   "evidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
                   }
                 },
@@ -10421,7 +10611,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "OK",
             "content": {
               "application/json": {
@@ -10448,6 +10638,16 @@
                       ]
                     },
                     "capabilityId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "playbookId": {
                       "anyOf": [
                         {
                           "type": "string"
@@ -10592,13 +10792,7 @@
                               ]
                             }
                           },
-                          "evidenceIds": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "format": "uuid"
-                            }
-                          }
+                          "evidenceIds": {}
                         },
                         "required": [
                           "op",
@@ -10717,6 +10911,24 @@
                         "type": "string"
                       }
                     },
+                    "entitySummaries": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "entityNotes": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "identifierCollisions": {
                       "type": "array",
                       "items": {
@@ -10771,6 +10983,7 @@
                     "caseId",
                     "jobId",
                     "capabilityId",
+                    "playbookId",
                     "status",
                     "patch",
                     "summary",
@@ -10806,8 +11019,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -10815,8 +11027,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -10838,8 +11049,7 @@
                   "sharedEvidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     },
                     "default": []
                   },
@@ -10888,6 +11098,16 @@
                         }
                       ]
                     },
+                    "playbookId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "status": {
                       "enum": [
                         "pending",
@@ -11023,13 +11243,7 @@
                               ]
                             }
                           },
-                          "evidenceIds": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "format": "uuid"
-                            }
-                          }
+                          "evidenceIds": {}
                         },
                         "required": [
                           "op",
@@ -11148,6 +11362,24 @@
                         "type": "string"
                       }
                     },
+                    "entitySummaries": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "entityNotes": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "identifierCollisions": {
                       "type": "array",
                       "items": {
@@ -11202,6 +11434,7 @@
                     "caseId",
                     "jobId",
                     "capabilityId",
+                    "playbookId",
                     "status",
                     "patch",
                     "summary",
@@ -11237,8 +11470,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
@@ -11246,8 +11478,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -11303,6 +11534,16 @@
                         }
                       ]
                     },
+                    "playbookId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "status": {
                       "enum": [
                         "pending",
@@ -11438,13 +11679,7 @@
                               ]
                             }
                           },
-                          "evidenceIds": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "format": "uuid"
-                            }
-                          }
+                          "evidenceIds": {}
                         },
                         "required": [
                           "op",
@@ -11563,6 +11798,24 @@
                         "type": "string"
                       }
                     },
+                    "entitySummaries": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
+                    "entityNotes": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    },
                     "identifierCollisions": {
                       "type": "array",
                       "items": {
@@ -11617,6 +11870,7 @@
                     "caseId",
                     "jobId",
                     "capabilityId",
+                    "playbookId",
                     "status",
                     "patch",
                     "summary",
@@ -11708,7 +11962,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "minLength": 1
+              "pattern": "^[A-Z][A-Z0-9_]*$"
             }
           }
         ],
@@ -11791,7 +12045,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "minLength": 1
+              "pattern": "^[A-Z][A-Z0-9_]*$"
             }
           }
         ],
@@ -11830,8 +12084,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -11866,6 +12119,11 @@
                         "type": "boolean"
                       },
                       "confidence": {
+                        "enum": [
+                          "unverified",
+                          "possible",
+                          "confirmed"
+                        ],
                         "type": "string"
                       },
                       "summary": {
@@ -11914,8 +12172,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
@@ -11952,8 +12209,7 @@
                           "type": "string"
                         },
                         "id": {
-                          "type": "string",
-                          "format": "uuid"
+                          "type": "string"
                         },
                         "data": {
                           "type": "object",
@@ -12043,8 +12299,7 @@
                         "evidenceIds": {
                           "type": "array",
                           "items": {
-                            "type": "string",
-                            "format": "uuid"
+                            "type": "string"
                           }
                         }
                       },
@@ -12062,8 +12317,7 @@
                   "evidenceIds": {
                     "type": "array",
                     "items": {
-                      "type": "string",
-                      "format": "uuid"
+                      "type": "string"
                     }
                   },
                   "userOverride": {
@@ -12083,7 +12337,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "OK",
             "content": {
               "application/json": {

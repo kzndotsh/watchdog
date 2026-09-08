@@ -21,4 +21,13 @@ describe("createWatchdogClient", () => {
     expect(request.url.includes("/api/v1//")).toBe(false);
     expect(request.headers.get("x-api-key")).toBe("test-key");
   });
+
+  it("rejects blank api keys", () => {
+    expect(() => createWatchdogClient({ apiKey: "" })).toThrow(
+      /apiKey is required/
+    );
+    expect(() => createWatchdogClient({ apiKey: "   " })).toThrow(
+      /apiKey is required/
+    );
+  });
 });

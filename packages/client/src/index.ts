@@ -34,6 +34,11 @@ function resolveBaseUrl(explicit?: string): string {
 export function createWatchdogClient(
   opts: CreateWatchdogClientOptions
 ): WatchdogClient {
+  const apiKey = opts.apiKey.trim();
+  if (!apiKey) {
+    throw new Error("apiKey is required");
+  }
+
   // contract.json is the generated OpenAPI contract (data only); AppRouter's
   // procedure/handler types have no runtime representation to validate
   // against, so OpenAPILink's documented pattern is to assert the JSON
@@ -42,7 +47,7 @@ export function createWatchdogClient(
   const link = new OpenAPILink(contract as unknown as AppRouter, {
     url: resolveBaseUrl(opts.baseUrl),
     headers: () => ({
-      "x-api-key": opts.apiKey,
+      "x-api-key": apiKey,
     }),
   });
   return createORPCClient(link);
