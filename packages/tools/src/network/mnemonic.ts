@@ -9,6 +9,7 @@ import type { ToolsTag } from "../errors/tagged-errors";
 import { httpToolsError, parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asNumber, asStringEmpty as asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
@@ -181,6 +182,7 @@ export function fetchMnemonicPdnsEffect(
   options?: MnemonicOptions
 ): Effect.Effect<MnemonicLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchMnemonicPdnsGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyIpOrHost(queryRaw);
     const limit = Math.min(Math.max(options?.limit ?? 50, 1), 500);
     const ua =
@@ -202,6 +204,6 @@ export function fetchMnemonicPdnsEffect(
         headers: { Accept: "application/json", "User-Agent": ua },
       },
     });
-    return parseMnemonicPdnsBody(value, kind, new Date().toISOString(), body);
+    return parseMnemonicPdnsBody(value, kind, queriedAt, body);
   });
 }

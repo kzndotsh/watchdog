@@ -6,6 +6,7 @@ import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 import {
@@ -124,10 +125,11 @@ export interface FetchCrtShOptions {
  */
 export function fetchCrtShLookupEffect(
   host: string,
-  signal?: AbortSignal,
+  signal: AbortSignal,
   options?: FetchCrtShOptions
 ): Effect.Effect<CtLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCrtShLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const resolved = options ?? {};
     const normalized = normalizeHost(host);
     const limit = resolved.limit ?? 50;
@@ -138,8 +140,7 @@ export function fetchCrtShLookupEffect(
     url.searchParams.set("q", `%.${normalized}`);
     url.searchParams.set("output", "json");
 
-    const abort = signal ?? new AbortController().signal;
-    const result = yield* fetchBytesEffect(url.toString(), abort, {
+    const result = yield* fetchBytesEffect(url.toString(), signal, {
       userAgent,
       maxBytes: 4_000_000,
       accept: "application/json",
@@ -161,7 +162,7 @@ export function fetchCrtShLookupEffect(
     return ctLookupSnapshotSchema.parse({
       host: normalized,
       source: "crt.sh",
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       entries,
       domains,
     });

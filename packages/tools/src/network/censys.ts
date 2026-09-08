@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord, recordRows } from "../parse/coerce";
 
 export const censysLookupSnapshotSchema = z.object({
@@ -57,6 +58,7 @@ export function fetchCensysHostEffect(
   options?: { userAgent?: string }
 ): Effect.Effect<CensysLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCensysHostGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const id = apiId.trim();
     const secret = apiSecret.trim();
@@ -90,7 +92,7 @@ export function fetchCensysHostEffect(
     if (status === 404) {
       return censysLookupSnapshotSchema.parse({
         ip,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         found: false,
         status: 404,
         asn: null,
@@ -121,7 +123,7 @@ export function fetchCensysHostEffect(
 
     return censysLookupSnapshotSchema.parse({
       ip,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       found: true,
       status,
       asn: typeof autonomous.asn === "number" ? autonomous.asn : null,

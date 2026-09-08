@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord } from "../parse/coerce";
 
 export const honeydbLookupSnapshotSchema = z.object({
@@ -55,6 +56,7 @@ export function fetchHoneydbLookupEffect(
   options?: { userAgent?: string }
 ): Effect.Effect<HoneydbLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHoneydbLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const id = apiId.trim();
     const key = apiKey.trim();
@@ -86,7 +88,7 @@ export function fetchHoneydbLookupEffect(
     if (status === 404) {
       return honeydbLookupSnapshotSchema.parse({
         ip,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "honeydb.io",
         found: false,
         asn: null,
@@ -107,7 +109,7 @@ export function fetchHoneydbLookupEffect(
 
     return honeydbLookupSnapshotSchema.parse({
       ip,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "honeydb.io",
       found: true,
       asn: typeof networkInfo.asn === "number" ? networkInfo.asn : null,

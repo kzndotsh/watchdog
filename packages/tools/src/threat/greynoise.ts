@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asBool, asString } from "../parse/coerce";
 
 export const greynoiseLookupSnapshotSchema = z.object({
@@ -45,6 +46,7 @@ export function fetchGreynoiseCommunityEffect(
   options?: GreynoiseOptions
 ): Effect.Effect<GreynoiseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchGreynoiseCommunityGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const key = options?.apiKey?.trim() ?? "";
     const ua =
@@ -72,7 +74,7 @@ export function fetchGreynoiseCommunityEffect(
 
     return greynoiseLookupSnapshotSchema.parse({
       ip,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "api.greynoise.io/v3/community",
       found: status === 200,
       noise,

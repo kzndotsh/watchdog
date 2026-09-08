@@ -9,6 +9,7 @@ import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { normalizeHttpUrl } from "../http/normalize-http-url";
 import { isBlockedUnshortenUrl } from "../http/unshorten-guards";
+import { nowIsoStringEffect } from "../infra/clock";
 
 export const urlscanSubmitVisibilitySchema = z.enum([
   "public",
@@ -46,6 +47,7 @@ export function submitUrlscanEffect(
   options?: { userAgent?: string }
 ): Effect.Effect<UrlscanSubmitSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* submitUrlscanGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({ slot: "URLSCAN_API_KEY" });
@@ -84,7 +86,7 @@ export function submitUrlscanEffect(
     return urlscanSubmitSnapshotSchema.parse({
       url: target,
       visibility,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "urlscan.io",
       uuid,
       resultUrl: typeof body.result === "string" ? body.result : null,

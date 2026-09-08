@@ -7,6 +7,7 @@ import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asString, recordRows } from "../parse/coerce";
 
 export const HASHLOOKUP_ALGOS = ["md5", "sha1", "sha256", "sha512"] as const;
@@ -84,6 +85,7 @@ export function fetchHashlookupEffect(
   options?: HashlookupOptions
 ): Effect.Effect<HashlookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHashlookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const hash = yield* Effect.try({
       try: () => normalizeHashlookupHash(hashRaw),
       catch: mapToolsCatch,
@@ -111,7 +113,7 @@ export function fetchHashlookupEffect(
       return hashlookupSnapshotSchema.parse({
         hash,
         algo,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "hashlookup.circl.lu",
         found: false,
         trust: null,
@@ -154,7 +156,7 @@ export function fetchHashlookupEffect(
       return hashlookupSnapshotSchema.parse({
         hash,
         algo,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "hashlookup.circl.lu",
         found: false,
         trust: null,
@@ -171,7 +173,7 @@ export function fetchHashlookupEffect(
     return hashlookupSnapshotSchema.parse({
       hash,
       algo,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "hashlookup.circl.lu",
       found: true,
       trust,

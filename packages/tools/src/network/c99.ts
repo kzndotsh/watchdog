@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asBool, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -82,6 +83,7 @@ export function fetchC99SubdomainsEffect(
   options?: C99Options
 ): Effect.Effect<C99LookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchC99SubdomainsGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const host = normalizeHost(hostRaw);
     const key = apiKey.trim();
     if (!key) {
@@ -136,7 +138,7 @@ export function fetchC99SubdomainsEffect(
 
     return c99LookupSnapshotSchema.parse({
       host,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "api.c99.nl/subdomainfinder",
       realtime,
       domains: hits.map((h) => h.subdomain),

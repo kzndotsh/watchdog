@@ -8,6 +8,7 @@ import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -216,6 +217,7 @@ export function fetchCommoncrawlLookupEffect(
   options?: CommoncrawlLookupOptions
 ): Effect.Effect<CommoncrawlLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCommoncrawlLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const resolved = options ?? {};
     const host = normalizeHost(hostRaw);
     const indexCount = Math.min(Math.max(resolved.indexes ?? 2, 1), 6);
@@ -264,7 +266,7 @@ export function fetchCommoncrawlLookupEffect(
 
     return commoncrawlLookupSnapshotSchema.parse({
       host,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "index.commoncrawl.org",
       indexes: indexes.map((i) => i.id),
       urls,

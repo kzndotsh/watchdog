@@ -9,6 +9,7 @@ import { normalizeIp, normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { nowIsoStringEffect } from "../infra/clock";
 import { expandIpv6 } from "../network/ip-lookup-cymru";
 
 export const fireholLookupSnapshotSchema = z.object({
@@ -147,6 +148,7 @@ export function fetchFireholLookupEffect(
   options?: FireholOptions
 ): Effect.Effect<FireholLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchFireholLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const ua = options?.userAgent ?? watchdogUserAgent("threat.firehol.lookup");
 
@@ -164,7 +166,7 @@ export function fetchFireholLookupEffect(
 
     return fireholLookupSnapshotSchema.parse({
       ip,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "iplists.firehol.org",
       list: "firehol_level1",
       found,

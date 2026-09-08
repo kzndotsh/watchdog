@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import type { ToolsTag } from "../errors/tagged-errors";
+import { nowIsoStringEffect } from "../infra/clock";
 import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import { normalizeDnsLookupHostEffect } from "./resolve";
 import {
@@ -164,13 +165,14 @@ export function fetchTxtInventoryEffect(
   host: string,
   signal: AbortSignal
 ): Effect.Effect<TxtInventorySnapshot, ToolsTag> {
-  return Effect.gen(function* fetchTxtInventoryOuterGen() {
+  return Effect.gen(function* fetchTxtInventoryGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const normalizedHost = yield* normalizeDnsLookupHostEffect(host);
     return yield* runAbortableResolver(
       signal,
       "TXT inventory aborted",
       (resolver) =>
-        Effect.gen(function* fetchTxtInventoryGen() {
+        Effect.gen(function* fetchTxtInventoryDnsGen() {
           const chunks = yield* dnsOrEmpty(
             () => resolver.resolveTxt(normalizedHost),
             [] as string[][]
@@ -179,7 +181,7 @@ export function fetchTxtInventoryEffect(
           const tokens = records.map(classifyRecord);
           return txtInventorySnapshotSchema.parse({
             host: normalizedHost,
-            queriedAt: new Date().toISOString(),
+            queriedAt,
             records,
             tokens,
           });

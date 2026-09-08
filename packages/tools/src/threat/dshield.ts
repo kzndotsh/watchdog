@@ -5,6 +5,7 @@ import { z } from "zod";
 import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord } from "../parse/coerce";
 
 export const dshieldLookupSnapshotSchema = z.object({
@@ -99,6 +100,7 @@ export function fetchDshieldLookupEffect(
   options?: DshieldOptions
 ): Effect.Effect<DshieldLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchDshieldLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const ua = options?.userAgent ?? DSHIELD_USER_AGENT;
 
@@ -113,6 +115,6 @@ export function fetchDshieldLookupEffect(
       },
     });
     const data = isRecord(body.ip) ? body.ip : {};
-    return parseDshieldBody(ip, new Date().toISOString(), data);
+    return parseDshieldBody(ip, queriedAt, data);
   });
 }

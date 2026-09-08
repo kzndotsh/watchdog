@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { nowIsoStringEffect } from "../infra/clock";
 
 export const pgpKeySchema = z.object({
   /** Key id / fingerprint string from HKP index (may be short id). */
@@ -79,6 +80,7 @@ export function fetchPgpLookupEffect(
   options?: PgpLookupOptions
 ): Effect.Effect<PgpLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchPgpLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const query = queryRaw.trim();
     if (!query) {
       return yield* new ValidationVendorError({
@@ -109,7 +111,7 @@ export function fetchPgpLookupEffect(
 
     return pgpLookupSnapshotSchema.parse({
       query,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source,
       keys,
     });

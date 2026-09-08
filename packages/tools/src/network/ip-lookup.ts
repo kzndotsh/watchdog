@@ -4,6 +4,7 @@ import { z } from "zod";
 import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
 import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
+import { nowIsoStringEffect } from "../infra/clock";
 import {
   originLookupName,
   parseCymruAsName,
@@ -49,6 +50,7 @@ export function fetchIpLookupEffect(
   signal: AbortSignal
 ): Effect.Effect<IpLookupSnapshot, ToolsTag> {
   return Effect.gen(function* fetchIpLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     return yield* runAbortableResolver(
       signal,
@@ -86,7 +88,7 @@ export function fetchIpLookupEffect(
 
           return ipLookupSnapshotSchema.parse({
             ip,
-            queriedAt: new Date().toISOString(),
+            queriedAt,
             source: "team-cymru-dns",
             asn: fields.asns[0] ?? null,
             asns: fields.asns,

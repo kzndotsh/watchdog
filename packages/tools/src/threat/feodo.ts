@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { nowIsoStringEffect, nowMillisEffect } from "../infra/clock";
 import {
   findFeodoEntry,
   parseFeodoEntries,
@@ -68,7 +69,8 @@ function fetchBlocklistEffect(
   apiKey: string | undefined
 ): Effect.Effect<FeodoEntry[], ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchFeodoBlocklistGen() {
-    const hit = cachedBlocklist(Date.now());
+    const now = yield* nowMillisEffect;
+    const hit = cachedBlocklist(now);
     if (hit) return hit;
 
     const { body } = yield* fetchJsonUnknownEffect({
@@ -84,11 +86,12 @@ function fetchBlocklistEffect(
 
 function toFeodoSnapshot(
   ip: string,
-  match: FeodoEntry | undefined
+  match: FeodoEntry | undefined,
+  queriedAt: string
 ): FeodoLookupSnapshot {
   return feodoLookupSnapshotSchema.parse({
     ip,
-    queriedAt: new Date().toISOString(),
+    queriedAt,
     source: "feodotracker.abuse.ch",
     found: Boolean(match),
     malware: match?.malware ?? null,
@@ -110,9 +113,10 @@ export function fetchFeodoLookupEffect(
   options?: FeodoOptions
 ): Effect.Effect<FeodoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchFeodoLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const ua = options?.userAgent ?? watchdogUserAgent("threat.feodo.lookup");
     const entries = yield* fetchBlocklistEffect(signal, ua, options?.apiKey);
-    return toFeodoSnapshot(ip, findFeodoEntry(entries, ip));
+    return toFeodoSnapshot(ip, findFeodoEntry(entries, ip), queriedAt);
   });
 }

@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import {
   asBool,
   asNumber,
@@ -132,6 +133,7 @@ export function fetchIpctlLookupEffect(
   options?: IpctlOptions
 ): Effect.Effect<IpctlLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchIpctlLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const ua = options?.userAgent ?? watchdogUserAgent("network.ipctl.lookup");
 
@@ -147,6 +149,6 @@ export function fetchIpctlLookupEffect(
       subject: ip,
     });
     const data = isRecord(body.data) ? body.data : {};
-    return parseIpctlBody(ip, new Date().toISOString(), data);
+    return parseIpctlBody(ip, queriedAt, data);
   });
 }

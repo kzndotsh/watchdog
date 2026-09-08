@@ -5,6 +5,7 @@ import { z } from "zod";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -83,6 +84,7 @@ export function fetchTrancoLookupEffect(
   options?: TrancoOptions
 ): Effect.Effect<TrancoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchTrancoLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const domain = normalizeHost(domainRaw);
     const ua = options?.userAgent ?? watchdogUserAgent("network.tranco.lookup");
 
@@ -94,7 +96,7 @@ export function fetchTrancoLookupEffect(
 
     return trancoLookupSnapshotSchema.parse({
       domain,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "tranco-list.eu",
       found: rows.length > 0,
       latestRank: latest?.rank ?? null,

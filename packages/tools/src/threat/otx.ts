@@ -13,6 +13,7 @@ import {
   assertHttpUrlScheme,
   normalizeHttpUrl,
 } from "../http/normalize-http-url";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -127,6 +128,7 @@ export function fetchOtxLookupEffect(
   options?: OtxOptions
 ): Effect.Effect<OtxLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchOtxLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({ slot: "OTX_API_KEY" });
@@ -159,7 +161,7 @@ export function fetchOtxLookupEffect(
       return otxLookupSnapshotSchema.parse({
         query: value,
         kind,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "otx.alienvault.com",
         found: false,
         pulseCount: 0,
@@ -172,7 +174,7 @@ export function fetchOtxLookupEffect(
     return otxLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "otx.alienvault.com",
       found: true,
       pulseCount,

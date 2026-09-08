@@ -9,6 +9,7 @@ import {
 } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -151,6 +152,7 @@ export function fetchDehashedLookupEffect(
   options?: DehashedOptions
 ): Effect.Effect<DehashedLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchDehashedLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({ slot: "DEHASHED_API_KEY" });
@@ -207,7 +209,7 @@ export function fetchDehashedLookupEffect(
     return dehashedLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "api.dehashed.com",
       found: entries.length > 0,
       total,

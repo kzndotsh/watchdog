@@ -10,6 +10,7 @@ import {
 } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { recordRows } from "../parse/coerce";
 import { normalizeEmail } from "./email-lookup";
 
@@ -51,6 +52,7 @@ export function fetchHibpBreachedAccountEffect(
   options?: HibpOptions
 ): Effect.Effect<HibpLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHibpBreachedAccountGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { email: normalized } = yield* Effect.try({
       try: () => normalizeEmail(email),
       catch: mapToolsCatch,
@@ -83,7 +85,7 @@ export function fetchHibpBreachedAccountEffect(
     if (status === 404) {
       return hibpLookupSnapshotSchema.parse({
         email: normalized,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         found: false,
         breachCount: 0,
         breaches: [],
@@ -115,7 +117,7 @@ export function fetchHibpBreachedAccountEffect(
 
     return hibpLookupSnapshotSchema.parse({
       email: normalized,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       found: rows.length > 0,
       breachCount: rows.length,
       breaches,

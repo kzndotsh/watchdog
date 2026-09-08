@@ -13,6 +13,7 @@ import {
   assertHttpUrlScheme,
   normalizeHttpUrl,
 } from "../http/normalize-http-url";
+import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -77,6 +78,7 @@ export function fetchXforceLookupEffect(
   options?: { userAgent?: string }
 ): Effect.Effect<XforceLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchXforceLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const key = apiKey.trim();
     const password = apiPassword.trim();
     if (!key) {
@@ -145,7 +147,7 @@ export function fetchXforceLookupEffect(
         return xforceLookupSnapshotSchema.parse({
           query: value,
           kind,
-          queriedAt: new Date().toISOString(),
+          queriedAt,
           source: "exchange.xforce.ibmcloud.com",
           found: true,
           score,
@@ -168,7 +170,7 @@ export function fetchXforceLookupEffect(
         return xforceLookupSnapshotSchema.parse({
           query: value,
           kind,
-          queriedAt: new Date().toISOString(),
+          queriedAt,
           source: "exchange.xforce.ibmcloud.com",
           found: true,
           score: typeof result.score === "number" ? result.score : null,
@@ -190,7 +192,7 @@ export function fetchXforceLookupEffect(
         return xforceLookupSnapshotSchema.parse({
           query: value,
           kind,
-          queriedAt: new Date().toISOString(),
+          queriedAt,
           source: "exchange.xforce.ibmcloud.com",
           found: true,
           score: null,

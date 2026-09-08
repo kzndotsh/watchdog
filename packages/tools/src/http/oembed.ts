@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
+import { nowIsoStringEffect } from "../infra/clock";
 import { fetchBytesEffect } from "./fetch-bytes";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 
@@ -146,7 +147,7 @@ export function fetchOembedEffect(
   options: OembedOptions
 ): Effect.Effect<OembedSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchOembedGen() {
-    const queriedAt = new Date().toISOString();
+    const queriedAt = yield* nowIsoStringEffect;
     const normalized = yield* Effect.try({
       try: () => {
         assertHttpUrlScheme(url);

@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { nowIsoStringEffect } from "../infra/clock";
 import { normalizeHost } from "../whois/normalize";
 
 export const hackertargetLookupSnapshotSchema = z.object({
@@ -76,6 +77,7 @@ export function fetchHackertargetReverseIpEffect(
   options?: HackertargetOptions
 ): Effect.Effect<HackertargetLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHackertargetReverseIpGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const limit = options?.limit ?? 200;
     const ua =
@@ -108,7 +110,7 @@ export function fetchHackertargetReverseIpEffect(
 
     return hackertargetLookupSnapshotSchema.parse({
       ip,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "api.hackertarget.com/reverseiplookup",
       domains,
       error,

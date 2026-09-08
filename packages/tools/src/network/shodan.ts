@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 
 export const shodanLookupSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -78,6 +79,7 @@ export function fetchShodanHostEffect(
   options?: ShodanOptions
 ): Effect.Effect<ShodanLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchShodanHostGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const key = apiKey.trim();
     if (!key) {
@@ -106,7 +108,7 @@ export function fetchShodanHostEffect(
     if (status === 404) {
       return shodanLookupSnapshotSchema.parse({
         ip,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         found: false,
         status: 404,
         org: null,

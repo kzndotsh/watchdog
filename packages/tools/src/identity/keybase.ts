@@ -9,6 +9,7 @@ import type { ToolsTag } from "../errors/tagged-errors";
 import { parseToolsError, validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -260,6 +261,7 @@ export function fetchKeybaseLookupEffect(
   options?: KeybaseOptions
 ): Effect.Effect<KeybaseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchKeybaseLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { kind, value, param } = yield* Effect.try({
       try: () => classifyQuery(queryRaw),
       catch: mapToolsCatch,
@@ -281,7 +283,7 @@ export function fetchKeybaseLookupEffect(
       subject: value,
     });
     return yield* Effect.try({
-      try: () => parseKeybaseBody(value, kind, new Date().toISOString(), body),
+      try: () => parseKeybaseBody(value, kind, queriedAt, body),
       catch: mapToolsCatch,
     });
   });

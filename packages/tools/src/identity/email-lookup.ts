@@ -5,6 +5,7 @@ import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
+import { nowIsoStringEffect } from "../infra/clock";
 
 export const emailLookupSnapshotSchema = z.object({
   email: z.string().min(1),
@@ -92,6 +93,7 @@ export function fetchEmailLookupEffect(
   signal: AbortSignal
 ): Effect.Effect<EmailLookupSnapshot, ToolsTag> {
   return Effect.gen(function* fetchEmailLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { email, domain } = yield* Effect.try({
       try: () => normalizeEmail(emailRaw),
       catch: mapToolsCatch,
@@ -125,7 +127,7 @@ export function fetchEmailLookupEffect(
           return emailLookupSnapshotSchema.parse({
             email,
             domain,
-            queriedAt: new Date().toISOString(),
+            queriedAt,
             providerHint: providerHint(
               domain,
               mxSorted.map((m) => m.exchange)

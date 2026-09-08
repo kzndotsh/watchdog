@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { isToolsError } from "../errors/tools-error";
 import { extractTitle } from "../html/to-text";
+import { nowIsoStringEffect } from "../infra/clock";
 import { fetchBytesEffect } from "./fetch-bytes";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import { isBlockedUnshortenUrl } from "./unshorten-guards";
@@ -111,6 +112,7 @@ export function fetchPageEnrichEffect(
   options: PageEnrichOptions
 ): Effect.Effect<PageEnrichSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchPageEnrichGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     let target: string;
     try {
       assertHttpUrlScheme(url);
@@ -124,7 +126,7 @@ export function fetchPageEnrichEffect(
       return pageEnrichSnapshotSchema.parse({
         url: target,
         finalUrl: target,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         status: 0,
         ok: false,
         title: null,
@@ -150,7 +152,7 @@ export function fetchPageEnrichEffect(
       return pageEnrichSnapshotSchema.parse({
         url: target,
         finalUrl: res.finalUrl,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         status: res.status,
         ok: false,
         title: null,
@@ -171,7 +173,7 @@ export function fetchPageEnrichEffect(
       return pageEnrichSnapshotSchema.parse({
         url: target,
         finalUrl: res.finalUrl,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         status: res.status,
         ok: false,
         title: null,
@@ -199,7 +201,7 @@ export function fetchPageEnrichEffect(
     return pageEnrichSnapshotSchema.parse({
       url: target,
       finalUrl: res.finalUrl,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       status: res.status,
       ok: true,
       title: extractTitle(html) ?? null,

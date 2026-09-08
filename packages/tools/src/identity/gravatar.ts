@@ -8,6 +8,7 @@ import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 import { normalizeEmail } from "./email-lookup";
 
@@ -149,6 +150,7 @@ export function fetchGravatarLookupEffect(
   options?: GravatarOptions
 ): Effect.Effect<GravatarLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchGravatarLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { email } = yield* Effect.try({
       try: () => normalizeEmail(emailRaw),
       catch: mapToolsCatch,
@@ -171,9 +173,9 @@ export function fetchGravatarLookupEffect(
     });
 
     if (status === 404) {
-      return emptyGravatar(email, hash, new Date().toISOString());
+      return emptyGravatar(email, hash, queriedAt);
     }
 
-    return parseGravatarBody(email, hash, new Date().toISOString(), body);
+    return parseGravatarBody(email, hash, queriedAt, body);
   });
 }

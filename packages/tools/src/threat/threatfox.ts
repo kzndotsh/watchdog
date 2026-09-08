@@ -9,6 +9,7 @@ import {
 } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -78,6 +79,7 @@ export function fetchThreatfoxLookupEffect(
   options?: ThreatfoxOptions
 ): Effect.Effect<ThreatfoxLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchThreatfoxLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyQuery(queryRaw);
     const key = apiKey.trim();
     if (!key) {
@@ -114,7 +116,7 @@ export function fetchThreatfoxLookupEffect(
       return threatfoxLookupSnapshotSchema.parse({
         query: value,
         kind,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "threatfox-api.abuse.ch",
         queryStatus,
         found: false,
@@ -157,7 +159,7 @@ export function fetchThreatfoxLookupEffect(
     return threatfoxLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "threatfox-api.abuse.ch",
       queryStatus,
       found: true,

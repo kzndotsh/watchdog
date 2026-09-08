@@ -6,6 +6,7 @@ import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
+import { nowIsoStringEffect } from "../infra/clock";
 
 export const cymruMhrLookupSnapshotSchema = z.object({
   hash: z.string().min(1),
@@ -78,6 +79,7 @@ export function fetchCymruMhrLookupEffect(
   signal: AbortSignal
 ): Effect.Effect<CymruMhrLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCymruMhrLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const hash = yield* Effect.try({
       try: () => normalizeCymruMhrHash(hashRaw),
       catch: mapToolsCatch,
@@ -96,7 +98,7 @@ export function fetchCymruMhrLookupEffect(
           const found = lastSeenEpoch !== null && detectionPct !== null;
           return cymruMhrLookupSnapshotSchema.parse({
             hash,
-            queriedAt: new Date().toISOString(),
+            queriedAt,
             source: "hash.cymru.com",
             found,
             lastSeenEpoch,

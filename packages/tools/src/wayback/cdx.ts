@@ -5,6 +5,7 @@ import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { normalizeWaybackUrl } from "./normalize-url";
 import {
   waybackFetchSnapshotSchema,
@@ -85,6 +86,7 @@ export function fetchWaybackLookupEffect(
   options: WaybackLookupOptions
 ): Effect.Effect<WaybackLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchWaybackLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const normalizedUrl = yield* Effect.try({
       try: () => normalizeWaybackUrl(url),
       catch: mapToolsCatch,
@@ -111,7 +113,7 @@ export function fetchWaybackLookupEffect(
     if (!isUnknownArray(payload) || payload.length === 0) {
       return waybackLookupSnapshotSchema.parse({
         url: normalizedUrl,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "web.archive.org/cdx",
         rows: [],
         closestTimestamp: null,
@@ -122,7 +124,7 @@ export function fetchWaybackLookupEffect(
 
     return waybackLookupSnapshotSchema.parse({
       url: normalizedUrl,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "web.archive.org/cdx",
       rows,
       closestTimestamp: rows[0]?.timestamp ?? null,
@@ -159,6 +161,7 @@ export function fetchWaybackSnapshotEffect(
   options: CdxOptions
 ): Effect.Effect<WaybackFetchSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchWaybackSnapshotGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const normalizedUrl = yield* Effect.try({
       try: () => normalizeWaybackUrl(url),
       catch: mapToolsCatch,
@@ -175,7 +178,7 @@ export function fetchWaybackSnapshotEffect(
       url: normalizedUrl,
       timestamp,
       archiveUrl,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       status: res.status,
       ok: res.ok,
       contentType: res.contentType,

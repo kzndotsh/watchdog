@@ -5,6 +5,7 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { errorMessage } from "../errors/tools-error";
+import { nowIsoStringEffect } from "../infra/clock";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import {
   isBlockedUnshortenUrl,
@@ -120,6 +121,7 @@ export function fetchUnshortenEffect(
   options: UnshortenOptions
 ): Effect.Effect<UnshortenSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchUnshortenGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const startUrl = yield* Effect.try({
       try: () => {
         assertHttpUrlScheme(url);
@@ -170,7 +172,7 @@ export function fetchUnshortenEffect(
 
     return unshortenSnapshotSchema.parse({
       url: startUrl,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       chain,
       finalUrl,
       hopCount: Math.max(0, chain.length - 1),

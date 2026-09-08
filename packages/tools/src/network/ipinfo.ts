@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asBool, asString } from "../parse/coerce";
 
 export const ipinfoLookupSnapshotSchema = z.object({
@@ -42,6 +43,7 @@ export function fetchIpinfoLookupEffect(
   options?: IpinfoOptions
 ): Effect.Effect<IpinfoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchIpinfoLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const token = apiToken.trim();
     if (!token) {
       return yield* new MissingCredentialError({ slot: "IPINFO_API_TOKEN" });
@@ -65,7 +67,7 @@ export function fetchIpinfoLookupEffect(
 
     return ipinfoLookupSnapshotSchema.parse({
       ip,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "ipinfo.io",
       found: asBool(body.bogon) !== true,
       hostname: asString(body.hostname),

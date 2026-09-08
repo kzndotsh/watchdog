@@ -11,6 +11,7 @@ import {
 import { parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asBool, asNumber, asString, isRecord } from "../parse/coerce";
 import { normalizeEmail } from "./email-lookup";
 
@@ -96,6 +97,7 @@ export function fetchEmailrepLookupEffect(
   options?: EmailrepOptions
 ): Effect.Effect<EmailrepLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchEmailrepLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { email } = yield* Effect.try({
       try: () => normalizeEmail(emailRaw),
       catch: mapToolsCatch,
@@ -139,7 +141,7 @@ export function fetchEmailrepLookupEffect(
     }
 
     return yield* Effect.try({
-      try: () => parseEmailrepBody(email, new Date().toISOString(), body),
+      try: () => parseEmailrepBody(email, queriedAt, body),
       catch: mapToolsCatch,
     });
   });

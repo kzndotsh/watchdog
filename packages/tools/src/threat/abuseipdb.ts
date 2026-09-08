@@ -6,6 +6,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
 
 export const abuseIpdbLookupSnapshotSchema = z.object({
@@ -48,6 +49,7 @@ export function fetchAbuseIpdbCheckEffect(
   options?: AbuseipdbOptions
 ): Effect.Effect<AbuseIpdbLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchAbuseIpdbCheckGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const key = apiKey.trim();
     if (!key) {
@@ -78,7 +80,7 @@ export function fetchAbuseIpdbCheckEffect(
 
     return abuseIpdbLookupSnapshotSchema.parse({
       ip,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       found: true,
       status,
       abuseConfidenceScore:

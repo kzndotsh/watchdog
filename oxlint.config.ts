@@ -33,6 +33,12 @@ const effecttsgoOff = {
   "effecttsgo/unnecessary-effect-gen": "off",
 } as const;
 
+/** Re-enabled in packages/tools — Clock-backed timestamps and abort signals. */
+const effecttsgoTier2Warn = {
+  "effecttsgo/global-date-in-effect": "warn",
+  "effecttsgo/abort-controller-in-effect": "warn",
+} as const;
+
 /** Re-enabled in packages/core — fix violations instead of blanket-off. */
 const effecttsgoTier1Warn = {
   "effecttsgo/unknown-in-effect-catch": "warn",
@@ -390,7 +396,6 @@ export default defineConfig({
         "packages/db/drizzle.config.ts",
         "packages/db/scripts/**/*.{mjs,ts}",
         "packages/**/scripts/**/*.{mjs,ts}",
-        "packages/tools/src/**/*.{ts,tsx}",
         "packages/caps/src/**/*.{ts,tsx}",
         "packages/ai/src/**/*.{ts,tsx}",
         "packages/cap-sdk/src/**/*.{ts,tsx}",
@@ -405,6 +410,23 @@ export default defineConfig({
         "scripts/**/*.{mjs,ts}",
         "vitest.config.ts",
         "playwright.config.ts",
+      ],
+      rules: effecttsgoOff,
+    },
+    {
+      // Tools HTTP/DNS — tier-2 rules stay on; boundary rules stay off.
+      files: ["packages/tools/src/**/*.{ts,tsx}"],
+      rules: {
+        ...effecttsgoOff,
+        ...effecttsgoTier2Warn,
+        "effecttsgo/missing-effect-context": "off",
+        "effecttsgo/missing-effect-error": "off",
+      },
+    },
+    {
+      files: [
+        "packages/tools/src/**/__tests__/**/*.{ts,tsx}",
+        "packages/tools/src/**/*.{test,spec,int.test}.{ts,tsx}",
       ],
       rules: effecttsgoOff,
     },

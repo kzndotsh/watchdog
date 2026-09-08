@@ -9,6 +9,7 @@ import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { nowIsoStringEffect } from "../infra/clock";
 import { expandIpv6 } from "./ip-lookup-cymru";
 
 export const torExitLookupSnapshotSchema = z.object({
@@ -93,6 +94,7 @@ export function fetchTorExitLookupEffect(
   options?: TorExitOptions
 ): Effect.Effect<TorExitLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchTorExitLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const ip = yield* normalizeIpEffect(ipRaw);
     const ua =
       options?.userAgent ?? watchdogUserAgent("network.tor_exit.lookup");
@@ -101,7 +103,7 @@ export function fetchTorExitLookupEffect(
 
     return torExitLookupSnapshotSchema.parse({
       ip,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "check.torproject.org",
       isExit: exits.has(torExitIpKey(ip) ?? ip),
     });

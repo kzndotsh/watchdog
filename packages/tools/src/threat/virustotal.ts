@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { isRecord } from "../parse/coerce";
 
@@ -48,6 +49,7 @@ export function fetchVirusTotalLookupEffect(
   options?: VirustotalOptions
 ): Effect.Effect<VirusTotalLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchVirusTotalLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyIpOrHost(queryRaw);
     const key = apiKey.trim();
     if (!key) {
@@ -82,7 +84,7 @@ export function fetchVirusTotalLookupEffect(
       return virusTotalLookupSnapshotSchema.parse({
         query: value,
         kind,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         found: false,
         status: 404,
         reputation: null,
@@ -107,7 +109,7 @@ export function fetchVirusTotalLookupEffect(
     return virusTotalLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       found: true,
       status,
       reputation:

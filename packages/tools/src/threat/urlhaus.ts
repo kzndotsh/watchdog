@@ -10,6 +10,7 @@ import {
   assertHttpUrlScheme,
   normalizeHttpUrl,
 } from "../http/normalize-http-url";
+import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -98,6 +99,7 @@ export function fetchUrlhausLookupEffect(
   options?: UrlhausOptions
 ): Effect.Effect<UrlhausLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchUrlhausLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = yield* Effect.try({
       try: () => classifyQuery(queryRaw),
       catch: mapToolsCatch,
@@ -172,7 +174,7 @@ export function fetchUrlhausLookupEffect(
       return urlhausLookupSnapshotSchema.parse({
         query: value,
         kind,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "urlhaus-api.abuse.ch",
         queryStatus,
         found: true,
@@ -204,7 +206,7 @@ export function fetchUrlhausLookupEffect(
       return urlhausLookupSnapshotSchema.parse({
         query: value,
         kind,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "urlhaus-api.abuse.ch",
         queryStatus,
         found: true,
@@ -236,7 +238,7 @@ export function fetchUrlhausLookupEffect(
     return urlhausLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "urlhaus-api.abuse.ch",
       queryStatus,
       found: true,

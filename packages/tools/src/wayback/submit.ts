@@ -5,6 +5,7 @@ import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { nowIsoStringEffect } from "../infra/clock";
 import { normalizeWaybackUrl } from "./normalize-url";
 import {
   archiveSubmitSnapshotSchema,
@@ -32,6 +33,7 @@ export function submitWaybackSaveEffect(
   options?: SubmitOptions
 ): Effect.Effect<ArchiveSubmitSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* submitWaybackSaveGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const target = yield* Effect.try({
       try: () => normalizeWaybackUrl(url),
       catch: mapToolsCatch,
@@ -64,7 +66,7 @@ export function submitWaybackSaveEffect(
 
     return archiveSubmitSnapshotSchema.parse({
       url: target,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       results: [
         {
           service: "wayback",

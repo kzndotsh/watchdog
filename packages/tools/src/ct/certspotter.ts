@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -113,6 +114,7 @@ export function fetchCertspotterLookupEffect(
   options?: CertspotterOptions
 ): Effect.Effect<CertspotterLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchCertspotterLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const host = normalizeHost(hostRaw);
     const limit = options?.limit ?? 100;
     const ua =
@@ -154,7 +156,7 @@ export function fetchCertspotterLookupEffect(
 
     return certspotterLookupSnapshotSchema.parse({
       host,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "api.certspotter.com/v1/issuances",
       domains,
       issuances,

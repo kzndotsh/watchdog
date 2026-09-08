@@ -11,6 +11,7 @@ import {
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { normalizeEmail } from "../identity/email-lookup";
+import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 
@@ -94,6 +95,7 @@ export function fetchHudsonrockLookupEffect(
   options?: HudsonrockOptions
 ): Effect.Effect<HudsonrockLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHudsonrockLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({ slot: "HUDSONROCK_API_KEY" });
@@ -154,7 +156,7 @@ export function fetchHudsonrockLookupEffect(
       return hudsonrockLookupSnapshotSchema.parse({
         query: value,
         kind,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "api.hudsonrock.com",
         found: false,
         totalResults: 0,
@@ -167,7 +169,7 @@ export function fetchHudsonrockLookupEffect(
     return hudsonrockLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "api.hudsonrock.com",
       found: true,
       totalResults,

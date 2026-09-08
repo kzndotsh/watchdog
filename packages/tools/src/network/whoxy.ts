@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -51,6 +52,7 @@ export function fetchWhoxyWhoisEffect(
   options?: WhoxyOptions
 ): Effect.Effect<WhoxyLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchWhoxyWhoisGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const host = normalizeHost(hostRaw);
     const key = apiKey.trim();
     if (!key) {
@@ -109,7 +111,7 @@ export function fetchWhoxyWhoisEffect(
 
     return whoxyLookupSnapshotSchema.parse({
       host,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       status: statusNum,
       ok,
       registrarName,

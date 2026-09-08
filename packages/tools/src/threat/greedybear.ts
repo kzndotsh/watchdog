@@ -8,6 +8,7 @@ import { createTtlCache } from "../cache/ttl-memory";
 import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { expandIpv6 } from "../network/ip-lookup-cymru";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
@@ -104,6 +105,7 @@ export function fetchGreedybearLookupEffect(
   options?: GreedybearOptions
 ): Effect.Effect<GreedybearLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchGreedybearLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const { kind, value } = classifyIpOrHost(queryRaw);
     const ua =
       options?.userAgent ?? watchdogUserAgent("threat.greedybear.lookup");
@@ -113,7 +115,7 @@ export function fetchGreedybearLookupEffect(
     return greedybearLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "greedybear.honeynet.org",
       found: feed.has(greedybearIocKey(value)),
       feed: "all/scanner/recent",

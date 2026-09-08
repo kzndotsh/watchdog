@@ -14,6 +14,7 @@ import {
   assertHttpUrlScheme,
   normalizeHttpUrl,
 } from "../http/normalize-http-url";
+import { nowIsoStringEffect } from "../infra/clock";
 import { isRecord } from "../parse/coerce";
 
 export const safebrowsingMatchSchema = z.object({
@@ -58,6 +59,7 @@ export function fetchSafebrowsingLookupEffect(
   options?: SafebrowsingOptions
 ): Effect.Effect<SafebrowsingLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchSafebrowsingLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const url = yield* Effect.try({
       try: () => {
         const trimmed = urlRaw.trim();
@@ -120,7 +122,7 @@ export function fetchSafebrowsingLookupEffect(
 
     return safebrowsingLookupSnapshotSchema.parse({
       url,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "safebrowsing.googleapis.com",
       found: matches.length > 0,
       matches,

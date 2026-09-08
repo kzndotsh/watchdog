@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { classifyBreachQuery } from "../parse/classify-breach-query";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -132,6 +133,7 @@ export function fetchSnusbaseLookupEffect(
   options?: SnusbaseOptions
 ): Effect.Effect<SnusbaseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchSnusbaseLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({ slot: "SNUSBASE_API_KEY" });
@@ -167,7 +169,7 @@ export function fetchSnusbaseLookupEffect(
     return snusbaseLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "api.snusbase.com",
       found: entries.length > 0,
       total,

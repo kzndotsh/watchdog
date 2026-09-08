@@ -5,6 +5,7 @@ import { z } from "zod";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -49,6 +50,7 @@ export function fetchLeakixLookupEffect(
   options?: LeakixOptions
 ): Effect.Effect<LeakixLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchLeakixLookupGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const key = apiKey.trim();
     if (!key) {
       return yield* new MissingCredentialError({ slot: "LEAKIX_API_KEY" });
@@ -79,7 +81,7 @@ export function fetchLeakixLookupEffect(
       return leakixLookupSnapshotSchema.parse({
         query: value,
         kind,
-        queriedAt: new Date().toISOString(),
+        queriedAt,
         source: "leakix.net",
         found: false,
         serviceCount: 0,
@@ -107,7 +109,7 @@ export function fetchLeakixLookupEffect(
     return leakixLookupSnapshotSchema.parse({
       query: value,
       kind,
-      queriedAt: new Date().toISOString(),
+      queriedAt,
       source: "leakix.net",
       found: true,
       serviceCount: services.length,

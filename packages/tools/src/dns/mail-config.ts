@@ -3,6 +3,7 @@ import type { Resolver } from "node:dns/promises";
 import { Effect } from "effect";
 
 import type { ToolsTag } from "../errors/tagged-errors";
+import { nowIsoStringEffect } from "../infra/clock";
 import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import {
   mailConfigSnapshotSchema,
@@ -51,13 +52,14 @@ export function fetchMailConfigEffect(
   signal: AbortSignal,
   options?: MailConfigOptions
 ): Effect.Effect<MailConfigSnapshot, ToolsTag> {
-  return Effect.gen(function* fetchMailConfigOuterGen() {
+  return Effect.gen(function* fetchMailConfigGen() {
+    const queriedAt = yield* nowIsoStringEffect;
     const normalizedHost = yield* normalizeDnsLookupHostEffect(host);
     return yield* runAbortableResolver(
       signal,
       "Mail config lookup aborted",
       (resolver) =>
-        Effect.gen(function* fetchMailConfigGen() {
+        Effect.gen(function* fetchMailConfigDnsGen() {
           const selectors = options?.dkimSelectors ?? DEFAULT_DKIM_SELECTORS;
           const [mx, txtRoot, txtDmarc, ...dkimResults] = yield* Effect.all(
             [
@@ -89,7 +91,7 @@ export function fetchMailConfigEffect(
 
           const snap: MailConfigSnapshot = {
             host: normalizedHost,
-            queriedAt: new Date().toISOString(),
+            queriedAt,
             mx: mx
               .map((m) => ({ exchange: m.exchange, priority: m.priority }))
               .sort((a, b) => a.priority - b.priority),
