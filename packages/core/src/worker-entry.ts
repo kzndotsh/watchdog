@@ -7,10 +7,15 @@ export {
   type BossRole,
   type BossHandle,
 } from "./jobs/boss";
+export {
+  extractDomainJobIdFromPayload,
+  failInvalidCapDeliveryEffect,
+} from "./jobs/cap-delivery";
 export { gracefulStopTimeoutMs } from "./jobs/timeouts";
 export {
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
+  reconcileOrphanedQueuedJobsEffect,
 } from "./jobs/reconcile-stale-jobs";
 export {
   executeJobOnMap,
@@ -22,3 +27,5 @@ export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
 export { findCancelledJobIdsEffect } from "./jobs/start-job";
 export { isWatchdogEvent, listenForEvents } from "./infra/events";
 export { listenForEventsStream } from "./infra/listen-events-stream";
+export { scheduleCaseExportEffect } from "./infra/export-sync";
+export type { WatchdogEvent } from "./infra/events";
