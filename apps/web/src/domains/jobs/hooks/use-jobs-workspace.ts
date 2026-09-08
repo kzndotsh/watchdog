@@ -137,7 +137,7 @@ export function useJobsWorkspace(
     { enabled: detailQueryEnabled }
   );
   const detailLoadError =
-    selectedId !== null && isError
+    selectedId !== null && !detailPending && isError
       ? errMessage(detailQueryError, "Failed to load job detail")
       : null;
 
