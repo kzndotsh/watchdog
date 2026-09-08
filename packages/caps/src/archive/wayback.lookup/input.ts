@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, uuidSchema } from "@watchdog/schemas";
+import { httpUrlSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const waybackLookupInput = z.object({
-  url: nonEmptyTrimmed.describe("URL"),
-  entityId: uuidSchema.optional(),
+  url: httpUrlSchema.describe("URL"),
+  entityId: optionalUuidSchema,
   limit: z.number().int().positive().max(100).optional(),
 });

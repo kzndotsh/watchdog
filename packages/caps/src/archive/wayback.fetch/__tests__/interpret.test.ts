@@ -25,7 +25,7 @@ describe("interpret", () => {
     byteLength: 13,
   };
 
-  it("interpretWaybackFetchReport proposes Claim", () => {
+  it("interpretWaybackFetchReport proposes url Identifier + Claim", () => {
     const result = interpretWaybackFetchReport(fixture, {
       input: {
         url: "https://example.com/",
@@ -33,9 +33,12 @@ describe("interpret", () => {
         entityId,
       },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/status=200/);
-    expect(claimText(result, 0)).toMatch(/bytes=13/);
+    expect(result.patch[0]?.resource).toBe("identifier");
+    expect(result.patch[0]?.data.type).toBe("url");
+    expect(result.patch[0]?.data.value).toBe("https://example.com");
+    expect(result.patch[1]?.resource).toBe("claim");
+    expect(claimText(result, 1)).toMatch(/status=200/);
+    expect(claimText(result, 1)).toMatch(/bytes=13/);
   });
 
   itRejectsIncompleteReport(

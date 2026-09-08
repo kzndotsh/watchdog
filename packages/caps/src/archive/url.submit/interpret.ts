@@ -3,7 +3,8 @@ import type { z } from "zod";
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { ArchiveSubmitSnapshot } from "@watchdog/tools";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { urlSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { archiveUrlSubmitInput } from "./input";
 
 type SubmitInput = z.infer<typeof archiveUrlSubmitInput>;
@@ -20,10 +21,11 @@ export function interpretArchiveUrlSubmitReport(
   report: ArchiveSubmitSnapshot,
   opts: CapInterpretOpts<SubmitInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
+    batches: [...urlSeedBatch(report.url)],
+    claimText: summarize(report),
     noEntitySummary:
-      "Archive submit completed; no Entity to attach Claim (public archive record may still exist)",
+      "Archive submit completed; no Entity to attach Identifiers (public archive record may still exist)",
   });
 }

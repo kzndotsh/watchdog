@@ -22,7 +22,10 @@ export const waybackLookup = defineCollectCap({
   useCases: ["Passive", "Footprint"],
   formOmit: ["entityId", "limit"],
   consumes: [{ kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
@@ -30,7 +33,7 @@ export const waybackLookup = defineCollectCap({
   reportLabel: "wayback.lookup",
   fetch: (ctx) =>
     Effect.gen(function* waybackLookupFetch() {
-      const url = ctx.input.url.trim();
+      const url = ctx.input.url;
       ctx.log(`Wayback CDX ${url}`);
       const snap = yield* fetchWaybackLookupEffect(url, ctx.signal, {
         userAgent: UA,

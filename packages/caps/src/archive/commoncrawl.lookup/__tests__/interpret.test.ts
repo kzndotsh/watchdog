@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   expectNoConfidenceOnPatch,
+  expectProposesIdentifier,
   itRejectsIncompleteReport,
   testId,
 } from "@watchdog/test-kit";
@@ -34,8 +35,9 @@ describe("interpret", () => {
       input: { host: "example.com", entityId },
     });
     expect(result.patch.filter((p) => p.resource === "identifier").length).toBe(
-      2
+      3
     );
+    expectProposesIdentifier(result, { type: "domain", value: "example.com" });
     expect(result.patch.at(-1)?.resource).toBe("claim");
     expectNoConfidenceOnPatch(result);
   });

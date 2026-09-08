@@ -23,12 +23,15 @@ export const urlSubmit = defineCollectCap({
   useCases: ["Active"],
   egress: "third_party",
   consumes: [{ kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "url" },
+  ],
   schema: archiveSubmitSnapshotSchema,
   reportLabel: "archive.url.submit",
   fetch: (ctx) =>
     Effect.gen(function* urlSubmitFetch() {
-      const url = ctx.input.url.trim();
+      const url = ctx.input.url;
       ctx.log(`archive submit (Wayback SPN) ${url}`);
       const snap = yield* submitWaybackSaveEffect(url, ctx.signal, {
         userAgent: UA,

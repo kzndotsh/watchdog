@@ -26,7 +26,10 @@ export const waybackFetch = defineCollectCap({
   useCases: ["Passive"],
   formOmit: ["entityId", "timestamp"],
   consumes: [{ kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "url" },
+  ],
   jobPolicy: {
     cacheTtlMs: 60 * 60_000,
   },
@@ -34,8 +37,8 @@ export const waybackFetch = defineCollectCap({
   reportLabel: "wayback.fetch",
   fetch: (ctx) =>
     Effect.gen(function* waybackFetchFetch() {
-      const url = ctx.input.url.trim();
-      let timestamp = ctx.input.timestamp?.trim();
+      const url = ctx.input.url;
+      let timestamp = ctx.input.timestamp;
       if (!timestamp) {
         ctx.log(`resolving closest CDX for ${url}`);
         timestamp =

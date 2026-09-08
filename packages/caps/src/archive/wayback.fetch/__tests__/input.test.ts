@@ -12,4 +12,27 @@ describe("wayback.fetch input", () => {
       })
     ).toMatchObject({ url: "https://example.com/page" });
   });
+
+  it("trims padded url", () => {
+    expect(
+      waybackFetchInput.parse({
+        url: "  https://example.com/page  ",
+      }).url
+    ).toBe("https://example.com/page");
+  });
+
+  it("trims padded timestamp and clears whitespace-only", () => {
+    expect(
+      waybackFetchInput.parse({
+        url: "https://example.com/page",
+        timestamp: "  20240101000000  ",
+      }).timestamp
+    ).toBe("20240101000000");
+    expect(
+      waybackFetchInput.parse({
+        url: "https://example.com/page",
+        timestamp: "   ",
+      }).timestamp
+    ).toBeUndefined();
+  });
 });

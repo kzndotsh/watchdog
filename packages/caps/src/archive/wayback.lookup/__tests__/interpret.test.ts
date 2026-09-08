@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   claimText,
+  expectProposesIdentifier,
   itRejectsIncompleteReport,
   testId,
 } from "@watchdog/test-kit";
@@ -26,13 +27,17 @@ describe("interpret", () => {
     closestTimestamp: "20260101000000",
   };
 
-  it("interpretWaybackLookupReport proposes Claim", () => {
+  it("interpretWaybackLookupReport proposes url Identifier + Claim", () => {
     const result = interpretWaybackLookupReport(fixture, {
       input: { url: "https://example.com/", entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(claimText(result, 0)).toMatch(/1 snapshot/);
-    expect(claimText(result, 0)).toMatch(/20260101000000/);
+    expectProposesIdentifier(result, {
+      type: "url",
+      value: "https://example.com",
+    });
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/1 snapshot/);
+    expect(claimText(result, 1)).toMatch(/20260101000000/);
   });
 
   itRejectsIncompleteReport(

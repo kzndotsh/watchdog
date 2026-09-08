@@ -24,6 +24,7 @@ export const commoncrawlLookup = defineCollectCap({
   consumes: [{ kind: "host" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "domain" },
     { kind: "identifier", type: "url" },
   ],
   jobPolicy: {
