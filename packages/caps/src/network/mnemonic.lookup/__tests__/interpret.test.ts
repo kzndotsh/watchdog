@@ -32,14 +32,17 @@ describe("interpret", () => {
     ips: [],
   };
 
-  it("interpretMnemonicLookupReport proposes domain Identifiers", () => {
+  it("interpretMnemonicLookupReport proposes seed IP + domain Identifiers", () => {
     const result = interpretMnemonicLookupReport(fixture, {
       input: { query: "8.8.8.8", entityId },
     });
-    expect(result.patch.length).toBe(2);
+    expect(result.patch.length).toBe(3);
     expect(result.patch[0]?.resource).toBe("identifier");
-    expect(result.patch[0]?.data.type).toBe("domain");
-    expect(claimText(result, 1)).toMatch(/Mnemonic PDNS/);
+    expect(result.patch[0]?.data.type).toBe("ip");
+    expect(result.patch[0]?.data.value).toBe("8.8.8.8");
+    expect(result.patch[1]?.resource).toBe("identifier");
+    expect(result.patch[1]?.data.type).toBe("domain");
+    expect(claimText(result, 2)).toMatch(/Mnemonic PDNS/);
   });
 
   it("interpretMnemonicLookupReport also proposes PDNS IPs", () => {
@@ -54,11 +57,36 @@ describe("interpret", () => {
       { input: { query: "dns.google", entityId } }
     );
     const ids = result.patch.filter((p) => p.resource === "identifier");
-    const types = ids.flatMap((p) => {
-      const type = p.data.type;
-      return typeof type === "string" ? [type] : [];
-    });
+    expect(ids).toHaveLength(2);
+    const types = ids.map((p) =>
+      typeof p.data.type === "string" ? p.data.type : ""
+    );
     expect(types.sort((a, b) => a.localeCompare(b))).toEqual(["domain", "ip"]);
+    expect(ids.find((p) => p.data.type === "domain")?.data.value).toBe(
+      "dns.google"
+    );
+    expect(ids.find((p) => p.data.type === "ip")?.data.value).toBe("8.8.8.8");
+  });
+
+  it("notes domain truncation in the claim when PDNS domains exceed the cap", () => {
+    const domains = Array.from(
+      { length: 85 },
+      (_, i) => `host${i}.example.com`
+    );
+    const result = interpretMnemonicLookupReport(
+      {
+        ...fixture,
+        kind: "ip",
+        domains,
+      },
+      { input: { query: "8.8.8.8", entityId } }
+    );
+    expect(
+      result.patch.filter(
+        (p) => p.resource === "identifier" && p.data.type === "domain"
+      )
+    ).toHaveLength(80);
+    expect(String(result.summary)).toMatch(/showing 80 of 85 in Identifiers/);
   });
 
   itRejectsIncompleteReport(

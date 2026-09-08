@@ -23,6 +23,7 @@ export const mnemonicLookup = defineCollectCap({
   consumes: [{ kind: "ip" }, { kind: "host" }],
   produces: [
     { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "ip" },
     { kind: "identifier", type: "domain" },
   ],
   jobPolicy: {
@@ -32,7 +33,7 @@ export const mnemonicLookup = defineCollectCap({
   reportLabel: "mnemonic.lookup",
   fetch: (ctx) =>
     Effect.gen(function* mnemonicLookupFetch() {
-      const query = ctx.input.query.trim();
+      const query = ctx.input.query;
       ctx.log(`Mnemonic PDNS ${query}`);
       const snap = yield* fetchMnemonicPdnsEffect(query, ctx.signal, {
         userAgent: UA,
