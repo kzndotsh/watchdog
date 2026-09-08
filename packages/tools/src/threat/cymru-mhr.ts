@@ -93,11 +93,12 @@ export function fetchCymruMhrLookupEffect(
             [] as string[][]
           );
           const { lastSeenEpoch, detectionPct } = parseTxtAnswer(answers);
+          const found = lastSeenEpoch !== null && detectionPct !== null;
           return cymruMhrLookupSnapshotSchema.parse({
             hash,
             queriedAt: new Date().toISOString(),
             source: "hash.cymru.com",
-            found: answers.length > 0,
+            found,
             lastSeenEpoch,
             detectionPct,
           });

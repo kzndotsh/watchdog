@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
@@ -110,7 +110,7 @@ export function fetchFeodoLookupEffect(
   options?: FeodoOptions
 ): Effect.Effect<FeodoLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchFeodoLookupGen() {
-    const ip = normalizeIp(ipRaw);
+    const ip = yield* normalizeIpEffect(ipRaw);
     const ua = options?.userAgent ?? watchdogUserAgent("threat.feodo.lookup");
     const entries = yield* fetchBlocklistEffect(signal, ua, options?.apiKey);
     return toFeodoSnapshot(ip, findFeodoEntry(entries, ip));

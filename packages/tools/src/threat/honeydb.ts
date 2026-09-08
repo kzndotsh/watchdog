@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
@@ -55,7 +55,7 @@ export function fetchHoneydbLookupEffect(
   options?: { userAgent?: string }
 ): Effect.Effect<HoneydbLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchHoneydbLookupGen() {
-    const ip = normalizeIp(ipRaw);
+    const ip = yield* normalizeIpEffect(ipRaw);
     const id = apiId.trim();
     const key = apiKey.trim();
     if (!id || !key) {
@@ -108,7 +108,7 @@ export function fetchHoneydbLookupEffect(
       ip,
       queriedAt: new Date().toISOString(),
       source: "honeydb.io",
-      found: isThreat || internetScanner || historyEventCount > 0,
+      found: true,
       asn: typeof networkInfo.asn === "number" ? networkInfo.asn : null,
       country: asString(networkInfo.country),
       isTor,

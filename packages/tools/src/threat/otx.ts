@@ -1,4 +1,4 @@
-import { isIP } from "node:net";
+import { isIP, isIPv4 } from "node:net";
 
 import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
@@ -29,7 +29,7 @@ export type OtxLookupSnapshot = z.infer<typeof otxLookupSnapshotSchema>;
 const MAX_PULSES = 20;
 const HASH_LENGTHS = new Set([32, 40, 64]);
 
-type OtxType = "IPv4" | "domain" | "file";
+type OtxType = "IPv4" | "IPv6" | "domain" | "file";
 
 /**
  * Classify a generic query string into an OTX indicator path type.
@@ -48,7 +48,12 @@ function classifyOtxIndicator(raw: string): {
   }
 
   if (isIP(trimmed)) {
-    return { kind: "ip", otxType: "IPv4", value: normalizeIp(trimmed) };
+    const value = normalizeIp(trimmed);
+    return {
+      kind: "ip",
+      otxType: isIPv4(value) ? "IPv4" : "IPv6",
+      value,
+    };
   }
 
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
@@ -59,7 +64,12 @@ function classifyOtxIndicator(raw: string): {
       throw validationToolsError(`Invalid URL: ${raw}`);
     }
     if (isIP(hostname)) {
-      return { kind: "url", otxType: "IPv4", value: normalizeIp(hostname) };
+      const value = normalizeIp(hostname);
+      return {
+        kind: "url",
+        otxType: isIPv4(value) ? "IPv4" : "IPv6",
+        value,
+      };
     }
     return { kind: "url", otxType: "domain", value: normalizeHost(hostname) };
   }
@@ -165,7 +175,7 @@ export function fetchOtxLookupEffect(
       kind,
       queriedAt: new Date().toISOString(),
       source: "otx.alienvault.com",
-      found: pulseCount > 0,
+      found: true,
       pulseCount,
       pulseNames,
       malwareFamilies,

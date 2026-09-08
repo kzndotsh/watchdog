@@ -45,4 +45,36 @@ describe("threatfox", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect(
+    "fetchThreatfoxLookupEffect treats ok with empty data as found",
+    () =>
+      Effect.gen(function* fetchThreatfoxEmptyGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi.fn().mockResolvedValue(
+            new Response(
+              JSON.stringify({
+                query_status: "ok",
+                data: [],
+              }),
+              { status: 200 }
+            )
+          )
+        );
+
+        const snap = yield* fetchThreatfoxLookupEffect(
+          "8.8.8.8",
+          "test-key",
+          AbortSignal.timeout(5000)
+        );
+
+        expect(snap.found).toBe(true);
+        expect(snap.queryStatus).toBe("ok");
+        expect(snap.iocs).toEqual([]);
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

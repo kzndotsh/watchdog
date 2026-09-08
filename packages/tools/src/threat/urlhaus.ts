@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
+import { mapToolsCatch } from "../errors/map-tools-tag";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
@@ -34,12 +35,8 @@ function classifyQuery(raw: string): {
   if (HASH_RE.test(trimmed))
     return { kind: "hash", value: trimmed.toLowerCase() };
   if (/^https?:\/\//i.test(trimmed)) return { kind: "url", value: trimmed };
-  try {
-    const classified = classifyIpOrHost(trimmed);
-    return { kind: "host", value: classified.value };
-  } catch {
-    return { kind: "host", value: trimmed };
-  }
+  const classified = classifyIpOrHost(trimmed);
+  return { kind: "host", value: classified.value };
 }
 
 function emptyResult(
@@ -62,6 +59,21 @@ function emptyResult(
   };
 }
 
+function urlhausHostUrlHasSubstance(row: Record<string, unknown>): boolean {
+  const threat = asString(row.threat);
+  const urlStatus = asString(row.url_status);
+  const urlhausReference = asString(row.urlhaus_reference);
+  const tags = Array.isArray(row.tags)
+    ? row.tags.filter((t): t is string => typeof t === "string")
+    : [];
+  return (
+    threat !== null ||
+    urlStatus !== null ||
+    urlhausReference !== null ||
+    tags.length > 0
+  );
+}
+
 /**
  * URLhaus (abuse.ch) malicious URL / host / payload search.
  * POST …/v1/{url,host,payload}/ with Auth-Key header. Never downloads samples.
@@ -79,10 +91,13 @@ export function fetchUrlhausLookupEffect(
   options?: UrlhausOptions
 ): Effect.Effect<UrlhausLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchUrlhausLookupGen() {
-    const { kind, value } = classifyQuery(queryRaw);
+    const { kind, value } = yield* Effect.try({
+      try: () => classifyQuery(queryRaw),
+      catch: mapToolsCatch,
+    });
     const key = apiKey.trim();
     if (!key) {
-      return yield* new MissingCredentialError({ slot: "THREATFOX_API_KEY" });
+      return yield* new MissingCredentialError({ slot: "URLHAUS_API_KEY" });
     }
 
     const ua = options?.userAgent ?? watchdogUserAgent("threat.urlhaus.lookup");
@@ -132,6 +147,21 @@ export function fetchUrlhausLookupEffect(
       const tags = Array.isArray(raw.tags)
         ? raw.tags.filter((t): t is string => typeof t === "string")
         : [];
+      const threat = asString(raw.threat);
+      const urlStatus = asString(raw.url_status);
+      const urlhausReference = asString(raw.urlhaus_reference);
+      const firstSeen = asString(raw.date_added);
+      const hasHit =
+        threat !== null ||
+        urlStatus !== null ||
+        urlhausReference !== null ||
+        firstSeen !== null ||
+        tags.length > 0;
+      if (!hasHit) {
+        return urlhausLookupSnapshotSchema.parse(
+          emptyResult(kind, value, queryStatus)
+        );
+      }
       return urlhausLookupSnapshotSchema.parse({
         query: value,
         kind,
@@ -139,37 +169,63 @@ export function fetchUrlhausLookupEffect(
         source: "urlhaus-api.abuse.ch",
         queryStatus,
         found: true,
-        threat: asString(raw.threat),
-        urlStatus: asString(raw.url_status),
+        threat,
+        urlStatus,
         tags,
-        urlhausReference: asString(raw.urlhaus_reference),
-        firstSeen: asString(raw.date_added),
+        urlhausReference,
+        firstSeen,
       });
     }
 
     if (kind === "host") {
-      const urls = Array.isArray(raw.urls) ? raw.urls : [];
-      const first = urls.find(isRecord);
+      const urls = Array.isArray(raw.urls)
+        ? raw.urls.filter(
+            (row): row is Record<string, unknown> =>
+              isRecord(row) && urlhausHostUrlHasSubstance(row)
+          )
+        : [];
+      const first = urls[0];
       const tags =
         first && Array.isArray(first.tags)
           ? first.tags.filter((t): t is string => typeof t === "string")
           : [];
+      if (urls.length === 0) {
+        return urlhausLookupSnapshotSchema.parse(
+          emptyResult(kind, value, queryStatus)
+        );
+      }
       return urlhausLookupSnapshotSchema.parse({
         query: value,
         kind,
         queriedAt: new Date().toISOString(),
         source: "urlhaus-api.abuse.ch",
         queryStatus,
-        found: urls.length > 0,
-        threat: first ? asString(first.threat) : null,
-        urlStatus: first ? asString(first.url_status) : null,
+        found: true,
+        threat: asString(first.threat),
+        urlStatus: asString(first.url_status),
         tags,
-        urlhausReference: first ? asString(first.urlhaus_reference) : null,
+        urlhausReference: asString(first.urlhaus_reference),
         firstSeen: asString(raw.firstseen),
       });
     }
 
     // payload / hash lookup — MalwareBazaar-style single record, no per-URL fields.
+    const threat = asString(raw.signature);
+    const sha256 = asString(raw.sha256_hash);
+    const md5 = asString(raw.md5_hash);
+    const fileType = asString(raw.file_type);
+    const firstSeen = asString(raw.firstseen);
+    const hasHit =
+      threat !== null ||
+      sha256 !== null ||
+      md5 !== null ||
+      fileType !== null ||
+      firstSeen !== null;
+    if (!hasHit) {
+      return urlhausLookupSnapshotSchema.parse(
+        emptyResult(kind, value, queryStatus)
+      );
+    }
     return urlhausLookupSnapshotSchema.parse({
       query: value,
       kind,
@@ -177,11 +233,11 @@ export function fetchUrlhausLookupEffect(
       source: "urlhaus-api.abuse.ch",
       queryStatus,
       found: true,
-      threat: asString(raw.signature),
+      threat,
       urlStatus: null,
       tags: [],
       urlhausReference: null,
-      firstSeen: asString(raw.firstseen),
+      firstSeen,
     });
   });
 }

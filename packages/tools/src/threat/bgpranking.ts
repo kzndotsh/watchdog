@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
@@ -117,7 +117,7 @@ export function fetchBgprankingLookupEffect(
   options?: BgprankingOptions
 ): Effect.Effect<BgprankingLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchBgprankingLookupGen() {
-    const ip = normalizeIp(ipRaw);
+    const ip = yield* normalizeIpEffect(ipRaw);
     const ua =
       options?.userAgent ?? watchdogUserAgent("threat.bgpranking.lookup");
 
@@ -127,7 +127,8 @@ export function fetchBgprankingLookupEffect(
         ip,
         queriedAt: new Date().toISOString(),
         source: "bgpranking-ng.circl.lu",
-        found: false,
+        // Lookup succeeded; IP has no ASN mapping in CIRCL history.
+        found: true,
         asn: null,
         asnDescription: null,
         asnRank: null,

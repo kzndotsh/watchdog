@@ -37,6 +37,17 @@ describe("dshield parse", () => {
     expect(snap.asCountry).toBe("CN");
     expect(snap.firstSeen).toBe("2020-01-01");
     expect(snap.threatFeedCount).toBe(2);
+    expect(snap.found).toBe(true);
+  });
+
+  it("treats threatfeeds-only payloads as found", () => {
+    const snap = parseDshieldBody("1.2.3.4", "2026-01-01T00:00:00.000Z", {
+      threatfeeds: { spamhaus: "2026-01-01" },
+    });
+    expect(snap.found).toBe(true);
+    expect(snap.threatFeedCount).toBe(1);
+    expect(snap.attacks).toBeNull();
+    expect(snap.count).toBeNull();
   });
 });
 
@@ -72,6 +83,13 @@ describe("cymru mhr parse", () => {
     expect(parseTxtAnswer([["1609459200", " 80"]])).toEqual({
       lastSeenEpoch: 1_609_459_200,
       detectionPct: 80,
+    });
+  });
+
+  it("returns null fields for unparseable TXT", () => {
+    expect(parseTxtAnswer([["not-a-malware-txt"]])).toEqual({
+      lastSeenEpoch: null,
+      detectionPct: null,
     });
   });
 });

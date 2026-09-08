@@ -129,6 +129,44 @@ export function fetchHashlookupEffect(
       typeof trustRaw === "number" || typeof trustRaw === "string"
         ? trustRaw
         : null;
+    const fileName = asString(body.FileName);
+    const product = firstProductName(body);
+    const md5 = asString(body.MD5);
+    const sha1 = asString(body["SHA-1"]);
+    const sha256 = asString(body["SHA-256"]);
+    const parentCount = Array.isArray(body.parents)
+      ? body.parents.length
+      : null;
+    const childCount = Array.isArray(body.children)
+      ? body.children.length
+      : null;
+    const hasHit =
+      trust !== null ||
+      fileName !== null ||
+      product !== null ||
+      md5 !== null ||
+      sha1 !== null ||
+      sha256 !== null ||
+      (parentCount ?? 0) > 0 ||
+      (childCount ?? 0) > 0;
+
+    if (!hasHit) {
+      return hashlookupSnapshotSchema.parse({
+        hash,
+        algo,
+        queriedAt: new Date().toISOString(),
+        source: "hashlookup.circl.lu",
+        found: false,
+        trust: null,
+        fileName: null,
+        product: null,
+        md5: null,
+        sha1: null,
+        sha256: null,
+        parentCount: null,
+        childCount: null,
+      });
+    }
 
     return hashlookupSnapshotSchema.parse({
       hash,
@@ -137,13 +175,13 @@ export function fetchHashlookupEffect(
       source: "hashlookup.circl.lu",
       found: true,
       trust,
-      fileName: asString(body.FileName),
-      product: firstProductName(body),
-      md5: asString(body.MD5),
-      sha1: asString(body["SHA-1"]),
-      sha256: asString(body["SHA-256"]),
-      parentCount: Array.isArray(body.parents) ? body.parents.length : null,
-      childCount: Array.isArray(body.children) ? body.children.length : null,
+      fileName,
+      product,
+      md5,
+      sha1,
+      sha256,
+      parentCount,
+      childCount,
     });
   });
 }

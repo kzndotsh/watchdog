@@ -5,7 +5,7 @@ import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { isRecord } from "../parse/coerce";
@@ -72,10 +72,11 @@ export function fetchXforceLookupEffect(
   return Effect.gen(function* fetchXforceLookupGen() {
     const key = apiKey.trim();
     const password = apiPassword.trim();
-    if (!key || !password) {
-      return yield* new ValidationVendorError({
-        message: "XFORCE_API_KEY and XFORCE_API_PASSWORD required",
-      });
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "XFORCE_API_KEY" });
+    }
+    if (!password) {
+      return yield* new MissingCredentialError({ slot: "XFORCE_API_PASSWORD" });
     }
 
     const { kind, value } = classifyXforceQuery(queryRaw);

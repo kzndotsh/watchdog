@@ -40,4 +40,73 @@ describe("honeydb", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect(
+    "fetchHoneydbLookupEffect treats clean 200 responses as found",
+    () =>
+      Effect.gen(function* fetchHoneydbLookupCleanGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi.fn().mockResolvedValue(
+            new Response(
+              JSON.stringify({
+                network_info: { asn: 15_169, country: "US" },
+                threat_info: { is_tor: false, is_threat: false },
+                internet_scanner: false,
+                ip_history: [],
+              }),
+              { status: 200 }
+            )
+          )
+        );
+
+        const snap = yield* fetchHoneydbLookupEffect(
+          "8.8.8.8",
+          "id",
+          "key",
+          AbortSignal.timeout(5000)
+        );
+
+        expect(snap.found).toBe(true);
+        expect(snap.isThreat).toBe(false);
+        expect(snap.historyEventCount).toBe(0);
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
+
+  it.effect("fetchHoneydbLookupEffect treats Tor-only context as found", () =>
+    Effect.gen(function* fetchHoneydbLookupTorGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              network_info: { asn: 20_000, country: "DE" },
+              threat_info: { is_tor: true, is_threat: false },
+              internet_scanner: false,
+              ip_history: [],
+            }),
+            { status: 200 }
+          )
+        )
+      );
+
+      const snap = yield* fetchHoneydbLookupEffect(
+        "1.2.3.4",
+        "id",
+        "key",
+        AbortSignal.timeout(5000)
+      );
+
+      expect(snap.found).toBe(true);
+      expect(snap.isTor).toBe(true);
+      expect(snap.isThreat).toBe(false);
+      expect(snap.historyEventCount).toBe(0);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

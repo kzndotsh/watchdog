@@ -2,9 +2,8 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString, isRecord } from "../parse/coerce";
 
@@ -26,6 +25,10 @@ export const dshieldLookupSnapshotSchema = z.object({
 });
 
 export type DshieldLookupSnapshot = z.infer<typeof dshieldLookupSnapshotSchema>;
+
+/** SANS ISC asks for contact info in the User-Agent string. */
+export const DSHIELD_USER_AGENT =
+  "Watchdog/1.0 (+threat.dshield.lookup; OSINT; contact: osint@watchdog.invalid)";
 
 function toIntOrNull(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -60,11 +63,13 @@ export function parseDshieldBody(
     ? Object.keys(threatfeeds).length
     : toIntOrNull(data.threatfeedscount);
 
+  const hasThreatFeeds = threatFeedCount !== null && threatFeedCount > 0;
+
   return dshieldLookupSnapshotSchema.parse({
     ip,
     queriedAt,
     source: "isc.sans.edu",
-    found: attacks !== null || count !== null || asname !== null,
+    found: (attacks ?? 0) > 0 || (count ?? 0) > 0 || hasThreatFeeds,
     attacks,
     count,
     maxrisk,
@@ -94,10 +99,8 @@ export function fetchDshieldLookupEffect(
   options?: DshieldOptions
 ): Effect.Effect<DshieldLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchDshieldLookupGen() {
-    const ip = normalizeIp(ipRaw);
-    const ua =
-      options?.userAgent ??
-      `${watchdogUserAgent("threat.dshield.lookup")}; contact: osint@watchdog.invalid)`;
+    const ip = yield* normalizeIpEffect(ipRaw);
+    const ua = options?.userAgent ?? DSHIELD_USER_AGENT;
 
     const { body } = yield* fetchJsonObjectEffect({
       url: `https://isc.sans.edu/api/ip/${encodeURIComponent(ip)}?json`,

@@ -160,7 +160,7 @@ export function fetchThreatfoxLookupEffect(
       queriedAt: new Date().toISOString(),
       source: "threatfox-api.abuse.ch",
       queryStatus,
-      found: iocs.length > 0,
+      found: true,
       iocs,
     });
   });

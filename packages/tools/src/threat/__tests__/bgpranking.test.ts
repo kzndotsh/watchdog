@@ -48,4 +48,30 @@ describe("bgpranking", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect(
+    "fetchBgprankingLookupEffect marks unmapped IPs as found with null ASN",
+    () =>
+      Effect.gen(function* fetchBgprankingLookupUnmappedGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi
+            .fn()
+            .mockResolvedValueOnce(
+              new Response(JSON.stringify({ response: {} }), { status: 200 })
+            )
+        );
+
+        const snap = yield* fetchBgprankingLookupEffect(
+          "203.0.113.1",
+          AbortSignal.timeout(5000)
+        );
+
+        expect(bgprankingLookupSnapshotSchema.parse(snap).found).toBe(true);
+        expect(snap.asn).toBeNull();
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

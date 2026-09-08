@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
-import { normalizeIp } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
@@ -45,7 +45,7 @@ export function fetchGreynoiseCommunityEffect(
   options?: GreynoiseOptions
 ): Effect.Effect<GreynoiseLookupSnapshot, ToolsTag, HttpClient.HttpClient> {
   return Effect.gen(function* fetchGreynoiseCommunityGen() {
-    const ip = normalizeIp(ipRaw);
+    const ip = yield* normalizeIpEffect(ipRaw);
     const key = options?.apiKey?.trim() ?? "";
     const ua =
       options?.userAgent ?? watchdogUserAgent("threat.greynoise.lookup");
@@ -56,7 +56,7 @@ export function fetchGreynoiseCommunityEffect(
     };
     if (key) headers.key = key;
 
-    const { body } = yield* fetchJsonObjectEffect({
+    const { status, body } = yield* fetchJsonObjectEffect({
       url: `https://api.greynoise.io/v3/community/${ip}`,
       init: {
         method: "GET",
@@ -65,7 +65,7 @@ export function fetchGreynoiseCommunityEffect(
       signal,
       service: "GreyNoise",
       subject: ip,
-      acceptStatus: (status) => status === 200 || status === 404,
+      acceptStatus: (httpStatus) => httpStatus === 200 || httpStatus === 404,
     });
     const noise = asBool(body.noise);
     const riot = asBool(body.riot);
@@ -74,7 +74,7 @@ export function fetchGreynoiseCommunityEffect(
       ip,
       queriedAt: new Date().toISOString(),
       source: "api.greynoise.io/v3/community",
-      found: noise === true || riot === true,
+      found: status === 200,
       noise,
       riot,
       classification: asString(body.classification),

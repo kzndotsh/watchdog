@@ -1,3 +1,6 @@
+import { isIP } from "node:net";
+
+import { expandIpv6 } from "../network/ip-lookup-cymru";
 import { asString, isRecord } from "../parse/coerce";
 
 export interface FeodoEntry {
@@ -26,9 +29,25 @@ export function parseFeodoEntries(raw: unknown): FeodoEntry[] {
   return out;
 }
 
+function feodoIpKey(raw: string): string | null {
+  const trimmed = raw.trim();
+  const version = isIP(trimmed);
+  if (version === 0) return null;
+  if (version === 6) {
+    try {
+      return expandIpv6(trimmed).toLowerCase();
+    } catch {
+      return trimmed.toLowerCase();
+    }
+  }
+  return trimmed;
+}
+
 export function findFeodoEntry(
   entries: readonly FeodoEntry[],
   ip: string
 ): FeodoEntry | undefined {
-  return entries.find((e) => e.ipAddress === ip);
+  const key = feodoIpKey(ip);
+  if (key === null) return undefined;
+  return entries.find((entry) => feodoIpKey(entry.ipAddress) === key);
 }
