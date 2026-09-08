@@ -33,6 +33,12 @@ export interface AuthLogFields {
   reason?: string;
 }
 
+function trimLogId(value: string | null | undefined): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
+
 export function jobWideEventFields(input: {
   jobId: string;
   outcome: string;
@@ -49,9 +55,14 @@ export function jobWideEventFields(input: {
   case?: CaseLogFields;
   cap: CapLogFields;
 } {
+  const jobId = trimLogId(input.jobId);
+  const caseId = trimLogId(input.caseId);
+  const capabilityId = trimLogId(input.capabilityId);
+  const playbookRunId = trimLogId(input.playbookRunId);
+
   return {
     job: {
-      jobId: input.jobId,
+      jobId,
       outcome: input.outcome,
       stopReason: input.stopReason,
       abortReason: input.abortReason,
@@ -59,10 +70,10 @@ export function jobWideEventFields(input: {
       reclaim: input.reclaim,
       durationMs: input.durationMs,
     },
-    case: input.caseId ? { caseId: input.caseId } : undefined,
+    case: caseId === undefined ? undefined : { caseId },
     cap: {
-      capabilityId: input.capabilityId,
-      playbookRunId: input.playbookRunId ?? undefined,
+      capabilityId,
+      playbookRunId,
     },
   };
 }

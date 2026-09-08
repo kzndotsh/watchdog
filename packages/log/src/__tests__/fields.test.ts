@@ -30,4 +30,20 @@ describe("jobWideEventFields", () => {
     expect(Object.keys(fields).sort()).toEqual(["cap", "case", "job"].sort());
     expect(JSON.stringify(fields)).not.toMatch(/secret|password|apiKey/i);
   });
+
+  it("trims padded log ids and drops blank case ids", () => {
+    const fields = jobWideEventFields({
+      jobId: "  job-1  ",
+      outcome: "succeeded",
+      caseId: "   ",
+      capabilityId: "  cap.dns  ",
+      playbookRunId: "  run-1  ",
+    });
+    expect(fields.job.jobId).toBe("job-1");
+    expect(fields.case).toBeUndefined();
+    expect(fields.cap).toEqual({
+      capabilityId: "cap.dns",
+      playbookRunId: "run-1",
+    });
+  });
 });
