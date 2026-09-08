@@ -20,7 +20,7 @@ export const searchCaseProc = authed
         caseId: input.caseId,
         organizationId: context.actor.organizationId,
         q: input.q,
-        limit: input.limit,
+        ...(input.limit === undefined ? {} : { perGroup: input.limit }),
       })
     )
   );
