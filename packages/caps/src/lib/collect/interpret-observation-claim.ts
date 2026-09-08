@@ -15,6 +15,8 @@ export function interpretObservationClaim(opts: {
   entityId: string | undefined;
   text: string;
   noEntitySummary: string;
+  /** When entityId is set but observation text is blank after trim. */
+  emptyTextSummary?: string;
 }): CapInterpretResult {
   const entityId = resolveCollectEntityId(opts.entityId);
   if (entityId === null) {
@@ -25,7 +27,10 @@ export function interpretObservationClaim(opts: {
   }
   const text = opts.text.trim();
   if (text === "") {
-    return { patch: [], summary: opts.noEntitySummary };
+    return {
+      patch: [],
+      summary: opts.emptyTextSummary ?? "No observation to attach",
+    };
   }
   return {
     summary: text,

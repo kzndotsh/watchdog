@@ -53,7 +53,7 @@ describe("interpret-observation-claim", () => {
       noEntitySummary: "no Entity",
     });
     expect(result.patch).toEqual([]);
-    expect(result.summary).toBe("no Entity");
+    expect(result.summary).toBe("No observation to attach");
   });
 
   it("interpretObservationClaim trims padded claim text", () => {
