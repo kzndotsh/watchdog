@@ -1,8 +1,24 @@
 import { ORPCError, os } from "@orpc/server";
 import { evlog } from "evlog/orpc";
 
-import type { ApiActor, ApiContext } from "./context";
+import type { ApiActor, ApiAuthMethod, ApiContext } from "./context";
 import { assertAgentChildWriteCustody } from "./custody";
+
+function apiKeyFromHeaders(headers: Headers): string | null {
+  const authHeader = headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.slice(7);
+  }
+  return headers.get("x-api-key");
+}
+
+/** Infer auth method when context omits it (in-process clients, tests). */
+export function resolveAuthMethod(context: ApiContext): ApiAuthMethod {
+  if (context.authMethod === "apiKey" || context.authMethod === "session") {
+    return context.authMethod;
+  }
+  return apiKeyFromHeaders(context.headers) ? "apiKey" : "session";
+}
 
 const ID_KEYS = [
   ["caseId", "case"],
@@ -51,13 +67,14 @@ export const authed = base.use(({ context, next }) => {
   if (!organizationId) {
     throw new ORPCError("FORBIDDEN");
   }
+  const authMethod = resolveAuthMethod(context);
   return next({
     context: {
       actor: {
         ...context.actor,
         organizationId,
       } satisfies ApiActor & { organizationId: string },
-      authMethod: context.authMethod,
+      authMethod,
     },
   });
 });
