@@ -91,6 +91,31 @@ describe("ArtifactContent", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
+  it("hides fetch error while refetching after a failure", () => {
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      isFetched: true,
+      isLoading: false,
+      isFetching: true,
+      isError: true,
+      error: new Error("storage unavailable"),
+      refetch: vi.fn(),
+    });
+
+    render(
+      <ArtifactContent
+        caseId={testId(10)}
+        jobId={testId(11)}
+        sha256="abc123"
+        mime="text/plain"
+        name="report.txt"
+      />
+    );
+
+    expect(screen.queryByText("storage unavailable")).not.toBeInTheDocument();
+    expect(document.querySelector('[aria-busy="true"]')).toBeTruthy();
+  });
+
   it("loads evidence-backed artifacts by evidence id", () => {
     useQueryMock.mockReturnValue({
       data: { text: "inline evidence" },

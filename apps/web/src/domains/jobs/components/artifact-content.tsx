@@ -72,28 +72,29 @@ export function ArtifactContent(props: ArtifactContentProps) {
   const contentPending = listPending(contentQuery, {
     enabled: contentQueryEnabled,
   });
+  const contentLoadError =
+    open && !contentPending && !contentQuery.isFetching && contentQuery.isError;
 
   const content = resolveArtifactTextContent(
     open,
-    contentPending,
-    contentQuery.isError,
+    contentPending || (open && contentQuery.isFetching && contentQuery.isError),
+    contentLoadError,
     artifactQueryText(contentQuery.data)
   );
   const shaChip = sha256Chip(artifactShaChipValue(sha256));
-  const body =
-    open && contentQuery.isError
-      ? {
-          kind: "custom" as const,
-          children: (
-            <FetchErrorAlert
-              error={errMessage(contentQuery.error, "Failed to load artifact")}
-              onRetry={() => {
-                void contentQuery.refetch();
-              }}
-            />
-          ),
-        }
-      : artifactBodyFromContent(content, mime);
+  const body = contentLoadError
+    ? {
+        kind: "custom" as const,
+        children: (
+          <FetchErrorAlert
+            error={errMessage(contentQuery.error, "Failed to load artifact")}
+            onRetry={() => {
+              void contentQuery.refetch();
+            }}
+          />
+        ),
+      }
+    : artifactBodyFromContent(content, mime);
 
   return (
     <ArtifactPreview
