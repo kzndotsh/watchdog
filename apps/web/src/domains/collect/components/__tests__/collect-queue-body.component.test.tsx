@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { CollectQueueBody } from "@/domains/collect/components/collect-queue-body";
+import { EMPTY_COLLECT_FILTERS } from "@/domains/collect/types";
 
 describe("CollectQueueBody", () => {
   it("shows loading before queue load errors", () => {
@@ -13,7 +14,7 @@ describe("CollectQueueBody", () => {
         queuePlaceholder={false}
         indexRows={[]}
         visibleRows={[]}
-        filters={{ q: "", hiddenOnly: false }}
+        filters={EMPTY_COLLECT_FILTERS}
         selectionRowId={null}
         blankSlateAction={null}
         onFiltersChange={vi.fn()}

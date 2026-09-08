@@ -1,8 +1,10 @@
-import type { UseQueryResult } from "@tanstack/react-query";
-
 import { errMessage } from "@/lib/utils";
 
-type QueryErrorState = Pick<UseQueryResult, "isError" | "isFetching" | "error">;
+interface QueryErrorState {
+  isError: boolean;
+  isFetching: boolean;
+  error: unknown;
+}
 
 /** Surface a query error only after initial fetch settles and refetch finishes. */
 export function queryLoadError(
