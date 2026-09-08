@@ -93,6 +93,11 @@ export function isPublicIpv4(ip: string): boolean {
     return false;
   }
   if (ip.startsWith("192.168.") || ip.startsWith("10.")) return false;
+  if (ip.startsWith("169.254.")) return false;
+  if (ip.startsWith("100.")) {
+    const second = Number(ip.split(".")[1]);
+    if (second >= 64 && second <= 127) return false;
+  }
   if (ip.startsWith("172.")) {
     const second = Number(ip.split(".")[1]);
     if (second >= 16 && second <= 31) return false;

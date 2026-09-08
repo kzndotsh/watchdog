@@ -14,6 +14,8 @@ import {
   DERIVED_JSON_ARTIFACT,
   EVIDENCE_SNAPSHOT_ARTIFACT,
   REPORT_JSON_ARTIFACT,
+  parseTrimmedCaseId,
+  trimmedOrUndefined,
 } from "@watchdog/schemas";
 import type { ToolsTag } from "@watchdog/tools";
 
@@ -73,10 +75,30 @@ export function interpretProcessDraft(
   if (!parsed.success) {
     throw new Error(`Invalid ProcessExtractDraft: ${parsed.error.message}`);
   }
-  const entityId = opts.input.entityId ?? opts.snapshotEntityId;
+  let entityId: string | undefined;
+  if (opts.input.entityId !== null && opts.input.entityId !== undefined) {
+    entityId = parseTrimmedCaseId(opts.input.entityId) ?? undefined;
+    if (entityId === undefined) {
+      throw new Error("Process interpret requires a valid entityId");
+    }
+  } else if (
+    opts.snapshotEntityId === null ||
+    opts.snapshotEntityId === undefined
+  ) {
+    entityId = undefined;
+  } else {
+    entityId = parseTrimmedCaseId(opts.snapshotEntityId) ?? undefined;
+    if (entityId === undefined) {
+      throw new Error("Process interpret requires a valid snapshotEntityId");
+    }
+  }
+  const evidenceId = parseTrimmedCaseId(opts.input.evidenceId) ?? undefined;
+  if (evidenceId === undefined) {
+    throw new Error("Process interpret requires a valid evidenceId");
+  }
   const outcome = draftToOutcome(parsed.data, {
-    evidenceId: opts.input.evidenceId,
-    ...(entityId !== undefined && entityId !== "" ? { entityId } : {}),
+    evidenceId,
+    ...(entityId === undefined ? {} : { entityId }),
   });
   switch (outcome.kind) {
     case "empty": {
@@ -90,9 +112,10 @@ export function interpretProcessDraft(
       // No signal: mark done only when there was text to harvest. Empty URL
       // dumps stay Processable after Enrich fills enriched.md.
       const hadText = (opts.snapshotTextChars ?? 0) > 0;
+      const draftSummary = trimmedOrUndefined(parsed.data.summary);
       return {
         patch: [],
-        summary: empty.empty,
+        summary: draftSummary ?? empty.empty,
         markSourceProcessed: hadText,
       };
     }

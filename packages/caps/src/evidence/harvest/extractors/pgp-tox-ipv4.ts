@@ -9,7 +9,7 @@ const pgpExtractor: HarvestExtractor = {
       const raw = m[0] ?? "";
       const norm = raw.replaceAll(/[\s:]/g, "").toUpperCase();
       if (norm.length !== 40 || !/[A-F]/.test(norm)) continue;
-      pushId(ctx.identifiers, ctx.seen, "other", norm, ctx.sourceText, {
+      pushId(ctx.identifiers, ctx.seen, "pgp", norm, ctx.sourceText, {
         notes: "pgp_fingerprint",
         quoteNeedle: raw,
       });

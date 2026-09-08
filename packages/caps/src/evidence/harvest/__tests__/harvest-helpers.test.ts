@@ -37,6 +37,8 @@ describe("harvest-helpers", () => {
     expect(isPublicIpv4("127.0.0.1")).toBe(false);
     expect(isPublicIpv4("192.168.1.1")).toBe(false);
     expect(isPublicIpv4("10.0.0.1")).toBe(false);
+    expect(isPublicIpv4("169.254.1.1")).toBe(false);
+    expect(isPublicIpv4("100.64.0.1")).toBe(false);
   });
 
   it("pushId deduplicates by type platform and value", () => {

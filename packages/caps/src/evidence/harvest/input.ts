@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { uuidSchema } from "@watchdog/schemas";
+import { optionalUuidSchema, trimmedUuidSchema } from "@watchdog/schemas";
 
 export const evidenceHarvestInput = z.object({
-  evidenceId: uuidSchema.describe("Evidence id"),
-  entityId: uuidSchema.optional(),
+  evidenceId: trimmedUuidSchema.describe("Evidence id"),
+  entityId: optionalUuidSchema,
 });

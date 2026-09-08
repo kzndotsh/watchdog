@@ -33,7 +33,10 @@ describe("pgp-tox-ipv4 extractors", () => {
 
     expect(
       ctx.identifiers.some(
-        (i) => i.notes === "pgp_fingerprint" && i.value.includes("ABCD")
+        (i) =>
+          i.type === "pgp" &&
+          i.notes === "pgp_fingerprint" &&
+          i.value.includes("ABCD")
       )
     ).toBe(true);
     expect(ctx.identifiers.some((i) => i.notes === "tox")).toBe(true);

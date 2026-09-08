@@ -8,6 +8,7 @@ import {
   uploadProcessArtifacts,
 } from "../lib/process-shared";
 import { fileAnalyzeInput } from "./input";
+import { fileAnalyzeReportSchema } from "./report-schema";
 import { fileAnalyzeToDraft } from "./to-draft";
 
 export const fileAnalyze = defineCapability({
@@ -61,18 +62,10 @@ export const fileAnalyze = defineCapability({
       return { artifacts };
     }),
   handoff(report): JobHandoff | undefined {
-    let bags: JobHandoff | undefined;
-    if (
-      report !== null &&
-      typeof report === "object" &&
-      !Array.isArray(report)
-    ) {
-      const sha256 = (report as { sha256?: unknown }).sha256;
-      if (typeof sha256 === "string" && sha256.trim() !== "") {
-        bags = { hash: [sha256.trim()] };
-      }
-    }
-    return bags;
+    const parsed = fileAnalyzeReportSchema.safeParse(report);
+    if (!parsed.success) return undefined;
+    const hash = parsed.data.sha256.trim();
+    return hash === "" ? undefined : { hash: [hash] };
   },
   interpret(report, opts) {
     return interpretProcessDraft(report, opts, {

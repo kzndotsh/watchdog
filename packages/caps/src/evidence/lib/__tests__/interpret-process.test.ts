@@ -36,7 +36,7 @@ describe("interpret-process", () => {
       },
       {
         input: { evidenceId },
-        snapshotEntityId: entityId,
+        snapshotEntityId: `  ${entityId}  `,
       },
       empty
     );
@@ -77,5 +77,68 @@ describe("interpret-process", () => {
       empty
     );
     expect(result.markSourceProcessed).toBe(true);
+  });
+
+  it("interpretProcessDraft surfaces summary-only drafts without patch ops", () => {
+    const result = interpretProcessDraft(
+      {
+        summary: "  No structured identifiers; narrative only.  ",
+        identifiers: [],
+        claims: [],
+        questions: [],
+      },
+      { input: { evidenceId, entityId }, snapshotTextChars: 40 },
+      empty
+    );
+    expect(result.patch).toEqual([]);
+    expect(result.summary).toBe("No structured identifiers; narrative only.");
+    expect(result.markSourceProcessed).toBe(true);
+  });
+
+  it("interpretProcessDraft skips handles without a platform", () => {
+    const result = interpretProcessDraft(
+      {
+        identifiers: [
+          { type: "handle", value: "@alice" },
+          { type: "email", value: "a@b.co" },
+        ],
+        claims: [],
+        questions: [],
+      },
+      { input: { evidenceId, entityId } },
+      empty
+    );
+    expect(
+      result.patch.filter((op) => op.resource === "identifier")
+    ).toHaveLength(1);
+    expect(result.patch[0].data.type).toBe("email");
+  });
+
+  it("interpretProcessDraft rejects invalid entityId", () => {
+    expect(() =>
+      interpretProcessDraft(
+        {
+          identifiers: [{ type: "email", value: "a@b.co" }],
+          claims: [],
+          questions: [],
+        },
+        { input: { evidenceId, entityId: "not-a-uuid" } },
+        empty
+      )
+    ).toThrow(/valid entityId/);
+  });
+
+  it("interpretProcessDraft rejects invalid evidenceId", () => {
+    expect(() =>
+      interpretProcessDraft(
+        {
+          identifiers: [{ type: "email", value: "a@b.co" }],
+          claims: [],
+          questions: [],
+        },
+        { input: { evidenceId: "bad", entityId } },
+        empty
+      )
+    ).toThrow(/valid evidenceId/);
   });
 });
