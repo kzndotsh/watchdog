@@ -94,6 +94,19 @@ function queryLoaded<T>(data: T) {
   };
 }
 
+function queryPendingWithError(error: Error) {
+  return {
+    data: undefined,
+    isFetched: true,
+    isLoading: false,
+    isError: true,
+    error,
+    isPlaceholderData: false,
+    isFetching: true,
+    refetch: vi.fn(),
+  };
+}
+
 function renderForm(slots: CredentialSlot[]) {
   useQueryMock.mockReturnValue(queryLoaded(slots));
 
@@ -114,6 +127,25 @@ describe("SettingsCredentialsForm", () => {
     expect(
       screen.getByText("No Cap credential slots registered.")
     ).toBeInTheDocument();
+  });
+
+  it("shows loading instead of an error while credentials are refetching", () => {
+    useQueryMock.mockReturnValue(
+      queryPendingWithError(new Error("Credentials unavailable"))
+    );
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <SettingsCredentialsForm />
+      </QueryClientProvider>
+    );
+
+    expect(
+      screen.queryByText("Credentials unavailable")
+    ).not.toBeInTheDocument();
   });
 
   it("groups connected and disconnected slots with the expected actions", () => {

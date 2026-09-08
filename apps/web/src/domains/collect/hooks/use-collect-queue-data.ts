@@ -107,10 +107,11 @@ export function useCollectQueueData(caseId: string) {
     }
     return names;
   }, [credentialSlots]);
-  const credentialsLoadErrorMessage = credentialsError
-    ? errMessage(credentialsLoadError, "Failed to load credentials")
-    : null;
   const credentialsPending = listPending(credentialsQuery);
+  const credentialsLoadErrorMessage =
+    credentialsError && !credentialsQuery.isFetching
+      ? errMessage(credentialsLoadError, "Failed to load credentials")
+      : null;
   const urlDumps = useMemo((): CollectUrlDump[] => {
     const dumps: CollectUrlDump[] = [];
     for (const row of evidenceRows) {

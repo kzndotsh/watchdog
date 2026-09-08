@@ -154,9 +154,10 @@ export function SettingsCredentialsForm() {
   const credentialsQuery = useQuery(credentialsListQuery());
   const slots = credentialsQuery.data ?? EMPTY_CREDENTIAL_SLOTS;
   const credentialsPending = listPending(credentialsQuery);
-  const credentialsLoadError = credentialsQuery.isError
-    ? errMessage(credentialsQuery.error, "Failed to load credentials")
-    : null;
+  const credentialsLoadError =
+    credentialsQuery.isError && !credentialsQuery.isFetching
+      ? errMessage(credentialsQuery.error, "Failed to load credentials")
+      : null;
   const credentialsPlaceholder = isQueryPlaceholderData(credentialsQuery);
 
   const [error, setError] = useState<string | null>(null);

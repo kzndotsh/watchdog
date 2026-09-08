@@ -84,4 +84,28 @@ describe("useCollectQueueData", () => {
     expect(result.current.queuePending).toBe(true);
     expect(result.current.queueLoadError).toBeNull();
   });
+
+  it("defers credentialsLoadError while the credentials query is refetching", () => {
+    useQueryMock.mockImplementation(
+      (options: { queryKey?: readonly unknown[] }) => {
+        const key = options.queryKey ?? [];
+        if (key[0] === "credentials") {
+          return {
+            data: undefined,
+            isFetched: true,
+            isLoading: false,
+            isError: true,
+            error: new Error("Credentials unavailable"),
+            isPlaceholderData: false,
+            isFetching: true,
+          };
+        }
+        return loadedQuery([]);
+      }
+    );
+
+    const { result } = renderHook(() => useCollectQueueData(testId(10)));
+
+    expect(result.current.credentialsLoadError).toBeNull();
+  });
 });
