@@ -3,7 +3,7 @@ import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
+import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString, isRecord } from "../parse/coerce";
@@ -58,10 +58,11 @@ export function fetchHoneydbLookupEffect(
     const ip = yield* normalizeIpEffect(ipRaw);
     const id = apiId.trim();
     const key = apiKey.trim();
-    if (!id || !key) {
-      return yield* new ValidationVendorError({
-        message: "HONEYDB_API_ID and HONEYDB_API_KEY required",
-      });
+    if (!id) {
+      return yield* new MissingCredentialError({ slot: "HONEYDB_API_ID" });
+    }
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "HONEYDB_API_KEY" });
     }
 
     const ua = options?.userAgent ?? watchdogUserAgent("threat.honeydb.lookup");

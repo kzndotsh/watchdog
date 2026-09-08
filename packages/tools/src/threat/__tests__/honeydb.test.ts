@@ -2,6 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { vi } from "vitest";
 
+import { MissingCredentialError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchHoneydbLookupEffect,
@@ -9,6 +10,34 @@ import {
 } from "../honeydb";
 
 describe("honeydb", () => {
+  it.effect("fetchHoneydbLookupEffect requires HONEYDB_API_ID", () =>
+    Effect.gen(function* missingIdGen() {
+      const result = yield* fetchHoneydbLookupEffect(
+        "8.8.8.8",
+        "   ",
+        "key",
+        AbortSignal.timeout(5000)
+      ).pipe(Effect.flip);
+
+      expect(result).toBeInstanceOf(MissingCredentialError);
+      expect(result.slot).toBe("HONEYDB_API_ID");
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
+  it.effect("fetchHoneydbLookupEffect requires HONEYDB_API_KEY", () =>
+    Effect.gen(function* missingKeyGen() {
+      const result = yield* fetchHoneydbLookupEffect(
+        "8.8.8.8",
+        "id",
+        "   ",
+        AbortSignal.timeout(5000)
+      ).pipe(Effect.flip);
+
+      expect(result).toBeInstanceOf(MissingCredentialError);
+      expect(result.slot).toBe("HONEYDB_API_KEY");
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
   it.effect("fetchHoneydbLookupEffect maps ip-context payloads", () =>
     Effect.gen(function* fetchHoneydbLookupGen() {
       vi.stubGlobal(
