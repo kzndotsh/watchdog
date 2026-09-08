@@ -26,7 +26,7 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterTaskMutation: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/ui/shadcn/toast", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),

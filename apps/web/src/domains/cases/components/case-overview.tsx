@@ -7,7 +7,6 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, DownloadIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { toast } from "sonner";
 
 import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
 import { CaseOverviewPending } from "@/domains/cases/components/case-overview-pending";
@@ -31,6 +30,7 @@ import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/shadcn/button";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_IDENTIFIERS: CaseIdentifierRecord[] = [];

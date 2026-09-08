@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
@@ -45,6 +44,7 @@ import {
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
 import { Button } from "@/shared/ui/shadcn/button";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import {
   normalizeIdentifierPlatform,

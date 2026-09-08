@@ -21,7 +21,7 @@ This page defines colors, type roles, the refuse list, and design-system primiti
     - Exceptions: `rounded-full` · `rounded-none` · `rounded-[inherit]`
     - Ban `rounded-xl` / `2xl` / `3xl` / `4xl` and arbitrary `rounded-[min(…)]` / `calc(var(--radius)±Npx)`
 - Mode: **Operate** (consistency over surprise)
-- Theme toggle: `.dark` / `.light` on `<html>`; Sonner follows that class
+- Theme toggle: `.dark` / `.light` on `<html>`; toast surfaces inherit theme tokens
 - Root: `TooltipProvider delay={500}` + `Toaster` (dense hit targets: `WithTooltip` + `wrapSpan`)
 - Tooltip chrome: elevated dark tip (`--wd-neutral-800` / `--wd-neutral-50` + light ring) via `TooltipContent`: sits above dark page bg; `Timestamp` / `WithTooltip` / sidebar share it
 - shadcn folder excluded from typecheck; hand-owned `shared/ui` typechecked by default
@@ -41,6 +41,7 @@ Vendored shadcn overlays live in `shared/ui/shadcn/`. **Dialog** is Watchdog-cus
 | **AlertDialog** | Blocking confirm, medium-stakes cancel (`DestructiveConfirmDialog` for irreversible) | Stock shadcn layout (footer chrome bar); description `text-copy-sm` |
 | **Sheet** | Right-side notes / long editors | Slide-over; shares popover palette |
 | **Popover** | Filters, compact pickers, table cells | Dense `p-2.5`; set `modal` when clicks must not pass through rows |
+| **Toast** (`toast.tsx`) | Transient mutation OK/fail, copy confirmations | Base UI stack; `rounded-md`; typed surfaces use `status-*` tints; close button on every toast; mount `<Toaster />` in root layout |
 
 Pick **Dialog** over **AlertDialog** when the user may dismiss via backdrop or close, or when the body is a real form. Pick **AlertDialog** when the flow must stay focused until an explicit action.
 

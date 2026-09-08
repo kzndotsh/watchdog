@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
@@ -35,6 +34,7 @@ import {
 } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
+import { toast } from "@/shared/ui/shadcn/toast";
 import type { TaskStatus } from "@watchdog/schemas";
 
 const EMPTY_TASKS: TaskRecord[] = [];

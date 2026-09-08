@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useCallback } from "react";
-import { toast } from "sonner";
 
 import {
   filterTriageQueue,
@@ -30,6 +29,7 @@ import {
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
+import { toast } from "@/shared/ui/shadcn/toast";
 import type { ProposalRecord } from "@watchdog/core";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import {

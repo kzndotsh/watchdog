@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query"
 import type { BetterFetchError } from "better-auth/react"
 import { useEffect } from "react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 export function ErrorToaster() {
   const queryClient = useQueryClient()

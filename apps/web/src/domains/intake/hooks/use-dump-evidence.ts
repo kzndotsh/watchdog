@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 
 import { dumpPasteFn, dumpUrlFn } from "@/domains/intake/intake.functions";
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
@@ -11,6 +10,7 @@ import {
 } from "@/domains/intake/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
 export interface UseDumpEvidenceOptions {

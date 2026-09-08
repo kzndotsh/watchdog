@@ -1,7 +1,7 @@
 import { useAuth, useResetPassword } from "@better-auth-ui/react"
 import { Eye, EyeOff } from "lucide-react"
 import { type SyntheticEvent, useEffect, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 import { Button } from "@/shared/ui/shadcn/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card"

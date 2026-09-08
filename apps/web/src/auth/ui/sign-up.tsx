@@ -6,7 +6,7 @@ import { useAuth, useFetchOptions, useSignUpEmail } from "@better-auth-ui/react"
 import { useIsMutating } from "@tanstack/react-query"
 import { Eye, EyeOff } from "lucide-react"
 import { type SyntheticEvent, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 import { Button } from "@/shared/ui/shadcn/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card"
 import {

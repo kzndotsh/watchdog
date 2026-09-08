@@ -10,7 +10,7 @@ import { connectionComposerIssues } from "../connection-composer.ts";
 import { buildCreateEdgeData, buildUpdateEdgeData } from "../edge-write.ts";
 import { pasteEntityErrorLabel } from "../paste-entity-error-label.ts";
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/ui/shadcn/toast", () => ({
   toast: { error: vi.fn() },
 }));
 

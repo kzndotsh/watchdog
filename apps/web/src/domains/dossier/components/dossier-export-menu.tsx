@@ -1,5 +1,4 @@
 import { ClipboardIcon, DownloadIcon } from "lucide-react";
-import { toast } from "sonner";
 
 import {
   copyEntityMarkdown,
@@ -15,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/shadcn/dropdown-menu";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 async function handleCopyMarkdown(caseId: string, entitySlug: string) {
   try {

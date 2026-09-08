@@ -8,7 +8,7 @@ import {
 } from "@better-auth-ui/react"
 import { Eye, EyeOff } from "lucide-react"
 import { type SyntheticEvent, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 import { Button } from "@/shared/ui/shadcn/button"
 import { Field, FieldError } from "@/shared/ui/shadcn/field"

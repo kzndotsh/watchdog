@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
-import { toast } from "sonner";
 
 import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
@@ -11,6 +10,7 @@ import {
 } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 function selectActiveCase(caseId: string) {
   return setActiveCaseIdFn({

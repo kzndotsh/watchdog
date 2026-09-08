@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
 import {
@@ -20,6 +19,7 @@ import {
   invalidateAfterEvidenceMutation,
   invalidateAfterJobMutation,
 } from "@/shared/lib/query-invalidation";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 type IntakePending = null | {
   kind: "harvest" | "extract" | "enrich";

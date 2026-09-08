@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import {
@@ -23,6 +22,7 @@ import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { useDataTable } from "@/shared/ui/data-table";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import { toast } from "@/shared/ui/shadcn/toast";
 import {
   confidenceLabel,
   IDENTIFIER_TYPE_LABELS,

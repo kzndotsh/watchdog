@@ -1,7 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode, type SubmitEvent } from "react";
-import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
@@ -50,6 +49,7 @@ import {
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";

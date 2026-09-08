@@ -2,7 +2,6 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { CheckIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
-import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
@@ -37,6 +36,7 @@ import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";

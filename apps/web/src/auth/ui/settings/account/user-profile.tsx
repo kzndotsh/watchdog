@@ -6,7 +6,7 @@ import {
 } from "@better-auth-ui/core"
 import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react"
 import { type SyntheticEvent, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 import { errMessage } from "@/lib/utils"
 import { Button } from "@/shared/ui/shadcn/button"

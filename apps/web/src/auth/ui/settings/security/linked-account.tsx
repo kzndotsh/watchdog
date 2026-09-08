@@ -8,7 +8,7 @@ import {
 } from "@better-auth-ui/react"
 import type { Account, SocialProvider } from "better-auth"
 import { Link2, Link2Off, Plug } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 import { Button } from "@/shared/ui/shadcn/button"
 import { Card, CardContent } from "@/shared/ui/shadcn/card"

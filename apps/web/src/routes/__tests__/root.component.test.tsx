@@ -23,7 +23,7 @@ vi.mock("@/shared/layout/providers", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/shadcn/sonner", () => ({
+vi.mock("@/shared/ui/shadcn/toast", () => ({
   Toaster: () => null,
 }));
 

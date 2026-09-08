@@ -1,6 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import { updateIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
@@ -9,6 +8,7 @@ import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-wri
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import type { IdentifierFieldUpdate } from "@/shared/ui/identifiers/identifier-cells";
+import { toast } from "@/shared/ui/shadcn/toast";
 import type {
   ConfidenceTier,
   IdentifierStatus,

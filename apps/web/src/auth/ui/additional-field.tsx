@@ -8,7 +8,7 @@ import { useAuth } from "@better-auth-ui/react"
 import { format } from "date-fns"
 import { CalendarIcon, Check, ChevronDownIcon, Copy } from "lucide-react"
 import { type ComponentType, useRef, useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 import { errMessage } from "@/lib/utils"
 import { buttonVariants } from "@/shared/ui/shadcn/button"

@@ -14,7 +14,7 @@ vi.mock("@/domains/entities/entities.functions", () => ({
   updateEntityFieldsFn: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/ui/shadcn/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

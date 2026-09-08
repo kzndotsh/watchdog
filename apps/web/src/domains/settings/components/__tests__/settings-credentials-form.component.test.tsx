@@ -54,7 +54,7 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterCredentialMutation: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/ui/shadcn/toast", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),

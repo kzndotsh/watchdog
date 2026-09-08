@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
 import {
@@ -13,6 +12,7 @@ import {
   optimisticActiveCaseSwitch,
   rollbackActiveCaseSwitch,
 } from "@/shared/lib/active-case-switch";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
 type NavigateFn = (opts: {

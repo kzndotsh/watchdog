@@ -2,7 +2,7 @@
 
 import { useSession } from "@better-auth-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 import { authClient } from "@/auth/client";
 import { isInstanceAdmin } from "@/auth/instance-admin";

@@ -1,5 +1,4 @@
-import { toast } from "sonner";
-
+import { toast } from "@/shared/ui/shadcn/toast";
 import {
   HANDLE_REQUIRES_PLATFORM,
   normalizeIdentifierPlatform,

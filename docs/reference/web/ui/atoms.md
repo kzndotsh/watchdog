@@ -38,6 +38,6 @@ Button sizes: PageHeader / toolbar → `sm` (or default); Queue row / dense icon
 - **`react-resizable-panels` v4 API**: `defaultSize`, `minSize`, `maxSize`: numbers = pixels, strings without units = percentages. Always use strings like `"34%"`. Vendor panel IDs must be unique per group: use `groupId` on `SplitView`. Do not put `autoSaveId` on the vendor wrapper (DOM warning).
 - **`<button>` inside `<button>`**: Base UI `TooltipTrigger` defaults to `<button>`. Use `render={<span />}` or `WithTooltip` `wrapSpan` inside queue row buttons. Default `CollapsibleTrigger` is also a `<button>`: use `nativeButton={false}` + `render={<div />}` when the header needs a full-width hit target with copyable `IdChip` or other buttons inside (`stopPropagation` on the interactive wrapper). Used on Collect run cards, Triage patch cards, and `ArtifactPreview`.
 - **`scrollbar-gutter: stable`** forces classic scrollbar mode and ignores `:-webkit-scrollbar`: avoid on styled scroll areas.
-- Theme toggle sets `.dark` / `.light` on `<html>`. Sonner must follow `document.documentElement` class: do not reintroduce `next-themes` without a provider.
+- Theme toggle sets `.dark` / `.light` on `<html>`. Toast inherits CSS variables from the document theme: do not reintroduce `next-themes` without a provider.
 - **Opaque ids**: never `.slice(0, N)` on hashes/ids in domains; use `IdChip` / `formatOpaqueId` (`ds:ban` greps this).
 - **Button as Link**: Base UI `Button` + `render={<Link />}` needs `nativeButton={false}` or you get nested interactive elements / wrong semantics.

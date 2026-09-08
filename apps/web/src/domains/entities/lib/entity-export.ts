@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 const EXTERNAL_AI_URL_MAX = 1800;
 

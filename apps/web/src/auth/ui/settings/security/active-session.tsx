@@ -2,7 +2,7 @@ import { useAuth, useRevokeSession, useSession } from "@better-auth-ui/react"
 import type { Session } from "better-auth"
 import Bowser from "bowser"
 import { LogOut, Monitor, Smartphone, X } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 import { Button } from "@/shared/ui/shadcn/button"
 import { Card, CardContent } from "@/shared/ui/shadcn/card"

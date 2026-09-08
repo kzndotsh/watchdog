@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
@@ -41,6 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/shadcn/alert-dialog";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { DossierConnectionsSkeletonLayout } from "@/shared/ui/skeletons";
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {

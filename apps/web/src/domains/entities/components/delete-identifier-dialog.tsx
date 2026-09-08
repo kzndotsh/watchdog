@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { deleteIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import { deleteIdentifierInputSchema } from "@/domains/entities/identifiers/types";
@@ -17,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/ui/shadcn/alert-dialog";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 
 export interface DeleteIdentifierTarget {

@@ -12,7 +12,7 @@ vi.mock("@/domains/entities/identifiers/identifiers.functions", () => ({
   createIdentifierFn: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/ui/shadcn/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

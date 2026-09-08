@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import {
   createEdgeFn,
@@ -21,6 +20,7 @@ import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write
 import { createEntityInputSchema } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
+import { toast } from "@/shared/ui/shadcn/toast";
 import type { EntityKind } from "@watchdog/schemas";
 
 interface UpdateEntityVars {

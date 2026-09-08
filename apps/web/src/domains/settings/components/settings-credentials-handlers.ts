@@ -1,8 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCredentialMutation } from "@/shared/lib/query-invalidation";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 export async function handleCredentialDeleted(
   queryClient: QueryClient,

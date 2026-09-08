@@ -1,7 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { toast } from "sonner";
 
 import type { DossierEditFormValues } from "@/domains/dossier/components/dossier-edit-dialog";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
@@ -16,6 +15,7 @@ import {
   invalidateAfterProposalQueueChange,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { toast } from "@/shared/ui/shadcn/toast";
 import {
   isProposalQueueLiveEvent,
   type WatchdogEvent,

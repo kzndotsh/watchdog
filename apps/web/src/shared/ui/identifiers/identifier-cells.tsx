@@ -5,7 +5,6 @@ import type {
   HeaderContext,
 } from "@tanstack/react-table";
 import { CopyIcon } from "lucide-react";
-import { toast } from "sonner";
 
 import type { IdentifierRecord } from "@/domains/entities/identifiers/identifiers.functions";
 import {
@@ -31,6 +30,7 @@ import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-ce
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { Button } from "@/shared/ui/shadcn/button";
+import { toast } from "@/shared/ui/shadcn/toast";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,

@@ -3,7 +3,6 @@ import { useMutation } from "@tanstack/react-query";
 import { format, isValid, parse } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
-import { toast } from "sonner";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
@@ -35,6 +34,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/ui/shadcn/popover";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";

@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserRoundIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { deleteEntityFn } from "@/domains/entities/entities.functions";
 import {
@@ -11,6 +10,7 @@ import {
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { entityDisplayLabel } from "@watchdog/schemas";
 
 export function DeleteEntityDialog({

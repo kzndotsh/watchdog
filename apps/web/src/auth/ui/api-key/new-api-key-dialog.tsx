@@ -3,7 +3,7 @@
 import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
 import { Check, Copy, Key } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key"
 

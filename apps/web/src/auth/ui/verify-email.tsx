@@ -2,7 +2,7 @@
 
 import { useAuth, useSendVerificationEmail } from "@better-auth-ui/react"
 import { useEffect, useState, useSyncExternalStore } from "react"
-import { toast } from "sonner"
+import { toast } from "@/shared/ui/shadcn/toast"
 
 import { Button } from "@/shared/ui/shadcn/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card"

@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { updateCaseFn } from "@/domains/cases/cases.functions";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
@@ -20,6 +19,7 @@ import {
 import { Input } from "@/shared/ui/shadcn/input";
 import { Switch } from "@/shared/ui/shadcn/switch";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 interface CaseSettingsFormProps {
   caseId: string;

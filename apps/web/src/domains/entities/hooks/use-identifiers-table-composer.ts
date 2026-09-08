@@ -2,7 +2,6 @@ import type { QueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { createIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
@@ -18,6 +17,7 @@ import {
   identifierCreateCanSubmit,
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { normalizeIdentifierPlatform } from "@watchdog/schemas";
 
 type IdentifierCreateValues = Parameters<

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const toastErrorMock = vi.hoisted(() => vi.fn());
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/ui/shadcn/toast", () => ({
   toast: { error: toastErrorMock },
 }));
 

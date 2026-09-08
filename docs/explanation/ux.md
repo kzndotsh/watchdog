@@ -80,7 +80,7 @@ Empty CTAs: real `Button`/`Link`, max one primary. Never `Get Started` / `OK`. P
 | Failure | Surface |
 | --- | --- |
 | Field validation | Input / Field helper (not toast) |
-| Transient mutation fail / OK | Sonner toast |
+| Transient mutation fail / OK | Toast (`shared/ui/shadcn/toast`) |
 | Region / route load fail | `FetchErrorAlert` in the data region |
 | Blocking policy (e.g. dual-control) | Inline Alert: not toast |
 | Destructive confirm fail | Inline error inside the dialog (stay open) |

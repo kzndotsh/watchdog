@@ -8,7 +8,7 @@ import {
 
 import { Providers } from "@/shared/layout/providers";
 import { Button } from "@/shared/ui/shadcn/button";
-import { Toaster } from "@/shared/ui/shadcn/sonner";
+import { Toaster } from "@/shared/ui/shadcn/toast";
 import { TooltipProvider } from "@/shared/ui/shadcn/tooltip";
 
 import appCss from "../styles.css?url";
@@ -54,7 +54,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Providers>
           <TooltipProvider delay={500}>{children}</TooltipProvider>
         </Providers>
-        <Toaster richColors closeButton />
+        <Toaster />
         <Scripts />
       </body>
     </html>

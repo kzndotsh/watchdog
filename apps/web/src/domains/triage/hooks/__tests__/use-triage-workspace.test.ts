@@ -15,7 +15,7 @@ vi.mock("@/domains/triage/triage.functions", () => ({
   rejectProposalFn: vi.fn(),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/ui/shadcn/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

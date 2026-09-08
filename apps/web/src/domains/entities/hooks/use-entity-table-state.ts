@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import type { CaseRecord } from "@/domains/cases/types";
 import {
@@ -28,6 +27,7 @@ import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { useDataTable } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
+import { toast } from "@/shared/ui/shadcn/toast";
 import { ENTITY_KIND_LABELS } from "@/shared/ui/vocab";
 import type { EntityKind } from "@watchdog/schemas";
 

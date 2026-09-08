@@ -5,7 +5,6 @@ import type {
   FilterFn,
   HeaderContext,
 } from "@tanstack/react-table";
-import { toast } from "sonner";
 
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import {
@@ -37,6 +36,7 @@ import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evide
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
+import { toast } from "@/shared/ui/shadcn/toast";
 import {
   CONFIDENCE_OPTIONS,
   EntityKindGlyph,
