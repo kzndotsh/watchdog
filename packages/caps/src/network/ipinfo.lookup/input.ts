@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, optionalUuidSchema } from "@watchdog/schemas";
+import { ipSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
 
 export const ipinfoLookupInput = z.object({
-  ip: nonEmptyTrimmed.describe("IP address"),
+  ip: ipSeedSchema.describe("IP address"),
   entityId: optionalUuidSchema,
 });

@@ -12,4 +12,8 @@ describe("c99.lookup input", () => {
       })
     ).toMatchObject({ host: "example.com", realtime: true });
   });
+
+  it("rejects invalid host seeds", () => {
+    expect(() => c99LookupInput.parse({ host: "not a host" })).toThrow();
+  });
 });
