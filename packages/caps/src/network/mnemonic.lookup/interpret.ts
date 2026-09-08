@@ -35,7 +35,8 @@ function summarize(
     DOMAIN_IDENTIFIER_BATCH_LIMIT
   );
   if (report.kind === "ip") {
-    return `Mnemonic PDNS for IP ${report.query}: ${count}; ${domainCount} domain(s)${domainNote}`;
+    const ipPart = ipCount > 0 ? `${ipCount} related IP(s)${ipNote}, ` : "";
+    return `Mnemonic PDNS for IP ${report.query}: ${count}; ${ipPart}${domainCount} domain(s)${domainNote}`;
   }
   return `Mnemonic PDNS for ${report.query}: ${count}; ${ipCount} IP(s)${ipNote}, ${domainCount} related domain(s)${domainNote}`;
 }

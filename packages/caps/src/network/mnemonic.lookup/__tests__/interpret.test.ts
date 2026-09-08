@@ -89,6 +89,26 @@ describe("interpret", () => {
     expect(String(result.summary)).toMatch(/showing 80 of 85 in Identifiers/);
   });
 
+  it("notes related-ip truncation in the claim when PDNS IPs exceed the cap", () => {
+    const ips = Array.from({ length: 85 }, (_, i) => `10.0.0.${i + 1}`);
+    const result = interpretMnemonicLookupReport(
+      {
+        ...fixture,
+        kind: "ip",
+        ips,
+      },
+      { input: { query: "8.8.8.8", entityId } }
+    );
+    expect(
+      result.patch.filter(
+        (p) => p.resource === "identifier" && p.data.type === "ip"
+      )
+    ).toHaveLength(81);
+    expect(String(result.summary)).toMatch(
+      /85 related IP\(s\).*showing 80 of 85/
+    );
+  });
+
   itRejectsIncompleteReport(
     mnemonicLookup,
     { query: "8.8.8.8" },
