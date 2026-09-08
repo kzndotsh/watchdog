@@ -9,9 +9,9 @@ import { TriagePatchBody } from "@/domains/triage/components/triage-patch-body";
 import { useTriageDetailForms } from "@/domains/triage/hooks/use-triage-detail-forms";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import type { AcceptFormValues } from "@/domains/triage/types";
-import { errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 
 interface TriageDetailProps {
@@ -68,18 +68,11 @@ export function TriageDetail({
     listPending(hiddenEvidenceQuery, {
       enabled: queryEnabledFlag(hiddenEvidenceQueryOptions.enabled),
     });
-  const evidenceLoadError =
-    !evidenceLoading &&
-    !activeEvidenceQuery.isFetching &&
-    !hiddenEvidenceQuery.isFetching &&
-    (activeEvidenceQuery.isError || hiddenEvidenceQuery.isError)
-      ? errMessage(
-          activeEvidenceQuery.error ??
-            hiddenEvidenceQuery.error ??
-            new Error("Failed to load evidence"),
-          "Failed to load evidence"
-        )
-      : null;
+  const evidenceLoadError = combinedQueryLoadError(
+    [activeEvidenceQuery, hiddenEvidenceQuery],
+    evidenceLoading,
+    "Failed to load evidence"
+  );
 
   const evidenceById = useMemo(() => {
     const map = new Map<string, EvidenceRecord>();

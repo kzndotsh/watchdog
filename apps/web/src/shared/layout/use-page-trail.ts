@@ -6,6 +6,7 @@ import { entityBySlugQuery } from "@/domains/entities/queries";
 import { buildPageTrail, type TrailItem } from "@/shared/layout/page-trail";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 
 function trailParams(matches: readonly { params: Record<string, unknown> }[]): {
@@ -43,7 +44,7 @@ export function usePageTrail(): {
   });
   const casesPending = listPending(casesQuery);
   const casesLoadError =
-    !casesPending && !casesQuery.isFetching && casesQuery.isError;
+    queryLoadError(casesQuery, casesPending, "Failed to load cases") !== null;
   const activeCase = casesLoadError ? null : (casesQuery.data?.active ?? null);
   const routeCase =
     casesLoadError || params.caseSlug === undefined
@@ -71,9 +72,7 @@ export function usePageTrail(): {
   const entityLoadError = Boolean(
     activeCase?.id &&
     params.entitySlug &&
-    !entityPending &&
-    !entityQuery.isFetching &&
-    entityQuery.isError
+    queryLoadError(entityQuery, entityPending, "Failed to load entity") !== null
   );
 
   let items = buildPageTrail({
