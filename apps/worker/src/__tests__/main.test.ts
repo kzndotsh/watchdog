@@ -13,6 +13,7 @@ const workerMocks = vi.hoisted(() => {
     ensureBossWorkerEffect,
     reconcileStaleJobsEffect: vi.fn(),
     reconcileStuckPlaybookRunsEffect: vi.fn(),
+    reconcileOrphanedQueuedJobsEffect: vi.fn(),
     listenForEventsStream: vi.fn(),
     listActiveJobIds: vi.fn(() => [] as string[]),
     findCancelledJobIdsEffect: vi.fn(),
@@ -33,24 +34,23 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
     reconcileStaleJobsEffect: workerMocks.reconcileStaleJobsEffect,
     reconcileStuckPlaybookRunsEffect:
       workerMocks.reconcileStuckPlaybookRunsEffect,
+    reconcileOrphanedQueuedJobsEffect:
+      workerMocks.reconcileOrphanedQueuedJobsEffect,
   };
 });
 
-vi.mock("@watchdog/env/server", () => ({}));
+vi.mock("@watchdog/env/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/env/server")>();
+  return { ...actual };
+});
 
-vi.mock("@watchdog/log", () => ({
-  createLogger: vi.fn(() => ({
-    set: vi.fn(),
-    error: vi.fn(),
-    emit: vi.fn(),
-  })),
-  initWatchdogLogger: vi.fn(),
-  jobWideEventFields: vi.fn((fields: unknown) => fields),
-}));
-
-vi.mock("../export-events", () => ({
-  handleExportEventEffect: workerMocks.handleExportEventEffect,
-}));
+vi.mock("../export-events", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../export-events")>();
+  return {
+    ...actual,
+    handleExportEventEffect: workerMocks.handleExportEventEffect,
+  };
+});
 
 import { JobFibers } from "@watchdog/core/worker";
 
@@ -62,13 +62,16 @@ workerMocks.ensureBossWorkerEffect.mockReturnValue(
 workerMocks.handleExportEventEffect.mockReturnValue(Effect.void);
 workerMocks.reconcileStaleJobsEffect.mockReturnValue(Effect.succeed(0));
 workerMocks.reconcileStuckPlaybookRunsEffect.mockReturnValue(Effect.succeed(0));
+workerMocks.reconcileOrphanedQueuedJobsEffect.mockReturnValue(
+  Effect.succeed(0)
+);
 workerMocks.findCancelledJobIdsEffect.mockReturnValue(
   Effect.succeed([] as string[])
 );
 workerMocks.listenForEventsStream.mockReturnValue(Stream.empty);
 
 describe("bootWorkerEffect", () => {
-  it.effect("starts pg-boss worker and export event stream", () =>
+  it.effect("stops pg-boss worker and export event stream", () =>
     Effect.gen(function* bootWorkerEffectTestGen() {
       const fiber = yield* bootWorkerEffect.pipe(
         Effect.provide(JobFibers.layer),
@@ -81,9 +84,50 @@ describe("bootWorkerEffect", () => {
       expect(
         workerMocks.reconcileStuckPlaybookRunsEffect
       ).toHaveBeenCalledTimes(1);
+      expect(
+        workerMocks.reconcileOrphanedQueuedJobsEffect
+      ).toHaveBeenCalledTimes(1);
       expect(workerMocks.work).toHaveBeenCalledTimes(1);
       expect(workerMocks.listenForEventsStream).toHaveBeenCalledTimes(1);
       yield* Fiber.interrupt(fiber);
     })
+  );
+
+  it.effect("unwinds scoped resources when SIGTERM is received", () =>
+    Effect.gen(function* bootWorkerSigtermTestGen() {
+      workerMocks.stop.mockClear();
+      const fiber = yield* bootWorkerEffect.pipe(
+        Effect.provide(JobFibers.layer),
+        Effect.forkChild
+      );
+      yield* Effect.yieldNow;
+      yield* Effect.yieldNow;
+      process.emit("SIGTERM");
+      yield* Fiber.await(fiber);
+      expect(workerMocks.stop).toHaveBeenCalledTimes(1);
+    })
+  );
+
+  it.effect(
+    "force-exits when a second shutdown signal arrives during shutdown",
+    () =>
+      Effect.gen(function* bootWorkerRepeatSigtermTestGen() {
+        const exit = vi
+          .spyOn(process, "exit")
+          .mockImplementation((() => undefined) as typeof process.exit);
+        workerMocks.stop.mockClear();
+        const fiber = yield* bootWorkerEffect.pipe(
+          Effect.provide(JobFibers.layer),
+          Effect.forkChild
+        );
+        yield* Effect.yieldNow;
+        yield* Effect.yieldNow;
+        process.emit("SIGTERM");
+        yield* Effect.yieldNow;
+        process.emit("SIGINT");
+        expect(exit).toHaveBeenCalledWith(130);
+        exit.mockRestore();
+        yield* Fiber.interrupt(fiber);
+      })
   );
 });

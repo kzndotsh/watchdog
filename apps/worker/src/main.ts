@@ -1,3 +1,4 @@
+import "@watchdog/env/server";
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect } from "effect";
 

@@ -16,18 +16,34 @@ function logCancelPollError(error: unknown): void {
 const pollCancelledJobsEffect: Effect.Effect<void, never, JobFibers> =
   Effect.gen(function* pollCancelledJobsGen() {
     const fibers = yield* JobFibers;
-    const running = fibers.listIds();
-    if (running.length === 0) {
+    const runningBefore = fibers.listIds();
+    if (runningBefore.length === 0) {
       return;
     }
     const outcome = yield* Effect.result(
-      findCancelledJobIdsEffect([...running])
+      findCancelledJobIdsEffect([...runningBefore])
     );
     if (Result.isFailure(outcome)) {
       logCancelPollError(outcome.failure);
       return;
     }
-    for (const id of outcome.success) {
+    const cancelled = new Set(outcome.success);
+    const runningBeforeSet = new Set(runningBefore);
+    const runningAfter = fibers.listIds();
+    const newlyRunning = runningAfter.filter((id) => !runningBeforeSet.has(id));
+    if (newlyRunning.length > 0) {
+      const followUp = yield* Effect.result(
+        findCancelledJobIdsEffect([...runningBefore, ...newlyRunning])
+      );
+      if (Result.isFailure(followUp)) {
+        logCancelPollError(followUp.failure);
+      } else {
+        for (const id of followUp.success) {
+          cancelled.add(id);
+        }
+      }
+    }
+    for (const id of cancelled) {
       yield* fibers.abort(id, "cancel");
     }
   });

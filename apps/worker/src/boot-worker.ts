@@ -1,11 +1,13 @@
 import path from "node:path";
 
-import { Cause, Data, Effect, Stream } from "effect";
+import { Cause, Data, Deferred, Effect, Stream } from "effect";
 
 import {
   CAP_JOB_QUEUE,
   executeJobOnMap,
   ensureBossWorkerEffect,
+  extractDomainJobIdFromPayload,
+  failInvalidCapDeliveryEffect,
   gracefulStopTimeoutMs,
   isCapJobPayload,
   isWatchdogEvent,
@@ -14,6 +16,7 @@ import {
   type JobFibersApi,
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
+  reconcileOrphanedQueuedJobsEffect,
   type CapJobPayload,
   type JobRunOutcome,
   type BossHandle,
@@ -23,9 +26,13 @@ import {
   initWatchdogLogger,
   jobWideEventFields,
 } from "@watchdog/log";
+import { trimmedUuidSchema } from "@watchdog/schemas";
 
 import { cancelPollLoopEffect } from "./cancel-poll";
-import { handleExportEventEffect } from "./export-events";
+import {
+  handleExportEventEffect,
+  shouldTriggerCaseExport,
+} from "./export-events";
 
 type BossWorker = BossHandle;
 
@@ -35,6 +42,8 @@ interface WorkerResources {
 
 interface WorkerShutdownContext extends WorkerResources {
   shuttingDown: boolean;
+  shutdownSignal: string;
+  bossStopError?: string;
 }
 
 function emitOnce(scope: string, fields: Record<string, unknown>): void {
@@ -89,6 +98,25 @@ function reconcileWorkerStartupEffect(): Effect.Effect<void> {
         stuckPlaybooks,
       });
     }
+
+    const orphanedQueued = yield* reconcileOrphanedQueuedJobsEffect().pipe(
+      Effect.catchCause((cause) =>
+        Effect.sync(() => {
+          logWorkerError(
+            "worker.reconcile",
+            "orphaned queued job reconcile failed",
+            Cause.squash(cause)
+          );
+          return 0;
+        })
+      )
+    );
+    if (orphanedQueued > 0) {
+      emitOnce("worker.reconcile", {
+        message: `re-enqueued ${orphanedQueued} orphaned queued Job(s)`,
+        orphanedQueued,
+      });
+    }
   });
 }
 
@@ -99,12 +127,13 @@ function executeCapJobPayloadEffect(
   log: ReturnType<typeof createLogger>,
   runJob: RunJob
 ): Effect.Effect<void, never, JobFibers> {
-  return runJob(data.jobId).pipe(
+  const jobId = trimmedUuidSchema.parse(data.jobId);
+  return runJob(jobId).pipe(
     Effect.tap((outcome) =>
       Effect.sync(() => {
         log.set(
           jobWideEventFields({
-            jobId: data.jobId,
+            jobId,
             outcome: outcome.outcome,
             stopReason: outcome.stopReason,
             abortReason: outcome.abortReason,
@@ -118,18 +147,21 @@ function executeCapJobPayloadEffect(
         );
       })
     ),
-    Effect.catchCause((cause) =>
-      Effect.sync(() => {
+    Effect.catchCause((cause) => {
+      if (cause.reasons.some(Cause.isDieReason)) {
+        return Effect.die(Cause.squash(cause));
+      }
+      return Effect.sync(() => {
         const error = Cause.squash(cause);
         log.set(
           jobWideEventFields({
-            jobId: data.jobId,
+            jobId,
             outcome: "handler_error",
           })
         );
         log.error(error instanceof Error ? error : new Error(String(error)));
-      })
-    ),
+      });
+    }),
     Effect.asVoid
   );
 }
@@ -137,7 +169,7 @@ function executeCapJobPayloadEffect(
 function processCapJobEffect(
   job: { id: string; data: unknown },
   runJob: RunJob
-): Effect.Effect<void, never, JobFibers> {
+): Effect.Effect<void, Error, JobFibers> {
   const log = createLogger({
     scope: "cap.job",
     bossJobId: job.id,
@@ -147,12 +179,30 @@ function processCapJobEffect(
   });
 
   if (!isCapJobPayload(job.data)) {
-    return Effect.sync(() => {
-      log.set({
-        job: { outcome: "invalid_payload" },
-        error: { message: "missing jobId in payload" },
-        payloadType: job.data === null ? "null" : typeof job.data,
+    const domainJobId = extractDomainJobIdFromPayload(job.data);
+    return Effect.gen(function* invalidCapPayloadGen() {
+      yield* Effect.sync(() => {
+        log.set({
+          bossJobId: job.id,
+          ...jobWideEventFields({
+            jobId: domainJobId ?? job.id,
+            outcome: "invalid_payload",
+          }),
+        });
+        log.error(
+          new Error(
+            `missing jobId in payload (payloadType=${job.data === null ? "null" : typeof job.data})`
+          )
+        );
       });
+      if (domainJobId === undefined) {
+        return yield* Effect.fail(
+          new Error(`unrecoverable cap payload for boss job ${job.id}`)
+        );
+      }
+      return yield* failInvalidCapDeliveryEffect(domainJobId).pipe(
+        Effect.orDie
+      );
     }).pipe(Effect.andThen(finish));
   }
 
@@ -161,46 +211,120 @@ function processCapJobEffect(
   );
 }
 
+function parseWatchdogEventPayload(rawPayload: string): unknown {
+  try {
+    return JSON.parse(rawPayload) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
 function handleExportEventPayloadEffect(
   rawPayload: string
 ): Effect.Effect<void> {
-  return Effect.try({
-    try: () => JSON.parse(rawPayload) as unknown,
-    catch: (error) => {
+  return Effect.gen(function* handleExportEventPayloadGen() {
+    const parsed = parseWatchdogEventPayload(rawPayload);
+    if (parsed === undefined) {
       logWorkerError(
         "export-sync.listen",
         "malformed watchdog_events payload",
-        error
+        new Error("invalid JSON")
       );
-      return new Error("malformed watchdog_events payload");
-    },
-  }).pipe(
-    Effect.flatMap((parsed) =>
-      isWatchdogEvent(parsed) ? handleExportEventEffect(parsed) : Effect.void
-    ),
-    Effect.ignore
-  );
+      return;
+    }
+    if (!isWatchdogEvent(parsed)) {
+      logWorkerError(
+        "export-sync.listen",
+        "ignored non-watchdog payload",
+        new Error("payload failed watchdog event schema")
+      );
+      return;
+    }
+    if (!shouldTriggerCaseExport(parsed)) {
+      return;
+    }
+    yield* Effect.forkChild(
+      handleExportEventEffect(parsed).pipe(
+        Effect.catchCause((cause) =>
+          Effect.sync(() => {
+            logWorkerError(
+              "export-sync",
+              "export scheduling failed",
+              Cause.squash(cause)
+            );
+          })
+        )
+      )
+    );
+  });
 }
+
+export { handleExportEventPayloadEffect };
 
 function onExportEventListening(): void {
   emitOnce("export-sync", { message: "listening for graph events" });
 }
 
-function onExportEventListenError(error: unknown): void {
-  logWorkerError("export-sync.listen", "LISTEN connection failed", error);
+function repeatShutdownExitCode(signal: string): number {
+  if (signal === "SIGINT") return 130;
+  if (signal === "SIGTERM") return 143;
+  return 1;
 }
 
-function exportEventsProgram() {
-  return Stream.runForEach(
-    listenForEventsStream({
-      onReady: onExportEventListening,
-      onError: onExportEventListenError,
-    }),
-    (payload) => handleExportEventPayloadEffect(payload)
+function requestWorkerShutdown(
+  signal: string,
+  ctx: WorkerShutdownContext,
+  shutdownGate: Deferred.Deferred<true>
+): void {
+  if (ctx.shuttingDown) {
+    process.exit(repeatShutdownExitCode(signal));
+    return;
+  }
+  ctx.shuttingDown = true;
+  ctx.shutdownSignal = signal;
+  void (async () => {
+    try {
+      await Effect.runPromise(Deferred.succeed(shutdownGate, true));
+    } catch (error: unknown) {
+      logWorkerError(
+        "worker.shutdown",
+        "shutdown request failed",
+        error instanceof Error ? error : new Error(String(error))
+      );
+      process.exit(1);
+    }
+  })();
+}
+
+function onExportEventListenError(
+  error: unknown,
+  ctx: WorkerShutdownContext,
+  shutdownGate: Deferred.Deferred<true>
+): void {
+  logWorkerError("export-sync.listen", "LISTEN connection failed", error);
+  requestWorkerShutdown("LISTEN", ctx, shutdownGate);
+}
+
+function exportEventsProgram(
+  ctx: WorkerShutdownContext,
+  shutdownGate: Deferred.Deferred<true>
+) {
+  return Effect.race(
+    Stream.runForEach(
+      listenForEventsStream({
+        onReady: onExportEventListening,
+        onError: (error) => {
+          onExportEventListenError(error, ctx, shutdownGate);
+        },
+      }),
+      (payload) => handleExportEventPayloadEffect(payload)
+    ),
+    Deferred.await(shutdownGate)
   );
 }
 
-class WorkerShutdownFailed extends Data.TaggedError("WorkerShutdownFailed")<{
+class WorkerBossFailed extends Data.TaggedError("WorkerBossFailed")<{
+  readonly operation: "shutdown" | "start";
   readonly cause: unknown;
 }> {}
 
@@ -210,7 +334,8 @@ function shutdownErrorMessage(cause: unknown): string {
 
 function shutdownWorkerResourcesEffect(
   signal: string,
-  resources: WorkerResources
+  resources: WorkerResources,
+  ctx?: WorkerShutdownContext
 ): Effect.Effect<void> {
   return Effect.gen(function* shutdownWorkerResourcesGen() {
     const fields: Record<string, unknown> = {
@@ -222,11 +347,15 @@ function shutdownWorkerResourcesEffect(
           graceful: true,
           timeout: gracefulStopTimeoutMs(),
         }),
-      catch: (cause) => new WorkerShutdownFailed({ cause }),
+      catch: (cause) => new WorkerBossFailed({ operation: "shutdown", cause }),
     }).pipe(
-      Effect.catchTag("WorkerShutdownFailed", (error) =>
+      Effect.catchTag("WorkerBossFailed", (error) =>
         Effect.sync(() => {
-          fields.bossStopError = shutdownErrorMessage(error.cause);
+          const message = shutdownErrorMessage(error.cause);
+          fields.bossStopError = message;
+          if (ctx !== undefined) {
+            ctx.bossStopError = message;
+          }
         })
       )
     );
@@ -236,46 +365,46 @@ function shutdownWorkerResourcesEffect(
   });
 }
 
-function workerShutdownEffect(
-  signal: string,
-  ctx: WorkerShutdownContext
-): Effect.Effect<void> {
-  if (ctx.shuttingDown) return Effect.void;
-  ctx.shuttingDown = true;
-  return shutdownWorkerResourcesEffect(signal, ctx).pipe(
-    Effect.andThen(
-      Effect.sync(() => {
-        process.exit(0);
-      })
-    )
-  );
-}
-
-function onWorkerSignal(signal: string, ctx: WorkerShutdownContext): void {
-  Effect.runFork(workerShutdownEffect(signal, ctx));
-}
-
-function bindWorkerShutdown(boss: BossWorker): void {
-  const ctx: WorkerShutdownContext = {
-    boss,
-    shuttingDown: false,
-  };
+function bindWorkerShutdown(
+  ctx: WorkerShutdownContext,
+  shutdownGate: Deferred.Deferred<true>
+): void {
   process.on("SIGTERM", () => {
-    onWorkerSignal("SIGTERM", ctx);
+    requestWorkerShutdown("SIGTERM", ctx, shutdownGate);
   });
   process.on("SIGINT", () => {
-    onWorkerSignal("SIGINT", ctx);
+    requestWorkerShutdown("SIGINT", ctx, shutdownGate);
   });
 }
 
 function processCapJobBatchEffect(
   jobs: { id: string; data: unknown }[],
   runJob: RunJob
-): Effect.Effect<void, never, JobFibers> {
-  const job = jobs[0];
-  if (!job) return Effect.void;
-  return processCapJobEffect(job, runJob);
+): Effect.Effect<void, Error, JobFibers> {
+  if (jobs.length === 0) {
+    return Effect.sync(() => {
+      logWorkerError(
+        "cap.job",
+        "empty pg-boss batch",
+        new Error("expected at least 1 job")
+      );
+    }).pipe(Effect.andThen(Effect.fail(new Error("empty pg-boss batch"))));
+  }
+  if (jobs.length > 1) {
+    logWorkerError(
+      "cap.job",
+      "unexpected pg-boss batch size",
+      new Error(`expected 1 job, got ${jobs.length}`)
+    );
+  }
+  return Effect.gen(function* processCapJobBatchGen() {
+    for (const capJob of jobs) {
+      yield* processCapJobEffect(capJob, runJob);
+    }
+  });
 }
+
+export { processCapJobBatchEffect, processCapJobEffect };
 
 function initWorkerLogger(): void {
   const workerRoot = path.resolve(import.meta.dirname, "..");
@@ -300,16 +429,25 @@ function startWorkerResourcesEffect(
           boss.work(
             CAP_JOB_QUEUE,
             { localConcurrency: 1, pollingIntervalSeconds: 2 },
-            (jobs) =>
-              Effect.runPromise(
-                processCapJobBatchEffect(jobs, runJob).pipe(
-                  Effect.provideService(JobFibers, fibers)
-                )
-              )
+            async (jobs) => {
+              try {
+                await Effect.runPromise(
+                  processCapJobBatchEffect(jobs, runJob).pipe(
+                    Effect.provideService(JobFibers, fibers)
+                  )
+                );
+              } catch (error: unknown) {
+                logWorkerError(
+                  "cap.job.batch",
+                  "unhandled cap job batch failure",
+                  error instanceof Error ? error : new Error(String(error))
+                );
+                throw error;
+              }
+            }
           )
         ),
-      catch: (error) =>
-        new Error(error instanceof Error ? error.message : String(error)),
+      catch: (cause) => new WorkerBossFailed({ operation: "start", cause }),
     }).pipe(Effect.orDie);
 
     return { boss };
@@ -322,14 +460,28 @@ export const bootWorkerEffect = Effect.scoped(
       initWorkerLogger();
     });
     const fibers = yield* JobFibers;
+    const shutdownGate = yield* Deferred.make<true>();
+    const shutdownCtxHolder: { current?: WorkerShutdownContext } = {};
     const resources = yield* Effect.acquireRelease(
       startWorkerResourcesEffect(fibers, (jobId) => executeJobOnMap(jobId)),
-      (acquired) => shutdownWorkerResourcesEffect("interrupt", acquired)
+      (acquired) => {
+        const ctx = shutdownCtxHolder.current;
+        if (ctx === undefined) {
+          return shutdownWorkerResourcesEffect("interrupt", acquired);
+        }
+        return shutdownWorkerResourcesEffect(ctx.shutdownSignal, acquired, ctx);
+      }
     );
+    const shutdownCtx: WorkerShutdownContext = {
+      boss: resources.boss,
+      shuttingDown: false,
+      shutdownSignal: "interrupt",
+    };
+    shutdownCtxHolder.current = shutdownCtx;
     yield* Effect.sync(() => {
-      bindWorkerShutdown(resources.boss);
+      bindWorkerShutdown(shutdownCtx, shutdownGate);
     });
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
-    return yield* exportEventsProgram();
+    return yield* exportEventsProgram(shutdownCtx, shutdownGate);
   })
 );
