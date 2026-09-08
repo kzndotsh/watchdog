@@ -56,7 +56,19 @@ describe("interpret", () => {
       (p) => p.resource === "identifier" && p.data.type === "domain"
     );
     expect(domains).toHaveLength(0);
-    expect(claimText(result, 1)).toMatch(/no geo\/org record/);
+    expect(claimText(result, 1)).toMatch(/bogon\/reserved/);
+  });
+
+  it("found without hostname proposes ip only", () => {
+    const result = interpretIpinfoLookupReport(
+      { ...fixture, hostname: null },
+      { input: { ip: fixture.ip, entityId } }
+    );
+    expectProposesIdentifier(result, { type: "ip", value: "8.8.8.8" });
+    const domains = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "domain"
+    );
+    expect(domains).toHaveLength(0);
   });
 
   itRejectsIncompleteReport(ipinfoLookup, { ip: "8.8.8.8" }, { ip: "8.8.8.8" });
