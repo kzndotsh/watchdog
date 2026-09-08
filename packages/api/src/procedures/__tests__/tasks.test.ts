@@ -19,7 +19,10 @@ vi.mock("@watchdog/core", async (importOriginal) => {
   };
 });
 
-import { list } from "../tasks";
+import { list, reorder, update } from "../tasks";
+
+const caseId = "00000000-0000-4000-8000-000000000001";
+const taskId = "00000000-0000-4000-8000-000000000060";
 
 const actor = {
   userId: "u1",
@@ -62,5 +65,44 @@ describe("tasks procedures", () => {
     await expect(
       client.list({ caseId: "00000000-0000-4000-8000-000000000001" })
     ).resolves.toHaveLength(1);
+  });
+
+  it("rejects an empty task update body", async () => {
+    const client = createRouterClient(
+      { update },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(client.update({ caseId, taskId })).rejects.toMatchObject({
+      message: "Input validation failed",
+      cause: {
+        issues: [{ message: "At least one field is required" }],
+      },
+    });
+  });
+
+  it("rejects task reorder with empty orderedIds", async () => {
+    const client = createRouterClient(
+      { reorder },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.reorder({ caseId, status: "backlog", orderedIds: [] })
+    ).rejects.toMatchObject({
+      message: "Input validation failed",
+    });
   });
 });

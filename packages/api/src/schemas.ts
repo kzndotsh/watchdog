@@ -3,6 +3,8 @@ import { z } from "zod";
 import {
   claimClassSchema,
   confidenceTierSchema,
+  createCaseFieldsSchema,
+  credentialNameSchema,
   edgePredicateSchema,
   entityKindSchema,
   evidenceKindSchema,
@@ -10,19 +12,21 @@ import {
   identifierTypeSchema,
   jobStatusSchema,
   jsonObjectSchema,
-  nonEmptyTrimmed,
-  optionalTrimmedSchema,
   patchOpSchema,
   playbookRunStatusSchema,
   proposalStatusSchema,
   questionStatusSchema,
   retractKindSchema,
-  slugifyName,
-  trimmedOrUndefined,
+  updateCaseInputSchema,
 } from "@watchdog/schemas";
 
-/** Agent ingress escape hatch — required for API-key child Graph writes. */
-export const userOverrideSchema = z.literal(true).optional();
+/** Agent ingress escape hatch — required as `true` for API-key child Graph writes. */
+export const userOverrideSchema = z
+  .literal(true)
+  .optional()
+  .describe("Required as true when authenticating with an API key.");
+
+export { credentialNameSchema };
 
 export {
   activityItemSchema,
@@ -42,34 +46,9 @@ export const caseSchema = z.object({
 });
 
 /** POST /cases — slug defaults from name when omitted. */
-export const createCaseInputSchema = z
-  .object({
-    name: nonEmptyTrimmed,
-    slug: z.string().optional(),
-    description: optionalTrimmedSchema,
-  })
-  .transform((data) => {
-    const slug = (
-      trimmedOrUndefined(data.slug) ?? slugifyName(data.name)
-    ).trim();
-    return {
-      name: data.name,
-      slug,
-      description: data.description,
-    };
-  })
-  .refine((data) => data.slug.length > 0, {
-    message: "Slug is required",
-    path: ["slug"],
-  });
+export const createCaseInputSchema = createCaseFieldsSchema;
 
-/** PATCH /cases/{caseId} — partial update (name also regenerates slug, description, egress). */
-export const updateCaseInputSchema = z.object({
-  caseId: z.uuid(),
-  name: optionalTrimmedSchema,
-  description: optionalTrimmedSchema,
-  allowThirdPartyEgress: z.boolean().optional(),
-});
+export { updateCaseInputSchema };
 
 export const entitySchema = z.object({
   id: z.uuid(),
@@ -114,6 +93,8 @@ export const caseIdentifierSchema = identifierSchema.extend({
   entityName: z.string(),
   entitySlug: z.string(),
   entityKind: entityKindSchema,
+  entitySummary: z.string().nullable(),
+  entityNotes: z.string().nullable(),
 });
 
 export const edgeSchema = z.object({
@@ -246,6 +227,7 @@ export const proposalSchema = z.object({
   caseId: z.uuid(),
   jobId: z.uuid().nullable(),
   capabilityId: z.string().nullable(),
+  playbookId: z.string().nullable(),
   status: proposalStatusSchema,
   patch: z.array(patchOpSchema),
   summary: z.string().nullable(),
@@ -262,6 +244,8 @@ export const proposalSchema = z.object({
   createdByLabel: z.string().nullable(),
   entityNames: z.record(z.string(), z.string()).optional(),
   entitySlugs: z.record(z.string(), z.string()).optional(),
+  entitySummaries: z.record(z.string(), z.string()).optional(),
+  entityNotes: z.record(z.string(), z.string()).optional(),
   identifierCollisions: z.array(identifierCollisionSchema).optional(),
 });
 
@@ -280,7 +264,7 @@ export const graphWriteRecordSchema = z.object({
   actorLabel: z.string(),
   channel: z.string(),
   userOverridden: z.boolean(),
-  confidence: z.string(),
+  confidence: confidenceTierSchema,
   summary: z.string().nullable(),
   createdAt: z.string(),
 });
