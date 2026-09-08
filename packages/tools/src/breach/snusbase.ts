@@ -77,6 +77,19 @@ function mapRow(table: string, raw: unknown): SnusbaseEntry | null {
   });
 }
 
+function snusbaseEntryHasSubstance(entry: SnusbaseEntry): boolean {
+  return (
+    entry.email !== null ||
+    entry.username !== null ||
+    entry.password !== null ||
+    entry.hash !== null ||
+    entry.lastip !== null ||
+    entry.name !== null ||
+    entry.host !== null ||
+    entry.domain !== null
+  );
+}
+
 function flattenSearchResults(results: unknown): {
   tables: SnusbaseTableCount[];
   entries: SnusbaseEntry[];
@@ -92,7 +105,9 @@ function flattenSearchResults(results: unknown): {
     for (const row of value) {
       if (entries.length >= ENTRIES_CAP) break;
       const mapped = mapRow(table, row);
-      if (mapped) entries.push(mapped);
+      if (mapped !== null && snusbaseEntryHasSubstance(mapped)) {
+        entries.push(mapped);
+      }
     }
     if (entries.length >= ENTRIES_CAP) break;
   }
@@ -154,7 +169,7 @@ export function fetchSnusbaseLookupEffect(
       kind,
       queriedAt: new Date().toISOString(),
       source: "api.snusbase.com",
-      found: total > 0,
+      found: entries.length > 0,
       total,
       tables,
       sampleCount: entries.length,

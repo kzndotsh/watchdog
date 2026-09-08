@@ -60,4 +60,41 @@ describe("snusbase", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect(
+    "fetchSnusbaseLookupEffect drops empty entry rows from the sample",
+    () =>
+      Effect.gen(function* fetchSnusbaseEmptyEntryGen() {
+        vi.stubGlobal(
+          "fetch",
+          vi.fn().mockResolvedValue(
+            new Response(
+              JSON.stringify({
+                size: 2,
+                results: {
+                  ExampleTable: [
+                    {},
+                    { email: "alice@mailhost.test", username: "alice" },
+                  ],
+                },
+              }),
+              { status: 200 }
+            )
+          )
+        );
+
+        const snap = yield* fetchSnusbaseLookupEffect(
+          "alice@mailhost.test",
+          "test-key",
+          AbortSignal.timeout(5000)
+        );
+
+        expect(snap.sampleCount).toBe(1);
+        expect(snap.entries).toHaveLength(1);
+        expect(snap.entries[0]?.email).toBe("alice@mailhost.test");
+      }).pipe(
+        Effect.provide(toolsHttpClientLayer),
+        Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+      )
+  );
 });

@@ -54,24 +54,37 @@ function classifyDehashedQuery(raw: string): {
   return { kind: "query", value: base.value };
 }
 
+function escapeDehashedQuoted(value: string): string {
+  return value.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+}
+
+function quotedDehashedField(field: string, value: string): string {
+  return `${field}:"${escapeDehashedQuoted(value)}"`;
+}
+
 function buildDehashedQuery(
   kind: "email" | "ip" | "domain" | "username" | "query",
   value: string
 ): string {
   switch (kind) {
     case "email": {
-      return `email:"${value}"`;
+      return quotedDehashedField("email", value);
     }
     case "ip": {
-      return `ip_address:"${value}"`;
+      return quotedDehashedField("ip_address", value);
     }
     case "domain": {
-      return `domain:${value}`;
+      return quotedDehashedField("domain", value);
     }
     case "username": {
-      return `username:${value}`;
+      return quotedDehashedField("username", value);
     }
     case "query": {
+      if (/[()"]|\sOR\s|\sAND\s/i.test(value)) {
+        throw new ValidationVendorError({
+          message: `Invalid DeHashed query: ${value}`,
+        });
+      }
       return value;
     }
     default: {
@@ -108,6 +121,19 @@ function mapEntry(raw: unknown): DehashedEntry | null {
   });
 }
 
+function dehashedEntryHasSubstance(entry: DehashedEntry): boolean {
+  return (
+    entry.databaseName !== null ||
+    entry.email !== null ||
+    entry.username !== null ||
+    entry.ipAddress !== null ||
+    entry.name !== null ||
+    entry.phone !== null ||
+    entry.password !== null ||
+    entry.hashedPassword !== null
+  );
+}
+
 /**
  * DeHashed breach-corpus search (email / IP / domain / username).
  * POST https://api.dehashed.com/v2/search — header `DeHashed-Api-Key`.
@@ -131,7 +157,15 @@ export function fetchDehashedLookupEffect(
     }
 
     const { kind, value } = classifyDehashedQuery(queryRaw);
-    const query = buildDehashedQuery(kind, value);
+    const query = yield* Effect.try({
+      try: () => buildDehashedQuery(kind, value),
+      catch: (error) =>
+        error instanceof ValidationVendorError
+          ? error
+          : new ValidationVendorError({
+              message: error instanceof Error ? error.message : String(error),
+            }),
+    });
     const ua =
       options?.userAgent ?? watchdogUserAgent("breach.dehashed.lookup");
 
@@ -162,7 +196,9 @@ export function fetchDehashedLookupEffect(
     const entries: DehashedEntry[] = [];
     for (const raw of rawEntries.slice(0, ENTRIES_CAP)) {
       const mapped = mapEntry(raw);
-      if (mapped) entries.push(mapped);
+      if (mapped !== null && dehashedEntryHasSubstance(mapped)) {
+        entries.push(mapped);
+      }
     }
     const total = typeof body.total === "number" ? body.total : entries.length;
     const balance = typeof body.balance === "number" ? body.balance : null;
@@ -173,7 +209,7 @@ export function fetchDehashedLookupEffect(
       kind,
       queriedAt: new Date().toISOString(),
       source: "api.dehashed.com",
-      found: total > 0,
+      found: entries.length > 0,
       total,
       balance,
       databases,

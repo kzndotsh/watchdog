@@ -42,4 +42,29 @@ describe("hudsonrock", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect("fetchHudsonrockLookupEffect treats empty 200 as found", () =>
+    Effect.gen(function* fetchHudsonrockEmptyGen() {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ total: 0, data: [] }), {
+            status: 200,
+          })
+        )
+      );
+
+      const snap = yield* fetchHudsonrockLookupEffect(
+        "alice@mailhost.test",
+        "test-key",
+        AbortSignal.timeout(5000)
+      );
+
+      expect(snap.found).toBe(true);
+      expect(snap.totalResults).toBe(0);
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });

@@ -167,7 +167,7 @@ export function fetchHudsonrockLookupEffect(
       kind,
       queriedAt: new Date().toISOString(),
       source: "api.hudsonrock.com",
-      found: totalResults > 0,
+      found: true,
       totalResults,
       newestDate,
     });
