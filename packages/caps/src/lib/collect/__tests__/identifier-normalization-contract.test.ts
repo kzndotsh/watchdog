@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { domainValuesBatch, querySeedBatches } from "../query-seed-batches.ts";
+import {
+  domainValuesBatch,
+  ipValuesBatch,
+  querySeedBatches,
+} from "../query-seed-batches.ts";
 import { validatedIdentifierValue } from "../validated-identifier-value.ts";
 
 describe("collect identifier normalization contract", () => {
@@ -35,5 +39,13 @@ describe("collect identifier normalization contract", () => {
     for (const value of values) {
       expect(validatedIdentifierValue("domain", value)).toBe(value);
     }
+  });
+
+  it("ipValuesBatch canonicalizes equivalent IPv6 spellings", () => {
+    const batch = ipValuesBatch([
+      "2001:0db8:0000:0000:0000:0000:0000:0001",
+      "2001:db8::1",
+    ]);
+    expect(batch).toEqual([{ type: "ip", values: ["2001:db8::1"] }]);
   });
 });

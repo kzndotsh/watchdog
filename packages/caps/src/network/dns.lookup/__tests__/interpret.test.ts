@@ -74,6 +74,22 @@ describe("interpretDnsReport", () => {
     expect(ips[0]?.data.value).toBe("93.184.216.34");
   });
 
+  it("dedupes equivalent IPv6 AAAA spellings into one ip identifier", () => {
+    const result = interpretDnsReport(
+      {
+        ...fixture,
+        a: [],
+        aaaa: ["2001:0db8:0000:0000:0000:0000:0000:0001", "2001:db8::1"],
+      },
+      { input: { host: "example.com", entityId } }
+    );
+    const ips = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "ip"
+    );
+    expect(ips).toHaveLength(1);
+    expect(ips[0]?.data.value).toBe("2001:db8::1");
+  });
+
   it("caps IP identifiers and notes truncation in the claim", () => {
     const a = Array.from(
       { length: 85 },
