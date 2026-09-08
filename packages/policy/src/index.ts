@@ -3,8 +3,9 @@ export {
   assertPatchShape,
   isOneOf,
   requireEnum,
+  requireEntitySlug,
   requireString,
+  requireUuid,
   CustodyViolation,
   type PatchGateOpts,
 } from "./patch-gates";
-export { patchNeedsConfidence } from "./patch-needs-confidence";

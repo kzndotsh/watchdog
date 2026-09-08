@@ -57,4 +57,10 @@ describe("patchNeedsConfidence", () => {
     };
     expect(patchNeedsConfidence([entity, event, question])).toBe(false);
   });
+
+  it("is false for missing or empty patch", () => {
+    expect(patchNeedsConfidence([])).toBe(false);
+    expect(patchNeedsConfidence(undefined)).toBe(false);
+    expect(patchNeedsConfidence(null)).toBe(false);
+  });
 });
