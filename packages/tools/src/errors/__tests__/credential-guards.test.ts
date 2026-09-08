@@ -15,9 +15,12 @@ import { fetchShodanHostEffect } from "../../network/shodan";
 import { submitUrlscanEffect } from "../../network/urlscan-submit";
 import { fetchWhoxyWhoisEffect } from "../../network/whoxy";
 import { fetchAbuseIpdbCheckEffect } from "../../threat/abuseipdb";
+import { fetchHoneydbLookupEffect } from "../../threat/honeydb";
+import { fetchMalwarebazaarLookupEffect } from "../../threat/malwarebazaar";
 import { fetchOtxLookupEffect } from "../../threat/otx";
 import { fetchSafebrowsingLookupEffect } from "../../threat/safebrowsing";
 import { fetchThreatfoxLookupEffect } from "../../threat/threatfox";
+import { fetchUrlhausLookupEffect } from "../../threat/urlhaus";
 import { fetchVirusTotalLookupEffect } from "../../threat/virustotal";
 import { fetchXforceLookupEffect } from "../../threat/xforce";
 import { MissingCredentialError } from "../tagged-errors";
@@ -86,6 +89,34 @@ const guardCases = [
     slot: "THREATFOX_API_KEY",
     run: () =>
       fetchThreatfoxLookupEffect("8.8.8.8", "", signal()).pipe(Effect.flip),
+  },
+  {
+    name: "urlhaus",
+    slot: "THREATFOX_API_KEY",
+    run: () =>
+      fetchUrlhausLookupEffect("8.8.8.8", "", signal()).pipe(Effect.flip),
+  },
+  {
+    name: "malwarebazaar",
+    slot: "THREATFOX_API_KEY",
+    run: () =>
+      fetchMalwarebazaarLookupEffect("a".repeat(64), "", signal()).pipe(
+        Effect.flip
+      ),
+  },
+  {
+    name: "honeydb api id",
+    slot: "HONEYDB_API_ID",
+    run: () =>
+      fetchHoneydbLookupEffect("8.8.8.8", "", "secret", signal()).pipe(
+        Effect.flip
+      ),
+  },
+  {
+    name: "honeydb api key",
+    slot: "HONEYDB_API_KEY",
+    run: () =>
+      fetchHoneydbLookupEffect("8.8.8.8", "id", "", signal()).pipe(Effect.flip),
   },
   {
     name: "urlscan submit",
