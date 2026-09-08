@@ -38,6 +38,17 @@ describe("fingerprintPatchOp", () => {
     expect(fingerprintPatchOp(mixed)).toBe(fingerprintPatchOp(folded));
   });
 
+  it("canonicalizes equivalent IPv6 spellings", () => {
+    const entityId = testId(21);
+    const expanded = buildIdentifierCreateOp(
+      entityId,
+      "ip",
+      "2001:0db8:0000:0000:0000:0000:0000:0001"
+    );
+    const compressed = buildIdentifierCreateOp(entityId, "ip", "2001:db8::1");
+    expect(fingerprintPatchOp(expanded)).toBe(fingerprintPatchOp(compressed));
+  });
+
   it("fingerprints an event by entity, when, and what", () => {
     const op = buildEventCreateOp(testId(22), "1815-12-10", "Born");
     expect(fingerprintPatchOp(op)).toBe(`event|${testId(22)}|1815-12-10|born`);

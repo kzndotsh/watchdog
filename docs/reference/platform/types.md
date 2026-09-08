@@ -112,7 +112,7 @@ SoT: `EDGE_PREDICATES` + `EDGE_PREDICATE_META` in [`packages/schemas/src/vocab.t
 
 **Domains:** `type === "domain"` is a hostname/FQDN Identifier (CT / subdomain Caps). Normalized via `normalizeIdentifierValue` (lowercase, strip scheme/path/`*.` prefix); gated via `validateIdentifierWrite`. Not an Entity by itself: attach to an Entity via Proposal Accept.
 
-**IPs:** `type === "ip"` is an IPv4/IPv6 Identifier (DNS A/AAAA, harvest): syntax only, not public-range enforced. Normalized via `normalizeIdentifierValue` (trim, strip `[brackets]`, lowercase IPv6 hex). Lives on the seed Entity: Caps do not auto-create infra Entities or `resolves_to` edges. DNS NS/MX stay in the observation Claim, not as Identifiers.
+**IPs:** `type === "ip"` is an IPv4/IPv6 Identifier (DNS A/AAAA, harvest): syntax only, not public-range enforced. Normalized via `normalizeIdentifierValue` (trim, strip `[brackets]`, lowercase + RFC 5952-compress IPv6 when valid). Lives on the seed Entity: Caps do not auto-create infra Entities or `resolves_to` edges. DNS NS/MX stay in the observation Claim, not as Identifiers.
 
 **Triage collisions:** `ProposalRecord.identifierCollisions` is a list annotation (same `type+value` on another Entity). Core indexes `identifiersRepo.listForCase`. Warn in Triage; Accept still allowed. Invalid Identifier values (`listInvalidIdentifierOps` + core write gate) **block** Accept.
 

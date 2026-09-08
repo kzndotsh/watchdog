@@ -12,10 +12,74 @@ const TRACKING_PARAMS = new Set([
   "mc_eid",
 ]);
 
+function expandIpv6(ip: string): string {
+  const parts = ip.split("::");
+  if (parts.length > 2) throw new Error(`Invalid IPv6: ${ip}`);
+  const head =
+    parts[0] !== undefined && parts[0] !== "" ? parts[0].split(":") : [];
+  const tail =
+    parts[1] !== undefined && parts[1] !== "" ? parts[1].split(":") : [];
+  const missing = 8 - head.length - tail.length;
+  const full = [
+    ...head,
+    ...Array.from({ length: Math.max(missing, 0) }, () => "0"),
+    ...tail,
+  ];
+  if (full.length !== 8) throw new Error(`Invalid IPv6: ${ip}`);
+  return full.map((h) => h.padStart(4, "0")).join(":");
+}
+
+function stripIpv6Hextets(parts: string[]): string[] {
+  return parts.map((h) => {
+    const trimmed = h.replace(/^0+/, "");
+    return trimmed === "" ? "0" : trimmed;
+  });
+}
+
+/** RFC 5952-style compressed lowercase IPv6 (schemas-local; no node:net / tools). */
+function compressIpv6(ip: string): string {
+  const parts = stripIpv6Hextets(expandIpv6(ip).toLowerCase().split(":"));
+
+  let bestStart = 0;
+  let bestLen = 0;
+  for (let i = 0; i < parts.length; i += 1) {
+    if (parts[i] !== "0") continue;
+    let len = 0;
+    while (i + len < parts.length && parts[i + len] === "0") len += 1;
+    if (len > bestLen) {
+      bestLen = len;
+      bestStart = i;
+    }
+  }
+
+  if (bestLen < 2) {
+    return parts.join(":");
+  }
+
+  const before = parts.slice(0, bestStart);
+  const after = parts.slice(bestStart + bestLen);
+  if (before.length === 0 && after.length === 0) return "::";
+  if (before.length === 0) return `::${after.join(":")}`;
+  if (after.length === 0) return `${before.join(":")}::`;
+  return `${before.join(":")}::${after.join(":")}`;
+}
+
+function ipv6HasInvalidCompression(value: string): boolean {
+  return (value.match(/::/g) ?? []).length > 1 || value.includes(":::");
+}
+
 function normalizeIpValue(raw: string): string {
   const trimmed = raw.trim().replace(/^\[/, "").replace(/\]$/, "");
   if (trimmed.includes(":")) {
-    return trimmed.toLowerCase();
+    const lower = trimmed.toLowerCase();
+    if (ipv6HasInvalidCompression(lower)) {
+      return lower;
+    }
+    try {
+      return compressIpv6(lower);
+    } catch {
+      return lower;
+    }
   }
   return trimmed;
 }
@@ -55,7 +119,7 @@ function normalizeUrlValue(raw: string): string {
  * - url → strip hash + common tracking params
  * - pgp fingerprints → strip spaces/colons, uppercase hex (armored keys stay trimmed)
  * - domain → lowercase host (strip scheme/path)
- * - ip → trim, strip [brackets], lowercase IPv6 hex
+ * - ip → trim, strip [brackets], lowercase + RFC 5952-compress IPv6
  * - handle / credential / crypto / other → trimmed as written
  */
 export function normalizeIdentifierValue(

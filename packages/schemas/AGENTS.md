@@ -17,7 +17,7 @@ Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normaliz
 - No DB, Caps, or app imports — leaf dependency.
 - Enums/vocab stay here; drizzle uses `text().$type<T>()`, never `pgEnum` for domain vocab.
 - Prefer extending existing primitives over parallel one-off types.
-- `IDENTIFIER_TYPES` includes `ip` (IPv4/IPv6 syntax). Normalize in `normalize-identifier.ts`; soft-strict value checks + write gate (`validateIdentifierWrite` = value + handle→platform) + Inbox preflight `listInvalidIdentifierOps` in `validate-identifier.ts` (schemas-local; do not import `@watchdog/tools` / `node:net`).
+- `IDENTIFIER_TYPES` includes `ip` (IPv4/IPv6 syntax). Normalize in `normalize-identifier.ts` (IPv6: lowercase + RFC 5952 compress when syntactically valid; malformed `:::` left as-is for validate to reject); soft-strict value checks + write gate (`validateIdentifierWrite` = value + handle→platform) + Inbox preflight `listInvalidIdentifierOps` in `validate-identifier.ts` (schemas-local; do not import `@watchdog/tools` / `node:net`).
 - Identifier PATCH: `updateIdentifierInputSchema` in `identifier-update.ts` — web/API/CLI identifier update share it (includes scope + at-least-one refine).
 - Identifier POST: `createIdentifierInputSchema` in `identifier-create.ts` — web/API/CLI identifier create share it (includes `validateIdentifierWrite` superRefine).
 - Claim/event/question POST: `createClaimInputSchema`, `createEventInputSchema`, `createQuestionInputSchema` — web/API/CLI create share them.

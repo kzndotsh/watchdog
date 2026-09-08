@@ -39,6 +39,9 @@ describe("normalize-identifier", () => {
   it("normalizeIdentifierValue canonicalizes ips", () => {
     expect(normalizeIdentifierValue("ip", " 8.8.8.8 ")).toBe("8.8.8.8");
     expect(normalizeIdentifierValue("ip", "[2001:DB8::1]")).toBe("2001:db8::1");
+    expect(
+      normalizeIdentifierValue("ip", "2001:0db8:0000:0000:0000:0000:0000:0001")
+    ).toBe("2001:db8::1");
   });
 
   it("normalizeIdentifierValue canonicalizes pgp fingerprints", () => {
