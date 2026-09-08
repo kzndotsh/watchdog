@@ -161,7 +161,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const resultHits = showResults && !isError ? hits : null;
   const paletteLoadError =
     casesLoadError ??
-    (showResults && isError ? errMessage(error, "Search failed") : null);
+    (showResults && isError && !isFetching && !pendingDebounce
+      ? errMessage(error, "Search failed")
+      : null);
   const retryPaletteLoad = () => {
     if (casesLoadError) {
       retryCases();

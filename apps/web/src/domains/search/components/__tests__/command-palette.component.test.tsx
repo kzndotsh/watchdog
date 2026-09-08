@@ -434,6 +434,25 @@ describe("CommandPalette", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps searching while a failed query refetches", async () => {
+    renderPalette(true, {
+      data: undefined,
+      isFetching: true,
+      isError: true,
+      error: new Error("Network down"),
+      refetch: vi.fn(),
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText("Search entities, evidence, tasks…"),
+      { target: { value: "xy" } }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Searching…")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Network down")).not.toBeInTheDocument();
+  });
+
   it("shows a retry banner when the cases query fails", () => {
     const retryCases = vi.fn();
     renderPalette(

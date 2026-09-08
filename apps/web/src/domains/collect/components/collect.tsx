@@ -85,12 +85,12 @@ function CollectWithCase({
   const handleUrl = ws.intake.onUrl;
 
   let runFormBody: ReactNode;
-  if (runFormLoadError) {
+  if (runFormPending) {
+    runFormBody = <InlineLoading label="Loading caps and playbooks…" />;
+  } else if (runFormLoadError) {
     runFormBody = (
       <FetchErrorAlert error={runFormLoadError} onRetry={handleRetryRunForm} />
     );
-  } else if (runFormPending) {
-    runFormBody = <InlineLoading label="Loading caps and playbooks…" />;
   } else {
     runFormBody = (
       <div
@@ -287,7 +287,7 @@ export function Collect({
   const runCatalogPlaceholder =
     capsQuery.isPlaceholderData || playbooksQuery.isPlaceholderData;
   const runCatalogLoadError =
-    capsQuery.isError || playbooksQuery.isError
+    !runCatalogPending && (capsQuery.isError || playbooksQuery.isError)
       ? errMessage(
           capsQuery.error ?? playbooksQuery.error,
           "Failed to load caps and playbooks"
