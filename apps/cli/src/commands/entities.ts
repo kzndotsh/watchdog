@@ -1,19 +1,26 @@
 import { defineCommand } from "citty";
 
-import { entityKindSchema } from "@watchdog/schemas";
+import {
+  caseScopeInputSchema,
+  createEntityInputSchema,
+  entitySlugScopeInputSchema,
+  trimmedEntityKindSchema,
+  updateEntityInputSchema,
+} from "@watchdog/schemas";
 
 import { api, emit, emitList, fail } from "../client";
-import { resolveEntityId } from "../ids";
+import { entityKindLabel, enrichEntityDisplay } from "../display";
+import { requireCaseId, resolveEntityId } from "../ids";
 import {
   asBoolean,
   caseArg,
   defineNounCommand,
-  pickDefined,
   requiredCaseArg,
   requiredEntityArg,
 } from "../noun";
+import { parseCliEnum, parseOptionalNullableTrimmedPatch } from "../parse-cli";
 
-const LIST_COLUMNS = ["id", "kind", "name", "slug"];
+const LIST_COLUMNS = ["id", "kind", "kindLabel", "name", "slug"];
 
 function listHelp(caseId: string): string[] {
   return [
@@ -28,10 +35,18 @@ export const entitiesCmd = defineNounCommand({
   required: ["case"],
   usageHelp: ["wd entities list -c <caseId>"],
   list: async (args) => {
-    const caseId = String(args.case);
-    const rows = await api().entities.list({ caseId });
+    const caseId = requireCaseId(args.case);
+    const rows = await api().entities.list(
+      caseScopeInputSchema.parse({ caseId })
+    );
     emitList({
-      items: rows,
+      items: rows.map((r) => ({
+        id: r.id,
+        kind: r.kind,
+        kindLabel: entityKindLabel(r.kind),
+        name: r.name,
+        slug: r.slug,
+      })),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       help: listHelp(caseId),
@@ -49,11 +64,12 @@ export const entitiesCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const row = await api().entities.get({
-          caseId: args.case,
+        const scope = entitySlugScopeInputSchema.parse({
+          caseId: requireCaseId(args.case),
           slug: args.slug,
         });
-        emit(row);
+        const row = await api().entities.get(scope);
+        emit(enrichEntityDisplay(row));
       },
     }),
     create: defineCommand({
@@ -75,19 +91,20 @@ export const entitiesCmd = defineNounCommand({
         slug: { type: "string", alias: "s", description: "Entity slug" },
       },
       run: async ({ args }) => {
-        const slug =
-          args.slug ??
-          args.name
-            .toLowerCase()
-            .replaceAll(/[^a-z0-9]+/g, "-")
-            .replaceAll(/^-|-$/g, "");
-        const row = await api().entities.create({
-          caseId: args.case,
-          kind: entityKindSchema.parse(args.kind),
+        const caseId = requireCaseId(args.case);
+        const payload = createEntityInputSchema.parse({
+          caseId,
+          kind: parseCliEnum(
+            trimmedEntityKindSchema,
+            args.kind,
+            "entity kind",
+            [`wd entities create -c ${caseId} -k person -n "Full Name"`]
+          ),
           name: args.name,
-          slug,
+          slug: args.slug,
         });
-        emit(row);
+        const row = await api().entities.create(payload);
+        emit(enrichEntityDisplay(row));
       },
     }),
     update: defineCommand({
@@ -100,28 +117,42 @@ export const entitiesCmd = defineNounCommand({
         ...requiredEntityArg,
         summary: {
           type: "string",
-          description: "Summary markdown (optional)",
+          description: "Summary markdown (empty to clear)",
         },
-        notes: { type: "string", description: "Notes markdown (optional)" },
+        notes: {
+          type: "string",
+          description: "Notes markdown (empty to clear)",
+        },
       },
       run: async ({ args }) => {
-        if (
-          (args.summary === undefined || args.summary === "") &&
-          (args.notes === undefined || args.notes === "")
-        ) {
+        const caseId = requireCaseId(args.case);
+        const touchesSummary = args.summary !== undefined;
+        const touchesNotes = args.notes !== undefined;
+        if (!touchesSummary && !touchesNotes) {
           fail("USAGE", "Provide --summary and/or --notes", {
             help: [
-              `wd entities update -c ${args.case} --entity ${args.entity} --summary "…"`,
+              `wd entities update -c ${caseId} --entity ${args.entity} --summary "…"`,
             ],
           });
         }
-        const entityId = await resolveEntityId(args.case, args.entity);
-        const row = await api().entities.update({
-          caseId: args.case,
+        const entityId = await resolveEntityId(caseId, args.entity);
+        const summary = parseOptionalNullableTrimmedPatch(args.summary);
+        const notes = parseOptionalNullableTrimmedPatch(args.notes);
+        const parsed = updateEntityInputSchema.safeParse({
+          caseId,
           entityId,
-          ...pickDefined({ summary: args.summary, notes: args.notes }),
+          ...(summary === undefined ? {} : { summary }),
+          ...(notes === undefined ? {} : { notes }),
         });
-        emit(row);
+        if (!parsed.success) {
+          fail("USAGE", "Provide --summary and/or --notes", {
+            help: [
+              `wd entities update -c ${caseId} --entity ${args.entity} --summary "…"`,
+            ],
+          });
+        }
+        const row = await api().entities.update(parsed.data);
+        emit(enrichEntityDisplay(row));
       },
     }),
   },

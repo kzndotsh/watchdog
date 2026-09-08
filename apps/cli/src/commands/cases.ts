@@ -1,9 +1,23 @@
 import { defineCommand } from "citty";
 
+import {
+  createCaseFieldsSchema,
+  deleteCaseInputSchema,
+  updateCaseInputSchema,
+} from "@watchdog/schemas";
+
 import { api, emit, emitList, emitOk, fail } from "../client";
+import { enrichCaseDisplay } from "../display";
+import { requireUuid } from "../ids";
 import { asBoolean, defineNounCommand, dryRunArg, pickDefined } from "../noun";
 
-const LIST_COLUMNS = ["id", "name", "slug", "allowThirdPartyEgress"];
+const LIST_COLUMNS = [
+  "id",
+  "name",
+  "slug",
+  "allowThirdPartyEgress",
+  "egressLabel",
+];
 const LIST_HELP = [
   "wd cases create -n <name>",
   "wd cases get <id>",
@@ -18,7 +32,7 @@ export const casesCmd = defineNounCommand({
   list: async (args) => {
     const rows = await api().cases.list();
     emitList({
-      items: rows,
+      items: rows.map((r) => enrichCaseDisplay(r)),
       columns: LIST_COLUMNS,
       table: asBoolean(args.table),
       help: LIST_HELP,
@@ -31,8 +45,11 @@ export const casesCmd = defineNounCommand({
         id: { type: "positional", description: "Case ID", required: true },
       },
       run: async ({ args }) => {
-        const row = await api().cases.get({ caseId: args.id });
-        emit(row);
+        const scope = deleteCaseInputSchema.parse({
+          caseId: requireUuid(args.id, "Case ID"),
+        });
+        const row = await api().cases.get(scope);
+        emit(enrichCaseDisplay(row));
       },
     }),
     create: defineCommand({
@@ -56,11 +73,15 @@ export const casesCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const row = await api().cases.create({
+        const fields = createCaseFieldsSchema.parse({
           name: args.name,
-          ...pickDefined({ slug: args.slug, description: args.description }),
+          ...pickDefined({
+            slug: args.slug,
+            description: args.description,
+          }),
         });
-        emit(row);
+        const row = await api().cases.create(fields);
+        emit(enrichCaseDisplay(row));
       },
     }),
     update: defineCommand({
@@ -79,7 +100,7 @@ export const casesCmd = defineNounCommand({
         description: {
           type: "string",
           alias: "d",
-          description: "New description",
+          description: "New description (empty to clear)",
         },
         allowThirdPartyEgress: {
           type: "boolean",
@@ -91,6 +112,7 @@ export const casesCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
+        const caseId = requireUuid(args.id, "Case ID");
         if (
           args.allowThirdPartyEgress === true &&
           args.denyThirdPartyEgress === true
@@ -107,26 +129,29 @@ export const casesCmd = defineNounCommand({
         } else if (args.denyThirdPartyEgress === true) {
           allowThirdPartyEgress = false;
         }
-        if (
-          args.name === undefined &&
-          args.description === undefined &&
-          allowThirdPartyEgress === undefined
-        ) {
+        if (args.name !== undefined && args.name.trim() === "") {
+          fail("USAGE", "Case name must not be blank", {
+            help: ["wd cases update <id> --name <name>"],
+          });
+        }
+        const touchesDescription = args.description !== undefined;
+        const parsed = updateCaseInputSchema.safeParse({
+          caseId,
+          ...(args.name === undefined ? {} : { name: args.name }),
+          ...(touchesDescription ? { description: args.description } : {}),
+          ...(allowThirdPartyEgress === undefined
+            ? {}
+            : { allowThirdPartyEgress }),
+        });
+        if (!parsed.success) {
           fail(
             "USAGE",
             "Provide at least one of --name, --description, --allow-third-party-egress, or --deny-third-party-egress",
             { help: ["wd cases update <id> --name <name>"] }
           );
         }
-        const row = await api().cases.update({
-          caseId: args.id,
-          ...pickDefined({
-            name: args.name,
-            description: args.description,
-            allowThirdPartyEgress,
-          }),
-        });
-        emit(row);
+        const row = await api().cases.update(parsed.data);
+        emit(enrichCaseDisplay(row));
       },
     }),
     delete: defineCommand({
@@ -139,12 +164,15 @@ export const casesCmd = defineNounCommand({
         ...dryRunArg,
       },
       run: async ({ args }) => {
+        const scope = deleteCaseInputSchema.parse({
+          caseId: requireUuid(args.id, "Case ID"),
+        });
         if (args["dry-run"]) {
-          emitOk({ dryRun: true, deleted: true, id: args.id });
+          emitOk({ dryRun: true, deleted: true, id: scope.caseId });
           return;
         }
-        await api().cases.delete({ caseId: args.id });
-        emitOk({ deleted: true, id: args.id });
+        await api().cases.delete(scope);
+        emitOk({ deleted: true, id: scope.caseId });
       },
     }),
   },

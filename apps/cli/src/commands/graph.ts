@@ -1,8 +1,11 @@
 import { defineCommand } from "citty";
 
+import { graphWriteInputSchema } from "@watchdog/schemas";
+
 import { api, emit, fail } from "../client";
+import { enrichGraphWriteDisplay } from "../display";
 import { withExamples } from "../examples";
-import { parseIdList } from "../ids";
+import { parseIdList, requireCaseId } from "../ids";
 import { loadPatch } from "../load-patch";
 import { requiredCaseArg } from "../noun";
 
@@ -57,22 +60,20 @@ export const graphCmd = defineCommand({
         },
       },
       run: async ({ args }) => {
+        const caseId = requireCaseId(args.case);
         const patch = loadPatch(args);
         const evidenceIds = parseIdList(args.evidence);
-        const row = await api().graph.write({
-          caseId: args.case,
-          patch,
-          userOverride: true,
-          ...(args.summary !== undefined && args.summary !== ""
-            ? { summary: args.summary }
-            : {}),
-          ...(evidenceIds === undefined ? {} : { evidenceIds }),
-          ...(args["idempotency-key"] !== undefined &&
-          args["idempotency-key"] !== ""
-            ? { idempotencyKey: args["idempotency-key"] }
-            : {}),
-        });
-        emit(row);
+        const row = await api().graph.write(
+          graphWriteInputSchema.parse({
+            caseId,
+            patch,
+            userOverride: true,
+            summary: args.summary,
+            idempotencyKey: args["idempotency-key"],
+            evidenceIds,
+          })
+        );
+        emit(enrichGraphWriteDisplay(row, patch));
       },
     }),
   },
