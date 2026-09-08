@@ -7,7 +7,13 @@ import {
   listEntitiesForCaseEffect,
   updateEntityFieldsEffect,
 } from "@watchdog/core";
-import { entityKindSchema } from "@watchdog/schemas";
+import {
+  caseScopeInputSchema,
+  createEntityInputSchema,
+  deleteEntityInputSchema,
+  entitySlugScopeInputSchema,
+  updateEntityInputSchema,
+} from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
@@ -20,7 +26,7 @@ export const list = authed
     summary: "List entities for a case",
     tags: ["entities"],
   })
-  .input(z.object({ caseId: z.uuid() }))
+  .input(caseScopeInputSchema)
   .output(z.array(entitySchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -35,7 +41,7 @@ export const get = authed
     summary: "Get entity by slug",
     tags: ["entities"],
   })
-  .input(z.object({ caseId: z.uuid(), slug: z.string().min(1) }))
+  .input(entitySlugScopeInputSchema)
   .output(entitySchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -55,14 +61,7 @@ export const create = authed
     tags: ["entities"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      kind: entityKindSchema,
-      name: z.string().min(1),
-      slug: z.string().min(1),
-    })
-  )
+  .input(createEntityInputSchema)
   .output(entitySchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -80,16 +79,7 @@ export const update = authed
     summary: "Update entity kind, name, summary, or notes",
     tags: ["entities"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-      kind: entityKindSchema.optional(),
-      name: z.string().trim().min(1).optional(),
-      summary: z.string().optional(),
-      notes: z.string().optional(),
-    })
-  )
+  .input(updateEntityInputSchema)
   .output(entitySchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -107,12 +97,7 @@ export const remove = authed
     summary: "Delete an entity",
     tags: ["entities"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      entityId: z.uuid(),
-    })
-  )
+  .input(deleteEntityInputSchema)
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(
