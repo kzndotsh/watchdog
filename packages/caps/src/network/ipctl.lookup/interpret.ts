@@ -3,6 +3,10 @@ import type { z } from "zod";
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import {
+  domainValuesBatch,
+  ipSeedBatch,
+} from "../../lib/collect/query-seed-batches";
 import type { ipctlLookupInput } from "./input";
 import type { IpctlLookupSnapshot } from "./report-schema";
 
@@ -69,8 +73,8 @@ export function interpretIpctlLookupReport(
   return interpretIdentifierBatches({
     entityId: opts.input.entityId,
     batches: [
-      { type: "ip", values: [report.ip] },
-      { type: "domain", values: [report.reverseDns] },
+      ...ipSeedBatch(report.ip),
+      ...domainValuesBatch(report.reverseDns ? [report.reverseDns] : []),
     ],
     claimText: summarize(report),
     noEntitySummary: "ipctl lookup captured; no Entity to attach Claim",
