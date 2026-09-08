@@ -13,6 +13,16 @@ import {
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
 } from "@watchdog/core";
+import {
+  attachEvidenceEntityInputSchema,
+  confirmFileUploadInputSchema,
+  dumpPasteInputSchema,
+  dumpUrlInputSchema,
+  evidenceScopeInputSchema,
+  listEvidenceInputSchema,
+  presignUploadInputSchema,
+  processEvidenceInputSchema,
+} from "@watchdog/schemas";
 
 import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";
@@ -26,14 +36,7 @@ export const list = authed
     summary: "List evidence for a case",
     tags: ["evidence"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      unprocessedOnly: z.boolean().optional().default(false),
-      unattachedOnly: z.boolean().optional().default(false),
-      hiddenOnly: z.boolean().optional().default(false),
-    })
-  )
+  .input(listEvidenceInputSchema)
   .output(z.array(evidenceSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -53,15 +56,7 @@ export const createPaste = authed
     tags: ["evidence"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      body: z.string().min(1),
-      label: z.string().optional(),
-      sourceUrl: z.url().optional(),
-      entityId: z.uuid().optional(),
-    })
-  )
+  .input(dumpPasteInputSchema)
   .output(evidenceSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -82,15 +77,7 @@ export const createUrl = authed
     tags: ["evidence"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      sourceUrl: z.url(),
-      label: z.string().optional(),
-      notes: z.string().optional(),
-      entityId: z.uuid().optional(),
-    })
-  )
+  .input(dumpUrlInputSchema)
   .output(evidenceSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -110,7 +97,7 @@ export const softDelete = authed
     summary: "Soft-delete evidence",
     tags: ["evidence"],
   })
-  .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
+  .input(evidenceScopeInputSchema)
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(
@@ -129,7 +116,7 @@ export const restore = authed
     summary: "Restore soft-deleted evidence to the active queue",
     tags: ["evidence"],
   })
-  .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
+  .input(evidenceScopeInputSchema)
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(
@@ -148,13 +135,7 @@ export const attachEntity = authed
     summary: "Attach or replace the Evidence Entity",
     tags: ["evidence"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      evidenceId: z.uuid(),
-      entityId: z.uuid().nullable(),
-    })
-  )
+  .input(attachEvidenceEntityInputSchema)
   .output(evidenceSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -172,15 +153,7 @@ export const presign = authed
     summary: "Presign a direct upload to object storage",
     tags: ["evidence"],
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      sha256: z.string().min(1),
-      mime: z.string().min(1),
-      byteLength: z.number().int().positive(),
-      name: z.string().optional(),
-    })
-  )
+  .input(presignUploadInputSchema)
   .output(presignedUploadSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -199,17 +172,7 @@ export const confirmFile = authed
     tags: ["evidence"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      uri: z.string().min(1),
-      sha256: z.string().min(1),
-      mime: z.string().min(1),
-      byteLength: z.number().int().positive(),
-      label: z.string().optional(),
-      entityId: z.uuid().optional(),
-    })
-  )
+  .input(confirmFileUploadInputSchema)
   .output(evidenceSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -231,7 +194,7 @@ export const downloadUrl = authed
     summary: "Get a short-lived download URL for evidence",
     tags: ["evidence"],
   })
-  .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
+  .input(evidenceScopeInputSchema)
   .output(z.object({ url: z.string().nullable() }))
   .handler(async ({ input, context }) =>
     runApp(
@@ -251,13 +214,7 @@ export const process = authed
     tags: ["evidence"],
     successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      evidenceId: z.uuid(),
-      ai: z.boolean().optional().default(false),
-    })
-  )
+  .input(processEvidenceInputSchema)
   .output(jobSchema)
   .handler(async ({ input, context }) =>
     runApp(
@@ -278,7 +235,7 @@ export const enrich = authed
     tags: ["evidence"],
     successStatus: 201,
   })
-  .input(z.object({ caseId: z.uuid(), evidenceId: z.uuid() }))
+  .input(evidenceScopeInputSchema)
   .output(jobSchema)
   .handler(async ({ input, context }) =>
     runApp(
