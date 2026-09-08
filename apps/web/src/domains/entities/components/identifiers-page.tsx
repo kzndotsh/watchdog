@@ -29,7 +29,13 @@ import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-com
 import { SearchField } from "@/shared/ui/search-field";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Label } from "@/shared/ui/shadcn/label";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/shared/ui/shadcn/field";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import {
   CONFIDENCE_OPTIONS,
@@ -157,17 +163,16 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               }}
               contentClassName="w-[18rem] max-h-[min(28rem,70vh)] overflow-y-auto"
             >
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <div className="flex flex-col gap-2">
+              <FieldSet className="gap-3 border-0 p-0">
+                <FieldLegend variant="label">Type</FieldLegend>
+                <FieldGroup className="gap-2">
                   {IDENTIFIER_TYPE_OPTIONS.map((opt) => {
                     const checked = typeFilter.includes(opt.value);
+                    const id = `identifier-type-${opt.value}`;
                     return (
-                      <label
-                        key={opt.value}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
-                      >
+                      <Field key={opt.value} orientation="horizontal">
                         <Checkbox
+                          id={id}
                           checked={checked}
                           onCheckedChange={(value) => {
                             setTypeFilter(
@@ -177,23 +182,22 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
                             );
                           }}
                         />
-                        {opt.label}
-                      </label>
+                        <FieldLabel htmlFor={id}>{opt.label}</FieldLabel>
+                      </Field>
                     );
                   })}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <div className="flex flex-col gap-2">
+                </FieldGroup>
+              </FieldSet>
+              <FieldSet className="gap-3 border-0 p-0">
+                <FieldLegend variant="label">Status</FieldLegend>
+                <FieldGroup className="gap-2">
                   {IDENTIFIER_STATUS_OPTIONS.map((opt) => {
                     const checked = statusFilter.includes(opt.value);
+                    const id = `identifier-status-${opt.value}`;
                     return (
-                      <label
-                        key={opt.value}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
-                      >
+                      <Field key={opt.value} orientation="horizontal">
                         <Checkbox
+                          id={id}
                           checked={checked}
                           onCheckedChange={(value) => {
                             setStatusFilter(
@@ -203,23 +207,22 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
                             );
                           }}
                         />
-                        {opt.label}
-                      </label>
+                        <FieldLabel htmlFor={id}>{opt.label}</FieldLabel>
+                      </Field>
                     );
                   })}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Confidence</Label>
-                <div className="flex flex-col gap-2">
+                </FieldGroup>
+              </FieldSet>
+              <FieldSet className="gap-3 border-0 p-0">
+                <FieldLegend variant="label">Confidence</FieldLegend>
+                <FieldGroup className="gap-2">
                   {CONFIDENCE_OPTIONS.map((opt) => {
                     const checked = confidenceFilter.includes(opt.value);
+                    const id = `identifier-confidence-${opt.value}`;
                     return (
-                      <label
-                        key={opt.value}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
-                      >
+                      <Field key={opt.value} orientation="horizontal">
                         <Checkbox
+                          id={id}
                           checked={checked}
                           onCheckedChange={(value) => {
                             setConfidenceFilter(
@@ -231,12 +234,12 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
                             );
                           }}
                         />
-                        {opt.label}
-                      </label>
+                        <FieldLabel htmlFor={id}>{opt.label}</FieldLabel>
+                      </Field>
                     );
                   })}
-                </div>
-              </div>
+                </FieldGroup>
+              </FieldSet>
             </PageFilterMenu>
           </>
         }

@@ -24,8 +24,8 @@ import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
+import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
-import { Label } from "@/shared/ui/shadcn/label";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 
@@ -256,8 +256,8 @@ export function JobCapRunForm({
                     icon={ListFilterIcon}
                     label="Advanced"
                   >
-                    <div className="space-y-2">
-                      <Label htmlFor="cap-filter-kind">Kind</Label>
+                    <Field>
+                      <FieldLabel htmlFor="cap-filter-kind">Kind</FieldLabel>
                       <FieldSelect
                         id="cap-filter-kind"
                         className="w-full"
@@ -269,9 +269,11 @@ export function JobCapRunForm({
                           label: opt.label,
                         }))}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cap-filter-category">Category</Label>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="cap-filter-category">
+                        Category
+                      </FieldLabel>
                       <FieldSelect
                         id="cap-filter-category"
                         className="w-full"
@@ -280,9 +282,11 @@ export function JobCapRunForm({
                         aria-label="Filter Caps by category"
                         options={categoryOptions}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cap-filter-intent">Intent</Label>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="cap-filter-intent">
+                        Intent
+                      </FieldLabel>
                       <FieldSelect
                         id="cap-filter-intent"
                         className="w-full"
@@ -294,11 +298,8 @@ export function JobCapRunForm({
                           label: opt.label,
                         }))}
                       />
-                    </div>
-                    <label
-                      htmlFor={needsKeyOnlyId}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
-                    >
+                    </Field>
+                    <Field orientation="horizontal">
                       <Checkbox
                         id={needsKeyOnlyId}
                         checked={needsKeyOnly}
@@ -306,8 +307,10 @@ export function JobCapRunForm({
                           setNeedsKeyOnly(value);
                         }}
                       />
-                      Needs key
-                    </label>
+                      <FieldLabel htmlFor={needsKeyOnlyId}>
+                        Needs key
+                      </FieldLabel>
+                    </Field>
                   </PageFilterMenu>
                 </div>
                 {layout === "stacked" ? (

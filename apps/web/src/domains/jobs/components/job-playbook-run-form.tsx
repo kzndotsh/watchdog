@@ -21,7 +21,7 @@ import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Label } from "@/shared/ui/shadcn/label";
+import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
 import { WithTooltip } from "@/shared/ui/timestamp";
 
 export interface PlaybookRunVars {
@@ -209,8 +209,10 @@ export function JobPlaybookRunForm({
                     icon={ListFilterIcon}
                     label="Playbook filters"
                   >
-                    <div className="space-y-2">
-                      <Label htmlFor="playbook-filter-seed">Seed</Label>
+                    <Field>
+                      <FieldLabel htmlFor="playbook-filter-seed">
+                        Seed
+                      </FieldLabel>
                       <FieldSelect
                         id="playbook-filter-seed"
                         className="w-full"
@@ -219,9 +221,11 @@ export function JobPlaybookRunForm({
                         aria-label="Filter playbooks by seed"
                         options={seedOptions}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="playbook-filter-egress">Egress</Label>
+                    </Field>
+                    <Field>
+                      <FieldLabel htmlFor="playbook-filter-egress">
+                        Egress
+                      </FieldLabel>
                       <FieldSelect
                         id="playbook-filter-egress"
                         className="w-full"
@@ -230,11 +234,8 @@ export function JobPlaybookRunForm({
                         aria-label="Filter playbooks by egress"
                         options={egressFilterOptions}
                       />
-                    </div>
-                    <label
-                      htmlFor={needsKeyOnlyId}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
-                    >
+                    </Field>
+                    <Field orientation="horizontal">
                       <Checkbox
                         id={needsKeyOnlyId}
                         checked={needsKeyOnly}
@@ -242,12 +243,11 @@ export function JobPlaybookRunForm({
                           setNeedsKeyOnly(value);
                         }}
                       />
-                      Needs key
-                    </label>
-                    <label
-                      htmlFor={urlDumpOnlyId}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
-                    >
+                      <FieldLabel htmlFor={needsKeyOnlyId}>
+                        Needs key
+                      </FieldLabel>
+                    </Field>
+                    <Field orientation="horizontal">
                       <Checkbox
                         id={urlDumpOnlyId}
                         checked={urlDumpOnly}
@@ -255,8 +255,10 @@ export function JobPlaybookRunForm({
                           setUrlDumpOnly(value);
                         }}
                       />
-                      URL dump seed
-                    </label>
+                      <FieldLabel htmlFor={urlDumpOnlyId}>
+                        URL dump seed
+                      </FieldLabel>
+                    </Field>
                   </PageFilterMenu>
                 </div>
                 <PlaybookSeedFields

@@ -20,8 +20,13 @@ import {
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { QueueFilterBar } from "@/shared/ui/queue-filter-bar";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { FieldLabel } from "@/shared/ui/shadcn/field";
-import { Label } from "@/shared/ui/shadcn/label";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/shared/ui/shadcn/field";
 
 export interface CollectQueueToolbarProps {
   filters: CollectFilters;
@@ -124,13 +129,10 @@ export function CollectQueueToolbar({
             contentClassName="w-[16rem]"
           >
             <div className="space-y-3">
-              <div className="space-y-2">
-                <Label>Show only</Label>
-                <div className="flex flex-col gap-2">
-                  <label
-                    htmlFor={hiddenOnlyId}
-                    className="flex cursor-pointer items-center gap-2 text-sm"
-                  >
+              <FieldSet className="gap-3 border-0 p-0">
+                <FieldLegend variant="label">Show only</FieldLegend>
+                <FieldGroup className="gap-2">
+                  <Field orientation="horizontal">
                     <Checkbox
                       id={hiddenOnlyId}
                       checked={filters.hiddenOnly}
@@ -140,12 +142,9 @@ export function CollectQueueToolbar({
                         );
                       }}
                     />
-                    <FieldLabel className="mb-0">Hidden</FieldLabel>
-                  </label>
-                  <label
-                    htmlFor={unprocessedOnlyId}
-                    className="flex cursor-pointer items-center gap-2 text-sm"
-                  >
+                    <FieldLabel htmlFor={hiddenOnlyId}>Hidden</FieldLabel>
+                  </Field>
+                  <Field orientation="horizontal">
                     <Checkbox
                       id={unprocessedOnlyId}
                       checked={filters.unprocessedOnly}
@@ -159,12 +158,11 @@ export function CollectQueueToolbar({
                         );
                       }}
                     />
-                    <FieldLabel className="mb-0">Unprocessed</FieldLabel>
-                  </label>
-                  <label
-                    htmlFor={unattachedOnlyId}
-                    className="flex cursor-pointer items-center gap-2 text-sm"
-                  >
+                    <FieldLabel htmlFor={unprocessedOnlyId}>
+                      Unprocessed
+                    </FieldLabel>
+                  </Field>
+                  <Field orientation="horizontal">
                     <Checkbox
                       id={unattachedOnlyId}
                       checked={filters.unattachedOnly}
@@ -178,21 +176,22 @@ export function CollectQueueToolbar({
                         );
                       }}
                     />
-                    <FieldLabel className="mb-0">Unattached</FieldLabel>
-                  </label>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>State</Label>
-                <div className="flex flex-col gap-2">
+                    <FieldLabel htmlFor={unattachedOnlyId}>
+                      Unattached
+                    </FieldLabel>
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
+              <FieldSet className="gap-3 border-0 p-0">
+                <FieldLegend variant="label">State</FieldLegend>
+                <FieldGroup className="gap-2">
                   {COLLECT_STATE_FACET_OPTIONS.map((opt) => {
                     const checked = filters.states.includes(opt.value);
+                    const id = `collect-state-${opt.value}`;
                     return (
-                      <label
-                        key={opt.value}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
-                      >
+                      <Field key={opt.value} orientation="horizontal">
                         <Checkbox
+                          id={id}
                           checked={checked}
                           onCheckedChange={(value) => {
                             onFiltersChange({
@@ -205,24 +204,23 @@ export function CollectQueueToolbar({
                             });
                           }}
                         />
-                        {opt.label}
-                      </label>
+                        <FieldLabel htmlFor={id}>{opt.label}</FieldLabel>
+                      </Field>
                     );
                   })}
-                </div>
-              </div>
+                </FieldGroup>
+              </FieldSet>
               {capOptions.length > 0 ? (
-                <div className="space-y-2">
-                  <Label>Cap / playbook</Label>
-                  <div className="flex max-h-40 flex-col gap-2 overflow-y-auto">
+                <FieldSet className="gap-3 border-0 p-0">
+                  <FieldLegend variant="label">Cap / playbook</FieldLegend>
+                  <FieldGroup className="max-h-40 gap-2 overflow-y-auto">
                     {capOptions.map((opt) => {
                       const checked = selectedCapabilityIds.has(opt.value);
+                      const id = `collect-cap-${opt.value}`;
                       return (
-                        <label
-                          key={opt.value}
-                          className="flex cursor-pointer items-center gap-2 text-sm"
-                        >
+                        <Field key={opt.value} orientation="horizontal">
                           <Checkbox
+                            id={id}
                             checked={checked}
                             onCheckedChange={(value) => {
                               onFiltersChange({
@@ -235,12 +233,14 @@ export function CollectQueueToolbar({
                               });
                             }}
                           />
-                          <span className="truncate text-xs">{opt.label}</span>
-                        </label>
+                          <FieldLabel htmlFor={id} className="truncate text-xs">
+                            {opt.label}
+                          </FieldLabel>
+                        </Field>
                       );
                     })}
-                  </div>
-                </div>
+                  </FieldGroup>
+                </FieldSet>
               ) : null}
             </div>
           </PageFilterMenu>

@@ -10,8 +10,14 @@ import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
 import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
-import { Label } from "@/shared/ui/shadcn/label";
 import { Switch } from "@/shared/ui/shadcn/switch";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
 
@@ -72,63 +78,65 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
       <h2 className="text-label-sm text-muted-foreground font-medium">
         Case settings
       </h2>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="case-name">Name</Label>
-        <Input
-          id="case-name"
-          value={nameDraft}
-          placeholder="Case name"
-          onChange={(e) => {
-            setNameDraft(e.target.value);
-          }}
-          onBlur={() => {
-            const next = nameDraft.trim();
-            if (!next) {
-              setNameDraft(caseRow.name);
-              return;
-            }
-            if (next !== caseRow.name) {
-              updateMutation.mutate({ name: next });
-            }
-          }}
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="case-description">Description</Label>
-        <Textarea
-          id="case-description"
-          value={descriptionDraft}
-          rows={3}
-          placeholder="What is this Case about?"
-          onChange={(e) => {
-            setDescriptionDraft(e.target.value);
-          }}
-          onBlur={() => {
-            const next = descriptionDraft.trim();
-            const prev = (caseRow.description ?? "").trim();
-            if (next !== prev) {
-              updateMutation.mutate({
-                description: next,
-              });
-            }
-          }}
-        />
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <Label htmlFor="case-egress">Third-party egress</Label>
-          <p className="text-muted-foreground text-xs">
-            Allow Caps that call external services.
-          </p>
-        </div>
-        <Switch
-          id="case-egress"
-          checked={caseRow.allowThirdPartyEgress}
-          onCheckedChange={(checked) => {
-            updateMutation.mutate({ allowThirdPartyEgress: checked });
-          }}
-        />
-      </div>
+      <FieldGroup className="gap-3">
+        <Field>
+          <FieldLabel htmlFor="case-name">Name</FieldLabel>
+          <Input
+            id="case-name"
+            value={nameDraft}
+            placeholder="Case name"
+            onChange={(e) => {
+              setNameDraft(e.target.value);
+            }}
+            onBlur={() => {
+              const next = nameDraft.trim();
+              if (!next) {
+                setNameDraft(caseRow.name);
+                return;
+              }
+              if (next !== caseRow.name) {
+                updateMutation.mutate({ name: next });
+              }
+            }}
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="case-description">Description</FieldLabel>
+          <Textarea
+            id="case-description"
+            value={descriptionDraft}
+            rows={3}
+            placeholder="What is this Case about?"
+            onChange={(e) => {
+              setDescriptionDraft(e.target.value);
+            }}
+            onBlur={() => {
+              const next = descriptionDraft.trim();
+              const prev = (caseRow.description ?? "").trim();
+              if (next !== prev) {
+                updateMutation.mutate({
+                  description: next,
+                });
+              }
+            }}
+          />
+        </Field>
+        <Field orientation="horizontal">
+          <Switch
+            id="case-egress"
+            checked={caseRow.allowThirdPartyEgress}
+            onCheckedChange={(checked) => {
+              updateMutation.mutate({ allowThirdPartyEgress: checked });
+            }}
+          />
+          <FieldContent>
+            <FieldLabel htmlFor="case-egress">Third-party egress</FieldLabel>
+            <FieldDescription>
+              Allow Caps that call external services.
+            </FieldDescription>
+          </FieldContent>
+        </Field>
+      </FieldGroup>
     </section>
   );
 }

@@ -10,7 +10,13 @@ import {
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { QueueFilterBar } from "@/shared/ui/queue-filter-bar";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Label } from "@/shared/ui/shadcn/label";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/shared/ui/shadcn/field";
 
 interface TriageQueueToolbarProps {
   filters: TriageQueueFilters;
@@ -54,24 +60,23 @@ export function TriageQueueToolbar({
             }}
             contentClassName="w-[16rem]"
           >
-            <div className="space-y-2">
-              <Label>
+            <FieldSet className="gap-3 border-0 p-0">
+              <FieldLegend variant="label">
                 Status
                 {pendingCount !== undefined && pendingCount > 0 ? (
                   <span className="text-label-mono-sm text-muted-foreground ml-1">
                     ({pendingCount} pending)
                   </span>
                 ) : null}
-              </Label>
-              <div className="flex flex-col gap-2">
+              </FieldLegend>
+              <FieldGroup className="gap-2">
                 {STATUS_FACET_OPTIONS.map((opt) => {
                   const checked = filters.statuses.includes(opt.value);
+                  const id = `triage-status-${opt.value}`;
                   return (
-                    <label
-                      key={opt.value}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
-                    >
+                    <Field key={opt.value} orientation="horizontal">
                       <Checkbox
+                        id={id}
                         checked={checked}
                         onCheckedChange={(value) => {
                           onFiltersChange({
@@ -82,12 +87,12 @@ export function TriageQueueToolbar({
                           });
                         }}
                       />
-                      {opt.label}
-                    </label>
+                      <FieldLabel htmlFor={id}>{opt.label}</FieldLabel>
+                    </Field>
                   );
                 })}
-              </div>
-            </div>
+              </FieldGroup>
+            </FieldSet>
           </PageFilterMenu>
         </>
       }

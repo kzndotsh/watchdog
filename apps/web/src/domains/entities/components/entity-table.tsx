@@ -29,7 +29,13 @@ import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { SearchField } from "@/shared/ui/search-field";
 import { Button } from "@/shared/ui/shadcn/button";
 import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Label } from "@/shared/ui/shadcn/label";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/shared/ui/shadcn/field";
 import { TableCell } from "@/shared/ui/shadcn/table";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import { ENTITY_KIND_LABELS, ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
@@ -180,17 +186,16 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
               }}
               contentClassName="w-[16rem]"
             >
-              <div className="space-y-2">
-                <Label>Kind</Label>
-                <div className="flex flex-col gap-2">
+              <FieldSet className="gap-3 border-0 p-0">
+                <FieldLegend variant="label">Kind</FieldLegend>
+                <FieldGroup className="gap-2">
                   {ENTITY_KINDS.map((k) => {
                     const checked = kindFilter.includes(k);
+                    const id = `entity-kind-${k}`;
                     return (
-                      <label
-                        key={k}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
-                      >
+                      <Field key={k} orientation="horizontal">
                         <Checkbox
+                          id={id}
                           checked={checked}
                           onCheckedChange={(value) => {
                             setKindFilter(
@@ -200,12 +205,14 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
                             );
                           }}
                         />
-                        {ENTITY_KIND_LABELS[k]}
-                      </label>
+                        <FieldLabel htmlFor={id}>
+                          {ENTITY_KIND_LABELS[k]}
+                        </FieldLabel>
+                      </Field>
                     );
                   })}
-                </div>
-              </div>
+                </FieldGroup>
+              </FieldSet>
             </PageFilterMenu>
           </>
         }

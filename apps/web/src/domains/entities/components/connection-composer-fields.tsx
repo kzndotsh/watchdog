@@ -1,8 +1,8 @@
 import type { ConnectionComposerValues } from "@/domains/entities/lib/connection-composer";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
+import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
-import { Label } from "@/shared/ui/shadcn/label";
 import {
   clampEdgePhrase,
   edgePhraseOptions,
@@ -74,9 +74,9 @@ export function ConnectionComposerFields({
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-xs">Relationship</Label>
+    <FieldGroup className="gap-3">
+      <Field className="gap-1.5">
+        <FieldLabel className="text-xs">Relationship</FieldLabel>
         <FieldCombobox
           value={values.phraseValue}
           onValueChange={(phraseValue) => {
@@ -89,10 +89,10 @@ export function ConnectionComposerFields({
           className="w-full"
           aria-label="Connection relationship"
         />
-      </div>
+      </Field>
 
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-xs">Peer</Label>
+      <Field className="gap-1.5">
+        <FieldLabel className="text-xs">Peer</FieldLabel>
         <EntityCombobox
           entities={[...peerOptions]}
           value={values.peerId}
@@ -103,12 +103,15 @@ export function ConnectionComposerFields({
           aria-label="Connection peer"
           disabled={disabled}
         />
-      </div>
+      </Field>
 
       {needsNotes ? (
-        <div className="flex flex-col gap-1.5">
-          <Label className="text-xs">Notes</Label>
+        <Field className="gap-1.5">
+          <FieldLabel className="text-xs" htmlFor="connection-notes">
+            Notes
+          </FieldLabel>
           <Input
+            id="connection-notes"
             value={values.notes}
             onChange={(e) => {
               onChange({ ...values, notes: e.target.value });
@@ -116,10 +119,9 @@ export function ConnectionComposerFields({
             placeholder="Why related…"
             disabled={disabled}
             className="h-7 text-xs"
-            aria-label="Connection notes"
           />
-        </div>
+        </Field>
       ) : null}
-    </>
+    </FieldGroup>
   );
 }
