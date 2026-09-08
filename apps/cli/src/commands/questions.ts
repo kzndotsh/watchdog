@@ -12,6 +12,7 @@ import { api, emit, emitList, fail, truncText } from "../client";
 import { requireUserOverride, userOverrideArg } from "../custody";
 import { displayStatusLabel, enrichQuestionDisplay } from "../display";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
+import { entityListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
@@ -25,11 +26,11 @@ import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 const LIST_COLUMNS = ["id", "text", "status", "statusLabel"];
 
 function listHelp(caseId: string, entity: string): string[] {
-  return [
+  return entityListHelp(caseId, entity, [
     `wd questions create -c ${caseId} --entity ${entity} --text "…" --user-override`,
     `wd questions update -c ${caseId} <id> --text "…" --user-override`,
     `wd questions reopen -c ${caseId} <id> --user-override`,
-  ];
+  ]);
 }
 
 export const questionsCmd = defineNounCommand({

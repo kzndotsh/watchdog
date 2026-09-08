@@ -5,7 +5,7 @@ import { patchSchema } from "@watchdog/schemas";
 import { fail } from "./io";
 import { hasCliText } from "./noun";
 
-function readStdin(): string {
+export function readStdin(): string {
   return readFileSync(0, "utf-8");
 }
 

@@ -63,7 +63,7 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 - `edges update` accepts a partial patch — provide at least one of `--from`/`--to`, `--predicate`, `--confidence`, `--notes`, `--evidence`, or `--entity` (`--from` and `--to` together).
 - Child-write **updates** (`identifiers` / `claims` / `edges`): `--notes ""` and `--evidence ""` clear those fields; omit the flag for no change. Creates still omit blank `--evidence`.
 - Destructive verbs support `--dry-run` (prints planned JSON only — does **not** validate against the API).
-- Paste body: `--body`, `-b -`, `--stdin`, or non-TTY stdin.
+- Paste body: `--body`, `-b -`, `--stdin`, or non-TTY stdin (`readStdin` in `load-patch.ts`).
 - Breaking: `wd caps` → `wd caps list` (also content-first `wd caps`).
 - Tests: `--help` / output contract, `CUSTODY` JSON when child writes omit `--user-override`, `loadPatch` reject paths. Live API is e2e / integration, not CLI unit.
 

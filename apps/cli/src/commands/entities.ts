@@ -11,6 +11,7 @@ import {
 import { api, emit, emitList, fail } from "../client";
 import { entityKindLabel, enrichEntityDisplay } from "../display";
 import { requireCaseId, resolveEntityId } from "../ids";
+import { caseListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
@@ -23,10 +24,10 @@ import { parseCliEnum, parseOptionalNullableTrimmedPatch } from "../parse-cli";
 const LIST_COLUMNS = ["id", "kind", "kindLabel", "name", "slug"];
 
 function listHelp(caseId: string): string[] {
-  return [
+  return caseListHelp(caseId, [
     `wd entities create -c ${caseId} -k person -n "Full Name"`,
     `wd entities get -c ${caseId} <slug>`,
-  ];
+  ]);
 }
 
 export const entitiesCmd = defineNounCommand({

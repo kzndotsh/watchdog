@@ -11,6 +11,7 @@ import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import { requireUserOverride, userOverrideArg } from "../custody";
 import { enrichEventDisplay } from "../display";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
+import { entityListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
@@ -26,9 +27,9 @@ import { parseOptionalNullableTrimmedPatch } from "../parse-cli";
 const LIST_COLUMNS = ["id", "when", "what", "where"];
 
 function listHelp(caseId: string, entity: string): string[] {
-  return [
+  return entityListHelp(caseId, entity, [
     `wd events create -c ${caseId} --entity ${entity} --when <when> --what "…" --user-override`,
-  ];
+  ]);
 }
 
 export const eventsCmd = defineNounCommand({

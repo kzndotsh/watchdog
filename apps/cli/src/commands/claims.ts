@@ -31,6 +31,7 @@ import {
   requireUuid,
   resolveEntityId,
 } from "../ids";
+import { entityListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
@@ -54,9 +55,9 @@ const LIST_COLUMNS = [
 ];
 
 function listHelp(caseId: string, entity: string): string[] {
-  return [
+  return entityListHelp(caseId, entity, [
     `wd claims create -c ${caseId} --entity ${entity} --text "…" --confidence unverified --user-override`,
-  ];
+  ]);
 }
 
 export const claimsCmd = defineNounCommand({

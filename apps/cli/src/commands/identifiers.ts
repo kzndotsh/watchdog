@@ -32,6 +32,7 @@ import {
   requireUuid,
   resolveEntityId,
 } from "../ids";
+import { entityListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
@@ -56,9 +57,9 @@ const LIST_COLUMNS = [
 ];
 
 function listHelp(caseId: string, entity: string): string[] {
-  return [
+  return entityListHelp(caseId, entity, [
     `wd identifiers create -c ${caseId} --entity ${entity} --type email --value "…" --confidence unverified --user-override`,
-  ];
+  ]);
 }
 
 export const identifiersCmd = defineNounCommand({

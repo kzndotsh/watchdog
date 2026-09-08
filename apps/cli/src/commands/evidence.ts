@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-
 import { defineCommand } from "citty";
 
 import {
@@ -20,6 +18,8 @@ import {
 import { withExamples } from "../examples";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
 import { jobInputTitlesForJobs } from "../job-evidence-titles";
+import { caseListHelp } from "../list-help";
+import { readStdin } from "../load-patch";
 import {
   asBoolean,
   caseArg,
@@ -33,17 +33,13 @@ import { uploadEvidenceFile } from "../upload-file";
 
 const LIST_COLUMNS = ["id", "kind", "kindLabel", "label", "captured"];
 
-function readStdin(): string {
-  return readFileSync(0, "utf-8");
-}
-
 function listHelp(caseId: string): string[] {
-  return [
+  return caseListHelp(caseId, [
     `wd evidence paste -c ${caseId} -b "…"`,
     `wd evidence file -c ${caseId} <path>`,
     `wd evidence process -c ${caseId} <evidenceId>`,
     `wd evidence enrich -c ${caseId} <evidenceId>`,
-  ];
+  ]);
 }
 
 export const evidenceCmd = defineNounCommand({

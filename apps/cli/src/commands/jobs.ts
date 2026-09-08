@@ -22,6 +22,7 @@ import {
 } from "../display";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
 import { jobInputTitlesForJobs } from "../job-evidence-titles";
+import { caseListHelp } from "../list-help";
 import {
   asBoolean,
   caseArg,
@@ -41,10 +42,10 @@ const LIST_COLUMNS = [
 ];
 
 function listHelp(caseId: string): string[] {
-  return [
+  return caseListHelp(caseId, [
     `wd jobs start -c ${caseId} --cap <capId>`,
     `wd jobs get -c ${caseId} <jobId>`,
-  ];
+  ]);
 }
 
 export const jobsCmd = defineNounCommand({

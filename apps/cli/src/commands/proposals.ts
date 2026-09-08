@@ -17,6 +17,7 @@ import {
 } from "../display";
 import { withExamples } from "../examples";
 import { parseIdList, requireCaseId, requireUuid } from "../ids";
+import { caseListHelp } from "../list-help";
 import { loadPatch } from "../load-patch";
 import {
   asBoolean,
@@ -30,10 +31,10 @@ import { parseCliEnum, parseOptionalCliEnum } from "../parse-cli";
 const LIST_COLUMNS = ["id", "status", "statusLabel", "summary", "created"];
 
 function listHelp(caseId: string): string[] {
-  return [
+  return caseListHelp(caseId, [
     `wd proposals accept -c ${caseId} <proposalId>`,
     `wd proposals create -c ${caseId} --patch-file <path>`,
-  ];
+  ]);
 }
 
 export const proposalsCmd = defineNounCommand({
