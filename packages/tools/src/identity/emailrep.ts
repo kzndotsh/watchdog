@@ -3,7 +3,11 @@ import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-tag";
-import { ValidationVendorError, type ToolsTag } from "../errors/tagged-errors";
+import {
+  MissingCredentialError,
+  ValidationVendorError,
+  type ToolsTag,
+} from "../errors/tagged-errors";
 import { parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
@@ -100,12 +104,15 @@ export function fetchEmailrepLookupEffect(
     const ua =
       options?.userAgent ?? watchdogUserAgent("identity.emailrep.lookup");
     const key = options?.apiKey?.trim() ?? "";
+    if (!key) {
+      return yield* new MissingCredentialError({ slot: "EMAILREP_API_KEY" });
+    }
 
     const headers: Record<string, string> = {
       Accept: "application/json",
       "User-Agent": ua,
+      Key: key,
     };
-    if (key) headers.Key = key;
 
     const { status, body } = yield* fetchJsonObjectEffect({
       url: `https://emailrep.io/${encodeURIComponent(email)}`,
