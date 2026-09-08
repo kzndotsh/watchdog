@@ -182,14 +182,12 @@ function cleanupScratchEffect(
   jobId: string
 ): Effect.Effect<void> {
   return Effect.tryPromise({
-    try: async () => {
-      await rm(scratchDir, { recursive: true, force: true });
-    },
+    try: () => rm(scratchDir, { recursive: true, force: true }),
     catch: (cleanupError: unknown) => {
       logSwallowed("collect.scratch_cleanup", cleanupError, { jobId });
       return new ScratchIOError({ reason: "collect scratch cleanup failed" });
     },
-  }).pipe(Effect.catch(() => Effect.void));
+  }).pipe(Effect.ignore);
 }
 
 function reclaimResult(

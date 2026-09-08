@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import { db, entitiesRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas";
 import {
@@ -6,6 +8,9 @@ import {
   patchOpRelatedEntityIds,
   proposalEntityName,
 } from "@watchdog/schemas";
+
+import { tryDb } from "../infra/postgres-effect";
+import type { DomainTag } from "../infra/tagged-errors";
 
 /** entityId → display label, slug, and searchable text maps for proposal/triage chrome. */
 export function buildEntityDisplayMaps(
@@ -42,37 +47,42 @@ export function buildEntityDisplayMaps(
   return { entityNames, entitySlugs, entitySummaries, entityNotes };
 }
 
-export async function loadEntityDisplayMapsForIds(
+export function loadEntityDisplayMapsForIdsEffect(
   caseId: string,
   entityIds: readonly string[]
-): Promise<{
-  entityNames: Record<string, string>;
-  entitySlugs: Record<string, string>;
-  entitySummaries: Record<string, string>;
-  entityNotes: Record<string, string>;
-}> {
+): Effect.Effect<
+  {
+    entityNames: Record<string, string>;
+    entitySlugs: Record<string, string>;
+    entitySummaries: Record<string, string>;
+    entityNotes: Record<string, string>;
+  },
+  DomainTag
+> {
   if (entityIds.length === 0) {
-    return {
+    return Effect.succeed({
       entityNames: {},
       entitySlugs: {},
       entitySummaries: {},
       entityNotes: {},
-    };
+    });
   }
-  const rows = await entitiesRepo.listNamesByIdsInCase(db, caseId, [
-    ...entityIds,
-  ]);
-  return buildEntityDisplayMaps(rows);
+  return tryDb(() =>
+    entitiesRepo.listNamesByIdsInCase(db, caseId, [...entityIds])
+  ).pipe(Effect.map((rows) => buildEntityDisplayMaps(rows)));
 }
 
-export async function loadEntityDisplayMapsForProposalPatches(
+export function loadEntityDisplayMapsForProposalPatchesEffect(
   rows: readonly { caseId: string; patch: readonly PatchOp[] }[]
-): Promise<{
-  entityNames: Record<string, string>;
-  entitySlugs: Record<string, string>;
-  entitySummaries: Record<string, string>;
-  entityNotes: Record<string, string>;
-}> {
+): Effect.Effect<
+  {
+    entityNames: Record<string, string>;
+    entitySlugs: Record<string, string>;
+    entitySummaries: Record<string, string>;
+    entityNotes: Record<string, string>;
+  },
+  DomainTag
+> {
   const idsByCase = new Map<string, Set<string>>();
   for (const row of rows) {
     const ids = idsByCase.get(row.caseId) ?? new Set<string>();
@@ -83,24 +93,37 @@ export async function loadEntityDisplayMapsForProposalPatches(
     }
     idsByCase.set(row.caseId, ids);
   }
-  const combined: {
-    id: string;
-    name: string;
-    slug: string;
-    summary?: string | null;
-    notes?: string | null;
-  }[] = [];
-  const batches = await Promise.all(
-    [...idsByCase.entries()]
-      .filter(([, ids]) => ids.size > 0)
-      .map(([caseId, ids]) =>
-        entitiesRepo.listNamesByIdsInCase(db, caseId, [...ids])
-      )
-  );
-  for (const caseRows of batches) {
-    combined.push(...caseRows);
+  const entries = [...idsByCase.entries()].filter(([, ids]) => ids.size > 0);
+  if (entries.length === 0) {
+    return Effect.succeed({
+      entityNames: {},
+      entitySlugs: {},
+      entitySummaries: {},
+      entityNotes: {},
+    });
   }
-  return buildEntityDisplayMaps(combined);
+  return Effect.forEach(
+    entries,
+    ([caseId, ids]) =>
+      tryDb(() => entitiesRepo.listNamesByIdsInCase(db, caseId, [...ids])).pipe(
+        Effect.map((caseRows) => ({ caseId, caseRows }))
+      ),
+    { concurrency: "unbounded" }
+  ).pipe(
+    Effect.map((batches) => {
+      const combined: {
+        id: string;
+        name: string;
+        slug: string;
+        summary?: string | null;
+        notes?: string | null;
+      }[] = [];
+      for (const batch of batches) {
+        combined.push(...batch.caseRows);
+      }
+      return buildEntityDisplayMaps(combined);
+    })
+  );
 }
 
 export function entityIdsFromPatches(

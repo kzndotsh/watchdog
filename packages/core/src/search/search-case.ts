@@ -39,7 +39,7 @@ import {
   entityIdsFromNullable,
   entityIdsFromPatches,
   entityNameForId,
-  loadEntityDisplayMapsForIds,
+  loadEntityDisplayMapsForIdsEffect,
 } from "../entities/entity-display";
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
@@ -276,12 +276,11 @@ export function searchCaseEffect(
       { concurrency: "unbounded" }
     );
 
-    const { entityNames, entitySlugs } = yield* tryDb(() =>
-      loadEntityDisplayMapsForIds(
+    const { entityNames, entitySlugs } =
+      yield* loadEntityDisplayMapsForIdsEffect(
         scopedCaseId,
         entityIdsForSearchHits(proposalRows, taskRows, evidenceRows, jobRows)
-      )
-    );
+      );
 
     const jobInputs = jobRows.map((row) => row.job.input);
     const evidenceIds = evidenceIdsFromJobInputs(jobInputs);

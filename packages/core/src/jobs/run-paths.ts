@@ -4,7 +4,7 @@ import { db, jobsRepo, type JobRow } from "@watchdog/db";
 
 import { errorMessage } from "../infra/domain-error";
 import { logSwallowed } from "../infra/process-log";
-import type { DomainTag } from "../infra/tagged-errors";
+import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 import { storeCacheStageEffect } from "./stages/cache";
 import { advancePlaybookRunEffect } from "./stages/chain";
 import type { CollectResult } from "./stages/collect";
@@ -30,7 +30,8 @@ function logPlaybookAdvanceFailureEffect(
     yield* Effect.tryPromise({
       try: () =>
         jobsRepo.updateInCase(db, caseId, jobId, { logs: jobLog.lines }),
-      catch: (error) => error,
+      catch: (error: unknown) =>
+        new InvalidError({ reason: errorMessage(error) }),
     }).pipe(
       Effect.tapError((persistError) =>
         Effect.sync(() => {

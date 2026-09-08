@@ -10,6 +10,7 @@ import { requireCapability } from "@watchdog/caps";
 import { db, jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
 import { parseTrimmedCaseId } from "@watchdog/schemas";
 
+import { nowDateEffect } from "../../infra/clock";
 import { errorMessage } from "../../infra/domain-error";
 import { tryDb } from "../../infra/postgres-effect";
 import { logProcess } from "../../infra/process-log";
@@ -179,12 +180,13 @@ function preparePreflightReadyEffect(
     const reclaimArtifacts =
       Array.isArray(job.output) && job.output.length > 0 ? job.output : null;
     const reclaimEvidenceIds = jobEvidenceIdsForReuse(job.evidenceIds);
+    const startedAt = job.startedAt ?? (yield* nowDateEffect);
 
     const markedRunning = yield* setJobStatusEffect(
       jobId,
       {
         status: "running",
-        startedAt: job.startedAt ?? new Date(),
+        startedAt,
         ...(reclaimArtifacts ? {} : { logs: [] as string[] }),
       },
       {

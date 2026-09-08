@@ -32,6 +32,7 @@ import {
   assertEvidenceInCaseEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
+import { nowDateEffect } from "../infra/clock";
 import { errorMessage } from "../infra/domain-error";
 import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
@@ -285,7 +286,7 @@ export function cancelJobEffect(
     if (!row) {
       return yield* new NotFoundError({ resource: "Job not found" });
     }
-    const finishedAt = new Date();
+    const finishedAt = yield* nowDateEffect;
     const cancelledId = yield* tryDb(() =>
       jobsRepo.cancelCancellableInCase(
         db,

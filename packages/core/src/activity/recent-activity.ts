@@ -24,7 +24,7 @@ import {
   labelForActor,
   loadActorUsersEffect,
 } from "../actors/resolve-actor-labels";
-import { loadEntityDisplayMapsForProposalPatches } from "../entities/entity-display";
+import { loadEntityDisplayMapsForProposalPatchesEffect } from "../entities/entity-display";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
@@ -315,13 +315,11 @@ export function listRecentActivityEffect(
     const {
       entityNames: proposalEntityNames,
       entitySlugs: proposalEntitySlugs,
-    } = yield* tryDb(() =>
-      loadEntityDisplayMapsForProposalPatches(
-        proposalRows.map((row) => ({
-          caseId: row.caseId,
-          patch: row.patch,
-        }))
-      )
+    } = yield* loadEntityDisplayMapsForProposalPatchesEffect(
+      proposalRows.map((row) => ({
+        caseId: row.caseId,
+        patch: row.patch,
+      }))
     );
 
     const collapsedJobRows = collapseRecentJobActivityRows(jobRows);

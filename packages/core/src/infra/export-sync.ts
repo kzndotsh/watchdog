@@ -42,10 +42,10 @@ function writeEffect(
   content: string | Uint8Array
 ): Effect.Effect<void, ExportIOError> {
   return Effect.tryPromise({
-    try: async () => {
-      await mkdir(nodePath.dirname(path), { recursive: true });
-      await writeFile(path, content);
-    },
+    try: () =>
+      mkdir(nodePath.dirname(path), { recursive: true }).then(() =>
+        writeFile(path, content)
+      ),
     catch: mapExportCatch,
   });
 }
@@ -118,7 +118,7 @@ function writeUriEvidenceFileEffect(
         });
       })
     ),
-    Effect.catch(() => Effect.succeed("skipped" as const))
+    Effect.orElseSucceed("skipped" as const)
   );
 }
 
@@ -377,10 +377,8 @@ export function renameCaseExportDirEffect(
       catch: mapExportCatch,
     });
     yield* Effect.tryPromise({
-      try: async () => {
-        try {
-          await rename(from, to);
-        } catch (error) {
+      try: () =>
+        rename(from, to).catch((error: unknown) => {
           if (
             error instanceof Error &&
             "code" in error &&
@@ -389,8 +387,7 @@ export function renameCaseExportDirEffect(
             return;
           }
           throw error;
-        }
-      },
+        }),
       catch: mapExportCatch,
     });
   });

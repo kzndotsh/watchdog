@@ -12,6 +12,7 @@ import {
 } from "@watchdog/schemas";
 
 import { readArtifactBytesEffect } from "../infra/blob";
+import { nowIsoStringEffect } from "../infra/clock";
 import { tryDb } from "../infra/postgres-effect";
 import { NotFoundError, type DomainTag } from "../infra/tagged-errors";
 import { parseStoredJobEvidenceIds } from "../jobs/stages/helpers";
@@ -48,7 +49,7 @@ function loadTextFromEvidence(row: {
       if (head.includes(0)) return "";
       return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
     }),
-    Effect.catch(() => Effect.succeed(""))
+    Effect.orElseSucceed(() => "")
   );
 }
 
@@ -87,7 +88,7 @@ function loadEnrichOutputText(input: {
         Effect.map((bytes) =>
           new TextDecoder("utf-8", { fatal: false }).decode(bytes)
         ),
-        Effect.catch(() => Effect.succeed(""))
+        Effect.orElseSucceed(() => "")
       );
       if (text.trim()) return text;
     }
@@ -135,6 +136,7 @@ export function packEvidenceSnapshotEffect(input: {
     }
     const label = trimmedOrUndefined(row.label ?? undefined);
     const mime = trimmedOrUndefined(row.mime ?? undefined);
+    const packedAt = yield* nowIsoStringEffect;
     return evidenceSnapshotSchema.parse({
       evidenceId: row.id,
       caseId: row.caseId,
@@ -145,7 +147,7 @@ export function packEvidenceSnapshotEffect(input: {
       ...(mime === undefined ? {} : { mime }),
       sha256: row.sha256,
       uri: row.uri,
-      packedAt: new Date().toISOString(),
+      packedAt,
       packerVersion: 1,
     });
   });

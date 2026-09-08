@@ -6,6 +6,8 @@ export type DomainErrorCode =
 
 const DOMAIN_ERROR_BRAND = Symbol.for("watchdog.DomainError");
 
+// Legacy throw-based bridge for tryDb / postgres drivers — not Effect TaggedError.
+// oxlint-disable-next-line effecttsgo/extends-native-error -- DomainError brand survives duplicate module instances
 export class DomainError extends Error {
   /** Brand survives duplicate module instances, unlike `instanceof`. */
   readonly [DOMAIN_ERROR_BRAND] = true;

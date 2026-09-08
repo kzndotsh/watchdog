@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import type { JobHandoff } from "@watchdog/db";
 
 import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
+import { nowDateEffect } from "../../infra/clock";
 import {
   notifyJobUpdateEffect,
   notifyProposalCreatedEffect,
@@ -33,6 +34,7 @@ export function finishEffect(
 ): Effect.Effect<"succeeded" | "cancelled", DomainTag> {
   return Effect.gen(function* finishGen() {
     const { state, jobLog } = input;
+    const finishedAt = yield* nowDateEffect;
 
     const finished = yield* setJobStatusEffect(
       state.jobId,
@@ -45,7 +47,7 @@ export function finishEffect(
         error: null,
         interpretError: input.interpretError,
         logs: jobLog.lines,
-        finishedAt: new Date(),
+        finishedAt,
         ...(input.handoff ? { handoff: input.handoff } : {}),
       },
       { unlessCancelled: true, notify: false, caseId: state.job.caseId }

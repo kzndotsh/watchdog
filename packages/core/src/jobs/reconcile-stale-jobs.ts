@@ -1,4 +1,4 @@
-import { Cause, Effect, Result } from "effect";
+import { Cause, Clock, Effect, Result } from "effect";
 
 import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas";
@@ -77,7 +77,7 @@ function reconcileStaleJobEffect(
 export function reconcileStaleJobsEffect(): Effect.Effect<number, DomainTag> {
   return Effect.gen(function* reconcileStaleJobsGen() {
     const running = yield* tryDb(() => jobsRepo.listRunning(db));
-    const now = Date.now();
+    const now = yield* Clock.currentTimeMillis;
     const results = yield* Effect.forEach(
       running,
       (row) => reconcileStaleJobEffect(row, now),
@@ -96,7 +96,10 @@ export function reconcileOrphanedQueuedJobsEffect(): Effect.Effect<
   DomainTag
 > {
   return Effect.gen(function* reconcileOrphanedQueuedJobsGen() {
-    const updatedBefore = new Date(Date.now() - ORPHAN_QUEUED_GRACE_MS);
+    const now = yield* Clock.currentTimeMillis;
+    // Drizzle `listQueuedStale` expects a JS Date; Clock supplies the millis.
+    // oxlint-disable-next-line effecttsgo/global-date-in-effect -- repo boundary Date interop
+    const updatedBefore = new Date(now - ORPHAN_QUEUED_GRACE_MS);
     const rows = yield* tryDb(() =>
       jobsRepo.listQueuedStale(db, updatedBefore)
     );

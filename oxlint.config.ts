@@ -4,6 +4,47 @@ import core from "ultracite/oxlint/core";
 import react from "ultracite/oxlint/react";
 import tanstack from "ultracite/oxlint/tanstack";
 
+/** Scoped off for Promise/Node/TanStack boundaries — not pure Effect pipelines. */
+const effecttsgoOff = {
+  "effecttsgo/abort-controller-in-effect": "off",
+  "effecttsgo/any-unknown-in-error-context": "off",
+  "effecttsgo/async-function": "off",
+  "effecttsgo/catch-to-ignore": "off",
+  "effecttsgo/catch-to-or-else-succeed": "off",
+  "effecttsgo/crypto-random-uuid": "off",
+  "effecttsgo/extends-native-error": "off",
+  "effecttsgo/global-console": "off",
+  "effecttsgo/global-date": "off",
+  "effecttsgo/global-date-in-effect": "off",
+  "effecttsgo/global-error-in-effect-failure": "off",
+  "effecttsgo/global-fetch": "off",
+  "effecttsgo/global-fetch-in-effect": "off",
+  "effecttsgo/global-random": "off",
+  "effecttsgo/global-timers": "off",
+  "effecttsgo/lazy-effect": "off",
+  "effecttsgo/multiple-effect-provide": "off",
+  "effecttsgo/new-promise": "off",
+  "effecttsgo/node-builtin-import": "off",
+  "effecttsgo/prefer-schema-over-json": "off",
+  "effecttsgo/process-env": "off",
+  "effecttsgo/run-effect-inside-effect": "off",
+  "effecttsgo/try-catch-in-effect-gen": "off",
+  "effecttsgo/unknown-in-effect-catch": "off",
+  "effecttsgo/unnecessary-effect-gen": "off",
+} as const;
+
+/** Re-enabled in packages/core — fix violations instead of blanket-off. */
+const effecttsgoTier1Warn = {
+  "effecttsgo/unknown-in-effect-catch": "warn",
+  "effecttsgo/any-unknown-in-error-context": "warn",
+  "effecttsgo/global-date-in-effect": "warn",
+  "effecttsgo/async-function": "warn",
+  "effecttsgo/catch-to-or-else-succeed": "warn",
+  "effecttsgo/catch-to-ignore": "warn",
+  "effecttsgo/extends-native-error": "warn",
+  "effecttsgo/try-catch-in-effect-gen": "warn",
+} as const;
+
 const watchdogIgnores = [
   "_legacy-v1/**",
   "_legacy-v2/**",
@@ -79,9 +120,8 @@ export default defineConfig({
     "jsdoc/require-param-description": "off",
     "jsdoc/require-returns-description": "off",
 
-    // effecttsgo recommended warn rules stay on (ultracite does not deny
-    // warnings). Highest remaining counts: async-function, global-date,
-    // node-builtin-import, global-console, process-env.
+    // effecttsgo recommended warn rules stay on for uncovered paths (ultracite
+    // does not deny warnings). Boundary layers disable via effecttsgoOff overrides.
 
     // --- Burn-down backlog (tighten gradually; see lint debt plan) ---
     "eslint/complexity": "off",
@@ -340,6 +380,54 @@ export default defineConfig({
         "unicorn/no-object-as-default-parameter": "off",
         "unicorn/consistent-function-scoping": "off",
         "unicorn/no-await-expression-member": "off",
+        ...effecttsgoOff,
+      },
+    },
+    {
+      // Promise repos, job Date interop, tools HTTP, TanStack/CLI edges, build scripts.
+      files: [
+        "packages/db/src/**/*.{ts,tsx}",
+        "packages/db/drizzle.config.ts",
+        "packages/db/scripts/**/*.{mjs,ts}",
+        "packages/**/scripts/**/*.{mjs,ts}",
+        "packages/tools/src/**/*.{ts,tsx}",
+        "packages/caps/src/**/*.{ts,tsx}",
+        "packages/ai/src/**/*.{ts,tsx}",
+        "packages/cap-sdk/src/**/*.{ts,tsx}",
+        "packages/env/src/**/*.{ts,tsx}",
+        "packages/log/src/**/*.{ts,tsx}",
+        "packages/schemas/src/**/*.{ts,tsx}",
+        "packages/test-kit/src/**/*.{ts,tsx}",
+        "packages/client/src/**/*.{ts,tsx}",
+        "packages/api/src/**/*.{ts,tsx}",
+        "apps/**/*.{ts,tsx,mjs}",
+        "e2e/**/*.{ts,tsx}",
+        "scripts/**/*.{mjs,ts}",
+        "vitest.config.ts",
+        "playwright.config.ts",
+      ],
+      rules: effecttsgoOff,
+    },
+    {
+      // Core Effect pipeline — tier-1 rules stay on; boundary rules stay off.
+      files: ["packages/core/src/**/*.{ts,tsx}"],
+      rules: {
+        ...effecttsgoOff,
+        ...effecttsgoTier1Warn,
+      },
+    },
+    {
+      files: [
+        "packages/core/src/**/__tests__/**/*.{ts,tsx}",
+        "packages/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
+      ],
+      rules: effecttsgoOff,
+    },
+    {
+      // Promise graph fingerprint scan — Effect migration deferred.
+      files: ["packages/core/src/proposals/finding-suppress.ts"],
+      rules: {
+        "effecttsgo/async-function": "off",
       },
     },
     {

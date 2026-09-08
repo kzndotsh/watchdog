@@ -1,10 +1,14 @@
 import { Resolver } from "node:dns/promises";
 
-import { Effect } from "effect";
+import { Data, Effect } from "effect";
 
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { abortedToolsError } from "../errors/tools-error";
+
+class BenignDnsFailure extends Data.TaggedError("BenignDnsFailure")<{
+  readonly cause: unknown;
+}> {}
 
 const BENIGN_DNS_ERROR_CODES = new Set(["ENOTFOUND", "ENODATA", "ESERVFAIL"]);
 
@@ -56,15 +60,11 @@ export function dnsOrEmpty<A>(
 ): Effect.Effect<A, ToolsTag> {
   return Effect.tryPromise({
     try: tryFn,
-    catch: (error) => error,
-  }).pipe(
-    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- Effect.catch is the canonical combinator here
-    Effect.catch((error) =>
+    catch: (error: unknown): ToolsTag | BenignDnsFailure =>
       isBenignDnsFailure(error)
-        ? Effect.succeed(empty)
-        : Effect.fail(mapToolsCatch(error))
-    )
-  );
+        ? new BenignDnsFailure({ cause: error })
+        : mapToolsCatch(error),
+  }).pipe(Effect.catchTag("BenignDnsFailure", () => Effect.succeed(empty)));
 }
 
 export function runAbortableResolver<A>(

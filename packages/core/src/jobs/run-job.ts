@@ -17,6 +17,7 @@ import { db, jobsRepo, type JobRow } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas";
 import { isToolsTag, taggedToToolsError, type ToolsTag } from "@watchdog/tools";
 
+import { nowMillisEffect } from "../infra/clock";
 import { tryDb } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
 import {
@@ -101,14 +102,13 @@ function classifyRun(input: {
 function jobOutcomeFromInterrupt(
   reason: JobAbortReason,
   row: JobRow | null,
-  started: number
+  started: number,
+  now: number
 ): JobRunOutcome {
   return {
     outcome: reason === "cancel" ? "cancelled" : "failed",
     abortReason: reason,
-    durationMs: row?.startedAt
-      ? Date.now() - row.startedAt.getTime()
-      : Date.now() - started,
+    durationMs: row?.startedAt ? now - row.startedAt.getTime() : now - started,
     caseId: row?.caseId,
     capabilityId: row?.capabilityId,
     playbookRunId: row?.playbookRunId ?? null,
@@ -162,10 +162,11 @@ function handlePreflightStopEffect(
         )
       );
     }
+    const now = yield* nowMillisEffect;
     return {
       outcome: outcomeFromStopStatus(row?.status),
       stopReason: reason,
-      durationMs: Date.now() - started,
+      durationMs: now - started,
       caseId: row?.caseId,
       capabilityId: row?.capabilityId,
       playbookRunId: row?.playbookRunId ?? null,
@@ -190,9 +191,10 @@ function handlePreflightDomainErrorEffect(
         caseId: row.caseId,
       });
     }
+    const now = yield* nowMillisEffect;
     return {
       outcome: "failed" as const,
-      durationMs: Date.now() - started,
+      durationMs: now - started,
       caseId: row?.caseId,
       capabilityId: row?.capabilityId,
       playbookRunId: row?.playbookRunId ?? null,
@@ -372,12 +374,13 @@ function runAfterCollectEffect(
       });
     }
 
+    const now = yield* nowMillisEffect;
     return {
       outcome: classified.outcome,
       abortReason: classified.abortReason,
       fromCache,
       reclaim,
-      durationMs: Date.now() - started,
+      durationMs: now - started,
       caseId: state.job.caseId,
       capabilityId: state.job.capabilityId,
       playbookRunId: state.job.playbookRunId ?? null,
@@ -406,16 +409,20 @@ function failOutcome(
     playbookRunId: state.job.playbookRunId,
     caseId: state.job.caseId,
   }).pipe(
-    Effect.map(() => ({
-      outcome: classified.outcome,
-      abortReason: classified.abortReason,
-      fromCache: collected?.fromCache,
-      reclaim: collected?.reclaim,
-      durationMs: Date.now() - started,
-      caseId: state.job.caseId,
-      capabilityId: state.job.capabilityId,
-      playbookRunId: state.job.playbookRunId ?? null,
-    }))
+    Effect.flatMap(() =>
+      nowMillisEffect.pipe(
+        Effect.map((now) => ({
+          outcome: classified.outcome,
+          abortReason: classified.abortReason,
+          fromCache: collected?.fromCache,
+          reclaim: collected?.reclaim,
+          durationMs: now - started,
+          caseId: state.job.caseId,
+          capabilityId: state.job.capabilityId,
+          playbookRunId: state.job.playbookRunId ?? null,
+        }))
+      )
+    )
   );
 }
 
@@ -524,7 +531,7 @@ export function executeJobEffect(
   return Effect.scoped(
     Effect.gen(function* executeJobGen() {
       const fibers = yield* JobFibers;
-      const started = Date.now();
+      const started = yield* nowMillisEffect;
       const jobSignal = yield* Effect.abortSignal;
       const preflight = yield* Effect.result(
         preflightEffect(jobId).pipe(
@@ -558,7 +565,7 @@ export function executeJobOnMap(
 ): Effect.Effect<JobRunOutcome, never, JobFibers> {
   return Effect.gen(function* trackJobFiber() {
     const fibers = yield* JobFibers;
-    const started = Date.now();
+    const started = yield* nowMillisEffect;
     const fiber = yield* FiberMap.run(
       fibers.map,
       jobId
@@ -582,7 +589,8 @@ export function executeJobOnMap(
         ).pipe(Effect.orDie);
       }
       fibers.clearReason(jobId);
-      return jobOutcomeFromInterrupt(reason, row, started);
+      const now = yield* nowMillisEffect;
+      return jobOutcomeFromInterrupt(reason, row, started, now);
     }
     fibers.clearReason(jobId);
     return yield* Effect.die(Cause.squash(exit.cause));

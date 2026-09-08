@@ -24,6 +24,7 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
+import { nowDateEffect } from "../infra/clock";
 import { errorMessage } from "../infra/domain-error";
 import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
@@ -269,7 +270,7 @@ export function cancelPlaybookRunEffect(
       playbookRunId,
       "Playbook run not found"
     );
-    const now = new Date();
+    const now = yield* nowDateEffect;
     const result = yield* transact((tx) =>
       Effect.gen(function* cancelPlaybookTx() {
         const run = yield* tryDb(() =>
