@@ -30,4 +30,28 @@ describe("uri schemes extractor", () => {
       ctx.identifiers.some((i) => i.type === "phone" && i.value.includes("555"))
     ).toBe(true);
   });
+
+  it("strips scheme prefix from crypto URIs", () => {
+    const ctx = makeCtx(
+      "bitcoin:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh ethereum:0xAbC123"
+    );
+    uriSchemesExtractor.collect(ctx);
+
+    expect(
+      ctx.identifiers.some(
+        (i) =>
+          i.type === "crypto" &&
+          i.platform === "bitcoin" &&
+          i.value === "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+      )
+    ).toBe(true);
+    expect(
+      ctx.identifiers.some(
+        (i) =>
+          i.type === "crypto" &&
+          i.platform === "ethereum" &&
+          i.value === "0xabc123"
+      )
+    ).toBe(true);
+  });
 });

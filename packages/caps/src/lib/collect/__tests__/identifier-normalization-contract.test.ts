@@ -37,6 +37,7 @@ describe("collect identifier normalization contract", () => {
     const values = batch[0]?.values ?? [];
     expect(values).toEqual(["example.com", "api.example.com"]);
     for (const value of values) {
+      if (typeof value !== "string") continue;
       expect(validatedIdentifierValue("domain", value)).toBe(value);
     }
   });

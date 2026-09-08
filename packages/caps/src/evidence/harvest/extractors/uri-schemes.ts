@@ -1,4 +1,4 @@
-import { isJunkEmail, pushId } from "../harvest-helpers";
+import { isJunkEmail, pushId, validBtc } from "../harvest-helpers";
 import * as P from "../harvest-patterns";
 import type { HarvestExtractor } from "./types";
 
@@ -16,17 +16,33 @@ const uriSchemesExtractor: HarvestExtractor = {
           });
         }
       } else if (scheme === "bitcoin" || scheme === "bitcoincash") {
-        pushId(ctx.identifiers, ctx.seen, "crypto", raw, ctx.sourceText, {
+        const addr = raw.slice(raw.indexOf(":") + 1).split("?")[0] ?? "";
+        if (addr === "" || !validBtc(addr)) continue;
+        pushId(ctx.identifiers, ctx.seen, "crypto", addr, ctx.sourceText, {
           platform: "bitcoin",
           notes: scheme,
+          quoteNeedle: raw,
         });
       } else if (scheme === "ethereum") {
-        pushId(ctx.identifiers, ctx.seen, "crypto", raw, ctx.sourceText, {
-          platform: "ethereum",
-        });
+        const addr = raw.slice(raw.indexOf(":") + 1).split("?")[0] ?? "";
+        if (addr === "") continue;
+        pushId(
+          ctx.identifiers,
+          ctx.seen,
+          "crypto",
+          addr.toLowerCase(),
+          ctx.sourceText,
+          {
+            platform: "ethereum",
+            quoteNeedle: raw,
+          }
+        );
       } else if (scheme === "monero") {
-        pushId(ctx.identifiers, ctx.seen, "crypto", raw, ctx.sourceText, {
+        const addr = raw.slice(raw.indexOf(":") + 1).split("?")[0] ?? "";
+        if (addr === "") continue;
+        pushId(ctx.identifiers, ctx.seen, "crypto", addr, ctx.sourceText, {
           platform: "monero",
+          quoteNeedle: raw,
         });
       } else if (scheme === "tel") {
         pushId(
