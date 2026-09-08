@@ -7,10 +7,12 @@ import { z } from "zod";
 import { normalizeIp } from "../dns/reverse";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
-import { normalizeHttpUrl } from "../http/normalize-http-url";
+import {
+  assertHttpUrlScheme,
+  normalizeHttpUrl,
+} from "../http/normalize-http-url";
 import { isRecord } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -43,10 +45,7 @@ function classifyXforceQuery(raw: string): {
   }
   const schemeMatch = /^([a-z][a-z0-9+.-]*):/i.exec(trimmed);
   if (schemeMatch) {
-    const scheme = schemeMatch[1].toLowerCase();
-    if (scheme !== "http" && scheme !== "https") {
-      throw validationToolsError(`URL must use http or https: ${raw}`);
-    }
+    assertHttpUrlScheme(trimmed);
     return { kind: "url", value: normalizeHttpUrl(trimmed) };
   }
   return { kind: "domain", value: normalizeHost(trimmed) };

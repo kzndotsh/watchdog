@@ -1,11 +1,26 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
+import { ValidationVendorError } from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import { fetchOtxLookupEffect, otxLookupSnapshotSchema } from "../otx";
 
 describe("otx", () => {
+  it.effect("rejects javascript URL schemes", () =>
+    Effect.gen(function* rejectJavascriptSchemeGen() {
+      const badUrl = ["javascript", ":alert(1)"].join("");
+      const outcome = yield* Effect.result(
+        fetchOtxLookupEffect(badUrl, "test-key", new AbortController().signal)
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
   it.effect("fetchOtxLookupEffect maps pulse summaries", () =>
     Effect.gen(function* fetchOtxLookupGen() {
       vi.stubGlobal(

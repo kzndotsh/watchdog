@@ -7,9 +7,12 @@ import { z } from "zod";
 import { normalizeIp } from "../dns/reverse";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
+import {
+  assertHttpUrlScheme,
+  normalizeHttpUrl,
+} from "../http/normalize-http-url";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 import { normalizeHost } from "../whois/normalize";
 
@@ -56,13 +59,9 @@ function classifyOtxIndicator(raw: string): {
     };
   }
 
-  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
-    let hostname: string;
-    try {
-      hostname = new URL(trimmed).hostname;
-    } catch {
-      throw validationToolsError(`Invalid URL: ${raw}`);
-    }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    assertHttpUrlScheme(trimmed);
+    const hostname = new URL(normalizeHttpUrl(trimmed)).hostname;
     if (isIP(hostname)) {
       const value = normalizeIp(hostname);
       return {
