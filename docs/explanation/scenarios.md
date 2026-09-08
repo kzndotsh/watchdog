@@ -129,7 +129,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Dashboard → Collect with jobId | removed | Jobs running tile links `/collect` without a selected job |
 | Settings tab URL sync | shipped | Sidebar tab changes write `?tab=` with `replace: true` (account omits param); deep links `/settings?tab=team | users | …` restore section on load |
 | Settings vault credentials | shipped | `/settings?tab=credentials`; Connect/Update dialog; needs `WD_MASTER_VAULT_KEY`; also `wd credentials` / `PUT /credentials/{name}` (never plaintext) |
-| Settings Team invite / accept | shipped | `/settings?tab=team`; owner/admin invite `admin` or `member`; copy-link + optional SMTP; accept at `/auth/accept-invitation/{id}` (invite-only register; public sign-up stays gated) |
+| Settings Team invite / accept | shipped | `/settings?tab=team`; owner/admin invite `admin` or `member`; copy-link + optional SMTP; accept at `/auth/accept-invitation/{id}` where `{id}` must be a UUID (malformed links fail before preview fetch; invite-only register; public sign-up stays gated) |
 | Settings Users (instance admin) | shipped | `/settings?tab=users` (hidden unless `auth.user.role` is `admin`); Disable/Enable + sign out all sessions; no impersonation; direct `?tab=users` for others is denied copy |
 | Export zip from Cases UI | shipped | Session or API key. Zip 404 if Case missing / out of org or zero entities; entity `export.md` 404 if Case/slug missing or foreign-org `caseId`. Evidence blob entry names use `evidenceActivityLabel` (human label, not raw id slice). Also `wd export zip` / `md` |
 | Evidence hide / restore / download | shipped | UI + `wd evidence hide` / `restore` / `download` |
