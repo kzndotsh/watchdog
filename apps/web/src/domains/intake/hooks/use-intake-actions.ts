@@ -10,6 +10,11 @@ import {
   restoreEvidenceFn,
   softDeleteEvidenceFn,
 } from "@/domains/intake/intake.functions";
+import {
+  attachEvidenceEntityInputSchema,
+  evidenceScopeInputSchema,
+  processEvidenceInputSchema,
+} from "@/domains/intake/types";
 import { refreshJobsAfterMutation } from "@/domains/jobs/queries";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
@@ -37,6 +42,7 @@ export interface UseIntakeActionsOptions {
   caseId: string;
   selectedEvidenceId: string | null;
   onEvidenceIdChange: (next: string | null) => void;
+  resolveSelectionAfterHide?: (hiddenEvidenceId: string) => string | null;
   closeDumpModal: () => void;
   onRestoreShowActiveQueue: () => void;
 }
@@ -45,6 +51,7 @@ export function useIntakeActions({
   caseId,
   selectedEvidenceId,
   onEvidenceIdChange,
+  resolveSelectionAfterHide,
   closeDumpModal,
   onRestoreShowActiveQueue,
 }: UseIntakeActionsOptions) {
@@ -66,11 +73,11 @@ export function useIntakeActions({
   const processMutation = useMutation({
     mutationFn: async (input: { evidenceId: string; ai?: boolean }) =>
       processEvidenceFn({
-        data: {
+        data: processEvidenceInputSchema.parse({
           caseId,
           evidenceId: input.evidenceId,
           ai: input.ai ?? false,
-        },
+        }),
       }),
     onSuccess: async (_result, input) => {
       onEvidenceIdChange(input.evidenceId);
@@ -90,7 +97,9 @@ export function useIntakeActions({
 
   const enrichMutation = useMutation({
     mutationFn: async (id: string) =>
-      enrichUrlEvidenceFn({ data: { caseId, evidenceId: id } }),
+      enrichUrlEvidenceFn({
+        data: evidenceScopeInputSchema.parse({ caseId, evidenceId: id }),
+      }),
     onSuccess: async (_result, id) => {
       onEvidenceIdChange(id);
       toast.success("Enrich job started");
@@ -107,8 +116,11 @@ export function useIntakeActions({
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) =>
-      softDeleteEvidenceFn({ data: { caseId, evidenceId: id } }),
-    onSuccess: async () => {
+      softDeleteEvidenceFn({
+        data: evidenceScopeInputSchema.parse({ caseId, evidenceId: id }),
+      }),
+    onSuccess: async (_ok, id) => {
+      onEvidenceIdChange(resolveSelectionAfterHide?.(id) ?? null);
       toast.success("Evidence hidden — filter Hidden to restore");
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
@@ -119,7 +131,9 @@ export function useIntakeActions({
 
   const restoreMutation = useMutation({
     mutationFn: async (id: string) =>
-      restoreEvidenceFn({ data: { caseId, evidenceId: id } }),
+      restoreEvidenceFn({
+        data: evidenceScopeInputSchema.parse({ caseId, evidenceId: id }),
+      }),
     onSuccess: async (_ok, id) => {
       toast.success("Evidence restored");
       onRestoreShowActiveQueue();
@@ -134,11 +148,11 @@ export function useIntakeActions({
   const attachMutation = useMutation({
     mutationFn: async (input: { evidenceId: string; entityId: string }) =>
       attachEvidenceEntityFn({
-        data: {
+        data: attachEvidenceEntityInputSchema.parse({
           caseId,
           evidenceId: input.evidenceId,
-          entityId: input.entityId === "" ? null : input.entityId,
-        },
+          entityId: input.entityId,
+        }),
       }),
     onSuccess: async () => {
       toast.success("Entity updated");

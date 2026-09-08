@@ -1,16 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { evidenceShowsInlineText } from "@/domains/intake/lib/evidence";
 import { evidenceDownloadUrlQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { artifactContentQuery } from "@/domains/jobs/queries";
-
-const TEXT_MIME_PATTERN =
-  /^(text\/|.*json.*|.*xml.*|.*html.*|.*yaml.*|.*javascript.*)/;
-
-function isTextMime(mime: string | null | undefined): boolean {
-  if (!mime) return false;
-  return TEXT_MIME_PATTERN.test(mime);
-}
+import { artifactContentQuery } from "@/domains/jobs/artifact-queries";
+import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 
 export function evidenceNeedsBlobText(
   evidence: EvidenceRecord | null
@@ -18,7 +12,7 @@ export function evidenceNeedsBlobText(
   if (!evidence) return false;
   if (evidence.text !== null && evidence.text !== "") return false;
   if (evidence.uri === null || evidence.uri === "") return false;
-  return isTextMime(evidence.mime);
+  return evidenceShowsInlineText(evidence);
 }
 
 export function buildEvidenceBlobState(input: {
@@ -45,20 +39,31 @@ export function useEvidenceBlobQueries(
   evidence: EvidenceRecord | null,
   needsBlobText: boolean
 ) {
+  const downloadQueryOptions = evidenceDownloadUrlQuery(
+    caseId,
+    evidence?.id ?? ""
+  );
+  const downloadQueryEnabled =
+    queryEnabledFlag(downloadQueryOptions.enabled) && Boolean(evidence?.uri);
+
+  const blobQueryOptions = artifactContentQuery({
+    source: "evidence",
+    caseId,
+    evidenceId: evidence?.id ?? "",
+    mime: evidence?.mime ?? "text/plain",
+  });
+  const blobQueryEnabled =
+    needsBlobText && queryEnabledFlag(blobQueryOptions.enabled);
+
   const downloadQuery = useQuery({
-    ...evidenceDownloadUrlQuery(caseId, evidence?.id ?? ""),
-    enabled: Boolean(evidence?.id && evidence.uri),
+    ...downloadQueryOptions,
+    enabled: downloadQueryEnabled,
   });
 
   const blobQuery = useQuery({
-    ...artifactContentQuery({
-      source: "evidence",
-      caseId,
-      evidenceId: evidence?.id ?? "",
-      mime: evidence?.mime ?? "text/plain",
-    }),
-    enabled: needsBlobText,
+    ...blobQueryOptions,
+    enabled: blobQueryEnabled,
   });
 
-  return { downloadQuery, blobQuery };
+  return { downloadQuery, blobQuery, downloadQueryEnabled, blobQueryEnabled };
 }

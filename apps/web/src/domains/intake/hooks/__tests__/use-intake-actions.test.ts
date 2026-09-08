@@ -159,6 +159,53 @@ describe("useIntakeActions", () => {
     expect(deleteMutation.mutate).toHaveBeenCalledWith(evidenceId);
   });
 
+  it("clears or advances selection after hide succeeds", async () => {
+    const evidenceId = testId(40);
+    const nextRowId = testId(41);
+    const onEvidenceIdChange = vi.fn();
+    const resolveSelectionAfterHide = vi.fn(() => nextRowId);
+    mockDump();
+
+    const client = new QueryClient();
+    useMutationMock.mockImplementation((config) => {
+      const idx =
+        (useMutationMock.mock.calls.length - 1) % intakeMutations.length;
+      const mutation = intakeMutations[idx] ?? processMutation;
+      if (mutation === deleteMutation && config?.onSuccess) {
+        return {
+          ...deleteMutation,
+          mutate: (id: string) => {
+            void Promise.resolve(config.onSuccess(undefined, id, undefined));
+          },
+        };
+      }
+      return mutation;
+    });
+
+    const { result } = renderHook(
+      () =>
+        useIntakeActions({
+          caseId: testId(10),
+          selectedEvidenceId: evidenceId,
+          onEvidenceIdChange,
+          resolveSelectionAfterHide,
+          closeDumpModal: vi.fn(),
+          onRestoreShowActiveQueue: vi.fn(),
+        }),
+      {
+        wrapper: ({ children }: { children: ReactNode }) =>
+          createElement(QueryClientProvider, { client }, children),
+      }
+    );
+
+    await act(async () => {
+      result.current.evidenceActions.onHide();
+    });
+
+    expect(resolveSelectionAfterHide).toHaveBeenCalledWith(evidenceId);
+    expect(onEvidenceIdChange).toHaveBeenCalledWith(nextRowId);
+  });
+
   it("ignores evidence actions when nothing is selected", () => {
     const { result } = renderIntakeActions(null);
 

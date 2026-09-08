@@ -8,7 +8,7 @@ import {
 } from "@/domains/intake/components/evidence-detail-header";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord } from "@/domains/jobs/types";
 import { Tabs } from "@/shared/ui/shadcn/tabs";
 import { capabilityLabel } from "@/shared/ui/vocab";
 import { testId } from "@watchdog/test-kit";
@@ -136,6 +136,67 @@ describe("EvidenceDetailHeader", () => {
       })
     );
     expect(onShowProducingRun).toHaveBeenCalledWith(producingCap.id);
+  });
+
+  it("falls back to entity slug when name is blank", () => {
+    const entityId = testId(50);
+    render(
+      <Tabs value="content">
+        <EvidenceDetailHeader
+          evidence={evidence({ entityId })}
+          isHidden={false}
+          producingCap={null}
+          canEnrich={false}
+          enrichJobs={[]}
+          enrichOutput={null}
+          relatedJobs={[]}
+          entities={[
+            { id: entityId, name: "", slug: "acme-corp", kind: "org" },
+          ]}
+          entityName=""
+        />
+      </Tabs>
+    );
+
+    expect(screen.getByText("acme-corp")).toBeInTheDocument();
+  });
+
+  it("treats whitespace entityId as unattached", () => {
+    render(
+      <Tabs value="content">
+        <EvidenceDetailHeader
+          evidence={evidence({ entityId: "   " })}
+          isHidden={false}
+          producingCap={null}
+          canEnrich={false}
+          enrichJobs={[]}
+          enrichOutput={null}
+          relatedJobs={[]}
+        />
+      </Tabs>
+    );
+
+    expect(screen.getByText("Unattached")).toBeInTheDocument();
+  });
+
+  it("does not show Unattached when entityId is set but labels are missing", () => {
+    const entityId = testId(51);
+    render(
+      <Tabs value="content">
+        <EvidenceDetailHeader
+          evidence={evidence({ entityId })}
+          isHidden={false}
+          producingCap={null}
+          canEnrich={false}
+          enrichJobs={[]}
+          enrichOutput={null}
+          relatedJobs={[]}
+        />
+      </Tabs>
+    );
+
+    expect(screen.getByText("Unknown entity")).toBeInTheDocument();
+    expect(screen.queryByText("Unattached")).not.toBeInTheDocument();
   });
 });
 

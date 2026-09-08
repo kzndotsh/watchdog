@@ -2,11 +2,12 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { processRunCardDomId } from "@/domains/intake/lib/process-run-card-dom";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
 import {
   artifactDefaultOpen,
   orderJobArtifacts,
 } from "@/domains/jobs/lib/artifacts";
+import { jobActivityAt } from "@/domains/jobs/lib/status";
+import type { JobListRecord } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { IdChip } from "@/shared/ui/id-chip";
@@ -16,7 +17,27 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/shared/ui/shadcn/collapsible";
-import { StatusInk, capabilityLabel } from "@/shared/ui/vocab";
+import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
+
+function processRunIsLive(job: JobListRecord): boolean {
+  return job.status === "queued" || job.status === "running";
+}
+
+function processRunEmptyArtifactsMessage(
+  job: JobListRecord,
+  live: boolean
+): string {
+  if (live) {
+    return "Still running — output appears when the job finishes.";
+  }
+  if (job.status === "blocked") {
+    if (job.error?.trim()) {
+      return "No artifacts from this run.";
+    }
+    return "Blocked — waiting on credentials or a prior step.";
+  }
+  return "No artifacts from this run.";
+}
 
 export function ProcessRunCard({
   job,
@@ -31,7 +52,7 @@ export function ProcessRunCard({
   onOpenChange?: (open: boolean) => void;
   highlighted?: boolean;
 }) {
-  const live = job.status === "queued" || job.status === "running";
+  const live = processRunIsLive(job);
   const controlled = open !== undefined;
 
   return (
@@ -57,7 +78,7 @@ export function ProcessRunCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-foreground text-xs font-medium">
-              {capabilityLabel(job.capabilityId)}
+              {jobHeadlineLabel(job)}
             </p>
             <div className="flex items-center gap-1.5">
               <StatusInk status={job.status} pulse={live} />
@@ -67,7 +88,7 @@ export function ProcessRunCard({
             </div>
           </div>
           <p className="text-label-mono-sm text-muted-foreground mt-1.5 tabular-nums">
-            <LocalDateTime value={job.createdAt} />
+            <LocalDateTime value={jobActivityAt(job)} />
             {job.output && job.output.length > 0 ? (
               <>
                 <span aria-hidden> · </span>
@@ -116,9 +137,7 @@ export function ProcessRunCard({
           </div>
         ) : (
           <p className="text-muted-foreground text-xs">
-            {live
-              ? "Still running — output appears when the job finishes."
-              : "No artifacts from this run."}
+            {processRunEmptyArtifactsMessage(job, live)}
           </p>
         )}
       </CollapsibleContent>

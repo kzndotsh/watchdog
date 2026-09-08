@@ -1,9 +1,17 @@
-import { keepPreviousData, queryOptions } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 
 import {
   getEvidenceDownloadUrlFn,
   listEvidenceFn,
 } from "@/domains/intake/intake.functions";
+import {
+  parseEvidenceScopeInput,
+  parseListEvidenceInput,
+  scopeCaseId,
+  scopeCaseIdEnabled,
+  scopeEvidenceDownload,
+} from "@/shared/lib/query-ingress";
+import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 
 export const evidenceKeys = {
@@ -19,21 +27,36 @@ export const evidenceListQuery = (
   opts?: { hiddenOnly?: boolean }
 ) => {
   const hiddenOnly = opts?.hiddenOnly === true;
+  const scopedCaseId = scopeCaseId(caseId);
+  const queryKey = evidenceKeys.list(scopedCaseId, hiddenOnly);
   return queryOptions({
-    queryKey: evidenceKeys.list(caseId, hiddenOnly),
-    queryFn: async () => listEvidenceFn({ data: { caseId, hiddenOnly } }),
+    queryKey,
+    queryFn: async () =>
+      listEvidenceFn({
+        data: parseListEvidenceInput(scopedCaseId, hiddenOnly),
+      }),
+    enabled: scopeCaseIdEnabled(caseId),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
-    placeholderData: keepPreviousData,
+    placeholderData: placeholderDataForQueryKey(queryKey),
   });
 };
 
-export const evidenceDownloadUrlQuery = (caseId: string, evidenceId: string) =>
-  queryOptions({
-    queryKey: evidenceKeys.download(caseId, evidenceId),
+export const evidenceDownloadUrlQuery = (
+  caseId: string,
+  evidenceId: string
+) => {
+  const { scoped, enabled } = scopeEvidenceDownload(caseId, evidenceId);
+  const queryKey = evidenceKeys.download(scoped.caseId, scoped.evidenceId);
+  return queryOptions({
+    queryKey,
     queryFn: async () =>
-      getEvidenceDownloadUrlFn({ data: { caseId, evidenceId } }),
+      getEvidenceDownloadUrlFn({
+        data: parseEvidenceScopeInput(scoped.caseId, scoped.evidenceId),
+      }),
     staleTime: STALE_DEFAULT,
     gcTime: GC_DEFAULT,
-    enabled: evidenceId.length > 0,
+    enabled,
+    placeholderData: placeholderDataForQueryKey(queryKey),
   });
+};

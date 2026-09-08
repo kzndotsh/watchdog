@@ -23,12 +23,15 @@ describe("uploadFileEvidence", () => {
   });
 
   it("uploads via presign and confirm", async () => {
+    const caseId = testId(10);
+    const sha256 =
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
     const file = new File(["hello"], "note.txt", { type: "text/plain" });
     presignUploadFn.mockResolvedValue({
       url: testHttpUrl("minio.test/put"),
       headers: { "Content-Type": "text/plain" },
-      uri: "s3://bucket/note.txt",
-      sha256: "deadbeef",
+      uri: `${caseId}/${sha256}/note.txt`,
+      sha256,
       mime: "text/plain",
       byteLength: file.size,
     });
@@ -44,7 +47,7 @@ describe("uploadFileEvidence", () => {
     );
 
     const created = await uploadFileEvidence({
-      caseId: testId(10),
+      caseId,
       file,
       label: "note.txt",
     });
@@ -55,6 +58,44 @@ describe("uploadFileEvidence", () => {
     );
     expect(confirmFileUploadFn).toHaveBeenCalled();
     expect(created.id).toBe(testId(40));
+
+    vi.unstubAllGlobals();
+  });
+
+  it("trims padded entityId on confirm", async () => {
+    const caseId = testId(10);
+    const entityId = testId(20);
+    const sha256 =
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
+    const file = new File(["hello"], "note.txt", { type: "text/plain" });
+    presignUploadFn.mockResolvedValue({
+      url: testHttpUrl("minio.test/put"),
+      headers: { "Content-Type": "text/plain" },
+      uri: `${caseId}/${sha256}/note.txt`,
+      sha256,
+      mime: "text/plain",
+      byteLength: file.size,
+    });
+    confirmFileUploadFn.mockResolvedValue({
+      id: testId(40),
+      caseId: testId(10),
+      kind: "file",
+      label: "note.txt",
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 200 })
+    );
+
+    await uploadFileEvidence({
+      caseId,
+      file,
+      entityId: `  ${entityId}  `,
+    });
+
+    expect(confirmFileUploadFn).toHaveBeenCalledWith({
+      data: expect.objectContaining({ entityId }),
+    });
 
     vi.unstubAllGlobals();
   });

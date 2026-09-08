@@ -5,8 +5,13 @@ import { toast } from "sonner";
 import { dumpPasteFn, dumpUrlFn } from "@/domains/intake/intake.functions";
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import {
+  dumpPasteInputSchema,
+  dumpUrlInputSchema,
+} from "@/domains/intake/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
 export interface UseDumpEvidenceOptions {
   caseId: string;
@@ -28,33 +33,61 @@ export function useDumpEvidence({
     setDumpError(null);
   }, []);
 
-  const targetEntityId = entityId === "" ? undefined : entityId;
+  const targetEntityId =
+    entityId === "" ? undefined : parseOptionalTrimmedUuid(entityId);
 
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
       const created: EvidenceRecord[] = [];
+      const failures: { name: string; message: string }[] = [];
       for (const [i, file] of files.entries()) {
         setUploadStatus(`Uploading ${i + 1}/${files.length}: ${file.name}`);
-        // oxlint-disable-next-line no-await-in-loop -- sequential by design: progress status per file, avoid saturating upload bandwidth
-        const uploaded = await uploadFileEvidence({
-          caseId,
-          file,
-          label: file.name,
-          entityId: targetEntityId,
-        });
-        created.push(uploaded);
+        try {
+          // oxlint-disable-next-line no-await-in-loop -- sequential by design: progress status per file, avoid saturating upload bandwidth
+          const uploaded = await uploadFileEvidence({
+            caseId,
+            file,
+            label: file.name,
+            entityId: targetEntityId,
+          });
+          created.push(uploaded);
+        } catch (error) {
+          failures.push({
+            name: file.name,
+            message: errMessage(error, "Upload failed"),
+          });
+        }
       }
-      return created;
+      if (created.length === 0 && failures.length > 0) {
+        throw new Error(
+          failures
+            .map((failure) => `${failure.name}: ${failure.message}`)
+            .join("; ")
+        );
+      }
+      return { created, failures };
     },
-    onSuccess: async (created) => {
+    onSuccess: async ({ created, failures }) => {
       setDumpError(null);
-      toast.success(
-        created.length === 1
-          ? "File uploaded"
-          : `${created.length} files uploaded`
-      );
-      await invalidateAfterEvidenceMutation(queryClient, caseId);
-      onSuccess?.(created);
+      if (failures.length > 0) {
+        const total = created.length + failures.length;
+        setDumpError(
+          failures
+            .map((failure) => `${failure.name}: ${failure.message}`)
+            .join("; ")
+        );
+        toast.warning(`${created.length} of ${total} files uploaded`);
+      } else {
+        toast.success(
+          created.length === 1
+            ? "File uploaded"
+            : `${created.length} files uploaded`
+        );
+      }
+      if (created.length > 0) {
+        await invalidateAfterEvidenceMutation(queryClient, caseId);
+        onSuccess?.(created);
+      }
     },
     onError: (e) => {
       setDumpError(errMessage(e, "Upload failed"));
@@ -71,7 +104,11 @@ export function useDumpEvidence({
       sourceUrl?: string;
     }) =>
       dumpPasteFn({
-        data: { caseId, ...data, entityId: targetEntityId },
+        data: dumpPasteInputSchema.parse({
+          caseId,
+          ...data,
+          entityId: targetEntityId,
+        }),
       }),
     onSuccess: async (created) => {
       setDumpError(null);
@@ -87,7 +124,11 @@ export function useDumpEvidence({
   const urlMutation = useMutation({
     mutationFn: async (data: { sourceUrl: string; label?: string }) =>
       dumpUrlFn({
-        data: { caseId, ...data, entityId: targetEntityId },
+        data: dumpUrlInputSchema.parse({
+          caseId,
+          ...data,
+          entityId: targetEntityId,
+        }),
       }),
     onSuccess: async (created) => {
       setDumpError(null);

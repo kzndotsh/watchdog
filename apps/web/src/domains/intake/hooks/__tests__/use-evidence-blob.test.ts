@@ -19,6 +19,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { useEvidenceBlob } from "@/domains/intake/hooks/use-evidence-blob";
+import { evidenceNeedsBlobText } from "@/domains/intake/hooks/use-evidence-blob.queries";
 
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {
@@ -44,7 +45,12 @@ function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
 
 describe("useEvidenceBlob", () => {
   it("returns inline text without fetching blob content", () => {
-    useQueryMock.mockReturnValue({ data: undefined, isPending: false });
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      isFetched: true,
+      isLoading: false,
+      isError: false,
+    });
 
     const { result } = renderHook(() =>
       useEvidenceBlob(testId(10), evidence())
@@ -59,15 +65,27 @@ describe("useEvidenceBlob", () => {
     useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
       const key = options.queryKey ?? [];
       if (key[0] === "artifact" && key[1] === "evidence") {
-        return { data: { text: "fetched body" }, isPending: false };
+        return {
+          data: { text: "fetched body" },
+          isFetched: true,
+          isLoading: false,
+          isError: false,
+        };
       }
       if (key[0] === "evidence" && key[2] === "download") {
         return {
           data: { url: testHttpUrl("download.test/blob") },
-          isPending: false,
+          isFetched: true,
+          isLoading: false,
+          isError: false,
         };
       }
-      return { data: undefined, isPending: false };
+      return {
+        data: undefined,
+        isFetched: true,
+        isLoading: false,
+        isError: false,
+      };
     });
 
     const { result } = renderHook(() =>
@@ -80,5 +98,112 @@ describe("useEvidenceBlob", () => {
     expect(result.current.resolvedText).toBe("fetched body");
     expect(result.current.downloadUrl).toBe(testHttpUrl("download.test/blob"));
     expect(result.current.hasUri).toBe(true);
+  });
+
+  it("loads blob text for attestation evidence stored only in object storage", () => {
+    useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
+      const key = options.queryKey ?? [];
+      if (key[0] === "artifact" && key[1] === "evidence") {
+        return {
+          data: { text: "attestation body" },
+          isFetched: true,
+          isLoading: false,
+          isError: false,
+        };
+      }
+      if (key[0] === "evidence" && key[2] === "download") {
+        return {
+          data: { url: null },
+          isFetched: true,
+          isLoading: false,
+          isError: false,
+        };
+      }
+      return {
+        data: undefined,
+        isFetched: true,
+        isLoading: false,
+        isError: false,
+      };
+    });
+
+    const row = evidence({
+      kind: "attestation",
+      text: null,
+      uri: "s3://bucket/attestation.md",
+      mime: null,
+    });
+    expect(evidenceNeedsBlobText(row)).toBe(true);
+
+    const { result } = renderHook(() => useEvidenceBlob(testId(10), row));
+
+    expect(result.current.resolvedText).toBe("attestation body");
+  });
+
+  it("surfaces contentLoadError when blob fetch fails", () => {
+    useQueryMock.mockImplementation((options: { queryKey?: unknown[] }) => {
+      const key = options.queryKey ?? [];
+      if (key[0] === "artifact" && key[1] === "evidence") {
+        return {
+          data: undefined,
+          isFetched: true,
+          isLoading: false,
+          isError: true,
+          error: new Error("blob unavailable"),
+          refetch: vi.fn(),
+        };
+      }
+      if (key[0] === "evidence" && key[2] === "download") {
+        return {
+          data: { url: null },
+          isFetched: true,
+          isLoading: false,
+          isError: false,
+          refetch: vi.fn(),
+        };
+      }
+      return {
+        data: undefined,
+        isFetched: true,
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      };
+    });
+
+    const row = evidence({
+      text: null,
+      uri: "s3://bucket/key",
+      mime: "text/plain",
+    });
+    const { result } = renderHook(() => useEvidenceBlob(testId(10), row));
+
+    expect(result.current.contentLoadError).toBe("blob unavailable");
+  });
+
+  it("does not fetch blob or download when case id is not a graph uuid", () => {
+    useQueryMock.mockImplementation(
+      (options: { queryKey?: unknown[]; enabled?: boolean }) => ({
+        data: undefined,
+        isFetched: true,
+        isLoading: false,
+        isError: false,
+        enabled: options.enabled,
+      })
+    );
+
+    const callsBefore = useQueryMock.mock.calls.length;
+    renderHook(() =>
+      useEvidenceBlob(
+        "case-1",
+        evidence({ text: null, uri: "s3://bucket/key", mime: "text/plain" })
+      )
+    );
+
+    const newCalls = useQueryMock.mock.calls.slice(callsBefore);
+    expect(newCalls).toHaveLength(2);
+    for (const call of newCalls) {
+      expect(call[0]?.enabled).toBe(false);
+    }
   });
 });

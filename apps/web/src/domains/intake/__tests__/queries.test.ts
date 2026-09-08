@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
+import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/intake/intake.functions", () => ({
   getEvidenceDownloadUrlFn: vi.fn(),
@@ -36,18 +37,31 @@ describe("intake queries", () => {
     ]);
   });
 
+  it("normalizes padded case ids for list query keys", () => {
+    const caseId = testId(10);
+    expect(evidenceListQuery(`  ${caseId}  `).queryKey).toEqual(
+      evidenceKeys.list(caseId)
+    );
+  });
+
   it("uses default stale tiers and gates download by evidence id", () => {
     expect(evidenceListQuery("case-1")).toMatchObject({
       queryKey: evidenceKeys.list("case-1"),
+      enabled: false,
       staleTime: STALE_DEFAULT,
       gcTime: GC_DEFAULT,
     });
     expect(evidenceDownloadUrlQuery("case-1", "")).toMatchObject({
       enabled: false,
     });
-    expect(evidenceDownloadUrlQuery("case-1", "ev-1")).toMatchObject({
+    const caseId = testId(10);
+    const evidenceId = testId(20);
+    expect(evidenceDownloadUrlQuery(caseId, evidenceId)).toMatchObject({
       enabled: true,
-      queryKey: evidenceKeys.download("case-1", "ev-1"),
+      queryKey: evidenceKeys.download(caseId, evidenceId),
     });
+    expect(
+      evidenceDownloadUrlQuery(`  ${caseId}  `, `  ${evidenceId}  `).queryKey
+    ).toEqual(evidenceKeys.download(caseId, evidenceId));
   });
 });

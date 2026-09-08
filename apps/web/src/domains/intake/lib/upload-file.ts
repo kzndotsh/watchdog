@@ -2,7 +2,11 @@ import {
   confirmFileUploadFn,
   presignUploadFn,
 } from "@/domains/intake/intake.functions";
-import type { EvidenceRecord } from "@/domains/intake/types";
+import {
+  confirmFileUploadInputSchema,
+  presignUploadInputSchema,
+  type EvidenceRecord,
+} from "@/domains/intake/types";
 import { MAX_UPLOAD_BYTES } from "@watchdog/schemas";
 
 function sha256HexFile(file: File): Promise<string> {
@@ -38,13 +42,13 @@ export function uploadFileEvidence(input: {
   return sha256HexFile(input.file)
     .then((sha256) =>
       presignUploadFn({
-        data: {
+        data: presignUploadInputSchema.parse({
           caseId: input.caseId,
           sha256,
           mime,
           byteLength: input.file.size,
           name: input.file.name,
-        },
+        }),
       }).then((put) => ({ put, sha256, mime }))
     )
     .then(({ put, sha256, mime }) =>
@@ -59,17 +63,17 @@ export function uploadFileEvidence(input: {
         return { put, sha256, mime };
       })
     )
-    .then(({ put }) =>
+    .then(({ put, sha256, mime }) =>
       confirmFileUploadFn({
-        data: {
+        data: confirmFileUploadInputSchema.parse({
           caseId: input.caseId,
           uri: put.uri,
-          sha256: put.sha256,
-          mime: put.mime,
+          sha256,
+          mime,
           byteLength: put.byteLength,
           label: input.label,
           entityId: input.entityId,
-        },
+        }),
       })
     );
 }

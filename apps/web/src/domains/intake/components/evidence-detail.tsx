@@ -13,16 +13,20 @@ import {
   evidenceHasEnrichableUrl,
   evidenceTitle,
   latestEnrichOutput,
+  tryParseEvidenceJson,
 } from "@/domains/intake/lib/evidence";
 import {
   collectRowForEvidence,
+  jobActivityAt,
   jobsForRole,
   producingCapFromRow,
 } from "@/domains/intake/lib/evidence-runs";
 import { processRunCardDomId } from "@/domains/intake/lib/process-run-card-dom";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord } from "@/domains/jobs/types";
+import { cn } from "@/lib/utils";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import {
   ArtifactPreview,
@@ -34,6 +38,7 @@ import { DetailFooter } from "@/shared/ui/detail-footer";
 import { EmptyState } from "@/shared/ui/empty-state";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { ExternalUrl } from "@/shared/ui/external-url";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { IdChip } from "@/shared/ui/id-chip";
 import { MetaRow } from "@/shared/ui/meta-row";
 import {
@@ -49,6 +54,7 @@ import {
 import { Button } from "@/shared/ui/shadcn/button";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
 import { Tabs, TabsContent } from "@/shared/ui/shadcn/tabs";
+import { isOpenJobStatus } from "@watchdog/schemas";
 
 type DetailTab = "content" | "output" | "jobs";
 
@@ -73,18 +79,28 @@ export interface EvidenceDetailProps {
 
 function EvidenceOutputTab({
   caseId,
-  enrichPending,
+  enrichRunning,
+  enrichBlocked,
   enrichOutput,
 }: {
   caseId: string;
-  enrichPending: boolean;
+  enrichRunning: boolean;
+  enrichBlocked: boolean;
   enrichOutput: ReturnType<typeof latestEnrichOutput>;
 }) {
-  if (enrichPending && !enrichOutput) {
+  if (enrichRunning && !enrichOutput) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 py-6 text-xs">
         <Spinner className="size-3.5" />
         Enrich running — combined markdown appears here when done.
+      </div>
+    );
+  }
+  if (enrichBlocked && !enrichOutput) {
+    return (
+      <div className="text-muted-foreground py-6 text-xs">
+        Enrich blocked — waiting on credentials or a prior step. Check the Jobs
+        tab for details.
       </div>
     );
   }
@@ -148,7 +164,7 @@ function EvidenceJobsTab({
   return (
     <div className="flex flex-col gap-2">
       {relatedJobs.map((job, i) => {
-        const live = job.status === "queued" || job.status === "running";
+        const open = isOpenJobStatus(job.status);
         const isFocused = focusedJobId === job.id;
         const controlled = focusedJobId !== null;
         return (
@@ -156,7 +172,7 @@ function EvidenceJobsTab({
             key={job.id}
             job={job}
             open={controlled ? isFocused : undefined}
-            defaultOpen={controlled ? undefined : live || i === 0}
+            defaultOpen={controlled ? undefined : open || i === 0}
             highlighted={isFocused}
             onOpenChange={(next) => {
               if (!next && isFocused) onFocusedJobChange(null);
@@ -166,16 +182,6 @@ function EvidenceJobsTab({
       })}
     </div>
   );
-}
-
-type JsonParseResult = { ok: true; data: unknown } | { ok: false };
-
-function tryParseJson(text: string): JsonParseResult {
-  try {
-    return { ok: true, data: JSON.parse(text) };
-  } catch {
-    return { ok: false };
-  }
 }
 
 function evidenceContentBody({
@@ -215,7 +221,7 @@ function evidenceContentBody({
   if (resolvedText !== null && resolvedText !== "") {
     const resolvedMime = mime ?? "text/plain";
     if (resolvedMime.includes("json")) {
-      const parsed = tryParseJson(resolvedText);
+      const parsed = tryParseEvidenceJson(resolvedText);
       if (parsed.ok) {
         return { kind: "json", data: parsed.data, defaultExpanded: 2 };
       }
@@ -246,6 +252,8 @@ function EvidenceContentPanel({
   loadingBlob,
   resolvedText,
   hasUri,
+  contentLoadError,
+  onRetryContent,
 }: {
   evidence: EvidenceRecord;
   canEnrich: boolean;
@@ -254,6 +262,8 @@ function EvidenceContentPanel({
   loadingBlob: boolean;
   resolvedText: string | null;
   hasUri: boolean;
+  contentLoadError: string | null;
+  onRetryContent: () => void;
 }) {
   const title = evidenceTitle(evidence);
   const notes =
@@ -266,41 +276,45 @@ function EvidenceContentPanel({
           <p className="text-muted-foreground text-xs leading-snug">{notes}</p>
         </ComposerShell>
       )}
-      <ArtifactPreview
-        name={title}
-        defaultOpen
-        headerAction={
-          evidence.sha256 !== null && evidence.sha256 !== "" ? (
-            <IdChip
-              value={evidence.sha256}
-              preset="sha256"
-              copyable
-              className="min-w-0"
-            />
-          ) : undefined
-        }
-        meta={
-          evidence.sourceUrl !== null && evidence.sourceUrl !== "" ? (
-            <MetaRow
-              label="Source URL"
-              className="flex-col items-start gap-1"
-              labelClassName="text-xs font-medium"
-            >
-              <ExternalUrl href={evidence.sourceUrl} />
-            </MetaRow>
-          ) : undefined
-        }
-        body={evidenceContentBody({
-          canEnrich,
-          isImage,
-          downloadUrl,
-          loadingBlob,
-          resolvedText,
-          mime: evidence.mime,
-          title,
-          hasUri,
-        })}
-      />
+      {contentLoadError ? (
+        <FetchErrorAlert error={contentLoadError} onRetry={onRetryContent} />
+      ) : (
+        <ArtifactPreview
+          name={title}
+          defaultOpen
+          headerAction={
+            evidence.sha256 !== null && evidence.sha256 !== "" ? (
+              <IdChip
+                value={evidence.sha256}
+                preset="sha256"
+                copyable
+                className="min-w-0"
+              />
+            ) : undefined
+          }
+          meta={
+            evidence.sourceUrl !== null && evidence.sourceUrl !== "" ? (
+              <MetaRow
+                label="Source URL"
+                className="flex-col items-start gap-1"
+                labelClassName="text-xs font-medium"
+              >
+                <ExternalUrl href={evidence.sourceUrl} />
+              </MetaRow>
+            ) : undefined
+          }
+          body={evidenceContentBody({
+            canEnrich,
+            isImage,
+            downloadUrl,
+            loadingBlob,
+            resolvedText,
+            mime: evidence.mime,
+            title,
+            hasUri,
+          })}
+        />
+      )}
     </div>
   );
 }
@@ -345,9 +359,13 @@ export function EvidenceDetail({
     () => latestEnrichOutput(enrichJobs),
     [enrichJobs]
   );
-  const enrichPending = useMemo(
+  const enrichRunning = useMemo(
     () =>
       enrichJobs.some((j) => j.status === "queued" || j.status === "running"),
+    [enrichJobs]
+  );
+  const enrichBlocked = useMemo(
+    () => enrichJobs.some((j) => j.status === "blocked"),
     [enrichJobs]
   );
   const canEnrich = Boolean(evidence && evidenceHasEnrichableUrl(evidence));
@@ -360,7 +378,7 @@ export function EvidenceDetail({
     const ids = new Set(fromCap.map((j) => j.id));
     const rest = [...enrichJobs, ...processJobs].filter((j) => !ids.has(j.id));
     return [...fromCap, ...rest].sort(
-      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)
+      (a, b) => Date.parse(jobActivityAt(b)) - Date.parse(jobActivityAt(a))
     );
   }, [producingCap, enrichJobs, processJobs]);
 
@@ -390,6 +408,9 @@ export function EvidenceDetail({
     resolvedText,
     loadingBlob,
     hasUri,
+    blobPlaceholder,
+    contentLoadError,
+    retryContent,
   } = useEvidenceBlob(caseId, evidence);
 
   function handleAttachEntity(entityId: string) {
@@ -440,7 +461,12 @@ export function EvidenceDetail({
           onShowProducingRun={handleShowProducingRun}
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto p-4",
+            placeholderDeemphasisClass(blobPlaceholder)
+          )}
+        >
           <TabsContent value="content" className="mt-0">
             <ActiveTabBody active={tab === "content"}>
               <EvidenceContentPanel
@@ -451,6 +477,8 @@ export function EvidenceDetail({
                 loadingBlob={loadingBlob}
                 resolvedText={resolvedText}
                 hasUri={hasUri}
+                contentLoadError={contentLoadError}
+                onRetryContent={retryContent}
               />
             </ActiveTabBody>
           </TabsContent>
@@ -459,7 +487,8 @@ export function EvidenceDetail({
             <ActiveTabBody active={tab === "output"}>
               <EvidenceOutputTab
                 caseId={caseId}
-                enrichPending={enrichPending}
+                enrichRunning={enrichRunning}
+                enrichBlocked={enrichBlocked}
                 enrichOutput={enrichOutput}
               />
             </ActiveTabBody>

@@ -8,7 +8,7 @@ import {
   type latestEnrichOutput,
 } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/jobs.functions";
+import type { JobListRecord } from "@/domains/jobs/types";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import {
   DetailContextHeader,
@@ -19,12 +19,29 @@ import { Button } from "@/shared/ui/shadcn/button";
 import { TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import { capabilityLabel } from "@/shared/ui/vocab";
+import { jobHeadlineLabel } from "@/shared/ui/vocab";
+import {
+  entityDisplayLabel,
+  parseOptionalTrimmedUuid,
+} from "@watchdog/schemas";
 
-function entityLabel(entityName: string | null | undefined): string {
-  return entityName !== null && entityName !== undefined && entityName !== ""
-    ? entityName
-    : "Unattached";
+function attachedEntityLabel(opts: {
+  attachedId: string;
+  entityName?: string | null;
+  entities?: readonly EntityOption[];
+}): string {
+  const scopedAttachedId = parseOptionalTrimmedUuid(opts.attachedId);
+  if (scopedAttachedId === undefined) return "Unattached";
+  const entity = opts.entities?.find((ent) => ent.id === scopedAttachedId);
+  if (entity !== undefined) {
+    return entityDisplayLabel({
+      name: entity.name,
+      slug: entity.slug ?? "",
+    });
+  }
+  const name = opts.entityName?.trim();
+  if (name !== undefined && name !== "") return name;
+  return "Unknown entity";
 }
 
 function EvidenceEntityEditor({
@@ -107,7 +124,11 @@ function EvidenceEntityMeta({
   onAttachEntity?: (entityId: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const label = entityLabel(entityName);
+  const label = attachedEntityLabel({
+    attachedId,
+    entityName,
+    entities,
+  });
   const canEdit =
     !isHidden && onAttachEntity !== undefined && entities !== undefined;
 
@@ -119,12 +140,15 @@ function EvidenceEntityMeta({
     setEditing(false);
   }, []);
 
+  const scopedAttachedId = parseOptionalTrimmedUuid(attachedId);
   const slug =
-    attachedId === ""
+    scopedAttachedId === undefined
       ? undefined
-      : entities?.find((ent) => ent.id === attachedId)?.slug;
+      : entities?.find((ent) => ent.id === scopedAttachedId)?.slug;
   const nameClass =
-    attachedId === "" ? "text-muted-foreground" : "text-foreground/80";
+    scopedAttachedId === undefined
+      ? "text-muted-foreground"
+      : "text-foreground/80";
   const nameEl =
     slug !== undefined && slug !== "" ? (
       <Link
@@ -338,7 +362,7 @@ export function EvidenceDetailHeader({
                   onShowProducingRun?.(producingCap.id);
                 }}
               >
-                {capabilityLabel(producingCap.capabilityId)}
+                {jobHeadlineLabel(producingCap)}
               </Button>
             </span>
           </>
