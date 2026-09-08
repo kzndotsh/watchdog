@@ -26,7 +26,7 @@ import type { JobListRecord } from "@/domains/jobs/types";
 import { tasksListQuery } from "@/domains/tasks/queries";
 import type { TaskRecord } from "@/domains/tasks/types";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
-import { errMessage, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { Page, PageHeader } from "@/shared/layout/page";
@@ -40,6 +40,7 @@ import {
   invalidateAfterProposalQueueChange,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { stackPendingFallback } from "@/shared/ui/active-tab-body";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -166,13 +167,11 @@ function DashboardActive({
   const [pendingProposalsQuery, jobsQuery, tasksQuery, entitiesQuery] =
     queryResults;
   const overviewPending = queryResults.some((query) => listPending(query));
-  const overviewLoadError =
-    !overviewPending && queryResults.some((query) => query.isError)
-      ? errMessage(
-          queryResults.find((query) => query.isError)?.error,
-          "Failed to load dashboard overview"
-        )
-      : null;
+  const overviewLoadError = combinedQueryLoadError(
+    queryResults,
+    overviewPending,
+    "Failed to load dashboard overview"
+  );
   const overviewPlaceholder = anyQueryPlaceholderData(queryResults);
   const pendingProposals = pendingProposalsQuery.data ?? EMPTY_PROPOSALS;
   const jobsRaw = jobsQuery.data ?? EMPTY_JOBS;

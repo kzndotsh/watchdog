@@ -33,6 +33,7 @@ import {
   invalidateAfterEntityChanged,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import type { TaskStatus } from "@watchdog/schemas";
 
@@ -60,13 +61,11 @@ export function useTaskWorkspace(
   const tasksQuery = useQuery(tasksListQuery(caseId, filters));
   const entitiesQuery = useQuery(entitiesListQuery(caseId));
   const pending = listPending(tasksQuery) || listPending(entitiesQuery);
-  const tasksLoadError =
-    !pending && (tasksQuery.isError || entitiesQuery.isError)
-      ? errMessage(
-          tasksQuery.error ?? entitiesQuery.error,
-          "Failed to load tasks"
-        )
-      : null;
+  const tasksLoadError = combinedQueryLoadError(
+    [tasksQuery, entitiesQuery],
+    pending,
+    "Failed to load tasks"
+  );
   const tasks = tasksQuery.data ?? EMPTY_TASKS;
   const entityOptions = useMemo(
     () => entityOptionsFromRecords(entitiesQuery.data ?? EMPTY_ENTITIES),

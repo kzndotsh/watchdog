@@ -6,8 +6,8 @@ import {
 } from "@tanstack/react-query";
 
 import { dataOrEmpty } from "@/domains/dossier/hooks/dossier-shell-query-helpers";
-import { errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 
 /** List fetch for dossier tabs with placeholder, pending, and error wiring. */
@@ -25,10 +25,7 @@ export function useDossierSectionQuery<
     data,
     placeholder: isQueryPlaceholderData(query),
     pending,
-    loadError:
-      !pending && query.isError
-        ? errMessage(query.error, "Failed to load section")
-        : null,
+    loadError: queryLoadError(query, pending, "Failed to load section"),
     retry: () => {
       void query.refetch();
     },

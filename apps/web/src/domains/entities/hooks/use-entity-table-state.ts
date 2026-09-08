@@ -25,6 +25,7 @@ import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
 import { listPending } from "@/shared/lib/list-pending";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { useDataTable } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { ENTITY_KIND_LABELS } from "@/shared/ui/vocab";
@@ -123,13 +124,11 @@ export function useEntityTableState(
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
   const edgesQuery = useQuery(edgesForCaseQuery(active.id));
   const pending = listPending(entitiesQuery) || listPending(edgesQuery);
-  const tableLoadError =
-    !pending && (entitiesQuery.isError || edgesQuery.isError)
-      ? errMessage(
-          entitiesQuery.error ?? edgesQuery.error,
-          "Failed to load entities"
-        )
-      : null;
+  const tableLoadError = combinedQueryLoadError(
+    [entitiesQuery, edgesQuery],
+    pending,
+    "Failed to load entities"
+  );
   const entitiesPlaceholder =
     entitiesQuery.isPlaceholderData || edgesQuery.isPlaceholderData;
   const rows = entitiesQuery.data;

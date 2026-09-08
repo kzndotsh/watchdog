@@ -27,6 +27,7 @@ import {
   invalidateAfterProposalAccept,
   invalidateAfterProposalQueueChange,
 } from "@/shared/lib/query-invalidation";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 import type { ProposalRecord } from "@watchdog/core";
@@ -70,10 +71,11 @@ export function useTriageWorkspace(
   const allProposals = proposalsQuery.data ?? EMPTY_PROPOSALS;
   const proposalsPlaceholder = isQueryPlaceholderData(proposalsQuery);
   const proposalsPending = listPending(proposalsQuery);
-  const proposalsLoadError =
-    !proposalsPending && proposalsQuery.isError
-      ? errMessage(proposalsQuery.error, "Failed to load proposals")
-      : null;
+  const proposalsLoadError = queryLoadError(
+    proposalsQuery,
+    proposalsPending,
+    "Failed to load proposals"
+  );
 
   const [internalFilters, setInternalFilters] = useState<TriageQueueFilters>(
     () =>

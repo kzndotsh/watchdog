@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import { casesContextQuery } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
-import { errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 
 const EMPTY_CASES: CaseRecord[] = [];
 
@@ -25,10 +25,7 @@ export function useCasesContext(options?: UseCasesContextOptions) {
     cases: casesCtx?.cases ?? EMPTY_CASES,
     active: casesCtx?.active ?? null,
     pending,
-    loadError:
-      !pending && !query.isFetching && query.isError
-        ? errMessage(query.error, "Failed to load cases")
-        : null,
+    loadError: queryLoadError(query, pending, "Failed to load cases"),
     retry: () => {
       void query.refetch();
     },

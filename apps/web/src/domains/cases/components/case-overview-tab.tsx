@@ -19,7 +19,7 @@ import { countLiveJobs } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import type { JobListRecord } from "@/domains/jobs/types";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
-import { errMessage, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -30,6 +30,7 @@ import {
   invalidateAfterProposalQueueChange,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -100,13 +101,11 @@ export function CaseOverviewTab({
   const jobs = jobsQuery.data ?? EMPTY_JOBS;
   const pendingProposals = pendingProposalsQuery.data ?? EMPTY_PROPOSALS;
   const overviewPending = queryResults.some((query) => listPending(query));
-  const overviewLoadError =
-    !overviewPending && queryResults.some((query) => query.isError)
-      ? errMessage(
-          queryResults.find((query) => query.isError)?.error,
-          "Failed to load case overview"
-        )
-      : null;
+  const overviewLoadError = combinedQueryLoadError(
+    queryResults,
+    overviewPending,
+    "Failed to load case overview"
+  );
   const statsPending = listsPending || overviewPending;
   const overviewPlaceholder =
     listsPlaceholder || anyQueryPlaceholderData(queryResults);

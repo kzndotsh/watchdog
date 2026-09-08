@@ -29,6 +29,7 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { cn, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import {
   AlertDialog,
@@ -70,13 +71,11 @@ export function ConnectionsSection({
   const queryResults = [edgesQuery, entitiesQuery];
   const placeholder = anyQueryPlaceholderData(queryResults);
   const pending = listPending(edgesQuery) || listPending(entitiesQuery);
-  const loadError =
-    !pending && (edgesQuery.isError || entitiesQuery.isError)
-      ? errMessage(
-          edgesQuery.error ?? entitiesQuery.error ?? null,
-          "Failed to load connections"
-        )
-      : null;
+  const loadError = combinedQueryLoadError(
+    [edgesQuery, entitiesQuery],
+    pending,
+    "Failed to load connections"
+  );
   const retry = () => {
     if (edgesQuery.isError) void edgesQuery.refetch();
     if (entitiesQuery.isError) void entitiesQuery.refetch();

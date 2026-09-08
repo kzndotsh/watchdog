@@ -20,10 +20,10 @@ import {
   playbooksListQuery,
 } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
-import { errMessage } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
@@ -286,13 +286,11 @@ export function Collect({
     listPending(capsQuery) || listPending(playbooksQuery);
   const runCatalogPlaceholder =
     capsQuery.isPlaceholderData || playbooksQuery.isPlaceholderData;
-  const runCatalogLoadError =
-    !runCatalogPending && (capsQuery.isError || playbooksQuery.isError)
-      ? errMessage(
-          capsQuery.error ?? playbooksQuery.error,
-          "Failed to load caps and playbooks"
-        )
-      : null;
+  const runCatalogLoadError = combinedQueryLoadError(
+    [capsQuery, playbooksQuery],
+    runCatalogPending,
+    "Failed to load caps and playbooks"
+  );
   const retryRunCatalog = () => {
     if (capsQuery.isError) void capsQuery.refetch();
     if (playbooksQuery.isError) void playbooksQuery.refetch();

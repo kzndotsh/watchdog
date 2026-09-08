@@ -14,8 +14,8 @@ import {
 import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { tasksListQuery } from "@/domains/tasks/queries";
-import { errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 
 import {
   anyQueryPending,
@@ -58,14 +58,11 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   const evidencePlaceholder =
     activeEvidenceQuery.isPlaceholderData ||
     hiddenEvidenceQuery.isPlaceholderData;
-  const evidenceLoadError =
-    !evidencePending &&
-    (activeEvidenceQuery.isError || hiddenEvidenceQuery.isError)
-      ? errMessage(
-          activeEvidenceQuery.error ?? hiddenEvidenceQuery.error ?? null,
-          "Failed to load evidence"
-        )
-      : null;
+  const evidenceLoadError = combinedQueryLoadError(
+    [activeEvidenceQuery, hiddenEvidenceQuery],
+    evidencePending,
+    "Failed to load evidence"
+  );
 
   const retryEvidence = useCallback(() => {
     void queryClient.invalidateQueries({

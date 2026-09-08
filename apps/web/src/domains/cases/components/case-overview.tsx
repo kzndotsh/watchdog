@@ -27,6 +27,7 @@ import {
   bindCasesChangedInvalidation,
   invalidateAfterCaseSwitch,
 } from "@/shared/lib/query-invalidation";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/shadcn/button";
@@ -45,13 +46,11 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   const caseRow = caseQuery.data;
   const casesCtx = casesCtxQuery.data;
   const headerPending = listPending(caseQuery) || listPending(casesCtxQuery);
-  const headerLoadError =
-    !headerPending && (caseQuery.isError || casesCtxQuery.isError)
-      ? errMessage(
-          caseQuery.error ?? casesCtxQuery.error,
-          "Failed to load case"
-        )
-      : null;
+  const headerLoadError = combinedQueryLoadError(
+    [caseQuery, casesCtxQuery],
+    headerPending,
+    "Failed to load case"
+  );
   const retryHeader = () => {
     if (caseQuery.isError) void caseQuery.refetch();
     if (casesCtxQuery.isError) void casesCtxQuery.refetch();
@@ -65,13 +64,11 @@ export function CaseOverview({ caseId }: { caseId: string }) {
     listPending(entitiesQuery) || listPending(identifiersQuery);
   const listsPlaceholder =
     entitiesQuery.isPlaceholderData || identifiersQuery.isPlaceholderData;
-  const listsLoadError =
-    !listsPending && (entitiesQuery.isError || identifiersQuery.isError)
-      ? errMessage(
-          entitiesQuery.error ?? identifiersQuery.error,
-          "Failed to load case overview"
-        )
-      : null;
+  const listsLoadError = combinedQueryLoadError(
+    [entitiesQuery, identifiersQuery],
+    listsPending,
+    "Failed to load case overview"
+  );
   const retryLists = () => {
     if (entitiesQuery.isError) void entitiesQuery.refetch();
     if (identifiersQuery.isError) void identifiersQuery.refetch();

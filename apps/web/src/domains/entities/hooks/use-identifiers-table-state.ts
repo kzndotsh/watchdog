@@ -18,9 +18,9 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { mergeEvidenceRecords } from "@/domains/intake/lib/evidence";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { errMessage } from "@/lib/utils";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
 import { listPending } from "@/shared/lib/list-pending";
+import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { useDataTable } from "@/shared/ui/data-table";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import {
@@ -175,18 +175,11 @@ export function useIdentifiersTableState(
     listPending(entitiesQuery) ||
     listPending(activeEvidenceQuery) ||
     listPending(hiddenEvidenceQuery);
-  const auxiliaryLoadError =
-    !pending &&
-    (entitiesQuery.isError ||
-      activeEvidenceQuery.isError ||
-      hiddenEvidenceQuery.isError)
-      ? errMessage(
-          entitiesQuery.error ??
-            activeEvidenceQuery.error ??
-            hiddenEvidenceQuery.error,
-          "Failed to load identifier context"
-        )
-      : null;
+  const auxiliaryLoadError = combinedQueryLoadError(
+    [entitiesQuery, activeEvidenceQuery, hiddenEvidenceQuery],
+    pending,
+    "Failed to load identifier context"
+  );
   const auxiliaryPlaceholder =
     entitiesQuery.isPlaceholderData ||
     activeEvidenceQuery.isPlaceholderData ||
