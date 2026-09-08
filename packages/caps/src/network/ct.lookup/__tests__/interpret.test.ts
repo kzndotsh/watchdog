@@ -59,6 +59,35 @@ describe("interpretCtReport", () => {
     expect(ids[0]?.data.value).toBe("example.com");
   });
 
+  it("drops wildcard domains from identifier proposals", () => {
+    const result = interpretCtReport(
+      {
+        ...fixture,
+        domains: ["*.example.com", "www.example.com", "api.*.example.com"],
+      },
+      { input: { host: "example.com", entityId } }
+    );
+    const ids = result.patch.filter((p) => p.resource === "identifier");
+    expect(ids).toHaveLength(2);
+    expect(
+      ids
+        .map((p) => (typeof p.data.value === "string" ? p.data.value : ""))
+        .sort((a, b) => a.localeCompare(b))
+    ).toEqual(["example.com", "www.example.com"]);
+  });
+
+  it("caps domain identifiers and notes truncation in the summary", () => {
+    const domains = Array.from({ length: 85 }, (_, i) => `sub${i}.example.com`);
+    const result = interpretCtReport(
+      { ...fixture, domains },
+      { input: { host: "example.com", entityId } }
+    );
+    expect(
+      result.patch.filter((p) => p.resource === "identifier")
+    ).toHaveLength(80);
+    expect(String(result.summary)).toMatch(/showing 80 of 86 in Identifiers/);
+  });
+
   it("emits an empty patch when entityId is omitted", () => {
     const result = interpretCtReport(
       {
@@ -76,7 +105,7 @@ describe("interpretCtReport", () => {
 });
 
 describe("ctLookup.handoff", () => {
-  it("drops wildcard hosts", () => {
+  it("prepends the queried host and drops wildcard hosts", () => {
     const bag = ctLookup.handoff?.({
       host: "example.com",
       source: "crt.sh",
@@ -89,6 +118,41 @@ describe("ctLookup.handoff", () => {
         "WWW.example.com",
       ],
     });
-    expect(bag).toEqual({ host: ["www.example.com"] });
+    expect(bag).toEqual({ host: ["example.com", "www.example.com"] });
+  });
+
+  it("returns undefined when CT found no domain names", () => {
+    const bag = ctLookup.handoff?.({
+      host: "example.com",
+      source: "crt.sh",
+      queriedAt: "2026-01-01T00:00:00.000Z",
+      entries: [],
+      domains: [],
+    });
+    expect(bag).toBeUndefined();
+  });
+
+  it("includes the seed when CT lists only subdomains", () => {
+    const bag = ctLookup.handoff?.({
+      host: "example.com",
+      source: "crt.sh",
+      queriedAt: "2026-01-01T00:00:00.000Z",
+      entries: [],
+      domains: ["www.example.com", "api.example.com"],
+    });
+    expect(bag).toEqual({
+      host: ["example.com", "www.example.com", "api.example.com"],
+    });
+  });
+
+  it("drops invalid domain seeds from handoff", () => {
+    const bag = ctLookup.handoff?.({
+      host: "example.com",
+      source: "crt.sh",
+      queriedAt: "2026-01-01T00:00:00.000Z",
+      entries: [],
+      domains: ["nodot", "www.example.com"],
+    });
+    expect(bag).toEqual({ host: ["example.com", "www.example.com"] });
   });
 });

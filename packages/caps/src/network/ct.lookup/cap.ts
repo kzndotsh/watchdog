@@ -4,6 +4,7 @@ import type { JobHandoff } from "@watchdog/cap-sdk";
 import { fetchCrtShLookupEffect, normalizeHost } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { eligibleHandoffHosts } from "../../lib/collect/query-seed-batches";
 import { ctLookupInput } from "./input";
 import { interpretCtReport } from "./interpret";
 import { ctLookupSnapshotSchema } from "./report-schema";
@@ -45,20 +46,10 @@ export const ctLookup = defineCollectCap({
   interpretSnap: interpretCtReport,
   handoff(report): JobHandoff | undefined {
     const parsed = ctLookupSnapshotSchema.safeParse(report);
-    let bags: JobHandoff | undefined;
-    if (parsed.success) {
-      const seen = new Set<string>();
-      const hosts: string[] = [];
-      for (const raw of parsed.data.domains) {
-        const host = normalizeHost(raw);
-        if (host === "" || host.startsWith("*.") || host.includes("*"))
-          continue;
-        if (seen.has(host)) continue;
-        seen.add(host);
-        hosts.push(host);
-      }
-      if (hosts.length > 0) bags = { host: hosts };
-    }
-    return bags;
+    if (!parsed.success) return undefined;
+    // Preserve "empty CT names skip DNS" — only hand off when CT returned names.
+    if (parsed.data.domains.length === 0) return undefined;
+    const hosts = eligibleHandoffHosts(parsed.data.host, parsed.data.domains);
+    return hosts.length > 0 ? { host: hosts } : undefined;
   },
 });
