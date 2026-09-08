@@ -37,12 +37,13 @@ describe("interpret", () => {
     const result = interpretC99LookupReport(fixture, {
       input: { host: "example.com", entityId },
     });
-    expect(result.patch.length).toBe(3);
+    expect(result.patch.length).toBe(4);
     expect(result.patch[0]?.resource).toBe("identifier");
     expect(result.patch[0]?.data.type).toBe("domain");
     expect(result.patch[1]?.resource).toBe("identifier");
-    expect(result.patch[2]?.resource).toBe("claim");
-    expect(claimText(result, 2)).toMatch(/cloudflare=1/);
+    expect(result.patch[2]?.resource).toBe("identifier");
+    expect(result.patch[3]?.resource).toBe("claim");
+    expect(claimText(result, 3)).toMatch(/cloudflare=1/);
   });
 
   itRejectsIncompleteReport(
@@ -50,4 +51,24 @@ describe("interpret", () => {
     { host: "example.com" },
     { host: "example.com" }
   );
+
+  it("drops wildcard subdomains from identifier proposals", () => {
+    const result = interpretC99LookupReport(
+      {
+        ...fixture,
+        domains: ["*.example.com", "www.example.com"],
+        hits: fixture.hits,
+      },
+      { input: { host: "example.com", entityId } }
+    );
+    const domains = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "domain"
+    );
+    expect(domains).toHaveLength(2);
+    expect(
+      domains
+        .map((p) => (typeof p.data.value === "string" ? p.data.value : ""))
+        .sort((a, b) => a.localeCompare(b))
+    ).toEqual(["example.com", "www.example.com"]);
+  });
 });
