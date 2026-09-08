@@ -2,7 +2,9 @@ import { Effect } from "effect";
 
 import {
   requireEnum as requireEnumPolicy,
+  requireEntitySlug as requireEntitySlugPolicy,
   requireString as requireStringPolicy,
+  requireUuid as requireUuidPolicy,
 } from "@watchdog/policy";
 import type { JsonValue } from "@watchdog/schemas";
 
@@ -20,6 +22,17 @@ export function requireDomainStringEffect(
   });
 }
 
+export function requireDomainUuidEffect(
+  data: Record<string, JsonValue>,
+  key: string
+): Effect.Effect<string, DomainTag> {
+  return Effect.try({
+    try: () => requireUuidPolicy(data, key),
+    catch: (error) =>
+      new InvalidError({ reason: errorMessage(error, "invalid") }),
+  });
+}
+
 export function requireDomainEnumEffect<T extends string>(
   value: string,
   allowed: readonly T[],
@@ -27,6 +40,16 @@ export function requireDomainEnumEffect<T extends string>(
 ): Effect.Effect<T, DomainTag> {
   return Effect.try({
     try: () => requireEnumPolicy(value, allowed, label),
+    catch: (error) =>
+      new InvalidError({ reason: errorMessage(error, "invalid") }),
+  });
+}
+
+export function requireDomainEntitySlugEffect(
+  data: Record<string, JsonValue>
+): Effect.Effect<string, DomainTag> {
+  return Effect.try({
+    try: () => requireEntitySlugPolicy(data),
     catch: (error) =>
       new InvalidError({ reason: errorMessage(error, "invalid") }),
   });
