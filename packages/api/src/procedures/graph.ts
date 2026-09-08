@@ -4,7 +4,7 @@ import {
   listGraphWritesForCaseEffect,
   writeGraphFromAgentEffect,
 } from "@watchdog/core";
-import { patchOpSchema } from "@watchdog/schemas";
+import { caseScopeInputSchema, graphWriteInputSchema } from "@watchdog/schemas";
 
 import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";
@@ -18,7 +18,7 @@ export const listWrites = authed
     summary: "List Graph write audit rows for a case",
     tags: ["graph"],
   })
-  .input(z.object({ caseId: z.uuid() }))
+  .input(caseScopeInputSchema)
   .output(z.array(graphWriteRecordSchema))
   .handler(async ({ input, context }) =>
     runApp(
@@ -32,17 +32,9 @@ export const write = authed
     path: "/cases/{caseId}/graph/write",
     summary: "Write Graph from agent (userOverride escape hatch)",
     tags: ["graph"],
+    successStatus: 201,
   })
-  .input(
-    z.object({
-      caseId: z.uuid(),
-      patch: z.array(patchOpSchema).min(1),
-      summary: z.string().optional(),
-      evidenceIds: z.array(z.uuid()).optional(),
-      userOverride: z.literal(true),
-      idempotencyKey: z.string().min(1).optional(),
-    })
-  )
+  .input(graphWriteInputSchema)
   .output(graphWriteResultSchema)
   .handler(async ({ input, context }) =>
     runApp(
