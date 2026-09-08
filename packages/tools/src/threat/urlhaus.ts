@@ -104,7 +104,7 @@ export function fetchUrlhausLookupEffect(
     });
     const key = apiKey.trim();
     if (!key) {
-      return yield* new MissingCredentialError({ slot: "URLHAUS_API_KEY" });
+      return yield* new MissingCredentialError({ slot: "THREATFOX_API_KEY" });
     }
 
     const ua = options?.userAgent ?? watchdogUserAgent("threat.urlhaus.lookup");

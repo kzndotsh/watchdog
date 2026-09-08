@@ -2,7 +2,10 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 import { vi } from "vitest";
 
-import { ValidationVendorError } from "../../errors/tagged-errors";
+import {
+  MissingCredentialError,
+  ValidationVendorError,
+} from "../../errors/tagged-errors";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
 import {
   fetchUrlhausLookupEffect,
@@ -10,6 +13,19 @@ import {
 } from "../urlhaus";
 
 describe("urlhaus", () => {
+  it.effect("fetchUrlhausLookupEffect requires THREATFOX_API_KEY", () =>
+    Effect.gen(function* missingKeyGen() {
+      const result = yield* fetchUrlhausLookupEffect(
+        "evil.example",
+        "   ",
+        AbortSignal.timeout(5000)
+      ).pipe(Effect.flip);
+
+      expect(result).toBeInstanceOf(MissingCredentialError);
+      expect(result.slot).toBe("THREATFOX_API_KEY");
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
   it.effect("fetchUrlhausLookupEffect maps host threat metadata", () =>
     Effect.gen(function* fetchUrlhausLookupGen() {
       vi.stubGlobal(
