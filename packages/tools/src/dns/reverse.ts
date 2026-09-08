@@ -6,7 +6,7 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
-import { expandIpv6 } from "../network/ip-lookup-cymru";
+import { canonicalIpLiteral, expandIpv6 } from "../network/ip-lookup-cymru";
 import {
   assertNotAborted,
   dnsOrEmpty,
@@ -53,7 +53,9 @@ export function dedupeResolvedIps(ips: readonly string[]): string[] {
           : normalized;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push(key);
+      out.push(
+        isIP(normalized) === 6 ? canonicalIpLiteral(normalized) : normalized
+      );
     } catch {
       /* skip malformed DNS answers */
     }

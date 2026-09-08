@@ -68,6 +68,24 @@ describe("interpret", () => {
     expect(ids.find((p) => p.data.type === "ip")?.data.value).toBe("8.8.8.8");
   });
 
+  it("dedupes seed IPv6 against related PDNS IPs with different spellings", () => {
+    const result = interpretMnemonicLookupReport(
+      {
+        ...fixture,
+        kind: "ip",
+        query: "2001:db8::1",
+        ips: ["2001:0db8:0000:0000:0000:0000:0000:0001"],
+        domains: [],
+      },
+      { input: { query: "2001:db8::1", entityId } }
+    );
+    const ipIds = result.patch.filter(
+      (p) => p.resource === "identifier" && p.data.type === "ip"
+    );
+    expect(ipIds).toHaveLength(1);
+    expect(ipIds[0]?.data.value).toBe("2001:db8::1");
+  });
+
   it("notes domain truncation in the claim when PDNS domains exceed the cap", () => {
     const domains = Array.from(
       { length: 85 },

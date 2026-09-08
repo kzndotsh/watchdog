@@ -68,7 +68,7 @@ describe("resolveDnsRecords", () => {
         AbortSignal.timeout(5000)
       );
 
-      expect(records.aaaa).toEqual(["2001:0db8:0000:0000:0000:0000:0000:0001"]);
+      expect(records.aaaa).toEqual(["2001:db8::1"]);
     })
   );
 

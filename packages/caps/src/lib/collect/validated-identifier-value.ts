@@ -2,6 +2,7 @@ import {
   validateIdentifierValue,
   type IdentifierType,
 } from "@watchdog/schemas";
+import { canonicalIpLiteral } from "@watchdog/tools";
 
 import { eligibleCtDomains } from "./eligible-domain-hosts";
 
@@ -17,5 +18,13 @@ export function validatedIdentifierValue(
     return parsed.ok ? parsed.value : null;
   }
   const parsed = validateIdentifierValue(type, raw);
-  return parsed.ok ? parsed.value : null;
+  if (!parsed.ok) return null;
+  if (type === "ip") {
+    try {
+      return canonicalIpLiteral(parsed.value);
+    } catch {
+      return null;
+    }
+  }
+  return parsed.value;
 }

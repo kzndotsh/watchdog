@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  compressIpv6,
   expandIpv6,
   originLookupName,
   parseCymruAsName,
@@ -17,6 +18,14 @@ describe("ip-lookup-cymru", () => {
     expect(expandIpv6("2001:db8::1")).toBe(
       "2001:0db8:0000:0000:0000:0000:0000:0001"
     );
+  });
+
+  it("compressIpv6 round-trips expanded spellings", () => {
+    expect(compressIpv6("2001:0db8:0000:0000:0000:0000:0000:0001")).toBe(
+      "2001:db8::1"
+    );
+    expect(compressIpv6("2001:db8::1")).toBe("2001:db8::1");
+    expect(compressIpv6("::1")).toBe("::1");
   });
 
   it("parses Team Cymru origin and AS TXT rows", () => {

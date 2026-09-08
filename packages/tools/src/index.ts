@@ -19,6 +19,11 @@ export {
   type DnsReverseSnapshot,
 } from "./dns/reverse";
 export {
+  canonicalIpLiteral,
+  compressIpv6,
+  expandIpv6,
+} from "./network/ip-lookup-cymru";
+export {
   extractOutboundFromHtml,
   extractOutboundFromMarkdown,
   extractTitle,

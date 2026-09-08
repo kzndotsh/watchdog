@@ -51,7 +51,7 @@ describe("mnemonic", () => {
       }
     );
 
-    expect(snap.ips).toEqual(["2001:0db8:0000:0000:0000:0000:0000:0001"]);
+    expect(snap.ips).toEqual(["2001:db8::1"]);
   });
 
   it("parseMnemonicPdnsBody rejects resource-limit responses", () => {

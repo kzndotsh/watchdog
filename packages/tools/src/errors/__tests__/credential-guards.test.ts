@@ -5,6 +5,7 @@ import { fetchDehashedLookupEffect } from "../../breach/dehashed";
 import { fetchHudsonrockLookupEffect } from "../../breach/hudsonrock";
 import { fetchSnusbaseLookupEffect } from "../../breach/snusbase";
 import { toolsHttpClientLayer } from "../../http/http-client-layer";
+import { fetchEmailrepLookupEffect } from "../../identity/emailrep";
 import { fetchHibpBreachedAccountEffect } from "../../identity/hibp";
 import { fetchC99SubdomainsEffect } from "../../network/c99";
 import { fetchCensysHostEffect } from "../../network/censys";
@@ -117,6 +118,12 @@ const guardCases = [
       fetchSnusbaseLookupEffect("ada@example.com", "", signal()).pipe(
         Effect.flip
       ),
+  },
+  {
+    name: "emailrep",
+    slot: "EMAILREP_API_KEY",
+    run: () =>
+      fetchEmailrepLookupEffect("ada@example.com", signal()).pipe(Effect.flip),
   },
   {
     name: "hibp",

@@ -17,4 +17,11 @@ describe("validatedIdentifierValue", () => {
       "ada@example.com"
     );
   });
+
+  it("canonicalizes equivalent IPv6 spellings", () => {
+    expect(
+      validatedIdentifierValue("ip", "2001:0db8:0000:0000:0000:0000:0000:0001")
+    ).toBe("2001:db8::1");
+    expect(validatedIdentifierValue("ip", "2001:db8::1")).toBe("2001:db8::1");
+  });
 });
