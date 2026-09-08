@@ -157,8 +157,8 @@ describe("draft-to-patch-ops", () => {
     expect(patch[0].resource).toBe("identifier");
   });
 
-  it("draftToPatchOps throws when entityId is present but invalid", () => {
-    expect(() =>
+  it("draftToPatchOps returns [] when entityId is present but invalid", () => {
+    expect(
       draftToPatchOps(
         {
           ...emptyDraft,
@@ -166,7 +166,19 @@ describe("draft-to-patch-ops", () => {
         },
         { evidenceId, entityId: "not-a-uuid" }
       )
-    ).toThrow("Entity id is not a valid UUID");
+    ).toEqual([]);
+  });
+
+  it("draftToPatchOps returns [] when evidenceId is invalid", () => {
+    expect(
+      draftToPatchOps(
+        {
+          ...emptyDraft,
+          identifiers: [{ type: "email", value: "a@b.co" }],
+        },
+        { evidenceId: "bad", entityId }
+      )
+    ).toEqual([]);
   });
 
   it("draftToOutcome returns failed for invalid entityId", () => {

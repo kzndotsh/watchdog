@@ -161,7 +161,7 @@ function questionToPatchOp(
 /**
  * Pure mapper: ProcessExtractDraft → PatchOp[].
  * Strips any smuggled confidence; attaches source evidenceId.
- * Without entityId, returns [] (identifiers/claims/questions need a parent Entity).
+ * Without entityId or when ctx ids are invalid, returns [] — use `draftToOutcome` for summaries.
  */
 export function draftToPatchOps(
   draft: ProcessExtractDraft,
@@ -170,8 +170,7 @@ export function draftToPatchOps(
   if (isEmptyDraft(draft)) return [];
   const normalized = normalizeDraftCtx(ctx);
   if (!normalized.ok) {
-    if (normalized.issue === "missing_entity") return [];
-    throw new Error(draftCtxError(normalized.issue));
+    return [];
   }
 
   const { entityId, evidenceId } = normalized.ctx;
