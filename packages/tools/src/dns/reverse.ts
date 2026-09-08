@@ -6,7 +6,11 @@ import { z } from "zod";
 import { mapToolsCatch } from "../errors/map-tools-tag";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { validationToolsError } from "../errors/tools-error";
-import { assertNotAborted, withAbortableResolver } from "./abortable-resolver";
+import {
+  assertNotAborted,
+  dnsOrEmpty,
+  withAbortableResolver,
+} from "./abortable-resolver";
 
 export const dnsReverseSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -23,6 +27,16 @@ export function normalizeIp(raw: string): string {
     throw validationToolsError(`Invalid IP address: ${raw}`);
   }
   return trimmed;
+}
+
+/** Effect wrapper — invalid IP → tagged `ToolsTag`, not a defect. */
+export function normalizeIpEffect(
+  raw: string
+): Effect.Effect<string, ToolsTag> {
+  return Effect.try({
+    try: () => normalizeIp(raw),
+    catch: mapToolsCatch,
+  });
 }
 
 function snapshotFromHostnames(
@@ -49,18 +63,15 @@ export function fetchDnsReverseEffect(
   signal: AbortSignal
 ): Effect.Effect<DnsReverseSnapshot, ToolsTag> {
   return Effect.gen(function* fetchDnsReverseGen() {
-    const normalized = yield* Effect.try({
-      try: () => normalizeIp(ip),
-      catch: mapToolsCatch,
-    });
+    const normalized = yield* normalizeIpEffect(ip);
     const { resolver, cleanup } = withAbortableResolver(
       signal,
       "DNS reverse aborted"
     );
-    const hostnames = yield* Effect.tryPromise({
-      try: () => resolver.reverse(normalized).catch(() => [] as string[]),
-      catch: mapToolsCatch,
-    }).pipe(
+    const hostnames = yield* dnsOrEmpty(
+      () => resolver.reverse(normalized),
+      [] as string[]
+    ).pipe(
       Effect.ensuring(
         Effect.sync(() => {
           cleanup();

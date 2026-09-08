@@ -2,7 +2,7 @@ import { Effect } from "effect";
 
 import type { ToolsTag } from "../errors/tagged-errors";
 import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
-import type { DnsRecords } from "./schema";
+import { dnsRecordsSchema, type DnsRecords } from "./schema";
 
 export type { DnsRecords };
 
@@ -26,7 +26,7 @@ export function resolveDnsRecordsEffect(
         ],
         { concurrency: "unbounded" }
       );
-      return { host, a, aaaa, mx, txt, ns };
+      return dnsRecordsSchema.parse({ host, a, aaaa, mx, txt, ns });
     })
   );
 }

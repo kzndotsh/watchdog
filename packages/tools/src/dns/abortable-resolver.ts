@@ -3,8 +3,19 @@ import { Resolver } from "node:dns/promises";
 import { Effect } from "effect";
 
 import { mapToolsCatch } from "../errors/map-tools-tag";
-import { ParseVendorError, type ToolsTag } from "../errors/tagged-errors";
+import type { ToolsTag } from "../errors/tagged-errors";
 import { abortedToolsError } from "../errors/tools-error";
+
+const BENIGN_DNS_ERROR_CODES = new Set(["ENOTFOUND", "ENODATA", "ESERVFAIL"]);
+
+function isBenignDnsFailure(cause: unknown): boolean {
+  if (typeof cause !== "object" || cause === null) return false;
+  const record = cause as { code?: string; name?: string };
+  if (record.code !== undefined && BENIGN_DNS_ERROR_CODES.has(record.code)) {
+    return true;
+  }
+  return record.name === "AbortError";
+}
 
 export function assertNotAborted(
   signal: AbortSignal,
@@ -38,16 +49,22 @@ export function withAbortableResolver(
   };
 }
 
-/** NXDOMAIN / SERVFAIL / cancel → `empty`; abort is re-checked after the body. */
+/** NXDOMAIN / SERVFAIL / cancel → `empty`; other resolver faults propagate. */
 export function dnsOrEmpty<A>(
   tryFn: () => Promise<A>,
   empty: A
-): Effect.Effect<A> {
+): Effect.Effect<A, ToolsTag> {
   return Effect.tryPromise({
     try: tryFn,
-    catch: (cause) =>
-      new ParseVendorError({ service: "dns", subject: String(cause) }),
-  }).pipe(Effect.orElseSucceed(() => empty));
+    catch: (error) => error,
+  }).pipe(
+    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- Effect.catch is the canonical combinator here
+    Effect.catch((error) =>
+      isBenignDnsFailure(error)
+        ? Effect.succeed(empty)
+        : Effect.fail(mapToolsCatch(error))
+    )
+  );
 }
 
 export function runAbortableResolver<A>(

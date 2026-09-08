@@ -31,7 +31,7 @@ function flattenTxt(chunks: string[][]): string[] {
 function resolveTxtFlatEffect(
   resolver: Resolver,
   name: string
-): Effect.Effect<string[]> {
+): Effect.Effect<string[], ToolsTag> {
   return dnsOrEmpty(() => resolver.resolveTxt(name), [] as string[][]).pipe(
     Effect.map((chunks) => flattenTxt(chunks))
   );
