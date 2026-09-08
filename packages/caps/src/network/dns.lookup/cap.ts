@@ -19,7 +19,11 @@ export const dnsLookup = defineCollectCap({
   kind: "collect",
   useCases: ["Passive", "Footprint"],
   consumes: [{ kind: "host" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "domain" },
+    { kind: "identifier", type: "ip" },
+  ],
   jobPolicy: {
     cacheTtlMs: 10 * 60_000,
   },
