@@ -4,7 +4,11 @@ import { db, identifiersRepo, type IdentifierListRow } from "@watchdog/db";
 import { isOneOf } from "@watchdog/policy";
 import {
   IDENTIFIER_TYPES,
+  entityDisplayLabel,
+  normalizeIdentifierTypeInput,
   normalizeIdentifierValue,
+  patchOpEntityId,
+  parseTrimmedCaseId,
   type IdentifierType,
   type PatchOp,
 } from "@watchdog/schemas";
@@ -38,14 +42,16 @@ function identifierKeysFromPatch(
     if (op.resource !== "identifier") continue;
     const typeRaw = op.data.type;
     const valueRaw = op.data.value;
-    const entityId = op.data.entityId;
-    if (typeof typeRaw !== "string" || !isOneOf(typeRaw, IDENTIFIER_TYPES)) {
+    const entityId = patchOpEntityId(op);
+    const typeTrimmed =
+      typeof typeRaw === "string" ? normalizeIdentifierTypeInput(typeRaw) : "";
+    if (typeTrimmed === "" || !isOneOf(typeTrimmed, IDENTIFIER_TYPES)) {
       continue;
     }
-    if (typeof valueRaw !== "string" || typeof entityId !== "string") continue;
-    const value = normalizeIdentifierValue(typeRaw, valueRaw);
+    if (typeof valueRaw !== "string" || entityId === undefined) continue;
+    const value = normalizeIdentifierValue(typeTrimmed, valueRaw);
     if (!value) continue;
-    keys.push({ opId: op.id, entityId, type: typeRaw, value });
+    keys.push({ opId: op.id, entityId, type: typeTrimmed, value });
   }
   return keys;
 }
@@ -81,7 +87,10 @@ function collisionsAgainstHits(
         type: key.type,
         value: key.value,
         entityId: hit.entityId,
-        entityName: hit.entityName,
+        entityName: entityDisplayLabel({
+          name: hit.entityName,
+          slug: hit.entitySlug,
+        }),
         entitySlug: hit.entitySlug,
       });
     }
@@ -94,11 +103,15 @@ export function loadIdentifierCollisionsEffect(
   caseId: string,
   patches: readonly PatchOp[][]
 ): Effect.Effect<IdentifierCollision[][], DomainTag> {
+  const scopedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
+  if (scopedCaseId === undefined) {
+    return Effect.succeed(patches.map(() => []));
+  }
   const perPatchKeys = patches.map(identifierKeysFromPatch);
   if (perPatchKeys.every((keys) => keys.length === 0)) {
     return Effect.succeed(patches.map(() => []));
   }
-  return tryDb(() => identifiersRepo.listForCase(db, caseId)).pipe(
+  return tryDb(() => identifiersRepo.listForCase(db, scopedCaseId)).pipe(
     Effect.map((hits) => {
       const byKey = indexByTypeValue(hits);
       return perPatchKeys.map((keys) => collisionsAgainstHits(keys, byKey));

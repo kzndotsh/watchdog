@@ -8,8 +8,11 @@ import {
 } from "@watchdog/db";
 import {
   edgePredicateAllowsKinds,
+  parseOptionalTrimmedUuid,
+  trimmedOrNull,
   type ConfidenceTier,
   type EdgePredicate,
+  type EntityKind,
 } from "@watchdog/schemas";
 
 import { tryDb } from "../infra/postgres-effect";
@@ -44,22 +47,41 @@ export function validateEdgeUpdateEffect(
   evidenceIds: string[]
 ): Effect.Effect<ValidatedEdgeUpdate, DomainTag> {
   return Effect.gen(function* validateEdgeUpdateGen() {
-    const viewEntityId = input.viewEntityId ?? existing.fromId;
+    const rawFromId = input.fromId;
+    const fromId =
+      rawFromId === undefined ? undefined : parseOptionalTrimmedUuid(rawFromId);
+    if (rawFromId !== undefined && fromId === undefined) {
+      return yield* new InvalidError({ reason: "fromId must be a valid UUID" });
+    }
+    const rawToId = input.toId;
+    const toId =
+      rawToId === undefined ? undefined : parseOptionalTrimmedUuid(rawToId);
+    if (rawToId !== undefined && toId === undefined) {
+      return yield* new InvalidError({ reason: "toId must be a valid UUID" });
+    }
+
+    const rawViewEntityId = input.viewEntityId;
+    const viewEntityId =
+      rawViewEntityId === undefined
+        ? undefined
+        : parseOptionalTrimmedUuid(rawViewEntityId);
+    if (rawViewEntityId !== undefined && viewEntityId === undefined) {
+      return yield* new InvalidError({
+        reason: "viewEntityId must be a valid UUID",
+      });
+    }
+    const resolvedViewEntityId = viewEntityId ?? existing.fromId;
     if (
-      viewEntityId !== existing.fromId &&
-      viewEntityId !== existing.toId
+      resolvedViewEntityId !== existing.fromId &&
+      resolvedViewEntityId !== existing.toId
     ) {
       return yield* new InvalidError({
         reason: "viewEntityId must be an endpoint of the Edge",
       });
     }
 
-    const hasEndpoints =
-      input.fromId !== undefined || input.toId !== undefined;
-    if (
-      hasEndpoints &&
-      (input.fromId === undefined || input.toId === undefined)
-    ) {
+    const hasEndpoints = fromId !== undefined || toId !== undefined;
+    if (hasEndpoints && (fromId === undefined || toId === undefined)) {
       return yield* new InvalidError({
         reason: "fromId and toId must be sent together",
       });
@@ -76,14 +98,14 @@ export function validateEdgeUpdateEffect(
     }
 
     const next = {
-      fromId: input.fromId ?? existing.fromId,
-      toId: input.toId ?? existing.toId,
+      fromId: fromId ?? existing.fromId,
+      toId: toId ?? existing.toId,
       predicate: input.predicate ?? existing.predicate,
       confidence: input.confidence ?? existing.confidence,
       notes:
         input.notes === undefined
           ? (existing.notes ?? null)
-          : input.notes.trim() || null,
+          : trimmedOrNull(input.notes),
     };
 
     yield* assertConfidenceEvidenceEffect(next.confidence, evidenceIds);
@@ -93,7 +115,7 @@ export function validateEdgeUpdateEffect(
         reason: "Edge cannot link an Entity to itself",
       });
     }
-    if (viewEntityId !== next.fromId && viewEntityId !== next.toId) {
+    if (resolvedViewEntityId !== next.fromId && resolvedViewEntityId !== next.toId) {
       return yield* new InvalidError({
         reason: "viewEntityId must remain an endpoint of this Edge",
       });
@@ -141,6 +163,29 @@ export function assertEdgeKindsAllowedEffect(
   });
 }
 
+export function assertEntityKindChangeAllowedEffect(
+  caseId: string,
+  entityId: string,
+  nextKind: EntityKind,
+  exec: DbExec
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* assertEntityKindChangeAllowedGen() {
+    const edges = yield* tryDb(() =>
+      edgesRepo.listForEntity(exec, caseId, entityId)
+    );
+    for (const edge of edges) {
+      const fromKind =
+        edge.fromId === entityId ? nextKind : edge.fromKind;
+      const toKind = edge.toId === entityId ? nextKind : edge.toKind;
+      if (!edgePredicateAllowsKinds(edge.predicate, fromKind, toKind)) {
+        return yield* new InvalidError({
+          reason: `Cannot change Entity kind to ${nextKind}: ${edge.predicate} is not allowed for ${fromKind} → ${toKind}`,
+        });
+      }
+    }
+  });
+}
+
 function buildEdgePatch(
   existing: NonNullable<Awaited<ReturnType<typeof edgesRepo.getInCase>>>,
   next: ValidatedEdgeUpdate["next"]
@@ -169,8 +214,18 @@ export function applyValidatedEdgeUpdateEffect(
     const { existing, next, endpointsChanged, predicateChanged } = validated;
 
     if (endpointsChanged) {
-      yield* assertEntityInCaseEffect(input.caseId, next.fromId, tx);
-      yield* assertEntityInCaseEffect(input.caseId, next.toId, tx);
+      const scopedFromId = yield* assertEntityInCaseEffect(
+        input.caseId,
+        next.fromId,
+        tx
+      );
+      const scopedToId = yield* assertEntityInCaseEffect(
+        input.caseId,
+        next.toId,
+        tx
+      );
+      next.fromId = scopedFromId;
+      next.toId = scopedToId;
     }
     if (endpointsChanged || predicateChanged) {
       yield* assertEdgeKindsAllowedEffect(
@@ -185,7 +240,7 @@ export function applyValidatedEdgeUpdateEffect(
     const patch = buildEdgePatch(existing, next);
     if (Object.keys(patch).length > 0) {
       const updated = yield* tryDb(() =>
-        edgesRepo.update(tx, input.edgeId, patch)
+        edgesRepo.updateInCase(tx, input.caseId, input.edgeId, patch)
       );
       if (!updated) {
         return yield* new InvalidError({ reason: "Failed to update Edge" });

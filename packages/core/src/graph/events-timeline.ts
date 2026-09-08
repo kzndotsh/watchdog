@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import { db, eventsRepo, type EventRow } from "@watchdog/db";
+import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
 
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
@@ -9,7 +10,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertCaseInOrgEffect, assertEntityInCaseEffect } from "./patch/guards";
+import { assertCaseInOrgEffect, assertEntityInCaseEffect, requireTrimmedGraphId } from "./patch/guards";
 
 export interface EventRecord {
   id: string;
@@ -34,7 +35,7 @@ export interface UpdateEventInput {
   eventId: string;
   when?: string;
   what?: string;
-  where?: string;
+  where?: string | null;
 }
 
 function toRecord(row: EventRow): EventRecord {
@@ -53,9 +54,15 @@ export function listEventsForEntityEffect(
   entityId: string
 ): Effect.Effect<EventRecord[], DomainTag> {
   return Effect.gen(function* listEventsGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
-    yield* assertEntityInCaseEffect(caseId, entityId, db);
-    const rows = yield* tryDb(() => eventsRepo.listForEntity(db, entityId));
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedEntityId = yield* requireTrimmedGraphId(
+      entityId,
+      "Entity not found in this Case"
+    );
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
+    const rows = yield* tryDb(() =>
+      eventsRepo.listForEntity(db, normalizedEntityId)
+    );
     return rows.map(toRecord);
   });
 }
@@ -64,20 +71,35 @@ export function createEventEffect(
   input: CreateEventInput
 ): Effect.Effect<EventRecord, DomainTag> {
   return Effect.gen(function* createEventGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
-    yield* assertEntityInCaseEffect(input.caseId, input.entityId, db);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const entityId = yield* requireTrimmedGraphId(
+      input.entityId,
+      "Entity not found in this Case"
+    );
+    yield* assertEntityInCaseEffect(scopedCaseId, entityId, db);
+    const when = trimmedOrUndefined(input.when);
+    if (when === undefined) {
+      return yield* new InvalidError({ reason: "Event when is required" });
+    }
+    const what = trimmedOrUndefined(input.what);
+    if (what === undefined) {
+      return yield* new InvalidError({ reason: "Event what is required" });
+    }
     const row = yield* tryDb(() =>
       eventsRepo.create(db, {
-        entityId: input.entityId,
-        when: input.when,
-        what: input.what,
-        whereText: input.where ?? null,
+        entityId,
+        when,
+        what,
+        whereText: trimmedOrNull(input.where),
       })
     );
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to create Event" });
     }
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -86,9 +108,16 @@ export function updateEventEffect(
   input: UpdateEventInput
 ): Effect.Effect<EventRecord, DomainTag> {
   return Effect.gen(function* updateEventGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const eventId = yield* requireTrimmedGraphId(
+      input.eventId,
+      "Event not found in this Case"
+    );
     const existing = yield* tryDb(() =>
-      eventsRepo.getInCase(db, input.caseId, input.eventId)
+      eventsRepo.getInCase(db, scopedCaseId, eventId)
     );
     if (!existing) {
       return yield* new NotFoundError({
@@ -96,18 +125,37 @@ export function updateEventEffect(
       });
     }
 
+    let nextWhen = existing.when;
+    if (input.when !== undefined) {
+      const when = trimmedOrUndefined(input.when);
+      if (when === undefined) {
+        return yield* new InvalidError({ reason: "Event when is required" });
+      }
+      nextWhen = when;
+    }
+    let nextWhat = existing.what;
+    if (input.what !== undefined) {
+      const what = trimmedOrUndefined(input.what);
+      if (what === undefined) {
+        return yield* new InvalidError({ reason: "Event what is required" });
+      }
+      nextWhat = what;
+    }
+
     const row = yield* tryDb(() =>
-      eventsRepo.update(db, input.eventId, {
-        when: input.when ?? existing.when,
-        what: input.what ?? existing.what,
+      eventsRepo.updateInCase(db, scopedCaseId, eventId, {
+        when: nextWhen,
+        what: nextWhat,
         whereText:
-          input.where === undefined ? existing.whereText : (input.where ?? null),
+          input.where === undefined
+            ? existing.whereText
+            : trimmedOrNull(input.where),
       })
     );
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to update Event" });
     }
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -118,9 +166,13 @@ export function deleteEventEffect(
   eventId: string
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteEventGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedEventId = yield* requireTrimmedGraphId(
+      eventId,
+      "Event not found in this Case"
+    );
     const existing = yield* tryDb(() =>
-      eventsRepo.getInCase(db, caseId, eventId)
+      eventsRepo.getInCase(db, scopedCaseId, normalizedEventId)
     );
     if (!existing) {
       return yield* new NotFoundError({
@@ -128,10 +180,12 @@ export function deleteEventEffect(
       });
     }
 
-    const deleted = yield* tryDb(() => eventsRepo.delete(db, eventId));
+    const deleted = yield* tryDb(() =>
+      eventsRepo.deleteInCase(db, scopedCaseId, normalizedEventId)
+    );
     if (!deleted) {
       return yield* new InvalidError({ reason: "Failed to delete Event" });
     }
-    yield* notifyEntityChangedEffect(caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
   });
 }

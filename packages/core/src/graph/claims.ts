@@ -6,9 +6,13 @@ import type {
   ConfidenceTier,
   RetractKind,
 } from "@watchdog/schemas";
-import { normalizeIdList } from "@watchdog/schemas";
+import { normalizeUuidList, trimmedOrUndefined } from "@watchdog/schemas";
 
-import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
+import { requireActorIdEffect } from "../actors/require-actor-id";
+import {
+  assertEvidenceIdsInCaseEffect,
+  parseGraphEvidenceIdsEffect,
+} from "../evidence/evidence";
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
@@ -22,6 +26,8 @@ import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
+  assertEvidenceLinkedEffect,
+  requireTrimmedGraphId,
 } from "./patch/guards";
 
 export interface ClaimRecord {
@@ -78,7 +84,7 @@ function toRecord(row: ClaimRow, evidenceIds: string[]): ClaimRecord {
     retractedReason: row.retractedReason ?? null,
     retractedBy: row.retractedBy ?? null,
     retractedAt: row.retractedAt?.toISOString() ?? null,
-    evidenceIds,
+    evidenceIds: normalizeUuidList(evidenceIds),
   };
 }
 
@@ -93,10 +99,14 @@ export function listClaimsForEntityEffect(
   opts?: EntityListOpts
 ): Effect.Effect<ClaimRecord[], DomainTag> {
   return Effect.gen(function* listClaimsGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
-    yield* assertEntityInCaseEffect(caseId, entityId, db);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedEntityId = yield* requireTrimmedGraphId(
+      entityId,
+      "Entity not found in this Case"
+    );
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
     const rows = yield* tryDb(() =>
-      claimsRepo.listForEntity(db, entityId, opts)
+      claimsRepo.listForEntity(db, normalizedEntityId, opts)
     );
     const byClaim = yield* tryDb(() =>
       evidenceLinksRepo.listForClaims(
@@ -112,19 +122,30 @@ export function createClaimEffect(
   input: CreateClaimInput
 ): Effect.Effect<ClaimRecord, DomainTag> {
   return Effect.gen(function* createClaimGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
-    const evidenceIds = normalizeIdList(input.evidenceIds ?? []);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const entityId = yield* requireTrimmedGraphId(
+      input.entityId,
+      "Entity not found in this Case"
+    );
+    const text = trimmedOrUndefined(input.text);
+    if (text === undefined) {
+      return yield* new InvalidError({ reason: "Claim text is required" });
+    }
+    const evidenceIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds ?? []);
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
     const row = yield* transact((tx) =>
       Effect.gen(function* createClaimTx() {
-        yield* assertEntityInCaseEffect(input.caseId, input.entityId, tx);
-        yield* assertEvidenceIdsInCaseEffect(input.caseId, evidenceIds, tx);
+        yield* assertEntityInCaseEffect(scopedCaseId, entityId, tx);
+        yield* assertEvidenceIdsInCaseEffect(scopedCaseId, evidenceIds, tx);
 
         const created = yield* tryDb(() =>
           claimsRepo.create(tx, {
-            entityId: input.entityId,
-            text: input.text,
+            entityId,
+            text,
             confidence: input.confidence,
             class: input.class,
           })
@@ -134,14 +155,15 @@ export function createClaimEffect(
             reason: "Failed to create Claim",
           });
         }
-        yield* tryDb(() =>
+        const linked = yield* tryDb(() =>
           evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)
         );
+        yield* assertEvidenceLinkedEffect(linked);
         return created;
       })
     );
 
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, evidenceIds);
   });
 }
@@ -151,9 +173,22 @@ export function retractClaimEffect(
   actorId: string
 ): Effect.Effect<ClaimRecord, DomainTag> {
   return Effect.gen(function* retractClaimGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const claimId = yield* requireTrimmedGraphId(
+      input.claimId,
+      "Claim not found"
+    );
+    const reason = trimmedOrUndefined(input.reason);
+    if (reason === undefined) {
+      return yield* new InvalidError({
+        reason: "Retraction reason is required",
+      });
+    }
     const existing = yield* tryDb(() =>
-      claimsRepo.getInCase(db, input.caseId, input.claimId)
+      claimsRepo.getInCase(db, scopedCaseId, claimId)
     );
     if (!existing) {
       return yield* new NotFoundError({ resource: "Claim not found" });
@@ -162,11 +197,12 @@ export function retractClaimEffect(
       return yield* new ConflictError({ reason: "Claim already retracted" });
     }
 
+    const scopedActorId = yield* requireActorIdEffect(actorId);
     const row = yield* tryDb(() =>
-      claimsRepo.retract(db, input.claimId, {
+      claimsRepo.retractInCase(db, scopedCaseId, claimId, {
         retractKind: input.kind,
-        retractedReason: input.reason,
-        retractedBy: actorId,
+        retractedReason: reason,
+        retractedBy: scopedActorId,
       })
     );
     if (!row) {
@@ -176,7 +212,7 @@ export function retractClaimEffect(
     const byClaim = yield* tryDb(() =>
       evidenceLinksRepo.listForClaims(db, [row.id])
     );
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, byClaim.get(row.id) ?? []);
   });
 }
@@ -185,18 +221,23 @@ export function updateClaimEffect(
   input: UpdateClaimInput
 ): Effect.Effect<ClaimRecord, DomainTag> {
   return Effect.gen(function* updateClaimGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const claimId = yield* requireTrimmedGraphId(
+      input.claimId,
+      "Claim not found"
+    );
     const existing = yield* tryDb(() =>
-      claimsRepo.getInCase(db, input.caseId, input.claimId)
+      claimsRepo.getInCase(db, scopedCaseId, claimId)
     );
     if (!existing) {
       return yield* new NotFoundError({ resource: "Claim not found" });
     }
-
-    const byClaim = yield* tryDb(() =>
-      evidenceLinksRepo.listForClaims(db, [existing.id])
-    );
-    const evidenceIds = byClaim.get(existing.id) ?? [];
+    if (existing.retracted) {
+      return yield* new ConflictError({ reason: "Claim already retracted" });
+    }
 
     if (
       input.text === undefined &&
@@ -207,15 +248,32 @@ export function updateClaimEffect(
       return yield* new InvalidError({ reason: "Nothing to update" });
     }
 
+    const nextText =
+      input.text === undefined ? undefined : trimmedOrUndefined(input.text);
+    if (input.text !== undefined && nextText === undefined) {
+      return yield* new InvalidError({ reason: "Claim text is required" });
+    }
+
     const { row, evidenceIds: nextEvidenceIds } = yield* transact((tx) =>
       Effect.gen(function* updateClaimTx() {
-        let nextIds = evidenceIds;
-        if (input.evidenceIds !== undefined) {
-          nextIds = normalizeIdList(input.evidenceIds);
-          yield* assertEvidenceIdsInCaseEffect(input.caseId, nextIds, tx);
-          nextIds = yield* tryDb(() =>
+        let nextIds: string[];
+        if (input.evidenceIds === undefined) {
+          const byClaim = yield* tryDb(() =>
+            evidenceLinksRepo.listForClaims(tx, [existing.id])
+          );
+          nextIds = byClaim.get(existing.id) ?? [];
+        } else {
+          nextIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
+          yield* assertEvidenceIdsInCaseEffect(scopedCaseId, nextIds, tx);
+          const replaced = yield* tryDb(() =>
             evidenceLinksRepo.replaceClaim(tx, existing.id, nextIds)
           );
+          if (replaced === null) {
+            return yield* new InvalidError({
+              reason: "Invalid evidence id",
+            });
+          }
+          nextIds = replaced;
         }
 
         const nextConfidence = input.confidence ?? existing.confidence;
@@ -226,8 +284,8 @@ export function updateClaimEffect(
         }
 
         const updated = yield* tryDb(() =>
-          claimsRepo.update(tx, input.claimId, {
-            ...(input.text === undefined ? {} : { text: input.text }),
+          claimsRepo.updateInCase(tx, scopedCaseId, claimId, {
+            ...(nextText === undefined ? {} : { text: nextText }),
             ...(input.class === undefined ? {} : { class: input.class }),
             ...(input.confidence === undefined
               ? {}
@@ -243,7 +301,7 @@ export function updateClaimEffect(
       })
     );
 
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, nextEvidenceIds);
   });
 }

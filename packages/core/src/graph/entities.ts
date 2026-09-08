@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import { db, entitiesRepo, type EntityRow } from "@watchdog/db";
 import type { EntityKind } from "@watchdog/schemas";
+import { slugifyName, trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
 
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
@@ -12,8 +13,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertCaseInOrgEffect } from "./patch/guards";
+import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
+import { assertEntityKindChangeAllowedEffect } from "./edge-update";
+
+const SLUG_UNIQUE_INDEX = "entities_case_slug_uidx";
 
 export interface EntityRecord {
   id: string;
@@ -41,8 +45,8 @@ export interface UpdateEntityFieldsInput {
   entityId: string;
   kind?: EntityKind;
   name?: string;
-  summary?: string;
-  notes?: string;
+  summary?: string | null;
+  notes?: string | null;
 }
 
 function toRecord(row: EntityRow): EntityRecord {
@@ -64,8 +68,8 @@ export function listEntitiesForCaseEffect(
   organizationId: string
 ): Effect.Effect<EntityRecord[], DomainTag> {
   return Effect.gen(function* listEntitiesGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() => entitiesRepo.listForCase(db, caseId));
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const rows = yield* tryDb(() => entitiesRepo.listForCase(db, scopedCaseId));
     return rows.map(toRecord);
   });
 }
@@ -76,9 +80,13 @@ export function getEntityByCaseSlugEffect(
   slug: string
 ): Effect.Effect<EntityRecord, DomainTag> {
   return Effect.gen(function* getEntityByCaseSlugGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedSlug = slugifyName(slug);
+    if (normalizedSlug === "") {
+      return yield* new NotFoundError({ resource: "Entity not found" });
+    }
     const row = yield* tryDb(() =>
-      entitiesRepo.getByCaseSlug(db, caseId, slug)
+      entitiesRepo.getByCaseSlug(db, scopedCaseId, normalizedSlug)
     );
     if (!row) {
       return yield* new NotFoundError({ resource: "Entity not found" });
@@ -90,37 +98,50 @@ export function getEntityByCaseSlugEffect(
 export function createEntityEffect(
   input: CreateEntityInput
 ): Effect.Effect<EntityRecord, DomainTag> {
-  const conflictReason = `Slug "${input.slug}" already exists in this Case`;
   return Effect.gen(function* createEntityGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const name = trimmedOrUndefined(input.name);
+    if (name === undefined) {
+      return yield* new InvalidError({ reason: "Entity name is required" });
+    }
+    const slug = slugifyName(input.slug);
+    if (slug === "") {
+      return yield* new InvalidError({ reason: "Entity slug is required" });
+    }
+    const conflictReason = `Slug "${slug}" already exists in this Case`;
     const existing = yield* tryDb(() =>
-      entitiesRepo.getByCaseSlug(db, input.caseId, input.slug)
+      entitiesRepo.getByCaseSlug(db, scopedCaseId, slug)
     );
     if (existing) {
       return yield* new ConflictError({ reason: conflictReason });
     }
 
-    const created = yield* transact((tx) =>
-      Effect.gen(function* createEntityTx() {
-        const row = yield* tryDb(() =>
-          entitiesRepo.create(tx, {
-            caseId: input.caseId,
-            kind: input.kind,
-            name: input.name,
-            slug: input.slug,
-          })
-        );
-        if (!row) {
-          return yield* new InvalidError({
-            reason: "Failed to create Entity",
-          });
-        }
-        yield* seedDefaultQuestionsEffect(tx, row);
-        return row;
-      })
+    const created = yield* transact(
+      (tx) =>
+        Effect.gen(function* createEntityTx() {
+          const row = yield* tryDb(() =>
+            entitiesRepo.create(tx, {
+              caseId: scopedCaseId,
+              kind: input.kind,
+              name,
+              slug,
+            })
+          );
+          if (!row) {
+            return yield* new InvalidError({
+              reason: "Failed to create Entity",
+            });
+          }
+          yield* seedDefaultQuestionsEffect(tx, row);
+          return row;
+        }),
+      { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
     );
 
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(created);
   });
 }
@@ -129,29 +150,53 @@ export function updateEntityFieldsEffect(
   input: UpdateEntityFieldsInput
 ): Effect.Effect<EntityRecord, DomainTag> {
   return Effect.gen(function* updateEntityGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const entityId = yield* requireTrimmedGraphId(
+      input.entityId,
+      "Entity not found"
+    );
     const existing = yield* tryDb(() =>
-      entitiesRepo.getInCase(db, input.caseId, input.entityId)
+      entitiesRepo.getInCase(db, scopedCaseId, entityId)
     );
     if (!existing) {
       return yield* new NotFoundError({ resource: "Entity not found" });
     }
 
+    const nextName =
+      input.name === undefined ? undefined : trimmedOrUndefined(input.name);
+    if (input.name !== undefined && nextName === undefined) {
+      return yield* new InvalidError({ reason: "Entity name is required" });
+    }
+
+    if (input.kind !== undefined && input.kind !== existing.kind) {
+      yield* assertEntityKindChangeAllowedEffect(
+        scopedCaseId,
+        entityId,
+        input.kind,
+        db
+      );
+    }
+
     const updated = yield* tryDb(() =>
-      entitiesRepo.update(db, input.entityId, {
+      entitiesRepo.updateInCase(db, scopedCaseId, entityId, {
         ...(input.kind === undefined ? {} : { kind: input.kind }),
-        ...(input.name === undefined ? {} : { name: input.name }),
+        ...(nextName === undefined ? {} : { name: nextName }),
         ...(input.summary === undefined
           ? {}
-          : { summary: input.summary || null }),
-        ...(input.notes === undefined ? {} : { notes: input.notes || null }),
+          : { summary: trimmedOrNull(input.summary) }),
+        ...(input.notes === undefined
+          ? {}
+          : { notes: trimmedOrNull(input.notes) }),
       })
     );
     if (!updated) {
       return yield* new InvalidError({ reason: "Failed to update Entity" });
     }
 
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(updated);
   });
 }
@@ -162,19 +207,25 @@ export function deleteEntityEffect(
   entityId: string
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteEntityGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedEntityId = yield* requireTrimmedGraphId(
+      entityId,
+      "Entity not found"
+    );
     const existing = yield* tryDb(() =>
-      entitiesRepo.getInCase(db, caseId, entityId)
+      entitiesRepo.getInCase(db, scopedCaseId, normalizedEntityId)
     );
     if (!existing) {
       return yield* new NotFoundError({ resource: "Entity not found" });
     }
 
-    const deleted = yield* tryDb(() => entitiesRepo.delete(db, entityId));
+    const deleted = yield* tryDb(() =>
+      entitiesRepo.deleteInCase(db, scopedCaseId, normalizedEntityId)
+    );
     if (!deleted) {
       return yield* new InvalidError({ reason: "Failed to delete Entity" });
     }
 
-    yield* notifyEntityChangedEffect(caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
   });
 }

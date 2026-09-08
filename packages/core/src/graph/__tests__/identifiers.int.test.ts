@@ -22,6 +22,23 @@ describe("createIdentifier", () => {
     await resetTestDb();
   });
 
+  it("trims padded entityId on create", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(19) });
+    const created = await runDomain(
+      createIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        entityId: `  ${entity.id}  `,
+        type: "email",
+        value: "ada@mailhost.test",
+        confidence: "unverified",
+        status: "unknown",
+      })
+    );
+    expect(created.entityId).toBe(entity.id);
+  });
+
   it("blocks confirmed without evidence", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
@@ -60,6 +77,41 @@ describe("createIdentifier", () => {
     );
     const links = await evidenceLinksRepo.listForIdentifiers(db, [created.id]);
     expect(links.get(created.id)).toEqual([evidence.id]);
+  });
+
+  it("stores trimmed notes on create", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(25) });
+    const created = await runDomain(
+      createIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        entityId: entity.id,
+        type: "email",
+        value: "notes@mailhost.test",
+        confidence: "unverified",
+        status: "unknown",
+        notes: "  primary inbox  ",
+      })
+    );
+    expect(created.notes).toBe("primary inbox");
+  });
+
+  it("stores trimmed identifier type on create", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(26) });
+    const created = await runDomain(
+      createIdentifierEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        entityId: entity.id,
+        type: "  email  " as "email",
+        value: "typed@mailhost.test",
+        confidence: "unverified",
+        status: "unknown",
+      })
+    );
+    expect(created.type).toBe("email");
   });
 
   it("conflicts on a duplicate natural key", async () => {

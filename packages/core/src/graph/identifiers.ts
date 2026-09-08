@@ -13,9 +13,9 @@ import type {
   IdentifierStatus,
   IdentifierType,
 } from "@watchdog/schemas";
-import { normalizeIdList, validateIdentifierWrite } from "@watchdog/schemas";
+import { normalizeUuidList, trimmedOrNull, validateIdentifierWrite } from "@watchdog/schemas";
 
-import { assertEvidenceIdsInCaseEffect } from "../evidence/evidence";
+import { assertEvidenceIdsInCaseEffect, parseGraphEvidenceIdsEffect } from "../evidence/evidence";
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
@@ -28,6 +28,8 @@ import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
   assertEntityInCaseEffect,
+  assertEvidenceLinkedEffect,
+  requireTrimmedGraphId,
 } from "./patch/guards";
 
 const NATURAL_KEY_INDEX = "identifiers_natural_uidx";
@@ -63,11 +65,11 @@ export interface UpdateIdentifierInput {
   organizationId: string;
   identifierId: string;
   value?: string;
-  platform?: string;
+  platform?: string | null;
   type?: IdentifierType;
   status?: IdentifierStatus;
   confidence?: ConfidenceTier;
-  notes?: string;
+  notes?: string | null;
   evidenceIds?: string[];
 }
 
@@ -81,7 +83,7 @@ function toRecord(row: IdentifierRow, evidenceIds: string[]): IdentifierRecord {
     confidence: row.confidence,
     status: row.status,
     notes: row.notes ?? null,
-    evidenceIds,
+    evidenceIds: normalizeUuidList(evidenceIds),
   };
 }
 
@@ -91,10 +93,14 @@ export function listIdentifiersForEntityEffect(
   entityId: string
 ): Effect.Effect<IdentifierRecord[], DomainTag> {
   return Effect.gen(function* listIdentifiersForEntityGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
-    yield* assertEntityInCaseEffect(caseId, entityId, db);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedEntityId = yield* requireTrimmedGraphId(
+      entityId,
+      "Entity not found in this Case"
+    );
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
     const rows = yield* tryDb(() =>
-      identifiersRepo.listForEntity(db, entityId)
+      identifiersRepo.listForEntity(db, normalizedEntityId)
     );
     const byId = yield* tryDb(() =>
       evidenceLinksRepo.listForIdentifiers(
@@ -111,6 +117,8 @@ export interface CaseIdentifierRecord extends IdentifierRecord {
   entityName: string;
   entitySlug: string;
   entityKind: EntityKind;
+  entitySummary: string | null;
+  entityNotes: string | null;
 }
 
 export function toCaseIdentifierRecord(
@@ -122,6 +130,8 @@ export function toCaseIdentifierRecord(
     entityName: row.entityName,
     entitySlug: row.entitySlug,
     entityKind: row.entityKind,
+    entitySummary: row.entitySummary,
+    entityNotes: row.entityNotes,
   };
 }
 
@@ -130,8 +140,8 @@ export function listIdentifiersForCaseEffect(
   organizationId: string
 ): Effect.Effect<CaseIdentifierRecord[], DomainTag> {
   return Effect.gen(function* listIdentifiersForCaseGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() => identifiersRepo.listForCase(db, caseId));
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const rows = yield* tryDb(() => identifiersRepo.listForCase(db, scopedCaseId));
     const byId = yield* tryDb(() =>
       evidenceLinksRepo.listForIdentifiers(
         db,
@@ -148,7 +158,10 @@ export function createIdentifierEffect(
   input: CreateIdentifierInput
 ): Effect.Effect<IdentifierRecord, DomainTag> {
   return Effect.gen(function* createIdentifierGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
     const written = validateIdentifierWrite({
       type: input.type,
       value: input.value,
@@ -157,26 +170,31 @@ export function createIdentifierEffect(
     if (!written.ok) {
       return yield* new InvalidError({ reason: written.message });
     }
-    const { value, platform } = written;
+    const { type, value, platform } = written;
 
-    const evidenceIds = normalizeIdList(input.evidenceIds ?? []);
+    const evidenceIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds ?? []);
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
+
+    const entityId = yield* requireTrimmedGraphId(
+      input.entityId,
+      "Entity not found in this Case"
+    );
 
     const row = yield* transact(
       (tx) =>
         Effect.gen(function* createIdentifierTx() {
-          yield* assertEntityInCaseEffect(input.caseId, input.entityId, tx);
-          yield* assertEvidenceIdsInCaseEffect(input.caseId, evidenceIds, tx);
+          yield* assertEntityInCaseEffect(scopedCaseId, entityId, tx);
+          yield* assertEvidenceIdsInCaseEffect(scopedCaseId, evidenceIds, tx);
 
           const created = yield* tryDb(() =>
             identifiersRepo.create(tx, {
-              entityId: input.entityId,
-              type: input.type,
+              entityId,
+              type,
               platform,
               value,
               confidence: input.confidence,
               status: input.status,
-              notes: input.notes ?? null,
+              notes: trimmedOrNull(input.notes),
             })
           );
           if (!created) {
@@ -184,15 +202,16 @@ export function createIdentifierEffect(
               reason: "Failed to create Identifier",
             });
           }
-          yield* tryDb(() =>
+          const linked = yield* tryDb(() =>
             evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
           );
+          yield* assertEvidenceLinkedEffect(linked);
           return created;
         }),
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
     );
 
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, evidenceIds);
   });
 }
@@ -201,9 +220,16 @@ export function updateIdentifierEffect(
   input: UpdateIdentifierInput
 ): Effect.Effect<IdentifierRecord, DomainTag> {
   return Effect.gen(function* updateIdentifierGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const identifierId = yield* requireTrimmedGraphId(
+      input.identifierId,
+      "Identifier not found"
+    );
     const existing = yield* tryDb(() =>
-      identifiersRepo.getInCase(db, input.caseId, input.identifierId)
+      identifiersRepo.getInCase(db, scopedCaseId, identifierId)
     );
     if (!existing) {
       return yield* new NotFoundError({ resource: "Identifier not found" });
@@ -221,21 +247,27 @@ export function updateIdentifierEffect(
       return yield* new InvalidError({ reason: "Nothing to update" });
     }
 
-    const byIdExisting = yield* tryDb(() =>
-      evidenceLinksRepo.listForIdentifiers(db, [existing.id])
-    );
-    const evidenceIds = byIdExisting.get(existing.id) ?? [];
-
     const { row, evidenceIds: nextEvidenceIds } = yield* transact(
       (tx) =>
         Effect.gen(function* updateIdentifierTx() {
-          let nextIds = evidenceIds;
-          if (input.evidenceIds !== undefined) {
-            nextIds = normalizeIdList(input.evidenceIds);
-            yield* assertEvidenceIdsInCaseEffect(input.caseId, nextIds, tx);
-            nextIds = yield* tryDb(() =>
+          let nextIds: string[];
+          if (input.evidenceIds === undefined) {
+            const byId = yield* tryDb(() =>
+              evidenceLinksRepo.listForIdentifiers(tx, [existing.id])
+            );
+            nextIds = byId.get(existing.id) ?? [];
+          } else {
+            nextIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds);
+            yield* assertEvidenceIdsInCaseEffect(scopedCaseId, nextIds, tx);
+            const replaced = yield* tryDb(() =>
               evidenceLinksRepo.replaceIdentifier(tx, existing.id, nextIds)
             );
+            if (replaced === null) {
+              return yield* new InvalidError({
+                reason: "Invalid evidence id",
+              });
+            }
+            nextIds = replaced;
           }
 
           const nextConfidence = input.confidence ?? existing.confidence;
@@ -245,16 +277,20 @@ export function updateIdentifierEffect(
             });
           }
 
-          const patch: Parameters<typeof identifiersRepo.update>[2] = {};
+          const patch: Parameters<typeof identifiersRepo.updateInCase>[3] = {};
           if (
             input.value !== undefined ||
             input.type !== undefined ||
             input.platform !== undefined
           ) {
+            const nextPlatform =
+              input.platform === undefined
+                ? existing.platform
+                : trimmedOrNull(input.platform) ?? "";
             const written = validateIdentifierWrite({
               type: input.type ?? existing.type,
               value: input.value ?? existing.value,
-              platform: input.platform ?? existing.platform,
+              platform: nextPlatform,
             });
             if (!written.ok) {
               return yield* new InvalidError({ reason: written.message });
@@ -276,7 +312,7 @@ export function updateIdentifierEffect(
             patch.confidence = input.confidence;
           }
           if (input.notes !== undefined) {
-            patch.notes = input.notes.trim() || null;
+            patch.notes = trimmedOrNull(input.notes);
           }
 
           if (Object.keys(patch).length === 0) {
@@ -284,7 +320,12 @@ export function updateIdentifierEffect(
           }
 
           const updated = yield* tryDb(() =>
-            identifiersRepo.update(tx, input.identifierId, patch)
+            identifiersRepo.updateInCase(
+              tx,
+              scopedCaseId,
+              identifierId,
+              patch
+            )
           );
           if (!updated) {
             return yield* new InvalidError({
@@ -296,7 +337,7 @@ export function updateIdentifierEffect(
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
     );
 
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, nextEvidenceIds);
   });
 }
@@ -307,9 +348,13 @@ export function deleteIdentifierEffect(
   identifierId: string
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteIdentifierGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedIdentifierId = yield* requireTrimmedGraphId(
+      identifierId,
+      "Identifier not found"
+    );
     const existing = yield* tryDb(() =>
-      identifiersRepo.getInCase(db, caseId, identifierId)
+      identifiersRepo.getInCase(db, scopedCaseId, normalizedIdentifierId)
     );
     if (!existing) {
       return yield* new NotFoundError({
@@ -318,12 +363,12 @@ export function deleteIdentifierEffect(
     }
 
     const deleted = yield* tryDb(() =>
-      identifiersRepo.deleteInCase(db, caseId, identifierId)
+      identifiersRepo.deleteInCase(db, scopedCaseId, normalizedIdentifierId)
     );
     if (!deleted) {
       return yield* new InvalidError({ reason: "Failed to delete Identifier" });
     }
 
-    yield* notifyEntityChangedEffect(caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
   });
 }

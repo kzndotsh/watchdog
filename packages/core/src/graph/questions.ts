@@ -7,6 +7,7 @@ import {
   type QuestionRow,
 } from "@watchdog/db";
 import type { EntityKind, QuestionStatus } from "@watchdog/schemas";
+import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
 
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
@@ -16,7 +17,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertCaseInOrgEffect, assertEntityInCaseEffect } from "./patch/guards";
+import { assertCaseInOrgEffect, assertEntityInCaseEffect, requireTrimmedGraphId } from "./patch/guards";
 
 export interface QuestionRecord {
   id: string;
@@ -112,10 +113,14 @@ export function listQuestionsForEntityEffect(
   entityId: string
 ): Effect.Effect<QuestionRecord[], DomainTag> {
   return Effect.gen(function* listQuestionsGen() {
-    yield* assertCaseInOrgEffect(caseId, organizationId);
-    yield* assertEntityInCaseEffect(caseId, entityId, db);
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedEntityId = yield* requireTrimmedGraphId(
+      entityId,
+      "Entity not found in this Case"
+    );
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
     const rows = yield* tryDb(() =>
-      questionsRepo.listForEntity(db, entityId)
+      questionsRepo.listForEntity(db, normalizedEntityId)
     );
     return rows.map(toRecord);
   });
@@ -125,19 +130,30 @@ export function createQuestionEffect(
   input: CreateQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag> {
   return Effect.gen(function* createQuestionGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
-    yield* assertEntityInCaseEffect(input.caseId, input.entityId, db);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const entityId = yield* requireTrimmedGraphId(
+      input.entityId,
+      "Entity not found in this Case"
+    );
+    yield* assertEntityInCaseEffect(scopedCaseId, entityId, db);
+    const text = trimmedOrUndefined(input.text);
+    if (text === undefined) {
+      return yield* new InvalidError({ reason: "Question text is required" });
+    }
     const row = yield* tryDb(() =>
       questionsRepo.create(db, {
-        entityId: input.entityId,
-        text: input.text,
+        entityId,
+        text,
         status: "open",
       })
     );
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to create Question" });
     }
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -146,9 +162,16 @@ export function resolveQuestionEffect(
   input: ResolveQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag> {
   return Effect.gen(function* resolveQuestionGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const questionId = yield* requireTrimmedGraphId(
+      input.questionId,
+      "Question not found"
+    );
     const existing = yield* tryDb(() =>
-      questionsRepo.getInCase(db, input.caseId, input.questionId)
+      questionsRepo.getInCase(db, scopedCaseId, questionId)
     );
     if (!existing) {
       return yield* new NotFoundError({ resource: "Question not found" });
@@ -158,14 +181,14 @@ export function resolveQuestionEffect(
     }
 
     const row = yield* tryDb(() =>
-      questionsRepo.resolve(db, input.questionId, {
-        resolvedNote: input.resolvedNote ?? null,
+      questionsRepo.resolveInCase(db, scopedCaseId, questionId, {
+        resolvedNote: trimmedOrNull(input.resolvedNote),
       })
     );
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to resolve Question" });
     }
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -174,9 +197,16 @@ export function updateQuestionEffect(
   input: UpdateQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag> {
   return Effect.gen(function* updateQuestionGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const questionId = yield* requireTrimmedGraphId(
+      input.questionId,
+      "Question not found"
+    );
     const existing = yield* tryDb(() =>
-      questionsRepo.getInCase(db, input.caseId, input.questionId)
+      questionsRepo.getInCase(db, scopedCaseId, questionId)
     );
     if (!existing) {
       return yield* new NotFoundError({ resource: "Question not found" });
@@ -191,18 +221,24 @@ export function updateQuestionEffect(
       });
     }
 
+    const nextText =
+      input.text === undefined ? undefined : trimmedOrUndefined(input.text);
+    if (input.text !== undefined && nextText === undefined) {
+      return yield* new InvalidError({ reason: "Question text is required" });
+    }
+
     const row = yield* tryDb(() =>
-      questionsRepo.update(db, input.questionId, {
-        ...(input.text === undefined ? {} : { text: input.text }),
+      questionsRepo.updateInCase(db, scopedCaseId, questionId, {
+        ...(nextText === undefined ? {} : { text: nextText }),
         ...(input.resolvedNote === undefined
           ? {}
-          : { resolvedNote: input.resolvedNote }),
+          : { resolvedNote: trimmedOrNull(input.resolvedNote) }),
       })
     );
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to update Question" });
     }
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -211,9 +247,16 @@ export function reopenQuestionEffect(
   input: ReopenQuestionInput
 ): Effect.Effect<QuestionRecord, DomainTag> {
   return Effect.gen(function* reopenQuestionGen() {
-    yield* assertCaseInOrgEffect(input.caseId, input.organizationId);
+    const scopedCaseId = yield* assertCaseInOrgEffect(
+      input.caseId,
+      input.organizationId
+    );
+    const questionId = yield* requireTrimmedGraphId(
+      input.questionId,
+      "Question not found"
+    );
     const existing = yield* tryDb(() =>
-      questionsRepo.getInCase(db, input.caseId, input.questionId)
+      questionsRepo.getInCase(db, scopedCaseId, questionId)
     );
     if (!existing) {
       return yield* new NotFoundError({ resource: "Question not found" });
@@ -223,7 +266,7 @@ export function reopenQuestionEffect(
     }
 
     const row = yield* tryDb(() =>
-      questionsRepo.update(db, input.questionId, {
+      questionsRepo.updateInCase(db, scopedCaseId, questionId, {
         status: "open",
         resolvedNote: null,
       })
@@ -231,7 +274,7 @@ export function reopenQuestionEffect(
     if (!row) {
       return yield* new InvalidError({ reason: "Failed to reopen Question" });
     }
-    yield* notifyEntityChangedEffect(input.caseId);
+    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
