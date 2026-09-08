@@ -24,12 +24,15 @@ export const urlscanSubmit = defineCollectCap({
   egress: "third_party",
   credentials: [{ name: "URLSCAN_API_KEY" }],
   consumes: [{ kind: "url" }],
-  produces: [{ kind: "evidence", evidenceKind: "file" }],
+  produces: [
+    { kind: "evidence", evidenceKind: "file" },
+    { kind: "identifier", type: "url" },
+  ],
   schema: urlscanSubmitSnapshotSchema,
   reportLabel: "urlscan.submit",
   fetch: (ctx) =>
     Effect.gen(function* urlscanSubmitFetch() {
-      const url = ctx.input.url.trim();
+      const url = ctx.input.url;
       const visibility = ctx.input.visibility ?? "unlisted";
       ctx.log(`urlscan.io submit ${url} visibility=${visibility}`);
       const key = yield* ctx.getCredential("URLSCAN_API_KEY");

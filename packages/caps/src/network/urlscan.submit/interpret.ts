@@ -3,7 +3,8 @@ import type { z } from "zod";
 import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { UrlscanSubmitSnapshot } from "@watchdog/tools";
 
-import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
+import { urlSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { urlscanSubmitInput } from "./input";
 
 type UrlscanSubmitInput = z.infer<typeof urlscanSubmitInput>;
@@ -21,9 +22,11 @@ export function interpretUrlscanSubmitReport(
   report: UrlscanSubmitSnapshot,
   opts: CapInterpretOpts<UrlscanSubmitInput>
 ): CapInterpretResult {
-  return interpretObservationClaim({
+  return interpretIdentifierBatches({
     entityId: opts.input.entityId,
-    text: summarize(report),
-    noEntitySummary: "urlscan.io submit completed; no Entity to attach Claim",
+    batches: [...urlSeedBatch(report.url)],
+    claimText: summarize(report),
+    noEntitySummary:
+      "urlscan.io submit completed; no Entity to attach Identifiers",
   });
 }

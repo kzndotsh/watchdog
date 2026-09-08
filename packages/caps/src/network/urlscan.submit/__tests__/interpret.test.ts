@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   claimText,
+  expectProposesIdentifier,
   itRejectsIncompleteReport,
   testId,
 } from "@watchdog/test-kit";
@@ -26,13 +27,16 @@ describe("interpret", () => {
     accepted: true,
   };
 
-  it("interpretUrlscanSubmitReport proposes Claim when entityId set", () => {
+  it("interpretUrlscanSubmitReport proposes url Identifier + Claim when entityId set", () => {
     const result = interpretUrlscanSubmitReport(fixture, {
       input: { url: fixture.url, entityId },
     });
-    expect(result.patch.length).toBe(1);
-    expect(result.patch[0]?.resource).toBe("claim");
-    expect(claimText(result, 0)).toMatch(/accepted \(unlisted\)/);
+    expectProposesIdentifier(result, {
+      type: "url",
+      value: "https://example.com",
+    });
+    expect(result.patch.length).toBe(2);
+    expect(claimText(result, 1)).toMatch(/accepted \(unlisted\)/);
   });
 
   it("interpretUrlscanSubmitReport empty patch without entityId", () => {
