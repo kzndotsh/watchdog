@@ -5,15 +5,16 @@ import {
   evidenceKindSchema,
   identifierTypeSchema,
   jobStatusSchema,
+  taskPrioritySchema,
   taskStatusSchema,
 } from "./enums";
-import { uuidSchema } from "./primitives";
+import { jsonObjectSchema, trimmedUuidSchema, uuidSchema } from "./primitives";
 
 export const SEARCH_MIN_QUERY_LENGTH = 2;
 
 export const searchCaseInputSchema = z.object({
-  caseId: uuidSchema,
-  q: z.string(),
+  caseId: trimmedUuidSchema,
+  q: z.string().trim().min(SEARCH_MIN_QUERY_LENGTH),
   limit: z.number().int().min(1).max(50).optional(),
 });
 export type SearchCaseInput = z.output<typeof searchCaseInputSchema>;
@@ -39,13 +40,25 @@ export const searchCaseEvidenceHitSchema = z.object({
   id: uuidSchema,
   label: z.string().nullable(),
   kind: evidenceKindSchema,
+  sourceUrl: z.string().nullable(),
+  entityName: z.string().nullable(),
 });
 
 export const searchCaseTaskHitSchema = z.object({
   id: uuidSchema,
   title: z.string(),
   status: taskStatusSchema,
+  priority: taskPrioritySchema.nullable(),
   entityId: uuidSchema.nullable(),
+  entityName: z.string().nullable(),
+});
+
+export const searchCaseProposalHitSchema = z.object({
+  id: uuidSchema,
+  summary: z.string().nullable(),
+  capabilityId: z.string().nullable(),
+  playbookId: z.string().nullable(),
+  entityName: z.string().nullable(),
 });
 
 export const searchCaseJobHitSchema = z.object({
@@ -53,12 +66,8 @@ export const searchCaseJobHitSchema = z.object({
   capabilityId: z.string(),
   status: jobStatusSchema,
   resultSummary: z.string().nullable(),
-});
-
-export const searchCaseProposalHitSchema = z.object({
-  id: uuidSchema,
-  summary: z.string().nullable(),
-  capabilityId: z.string().nullable(),
+  input: jsonObjectSchema,
+  playbookId: z.string().nullable(),
 });
 
 export const searchCaseCaseHitSchema = z.object({
@@ -76,5 +85,9 @@ export const searchCaseResultSchema = z.object({
   jobs: z.array(searchCaseJobHitSchema),
   proposals: z.array(searchCaseProposalHitSchema),
   cases: z.array(searchCaseCaseHitSchema),
+  /** evidenceId → display label for job input resolution in search chrome. */
+  evidenceLabels: z.record(z.string(), z.string()),
+  /** entityId → display label for job input resolution in search chrome. */
+  entityLabels: z.record(z.string(), z.string()),
 });
 export type SearchCaseResult = z.output<typeof searchCaseResultSchema>;

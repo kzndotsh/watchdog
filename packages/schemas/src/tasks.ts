@@ -1,7 +1,23 @@
 import { z } from "zod";
 
-import { taskPrioritySchema, taskStatusSchema } from "./enums";
-import { nonEmptyTrimmed, uuidSchema } from "./primitives";
+import {
+  optionalTaskPrioritySchema,
+  optionalTaskStatusSchema,
+  taskPrioritySchema,
+  taskStatusSchema,
+  trimmedTaskStatusSchema,
+} from "./enums";
+import {
+  nonEmptyTrimmed,
+  nullableTrimmedPatchSchema,
+  nullableUuidSchema,
+  optionalDueDatePatchSchema,
+  optionalTrimmedSchema,
+  optionalUuidSchema,
+  trimmedUuidSchema,
+  uuidListSchema,
+  uuidSchema,
+} from "./primitives";
 
 export const taskSchema = z.object({
   id: uuidSchema,
@@ -17,35 +33,40 @@ export const taskSchema = z.object({
   updatedAt: z.string(),
 });
 
-export const taskFiltersSchema = z.object({
-  caseId: uuidSchema,
-  entityId: uuidSchema.optional(),
-  status: taskStatusSchema.optional(),
-  unattachedOnly: z.boolean().optional(),
-});
+export const taskFiltersSchema = z
+  .object({
+    caseId: trimmedUuidSchema,
+    entityId: optionalUuidSchema,
+    status: optionalTaskStatusSchema,
+    unattachedOnly: z.boolean().optional(),
+  })
+  .refine(
+    (filters) => !(filters.unattachedOnly && filters.entityId !== undefined),
+    { message: "entityId and unattachedOnly are mutually exclusive" }
+  );
 export type TaskFiltersInput = z.output<typeof taskFiltersSchema>;
 
 export const taskCreateInputSchema = z.object({
-  caseId: uuidSchema,
+  caseId: trimmedUuidSchema,
   title: nonEmptyTrimmed,
-  description: z.string().optional(),
-  status: taskStatusSchema.optional(),
-  priority: taskPrioritySchema.nullable().optional(),
-  dueDate: z.string().nullable().optional(),
-  entityId: uuidSchema.nullable().optional(),
+  description: optionalTrimmedSchema,
+  status: optionalTaskStatusSchema,
+  priority: optionalTaskPrioritySchema.nullable().optional(),
+  dueDate: optionalDueDatePatchSchema,
+  entityId: nullableUuidSchema.optional(),
 });
 export type CreateTaskInput = z.output<typeof taskCreateInputSchema>;
 
 export const taskUpdateInputSchema = z
   .object({
-    caseId: uuidSchema,
-    taskId: uuidSchema,
+    caseId: trimmedUuidSchema,
+    taskId: trimmedUuidSchema,
     title: nonEmptyTrimmed.optional(),
-    description: z.string().nullable().optional(),
-    status: taskStatusSchema.optional(),
-    priority: taskPrioritySchema.nullable().optional(),
-    dueDate: z.string().nullable().optional(),
-    entityId: uuidSchema.nullable().optional(),
+    description: nullableTrimmedPatchSchema,
+    status: optionalTaskStatusSchema,
+    priority: optionalTaskPrioritySchema.nullable().optional(),
+    dueDate: optionalDueDatePatchSchema,
+    entityId: nullableUuidSchema.optional(),
   })
   .refine(
     (data) =>
@@ -60,19 +81,21 @@ export const taskUpdateInputSchema = z
 export type UpdateTaskInput = z.output<typeof taskUpdateInputSchema>;
 
 export const taskDeleteInputSchema = z.object({
-  caseId: uuidSchema,
-  taskId: uuidSchema,
+  caseId: trimmedUuidSchema,
+  taskId: trimmedUuidSchema,
 });
 export type DeleteTaskInput = z.output<typeof taskDeleteInputSchema>;
 
 export const taskIdInputSchema = z.object({
-  caseId: uuidSchema,
-  taskId: uuidSchema,
+  caseId: trimmedUuidSchema,
+  taskId: trimmedUuidSchema,
 });
 
 export const taskReorderInputSchema = z.object({
-  caseId: uuidSchema,
-  status: taskStatusSchema,
-  orderedIds: z.array(uuidSchema),
+  caseId: trimmedUuidSchema,
+  status: trimmedTaskStatusSchema,
+  orderedIds: uuidListSchema.refine((ids) => ids.length > 0, {
+    message: "orderedIds must not be empty",
+  }),
 });
 export type ReorderTasksInput = z.output<typeof taskReorderInputSchema>;

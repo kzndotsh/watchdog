@@ -3,6 +3,16 @@
 export const ENTITY_KINDS = ["person", "infra", "org"] as const;
 export type EntityKind = (typeof ENTITY_KINDS)[number];
 
+/** Trimmed display name, falling back to slug when name is blank. */
+export function entityDisplayLabel(entity: {
+  name: string;
+  slug: string;
+}): string {
+  const trimmed = entity.name.trim();
+  if (trimmed !== "") return trimmed;
+  return entity.slug.trim();
+}
+
 export const CLAIM_CLASSES = [
   "observation",
   "assessment",
@@ -279,6 +289,15 @@ export function edgePredicateAllowsKinds(
   return pairs.some(([from, to]) => from === fromKind && to === toKind);
 }
 
+/** `related_to` edges require non-empty notes at create/update time. */
+export function edgeRelatedToHasNotes(input: {
+  predicate?: string;
+  notes?: string | null;
+}): boolean {
+  if (input.predicate !== "related_to") return true;
+  return typeof input.notes === "string" && input.notes.trim() !== "";
+}
+
 export type EdgeOrientation = "forward" | "inverse";
 
 /**
@@ -292,9 +311,11 @@ export function resolveEdgeEndpoints(opts: {
   orientation: EdgeOrientation;
   existing?: { fromId: string; toId: string; peerId: string };
 }): { fromId: string; toId: string } {
-  const { entityId, peerId, predicate, orientation, existing } = opts;
+  const entityId = opts.entityId.trim();
+  const peerId = opts.peerId.trim();
+  const { predicate, orientation, existing } = opts;
   if (EDGE_PREDICATE_META[predicate].symmetric) {
-    if (existing && existing.peerId === peerId) {
+    if (existing && existing.peerId.trim() === peerId) {
       return { fromId: existing.fromId, toId: existing.toId };
     }
     return { fromId: entityId, toId: peerId };
@@ -319,14 +340,16 @@ export function parseEdgePhraseValue(
   value: string
 ): { predicate: EdgePredicate; orientation: EdgeOrientation } | null {
   const [predicateRaw, orientationRaw] = value.split(":");
+  const predicate = predicateRaw?.trim().toLowerCase();
+  const orientation = orientationRaw?.trim().toLowerCase();
   if (
-    !predicateRaw ||
-    !isEdgePredicate(predicateRaw) ||
-    (orientationRaw !== "forward" && orientationRaw !== "inverse")
+    !predicate ||
+    !isEdgePredicate(predicate) ||
+    (orientation !== "forward" && orientation !== "inverse")
   ) {
     return null;
   }
-  return { predicate: predicateRaw, orientation: orientationRaw };
+  return { predicate, orientation };
 }
 
 export const EVIDENCE_KINDS = [
@@ -355,6 +378,25 @@ export function isOpenJobStatus(status: JobStatus): boolean {
   return (OPEN_JOB_STATUSES as readonly string[]).includes(status);
 }
 
+/** When collapsing playbook step rows, pick the most significant status. */
+export const PLAYBOOK_AGGREGATE_STATUS_PRIORITY: readonly JobStatus[] = [
+  "running",
+  "blocked",
+  "queued",
+  "failed",
+  "cancelled",
+  "succeeded",
+];
+
+export function pickPlaybookAggregateStatus(
+  statuses: readonly JobStatus[]
+): JobStatus {
+  for (const status of PLAYBOOK_AGGREGATE_STATUS_PRIORITY) {
+    if (statuses.some((value) => value === status)) return status;
+  }
+  return statuses[0] ?? "queued";
+}
+
 export const PLAYBOOK_SEED_KINDS = [
   "host",
   "url",
@@ -365,6 +407,10 @@ export const PLAYBOOK_SEED_KINDS = [
   "handle",
 ] as const;
 export type PlaybookSeedKind = (typeof PLAYBOOK_SEED_KINDS)[number];
+
+export function isPlaybookSeedKind(value: string): value is PlaybookSeedKind {
+  return (PLAYBOOK_SEED_KINDS as readonly string[]).includes(value);
+}
 
 export const HANDOFF_BAGS = [
   "host",
