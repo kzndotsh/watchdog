@@ -1,12 +1,15 @@
+import { isIP } from "node:net";
+
 import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { createTtlCache } from "../cache/ttl-memory";
-import { normalizeIp, normalizeIpEffect } from "../dns/reverse";
+import { normalizeIpEffect } from "../dns/reverse";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";
+import { expandIpv6 } from "./ip-lookup-cymru";
 
 export const torExitLookupSnapshotSchema = z.object({
   ip: z.string().min(1),
@@ -21,6 +24,21 @@ const EXIT_LIST_TTL_MS = 60 * 60_000;
 const EXIT_LIST_CACHE_KEY = "exit-addresses";
 const exitListCache = createTtlCache<Set<string>>(EXIT_LIST_TTL_MS);
 
+/** Normalize exit-list IPs so equivalent IPv6 spellings match. */
+export function torExitIpKey(raw: string): string | null {
+  const trimmed = raw.trim();
+  const version = isIP(trimmed);
+  if (version === 0) return null;
+  if (version === 6) {
+    try {
+      return expandIpv6(trimmed).toLowerCase();
+    } catch {
+      return trimmed.toLowerCase();
+    }
+  }
+  return trimmed;
+}
+
 /** Exported for unit tests — same parser used by fetchTorExitLookup. */
 export function parseExitAddresses(text: string): Set<string> {
   const ips = new Set<string>();
@@ -28,11 +46,8 @@ export function parseExitAddresses(text: string): Set<string> {
     const match = /^ExitAddress\s+(\S+)/.exec(line.trim());
     const candidate = match?.[1];
     if (!candidate) continue;
-    try {
-      ips.add(normalizeIp(candidate));
-    } catch {
-      /* skip malformed entries */
-    }
+    const key = torExitIpKey(candidate);
+    if (key) ips.add(key);
   }
   return ips;
 }
@@ -88,7 +103,7 @@ export function fetchTorExitLookupEffect(
       ip,
       queriedAt: new Date().toISOString(),
       source: "check.torproject.org",
-      isExit: exits.has(ip),
+      isExit: exits.has(torExitIpKey(ip) ?? ip),
     });
   });
 }
