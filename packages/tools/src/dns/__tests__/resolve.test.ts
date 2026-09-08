@@ -1,6 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { vi } from "vitest";
+
+import { ValidationVendorError } from "../../errors/tagged-errors";
+import { toolsHttpClientLayer } from "../../http/http-client-layer";
 
 const { mockResolver } = vi.hoisted(() => ({
   mockResolver: {
@@ -47,5 +50,31 @@ describe("resolveDnsRecords", () => {
       expect(records.mx[0]?.exchange).toBe("mx.example.com");
       expect(records.ns).toContain("ns.example.com");
     })
+  );
+
+  it.effect("resolveDnsRecordsEffect rejects IP literals", () =>
+    Effect.gen(function* resolveDnsRecordsRejectIpGen() {
+      const outcome = yield* Effect.result(
+        resolveDnsRecordsEffect("8.8.8.8", AbortSignal.timeout(5000))
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
+  it.effect("resolveDnsRecordsEffect rejects invalid hostnames", () =>
+    Effect.gen(function* resolveDnsRecordsRejectHostGen() {
+      const outcome = yield* Effect.result(
+        resolveDnsRecordsEffect("not a host!", AbortSignal.timeout(5000))
+      );
+
+      expect(Result.isFailure(outcome)).toBe(true);
+      if (Result.isFailure(outcome)) {
+        expect(outcome.failure).toBeInstanceOf(ValidationVendorError);
+      }
+    }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 });
