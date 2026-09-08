@@ -9,10 +9,11 @@ import {
   resolveArtifactHeaderAction,
   resolveArtifactTextContent,
 } from "@/domains/jobs/components/artifact-content-helpers";
-import { cn, errMessage } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { artifactBodyFromContent } from "@/shared/ui/artifact-body-from-content";
 import { ArtifactPreview } from "@/shared/ui/artifact-preview";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -72,8 +73,10 @@ export function ArtifactContent(props: ArtifactContentProps) {
   const contentPending = listPending(contentQuery, {
     enabled: contentQueryEnabled,
   });
-  const contentLoadError =
-    open && !contentPending && !contentQuery.isFetching && contentQuery.isError;
+  const contentLoadErrorMessage = open
+    ? queryLoadError(contentQuery, contentPending, "Failed to load artifact")
+    : null;
+  const contentLoadError = contentLoadErrorMessage !== null;
 
   const content = resolveArtifactTextContent(
     open,
@@ -82,12 +85,12 @@ export function ArtifactContent(props: ArtifactContentProps) {
     artifactQueryText(contentQuery.data)
   );
   const shaChip = sha256Chip(artifactShaChipValue(sha256));
-  const body = contentLoadError
+  const body = contentLoadErrorMessage
     ? {
         kind: "custom" as const,
         children: (
           <FetchErrorAlert
-            error={errMessage(contentQuery.error, "Failed to load artifact")}
+            error={contentLoadErrorMessage}
             onRetry={() => {
               void contentQuery.refetch();
             }}

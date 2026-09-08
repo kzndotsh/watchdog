@@ -21,6 +21,7 @@ import { Spinner } from "@/shared/ui/shadcn/spinner";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 export function AcceptInvitation({ invitationId }: { invitationId: string }) {
@@ -60,7 +61,14 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
     },
   });
 
-  if (listPending(previewQuery) || sessionPending) {
+  const previewPending = listPending(previewQuery);
+  const previewLoadError = queryLoadError(
+    previewQuery,
+    previewPending,
+    "Could not load invitation"
+  );
+
+  if (previewPending || sessionPending) {
     return (
       <div className="flex justify-center py-10">
         <Spinner />
@@ -68,10 +76,10 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
     );
   }
 
-  if (previewQuery.isError) {
+  if (previewLoadError !== null) {
     return (
       <FetchErrorAlert
-        error={errMessage(previewQuery.error, "Could not load invitation")}
+        error={previewLoadError}
         onRetry={() => {
           void previewQuery.refetch();
         }}

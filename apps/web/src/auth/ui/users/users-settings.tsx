@@ -14,6 +14,7 @@ import { Spinner } from "@/shared/ui/shadcn/spinner";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 const USERS_QUERY_KEY = ["auth-admin", "users"] as const;
@@ -93,7 +94,14 @@ export function UsersSettings() {
     },
   });
 
-  if (listPending(usersQuery)) {
+  const usersPending = listPending(usersQuery);
+  const usersLoadError = queryLoadError(
+    usersQuery,
+    usersPending,
+    "Could not load users"
+  );
+
+  if (usersPending) {
     return (
       <div className="flex justify-center py-8">
         <Spinner />
@@ -101,10 +109,10 @@ export function UsersSettings() {
     );
   }
 
-  if (usersQuery.isError) {
+  if (usersLoadError !== null) {
     return (
       <FetchErrorAlert
-        error={errMessage(usersQuery.error, "Could not load users")}
+        error={usersLoadError}
         onRetry={() => {
           void usersQuery.refetch();
         }}

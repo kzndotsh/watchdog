@@ -21,6 +21,7 @@ import { Spinner } from "@/shared/ui/shadcn/spinner";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
+import { queryLoadError } from "@/shared/lib/query-load-error";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 interface OrgMember {
@@ -146,7 +147,14 @@ export function TeamSettings() {
     },
   });
 
-  if (listPending(teamQuery)) {
+  const teamPending = listPending(teamQuery);
+  const teamLoadError = queryLoadError(
+    teamQuery,
+    teamPending,
+    "Could not load team"
+  );
+
+  if (teamPending) {
     return (
       <div className="flex justify-center py-8">
         <Spinner />
@@ -154,10 +162,10 @@ export function TeamSettings() {
     );
   }
 
-  if (teamQuery.isError) {
+  if (teamLoadError !== null) {
     return (
       <FetchErrorAlert
-        error={errMessage(teamQuery.error, "Could not load team")}
+        error={teamLoadError}
         onRetry={() => {
           void teamQuery.refetch();
         }}
