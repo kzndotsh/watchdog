@@ -10,6 +10,7 @@ import {
 } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
+import { normalizeEmail } from "../identity/email-lookup";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { asString, isRecord, recordRows } from "../parse/coerce";
 
@@ -38,7 +39,8 @@ function classifyHudsonrockQuery(raw: string): {
 } {
   const trimmed = raw.trim();
   if (trimmed.includes("@")) {
-    return { kind: "email", value: trimmed.toLowerCase() };
+    const { email } = normalizeEmail(trimmed);
+    return { kind: "email", value: email };
   }
   return classifyIpOrHost(trimmed);
 }

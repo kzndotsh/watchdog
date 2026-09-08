@@ -67,4 +67,20 @@ describe("hudsonrock", () => {
       Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
     )
   );
+
+  it.effect("fetchHudsonrockLookupEffect rejects invalid email queries", () =>
+    Effect.gen(function* fetchHudsonrockInvalidEmailGen() {
+      const result = yield* Effect.exit(
+        fetchHudsonrockLookupEffect(
+          "not-an-email",
+          "test-key",
+          AbortSignal.timeout(5000)
+        )
+      );
+      expect(result._tag).toBe("Failure");
+    }).pipe(
+      Effect.provide(toolsHttpClientLayer),
+      Effect.ensuring(Effect.sync(() => vi.unstubAllGlobals()))
+    )
+  );
 });
