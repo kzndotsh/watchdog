@@ -3,6 +3,8 @@ import { HttpClient } from "effect/unstable/http";
 
 import { errorMessage } from "../errors/tools-error";
 import { abortWhen } from "./abort-when";
+import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
+import { isBlockedUnshortenUrl } from "./unshorten-guards";
 
 export interface FetchBytesOptions {
   /** User-Agent header (Cap OPSEC policy — pass from Cap, never hardcode Cap id here). */
@@ -37,6 +39,35 @@ function fetchBytesFailure(url: string, error: unknown): FetchBytesResult {
 
 function mapFetchBytesFailure(url: string) {
   return (error: unknown) => Effect.succeed(fetchBytesFailure(url, error));
+}
+
+function resolveFetchTarget(
+  raw: string
+): { url: string } | { error: string; url: string } {
+  try {
+    assertHttpUrlScheme(raw);
+    const url = normalizeHttpUrl(raw);
+    if (isBlockedUnshortenUrl(url)) {
+      return { error: "Blocked URL (private/loopback)", url };
+    }
+    return { url };
+  } catch (error) {
+    return { error: errorMessage(error), url: raw };
+  }
+}
+
+function guardFetchBytesResult(result: FetchBytesResult): FetchBytesResult {
+  if (result.ok && isBlockedUnshortenUrl(result.finalUrl)) {
+    return {
+      ok: false,
+      status: result.status,
+      bytes: new Uint8Array(),
+      contentType: null,
+      finalUrl: result.finalUrl,
+      error: "Blocked redirect target (private/loopback)",
+    };
+  }
+  return result;
 }
 
 function fetchBytesBody(
@@ -84,15 +115,24 @@ export function fetchBytesEffect(
   signal: AbortSignal,
   options: FetchBytesOptions
 ): Effect.Effect<FetchBytesResult, never, HttpClient.HttpClient> {
-  return fetchBytesBody(url, options).pipe(
+  const target = resolveFetchTarget(url);
+  if ("error" in target) {
+    return Effect.succeed(fetchBytesFailure(target.url, target.error));
+  }
+
+  return fetchBytesBody(target.url, options).pipe(
+    Effect.map((result) => guardFetchBytesResult(result)),
     Effect.raceFirst(abortWhen(signal)),
     Effect.exit,
     Effect.map((exit) => {
       if (Exit.isSuccess(exit)) return exit.value;
       if (Cause.hasInterruptsOnly(exit.cause)) {
-        return fetchBytesFailure(url, new Error("This operation was aborted"));
+        return fetchBytesFailure(
+          target.url,
+          new Error("This operation was aborted")
+        );
       }
-      return fetchBytesFailure(url, Cause.squash(exit.cause));
+      return fetchBytesFailure(target.url, Cause.squash(exit.cause));
     })
   );
 }

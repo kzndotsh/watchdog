@@ -94,4 +94,28 @@ describe("fetchBytesEffect", () => {
       expect(result.error).toMatch(/abort/i);
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
+
+  it.effect("blocks private and loopback URLs before fetching", () =>
+    Effect.gen(function* fetchBytesBlockedGen() {
+      const result = yield* fetchBytesEffect(
+        "http://127.0.0.1/page",
+        new AbortController().signal,
+        { userAgent: "watchdog-test", maxBytes: 1024 }
+      );
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatch(/Blocked URL/);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
+
+  it.effect("rejects non-http(s) URLs before fetching", () =>
+    Effect.gen(function* fetchBytesBadSchemeGen() {
+      const result = yield* fetchBytesEffect(
+        "file:///etc/passwd",
+        new AbortController().signal,
+        { userAgent: "watchdog-test", maxBytes: 1024 }
+      );
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatch(/http or https/i);
+    }).pipe(Effect.provide(toolsHttpClientLayer))
+  );
 });
