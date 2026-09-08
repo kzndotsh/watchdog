@@ -3,24 +3,26 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { LanguageModel } from "ai";
 
 import type { LlmProviderConfig } from "./llm-provider";
+import { llmProviderConfigSchema } from "./llm-provider";
 
 /** Resolve a LanguageModel from vault-shaped config (no Graph/DB). */
 export function createWatchdogModel(config: LlmProviderConfig): LanguageModel {
-  switch (config.kind) {
+  const parsed = llmProviderConfigSchema.parse(config);
+  switch (parsed.kind) {
     case "anthropic": {
-      const anthropic = createAnthropic({ apiKey: config.apiKey });
-      return anthropic(config.model);
+      const anthropic = createAnthropic({ apiKey: parsed.apiKey });
+      return anthropic(parsed.model);
     }
     case "openai_compat": {
       const openai = createOpenAICompatible({
         name: "watchdog-compat",
-        apiKey: config.apiKey,
-        baseURL: config.baseUrl,
+        apiKey: parsed.apiKey,
+        baseURL: parsed.baseUrl,
       });
-      return openai(config.model);
+      return openai(parsed.model);
     }
     default: {
-      const _exhaustive: never = config;
+      const _exhaustive: never = parsed;
       return _exhaustive;
     }
   }

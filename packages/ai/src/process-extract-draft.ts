@@ -1,17 +1,21 @@
 import { z } from "zod";
 
 import {
-  claimClassSchema,
+  nonEmptyTrimmed,
+  optionalClaimClassSchema,
   IDENTIFIER_PLATFORM_SLUGS,
-  identifierStatusSchema,
-  identifierTypeSchema,
+  optionalIdentifierStatusSchema,
+  optionalTrimmedSchema,
+  trimmedIdentifierTypeSchema,
 } from "@watchdog/schemas";
 
 const PLATFORM_HINT = IDENTIFIER_PLATFORM_SLUGS.join(", ");
 
 const draftIdentifierSchema = z.object({
-  type: identifierTypeSchema.describe("Identifier type from closed vocab"),
-  value: z.string().trim().min(1).describe("Raw identifier value"),
+  type: trimmedIdentifierTypeSchema.describe(
+    "Identifier type from closed vocab"
+  ),
+  value: nonEmptyTrimmed.describe("Raw identifier value"),
   /**
    * Prefer a known slug when it matches Evidence; custom lowercase slug OK if not in catalog.
    * Free string — not a closed enum.
@@ -23,29 +27,24 @@ const draftIdentifierSchema = z.object({
     .describe(
       `Platform slug for handles (and optionally email/crypto). Prefer known: ${PLATFORM_HINT}. Custom slug allowed if the site is not listed.`
     ),
-  status: identifierStatusSchema
-    .optional()
-    .describe("current | former | unknown — only when Evidence states it"),
-  notes: z.string().optional(),
-  evidenceQuote: z
-    .string()
-    .optional()
-    .describe("Verbatim span from EvidenceSnapshot.text when possible"),
+  status: optionalIdentifierStatusSchema.describe(
+    "current | former | unknown — only when Evidence states it"
+  ),
+  notes: optionalTrimmedSchema,
+  evidenceQuote: optionalTrimmedSchema.describe(
+    "Verbatim span from EvidenceSnapshot.text when possible"
+  ),
 });
 
 const draftClaimSchema = z.object({
-  text: z
-    .string()
-    .trim()
-    .min(1)
-    .describe("Observation text grounded in Evidence"),
-  class: claimClassSchema.optional().describe("Default observation"),
-  evidenceQuote: z.string().optional(),
+  text: nonEmptyTrimmed.describe("Observation text grounded in Evidence"),
+  class: optionalClaimClassSchema.describe("Default observation"),
+  evidenceQuote: optionalTrimmedSchema,
 });
 
 const draftQuestionSchema = z.object({
-  text: z.string().trim().min(1).describe("Open question when uncertain"),
-  evidenceQuote: z.string().optional(),
+  text: nonEmptyTrimmed.describe("Open question when uncertain"),
+  evidenceQuote: optionalTrimmedSchema,
 });
 
 /**
@@ -53,10 +52,9 @@ const draftQuestionSchema = z.object({
  * Harvest and AI Process Caps both emit this shape.
  */
 export const processExtractDraftSchema = z.object({
-  summary: z
-    .string()
-    .optional()
-    .describe("Short extract summary for Job/Proposal"),
+  summary: optionalTrimmedSchema.describe(
+    "Short extract summary for Job/Proposal"
+  ),
   identifiers: z.array(draftIdentifierSchema).default([]),
   claims: z.array(draftClaimSchema).default([]),
   questions: z.array(draftQuestionSchema).default([]),

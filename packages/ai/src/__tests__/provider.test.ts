@@ -23,4 +23,15 @@ describe("createWatchdogModel", () => {
     });
     expect(model).toBeTruthy();
   });
+
+  it("rejects invalid provider config", () => {
+    expect(() =>
+      createWatchdogModel({
+        kind: "openai_compat",
+        apiKey: "sk-test",
+        baseUrl: "not-a-url",
+        model: "gpt-4o",
+      })
+    ).toThrow();
+  });
 });
