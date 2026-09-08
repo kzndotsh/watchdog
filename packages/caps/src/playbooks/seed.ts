@@ -83,6 +83,17 @@ export function seedField(
   return seed[SEED_FIELD[kind]];
 }
 
+function normalizeSeedValues(seed: SeedValues): SeedValues {
+  const out: SeedValues = {};
+  for (const key of SEED_JSON_KEYS) {
+    const value = seed[key];
+    if (value === undefined) continue;
+    const trimmed = value.trim();
+    if (trimmed !== "") out[key] = trimmed;
+  }
+  return out;
+}
+
 export function presentSeedKinds(seed: SeedValues): Set<PlaybookSeedKind> {
   const present = new Set<PlaybookSeedKind>();
   for (const kind of PLAYBOOK_SEED_KINDS) {
@@ -103,37 +114,35 @@ function primaryQuery(seed: SeedValues): string | undefined {
 export function seedValuesToCandidateInput(
   seed: SeedValues
 ): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const key of SEED_JSON_KEYS) {
-    const value = seed[key];
-    if (value !== undefined) out[key] = value;
+  const normalized = normalizeSeedValues(seed);
+  const out: Record<string, unknown> = { ...normalized };
+  if (normalized.evidenceId !== undefined) {
+    out.sourceEvidenceId = normalized.evidenceId;
   }
-  if (seed.evidenceId !== undefined) out.sourceEvidenceId = seed.evidenceId;
-  if (out.host === undefined && seed.url !== undefined) {
-    const derived = hostFromUrl(seed.url);
+  if (out.host === undefined && normalized.url !== undefined) {
+    const derived = hostFromUrl(normalized.url);
     if (derived !== undefined) out.host = derived;
   }
-  const query = primaryQuery(seed);
+  const query = primaryQuery(normalized);
   if (query !== undefined) out.query = query;
   return out;
 }
 
 export function seedValuesToJson(seed: SeedValues): JsonObject {
+  const normalized = normalizeSeedValues(seed);
   const out: JsonObject = {};
   for (const key of SEED_JSON_KEYS) {
-    const value = seed[key];
+    const value = normalized[key];
     if (value !== undefined) out[key] = value;
   }
   return out;
 }
 
 export function seedValuesFromJson(seed: JsonObject): SeedValues {
-  const out: SeedValues = {};
+  const raw: SeedValues = {};
   for (const key of SEED_JSON_KEYS) {
     const value = seed[key];
-    if (typeof value === "string" && value.trim() !== "") {
-      out[key] = value;
-    }
+    if (typeof value === "string") raw[key] = value;
   }
-  return out;
+  return normalizeSeedValues(raw);
 }

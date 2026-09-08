@@ -28,7 +28,7 @@ describe("decidePlaybookAdvance", () => {
     expect(decision).toEqual({ kind: "wait" });
   });
 
-  it("enqueues when a blocked sibling remains after another succeeded at the same step", () => {
+  it("advances past stale blocked siblings when another job at the step succeeded", () => {
     const decision = decidePlaybookAdvance(
       requirePlaybook("host-footprint"),
       { host: "example.com" },
@@ -41,7 +41,7 @@ describe("decidePlaybookAdvance", () => {
     );
     expect(decision.kind).toBe("enqueue");
     if (decision.kind !== "enqueue") return;
-    expect(decision.step).toBe(1);
+    expect(decision.step).toBe(2);
   });
 
   it("waits while a blocked sibling still has a running peer at the same step", () => {
@@ -220,5 +220,21 @@ describe("decidePlaybookAdvance", () => {
       []
     );
     expect(decision).toEqual({ kind: "finish" });
+  });
+
+  it("abandons when the final step failed", () => {
+    const decision = decidePlaybookAdvance(
+      requirePlaybook("host-posture"),
+      { host: "example.com" },
+      [
+        { step: 0, status: "succeeded" },
+        { step: 1, status: "failed" },
+      ],
+      []
+    );
+    expect(decision).toEqual({
+      kind: "abandon",
+      reason: "Cancelled — playbook step failed",
+    });
   });
 });

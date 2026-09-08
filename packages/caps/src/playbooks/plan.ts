@@ -6,7 +6,8 @@ import type {
 } from "@watchdog/cap-sdk";
 import { toCapDescriptor } from "@watchdog/cap-sdk";
 import {
-  isJsonObject,
+  parseCapJobInput,
+  parseGraphUuidList,
   type HandoffBag,
   type JobHandoff,
   type JsonObject,
@@ -115,7 +116,7 @@ export function predecessorFromJob(row: {
     step: row.playbookStep ?? 0,
     bags: {
       ...row.handoff,
-      evidenceId: [...(row.evidenceIds ?? [])],
+      evidenceId: parseGraphUuidList(row.evidenceIds ?? []) ?? [],
     },
   };
 }
@@ -187,22 +188,15 @@ function parseCapInput(
   candidate: Record<string, unknown>
 ): JsonObject | PlanError {
   const cap = requireCapability(capabilityId);
-  const parsed = cap.input.safeParse(candidate);
-  if (!parsed.success) {
+  const parsed = parseCapJobInput(cap.input, candidate);
+  if (!parsed.ok) {
     return {
       kind: "invalid_input",
       capabilityId,
-      message: parsed.error.message,
+      message: parsed.message,
     };
   }
-  if (!isJsonObject(parsed.data)) {
-    return {
-      kind: "invalid_input",
-      capabilityId,
-      message: "parsed input was not a JSON object",
-    };
-  }
-  return parsed.data;
+  return parsed.input;
 }
 
 function validateStepRefs(

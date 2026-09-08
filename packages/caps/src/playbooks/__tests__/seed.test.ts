@@ -35,6 +35,37 @@ describe("playbook seed helpers", () => {
     expect(seedValuesFromJson(json)).toEqual(seed);
   });
 
+  it("seedValuesFromJson trims stored seed strings", () => {
+    expect(
+      seedValuesFromJson({ host: "  example.com  ", email: "   " })
+    ).toEqual({ host: "example.com" });
+  });
+
+  it("seedValuesToJson trims seed strings before persistence", () => {
+    expect(
+      seedValuesToJson({
+        host: "  example.com  ",
+        entityId: "  00000000-0000-4000-8000-000000000001  ",
+      })
+    ).toEqual({
+      host: "example.com",
+      entityId: "00000000-0000-4000-8000-000000000001",
+    });
+  });
+
+  it("seedValuesToCandidateInput trims ids before step input", () => {
+    const input = seedValuesToCandidateInput({
+      evidenceId: "  00000000-0000-4000-8000-000000000099  ",
+      email: "  alice@mailhost.test  ",
+    });
+    expect(input).toEqual({
+      evidenceId: "00000000-0000-4000-8000-000000000099",
+      sourceEvidenceId: "00000000-0000-4000-8000-000000000099",
+      email: "alice@mailhost.test",
+      query: "alice@mailhost.test",
+    });
+  });
+
   it("seedValuesToCandidateInput adds query and derived host", () => {
     const input = seedValuesToCandidateInput({
       email: "alice@mailhost.test",

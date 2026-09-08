@@ -230,6 +230,26 @@ describe("plan", () => {
     expect(bound.evidenceId).toBe("00000000-0000-4000-8000-00000000aaa1");
   });
 
+  it("predecessorFromJob normalizes padded evidenceIds", () => {
+    const pred = predecessorFromJob({
+      playbookStep: 0,
+      evidenceIds: ["  00000000-0000-4000-8000-00000000aaa1  ", "  "],
+      handoff: {},
+    });
+    expect(pred.bags.evidenceId).toEqual([
+      "00000000-0000-4000-8000-00000000aaa1",
+    ]);
+  });
+
+  it("predecessorFromJob drops evidence bag when stored ids are invalid", () => {
+    const pred = predecessorFromJob({
+      playbookStep: 0,
+      evidenceIds: ["00000000-0000-4000-8000-00000000aaa1", "not-a-uuid"],
+      handoff: {},
+    });
+    expect(pred.bags.evidenceId).toEqual([]);
+  });
+
   it("host-enumerate fans out DNS inputs capped at 25", () => {
     const plan = planPlaybook(requirePlaybook("host-enumerate"), {
       host: "example.com",

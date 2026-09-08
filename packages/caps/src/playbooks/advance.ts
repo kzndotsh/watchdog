@@ -72,6 +72,14 @@ export function decidePlaybookAdvance(
 
     if (open.length > 0 && !blockedOnly) return { kind: "wait" };
 
+    if (blockedOnly && at.some((j) => j.status === "succeeded")) {
+      const nextDef = defs[step + 1];
+      if (nextDef === undefined) {
+        continue;
+      }
+      return enqueueStep(nextDef, seed, predecessors, step + 1);
+    }
+
     if (at.length === 0 || blockedOnly) {
       if (step === 0) return enqueueStep(def, seed, predecessors, 0);
       const prev = jobs.filter((j) => j.step === step - 1);
@@ -91,7 +99,16 @@ export function decidePlaybookAdvance(
     }
 
     const nextDef = defs[step + 1];
-    if (nextDef === undefined) continue;
+    if (nextDef === undefined) {
+      if (at.length > 0 && !at.some((j) => j.status === "succeeded")) {
+        if (def.fanOut !== undefined) return { kind: "finish" };
+        return {
+          kind: "abandon",
+          reason: "Cancelled — playbook step failed",
+        };
+      }
+      continue;
+    }
 
     if (!at.some((j) => j.status === "succeeded")) {
       return {
