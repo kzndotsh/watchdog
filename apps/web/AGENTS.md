@@ -38,8 +38,8 @@ TanStack Start UI for Watchdog. When UI contracts disagree with root AGENTS, **[
 
 ## Gotchas
 
-- Artifact bytes from MinIO are `readArtifactBytesEffect`. Job Detail and zip/md file routes use `runApp` (`jobs.functions.ts`, export routes).
-- Client UI must not import `@watchdog/policy` barrel (pulls Effect into the browser). Use `@watchdog/policy/patch-needs-confidence` for Triage confidence UI. Vite `optimizeDeps.include: ["effect"]` is a safety net for residual server-fn / HMR discovery.
+- Artifact bytes from MinIO are `readArtifactBytesEffect`. Job Detail uses `getArtifactContentFn` in `jobs-artifact.functions.ts` (keeps `@watchdog/api` / `@watchdog/core` off the client import graph); zip/md export routes use `runApp` directly.
+- Client UI must not import `@watchdog/policy` barrel (pulls Effect into the browser). Use `@watchdog/policy/patch-needs-confidence` for Triage confidence UI. Use `@watchdog/core/job-display` for job/playbook label helpers — not `@watchdog/core` (pulls blob/db/env). Import `JobListRecord` / `JobRecord` from `@/domains/jobs/types`, not `jobs.functions` (server fns). Vite `optimizeDeps.include: ["effect"]` is a safety net for residual server-fn / HMR discovery.
 
 Canonical contracts: [`docs/reference/contracts/`](../../docs/reference/contracts/README.md). Web traps: [`docs/reference/web/README.md#traps-index`](../../docs/reference/web/README.md#traps-index).
 
