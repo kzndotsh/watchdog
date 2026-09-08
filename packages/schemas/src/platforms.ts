@@ -402,3 +402,29 @@ export const IDENTIFIER_PLATFORM_SLUGS: readonly string[] =
 export function isKnownIdentifierPlatform(slug: string): boolean {
   return PLATFORM_BY_SLUG.has(slug);
 }
+
+/** Lowercase haystack for identifier platform text search (slug, label, aliases). */
+export function identifierPlatformSearchHaystack(
+  slug: string | null | undefined
+): string {
+  const trimmed = slug?.trim() ?? "";
+  if (trimmed === "") return "";
+  const meta = identifierPlatformMeta(trimmed);
+  if (meta === null) return trimmed.toLowerCase();
+  return [meta.slug, meta.label, ...(meta.aliases ?? [])]
+    .join(" ")
+    .toLowerCase();
+}
+
+/** Known platform slugs whose label/alias haystack matches the search term. */
+export function identifierPlatformSlugsMatchingSearch(term: string): string[] {
+  const q = term.replaceAll("%", "").trim().toLowerCase();
+  if (q === "") return [];
+  const slugs: string[] = [];
+  for (const platform of IDENTIFIER_PLATFORMS) {
+    if (identifierPlatformSearchHaystack(platform.slug).includes(q)) {
+      slugs.push(platform.slug);
+    }
+  }
+  return slugs;
+}

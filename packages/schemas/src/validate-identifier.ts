@@ -1,6 +1,7 @@
 import { normalizeIdentifierValue } from "./normalize-identifier";
 import type { PatchOp } from "./patch";
 import { normalizeIdentifierPlatform } from "./platforms";
+import { trimmedOrUndefined } from "./primitives";
 import { IDENTIFIER_TYPES, type IdentifierType } from "./vocab";
 
 export type ValidateIdentifierResult =
@@ -22,6 +23,11 @@ export const HANDLE_REQUIRES_PLATFORM =
   "platform is required when type is handle";
 
 const PGP_HEX_LENGTHS = new Set([8, 16, 40, 64]);
+
+export function normalizeIdentifierTypeInput(type: string): string {
+  const trimmed = trimmedOrUndefined(type);
+  return trimmed === undefined ? "" : trimmed.toLowerCase();
+}
 const IDENTIFIER_TYPE_SET = new Set<string>(IDENTIFIER_TYPES);
 
 function fail(message: string): ValidateIdentifierResult {
@@ -241,7 +247,8 @@ export function validateIdentifierValue(
   type: IdentifierType | string,
   value: string
 ): ValidateIdentifierResult {
-  if (!IDENTIFIER_TYPE_SET.has(type)) {
+  const normalizedType = normalizeIdentifierTypeInput(type);
+  if (!IDENTIFIER_TYPE_SET.has(normalizedType)) {
     return fail("Invalid identifier type.");
   }
 
@@ -250,19 +257,19 @@ export function validateIdentifierValue(
     return fail("Value is required.");
   }
 
-  const normalized = normalizeIdentifierValue(type, raw);
+  const normalized = normalizeIdentifierValue(normalizedType, raw);
   if (!normalized) {
     return fail("Value is required.");
   }
 
-  if ((SOFT_IDENTIFIER_TYPES as ReadonlySet<string>).has(type)) {
+  if ((SOFT_IDENTIFIER_TYPES as ReadonlySet<string>).has(normalizedType)) {
     return { ok: true, value: normalized };
   }
-  if (!isStrictIdentifierType(type)) {
+  if (!isStrictIdentifierType(normalizedType)) {
     return fail("Invalid identifier type.");
   }
 
-  return STRICT_TYPE_VALIDATORS[type](raw, normalized);
+  return STRICT_TYPE_VALIDATORS[normalizedType](raw, normalized);
 }
 
 /** Value shape + handle→platform write gate (normalize platform). */
@@ -272,11 +279,12 @@ export function validateIdentifierWrite(input: {
   value: string;
   platform?: string;
 }): ValidateIdentifierWriteResult {
-  const validated = validateIdentifierValue(input.type, input.value);
+  const normalizedType = normalizeIdentifierTypeInput(input.type);
+  const validated = validateIdentifierValue(normalizedType, input.value);
   if (!validated.ok) {
     return validated;
   }
-  const type = IDENTIFIER_TYPES.find((t) => t === input.type);
+  const type = IDENTIFIER_TYPES.find((t) => t === normalizedType);
   if (type === undefined) {
     return { ok: false, message: "Invalid identifier type." };
   }
@@ -289,17 +297,23 @@ export function validateIdentifierWrite(input: {
 
 /** Inbox / Accept preflight — same write gate as core create/Accept. */
 export function listInvalidIdentifierOps(
-  patch: readonly PatchOp[]
+  patch: readonly PatchOp[] | null | undefined
 ): InvalidIdentifierOp[] {
   const out: InvalidIdentifierOp[] = [];
-  for (const op of patch) {
+  for (const op of patch ?? []) {
     if (op.resource !== "identifier") continue;
     if (op.op !== "create" && op.op !== "upsert") continue;
 
-    const type = typeof op.data.type === "string" ? op.data.type : "";
-    const value = typeof op.data.value === "string" ? op.data.value : "";
+    const type =
+      typeof op.data.type === "string"
+        ? normalizeIdentifierTypeInput(op.data.type)
+        : "";
+    const value =
+      typeof op.data.value === "string"
+        ? (trimmedOrUndefined(op.data.value) ?? "")
+        : "";
     const platform =
-      typeof op.data.platform === "string" ? op.data.platform : "";
+      typeof op.data.platform === "string" ? op.data.platform.trim() : "";
     const written = validateIdentifierWrite({ type, value, platform });
     if (!written.ok) {
       out.push({

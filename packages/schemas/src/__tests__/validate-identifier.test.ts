@@ -14,9 +14,16 @@ describe("validateIdentifierValue", () => {
   });
 
   it("rejects unknown types", () => {
-    const bad = validateIdentifierValue("Email", "a@b.co");
+    const bad = validateIdentifierValue("not-a-type", "a@b.co");
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.message).toMatch(/type/i);
+  });
+
+  it("case-folds known types", () => {
+    expect(validateIdentifierValue("Email", "Ada@Example.COM")).toEqual({
+      ok: true,
+      value: "ada@example.com",
+    });
   });
 
   it("email happy + reject", () => {
@@ -147,6 +154,24 @@ describe("validateIdentifierWrite", () => {
       platform: "",
     });
   });
+
+  it("trims padded identifier type on write", () => {
+    expect(
+      validateIdentifierWrite({
+        type: "  email  ",
+        value: "a@b.co",
+      })
+    ).toMatchObject({ ok: true, type: "email", value: "a@b.co" });
+  });
+
+  it("case-folds identifier type on write", () => {
+    expect(
+      validateIdentifierWrite({
+        type: "  EMAIL  ",
+        value: "a@b.co",
+      })
+    ).toMatchObject({ ok: true, type: "email", value: "a@b.co" });
+  });
 });
 
 describe("listInvalidIdentifierOps", () => {
@@ -183,5 +208,29 @@ describe("listInvalidIdentifierOps", () => {
     expect(hits.length).toBe(2);
     expect(hits[0]?.opId).toBe("00000000-0000-4000-8000-000000000001");
     expect(hits[1]?.message).toBe(HANDLE_REQUIRES_PLATFORM);
+  });
+
+  it("returns no hits for missing or empty patch", () => {
+    expect(listInvalidIdentifierOps([])).toEqual([]);
+    expect(listInvalidIdentifierOps(undefined)).toEqual([]);
+    expect(listInvalidIdentifierOps(null)).toEqual([]);
+  });
+
+  it("trims padded identifier fields before validation", () => {
+    const hits = listInvalidIdentifierOps([
+      {
+        id: "00000000-0000-4000-8000-000000000004",
+        op: "create",
+        resource: "identifier",
+        data: {
+          entityId: "00000000-0000-4000-8000-000000000099",
+          type: "  email  ",
+          value: "  not-an-email  ",
+        },
+      },
+    ]);
+    expect(hits).toHaveLength(1);
+    expect(hits[0]?.type).toBe("email");
+    expect(hits[0]?.value).toBe("not-an-email");
   });
 });

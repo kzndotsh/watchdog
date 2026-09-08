@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   identifierPlatformMeta,
+  identifierPlatformSlugsMatchingSearch,
   normalizeIdentifierPlatform,
   resolveIdentifierPlatform,
 } from "../platforms.ts";
@@ -29,5 +30,21 @@ describe("platforms", () => {
     expect(normalizeIdentifierPlatform("X")).toBe("twitter");
     expect(normalizeIdentifierPlatform("Boy Moment")).toBe("boy_moment");
     expect(normalizeIdentifierPlatform("weird!!site")).toBe("weird_site");
+  });
+
+  it("identifierPlatformSlugsMatchingSearch matches labels and aliases", () => {
+    expect(identifierPlatformSlugsMatchingSearch("X / Twitter")).toEqual([
+      "twitter",
+    ]);
+    expect(identifierPlatformSlugsMatchingSearch("instagram")).toEqual([
+      "instagram",
+    ]);
+    expect(identifierPlatformSlugsMatchingSearch("missing")).toEqual([]);
+  });
+
+  it("identifierPlatformSlugsMatchingSearch matches underscore slugs literally", () => {
+    expect(identifierPlatformSlugsMatchingSearch("discord_server")).toEqual([
+      "discord_server",
+    ]);
   });
 });
