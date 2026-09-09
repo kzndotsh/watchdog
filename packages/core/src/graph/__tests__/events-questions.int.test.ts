@@ -3,12 +3,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   createEventEffect,
   createQuestionEffect,
+  deleteQuestionEffect,
   DomainError,
   reopenQuestionEffect,
   resolveQuestionEffect,
   runDomain,
 } from "@watchdog/core";
-import { db } from "@watchdog/db";
+import { db, questionsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
 
@@ -100,6 +101,28 @@ describe("questions", () => {
       })
     );
     expect(reopened.status).toBe("open");
+  });
+
+  it("deletes a question in the case", async () => {
+    const cased = await seedCase(db);
+    const entity = await seedEntity(db, cased.id, { id: testId(24) });
+    const created = await runDomain(
+      createQuestionEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        entityId: entity.id,
+        text: "Delete me?",
+      })
+    );
+    await runDomain(
+      deleteQuestionEffect(
+        cased.id,
+        TEST_ORGANIZATION_ID,
+        created.id
+      )
+    );
+    const rows = await questionsRepo.listForEntity(db, entity.id);
+    expect(rows.some((row) => row.id === created.id)).toBe(false);
   });
 
   it("rejects whitespace-only question text", async () => {

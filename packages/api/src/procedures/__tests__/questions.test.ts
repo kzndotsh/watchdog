@@ -2,12 +2,15 @@ import { createRouterClient } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listQuestionsForEntityEffect, updateQuestionEffect } = vi.hoisted(
-  () => ({
-    listQuestionsForEntityEffect: vi.fn(),
-    updateQuestionEffect: vi.fn(),
-  })
-);
+const {
+  listQuestionsForEntityEffect,
+  updateQuestionEffect,
+  deleteQuestionEffect,
+} = vi.hoisted(() => ({
+  listQuestionsForEntityEffect: vi.fn(),
+  updateQuestionEffect: vi.fn(),
+  deleteQuestionEffect: vi.fn(),
+}));
 
 vi.mock("@watchdog/core", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core")>();
@@ -18,10 +21,11 @@ vi.mock("@watchdog/core", async (importOriginal) => {
     updateQuestionEffect,
     resolveQuestionEffect: vi.fn(),
     reopenQuestionEffect: vi.fn(),
+    deleteQuestionEffect,
   };
 });
 
-import { create, list, update } from "../questions";
+import { create, list, remove, update } from "../questions";
 
 const actor = {
   userId: "u1",
@@ -143,5 +147,28 @@ describe("questions procedures", () => {
         userOverride: true,
       })
     ).resolves.toBeDefined();
+  });
+
+  it("deletes a question", async () => {
+    deleteQuestionEffect.mockReturnValueOnce(Effect.void);
+
+    const client = createRouterClient(
+      { delete: remove },
+      {
+        context: {
+          headers: new Headers(),
+          actor,
+          authMethod: "session",
+        },
+      }
+    );
+
+    await expect(
+      client.delete({
+        caseId: "00000000-0000-4000-8000-000000000001",
+        questionId: "00000000-0000-4000-8000-000000000080",
+        userOverride: true,
+      })
+    ).resolves.toEqual({ ok: true });
   });
 });

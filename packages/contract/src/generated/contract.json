@@ -556,6 +556,20 @@
           ]
         }
       }
+    },
+    "delete": {
+      "~orpc": {
+        "errorMap": {},
+        "meta": {},
+        "route": {
+          "method": "DELETE",
+          "path": "/cases/{caseId}/questions/{questionId}",
+          "summary": "Delete a question",
+          "tags": [
+            "questions"
+          ]
+        }
+      }
     }
   },
   "tasks": {

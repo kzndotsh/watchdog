@@ -278,3 +278,31 @@ export function reopenQuestionEffect(
     return toRecord(row);
   });
 }
+
+export function deleteQuestionEffect(
+  caseId: string,
+  organizationId: string,
+  questionId: string
+): Effect.Effect<void, DomainTag> {
+  return Effect.gen(function* deleteQuestionGen() {
+    const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
+    const normalizedQuestionId = yield* requireTrimmedGraphId(
+      questionId,
+      "Question not found"
+    );
+    const existing = yield* tryDb(() =>
+      questionsRepo.getInCase(db, scopedCaseId, normalizedQuestionId)
+    );
+    if (!existing) {
+      return yield* new NotFoundError({ resource: "Question not found" });
+    }
+
+    const deleted = yield* tryDb(() =>
+      questionsRepo.deleteInCase(db, scopedCaseId, normalizedQuestionId)
+    );
+    if (!deleted) {
+      return yield* new InvalidError({ reason: "Failed to delete Question" });
+    }
+    yield* notifyEntityChangedEffect(scopedCaseId);
+  });
+}

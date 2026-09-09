@@ -74,6 +74,7 @@ export const router = {
     update: questions.update,
     resolve: questions.resolve,
     reopen: questions.reopen,
+    delete: questions.remove,
   },
   tasks: {
     list: tasks.list,

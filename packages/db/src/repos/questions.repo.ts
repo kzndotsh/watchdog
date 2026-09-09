@@ -215,4 +215,33 @@ export const questionsRepo = {
       .returning(questionColumns);
     return row ?? null;
   },
+
+  async delete(exec: DbExec, questionId: string): Promise<QuestionRow | null> {
+    const scopedQuestionId = trimResourceId(questionId);
+    if (scopedQuestionId === undefined) return null;
+    const [deleted] = await exec
+      .delete(questions)
+      .where(eq(questions.id, scopedQuestionId))
+      .returning(questionColumns);
+    return deleted ?? null;
+  },
+
+  async deleteInCase(
+    exec: DbExec,
+    caseId: string,
+    questionId: string
+  ): Promise<QuestionRow | null> {
+    const scoped = trimScopedCaseIds(caseId, questionId);
+    if (!scoped) return null;
+    const [deleted] = await exec
+      .delete(questions)
+      .where(
+        and(
+          eq(questions.id, scoped.resourceId),
+          entityRowInCase(questions.entityId, scoped.caseId)
+        )
+      )
+      .returning(questionColumns);
+    return deleted ?? null;
+  },
 };

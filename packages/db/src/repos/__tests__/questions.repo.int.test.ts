@@ -59,6 +59,48 @@ describe("questionsRepo", () => {
     });
   });
 
+  it("deleteInCase removes a question scoped to the case", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const entity = await seedEntity(tx, cased.id, { id: testId(24) });
+      const created = await questionsRepo.create(tx, {
+        entityId: entity.id,
+        text: "Delete me?",
+        status: "open",
+      });
+      if (!created) throw new Error("question");
+      const deleted = await questionsRepo.deleteInCase(
+        tx,
+        cased.id,
+        created.id
+      );
+      expect(deleted?.id).toBe(created.id);
+      expect(
+        await questionsRepo.getInCase(tx, cased.id, created.id)
+      ).toBeNull();
+    });
+  });
+
+  it("deleteInCase rejects cross-case deletes", async () => {
+    await withTestTx(async (tx) => {
+      const caseA = await seedCase(tx);
+      const caseB = await seedCase(tx);
+      const entityB = await seedEntity(tx, caseB.id, { id: testId(25) });
+      const created = await questionsRepo.create(tx, {
+        entityId: entityB.id,
+        text: "Stay",
+        status: "open",
+      });
+      if (!created) throw new Error("question");
+      expect(
+        await questionsRepo.deleteInCase(tx, caseA.id, created.id)
+      ).toBeNull();
+      expect(
+        await questionsRepo.getInCase(tx, caseB.id, created.id)
+      ).not.toBeNull();
+    });
+  });
+
   it("rejects blank question text on create", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

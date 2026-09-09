@@ -153,6 +153,7 @@ export {
   updateQuestionEffect,
   resolveQuestionEffect,
   reopenQuestionEffect,
+  deleteQuestionEffect,
   type QuestionRecord,
   type CreateQuestionInput,
   type UpdateQuestionInput,

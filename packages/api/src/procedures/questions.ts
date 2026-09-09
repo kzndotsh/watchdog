@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   createQuestionEffect,
+  deleteQuestionEffect,
   listQuestionsForEntityEffect,
   reopenQuestionEffect,
   resolveQuestionEffect,
@@ -119,3 +120,27 @@ export const reopen = graphChildWrite
       })
     )
   );
+
+export const remove = graphChildWrite
+  .route({
+    method: "DELETE",
+    path: "/cases/{caseId}/questions/{questionId}",
+    summary: "Delete a question",
+    tags: ["questions"],
+  })
+  .input(
+    questionScopeInputSchema.extend({
+      userOverride: userOverrideSchema,
+    })
+  )
+  .output(z.object({ ok: z.literal(true) }))
+  .handler(async ({ input, context }) => {
+    await runApp(
+      deleteQuestionEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.questionId
+      )
+    );
+    return { ok: true as const };
+  });
