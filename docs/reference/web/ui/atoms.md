@@ -28,7 +28,7 @@ Evidence pickers live in `shared/ui/intake/evidence-picker.tsx` (`EvidencePicker
 | 2-3 exclusive view modes | `ToggleGroup` (not boolean `Switch`; not `Tabs` when the trigger owns no panel: e.g. Jobs Cap/Playbook run mode, whose form sits in the queue toolbar) |
 | Unrelated CTAs / dialog footer | `flex` + `gap`: don't ButtonGroup everything |
 | Adorned field (icon, eye, kbd) | `InputGroup` |
-| Toolbar filter search | `SearchField`: not InputGroup |
+| Toolbar filter search | `SearchField`: CONTROL chrome + fixed `SEARCH_FIELD_WIDTH` (`w-80`); not raw `InputGroup`; don't override width per page |
 | Button icons / Spinner in Button | `data-icon="inline-start\|inline-end"` |
 
 Button sizes: PageHeader / toolbar → `sm` (or default); Queue row / dense icon actions → `xs`.

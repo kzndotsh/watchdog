@@ -22,4 +22,20 @@ describe("SearchField", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
     expect(onValueChange).toHaveBeenCalledWith("");
   });
+
+  it("uses the shared fixed toolbar width", () => {
+    const { container } = render(
+      <SearchField
+        value=""
+        onValueChange={() => {
+          /* noop */
+        }}
+        aria-label="Search items"
+      />
+    );
+
+    expect(container.querySelector("[data-slot=input-group]")).toHaveClass(
+      "w-80"
+    );
+  });
 });

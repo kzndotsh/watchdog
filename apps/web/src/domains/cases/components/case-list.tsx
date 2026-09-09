@@ -458,7 +458,7 @@ export function CaseList() {
   } = useCaseList();
 
   return (
-    <Page className="min-h-0 gap-4 overflow-hidden">
+    <Page className="min-h-0 overflow-hidden">
       <PageHeader
         actions={
           <CaseListHeaderActions activeId={activeId} onCreate={openCreate} />
@@ -474,7 +474,6 @@ export function CaseList() {
             onValueChange={setSearch}
             placeholder="Search cases…"
             aria-label="Search cases"
-            className="max-w-md min-w-[12rem]"
           />
         }
       />

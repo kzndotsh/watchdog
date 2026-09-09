@@ -238,7 +238,6 @@ const ATOM_CATALOG: AtomEntry[] = [
         }}
         aria-label="Atom catalog search demo"
         placeholder="Search…"
-        className="max-w-xs"
       />
     ),
   },
@@ -536,7 +535,6 @@ export function AtomsSection() {
         onValueChange={setFilter}
         aria-label="Filter atoms"
         placeholder="Filter atoms…"
-        className="max-w-md"
       />
       <div className="grid gap-3 md:grid-cols-2">
         {visible.map((atom) => (

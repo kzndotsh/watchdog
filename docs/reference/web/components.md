@@ -19,7 +19,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `ClickableIdChip` | Preview `IdChip` (eye glyph) | Click-to-preview evidence ids | Plain / copy chips | `IdChip` | canonical | yes | : |
 | `ComposerShell` | Muted bordered composer surface | Add/edit dossier forms | Callouts / dashed rows | : | canonical | yes | muted |
 | `ConfidenceSelect` | Confidence Select: CONTROL chrome (same density as FieldSelect) | Graph / Accept confidence | Display-only chips | `ConfidenceBadge` | canonical | yes | : |
-| `control-chrome` | Shared dense field + menu tokens (`h-8` / `text-xs` / `rounded-md`) | SearchField · Select · Combobox | Freestyle control heights | : | canonical | no | : |
+| `control-chrome` | Shared dense field + menu tokens (`CONTROL_HEIGHT` `h-8` · `CONTROL_TEXT` · `rounded-md`); `SEARCH_FIELD_WIDTH` (`w-80 max-w-full shrink-0`) for toolbar search | SearchField · Select · Combobox | Freestyle control heights · per-page search widths | : | canonical | no | : |
 | `DestructiveConfirmDialog` | Type-to-confirm destroy | Irreversible deletes | Soft cancels | AlertDialog | canonical | no | destructive |
 | `DetailEmpty` | Select-none Detail empty: quiet, no dashed frame | No queue selection | Loading / blank slate | `InlineLoading` · `EmptyState` | canonical | yes | muted |
 | `DetailFooter` | Bottom CTA bar for Detail | Accept / Cancel / Harvest · Enrich | Identity / meta | `DetailHeader` | canonical | yes | : |
@@ -70,7 +70,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `DropdownActionItems` / `ContextActionItems` | `AppAction[]` → menu items | Shared ⋯ / right-click / factories | Ad-hoc `DropdownMenuItem` when a factory exists | : | canonical | yes | : |
 | `ActionsContextMenu` | ContextMenu + editable capture skip | Table rows · inset fallback · graph nodes · Cases cards | Dropdown-only ⋯ | ContextMenu | canonical | no | : |
 | `TargetActionsHost` | ContextMenu shell + trailing ⋯ for a target `AppAction[]` | Dossier Connections / Claims / Events / Questions rows | Tables (use `getRowActions`) · Cases (manual header ⋯) | `ActionsContextMenu` · `RowActionsMenu` | canonical | no | : |
-| `SearchField` | Named search input: CONTROL chrome | Filters / toolbars | Debounced fetch inside atom | : | canonical | yes | : |
+| `SearchField` | Named search input: CONTROL chrome + fixed `SEARCH_FIELD_WIDTH` (`w-80`) | Filters / toolbars (Cases · Entities · Identifiers · Collect · Triage) | Debounced fetch inside atom · per-page width overrides | : | canonical | yes | : |
 | `SectionHeaderBar` | Title + count + trailing | Sections / day groups | Page headers | `Page` header | canonical | no | : |
 | `SectionLabel` | Small meta section label (normal case) | Field / meta captions · dossier section titles | Page titles | : | canonical | yes | meta |
 | `LoadingRegion` | Three-channel a11y wrapper (`aria-busy` + sr-only `role="status"` + `aria-hidden` skeleton subtree) | Inside `PendingRegion` / hand skeletons | Domains spelling `aria-busy` directly | : | canonical | no | [`loading-region.tsx`](../../../apps/web/src/shared/ui/loading-region.tsx) |

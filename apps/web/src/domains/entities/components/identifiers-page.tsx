@@ -107,7 +107,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
   );
 
   return (
-    <Page className="gap-4">
+    <Page>
       <PageHeader
         count={rows.length}
         countOn="identifiers"
@@ -152,7 +152,6 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               onValueChange={setSearch}
               placeholder="Search identifiers…"
               aria-label="Search identifiers"
-              className="max-w-md min-w-[12rem]"
             />
             <PageFilterMenu
               chips={filterChips}

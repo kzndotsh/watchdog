@@ -1,7 +1,11 @@
 import { SearchIcon, XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { CONTROL_HEIGHT, CONTROL_TEXT } from "@/shared/ui/control-chrome";
+import {
+  CONTROL_HEIGHT,
+  CONTROL_TEXT,
+  SEARCH_FIELD_WIDTH,
+} from "@/shared/ui/control-chrome";
 import {
   InputGroup,
   InputGroupAddon,
@@ -32,9 +36,7 @@ export function SearchField({
   clearable = true,
 }: SearchFieldProps) {
   return (
-    <InputGroup
-      className={cn(CONTROL_HEIGHT, "max-w-sm min-w-48 flex-1", className)}
-    >
+    <InputGroup className={cn(CONTROL_HEIGHT, SEARCH_FIELD_WIDTH, className)}>
       <InputGroupAddon align="inline-start">
         <SearchIcon className="size-3.5" aria-hidden />
       </InputGroupAddon>

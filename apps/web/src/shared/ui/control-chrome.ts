@@ -7,6 +7,8 @@
  */
 export const CONTROL_HEIGHT = "h-8";
 export const CONTROL_TEXT = "text-label-meta-sm";
+/** Fixed toolbar search width — queue + page toolbars stay aligned. */
+export const SEARCH_FIELD_WIDTH = "w-80 max-w-full shrink-0";
 const CONTROL_RADIUS = "rounded-md";
 const CONTROL_SURFACE = "bg-transparent dark:bg-input/30";
 

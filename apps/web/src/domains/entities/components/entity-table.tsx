@@ -145,7 +145,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
   );
 
   return (
-    <Page className="gap-4">
+    <Page>
       <PageHeader
         count={rows.length}
         countOn="entities"
@@ -177,7 +177,6 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
               onValueChange={setSearch}
               placeholder="Search entities…"
               aria-label="Search entities"
-              className="max-w-md min-w-[12rem]"
             />
             <PageFilterMenu
               chips={filterChips}
