@@ -52,6 +52,7 @@ export const EDGE_PREDICATES = [
   "leads",
   "founded",
   "member_of",
+  "employee_of",
   "associate_of",
   "same_as",
   "suspected_as",
@@ -117,6 +118,8 @@ const PERSON_ORG_TO_ORG: readonly EdgeKindPair[] = [
   ["org", "org"],
 ];
 
+const PERSON_TO_ORG: readonly EdgeKindPair[] = [["person", "org"]];
+
 const PERSON_ORG_TO_INFRA_OR_ORG: readonly EdgeKindPair[] = [
   ...PERSON_ORG_TO_INFRA,
   ...PERSON_ORG_TO_ORG,
@@ -179,6 +182,13 @@ export const EDGE_PREDICATE_META: Record<EdgePredicate, EdgePredicateMeta> = {
     symmetric: false,
     group: "roles_affiliation",
     validKinds: PERSON_ORG_TO_ORG,
+  },
+  employee_of: {
+    label: "Employee of",
+    inverseLabel: "Employs",
+    symmetric: false,
+    group: "roles_affiliation",
+    validKinds: PERSON_TO_ORG,
   },
   associate_of: {
     label: "Associate of",

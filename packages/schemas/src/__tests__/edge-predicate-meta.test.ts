@@ -29,6 +29,7 @@ describe("edge-predicate-meta", () => {
     expect(EDGE_PREDICATE_META.leads.group).toBe("roles_affiliation");
     expect(EDGE_PREDICATE_META.founded.group).toBe("roles_affiliation");
     expect(EDGE_PREDICATE_META.member_of.group).toBe("roles_affiliation");
+    expect(EDGE_PREDICATE_META.employee_of.group).toBe("roles_affiliation");
     expect(EDGE_PREDICATE_META.same_as.group).toBe("identity");
     expect(EDGE_PREDICATE_META.primary_domain.group).toBe("domains_hosting");
     expect(EDGE_PREDICATE_META.registers.group).toBe("registration_services");
@@ -86,6 +87,24 @@ describe("edge-predicate-meta", () => {
       edgeRelatedToHasNotes({ predicate: "related_to", notes: "linked" })
     ).toBe(true);
     expect(edgeRelatedToHasNotes({ predicate: "same_as" })).toBe(true);
+  });
+
+  it("hosted_on allows infra as dependent only", () => {
+    expect(edgePredicateAllowsKinds("hosted_on", "infra", "infra")).toBe(true);
+    expect(edgePredicateAllowsKinds("hosted_on", "infra", "person")).toBe(true);
+    expect(edgePredicateAllowsKinds("hosted_on", "person", "infra")).toBe(
+      false
+    );
+    expect(edgePredicateAllowsKinds("hosted_on", "org", "infra")).toBe(false);
+  });
+
+  it("employee_of allows person to org only", () => {
+    expect(edgePredicateAllowsKinds("employee_of", "person", "org")).toBe(true);
+    expect(edgePredicateAllowsKinds("employee_of", "person", "person")).toBe(
+      false
+    );
+    expect(edgePredicateAllowsKinds("employee_of", "org", "org")).toBe(false);
+    expect(predicateLabel("employee_of", "in")).toBe("Employs");
   });
 
   it("edgePredicateAllowsKinds rejects invalid pairs", () => {

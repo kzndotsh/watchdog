@@ -66,17 +66,18 @@ The separate investigation vault keeps its own markdown vocabulary in a private 
 
 SoT: `EDGE_PREDICATES` + `EDGE_PREDICATE_META` in [`packages/schemas/src/vocab.ts`](../../../packages/schemas/src/vocab.ts).
 
-**Doctrine:** one directed Postgres row (`from_id` → `to_id`). Inverse labels are display metadata (`inverseLabel`), not a second stored predicate or Wikidata-style dual statement. Prefer **dependent → provider** for infra topology (`hosted_on`, `dns_via`, `mail_via`, `resolves_to`).
+**Doctrine:** one directed Postgres row (`from_id` → `to_id`). Inverse labels are display metadata (`inverseLabel`), not a second stored predicate or Wikidata-style dual statement. Prefer **dependent → provider** for infra topology (`hosted_on`, `dns_via`, `mail_via`, `resolves_to`). `hosted_on` valid pairs: infra→infra (asset on provider), infra→org, infra→person (asset on org or personal host). Person/org centers do not offer `hosted_on` in phrase pickers — link the domain infra asset, then **Operates** / **Registers** / **Owns** from the person, and **Hosted on** from that infra to its provider.
 
 | Predicate | Meaning (A → B) | Inverse label (from B) | Symmetric |
 | --- | --- | --- | --- |
 | `operates` | A runs/administers B | operated by | no |
 | `owns` | A owns B | owned by | no |
-| `hosted_on` | A is hosted on B | hosts | no |
+| `hosted_on` | A is hosted on B (dependent → provider) | hosts | no |
 | `leads` | A leads B | led by | no |
 | `founded` | A founded B | founded by | no |
 | `registers` | A (registrant) registered B | registered by | no |
 | `member_of` | A is member of B | has member | no |
+| `employee_of` | A is employed by B | employs | no |
 | `parent_of` | A is parent of B | child of | no |
 | `primary_domain` | A's primary domain is B | primary domain of | no |
 | `resolves_to` | A resolves to B | resolved from | no |
