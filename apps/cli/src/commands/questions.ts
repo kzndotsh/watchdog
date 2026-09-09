@@ -8,7 +8,7 @@ import {
   updateQuestionInputSchema,
 } from "@watchdog/schemas";
 
-import { api, emit, emitList, fail, truncText } from "../client";
+import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import { requireUserOverride, userOverrideArg } from "../custody";
 import { displayStatusLabel, enrichQuestionDisplay } from "../display";
 import { requireCaseId, requireUuid, resolveEntityId } from "../ids";
@@ -17,6 +17,7 @@ import {
   asBoolean,
   caseArg,
   defineNounCommand,
+  dryRunArg,
   entityArg,
   requiredCaseArg,
   requiredEntityArg,
@@ -30,6 +31,7 @@ function listHelp(caseId: string, entity: string): string[] {
     `wd questions create -c ${caseId} --entity ${entity} --text "…" --user-override`,
     `wd questions update -c ${caseId} <id> --text "…" --user-override`,
     `wd questions reopen -c ${caseId} <id> --user-override`,
+    `wd questions delete -c ${caseId} <id> --user-override`,
   ]);
 }
 
@@ -206,6 +208,38 @@ export const questionsCmd = defineNounCommand({
           userOverride: true,
         });
         emit(enrichQuestionDisplay(row));
+      },
+    }),
+    delete: defineCommand({
+      meta: {
+        name: "delete",
+        description: "Delete a question (--user-override required)",
+      },
+      args: {
+        ...requiredCaseArg,
+        question: {
+          type: "positional",
+          description: "Question ID",
+          required: true,
+        },
+        ...dryRunArg,
+        ...userOverrideArg,
+      },
+      run: async ({ args }) => {
+        requireUserOverride(args["user-override"]);
+        const scope = questionScopeInputSchema.parse({
+          caseId: requireCaseId(args.case),
+          questionId: requireUuid(args.question, "Question ID"),
+        });
+        if (args["dry-run"]) {
+          emitOk({ dryRun: true, deleted: true, id: scope.questionId });
+          return;
+        }
+        await api().questions.delete({
+          ...scope,
+          userOverride: true,
+        });
+        emitOk({ deleted: true, id: scope.questionId });
       },
     }),
   },
