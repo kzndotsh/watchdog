@@ -302,7 +302,7 @@ function DashboardSplit({
   const hydrated = useHydrated();
 
   const overviewBody = (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto pr-1 pb-2">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto">
       {overview}
     </div>
   );

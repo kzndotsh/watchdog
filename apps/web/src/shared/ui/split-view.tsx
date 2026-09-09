@@ -29,7 +29,9 @@ export interface SplitViewProps {
   middleMinSize?: string;
   middleMaxSize?: string;
   detailMinSize?: string;
-  /** Rounded border chrome (Collect/Triage). Off for full-bleed shells. */
+  /**
+   * Outer box around Queue+Detail. Off by default — the handle is the divider.
+   */
   bordered?: boolean;
   className?: string;
 }
@@ -67,7 +69,7 @@ export function SplitView({
   middleMinSize = "25%",
   middleMaxSize = "60%",
   detailMinSize = "30%",
-  bordered = true,
+  bordered = false,
   className,
 }: SplitViewProps) {
   const hydrated = useHydrated();

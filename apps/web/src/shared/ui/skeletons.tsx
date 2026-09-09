@@ -265,12 +265,12 @@ export function MetricTilesSkeletonLayout({
   className?: string;
 }) {
   return (
-    <section aria-hidden className={cn("grid gap-2", className)}>
+    <section
+      aria-hidden
+      className={cn("grid shrink-0 grid-cols-3 gap-2", className)}
+    >
       {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="border-border flex flex-col gap-1 rounded-md border px-3 py-2.5"
-        >
+        <div key={i} className="flex flex-col gap-1 rounded-md px-3 py-2.5">
           <Skeleton className="h-8 w-12" />
           <Skeleton className="h-4 w-20" />
         </div>
@@ -304,15 +304,22 @@ function DashboardPanelSkeleton({
   );
 }
 
+/** Dashboard overview — triage/due panels under the metric tiles. */
+export function DashboardOverviewPanelsSkeletonLayout() {
+  return (
+    <div className="grid min-h-0 gap-6 lg:grid-cols-2 lg:items-start">
+      <DashboardPanelSkeleton titleWidth="w-12" />
+      <DashboardPanelSkeleton titleWidth="w-8" />
+    </div>
+  );
+}
+
 /** Dashboard overview — metric tiles + triage/due panels. */
 export function DashboardOverviewSkeletonLayout() {
   return (
-    <div className="flex flex-col gap-6">
-      <MetricTilesSkeletonLayout className="grid-cols-3" />
-      <div className="grid min-h-0 gap-6 lg:grid-cols-2 lg:items-start">
-        <DashboardPanelSkeleton titleWidth="w-12" />
-        <DashboardPanelSkeleton titleWidth="w-8" />
-      </div>
+    <div className="flex flex-col gap-3">
+      <MetricTilesSkeletonLayout />
+      <DashboardOverviewPanelsSkeletonLayout />
     </div>
   );
 }
@@ -466,7 +473,7 @@ function CaseSettingsSkeleton() {
 export function CaseOverviewSkeletonLayout() {
   return (
     <div className="flex flex-col gap-6">
-      <MetricTilesSkeletonLayout className="sm:grid-cols-2 lg:grid-cols-3" />
+      <MetricTilesSkeletonLayout />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,22rem)]">
         <section className="min-w-0">
           <Skeleton className="mb-2 h-4 w-28" />
@@ -534,7 +541,7 @@ function TaskBoardColumnSkeleton({
 }) {
   return (
     <div className={TASK_BOARD_COLUMN_SHELL_CLASS}>
-      <header className="border-border bg-background/95 sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2 backdrop-blur-sm">
+      <header className="border-border bg-background sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
         <SectionLabel as="h3">
           <Skeleton className="inline-block h-3 w-20 align-middle" />
           <Skeleton className="ml-2 inline-block h-3 w-4 align-middle tabular-nums" />

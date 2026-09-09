@@ -41,7 +41,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
 }: Props<TData, TValue>) {
   if (!column.getCanSort()) {
     return (
-      <span className={cn("text-xs font-medium", className)}>{title}</span>
+      <span className={cn("text-sm font-medium", className)}>{title}</span>
     );
   }
 
@@ -51,7 +51,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
     <button
       type="button"
       className={cn(
-        "group/col-header inline-flex h-7 max-w-full items-center gap-1 text-xs font-medium",
+        "group/col-header inline-flex h-7 max-w-full items-center gap-1 text-sm font-medium",
         "focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-2",
         sorted
           ? "text-foreground"

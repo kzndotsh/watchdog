@@ -7,30 +7,40 @@ export interface MetricTile {
   label: string;
   value: number | string;
   hint?: string;
-  to: "/cases" | "/entities" | "/triage" | "/collect" | "/tasks";
+  to:
+    | "/cases"
+    | "/entities"
+    | "/identifiers"
+    | "/graph"
+    | "/triage"
+    | "/collect"
+    | "/tasks";
   tone?: "default" | "warn" | "muted";
 }
 
 export function MetricsSection({
   tiles,
   className,
+  label = "Overview",
 }: {
   tiles: MetricTile[];
   className?: string;
+  /** Accessible name for the stats grid. */
+  label?: string;
 }) {
   return (
     <section
-      aria-label="Overview"
-      className={cn("grid grid-cols-3 gap-2", className)}
+      aria-label={label}
+      className={cn("grid shrink-0 grid-cols-3 gap-2", className)}
     >
       {tiles.map((tile) => (
         <Link
           key={tile.id}
           to={tile.to}
           className={cn(
-            "border-border relative flex flex-col gap-1 rounded-md border px-3 py-2.5 transition-colors",
-            "hover:bg-muted/50 focus-visible:bg-muted/60 focus-visible:outline-none",
-            tile.tone === "warn" && "border-warning/40",
+            "relative flex flex-col gap-1 rounded-md px-3 py-2.5 transition-colors",
+            "hover:bg-muted/40 focus-visible:bg-muted/50 focus-visible:outline-none",
+            tile.tone === "warn" && "text-warning",
             tile.tone === "muted" && "opacity-80"
           )}
         >
@@ -41,7 +51,7 @@ export function MetricsSection({
           ) : null}
           <span
             className={cn(
-              "font-mono text-2xl font-semibold tracking-tight tabular-nums",
+              "text-heading-dossier font-semibold tracking-tight tabular-nums",
               tile.tone === "warn" && "text-warning",
               tile.hint && "pr-16"
             )}

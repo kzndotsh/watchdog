@@ -1,5 +1,5 @@
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
@@ -9,6 +9,10 @@ import {
   jobEntityLabelsForActivity,
 } from "@/domains/cases/lib/overview-activity";
 import type { CaseRecord } from "@/domains/cases/types";
+import {
+  MetricsSection,
+  type MetricTile,
+} from "@/domains/dashboard/components/metrics-section";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
@@ -39,6 +43,15 @@ import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import type { ProposalRecord } from "@watchdog/core";
 import { activityKindLabel, isProposalQueueLiveEvent } from "@watchdog/schemas";
 
+function inboxMetricTone(
+  statsPending: boolean,
+  pendingCount: number
+): MetricTile["tone"] {
+  if (statsPending) return "muted";
+  if (pendingCount > 0) return "warn";
+  return "default";
+}
+
 function caseOverviewQueries(caseId: string) {
   return [
     edgesForCaseQuery(caseId),
@@ -53,20 +66,6 @@ const EMPTY_EDGES: CaseEdgeRecord[] = [];
 const EMPTY_EVIDENCE: EvidenceRecord[] = [];
 const EMPTY_JOBS: JobListRecord[] = [];
 const EMPTY_PROPOSALS: ProposalRecord[] = [];
-
-interface StatTile {
-  id: string;
-  label: string;
-  value: number | string;
-  to?:
-    | "/entities"
-    | "/identifiers"
-    | "/graph"
-    | "/tasks"
-    | "/collect"
-    | "/triage";
-  tone?: "warn";
-}
 
 export function CaseOverviewTab({
   caseId,
@@ -83,7 +82,6 @@ export function CaseOverviewTab({
   listsPending?: boolean;
   listsPlaceholder?: boolean;
 }) {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const queryResults = useQueries({
     queries: caseOverviewQueries(caseId),
@@ -130,56 +128,61 @@ export function CaseOverviewTab({
 
   const liveJobCount = useMemo(() => countLiveJobs(jobs), [jobs]);
 
-  const tiles: StatTile[] = useMemo(
-    () => [
+  const tiles: MetricTile[] = useMemo(() => {
+    const pendingTone = statsPending ? "muted" : "default";
+    return [
       {
         id: "entities",
         label: "Entities",
         value: statsPending ? "—" : entities.length,
         to: "/entities",
+        tone: pendingTone,
       },
       {
         id: "identifiers",
         label: "Identifiers",
         value: statsPending ? "—" : identifiers.length,
         to: "/identifiers",
+        tone: pendingTone,
       },
       {
         id: "connections",
         label: "Connections",
         value: statsPending ? "—" : edges.length,
         to: "/graph",
+        tone: pendingTone,
       },
       {
         id: "evidence",
         label: "Evidence",
         value: statsPending ? "—" : evidence.length,
         to: "/collect",
+        tone: pendingTone,
       },
       {
         id: "live",
         label: "Live jobs",
         value: statsPending ? "—" : liveJobCount,
         to: "/collect",
+        tone: pendingTone,
       },
       {
         id: "inbox",
         label: "Pending proposals",
         value: statsPending ? "—" : pendingProposals.length,
-        tone: !statsPending && pendingProposals.length > 0 ? "warn" : undefined,
+        tone: inboxMetricTone(statsPending, pendingProposals.length),
         to: "/triage",
       },
-    ],
-    [
-      statsPending,
-      entities.length,
-      identifiers.length,
-      edges.length,
-      evidence.length,
-      liveJobCount,
-      pendingProposals.length,
-    ]
-  );
+    ];
+  }, [
+    statsPending,
+    entities.length,
+    identifiers.length,
+    edges.length,
+    evidence.length,
+    liveJobCount,
+    pendingProposals.length,
+  ]);
 
   const entityLabels = useMemo(
     () => jobEntityLabelsForActivity(jobs, entities),
@@ -211,57 +214,11 @@ export function CaseOverviewTab({
           }}
         />
       ) : null}
-      <section
-        aria-label="Case stats"
-        className={cn(
-          "grid gap-2 sm:grid-cols-2 lg:grid-cols-3",
-          placeholderDeemphasisClass(overviewPlaceholder)
-        )}
-      >
-        {tiles.map((tile) => {
-          const className = cn(
-            "border-border flex flex-col gap-1 rounded-md border px-3 py-2.5 text-left transition-colors",
-            tile.to &&
-              "hover:bg-muted/50 focus-visible:bg-muted/60 focus-visible:outline-none",
-            tile.tone === "warn" && "border-warning/40"
-          );
-          const body = (
-            <>
-              <span
-                className={cn(
-                  "font-mono text-2xl font-semibold tracking-tight tabular-nums",
-                  tile.tone === "warn" && "text-warning"
-                )}
-              >
-                {tile.value}
-              </span>
-              <span className="text-label-sm text-muted-foreground">
-                {tile.label}
-              </span>
-            </>
-          );
-          if (tile.to) {
-            const to = tile.to;
-            return (
-              <button
-                key={tile.id}
-                type="button"
-                className={className}
-                onClick={() => {
-                  void navigate({ to });
-                }}
-              >
-                {body}
-              </button>
-            );
-          }
-          return (
-            <div key={tile.id} className={className}>
-              {body}
-            </div>
-          );
-        })}
-      </section>
+      <MetricsSection
+        label="Case stats"
+        tiles={tiles}
+        className={placeholderDeemphasisClass(overviewPlaceholder)}
+      />
 
       <div
         className={cn(

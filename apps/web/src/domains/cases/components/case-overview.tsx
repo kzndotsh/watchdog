@@ -93,7 +93,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
 
   if (headerLoadError) {
     return (
-      <Page className="gap-4">
+      <Page>
         <PageHeader />
         <FetchErrorAlert error={headerLoadError} onRetry={retryHeader} />
       </Page>
@@ -102,7 +102,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
 
   if (headerPending) {
     return (
-      <Page className="gap-4">
+      <Page>
         <PageHeader />
         <CaseOverviewPending />
       </Page>
@@ -136,7 +136,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   }
 
   return (
-    <Page className="gap-4">
+    <Page>
       <PageHeader
         actions={
           <div className="flex items-center gap-2">

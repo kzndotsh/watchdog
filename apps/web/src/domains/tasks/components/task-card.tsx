@@ -87,7 +87,7 @@ function TaskCardBody({
         {task.priority ? (
           <span
             className={cn(
-              "mt-0.5 inline-flex shrink-0 items-center rounded-sm px-1 py-px text-[0.65rem] leading-none font-medium tracking-wide uppercase",
+              "text-chip mt-0.5 inline-flex shrink-0 items-center rounded-sm px-1 py-px leading-none",
               STATUS_TONES[TASK_PRIORITY_TONE_MAP[task.priority]].low
             )}
           >
@@ -287,7 +287,7 @@ export function TaskCardPreview({
   const overdue = isTaskDueOverdue(task.dueDate, task.status);
 
   return (
-    <div className={cn(TASK_CARD_SHELL_CLASS, "cursor-grabbing shadow-md")}>
+    <div className={cn(TASK_CARD_SHELL_CLASS, "cursor-grabbing")}>
       {task.priority ? (
         <span
           aria-hidden

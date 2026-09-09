@@ -20,10 +20,9 @@ export function CommandSearchTrigger() {
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton
-          variant="outline"
           tooltip="Search"
           onClick={openPalette}
-          className="text-muted-foreground hover:text-muted-foreground active:text-muted-foreground hover:bg-transparent active:bg-transparent"
+          className="text-muted-foreground hover:text-foreground"
         >
           <SearchIcon />
           {collapsed ? null : (

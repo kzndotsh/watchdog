@@ -151,6 +151,30 @@ if (existsSync(layoutSl)) {
   }
 }
 
+// ── 1b. Arbitrary font sizes (use @theme text-* or wd-typography roles) ───────
+const ARBITRARY_FONT_SIZE_RE = /\btext-\[(?:\d+(?:\.\d+)?px|\d*\.?\d+rem)\]/;
+const arbitraryFontHits = [];
+for (const f of walk(src)) {
+  const r = rel(f);
+  if (r.startsWith("shared/ui/shadcn/") || r.startsWith("styles/")) continue;
+  const lines = readFileSync(f, "utf-8").split("\n");
+  for (const [i, line] of lines.entries()) {
+    if (line.trimStart().startsWith("//") || line.trimStart().startsWith("*"))
+      continue;
+    if (!ARBITRARY_FONT_SIZE_RE.test(line)) continue;
+    if (consumeAllow(lines, i, "arbitrary-font-size")) continue;
+    arbitraryFontHits.push(`${r}:${i + 1}: ${line.trim()}`);
+  }
+}
+for (const hit of arbitraryFontHits) {
+  fail(
+    `Arbitrary font size — use text-2xs/xs/sm/base/xl/2xl or text-copy/text-label-* roles: ${hit}`
+  );
+}
+if (arbitraryFontHits.length === 0) {
+  ok("No arbitrary text-[Npx|Nrem] font sizes outside shadcn/styles");
+}
+
 // ── 2. Freestyle confidence / status greens & ambers (all of src/) ───────────
 const COLOR_RE =
   /\b(?:text|bg|border)-(?:green|amber|emerald|yellow|lime|orange|red)-(?:\d{2,3})\b|\bdark:(?:text|bg|border)-(?:green|amber|emerald|yellow)-/;

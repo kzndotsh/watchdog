@@ -105,7 +105,7 @@ export function CodeBlock({
   }, [code, mime, lang, shikiTheme]);
 
   const preClassName = cn(
-    "bg-muted/40 overflow-auto rounded-md p-3 font-mono text-[11px] leading-relaxed break-words whitespace-pre-wrap",
+    "bg-muted/40 text-label-mono-sm overflow-auto rounded-md p-3 font-mono leading-relaxed break-words whitespace-pre-wrap",
     className
   );
 

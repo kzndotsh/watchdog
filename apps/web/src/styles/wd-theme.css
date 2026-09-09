@@ -116,8 +116,16 @@
   --color-kind-attestation: var(--kind-attestation);
   --color-kind-other: var(--kind-other);
 
-  /* Product ladder: sm / md(8) / lg only — no xl+ */
-  --radius-sm: calc(var(--radius) * 0.5); /* 4px */
-  --radius-md: var(--radius); /* 8px — default controls */
-  --radius-lg: calc(var(--radius) * 1.5); /* 12px — surfaces */
+  /* Product ladder: sm / md(6) / lg only — no xl+ */
+  --radius-sm: calc(var(--radius) * 0.5); /* 3px */
+  --radius-md: var(--radius); /* 6px — default controls */
+  --radius-lg: calc(var(--radius) * 1.5); /* 9px — surfaces */
+
+  /*
+    Typography scale (ops-dense) — Tailwind text-* SoT; semantic roles in
+    wd-typography.css bundle size + weight + leading. text-2xs fills the gap
+    between xs (12px) and sm (14px) at 13px @ 1.0 root.
+  */
+  --text-2xs: 0.8125rem;
+  --text-2xs--line-height: 1.25;
 }

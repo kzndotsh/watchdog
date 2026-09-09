@@ -18,7 +18,7 @@ export function DataTablePagination<TData extends RowData>({
   const page = table.state.pagination.pageIndex;
 
   return (
-    <div className="text-muted-foreground flex items-center justify-between px-1 py-2 text-xs">
+    <div className="text-muted-foreground flex items-center justify-between px-1 py-2 text-sm">
       <span>
         Page {page + 1} of {pageCount} ·{" "}
         {table.getFilteredRowModel().rows.length} total

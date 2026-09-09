@@ -97,7 +97,7 @@ function NavUser() {
             render={
               <SidebarMenuButton
                 size="lg"
-                className="hover:bg-sidebar-accent data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground border-0 bg-transparent shadow-none dark:bg-[color-mix(in_oklab,var(--input)_18%,transparent)] dark:hover:bg-[color-mix(in_oklab,var(--input)_32%,transparent)] dark:data-open:bg-[color-mix(in_oklab,var(--input)_32%,transparent)]"
+                className="hover:bg-sidebar-accent data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground border-0 bg-transparent shadow-none"
               />
             }
           >
@@ -112,7 +112,7 @@ function NavUser() {
               </span>
               {email ? (
                 <span
-                  className="text-muted-foreground truncate text-xs"
+                  className="text-muted-foreground truncate text-sm"
                   suppressHydrationWarning
                 >
                   {email}
@@ -132,7 +132,7 @@ function NavUser() {
                 <div className="flex flex-col gap-0.5">
                   <span className="truncate font-medium">{name}</span>
                   {email ? (
-                    <span className="text-muted-foreground truncate text-xs">
+                    <span className="text-muted-foreground truncate text-sm">
                       {email}
                     </span>
                   ) : null}
@@ -182,14 +182,14 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              size="lg"
+              size="default"
               isActive={pathActive(pathname, "/")}
               render={<Link to="/" />}
               tooltip="Dashboard"
-              className="h-14 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! [&_svg]:size-5"
+              className="h-9 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! [&_svg]:size-4"
             >
               <DogIcon className="shrink-0" />
-              <span className="font-heading text-lg font-bold tracking-widest group-data-[collapsible=icon]:hidden">
+              <span className="font-heading text-sm font-medium tracking-[0.12em] group-data-[collapsible=icon]:hidden">
                 WATCHDOG
               </span>
             </SidebarMenuButton>

@@ -14,7 +14,7 @@ const PRESET: Record<IdChipPreset, { head: number; tail: number }> = {
 };
 
 const VALUE_TOOLTIP_CLASS =
-  "max-w-[12rem] break-all px-2 py-1 font-mono text-[10px] leading-snug";
+  "max-w-[12rem] break-all px-2 py-1 font-mono text-label-mono-sm leading-snug";
 
 interface IdChipProps {
   value: string;

@@ -3,21 +3,21 @@
 
   --background: oklch(0.19 0.012 250);
   --foreground: oklch(0.96 0.01 250);
-  --card: oklch(0.23 0.012 250);
+  --card: oklch(0.19 0.012 250);
   --card-foreground: oklch(0.96 0.01 250);
   --popover: oklch(0.23 0.012 250);
   --popover-foreground: oklch(0.96 0.01 250);
   --primary: oklch(0.72 0.12 220);
   --primary-foreground: oklch(0.18 0.02 250);
-  --secondary: oklch(0.28 0.014 250);
+  --secondary: oklch(0.26 0.014 250);
   --secondary-foreground: oklch(0.96 0.01 250);
-  --muted: oklch(0.28 0.014 250);
+  --muted: oklch(0.26 0.014 250);
   --muted-foreground: oklch(0.68 0.02 250);
-  --accent: oklch(0.3 0.03 220);
-  --accent-foreground: oklch(0.92 0.03 220);
+  --accent: oklch(0.26 0.014 250);
+  --accent-foreground: oklch(0.96 0.01 250);
   --destructive: oklch(0.76 0.16 25);
   /* Match SelectTrigger quiet stroke (was border@12% × 55% mix) */
-  --border: color-mix(in oklab, oklch(0.96 0.01 250 / 12%) 55%, transparent);
+  --border: color-mix(in oklab, oklch(0.96 0.01 250 / 8%) 50%, transparent);
   --input: var(--border);
   --ring: oklch(0.68 0.11 220);
   --chart-1: oklch(0.72 0.12 220);
@@ -25,11 +25,11 @@
   --chart-3: oklch(0.78 0.14 75);
   --chart-4: oklch(0.72 0.12 230);
   --chart-5: oklch(0.76 0.16 25);
-  --sidebar: oklch(0.165 0.012 250);
+  --sidebar: oklch(0.19 0.012 250);
   --sidebar-foreground: oklch(0.96 0.01 250);
   --sidebar-primary: oklch(0.72 0.12 220);
   --sidebar-primary-foreground: oklch(0.18 0.02 250);
-  --sidebar-accent: oklch(0.28 0.014 250);
+  --sidebar-accent: oklch(0.24 0.014 250);
   --sidebar-accent-foreground: oklch(0.96 0.01 250);
   --sidebar-border: var(--border);
   --sidebar-ring: oklch(0.68 0.11 220);

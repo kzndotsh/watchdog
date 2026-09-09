@@ -39,7 +39,7 @@ function CrumbFace({ item }: { item: TrailItem }) {
 
 function TrailLink({ item, href }: { item: TrailItem; href: TrailTo }) {
   const className =
-    "text-muted-foreground hover:text-foreground inline-flex max-w-[12rem] min-w-0 items-center gap-1 text-xs";
+    "text-muted-foreground hover:text-foreground inline-flex max-w-[12rem] min-w-0 items-center gap-1 text-sm";
   const ariaLabel = item.id === "case" ? `Case ${item.label}` : undefined;
   const face = <CrumbFace item={item} />;
 
@@ -103,7 +103,7 @@ function LastCrumb({
       <BreadcrumbPage
         aria-label={item.id === "case" ? `Case ${item.label}` : undefined}
         className={cn(
-          "text-foreground inline-flex max-w-[16rem] min-w-0 items-center gap-1 text-xs font-semibold tracking-tight",
+          "text-foreground inline-flex max-w-[16rem] min-w-0 items-center gap-1 text-sm font-semibold tracking-tight",
           placeholderDeemphasisClass(placeholderLast),
           errorLast && "text-destructive"
         )}
@@ -139,7 +139,7 @@ export function AppBreadcrumbs({
 
   return (
     <Breadcrumb className="min-w-0">
-      <BreadcrumbList className="text-muted-foreground flex-nowrap gap-1 text-xs">
+      <BreadcrumbList className="text-muted-foreground flex-nowrap gap-1 text-sm">
         {ancestors.map((item) => (
           <Fragment key={item.id}>
             <BreadcrumbItem className="min-w-0">

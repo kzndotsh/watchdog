@@ -53,7 +53,7 @@ function PlaybookInfoCard({
     <div className="space-y-2 text-xs">
       <div>
         <p className="font-medium">{playbook.title}</p>
-        <p className="text-muted-foreground font-mono text-[0.65rem] leading-snug">
+        <p className="text-muted-foreground text-label-mono-sm font-mono leading-snug">
           {playbook.id}
         </p>
       </div>
@@ -64,7 +64,7 @@ function PlaybookInfoCard({
       )}
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
         <dt className="text-muted-foreground">Steps</dt>
-        <dd className="text-[0.65rem] leading-snug">
+        <dd className="text-label-mono-sm leading-snug">
           {playbook.steps.map((step) => capabilityLabel(step)).join(" → ")}
         </dd>
         <dt className="text-muted-foreground">Seed</dt>

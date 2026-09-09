@@ -24,7 +24,7 @@ Name the **layout kind**, then the **parts**. These are component/layout words: 
 | **form** | **FormSection** × N | : |
 | **card grid** | searchable cards (+ dashed create CTA) | Cases: `CASE_CARD_SHELL_CLASS` |
 | **board** | status columns + cards (kanban) | `/tasks` + Dossier Tasks tab: domain-owned (`TaskBoard`) |
-| **mixed (dashboard)** | Stat cards + section panels + resizable Activity (`ScrollArea`) | `/` Dashboard: domain-owned (`MetricsSection`, `dashboard-panels`, `RecentActivity` in vertical `ResizablePanelGroup`) |
+| **mixed (dashboard)** | Borderless metric stats + section panels + resizable Activity (`ScrollArea`) | `/` Dashboard: domain-owned (`MetricsSection`, `dashboard-panels`, `RecentActivity` in vertical `ResizablePanelGroup`) |
 
 | Part | Code |
 | --- | --- |

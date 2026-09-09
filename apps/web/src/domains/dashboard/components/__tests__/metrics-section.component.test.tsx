@@ -40,5 +40,8 @@ describe("MetricsSection", () => {
     expect(screen.getByText("Jobs")).toBeInTheDocument();
     expect(screen.getByText("live")).toBeInTheDocument();
     expect(screen.getByRole("link")).toHaveAttribute("href", "/collect");
+    expect(
+      screen.getByRole("region", { name: "Overview" })
+    ).toBeInTheDocument();
   });
 });

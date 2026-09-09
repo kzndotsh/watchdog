@@ -58,8 +58,8 @@ export function QueueRow({
       data-live={live || undefined}
       className={cn(
         "relative flex w-full min-w-0 cursor-pointer flex-nowrap items-start gap-2 px-3 py-1.5 text-left transition-colors",
-        "hover:bg-muted/50 focus-visible:bg-muted/60 focus-visible:outline-none",
-        selected && "bg-muted/70",
+        "hover:bg-muted/40 focus-visible:bg-muted/50 focus-visible:outline-none",
+        selected && "bg-muted/45",
         className
       )}
       onClick={handleActivate}
@@ -95,10 +95,7 @@ export function QueueRowTitle({
 }) {
   return (
     <span
-      className={cn(
-        "text-foreground truncate font-mono text-xs font-medium",
-        className
-      )}
+      className={cn("text-foreground truncate text-sm font-medium", className)}
     >
       {children}
     </span>

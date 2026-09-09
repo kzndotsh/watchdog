@@ -45,7 +45,7 @@ function CapInfoCard({
     <div className="space-y-2 text-xs">
       <div>
         <p className="font-medium">{cap.title}</p>
-        <p className="text-muted-foreground font-mono text-[0.65rem] leading-snug">
+        <p className="text-muted-foreground text-label-mono-sm font-mono leading-snug">
           {cap.id}
         </p>
       </div>
@@ -62,7 +62,7 @@ function CapInfoCard({
               <dd
                 className={
                   row.mono === true
-                    ? "font-mono text-[0.65rem] leading-snug break-all"
+                    ? "text-label-mono-sm font-mono leading-snug break-all"
                     : "leading-snug"
                 }
               >

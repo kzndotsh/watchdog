@@ -27,6 +27,7 @@ const twMerge = extendTailwindMerge({
             "copy-sm",
             "meta",
             "chip",
+            "2xs",
           ],
         },
       ],

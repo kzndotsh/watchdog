@@ -34,7 +34,7 @@ describe("Skeletons", () => {
     expect(board.querySelectorAll(".min-w-\\[14rem\\]")).toHaveLength(2);
 
     const { container: grid } = render(<CardGridSkeleton slots={3} />);
-    expect(grid.querySelectorAll(".rounded-lg")).toHaveLength(3);
+    expect(grid.querySelectorAll(".rounded-md")).toHaveLength(3);
   });
 
   it("renders Collect queue and detail skeletons with day groups and tab strip", () => {

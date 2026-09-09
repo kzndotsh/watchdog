@@ -6,7 +6,7 @@ export const GRAPH_CANVAS_BG_CLASS = "bg-muted/20!";
 export const GRAPH_CANVAS_DOT_GAP = 16;
 export const GRAPH_CANVAS_DOT_SIZE = 1;
 /** Peak dot contrast at comfortable zoom (color-mix %). */
-export const GRAPH_CANVAS_DOT_MIX_PEAK = 22;
+export const GRAPH_CANVAS_DOT_MIX_PEAK = 14;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));

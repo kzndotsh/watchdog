@@ -41,7 +41,7 @@ export function DataTableViewOptions<TData extends RowData>({
       >
         <Settings2Icon className="size-4" />
         {totalCount > 0 ? (
-          <span className="text-muted-foreground text-xs tabular-nums">
+          <span className="text-muted-foreground text-sm tabular-nums">
             {visibleCount}/{totalCount}
           </span>
         ) : null}

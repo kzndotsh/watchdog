@@ -116,6 +116,10 @@ describe("CaseOverviewTab", () => {
     expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByText("Entities")).toBeInTheDocument();
     expect(screen.getByText("Identifiers")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Entities/ })).toHaveAttribute(
+      "href",
+      "/entities"
+    );
   });
 
   it("shows a blank activity slate when there is no recent activity", () => {

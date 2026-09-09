@@ -23,7 +23,7 @@ Operate mode: task clarity over surprise. Surfaces earn their chrome; don't inve
 | `/tasks` | Case work board (kanban); optional entity filter | board |
 | `/cases` | Manage Cases (create / Open / export) | card grid |
 | `/cases/$caseSlug` | Case Overview: case dashboard (stats, activity, settings) | stack |
-| `/settings` | Account, security, API keys, Cap credentials (`?tab=`) | stack (sidebar + form) |
+| `/settings` | Account, security, appearance, API keys, Cap credentials (`?tab=`) | stack (sidebar + form) |
 | `/ui` | DS fixtures only: not a product surface | fixtures |
 | `/auth/$path` | Better Auth views: `sign-in`, `sign-up`, `forgot-password`, `reset-password`, `verify-email`, `sign-out` (WATCHDOG mark + custody line above card) | centered card |
 

@@ -273,13 +273,13 @@ function JsonNode({
         aria-label={open ? "Collapse" : "Expand"}
       >
         {fieldLabel}
-        <span className="text-[9px] leading-none select-none">
+        <span className="text-label-meta-sm leading-none select-none">
           {open ? "▾" : "▸"}
         </span>
         <span className={t.bracket}>{openBracket}</span>
         {!open && (
           <>
-            <span className="text-muted-foreground text-[11px] italic select-none">
+            <span className="text-muted-foreground text-label-mono-sm italic select-none">
               {preview(value)}
             </span>
             <span className={t.bracket}>{closeBracket}</span>
@@ -368,7 +368,7 @@ export function JsonView({
       aria-label="JSON"
       onKeyDown={onKeyDown}
       className={cn(
-        "bg-muted/40 overflow-auto rounded-md p-3 font-mono text-[11px] leading-relaxed",
+        "bg-muted/40 text-label-mono-sm overflow-auto rounded-md p-3 font-mono leading-relaxed",
         className
       )}
     >

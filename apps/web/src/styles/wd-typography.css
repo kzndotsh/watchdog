@@ -1,81 +1,72 @@
-/* Type roles — Geist-shaped, ops-dense (prefer over raw text-[Npx]) */
+/*
+  Semantic type roles — thin bundles over @theme text-* (wd-theme.css).
+  Prefer these in product UI; raw text-xs/sm/base are fine in shadcn primitives.
+  Ban arbitrary text-[Npx] via ds:check.
+*/
 @utility text-heading-page {
-  font-size: 1.25rem;
+  @apply text-xl font-semibold;
   line-height: 1.25;
-  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
 @utility text-heading-dossier {
-  font-size: 1.5rem;
+  @apply text-2xl font-semibold;
   line-height: 1.2;
-  font-weight: 600;
   letter-spacing: -0.025em;
 }
 
 @utility text-heading-section {
-  font-size: 0.9375rem;
+  @apply text-base font-medium;
   line-height: 1.35;
-  font-weight: 500;
 }
 
 @utility text-label {
-  font-size: 0.875rem;
+  @apply text-sm font-medium;
   line-height: 1.25;
-  font-weight: 500;
 }
 
 @utility text-label-sm {
-  font-size: 0.8125rem;
+  @apply text-sm font-medium;
   line-height: 1.25;
-  font-weight: 500;
 }
 
 @utility text-label-meta {
-  font-size: 0.6875rem;
-  line-height: 1.2;
-  font-weight: 500;
+  @apply text-2xs font-medium;
+  line-height: 1.25;
 }
 
 @utility text-label-meta-sm {
-  font-size: 0.625rem;
-  line-height: 1.2;
-  font-weight: 500;
+  @apply text-xs font-medium;
+  line-height: 1.25;
 }
 
 @utility text-label-mono {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  @apply font-mono text-sm;
   line-height: 1.25;
 }
 
 @utility text-label-mono-sm {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  line-height: 1.2;
+  @apply text-2xs font-mono;
+  line-height: 1.25;
 }
 
 @utility text-copy {
-  font-size: 0.875rem;
+  @apply text-base;
   line-height: 1.55;
 }
 
 @utility text-copy-sm {
-  font-size: 0.8125rem;
+  @apply text-sm;
   line-height: 1.5;
 }
 
-/* Aliases (Phase 1 plan) */
 @utility text-meta {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  line-height: 1.2;
+  @apply text-2xs font-mono;
+  line-height: 1.25;
 }
 
 @utility text-chip {
-  font-size: 0.625rem;
-  line-height: 1.2;
-  font-weight: 500;
+  @apply text-xs font-medium uppercase;
+  line-height: 1.25;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
 }

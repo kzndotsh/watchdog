@@ -4,4 +4,4 @@ export const TASK_BOARD_COLUMN_SHELL_CLASS =
 
 /** Task card shell — shared with task-card + BoardSkeleton. */
 export const TASK_CARD_SHELL_CLASS =
-  "border-border bg-card relative flex w-full gap-1.5 overflow-hidden rounded-md border py-2 pr-2 pl-1.5 shadow-xs";
+  "border-border bg-background relative flex w-full gap-1.5 overflow-hidden rounded-md border py-2 pr-2 pl-1.5";

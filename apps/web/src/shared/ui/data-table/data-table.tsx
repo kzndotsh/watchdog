@@ -217,7 +217,7 @@ export function DataTable<TData extends RowData>({
     <div
       aria-busy={showPending || undefined}
       className={cn(
-        "overflow-hidden rounded-lg border text-xs",
+        "overflow-hidden rounded-lg border text-sm",
         "[&_tbody_tr]:h-10 [&_td]:py-1 [&_th]:h-8",
         className
       )}
@@ -236,7 +236,7 @@ export function DataTable<TData extends RowData>({
             />
           ))}
         </colgroup>
-        <TableHeader className="bg-muted/80 sticky top-0 z-10 backdrop-blur">
+        <TableHeader className="bg-background sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (

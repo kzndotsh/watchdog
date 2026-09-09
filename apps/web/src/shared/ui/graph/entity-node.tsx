@@ -21,8 +21,8 @@ export function EntityNode({
     <div
       className={cn(
         ENTITY_NODE_SHELL_CLASS,
-        selected && "ring-ring ring-offset-background ring-2 ring-offset-1",
-        data.isCenter && "shadow-md"
+        selected && "ring-ring ring-1",
+        data.isCenter && "border-foreground/25"
       )}
       style={{ borderColor: border }}
     >
