@@ -13,6 +13,16 @@ vi.mock("@/auth/ensure-session", () => ({
   ensureAppSession: vi.fn(),
 }));
 
+vi.mock("@/domains/cases/queries", () => ({
+  casesContextQuery: vi.fn(() => ({
+    queryKey: ["cases", "context"],
+  })),
+}));
+
+vi.mock("@/shared/lib/warm-query", () => ({
+  ensureAppQueryData: vi.fn().mockResolvedValue({ cases: [], active: null }),
+}));
+
 vi.mock("@/shared/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="app-shell">{children}</div>
@@ -33,7 +43,9 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 });
 
 import { ensureAppSession } from "@/auth/ensure-session";
+import { casesContextQuery } from "@/domains/cases/queries";
 import { Route } from "@/routes/_protected";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
 describe("_protected route", () => {
   it("redirects unauthenticated visitors to sign-in with returnTo", async () => {
@@ -58,19 +70,25 @@ describe("_protected route", () => {
       session: { id: "sess-1" },
       user: { id: "user-1", name: "Analyst" },
     };
+    const queryClient = { id: "qc-1" };
     vi.mocked(ensureAppSession).mockResolvedValue(
       session as Awaited<ReturnType<typeof ensureAppSession>>
     );
 
     await expect(
       Route.options.beforeLoad!({
-        context: { queryClient: {} },
+        context: { queryClient },
         location: { href: "/tasks" },
       } as never)
     ).resolves.toEqual({
       session,
       user: session.user,
     });
+
+    expect(ensureAppQueryData).toHaveBeenCalledWith(
+      queryClient,
+      casesContextQuery()
+    );
   });
 
   it("renders the authenticated app shell", () => {

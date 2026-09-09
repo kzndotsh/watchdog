@@ -3,7 +3,9 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import { authClient } from "@/auth/client";
 import { ensureAppSession } from "@/auth/ensure-session";
+import { casesContextQuery } from "@/domains/cases/queries";
 import { AppShell } from "@/shared/layout/app-shell";
+import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
 function ProtectedLayout() {
   // Mid-visit revocation / other-tab sign-out — beforeLoad only runs on enter.
@@ -30,6 +32,9 @@ export const Route = createFileRoute("/_protected")({
         search: { redirectTo: returnTo },
       });
     }
+
+    // Sidebar CaseSwitcher + case nav need cases context on every protected route.
+    await ensureAppQueryData(queryClient, casesContextQuery());
 
     return { session, user: session.user };
   },
