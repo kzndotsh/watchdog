@@ -3,6 +3,7 @@ import {
   Specimen,
   Swatch,
 } from "@/routes/_protected/ui/-guide-chrome";
+import { TypeScaleSpecimen } from "@/routes/_protected/ui/type-scale-specimen";
 
 const CONFIDENCE_SWATCHES = [
   { name: "confirmed", className: "bg-confidence-confirmed" },
@@ -58,21 +59,6 @@ const SEMANTIC_SWATCHES = [
   { name: "primary", className: "bg-primary" },
 ] as const;
 
-const TYPE_ROLES = [
-  { name: "text-heading-page", className: "text-heading-page" },
-  { name: "text-heading-dossier", className: "text-heading-dossier" },
-  { name: "text-heading-section", className: "text-heading-section" },
-  { name: "text-label", className: "text-label" },
-  { name: "text-label-sm", className: "text-label-sm" },
-  { name: "text-label-meta", className: "text-label-meta" },
-  { name: "text-label-mono", className: "text-label-mono" },
-  { name: "text-label-mono-sm", className: "text-label-mono-sm" },
-  { name: "text-copy", className: "text-copy" },
-  { name: "text-copy-sm", className: "text-copy-sm" },
-  { name: "text-meta", className: "text-meta" },
-  { name: "text-chip", className: "text-chip" },
-] as const;
-
 export function FoundationsSection() {
   return (
     <GuideSection
@@ -104,20 +90,12 @@ export function FoundationsSection() {
         ))}
       </Specimen>
 
-      <Specimen label="Type roles" className="md:col-span-2">
-        <div className="flex w-full flex-col gap-2">
-          {TYPE_ROLES.map((role) => (
-            <div
-              key={role.name}
-              className="border-border flex flex-wrap items-baseline gap-3 border-b border-dashed py-1 last:border-b-0"
-            >
-              <span className="text-label-mono-sm text-muted-foreground w-44 shrink-0">
-                {role.name}
-              </span>
-              <span className={role.className}>The quick brown fox</span>
-            </div>
-          ))}
-        </div>
+      <Specimen
+        label="Type scale"
+        blurb="All wd-typography roles with live rem, px, and line-height from computed styles."
+        className="md:col-span-2"
+      >
+        <TypeScaleSpecimen className="w-full" />
       </Specimen>
     </GuideSection>
   );
