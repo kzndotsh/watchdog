@@ -54,11 +54,10 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Manage",
-    items: [{ to: "/cases", label: "Cases", icon: BriefcaseIcon }],
-  },
-  {
-    label: "Config",
-    items: [{ to: "/settings", label: "Settings", icon: SettingsIcon }],
+    items: [
+      { to: "/cases", label: "Cases", icon: BriefcaseIcon },
+      { to: "/settings", label: "Settings", icon: SettingsIcon },
+    ],
   },
   {
     label: "Dev",

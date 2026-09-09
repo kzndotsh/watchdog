@@ -141,7 +141,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
 | Mod+K opens command palette | shipped | Toggle; works in editable fields; sidebar Search… trigger |
-| Jump to pages (idle) | shipped | Dashboard + Case nav + Work/Manage/Config (no Dev /ui) |
+| Jump to pages (idle) | shipped | Dashboard + Case nav + Work/Manage (no Dev /ui) |
 | Commands group (idle) | shipped | `SearchUi` `paletteCommands` (Toggle sidebar, Shortcuts); open-palette omitted by construction |
 | Type entity name → dossier | shipped | ≥2 chars; Active Case only; Enter → `/entities/$slug` |
 | Identifier / Evidence / Task / Job / Triage hits | shipped | Deep links: identifiers tab, `?id=` (Collect Evidence or Job), `?entityId=` (Tasks), `?proposalId=` (Triage) |

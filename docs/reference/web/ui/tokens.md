@@ -17,7 +17,7 @@ This page defines colors, type roles, the refuse list, and design-system primiti
     - **`--radius: 0.5rem`** = medium base (**8px**): default via `rounded-md`
     - `rounded-sm` (4px): checkbox / tiny inset
     - `rounded-md` (8px): controls, chips, dense panels, **dialogs**
-    - `rounded-lg` (12px): cards, menus, larger surfaces
+    - `rounded-lg` (12px): cards, menus, larger surfaces; **sidebar nav** (`SidebarMenuButton`, `SidebarMenuSubButton`, menu skeleton in `sidebar.tsx`)
     - Exceptions: `rounded-full` · `rounded-none` · `rounded-[inherit]`
     - Ban `rounded-xl` / `2xl` / `3xl` / `4xl` and arbitrary `rounded-[min(…)]` / `calc(var(--radius)±Npx)`
 - Mode: **Operate** (consistency over surprise)
