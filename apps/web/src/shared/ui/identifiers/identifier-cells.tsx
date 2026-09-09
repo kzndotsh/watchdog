@@ -17,6 +17,7 @@ import {
   CONFIRMED_REQUIRES_EVIDENCE_HINT,
   isConfirmedBlocked,
 } from "@/shared/lib/confirmed-evidence";
+import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import {
   DataTableColumnHeader,
   EditableSelectCell,
@@ -66,9 +67,9 @@ export function IdentifierValueCopyControl({ value }: { value: string }) {
         void (async () => {
           try {
             await navigator.clipboard.writeText(value);
-            toast.success("Copied");
+            toast.success(TOAST_COPIED);
           } catch {
-            toast.error("Couldn't copy");
+            toast.error(TOAST_COULDNT_COPY);
           }
         })();
       }}

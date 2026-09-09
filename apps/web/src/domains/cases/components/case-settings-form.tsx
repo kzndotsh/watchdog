@@ -9,6 +9,7 @@ import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
 import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
+import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
 import {
   Field,
   FieldContent,
@@ -55,7 +56,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
     onSuccess: async (updated) => {
       writeCaseRecordCache(queryClient, updated, { slug: caseRow.slug });
       notifyCasesChanged();
-      toast.success("Updated");
+      toast.success(TOAST_CASE_UPDATED);
       if (updated.slug !== caseRow.slug) {
         await navigate({
           to: "/cases/$caseSlug",

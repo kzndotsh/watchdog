@@ -7,6 +7,7 @@ import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-op
 import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
+import { TOAST_IDENTIFIER_UPDATED } from "@/shared/lib/toast-copy";
 import type { IdentifierFieldUpdate } from "@/shared/ui/identifiers/identifier-cells";
 import { toast } from "@/shared/ui/shadcn/toast";
 import type {
@@ -38,7 +39,7 @@ async function onIdentifierUpdated(
   rows: CaseIdentifierRecord[],
   identifierId: string
 ): Promise<void> {
-  toast.success("Updated");
+  toast.success(TOAST_IDENTIFIER_UPDATED);
   const row = rows.find((entry) => entry.id === identifierId);
   await invalidateAfterEntityChanged(
     queryClient,

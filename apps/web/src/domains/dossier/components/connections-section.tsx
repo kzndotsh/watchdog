@@ -30,6 +30,7 @@ import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
+import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,6 +100,7 @@ export function ConnectionsSection({
 
   const [dialog, setDialog] = useState<DialogState>({ mode: "closed" });
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const createMutation = useMutation({
@@ -174,12 +176,12 @@ export function ConnectionsSection({
       }),
     onSuccess: async () => {
       setPendingDeleteId(null);
+      setDeleteError(null);
       await invalidate();
       toast.success("Connection deleted");
     },
     onError: (e) => {
-      toast.error(errMessage(e, "Delete failed"));
-      setPendingDeleteId(null);
+      setDeleteError(errMessage(e, "Delete failed"));
     },
   });
 
@@ -303,7 +305,10 @@ export function ConnectionsSection({
         <AlertDialog
           open={pendingDeleteId !== null}
           onOpenChange={(open) => {
-            if (!open) setPendingDeleteId(null);
+            if (!open) {
+              setPendingDeleteId(null);
+              setDeleteError(null);
+            }
           }}
         >
           <AlertDialogContent>
@@ -314,6 +319,7 @@ export function ConnectionsSection({
                 later.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <FormInlineError>{deleteError}</FormInlineError>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction

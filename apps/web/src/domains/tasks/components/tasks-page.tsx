@@ -13,6 +13,7 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/shadcn/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
@@ -79,6 +80,7 @@ function TasksActive({
               placeholderDeemphasisClass(ws.tasksPlaceholder)
             )}
           >
+            <FormInlineError>{ws.quickCreateError}</FormInlineError>
             <TaskBoard
               items={ws.tasks}
               selectedId={ws.selected?.id}

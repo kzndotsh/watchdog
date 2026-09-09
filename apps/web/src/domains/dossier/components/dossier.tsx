@@ -42,6 +42,7 @@ import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/shadcn/button";
 import {
   Tabs,
@@ -113,6 +114,8 @@ function DossierForEntity({
     setEditOpen,
     editError,
     setEditError,
+    renameError,
+    setRenameError,
     handleEvidenceClick,
     counts,
     countsPending,
@@ -166,6 +169,7 @@ function DossierForEntity({
                 const name = next.trim();
                 if (!name) return false;
                 if (name !== entity.name) {
+                  setRenameError(null);
                   renameMutation.mutate(name);
                 }
                 return true;
@@ -203,55 +207,66 @@ function DossierForEntity({
             </div>
           }
           below={
-            <TabsList
-              variant="line"
-              className="h-8 max-w-full justify-start overflow-x-auto"
-            >
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
-              <TabsTrigger value="claims">
-                Claims
-                {countsPending ? null : (
-                  <TabCount n={counts.claims} className={tabCountClass} />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="identifiers">
-                Identifiers
-                {countsPending ? null : (
-                  <TabCount n={counts.identifiers} className={tabCountClass} />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="connections">
-                Connections
-                {countsPending ? null : (
-                  <TabCount n={counts.connections} className={tabCountClass} />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="evidence">
-                Evidence
-                {countsPending ? null : (
-                  <TabCount n={counts.evidence} className={tabCountClass} />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="events">
-                Events
-                {countsPending ? null : (
-                  <TabCount n={counts.events} className={tabCountClass} />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="questions">
-                Questions
-                {countsPending ? null : (
-                  <TabCount n={counts.questions} className={tabCountClass} />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="tasks">
-                Tasks
-                {countsPending ? null : (
-                  <TabCount n={counts.tasks} className={tabCountClass} />
-                )}
-              </TabsTrigger>
-            </TabsList>
+            <>
+              {renameError ? (
+                <FormInlineError>{renameError}</FormInlineError>
+              ) : null}
+              <TabsList
+                variant="line"
+                className="h-8 max-w-full justify-start overflow-x-auto"
+              >
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+                <TabsTrigger value="claims">
+                  Claims
+                  {countsPending ? null : (
+                    <TabCount n={counts.claims} className={tabCountClass} />
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="identifiers">
+                  Identifiers
+                  {countsPending ? null : (
+                    <TabCount
+                      n={counts.identifiers}
+                      className={tabCountClass}
+                    />
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="connections">
+                  Connections
+                  {countsPending ? null : (
+                    <TabCount
+                      n={counts.connections}
+                      className={tabCountClass}
+                    />
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="evidence">
+                  Evidence
+                  {countsPending ? null : (
+                    <TabCount n={counts.evidence} className={tabCountClass} />
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="events">
+                  Events
+                  {countsPending ? null : (
+                    <TabCount n={counts.events} className={tabCountClass} />
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="questions">
+                  Questions
+                  {countsPending ? null : (
+                    <TabCount n={counts.questions} className={tabCountClass} />
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="tasks">
+                  Tasks
+                  {countsPending ? null : (
+                    <TabCount n={counts.tasks} className={tabCountClass} />
+                  )}
+                </TabsTrigger>
+              </TabsList>
+            </>
           }
         />
 

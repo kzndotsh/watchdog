@@ -15,6 +15,7 @@ export function useDossierShell(caseId: string, entity: EntityRecord) {
     queryClient: queryState.queryClient,
     setEditOpen: queryState.setEditOpen,
     setEditError: queryState.setEditError,
+    setRenameError: queryState.setRenameError,
   });
 
   return {

@@ -138,6 +138,7 @@ Fictional tokens (`probable`, `active`/`dormant`/`merged`, vault kinds, `--sever
 | Stack tab / panel first load | Generic stack: `ActiveTabBody` → `stackPendingFallback()`. Dossier tabs: hand `LoadingRegion` + `*SkeletonLayout` except tasks (`BoardSkeleton`); Case Overview → `CaseOverviewPending`: never "Loading…" copy in data slots |
 | Dashboard live data | `useLiveEvents` on Dashboard for jobs + proposals + tasks |
 | Mutation errors | Prefer `FormInlineError` **or** toast: not both (Entities Connections popover: inline; success may still toast) |
+| Copy confirmations | `toast.success` / `toast.error` via `shared/lib/toast-copy.ts` (`Copied` / `Couldn't copy`); `IdChip` tip is enough when copy is on-chip — no redundant toast |
 | Load failures | `FetchErrorAlert` (+ optional `onRetry` in region boundaries; `meta.silentError` when inline) |
 | Empties | `EmptyState` / `DetailEmpty`: not raw shadcn `Empty` in domains |
 

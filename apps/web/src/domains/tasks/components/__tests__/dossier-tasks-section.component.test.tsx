@@ -48,6 +48,7 @@ describe("DossierTasksSection", () => {
       entityById: new Map(),
       selected: null,
       formError: null,
+      quickCreateError: null,
       updateBusy: false,
       quickCreateBusy: false,
       handleSelect: vi.fn(),

@@ -75,13 +75,6 @@ export function useBulkAddIdentifiersImport(options: {
       const invalidCount = vars.rows.filter(
         (row) => !isIdentifierPasteRowImportable(row)
       ).length;
-      const skipped = result.failed.length + invalidCount;
-      const summary = `Imported ${result.imported} · ${skipped} skipped`;
-      if (result.imported > 0) {
-        toast.success(summary);
-      } else {
-        toast.error(summary);
-      }
       if (result.failed.length === 0 && invalidCount === 0) {
         onClose();
         return;
@@ -102,6 +95,9 @@ export function useBulkAddIdentifiersImport(options: {
           result.failed.map((row) => [row.key, row.message])
         ),
       });
+    },
+    onError: (e) => {
+      toast.error(errMessage(e, "Import failed"));
     },
   });
 }

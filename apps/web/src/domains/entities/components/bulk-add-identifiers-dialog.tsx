@@ -1,8 +1,13 @@
 import { BulkAddMapStage } from "@/domains/entities/components/bulk-add-map-stage";
 import type { IdentifierPasteEntity } from "@/domains/entities/lib/parse-identifier-paste";
+import { isIdentifierPasteRowImportable } from "@/domains/entities/lib/parse-identifier-paste";
 import { useBulkAddIdentifiersImport } from "@/domains/entities/lib/use-bulk-add-identifiers-import";
 import { useBulkAddIdentifiersPaste } from "@/domains/entities/lib/use-bulk-add-identifiers-paste";
 import { errMessage } from "@/lib/utils";
+import {
+  TOAST_IMPORT_FAILED,
+  TOAST_IMPORT_LOADING,
+} from "@/shared/lib/toast-copy";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/shadcn/button";
@@ -16,6 +21,7 @@ import {
 } from "@/shared/ui/shadcn/dialog";
 import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { toast } from "@/shared/ui/shadcn/toast";
 
 interface Props {
   open: boolean;
@@ -169,7 +175,22 @@ export function BulkAddIdentifiersDialog({
               type="button"
               disabled={busy || validRows.length === 0}
               onClick={() => {
-                importMutation.mutate({ rows, table });
+                const input = { rows, table };
+                void toast.promise(importMutation.mutateAsync(input), {
+                  loading: TOAST_IMPORT_LOADING,
+                  success: (result) => {
+                    const invalidCount = rows.filter(
+                      (row) => !isIdentifierPasteRowImportable(row)
+                    ).length;
+                    const skipped = result.failed.length + invalidCount;
+                    const summary = `Imported ${result.imported} · ${skipped} skipped`;
+                    if (result.imported === 0) {
+                      return { title: summary, type: "error" };
+                    }
+                    return summary;
+                  },
+                  error: TOAST_IMPORT_FAILED,
+                });
               }}
             >
               {`Import ${validRows.length} identifier${validRows.length === 1 ? "" : "s"}`}

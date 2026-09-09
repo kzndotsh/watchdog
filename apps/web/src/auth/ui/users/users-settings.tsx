@@ -8,6 +8,11 @@ import { authClient } from "@/auth/client";
 import { isInstanceAdmin } from "@/auth/instance-admin";
 import { errMessage, cn } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
+import {
+  TOAST_SESSIONS_REVOKED,
+  TOAST_USER_DISABLED,
+  TOAST_USER_ENABLED,
+} from "@/shared/lib/toast-copy";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
 import { Spinner } from "@/shared/ui/shadcn/spinner";
@@ -64,7 +69,10 @@ export function UsersSettings() {
       });
       if (error) throw new Error(error.message || "Could not disable user");
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success(TOAST_USER_DISABLED);
+    },
     onError: (error) => {
       toast.error(errMessage(error, "Could not disable user"));
     },
@@ -75,7 +83,10 @@ export function UsersSettings() {
       const { error } = await authClient.admin.unbanUser({ userId });
       if (error) throw new Error(error.message || "Could not enable user");
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success(TOAST_USER_ENABLED);
+    },
     onError: (error) => {
       toast.error(errMessage(error, "Could not enable user"));
     },
@@ -88,7 +99,10 @@ export function UsersSettings() {
         throw new Error(error.message || "Could not sign out sessions");
       }
     },
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      toast.success(TOAST_SESSIONS_REVOKED);
+    },
     onError: (error) => {
       toast.error(errMessage(error, "Could not sign out sessions"));
     },

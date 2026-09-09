@@ -15,6 +15,7 @@ import {
   invalidateAfterProposalQueueChange,
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
+import { TOAST_ENTITY_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/shadcn/toast";
 import {
   isProposalQueueLiveEvent,
@@ -68,6 +69,7 @@ export interface EntityMutationContext {
   queryClient: QueryClient;
   setEditOpen: (open: boolean) => void;
   setEditError: (message: string | null) => void;
+  setRenameError: (message: string | null) => void;
 }
 
 async function invalidateDossierEntity(
@@ -89,12 +91,13 @@ function renameEntity(ctx: EntityMutationContext, name: string) {
 }
 
 async function onRenameSuccess(ctx: EntityMutationContext): Promise<void> {
-  toast.success("Updated");
+  ctx.setRenameError(null);
+  toast.success(TOAST_ENTITY_UPDATED);
   await invalidateDossierEntity(ctx);
 }
 
-function onRenameError(err: unknown): void {
-  toast.error(errMessage(err, "Rename failed"));
+function onRenameError(ctx: EntityMutationContext, err: unknown): void {
+  ctx.setRenameError(errMessage(err, "Rename failed"));
 }
 
 function editEntity(ctx: EntityMutationContext, values: DossierEditFormValues) {
@@ -112,7 +115,7 @@ function editEntity(ctx: EntityMutationContext, values: DossierEditFormValues) {
 async function onEditSuccess(ctx: EntityMutationContext): Promise<void> {
   ctx.setEditError(null);
   ctx.setEditOpen(false);
-  toast.success("Updated");
+  toast.success(TOAST_ENTITY_UPDATED);
   await invalidateDossierEntity(ctx);
 }
 
@@ -124,7 +127,9 @@ export function useDossierShellMutations(ctx: EntityMutationContext) {
   const renameMutation = useMutation({
     mutationFn: async (name: string) => renameEntity(ctx, name),
     onSuccess: async () => onRenameSuccess(ctx),
-    onError: onRenameError,
+    onError: (err) => {
+      onRenameError(ctx, err);
+    },
   });
 
   const editMutation = useMutation({

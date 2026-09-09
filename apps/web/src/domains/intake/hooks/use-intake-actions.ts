@@ -19,7 +19,6 @@ import {
   invalidateAfterEvidenceMutation,
   invalidateAfterJobMutation,
 } from "@/shared/lib/query-invalidation";
-import { toast } from "@/shared/ui/shadcn/toast";
 
 type IntakePending = null | {
   kind: "harvest" | "extract" | "enrich";
@@ -83,9 +82,6 @@ export function useIntakeActions({
       }),
     onSuccess: async (_result, input) => {
       onEvidenceIdChange(input.evidenceId);
-      toast.success(
-        input.ai === true ? "Extract (AI) job started" : "Harvest job started"
-      );
       await invalidateAfterJobMutation(queryClient, caseId);
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
@@ -104,7 +100,6 @@ export function useIntakeActions({
       }),
     onSuccess: async (_result, id) => {
       onEvidenceIdChange(id);
-      toast.success("Enrich job started");
       await invalidateAfterJobMutation(queryClient, caseId);
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
@@ -123,7 +118,6 @@ export function useIntakeActions({
       }),
     onSuccess: async (_ok, id) => {
       onEvidenceIdChange(resolveSelectionAfterHide?.(id) ?? null);
-      toast.success("Evidence hidden — filter Hidden to restore");
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {
@@ -137,7 +131,6 @@ export function useIntakeActions({
         data: evidenceScopeInputSchema.parse({ caseId, evidenceId: id }),
       }),
     onSuccess: async (_ok, id) => {
-      toast.success("Evidence restored");
       onRestoreShowActiveQueue();
       onEvidenceIdChange(id);
       await invalidateAfterEvidenceMutation(queryClient, caseId);
@@ -157,7 +150,6 @@ export function useIntakeActions({
         }),
       }),
     onSuccess: async () => {
-      toast.success("Entity updated");
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {

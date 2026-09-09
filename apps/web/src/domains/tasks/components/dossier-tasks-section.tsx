@@ -5,6 +5,7 @@ import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import { cn } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { FormInlineError } from "@/shared/ui/form-inline-message";
 
 export function DossierTasksSection({ caseId, entityId }: DossierSectionProps) {
   const ws = useTaskWorkspace(caseId, { entityId, live: false });
@@ -20,6 +21,7 @@ export function DossierTasksSection({ caseId, entityId }: DossierSectionProps) {
         placeholderDeemphasisClass(ws.tasksPlaceholder)
       )}
     >
+      <FormInlineError>{ws.quickCreateError}</FormInlineError>
       <TaskBoard
         items={ws.tasks}
         selectedId={ws.selected?.id}

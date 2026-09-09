@@ -24,6 +24,11 @@ import { errMessage } from "@/lib/utils";
 import type { AppAction } from "@/shared/lib/app-action";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import {
+  TOAST_COULDNT_COPY,
+  TOAST_IDENTIFIER_ADDED,
+  TOAST_IDENTIFIER_UPDATED,
+} from "@/shared/lib/toast-copy";
+import {
   DataTable,
   DataTableAddRow,
   DataTablePagination,
@@ -76,6 +81,7 @@ export function IdentifiersSection({
   } = useDossierSectionQuery(identifiersListQuery(caseId, entityId));
   const [composing, setComposing] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -110,7 +116,7 @@ export function IdentifiersSection({
       });
     },
     onSuccess: async () => {
-      toast.success("Identifier added");
+      toast.success(TOAST_IDENTIFIER_ADDED);
       await invalidate();
     },
   });
@@ -152,10 +158,13 @@ export function IdentifiersSection({
         data: buildUpdateIdentifierData(caseId, input),
       }),
     onSuccess: async () => {
-      toast.success("Updated");
+      setUpdateError(null);
+      toast.success(TOAST_IDENTIFIER_UPDATED);
       await invalidate();
     },
-    onError: (e) => toast.error(errMessage(e, "Update failed")),
+    onError: (e) => {
+      setUpdateError(errMessage(e, "Update failed"));
+    },
   });
 
   function openComposer() {
@@ -203,7 +212,7 @@ export function IdentifiersSection({
           try {
             await copyIdentifierValue(value);
           } catch {
-            toast.error("Couldn't copy");
+            toast.error(TOAST_COULDNT_COPY);
           }
         })();
       },
@@ -323,7 +332,7 @@ export function IdentifiersSection({
             </div>
           }
         >
-          <FormInlineError>{submitError}</FormInlineError>
+          <FormInlineError>{submitError ?? updateError}</FormInlineError>
           <div className="flex flex-col gap-2">
             <DataTable
               table={table}

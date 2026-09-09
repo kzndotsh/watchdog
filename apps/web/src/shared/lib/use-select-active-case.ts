@@ -44,7 +44,7 @@ export function useSelectActiveCase(input: {
       optimisticActiveCaseSwitch(queryClient, input.cases, caseId),
     onError: (err, _caseId, ctx) => {
       rollbackActiveCaseSwitch(queryClient, ctx?.prev);
-      toast.error(errMessage(err, "Failed to switch case"));
+      toast.error(errMessage(err, "Couldn't switch case"));
     },
     onSuccess: async (caseId, _vars, ctx) => {
       const scopedCaseId = parseOptionalTrimmedUuid(caseId);

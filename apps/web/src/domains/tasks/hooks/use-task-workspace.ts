@@ -33,6 +33,11 @@ import {
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
+import {
+  TOAST_TASK_CREATED,
+  TOAST_TASK_DELETED,
+  TOAST_TASK_UPDATED,
+} from "@/shared/lib/toast-copy";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { toast } from "@/shared/ui/shadcn/toast";
 import type { TaskStatus } from "@watchdog/schemas";
@@ -87,6 +92,7 @@ export function useTaskWorkspace(
   const [createStatus, setCreateStatus] = useState<TaskStatus>("backlog");
   const [selected, setSelected] = useState<TaskRecord | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [quickCreateError, setQuickCreateError] = useState<string | null>(null);
 
   useLiveEvents(live ? caseId : null, (event) => {
     if (event.type === "task_changed") {
@@ -121,7 +127,7 @@ export function useTaskWorkspace(
     onSuccess: async () => {
       setCreateOpen(false);
       setFormError(null);
-      toast.success("Task created");
+      toast.success(TOAST_TASK_CREATED);
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
@@ -143,11 +149,12 @@ export function useTaskWorkspace(
         ),
       }),
     onSuccess: async () => {
-      toast.success("Task created");
+      setQuickCreateError(null);
+      toast.success(TOAST_TASK_CREATED);
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
-      toast.error(errMessage(e, "Create failed"));
+      setQuickCreateError(errMessage(e, "Create failed"));
     },
   });
 
@@ -161,7 +168,7 @@ export function useTaskWorkspace(
     onSuccess: async () => {
       setSelected(null);
       setFormError(null);
-      toast.success("Task updated");
+      toast.success(TOAST_TASK_UPDATED);
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
@@ -179,13 +186,11 @@ export function useTaskWorkspace(
         setSelected(null);
       }
       setFormError(null);
-      toast.success("Task deleted");
+      toast.success(TOAST_TASK_DELETED);
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
-      const message = errMessage(e, "Delete failed");
-      setFormError(message);
-      toast.error(message);
+      toast.error(errMessage(e, "Delete failed"));
     },
   });
 
@@ -283,6 +288,7 @@ export function useTaskWorkspace(
     entityId: scopedEntityId,
     selected,
     formError,
+    quickCreateError,
     createOpen,
     createStatus,
     openCreate,

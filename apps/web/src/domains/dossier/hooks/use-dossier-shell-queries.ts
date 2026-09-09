@@ -99,6 +99,7 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
   );
   const [editOpen, setEditOpen] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   const evidenceMap = useMemo(
     () => evidenceRecordMap(evidenceAll),
@@ -160,6 +161,8 @@ export function useDossierShellQueries(caseId: string, entity: EntityRecord) {
     setEditOpen,
     editError,
     setEditError,
+    renameError,
+    setRenameError,
     evidenceMap,
     evidenceTitleById,
     handleEvidenceClick,

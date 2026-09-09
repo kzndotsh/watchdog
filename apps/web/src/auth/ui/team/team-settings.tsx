@@ -4,6 +4,7 @@ import { useSession } from "@better-auth-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "@/shared/ui/shadcn/toast";
+import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 
 import { authClient } from "@/auth/client";
 import { buildInvitationAcceptUrl, invitationAcceptPath } from "@/auth/invitation-url";
@@ -300,7 +301,7 @@ export function TeamSettings() {
                         onClick={() => {
                           void navigator.clipboard.writeText(url).then(
                             () => {
-                              toast.success("Invitation link copied");
+                              toast.success(TOAST_COPIED);
                             },
                             (error) => {
                               toast.error(errMessage(error, "Copy failed"));

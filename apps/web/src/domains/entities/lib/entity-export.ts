@@ -1,3 +1,4 @@
+import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/shadcn/toast";
 
 const EXTERNAL_AI_URL_MAX = 1800;
@@ -33,7 +34,7 @@ export function entityDossierUrl(entitySlug: string): string {
 
 export async function copyEntityLink(entitySlug: string): Promise<void> {
   await navigator.clipboard.writeText(entityDossierUrl(entitySlug));
-  toast.success("Link copied");
+  toast.success(TOAST_COPIED);
 }
 
 export async function copyEntityMarkdown(
@@ -42,7 +43,7 @@ export async function copyEntityMarkdown(
 ): Promise<void> {
   const md = await fetchEntityMarkdown(caseId, entitySlug);
   await navigator.clipboard.writeText(md);
-  toast.success("Copied to clipboard");
+  toast.success(TOAST_COPIED);
 }
 
 /** Open entity Markdown in an external AI chat URL (length-limited). */
@@ -65,5 +66,5 @@ export async function openEntityMarkdownInChat(
 
 export async function copyIdentifierValue(value: string): Promise<void> {
   await navigator.clipboard.writeText(value);
-  toast.success("Copied");
+  toast.success(TOAST_COPIED);
 }

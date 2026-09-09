@@ -81,8 +81,6 @@ describe("ConnectionComposerFields", () => {
     expect(
       screen.getByRole("combobox", { name: "Connection peer" })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("textbox", { name: "Connection notes" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Notes" })).toBeInTheDocument();
   });
 });

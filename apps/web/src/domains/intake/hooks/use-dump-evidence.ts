@@ -10,6 +10,10 @@ import {
 } from "@/domains/intake/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
+import {
+  TOAST_UPLOAD_FAILED,
+  TOAST_UPLOAD_LOADING,
+} from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/shadcn/toast";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
@@ -70,18 +74,10 @@ export function useDumpEvidence({
     onSuccess: async ({ created, failures }) => {
       setDumpError(null);
       if (failures.length > 0) {
-        const total = created.length + failures.length;
         setDumpError(
           failures
             .map((failure) => `${failure.name}: ${failure.message}`)
             .join("; ")
-        );
-        toast.warning(`${created.length} of ${total} files uploaded`);
-      } else {
-        toast.success(
-          created.length === 1
-            ? "File uploaded"
-            : `${created.length} files uploaded`
         );
       }
       if (created.length > 0) {
@@ -145,7 +141,19 @@ export function useDumpEvidence({
     const files = [...fileList];
     if (files.length === 0) return;
     setDumpError(null);
-    uploadMutation.mutate(files);
+    void toast.promise(uploadMutation.mutateAsync(files), {
+      loading: TOAST_UPLOAD_LOADING,
+      success: ({ created, failures }) => {
+        if (failures.length > 0) {
+          const total = created.length + failures.length;
+          return `${created.length} of ${total} files uploaded`;
+        }
+        return created.length === 1
+          ? "File uploaded"
+          : `${created.length} files uploaded`;
+      },
+      error: TOAST_UPLOAD_FAILED,
+    });
   }
 
   const dumpingPaste = pasteMutation.isPending;

@@ -20,6 +20,10 @@ import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write
 import { createEntityInputSchema } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
+import {
+  TOAST_ENTITY_CREATED,
+  TOAST_ENTITY_UPDATED,
+} from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/shadcn/toast";
 import type { EntityKind } from "@watchdog/schemas";
 
@@ -51,7 +55,7 @@ async function onEntityFieldsUpdated(
   caseId: string,
   entityId: string
 ): Promise<void> {
-  toast.success("Updated");
+  toast.success(TOAST_ENTITY_UPDATED);
   await invalidateAfterEntityChanged(
     queryClient,
     caseId,
@@ -78,7 +82,6 @@ async function onConnectionCreated(
   caseId: string,
   centerId: string
 ): Promise<void> {
-  toast.success("Connection added");
   await invalidateAfterEntityChanged(
     queryClient,
     caseId,
@@ -107,7 +110,6 @@ async function onConnectionUpdated(
   caseId: string,
   centerId: string
 ): Promise<void> {
-  toast.success("Connection updated");
   await invalidateAfterEntityChanged(
     queryClient,
     caseId,
@@ -128,7 +130,7 @@ async function createEntityRecord(
       name,
     }),
   });
-  toast.success("Entity created");
+  toast.success(TOAST_ENTITY_CREATED);
   await invalidateAfterEntityChanged(
     queryClient,
     caseId,
@@ -188,9 +190,6 @@ export function useEntityTableMutations(caseId: string) {
       createEntityConnection(caseId, vars),
     onSuccess: async (_data, vars) =>
       onConnectionCreated(queryClient, caseId, vars.centerId),
-    onError: (error) => {
-      toast.error(errMessage(error, "Connection failed"));
-    },
   });
 
   const connectionUpdateMutation = useMutation({
@@ -198,9 +197,6 @@ export function useEntityTableMutations(caseId: string) {
       updateEntityConnection(caseId, vars),
     onSuccess: async (_data, vars) =>
       onConnectionUpdated(queryClient, caseId, vars.centerId),
-    onError: (error) => {
-      toast.error(errMessage(error, "Connection update failed"));
-    },
   });
 
   const createEntity = async (name: string, kind: EntityKind) =>

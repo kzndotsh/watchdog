@@ -6,7 +6,12 @@ import { describe, expect, it, vi } from "vitest";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/shared/ui/shadcn/toast", () => ({
-  toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() },
+  toast: {
+    success: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
+    promise: vi.fn((promiseValue: Promise<unknown>) => promiseValue),
+  },
 }));
 
 vi.mock("@/domains/intake/lib/upload-file", () => ({
@@ -41,10 +46,15 @@ import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
 function renderDumpHook() {
   const mutations: {
     mutate: ReturnType<typeof vi.fn>;
+    mutateAsync: ReturnType<typeof vi.fn>;
     isPending: boolean;
   }[] = [];
   useMutationMock.mockImplementation(() => {
-    const mutation = { mutate: vi.fn(), isPending: false };
+    const mutation = {
+      mutate: vi.fn(),
+      mutateAsync: vi.fn(),
+      isPending: false,
+    };
     mutations.push(mutation);
     return mutation;
   });
@@ -74,15 +84,20 @@ describe("useDumpEvidence", () => {
     expect(result.current.uploadStatus).toBeNull();
   });
 
-  it("forwards selected files to the upload mutation", () => {
+  it("forwards selected files through toast.promise upload", () => {
     const { result, mutations } = renderDumpHook();
     const file = new File(["x"], "a.txt", { type: "text/plain" });
+    const mutateAsync = vi
+      .fn()
+      .mockResolvedValue({ created: [], failures: [] });
+    mutations[0]!.mutateAsync = mutateAsync;
 
     act(() => {
       result.current.onFiles([file]);
     });
 
-    expect(mutations[0]?.mutate).toHaveBeenCalledWith([file]);
+    expect(toast.promise).toHaveBeenCalled();
+    expect(mutateAsync).toHaveBeenCalledWith([file]);
     expect(result.current.uploading).toBe(false);
   });
 
@@ -109,11 +124,8 @@ describe("useDumpEvidence", () => {
       (options: NonNullable<typeof mutationOptions>) => {
         mutationOptions ??= options;
         return {
-          mutate: (files: File[]) => {
-            void options.mutationFn(files).then((result) => {
-              void options.onSuccess(result);
-            });
-          },
+          mutate: vi.fn(),
+          mutateAsync: (files: File[]) => options.mutationFn(files),
           isPending: false,
         };
       }
@@ -144,7 +156,7 @@ describe("useDumpEvidence", () => {
 
     expect(invalidateAfterEvidenceMutation).toHaveBeenCalled();
     expect(onSuccess).toHaveBeenCalledWith([created]);
-    expect(toast.warning).toHaveBeenCalledWith("1 of 2 files uploaded");
+    expect(toast.promise).toHaveBeenCalled();
     expect(result.current.dumpError).toContain("bad.txt");
   });
 });

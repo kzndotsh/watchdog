@@ -45,6 +45,8 @@ vi.mock("@/domains/dossier/hooks/use-dossier-shell", () => ({
     setEditOpen: vi.fn(),
     editError: null,
     setEditError: vi.fn(),
+    renameError: null,
+    setRenameError: vi.fn(),
     handleEvidenceClick: vi.fn(),
     counts: {
       claims: 0,

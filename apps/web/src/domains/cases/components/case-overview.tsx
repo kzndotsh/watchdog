@@ -87,7 +87,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
       toast.success("Active Case set");
     },
     onError: (err) => {
-      toast.error(errMessage(err, "Failed to set Active Case"));
+      toast.error(errMessage(err, "Couldn't set Active Case"));
     },
   });
 
