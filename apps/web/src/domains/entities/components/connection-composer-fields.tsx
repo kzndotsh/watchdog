@@ -5,9 +5,11 @@ import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
 import {
   clampEdgePhrase,
-  edgePhraseOptions,
+  edgePhraseOptionsForPeers,
   edgePhraseValue,
+  filterPeerOptionsForPhrase,
   parseEdgePhraseValue,
+  peerKindAllowedForPhrase,
   preferredEdgePhrase,
 } from "@/shared/ui/vocab/edge-predicate";
 import type { EntityKind } from "@watchdog/schemas";
@@ -34,13 +36,40 @@ export function ConnectionComposerFields({
 }: Props) {
   const scopedPeerId = parseOptionalTrimmedUuid(values.peerId) ?? "";
   const peer = peerOptions.find((o) => o.id === scopedPeerId);
-  const phraseOptions = edgePhraseOptions(
+  const phraseOptions = edgePhraseOptionsForPeers(
+    centerKind,
+    peerOptions,
     peer?.kind
-      ? { fromKind: centerKind, toKind: peer.kind }
-      : { fromKind: centerKind }
+  );
+  const filteredPeerOptions = filterPeerOptionsForPhrase(
+    centerKind,
+    peerOptions,
+    values.phraseValue
   );
   const needsNotes =
     parseEdgePhraseValue(values.phraseValue)?.predicate === "related_to";
+
+  function setPhrase(phraseValue: string) {
+    const parsed = parseEdgePhraseValue(phraseValue);
+    if (!parsed) {
+      onChange({ ...values, phraseValue });
+      return;
+    }
+    const currentPeer = peerOptions.find((o) => o.id === scopedPeerId);
+    const peerStillValid =
+      currentPeer?.kind !== undefined &&
+      peerKindAllowedForPhrase(
+        centerKind,
+        currentPeer.kind,
+        parsed.predicate,
+        parsed.orientation
+      );
+    onChange({
+      ...values,
+      phraseValue,
+      peerId: peerStillValid ? values.peerId : "",
+    });
+  }
 
   function setPeer(peerId: string) {
     const scopedId = parseOptionalTrimmedUuid(peerId) ?? "";
@@ -79,9 +108,7 @@ export function ConnectionComposerFields({
         <FieldLabel className="text-xs">Relationship</FieldLabel>
         <FieldCombobox
           value={values.phraseValue}
-          onValueChange={(phraseValue) => {
-            onChange({ ...values, phraseValue });
-          }}
+          onValueChange={setPhrase}
           options={phraseOptions}
           placeholder="Search relationships…"
           emptyText="No matching relationships."
@@ -94,7 +121,7 @@ export function ConnectionComposerFields({
       <Field className="gap-1.5">
         <FieldLabel className="text-xs">Peer</FieldLabel>
         <EntityCombobox
-          entities={[...peerOptions]}
+          entities={[...filteredPeerOptions]}
           value={values.peerId}
           onValueChange={setPeer}
           allowEmpty={false}

@@ -1,3 +1,4 @@
+import type { EntityOption } from "@/shared/ui/entity-combobox";
 import {
   EDGE_PREDICATES,
   EDGE_PREDICATE_GROUPS,
@@ -55,9 +56,54 @@ function allowsPair(
   return edgePredicateAllowsKinds(predicate, fromKind, toKind);
 }
 
+/** Whether a peer kind is valid for the center entity + selected phrase. */
+export function peerKindAllowedForPhrase(
+  centerKind: EntityKind,
+  peerKind: EntityKind,
+  predicate: EdgePredicate,
+  orientation: EdgeOrientation
+): boolean {
+  if (orientation === "forward") {
+    return edgePredicateAllowsKinds(predicate, centerKind, peerKind);
+  }
+  return edgePredicateAllowsKinds(predicate, peerKind, centerKind);
+}
+
+export function filterPeerOptionsForPhrase(
+  centerKind: EntityKind,
+  peerOptions: readonly EntityOption[],
+  phraseValue: string
+): EntityOption[] {
+  const parsed = parseEdgePhraseValue(phraseValue);
+  if (!parsed) return [...peerOptions];
+  return peerOptions.filter(
+    (peer) =>
+      peer.kind !== undefined &&
+      peerKindAllowedForPhrase(
+        centerKind,
+        peer.kind,
+        parsed.predicate,
+        parsed.orientation
+      )
+  );
+}
+
 const GROUP_RANK = new Map(
   EDGE_PREDICATE_GROUPS.map((g, i) => [g, i] as const)
 );
+
+function sortEdgePhraseOptions(out: EdgePhraseOption[]): EdgePhraseOption[] {
+  out.sort((a, b) => {
+    const ga = GROUP_RANK.get(EDGE_PREDICATE_META[a.predicate].group) ?? 0;
+    const gb = GROUP_RANK.get(EDGE_PREDICATE_META[b.predicate].group) ?? 0;
+    if (ga !== gb) return ga - gb;
+    return (
+      EDGE_PREDICATES.indexOf(a.predicate) -
+      EDGE_PREDICATES.indexOf(b.predicate)
+    );
+  });
+  return out;
+}
 
 /**
  * Combined phrase options for create framing.
@@ -76,6 +122,15 @@ export function edgePhraseOptions(opts?: {
     const meta = EDGE_PREDICATE_META[predicate];
     const groupLabel = EDGE_PREDICATE_GROUP_LABELS[meta.group];
 
+    // Infra topology only: dependent is always an infra entity in the picker.
+    if (
+      predicate === "hosted_on" &&
+      fromKind !== undefined &&
+      fromKind !== "infra"
+    ) {
+      continue;
+    }
+
     if (allowsPair(predicate, fromKind, toKind)) {
       out.push({
         value: edgePhraseValue(predicate, "forward"),
@@ -88,7 +143,18 @@ export function edgePhraseOptions(opts?: {
 
     if (meta.symmetric) continue;
 
-    if (allowsPair(predicate, toKind, fromKind)) {
+    const forwardCanonical =
+      fromKind !== undefined &&
+      toKind !== undefined &&
+      allowsPair(predicate, fromKind, toKind);
+    const inverseCanonical =
+      fromKind !== undefined &&
+      toKind !== undefined &&
+      allowsPair(predicate, toKind, fromKind);
+    const skipInversePreferForward =
+      forwardCanonical && inverseCanonical && fromKind !== toKind;
+
+    if (inverseCanonical && !skipInversePreferForward) {
       out.push({
         value: edgePhraseValue(predicate, "inverse"),
         label: meta.inverseLabel,
@@ -99,16 +165,46 @@ export function edgePhraseOptions(opts?: {
     }
   }
 
-  out.sort((a, b) => {
-    const ga = GROUP_RANK.get(EDGE_PREDICATE_META[a.predicate].group) ?? 0;
-    const gb = GROUP_RANK.get(EDGE_PREDICATE_META[b.predicate].group) ?? 0;
-    if (ga !== gb) return ga - gb;
-    return (
-      EDGE_PREDICATES.indexOf(a.predicate) -
-      EDGE_PREDICATES.indexOf(b.predicate)
-    );
-  });
-  return out;
+  return sortEdgePhraseOptions(out);
+}
+
+/**
+ * Relationship options for a center entity and case peers.
+ * With a selected peer kind, narrows to that pair; otherwise unions phrases
+ * valid for at least one available peer kind (not the unfiltered center-only list).
+ */
+export function edgePhraseOptionsForPeers(
+  centerKind: EntityKind,
+  peerOptions: readonly EntityOption[],
+  selectedPeerKind?: EntityKind
+): EdgePhraseOption[] {
+  if (selectedPeerKind !== undefined) {
+    return edgePhraseOptions({
+      fromKind: centerKind,
+      toKind: selectedPeerKind,
+    });
+  }
+
+  const peerKinds = new Set<EntityKind>();
+  for (const peer of peerOptions) {
+    if (peer.kind !== undefined) peerKinds.add(peer.kind);
+  }
+
+  const seen = new Set<string>();
+  const out: EdgePhraseOption[] = [];
+
+  for (const peerKind of peerKinds) {
+    for (const phrase of edgePhraseOptions({
+      fromKind: centerKind,
+      toKind: peerKind,
+    })) {
+      if (seen.has(phrase.value)) continue;
+      seen.add(phrase.value);
+      out.push(phrase);
+    }
+  }
+
+  return sortEdgePhraseOptions(out);
 }
 
 type PreferredPair = readonly [EdgePredicate, EdgeOrientation];

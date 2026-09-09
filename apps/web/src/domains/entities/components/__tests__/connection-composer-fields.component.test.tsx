@@ -83,4 +83,29 @@ describe("ConnectionComposerFields", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Notes" })).toBeInTheDocument();
   });
+
+  it("filters peer options for the selected relationship", () => {
+    render(
+      <ConnectionComposerFields
+        centerKind="person"
+        peerOptions={[
+          { id: "peer-person", name: "Person", slug: "person", kind: "person" },
+          { id: "peer-org", name: "Org", slug: "org", kind: "org" },
+          { id: "peer-infra", name: "Infra", slug: "infra", kind: "infra" },
+        ]}
+        values={{
+          peerId: "",
+          phraseValue: edgePhraseValue("operates", "forward"),
+          notes: "",
+        }}
+        onChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("option", { name: "Org" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Infra" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "Person" })
+    ).not.toBeInTheDocument();
+  });
 });

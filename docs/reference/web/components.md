@@ -118,7 +118,7 @@ Canonical unions: [`packages/schemas/src/vocab.ts`](../../../packages/schemas/sr
 | `JobStatus` / `ProposalStatus` / `RetractKind` / `IdentifierStatus` | `StatusBadge` / `StatusDot` | Shared `DisplayStatus` |
 | `TaskStatus` / `TaskPriority` | `TaskStatusBadge` / `TaskPriorityBadge` | Tone-map onto existing `--status-*` |
 | `EntityKind` / `EvidenceKind` / `IdentifierType` / `ClaimClass` | `KindBadge` / `ClaimClassBadge` | Schema-typed only; entity kinds include icon in badge |
-| `EdgePredicate` | `predicateLabel` / `edgePhraseOptions` (+ `group`); `preferredEdgePhrase` / `clampEdgePhrase` | Exhaustive Record; inverses = display only (`inverseLabel`); Combobox groups from schema `EDGE_PREDICATE_GROUPS` |
+| `EdgePredicate` | `predicateLabel` / `edgePhraseOptions` (+ `group`); `edgePhraseOptionsForPeers` / `filterPeerOptionsForPhrase` / `clampEdgePhrase` | Exhaustive Record; inverses = display only (`inverseLabel`); Combobox groups from schema `EDGE_PREDICATE_GROUPS`; relationship + peer pickers filter by `validKinds` and available case peers |
 | `PatchOp` | `PatchOpBadge` + `PATCH_RESOURCE_META` | Domain tones |
 | Capability id | `CapabilityLabel` / `capabilityLabel` | Catalog title |
 | Playbook id | `playbookLabel` | Catalog title or title-cased id |

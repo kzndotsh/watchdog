@@ -3,7 +3,11 @@ import { describe, it, expect } from "vitest";
 import {
   clampEdgePhrase,
   edgePhraseOptions,
+  edgePhraseOptionsForPeers,
+  filterPeerOptionsForPhrase,
+  peerKindAllowedForPhrase,
   preferredEdgePhrase,
+  edgePhraseValue,
 } from "../../../../shared/ui/vocab/edge-predicate.ts";
 
 function requirePhrase(hit: ReturnType<typeof preferredEdgePhrase>) {
@@ -72,5 +76,70 @@ describe("preferred-edge-phrase", () => {
     const hit = clampEdgePhrase("org", "infra", "leads", "forward");
     expect(hit.predicate).toBe("primary_domain");
     expect(hit.orientation).toBe("forward");
+  });
+
+  it("peerKindAllowedForPhrase: person operates forward allows org and infra only", () => {
+    expect(
+      peerKindAllowedForPhrase("person", "org", "operates", "forward")
+    ).toBe(true);
+    expect(
+      peerKindAllowedForPhrase("person", "infra", "operates", "forward")
+    ).toBe(true);
+    expect(
+      peerKindAllowedForPhrase("person", "person", "operates", "forward")
+    ).toBe(false);
+  });
+
+  it("edgePhraseOptionsForPeers: person with only person peers omits operates", () => {
+    const phrases = edgePhraseOptionsForPeers("person", [
+      { id: "p1", name: "A", slug: "a", kind: "person" },
+    ]);
+    expect(phrases.some((phrase) => phrase.predicate === "operates")).toBe(
+      false
+    );
+    expect(phrases.some((phrase) => phrase.predicate === "associate_of")).toBe(
+      true
+    );
+  });
+
+  it("edgePhraseOptions: person to infra omits hosted_on", () => {
+    const opts = edgePhraseOptions({ fromKind: "person", toKind: "infra" });
+    expect(opts.some((phrase) => phrase.predicate === "hosted_on")).toBe(false);
+  });
+
+  it("edgePhraseOptions: infra to infra includes hosted_on", () => {
+    const opts = edgePhraseOptions({ fromKind: "infra", toKind: "infra" });
+    expect(opts.some((phrase) => phrase.predicate === "hosted_on")).toBe(true);
+  });
+
+  it("edgePhraseOptions: person to org includes employee_of", () => {
+    const opts = edgePhraseOptions({ fromKind: "person", toKind: "org" });
+    expect(opts.some((phrase) => phrase.predicate === "employee_of")).toBe(
+      true
+    );
+  });
+
+  it("edgePhraseOptionsForPeers: person with org peer includes operates", () => {
+    const phrases = edgePhraseOptionsForPeers("person", [
+      { id: "p1", name: "A", slug: "a", kind: "person" },
+      { id: "o1", name: "Org", slug: "org", kind: "org" },
+    ]);
+    expect(phrases.some((phrase) => phrase.predicate === "operates")).toBe(
+      true
+    );
+  });
+
+  it("filterPeerOptionsForPhrase: operates on person drops person peers", () => {
+    const peers = [
+      { id: "p1", name: "Person", slug: "p1", kind: "person" as const },
+      { id: "o1", name: "Org", slug: "o1", kind: "org" as const },
+      { id: "i1", name: "Infra", slug: "i1", kind: "infra" as const },
+    ];
+    const filtered = filterPeerOptionsForPhrase(
+      "person",
+      peers,
+      edgePhraseValue("operates", "forward")
+    );
+    expect(filtered.map((peer) => peer.id)).toEqual(["o1", "i1"]);
   });
 });

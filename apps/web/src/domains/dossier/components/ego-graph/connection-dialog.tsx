@@ -27,15 +27,16 @@ import {
 } from "@/shared/ui/shadcn/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
 import { Input } from "@/shared/ui/shadcn/input";
+import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
-  CONFIDENCE_OPTIONS,
   EDGE_PREDICATE_META,
   clampEdgePhrase,
-  edgePhraseOptions,
+  edgePhraseOptionsForPeers,
   edgePhraseValue,
   parseEdgePhraseValue,
+  peerKindAllowedForPhrase,
   predicateLabel,
-} from "@/shared/ui/vocab";
+} from "@/shared/ui/vocab/edge-predicate";
 import {
   parseOptionalTrimmedUuid,
   trimmedConfidenceTierSchema,
@@ -184,36 +185,55 @@ export function ConnectionDialog({
           </DialogHeader>
 
           <FieldGroup className="gap-3">
-            <form.Field name="peerId">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Peer</FieldLabel>
-                  <EntityCombobox
-                    entities={peerOptions}
-                    value={field.state.value}
-                    onValueChange={(next) => {
-                      const peerId =
-                        parseOptionalTrimmedUuid(next) ?? next.trim();
-                      field.handleChange(peerId);
-                      const peer = entitiesById.get(peerId);
-                      if (!peer) return;
-                      const clamped = clampEdgePhrase(
-                        center.kind,
-                        peer.kind,
-                        form.getFieldValue("predicate"),
-                        form.getFieldValue("orientation")
-                      );
-                      form.setFieldValue("predicate", clamped.predicate);
-                      form.setFieldValue("orientation", clamped.orientation);
-                    }}
-                    emptyLabel="Select entity…"
-                    allowEmpty={false}
-                    disabled={busy}
-                    aria-label="Peer entity"
-                  />
-                </Field>
+            <form.Subscribe
+              selector={(s) => ({
+                predicate: s.values.predicate,
+                orientation: s.values.orientation,
+              })}
+            >
+              {({ predicate, orientation }) => (
+                <form.Field name="peerId">
+                  {(field) => (
+                    <Field>
+                      <FieldLabel>Peer</FieldLabel>
+                      <EntityCombobox
+                        entities={peerOptions.filter((entity) =>
+                          peerKindAllowedForPhrase(
+                            center.kind,
+                            entity.kind,
+                            predicate,
+                            orientation
+                          )
+                        )}
+                        value={field.state.value}
+                        onValueChange={(next) => {
+                          const peerId =
+                            parseOptionalTrimmedUuid(next) ?? next.trim();
+                          field.handleChange(peerId);
+                          const peer = entitiesById.get(peerId);
+                          if (!peer) return;
+                          const clamped = clampEdgePhrase(
+                            center.kind,
+                            peer.kind,
+                            form.getFieldValue("predicate"),
+                            form.getFieldValue("orientation")
+                          );
+                          form.setFieldValue("predicate", clamped.predicate);
+                          form.setFieldValue(
+                            "orientation",
+                            clamped.orientation
+                          );
+                        }}
+                        emptyLabel="Select entity…"
+                        allowEmpty={false}
+                        disabled={busy}
+                        aria-label="Peer entity"
+                      />
+                    </Field>
+                  )}
+                </form.Field>
               )}
-            </form.Field>
+            </form.Subscribe>
 
             <form.Subscribe
               selector={(s) => ({
@@ -228,10 +248,10 @@ export function ConnectionDialog({
                 const peer = scopedPeerId
                   ? entitiesById.get(scopedPeerId)
                   : undefined;
-                const phrases = edgePhraseOptions(
-                  peer
-                    ? { fromKind: center.kind, toKind: peer.kind }
-                    : undefined
+                const phrases = edgePhraseOptionsForPeers(
+                  center.kind,
+                  peerOptions,
+                  peer?.kind
                 );
                 const selectOptions = phrases.map((p) => ({
                   value: p.value,
@@ -251,6 +271,17 @@ export function ConnectionDialog({
                         if (!parsed) return;
                         form.setFieldValue("predicate", parsed.predicate);
                         form.setFieldValue("orientation", parsed.orientation);
+                        if (
+                          peer &&
+                          !peerKindAllowedForPhrase(
+                            center.kind,
+                            peer.kind,
+                            parsed.predicate,
+                            parsed.orientation
+                          )
+                        ) {
+                          form.setFieldValue("peerId", "");
+                        }
                       }}
                       disabled={busy || selectOptions.length === 0}
                       placeholder="Search relationships…"
