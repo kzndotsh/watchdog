@@ -17,11 +17,11 @@ import {
 } from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
-import { stackPendingFallback } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { resolveSelectValue } from "@/shared/ui/control-chrome";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { PendingRegion } from "@/shared/ui/pending-region";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui/shadcn/select";
+import { DashboardActivitySkeletonLayout } from "@/shared/ui/skeletons";
 import {
   StatusBadge,
   TaskStatusBadge,
@@ -259,7 +260,15 @@ function RecentActivityList({
   }
 
   if (activityPending) {
-    return stackPendingFallback(1);
+    return (
+      <PendingRegion
+        loading
+        label="Loading recent activity"
+        fallback={<DashboardActivitySkeletonLayout />}
+      >
+        {null}
+      </PendingRegion>
+    );
   }
 
   if (items.length === 0) {

@@ -42,18 +42,46 @@ import {
 } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
-import { stackPendingFallback } from "@/shared/ui/active-tab-body";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { PendingRegion } from "@/shared/ui/pending-region";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/shared/ui/shadcn/resizable";
+import {
+  DashboardActivityPanelSkeleton,
+  DashboardOverviewSkeleton,
+} from "@/shared/ui/skeletons";
 import type { ProposalRecord } from "@watchdog/core";
 import { isProposalQueueLiveEvent } from "@watchdog/schemas";
 
 const OVERVIEW_DEFAULT = "68%";
 const ACTIVITY_DEFAULT = "32%";
+
+function dashboardOverviewPending() {
+  return (
+    <PendingRegion
+      loading
+      label="Loading dashboard overview"
+      fallback={<DashboardOverviewSkeleton />}
+    >
+      {null}
+    </PendingRegion>
+  );
+}
+
+function dashboardActivityPanelPending() {
+  return (
+    <PendingRegion
+      loading
+      label="Loading recent activity"
+      fallback={<DashboardActivityPanelSkeleton />}
+    >
+      {null}
+    </PendingRegion>
+  );
+}
 
 interface OverviewMetrics {
   proposalsPending: number;
@@ -229,7 +257,7 @@ function DashboardActive({
   }
 
   if (overviewPending) {
-    return stackPendingFallback(2);
+    return dashboardOverviewPending();
   }
 
   return (
@@ -363,7 +391,10 @@ export function DashboardHome({
     return (
       <Page density="split">
         <PageHeader />
-        {stackPendingFallback(2)}
+        <DashboardSplit
+          overview={dashboardOverviewPending()}
+          activity={dashboardActivityPanelPending()}
+        />
       </Page>
     );
   }

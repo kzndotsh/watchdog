@@ -32,7 +32,17 @@ import {
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
 import { QueueRowMeta, QueueRowTitle } from "@/shared/ui/queue-row";
 import { SectionLabel } from "@/shared/ui/section-label";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/shared/ui/shadcn/field";
+import { Input } from "@/shared/ui/shadcn/input";
 import { Skeleton } from "@/shared/ui/shadcn/skeleton";
+import { Switch } from "@/shared/ui/shadcn/switch";
+import { Textarea } from "@/shared/ui/shadcn/textarea";
 import {
   TASK_BOARD_COLUMN_SHELL_CLASS,
   TASK_CARD_SHELL_CLASS,
@@ -56,6 +66,12 @@ export const BOARD_SKELETON_CARDS_PER_COLUMN = 3;
 
 /** Default case grid slot count (1 page of cards). */
 export const CARD_GRID_SKELETON_SLOT_COUNT = 6;
+
+/** Dashboard overview metric tiles — matches MetricsSection grid. */
+export const DASHBOARD_METRIC_TILE_COUNT = 6;
+
+/** Median visible activity rows on the dashboard feed. */
+export const DASHBOARD_ACTIVITY_SKELETON_ROW_COUNT = 5;
 
 /** Median visible Collect queue rows — shared with collect.tsx. */
 export const COLLECT_QUEUE_SKELETON_ROW_COUNT = 10;
@@ -240,24 +256,220 @@ export function StackBodySkeletonLayout({
   );
 }
 
+/** Metric tile grid — shared by dashboard overview and case overview. */
+export function MetricTilesSkeletonLayout({
+  count = DASHBOARD_METRIC_TILE_COUNT,
+  className,
+}: {
+  count?: number;
+  className?: string;
+}) {
+  return (
+    <section aria-hidden className={cn("grid gap-2", className)}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="border-border flex flex-col gap-1 rounded-md border px-3 py-2.5"
+        >
+          <Skeleton className="h-8 w-12" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function DashboardPanelSkeleton({
+  titleWidth = "w-12",
+}: {
+  titleWidth?: string;
+}) {
+  return (
+    <section className="space-y-3" aria-hidden>
+      <div className="flex min-h-6 shrink-0 items-center justify-between gap-2">
+        <Skeleton className={cn("h-5", titleWidth)} />
+        <Skeleton className="h-4 w-10" />
+      </div>
+      <ul className="border-border divide-border divide-y overflow-hidden rounded-md border">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <li key={i}>
+            <div className="flex items-start justify-between gap-3 px-3 py-2.5">
+              <Skeleton className="h-4 min-w-0 flex-1" />
+              <Skeleton className="h-3 w-12 shrink-0" />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Dashboard overview — metric tiles + triage/due panels. */
+export function DashboardOverviewSkeletonLayout() {
+  return (
+    <div className="flex flex-col gap-6">
+      <MetricTilesSkeletonLayout className="grid-cols-3" />
+      <div className="grid min-h-0 gap-6 lg:grid-cols-2 lg:items-start">
+        <DashboardPanelSkeleton titleWidth="w-12" />
+        <DashboardPanelSkeleton titleWidth="w-8" />
+      </div>
+    </div>
+  );
+}
+
+/** Dashboard overview — PendingRegion fallback for overview metrics + panels. */
+export function DashboardOverviewSkeleton({
+  className,
+}: {
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-col", className)}>
+      <DashboardOverviewSkeletonLayout />
+    </div>
+  );
+}
+
+/** Activity feed rows — mirrors RecentActivity list items. */
+export function DashboardActivitySkeletonLayout({
+  rows = DASHBOARD_ACTIVITY_SKELETON_ROW_COUNT,
+}: {
+  rows?: number;
+}) {
+  return (
+    <ul className="divide-border divide-y" aria-hidden>
+      {Array.from({ length: rows }).map((_, i) => (
+        <li key={i}>
+          <div className="flex flex-wrap items-start justify-between gap-2 px-0 py-2.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Skeleton className="h-3 w-14" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <Skeleton className="h-4 w-3/4 max-w-sm" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+            <Skeleton className="h-3 w-10 shrink-0" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Full activity column — header chrome + scrollable feed rows. */
+export function DashboardActivityPanelSkeleton({
+  className,
+}: {
+  className?: string;
+}) {
+  return (
+    <section
+      className={cn("flex h-full min-h-0 flex-col gap-2", className)}
+      aria-hidden
+    >
+      <div className="flex min-h-7 shrink-0 items-center justify-between gap-2">
+        <Skeleton className="h-5 w-16" />
+        <Skeleton className="h-7 w-[11rem] rounded-md" />
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden pr-3">
+        <DashboardActivitySkeletonLayout />
+      </div>
+    </section>
+  );
+}
+
+/** Overlay skeleton on invisible chrome so box model matches the real control. */
+function GhostSizedSkeleton({
+  children,
+  className,
+  skeletonClassName,
+}: {
+  children: ReactNode;
+  className?: string;
+  skeletonClassName?: string;
+}) {
+  return (
+    <div className={cn("relative", className)}>
+      <div className="pointer-events-none invisible" aria-hidden>
+        {children}
+      </div>
+      <Skeleton
+        className={cn("absolute inset-0 rounded-md", skeletonClassName)}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+/** Case settings sidebar — same Field stack as CaseSettingsForm. */
+function CaseSettingsSkeleton() {
+  return (
+    <section
+      className="border-border flex flex-col gap-3 rounded-md border p-3"
+      aria-hidden
+    >
+      <h2 className="text-label-sm text-muted-foreground relative w-fit font-medium">
+        <span className="invisible">Case settings</span>
+        <Skeleton className="absolute inset-0 rounded-md" aria-hidden />
+      </h2>
+      <FieldGroup className="gap-3">
+        <Field>
+          <FieldLabel className="relative w-fit">
+            <span className="invisible">Name</span>
+            <Skeleton className="absolute inset-0 rounded-md" aria-hidden />
+          </FieldLabel>
+          <GhostSizedSkeleton>
+            <Input disabled readOnly tabIndex={-1} defaultValue="" />
+          </GhostSizedSkeleton>
+        </Field>
+        <Field>
+          <FieldLabel className="relative w-fit">
+            <span className="invisible">Description</span>
+            <Skeleton className="absolute inset-0 rounded-md" aria-hidden />
+          </FieldLabel>
+          <GhostSizedSkeleton>
+            <Textarea
+              disabled
+              readOnly
+              rows={3}
+              tabIndex={-1}
+              defaultValue=""
+            />
+          </GhostSizedSkeleton>
+        </Field>
+        <Field orientation="horizontal">
+          <GhostSizedSkeleton
+            className="shrink-0"
+            skeletonClassName="rounded-full"
+          >
+            <Switch disabled tabIndex={-1} checked={false} />
+          </GhostSizedSkeleton>
+          <FieldContent>
+            <FieldLabel className="relative w-fit">
+              <span className="invisible">Third-party egress</span>
+              <Skeleton className="absolute inset-0 rounded-md" aria-hidden />
+            </FieldLabel>
+            <GhostSizedSkeleton>
+              <FieldDescription>
+                Allow Caps that call external services.
+              </FieldDescription>
+            </GhostSizedSkeleton>
+          </FieldContent>
+        </Field>
+      </FieldGroup>
+    </section>
+  );
+}
+
 /** Case overview layout — mirrors CaseOverviewTab. */
 export function CaseOverviewSkeletonLayout() {
   return (
     <div className="flex flex-col gap-6">
-      <section aria-hidden className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="border-border flex flex-col gap-1 rounded-md border px-3 py-2.5"
-          >
-            <Skeleton className="h-8 w-12" />
-            <Skeleton className="h-3 w-20" />
-          </div>
-        ))}
-      </section>
+      <MetricTilesSkeletonLayout className="sm:grid-cols-2 lg:grid-cols-3" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(16rem,22rem)]">
         <section className="min-w-0">
-          <Skeleton className="mb-2 h-3 w-28" />
+          <Skeleton className="mb-2 h-4 w-28" />
           <div className="ml-2 flex flex-col gap-3 pl-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex flex-col gap-1">
@@ -267,15 +479,7 @@ export function CaseOverviewSkeletonLayout() {
             ))}
           </div>
         </section>
-        <section className="border-border flex flex-col gap-3 rounded-md border p-3">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <div className="flex items-center justify-between gap-3">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="size-5 rounded-full" />
-          </div>
-        </section>
+        <CaseSettingsSkeleton />
       </div>
     </div>
   );

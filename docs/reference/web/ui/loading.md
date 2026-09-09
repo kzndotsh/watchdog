@@ -100,8 +100,9 @@ See [`data.md`](../data.md) for the full helper ↔ route table and parity rule.
 | **Board** (Tasks) | Identity + `warmTasksQueries` | `PendingRegion` + `BoardSkeleton` |
 | **Card grid** (Cases) | Identity only | `PendingRegion` + `CardGridSkeleton` |
 | **Graph** | Identity + `ensureGraphQueries` | `GraphCanvasLoadingRegion` (hand skeleton) |
-| **Stack** (Dossier, Dashboard, Settings tabs) | Identity + `warmDossierQueries` / `warmDashboardQueries` / … | `ActiveTabBody` or `RegionBoundary` + `stackPendingFallback()` |
-| **Case Overview** | Identity + `warmCaseOverviewQueries` | `CaseOverviewPending` (`case-overview-pending.tsx`) |
+| **Stack** (Dossier, Settings tabs) | Identity + `warmDossierQueries` / … | `ActiveTabBody` or `RegionBoundary` + `stackPendingFallback()` |
+| **Dashboard** (`/`) | Identity + `warmDashboardQueries` | `PendingRegion` + `DashboardOverviewSkeleton` / `DashboardActivityPanelSkeleton` / `DashboardActivitySkeletonLayout` (overview, cases-pending split, activity list) — not `stackPendingFallback()` |
+| **Case Overview** | Identity + `warmCaseOverviewQueries` | `CaseOverviewPending` → `CaseOverviewSkeleton` (`MetricTilesSkeletonLayout` + activity column + `CaseSettingsSkeleton` ghost Field stack) |
 
 Button / mutation wait: Button `loading` / `InlineLoading` / `Spinner`: not page skeleton. No data: `EmptyState` / `DetailEmpty`: never Skeleton.
 
@@ -116,7 +117,7 @@ Per-surface map for first paint, filtered empty, and fetch failure. Load failure
 | **Tasks** board | `PendingRegion` + `BoardSkeleton` (`listPending`) | implicit empty columns | route `RouteError` | Workspace uses `useSuspenseQuery` for tasks/entities. |
 | **Cases** grid | `PendingRegion` + `CardGridSkeleton` | `EmptyState` `no-results` (search) | route `RouteError` | `casesContextQuery` via `useQuery` + `listPending`. |
 | **Entities** / **Identifiers** tables | `DataTable` `pending` + per-cell skeletons | `EmptyState` in table body | route `RouteError` | Tab body Suspense-backed. |
-| **Dashboard** panels | `RegionBoundary` / tab skeletons per panel | Recent Activity `EmptyState`; triage/tasks panels dashed inline empty | route `RouteError` | Activity uses `useSuspenseQuery`; refetch de-emphasis only. |
+| **Dashboard** panels | `PendingRegion` + hand skeletons per panel (`DashboardOverviewSkeleton`, `DashboardActivityPanelSkeleton`, activity list `DashboardActivitySkeletonLayout`) | Recent Activity `EmptyState`; triage/tasks panels dashed inline empty | `FetchErrorAlert` in panel body | Activity header stays mounted; list slot skeletons only. Cases-pending keeps split chrome. |
 
 ### Rejected loading "delight" patterns
 
@@ -127,7 +128,7 @@ Hydration: suppress relative time / session name when needed; no nested `<button
 ## Gotchas
 
 - **`useSuspenseQuery` + `enabled`**: Suspense queries do not support `enabled: false`. Split components when `caseId` / `entityId` is optional (`Collect` detail branch, `Dossier` entity branch).
-- **Stack loading (Dashboard / Case / Dossier / Settings)**: loader awaits identity only (`casesContext` / case row / entity); warm lists with `void prefetchQuery` (`warmDashboardQueries` / `warmCaseOverviewQueries` / `warmDossierQueries`). Shell uses `useQuery` for tab counts where needed; tab/panel bodies use `ActiveTabBody` → `PendingRegion` + `stackPendingFallback()` or `RegionBoundary` + same fallback. No route-level `RoutePending` on these pages; no "Loading…" copy in data slots.
+- **Stack loading (Case / Dossier / Settings)**: loader awaits identity only (`casesContext` / case row / entity); warm lists with `void prefetchQuery` (`warmCaseOverviewQueries` / `warmDossierQueries`). Tab bodies use `ActiveTabBody` → `PendingRegion` + `stackPendingFallback()` or `RegionBoundary` + same fallback. **Dashboard** (`/`) is split-stack, not stack tabs: overview/activity data slots use hand `*Skeleton` fallbacks inline (`dashboard-home.tsx`, `recent-activity.tsx`). Case Overview settings sidebar uses `CaseSettingsSkeleton` (invisible `Field` / `Input` / `Textarea` / `Switch` chrome + overlay `Skeleton` for box-model parity). No route-level `RoutePending` on these pages; no "Loading…" copy in data slots.
 - **Split Queue loading (Collect / Triage)**: Collect loader awaits `ensureCollectQueueQueries` (+ job detail when `?id=`); catalogs warm in background via `warmCollectCatalogQueries`. Triage: thin loader + `warmTriageQueries`. Domain owns `<Page>` + `PageHeader` + toolbars; queue/detail data slots use `PendingRegion` only on cache miss. Triage wraps the split in `RegionBoundary` → `TriageSplitPendingFallback`.
 - **`QueueShell scrollable={false}` while loading**: skeleton row counts (`COLLECT_QUEUE_SKELETON_ROW_COUNT`, `QueueSkeleton rows={10}` in `TriageSplitPendingFallback`) are sized generously and can overflow a short viewport, popping a scrollbar that disappears once real (usually shorter) content lands. Pass `scrollable={!loading}` to `QueueShell` (Collect: `!queuePending`; Triage's only skeleton is `TriageSplitPendingFallback`, always `scrollable={false}`) so the pane clips instead of scrolling during the skeleton state. **`CollectQueueSkeleton`** uses `QueueDayGroup` with **`headerVariant="panel"`** (not sticky): sticky day bars inside a clipped pane overlap mid-list rows.
 - **Router `defaultPendingComponent`**: `RoutePendingSkeletonLayout` is a single **`flex-col`** shell (title bar + scrollable `StackBodySkeleton` body). Do not return a fragment of siblings from skeleton layouts meant to fill a flex parent — sections need an inner `gap-6` column (`StackBodySkeletonLayout`).
