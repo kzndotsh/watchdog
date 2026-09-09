@@ -14,6 +14,7 @@ vi.mock("@/domains/entities/questions/questions.functions", () => ({
   updateQuestionFn: vi.fn(),
   resolveQuestionFn: vi.fn(),
   reopenQuestionFn: vi.fn(),
+  deleteQuestionFn: vi.fn(),
 }));
 
 vi.mock("@/shared/ui/shadcn/toast", () => ({

@@ -2,11 +2,13 @@ import type { AppAction } from "@/shared/lib/app-action";
 
 export interface OpenQuestionRowActionHandlers {
   onEdit: () => void;
+  onDelete: () => void;
   onResolve: () => void;
 }
 
 export interface ResolvedQuestionRowActionHandlers {
   onEdit: () => void;
+  onDelete: () => void;
   onReopen: () => void;
 }
 
@@ -27,6 +29,13 @@ export function openQuestionRowActions(
       group: "target",
       run: handlers.onResolve,
     },
+    {
+      id: "question-delete",
+      label: "Delete",
+      group: "target",
+      destructive: true,
+      run: handlers.onDelete,
+    },
   ];
 }
 
@@ -46,6 +55,13 @@ export function resolvedQuestionRowActions(
       label: "Reopen",
       group: "target",
       run: handlers.onReopen,
+    },
+    {
+      id: "question-delete",
+      label: "Delete",
+      group: "target",
+      destructive: true,
+      run: handlers.onDelete,
     },
   ];
 }

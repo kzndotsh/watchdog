@@ -44,3 +44,12 @@ export const reopenQuestionFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<QuestionRecord> =>
     orpcFromContext(context).questions.reopen(data)
   );
+
+export const deleteQuestionFn = createServerFn({ method: "POST" })
+  .validator(questionScopeInputSchema)
+  .handler(async ({ data, context }): Promise<void> => {
+    await orpcFromContext(context).questions.delete({
+      caseId: data.caseId,
+      questionId: data.questionId,
+    });
+  });

@@ -62,15 +62,31 @@ describe("dossier row action factories", () => {
   });
 
   it("builds open and resolved question actions", () => {
-    expect(
-      openQuestionRowActions({ onEdit: vi.fn(), onResolve: vi.fn() }).map(
-        (a) => a.id
-      )
-    ).toEqual(["question-edit", "question-resolve"]);
-    expect(
-      resolvedQuestionRowActions({ onEdit: vi.fn(), onReopen: vi.fn() }).map(
-        (a) => a.id
-      )
-    ).toEqual(["question-edit", "question-reopen"]);
+    const onDelete = vi.fn();
+    const openActions = openQuestionRowActions({
+      onEdit: vi.fn(),
+      onDelete,
+      onResolve: vi.fn(),
+    });
+    expect(openActions.map((a) => a.id)).toEqual([
+      "question-edit",
+      "question-resolve",
+      "question-delete",
+    ]);
+    expect(openActions[2]?.destructive).toBe(true);
+    openActions[2]?.run();
+    expect(onDelete).toHaveBeenCalled();
+
+    const resolvedActions = resolvedQuestionRowActions({
+      onEdit: vi.fn(),
+      onDelete: vi.fn(),
+      onReopen: vi.fn(),
+    });
+    expect(resolvedActions.map((a) => a.id)).toEqual([
+      "question-edit",
+      "question-reopen",
+      "question-delete",
+    ]);
+    expect(resolvedActions[2]?.destructive).toBe(true);
   });
 });

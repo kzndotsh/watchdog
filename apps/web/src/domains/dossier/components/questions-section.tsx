@@ -18,6 +18,7 @@ import type { DossierSectionProps } from "@/domains/dossier/types";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import {
   createQuestionFn,
+  deleteQuestionFn,
   reopenQuestionFn,
   resolveQuestionFn,
   updateQuestionFn,
@@ -371,6 +372,7 @@ function OpenQuestionRow({
   onResolvingChange,
   onSaveEdit,
   onResolved,
+  onDelete,
 }: {
   caseId: string;
   label: string;
@@ -380,6 +382,7 @@ function OpenQuestionRow({
   onResolvingChange: (id: string | null) => void;
   onSaveEdit: (text: string) => Promise<void>;
   onResolved: () => Promise<void>;
+  onDelete: () => void;
 }) {
   const editing = editor.editId === question.id;
   const resolving = resolvingId === question.id;
@@ -412,6 +415,7 @@ function OpenQuestionRow({
                   onResolvingChange(null);
                   editor.handleOpenEdit(question.id);
                 },
+                onDelete,
                 onResolve: () => {
                   editor.handleCloseEdit();
                   onResolvingChange(question.id);
@@ -469,6 +473,7 @@ function ResolvedQuestionRow({
   editor,
   onSaveEdit,
   onReopen,
+  onDelete,
 }: {
   label: string;
   question: QuestionRecord;
@@ -478,6 +483,7 @@ function ResolvedQuestionRow({
     resolvedNote: string | null;
   }) => Promise<void>;
   onReopen: () => void;
+  onDelete: () => void;
 }) {
   const editing = editor.editId === question.id;
 
@@ -507,6 +513,7 @@ function ResolvedQuestionRow({
           onEdit: () => {
             editor.handleOpenEdit(question.id);
           },
+          onDelete,
           onReopen,
         })}
         label="Question actions"
@@ -599,6 +606,34 @@ export function QuestionsSection({
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (questionId: string) =>
+      deleteQuestionFn({
+        data: questionScopeInputSchema.parse({ caseId, questionId }),
+      }),
+    onSuccess: async () => {
+      editor.handleCloseEdit();
+      editor.handleError(null);
+      setResolvingId(null);
+      await invalidate();
+      toast.success("Question deleted");
+    },
+    onError: (caughtError) => {
+      editor.handleError(errMessage(caughtError, "Delete failed"));
+    },
+  });
+
+  function handleDelete(questionId: string) {
+    if (editor.editId === questionId) {
+      editor.handleCloseEdit();
+    }
+    if (resolvingId === questionId) {
+      setResolvingId(null);
+    }
+    editor.handleError(null);
+    deleteMutation.mutate(questionId);
+  }
+
   const open = rows.filter((r) => r.status === "open");
   const resolved = rows.filter((r) => r.status === "resolved");
 
@@ -677,6 +712,9 @@ export function QuestionsSection({
                   setResolvingId(null);
                   await invalidate();
                 }}
+                onDelete={() => {
+                  handleDelete(row.id);
+                }}
               />
             ))}
           </TimelineSpine>
@@ -706,6 +744,9 @@ export function QuestionsSection({
                   }}
                   onReopen={() => {
                     reopenMutation.mutate(row.id);
+                  }}
+                  onDelete={() => {
+                    handleDelete(row.id);
                   }}
                 />
               ))}
