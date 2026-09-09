@@ -41,7 +41,7 @@ Vendored shadcn overlays live in `shared/ui/shadcn/`. **Dialog** is Watchdog-cus
 | **AlertDialog** | Blocking confirm, medium-stakes cancel (`DestructiveConfirmDialog` for irreversible) | Stock shadcn layout (footer chrome bar); description `text-copy-sm` |
 | **Sheet** | Right-side notes / long editors | Slide-over; shares popover palette |
 | **Popover** | Filters, compact pickers, table cells | Dense `p-2.5`; set `modal` when clicks must not pass through rows |
-| **Toast** (`toast.tsx`) | Transient mutation OK/fail, copy confirmations | Base UI stack; `rounded-md`; typed surfaces use `status-*` tints; close button on every toast; mount `<Toaster />` in root layout |
+| **Toast** (`toast.tsx`) | Transient mutation OK/fail, copy confirmations | Base UI stack; `rounded-md`; neutral `bg-card` panel + icon chip (`status-*-bg` / `status-*-fg`); body stays `foreground` / `muted-foreground`; close on every toast; mount `<Toaster />` in root layout |
 
 Pick **Dialog** over **AlertDialog** when the user may dismiss via backdrop or close, or when the body is a real form. Pick **AlertDialog** when the flow must stay focused until an explicit action.
 
