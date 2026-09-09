@@ -61,6 +61,7 @@ vi.mock("@/domains/settings/components/settings-shell", () => ({
   SETTINGS_TABS: [
     "account",
     "security",
+    "appearance",
     "team",
     "users",
     "api-keys",

@@ -15,6 +15,8 @@ import appCss from "../styles.css?url";
 
 const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`;
 
+const DISPLAY_SCALE_INIT_SCRIPT = `(function(){try{var allowed=[1.1,1.2,1.35];var raw=window.localStorage.getItem('wd-display-scale');var scale=1.1;if(raw!==null){var parsed=parseFloat(raw);if(allowed.indexOf(parsed)!==-1){scale=parsed}}var root=document.documentElement;root.style.setProperty('--wd-display-scale',String(scale));root.dataset.displayScale=String(scale);}catch(e){}})();`;
+
 export interface RouterContext {
   queryClient: QueryClient;
   allowSignup?: boolean;
@@ -23,7 +25,7 @@ export interface RouterContext {
 function NotFoundPage() {
   return (
     <main className="mx-auto flex min-h-svh max-w-lg flex-col justify-center px-4 py-12">
-      <div className="bg-card text-card-foreground flex flex-col gap-4 rounded-lg border p-6 shadow-sm sm:p-8">
+      <div className="bg-background text-foreground flex flex-col gap-4 rounded-md border p-6 sm:p-8">
         <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
           404
         </p>
@@ -46,8 +48,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* XSS-safe static theme bootstrap — no user input */}
+        {/* XSS-safe static appearance bootstrap — no user input */}
         <script suppressHydrationWarning>{THEME_INIT_SCRIPT}</script>
+        <script suppressHydrationWarning>{DISPLAY_SCALE_INIT_SCRIPT}</script>
         <HeadContent />
       </head>
       <body className="selection:bg-primary/20 font-sans [overflow-wrap:anywhere] antialiased">

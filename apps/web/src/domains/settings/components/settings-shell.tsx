@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 export const SETTINGS_TABS = [
   "account",
   "security",
+  "appearance",
   "team",
   "users",
   "api-keys",

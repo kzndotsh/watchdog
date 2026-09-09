@@ -1,14 +1,15 @@
+/* oxlint-disable react/only-export-components, react-doctor/only-export-components -- theme hooks + sidebar menu item */
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
 
 import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
 
-type ThemeMode = "light" | "dark" | "auto";
+export type ThemeMode = "light" | "dark" | "auto";
 
 const THEME_STORAGE_KEY = "theme";
 const themeModeListeners = new Set<() => void>();
 
-function isThemeMode(value: string | null): value is ThemeMode {
+export function isThemeMode(value: unknown): value is ThemeMode {
   return value === "light" || value === "dark" || value === "auto";
 }
 
@@ -34,7 +35,7 @@ function subscribeToThemeMode(callback: () => void) {
   };
 }
 
-function persistThemeMode(mode: ThemeMode) {
+export function persistThemeMode(mode: ThemeMode) {
   window.localStorage.setItem(THEME_STORAGE_KEY, mode);
   for (const listener of themeModeListeners) listener();
 }
@@ -63,7 +64,7 @@ function applyThemeMode(mode: ThemeMode) {
   document.documentElement.style.colorScheme = resolved;
 }
 
-function modeLabel(mode: ThemeMode): string {
+export function modeLabel(mode: ThemeMode): string {
   switch (mode) {
     case "auto": {
       return "System";
@@ -143,7 +144,7 @@ function useAutoThemePreference(mode: ThemeMode): void {
   }, [mode]);
 }
 
-function useThemeMode() {
+export function useThemeMode() {
   const mode = useSyncExternalStore(
     subscribeToThemeMode,
     getStoredThemeMode,
@@ -160,6 +161,10 @@ function useThemeMode() {
     persistThemeMode(nextThemeMode(mode));
   }
 
+  function setMode(next: ThemeMode) {
+    persistThemeMode(next);
+  }
+
   const Icon = themeModeIcon(mode);
 
   const ariaLabel =
@@ -167,7 +172,7 @@ function useThemeMode() {
       ? "Theme mode: auto (system). Click to switch to light mode."
       : `Theme mode: ${mode}. Click to switch mode.`;
 
-  return { mode, toggleMode, Icon, ariaLabel };
+  return { mode, toggleMode, setMode, Icon, ariaLabel };
 }
 
 /** Theme cycle control for the sidebar user dropdown. */

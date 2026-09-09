@@ -2,6 +2,7 @@ import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import {
   KeyIcon,
+  PaletteIcon,
   ShieldIcon,
   UserCogIcon,
   UserIcon,
@@ -17,6 +18,7 @@ import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
 import { TeamSettings } from "@/auth/ui/team/team-settings";
 import { UsersSettings } from "@/auth/ui/users/users-settings";
+import { SettingsAppearancePanel } from "@/domains/settings/components/settings-appearance-panel";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
   SETTINGS_TABS,
@@ -45,6 +47,12 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
     label: "Security",
     description: "Password, sessions, and linked accounts.",
     icon: ShieldIcon,
+  },
+  {
+    id: "appearance",
+    label: "Appearance",
+    description: "Theme, display size, and visual preferences.",
+    icon: PaletteIcon,
   },
   {
     id: "team",
@@ -104,6 +112,9 @@ function SettingsPanel({
           <AuthSettings view={tab} hideNav />
         </div>
       );
+    }
+    case "appearance": {
+      return <SettingsAppearancePanel />;
     }
     case "api-keys": {
       return (

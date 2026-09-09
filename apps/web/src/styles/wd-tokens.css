@@ -7,6 +7,11 @@
 :root {
   color-scheme: light dark;
 
+  /* App display size — multiplied on html font-size (rem typography + spacing) */
+  --wd-display-scale: 1.1;
+  /* Hi-DPI / large viewports (e.g. 4K) — subtle bump; overridden by user display scale */
+  --wd-viewport-font-factor: 1;
+
   /* --- Reference: cool neutral --- */
   --wd-neutral-50: oklch(0.985 0.004 250);
   --wd-neutral-100: oklch(0.96 0.006 250);
@@ -66,7 +71,7 @@
   /* --- Light semantic (shadcn) --- */
   --background: var(--wd-neutral-50);
   --foreground: var(--wd-neutral-950);
-  --card: oklch(1 0.002 250);
+  --card: var(--wd-neutral-50);
   --card-foreground: var(--wd-neutral-950);
   --popover: oklch(1 0.002 250);
   --popover-foreground: var(--wd-neutral-950);
@@ -76,11 +81,11 @@
   --secondary-foreground: var(--wd-neutral-900);
   --muted: var(--wd-neutral-100);
   --muted-foreground: var(--wd-neutral-500);
-  --accent: var(--wd-accent-50);
-  --accent-foreground: var(--wd-accent-900);
+  --accent: var(--wd-neutral-100);
+  --accent-foreground: var(--wd-neutral-900);
   --destructive: var(--wd-danger-600);
   /* Resting strokes — same quiet mix SelectTrigger used to apply locally */
-  --border: color-mix(in oklab, var(--wd-neutral-200) 55%, transparent);
+  --border: color-mix(in oklab, var(--wd-neutral-200) 40%, transparent);
   --input: var(--border);
   --ring: var(--wd-accent-500);
   --chart-1: var(--wd-accent-500);
@@ -88,12 +93,12 @@
   --chart-3: var(--wd-signal-500);
   --chart-4: var(--wd-info-500);
   --chart-5: var(--wd-danger-500);
-  --radius: 0.5rem;
-  --sidebar: var(--wd-neutral-100);
+  --radius: 0.375rem;
+  --sidebar: var(--wd-neutral-50);
   --sidebar-foreground: var(--wd-neutral-900);
   --sidebar-primary: var(--wd-accent-600);
   --sidebar-primary-foreground: oklch(0.98 0.01 220);
-  --sidebar-accent: var(--wd-neutral-200);
+  --sidebar-accent: var(--wd-neutral-100);
   --sidebar-accent-foreground: var(--wd-neutral-900);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--wd-accent-500);
@@ -192,6 +197,18 @@
   --duration-fast: 100ms;
   --duration-panel: 180ms;
   --ease-out-strong: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 2048px) and (min-resolution: 1.5dppx) {
+  :root {
+    --wd-viewport-font-factor: 1.06;
+  }
+}
+
+html {
+  font-size: calc(
+    100% * var(--wd-display-scale) * var(--wd-viewport-font-factor)
+  );
 }
 
 html,

@@ -1,6 +1,6 @@
 ---
 document_created: 2026-07-30T01:30
-document_updated: 2026-09-06T12:20
+document_updated: 2026-09-09T21:55
 ---
 
 # SCENARIOS: Day-0 investigator journeys
@@ -114,7 +114,8 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | --- | --- | --- |
 | Cases CRUD + switch cookie | shipped | Org-scoped list/get/create/update/delete (active Better Auth organization). **Open** sets Active + opens Overview; **Set as active case** in card ⋯; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename (slug unique is still global); update/egress also via API/CLI |
 | Delete case | shipped | Type-to-confirm (`DestructiveConfirmDialog`) on Cases card ⋯ and Overview; cascades Graph/Jobs/Triage/Evidence; heals Active cookie; also `wd cases delete` |
-| Case overview page | shipped | `/cases/$caseSlug`: case dashboard (stats / activity / settings); landing via **Open** from Manage Cases; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks`; unknown slug → PageHeader + centered 404 + **Back to Cases** |
+| Case overview page | shipped | `/cases/$caseSlug`: case dashboard (stats / activity / settings); landing via **Open** from Manage Cases; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks`; unknown slug → PageHeader + centered 404 + **Back to Cases**; stats grid reuses dashboard `MetricsSection` (borderless tiles, sans numerals) |
+| Unknown route (global) | shipped | Root `notFoundComponent` (`__root.tsx`): full-viewport centered flat card on `background` (no shadow); **Go to dashboard** |
 | Identifiers table | shipped | `/identifiers`: Active-Case browse + inline edit + evidence + in-place create (Value first after Entity); **Bulk add** paste/map dialog (default Entity fills empty Entity cells; mapped name/slug miss → **Not found** / **Ambiguous**; preview cells editable; `confirmed` → `unverified`); row click → Dossier Identifiers |
 | Bulk add identifiers | shipped | Same two-stage dialog on `/identifiers` and Dossier Identifiers (paste, then left/right match). Default Entity fills empty Entity cells; a mapped name/slug miss shows **Not found** / **Ambiguous** on the Entity cell (picker stays empty). Preview cells are editable (empty Type/Platform = **: **). Dossier locks Entity. Type deferred from column/values. `validateIdentifierWrite` (incl. handle→platform) marks rows invalid. No Evidence / no `confirmed` from paste. |
 | Case graph page | shipped | `/graph`: case-wide preview (`CaseGraphCanvas`); Graph Studio still Phase 2 |
@@ -127,7 +128,8 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Quick Launch paste → Collect | removed | Dump stays on Collect; Dashboard does not host paste |
 | Dashboard → Triage with proposalId | shipped | Triage panel rows deep-link `search.proposalId` |
 | Dashboard → Collect with jobId | removed | Jobs running tile links `/collect` without a selected job |
-| Settings tab URL sync | shipped | Sidebar tab changes write `?tab=` with `replace: true` (account omits param); deep links `/settings?tab=team | users | …` restore section on load |
+| Settings tab URL sync | shipped | Sidebar tab changes write `?tab=` with `replace: true` (account omits param); deep links `/settings?tab=appearance | team | users | …` restore section on load |
+| Settings appearance | shipped | `/settings?tab=appearance`; theme (Light / Dark / System) + display size presets (Default 1.1 / Comfortable 1.2 / Large 1.35) via `--wd-display-scale` on `<html>`; product default **Default (1.1)** when unset; hi-DPI viewport factor on 4K; `localStorage` only; sidebar theme shortcut still cycles mode |
 | Settings vault credentials | shipped | `/settings?tab=credentials`; Connect/Update dialog; needs `WD_MASTER_VAULT_KEY`; also `wd credentials` / `PUT /credentials/{name}` (never plaintext) |
 | Settings Team invite / accept | shipped | `/settings?tab=team`; owner/admin invite `admin` or `member`; copy-link + optional SMTP; accept at `/auth/accept-invitation/{id}` where `{id}` must be a UUID (malformed links fail before preview fetch; invite-only register; public sign-up stays gated) |
 | Settings Users (instance admin) | shipped | `/settings?tab=users` (hidden unless `auth.user.role` is `admin`); Disable/Enable + sign out all sessions; no impersonation; direct `?tab=users` for others is denied copy |
