@@ -36,6 +36,7 @@ function asRow(
         entityOptions: [],
         createConnection: async () => {},
         updateConnection: async () => {},
+        deleteConnection: async () => {},
         onOpenEntity: () => {},
         onCopyEntityLink: () => {},
         onCopyEntityMarkdown: () => {},

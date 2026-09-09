@@ -47,6 +47,7 @@ interface Props {
   entityOptions: readonly EntityOption[];
   onCreate: (input: CreateEntityConnectionInput) => Promise<void>;
   onUpdate: (input: UpdateEntityConnectionInput) => Promise<void>;
+  onDelete: (edgeId: string) => Promise<void>;
 }
 
 type PanelMode =
@@ -77,12 +78,14 @@ export function EntityConnectionsCell({
   entityOptions,
   onCreate,
   onUpdate,
+  onDelete,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<PanelMode>({ kind: "create" });
   const [form, setForm] = useState<ConnectionComposerValues>(EMPTY_FORM);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [unlinkingEdgeId, setUnlinkingEdgeId] = useState<string | null>(null);
 
   const peerChoices = entityOptions.filter((o) => o.id !== entity.id);
   const visible = peers.slice(0, MAX_VISIBLE_CHIPS);
@@ -90,12 +93,16 @@ export function EntityConnectionsCell({
   const addDisabled = peerChoices.length === 0;
   const isEdit = mode.kind === "edit";
   const showComposer = mode.kind === "create" || mode.kind === "edit";
+  const showConnectionList =
+    peers.length > 0 && (mode.kind === "browse" || overflow > 0);
+  const busy = saving || unlinkingEdgeId !== null;
 
   function close() {
     setOpen(false);
     setMode({ kind: "create" });
     setForm(EMPTY_FORM);
     setSaveError(null);
+    setUnlinkingEdgeId(null);
   }
 
   function openCreate() {
@@ -117,6 +124,21 @@ export function EntityConnectionsCell({
     setForm(EMPTY_FORM);
     setSaveError(null);
     setOpen(true);
+  }
+
+  async function handleUnlink(peer: EntityConnectionPeer) {
+    setUnlinkingEdgeId(peer.edgeId);
+    setSaveError(null);
+    try {
+      await onDelete(peer.edgeId);
+      close();
+    } catch (error) {
+      setSaveError(
+        error instanceof Error ? error.message : "Couldn't unlink connection"
+      );
+    } finally {
+      setUnlinkingEdgeId(null);
+    }
   }
 
   async function handleSave() {
@@ -164,6 +186,8 @@ export function EntityConnectionsCell({
   if (saving) saveLabel = "Saving…";
   else if (isEdit) saveLabel = "Save";
 
+  const addAriaLabel = `Add connection for ${entityDisplayLabel(entity)}`;
+
   return (
     <div
       className="flex min-w-0 items-center gap-1"
@@ -177,60 +201,6 @@ export function EntityConnectionsCell({
         e.stopPropagation();
       }}
     >
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-        {peers.length === 0 ? (
-          <span className="text-muted-foreground text-xs">—</span>
-        ) : (
-          <>
-            {visible.map((peer) => {
-              const peerLabel = entityDisplayLabel({
-                name: peer.peerName,
-                slug: peer.peerSlug,
-              });
-              const label = predicateLabel(peer.predicate, peer.direction);
-              const phrase = `${label} ${peerLabel}`;
-              const DirectionIcon =
-                peer.direction === "out" ? ArrowUpRightIcon : ArrowDownLeftIcon;
-              return (
-                <button
-                  key={peer.edgeId}
-                  type="button"
-                  title={phrase}
-                  aria-label={`Edit connection ${phrase}`}
-                  className={cn(
-                    CHIP_SIZE_CLASS.sm,
-                    "text-foreground/80 bg-secondary hover:bg-secondary/80 inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1 border-transparent"
-                  )}
-                  onClick={() => {
-                    openEdit(peer);
-                  }}
-                >
-                  <DirectionIcon
-                    className="text-muted-foreground size-3 shrink-0"
-                    aria-hidden
-                  />
-                  <span className="min-w-0 truncate font-medium">
-                    {peerLabel}
-                  </span>
-                </button>
-              );
-            })}
-            {overflow > 0 ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={DASHED_PILL_CLASS}
-                aria-label={`${overflow} more connections`}
-                onClick={openBrowse}
-              >
-                +{overflow}
-              </Button>
-            ) : null}
-          </>
-        )}
-      </div>
-
       <Popover
         open={open}
         onOpenChange={(next) => {
@@ -238,38 +208,122 @@ export function EntityConnectionsCell({
         }}
         modal
       >
-        <PopoverTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-0"
-              disabled={addDisabled}
-              aria-label={`Add connection for ${entityDisplayLabel(entity)}`}
-              title="Add connection"
-              onClick={(e) => {
-                e.preventDefault();
-                openCreate();
-              }}
-            />
-          }
-        >
-          <PlusIcon className="size-3" aria-hidden />
-        </PopoverTrigger>
+        <div className="flex min-w-0 flex-1 items-center gap-1">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+            {peers.length === 0 ? (
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={DASHED_PILL_CLASS}
+                    disabled={addDisabled}
+                    aria-label={addAriaLabel}
+                    title="Add connection"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openCreate();
+                    }}
+                  />
+                }
+              >
+                <PlusIcon className="size-3" aria-hidden />
+              </PopoverTrigger>
+            ) : (
+              <>
+                {visible.map((peer) => {
+                  const peerLabel = entityDisplayLabel({
+                    name: peer.peerName,
+                    slug: peer.peerSlug,
+                  });
+                  const label = predicateLabel(peer.predicate, peer.direction);
+                  const phrase = `${label} ${peerLabel}`;
+                  const DirectionIcon =
+                    peer.direction === "out"
+                      ? ArrowUpRightIcon
+                      : ArrowDownLeftIcon;
+                  return (
+                    <button
+                      key={peer.edgeId}
+                      type="button"
+                      title={phrase}
+                      aria-label={`Edit connection ${phrase}`}
+                      className={cn(
+                        CHIP_SIZE_CLASS.sm,
+                        "text-foreground/80 bg-secondary hover:bg-secondary/80 inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1 border-transparent"
+                      )}
+                      onClick={() => {
+                        openEdit(peer);
+                      }}
+                    >
+                      <DirectionIcon
+                        className="text-muted-foreground size-3 shrink-0"
+                        aria-hidden
+                      />
+                      <span className="min-w-0 truncate font-medium">
+                        {peerLabel}
+                      </span>
+                    </button>
+                  );
+                })}
+                {overflow > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={DASHED_PILL_CLASS}
+                    aria-label={`${overflow} more connections`}
+                    onClick={openBrowse}
+                  >
+                    +{overflow}
+                  </Button>
+                ) : null}
+              </>
+            )}
+          </div>
+
+          {peers.length > 0 ? (
+            <PopoverTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-0"
+                  disabled={addDisabled}
+                  aria-label={addAriaLabel}
+                  title="Add connection"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openCreate();
+                  }}
+                />
+              }
+            >
+              <PlusIcon className="size-3" aria-hidden />
+            </PopoverTrigger>
+          ) : null}
+        </div>
         <PopoverContent align="end" className="w-80 gap-2.5">
-          {peers.length > 0 && (mode.kind === "browse" || overflow > 0) ? (
+          {showConnectionList ? (
             <div className="flex max-h-28 flex-col gap-1 overflow-y-auto border-b pb-2">
               {peers.map((peer) => {
                 const peerLabel = entityDisplayLabel({
                   name: peer.peerName,
                   slug: peer.peerSlug,
                 });
+                const selected =
+                  mode.kind === "edit" && mode.peer.edgeId === peer.edgeId;
                 return (
                   <button
                     key={peer.edgeId}
                     type="button"
-                    className="hover:bg-muted/50 flex min-w-0 items-baseline gap-1.5 rounded-sm px-1 py-0.5 text-left text-xs"
+                    className={cn(
+                      "hover:bg-muted/50 flex min-w-0 items-baseline gap-1.5 rounded-sm px-1 py-0.5 text-left text-xs",
+                      selected && "bg-muted/40"
+                    )}
+                    disabled={busy}
                     onClick={() => {
                       openEdit(peer);
                     }}
@@ -291,29 +345,49 @@ export function EntityConnectionsCell({
                 peerOptions={peerChoices}
                 values={form}
                 onChange={setForm}
-                disabled={saving}
+                disabled={busy}
               />
               <FormInlineError>{saveError}</FormInlineError>
-              <div className="flex justify-end gap-1.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={saving}
-                  onClick={close}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={saving || !form.peerId || !form.phraseValue}
-                  onClick={() => {
-                    void handleSave();
-                  }}
-                >
-                  {saveLabel}
-                </Button>
+              <div className="flex items-center gap-1.5">
+                {isEdit ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    disabled={busy}
+                    aria-label={`Unlink ${entityDisplayLabel({
+                      name: mode.peer.peerName,
+                      slug: mode.peer.peerSlug,
+                    })}`}
+                    onClick={() => {
+                      void handleUnlink(mode.peer);
+                    }}
+                  >
+                    {unlinkingEdgeId === mode.peer.edgeId ? "…" : "Unlink"}
+                  </Button>
+                ) : null}
+                <div className="ml-auto flex gap-1.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy}
+                    onClick={close}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={busy || !form.peerId || !form.phraseValue}
+                    onClick={() => {
+                      void handleSave();
+                    }}
+                  >
+                    {saveLabel}
+                  </Button>
+                </div>
               </div>
             </>
           ) : (

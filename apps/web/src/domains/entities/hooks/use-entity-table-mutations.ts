@@ -3,8 +3,10 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import {
   createEdgeFn,
+  deleteEdgeFn,
   updateEdgeFn,
 } from "@/domains/entities/edges/edges.functions";
+import { edgeScopeInputSchema } from "@/domains/entities/edges/types";
 import {
   createEntityFn,
   updateEntityFieldsFn,
@@ -42,6 +44,11 @@ interface ConnectionVars {
 interface ConnectionUpdateVars {
   centerId: string;
   input: UpdateEntityConnectionInput;
+}
+
+interface ConnectionDeleteVars {
+  centerId: string;
+  edgeId: string;
 }
 
 function updateEntityFields(caseId: string, vars: UpdateEntityVars) {
@@ -117,6 +124,28 @@ async function onConnectionUpdated(
   );
 }
 
+function deleteEntityConnection(caseId: string, vars: ConnectionDeleteVars) {
+  return deleteEdgeFn({
+    data: edgeScopeInputSchema.parse({
+      caseId,
+      edgeId: vars.edgeId,
+    }),
+  });
+}
+
+async function onConnectionDeleted(
+  queryClient: QueryClient,
+  caseId: string,
+  centerId: string
+): Promise<void> {
+  toast.success("Connection deleted");
+  await invalidateAfterEntityChanged(
+    queryClient,
+    caseId,
+    entityChangedOpts(queryClient, caseId, centerId)
+  );
+}
+
 async function createEntityRecord(
   caseId: string,
   queryClient: QueryClient,
@@ -146,6 +175,9 @@ function buildEntityTableMutationHandlers(
   connectionUpdateMutation: {
     mutateAsync: (vars: ConnectionUpdateVars) => Promise<unknown>;
   },
+  connectionDeleteMutation: {
+    mutateAsync: (vars: ConnectionDeleteVars) => Promise<unknown>;
+  },
   createEntity: (name: string, kind: EntityKind) => Promise<void>
 ) {
   return {
@@ -169,6 +201,9 @@ function buildEntityTableMutationHandlers(
       input: UpdateEntityConnectionInput
     ) {
       await connectionUpdateMutation.mutateAsync({ centerId, input });
+    },
+    async deleteConnection(centerId: string, edgeId: string) {
+      await connectionDeleteMutation.mutateAsync({ centerId, edgeId });
     },
     createEntity,
   };
@@ -199,6 +234,16 @@ export function useEntityTableMutations(caseId: string) {
       onConnectionUpdated(queryClient, caseId, vars.centerId),
   });
 
+  const connectionDeleteMutation = useMutation({
+    mutationFn: async (vars: ConnectionDeleteVars) =>
+      deleteEntityConnection(caseId, vars),
+    onSuccess: async (_data, vars) =>
+      onConnectionDeleted(queryClient, caseId, vars.centerId),
+    onError: (error) => {
+      toast.error(errMessage(error, "Delete failed"));
+    },
+  });
+
   const createEntity = async (name: string, kind: EntityKind) =>
     createEntityRecord(caseId, queryClient, name, kind);
 
@@ -206,6 +251,7 @@ export function useEntityTableMutations(caseId: string) {
     updateMutation,
     connectionMutation,
     connectionUpdateMutation,
+    connectionDeleteMutation,
     createEntity
   );
 }

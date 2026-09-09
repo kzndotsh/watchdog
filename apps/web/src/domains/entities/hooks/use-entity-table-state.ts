@@ -110,6 +110,7 @@ function buildEntityTableMeta(
     entityOptions,
     createConnection: mutations.createConnection,
     updateConnection: mutations.updateConnection,
+    deleteConnection: mutations.deleteConnection,
     ...actions,
   };
 }

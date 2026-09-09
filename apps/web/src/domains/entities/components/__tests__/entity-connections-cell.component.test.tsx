@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { EntityConnectionsCell } from "@/domains/entities/components/entity-connections-cell";
@@ -22,7 +23,7 @@ const ENTITY: EntityRecord = {
 };
 
 describe("EntityConnectionsCell", () => {
-  it("shows empty marker and add control when there are no peers", () => {
+  it("shows left add control when there are no peers", () => {
     render(
       <EntityConnectionsCell
         entity={ENTITY}
@@ -32,13 +33,14 @@ describe("EntityConnectionsCell", () => {
         ]}
         onCreate={vi.fn()}
         onUpdate={vi.fn()}
+        onDelete={vi.fn()}
       />
     );
 
-    expect(screen.getByText("—")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Add connection for Alpha Entity" })
     ).toBeInTheDocument();
+    expect(screen.queryByText("—")).not.toBeInTheDocument();
   });
 
   it("renders direction arrow chips with phrase tooltips", () => {
@@ -81,6 +83,7 @@ describe("EntityConnectionsCell", () => {
         ]}
         onCreate={vi.fn()}
         onUpdate={vi.fn()}
+        onDelete={vi.fn()}
       />
     );
 
@@ -119,6 +122,7 @@ describe("EntityConnectionsCell", () => {
         entityOptions={[]}
         onCreate={vi.fn()}
         onUpdate={vi.fn()}
+        onDelete={vi.fn()}
       />
     );
 
@@ -128,5 +132,46 @@ describe("EntityConnectionsCell", () => {
         name: /Edit connection Hosted on acme-corp/i,
       })
     ).toHaveAttribute("title", "Hosted on acme-corp");
+  });
+
+  it("unlinks a connection from the popover footer when editing", async () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const peer = {
+      edgeId: testId(3),
+      peerId: testId(2),
+      peerName: "John Doe",
+      peerSlug: "john",
+      peerKind: "person" as const,
+      peerSummary: null,
+      peerNotes: null,
+      predicate: "associate_of" as const,
+      direction: "out" as const,
+      notes: null,
+      fromId: ENTITY.id,
+      toId: testId(2),
+    };
+
+    render(
+      <EntityConnectionsCell
+        entity={ENTITY}
+        peers={[peer]}
+        entityOptions={[
+          { id: testId(2), name: "John Doe", slug: "john", kind: "person" },
+        ]}
+        onCreate={vi.fn()}
+        onUpdate={vi.fn()}
+        onDelete={onDelete}
+      />
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /Edit connection Associate of John Doe/i,
+      })
+    );
+    await user.click(screen.getByRole("button", { name: "Unlink John Doe" }));
+
+    expect(onDelete).toHaveBeenCalledWith(peer.edgeId);
   });
 });

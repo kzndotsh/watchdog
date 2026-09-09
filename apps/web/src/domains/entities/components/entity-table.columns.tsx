@@ -77,6 +77,7 @@ export interface EntityTableMeta {
     centerId: string,
     input: UpdateEntityConnectionInput
   ) => Promise<void>;
+  deleteConnection: (centerId: string, edgeId: string) => Promise<void>;
   onOpenEntity: (entity: EntityRecord) => void;
   onCopyEntityLink: (entity: EntityRecord) => void;
   onCopyEntityMarkdown: (entity: EntityRecord) => void;
@@ -195,6 +196,7 @@ function renderConnectionsCell(
       entityOptions={meta.entityOptions}
       onCreate={async (input) => meta.createConnection(row.id, input)}
       onUpdate={async (input) => meta.updateConnection(row.id, input)}
+      onDelete={async (edgeId) => meta.deleteConnection(row.id, edgeId)}
     />
   );
 }
