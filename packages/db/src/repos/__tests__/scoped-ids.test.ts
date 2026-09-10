@@ -19,11 +19,13 @@ describe("scoped ids", () => {
   it("trimResourceId rejects non-UUID graph ids", () => {
     expect(trimResourceId("entity-1")).toBeUndefined();
     expect(trimResourceId(testId(1))).toBe(testId(1));
+    expect(trimResourceId(`  ${testId(1)}  `)).toBe(testId(1));
   });
 
   it("trimCaseId rejects non-UUID case ids", () => {
     expect(trimCaseId("case-1")).toBeUndefined();
     expect(trimCaseId(testId(2))).toBe(testId(2));
+    expect(trimCaseId(`  ${testId(2)}  `)).toBe(testId(2));
   });
 
   it("resolveNullableGraphIdForWrite rejects invalid non-empty ids", () => {

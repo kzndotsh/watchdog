@@ -36,18 +36,6 @@ describe("casesRepo", () => {
     });
   });
 
-  it("trims padded case id on getById", async () => {
-    await withTestTx(async (tx) => {
-      const created = await seedCase(tx, { slug: "trimmed-get" });
-      const row = await casesRepo.getById(
-        tx,
-        `  ${created.id}  `,
-        created.organizationId
-      );
-      expect(row?.id).toBe(created.id);
-    });
-  });
-
   it("getBySlug slugifies display-style names", async () => {
     await withTestTx(async (tx) => {
       const created = await seedCase(tx, {

@@ -47,28 +47,6 @@ describe("searchCase", () => {
     );
   });
 
-  it("accepts a padded case id", async () => {
-    const cased = await seedCase(db, {
-      name: "Padded Search Case",
-      slug: "padded-search-case",
-    });
-    await seedEntity(db, cased.id, {
-      id: testId(21),
-      name: "Padding Subject",
-      slug: "padding-subject",
-    });
-    const result = await runDomain(
-      searchCaseEffect({
-        caseId: `  ${cased.id}  `,
-        organizationId: TEST_ORGANIZATION_ID,
-        q: "Padding",
-      })
-    );
-    expect(result.entities.some((hit) => hit.slug === "padding-subject")).toBe(
-      true
-    );
-  });
-
   it("hits an entity by notes", async () => {
     const cased = await seedCase(db, {
       name: "Search Case",

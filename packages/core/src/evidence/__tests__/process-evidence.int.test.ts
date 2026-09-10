@@ -54,24 +54,6 @@ describe("processEvidence", () => {
     expect(second.id).toBe(first.id);
   });
 
-  it("rejects blank actorId before starting harvest", async () => {
-    const cased = await seedCase(db);
-    const evidence = await seedEvidence(db, cased.id, { kind: "file" });
-    await expect(
-      runDomain(
-        processEvidenceEffect({
-          caseId: cased.id,
-          organizationId: TEST_ORGANIZATION_ID,
-          evidenceId: evidence.id,
-          actorId: "   ",
-          actorLabel: TEST_ACTOR_ID,
-        })
-      )
-    ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
-    );
-  });
-
   it("dedupes concurrent harvest requests to one job", async () => {
     const cased = await seedCase(db);
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
@@ -264,24 +246,6 @@ describe("processEvidence", () => {
       evidenceId: evidence.id,
       entityId: entity.id,
     });
-  });
-
-  it("trims padded evidenceId when starting process", async () => {
-    const cased = await seedCase(db);
-    const evidence = await seedEvidence(db, cased.id, {
-      sourceUrl: "https://mailhost.test/page",
-      text: "https://mailhost.test/page",
-    });
-    const job = await runDomain(
-      processEvidenceEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        evidenceId: `  ${evidence.id}  `,
-        actorId: TEST_ACTOR_ID,
-        actorLabel: TEST_ACTOR_ID,
-      })
-    );
-    expect(job.status).toBe("queued");
   });
 
   it("stamps processedAt", async () => {

@@ -106,31 +106,6 @@ describe("createTask", () => {
     expect(events.every((row) => row.actorId === TEST_ACTOR_ID)).toBe(true);
   });
 
-  it("trims padded entityId on create", async () => {
-    const cased = await seedCase(db);
-    const entity = await seedEntity(db, cased.id, {
-      id: testId(21),
-      slug: "target",
-    });
-    const created = await runDomain(
-      createTaskEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        title: "Trim entity",
-        entityId: `  ${entity.id}  `,
-        actorId: TEST_ACTOR_ID,
-      })
-    );
-    expect(created.entityId).toBe(entity.id);
-
-    const listed = await runDomain(
-      listTasksForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
-        entityId: `  ${entity.id}  `,
-      })
-    );
-    expect(listed.some((row) => row.id === created.id)).toBe(true);
-  });
-
   it("trims padded dueDate on create and treats whitespace-only as null", async () => {
     const cased = await seedCase(db);
     const created = await runDomain(

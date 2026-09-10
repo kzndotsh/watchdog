@@ -130,36 +130,6 @@ describe("applyPatch", () => {
     });
   });
 
-  it("trims padded entity ids on claim create patch ops", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, {
-        id: testId(38),
-        slug: "claim-target",
-      });
-      const claimOp = buildClaimCreateOp(entity.id, "Observed host", {
-        id: testId(39),
-        data: {
-          entityId: `  ${entity.id}  `,
-          text: "Observed host",
-          class: "observation",
-        },
-      });
-
-      await runDomain(
-        applyPatchEffect({
-          tx,
-          caseId: cased.id,
-          confidence: "unverified",
-          patch: [claimOp],
-        })
-      );
-
-      const claims = await claimsRepo.listForEntity(tx, entity.id);
-      expect(claims.some((row) => row.text === "Observed host")).toBe(true);
-    });
-  });
-
   it("rejects entity upsert when slug belongs to a different id", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

@@ -117,27 +117,6 @@ describe("evidenceLinksRepo", () => {
     });
   });
 
-  it("listForClaims trims padded parent ids", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(26) });
-      const evidence = await seedEvidence(tx, cased.id, { label: "proof" });
-      const claim = await claimsRepo.create(tx, {
-        entityId: entity.id,
-        text: "cited",
-        class: "observation",
-        confidence: "unverified",
-      });
-      if (!claim) throw new Error("claim");
-
-      await evidenceLinksRepo.linkClaim(tx, claim.id, [evidence.id]);
-      const listed = await evidenceLinksRepo.listForClaims(tx, [
-        `  ${claim.id}  `,
-      ]);
-      expect(listed.get(claim.id)).toEqual([evidence.id]);
-    });
-  });
-
   it("linkClaim rejects invalid evidence ids", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

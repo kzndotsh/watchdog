@@ -38,6 +38,8 @@ Repos **do** keep:
 
 `create`/`update` return `null` for scoped-id miss, actor reject, or zero-row update/delete — not for empty display text. `check:repos` bans `trimmedOrNull` in repos and allowlists `trimmedOrUndefined` to lookup-only methods (credential name, idempotency key, cap-cache keys, capability id WHERE).
 
+**Tests:** Direct repo callers (test-kit seeds, rare bypass paths) do not get core display validation. Generic scoped-ID and lookup-key trim behavior belongs in [`src/repos/__tests__/scoped-ids.test.ts`](src/repos/__tests__/scoped-ids.test.ts) — repo int tests should not re-assert padded UUID lookups unless they cover a distinct contract (job input normalize, proposal actor integrity, idempotency keys, etc.).
+
 ### Red flags — STOP
 
 - Protocol/interface split for Drizzle repos (TS structural typing is enough)

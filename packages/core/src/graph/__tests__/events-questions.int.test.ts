@@ -33,21 +33,6 @@ describe("createEvent", () => {
     expect(created.what).toBe("Born");
   });
 
-  it("trims padded entityId on create", async () => {
-    const cased = await seedCase(db);
-    const entity = await seedEntity(db, cased.id, { id: testId(23) });
-    const created = await runDomain(
-      createEventEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        entityId: `  ${entity.id}  `,
-        when: "1815-12-10",
-        what: "Born",
-      })
-    );
-    expect(created.entityId).toBe(entity.id);
-  });
-
   it("rejects whitespace-only event fields", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(22) });

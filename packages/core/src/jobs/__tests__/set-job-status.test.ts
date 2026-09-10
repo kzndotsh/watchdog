@@ -34,28 +34,6 @@ describe("setJobStatus", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("trims padded job and case ids before updating", async () => {
-    updateInCase.mockResolvedValueOnce({
-      id: jobId,
-      caseId,
-      status: "running",
-    });
-    await Effect.runPromise(
-      setJobStatusEffect(
-        `  ${jobId}  `,
-        { status: "running" },
-        { caseId: `  ${caseId}  ` }
-      )
-    );
-    expect(updateInCase).toHaveBeenCalledWith(
-      {},
-      caseId,
-      jobId,
-      { status: "running" },
-      { unlessCancelled: undefined, onlyStatuses: undefined }
-    );
-  });
-
   it("returns null for invalid scoped ids without calling the repo", async () => {
     updateInCase.mockClear();
     const result = await Effect.runPromise(

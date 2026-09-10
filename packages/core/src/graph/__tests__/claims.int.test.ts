@@ -16,22 +16,6 @@ describe("createClaim", () => {
     await resetTestDb();
   });
 
-  it("trims padded entityId on create", async () => {
-    const cased = await seedCase(db);
-    const entity = await seedEntity(db, cased.id, { id: testId(22) });
-    const created = await runDomain(
-      createClaimEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        entityId: `  ${entity.id}  `,
-        text: "Trimmed entity ref",
-        confidence: "unverified",
-        class: "observation",
-      })
-    );
-    expect(created.entityId).toBe(entity.id);
-  });
-
   it("creates then retracts with retractedAt set", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
@@ -61,37 +45,6 @@ describe("createClaim", () => {
     );
     expect(retracted.retracted).toBe(true);
     expect(retracted.retractedAt).toBeTruthy();
-  });
-
-  it("rejects blank actorId on retract", async () => {
-    const cased = await seedCase(db);
-    const entity = await seedEntity(db, cased.id, { id: testId(24) });
-    const created = await runDomain(
-      createClaimEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        entityId: entity.id,
-        text: "Needs actor",
-        confidence: "unverified",
-        class: "observation",
-      })
-    );
-    await expect(
-      runDomain(
-        retractClaimEffect(
-          {
-            caseId: cased.id,
-            organizationId: TEST_ORGANIZATION_ID,
-            claimId: created.id,
-            kind: "retracted",
-            reason: "no actor",
-          },
-          "   "
-        )
-      )
-    ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
-    );
   });
 
   it("rejects updates to retracted claims", async () => {

@@ -124,39 +124,9 @@ describe("getCaseBySlug", () => {
   });
 });
 
-describe("getCaseById", () => {
-  beforeEach(async () => {
-    await resetTestDb();
-  });
-
-  it("accepts a padded case id", async () => {
-    const cased = await seedCase(db, {
-      name: "Padded Get",
-      slug: "padded-get",
-    });
-    const row = await runDomain(
-      getCaseByIdEffect(`  ${cased.id}  `, TEST_ORGANIZATION_ID)
-    );
-    expect(row.id).toBe(cased.id);
-  });
-});
-
 describe("deleteCase", () => {
   beforeEach(async () => {
     await resetTestDb();
-  });
-
-  it("trims padded case id on delete", async () => {
-    const cased = await seedCase(db);
-    await runDomain(
-      deleteCaseEffect(`  ${cased.id}  `, {
-        organizationId: TEST_ORGANIZATION_ID,
-      })
-    );
-    const missing = await Effect.runPromise(
-      Effect.result(getCaseByIdEffect(cased.id, TEST_ORGANIZATION_ID))
-    );
-    expect(Result.isFailure(missing)).toBe(true);
   });
 
   it("removes the case and cascaded graph rows", async () => {

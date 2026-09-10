@@ -22,6 +22,8 @@ Domain services for Case Graph, Jobs, evidence, Tasks (case work items — not G
 | Caps via catalog + `interpret` → Proposal | Let Caps or Jobs write Graph directly |
 | Enqueue only via `enqueueCapJobEffect` / boss helpers | Open ad-hoc pg-boss clients per call site |
 
+**Tests:** Generic padded-UUID trim and `requireActorIdEffect` / `optionalActorId` belong in unit owners (`graph/patch/__tests__/guards.test.ts`, `actors/__tests__/require-actor-id.test.ts`, `@watchdog/schemas` `primitives-trim.test.ts`; repo scoped IDs in [`packages/db` `scoped-ids.test.ts`](../db/src/repos/__tests__/scoped-ids.test.ts)). Core `*.int.test.ts` should assert domain contracts only (slug/dueDate display, wire-record normalize, workflow actor gates), not re-prove padded canonical UUIDs on every Effect.
+
 ## Gotchas
 
 - Services call repos with `exec: DbExec` first; never open TX inside repos.

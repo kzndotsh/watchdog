@@ -90,33 +90,6 @@ describe("capCacheRepo", () => {
     });
   });
 
-  it("trims padded case id on lookupActive", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const now = new Date();
-      await capCacheRepo.upsert(tx, {
-        caseId: cased.id,
-        capabilityId: "network.dns.lookup",
-        inputHash: "hash-padded",
-        jobId: "11111111-1111-4111-8111-000000000099",
-        artifacts: [],
-        resultSummary: "padded",
-        ttlMs: 60_000,
-        createdAt: now,
-        expiresAt: new Date(now.getTime() + 60_000),
-      });
-
-      const hit = await capCacheRepo.lookupActive(
-        tx,
-        `  ${cased.id}  `,
-        "network.dns.lookup",
-        "hash-padded",
-        now
-      );
-      expect(hit?.resultSummary).toBe("padded");
-    });
-  });
-
   it("returns stored job evidenceIds without filtering invalid entries", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

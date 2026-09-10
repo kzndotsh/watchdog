@@ -276,32 +276,6 @@ describe("entitiesRepo", () => {
     });
   });
 
-  it("trims padded case and entity ids on scoped lookups", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, {
-        id: testId(60),
-        name: "Padded Lookup",
-        slug: "padded-lookup",
-      });
-
-      const row = await entitiesRepo.getInCase(
-        tx,
-        `  ${cased.id}  `,
-        `  ${entity.id}  `
-      );
-      expect(row?.id).toBe(entity.id);
-
-      const updated = await entitiesRepo.updateInCase(
-        tx,
-        `  ${cased.id}  `,
-        `  ${entity.id}  `,
-        { summary: "trimmed" }
-      );
-      expect(updated?.summary).toBe("trimmed");
-    });
-  });
-
   it("listSlugsInCase matches padded slug inputs", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

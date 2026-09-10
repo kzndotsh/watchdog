@@ -161,32 +161,6 @@ describe("getEntityByCaseSlug", () => {
   });
 });
 
-describe("listEntitiesForCase", () => {
-  beforeEach(async () => {
-    await resetTestDb();
-  });
-
-  it("accepts a padded case id", async () => {
-    const cased = await seedCase(db);
-    await runDomain(
-      createEntityEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        kind: "person",
-        name: "Padded Case",
-        slug: "padded-case",
-      })
-    );
-    const rows = await runDomain(
-      listEntitiesForCaseEffect(
-        `  ${cased.id}  `,
-        TEST_ORGANIZATION_ID
-      )
-    );
-    expect(rows.some((row) => row.slug === "padded-case")).toBe(true);
-  });
-});
-
 describe("deleteEntity", () => {
   beforeEach(async () => {
     await resetTestDb();

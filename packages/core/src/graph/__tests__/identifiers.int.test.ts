@@ -22,23 +22,6 @@ describe("createIdentifier", () => {
     await resetTestDb();
   });
 
-  it("trims padded entityId on create", async () => {
-    const cased = await seedCase(db);
-    const entity = await seedEntity(db, cased.id, { id: testId(19) });
-    const created = await runDomain(
-      createIdentifierEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        entityId: `  ${entity.id}  `,
-        type: "email",
-        value: "ada@mailhost.test",
-        confidence: "unverified",
-        status: "unknown",
-      })
-    );
-    expect(created.entityId).toBe(entity.id);
-  });
-
   it("blocks confirmed without evidence", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });

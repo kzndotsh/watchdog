@@ -211,38 +211,6 @@ describe("evidenceRepo", () => {
     });
   });
 
-  it("trims padded case and evidence ids on scoped lookups", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await seedEvidence(tx, cased.id);
-
-      const row = await evidenceRepo.getActiveInCase(
-        tx,
-        `  ${cased.id}  `,
-        `  ${created.id}  `
-      );
-      expect(row?.id).toBe(created.id);
-
-      expect(
-        await evidenceRepo.markProcessed(
-          tx,
-          `  ${cased.id}  `,
-          `  ${created.id}  `
-        )
-      ).toBe(true);
-    });
-  });
-
-  it("trims padded case id on listForCase", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await seedEvidence(tx, cased.id);
-
-      const rows = await evidenceRepo.listForCase(tx, `  ${cased.id}  `);
-      expect(rows.some((row) => row.id === created.id)).toBe(true);
-    });
-  });
-
   it("rejects blank actorId on create", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
