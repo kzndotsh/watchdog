@@ -17,6 +17,8 @@ Domain services for Case Graph, Jobs, evidence, Tasks (case work items — not G
 | Do | Don’t |
 | --- | --- |
 | Own transactions, SSE notify Effects, domain errors | Import Drizzle / write SQL in core |
+| Normalize display fields (trim, slugify, `InvalidError`) before repo writes | Rely on repos to reject blank name/text |
+| Trim `actorLabel` via `actorLabelForPersist` (`trimmedOrNull`) before jobs / graph_writes / evidence insert | Expect repo-level `actorLabel` trim |
 | Caps via catalog + `interpret` → Proposal | Let Caps or Jobs write Graph directly |
 | Enqueue only via `enqueueCapJobEffect` / boss helpers | Open ad-hoc pg-boss clients per call site |
 

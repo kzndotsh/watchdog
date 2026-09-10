@@ -1,7 +1,8 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { casesRepo, db, jobsRepo } from "@watchdog/db";
+import { runDomain, updateCaseEffect } from "@watchdog/core";
+import { db, jobsRepo } from "@watchdog/db";
 import { buildClaimCreateOp, testId } from "@watchdog/test-kit";
 import {
   resetTestDb,
@@ -86,9 +87,13 @@ describe("preflight", () => {
 
   it("stops when extract.ai credentials are missing after egress is enabled", async () => {
     const cased = await seedCase(db);
-    await casesRepo.update(db, cased.id, cased.organizationId, {
-      allowThirdPartyEgress: true,
-    });
+    await runDomain(
+      updateCaseEffect({
+        id: cased.id,
+        organizationId: cased.organizationId,
+        allowThirdPartyEgress: true,
+      })
+    );
     const job = await seedJob(db, cased.id, {
       status: "queued",
       capabilityId: "evidence.extract.ai",

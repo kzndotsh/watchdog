@@ -19,6 +19,7 @@ import {
   type JsonObject,
 } from "@watchdog/schemas";
 
+import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import { loadActorUsersEffect } from "../actors/resolve-actor-labels";
 import {
@@ -129,7 +130,7 @@ function startCapForEvidenceEffect(input: {
             input: jobInput,
             status: "queued",
             actorId,
-            actorLabel: input.actorLabel ?? null,
+            actorLabel: actorLabelForPersist(input.actorLabel),
             logs: [],
           })
         );

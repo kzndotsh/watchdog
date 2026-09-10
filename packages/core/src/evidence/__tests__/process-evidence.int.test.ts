@@ -7,8 +7,9 @@ import {
   markEvidenceProcessedEffect,
   processEvidenceEffect,
   runDomain,
+  updateCaseEffect,
 } from "@watchdog/core";
-import { casesRepo, db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
   TEST_ACTOR_ID,
   TEST_ORGANIZATION_ID,
@@ -131,9 +132,13 @@ describe("processEvidence", () => {
 
   it("starts extract.ai when ai is true", async () => {
     const cased = await seedCase(db);
-    await casesRepo.update(db, cased.id, cased.organizationId, {
-      allowThirdPartyEgress: true,
-    });
+    await runDomain(
+      updateCaseEffect({
+        id: cased.id,
+        organizationId: cased.organizationId,
+        allowThirdPartyEgress: true,
+      })
+    );
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
     await expect(
       runDomain(

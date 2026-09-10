@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { putCredentialEffect, runDomain } from "@watchdog/core";
-import { casesRepo, db } from "@watchdog/db";
+import {
+  putCredentialEffect,
+  runDomain,
+  updateCaseEffect,
+} from "@watchdog/core";
+import { db } from "@watchdog/db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase } from "@watchdog/test-kit/db";
 
@@ -15,9 +19,13 @@ describe("evaluateCapAvailability", () => {
 
   it("blocks extract.ai without vault credentials even when egress is on", async () => {
     const cased = await seedCase(db);
-    await casesRepo.update(db, cased.id, cased.organizationId, {
-      allowThirdPartyEgress: true,
-    });
+    await runDomain(
+      updateCaseEffect({
+        id: cased.id,
+        organizationId: cased.organizationId,
+        allowThirdPartyEgress: true,
+      })
+    );
     const cap = requireCapability("evidence.extract.ai");
     const { result } = await runDomain(
       evaluateCapAvailabilityEffect({
@@ -33,9 +41,13 @@ describe("evaluateCapAvailability", () => {
 
   it("allows extract.ai when a compatible key is stored", async () => {
     const cased = await seedCase(db);
-    await casesRepo.update(db, cased.id, cased.organizationId, {
-      allowThirdPartyEgress: true,
-    });
+    await runDomain(
+      updateCaseEffect({
+        id: cased.id,
+        organizationId: cased.organizationId,
+        allowThirdPartyEgress: true,
+      })
+    );
     await runDomain(
       putCredentialEffect({
         userId: TEST_ACTOR_ID,

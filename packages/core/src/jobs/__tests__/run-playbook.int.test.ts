@@ -6,14 +6,9 @@ import {
   dumpUrlEffect,
   runPlaybookEffect,
   runDomain,
+  updateCaseEffect,
 } from "@watchdog/core";
-import {
-  casesRepo,
-  db,
-  evidenceRepo,
-  jobsRepo,
-  playbookRunsRepo,
-} from "@watchdog/db";
+import { db, evidenceRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-kit/db";
 
@@ -54,6 +49,21 @@ describe("runPlaybook", () => {
 
     const run = await playbookRunsRepo.get(db, result.playbookRunId);
     expect(run?.status).toBe("running");
+  });
+
+  it("normalizes padded playbook id", async () => {
+    const cased = await seedCase(db);
+    const result = await runDomain(
+      runPlaybookEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        playbookId: "  host-footprint  ",
+        actorId: TEST_ACTOR_ID,
+        seed: { host: "mailhost.test" },
+      })
+    );
+    const run = await playbookRunsRepo.get(db, result.playbookRunId);
+    expect(run?.playbookId).toBe("host-footprint");
   });
 
   it("rejects whitespace-only playbook id", async () => {
@@ -142,9 +152,13 @@ describe("runPlaybook", () => {
 
   it("throws before insert when extract.ai credentials are missing", async () => {
     const cased = await seedCase(db);
-    await casesRepo.update(db, cased.id, cased.organizationId, {
-      allowThirdPartyEgress: true,
-    });
+    await runDomain(
+      updateCaseEffect({
+        id: cased.id,
+        organizationId: cased.organizationId,
+        allowThirdPartyEgress: true,
+      })
+    );
     const dumped = await runDomain(
       dumpUrlEffect({
         caseId: cased.id,

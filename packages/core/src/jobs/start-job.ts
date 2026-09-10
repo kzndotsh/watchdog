@@ -17,6 +17,7 @@ import {
   type PlaybookRunStatus,
 } from "@watchdog/schemas";
 
+import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import {
   optionalActorId,
   requireActorIdEffect,
@@ -209,7 +210,7 @@ export function startJobEffect(
         input: normalizedCapInput,
         status: "queued",
         actorId,
-        actorLabel: input.actorLabel ?? null,
+        actorLabel: actorLabelForPersist(input.actorLabel),
         logs: [],
       })
     );

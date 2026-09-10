@@ -14,6 +14,7 @@ import {
 import { casesRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { trimmedOrUndefined } from "@watchdog/schemas";
 
+import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import {
   optionalActorId,
   requireActorIdEffect,
@@ -190,7 +191,7 @@ export function runPlaybookEffect(
             seed: seedJson,
             status: "running",
             actorId,
-            actorLabel: input.actorLabel ?? null,
+            actorLabel: actorLabelForPersist(input.actorLabel),
           })
         );
         if (!run) {
@@ -211,7 +212,7 @@ export function runPlaybookEffect(
             input: stepInput,
             status: "queued",
             actorId,
-            actorLabel: input.actorLabel ?? null,
+            actorLabel: actorLabelForPersist(input.actorLabel),
             logs: [],
             playbookRunId: run.id,
             playbookStep: plan.step.playbookStep,

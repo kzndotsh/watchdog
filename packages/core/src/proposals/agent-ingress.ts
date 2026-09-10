@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { db, graphWritesRepo, type GraphWriteRow } from "@watchdog/db";
 import { trimmedOrNull } from "@watchdog/schemas";
 
+import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import {
   labelForActor,
@@ -222,7 +223,7 @@ export function writeGraphFromAgentEffect(input: {
             graphWritesRepo.create(tx, {
               caseId: scopedCaseId,
               actorId,
-              actorLabel: input.actorLabel ?? null,
+              actorLabel: actorLabelForPersist(input.actorLabel),
               channel: "agent_write",
               userOverridden: true,
               confidence: "unverified",

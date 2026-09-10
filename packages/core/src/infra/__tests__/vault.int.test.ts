@@ -69,6 +69,35 @@ describe("vault", () => {
     );
   });
 
+  it("trims padded credential labels on create and update", async () => {
+    await runDomain(
+      putCredentialEffect({
+        userId: TEST_ACTOR_ID,
+        name: "TRIMMED_LABEL_KEY",
+        secret: "bytes",
+        label: "  WhoisXML  ",
+      })
+    );
+    const meta = await runDomain(listCredentialMetaEffect(TEST_ACTOR_ID));
+    const row = meta.find((m) => m.name === "TRIMMED_LABEL_KEY");
+    expect(row?.label).toBe("WhoisXML");
+
+    await runDomain(
+      putCredentialEffect({
+        userId: TEST_ACTOR_ID,
+        name: "TRIMMED_LABEL_KEY",
+        secret: "bytes2",
+        label: "  Updated  ",
+      })
+    );
+    const updated = await runDomain(listCredentialMetaEffect(TEST_ACTOR_ID));
+    expect(updated.find((m) => m.name === "TRIMMED_LABEL_KEY")?.label).toBe(
+      "Updated"
+    );
+
+    await runDomain(deleteCredentialEffect(TEST_ACTOR_ID, "TRIMMED_LABEL_KEY"));
+  });
+
   it("updates ciphertext for the same name", async () => {
     await runDomain(
       putCredentialEffect({

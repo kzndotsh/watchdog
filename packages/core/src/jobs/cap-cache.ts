@@ -3,7 +3,11 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 
 import { capCacheRepo, db, type JobArtifact } from "@watchdog/db";
-import { isJsonObject, normalizeJobInput } from "@watchdog/schemas";
+import {
+  isJsonObject,
+  normalizeJobInput,
+  trimmedOrNull,
+} from "@watchdog/schemas";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
@@ -75,7 +79,7 @@ export function storeCapCacheEffect(
       inputHash: input.inputHash,
       jobId: input.jobId,
       artifacts: input.artifacts,
-      resultSummary: input.resultSummary,
+      resultSummary: trimmedOrNull(input.resultSummary),
       ttlMs: input.ttlMs,
       createdAt: now,
       expiresAt,

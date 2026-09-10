@@ -15,6 +15,7 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas";
 
+import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import {
   labelForActor,
@@ -241,7 +242,7 @@ export function dumpPasteEffect(
         sha256: artifact.sha256,
         sourceUrl: trimmedOrNull(input.sourceUrl),
         actorId,
-        actorLabel: input.actorLabel ?? null,
+        actorLabel: actorLabelForPersist(input.actorLabel),
       })
     );
     if (!row) {
@@ -278,7 +279,7 @@ export function dumpUrlEffect(
         sourceUrl,
         text: sourceUrl,
         actorId,
-        actorLabel: input.actorLabel ?? null,
+        actorLabel: actorLabelForPersist(input.actorLabel),
       })
     );
     if (!row) {
@@ -422,7 +423,7 @@ export function confirmFileUploadEffect(
         uri,
         sha256: input.sha256,
         actorId: scopedActorId,
-        actorLabel: actorLabel ?? null,
+        actorLabel: actorLabelForPersist(actorLabel),
       })
     );
     if (!row) {
@@ -494,7 +495,7 @@ export function createAttestationEffect(
         label: trimmedOrUndefined(input.label) ?? "Accept attestation",
         text,
         actorId,
-        actorLabel: input.actorLabel ?? null,
+        actorLabel: actorLabelForPersist(input.actorLabel),
       })
     );
     if (!row) {

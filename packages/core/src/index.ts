@@ -30,6 +30,7 @@ export {
   reconcileStuckPlaybookRunsEffect,
   reconcileOrphanedQueuedJobsEffect,
 } from "./jobs/reconcile-stale-jobs";
+export { actorLabelForPersist } from "./actors/actor-label-snapshot";
 export {
   actorHandleFromUser,
   formatActorLabel,
