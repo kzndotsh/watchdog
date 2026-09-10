@@ -46,19 +46,6 @@ describe("questionsRepo", () => {
     });
   });
 
-  it("trims padded question text on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(22) });
-      const created = await questionsRepo.create(tx, {
-        entityId: entity.id,
-        text: "  Where does Ada live?  ",
-        status: "open",
-      });
-      expect(created?.text).toBe("Where does Ada live?");
-    });
-  });
-
   it("deleteInCase removes a question scoped to the case", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
@@ -98,19 +85,6 @@ describe("questionsRepo", () => {
       expect(
         await questionsRepo.getInCase(tx, caseB.id, created.id)
       ).not.toBeNull();
-    });
-  });
-
-  it("rejects blank question text on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(23) });
-      const created = await questionsRepo.create(tx, {
-        entityId: entity.id,
-        text: "   ",
-        status: "open",
-      });
-      expect(created).toBeNull();
     });
   });
 });

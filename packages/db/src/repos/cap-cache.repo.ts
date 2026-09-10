@@ -1,6 +1,6 @@
 import { and, eq, gt } from "drizzle-orm";
 
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
 import { capCache } from "../schema/cap-cache";
@@ -88,7 +88,6 @@ export const capCacheRepo = {
     ) {
       return;
     }
-    const resultSummary = trimmedOrNull(values.resultSummary);
     await exec
       .insert(capCache)
       .values({
@@ -97,14 +96,13 @@ export const capCacheRepo = {
         capabilityId: scopedCapabilityId,
         inputHash: scopedInputHash,
         jobId: scopedJobId,
-        resultSummary,
       })
       .onConflictDoUpdate({
         target: [capCache.caseId, capCache.capabilityId, capCache.inputHash],
         set: {
           jobId: scopedJobId,
           artifacts: values.artifacts,
-          resultSummary,
+          resultSummary: values.resultSummary,
           ttlMs: values.ttlMs,
           createdAt: values.createdAt,
           expiresAt: values.expiresAt,

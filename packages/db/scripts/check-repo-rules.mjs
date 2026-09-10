@@ -31,6 +31,20 @@ const BANNED = [
   },
 ];
 
+/** Lookup-only trim helpers — not display write validation. */
+const TRIM_ALLOWLIST = new Set([
+  "getIdByName",
+  "getCiphertext",
+  "deleteByName",
+  "findIdByIdempotency",
+  "listActiveForCapability",
+  "listSucceededForCapability",
+  "lookupActive",
+  "upsert",
+]);
+
+const TRIM_RE = /\btrimmedOr(?:Null|Undefined)\s*\(/;
+
 /** Every repo takes the pool-or-transaction handle as its first parameter. */
 const METHOD = /^ {2}async (\w+)\((.*)$/;
 const FIRST_PARAM = /^\s*(\w+)\s*:/;
@@ -57,17 +71,40 @@ const fileTexts = await Promise.all(
 
 for (const [fileIndex, file] of files.entries()) {
   const lines = fileTexts[fileIndex].split("\n");
+  let currentMethod = null;
 
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i] ?? "";
     const trimmed = line.trimStart();
     if (trimmed.startsWith("//") || trimmed.startsWith("*")) continue;
 
+    const method = METHOD.exec(line);
+    if (method) {
+      currentMethod = method[1];
+    }
+
     for (const { re, msg } of BANNED) {
       if (re.test(line)) fail(file, i + 1, msg, line);
     }
 
-    const method = METHOD.exec(line);
+    if (TRIM_RE.test(line)) {
+      if (/\btrimmedOrNull\s*\(/.test(line)) {
+        fail(
+          file,
+          i + 1,
+          "write vs lookup: repos must not trim display strings — use trimmedOrNull in core/schemas only",
+          line
+        );
+      } else if (currentMethod === null || !TRIM_ALLOWLIST.has(currentMethod)) {
+        fail(
+          file,
+          i + 1,
+          `write vs lookup: trimmedOrUndefined is lookup-only (allowed methods: ${[...TRIM_ALLOWLIST].join(", ")})`,
+          line
+        );
+      }
+    }
+
     if (!method) continue;
     // Params may wrap onto the next line.
     const params = method[2].trim() || (lines[i + 1] ?? "");

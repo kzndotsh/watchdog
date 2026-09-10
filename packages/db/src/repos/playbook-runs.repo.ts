@@ -1,7 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 
 import type { PlaybookRunStatus } from "@watchdog/schemas";
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
 import { playbookRuns } from "../schema/playbook-runs";
@@ -27,26 +26,15 @@ export const playbookRunsRepo = {
   ): Promise<PlaybookRunRow | null> {
     const scopedCaseId = trimCaseId(values.caseId);
     const scopedActorId = trimActorId(values.actorId);
-    const playbookId = trimmedOrUndefined(values.playbookId);
-    if (
-      scopedCaseId === undefined ||
-      scopedActorId === undefined ||
-      playbookId === undefined
-    ) {
+    if (scopedCaseId === undefined || scopedActorId === undefined) {
       return null;
     }
-    const actorLabel =
-      values.actorLabel === undefined || values.actorLabel === null
-        ? values.actorLabel
-        : trimmedOrNull(values.actorLabel);
     const [created] = await exec
       .insert(playbookRuns)
       .values({
         ...values,
         caseId: scopedCaseId,
-        playbookId,
         actorId: scopedActorId,
-        ...(values.actorLabel === undefined ? {} : { actorLabel }),
       })
       .returning();
     return created ?? null;

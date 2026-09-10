@@ -243,32 +243,6 @@ describe("evidenceRepo", () => {
     });
   });
 
-  it("trims padded evidence metadata on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await evidenceRepo.create(tx, {
-        caseId: cased.id,
-        entityId: null,
-        kind: "other",
-        label: "  Registry export  ",
-        notes: "  from vendor  ",
-        mime: null,
-        uri: "  s3://bucket/key  ",
-        sha256: null,
-        text: null,
-        sourceUrl: "  https://example.com/doc  ",
-        actorId: "  actor-1  ",
-        actorLabel: "  Ada  ",
-      });
-      expect(created?.actorId).toBe("actor-1");
-      expect(created?.label).toBe("Registry export");
-      expect(created?.notes).toBe("from vendor");
-      expect(created?.uri).toBe("s3://bucket/key");
-      expect(created?.sourceUrl).toBe("https://example.com/doc");
-      expect(created?.actorLabel).toBe("Ada");
-    });
-  });
-
   it("rejects blank actorId on create", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

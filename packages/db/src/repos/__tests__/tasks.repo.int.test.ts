@@ -213,30 +213,6 @@ describe("tasksRepo", () => {
     });
   });
 
-  it("trims padded task title on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await tasksRepo.create(tx, {
-        caseId: cased.id,
-        title: "  Follow up  ",
-        status: "backlog",
-      });
-      expect(created?.title).toBe("Follow up");
-    });
-  });
-
-  it("rejects blank task title on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await tasksRepo.create(tx, {
-        caseId: cased.id,
-        title: "   ",
-        status: "backlog",
-      });
-      expect(created).toBeNull();
-    });
-  });
-
   it("rejects invalid entityId on create", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

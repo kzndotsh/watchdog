@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
 import { credentials } from "../schema/credentials";
@@ -72,13 +72,9 @@ export const credentialsRepo = {
     exec: DbExec,
     values: NewCredential
   ): Promise<CredentialMetaRow | null> {
-    const scopedName = trimmedOrUndefined(values.name);
-    if (scopedName === undefined) return null;
-    const label =
-      values.label === undefined ? undefined : trimmedOrNull(values.label);
     const [created] = await exec
       .insert(credentials)
-      .values({ ...values, name: scopedName, label })
+      .values(values)
       .returning(credentialMetaColumns);
     return created ?? null;
   },
@@ -95,7 +91,7 @@ export const credentialsRepo = {
     if (scopedId === undefined) return null;
     const [updated] = await exec
       .update(credentials)
-      .set({ ...values, label: trimmedOrNull(values.label) })
+      .set(values)
       .where(eq(credentials.id, scopedId))
       .returning(credentialMetaColumns);
     return updated ?? null;

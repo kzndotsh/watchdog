@@ -21,7 +21,6 @@ import {
   normalizeJobInput,
   jobInputGraphIdFieldIssues,
   parseGraphUuidList,
-  trimmedOrNull,
   trimmedOrUndefined,
   type JobStatus,
   type PlaybookRunStatus,
@@ -146,7 +145,7 @@ function withNormalizedJobInput<T extends { input?: JsonObject }>(
   return { ...values, input: normalizeJobInput(values.input) };
 }
 
-function jobValuesForWrite<
+function normalizeJobIngressValues<
   T extends { evidenceIds?: string[] | null; input?: JsonObject },
 >(values: T): T | null {
   const withEvidence = withNormalizedEvidenceIds(values);
@@ -154,18 +153,9 @@ function jobValuesForWrite<
   return withNormalizedJobInput(withEvidence);
 }
 
-function jobPatchForWrite(patch: JobPatch): JobPatch | null {
-  const next = jobValuesForWrite(patch);
+function normalizeJobPatchIngress(patch: JobPatch): JobPatch | null {
+  const next = normalizeJobIngressValues(patch);
   if (next === null) return null;
-  if (patch.resultSummary !== undefined) {
-    next.resultSummary = trimmedOrNull(patch.resultSummary);
-  }
-  if (patch.error !== undefined) {
-    next.error = trimmedOrNull(patch.error);
-  }
-  if (patch.interpretError !== undefined) {
-    next.interpretError = trimmedOrNull(patch.interpretError);
-  }
   if (patch.proposalId !== undefined) {
     const resolved = resolveNullableGraphIdForWrite(patch.proposalId);
     if (!resolved.ok) return null;
@@ -178,12 +168,7 @@ export const jobsRepo = {
   async create(exec: DbExec, values: NewJob): Promise<JobRow | null> {
     const scopedCaseId = trimCaseId(values.caseId);
     const scopedActorId = trimActorId(values.actorId);
-    const capabilityId = trimmedOrUndefined(values.capabilityId);
-    if (
-      scopedCaseId === undefined ||
-      scopedActorId === undefined ||
-      capabilityId === undefined
-    ) {
+    if (scopedCaseId === undefined || scopedActorId === undefined) {
       return null;
     }
     let playbookRunId: string | null | undefined;
@@ -194,21 +179,15 @@ export const jobsRepo = {
       if (!resolved.ok) return null;
       playbookRunId = resolved.id ?? null;
     }
-    const actorLabel =
-      values.actorLabel === undefined || values.actorLabel === null
-        ? values.actorLabel
-        : trimmedOrNull(values.actorLabel);
-    const normalized = jobValuesForWrite(values);
+    const normalized = normalizeJobIngressValues(values);
     if (normalized === null) return null;
     const [created] = await exec
       .insert(jobs)
       .values({
         ...normalized,
         caseId: scopedCaseId,
-        capabilityId,
         actorId: scopedActorId,
         playbookRunId,
-        ...(values.actorLabel === undefined ? {} : { actorLabel }),
         logs: values.logs ?? [],
       })
       .returning();
@@ -551,7 +530,7 @@ export const jobsRepo = {
   ): Promise<JobRow | null> {
     const scopedJobId = trimResourceId(jobId);
     if (scopedJobId === undefined) return null;
-    const normalizedPatch = jobPatchForWrite(patch);
+    const normalizedPatch = normalizeJobPatchIngress(patch);
     if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(jobs)
@@ -580,7 +559,7 @@ export const jobsRepo = {
   ): Promise<JobRow | null> {
     const scoped = trimScopedCaseIds(caseId, jobId);
     if (!scoped) return null;
-    const normalizedPatch = jobPatchForWrite(patch);
+    const normalizedPatch = normalizeJobPatchIngress(patch);
     if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(jobs)

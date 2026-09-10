@@ -5,7 +5,6 @@ import {
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   parseGraphUuidList,
-  trimmedOrNull,
 } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
@@ -223,10 +222,6 @@ export const proposalsRepo = {
       if (!resolved.ok) return null;
       jobId = resolved.id ?? null;
     }
-    const summary =
-      values.summary === undefined
-        ? values.summary
-        : trimmedOrNull(values.summary);
     const createdBy =
       values.createdBy === undefined || values.createdBy === null
         ? values.createdBy
@@ -248,7 +243,6 @@ export const proposalsRepo = {
         ...values,
         caseId: scopedCaseId,
         jobId,
-        summary,
         ...(values.createdBy === undefined
           ? {}
           : { createdBy: createdBy ?? null }),
@@ -306,7 +300,7 @@ export const proposalsRepo = {
       .update(proposals)
       .set({
         status: "rejected",
-        rejectReason: trimmedOrNull(values.rejectReason),
+        rejectReason: values.rejectReason,
         decidedBy: scopedDecidedBy,
         decidedAt: values.decidedAt,
       })

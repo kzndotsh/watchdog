@@ -7,8 +7,6 @@ import {
   TASK_PRIORITIES,
   TASK_STATUS_LABELS,
   TASK_STATUSES,
-  trimmedOrNull,
-  trimmedOrUndefined,
 } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
@@ -74,26 +72,11 @@ export interface ListTasksRowsOpts {
   status?: TaskStatus;
 }
 
-function taskTitleForWrite(title: string): string | undefined {
-  return trimmedOrUndefined(title);
-}
-
-function taskPatchForWrite(patch: TaskPatch): TaskPatch | null {
-  const next: TaskPatch = { ...patch };
-  if (patch.title !== undefined) {
-    const title = taskTitleForWrite(patch.title);
-    if (title === undefined) return null;
-    next.title = title;
-  }
-  if (patch.description !== undefined) {
-    next.description = trimmedOrNull(patch.description);
-  }
-  if (patch.entityId !== undefined) {
-    const resolved = resolveNullableGraphIdForWrite(patch.entityId);
-    if (!resolved.ok) return null;
-    next.entityId = resolved.id ?? null;
-  }
-  return next;
+function taskPatchEntityId(patch: TaskPatch): TaskPatch | null {
+  if (patch.entityId === undefined) return patch;
+  const resolved = resolveNullableGraphIdForWrite(patch.entityId);
+  if (!resolved.ok) return null;
+  return { ...patch, entityId: resolved.id ?? null };
 }
 
 export const tasksRepo = {
@@ -201,8 +184,6 @@ export const tasksRepo = {
   async create(exec: DbExec, values: NewTask): Promise<TaskRow | null> {
     const scopedCaseId = trimCaseId(values.caseId);
     if (scopedCaseId === undefined) return null;
-    const title = taskTitleForWrite(values.title);
-    if (title === undefined) return null;
     const status = values.status ?? "backlog";
     const position =
       values.position ??
@@ -210,20 +191,14 @@ export const tasksRepo = {
     const resolvedEntityId = resolveNullableGraphIdForWrite(values.entityId);
     if (!resolvedEntityId.ok) return null;
     const entityId = resolvedEntityId.id;
-    const description =
-      values.description === undefined
-        ? undefined
-        : trimmedOrNull(values.description);
     const [created] = await exec
       .insert(tasks)
       .values({
         ...values,
         caseId: scopedCaseId,
-        title,
         status,
         position,
         ...(entityId === undefined ? {} : { entityId }),
-        ...(description === undefined ? {} : { description }),
       })
       .returning(taskColumns);
     return created ?? null;
@@ -236,11 +211,11 @@ export const tasksRepo = {
   ): Promise<TaskRow | null> {
     const scopedTaskId = trimResourceId(taskId);
     if (scopedTaskId === undefined) return null;
-    const normalizedPatch = taskPatchForWrite(patch);
-    if (normalizedPatch === null) return null;
+    const patchToSet = taskPatchEntityId(patch);
+    if (patchToSet === null) return null;
     const [updated] = await exec
       .update(tasks)
-      .set(normalizedPatch)
+      .set(patchToSet)
       .where(eq(tasks.id, scopedTaskId))
       .returning(taskColumns);
     return updated ?? null;
@@ -254,11 +229,11 @@ export const tasksRepo = {
   ): Promise<TaskRow | null> {
     const scoped = trimScopedCaseIds(caseId, taskId);
     if (!scoped) return null;
-    const normalizedPatch = taskPatchForWrite(patch);
-    if (normalizedPatch === null) return null;
+    const patchToSet = taskPatchEntityId(patch);
+    if (patchToSet === null) return null;
     const [updated] = await exec
       .update(tasks)
-      .set(normalizedPatch)
+      .set(patchToSet)
       .where(
         and(eq(tasks.id, scoped.resourceId), eq(tasks.caseId, scoped.caseId))
       )

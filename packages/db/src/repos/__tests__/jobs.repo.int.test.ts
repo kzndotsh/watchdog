@@ -535,36 +535,6 @@ describe("jobsRepo", () => {
     });
   });
 
-  it("trims padded capabilityId and actorLabel on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await jobsRepo.create(tx, {
-        caseId: cased.id,
-        capabilityId: "  network.dns.lookup  ",
-        input: { host: "example.com" },
-        status: "queued",
-        actorId: TEST_ACTOR_ID,
-        actorLabel: "  Ada  ",
-      });
-      expect(created?.capabilityId).toBe("network.dns.lookup");
-      expect(created?.actorLabel).toBe("Ada");
-    });
-  });
-
-  it("rejects blank capabilityId on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await jobsRepo.create(tx, {
-        caseId: cased.id,
-        capabilityId: "   ",
-        input: {},
-        status: "queued",
-        actorId: TEST_ACTOR_ID,
-      });
-      expect(created).toBeNull();
-    });
-  });
-
   it("create rejects invalid entityId in input", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
@@ -587,17 +557,6 @@ describe("jobsRepo", () => {
         input: { evidenceId: "bad" },
       });
       expect(updated).toBeNull();
-    });
-  });
-
-  it("trims padded resultSummary on update", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const job = await seedJob(tx, cased.id);
-      const updated = await jobsRepo.update(tx, job.id, {
-        resultSummary: "  DNS captured  ",
-      });
-      expect(updated?.resultSummary).toBe("DNS captured");
     });
   });
 });

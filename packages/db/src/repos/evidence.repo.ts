@@ -17,8 +17,6 @@ import {
   EVIDENCE_KIND_LABELS,
   EVIDENCE_KINDS,
   normalizeUuidList,
-  trimmedOrNull,
-  trimmedOrUndefined,
 } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
@@ -88,33 +86,6 @@ export interface ListEvidenceRowsOpts {
   deletedOnly?: boolean;
   unprocessedOnly?: boolean;
   unattachedOnly?: boolean;
-}
-
-function evidenceMetadataForCreate(values: NewEvidence): NewEvidence {
-  const label =
-    values.label === undefined ? values.label : trimmedOrNull(values.label);
-  const notes =
-    values.notes === undefined ? values.notes : trimmedOrNull(values.notes);
-  const sourceUrl =
-    values.sourceUrl === undefined || values.sourceUrl === null
-      ? values.sourceUrl
-      : (trimmedOrUndefined(values.sourceUrl) ?? null);
-  const uri =
-    values.uri === undefined || values.uri === null
-      ? values.uri
-      : (trimmedOrUndefined(values.uri) ?? null);
-  const actorLabel =
-    values.actorLabel === undefined || values.actorLabel === null
-      ? values.actorLabel
-      : trimmedOrNull(values.actorLabel);
-  return {
-    ...values,
-    ...(values.label === undefined ? {} : { label }),
-    ...(values.notes === undefined ? {} : { notes }),
-    ...(values.sourceUrl === undefined ? {} : { sourceUrl }),
-    ...(values.uri === undefined ? {} : { uri }),
-    ...(values.actorLabel === undefined ? {} : { actorLabel }),
-  };
 }
 
 function softDeleteFilter(opts?: ListEvidenceRowsOpts) {
@@ -272,17 +243,10 @@ export const evidenceRepo = {
     if (scopedActorId === undefined) return null;
     const resolvedEntityId = resolveNullableGraphIdForWrite(values.entityId);
     if (!resolvedEntityId.ok) return null;
-    const normalized = evidenceMetadataForCreate({
-      ...values,
-      actorId: scopedActorId,
-      ...(values.entityId === undefined
-        ? {}
-        : { entityId: resolvedEntityId.id ?? null }),
-    });
     const [created] = await exec
       .insert(evidence)
       .values({
-        ...normalized,
+        ...values,
         caseId: scopedCaseId,
         actorId: scopedActorId,
         ...(values.entityId === undefined

@@ -117,33 +117,6 @@ describe("capCacheRepo", () => {
     });
   });
 
-  it("trims padded resultSummary on upsert", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const now = new Date();
-      await capCacheRepo.upsert(tx, {
-        caseId: cased.id,
-        capabilityId: "network.dns.lookup",
-        inputHash: "hash-summary",
-        jobId: "11111111-1111-4111-8111-000000000088",
-        artifacts: [],
-        resultSummary: "  trimmed summary  ",
-        ttlMs: 60_000,
-        createdAt: now,
-        expiresAt: new Date(now.getTime() + 60_000),
-      });
-
-      const hit = await capCacheRepo.lookupActive(
-        tx,
-        cased.id,
-        "network.dns.lookup",
-        "hash-summary",
-        now
-      );
-      expect(hit?.resultSummary).toBe("trimmed summary");
-    });
-  });
-
   it("returns stored job evidenceIds without filtering invalid entries", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

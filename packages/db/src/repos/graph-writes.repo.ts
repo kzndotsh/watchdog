@@ -5,7 +5,7 @@ import type {
   GraphWriteChannel,
   PatchOp,
 } from "@watchdog/schemas";
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
 import { graphWrites } from "../schema/graph-writes";
@@ -85,23 +85,12 @@ export const graphWritesRepo = {
     const scopedCaseId = trimCaseId(values.caseId);
     const scopedActorId = trimActorId(values.actorId);
     if (scopedCaseId === undefined || scopedActorId === undefined) return null;
-    const actorLabel =
-      values.actorLabel === undefined || values.actorLabel === null
-        ? values.actorLabel
-        : trimmedOrNull(values.actorLabel);
-    const summary =
-      values.summary === undefined || values.summary === null
-        ? values.summary
-        : trimmedOrNull(values.summary);
     const [created] = await exec
       .insert(graphWrites)
       .values({
         ...values,
         caseId: scopedCaseId,
         actorId: scopedActorId,
-        idempotencyKey: trimmedOrUndefined(values.idempotencyKey) ?? null,
-        ...(values.actorLabel === undefined ? {} : { actorLabel }),
-        ...(values.summary === undefined ? {} : { summary }),
       })
       .returning({ id: graphWrites.id });
     return created ?? null;

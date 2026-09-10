@@ -1,7 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 
 import type { ActivityKind } from "@watchdog/schemas";
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
 import { activityEvents } from "../schema/activity-events";
@@ -44,10 +43,6 @@ export interface RecentActivityEventRow {
   at: Date;
 }
 
-function activityTextForWrite(text: string): string | undefined {
-  return trimmedOrUndefined(text);
-}
-
 export const activityEventsRepo = {
   async create(
     exec: DbExec,
@@ -55,14 +50,7 @@ export const activityEventsRepo = {
   ): Promise<ActivityEventRow | null> {
     const scopedCaseId = trimCaseId(values.caseId);
     const scopedSubjectId = trimResourceId(values.subjectId);
-    const action = activityTextForWrite(values.action);
-    const label = activityTextForWrite(values.label);
-    if (
-      scopedCaseId === undefined ||
-      scopedSubjectId === undefined ||
-      action === undefined ||
-      label === undefined
-    ) {
+    if (scopedCaseId === undefined || scopedSubjectId === undefined) {
       return null;
     }
     const actorId =
@@ -73,14 +61,6 @@ export const activityEventsRepo = {
       values.id === undefined
         ? undefined
         : (trimResourceId(values.id) ?? undefined);
-    const fromValue =
-      values.fromValue === undefined || values.fromValue === null
-        ? values.fromValue
-        : trimmedOrNull(values.fromValue);
-    const toValue =
-      values.toValue === undefined || values.toValue === null
-        ? values.toValue
-        : trimmedOrNull(values.toValue);
     const [created] = await exec
       .insert(activityEvents)
       .values({
@@ -88,11 +68,7 @@ export const activityEventsRepo = {
         id,
         caseId: scopedCaseId,
         subjectId: scopedSubjectId,
-        action,
-        label,
         actorId,
-        ...(values.fromValue === undefined ? {} : { fromValue }),
-        ...(values.toValue === undefined ? {} : { toValue }),
       })
       .returning();
     return created ?? null;

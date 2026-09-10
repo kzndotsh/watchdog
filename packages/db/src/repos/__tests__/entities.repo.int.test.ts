@@ -302,33 +302,6 @@ describe("entitiesRepo", () => {
     });
   });
 
-  it("trims padded entity name and slug on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await entitiesRepo.create(tx, {
-        caseId: cased.id,
-        kind: "person",
-        name: "  Ada Lovelace  ",
-        slug: "  ada-lovelace  ",
-      });
-      expect(created?.name).toBe("Ada Lovelace");
-      expect(created?.slug).toBe("ada-lovelace");
-    });
-  });
-
-  it("rejects blank entity name on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const created = await entitiesRepo.create(tx, {
-        caseId: cased.id,
-        kind: "person",
-        name: "   ",
-        slug: "blank-name",
-      });
-      expect(created).toBeNull();
-    });
-  });
-
   it("listSlugsInCase matches padded slug inputs", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

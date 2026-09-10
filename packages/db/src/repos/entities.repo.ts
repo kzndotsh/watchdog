@@ -4,9 +4,6 @@ import {
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   normalizeUuidList,
-  slugifyName,
-  trimmedOrNull,
-  trimmedOrUndefined,
 } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
@@ -20,6 +17,7 @@ import {
 } from "./_label-search";
 import { clampSearchLimit } from "./_limits";
 import { trimCaseId, trimResourceId, trimScopedCaseIds } from "./_scoped-ids";
+import { slugForLookup } from "./_slug-lookup";
 
 export const entityColumns = {
   id: entities.id,
@@ -58,31 +56,6 @@ export type NewEntity = Pick<
 export type EntityPatch = Partial<
   Pick<typeof entities.$inferInsert, "kind" | "name" | "summary" | "notes">
 >;
-
-function entityNameForWrite(name: string): string | undefined {
-  return trimmedOrUndefined(name);
-}
-
-function entitySlugForWrite(slug: string): string | undefined {
-  const normalized = slugifyName(slug);
-  return normalized === "" ? undefined : normalized;
-}
-
-function entityPatchForWrite(patch: EntityPatch): EntityPatch | null {
-  const next: EntityPatch = { ...patch };
-  if (patch.name !== undefined) {
-    const name = entityNameForWrite(patch.name);
-    if (name === undefined) return null;
-    next.name = name;
-  }
-  if (patch.summary !== undefined) {
-    next.summary = trimmedOrNull(patch.summary);
-  }
-  if (patch.notes !== undefined) {
-    next.notes = trimmedOrNull(patch.notes);
-  }
-  return next;
-}
 
 export const entitiesRepo = {
   async listForCase(exec: DbExec, caseId: string): Promise<EntityRow[]> {
@@ -232,7 +205,7 @@ export const entitiesRepo = {
     slug: string
   ): Promise<EntityRow | null> {
     const scopedCaseId = trimCaseId(caseId);
-    const scopedSlug = entitySlugForWrite(slug);
+    const scopedSlug = slugForLookup(slug);
     if (scopedCaseId === undefined || scopedSlug === undefined) return null;
     const [row] = await exec
       .select(entityColumns)
@@ -253,7 +226,7 @@ export const entitiesRepo = {
     const normalized = [
       ...new Set(
         slugs
-          .map((slug) => entitySlugForWrite(slug))
+          .map((slug) => slugForLookup(slug))
           .filter((slug): slug is string => slug !== undefined)
       ),
     ];
@@ -302,23 +275,9 @@ export const entitiesRepo = {
   async create(exec: DbExec, values: NewEntity): Promise<EntityRow | null> {
     const scopedCaseId = trimCaseId(values.caseId);
     if (scopedCaseId === undefined) return null;
-    const name = entityNameForWrite(values.name);
-    const slug = entitySlugForWrite(values.slug);
-    if (name === undefined || slug === undefined) return null;
-    const summary =
-      values.summary === undefined ? undefined : trimmedOrNull(values.summary);
-    const notes =
-      values.notes === undefined ? undefined : trimmedOrNull(values.notes);
     const [created] = await exec
       .insert(entities)
-      .values({
-        ...values,
-        caseId: scopedCaseId,
-        name,
-        slug,
-        ...(summary === undefined ? {} : { summary }),
-        ...(notes === undefined ? {} : { notes }),
-      })
+      .values({ ...values, caseId: scopedCaseId })
       .returning(entityColumns);
     return created ?? null;
   },
@@ -330,11 +289,9 @@ export const entitiesRepo = {
   ): Promise<EntityRow | null> {
     const scopedEntityId = trimResourceId(entityId);
     if (scopedEntityId === undefined) return null;
-    const normalizedPatch = entityPatchForWrite(patch);
-    if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(entities)
-      .set(normalizedPatch)
+      .set(patch)
       .where(eq(entities.id, scopedEntityId))
       .returning(entityColumns);
     return updated ?? null;
@@ -348,11 +305,9 @@ export const entitiesRepo = {
   ): Promise<EntityRow | null> {
     const scoped = trimScopedCaseIds(caseId, entityId);
     if (!scoped) return null;
-    const normalizedPatch = entityPatchForWrite(patch);
-    if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(entities)
-      .set(normalizedPatch)
+      .set(patch)
       .where(
         and(
           eq(entities.id, scoped.resourceId),

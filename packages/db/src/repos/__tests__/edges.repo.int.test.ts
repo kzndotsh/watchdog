@@ -160,28 +160,6 @@ describe("edgesRepo", () => {
     });
   });
 
-  it("trims padded edge notes on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const from = await seedEntity(tx, cased.id, {
-        id: testId(28),
-        slug: "from-trim",
-      });
-      const to = await seedEntity(tx, cased.id, {
-        id: testId(29),
-        slug: "to-trim",
-      });
-      const created = await edgesRepo.create(tx, {
-        fromId: from.id,
-        toId: to.id,
-        predicate: "owns",
-        confidence: "unverified",
-        notes: "  subsidiary  ",
-      });
-      expect(created?.notes).toBe("subsidiary");
-    });
-  });
-
   it("create rejects invalid endpoint ids", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

@@ -309,40 +309,6 @@ describe("proposalsRepo", () => {
     });
   });
 
-  it("trims padded summary on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(42) });
-      const created = await proposalsRepo.create(tx, {
-        caseId: cased.id,
-        status: "pending",
-        patch: [buildClaimCreateOp(entity.id, "observed", { id: testId(43) })],
-        summary: "  Link domains  ",
-      });
-      expect(created).not.toBeNull();
-      const row = created
-        ? await proposalsRepo.getInCase(tx, cased.id, created.id)
-        : null;
-      expect(row?.proposal.summary).toBe("Link domains");
-    });
-  });
-
-  it("trims padded rejectReason on reject", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(44) });
-      const { id } = await seedProposal(tx, cased.id, [
-        buildClaimCreateOp(entity.id, "observed", { id: testId(45) }),
-      ]);
-      const rejected = await proposalsRepo.reject(tx, cased.id, id, {
-        rejectReason: "  duplicate  ",
-        decidedBy: TEST_ACTOR_ID,
-        decidedAt: new Date(),
-      });
-      expect(rejected?.rejectReason).toBe("duplicate");
-    });
-  });
-
   it("trims padded decidedBy on accept and reject", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

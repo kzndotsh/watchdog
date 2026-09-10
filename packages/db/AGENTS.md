@@ -25,6 +25,19 @@ The barrel is **re-exports only**. Do not add an aggregate `repos` object: build
 5. **Plain values only** — no `SQL` / `eq(...)` in public signatures. Options like `{ includeRetracted?: boolean }`; the repo builds `where` internally.
 6. **Soft delete is the repo's job** — only `evidence` has `deletedAt`; exclude deleted by default (`isNull(deletedAt)`), require `includeDeleted`. A method that deliberately includes deleted rows says so in its name (`getUriInCaseIncludingDeleted`).
 
+### Write vs lookup (display fields)
+
+Repos do **not** re-validate display strings (required name/title/text, slugify-on-insert, blank→null). Zod at HTTP/CLI/web and `@watchdog/core` `*Effect` own that before `create`/`update`.
+
+Repos **do** keep:
+
+- **Lookup scoping** — `trimCaseId` / `trimResourceId` / `trimActorId` on WHERE; invalid UUID → `[]` / `null`.
+- **Slug WHERE keys** — `slugForLookup` (`_slug-lookup.ts`) on `getBySlug` / `listSlugsInCase` (not write-only helpers).
+- **Fail-closed graph ids** — `resolveNullableGraphIdForWrite`, job `input` UUID normalize, evidence-link uuid lists; garbage FK → `null` create.
+- **Actor integrity on proposals** — `trimActorId` on `createdBy` / `decidedBy`; explicit blank actor → `null` create (reject attribution).
+
+`create`/`update` return `null` for scoped-id miss, actor reject, or zero-row update/delete — not for empty display text. `check:repos` bans `trimmedOrNull` in repos and allowlists `trimmedOrUndefined` to lookup-only methods (credential name, idempotency key, cap-cache keys, capability id WHERE).
+
 ### Red flags — STOP
 
 - Protocol/interface split for Drizzle repos (TS structural typing is enough)

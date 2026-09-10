@@ -63,7 +63,7 @@ describe("graphWritesRepo", () => {
     });
   });
 
-  it("create trims idempotencyKey for lookup", async () => {
+  it("findIdByIdempotency trims padded lookup keys", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(21) });
@@ -75,7 +75,7 @@ describe("graphWritesRepo", () => {
         confidence: "unverified",
         summary: null,
         patch: [buildClaimCreateOp(entity.id, "Bob", { id: testId(31) })],
-        idempotencyKey: "  k2  ",
+        idempotencyKey: "k2",
       });
       expect(created).not.toBeNull();
       if (created === null) {
@@ -85,34 +85,9 @@ describe("graphWritesRepo", () => {
       const found = await graphWritesRepo.findIdByIdempotency(tx, {
         caseId: cased.id,
         actorId: TEST_ACTOR_ID,
-        idempotencyKey: "k2",
+        idempotencyKey: "  k2  ",
       });
       expect(found).toBe(created.id);
-
-      const row = await graphWritesRepo.get(tx, created.id);
-      expect(row?.idempotencyKey).toBe("k2");
-    });
-  });
-
-  it("trims padded summary and actorLabel on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(22) });
-      const created = await graphWritesRepo.create(tx, {
-        caseId: cased.id,
-        actorId: TEST_ACTOR_ID,
-        actorLabel: "  Ada  ",
-        channel: "agent_write",
-        userOverridden: true,
-        confidence: "unverified",
-        summary: "  Linked domains  ",
-        patch: [buildClaimCreateOp(entity.id, "Ada", { id: testId(32) })],
-        idempotencyKey: null,
-      });
-      expect(created).not.toBeNull();
-      const row = created ? await graphWritesRepo.get(tx, created.id) : null;
-      expect(row?.summary).toBe("Linked domains");
-      expect(row?.actorLabel).toBe("Ada");
     });
   });
 

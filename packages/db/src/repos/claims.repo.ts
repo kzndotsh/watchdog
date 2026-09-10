@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 
-import { normalizeUuidList, trimmedOrUndefined } from "@watchdog/schemas";
+import { normalizeUuidList } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
 import { claims } from "../schema/claims";
@@ -50,17 +50,6 @@ export interface RetractClaimValues {
 export interface ClaimTextKey {
   entityId: string;
   text: string;
-}
-
-function claimTextForWrite(text: string): string | undefined {
-  return trimmedOrUndefined(text);
-}
-
-function claimPatchForWrite(patch: ClaimPatch): ClaimPatch | null {
-  if (patch.text === undefined) return patch;
-  const text = claimTextForWrite(patch.text);
-  if (text === undefined) return null;
-  return { ...patch, text };
 }
 
 export const claimsRepo = {
@@ -131,15 +120,13 @@ export const claimsRepo = {
   async create(exec: DbExec, values: NewClaim): Promise<ClaimRow | null> {
     const scopedEntityId = trimResourceId(values.entityId);
     if (scopedEntityId === undefined) return null;
-    const text = claimTextForWrite(values.text);
-    if (text === undefined) return null;
     const id =
       values.id === undefined
         ? undefined
         : (trimResourceId(values.id) ?? undefined);
     const [created] = await exec
       .insert(claims)
-      .values({ ...values, id, entityId: scopedEntityId, text })
+      .values({ ...values, id, entityId: scopedEntityId })
       .returning(claimColumns);
     return created ?? null;
   },
@@ -151,11 +138,9 @@ export const claimsRepo = {
   ): Promise<ClaimRow | null> {
     const scopedClaimId = trimResourceId(claimId);
     if (scopedClaimId === undefined) return null;
-    const normalizedPatch = claimPatchForWrite(patch);
-    if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(claims)
-      .set(normalizedPatch)
+      .set(patch)
       .where(eq(claims.id, scopedClaimId))
       .returning(claimColumns);
     return updated ?? null;
@@ -169,11 +154,9 @@ export const claimsRepo = {
   ): Promise<ClaimRow | null> {
     const scoped = trimScopedCaseIds(caseId, claimId);
     if (!scoped) return null;
-    const normalizedPatch = claimPatchForWrite(patch);
-    if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(claims)
-      .set(normalizedPatch)
+      .set(patch)
       .where(
         and(
           eq(claims.id, scoped.resourceId),

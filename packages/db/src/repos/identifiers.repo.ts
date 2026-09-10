@@ -10,8 +10,6 @@ import {
   IDENTIFIER_TYPES,
   identifierPlatformSlugsMatchingSearch,
   normalizeUuidList,
-  trimmedOrNull,
-  trimmedOrUndefined,
 } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
@@ -66,32 +64,6 @@ export interface IdentifierNaturalKey {
   type: IdentifierType;
   platform: string;
   value: string;
-}
-
-function identifierValueForWrite(value: string): string | undefined {
-  return trimmedOrUndefined(value);
-}
-
-function identifierPlatformForWrite(platform: string): string {
-  return trimmedOrUndefined(platform) ?? "";
-}
-
-function identifierPatchForWrite(
-  patch: IdentifierPatch
-): IdentifierPatch | null {
-  const next: IdentifierPatch = { ...patch };
-  if (patch.value !== undefined) {
-    const value = identifierValueForWrite(patch.value);
-    if (value === undefined) return null;
-    next.value = value;
-  }
-  if (patch.platform !== undefined) {
-    next.platform = identifierPlatformForWrite(patch.platform);
-  }
-  if (patch.notes !== undefined) {
-    next.notes = trimmedOrNull(patch.notes);
-  }
-  return next;
 }
 
 export const identifiersRepo = {
@@ -278,8 +250,6 @@ export const identifiersRepo = {
   ): Promise<IdentifierRow | null> {
     const scopedEntityId = trimResourceId(values.entityId);
     if (scopedEntityId === undefined) return null;
-    const value = identifierValueForWrite(values.value);
-    if (value === undefined) return null;
     const id =
       values.id === undefined
         ? undefined
@@ -290,12 +260,6 @@ export const identifiersRepo = {
         ...values,
         id,
         entityId: scopedEntityId,
-        value,
-        platform: identifierPlatformForWrite(values.platform ?? ""),
-        notes:
-          values.notes === undefined
-            ? values.notes
-            : trimmedOrNull(values.notes),
       })
       .returning(identifierColumns);
     return created ?? null;
@@ -308,11 +272,9 @@ export const identifiersRepo = {
   ): Promise<IdentifierRow | null> {
     const scopedIdentifierId = trimResourceId(identifierId);
     if (scopedIdentifierId === undefined) return null;
-    const normalizedPatch = identifierPatchForWrite(patch);
-    if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(identifiers)
-      .set(normalizedPatch)
+      .set(patch)
       .where(eq(identifiers.id, scopedIdentifierId))
       .returning(identifierColumns);
     return updated ?? null;
@@ -326,11 +288,9 @@ export const identifiersRepo = {
   ): Promise<IdentifierRow | null> {
     const scoped = trimScopedCaseIds(caseId, identifierId);
     if (!scoped) return null;
-    const normalizedPatch = identifierPatchForWrite(patch);
-    if (normalizedPatch === null) return null;
     const [updated] = await exec
       .update(identifiers)
-      .set(normalizedPatch)
+      .set(patch)
       .where(
         and(
           eq(identifiers.id, scoped.resourceId),

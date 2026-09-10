@@ -45,34 +45,4 @@ describe("eventsRepo", () => {
       expect(row?.what).toBe("Observed");
     });
   });
-
-  it("trims padded event fields on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(22) });
-      const created = await eventsRepo.create(tx, {
-        entityId: entity.id,
-        when: "  1815-12-10  ",
-        what: "  Born  ",
-        whereText: "  London  ",
-      });
-      expect(created?.when).toBe("1815-12-10");
-      expect(created?.what).toBe("Born");
-      expect(created?.whereText).toBe("London");
-    });
-  });
-
-  it("rejects blank required event fields on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(23) });
-      const created = await eventsRepo.create(tx, {
-        entityId: entity.id,
-        when: "   ",
-        what: "Born",
-        whereText: null,
-      });
-      expect(created).toBeNull();
-    });
-  });
 });

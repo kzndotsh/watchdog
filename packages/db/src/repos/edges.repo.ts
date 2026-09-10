@@ -2,7 +2,7 @@ import { and, asc, eq, inArray, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import type { EdgePredicate } from "@watchdog/schemas";
-import { normalizeUuidList, trimmedOrNull } from "@watchdog/schemas";
+import { normalizeUuidList } from "@watchdog/schemas";
 
 import type { DbExec } from "../exec";
 import { edges } from "../schema/edges";
@@ -54,18 +54,8 @@ export interface EdgeNaturalKey {
   notes?: string | null;
 }
 
-function edgeNotesForWrite(
-  notes: string | null | undefined
-): string | null | undefined {
-  if (notes === undefined) return undefined;
-  return trimmedOrNull(notes);
-}
-
-function edgePatchForWrite(patch: EdgePatch): EdgePatch | null {
+function edgePatchEndpointIds(patch: EdgePatch): EdgePatch | null {
   const next: EdgePatch = { ...patch };
-  if (patch.notes !== undefined) {
-    next.notes = edgeNotesForWrite(patch.notes) ?? null;
-  }
   if (patch.fromId !== undefined) {
     const fromId = trimResourceId(patch.fromId);
     if (fromId === undefined) return null;
@@ -273,7 +263,6 @@ export const edgesRepo = {
       values.id === undefined
         ? undefined
         : (trimResourceId(values.id) ?? undefined);
-    const notes = edgeNotesForWrite(values.notes);
     const [created] = await exec
       .insert(edges)
       .values({
@@ -281,7 +270,6 @@ export const edgesRepo = {
         id,
         fromId,
         toId,
-        ...(notes === undefined ? {} : { notes }),
       })
       .returning(edgeColumns);
     return created ?? null;
@@ -294,11 +282,11 @@ export const edgesRepo = {
   ): Promise<EdgeRow | null> {
     const scopedEdgeId = trimResourceId(edgeId);
     if (scopedEdgeId === undefined) return null;
-    const normalizedPatch = edgePatchForWrite(patch);
-    if (normalizedPatch === null) return null;
+    const patchToSet = edgePatchEndpointIds(patch);
+    if (patchToSet === null) return null;
     const [updated] = await exec
       .update(edges)
-      .set(normalizedPatch)
+      .set(patchToSet)
       .where(eq(edges.id, scopedEdgeId))
       .returning(edgeColumns);
     return updated ?? null;
@@ -312,11 +300,11 @@ export const edgesRepo = {
   ): Promise<EdgeRow | null> {
     const scoped = trimScopedCaseIds(caseId, edgeId);
     if (!scoped) return null;
-    const normalizedPatch = edgePatchForWrite(patch);
-    if (normalizedPatch === null) return null;
+    const patchToSet = edgePatchEndpointIds(patch);
+    if (patchToSet === null) return null;
     const [updated] = await exec
       .update(edges)
-      .set(normalizedPatch)
+      .set(patchToSet)
       .where(
         and(
           eq(edges.id, scoped.resourceId),

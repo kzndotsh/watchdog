@@ -247,48 +247,4 @@ describe("identifiersRepo", () => {
       ).toBeNull();
     });
   });
-
-  it("trims padded identifier value on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, {
-        id: testId(30),
-        name: "Subject",
-        slug: "subject-trim",
-      });
-      const created = await identifiersRepo.create(tx, {
-        entityId: entity.id,
-        type: "email",
-        platform: "  github  ",
-        value: "  ada@example.com  ",
-        confidence: "unverified",
-        status: "active",
-        notes: "  note  ",
-      });
-      expect(created?.value).toBe("ada@example.com");
-      expect(created?.platform).toBe("github");
-      expect(created?.notes).toBe("note");
-    });
-  });
-
-  it("rejects blank identifier value on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, {
-        id: testId(31),
-        name: "Subject",
-        slug: "subject-blank",
-      });
-      const created = await identifiersRepo.create(tx, {
-        entityId: entity.id,
-        type: "email",
-        platform: "",
-        value: "   ",
-        confidence: "unverified",
-        status: "active",
-        notes: null,
-      });
-      expect(created).toBeNull();
-    });
-  });
 });

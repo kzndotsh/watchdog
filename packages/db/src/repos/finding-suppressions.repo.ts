@@ -1,7 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
 
-import { trimmedOrUndefined } from "@watchdog/schemas";
-
 import type { DbExec } from "../exec";
 import { findingSuppressions } from "../schema/finding-suppressions";
 import { trimCaseId, trimResourceId } from "./_scoped-ids";
@@ -39,14 +37,7 @@ export const findingSuppressionsRepo = {
     const normalized = rows.flatMap((row) => {
       const scopedCaseId = trimCaseId(row.caseId);
       const scopedProposalId = trimResourceId(row.proposalId);
-      const fingerprint = trimmedOrUndefined(row.fingerprint);
-      const reason = trimmedOrUndefined(row.reason);
-      if (
-        scopedCaseId === undefined ||
-        scopedProposalId === undefined ||
-        fingerprint === undefined ||
-        reason === undefined
-      ) {
+      if (scopedCaseId === undefined || scopedProposalId === undefined) {
         return [];
       }
       return [
@@ -54,8 +45,6 @@ export const findingSuppressionsRepo = {
           ...row,
           caseId: scopedCaseId,
           proposalId: scopedProposalId,
-          fingerprint,
-          reason,
         },
       ];
     });

@@ -82,34 +82,6 @@ describe("claimsRepo", () => {
     });
   });
 
-  it("trims padded claim text on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(23) });
-      const created = await claimsRepo.create(tx, {
-        entityId: entity.id,
-        text: "  Ada observed a host  ",
-        class: "observation",
-        confidence: "unverified",
-      });
-      expect(created?.text).toBe("Ada observed a host");
-    });
-  });
-
-  it("rejects blank claim text on create", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const entity = await seedEntity(tx, cased.id, { id: testId(24) });
-      const created = await claimsRepo.create(tx, {
-        entityId: entity.id,
-        text: "   ",
-        class: "observation",
-        confidence: "unverified",
-      });
-      expect(created).toBeNull();
-    });
-  });
-
   it("trims padded retractedBy on retractInCase", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
