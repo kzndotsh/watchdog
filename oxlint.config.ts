@@ -263,6 +263,13 @@ export default defineConfig({
   },
   overrides: [
     {
+      // Astro components use PascalCase filenames (import paths match).
+      files: ["apps/site/**/*.astro"],
+      rules: {
+        "unicorn/filename-case": "off",
+      },
+    },
+    {
       files: ["scripts/**/*.mjs"],
       rules: {
         "eslint/no-use-before-define": "off",

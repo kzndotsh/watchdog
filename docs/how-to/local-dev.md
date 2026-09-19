@@ -13,6 +13,7 @@
 | Containers only | `just docker-up` |
 | Install | `pnpm install` |
 | Web only | `pnpm dev:web` → http://127.0.0.1:3000 |
+| Marketing site only | `pnpm dev:site` → http://127.0.0.1:3001 (not part of `just dev`; no infra) |
 | Worker only | `pnpm dev:worker` (required for Jobs/Collect/Process) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
 | Test DBs | `just test-db` (`watchdog_test`, `watchdog_e2e`) |

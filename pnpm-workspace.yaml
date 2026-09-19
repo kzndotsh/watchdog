@@ -19,6 +19,7 @@ allowBuilds:
   lightningcss: true
   msgpackr-extract: false
   msw: true
+  sharp: false
 
 minimumReleaseAgeExclude:
   - "@effect/tsgo-darwin-arm64@0.39.1"

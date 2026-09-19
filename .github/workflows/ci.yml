@@ -42,6 +42,7 @@ jobs:
       caps: ${{ steps.filter.outputs.caps }}
       api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
+      site: ${{ steps.filter.outputs.site }}
       db: ${{ steps.filter.outputs.db }}
       e2e: ${{ steps.filter.outputs.e2e }}
       agents: ${{ steps.filter.outputs.agents }}
@@ -92,6 +93,8 @@ jobs:
               - 'packages/core/**'
             web:
               - 'apps/web/**'
+            site:
+              - 'apps/site/**'
             db:
               - 'packages/db/**'
             e2e:
@@ -169,6 +172,10 @@ jobs:
       - name: Knip (unused files / exports / deps)
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm knip
+
+      - name: Site build
+        if: github.event_name != 'pull_request' || needs.changes.outputs.site == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm --filter @watchdog/site build
 
       - name: Web DS bans
         if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'

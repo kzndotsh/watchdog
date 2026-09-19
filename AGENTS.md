@@ -14,7 +14,7 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Local infra (Postgres + MinIO + migrate) | `just up` · `just docker-up` (containers only) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
-| Dev | `just dev` · `pnpm dev:web` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
+| Dev | `just dev` · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
 | Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix + agents + docs + effect-edges + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
