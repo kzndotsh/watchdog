@@ -20,7 +20,7 @@
     "@watchdog/schemas": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "effect": "4.0.0-rc.112",
-    "fast-check": "^4.9.0",
+    "fast-check": "^4.10.1",
     "msw": "^2.15.0",
     "vitest": "^4.1.10"
   },

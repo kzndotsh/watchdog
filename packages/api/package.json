@@ -10,19 +10,19 @@
     "export-contract": "tsx scripts/export-contract.ts"
   },
   "dependencies": {
-    "@orpc/contract": "^1.15.0",
-    "@orpc/openapi": "^1.15.0",
-    "@orpc/server": "^1.15.0",
-    "@orpc/zod": "^1.15.0",
+    "@orpc/contract": "^1.15.1",
+    "@orpc/openapi": "^1.15.1",
+    "@orpc/server": "^1.15.1",
+    "@orpc/zod": "^1.15.1",
     "@watchdog/core": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "effect": "4.0.0-rc.112",
     "evlog": "2.29.0",
-    "zod": "^4.6.2"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.4.1",
     "@watchdog/test-kit": "workspace:*",
     "tsx": "^4.23.13",
     "typescript": "7.0.2"
