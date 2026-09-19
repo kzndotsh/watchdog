@@ -57,7 +57,7 @@
     "@effect/vitest": "4.0.0-rc.112",
     "@playwright/test": "^1.63.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^5.0.1",
     "@watchdog/test-kit": "workspace:*",
     "happy-dom": "^20.14.3",
     "jsdom": "^30.0.1",
