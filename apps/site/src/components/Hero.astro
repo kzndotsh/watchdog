@@ -1,0 +1,262 @@
+---
+import PrimaryButton from "@/components/PrimaryButton.astro";
+import { DOCS_URL, GITHUB_URL } from "@/lib/site";
+
+/** Muted first line of the two-tone headline. */
+const headingMuted = "Investigations are messy.";
+
+const heading = "Your OSINT work requires a place you can trust.";
+
+const description =
+  "From case creation and daily operations to LE handoff and reporting, Watchdog is your all-in-one platform for orchestrating OSINT investigations.";
+
+/** Emphasized trailing phrase in the description column. */
+const descriptionHighlight = "";
+
+const byline = "";
+
+const trustChips = ["Proudly open source"] as const;
+
+/** Fan order: center, right, left (matches Hero97 layout). URLs from Hero138. */
+const previewImages = [
+  {
+    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-1-16x9.png",
+    srcDark:
+      "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-1-16x9-dark.png",
+    alt: "Product interface preview",
+  },
+  {
+    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-2-16x9.png",
+    srcDark:
+      "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-2-16x9-dark.png",
+    alt: "Dashboard layout preview",
+  },
+  {
+    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-1-16x9.png",
+    srcDark:
+      "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-1-16x9-dark.png",
+    alt: "Product interface preview",
+  },
+] as const;
+
+function previewSrc(image: (typeof previewImages)[number]): string {
+  return image.srcDark ?? image.src;
+}
+
+const [centerImage, rightImage, leftImage] = previewImages;
+---
+
+<section
+  class="relative -mt-[calc(4.5rem+env(safe-area-inset-top))] overflow-hidden border-b border-border"
+>
+  <svg class="hero-bg__filter-def" aria-hidden="true">
+    <defs>
+      <filter id="hero-board-dither" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB">
+        <feComponentTransfer>
+          <feFuncR type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
+          <feFuncG type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
+          <feFuncB type="discrete" tableValues="0 0.2 0.4 0.6 0.8 1" />
+        </feComponentTransfer>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+    <div class="hero-bg__frame">
+      <div class="hero-bg__art" role="presentation"></div>
+      <div class="hero-bg__dither" role="presentation"></div>
+    </div>
+    <div
+      class="absolute inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/92"
+    >
+    </div>
+  </div>
+
+  <div
+    class="relative z-[1] mx-auto w-full max-w-7xl px-4 pt-[calc(env(safe-area-inset-top)+7.5rem)] md:px-6 md:pt-[calc(env(safe-area-inset-top)+9.5rem)]"
+  >
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_28rem] lg:gap-x-12 lg:gap-y-10 lg:items-start">
+      <h1
+        class="max-w-3xl font-heading text-3xl font-semibold leading-tight text-balance text-foreground md:text-6xl"
+      >
+        {
+          headingMuted && (
+            <span class="mb-3 block text-xl text-foreground/60 md:text-4xl">{headingMuted}</span>
+          )
+        }
+        {heading}
+      </h1>
+
+      <ul
+        class="flex flex-wrap justify-end gap-2 lg:col-start-2 lg:row-start-1"
+        aria-label="Platform"
+      >
+        {
+          trustChips.map((chip) => (
+            <li>
+              <span
+                class="inline-flex items-center rounded-full border border-dashed border-muted-foreground/45 px-3 py-1 font-mono text-xs text-muted-foreground"
+              >
+                {chip}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="flex flex-col-reverse gap-8 lg:contents">
+        <div class="lg:col-start-1 lg:row-start-2 lg:self-center">
+          <div class="flex flex-wrap items-center gap-2">
+            <PrimaryButton href={DOCS_URL} external class="h-auto px-6 py-3">
+              Get started
+            </PrimaryButton>
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group inline-flex h-auto items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold text-foreground no-underline transition-colors hover:bg-foreground/10 hover:no-underline"
+            >
+              GitHub
+              <svg
+                class="size-3.5 stroke-current transition-transform group-hover:translate-x-0.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14"></path>
+                <path d="m12 5 7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+          {byline && <p class="mt-4 text-xs text-muted-foreground">{byline}</p>}
+        </div>
+
+        <p
+          class="max-w-lg text-lg leading-relaxed text-pretty text-muted-foreground lg:col-start-2 lg:row-start-2 lg:-mt-10 lg:max-w-none lg:self-start"
+        >
+          {description}
+          {descriptionHighlight && (
+            <span class="font-medium text-foreground"> {descriptionHighlight}</span>
+          )}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="relative z-[1] mt-16 w-full pb-16 md:mt-24 md:pb-24">
+    <div class="relative mx-auto w-full max-w-[87.5rem] px-4 md:px-6">
+      {
+        centerImage && (
+          <div class="relative z-20 mx-auto w-full">
+            <div
+              class="mx-auto w-full max-w-[calc(100%-2.5rem)] overflow-hidden rounded-lg border border-border bg-card shadow-xl sm:max-w-[calc(100%-5rem)]"
+            >
+              <div class="aspect-[2191/1000] w-full">
+                <img
+                  src={previewSrc(centerImage)}
+                  alt={centerImage.alt}
+                  class="size-full object-cover object-center"
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        rightImage && (
+          <div
+            class="absolute top-1/2 -right-1/2 z-10 hidden w-[65%] max-w-[68.75rem] -translate-y-1/2 overflow-hidden rounded-lg border border-border bg-card shadow-md md:block md:w-[80%]"
+          >
+            <div class="aspect-[2191/1000] w-full">
+              <img
+                  src={previewSrc(rightImage)}
+                alt={rightImage.alt}
+                class="size-full object-cover object-center"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          </div>
+        )
+      }
+
+      {
+        leftImage && (
+          <div
+            class="absolute top-1/2 -left-1/2 z-10 hidden w-[65%] max-w-[68.75rem] -translate-y-1/2 overflow-hidden rounded-lg border border-border bg-card shadow-md md:block md:w-[80%]"
+          >
+            <div class="aspect-[2191/1000] w-full">
+              <img
+                  src={previewSrc(leftImage)}
+                alt={leftImage.alt}
+                class="size-full object-cover object-center"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-bg__filter-def {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .hero-bg__frame {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100vw;
+    max-width: none;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+
+  .hero-bg__art {
+    position: absolute;
+    inset: 0;
+    background-image: url("/hero-board-bg.jpg?v=wireframe");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    filter: url(#hero-board-dither);
+    opacity: 0.14;
+  }
+
+  .hero-bg__dither {
+    position: absolute;
+    inset: 0;
+    opacity: 0.3;
+    image-rendering: pixelated;
+    background-color: color-mix(in oklab, var(--primary) 38%, var(--foreground) 10%);
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='1' height='1' fill='%23fff' opacity='0'/%3E%3Crect x='1' width='1' height='1' fill='%23fff' opacity='.5'/%3E%3Crect x='2' width='1' height='1' fill='%23fff' opacity='.13'/%3E%3Crect x='3' width='1' height='1' fill='%23fff' opacity='.63'/%3E%3Crect y='1' width='1' height='1' fill='%23fff' opacity='.75'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23fff' opacity='.25'/%3E%3Crect x='2' y='1' width='1' height='1' fill='%23fff' opacity='.88'/%3E%3Crect x='3' y='1' width='1' height='1' fill='%23fff' opacity='.38'/%3E%3Crect y='2' width='1' height='1' fill='%23fff' opacity='.19'/%3E%3Crect x='1' y='2' width='1' height='1' fill='%23fff' opacity='.69'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff' opacity='.06'/%3E%3Crect x='3' y='2' width='1' height='1' fill='%23fff' opacity='.56'/%3E%3Crect y='3' width='1' height='1' fill='%23fff' opacity='.94'/%3E%3Crect x='1' y='3' width='1' height='1' fill='%23fff' opacity='.44'/%3E%3Crect x='2' y='3' width='1' height='1' fill='%23fff' opacity='.81'/%3E%3Crect x='3' y='3' width='1' height='1' fill='%23fff' opacity='.31'/%3E%3C/svg%3E");
+    mask-size: 4px 4px;
+    mask-repeat: repeat;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='1' height='1' fill='%23fff' opacity='0'/%3E%3Crect x='1' width='1' height='1' fill='%23fff' opacity='.5'/%3E%3Crect x='2' width='1' height='1' fill='%23fff' opacity='.13'/%3E%3Crect x='3' width='1' height='1' fill='%23fff' opacity='.63'/%3E%3Crect y='1' width='1' height='1' fill='%23fff' opacity='.75'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23fff' opacity='.25'/%3E%3Crect x='2' y='1' width='1' height='1' fill='%23fff' opacity='.88'/%3E%3Crect x='3' y='1' width='1' height='1' fill='%23fff' opacity='.38'/%3E%3Crect y='2' width='1' height='1' fill='%23fff' opacity='.19'/%3E%3Crect x='1' y='2' width='1' height='1' fill='%23fff' opacity='.69'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23fff' opacity='.06'/%3E%3Crect x='3' y='2' width='1' height='1' fill='%23fff' opacity='.56'/%3E%3Crect y='3' width='1' height='1' fill='%23fff' opacity='.94'/%3E%3Crect x='1' y='3' width='1' height='1' fill='%23fff' opacity='.44'/%3E%3Crect x='2' y='3' width='1' height='1' fill='%23fff' opacity='.81'/%3E%3Crect x='3' y='3' width='1' height='1' fill='%23fff' opacity='.31'/%3E%3C/svg%3E");
+    -webkit-mask-size: 4px 4px;
+    -webkit-mask-repeat: repeat;
+  }
+
+  @media (max-width: 639px) {
+    .hero-bg__art {
+      opacity: 0.09;
+    }
+
+    .hero-bg__dither {
+      opacity: 0.24;
+    }
+  }
+</style>

@@ -1,0 +1,19 @@
+---
+import PrimaryButton from "@/components/PrimaryButton.astro";
+import { DOCS_URL } from "@/lib/site";
+---
+
+<section class="bg-primary/5 py-24 md:py-32">
+  <div class="mx-auto max-w-2xl px-4 text-center md:px-6">
+    <h2 class="text-3xl font-semibold tracking-tight text-balance text-foreground md:text-4xl">
+      Start your first case.
+    </h2>
+    <p class="mt-4 text-lg text-pretty leading-relaxed text-muted-foreground">
+      Self-hosted, and still pre-1.0. Read the docs to set it up on your own infrastructure, then
+      sign in from there.
+    </p>
+    <div class="mt-8 flex justify-center">
+      <PrimaryButton href={DOCS_URL} external>Get started</PrimaryButton>
+    </div>
+  </div>
+</section>

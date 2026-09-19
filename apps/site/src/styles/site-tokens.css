@@ -1,0 +1,46 @@
+/*
+  Watchdog marketing site — OKLCH reference ramps (subset of apps/web wd-tokens.css).
+  Dark-first; cool charcoal surfaces (hue ~250) + steel-cyan accent (hue ~220).
+*/
+
+:root {
+  color-scheme: dark;
+
+  /* --- Reference: cool neutral --- */
+  --wd-neutral-50: oklch(0.985 0.004 250);
+  --wd-neutral-100: oklch(0.96 0.006 250);
+  --wd-neutral-200: oklch(0.91 0.01 250);
+  --wd-neutral-300: oklch(0.82 0.014 250);
+  --wd-neutral-400: oklch(0.68 0.018 250);
+  --wd-neutral-500: oklch(0.55 0.02 250);
+  --wd-neutral-600: oklch(0.42 0.018 250);
+  --wd-neutral-700: oklch(0.32 0.016 250);
+  --wd-neutral-800: oklch(0.24 0.014 250);
+  --wd-neutral-900: oklch(0.19 0.012 250);
+  --wd-neutral-950: oklch(0.14 0.01 250);
+
+  /* --- Reference: steel cyan accent --- */
+  --wd-accent-50: oklch(0.96 0.02 220);
+  --wd-accent-100: oklch(0.91 0.04 220);
+  --wd-accent-200: oklch(0.84 0.06 220);
+  --wd-accent-300: oklch(0.76 0.09 220);
+  --wd-accent-400: oklch(0.68 0.11 220);
+  --wd-accent-500: oklch(0.6 0.12 220);
+  --wd-accent-600: oklch(0.48 0.11 220);
+  --wd-accent-700: oklch(0.4 0.1 220);
+  --wd-accent-800: oklch(0.32 0.08 220);
+  --wd-accent-900: oklch(0.26 0.06 220);
+  --wd-accent-950: oklch(0.18 0.04 220);
+
+  --radius: 0.375rem;
+
+  /* Marketing type scale — rem typography + spacing (slightly larger than product 1.1) */
+  --site-display-scale: 1;
+  --site-viewport-font-factor: 1;
+}
+
+@media (min-width: 2048px) and (min-resolution: 1.5dppx) {
+  :root {
+    --site-viewport-font-factor: 1.06;
+  }
+}

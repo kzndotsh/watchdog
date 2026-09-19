@@ -1,0 +1,37 @@
+---
+import { cn } from "@/lib/cn";
+
+interface Props {
+  href: string;
+  variant?: "primary" | "secondary";
+  class?: string;
+  external?: boolean;
+}
+
+const {
+  href,
+  variant = "primary",
+  class: className,
+  external = false,
+} = Astro.props;
+
+const base =
+  "inline-flex h-10 min-h-10 items-center justify-center rounded-md px-5 text-sm font-semibold transition-transform duration-200 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background no-underline hover:no-underline";
+
+// Primary inverts (near-white on near-black): the one dominant action per
+// screen. The brand accent (steel-cyan) stays reserved for small highlights
+// - eyebrows, numbers, hover states - never the CTA fill.
+const variants = {
+  primary: "bg-foreground text-background hover:opacity-90",
+  secondary:
+    "border border-border bg-transparent text-foreground hover:bg-foreground/5",
+};
+---
+
+<a
+  href={href}
+  class={cn(base, variants[variant], className)}
+  {...external ? { target: "_blank", rel: "noopener noreferrer" } : {}}
+>
+  <slot />
+</a>

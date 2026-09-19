@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#1a1d24"/>
+  <radialGradient id="og-glow" cx="70%" cy="30%" r="50%">
+    <stop offset="0%" stop-color="#5eb8d4" stop-opacity="0.2"/>
+    <stop offset="100%" stop-color="#1a1d24" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="1200" height="630" fill="url(#og-glow)"/>
+  <text x="80" y="280" fill="#eef2f5" font-family="system-ui, sans-serif" font-size="64" font-weight="600">Watchdog</text>
+  <text x="80" y="360" fill="#9aa8b4" font-family="system-ui, sans-serif" font-size="32">Case Graph under human custody</text>
+</svg>

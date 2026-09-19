@@ -1,0 +1,20 @@
+.dark {
+  color-scheme: dark;
+
+  /* Copied from apps/web/src/styles/wd-dark.css (core semantic roles only). */
+  --background: oklch(0.19 0.012 250);
+  --foreground: oklch(0.96 0.01 250);
+  /* App card === canvas; marketing panels use the app popover surface. */
+  --card: oklch(0.23 0.012 250);
+  --card-foreground: oklch(0.96 0.01 250);
+  --primary: oklch(0.72 0.12 220);
+  --primary-foreground: oklch(0.18 0.02 250);
+  --secondary: oklch(0.26 0.014 250);
+  --secondary-foreground: oklch(0.96 0.01 250);
+  --muted: oklch(0.26 0.014 250);
+  --muted-foreground: oklch(0.68 0.02 250);
+  --accent: oklch(0.26 0.014 250);
+  --accent-foreground: oklch(0.96 0.01 250);
+  --border: color-mix(in oklab, oklch(0.96 0.01 250 / 8%) 50%, transparent);
+  --ring: oklch(0.68 0.11 220);
+}
