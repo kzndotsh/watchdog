@@ -15,10 +15,11 @@
 
 ### Platform / dev
 
-| Task                               | Doc                                |
-| ---------------------------------- | ---------------------------------- |
-| Daily docker, wipe, test DB        | [`local-dev.md`](local-dev.md)     |
-| Auth, signup, CSRF, API keys       | [`auth-setup.md`](auth-setup.md)   |
+| Task | Doc |
+| --- | --- |
+| Daily docker, wipe, test DB | [`local-dev.md`](local-dev.md) |
+| Marketing site (Astro, no infra) | [`local-dev.md`](local-dev.md#daily-workflow) · [`../../apps/site/README.md`](../../apps/site/README.md) |
+| Auth, signup, CSRF, API keys | [`auth-setup.md`](auth-setup.md) |
 | Vault master key + Cap credentials | [`vault-setup.md`](vault-setup.md) |
 
 ### Agents / automation

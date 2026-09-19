@@ -21,6 +21,8 @@
 
 Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets go in Settings vault, not `.env` ([`vault-setup.md`](vault-setup.md)).
 
+**Marketing site (`apps/site`):** static Astro landing at `:3001`; not started by `just dev`. Set `PUBLIC_APP_URL` in root `.env` (see `env.example`) so **Sign in** / **Get started** point at the product app (`:3000` locally). Build: `pnpm build:site`. Detail: [`../../apps/site/README.md`](../../apps/site/README.md).
+
 ## Services
 
 - **Postgres 18** — `127.0.0.1:5432`, app user from `DATABASE_URL`; migrations may use `DATABASE_URL_MIGRATE` (superuser). Compose mounts the data volume at `/var/lib/postgresql` (PG 18 Docker layout). Upgrading from 16: stop containers, remove the old `postgres_data` volume (or dump/restore if you need data), then `just up` so init scripts recreate roles/DBs.

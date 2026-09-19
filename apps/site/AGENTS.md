@@ -1,6 +1,6 @@
 # AGENTS.md — `@watchdog/site`
 
-Marketing site at `watchdog.com` (static Astro). Product app stays at `apps/web` (`app.watchdog.com` / `:3000` locally).
+Static marketing landing for Watchdog (`watchdog.com`). No Case Graph, auth, or worker — link out to the product app and docs only.
 
 ## Scope
 

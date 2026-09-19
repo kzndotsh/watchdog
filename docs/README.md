@@ -16,6 +16,7 @@ Documentation charter (Diátaxis, page shape, update rules): [`explanation/docum
 | **Investigator (UI)** | [`explanation/product.md`](explanation/product.md) | [`explanation/ux.md`](explanation/ux.md) · [`explanation/scenarios.md`](explanation/scenarios.md) |
 | **Agent / CLI** | [`how-to/agent-cli.md`](how-to/agent-cli.md) | [`reference/contracts/agent-ingress.md`](reference/contracts/agent-ingress.md) · OpenAPI `/api/v1/` |
 | **Contributor** | [`contributing/ci-gates.md`](contributing/ci-gates.md) | [`contributing/testing/index.md`](contributing/testing/index.md) |
+| **Marketing site** | [`../apps/site/README.md`](../apps/site/README.md) | [`how-to/local-dev.md`](how-to/local-dev.md) (port 3001) |
 | **Stuck locally** | [`how-to/troubleshooting.md`](how-to/troubleshooting.md) | [`reference/web/README.md#traps-index`](reference/web/README.md#traps-index) |
 
 ## Tutorials

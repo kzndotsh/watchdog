@@ -80,7 +80,7 @@ No account is seeded and registration is closed by default. See [`docs/how-to/on
 
 **First investigation tutorial:** [`docs/tutorials/first-investigation.md`](docs/tutorials/first-investigation.md) (dump → Process → Triage → Dossier).
 
-Everything binds to loopback: web on `:3000`, Postgres on `:5432`, MinIO on `:9100` with its console on `:9101`. Agents: [`docs/how-to/agent-cli.md`](docs/how-to/agent-cli.md) · OpenAPI `/api/v1/spec.json`.
+Everything binds to loopback: product app on `:3000`, static marketing site on `:3001` (optional — no infra), Postgres on `:5432`, MinIO on `:9100` with its console on `:9101`. Agents: [`docs/how-to/agent-cli.md`](docs/how-to/agent-cli.md) · OpenAPI `/api/v1/spec.json`.
 
 **pnpm only.** Version is pinned in `package.json`; npm and yarn will produce a broken workspace.
 
@@ -154,6 +154,7 @@ Every Cap declares its egress (29 make no third-party call at all) and tags itse
 ```
 apps/
 ├── web/                  TanStack Start UI + oRPC handlers (RPC + OpenAPI)
+├── site/                 Static marketing landing (Astro 6 + Tailwind 4) → `watchdog.com`
 ├── worker/               pg-boss consumer that executes Cap jobs
 └── cli/                  The `wd` binary (compiled to dist/), every noun the API exposes
 packages/
@@ -199,7 +200,8 @@ A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker
 
 | Task | Command |
 | --- | --- |
-| Dev servers | `just dev` · `pnpm dev:web` · `pnpm dev:worker` |
+| Dev servers | `just dev` · `pnpm dev:web` · `pnpm dev:worker` · `pnpm dev:site` (marketing, no infra) |
+| Marketing build | `pnpm build:site` → `apps/site/dist/` |
 | Database | `pnpm db:migrate` · `pnpm db:generate` · `pnpm db:studio` |
 | Local infra | `just up` · `just down` · `just docker-up` (containers only) |
 | Reset case data, keep auth (orgs + vault) | `just wipe` |
@@ -238,6 +240,7 @@ Investigation content (corpus, entity notes, mirrors) lives in a separate privat
 | [`docs/reference/platform/types.md`](docs/reference/platform/types.md) | Shared Zod schemas and vocabulary |
 | [`docs/explanation/ux.md`](docs/explanation/ux.md) | Information architecture and investigator flows |
 | [`docs/reference/web/`](docs/reference/web/README.md) | UI, design system, domains, data fetching |
+| [`apps/site/README.md`](apps/site/README.md) | Marketing site dev, build, `PUBLIC_APP_URL` for sign-in links |
 | [`AGENTS.md`](AGENTS.md) | Conventions for coding agents in this repo |
 
 ## License

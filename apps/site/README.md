@@ -1,6 +1,11 @@
 # `@watchdog/site`
 
-Static marketing site for Watchdog (Astro 6 + Tailwind v4). Deploy artifact: `dist/`.
+Static marketing site for Watchdog (Astro 6 + Tailwind v4). Deploy artifact: `dist/`. Product app remains `apps/web` (`app.watchdog.com` / `:3000` locally).
+
+## Deploy / env
+
+- **`PUBLIC_APP_URL`** (root `.env`, Astro build-time): base URL for **Sign in** and product CTAs. Local default: `http://127.0.0.1:3000`. Production: `https://app.watchdog.com`.
+- Docs links on the page point at GitHub `docs/README.md` (not served from this app).
 
 ## Dev
 

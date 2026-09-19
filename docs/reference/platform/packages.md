@@ -3,7 +3,7 @@
 **What this is:** monorepo package list and forbidden-import matrix.  
 **Not:** Cap SPI / Intake tutorial ([`caps-boundary.md`](caps-boundary.md)), jobs/oRPC ([`jobs-orpc.md`](jobs-orpc.md)), web Start/Query ([`../web/architecture.md`](../web/architecture.md)).
 
-`apps/*` + `packages/*`: `@watchdog/env` (T3 Env boot secrets), `@watchdog/db` (Drizzle + events), `@watchdog/schemas` / `@watchdog/policy` / `@watchdog/ai`, `@watchdog/cap-sdk` / `@watchdog/caps` / `@watchdog/tools`, `@watchdog/core`, `@watchdog/log` (evlog process logs), `@watchdog/api` (oRPC), `@watchdog/contract` (generated OpenAPI / minified router), `@watchdog/client`, `apps/cli` (`@watchdog/cli` / `wd`), `apps/worker` (pg-boss).
+`apps/*` + `packages/*`: `@watchdog/env` (T3 Env boot secrets), `@watchdog/db` (Drizzle + events), `@watchdog/schemas` / `@watchdog/policy` / `@watchdog/ai`, `@watchdog/cap-sdk` / `@watchdog/caps` / `@watchdog/tools`, `@watchdog/core`, `@watchdog/log` (evlog process logs), `@watchdog/api` (oRPC), `@watchdog/contract` (generated OpenAPI / minified router), `@watchdog/client`, `apps/cli` (`@watchdog/cli` / `wd`), `apps/worker` (pg-boss), `apps/site` (`@watchdog/site` — static marketing; no `@watchdog/*` runtime deps).
 
 ## Package import direction (forbidden imports)
 
@@ -24,6 +24,7 @@
 | `@watchdog/client` | **contract** (+ oRPC client libs) | api, apps, db, caps, core, **log** |
 | `apps/cli` (`@watchdog/cli`) | client + schemas (+ own `WD_API_*`) | core, db, api, env, **log**, other apps |
 | `apps/web` / `apps/worker` | api / core / caps / schemas / **env** / **log** as needed | web must not import **db** except `auth/server.ts` + SSE `routes/api/events.ts` |
+| `apps/site` (`@watchdog/site`) | Astro + Tailwind only (tokens copied from web, not imported) | **db**, **core**, **api**, **caps**, `apps/web/src` |
 
 `PatchOp` and `patchOpSchema` live in **`@watchdog/schemas`** so Caps never depend on Drizzle. `EvidenceSnapshot` also lives in schemas (re-exported from `@watchdog/ai` for Process helpers). Accept / apply-patch custody (`assertPatchGates`, `patchNeedsConfidence`) lives in **`@watchdog/policy`**: pure, DB-free; import policy/schemas directly (do not re-export through core). Client UI: `@watchdog/policy/patch-needs-confidence` — not the package barrel (Effect stays off the browser).
 
