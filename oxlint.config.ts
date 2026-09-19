@@ -141,6 +141,8 @@ export default defineConfig({
     "eslint/no-negated-condition": "error",
     // P4/P5/P6 medium rules — already clean; enforced as error
     "eslint/no-nested-ternary": "error",
+    // Ultracite passes rule options oxlint 1.81+ no longer accepts (see ultracite core).
+    "eslint/no-unmodified-loop-condition": "error",
     "eslint/no-plusplus": "error",
     "eslint/no-await-in-loop": "error",
     "eslint/no-shadow": "error",
