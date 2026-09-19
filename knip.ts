@@ -13,6 +13,7 @@ const config: KnipConfig = {
     "apps/web/src/domains/**/*.server.ts": ["types"],
     "apps/web/src/auth/server.ts": ["types"],
     // WD UI + domain helpers exported for /ui gallery, COMPONENTS.md, and tests.
+    "apps/web/src/shared/ui/active-tab-body.tsx": ["exports"],
     "apps/web/src/shared/ui/skeletons.tsx": ["exports"],
     "apps/web/src/shared/ui/graph/index.ts": ["exports"],
     "apps/web/src/shared/ui/graph/graph-bezier.ts": ["exports"],
@@ -44,6 +45,15 @@ const config: KnipConfig = {
       ],
       // Root depends on @watchdog/cli so `pnpm exec wd` / node_modules/.bin/wd work.
       ignoreDependencies: ["@watchdog/cli"],
+    },
+    "apps/site": {
+      entry: ["src/pages/**/*.{astro,ts}", "astro.config.mjs"],
+      project: ["src/**/*.{astro,ts}", "astro.config.mjs"],
+      ignoreDependencies: [
+        "@fontsource-variable/geist",
+        "@fontsource-variable/geist-mono",
+        "tailwindcss",
+      ],
     },
     "apps/web": {
       entry: [

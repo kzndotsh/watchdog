@@ -23,8 +23,8 @@ Dirty UI paths also trip `.cursor/hooks/stop-gate.mjs` (runs `ds:ban` when web U
 ## Automated (web)
 
 ```bash
-pnpm test:unit            # packages + worker only (web is not in this project)
-pnpm test:component       # all `apps/web/src/**/__tests__/**` (lib `*.test.ts` + `*.component.test.tsx`)
+pnpm test:unit            # packages + worker + `web-unit` (web lib tests without DOM)
+pnpm test:component       # happy-dom: `*.component.test.tsx` + DOM lib tests listed in `vitest.config.ts` `webDomTestGlobs` (e.g. `display-scale.test.ts`)
 pnpm test:e2e             # Playwright under e2e/specs (needs `just up` or `just test-db` + `just docker-up`; Playwright starts web+worker)
 pnpm test:e2e:smoke       # @smoke + @custody
 pnpm test:e2e:journey     # @journey only (core loop)

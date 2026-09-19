@@ -8,6 +8,7 @@ const webSrc = path.join(import.meta.dirname, "apps/web/src");
 /** Web tests that need a DOM (RTL hooks or browser globals) — excluded from web-unit. */
 const webDomTestGlobs = [
   "apps/web/src/**/hooks/**/__tests__/**/*.test.ts",
+  "apps/web/src/shared/lib/__tests__/display-scale.test.ts",
   "apps/web/src/shared/lib/__tests__/use-global-hotkeys.test.ts",
   "apps/web/src/shared/lib/__tests__/hotkeys.test.ts",
   "apps/web/src/shared/lib/__tests__/query-client.test.ts",
