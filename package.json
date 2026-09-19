@@ -62,16 +62,16 @@
     "happy-dom": "^20.14.3",
     "jsdom": "^30.0.1",
     "knip": "^6.35.1",
-    "oxfmt": "^0.67.0",
-    "oxlint": "1.82.0",
-    "oxlint-plugin-react-doctor": "^0.9.13",
+    "oxfmt": "^0.68.0",
+    "oxlint": "1.83.0",
+    "oxlint-plugin-react-doctor": "^0.9.14",
     "oxlint-tsgolint": "7.0.2001",
-    "react-doctor": "^0.9.13",
+    "react-doctor": "^0.9.14",
     "tsx": "^4.23.13",
     "typescript": "7.0.2",
     "ultracite": "7.12.0",
     "vitest": "^4.1.10",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=22"
