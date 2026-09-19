@@ -1,6 +1,6 @@
 # `@watchdog/site`
 
-Static marketing site for Watchdog (Astro 6 + Tailwind v4). Deploy artifact: `dist/`. Product app remains `apps/web` (`app.watchdog.com` / `:3000` locally).
+Static marketing site for Watchdog (Astro 7 + Tailwind v4). Deploy artifact: `dist/`. Product app remains `apps/web` (`app.watchdog.com` / `:3000` locally).
 
 ## Deploy / env
 

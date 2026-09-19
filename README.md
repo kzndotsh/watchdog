@@ -154,7 +154,7 @@ Every Cap declares its egress (29 make no third-party call at all) and tags itse
 ```
 apps/
 ├── web/                  TanStack Start UI + oRPC handlers (RPC + OpenAPI)
-├── site/                 Static marketing landing (Astro 6 + Tailwind 4) → `watchdog.com`
+├── site/                 Static marketing landing (Astro 7 + Tailwind 4) → `watchdog.com`
 ├── worker/               pg-boss consumer that executes Cap jobs
 └── cli/                  The `wd` binary (compiled to dist/), every noun the API exposes
 packages/

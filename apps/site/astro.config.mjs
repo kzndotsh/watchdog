@@ -8,6 +8,8 @@ const root = import.meta.dirname;
 export default defineConfig({
   site: "https://watchdog.com",
   output: "static",
+  // Static marketing site only; no custom src/fetch.ts worker entrypoint.
+  fetchFile: null,
   server: {
     port: 3001,
   },
