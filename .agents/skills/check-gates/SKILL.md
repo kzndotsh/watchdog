@@ -11,7 +11,7 @@ description: >-
   pnpm typecheck") — just run it.
 metadata:
   owner: watchdog
-  sources: package.json, lefthook.yml, .github/workflows/ci.yml, AGENTS.md, docs/contributing/ci-gates.md
+  sources: package.json, lefthook.yml, .github/workflows/ci.yml, codecov.yml, AGENTS.md, docs/contributing/ci-gates.md
 ---
 
 # Check gates

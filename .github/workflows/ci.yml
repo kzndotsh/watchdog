@@ -81,6 +81,7 @@ jobs:
               - 'oxlint.config.ts'
               - 'oxfmt.config.ts'
               - 'tsconfig.json'
+              - 'codecov.yml'
               - '.github/**'
               - 'docker-compose.yml'
               - 'scripts/**'
@@ -209,8 +210,14 @@ jobs:
       needs.changes.outputs.config == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v6
         with:
@@ -224,13 +231,30 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Unit + property tests
-        if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm test:unit && pnpm test:property
+      - name: Unit + property + component coverage
+        run: >
+          pnpm run test:coverage -- --reporter=default --reporter=junit --outputFile.junit=junit.xml
 
-      - name: Component tests
-        if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm test:component
+      - name: Upload coverage to Codecov
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: codecov/codecov-action@v6
+        with:
+          files: coverage/lcov.info
+          name: watchdog
+          fail_ci_if_error: false
+          verbose: true
+          use_oidc: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: codecov/test-results-action@v1
+        with:
+          file: junit.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   integration:
     name: Integration + e2e

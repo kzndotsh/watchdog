@@ -26,7 +26,7 @@ ds/agents/docs → unit/component → integration → e2e.
 | `packages/db/**` | `pnpm --filter @watchdog/db check:repos` |
 | `apps/cli/**` | `check:docs-affected:strict` (doc-map); TS rows above; `pnpm --filter @watchdog/cli build` when bin/dist changes |
 | `e2e/**`, `playwright.config.ts` | `pnpm exec vitest run --project e2e-parser`; `pnpm test:e2e` (or `pnpm test:e2e:smoke` for harness-only); `check:docs-affected:strict` |
-| `package.json`, lockfile, `pnpm-workspace.yaml`, `vitest.config.ts`, `knip.ts`, `oxlint.config.ts`, `oxfmt.config.ts`, `.github/**`, `scripts/**` | full set — treat as config |
+| `package.json`, lockfile, `pnpm-workspace.yaml`, `vitest.config.ts`, `knip.ts`, `oxlint.config.ts`, `oxfmt.config.ts`, `codecov.yml`, `.github/**`, `scripts/**` | full set — treat as config. CI Unit runs `pnpm test:coverage` (Codecov upload is non-blocking) |
 
 `generate-routes` is not a CI drift job. Run it when route files changed so
 `routeTree.gen.ts` matches; do not treat it as a merge gate.

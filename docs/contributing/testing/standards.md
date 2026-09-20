@@ -65,7 +65,7 @@ No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion
 
 ## Coverage
 
-`pnpm test:coverage` is a reviewer signal, not a percentage gate to game.
+`pnpm test:coverage` is a reviewer signal, not a percentage gate to game. CI uploads `coverage/lcov.info` to Codecov (informational project/patch status only). `kzndotsh` does not require an upload token; the Unit job uses GitHub OIDC and optional `CODECOV_TOKEN` for Test Analytics.
 
 ## E2E layout
 

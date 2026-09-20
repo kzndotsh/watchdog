@@ -25,6 +25,7 @@ dist/
 *.log
 pnpm-debug.log*
 coverage/
+junit.xml
 test-results/
 playwright-report/
 blob-report/

@@ -17,7 +17,7 @@ pnpm test:e2e             # full Playwright suite
 pnpm test:e2e:smoke       # @smoke + @custody (fast gate)
 pnpm test:e2e:journey     # @journey only (core loop)
 pnpm exec vitest run --project e2e-parser  # pure harness unit tests under e2e/
-pnpm test:coverage        # v8 report under coverage/ (not a %)
+pnpm test:coverage        # v8 report under coverage/ (not a %). CI uploads coverage/lcov.info to Codecov.
 pnpm test:watch
 pnpm --filter @watchdog/web ds:check
 pnpm --filter @watchdog/db check:repos
