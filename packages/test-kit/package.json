@@ -19,10 +19,10 @@
     "@watchdog/db": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "drizzle-orm": "^0.45.2",
-    "effect": "4.0.0-rc.112",
+    "effect": "4.0.0-rc.115",
     "fast-check": "^4.10.1",
     "msw": "^2.15.0",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.1"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",

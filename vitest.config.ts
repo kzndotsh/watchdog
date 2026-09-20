@@ -55,6 +55,9 @@ const integrationEnv = {
 
 export default defineConfig({
   test: {
+    // Vitest 5 clears mock history before each test. Suites assert calls
+    // made at import time and in beforeAll, which that default would drop.
+    clearMocks: false,
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
@@ -145,7 +148,7 @@ export default defineConfig({
           setupFiles: ["apps/web/src/test-setup.ts"],
           deps: {
             optimizer: {
-              web: {
+              client: {
                 enabled: true,
               },
             },

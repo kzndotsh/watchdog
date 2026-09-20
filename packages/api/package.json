@@ -17,7 +17,7 @@
     "@watchdog/core": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
-    "effect": "4.0.0-rc.112",
+    "effect": "4.0.0-rc.115",
     "evlog": "2.29.0",
     "zod": "^4.6.5"
   },

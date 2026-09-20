@@ -17,7 +17,7 @@
     "@watchdog/env": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "drizzle-orm": "^0.45.2",
-    "effect": "4.0.0-rc.112",
+    "effect": "4.0.0-rc.115",
     "postgres": "^3.4.9"
   },
   "devDependencies": {

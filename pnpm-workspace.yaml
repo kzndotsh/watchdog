@@ -5,12 +5,12 @@ packages:
 overrides:
   typescript: "7.0.2"
   "react-doctor>typescript": "5.9.3"
-  effect: "4.0.0-rc.112"
+  effect: "4.0.0-rc.115"
   oxlint: "1.81.0"
   oxlint-tsgolint: "7.0.2001"
   zod: "^4.4.3"
-  better-auth: "1.7.2"
-  "@better-auth/core": "1.7.2"
+  better-auth: "1.7.5"
+  "@better-auth/core": "1.7.5"
   # GHSA-x5fp-wj9c-mxmx / GHSA-4mjr-xmp4-gh2g (express → body-parser transitive)
   qs: "6.16.0"
 

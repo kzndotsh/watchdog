@@ -13,7 +13,7 @@
     "@watchdog/env": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
-    "effect": "4.0.0-rc.112"
+    "effect": "4.0.0-rc.115"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",

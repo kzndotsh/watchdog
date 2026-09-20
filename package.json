@@ -50,14 +50,14 @@
   },
   "dependencies": {
     "@watchdog/cli": "workspace:*",
-    "effect": "4.0.0-rc.112"
+    "effect": "4.0.0-rc.115"
   },
   "devDependencies": {
     "@effect/tsgo": "0.45.0",
-    "@effect/vitest": "4.0.0-rc.112",
+    "@effect/vitest": "4.0.0-rc.115",
     "@playwright/test": "^1.63.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^5.0.1",
     "@watchdog/test-kit": "workspace:*",
     "happy-dom": "^20.14.3",
     "jsdom": "^30.0.1",
@@ -70,7 +70,7 @@
     "tsx": "^4.23.13",
     "typescript": "7.0.2",
     "ultracite": "7.12.0",
-    "vitest": "^4.1.10",
+    "vitest": "^5.0.1",
     "yaml": "^2.9.0"
   },
   "engines": {

@@ -1,7 +1,6 @@
 import type { GenericEndpointContext } from "better-auth";
 import { APIError, getSessionFromCtx } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
-import { createLocalAccountIssuer } from "better-auth/db";
 import type { getOrgAdapter } from "better-auth/plugins";
 
 import {
@@ -64,7 +63,6 @@ export async function createCredentialUser(
   await ctx.context.internalAdapter.linkAccount({
     userId: createdUser.id,
     providerId: "credential",
-    issuer: createLocalAccountIssuer("credential"),
     accountId: createdUser.id,
     password: hash,
   });

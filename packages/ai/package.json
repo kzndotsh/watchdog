@@ -13,7 +13,7 @@
     "@ai-sdk/openai-compatible": "^3.0.49",
     "@watchdog/schemas": "workspace:*",
     "ai": "^7.0.102",
-    "effect": "4.0.0-rc.112"
+    "effect": "4.0.0-rc.115"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
