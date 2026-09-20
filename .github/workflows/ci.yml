@@ -297,10 +297,12 @@ jobs:
 
       - name: Create evidence bucket
         run: |
-          curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /tmp/mc
-          chmod +x /tmp/mc
-          /tmp/mc alias set local http://127.0.0.1:9100 minioadmin minioadmin
-          /tmp/mc mb --ignore-existing local/watchdog-evidence
+          # dl.min.io/client/mc returns 410. Same Quay pin as scripts/minio-init.sh.
+          docker run --rm --network host \
+            -e MC_HOST_local=http://minioadmin:minioadmin@127.0.0.1:9100 \
+            --entrypoint /bin/mc \
+            quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z \
+            mb --ignore-existing local/watchdog-evidence
 
       - name: Integration tests
         if: |
