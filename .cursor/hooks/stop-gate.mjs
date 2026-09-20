@@ -192,31 +192,10 @@ function main() {
     }
   }
 
-  const codeForDocs = files.some(
-    (f) =>
-      f.startsWith("apps/web/src/") ||
-      f.startsWith("apps/web/scripts/") ||
-      f.startsWith("packages/caps/") ||
-      f.startsWith("e2e/") ||
-      f === "playwright.config.ts"
-  );
-  const docsAffectScript = path.join(root, "scripts/check-docs-affected.mjs");
-  if (codeForDocs && existsSync(docsAffectScript)) {
-    const res = spawnSync(process.execPath, [docsAffectScript], {
-      cwd: root,
-      encoding: "utf8",
-    });
-    const out = formatSpawn(res);
-    if (/WARN|FAIL/.test(out)) {
-      parts.push(
-        "`pnpm check:docs-affected` warned after code edits without a paired doc touch. Update the mapped docs, or use `docs:allow-affect — <reason>` in the commit message.",
-        "",
-        "```",
-        clip(out),
-        "```"
-      );
-    }
-  }
+  // docs-affected stays on lefthook pre-commit / CI. Surfacing WARN here as
+  // followup_message spams every stop while mapped package.json files stay
+  // dirty, and the usual fix (`docs:allow-affect` in the commit message) is
+  // not something the agent can apply mid-turn.
 
   if (parts.length === 0) respond({});
   respond({ followup_message: parts.join("\n") });
