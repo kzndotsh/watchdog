@@ -9,7 +9,7 @@ export class CollectPage extends BasePage {
       .fill(body);
     await this.page.getByRole("button", { name: /add evidence/i }).click();
     await this.page
-      .getByRole("dialog")
+      .getByRole("dialog", { name: "Paste evidence" })
       .waitFor({ state: "hidden", timeout: 20_000 });
   }
 
