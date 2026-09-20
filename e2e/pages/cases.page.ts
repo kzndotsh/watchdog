@@ -6,7 +6,7 @@ export class CasesPage extends BasePage {
     const trigger = this.page.getByRole("button", { name: "New Case" }).first();
     await trigger.waitFor({ timeout: 30_000 });
     await trigger.click();
-    const dialog = this.page.getByRole("alertdialog");
+    const dialog = this.page.getByRole("dialog", { name: "New Case" });
     await dialog.waitFor({ state: "visible", timeout: 15_000 });
     await dialog.getByLabel("Case name").fill(name);
     await dialog.getByRole("button", { name: /^create$/i }).click();
