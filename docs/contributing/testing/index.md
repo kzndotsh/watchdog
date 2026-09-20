@@ -32,7 +32,7 @@ pnpm --filter @watchdog/db check:repos
 | Component | `apps/web/src/**/__tests__/**` (`*.test.ts` + `*.component.test.tsx`) | jsdom + Testing Library |
 | Integration | `*.int.test.ts` under `packages/*` or `apps/*` | `watchdog_test`; `withTestTx` or `resetTestDb` |
 | E2E parser | `e2e/**/*.test.ts` (not under `specs/`) | Pure; guards the E2E harness itself |
-| E2E | `e2e/specs/**/*.spec.ts` | `watchdog_e2e` + web + worker; tags `@smoke`, `@custody`, `@journey`; CI retries ×2 |
+| E2E | `e2e/specs/**/*.spec.ts` | `watchdog_e2e` + web + worker; tags `@smoke`, `@custody`, `@journey`; no retries |
 
 Sibling `__tests__/` next to source. Shared builders/harness: `@watchdog/test-kit` (`/fc`, `/fixtures`, `/db`, `/http`, `/it`). **E2E prereqs:** Postgres + MinIO (`just up` or `just test-db` + `just docker-up`). Playwright starts web on port **3300** (does not reuse `:3000`) and the worker with `pnpm --filter @watchdog/worker start`: not `dev`/`tsx watch`, which would kill a daily worker watching the same files. Each browser test wipes `watchdog_e2e` public + `auth` (and cookies) via the auto `_resetDb` fixture before running. NixOS: enter `nix develop` so Chromium comes from the flake; CI installs Playwright's own Chromium.
 

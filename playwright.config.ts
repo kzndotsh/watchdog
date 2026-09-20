@@ -11,7 +11,8 @@ export default defineConfig({
   testDir: "./e2e/specs",
   fullyParallel: false,
   workers: 1,
-  retries: isCi ? 2 : 0,
+  // A deterministic failure was running three times and waiting out every timeout.
+  retries: 0,
   timeout: 120_000,
   globalSetup: "./e2e/support/global-setup.ts",
   reporter: isCi ? [["github"], ["html", { open: "never" }]] : "list",
