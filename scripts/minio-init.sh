@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Create MinIO Evidence bucket (CORS via docker-compose MINIO_API_CORS_ALLOW_ORIGIN).
-# Prefer host `mc` (nix develop); fall back to `minio/mc` on the compose network.
+# Prefer host `mc` (nix develop); fall back to the pinned Quay `mc` image on the compose network.
 set -euo pipefail
 
 ENDPOINT="${S3_ENDPOINT:-http://127.0.0.1:9100}"
@@ -17,7 +17,7 @@ ensure_bucket_with_host_mc() {
 
 ensure_bucket_with_docker_mc() {
   if ! command -v docker >/dev/null 2>&1; then
-    echo "minio-client (mc) required — install via nix develop / pkgs.minio-client, or ensure docker is available for the minio/mc fallback" >&2
+    echo "minio-client (mc) required — install via nix develop / pkgs.minio-client, or ensure docker is available for the Quay mc fallback" >&2
     exit 1
   fi
   if ! docker inspect "$MINIO_CONTAINER" >/dev/null 2>&1; then
@@ -32,9 +32,10 @@ ensure_bucket_with_docker_mc() {
   fi
   # Host publish is 127.0.0.1-only; join the compose network and talk to service DNS.
   # MC_HOST_* avoids MinIO redirecting clients to localhost:9000.
+  # Hub `minio/mc:latest` is no longer pullable; community images live on Quay (pinned).
   docker run --rm --network "$network" \
     -e "MC_HOST_local=http://${ACCESS}:${SECRET}@${MINIO_SERVICE_URL#http://}" \
-    --entrypoint /bin/mc minio/mc:latest \
+    --entrypoint /bin/mc quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z \
     mb --ignore-existing "local/${BUCKET}"
 }
 
