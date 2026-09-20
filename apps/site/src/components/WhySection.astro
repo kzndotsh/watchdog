@@ -1,0 +1,60 @@
+---
+const failures = [
+  "Summaries and assumptions get treated as fact.",
+  "The case lives in three places at once. None of them agree.",
+  "More lookups produce more data, not more clarity.",
+  "A coincidence becomes a confirmed link.",
+] as const;
+
+const cards = [
+  {
+    title: "You decide what lands",
+    body: "Every result comes back as a proposal, not a conclusion. Nothing reaches the case until you say so.",
+  },
+  {
+    title: "One source of truth",
+    body: "The case lives in one place — not a thread, not a doc. One graph, one record. The export regenerates from it any time.",
+  },
+  {
+    title: "Collect without the noise",
+    body: "Run as many lookups as you need. Accept what holds, reject what doesn't. The case grows with your judgment.",
+  },
+] as const;
+---
+
+<section id="why" class="border-b border-border py-24 md:py-32">
+  <div class="mx-auto max-w-7xl px-4 md:px-6">
+    <p class="font-mono text-sm text-muted-foreground">Why Watchdog</p>
+    <h2 class="mt-3 text-3xl font-semibold leading-tight text-foreground md:text-5xl">
+      Most tools are built to collect.
+      <br />
+      Watchdog is built to conclude.
+    </h2>
+
+    <p class="mt-12 text-lg leading-relaxed text-muted-foreground">
+      What usually goes wrong:
+    </p>
+    <ul class="mt-4 max-w-xl border-l border-border pl-5">
+      {
+        failures.map((failure) => (
+          <li class="py-1.5 text-lg leading-relaxed text-foreground">{failure}</li>
+        ))
+      }
+    </ul>
+
+    <p class="mt-12 text-2xl leading-snug text-foreground md:text-3xl">
+      Watchdog was built to solve these problems.
+    </p>
+
+    <div class="mt-10 grid gap-5 md:grid-cols-3">
+      {
+        cards.map((card) => (
+          <div class="rounded-sm border border-border bg-card p-8">
+            <p class="text-xl font-medium text-foreground">{card.title}</p>
+            <p class="mt-4 text-base leading-relaxed text-muted-foreground">{card.body}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
