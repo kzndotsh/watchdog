@@ -7,7 +7,6 @@ import {
   GitForkIcon,
   HashIcon,
   InboxIcon,
-  PaletteIcon,
   SettingsIcon,
   ShapesIcon,
   UploadIcon,
@@ -22,8 +21,7 @@ export type NavTo =
   | "/collect"
   | "/triage"
   | "/tasks"
-  | "/settings"
-  | "/ui";
+  | "/settings";
 
 export interface NavItem {
   to: NavTo;
@@ -58,10 +56,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/cases", label: "Cases", icon: BriefcaseIcon },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
     ],
-  },
-  {
-    label: "Dev",
-    items: [{ to: "/ui", label: "UI kit", icon: PaletteIcon }],
   },
 ];
 

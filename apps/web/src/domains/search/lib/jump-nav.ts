@@ -31,7 +31,7 @@ const JUMP_ICONS: Partial<Record<NavTo | "/", LucideIcon>> = {
   "/settings": SettingsIcon,
 };
 
-/** Idle palette destinations (excludes Dev / UI kit). */
+/** Idle command-palette destinations. */
 export function jumpNavItems(): JumpNavItem[] {
   const seen = new Set<string>();
   const items: JumpNavItem[] = [];
@@ -50,7 +50,6 @@ export function jumpNavItems(): JumpNavItem[] {
   }
   for (const group of NAV_GROUPS) {
     for (const item of group.items) {
-      if (item.to === "/ui") continue;
       push(item.to, item.label, item.icon);
     }
   }

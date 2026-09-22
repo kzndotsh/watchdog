@@ -137,6 +137,7 @@ describe("AppSidebar", () => {
     expect(screen.getByText("Collect")).toBeInTheDocument();
     expect(screen.getByText("Triage")).toBeInTheDocument();
     expect(screen.getByText("Cases")).toBeInTheDocument();
+    expect(screen.queryByText("UI kit")).not.toBeInTheDocument();
     expect(screen.getByText("Theme menu")).toBeInTheDocument();
   });
 });
