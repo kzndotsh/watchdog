@@ -203,4 +203,26 @@ describe("Collect", () => {
     expect(screen.getByText("Loading caps and playbooks…")).toBeInTheDocument();
     expect(screen.queryByText("Caps unavailable")).not.toBeInTheDocument();
   });
+
+  it("stretches the detail column so the footer can sit at the bottom", () => {
+    useCasesContextMock.mockReturnValue({
+      active: ACTIVE,
+      pending: false,
+      loadError: null,
+      retry: vi.fn(),
+    });
+    useQueryMock.mockReturnValue({
+      data: [],
+      isError: false,
+      isFetched: true,
+      isLoading: false,
+      isPlaceholderData: false,
+    });
+    mockWorkspace();
+
+    renderCollect();
+
+    const detail = screen.getByText("Collect detail");
+    expect(detail.parentElement).toHaveClass("h-full", "flex-1");
+  });
 });

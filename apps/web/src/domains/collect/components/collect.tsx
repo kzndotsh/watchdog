@@ -20,6 +20,7 @@ import {
   playbooksListQuery,
 } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
+import { cn } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -230,8 +231,11 @@ function CollectWithCase({
               />
             ) : (
               <div
-                className={placeholderDeemphasisClass(
-                  ws.detailPlaceholder && !ws.detailPending
+                className={cn(
+                  "flex h-full min-h-0 flex-1 flex-col",
+                  placeholderDeemphasisClass(
+                    ws.detailPlaceholder && !ws.detailPending
+                  )
                 )}
               >
                 <CollectDetail
