@@ -97,6 +97,7 @@ Repos take `exec` first. Outside a TX pass `db`; inside pass `tx`. This **invert
 | Generate / apply migrations | `pnpm db:generate` · `pnpm db:migrate` |
 | Studio | `pnpm db:studio` |
 | Wipe case data | `just wipe` / `just wipe yes` — truncates public Graph/Jobs/Inbox/Evidence; keeps `auth.*` (users, orgs, members, API keys) + `credentials` + migrations. Empties MinIO objects, not the bucket. Not `docker compose down -v`. |
+| Screenshot seed | `just seed-demo` · `just seed-demo --force` — fictional cases in `scripts/demo-seed/`. Uses the earliest org owner. Does not leave queued Jobs. |
 
 `check:repos` gates `src/repos/*.repo.ts` on the mechanically checkable parts of the contract: leading `exec: DbExec`, plus no `notifyEvent` (2), `throw new` (3), `.transaction(` (4), `.toISOString()` (1), or `: SQL` in a signature (5). Rule 6 and the nested-read-model rule stay review conventions, as does update/delete without `.where()` (oxlint hosts no drizzle plugin).
 

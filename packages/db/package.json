@@ -10,6 +10,7 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
+    "seed:demo": "tsx scripts/demo-seed/run.ts",
     "typecheck": "tsc --noEmit",
     "check:repos": "node ./scripts/check-repo-rules.mjs"
   },

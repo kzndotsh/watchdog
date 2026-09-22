@@ -29,6 +29,10 @@ minio-init:
 wipe *args:
     bash scripts/wipe-case-data.sh {{args}}
 
+# Fictional cases for product screenshots. `just seed-demo --force` replaces them.
+seed-demo *args:
+    pnpm seed:demo -- {{args}}
+
 # Create + migrate watchdog_test / watchdog_e2e
 test-db:
     bash scripts/ensure-test-db.sh

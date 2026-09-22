@@ -33,6 +33,7 @@
     "db:generate": "pnpm --filter @watchdog/db generate",
     "db:migrate": "pnpm --filter @watchdog/db migrate",
     "db:studio": "pnpm --filter @watchdog/db studio",
+    "seed:demo": "pnpm --filter @watchdog/db seed:demo",
     "check:effect-edges": "node ./scripts/check-effect-edges.mjs",
     "check:effect-edges:strict": "node ./scripts/check-effect-edges.mjs --strict",
     "check:agents:strict": "node ./scripts/check-agents.mjs --strict --fail-docs-length",

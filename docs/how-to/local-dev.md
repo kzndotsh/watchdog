@@ -16,6 +16,7 @@
 | Marketing site only | `pnpm dev:site` → http://127.0.0.1:3001 (not part of `just dev`; no infra) |
 | Worker only | `pnpm dev:worker` (required for Jobs/Collect/Process) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
+| Screenshot seed | `just seed-demo` · `just seed-demo --force` (fictional cases in the current org; sign up first) |
 | Test DBs | `just test-db` (`watchdog_test`, `watchdog_e2e`) |
 | Stop containers | `just down` |
 
@@ -31,7 +32,7 @@ Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets 
 
 ## Common fixes
 
-- **Stale Graph / inbox after experiments:** `just wipe yes` then re-seed manually.
+- **Stale Graph / inbox after experiments:** `just wipe yes`, then `just seed-demo` if you want the screenshot cases back.
 - **Route 404 after adding files:** `pnpm generate-routes` or restart `pnpm dev:web` (`routeTree.gen.ts` is generated).
 - **Integration/e2e locally:** `just test-db` then `pnpm test:integration` or `pnpm test:e2e`.
 - **Desloppify (optional local hygiene):** `pnpm desloppify:scan` (bootstrap excludes first); `pnpm desloppify:status` / `pnpm desloppify:next`. State under `.desloppify/` is gitignored — do not commit it.

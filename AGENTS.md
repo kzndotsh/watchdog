@@ -13,6 +13,7 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Toolchain | `nix develop` |
 | Local infra (Postgres + MinIO + migrate) | `just up` · `just docker-up` (containers only) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
+| Screenshot seed | `just seed-demo` · `just seed-demo --force` |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
 | Dev | `just dev` · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
