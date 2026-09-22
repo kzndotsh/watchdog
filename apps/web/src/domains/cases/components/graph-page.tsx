@@ -8,6 +8,7 @@ import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
+import { cn } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
@@ -72,7 +73,12 @@ function GraphCanvasBody({
   const edges = edgesQuery.data ?? EMPTY_EDGES;
 
   return (
-    <div className={placeholderDeemphasisClass(graphPlaceholder)}>
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 flex-col",
+        placeholderDeemphasisClass(graphPlaceholder)
+      )}
+    >
       <CaseGraphCanvas
         entities={entities}
         edges={edges}

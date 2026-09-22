@@ -8,9 +8,9 @@ import { confidenceStroke } from "@/shared/ui/graph/graph-styles";
 import { LoadingRegion } from "@/shared/ui/loading-region";
 import type { EntityKind } from "@watchdog/schemas";
 
-/** Full-page case graph shell — matches `CaseGraphCanvas`. */
+/** Full-page case graph shell — fills the page column under the header. */
 export const GRAPH_CANVAS_PAGE_SHELL_CLASS =
-  "border-border h-[min(70vh,36rem)] min-h-[24rem] overflow-hidden rounded-md border";
+  "border-border min-h-0 flex-1 overflow-hidden rounded-md border";
 
 /** Dossier overview ego-graph embed. */
 export const GRAPH_CANVAS_EMBED_SHELL_CLASS =

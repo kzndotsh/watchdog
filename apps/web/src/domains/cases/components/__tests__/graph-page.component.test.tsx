@@ -123,7 +123,8 @@ describe("GraphPage", () => {
     mockGraphQueries();
 
     renderGraphPage();
-    expect(screen.getByText("Graph canvas")).toBeInTheDocument();
+    const canvas = screen.getByText("Graph canvas");
+    expect(canvas.parentElement).toHaveClass("flex-1");
     expect(
       screen.queryByRole("link", { name: "Select a case" })
     ).not.toBeInTheDocument();
