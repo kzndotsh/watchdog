@@ -17,25 +17,22 @@ const byline = "";
 
 const trustChips = ["Proudly open source"] as const;
 
-/** Fan order: center, right, left (matches Hero97 layout). URLs from Hero138. */
+/** Fan order: center, right, left. */
 const previewImages = [
   {
-    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-1-16x9.png",
-    srcDark:
-      "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-1-16x9-dark.png",
-    alt: "Product interface preview",
+    src: "/watchdog-collect.png",
+    srcDark: "/watchdog-collect.png",
+    alt: "Collect queue and job detail",
   },
   {
-    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-2-16x9.png",
-    srcDark:
-      "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-2-16x9-dark.png",
-    alt: "Dashboard layout preview",
+    src: "/watchdog-home.png",
+    srcDark: "/watchdog-home.png",
+    alt: "Home",
   },
   {
-    src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-1-16x9.png",
-    srcDark:
-      "https://deifkwefumgah.cloudfront.net/shadcnblocks/image-set/modern/saas-hero/saas-hero-1-16x9-dark.png",
-    alt: "Product interface preview",
+    src: "/watchdog-graph.png",
+    srcDark: "/watchdog-graph.png",
+    alt: "Case graph",
   },
 ] as const;
 
@@ -158,7 +155,7 @@ const [centerImage, rightImage, leftImage] = previewImages;
                 <img
                   src={previewSrc(centerImage)}
                   alt={centerImage.alt}
-                  class="size-full object-cover object-center"
+                  class="size-full object-cover object-top"
                   loading="eager"
                   decoding="async"
                 />
@@ -177,7 +174,7 @@ const [centerImage, rightImage, leftImage] = previewImages;
               <img
                   src={previewSrc(rightImage)}
                 alt={rightImage.alt}
-                class="size-full object-cover object-center"
+                class="size-full object-cover object-top"
                 loading="lazy"
                 decoding="async"
               />
@@ -195,7 +192,7 @@ const [centerImage, rightImage, leftImage] = previewImages;
               <img
                   src={previewSrc(leftImage)}
                 alt={leftImage.alt}
-                class="size-full object-cover object-center"
+                class="size-full object-cover object-top"
                 loading="lazy"
                 decoding="async"
               />
