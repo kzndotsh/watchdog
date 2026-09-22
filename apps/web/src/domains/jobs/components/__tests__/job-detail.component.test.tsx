@@ -108,6 +108,29 @@ describe("JobDetail", () => {
     expect(screen.getByText(/Step 1 ·/)).toBeInTheDocument();
   });
 
+  it("does not show an empty log state under a playbook spine", () => {
+    const step = jobRecord({
+      status: "succeeded",
+      logs: [],
+      playbookId: "host-footprint",
+      playbookRunId: testId(12),
+      playbookStep: 0,
+      capabilityId: "network.dns.lookup",
+    });
+
+    render(
+      <JobDetail
+        job={step}
+        runSiblings={[step]}
+        busy={false}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText(/DNS Lookup/).length).toBeGreaterThan(1);
+    expect(screen.queryByText("No logs yet")).not.toBeInTheDocument();
+  });
+
   it("shows playbook blocked hint for step 0 without blaming a prior step", () => {
     render(
       <JobDetail

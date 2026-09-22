@@ -115,8 +115,19 @@ function JobPlaybookSpine({
   );
 }
 
-function JobLogTabBody({ logs, live }: { logs: string; live: boolean }) {
+function JobLogTabBody({
+  logs,
+  live,
+  alongsideSpine,
+}: {
+  logs: string;
+  live: boolean;
+  alongsideSpine: boolean;
+}) {
   if (!logs) {
+    // The playbook spine is the log tab's content. An empty-state here
+    // reads as if that spine were not there.
+    if (alongsideSpine) return null;
     return (
       <EmptyState
         intent="blank-slate"
@@ -460,7 +471,13 @@ function JobDetailLoaded({
                       blockedWaiting={blockedWaiting}
                     />
                   ) : null}
-                  <JobLogTabBody logs={view.logs} live={view.live} />
+                  <JobLogTabBody
+                    logs={view.logs}
+                    live={view.live}
+                    alongsideSpine={
+                      playbookSteps !== null && job.playbookId !== null
+                    }
+                  />
                 </div>
               </ActiveTabBody>
             </TabsContent>
