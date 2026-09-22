@@ -10,10 +10,10 @@
     "export-contract": "tsx scripts/export-contract.ts"
   },
   "dependencies": {
-    "@orpc/contract": "^1.15.1",
-    "@orpc/openapi": "^1.15.1",
-    "@orpc/server": "^1.15.1",
-    "@orpc/zod": "^1.15.1",
+    "@orpc/contract": "^1.15.2",
+    "@orpc/openapi": "^1.15.2",
+    "@orpc/server": "^1.15.2",
+    "@orpc/zod": "^1.15.2",
     "@watchdog/core": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
