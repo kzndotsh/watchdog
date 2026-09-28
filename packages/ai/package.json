@@ -16,7 +16,7 @@
     "effect": "4.0.0-rc.115"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.6.2",
     "@watchdog/test-kit": "workspace:*",
     "typescript": "7.0.2",
     "zod": "^4.6.5"

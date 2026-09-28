@@ -22,10 +22,10 @@
     "postgres": "^3.4.9"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.6.2",
     "@watchdog/test-kit": "workspace:*",
     "dotenv": "^17.4.2",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "^0.31.11",
     "typescript": "7.0.2"
   }
 }
