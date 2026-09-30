@@ -1,6 +1,6 @@
 # UI: design system hub
 
-This index covers how the interface is built. Product IA is in [`../../explanation/ux.md`](../../explanation/ux.md).
+This index covers how the interface is built. Product IA is in [`../../explanation/ux.md`](../../explanation/ux.md); the design brief the rules trace back to is [`../../explanation/design.md`](../../explanation/design.md).
 
 The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. The style guide is **/ui**.
 
@@ -8,6 +8,7 @@ The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. The style 
 | --- | --- |
 | [`ui/README.md`](ui/README.md) | Delivery gates, chrome lexicon, PR checklist |
 | [`ui/tokens.md`](ui/tokens.md) | Design system, colors, type roles, refuse list |
+| [`ui/rules.md`](ui/rules.md) | Rules inventory: reason, kind, verdict, enforcer |
 | [`ui/page-shell.md`](ui/page-shell.md) | Page / trail / toolbar |
 | [`ui/forms.md`](ui/forms.md) | Form library |
 | [`ui/tables.md`](ui/tables.md) | Table columns + DataTable pending |

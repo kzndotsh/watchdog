@@ -72,7 +72,7 @@ Contrast fix: adjust OKLCH **L only**: keep hue/chroma stable.
 
 ## Refuse list (AI slop)
 
-No nested cards, colored side-tab accents, glow/halo, gradient text, icon-tile feature grids, bounce/elastic easing, decorative glass, mono-as-decoration, cream/violet brand defaults.
+No nested cards, decorative colored side borders (a thin state bar on a live row is fine), glow/halo, gradients or gradient text, icon-tile feature grids, bounce/elastic easing, decorative glass, mono-as-decoration, cream/violet brand defaults. `ds:check` enforces gradients / glass / `rounded-xl+` / off-palette hues; the rest is review. Why each rule exists: [`rules.md`](rules.md).
 
 ## Type scale (hybrid)
 

@@ -31,6 +31,7 @@ Documentation charter (Diátaxis, page shape, update rules): [`explanation/docum
 | --- | --- | --- |
 | [`explanation/product.md`](explanation/product.md) | Intent, personas, refuse | Phase checkboxes, pixels |
 | [`explanation/ux.md`](explanation/ux.md) | IA, flows, copy meaning | Component APIs, tokens |
+| [`explanation/design.md`](explanation/design.md) | Design brief: direction, color, surfaces, interaction | Tokens, atoms |
 | [`explanation/scenarios.md`](explanation/scenarios.md) | Walked journeys (`shipped` / `partial` / `missing` / `lying`) | Cap unit tests |
 | [`explanation/documentation.md`](explanation/documentation.md) | Doc IA charter (Diátaxis) | Gate scripts |
 
@@ -90,6 +91,7 @@ Index: [`how-to/README.md`](how-to/README.md).
 | [`reference/web/UI.md`](reference/web/UI.md) | UI hub → `ui/` leaves |
 | [`reference/web/ui/README.md`](reference/web/ui/README.md) | Delivery gates, chrome lexicon |
 | [`reference/web/ui/tokens.md`](reference/web/ui/tokens.md) | Colors, type, refuse list |
+| [`reference/web/ui/rules.md`](reference/web/ui/rules.md) | Every UI rule: reason, kind, verdict, enforcer |
 | [`reference/web/ui/page-shell.md`](reference/web/ui/page-shell.md) | Page / trail / toolbar |
 | [`reference/web/ui/forms.md`](reference/web/ui/forms.md) | Form library |
 | [`reference/web/ui/tables.md`](reference/web/ui/tables.md) | Column sizing + DataTable pending |
