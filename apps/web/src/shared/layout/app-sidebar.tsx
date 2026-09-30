@@ -162,7 +162,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
+      {/* Same height as the page header (44px + its 1px border), logo and wordmark centered on its line */}
+      <SidebarHeader className="border-sidebar-border box-content h-10 justify-center border-b p-0 px-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
