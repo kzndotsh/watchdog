@@ -24,7 +24,7 @@ Product nouns and investigator loop: [`../../explanation/product.md`](../../expl
 
 Runtime errors on the API/CLI/worker edge are tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` (same codes as `DomainError`). Ingress and custody contracts are unchanged.
 
-**Org isolation:** Cases are org-scoped. Case-child reads/writes that take `caseId` must resolve against the actor’s organization; a foreign-org Case is **`not_found`** (no cross-org bleed, no distinct wrong-org error). Missing org context on session/API key is **403**. Product noun: [`../../explanation/product.md`](../../explanation/product.md).
+**Org isolation:** Cases are org-scoped. Case-child reads/writes that take `caseId` must resolve against the actor’s organization; a foreign-org Case is **`not_found`** (no cross-org bleed, no distinct wrong-org error). Missing org context on session/API key is **403**. Ids of another org's children (entity, claim, evidence, job, proposal…) passed under your own Case are rejected too; `packages/api/src/__tests__/org-isolation.int.test.ts` attacks every case-scoped procedure both ways and must list any new one. The live-events stream re-checks membership on every heartbeat. Product noun: [`../../explanation/product.md`](../../explanation/product.md).
 
 ## See also
 

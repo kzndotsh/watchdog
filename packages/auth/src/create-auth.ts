@@ -108,6 +108,18 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
       // unlink-account return SESSION_NOT_FRESH after a day of staying logged in.
       freshAge: 0,
     },
+    // Better Auth applies this in production only (per IP, in memory). Paths not listed keep
+    // its defaults (sign-in and password flows are already throttled).
+    rateLimit: {
+      customRules: {
+        "/sign-up/email": { window: 60 * 60, max: 10 },
+        "/organization/create": { window: 60 * 60, max: 5 },
+        "/organization/delete": { window: 60 * 60, max: 5 },
+        "/organization/update-member-role": { window: 60, max: 10 },
+        "/organization/remove-member": { window: 60, max: 20 },
+        "/organization/invite-member": { window: 60, max: 20 },
+      },
+    },
     advanced: {
       database: {
         generateId: () => crypto.randomUUID(),
