@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 
@@ -25,19 +25,4 @@ export function ActiveTabBody({
     return stackPendingFallback(pendingSections);
   }
   return children;
-}
-
-/** Suspense wrapper with StackBodySkeleton — use inside ActiveTabBody. */
-export function SuspenseTabBody({
-  children,
-  fallback,
-}: {
-  children: ReactNode;
-  fallback?: ReactNode;
-}) {
-  return (
-    <Suspense fallback={fallback ?? stackPendingFallback()}>
-      {children}
-    </Suspense>
-  );
 }

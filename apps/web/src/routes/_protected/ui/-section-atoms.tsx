@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { GuideSection, Specimen } from "@/routes/_protected/ui/-guide-chrome";
 import { DropdownActionItems } from "@/shared/ui/action-list";
-import { ActiveTabBody, SuspenseTabBody } from "@/shared/ui/active-tab-body";
+import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
@@ -404,17 +404,6 @@ const ATOM_CATALOG: AtomEntry[] = [
         <ActiveTabBody active>
           <p className="text-sm leading-normal">Active tab body</p>
         </ActiveTabBody>
-      </div>
-    ),
-  },
-  {
-    name: "SuspenseTabBody",
-    blurb: "Suspense + StackBodySkeleton inside ActiveTabBody.",
-    render: () => (
-      <div className="border-border w-full max-w-sm rounded-md border p-3">
-        <SuspenseTabBody>
-          <p className="text-sm leading-normal">Resolved tab content</p>
-        </SuspenseTabBody>
       </div>
     ),
   },

@@ -126,10 +126,10 @@ Shared chrome under `src/shared/`.
 | **Table** (`/entities`, `/identifiers`) | Thin loader + `warmEntitiesQueries` / `warmIdentifiersQueries` | `<Page>` + `PageHeader` + `DataTable` with `pending={listPending(...)}`: per-cell skeletons, not `PendingRegion` ([`tables.md`](ui/tables.md)) |
 | **Board** (`/tasks`) | Thin loader + `warmTasksQueries` | `<Page>` + `PageHeader` + `TaskBoard`; board slot **`PendingRegion`** + `BoardSkeleton` |
 | **Card grid** (`/cases`) | Thin loader (identity only) | `case-list.tsx`; grid slot **`PendingRegion`** + `CardGridSkeleton` |
-| **Graph** (`/graph`) | Thin loader + `ensureGraphQueries` | `graph-page.tsx`; `GraphCanvasLoadingRegion` while suspense; then `CaseGraphCanvas` |
+| **Graph** (`/graph`) | Thin loader + `ensureGraphQueries` | `graph-page.tsx`; `GraphCanvasLoadingRegion` while loading; then `CaseGraphCanvas` |
 | **Stack** (Dossier, Case Overview, Dashboard) | Thin loader + matching `warm*` helper | Full `<Page>` shell; tab bodies **`ActiveTabBody`** + `stackPendingFallback()`; Case Overview pending uses **`CaseOverviewPending`** |
 | **Mixed / split stack** (Dashboard) | Thin loader + `warmDashboardQueries` | `dashboard-home.tsx`: `Page density="split"`; Activity panel uses `PendingRegion` |
-| **Settings** | `<Page>` + `PageHeader` | `SettingsShell` + tab panels; credentials tab **`Suspense`** + `stackPendingFallback(1)` |
+| **Settings** | `<Page>` + `PageHeader` | `SettingsShell` + tab panels; credentials tab `stackPendingFallback(1)` while pending |
 
 Split-view domains own the full page shell including `<Page>` (Collect/Triage pattern). Table/board/stack domains own the shell in the domain entry (`actions=`, `count=` + `countOn=` on table/board last crumbs, and `below=` line tabs live with the tab state they drive). Identity is the PageHeader trail: see [`page-shell.md`](ui/page-shell.md). Do not pass per-page identity titles or explainer `description=` (404 missing-slug copy only).
 

@@ -17,8 +17,7 @@ Query owns server-state caching. Router `defaultPreloadStaleTime` is `0`, so Que
 | Path | Use when |
 | --- | --- |
 | Route `loader` + `queryClient.ensureQueryData(queryOptions)` | Prefetch during navigation / SSR |
-| `useSuspenseQuery(queryOptions)` | Loader-guaranteed data in the page |
-| `useQuery(queryOptions)` | Optional / deferred (e.g. artifact body) |
+| `useQuery(queryOptions)` | Page and region reads: branch on `isPending` (`PendingRegion` / skeleton) and `error` (`FetchErrorAlert` + retry) |
 | `useMutation` + **named invalidation contract** | Writes |
 | SSE `useLiveEvents` → same contracts | Server-pushed job/proposal/entity/task updates |
 
@@ -82,13 +81,13 @@ Soft settle (no loading flash): `invalidateQueries({ refetchType: "none" })` the
 
 **Router gotcha:** child `loader({ context })` gets `beforeLoad` context (e.g. `{ session, user }` + `queryClient`), **not** parent loader return data. Sibling pages share data via **Query keys**, not parent loader inheritance. See [`README.md#traps-index`](README.md#traps-index).
 
-### Suspense split
+### Conditional queries
 
-`useSuspenseQuery` cannot use `enabled: false`. When data needs `caseId` / `entityId`, split components (`Collect` → active detail, `Dossier` → `DossierForCase` → `DossierForEntity`).
+Gate optional reads with `enabled` (`caseId` / `entityId` may be absent); split components only when it keeps the tree simpler (`Collect` → active detail, `Dossier` → `DossierForCase` → `DossierForEntity`).
 
 Stack pages: loader `ensureQueryData` identity only + warm helpers (`warmDossierQueries` / `warmCaseOverviewQueries` / `warmDashboardQueries`). Shell counts = `useQuery`; tab/panel bodies = `ActiveTabBody` + `stackPendingFallback()`. Queue pages: Collect loader **awaits** `ensureCollectQueueQueries` (+ job detail when `?id=`); Triage stays identity + `warmTriageQueries`. In-page `PendingRegion` remains for cache misses: not route-level `RoutePending`. Table pages (`/entities`, `/identifiers`): `listPending` → `DataTable` `pending` ([`tables.md`](ui/tables.md)).
 
-**Warm-helper parity:** every `warm*Queries` helper must prefetch every query the page's components suspend on. Adding a `useSuspenseQuery` (or a second call in the same file) requires updating the matching warm helper in the same change: or switching to `useSuspenseQueries`. The dossier shell hook (`use-dossier-shell-queries`) is the implicit warm layer for tab counts; compare query keys when touching dossier sections.
+**Warm-helper parity:** every `warm*Queries` helper should prefetch the queries the page reads on first paint; otherwise that region shows its `PendingRegion` skeleton on a cache miss. The dossier shell hook (`use-dossier-shell-queries`) is the implicit warm layer for tab counts; compare query keys when touching dossier sections.
 
 | Helper | Route / surface | Prefetch module |
 | --- | --- | --- |

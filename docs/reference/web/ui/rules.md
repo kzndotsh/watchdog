@@ -13,7 +13,6 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | Opaque ids via `IdChip` / `formatOpaqueId`, never `.slice(0,N)` | Truncated ids that collide and can't be searched | Keep | ds |
 | No fictional vocab (`probable`, `active`, `dormant`, `merged`) | UI values that aren't in `@watchdog/schemas` unions | Keep | ds |
 | Loaders await identity only; no `await Promise.all` in loaders | SSR TTFB waterfalls | Keep | ds |
-| ≤1 `useSuspenseQuery` per file (`useSuspenseQueries` instead) | Serial suspense waterfalls on cold cache | Keep | ds |
 | No `RoutePending` in routes (one pending surface per region) | Double skeletons: route pending + in-page pending | Keep | ds |
 | `aria-busy` / `animate-pulse` only inside `shared/ui` | Loading regions without the three a11y channels or the reduced-motion guard | Keep | ds |
 | The sixteen loading rules ([`loading.md`](loading.md)) | Flashing skeletons, confident wrong values, blanked shells | Keep | ds (partial) + review |

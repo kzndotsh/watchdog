@@ -13,7 +13,6 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | Atom | Purpose | Use when | Do not use when | Alternative | Status | `/ui` | Tokens |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `ActiveTabBody` | Inactive → null; pending → `PendingRegion` + `stackPendingFallback()` (hand `StackBodySkeleton` fallback) | Stack / Detail tab gates (Case · Dossier · Settings) | React `<Activity>` for heavy canvases | `SuspenseTabBody` inside | canonical | yes | : |
-| `SuspenseTabBody` | Suspense + `stackPendingFallback()` | Inside `ActiveTabBody` for lazy tab data | Full-page pending | `RoutePending` | canonical | yes | : |
 | `ArtifactPreview` | Presentational artifact chrome (+ `ArtifactPreviewSkeleton` loading layout) | Showing named mime body | Fetching artifacts | : | canonical | no | : |
 | `CodeBlock` | Shiki highlighted code | Logs / JSON dumps | Editable fields | `JsonView` for trees | canonical | no | : |
 | `ClickableIdChip` | Preview `IdChip` (eye glyph) | Click-to-preview evidence ids | Plain / copy chips | `IdChip` | canonical | yes | : |
@@ -76,7 +75,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `LoadingRegion` | Three-channel a11y wrapper (`aria-busy` + sr-only `role="status"` + `aria-hidden` skeleton subtree) | Inside `PendingRegion` / hand skeletons | Domains spelling `aria-busy` directly | : | canonical | no | [`loading-region.tsx`](../../../apps/web/src/shared/ui/loading-region.tsx) |
 | `PendingRegion` | `LoadingRegion` + hand skeleton `fallback` when `loading={true}`; live children when ready | Domain data-slot loading (boards, grids, stack, split queue/detail, case overview) | **`DataTable`** (use `pending`) · graph (hand `GraphCanvasLoadingRegion`) · static chrome | hand skeletons in `skeletons.tsx` as `fallback` | canonical | no | [`pending-region.tsx`](../../../apps/web/src/shared/ui/pending-region.tsx) |
 | `QueueSkeleton` | Queue-row skeleton | `PendingRegion` fallback · `/ui` specimen | Full page chrome · stack tabs | : | canonical | yes | : |
-| `StackBodySkeleton` | Hand stack/tab skeleton | `PendingRegion` / `stackPendingFallback()` fallback · Settings Suspense | Primary stack pending (use `PendingRegion`) | `stackPendingFallback()` | canonical | yes | : |
+| `StackBodySkeleton` | Hand stack/tab skeleton | `PendingRegion` / `stackPendingFallback()` fallback | Primary stack pending (use `PendingRegion`) | `stackPendingFallback()` | canonical | yes | : |
 | `BoardSkeleton` | Task board column/card skeleton | `PendingRegion` fallback for task board | Full page chrome | : | canonical | yes | : |
 | `CardGridSkeleton` | Case grid slot skeleton | `PendingRegion` fallback for cases grid | Full page chrome | : | canonical | yes | : |
 | `case-card-shell` | Shared case grid card/create shell class tokens | `CaseList` · `CardGridSkeleton` | Ad-hoc case card chrome | : | canonical | no | : |
@@ -152,7 +151,7 @@ Fictional tokens (`probable`, `active`/`dormant`/`merged`, vault kinds, `--sever
 - Freestyle palette across all `src/`
 - Opaque-id `.slice` across all domains
 - Fictional vocab literals
-- Loading doctrine bans (RoutePending in routes, shadcn/skeleton in domains, animate-pulse / aria-busy outside shared/ui, loader `Promise.all`, useSuspenseQuery waterfalls): see [`loading.md`](ui/loading.md)
+- Loading doctrine bans (RoutePending in routes, shadcn/skeleton in domains, animate-pulse / aria-busy outside shared/ui, loader `Promise.all`): see [`loading.md`](ui/loading.md)
 - `COMPONENTS.md` present
 
 Stop hook (`.cursor/hooks/stop-gate.mjs`) lint-checks files changed this turn and runs `ds:ban` when web UI paths are dirty; pre-push owns the full typecheck.

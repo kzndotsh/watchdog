@@ -27,7 +27,7 @@ Surfaces: Entities (`entity-table.columns.tsx`), Identifiers (`identifiers-table
 | `pendingLabel` for screen readers (`aria-busy` on table wrapper) | Hoisting `<tr>` skeletons inside a single `<td>` |
 | Every column defines `size` ([Table columns](#table-columns)) | Overlay skeleton in one `colSpan` cell |
 
-Surfaces: `/entities`, `/identifiers` (`entity-table.tsx`, `identifiers-page.tsx`). Dossier Identifiers tab uses `useSuspenseQuery` inside the tab: parent Suspense, no `pending`. Full loading doctrine: [`loading.md`](loading.md).
+Surfaces: `/entities`, `/identifiers` (`entity-table.tsx`, `identifiers-page.tsx`). Dossier Identifiers tab reads with `useQuery` inside the tab body. Full loading doctrine: [`loading.md`](loading.md).
 
 ## Gotchas
 

@@ -18,7 +18,7 @@ Share row counts and grid templates between live UI and skeletons through export
 
 ## Loading & hydration (implementation)
 
-**SSR split:** `useSuspenseQuery` fetches during SSR and ships data in the HTML; `useQuery` returns pending on the server and fetches after hydration. Thin loaders + in-page skeletons trade a fully-populated first paint for client-navigation responsiveness: deliberate for this app.
+**SSR split:** `useQuery` returns pending on the server and fetches after hydration; loaders that `ensureQueryData` put data in the cache before render. Thin loaders + in-page skeletons trade a fully-populated first paint for client-navigation responsiveness: deliberate for this app.
 
 Router: `defaultPendingMs=400`, `defaultPendingMinMs=500`, `defaultPendingComponent` (minimal shell floor), `defaultErrorComponent: RouteError` (retry via `router.invalidate()`).
 
@@ -61,7 +61,6 @@ Lead with "don't skeleton at all": skeletons are the fallback of last resort ([V
 | # | Rule |
 | --- | --- |
 | 2 | **Loaders await identity only**: `casesContextQuery` + at most one title row; lists via `warm*Queries`. |
-| 9 | **>1 `useSuspenseQuery` → `useSuspenseQueries`**: serial calls waterfall on cold cache _and_ SSR TTFB; warm-helper parity is not structural. |
 | 10 | **Fetch only what's visible**: no query in collapsed panels or inside `.map()`; gate artifact content on `open`. |
 | 11 | **One SSE connection per case**: `useLiveEvents` ref-counts a shared `EventSource`; nested workspaces pass `live: false`. |
 
@@ -81,7 +80,6 @@ Lead with "don't skeleton at all": skeletons are the fallback of last resort ([V
 | `animate-pulse` outside `shared/ui/` | `Skeleton` primitive (reduced-motion guard) |
 | `aria-busy` outside `shared/ui/` | `LoadingRegion` |
 | `await Promise.all` in route `loader` (excl. `routes/api/**`) | Thin loader + `warm*Queries` |
-| 2+ `useSuspenseQuery` per file | `useSuspenseQueries` (`// ds:allow-use-suspense-query: reason` per line if intentional) |
 
 Escape hatch: `// ds:allow-<rule>: reason` on the line above a flagged line; `ds:check` reports active allow count.
 
@@ -114,9 +112,9 @@ Per-surface map for first paint, filtered empty, and fetch failure. Load failure
 | --- | --- | --- | --- | --- |
 | **Collect** queue | `PendingRegion` + queue skeleton only on `listPending` cache miss (loader awaits evidence/jobs/entities) | `EmptyState` `blank-slate` / `no-results` | `FetchErrorAlert` in queue body | Hidden filter may skeleton once; job-only detail skeleton until `jobDetailQuery` settles (loader awaits when `?id=` is a job). |
 | **Triage** queue + detail | `TriageSplitPendingFallback` | `EmptyState` `blank-slate` / `cleared` / `no-results` | `FetchErrorAlert` |  |
-| **Tasks** board | `PendingRegion` + `BoardSkeleton` (`listPending`) | implicit empty columns | route `RouteError` | Workspace uses `useSuspenseQuery` for tasks/entities. |
+| **Tasks** board | `PendingRegion` + `BoardSkeleton` (`listPending`) | implicit empty columns | route `RouteError` |  |
 | **Cases** grid | `PendingRegion` + `CardGridSkeleton` | `EmptyState` `no-results` (search) | route `RouteError` | `casesContextQuery` via `useQuery` + `listPending`. |
-| **Entities** / **Identifiers** tables | `DataTable` `pending` + per-cell skeletons | `EmptyState` in table body | route `RouteError` | Tab body Suspense-backed. |
+| **Entities** / **Identifiers** tables | `DataTable` `pending` + per-cell skeletons | `EmptyState` in table body | route `RouteError` |  |
 | **Dashboard** panels | `PendingRegion` + hand skeletons per panel (`DashboardOverviewSkeleton`, `DashboardActivityPanelSkeleton`, activity list `DashboardActivitySkeletonLayout`) | Recent Activity `EmptyState`; triage/tasks panels dashed inline empty | `FetchErrorAlert` in panel body | Activity header stays mounted; list slot skeletons only. Cases-pending keeps split chrome. |
 
 ### Rejected loading "delight" patterns
@@ -127,7 +125,6 @@ Hydration: suppress relative time / session name when needed; no nested `<button
 
 ## Gotchas
 
-- **`useSuspenseQuery` + `enabled`**: Suspense queries do not support `enabled: false`. Split components when `caseId` / `entityId` is optional (`Collect` detail branch, `Dossier` entity branch).
 - **Stack loading (Case / Dossier / Settings)**: loader awaits identity only (`casesContext` / case row / entity); warm lists with `void prefetchQuery` (`warmCaseOverviewQueries` / `warmDossierQueries`). Tab bodies use `ActiveTabBody` → `PendingRegion` + `stackPendingFallback()`. **Dashboard** (`/`) is split-stack, not stack tabs: overview/activity data slots use hand `*Skeleton` fallbacks inline (`dashboard-home.tsx`, `recent-activity.tsx`). Case Overview settings sidebar uses `CaseSettingsSkeleton` (invisible `Field` / `Input` / `Textarea` / `Switch` chrome + overlay `Skeleton` for box-model parity). No route-level `RoutePending` on these pages; no "Loading…" copy in data slots.
 - **Split Queue loading (Collect / Triage)**: Collect loader awaits `ensureCollectQueueQueries` (+ job detail when `?id=`); catalogs warm in background via `warmCollectCatalogQueries`. Triage: thin loader + `warmTriageQueries`. Domain owns `<Page>` + `PageHeader` + toolbars; queue/detail data slots use `PendingRegion` only on cache miss. Triage shows `TriageSplitPendingFallback` while pending.
 - **`QueueShell scrollable={false}` while loading**: skeleton row counts (`COLLECT_QUEUE_SKELETON_ROW_COUNT`, `QueueSkeleton rows={10}` in `TriageSplitPendingFallback`) are sized generously and can overflow a short viewport, popping a scrollbar that disappears once real (usually shorter) content lands. Pass `scrollable={!loading}` to `QueueShell` (Collect: `!queuePending`; Triage's only skeleton is `TriageSplitPendingFallback`, always `scrollable={false}`) so the pane clips instead of scrolling during the skeleton state. **`CollectQueueSkeleton`** uses `QueueDayGroup` with **`headerVariant="panel"`** (not sticky): sticky day bars inside a clipped pane overlap mid-list rows.

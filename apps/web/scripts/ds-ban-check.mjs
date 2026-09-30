@@ -340,7 +340,6 @@ const ROUTE_PENDING_IMPORT_RE =
   /from\s+["']@\/shared\/layout\/route-pending["']/;
 const SHADCN_SKELETON_IMPORT_RE =
   /from\s+["']@\/shared\/ui\/shadcn\/skeleton["']/;
-const USE_SUSPENSE_QUERY_CALL_RE = /\buseSuspenseQuery\s*\(/;
 
 const routePendingHits = [];
 for (const f of walk(path.join(src, "routes"))) {
@@ -444,36 +443,11 @@ for (const f of walk(path.join(src, "routes"))) {
 }
 for (const hit of loaderPromiseAllHits) {
   fail(
-    `await Promise.all in route loader — thin loader (identity only) + warm*Queries helper; parallel reads belong in components via useSuspenseQueries: ${hit}`
+    `await Promise.all in route loader — thin loader (identity only) + warm*Queries helper; parallel reads belong in components (useQuery per region): ${hit}`
   );
 }
 if (loaderPromiseAllHits.length === 0) {
   ok("No awaited Promise.all in route loaders (excl. routes/api/)");
-}
-
-const suspenseWaterfallHits = [];
-for (const f of walk(src)) {
-  const r = rel(f);
-  if (r.includes("/__tests__/")) continue;
-  const lines = readFileSync(f, "utf-8").split("\n");
-  let unallowedCalls = 0;
-  for (const [i, line] of lines.entries()) {
-    if (line.trimStart().startsWith("//")) continue;
-    if (!USE_SUSPENSE_QUERY_CALL_RE.test(line)) continue;
-    if (consumeAllow(lines, i, "use-suspense-query")) continue;
-    unallowedCalls += 1;
-  }
-  if (unallowedCalls >= 2) {
-    suspenseWaterfallHits.push(`${r} (${unallowedCalls} calls)`);
-  }
-}
-for (const hit of suspenseWaterfallHits) {
-  fail(
-    `2+ useSuspenseQuery in one file — serial waterfalls; collapse to useSuspenseQueries (warm* parity is not enough on cold cache / SSR TTFB): ${hit}`
-  );
-}
-if (suspenseWaterfallHits.length === 0) {
-  ok("No useSuspenseQuery waterfalls (≤1 call per file)");
 }
 
 if (allowCount > 0) {

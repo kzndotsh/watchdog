@@ -79,7 +79,7 @@ With `just up` (infra ready), `pnpm dev:web` (+ worker for Cap runs):
 
 - Match a route to [`loading.md`](../../reference/web/ui/loading.md): shell-first, one pending surface per region, region load failures via `FetchErrorAlert` + retry.
 - Tables: **`DataTable` `pending` only**: never `PendingRegion` ([§ Tables](../../reference/web/ui/tables.md)).
-- New `useSuspenseQuery` on a warmed page: update the matching `warm*Queries` helper in the same PR ([`DATA.md`](../../reference/web/data.md) parity table).
+- New query read on a warmed page: update the matching `warm*Queries` helper in the same PR ([`DATA.md`](../../reference/web/data.md) parity table).
 
 ## When you change chrome
 
