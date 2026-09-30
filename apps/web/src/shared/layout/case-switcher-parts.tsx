@@ -3,7 +3,11 @@ import { CheckIcon, LayoutDashboardIcon } from "lucide-react";
 
 import { CASE_NAV_ITEMS, pathActive } from "@/config/nav";
 import type { CaseRecord } from "@/domains/cases/types";
-import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
+import {
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+} from "@watchdog/ui/components/dropdown-menu";
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -65,7 +69,8 @@ export function CasePickerItems({
   onSelect: (id: string) => void;
 }) {
   return (
-    <>
+    <DropdownMenuGroup>
+      <DropdownMenuLabel>Cases</DropdownMenuLabel>
       {cases.map((c) => {
         const selected = c.id === activeId;
         return (
@@ -76,10 +81,10 @@ export function CasePickerItems({
             }}
           >
             <span className="truncate">{c.name}</span>
-            {selected ? <CheckIcon className="ml-auto size-4" /> : null}
+            {selected ? <CheckIcon className="ml-auto" /> : null}
           </DropdownMenuItem>
         );
       })}
-    </>
+    </DropdownMenuGroup>
   );
 }

@@ -72,12 +72,7 @@ export function CaseSwitcherCollapsed({
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton
-                tooltip={active?.name ?? "Case"}
-                className="dark:bg-input/30 data-open:bg-sidebar-accent dark:data-open:bg-input/50 data-open:text-sidebar-accent-foreground bg-transparent"
-              />
-            }
+            render={<SidebarMenuButton tooltip={active?.name ?? "Case"} />}
           >
             <FolderIcon />
             <span>{active?.name ?? "Case"}</span>
@@ -152,27 +147,24 @@ export function CaseSwitcherExpanded({
                 <SidebarMenuButton
                   aria-label="Active case"
                   tooltip={active?.name ?? "Case"}
-                  className="dark:bg-input/30 data-popup-open:bg-input/30 data-popup-open:text-sidebar-accent-foreground h-8 bg-transparent data-popup-open:!rounded-b-none"
                 />
               }
             >
               <FolderIcon />
               <span className="truncate">{active?.name ?? "Select case…"}</span>
-              <ChevronsUpDownIcon className="ml-auto size-3.5 opacity-50" />
+              <ChevronsUpDownIcon className="ml-auto" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="bg-sidebar w-(--anchor-width) min-w-0 overflow-hidden !rounded-t-none rounded-b-md p-0 shadow-none ring-0"
+              className="min-w-56"
               side="bottom"
               align="start"
-              sideOffset={0}
+              sideOffset={4}
             >
-              <div className="bg-input/30 p-1">
-                <CasePickerItems
-                  cases={cases}
-                  activeId={activeId}
-                  onSelect={onSelectCase}
-                />
-              </div>
+              <CasePickerItems
+                cases={cases}
+                activeId={activeId}
+                onSelect={onSelectCase}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>

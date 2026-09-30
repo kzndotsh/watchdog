@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 import { waitForHydrated } from "../support/hydration";
 
@@ -23,6 +23,28 @@ export class AuthPage {
     }
     await this.page.getByRole("button", { name: /^sign up$/i }).click();
     await this.page.waitForURL((url) => !url.pathname.includes("/auth/"), {
+      timeout: 30_000,
+    });
+    await this.completeOnboarding(stamp);
+  }
+
+  /** A new account starts with no organization: create one when onboarding asks. */
+  private async completeOnboarding(stamp: string): Promise<void> {
+    // The protected layout redirects an account with no organization here.
+    await this.page.waitForURL(/\/onboarding/, { timeout: 30_000 });
+    await waitForHydrated(this.page);
+    const name = this.page.getByRole("textbox", { name: "Name", exact: true });
+    // The route chunk can hydrate after the root: a value typed before that is
+    // reset, so retry until the input keeps it.
+    await expect(async () => {
+      await name.fill(`E2E Org ${stamp}`);
+      await this.page.waitForTimeout(300);
+      await expect(name).toHaveValue(`E2E Org ${stamp}`);
+    }).toPass({ timeout: 15_000 });
+    await this.page
+      .getByRole("button", { name: "Create organization" })
+      .click();
+    await this.page.waitForURL((url) => !url.pathname.includes("/onboarding"), {
       timeout: 30_000,
     });
   }

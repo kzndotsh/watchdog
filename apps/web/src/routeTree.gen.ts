@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as ApiEventsRouteImport } from './routes/api/events'
 import { Route as ApiSignupAllowedRouteImport } from './routes/api/signup-allowed'
@@ -34,6 +35,11 @@ import { Route as ApiV1CasesCaseIdEntitiesSlugExportDotmdRouteImport } from './r
 
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
@@ -149,6 +155,7 @@ const ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof ProtectedIndexRoute
+  '/onboarding': typeof OnboardingRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
@@ -171,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/cases/$caseId/entities/$slug/export.md': typeof ApiV1CasesCaseIdEntitiesSlugExportDotmdRoute
 }
 export interface FileRoutesByTo {
+  '/onboarding': typeof OnboardingRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
@@ -196,6 +204,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_protected': typeof ProtectedRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
   '/api/events': typeof ApiEventsRoute
   '/api/signup-allowed': typeof ApiSignupAllowedRoute
   '/api/v1': typeof ApiV1RouteWithChildren
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/onboarding'
     | '/api/events'
     | '/api/signup-allowed'
     | '/api/v1'
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/api/v1/cases/$caseId/entities/$slug/export.md'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/onboarding'
     | '/api/events'
     | '/api/signup-allowed'
     | '/api/v1'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_protected'
+    | '/onboarding'
     | '/api/events'
     | '/api/signup-allowed'
     | '/api/v1'
@@ -293,6 +305,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   ProtectedRoute: typeof ProtectedRouteWithChildren
+  OnboardingRoute: typeof OnboardingRoute
   ApiEventsRoute: typeof ApiEventsRoute
   ApiSignupAllowedRoute: typeof ApiSignupAllowedRoute
   ApiV1Route: typeof ApiV1RouteWithChildren
@@ -308,6 +321,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof ProtectedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_protected/': {
@@ -511,6 +531,7 @@ const ApiV1RouteWithChildren = ApiV1Route._addFileChildren(ApiV1RouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   ProtectedRoute: ProtectedRouteWithChildren,
+  OnboardingRoute: OnboardingRoute,
   ApiEventsRoute: ApiEventsRoute,
   ApiSignupAllowedRoute: ApiSignupAllowedRoute,
   ApiV1Route: ApiV1RouteWithChildren,

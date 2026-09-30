@@ -17,6 +17,7 @@ import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
 import { TeamSettings } from "@/auth/ui/team/team-settings";
 import { UsersSettings } from "@/auth/ui/users/users-settings";
+import { OrganizationProfile } from "@/domains/organization/components/organization-profile";
 import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
@@ -56,15 +57,15 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
   },
   {
     id: "team",
-    label: "Team",
-    description: "Invite investigators and manage organization membership.",
+    label: "Organization",
+    description: "Name, members, invitations, and roles.",
     icon: UsersIcon,
   },
   {
     id: "users",
     label: "Users",
     description:
-      "Disable or enable install accounts. Organization membership is on Team.",
+      "Disable or enable install accounts. Organization membership is on Organization.",
     icon: UserCogIcon,
   },
   {
@@ -124,7 +125,12 @@ function SettingsPanel({
       );
     }
     case "team": {
-      return <TeamSettings />;
+      return (
+        <div className="flex max-w-2xl flex-col gap-8">
+          <OrganizationProfile />
+          <TeamSettings />
+        </div>
+      );
     }
     case "users": {
       if (sessionPending) {

@@ -9,7 +9,7 @@
 2. **Env:** copy `env.example` → `.env`; set `BETTER_AUTH_SECRET`, `WD_MASTER_VAULT_KEY`, and DB/S3 defaults (see [`vault-setup.md`](vault-setup.md) for vault key generation).
 3. **Infra:** `just up` (Postgres + MinIO + bucket + migrations)
 4. **Deps:** `pnpm install`
-5. **First account:** `BETTER_AUTH_ALLOW_SIGNUP=1` → restart web → `/auth/sign-up` → set `BETTER_AUTH_ALLOW_SIGNUP=0` → restart again ([`auth-setup.md`](auth-setup.md)).
+5. **First account:** `BETTER_AUTH_ALLOW_SIGNUP=1` → restart web → `/auth/sign-up` → create your organization on the onboarding page → set `BETTER_AUTH_ALLOW_SIGNUP=0` if you want an invitation-only install → restart again ([`auth-setup.md`](auth-setup.md)).
 6. **Run:** `just dev` (infra + web + worker) — or `just up` then `pnpm dev:web` + `pnpm dev:worker` in two terminals ([`auth-setup.md`](auth-setup.md) for signup restart).
 7. **Smoke:** sign in → create a Case → optional Settings credentials for Caps you will run.
 

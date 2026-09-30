@@ -25,7 +25,7 @@ vi.mock("@watchdog/db", () => ({
   organization: {},
   member: {},
   invitation: {},
-  bootstrapWatchdogOrganization: vi.fn(),
+  promoteFirstUserToInstanceAdmin: vi.fn(),
   onAuthSessionCreated: vi.fn(),
   resolveUserOrganizationId: vi.fn(),
 }));
@@ -55,7 +55,8 @@ describe("createAuth", () => {
     expect(auth.api).toBeDefined();
     expect(organization).toHaveBeenCalledWith(
       expect.objectContaining({
-        allowUserToCreateOrganization: false,
+        allowUserToCreateOrganization: expect.any(Function),
+        disableOrganizationDeletion: true,
         requireEmailVerificationOnInvitation: false,
         sendInvitationEmail: expect.any(Function),
       })
@@ -86,6 +87,18 @@ describe("createAuth", () => {
     expect(config.databaseHooks.session.create.after).toEqual(
       expect.any(Function)
     );
+  });
+
+  it("lets anyone create an organization only on open-signup installs", () => {
+    createAuth();
+    const call = vi.mocked(organization).mock.calls.at(-1)?.[0];
+    const allow = call?.allowUserToCreateOrganization;
+    if (typeof allow !== "function")
+      throw new TypeError("expected a policy fn");
+
+    // Test env has signup closed: members can't, the instance admin can.
+    expect(allow({ role: "user" } as never)).toBe(false);
+    expect(allow({ role: "admin" } as never)).toBe(true);
   });
 
   it("appends trailing plugins last", () => {

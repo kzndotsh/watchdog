@@ -6,12 +6,12 @@ import { admin, organization } from "better-auth/plugins";
 import {
   account,
   apiKey as apiKeyTable,
-  bootstrapWatchdogOrganization,
   db,
   invitation,
   member,
   onAuthSessionCreated,
   organization as organizationTable,
+  promoteFirstUserToInstanceAdmin,
   session,
   user,
   verification,
@@ -21,6 +21,7 @@ import { env } from "@watchdog/env/server";
 import {
   DISABLED_ACCOUNT_MESSAGE,
   instanceAdminAccess,
+  isInstanceAdmin,
 } from "./instance-admin";
 import { inviteSignupPlugin } from "./invite-signup-plugin";
 import { sendInvitationEmail } from "./send-invitation-email";
@@ -104,7 +105,7 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
       user: {
         create: {
           after: async (created) => {
-            await bootstrapWatchdogOrganization(db, created.id);
+            await promoteFirstUserToInstanceAdmin(db, created.id);
           },
         },
       },
@@ -123,6 +124,9 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
     plugins: [
       apiKeyPlugin({
         defaultPrefix: "wd_",
+        // Keys carry the organization they act in (`metadata.organizationId`);
+        // `createApiContext` re-checks the owner's membership on every call.
+        enableMetadata: true,
         keyExpiration: {
           // Bound compromise window; agents can request shorter expiry at create time.
           defaultExpiresIn: 60 * 60 * 24 * 90,
@@ -134,8 +138,17 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
         },
       }),
       organization({
-        allowUserToCreateOrganization: false,
+        // Self-serve organizations follow the signup policy: open installs let
+        // anyone create one; invite-only installs reserve it for the instance admin.
+        allowUserToCreateOrganization: (candidate) =>
+          env.BETTER_AUTH_ALLOW_SIGNUP ||
+          isInstanceAdmin(
+            typeof candidate.role === "string" ? candidate.role : null
+          ),
         creatorRole: "owner",
+        // Cases reference organizations by a soft id, so deleting one would orphan
+        // evidence and the Case Graph. Enable once deletion cascades/archives.
+        disableOrganizationDeletion: true,
         requireEmailVerificationOnInvitation: false,
         sendInvitationEmail,
       }),

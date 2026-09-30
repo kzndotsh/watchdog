@@ -1,9 +1,10 @@
 import type { ApiKeyAuthClient } from "@better-auth-ui/core/plugins/api-key"
-import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
+import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react"
 import { useCreateApiKey } from "@better-auth-ui/react/plugins/api-key"
 import { Key } from "lucide-react"
 import { type SyntheticEvent, useState } from "react"
 
+import { authClient as appAuthClient } from "@/auth/client"
 import { apiKeyPlugin } from "@/auth/plugins/api-key"
 
 import {
@@ -36,6 +37,10 @@ export function CreateApiKeyDialog({
   organizationId
 }: CreateApiKeyDialogProps) {
   const { authClient, localization } = useAuth()
+  const { data: sessionData } = useSession(appAuthClient)
+  // Keys act in the organization they were created in (checked again on every request).
+  const scopedOrganizationId =
+    sessionData?.session.activeOrganizationId ?? undefined
   const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin)
 
   const { mutate: createApiKey, isPending: isCreating } = useCreateApiKey(
@@ -62,11 +67,14 @@ export function CreateApiKeyDialog({
     const name = (formData.get("name") as string).trim()
 
     const payload =
-      name || organizationId
+      name || organizationId || scopedOrganizationId
         ? {
             ...(name ? { name } : {}),
             ...(organizationId
               ? { organizationId, configId: "organization" }
+              : {}),
+            ...(!organizationId && scopedOrganizationId
+              ? { metadata: { organizationId: scopedOrganizationId } }
               : {})
           }
         : undefined

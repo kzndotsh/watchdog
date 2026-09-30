@@ -31,6 +31,10 @@ vi.mock("@/domains/search/components/command-search-trigger", () => ({
   CommandSearchTrigger: () => <div>Search trigger</div>,
 }));
 
+vi.mock("@/domains/organization/components/org-switcher", () => ({
+  OrgSwitcher: () => <div>Org switcher</div>,
+}));
+
 vi.mock("@/shared/layout/case-switcher", () => ({
   CaseSwitcher: () => <div>Case switcher</div>,
 }));
@@ -131,6 +135,7 @@ describe("AppSidebar", () => {
     expect(screen.getByText("WATCHDOG")).toBeInTheDocument();
     expect(screen.getByText("Search trigger")).toBeInTheDocument();
     expect(screen.getByText("Case switcher")).toBeInTheDocument();
+    expect(screen.getByText("Org switcher")).toBeInTheDocument();
     expect(screen.getAllByText("Analyst").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Settings").length).toBeGreaterThan(0);
     expect(screen.getByText("Tasks")).toBeInTheDocument();

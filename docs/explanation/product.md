@@ -20,7 +20,7 @@ Small-team OSINT: keep one **Case Graph** of Claims + Evidence you can defend, w
 - Postgres is SoT; markdown Export is a projection.
 - If you need Scratch / Candidate / Mutation R-tiers to explain Day-0, the design failed.
 
-**Team** maps to a Better Auth **organization**: one install org at bootstrap, org-scoped Cases, Settings → **Team** for invite + membership (`admin` / `member`). **Users** (instance admin only) is account disable/enable — not org membership. API and CLI calls resolve the active org from session or key owner; missing org context is **403**, not cross-org bleed. Case-child APIs that accept `caseId` treat a foreign-org Case as **`not_found`** (same as missing) — never return another org’s Graph.
+**Organization** maps to a Better Auth **organization**: a workspace that owns Cases, members, and API keys. A user can belong to several and switches in the sidebar; on installs with open signup anyone can create one (onboarding after sign-up), on invitation-only installs only the instance admin can. Settings → **Organization** holds the profile, invitations, and membership (`owner` / `admin` / `member`). **Users** (instance admin only) is account disable/enable — not org membership. API and CLI calls resolve the active org from the session, or from the org the API key was created in (`metadata.organizationId`, re-checked against the owner's membership on every call; keys from before multi-org use the owner's oldest org); missing org context is **403**, not cross-org bleed. Case-child APIs that accept `caseId` treat a foreign-org Case as **`not_found`** (same as missing) — never return another org’s Graph.
 
 ---
 

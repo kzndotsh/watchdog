@@ -9,6 +9,7 @@ import {
 
 import { authClient } from "@/auth/client";
 import { NAV_GROUPS, pathActive } from "@/config/nav";
+import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
 import { CommandSearchTrigger } from "@/domains/search/components/command-search-trigger";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
 import { ThemeMenuItem } from "@/shared/layout/theme-toggle";
@@ -233,6 +234,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        <OrgSwitcher />
         <NavUser />
       </SidebarFooter>
     </Sidebar>

@@ -24,6 +24,32 @@ export function actorFromSession(
   };
 }
 
+/**
+ * Organization an API key was issued for (`metadata.organizationId`, set when the key is
+ * created in the UI). Keys without it predate multi-organization and act in the owner's
+ * oldest organization.
+ */
+function keyOrganizationId(metadata: unknown): string | null {
+  let parsed = metadata;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return null;
+    }
+  }
+  if (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    "organizationId" in parsed &&
+    typeof parsed.organizationId === "string" &&
+    parsed.organizationId !== ""
+  ) {
+    return parsed.organizationId;
+  }
+  return null;
+}
+
 function extractApiKey(headers: Headers): string | null {
   const authHeader = headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
@@ -64,28 +90,35 @@ export async function createApiContext(
     const result = await auth.api.verifyApiKey({ body: { key } });
     if (result.valid && result.key) {
       const userId = result.key.referenceId;
-      const organizationId = await resolveActorOrganizationId(userId);
-      if (log) {
-        log.set({
-          auth: { method: "apiKey" },
-          userId,
-          user: {
-            id: userId,
+      const scopedOrganizationId = keyOrganizationId(result.key.metadata);
+      const organizationId = await resolveActorOrganizationId(
+        userId,
+        scopedOrganizationId
+      );
+      // A scoped key stops working when its owner leaves that organization.
+      if (scopedOrganizationId === null || organizationId !== null) {
+        if (log) {
+          log.set({
+            auth: { method: "apiKey" },
+            userId,
+            user: {
+              id: userId,
+              name: `api-key:${result.key.name ?? result.key.id}`,
+            },
+          });
+        }
+        return {
+          headers: request.headers,
+          actor: {
+            userId,
+            email: null,
             name: `api-key:${result.key.name ?? result.key.id}`,
+            organizationId,
           },
-        });
+          authMethod: "apiKey",
+          log,
+        };
       }
-      return {
-        headers: request.headers,
-        actor: {
-          userId,
-          email: null,
-          name: `api-key:${result.key.name ?? result.key.id}`,
-          organizationId,
-        },
-        authMethod: "apiKey",
-        log,
-      };
     }
     if (log) {
       log.set({

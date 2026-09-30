@@ -78,7 +78,7 @@ just dev                    # Postgres + MinIO + migrations + web + worker
 
 No account is seeded and registration is closed by default. See [`docs/how-to/onboarding.md`](docs/how-to/onboarding.md) and [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup, invites, and env detail.
 
-**Bootstrap:** set `BETTER_AUTH_ALLOW_SIGNUP=1`, create the first account at `/auth/sign-up`, then set the flag back to `0`. That user becomes instance admin and owner of the install organization (`Watchdog`). Everyone else joins via Settings → **Team** invite (copy link, or optional SMTP in `.env`).
+**Bootstrap:** set `BETTER_AUTH_ALLOW_SIGNUP=1`, create the first account at `/auth/sign-up`; it becomes the instance admin, then onboarding asks you to create your organization. Leave the flag on for an open install (anyone can sign up and create organizations), or set it back to `0` to lock the install to invitations (Settings → **Organization**: copy link, or optional SMTP in `.env`).
 
 **First investigation tutorial:** [`docs/tutorials/first-investigation.md`](docs/tutorials/first-investigation.md) (dump → Process → Triage → Dossier).
 
@@ -105,14 +105,14 @@ Everything binds to loopback: product app on `:3000`, static marketing site on `
 | --- | --- |
 | `DATABASE_URL_MIGRATE` | Superuser URL for migrations; falls back to `DATABASE_URL` |
 | `BETTER_AUTH_URL` | Default `http://127.0.0.1:3000` |
-| `BETTER_AUTH_ALLOW_SIGNUP` | Open registration; default off (solo bootstrap only) |
+| `BETTER_AUTH_ALLOW_SIGNUP` | Open registration and self-serve organizations; default off (invitation-only) |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | Comma-separated extra origins |
 | `SMTP_HOST` · `SMTP_FROM` | Optional invitation mail (`SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`); copy-link works without SMTP |
 | `S3_REGION` | Default `us-east-1` |
 | `WD_EXPORT_DIR` | Markdown shadow location; default `<repo>/export` |
 | `NODE_ENV` | `development` · `production` · `test` |
 
-The CLI reads its own pair: `WD_API_URL` and `WD_API_KEY`, the latter created in Settings → API Keys. **Cap API keys never go here.** They live in the encrypted vault. API and CLI calls are scoped to the caller's Better Auth organization (session `activeOrganizationId`, or the key owner's membership).
+The CLI reads its own pair: `WD_API_URL` and `WD_API_KEY`, the latter created in Settings → API Keys. **Cap API keys never go here.** They live in the encrypted vault. API and CLI calls are scoped to the caller's Better Auth organization (session `activeOrganizationId`, or the organization the key was created in).
 
 ## A case, end to end
 
@@ -184,7 +184,7 @@ Most server-side product logic runs on **[Effect](https://effect.website)** (v4)
 
 ### Organizations and tenancy
 
-Better Auth **organizations** bound the case graph: each Case row carries an `organization_id`; list/get/create/update/delete and search filter on the active org. The first bootstrap user owns the single install org; later users join by invitation (`/auth/accept-invitation/{id}`) with org role `admin` or `member`. Instance admins (`auth.user.role`) manage accounts under Settings → **Users**; org admins invite under **Team**. Missing org context on an API call is **403**, not a silent cross-org leak. Details: [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) · [`docs/explanation/scenarios.md`](docs/explanation/scenarios.md).
+Better Auth **organizations** bound the case graph: each Case row carries an `organization_id`; list/get/create/update/delete and search filter on the active org. Users create organizations themselves (onboarding, or the sidebar switcher when signup is open) or join by invitation (`/auth/accept-invitation/{id}`) with org role `admin` or `member`. Instance admins (`auth.user.role`, the first account) manage accounts under Settings → **Users**; org owners and admins invite under **Organization**. Missing org context on an API call is **403**, not a silent cross-org leak. Details: [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) · [`docs/explanation/scenarios.md`](docs/explanation/scenarios.md).
 
 A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to Triage → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
 
@@ -225,7 +225,7 @@ Not there yet, worth knowing before you invest time:
 
 - **MCP server.** Not built. Agents use the OpenAPI surface today.
 - **Playbooks** are linear chains, with no branching and no conditionals.
-- **Multi-org SaaS.** Single install org at bootstrap; no self-serve org creation or billing. Team invite + org-scoped cases work for a small shop, not arbitrary tenant isolation under attack.
+- **Hardened multi-tenancy.** Organizations are self-serve and Cases are org-scoped, but there is no billing, no org deletion, and no adversarial-tenant isolation review yet.
 - **End-to-end coverage** — 18 Playwright specs in `e2e/specs/` (`@smoke` / `@custody` / `@journey`), including auth sign-up, team invite, and instance-admin Users, on top of unit, component, and integration tiers — not full manual-smoke parity yet.
 
 Investigation content (corpus, entity notes, mirrors) lives in a separate private repo and never enters this one.
