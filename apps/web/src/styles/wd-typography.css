@@ -15,6 +15,11 @@
   letter-spacing: -0.025em;
 }
 
+/* Opaque ids: keep glyphs literal (no fi/ff ligatures). */
+@utility ligatures-none {
+  font-variant-ligatures: none;
+}
+
 @utility text-heading-section {
   @apply text-base font-medium;
   line-height: 1.35;

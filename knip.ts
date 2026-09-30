@@ -44,7 +44,8 @@ const config: KnipConfig = {
         "scripts/**/*.{mjs,js,ts}",
       ],
       // Root depends on @watchdog/cli so `pnpm exec wd` / node_modules/.bin/wd work.
-      ignoreDependencies: ["@watchdog/cli"],
+      // `cn` is resolved by @shadcn/lint at lint time (grammar >= 0.3.2); nothing imports it.
+      ignoreDependencies: ["@watchdog/cli", "cn"],
     },
     "apps/site": {
       entry: ["src/pages/**/*.{astro,ts}", "astro.config.mjs"],

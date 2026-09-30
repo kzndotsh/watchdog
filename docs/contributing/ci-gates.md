@@ -16,7 +16,7 @@ Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference)
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm check` | Oxlint + Oxfmt (Ultracite). `effecttsgo` recommended is on; warn-severity Effect rules do not fail this gate. |
+| `pnpm check` | Oxlint + Oxfmt (Ultracite). `effecttsgo` recommended is on; warn-severity Effect rules do not fail this gate. `@shadcn/lint` (pinned, web only) fails raw palette colors, undeclared tokens, off-scale arbitrary values, and Tailwind classes that generate no CSS. |
 | `pnpm typecheck` | Workspace TS |
 | `pnpm check:agents:strict` | AGENTS.md hygiene + doc length on agents |
 | `pnpm check:docs:strict` | Docs links, index, leaf length budget |

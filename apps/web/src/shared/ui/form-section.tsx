@@ -50,8 +50,7 @@ export function FormSection({
           ACCENT_CARD_SURFACE,
           tone === "error" &&
             "bg-destructive/5 ring-destructive/40 dark:bg-destructive/10",
-          tone === "warning" &&
-            "bg-[color-mix(in_oklab,var(--wd-signal-500)_8%,transparent)] ring-[var(--wd-signal-500)]/35"
+          tone === "warning" && "bg-signal/8 ring-signal/35"
         )}
       >
         <CardContent className={cn("flex flex-col gap-6", contentClassName)}>

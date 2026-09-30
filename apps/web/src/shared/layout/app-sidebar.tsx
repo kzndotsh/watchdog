@@ -189,7 +189,7 @@ export function AppSidebar() {
               className="h-9 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! [&_svg]:size-4"
             >
               <DogIcon className="shrink-0" />
-              <span className="font-heading text-sm font-medium tracking-[0.12em] group-data-[collapsible=icon]:hidden">
+              <span className="font-heading tracking-eyebrow-sm text-sm font-medium group-data-[collapsible=icon]:hidden">
                 WATCHDOG
               </span>
             </SidebarMenuButton>

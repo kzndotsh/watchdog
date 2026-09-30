@@ -89,6 +89,9 @@ export default defineConfig({
   // effecttsgo comes from `@effect/tsgo/oxlint-presets` after `effect-tsgo patch --oxlint`.
   jsPlugins: [
     { name: "react-doctor", specifier: "oxlint-plugin-react-doctor" },
+    // Tailwind v4-aware class checks (theme tokens, unknown classes, arbitrary values).
+    // Web only — enabled in the apps/web override below. Pin exact: pre-1.0.
+    "@shadcn/lint",
   ],
   rules: {
     // --- Permanent off: low signal / huge churn (lint debt burn-down P7) ---
@@ -648,6 +651,32 @@ export default defineConfig({
       rules: {
         "react/only-export-components": "off",
         "unicorn/prefer-export-from": "off",
+      },
+    },
+    {
+      // Tailwind class checks on web UI. Class strings live in constants (STATUS_TONES,
+      // type roles), so scan every string. no-restyle / no-inline-styles /
+      // require-static-classes are deliberately off: see docs/reference/web/ui/rules.md.
+      files: ["apps/web/src/**/*.{ts,tsx}"],
+      rules: {
+        "shadcn/no-raw-colors": ["error", { scanAllStrings: true }],
+        "shadcn/no-arbitrary-values": [
+          "error",
+          { allow: ["layout"], scanAllStrings: true },
+        ],
+        "shadcn/no-unknown-classes": "error",
+      },
+    },
+    {
+      // Fixtures assert on made-up class / token names.
+      files: [
+        "apps/web/src/**/__tests__/**/*.{ts,tsx}",
+        "apps/web/src/**/*.{test,spec}.{ts,tsx}",
+      ],
+      rules: {
+        "shadcn/no-raw-colors": "off",
+        "shadcn/no-arbitrary-values": "off",
+        "shadcn/no-unknown-classes": "off",
       },
     },
   ],

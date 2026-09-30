@@ -66,7 +66,7 @@ export function IdChip({
   const shown = display?.trim() ? display.trim() : value;
 
   const chrome = cn(
-    "border-border/60 bg-muted/60 inline-flex w-fit max-w-full min-w-0 gap-1 rounded-md border pl-1.5 [font-variant-ligatures:none]",
+    "border-border/60 bg-muted/60 ligatures-none inline-flex w-fit max-w-full min-w-0 gap-1 rounded-md border pl-1.5",
     full ? "h-auto min-h-5 items-start py-0.5" : "items-center",
     size === "sm" ? "text-label-mono-sm" : "text-label-mono",
     !full && (size === "sm" ? "h-5" : "h-6"),

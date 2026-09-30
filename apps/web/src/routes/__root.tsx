@@ -26,7 +26,7 @@ function NotFoundPage() {
   return (
     <main className="mx-auto flex min-h-svh max-w-lg flex-col justify-center px-4 py-12">
       <div className="bg-background text-foreground flex flex-col gap-4 rounded-md border p-6 sm:p-8">
-        <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+        <p className="text-muted-foreground tracking-eyebrow text-xs font-semibold uppercase">
           404
         </p>
         <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">

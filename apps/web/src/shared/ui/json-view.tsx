@@ -17,6 +17,8 @@ import { useCallback, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable shadcn/no-arbitrary-values -- Syntax palette (Tokyo Night dark / GitHub light), not app chrome. Debt: move to --syntax-* tokens. */
+
 // ─── theme tokens ─────────────────────────────────────────────────────────────
 
 const TOKENS = {
