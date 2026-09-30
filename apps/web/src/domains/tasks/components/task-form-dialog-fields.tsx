@@ -20,7 +20,7 @@ export function TaskFormFields({
   busy: boolean;
 }) {
   return (
-    <FieldGroup className="gap-3">
+    <FieldGroup density="cozy">
       <form.Field name="title">
         {(field) => (
           <Field>

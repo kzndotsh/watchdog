@@ -184,7 +184,7 @@ export function ConnectionDialog({
             </DialogTitle>
           </DialogHeader>
 
-          <FieldGroup className="gap-3">
+          <FieldGroup density="cozy">
             <form.Subscribe
               selector={(s) => ({
                 predicate: s.values.predicate,

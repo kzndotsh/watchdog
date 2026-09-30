@@ -69,7 +69,7 @@ export function TriageQueueToolbar({
                   </span>
                 ) : null}
               </FieldLegend>
-              <FieldGroup className="gap-2">
+              <FieldGroup density="compact">
                 {STATUS_FACET_OPTIONS.map((opt) => {
                   const checked = filters.statuses.includes(opt.value);
                   const id = `triage-status-${opt.value}`;

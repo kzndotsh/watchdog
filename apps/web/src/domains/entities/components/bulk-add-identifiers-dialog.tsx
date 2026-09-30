@@ -93,7 +93,7 @@ export function BulkAddIdentifiersDialog({
         </DialogHeader>
 
         {stage === "paste" ? (
-          <Field className="gap-1">
+          <Field density="compact">
             <FieldLabel htmlFor="bulk-add-identifiers-paste">Paste</FieldLabel>
             <Textarea
               id="bulk-add-identifiers-paste"

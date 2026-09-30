@@ -79,7 +79,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
       <h2 className="text-label text-muted-foreground font-medium">
         Case settings
       </h2>
-      <FieldGroup className="gap-3">
+      <FieldGroup density="cozy">
         <Field>
           <FieldLabel htmlFor="case-name">Name</FieldLabel>
           <Input

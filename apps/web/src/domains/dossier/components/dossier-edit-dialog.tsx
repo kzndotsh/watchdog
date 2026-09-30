@@ -87,7 +87,7 @@ export function DossierEditDialog({
             <DialogTitle>Edit entity</DialogTitle>
           </DialogHeader>
 
-          <FieldGroup className="gap-3">
+          <FieldGroup density="cozy">
             <form.Field name="name">
               {(field) => (
                 <Field>

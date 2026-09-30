@@ -54,7 +54,7 @@ export function BulkAddMapStage({
   return (
     <>
       <div className="flex flex-wrap items-end gap-2">
-        <Field className="gap-1">
+        <Field density="compact">
           <FieldLabel>Entity</FieldLabel>
           <EntityCombobox
             entities={
@@ -82,7 +82,7 @@ export function BulkAddMapStage({
           ) : null}
         </Field>
         {showPlatform ? (
-          <Field className="gap-1">
+          <Field density="compact">
             <FieldLabel>Platform</FieldLabel>
             <FieldSelect
               value={defaultPlatform}

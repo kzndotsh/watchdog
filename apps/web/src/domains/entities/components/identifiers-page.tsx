@@ -164,7 +164,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
             >
               <FieldSet>
                 <FieldLegend variant="label">Type</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup density="compact">
                   {IDENTIFIER_TYPE_OPTIONS.map((opt) => {
                     const checked = typeFilter.includes(opt.value);
                     const id = `identifier-type-${opt.value}`;
@@ -189,7 +189,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               </FieldSet>
               <FieldSet>
                 <FieldLegend variant="label">Status</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup density="compact">
                   {IDENTIFIER_STATUS_OPTIONS.map((opt) => {
                     const checked = statusFilter.includes(opt.value);
                     const id = `identifier-status-${opt.value}`;
@@ -214,7 +214,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               </FieldSet>
               <FieldSet>
                 <FieldLegend variant="label">Confidence</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup density="compact">
                   {CONFIDENCE_OPTIONS.map((opt) => {
                     const checked = confidenceFilter.includes(opt.value);
                     const id = `identifier-confidence-${opt.value}`;

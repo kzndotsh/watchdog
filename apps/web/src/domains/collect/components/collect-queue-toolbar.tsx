@@ -131,7 +131,7 @@ export function CollectQueueToolbar({
             <div className="space-y-3">
               <FieldSet>
                 <FieldLegend variant="label">Show only</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup density="compact">
                   <Field orientation="horizontal">
                     <Checkbox
                       id={hiddenOnlyId}
@@ -184,7 +184,7 @@ export function CollectQueueToolbar({
               </FieldSet>
               <FieldSet>
                 <FieldLegend variant="label">State</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup density="compact">
                   {COLLECT_STATE_FACET_OPTIONS.map((opt) => {
                     const checked = filters.states.includes(opt.value);
                     const id = `collect-state-${opt.value}`;
@@ -213,7 +213,10 @@ export function CollectQueueToolbar({
               {capOptions.length > 0 ? (
                 <FieldSet>
                   <FieldLegend variant="label">Cap / playbook</FieldLegend>
-                  <FieldGroup className="max-h-40 gap-2 overflow-y-auto">
+                  <FieldGroup
+                    density="compact"
+                    className="max-h-40 overflow-y-auto"
+                  >
                     {capOptions.map((opt) => {
                       const checked = selectedCapabilityIds.has(opt.value);
                       const id = `collect-cap-${opt.value}`;
@@ -233,7 +236,7 @@ export function CollectQueueToolbar({
                               });
                             }}
                           />
-                          <FieldLabel htmlFor={id} className="truncate text-xs">
+                          <FieldLabel htmlFor={id} className="truncate">
                             {opt.label}
                           </FieldLabel>
                         </Field>

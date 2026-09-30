@@ -37,23 +37,44 @@ function FieldLegend({
   );
 }
 
-function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
+const fieldGroupVariants = cva(
+  "group/field-group @container/field-group flex w-full flex-col data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4",
+  {
+    variants: {
+      // Watchdog: form density. default = roomy dialogs, cozy = forms, compact = toolbars / popovers.
+      density: {
+        default: "gap-5",
+        cozy: "gap-3",
+        compact: "gap-2",
+      },
+    },
+    defaultVariants: { density: "default" },
+  }
+);
+
+function FieldGroup({
+  className,
+  density = "default",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof fieldGroupVariants>) {
   return (
     <div
       data-slot="field-group"
-      className={cn(
-        "group/field-group @container/field-group flex w-full flex-col gap-5 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4",
-        className
-      )}
+      className={cn(fieldGroupVariants({ density }), className)}
       {...props}
     />
   );
 }
 
 const fieldVariants = cva(
-  "group/field data-[invalid=true]:text-destructive flex w-full gap-2",
+  "group/field data-[invalid=true]:text-destructive flex w-full",
   {
     variants: {
+      // Watchdog: compact = tight label/control stacks in dense composers.
+      density: {
+        default: "gap-2",
+        compact: "gap-1.5",
+      },
       orientation: {
         vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
         horizontal:
@@ -64,6 +85,7 @@ const fieldVariants = cva(
     },
     defaultVariants: {
       orientation: "vertical",
+      density: "default",
     },
   }
 );
@@ -71,6 +93,7 @@ const fieldVariants = cva(
 function Field({
   className,
   orientation = "vertical",
+  density = "default",
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
   return (
@@ -78,7 +101,7 @@ function Field({
       role="group"
       data-slot="field"
       data-orientation={orientation}
-      className={cn(fieldVariants({ orientation }), className)}
+      className={cn(fieldVariants({ orientation, density }), className)}
       {...props}
     />
   );

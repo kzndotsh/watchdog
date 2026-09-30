@@ -103,9 +103,9 @@ export function ConnectionComposerFields({
   }
 
   return (
-    <FieldGroup className="gap-3">
-      <Field className="gap-1.5">
-        <FieldLabel className="text-xs">Relationship</FieldLabel>
+    <FieldGroup density="cozy">
+      <Field density="compact">
+        <FieldLabel>Relationship</FieldLabel>
         <FieldCombobox
           value={values.phraseValue}
           onValueChange={setPhrase}
@@ -118,8 +118,8 @@ export function ConnectionComposerFields({
         />
       </Field>
 
-      <Field className="gap-1.5">
-        <FieldLabel className="text-xs">Peer</FieldLabel>
+      <Field density="compact">
+        <FieldLabel>Peer</FieldLabel>
         <EntityCombobox
           entities={[...filteredPeerOptions]}
           value={values.peerId}
@@ -133,10 +133,8 @@ export function ConnectionComposerFields({
       </Field>
 
       {needsNotes ? (
-        <Field className="gap-1.5">
-          <FieldLabel className="text-xs" htmlFor="connection-notes">
-            Notes
-          </FieldLabel>
+        <Field density="compact">
+          <FieldLabel htmlFor="connection-notes">Notes</FieldLabel>
           <Input
             id="connection-notes"
             value={values.notes}

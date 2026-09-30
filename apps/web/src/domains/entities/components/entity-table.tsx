@@ -187,7 +187,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
             >
               <FieldSet>
                 <FieldLegend variant="label">Kind</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup density="compact">
                   {ENTITY_KINDS.map((k) => {
                     const checked = kindFilter.includes(k);
                     const id = `entity-kind-${k}`;
