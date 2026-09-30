@@ -1,3 +1,20 @@
+import {
+  CircleAlertIcon,
+  CircleCheckIcon,
+  CircleDashedIcon,
+  CircleDotDashedIcon,
+  CircleDotIcon,
+  CircleMinusIcon,
+  CircleOffIcon,
+  CirclePauseIcon,
+  CircleQuestionMarkIcon,
+  CircleSlashIcon,
+  CircleXIcon,
+  HistoryIcon,
+  LoaderCircleIcon,
+  type LucideIcon,
+} from "lucide-react";
+
 import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
 import type { VocabTone } from "@/shared/ui/vocab/vocab-badge";
 import {
@@ -121,6 +138,32 @@ export const STATUS_DOT: Record<DisplayStatus, string> = {
   current: "bg-status-current",
   former: "bg-status-former",
   unknown: "bg-status-unknown",
+};
+
+/**
+ * Glyph per status: shape carries the state, color reinforces it (WCAG 1.4.1).
+ * Statuses that share a hue (queued / cancelled / unknown, or pending / contested / former)
+ * must still differ in shape. Keep one glyph family (lucide circle set) for even weight.
+ */
+export const STATUS_GLYPH: Record<
+  DisplayStatus,
+  { icon: LucideIcon; color: string }
+> = {
+  queued: { icon: CircleDashedIcon, color: "text-status-queued" },
+  running: { icon: LoaderCircleIcon, color: "text-status-running" },
+  blocked: { icon: CirclePauseIcon, color: "text-warning" },
+  succeeded: { icon: CircleCheckIcon, color: "text-status-succeeded" },
+  failed: { icon: CircleXIcon, color: "text-status-failed" },
+  cancelled: { icon: CircleSlashIcon, color: "text-status-cancelled" },
+  pending: { icon: CircleDotDashedIcon, color: "text-status-pending" },
+  accepted: { icon: CircleCheckIcon, color: "text-status-accepted" },
+  rejected: { icon: CircleMinusIcon, color: "text-status-rejected" },
+  retracted: { icon: CircleOffIcon, color: "text-status-retracted" },
+  contested: { icon: CircleAlertIcon, color: "text-status-contested" },
+  disproved: { icon: CircleXIcon, color: "text-status-disproved" },
+  current: { icon: CircleDotIcon, color: "text-status-current" },
+  former: { icon: HistoryIcon, color: "text-status-former" },
+  unknown: { icon: CircleQuestionMarkIcon, color: "text-status-unknown" },
 };
 
 export function statusLabel(value: DisplayStatus): string {

@@ -1,3 +1,5 @@
+import { EyeOffIcon } from "lucide-react";
+
 import type { CollectRow, CollectState } from "@/domains/collect/types";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
@@ -78,9 +80,11 @@ export function CollectQueueList({
                   className="py-2"
                   trailing={
                     row.state === "hidden" ? (
-                      <span
+                      <EyeOffIcon
+                        role="img"
                         aria-label="Hidden"
-                        className="bg-muted-foreground/40 inline-flex size-2 shrink-0 rounded-full"
+                        className="text-muted-foreground size-3 shrink-0"
+                        strokeWidth={2.25}
                       />
                     ) : (
                       <StatusDot

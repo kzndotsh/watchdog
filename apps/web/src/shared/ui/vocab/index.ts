@@ -8,6 +8,7 @@ export {
 export { StatusBadge, StatusInk } from "@/shared/ui/vocab/status";
 export {
   STATUS_DOT,
+  STATUS_GLYPH,
   JOB_STATUS_OPTIONS,
   PROPOSAL_STATUS_OPTIONS,
   IDENTIFIER_STATUS_OPTIONS,

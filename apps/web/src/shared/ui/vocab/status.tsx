@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import {
-  STATUS_DOT,
+  STATUS_GLYPH,
   STATUS_LABELS,
   STATUS_TONES,
   type DisplayStatus,
@@ -36,7 +36,7 @@ export function StatusBadge({
   );
 }
 
-/** Status as colored type + dot — no pill. Use in Detail context strips. */
+/** Status as glyph + colored word — no pill. Use in Detail context strips. */
 export function StatusInk({
   status,
   pulse = false,
@@ -48,16 +48,19 @@ export function StatusInk({
   className?: string;
   children?: ReactNode;
 }) {
+  const { icon: Icon, color } = STATUS_GLYPH[status];
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-1", className)}>
       <span
         aria-hidden
         className={cn(
-          "size-2 shrink-0 rounded-full",
-          STATUS_DOT[status],
-          pulse && status === "running" && "animate-pulse"
+          "inline-flex size-3 shrink-0",
+          color,
+          pulse && status === "running" && "animate-spin"
         )}
-      />
+      >
+        <Icon className="size-3" strokeWidth={2.25} />
+      </span>
       <span
         className={cn("truncate", STATUS_TONES[status].low, "bg-transparent")}
       >
