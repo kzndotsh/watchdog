@@ -87,3 +87,12 @@ Each Playwright test runs after an automatic `_resetDb` fixture that calls `rese
 ## Adding an e2e spec
 
 Add when the behavior crosses pages, real browser timing, or auth/session chrome that unit/integration/component tests cannot structurally cover. Put the spec in the matching `e2e/specs/<area>/` folder, reuse fixtures and page objects, and assert on persisted/API-visible outcomes: not mock internals.
+
+## Test speed: shared workers
+
+Every Vitest project (unit, web-unit, property, component, integration) runs with `isolate: false` plus `vitest.reset-modules.ts`. A fresh worker per file re-evaluated `effect`, `drizzle`, and `postgres` for each file, and that import work was about 75% of the run (unit 41s, component 34s, integration 79s; now about 16s, 14s, 22s). Without isolation those load once per worker, and the setup file clears the module registry before every file, so `vi.mock` still applies to our own modules.
+
+What this means when writing tests:
+
+- **Restore what you change.** `process.env`, `globalThis`, fake timers, `window` / DOM, and module-level state outside the module registry are shared by the files that run in the same worker. Set and restore them in `beforeEach` / `afterEach` (`vi.stubEnv` + `vi.unstubAllEnvs`, `vi.useFakeTimers` + `vi.useRealTimers`).
+- **A leak shows up as an order-dependent failure.** Reproduce with `pnpm exec vitest run --project <name> --sequence.shuffle.files`, then fix the test's cleanup; do not turn isolation back on for the project.
