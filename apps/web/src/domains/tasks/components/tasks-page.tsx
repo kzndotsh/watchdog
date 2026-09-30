@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -9,6 +9,8 @@ import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import { cn } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
+import type { AppAction } from "@/shared/lib/app-action";
+import { usePaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -31,6 +33,23 @@ function TasksActive({
   onTaskIdChange,
 }: Props & { active: CaseRecord }) {
   const ws = useTaskWorkspace(active.id, { entityId });
+  const { openCreate } = ws;
+  const paletteActions = useMemo<AppAction[]>(
+    () => [
+      {
+        id: "tasks-new",
+        label: "New task",
+        group: "page",
+        icon: PlusIcon,
+        keywords: "create add todo",
+        run: () => {
+          openCreate("backlog");
+        },
+      },
+    ],
+    [openCreate]
+  );
+  usePaletteCommands(paletteActions);
 
   useEffect(() => {
     const normalizedTaskId = scopeOptionalUuid(taskId);

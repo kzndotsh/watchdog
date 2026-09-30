@@ -37,6 +37,7 @@ Button sizes: PageHeader / toolbar → `sm` (or default); Queue row / dense icon
 
 - `QueueShell` owns Queue keyboard flow (`shared/lib/queue-keyboard.ts`): `j` / `k` anywhere outside editable fields, ↑ / ↓ while focus is in the Queue. It clicks the next `[data-slot=queue-row]`, so each Queue keeps its own `onSelect` → URL wiring. Only the most recently mounted Queue listens; opt out with `keyboard={false}`.
 - Single-key actions are declarative: put `data-hotkey="<key>"` + `aria-keyshortcuts` on the control and a `Kbd` hint inside it. `useDataHotkeys` (mounted in `SearchChrome`) clicks the first live match, so disabled / gated controls stay gated. Add every shortcut to `HOTKEYS` so the Shortcuts dialog lists it.
+- Page commands: a surface calls `usePaletteCommands(actions)` (`shared/lib/palette-commands.ts`) with its `page` AppActions; Mod+K lists them under **This Page** while it is mounted. Reuse the same AppAction the button or ⋯ menu runs; don't fork a palette-only handler.
 
 ## Gotchas
 

@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { CheckIcon, DownloadIcon, PlusIcon } from "lucide-react";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import { createCaseFn } from "@/domains/cases/cases.functions";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
@@ -10,7 +10,11 @@ import { createCaseInputSchema, type CaseRecord } from "@/domains/cases/types";
 import { cn, errMessage, nextAutoSlug } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
-import { filterActionsForSurface } from "@/shared/lib/app-action";
+import {
+  filterActionsForSurface,
+  type AppAction,
+} from "@/shared/lib/app-action";
+import { usePaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import {
@@ -456,6 +460,20 @@ export function CaseList() {
     closeDeleteDialog,
     handleCaseDeleted,
   } = useCaseList();
+  const paletteActions = useMemo<AppAction[]>(
+    () => [
+      {
+        id: "cases-new",
+        label: "New Case",
+        group: "page",
+        icon: PlusIcon,
+        keywords: "create add investigation",
+        run: openCreate,
+      },
+    ],
+    [openCreate]
+  );
+  usePaletteCommands(paletteActions);
 
   return (
     <Page className="min-h-0 overflow-hidden">
