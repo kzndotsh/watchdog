@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { TYPE_SCALE_ROLES } from "@/routes/_protected/ui/type-scale-roles";
-import { TypeScaleSpecimen } from "@/routes/_protected/ui/type-scale-specimen";
+import { TYPE_SCALE_ROLES } from "@/routes/_protected/ui/-type-scale-roles";
+import { TypeScaleSpecimen } from "@/routes/_protected/ui/-type-scale-specimen";
 import { DISPLAY_SCALE_STORAGE_KEY } from "@/shared/lib/display-scale";
 
 describe("TypeScaleSpecimen", () => {

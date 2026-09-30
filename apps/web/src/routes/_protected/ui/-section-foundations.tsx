@@ -3,7 +3,7 @@ import {
   Specimen,
   Swatch,
 } from "@/routes/_protected/ui/-guide-chrome";
-import { TypeScaleSpecimen } from "@/routes/_protected/ui/type-scale-specimen";
+import { TypeScaleSpecimen } from "@/routes/_protected/ui/-type-scale-specimen";
 
 const CONFIDENCE_SWATCHES = [
   { name: "confirmed", className: "bg-confidence-confirmed" },
