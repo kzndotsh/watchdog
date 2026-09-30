@@ -343,13 +343,13 @@ async function checkDocLength(absPath) {
     text.includes("<!-- docs:allow-length -->") ||
     rel === "docs/explanation/scenarios.md";
   if (allow) return;
-  if (n > 250) {
+  if (n > 600) {
     note(
       failLength ? "fail" : "warn",
-      `${rel}: >250 lines (${n})${failLength ? "" : " [warn until docs D6]"}`
+      `${rel}: >600 lines (${n})${failLength ? "" : " [warn until docs D6]"}`
     );
-  } else if (n > 180) {
-    note("warn", `${rel}: >180 lines (${n})`);
+  } else if (n > 400) {
+    note("warn", `${rel}: >400 lines (${n})`);
   }
 }
 

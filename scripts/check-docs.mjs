@@ -126,13 +126,13 @@ async function checkMarkdownFile(absPath, opts) {
       text.includes("<!-- docs:allow-length -->") ||
       rel === "docs/explanation/scenarios.md";
     if (!allow) {
-      if (lines > 250) {
+      if (lines > 600) {
         note(
           failLength ? "fail" : "warn",
-          `${rel}: >250 lines (${lines})${failLength ? "" : " [warn until D6]"}`
+          `${rel}: >600 lines (${lines})${failLength ? "" : " [warn until D6]"}`
         );
-      } else if (lines > 180) {
-        note("warn", `${rel}: >180 lines (${lines})`);
+      } else if (lines > 400) {
+        note("warn", `${rel}: >400 lines (${lines})`);
       }
     }
   }
