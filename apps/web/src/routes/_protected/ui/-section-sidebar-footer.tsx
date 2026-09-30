@@ -111,7 +111,7 @@ export function SidebarFooterSection() {
     <GuideSection
       id="sidebar-footer"
       title="Sidebar footer variants"
-      blurb="Options for the org switcher and the account control. Each shows the expanded sidebar (left) and icon mode (right). C is what the app uses today."
+      blurb="Options for the org switcher and the account control. Each shows the expanded sidebar (left) and icon mode (right). D is what the app uses today (C was tried first)."
     >
       <div className="grid gap-8 lg:grid-cols-2">
         <Variant

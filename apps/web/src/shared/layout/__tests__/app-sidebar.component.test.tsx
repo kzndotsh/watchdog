@@ -157,17 +157,17 @@ vi.mock("@watchdog/ui/components/skeleton", () => ({
 import { AppSidebar } from "@/shared/layout/app-sidebar";
 
 describe("AppSidebar", () => {
-  it("renders dashboard branding, search, case switcher, and account strip", () => {
+  it("renders dashboard, search, case switcher, and account row", () => {
     render(<AppSidebar />);
 
-    expect(screen.getByText("WATCHDOG")).toBeInTheDocument();
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Search trigger")).toBeInTheDocument();
     expect(screen.getByText("Case switcher")).toBeInTheDocument();
     expect(screen.getByText("Org switcher")).toBeInTheDocument();
-    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getAllByText("Analyst").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Settings")).toBeInTheDocument();
-    expect(screen.getByLabelText("Sign out")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Theme mode/)).toBeInTheDocument();
+    expect(screen.getByText("Sign out")).toBeInTheDocument();
+    expect(screen.getByText("System")).toBeInTheDocument();
     expect(screen.getByText("Tasks")).toBeInTheDocument();
     expect(screen.getByText("Collect")).toBeInTheDocument();
     expect(screen.getByText("Triage")).toBeInTheDocument();

@@ -1,6 +1,6 @@
 import { useSession } from "@better-auth-ui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
+import { LogOutIcon, SettingsIcon } from "lucide-react";
 
 import { authClient } from "@/auth/client";
 import { NAV_GROUPS, pathActive } from "@/config/nav";
@@ -12,6 +12,15 @@ import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { trimmedOrUndefined } from "@watchdog/schemas";
 import { Avatar, AvatarFallback } from "@watchdog/ui/components/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@watchdog/ui/components/dropdown-menu";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 import {
   Sidebar,
@@ -24,7 +33,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "@watchdog/ui/components/sidebar";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 
@@ -48,16 +56,17 @@ function userInitials(name: string): string {
     .join("");
 }
 
-function AccountStripSkeleton() {
+function AccountRowSkeleton() {
   return (
-    <div className="flex items-center gap-1 px-1">
+    <div className="flex items-center gap-2 px-2">
       <Skeleton className="size-6 rounded-full" />
+      <Skeleton className="h-3.5 w-24" />
     </div>
   );
 }
 
-/** Account controls as a strip: who you are, theme, settings, sign out. Icon mode keeps avatar + settings. */
-function AccountStrip() {
+/** Slim footer row: the account menu (name, theme, sign out) plus a settings shortcut. */
+function AccountRow() {
   const { data, isPending } = useSession(authClient);
   const { mode, toggleMode, Icon: ThemeIcon, ariaLabel } = useThemeMode();
   const user = data?.user;
@@ -65,40 +74,70 @@ function AccountStrip() {
   const email = user?.email ?? "";
 
   if (isPending && !user) {
-    return <AccountStripSkeleton />;
+    return <AccountRowSkeleton />;
   }
 
   return (
-    <div className="flex items-center gap-1 px-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:px-0">
-      <WithTooltip
-        side="right"
-        content={
-          <span className="flex flex-col">
-            <span className="font-medium">{name}</span>
-            {email ? <span className="opacity-80">{email}</span> : null}
-          </span>
-        }
-      >
-        <Avatar size="sm" aria-label={name}>
-          <AvatarFallback className="text-xs" suppressHydrationWarning>
-            {userInitials(name) || "?"}
-          </AvatarFallback>
-        </Avatar>
-      </WithTooltip>
+    <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
+      <SidebarMenu className="min-w-0 flex-1">
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <SidebarMenuButton aria-label="Account menu" tooltip={name} />
+              }
+            >
+              <Avatar size="sm">
+                <AvatarFallback className="text-xs" suppressHydrationWarning>
+                  {userInitials(name) || "?"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate" suppressHydrationWarning>
+                {name}
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="min-w-56"
+              side="top"
+              align="start"
+              sideOffset={4}
+            >
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="truncate font-medium">{name}</span>
+                    {email ? (
+                      <span className="text-muted-foreground truncate">
+                        {email}
+                      </span>
+                    ) : null}
+                  </div>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  closeOnClick={false}
+                  aria-label={ariaLabel}
+                  onClick={toggleMode}
+                >
+                  <ThemeIcon />
+                  {modeLabel(mode)}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  render={
+                    <Link to="/auth/$path" params={{ path: "sign-out" }} />
+                  }
+                >
+                  <LogOutIcon />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
 
-      <span className="flex-1 group-data-[collapsible=icon]:hidden" />
-
-      <WithTooltip content={`Theme: ${modeLabel(mode)}`}>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={ariaLabel}
-          onClick={toggleMode}
-          className="text-sidebar-foreground group-data-[collapsible=icon]:hidden"
-        >
-          <ThemeIcon />
-        </Button>
-      </WithTooltip>
       <WithTooltip content="Settings" side="right">
         <Button
           variant="ghost"
@@ -111,18 +150,6 @@ function AccountStrip() {
           <SettingsIcon />
         </Button>
       </WithTooltip>
-      <WithTooltip content="Sign out">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Sign out"
-          nativeButton={false}
-          render={<Link to="/auth/$path" params={{ path: "sign-out" }} />}
-          className="text-sidebar-foreground group-data-[collapsible=icon]:hidden"
-        >
-          <LogOutIcon />
-        </Button>
-      </WithTooltip>
     </div>
   );
 }
@@ -132,23 +159,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="pb-0">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="default"
-              isActive={pathActive(pathname, "/")}
-              render={<Link to="/" />}
-              tooltip="Dashboard"
-              className="h-9 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! [&_svg]:size-4"
-            >
-              <DogIcon className="shrink-0" />
-              <span className="font-heading tracking-eyebrow-sm text-sm font-medium group-data-[collapsible=icon]:hidden">
-                WATCHDOG
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader>
+        <OrgSwitcher />
       </SidebarHeader>
 
       <SidebarContent>
@@ -187,9 +199,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <OrgSwitcher />
-        <SidebarSeparator />
-        <AccountStrip />
+        <AccountRow />
       </SidebarFooter>
     </Sidebar>
   );
