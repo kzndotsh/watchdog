@@ -10,7 +10,7 @@ import {
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 
-export interface CollectRunFormPanelProps {
+export interface CollectRunFormProps {
   runMode: CollectRunMode;
   playbooks: PlaybookListItem[];
   caps: CapListItem[];
@@ -23,7 +23,7 @@ export interface CollectRunFormPanelProps {
   onRunCap: (vars: CapRunVars) => Promise<void>;
 }
 
-export function CollectRunFormPanel({
+export function CollectRunForm({
   runMode,
   playbooks,
   caps,
@@ -34,7 +34,7 @@ export function CollectRunFormPanel({
   runError,
   onRunPlaybook,
   onRunCap,
-}: CollectRunFormPanelProps) {
+}: CollectRunFormProps) {
   if (runMode === "playbook") {
     return (
       <JobPlaybookRunForm

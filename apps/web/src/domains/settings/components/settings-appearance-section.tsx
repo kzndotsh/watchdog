@@ -28,7 +28,7 @@ const THEME_OPTIONS: {
 ];
 
 /** Theme + display size preferences (localStorage). */
-export function SettingsAppearancePanel() {
+export function SettingsAppearanceSection() {
   const { mode, setMode } = useThemeMode();
   const { scale, setScale } = useDisplayScale();
 

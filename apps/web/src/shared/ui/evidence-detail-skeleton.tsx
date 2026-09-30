@@ -3,7 +3,7 @@ import { ArtifactPreviewSkeleton } from "@/shared/ui/artifact-preview";
 import {
   DetailContextHeader,
   DetailContextSep,
-} from "@/shared/ui/detail-context-strip";
+} from "@/shared/ui/detail-context-line";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
 import { Skeleton } from "@/shared/ui/shadcn/skeleton";

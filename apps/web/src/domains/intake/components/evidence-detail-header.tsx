@@ -13,7 +13,7 @@ import { ActorMention } from "@/shared/ui/actor-mention";
 import {
   DetailContextHeader,
   DetailContextSep,
-} from "@/shared/ui/detail-context-strip";
+} from "@/shared/ui/detail-context-line";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/shadcn/button";
 import { TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";

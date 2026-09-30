@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SettingsAppearancePanel } from "@/domains/settings/components/settings-appearance-panel";
+import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { DISPLAY_SCALE_STORAGE_KEY } from "@/shared/lib/display-scale";
 
-describe("SettingsAppearancePanel", () => {
+describe("SettingsAppearanceSection", () => {
   afterEach(() => {
     window.localStorage.removeItem("theme");
     window.localStorage.removeItem(DISPLAY_SCALE_STORAGE_KEY);
@@ -15,7 +15,7 @@ describe("SettingsAppearancePanel", () => {
   });
 
   it("renders theme and display size controls", () => {
-    render(<SettingsAppearancePanel />);
+    render(<SettingsAppearanceSection />);
 
     expect(screen.getByText("Theme")).toBeInTheDocument();
     expect(screen.getByText("Display size")).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe("SettingsAppearancePanel", () => {
   });
 
   it("persists display scale and applies the css variable", () => {
-    render(<SettingsAppearancePanel />);
+    render(<SettingsAppearanceSection />);
 
     fireEvent.click(screen.getByRole("button", { name: "Large" }));
 
@@ -40,7 +40,7 @@ describe("SettingsAppearancePanel", () => {
   });
 
   it("persists theme mode when a radio option is selected", () => {
-    render(<SettingsAppearancePanel />);
+    render(<SettingsAppearanceSection />);
 
     fireEvent.click(screen.getByRole("radio", { name: "Dark" }));
 

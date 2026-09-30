@@ -18,7 +18,7 @@ import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
 import { TeamSettings } from "@/auth/ui/team/team-settings";
 import { UsersSettings } from "@/auth/ui/users/users-settings";
-import { SettingsAppearancePanel } from "@/domains/settings/components/settings-appearance-panel";
+import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
   SETTINGS_TABS,
@@ -114,7 +114,7 @@ function SettingsPanel({
       );
     }
     case "appearance": {
-      return <SettingsAppearancePanel />;
+      return <SettingsAppearanceSection />;
     }
     case "api-keys": {
       return (

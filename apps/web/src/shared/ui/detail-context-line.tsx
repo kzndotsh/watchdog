@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** Muted inline context under split-view queue selection — not labeled MetaRows. */
-export function DetailContextStrip({
+export function DetailContextLine({
   children,
   className,
 }: {
@@ -12,7 +12,7 @@ export function DetailContextStrip({
 }) {
   return (
     <p
-      data-slot="detail-context-strip"
+      data-slot="detail-context-line"
       className={cn(
         "text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs",
         className
@@ -46,9 +46,9 @@ export function DetailContextHeader({
         className
       )}
     >
-      <DetailContextStrip className="min-w-0 flex-1 flex-nowrap overflow-hidden">
+      <DetailContextLine className="min-w-0 flex-1 flex-nowrap overflow-hidden">
         {children}
-      </DetailContextStrip>
+      </DetailContextLine>
     </div>
   );
 }

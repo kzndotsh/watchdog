@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import {
   DetailContextHeader,
   DetailContextSep,
-} from "@/shared/ui/detail-context-strip";
+} from "@/shared/ui/detail-context-line";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 

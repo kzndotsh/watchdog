@@ -19,7 +19,7 @@ export const WD_UI_FILES = [
   "src/shared/ui/default-route-pending-shell.tsx",
   "src/shared/ui/destructive-confirm-dialog.tsx",
   "src/shared/ui/detail-empty.tsx",
-  "src/shared/ui/detail-context-strip.tsx",
+  "src/shared/ui/detail-context-line.tsx",
   "src/shared/ui/detail-footer.tsx",
   "src/shared/ui/detail-status-chip.tsx",
   "src/shared/ui/empty-state.tsx",

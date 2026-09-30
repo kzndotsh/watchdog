@@ -72,7 +72,7 @@ Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.
 | Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | [`ingress`](docs/reference/contracts/ingress.md) · [`custody`](docs/reference/contracts/custody.md) |
 | Agents/CLI default: propose; graph write needs `userOverride` → Graph @ `unverified` + `graph_writes` | Silent machine Graph writes; mid-build verbs (<!-- check:agents allow-banned --> promote / Scratch / Door A / Candidate theater) | [`agent-ingress`](docs/reference/contracts/agent-ingress.md) |
 | Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | — |
-| Chrome: Queue + Detail | Console / Tape / Panel / Pane / Rail / Strip | — |
+| Chrome: Queue + Detail | Console / Workbench / Tape surfaces; a screen named `*Panel` | [ui lexicon](docs/reference/web/ui/README.md#chrome-lexicon-ui-parts) |
 | Process logs via `@watchdog/log` (evlog NDJSON) | Secrets/Evidence body in logs; treat evlog as Graph audit | [`evlog`](docs/reference/contracts/evlog.md) |
 | Extend the tracked packages/apps | Extend `_legacy-*` | — |
 

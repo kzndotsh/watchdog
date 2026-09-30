@@ -11,7 +11,7 @@ import {
 import { CollectDetail } from "@/domains/collect/components/collect-detail";
 import { CollectQueueBody } from "@/domains/collect/components/collect-queue-body";
 import { CollectQueueToolbar } from "@/domains/collect/components/collect-queue-toolbar";
-import { CollectRunFormPanel } from "@/domains/collect/components/collect-run-form-panel";
+import { CollectRunForm } from "@/domains/collect/components/collect-run-form";
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
 import { collectQueueCountLabel } from "@/domains/collect/lib/collect-queue-label";
 import { DumpDialogs } from "@/domains/intake/components/dump-dialogs";
@@ -99,7 +99,7 @@ function CollectWithCase({
           (runCatalogPlaceholder || ws.credentialsPending) && !runFormPending
         )}
       >
-        <CollectRunFormPanel
+        <CollectRunForm
           runMode={ws.runMode}
           playbooks={playbooks}
           caps={caps}
