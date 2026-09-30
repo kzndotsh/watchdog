@@ -71,7 +71,7 @@ describe("SearchChrome", () => {
     );
   });
 
-  it("registers global hotkey bindings for palette, sidebar, and shortcuts", () => {
+  it("registers global hotkey bindings for palette and shortcuts (Mod+B belongs to SidebarProvider)", () => {
     render(
       <SearchChrome>
         <div>Child</div>
@@ -83,7 +83,6 @@ describe("SearchChrome", () => {
     }[];
     expect(bindings.map((binding) => binding.id)).toEqual([
       "command-palette",
-      "toggle-sidebar",
       "shortcuts",
     ]);
   });

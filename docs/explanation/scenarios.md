@@ -152,7 +152,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Identifier / Evidence / Task / Job / Triage hits | shipped | Deep links: identifiers tab, `?id=` (Collect Evidence or Job), `?entityId=` (Tasks), `?proposalId=` (Triage) |
 | Cases group switches Active | shipped | Sets cookie + opens Overview |
 | `?` Shortcuts dialog | shipped | Global list incl. Queue `j`/`k` and Triage `a`/`r`; HOTKEYS catalog stays static |
-| Mod+B toggles sidebar | shipped | Via `useGlobalHotkeys` in `SearchChrome` (not shadcn-only listener) |
+| Mod+B toggles sidebar | shipped | Upstream `SidebarProvider` owns the listener (vendored, unpatched); `SearchChrome` binds only Mod+K and `?` |
 | Entities/Identifiers row context menu | shipped | Same labels as ⋯; target-only; editables keep native menu; Dossier Identifiers included |
 | Ego graph node menu | shipped | ContextMenu + ⋯ DropdownMenu from `getNodeActions`; Case overview graph omits |
 | Dossier section row menus | shipped | Connections / Claims / Events / Questions: `AppAction` factories + ContextMenu + ⋯ |
