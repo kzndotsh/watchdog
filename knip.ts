@@ -12,8 +12,6 @@ const config: KnipConfig = {
     // Vendored shadcn output: unused *files* still surface; unused exports are upstream's.
     "packages/ui/src/**": ["exports", "types"],
     "apps/web/src/shared/ui/primitives/**": ["exports", "types"],
-    // Reworked in the toast commit; unused Base UI re-exports until then.
-    "apps/web/src/shared/ui/toast.tsx": ["exports"],
     "apps/web/src/domains/**/types.ts": ["types"],
     "apps/web/src/domains/**/*.server.ts": ["types"],
     "apps/web/src/auth/server.ts": ["types"],

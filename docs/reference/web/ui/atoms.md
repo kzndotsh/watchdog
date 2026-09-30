@@ -52,7 +52,7 @@ Callers place components (layout classes, `truncate`) and pick a size or variant
 | `input`, `textarea` | `mono` (ids, hashes, paths) |
 | `combobox` | `ComboboxInput tone="warning"` (data leaves the machine) |
 
-Anything that is only a different look is not a wrapper: use the stock component, or a CSS token if it should change everywhere. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`toast`, `QueueRow`, `StatusDot`, `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`).
+Anything that is only a different look is not a wrapper: use the stock component, or a CSS token if it should change everywhere. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`toast` helpers, `QueueRow`, `StatusDot`, `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`).
 
 Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`; Inputs 12px at `md+`), so don't add `text-xs` / `h-*` patches to match the old scale. Density comes from Mira, so don't add `text-xs` / `h-*` patches to a screen.
 

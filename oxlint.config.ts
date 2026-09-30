@@ -350,7 +350,10 @@ export default defineConfig({
     },
     {
       // Wrappers are the one place that composes the vanilla primitives they wrap.
-      files: ["apps/web/src/shared/ui/primitives/**/*.{ts,tsx}"],
+      files: [
+        "apps/web/src/shared/ui/primitives/**/*.{ts,tsx}",
+        "apps/web/src/shared/ui/toast.tsx",
+      ],
       rules: {
         // Wrappers re-export their base module (`export *`): fast-refresh boundaries don't apply.
         "react/only-export-components": "off",

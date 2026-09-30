@@ -13,7 +13,6 @@
     "ds:check": "pnpm typecheck && pnpm ds:ban"
   },
   "dependencies": {
-    "@base-ui/react": "^1.8.0",
     "@better-auth-ui/core": "1.7.23",
     "@better-auth-ui/react": "1.7.23",
     "@better-auth/api-key": "1.7.5",

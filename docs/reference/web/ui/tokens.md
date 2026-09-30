@@ -42,7 +42,7 @@ Overlays come from `@watchdog/ui` (upstream Mira look) directly. Dialog and Aler
 | **AlertDialog** | Blocking confirm, medium-stakes cancel (`DestructiveConfirmDialog` for irreversible) | Upstream layout; `AlertDialogAction` runs on our Button (`loading`) |
 | **Sheet** | Right-side notes / long editors | Upstream slide-over; shares popover palette |
 | **Popover** | Filters, compact pickers, table cells | Upstream `p-2.5` (`flush` for calendars / lists); set `modal` when clicks must not pass through rows |
-| **Toast** (`toast.tsx`) | Transient mutation OK/fail, copy confirmations | Base UI stack; `rounded-md`; neutral `bg-card` panel + icon chip (`status-*-bg` / `status-*-fg`); body stays `foreground` / `muted-foreground`; close on every toast; mount `<Toaster />` in root layout |
+| **Toast** (`shared/ui/toast.tsx`) | Transient mutation OK/fail, copy confirmations | Upstream shadcn Base UI toast + `Toaster` (per-type icons, stacking motion) from `@watchdog/ui`; our file only adds `toast.success` / `error` / `warning` / `info` / `loading` one-call helpers. Mount `<Toaster />` once in the root layout |
 
 **Enter confirms** (`shared/lib/dialog-default-action.ts`, wired into `DialogContent` + `AlertDialogContent`): Enter clicks `[data-dialog-default-action]`, else the AlertDialog action, else the single enabled primary/destructive footer `Button` (`data-variant`). Native Enter wins inside `<form>`, on buttons/links, comboboxes, menus, textareas (Mod+Enter confirms from a textarea), and during IME composition. Two primaries → no default. Opt out with `enterConfirms={false}`. Lives in the `primitives` wrappers, so `pnpm ui:sync` never disturbs it.
 
