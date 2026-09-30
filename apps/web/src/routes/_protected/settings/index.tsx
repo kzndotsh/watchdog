@@ -13,7 +13,6 @@ import { useCallback, useEffect } from "react";
 import { z } from "zod";
 
 import { authClient } from "@/auth/client";
-import { isInstanceAdmin } from "@/auth/instance-admin";
 import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
 import { TeamSettings } from "@/auth/ui/team/team-settings";
@@ -31,6 +30,7 @@ import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
 import { normalizeRouteSegment } from "@/shared/lib/route-slug";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
+import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
 const routeApi = getRouteApi("/_protected/settings/");

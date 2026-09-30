@@ -12,7 +12,7 @@ Drizzle ORM + postgres.js for the Watchdog Case Graph and Better Auth tables.
 | Repository | `src/repos/*.repo.ts` | SQL only — queries/commands over `DbExec` |
 | Barrel | `src/repos/index.ts` | Named re-exports (`claimsRepo`, `ClaimRow`, …) — entrypoint `@watchdog/db`; `@watchdog/db/schema` for schema-only |
 
-Services (`@watchdog/core`) call repos. Controllers (`@watchdog/api`) call services. Apps never write SQL except documented exceptions (`auth/server.ts`, SSE `listenForEvents`).
+Services (`@watchdog/core`) call repos. Controllers (`@watchdog/api`) call services. Apps never write SQL except documented exceptions (`@watchdog/auth`, SSE `listenForEvents`).
 
 The barrel is **re-exports only**. Do not add an aggregate `repos` object: building one needs a value import of every repo, so a single type import would pull all repo modules and their tables into the graph.
 

@@ -7,8 +7,8 @@ import { toast } from "@/shared/ui/toast";
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 
 import { authClient } from "@/auth/client";
-import { buildInvitationAcceptUrl, invitationAcceptPath } from "@/auth/invitation-url";
-import { canManageTeam, INVITE_ROLE_OPTIONS } from "@/auth/org-roles";
+import { buildInvitationAcceptUrl, invitationAcceptPath } from "@watchdog/auth/invitation-url";
+import { canManageTeam, INVITE_ROLE_OPTIONS } from "@watchdog/auth/org-roles";
 import { errMessage, cn } from "@/lib/utils";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormSection } from "@/shared/ui/form-section";

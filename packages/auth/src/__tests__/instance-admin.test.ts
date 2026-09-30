@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { instanceAdminAccess, isInstanceAdmin } from "@/auth/instance-admin";
+import { instanceAdminAccess, isInstanceAdmin } from "../instance-admin";
 
 describe("isInstanceAdmin", () => {
   it("matches the Better Auth user.role admin token", () => {

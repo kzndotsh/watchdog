@@ -1,0 +1,31 @@
+{
+  "name": "@watchdog/auth",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server": "./src/server.ts",
+    "./instance-admin": "./src/instance-admin.ts",
+    "./org-roles": "./src/org-roles.ts",
+    "./invitation-url": "./src/invitation-url.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/api-key": "1.7.5",
+    "@better-auth/drizzle-adapter": "1.7.5",
+    "@watchdog/api": "workspace:*",
+    "@watchdog/db": "workspace:*",
+    "@watchdog/env": "workspace:*",
+    "@watchdog/log": "workspace:*",
+    "@watchdog/schemas": "workspace:*",
+    "better-auth": "1.7.5",
+    "nodemailer": "^10.0.10",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "@watchdog/test-kit": "workspace:*",
+    "typescript": "7.0.2"
+  }
+}

@@ -47,7 +47,7 @@ Watchdog runtime conventions (run* edges, JobFibers, Cap `run`, browser policy) 
 
 ## Sub-AGENTS directory
 
-**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `apps/cli`, `packages/{db,core,api,caps,cap-sdk,env,client,contract,policy,schemas,ai,tools,log,test-kit,ui}`.
+**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `apps/cli`, `packages/{db,core,api,auth,caps,cap-sdk,env,client,contract,policy,schemas,ai,tools,log,test-kit,ui}`.
 
 ## Agent Skills
 

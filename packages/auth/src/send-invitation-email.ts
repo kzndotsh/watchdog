@@ -1,7 +1,8 @@
-import { buildInvitationAcceptUrl } from "@/auth/invitation-url";
-import { sendSmtpMail } from "@/auth/smtp-mail";
 import { env } from "@watchdog/env/server";
 import { createLogger, maskEmail, peekRequestLogger } from "@watchdog/log";
+
+import { buildInvitationAcceptUrl } from "./invitation-url";
+import { sendSmtpMail } from "./smtp-mail";
 
 interface InvitationEmailData {
   id: string;

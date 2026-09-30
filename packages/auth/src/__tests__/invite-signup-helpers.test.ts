@@ -5,7 +5,7 @@ import {
   assertPasswordLength,
   requirePendingInvitation,
   throwInvitationNotFound,
-} from "@/auth/invite-signup-helpers";
+} from "../invite-signup-helpers";
 
 describe("invite-signup-helpers", () => {
   describe("throwInvitationNotFound", () => {

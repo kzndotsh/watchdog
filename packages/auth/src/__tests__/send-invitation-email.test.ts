@@ -22,11 +22,11 @@ vi.mock("@watchdog/env/server", () => ({
 
 const sendSmtpMail = vi.hoisted(() => vi.fn());
 
-vi.mock("@/auth/smtp-mail", () => ({
+vi.mock("../smtp-mail", () => ({
   sendSmtpMail,
 }));
 
-import { sendInvitationEmail } from "@/auth/send-invitation-email";
+import { sendInvitationEmail } from "../send-invitation-email";
 
 describe("sendInvitationEmail", () => {
   beforeEach(() => {

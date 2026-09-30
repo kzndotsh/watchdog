@@ -6,7 +6,7 @@ import type { getOrgAdapter } from "better-auth/plugins";
 import {
   type PendingInvitation,
   throwInvitationNotFound,
-} from "@/auth/invite-signup-helpers";
+} from "./invite-signup-helpers";
 
 type OrgAdapter = ReturnType<typeof getOrgAdapter>;
 

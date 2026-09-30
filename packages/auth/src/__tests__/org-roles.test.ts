@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { canManageTeam } from "@/auth/org-roles";
+import { canManageTeam } from "../org-roles";
 
 describe("canManageTeam", () => {
   it("allows owner and admin", () => {

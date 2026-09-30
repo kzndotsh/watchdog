@@ -4,25 +4,23 @@ import { testHttpOrigin } from "@watchdog/test-kit";
 
 const resolveActorOrganizationId = vi.hoisted(() => vi.fn(async () => "org-1"));
 
-vi.mock("@/auth/server", () => ({
-  auth: {
-    api: {
-      getSession: vi.fn(),
-      verifyApiKey: vi.fn(),
-    },
-  },
-  resolveActorOrganizationId,
-}));
+vi.mock("../actor", () => ({ resolveActorOrganizationId }));
 
 vi.mock("@watchdog/log", () => ({
   identifyUser: vi.fn(),
   peekRequestLogger: vi.fn(() => null),
 }));
 
-import { actorFromSession, createApiContext } from "@/auth/api-context.server";
-import { auth } from "@/auth/server";
+import { actorFromSession, createApiContext } from "../api-context";
 
-describe("api-context.server", () => {
+const auth = {
+  api: {
+    getSession: vi.fn(),
+    verifyApiKey: vi.fn(),
+  },
+};
+
+describe("api-context", () => {
   it("maps a session user to an ApiActor", () => {
     expect(
       actorFromSession(
@@ -46,6 +44,7 @@ describe("api-context.server", () => {
     } as never);
 
     const context = await createApiContext(
+      auth as never,
       new Request(testHttpOrigin("127.0.0.1", "/api/v1/health"))
     );
 

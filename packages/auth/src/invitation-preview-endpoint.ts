@@ -4,8 +4,8 @@ import { getOrgAdapter } from "better-auth/plugins";
 import {
   requirePendingInvitation,
   throwInvitationNotFound,
-} from "@/auth/invite-signup-helpers";
-import { invitationPreviewSchema } from "@/auth/invite-signup-schemas";
+} from "./invite-signup-helpers";
+import { invitationPreviewSchema } from "./invite-signup-schemas";
 
 export const invitationPreviewEndpoint = createAuthEndpoint(
   "/organization/invitation-preview",

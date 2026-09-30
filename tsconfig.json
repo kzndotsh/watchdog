@@ -10,6 +10,8 @@
       "@watchdog/api": ["./packages/api/src/index.ts"],
       "@watchdog/api/*": ["./packages/api/src/*"],
 
+      "@watchdog/auth/*": ["./packages/auth/src/*"],
+
       "@watchdog/cap-sdk": ["./packages/cap-sdk/src/index.ts"],
       "@watchdog/cap-sdk/*": ["./packages/cap-sdk/src/*"],
 

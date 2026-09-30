@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildInvitationAcceptUrl,
   invitationAcceptPath,
-} from "@/auth/invitation-url";
+} from "../invitation-url";
 
 describe("invitation URL", () => {
   it("embeds the invitation id in the accept path", () => {

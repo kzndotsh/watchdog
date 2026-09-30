@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/shared/ui/toast";
 
 import { authClient } from "@/auth/client";
-import { isInstanceAdmin } from "@/auth/instance-admin";
+import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
 import { errMessage, cn } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
 import {

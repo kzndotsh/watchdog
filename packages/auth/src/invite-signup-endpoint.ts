@@ -6,12 +6,12 @@ import {
   assertNoExistingSession,
   createCredentialUser,
   establishInviteSession,
-} from "@/auth/invite-signup-flow";
+} from "./invite-signup-flow";
 import {
   assertPasswordLength,
   requirePendingInvitation,
-} from "@/auth/invite-signup-helpers";
-import { inviteSignUpBody } from "@/auth/invite-signup-schemas";
+} from "./invite-signup-helpers";
+import { inviteSignUpBody } from "./invite-signup-schemas";
 
 export const inviteSignUpEndpoint = createAuthEndpoint(
   "/organization/invite-sign-up",

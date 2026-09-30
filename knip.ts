@@ -102,6 +102,16 @@ const config: KnipConfig = {
       entry: ["src/index.ts", "scripts/**/*.ts", "src/**/__tests__/**/*.ts"],
       project: ["src/**/*.ts", "scripts/**/*.ts"],
     },
+    "packages/auth": {
+      entry: [
+        "src/server.ts",
+        "src/instance-admin.ts",
+        "src/org-roles.ts",
+        "src/invitation-url.ts",
+        "src/**/__tests__/**/*.test.ts",
+      ],
+      project: ["src/**/*.ts"],
+    },
     "packages/cap-sdk": {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],

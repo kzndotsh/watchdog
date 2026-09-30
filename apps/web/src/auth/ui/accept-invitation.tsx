@@ -9,7 +9,7 @@ import {
   fetchInvitationPreview,
   inviteSignUp,
 } from "@/auth/invitation-api";
-import { invitationAcceptPath } from "@/auth/invitation-url";
+import { invitationAcceptPath } from "@watchdog/auth/invitation-url";
 import { errMessage } from "@/lib/utils";
 import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 import { Button } from "@/shared/ui/primitives/button";
