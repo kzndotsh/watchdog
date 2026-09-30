@@ -239,7 +239,7 @@ function renderUpdatedAtCell(
 ) {
   const { updatedAt, createdAt } = ctx.row.original;
   if (!updatedAt) {
-    return <span className="text-muted-foreground text-label-mono-sm">—</span>;
+    return <span className="text-muted-foreground text-2xs font-mono">—</span>;
   }
 
   return (
@@ -254,7 +254,7 @@ function renderUpdatedAtCell(
     >
       <time
         dateTime={updatedAt}
-        className="text-muted-foreground text-label-mono-sm cursor-default whitespace-nowrap tabular-nums"
+        className="text-muted-foreground text-2xs cursor-default font-mono whitespace-nowrap tabular-nums"
       >
         <span suppressHydrationWarning>{formatRelativeTime(updatedAt)}</span>
       </time>

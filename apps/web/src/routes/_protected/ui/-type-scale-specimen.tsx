@@ -107,16 +107,16 @@ export function TypeScaleSpecimen({ className }: { className?: string }) {
     <div className={cn("flex w-full min-w-0 flex-col gap-3", className)}>
       <p className="text-muted-foreground text-xs leading-snug">
         Root{" "}
-        <span className="text-label-mono-sm text-foreground tabular-nums">
+        <span className="text-2xs text-foreground font-mono tabular-nums">
           {rootPx > 0 ? formatPx(rootPx) : "…"}
         </span>
         {" · "}
         display scale{" "}
-        <span className="text-label-mono-sm text-foreground tabular-nums">
+        <span className="text-2xs text-foreground font-mono tabular-nums">
           {scale}
         </span>
         . Sizes map to Tailwind{" "}
-        <span className="text-label-mono-sm text-foreground">
+        <span className="text-2xs text-foreground font-mono">
           text-2xs · xs · sm · base · xl · 2xl
         </span>
         ; roles bundle weight and leading. Hi-DPI / 4K adds a viewport factor.
@@ -126,7 +126,7 @@ export function TypeScaleSpecimen({ className }: { className?: string }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[40rem] border-collapse text-left">
           <thead>
-            <tr className="text-label-meta text-muted-foreground border-b">
+            <tr className="text-2xs text-muted-foreground border-b font-medium">
               <th className="pr-3 pb-2 font-medium">Role</th>
               <th className="pr-3 pb-2 font-medium">rem</th>
               <th className="pr-3 pb-2 font-medium">px</th>
@@ -143,19 +143,19 @@ export function TypeScaleSpecimen({ className }: { className?: string }) {
                   key={role.name}
                   className="border-border border-b border-dashed last:border-b-0"
                 >
-                  <td className="text-label-mono-sm text-muted-foreground py-2 pr-3 align-baseline whitespace-nowrap">
+                  <td className="text-2xs text-muted-foreground py-2 pr-3 align-baseline font-mono whitespace-nowrap">
                     {role.name}
                   </td>
-                  <td className="text-label-mono-sm py-2 pr-3 align-baseline whitespace-nowrap tabular-nums">
+                  <td className="text-2xs py-2 pr-3 align-baseline font-mono whitespace-nowrap tabular-nums">
                     {row ? formatRem(row.rem) : "…"}
                   </td>
-                  <td className="text-label-mono-sm py-2 pr-3 align-baseline whitespace-nowrap tabular-nums">
+                  <td className="text-2xs py-2 pr-3 align-baseline font-mono whitespace-nowrap tabular-nums">
                     {row ? formatPx(row.px) : "…"}
                   </td>
-                  <td className="text-label-mono-sm py-2 pr-3 align-baseline whitespace-nowrap tabular-nums">
+                  <td className="text-2xs py-2 pr-3 align-baseline font-mono whitespace-nowrap tabular-nums">
                     {row ? formatWeight(row.fontWeight) : "…"}
                   </td>
-                  <td className="text-label-mono-sm text-muted-foreground py-2 pr-3 align-baseline whitespace-nowrap tabular-nums">
+                  <td className="text-2xs text-muted-foreground py-2 pr-3 align-baseline font-mono whitespace-nowrap tabular-nums">
                     {row && row.lineHeightPx > 0
                       ? formatPx(row.lineHeightPx)
                       : "…"}

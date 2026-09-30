@@ -61,7 +61,9 @@ function renderSectionBody({
       />
     );
   }
-  return <p className="text-copy-sm text-muted-foreground">{emptyText}</p>;
+  return (
+    <p className="text-muted-foreground text-sm leading-normal">{emptyText}</p>
+  );
 }
 
 export function DossierSection({

@@ -8,8 +8,8 @@ type ChipSize = "sm" | "md";
 
 /** Shared dense chip chrome (matches IdChip height/radius; sans label). */
 export const CHIP_SIZE_CLASS: Record<ChipSize, string> = {
-  sm: "h-5 gap-0.5 rounded-md border border-border/60 px-1.5 py-0 text-label-meta leading-none",
-  md: "h-5 gap-1 rounded-md border border-border/60 px-1.5 py-0 text-label-meta leading-none",
+  sm: "h-5 gap-0.5 rounded-md border border-border/60 px-1.5 py-0 text-2xs font-medium leading-none",
+  md: "h-5 gap-1 rounded-md border border-border/60 px-1.5 py-0 text-2xs font-medium leading-none",
 };
 
 type DetailStatusChipProps = Omit<ComponentProps<typeof Badge>, "variant"> & {

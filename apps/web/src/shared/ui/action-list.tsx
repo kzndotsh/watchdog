@@ -20,7 +20,8 @@ import {
 import { Kbd, KbdGroup } from "@watchdog/ui/components/kbd";
 
 /** Dense keys inside menus / command items. */
-export const MENU_KBD_CLASS = "h-4 min-w-4 px-1 text-label-meta-sm";
+export const MENU_KBD_CLASS =
+  "h-4 min-w-4 px-1 text-xs font-medium leading-tight";
 
 /** Catalog chord (`Mod+K`, `?`) as `Kbd` / `KbdGroup`. */
 export function ActionShortcutChord({

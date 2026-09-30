@@ -227,7 +227,7 @@ export function CaseOverviewTab({
         )}
       >
         <section aria-label="Recent activity" className="min-w-0">
-          <h2 className="text-label text-muted-foreground mb-2 font-medium">
+          <h2 className="text-muted-foreground mb-2 text-sm leading-tight font-medium">
             Recent activity
           </h2>
           {activity.length === 0 ? (
@@ -244,7 +244,7 @@ export function CaseOverviewTab({
                   <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <div className="min-w-0">
-                      <span className="text-muted-foreground text-chip mr-1.5 uppercase">
+                      <span className="text-muted-foreground mr-1.5 text-xs font-medium tracking-wider uppercase">
                         {activityKindLabel(item.kind)}
                       </span>
                       <Link

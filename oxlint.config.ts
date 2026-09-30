@@ -685,8 +685,8 @@ export default defineConfig({
       },
     },
     {
-      // Tailwind class checks on web UI. Class strings live in constants (STATUS_TONES,
-      // type roles), so scan every string. no-inline-styles / require-static-classes
+      // Tailwind class checks on web UI. Class strings live in constants (STATUS_TONES),
+      // so scan every string. no-inline-styles / require-static-classes
       // are deliberately off: see docs/reference/web/ui/rules.md.
       files: ["apps/web/src/**/*.{ts,tsx}"],
       rules: {

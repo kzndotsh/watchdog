@@ -28,7 +28,7 @@ export function QueueHeader({
       <SectionLabel as="span">{label}</SectionLabel>
       <div className="flex items-center gap-2">
         {count === undefined ? null : (
-          <span className="text-label-mono-sm text-muted-foreground tabular-nums">
+          <span className="text-2xs text-muted-foreground font-mono tabular-nums">
             {count}
           </span>
         )}

@@ -7,7 +7,7 @@ The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. The style 
 | Leaf | Owns |
 | --- | --- |
 | [`ui/README.md`](ui/README.md) | Delivery gates, chrome lexicon, PR checklist |
-| [`ui/tokens.md`](ui/tokens.md) | Design system, colors, type roles, refuse list |
+| [`ui/tokens.md`](ui/tokens.md) | Design system, colors, type scale, refuse list |
 | [`ui/rules.md`](ui/rules.md) | Rules inventory: reason, kind, verdict, enforcer |
 | [`ui/page-shell.md`](ui/page-shell.md) | Page / trail / toolbar |
 | [`ui/forms.md`](ui/forms.md) | Form library |

@@ -64,7 +64,7 @@ export function FoundationsSection() {
     <GuideSection
       id="foundations"
       title="Foundations"
-      blurb="Semantic tokens and type roles from styles.css. Prefer these utilities over freestyle palette classes."
+      blurb="Semantic color tokens and the vanilla type scale. Prefer these over freestyle palette classes."
     >
       <Specimen label="Semantic">
         {SEMANTIC_SWATCHES.map((s) => (

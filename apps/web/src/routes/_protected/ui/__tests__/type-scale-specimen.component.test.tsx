@@ -31,8 +31,8 @@ describe("TypeScaleSpecimen", () => {
     });
   });
 
-  it("includes text-label-meta-sm", () => {
+  it("includes label-meta-sm", () => {
     render(<TypeScaleSpecimen />);
-    expect(screen.getByText("text-label-meta-sm")).toBeInTheDocument();
+    expect(screen.getByText("label-meta-sm")).toBeInTheDocument();
   });
 });

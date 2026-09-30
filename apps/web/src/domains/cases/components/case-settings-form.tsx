@@ -76,7 +76,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
       aria-label="Case settings"
       className="border-border flex flex-col gap-3 rounded-md border p-3"
     >
-      <h2 className="text-label text-muted-foreground font-medium">
+      <h2 className="text-muted-foreground text-sm leading-tight font-medium">
         Case settings
       </h2>
       <FieldGroup>

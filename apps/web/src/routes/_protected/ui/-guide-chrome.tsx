@@ -83,7 +83,7 @@ export function Specimen({
       )}
     >
       <div className="space-y-0.5">
-        <span className="text-label-mono-sm text-muted-foreground">
+        <span className="text-2xs text-muted-foreground font-mono">
           {label}
         </span>
         {blurb ? (
@@ -107,7 +107,7 @@ export function Swatch({
   return (
     <div className="flex min-w-24 flex-col gap-1.5">
       <div className={cn("border-border h-8 rounded-md border", className)} />
-      <span className="text-label-mono-sm text-muted-foreground truncate">
+      <span className="text-2xs text-muted-foreground truncate font-mono">
         {name}
       </span>
     </div>

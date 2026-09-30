@@ -36,7 +36,7 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | `FieldSelect` / `Select`, never a native `<select>` | Two select stacks | Keep (the vendored `native-select` is gone, so nothing to ban) | review |
 | Vendored primitives are never hand-edited; Watchdog behavior goes in a `primitives` wrapper or tokens (`check:vendor`) | Every `shadcn add`, codemod, or preset change becoming a merge conflict; agents quietly patching primitives | **New** | vendor lock |
 | A component with a Watchdog wrapper is imported from `shared/ui/primitives`, never from `@watchdog/ui` (the ban list follows the folder) | Silently skipping `loading`, Enter-to-confirm, `mono` | **New** | lint |
-| Type roles / `@theme` sizes, no `text-[Npx]` or other off-scale arbitrary values | One-off sizes and tracking that drift from the scale | Keep, **moved to lint** (`no-arbitrary-values`, layout values allowed) | lint |
+| `@theme` sizes and vanilla type classes, no `text-[Npx]` or other off-scale arbitrary values | One-off sizes and tracking that drift from the scale | Keep, **moved to lint** (`no-arbitrary-values`, layout values allowed) | lint |
 | Every Tailwind class must generate CSS (`no-unknown-classes`) | Typos and removed utilities failing silently (`hovr:flex`, a deleted `text-label-sm`) | **New** | lint |
 | `wd-ui-files.mjs` manifest + `/ui` fixtures for required atoms | Undocumented atoms | Keep (revisit if it slows atom work) | ds |
 | TanStack Form only (no react-hook-form) | Two form libraries | Keep | review |
@@ -77,7 +77,7 @@ Pinned at `0.2.0` (pre-1.0, single maintainer: bump deliberately). Web only. Aud
 | `no-raw-colors` (`scanAllStrings`) | **On** | Class strings live in constants (`STATUS_TONES`), not just `className`. |
 | `no-arbitrary-values` (layout allowed, `scanAllStrings`) | **On** | Layout one-offs (`max-w-[12rem]`) are fine; type, color, and tracking are not. |
 | `no-unknown-classes` | **On** | Reads our real Tailwind theme + `@utility` roles. Known false positive: a prop named `claimClass` looks like a class prop (disable with a reason). |
-| `no-restyle` (`allow: ["layout", "truncate"]`) | **On** in `domains/` + `routes/` | The audit found 292 errors at 140 sites. Most were repeats of a primitive's default (`size="sm"` + `h-6 text-xs`, `FieldSet border-0 p-0`); the rest became variants ([`atoms.md`](atoms.md#variants-not-overrides)). Four true one-offs carry a reasoned `oxlint-disable`. `shared/` is exempt: atoms own their style. It still reads our type roles (`text-label-meta-sm`, `text-chip`) as colors, so pass roles through a variant, not `className`. |
+| `no-restyle` (`allow: ["layout", "truncate"]`) | **On** in `domains/` + `routes/` | The audit found 292 errors at 140 sites. Most were repeats of a primitive's default (`size="sm"` + `h-6 text-xs`, `FieldSet border-0 p-0`); the rest became variants ([`atoms.md`](atoms.md#variants-not-overrides)). Four true one-offs carry a reasoned `oxlint-disable`. `shared/` is exempt: atoms own their style. |
 | `no-inline-styles` | **Off** | 36 hits, mostly legitimate dynamic values (drag transforms, syntax colors, measured heights). |
 | `require-static-classes` | **Off** | Flags imported class constants and helper functions, which is our normal pattern. |
 

@@ -52,7 +52,7 @@ function TriageBody({
               </span>
               <RelativeTime
                 value={p.createdAt}
-                className="text-label-mono-sm text-muted-foreground shrink-0 tabular-nums"
+                className="text-2xs text-muted-foreground shrink-0 font-mono tabular-nums"
               />
             </Link>
           </li>
@@ -112,7 +112,7 @@ function DueBody({
                 value={task.dueDate}
                 dateOnly
                 className={cn(
-                  "text-label-mono-sm shrink-0 tabular-nums",
+                  "text-2xs shrink-0 font-mono tabular-nums",
                   overdue && "text-destructive"
                 )}
               />

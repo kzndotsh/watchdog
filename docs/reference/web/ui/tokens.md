@@ -1,6 +1,6 @@
 # UI: tokens and design system
 
-This page defines colors, type roles, the refuse list, and design-system primitives. The hub is [`../UI.md`](../UI.md).
+This page defines colors, type scale, the refuse list, and design-system primitives. The hub is [`../UI.md`](../UI.md).
 
 ## Design system
 
@@ -78,15 +78,17 @@ No nested cards, decorative colored side borders (a thin state bar on a live row
 
 **Tailwind `@theme`** (`styles/wd-theme.css`) owns rem sizes: `text-2xs` (0.8125rem), `text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`. Default Tailwind steps already match ops-dense body/page sizes; **`text-2xs`** fills the 13px gap between xs (12) and sm (14).
 
-**Semantic roles** (`styles/wd-typography.css`) are thin `@apply` bundles (size + weight + leading + mono/uppercase). Prefer roles in product UI; shadcn primitives may keep raw `text-xs` / `text-sm`.
+**No type roles.** Use vanilla Tailwind (`text-*`, `font-*`, `leading-*`, `tracking-*`, `font-mono`, `uppercase`); the vendored primitives and stock `cn` speak the same classes. Recipes the app repeats (the `/ui` specimen lists them):
 
-| Role | Tailwind size | rem | ~px @ 1.0 |
-| --- | --- | --- | --- |
-| `text-heading-dossier` | `text-2xl` | 1.5 | 24 |
-| `text-heading-page` | `text-xl` | 1.25 | 20 |
-| `text-heading-section` / `text-copy` | `text-base` | 1 | 16 |
-| `text-copy-sm` / `text-label` / `text-label-mono` | `text-sm` | 0.875 | 14 |
-| `text-label-meta` / `text-meta` / `text-label-mono-sm` | `text-2xs` | 0.8125 | 13 |
-| `text-label-meta-sm` / `text-chip` | `text-xs` | 0.75 | 12 |
+| Use | Classes |
+| --- | --- |
+| Dossier heading | `text-2xl font-semibold leading-tight tracking-tight` |
+| Page heading | `text-xl font-semibold leading-tight tracking-tight` |
+| Section heading | `text-base font-medium leading-snug` |
+| Body / secondary body | `text-base leading-normal` / `text-sm leading-normal` |
+| Label | `text-sm font-medium leading-tight` |
+| Meta label / compact meta label | `text-2xs font-medium` / `text-xs font-medium leading-tight` |
+| Mono value / compact mono (ids, timestamps) | `font-mono text-sm leading-tight` / `font-mono text-2xs` |
+| Chip | `text-xs font-medium tracking-wider uppercase` |
 
-`@shadcn/lint` `no-arbitrary-values` bans `text-[Npx]` / `text-[Nrem]` (and other off-scale values: use a theme token or add one, e.g. `tracking-eyebrow`); escape with `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason`. New role names: register in the `lib/utils.ts` `createCn` `font-size` group (`cn/config`). **Input** uses `text-sm` (iOS zoom floor).
+`@shadcn/lint` `no-arbitrary-values` bans `text-[Npx]` / `text-[Nrem]` (and other off-scale values: use a theme token or add one, e.g. `tracking-eyebrow`); escape with `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason`. **Input** uses `text-sm` (iOS zoom floor).

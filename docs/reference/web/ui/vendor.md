@@ -9,7 +9,7 @@ This page defines how shadcn primitives are vendored, locked, updated, and wrapp
 | Primitives | `packages/ui` (`@watchdog/ui`) | shadcn `base-mira` components + `use-mobile`, exactly as the CLI writes them | **Never by hand** |
 | Wrappers | `apps/web/src/shared/ui/primitives/` | Same-name wrappers where a behavior must apply everywhere (Button, Dialog, AlertDialog, Combobox, Input, Textarea) | Yes |
 | Atoms | `apps/web/src/shared/ui/` | `QueueRow`, `SplitView`, status glyphs, data-table kit, `toast`, … (own names) | Yes |
-| Tokens / CSS | `apps/web/src/styles*` | Color, radius ladder, type roles, focus chrome (`data-slot` overrides) | Yes |
+| Tokens / CSS | `apps/web/src/styles*` | Color, radius ladder, type scale, focus chrome (`data-slot` overrides) | Yes |
 
 Domain code imports vanilla primitives from `@watchdog/ui/components/<name>` and wrapped ones from `@/shared/ui/primitives/<name>`. oxlint bans the vanilla path for exactly the components that have a wrapper.
 
@@ -35,7 +35,7 @@ Domain code imports vanilla primitives from `@watchdog/ui/components/<name>` and
 ## Gotchas
 
 - Run the CLI as `pnpm dlx shadcn@latest`. The repo's `zod` override breaks the locally installed `shadcn` binary (`o.deepPartial is not a function`).
-- Upstream components import `cn` from the `cn` package directly, not from `@/lib/utils`. Our `cn` (`createCn` from `cn/config`, extended with the type roles; replaces `clsx` + `tailwind-merge`) is used by atoms and wrappers; primitives use stock `cn`, which reads `text-label-*` roles as text **colors** (`cn("text-muted-foreground", "text-label-mono-sm")` drops the color). Keep type roles out of `className` passed into primitives (`no-restyle` enforces this).
+- Upstream components import `cn` from the `cn` package directly, not from `@/lib/utils`. `@/lib/utils` re-exports the same stock `cn` (replaces `clsx` + `tailwind-merge`). There are no custom type-role utilities, so nothing needs to be registered: `text-2xs` parses as a t-shirt size and every other `text-*` is vanilla.
 - `apps/web` tsconfig has `noUnusedLocals` off: upstream files pulled into its program carry unused `React` imports. oxlint `no-unused-vars` covers our own code.
 - `apps/web/components.json` mirrors `packages/ui/components.json` (`style`, `iconLibrary`, `baseColor`). Run `add` from `packages/ui`.
 - Presets: shadcn says `components.json` `style` cannot change after init. Use `shadcn apply <preset>` (`--only theme|font` skips reinstalling components) from `packages/ui`, then `pnpm ui:sync`. `tailwind.css` in that file points at an unused stub (`src/styles/globals.css`) on purpose, so the CLI can never write into our real tokens.

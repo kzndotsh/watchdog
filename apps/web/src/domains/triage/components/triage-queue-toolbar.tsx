@@ -64,7 +64,7 @@ export function TriageQueueToolbar({
               <FieldLegend variant="label">
                 Status
                 {pendingCount !== undefined && pendingCount > 0 ? (
-                  <span className="text-label-mono-sm text-muted-foreground ml-1">
+                  <span className="text-2xs text-muted-foreground ml-1 font-mono">
                     ({pendingCount} pending)
                   </span>
                 ) : null}

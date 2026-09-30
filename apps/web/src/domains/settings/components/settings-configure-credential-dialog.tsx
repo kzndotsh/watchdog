@@ -129,16 +129,16 @@ export function ConfigureCredentialDialog({
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{slot.label}</p>
-                <p className="text-muted-foreground text-label-mono-sm truncate">
+                <p className="text-muted-foreground text-2xs truncate font-mono">
                   {slot.name}
                 </p>
               </div>
               {configured && slot.updatedAt ? (
-                <p className="text-muted-foreground text-label-mono-sm shrink-0">
+                <p className="text-muted-foreground text-2xs shrink-0 font-mono">
                   Updated <LocalDateTime value={slot.updatedAt} />
                 </p>
               ) : (
-                <p className="text-muted-foreground text-label-mono-sm shrink-0">
+                <p className="text-muted-foreground text-2xs shrink-0 font-mono">
                   Not connected
                 </p>
               )}

@@ -32,7 +32,7 @@ export function EntityNode({
             {data.label}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1">
-            <KindBadge kind={data.kind} className="text-chip" />
+            <KindBadge kind={data.kind} className="text-xs font-medium tracking-wider uppercase" />
           </div>
         </div>
         {actions && actions.length > 0 ? (

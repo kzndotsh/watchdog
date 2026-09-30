@@ -89,7 +89,7 @@ export function ProcessRunCard({
                 ) : null}
               </div>
             </div>
-            <p className="text-label-mono-sm text-muted-foreground mt-1.5 tabular-nums">
+            <p className="text-2xs text-muted-foreground mt-1.5 font-mono tabular-nums">
               <LocalDateTime value={jobActivityAt(job)} />
               {job.output && job.output.length > 0 ? (
                 <>

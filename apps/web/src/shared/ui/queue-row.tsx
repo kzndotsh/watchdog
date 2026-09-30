@@ -114,7 +114,7 @@ export function QueueRowMeta({
   return (
     <span
       className={cn(
-        "text-label-mono-sm text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5",
+        "text-2xs text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5 font-mono",
         className
       )}
     >

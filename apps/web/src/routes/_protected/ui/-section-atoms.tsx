@@ -389,7 +389,9 @@ const ATOM_CATALOG: AtomEntry[] = [
     render: () => (
       <TimelineSpine className="ml-2 min-h-10 pl-4">
         <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
-        <span className="text-copy-sm text-muted-foreground">Milestone</span>
+        <span className="text-muted-foreground text-sm leading-normal">
+          Milestone
+        </span>
       </TimelineSpine>
     ),
   },
@@ -407,7 +409,7 @@ const ATOM_CATALOG: AtomEntry[] = [
           <p className="text-xs">Hidden when pending</p>
         </ActiveTabBody>
         <ActiveTabBody active>
-          <p className="text-copy-sm">Active tab body</p>
+          <p className="text-sm leading-normal">Active tab body</p>
         </ActiveTabBody>
       </div>
     ),
@@ -418,7 +420,7 @@ const ATOM_CATALOG: AtomEntry[] = [
     render: () => (
       <div className="border-border w-full max-w-sm rounded-md border p-3">
         <SuspenseTabBody>
-          <p className="text-copy-sm">Resolved tab content</p>
+          <p className="text-sm leading-normal">Resolved tab content</p>
         </SuspenseTabBody>
       </div>
     ),
@@ -499,14 +501,14 @@ const ATOM_CATALOG: AtomEntry[] = [
           groupId="ui-atom-split"
           list={
             <aside className="flex h-full min-h-0 flex-col p-2">
-              <span className="text-label-mono-sm text-muted-foreground">
+              <span className="text-2xs text-muted-foreground font-mono">
                 Queue
               </span>
             </aside>
           }
           detail={
             <div className="flex h-full min-h-0 flex-col p-2">
-              <span className="text-label-mono-sm text-muted-foreground">
+              <span className="text-2xs text-muted-foreground font-mono">
                 Detail
               </span>
             </div>

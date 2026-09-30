@@ -165,22 +165,22 @@ export function EntityEvidenceSection({
                         {label}
                       </span>
                       {row.processedAt === null ? (
-                        <span className="text-label text-warning">
+                        <span className="text-warning text-sm leading-tight font-medium">
                           Unprocessed
                         </span>
                       ) : (
-                        <span className="text-label text-success">
+                        <span className="text-success text-sm leading-tight font-medium">
                           Processed
                         </span>
                       )}
                     </div>
-                    <div className="text-label text-muted-foreground flex flex-wrap items-center gap-3">
+                    <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm leading-tight font-medium">
                       {row.mime !== null && row.mime !== "" ? (
-                        <span className="text-label-mono-sm">{row.mime}</span>
+                        <span className="text-2xs font-mono">{row.mime}</span>
                       ) : null}
                       <RelativeTime value={row.capturedAt} />
                       {sourceFootnote === null ? null : (
-                        <span className="text-label-mono-sm truncate">
+                        <span className="text-2xs truncate font-mono">
                           {sourceFootnote}
                         </span>
                       )}

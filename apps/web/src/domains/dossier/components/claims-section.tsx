@@ -607,7 +607,7 @@ export function ClaimsSection({
                         {row.text}
                       </p>
                     )}
-                    <div className="text-label mt-1 flex flex-wrap items-center gap-1.5">
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm leading-tight font-medium">
                       <ClaimClassBadge claimClass={row.class} />
                       <ConfidenceBadge confidence={row.confidence} />
                       {row.evidenceIds.length > 0 ? (

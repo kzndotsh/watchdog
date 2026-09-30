@@ -25,7 +25,7 @@ Anti-references: generic SaaS dashboards, decorative AI gradients and glow, term
 ## Type
 
 - Geist for UI, Geist Mono for ids, hashes, paths, and counts. Mono carries data, never decoration.
-- Compact, fixed sizes (roles in `wd-typography.css`); counts use tabular numerals.
+- Compact, fixed sizes (vanilla Tailwind scale, see `tokens.md`); counts use tabular numerals.
 
 ## Interaction
 

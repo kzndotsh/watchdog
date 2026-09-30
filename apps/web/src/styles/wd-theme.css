@@ -130,8 +130,7 @@
   --radius-4xl: var(--radius-lg);
 
   /*
-    Typography scale (ops-dense) — Tailwind text-* SoT; semantic roles in
-    wd-typography.css bundle size + weight + leading. text-2xs fills the gap
+    Typography scale (ops-dense) — Tailwind text-* SoT. text-2xs fills the gap
     between xs (12px) and sm (14px) at 13px @ 1.0 root.
   */
   --text-2xs: 0.8125rem;

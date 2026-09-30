@@ -206,7 +206,7 @@ function EvidenceChecklist({
                   <span className="min-w-0 flex-1 truncate" title={label}>
                     {label}
                   </span>
-                  <span className="text-muted-foreground text-chip shrink-0">
+                  <span className="text-muted-foreground shrink-0 text-xs font-medium tracking-wider uppercase">
                     {kindLabel(row.kind)}
                   </span>
                 </label>

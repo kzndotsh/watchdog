@@ -185,7 +185,7 @@ function ComposerEvidenceField({
                 </DetailStatusChip>
               ) : null}
               {overflow > 0 ? (
-                <span className="text-muted-foreground text-label-meta-sm shrink-0 tabular-nums">
+                <span className="text-muted-foreground shrink-0 text-xs leading-tight font-medium tabular-nums">
                   +{overflow}
                 </span>
               ) : null}

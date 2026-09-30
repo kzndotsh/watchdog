@@ -84,7 +84,7 @@ function CaseCard({
           <p className="truncate text-sm leading-tight font-medium">
             {caseRow.name}
           </p>
-          <p className="text-muted-foreground text-label-mono-sm truncate">
+          <p className="text-muted-foreground text-2xs truncate font-mono">
             {caseRow.slug}
           </p>
         </div>

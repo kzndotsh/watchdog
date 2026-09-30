@@ -31,6 +31,7 @@ export const WD_UI_FILES = [
   "src/shared/ui/region-boundary.tsx",
   "src/shared/ui/field-combobox.tsx",
   "src/shared/ui/field-select.tsx",
+  "src/shared/ui/field-message.tsx",
   "src/shared/ui/form-inline-message.tsx",
   "src/shared/ui/form-section.tsx",
   "src/shared/ui/format-opaque-id.ts",

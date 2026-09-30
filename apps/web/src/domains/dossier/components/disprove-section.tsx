@@ -67,7 +67,7 @@ export function DisproveSection({
                       <ClaimClassBadge claimClass={row.class} />
                       <StatusBadge status={retractKind} />
                       {row.retractedAt !== null && row.retractedAt !== "" ? (
-                        <span className="text-label-mono-sm text-muted-foreground">
+                        <span className="text-2xs text-muted-foreground font-mono">
                           {new Date(row.retractedAt).toLocaleDateString()}
                         </span>
                       ) : null}

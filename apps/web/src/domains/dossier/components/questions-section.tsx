@@ -67,7 +67,7 @@ function QuestionLine({
 
   return (
     <div className="flex items-baseline gap-2">
-      <span className="text-label-mono-sm text-muted-foreground shrink-0 tabular-nums">
+      <span className="text-2xs text-muted-foreground shrink-0 font-mono tabular-nums">
         {label}
       </span>
       {onEdit ? (
@@ -193,7 +193,7 @@ function QuestionComposer({
         </form.Field>
       ) : null}
       <div className="flex justify-end gap-1">
-        <span className="text-chip text-muted-foreground self-center">
+        <span className="text-muted-foreground self-center text-xs font-medium tracking-wider uppercase">
           ⌘↵ to save
         </span>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>

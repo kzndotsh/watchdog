@@ -62,7 +62,7 @@ function EvidencePreviewBody({
         <div className="flex items-center gap-2">
           <KindBadge kind={evidence.kind} />
           {evidence.mime !== null && evidence.mime !== undefined ? (
-            <span className="text-label-mono-sm text-muted-foreground">
+            <span className="text-2xs text-muted-foreground font-mono">
               {evidence.mime}
             </span>
           ) : null}

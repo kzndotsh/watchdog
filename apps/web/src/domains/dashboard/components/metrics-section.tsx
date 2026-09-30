@@ -45,20 +45,22 @@ export function MetricsSection({
           )}
         >
           {tile.hint ? (
-            <span className="text-label-mono-sm text-muted-foreground absolute top-2.5 right-3">
+            <span className="text-2xs text-muted-foreground absolute top-2.5 right-3 font-mono">
               {tile.hint}
             </span>
           ) : null}
           <span
             className={cn(
-              "text-heading-dossier font-semibold tracking-tight tabular-nums",
+              "text-2xl leading-tight font-semibold tracking-tight tabular-nums",
               tile.tone === "warn" && "text-warning",
               tile.hint && "pr-16"
             )}
           >
             {tile.value}
           </span>
-          <span className="text-label text-muted-foreground">{tile.label}</span>
+          <span className="text-muted-foreground text-sm leading-tight font-medium">
+            {tile.label}
+          </span>
         </Link>
       ))}
     </section>
