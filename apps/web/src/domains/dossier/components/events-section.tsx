@@ -105,7 +105,7 @@ function WhenDateField({
         >
           <CalendarIcon />
         </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        <PopoverContent flush className="w-auto overflow-hidden" align="start">
           <Calendar
             mode="single"
             selected={selected}

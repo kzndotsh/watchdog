@@ -32,9 +32,6 @@ import type { EdgeOrientation } from "@watchdog/schemas";
 
 const MAX_VISIBLE_CHIPS = 2;
 
-const DASHED_PILL_CLASS =
-  "text-muted-foreground hover:text-foreground border-border/60 hover:bg-muted/40 h-5 gap-0.5 rounded-full border border-dashed bg-transparent px-1.5 text-xs font-normal shadow-none";
-
 const EMPTY_FORM: ConnectionComposerValues = {
   peerId: "",
   phraseValue: "",
@@ -215,9 +212,8 @@ export function EntityConnectionsCell({
                 render={
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className={DASHED_PILL_CLASS}
+                    variant="dashed"
+                    size="chip"
                     disabled={addDisabled}
                     aria-label={addAriaLabel}
                     title="Add connection"
@@ -270,9 +266,8 @@ export function EntityConnectionsCell({
                 {overflow > 0 ? (
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className={DASHED_PILL_CLASS}
+                    variant="dashed"
+                    size="chip"
                     aria-label={`${overflow} more connections`}
                     onClick={openBrowse}
                   >
@@ -284,25 +279,26 @@ export function EntityConnectionsCell({
           </div>
 
           {peers.length > 0 ? (
-            <PopoverTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-0"
-                  disabled={addDisabled}
-                  aria-label={addAriaLabel}
-                  title="Add connection"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    openCreate();
-                  }}
-                />
-              }
-            >
-              <PlusIcon className="size-3" aria-hidden />
-            </PopoverTrigger>
+            <span className="inline-flex shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 has-disabled:opacity-0">
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost-muted"
+                    size="icon-xs"
+                    disabled={addDisabled}
+                    aria-label={addAriaLabel}
+                    title="Add connection"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openCreate();
+                    }}
+                  />
+                }
+              >
+                <PlusIcon className="size-3" aria-hidden />
+              </PopoverTrigger>
+            </span>
           ) : null}
         </div>
         <PopoverContent align="end" className="w-80">

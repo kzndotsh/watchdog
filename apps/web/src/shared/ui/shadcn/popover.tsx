@@ -18,9 +18,12 @@ function PopoverContent({
   alignOffset = 0,
   side = "bottom",
   sideOffset = 4,
+  flush = false,
   ...props
-}: PopoverPrimitive.Popup.Props &
-  Pick<
+}: PopoverPrimitive.Popup.Props & {
+    /** Watchdog: no padding or gap (calendar, list pickers own their spacing). */
+    flush?: boolean;
+  } & Pick<
     PopoverPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
   >) {
@@ -36,7 +39,8 @@ function PopoverContent({
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={cn(
-            "bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 z-50 flex w-72 origin-(--transform-origin) flex-col gap-2.5 rounded-lg p-2.5 text-sm shadow-md ring-1 outline-hidden duration-75",
+            "bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 z-50 flex w-72 origin-(--transform-origin) flex-col rounded-lg text-sm shadow-md ring-1 outline-hidden duration-75",
+            flush ? "p-0" : "gap-2.5 p-2.5",
             className
           )}
           {...props}

@@ -161,18 +161,18 @@ export function CapCapabilitySelect({
         showClear={value !== ""}
         aria-label="Capability"
         placeholder="Select Cap…"
+        size="sm"
+        tone={needsEgress ? "warning" : "default"}
         className={cn(
           CONTROL_HEIGHT,
-          "w-full max-w-full min-w-[12rem] [&_[data-slot=input-group-control]]:text-xs",
-          needsEgress &&
-            "border-warning/40 [&_[data-slot=input-group-control]]:text-warning",
+          "w-full max-w-full min-w-[12rem]",
           className
         )}
       />
 
       <ComboboxContent
         align="center"
-        className="flex w-[min(100vw-2rem,36rem)] min-w-[22rem] flex-row overflow-hidden p-0"
+        className="flex w-[min(100vw-2rem,36rem)] min-w-[22rem] flex-row overflow-hidden"
       >
         <div className="flex min-w-0 flex-1 flex-col">
           <ComboboxEmpty>No Caps match.</ComboboxEmpty>
@@ -180,7 +180,7 @@ export function CapCapabilitySelect({
             {(group: CapGroup, index: number) => (
               <ComboboxGroup key={group.value} items={group.items}>
                 {index > 0 ? <ComboboxSeparator /> : null}
-                <ComboboxLabel className="px-1.5">{group.value}</ComboboxLabel>
+                <ComboboxLabel>{group.value}</ComboboxLabel>
                 <ComboboxCollection>
                   {(cap: CapListItem) => (
                     <ComboboxItem key={cap.id} value={cap}>

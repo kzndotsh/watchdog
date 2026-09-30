@@ -11,7 +11,6 @@ import {
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { pasteEntityErrorLabel } from "@/domains/entities/lib/paste-entity-error-label";
 import { parsePasteTarget } from "@/domains/entities/lib/use-bulk-add-identifiers-paste";
-import { cn } from "@/lib/utils";
 import {
   EditableSelectCell,
   EditableSuggestCell,
@@ -211,10 +210,7 @@ export function BulkAddIdentifiersPreviewTable({
                       variant="cell"
                       showClear={false}
                       disabled={busy}
-                      className={cn(
-                        "w-full",
-                        entityHint !== null && "text-destructive"
-                      )}
+                      className="w-full"
                       aria-invalid={entityHint !== null}
                       aria-label={`Entity for ${row.value || "row"}`}
                     />

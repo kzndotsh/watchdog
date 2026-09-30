@@ -354,7 +354,7 @@ export function RecentActivity({
               <SelectTrigger
                 aria-label="Filter activity by case"
                 size="sm"
-                className="h-7 w-[11rem] text-xs"
+                className="h-7 w-[11rem]"
               >
                 <SelectValue placeholder="All cases">
                   {(value: string | null) => {

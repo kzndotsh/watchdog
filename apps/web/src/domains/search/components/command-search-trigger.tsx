@@ -22,7 +22,7 @@ export function CommandSearchTrigger() {
         <SidebarMenuButton
           tooltip="Search"
           onClick={openPalette}
-          className="text-muted-foreground hover:text-foreground"
+          variant="muted"
         >
           <SearchIcon />
           {collapsed ? null : (

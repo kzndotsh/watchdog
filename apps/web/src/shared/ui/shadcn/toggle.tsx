@@ -13,6 +13,8 @@ const toggleVariants = cva(
       variant: {
         default: "bg-transparent",
         outline: "border-input hover:bg-muted border bg-transparent",
+        // Watchdog: item of a segmented control (pair with ToggleGroup variant="segmented").
+        segmented: "",
       },
       size: {
         default:
@@ -21,6 +23,14 @@ const toggleVariants = cva(
         lg: "h-9 min-w-9 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
       },
     },
+    compoundVariants: [
+      {
+        variant: "segmented",
+        size: ["default", "sm", "lg"],
+        class:
+          "text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground h-6 min-w-0 px-2.5 text-xs aria-pressed:shadow-sm",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",

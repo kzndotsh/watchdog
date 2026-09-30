@@ -59,7 +59,7 @@ function ConnectionRow({
             />
             <ConfidenceBadge
               confidence={edge.confidence}
-              className="text-chip shrink-0"
+              className="shrink-0"
             />
           </div>
           {edge.notes?.trim() ? (

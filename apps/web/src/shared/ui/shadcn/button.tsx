@@ -21,6 +21,8 @@ const buttonVariants = cva(
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
         // Watchdog: quiet secondary actions and red-on-hover destructive ones.
+        dashed:
+          "text-muted-foreground border-border/60 hover:bg-muted/40 hover:text-foreground border-dashed bg-transparent font-normal shadow-none",
         "ghost-muted":
           "text-muted-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         "ghost-destructive":
@@ -35,6 +37,8 @@ const buttonVariants = cva(
         sm: "h-7 gap-1 rounded-md px-2.5 text-label-meta-sm has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
         icon: "size-8",
+        // Watchdog: pill-shaped dense control (count / add chips).
+        chip: "h-5 gap-0.5 rounded-full px-1.5 text-xs [&_svg:not([class*='size-'])]:size-3",
         "icon-xs":
           "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-7 rounded-md",

@@ -357,6 +357,7 @@ export function EvidenceDetailHeader({
               <Button
                 type="button"
                 variant="link"
+                // oxlint-disable-next-line shadcn/no-restyle -- inline text link inside a context line: muted ink, no padding; a one-off, not a Button treatment
                 className="text-foreground/80 h-auto min-h-0 p-0 text-xs font-normal underline-offset-2 hover:underline"
                 onClick={() => {
                   onShowProducingRun?.(producingCap.id);

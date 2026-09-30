@@ -108,8 +108,8 @@ function CredentialSlotGroup({
       <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {title}
       </h3>
-      <Card className={cn(ACCENT_CARD_SURFACE, "gap-0 p-0 py-0")}>
-        <CardContent className="p-0">
+      <Card size="flush" className={ACCENT_CARD_SURFACE}>
+        <CardContent>
           {slots.map((slot, index) => (
             <div key={slot.name}>
               {index > 0 ? <Separator /> : null}
@@ -229,11 +229,11 @@ export function SettingsCredentialsForm() {
       ) : null}
 
       {slots.length === 0 ? (
-        <Card className={cn(ACCENT_CARD_SURFACE, "gap-0 p-0 py-0")}>
-          <CardContent className="text-muted-foreground flex flex-col items-center gap-2 px-4 py-10 text-center text-sm">
+        <Card size="flush" className={ACCENT_CARD_SURFACE}>
+          <div className="text-muted-foreground flex flex-col items-center gap-2 px-4 py-10 text-center text-sm">
             <KeyRoundIcon className="size-5" />
             No Cap credential slots registered.
-          </CardContent>
+          </div>
         </Card>
       ) : (
         <div

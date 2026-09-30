@@ -58,7 +58,7 @@ function EvidencePreviewBody({
 
   return (
     <>
-      <SheetHeader className="px-5 pt-5 pb-4">
+      <SheetHeader>
         <div className="flex items-center gap-2">
           <KindBadge kind={evidence.kind} />
           {evidence.mime !== null && evidence.mime !== undefined ? (
@@ -67,7 +67,7 @@ function EvidencePreviewBody({
             </span>
           ) : null}
         </div>
-        <SheetTitle className="text-base">{title}</SheetTitle>
+        <SheetTitle>{title}</SheetTitle>
         {evidence.notes !== null && evidence.notes !== "" ? (
           <SheetDescription>{evidence.notes}</SheetDescription>
         ) : null}
@@ -76,12 +76,9 @@ function EvidencePreviewBody({
       <Separator />
 
       <ScrollArea
-        className={cn(
-          "flex-1 px-5 py-4",
-          placeholderDeemphasisClass(blobPlaceholder)
-        )}
+        className={cn("flex-1", placeholderDeemphasisClass(blobPlaceholder))}
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 px-5 py-4">
           <MetaGrid>
             <MetaGridItem label="Captured">
               <RelativeTime value={evidence.capturedAt} />
@@ -181,10 +178,7 @@ export function EvidencePreviewDrawer({
         onClose();
       }}
     >
-      <SheetContent
-        side="right"
-        className="flex flex-col gap-0 p-0 sm:max-w-lg"
-      >
+      <SheetContent side="right" flush className="flex flex-col sm:max-w-lg">
         {evidence === null ? null : (
           <EvidencePreviewBody evidence={evidence} caseId={caseId} />
         )}

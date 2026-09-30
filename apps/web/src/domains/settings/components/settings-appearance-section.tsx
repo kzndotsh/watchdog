@@ -54,6 +54,7 @@ export function SettingsAppearanceSection() {
               return (
                 <Label
                   key={option.value}
+                  // oxlint-disable-next-line shadcn/no-restyle -- radio card: the label is the whole hit target, so it owns border, hover and checked chrome
                   className="border-input hover:bg-muted/60 has-[[data-checked]]:border-primary has-[[data-checked]]:bg-muted/80 flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 text-sm"
                 >
                   <RadioGroupItem value={option.value} />
@@ -96,7 +97,7 @@ export function SettingsAppearanceSection() {
               <ToggleGroupItem
                 key={preset}
                 value={String(preset)}
-                className="min-w-0 flex-1 px-2"
+                className="min-w-0 flex-1"
               >
                 {DISPLAY_SCALE_LABELS[preset]}
               </ToggleGroupItem>

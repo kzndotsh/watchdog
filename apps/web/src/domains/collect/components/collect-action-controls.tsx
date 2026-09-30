@@ -46,15 +46,10 @@ export function CollectRunModeToggle({
         const mode = next[0];
         if (isRunMode(mode)) onValueChange(mode);
       }}
-      className="bg-muted h-7 rounded-lg p-0.5"
+      variant="segmented"
     >
       {RUN_MODES.map((mode) => (
-        <ToggleGroupItem
-          key={mode.value}
-          value={mode.value}
-          size="sm"
-          className="text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground h-6 px-2.5 text-xs aria-pressed:shadow-sm"
-        >
+        <ToggleGroupItem key={mode.value} value={mode.value}>
           {mode.label}
         </ToggleGroupItem>
       ))}
@@ -72,6 +67,7 @@ export function CollectDumpButtons({
   return (
     <ButtonGroup
       aria-label="Dump evidence"
+      // oxlint-disable-next-line shadcn/no-restyle -- ButtonGroup squares the last child's corner; this group ends in a rounded primary action
       className="[&>[data-slot]:not(:has(~[data-slot]))]:rounded-r-md!"
     >
       <Button

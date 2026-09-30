@@ -154,6 +154,7 @@ function DossierForEntity({
         onValueChange={(v) => {
           onTabChange(parseDossierTab(typeof v === "string" ? v : undefined));
         }}
+        // oxlint-disable-next-line shadcn/no-restyle -- Dossier stack rhythm: gap-4 between the PageHeader and the tab body, both direct Tabs children
         className="flex min-h-0 w-full flex-1 flex-col gap-4"
       >
         <PageHeader
@@ -433,7 +434,6 @@ function DossierForEntity({
           </ActiveTabBody>
         </TabsContent>
       </Tabs>
-
       <EvidencePreviewDrawer
         evidence={previewEvidence}
         caseId={caseId}

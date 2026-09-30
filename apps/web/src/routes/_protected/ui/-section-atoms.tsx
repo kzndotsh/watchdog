@@ -178,9 +178,9 @@ const ATOM_CATALOG: AtomEntry[] = [
     blurb: "Claim class — not KindBadge.",
     render: () => (
       <>
-        {/* oxlint-disable-next-line shadcn/no-unknown-classes -- claimClass is a vocab value, not a CSS class */}
+        {/* oxlint-disable-next-line shadcn/no-unknown-classes, shadcn/no-restyle -- claimClass is a vocab value, not a CSS class */}
         <ClaimClassBadge claimClass="observation" />
-        {/* oxlint-disable-next-line shadcn/no-unknown-classes -- claimClass is a vocab value, not a CSS class */}
+        {/* oxlint-disable-next-line shadcn/no-unknown-classes, shadcn/no-restyle -- claimClass is a vocab value, not a CSS class */}
         <ClaimClassBadge claimClass="allegation" />
       </>
     ),

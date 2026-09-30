@@ -72,15 +72,30 @@ function ComboboxInput({
   disabled = false,
   showTrigger = true,
   showClear = false,
+  size = "default",
+  tone = "default",
   ...props
-}: ComboboxPrimitive.Input.Props & {
+}: Omit<ComboboxPrimitive.Input.Props, "size"> & {
   showTrigger?: boolean;
   showClear?: boolean;
+  /** Watchdog: sm = 12px dense selectors. */
+  size?: "default" | "sm";
+  /** Watchdog: warning = needs attention (e.g. third-party egress). */
+  tone?: "default" | "warning";
 }) {
   const anchorRef = React.useContext(ComboboxFieldAnchorContext);
 
   return (
-    <InputGroup ref={anchorRef} className={cn("w-full min-w-0", className)}>
+    <InputGroup
+      ref={anchorRef}
+      className={cn(
+        "w-full min-w-0",
+        size === "sm" && "[&_[data-slot=input-group-control]]:text-xs",
+        tone === "warning" &&
+          "border-warning/40 [&_[data-slot=input-group-control]]:text-warning",
+        className
+      )}
+    >
       <ComboboxPrimitive.Input
         render={<InputGroupInput disabled={disabled} />}
         {...props}
