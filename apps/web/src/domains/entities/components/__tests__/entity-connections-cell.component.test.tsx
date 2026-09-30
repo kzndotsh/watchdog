@@ -87,16 +87,13 @@ describe("EntityConnectionsCell", () => {
       />
     );
 
+    // Several connections collapse to one button with direction counts.
     expect(
-      screen.getByRole("button", {
-        name: /Edit connection Associate of John Doe/i,
-      })
-    ).toHaveAttribute("title", "Associate of John Doe");
+      screen.queryByRole("button", { name: /Edit connection/i })
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Edit connection Associate of Acme/i })
-    ).toHaveAttribute("title", "Associate of Acme");
-    expect(screen.getByText("John Doe")).toBeInTheDocument();
-    expect(screen.getByText("Acme")).toBeInTheDocument();
+      screen.getByRole("button", { name: "2 connections" })
+    ).toHaveAttribute("title", "1 outgoing, 1 incoming");
   });
 
   it("falls back to peer slug when the peer has no display name", () => {

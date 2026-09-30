@@ -30,7 +30,8 @@ import {
   PopoverTrigger,
 } from "@watchdog/ui/components/popover";
 
-const MAX_VISIBLE_CHIPS = 2;
+// A lone connection shows as a named chip; several collapse to direction counts so the row stays on one line.
+const MAX_VISIBLE_CHIPS = 1;
 
 const EMPTY_FORM: ConnectionComposerValues = {
   peerId: "",
@@ -85,8 +86,10 @@ export function EntityConnectionsCell({
   const [unlinkingEdgeId, setUnlinkingEdgeId] = useState<string | null>(null);
 
   const peerChoices = entityOptions.filter((o) => o.id !== entity.id);
-  const visible = peers.slice(0, MAX_VISIBLE_CHIPS);
+  const visible = peers.length > MAX_VISIBLE_CHIPS ? [] : peers;
   const overflow = peers.length - visible.length;
+  const outCount = peers.filter((p) => p.direction === "out").length;
+  const inCount = peers.length - outCount;
   const addDisabled = peerChoices.length === 0;
   const isEdit = mode.kind === "edit";
   const showComposer = mode.kind === "create" || mode.kind === "edit";
@@ -206,7 +209,7 @@ export function EntityConnectionsCell({
         modal
       >
         <div className="flex min-w-0 flex-1 items-center gap-1">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+          <div className="flex min-w-0 flex-1 items-center gap-1">
             {peers.length === 0 ? (
               <PopoverTrigger
                 render={
@@ -247,7 +250,7 @@ export function EntityConnectionsCell({
                       aria-label={`Edit connection ${phrase}`}
                       className={cn(
                         CHIP_SIZE_CLASS.sm,
-                        "text-foreground/80 bg-secondary hover:bg-secondary/80 inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1 border-transparent"
+                        "text-foreground/80 bg-secondary hover:bg-secondary/80 inline-flex max-w-full min-w-0 shrink cursor-pointer items-center gap-1 border-transparent"
                       )}
                       onClick={() => {
                         openEdit(peer);
@@ -268,10 +271,28 @@ export function EntityConnectionsCell({
                     type="button"
                     variant="outline"
                     size="xs"
-                    aria-label={`${overflow} more connections`}
+                    aria-label={`${peers.length} connections`}
+                    title={`${outCount} outgoing, ${inCount} incoming`}
                     onClick={openBrowse}
                   >
-                    +{overflow}
+                    {outCount > 0 ? (
+                      <span className="inline-flex items-center gap-0.5">
+                        <ArrowUpRightIcon
+                          className="text-muted-foreground size-3"
+                          aria-hidden
+                        />
+                        {outCount}
+                      </span>
+                    ) : null}
+                    {inCount > 0 ? (
+                      <span className="inline-flex items-center gap-0.5">
+                        <ArrowDownLeftIcon
+                          className="text-muted-foreground size-3"
+                          aria-hidden
+                        />
+                        {inCount}
+                      </span>
+                    ) : null}
                   </Button>
                 ) : null}
               </>
