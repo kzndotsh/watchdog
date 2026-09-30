@@ -61,11 +61,13 @@ export function CaseSwitcherCollapsed({
   active,
   activeId,
   onSelectCase,
+  onCreate,
 }: {
   cases: CaseRecord[];
   active: CaseRecord | null | undefined;
   activeId: string;
   onSelectCase: (id: string) => void;
+  onCreate: () => void;
 }) {
   return (
     <SidebarMenu>
@@ -87,6 +89,7 @@ export function CaseSwitcherCollapsed({
               cases={cases}
               activeId={activeId}
               onSelect={onSelectCase}
+              onCreate={onCreate}
             />
             {active ? (
               <>
@@ -129,12 +132,14 @@ export function CaseSwitcherExpanded({
   activeId,
   collapsed,
   onSelectCase,
+  onCreate,
 }: {
   cases: CaseRecord[];
   active: CaseRecord | null | undefined;
   activeId: string;
   collapsed: boolean;
   onSelectCase: (id: string) => void;
+  onCreate: () => void;
 }) {
   return (
     <>
@@ -164,6 +169,7 @@ export function CaseSwitcherExpanded({
                 cases={cases}
                 activeId={activeId}
                 onSelect={onSelectCase}
+                onCreate={onCreate}
               />
             </DropdownMenuContent>
           </DropdownMenu>

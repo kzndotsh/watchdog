@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { CheckIcon, LayoutDashboardIcon } from "lucide-react";
+import { CheckIcon, LayoutDashboardIcon, PlusIcon } from "lucide-react";
 
 import { CASE_NAV_ITEMS, pathActive } from "@/config/nav";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -7,6 +7,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@watchdog/ui/components/dropdown-menu";
 import {
   SidebarMenuButton,
@@ -59,32 +60,42 @@ export function CaseNavLinks({
   );
 }
 
+/** Case list for the switcher menu, ending with "Create case". */
 export function CasePickerItems({
   cases,
   activeId,
   onSelect,
+  onCreate,
 }: {
   cases: CaseRecord[];
   activeId: string;
   onSelect: (id: string) => void;
+  onCreate: () => void;
 }) {
   return (
-    <DropdownMenuGroup>
-      <DropdownMenuLabel>Cases</DropdownMenuLabel>
-      {cases.map((c) => {
-        const selected = c.id === activeId;
-        return (
-          <DropdownMenuItem
-            key={c.id}
-            onClick={() => {
-              onSelect(c.id);
-            }}
-          >
-            <span className="truncate">{c.name}</span>
-            {selected ? <CheckIcon className="ml-auto" /> : null}
-          </DropdownMenuItem>
-        );
-      })}
-    </DropdownMenuGroup>
+    <>
+      <DropdownMenuGroup>
+        <DropdownMenuLabel>Cases</DropdownMenuLabel>
+        {cases.map((c) => {
+          const selected = c.id === activeId;
+          return (
+            <DropdownMenuItem
+              key={c.id}
+              onClick={() => {
+                onSelect(c.id);
+              }}
+            >
+              <span className="truncate">{c.name}</span>
+              {selected ? <CheckIcon className="ml-auto" /> : null}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuGroup>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={onCreate}>
+        <PlusIcon />
+        Create case
+      </DropdownMenuItem>
+    </>
   );
 }
