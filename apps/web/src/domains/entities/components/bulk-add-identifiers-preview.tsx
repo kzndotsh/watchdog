@@ -172,7 +172,7 @@ export function BulkAddIdentifiersPreviewTable({
             <TableHead className="overflow-hidden">Platform</TableHead>
             <TableHead className="overflow-hidden">Status</TableHead>
             <TableHead className="overflow-hidden">Confidence</TableHead>
-            <TableHead className="overflow-hidden px-1 text-center">
+            <TableHead className="overflow-hidden text-center">
               <span className="sr-only">Note</span>
             </TableHead>
           </TableRow>
@@ -282,7 +282,7 @@ export function BulkAddIdentifiersPreviewTable({
                     }}
                   />
                 </TableCell>
-                <TableCell className="overflow-hidden px-1 text-center">
+                <TableCell className="overflow-hidden text-center">
                   {previewNote(row)}
                 </TableCell>
               </TableRow>

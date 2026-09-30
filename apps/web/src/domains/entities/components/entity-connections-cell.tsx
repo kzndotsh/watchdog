@@ -305,7 +305,7 @@ export function EntityConnectionsCell({
             </PopoverTrigger>
           ) : null}
         </div>
-        <PopoverContent align="end" className="w-80 gap-2.5">
+        <PopoverContent align="end" className="w-80">
           {showConnectionList ? (
             <div className="flex max-h-28 flex-col gap-1 overflow-y-auto border-b pb-2">
               {peers.map((peer) => {

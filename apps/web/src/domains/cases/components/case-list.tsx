@@ -88,14 +88,14 @@ function CaseCard({
           </p>
         </div>
         {isActive ? (
-          <DetailStatusChip size="sm" className="shrink-0 gap-0.5">
+          <DetailStatusChip size="sm" className="shrink-0">
             <CheckIcon className="size-2.5" />
             Active
           </DetailStatusChip>
         ) : null}
         <RowActionsMenu
+          alwaysVisible
           label="Case actions"
-          className="opacity-100"
           actions={dropdownActions}
         />
       </div>

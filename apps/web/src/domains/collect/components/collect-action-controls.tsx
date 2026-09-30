@@ -136,11 +136,8 @@ export function CollectRunPopover({
         <PlayIcon data-icon="inline-start" />
         Run
       </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        className="w-[min(32rem,calc(100vw-2rem))] gap-3 p-3"
-      >
-        <PopoverHeader className="gap-2">
+      <PopoverContent align="end" className="w-[min(32rem,calc(100vw-2rem))]">
+        <PopoverHeader>
           <div className="flex items-center justify-between gap-2">
             <PopoverTitle>Run Cap or Playbook</PopoverTitle>
             <CollectRunModeToggle

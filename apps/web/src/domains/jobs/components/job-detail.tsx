@@ -130,11 +130,11 @@ function JobLogTabBody({
     if (alongsideSpine) return null;
     return (
       <EmptyState
+        size="sm"
         intent="blank-slate"
         items="logs"
         title="No logs yet"
         description="Logs appear here while the job runs."
-        className="py-6"
       />
     );
   }
@@ -151,11 +151,11 @@ function JobInputTabBody({ input }: { input: JobRecord["input"] }) {
   if (Object.keys(input).length === 0) {
     return (
       <EmptyState
+        size="sm"
         intent="blank-slate"
         items="input"
         title="No input"
         description="This job has no recorded input."
-        className="py-6"
       />
     );
   }
@@ -176,6 +176,7 @@ function JobOutputTabBody({
   if (orderedOutput.length === 0) {
     return (
       <EmptyState
+        size="sm"
         intent="blank-slate"
         items="output"
         title="No output yet"
@@ -184,7 +185,6 @@ function JobOutputTabBody({
             ? "Still running — output appears when the job finishes."
             : "This job produced no artifacts."
         }
-        className="py-6"
       />
     );
   }

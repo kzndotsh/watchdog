@@ -72,7 +72,7 @@ export function DossierExportMenu({
         <ClipboardIcon className="size-3.5" />
         Copy
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-44 text-xs">
+      <DropdownMenuContent align="end" className="min-w-44">
         <DropdownMenuItem
           onClick={() => {
             void handleCopyMarkdown(caseId, entitySlug);

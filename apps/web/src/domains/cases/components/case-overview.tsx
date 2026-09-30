@@ -141,7 +141,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
         actions={
           <div className="flex items-center gap-2">
             {isActive ? (
-              <DetailStatusChip size="sm" className="gap-0.5">
+              <DetailStatusChip size="sm">
                 <CheckIcon className="size-2.5" />
                 Active
               </DetailStatusChip>

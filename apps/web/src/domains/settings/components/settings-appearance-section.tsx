@@ -47,7 +47,7 @@ export function SettingsAppearanceSection() {
                 setMode(next);
               }
             }}
-            className="grid gap-2 sm:grid-cols-3"
+            className="grid sm:grid-cols-3"
           >
             {THEME_OPTIONS.map((option) => {
               const Icon = option.icon;

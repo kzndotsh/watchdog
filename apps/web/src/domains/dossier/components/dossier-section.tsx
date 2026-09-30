@@ -52,11 +52,12 @@ function renderSectionBody({
   if (emptyPresentation === "panel") {
     return (
       <EmptyState
+        framed
         intent="blank-slate"
         items={emptyItems ?? "items"}
         description={emptyDescription ?? emptyText}
         action={emptyAction}
-        className="border-border/60 min-h-0 flex-1 rounded-lg border border-dashed py-12"
+        className="min-h-0 flex-1"
       />
     );
   }

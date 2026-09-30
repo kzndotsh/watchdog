@@ -376,12 +376,12 @@ export function EvidenceDetailHeader({
         <TabsList variant="line" className="h-8">
           <TabsTrigger value="content">Content</TabsTrigger>
           {canEnrich || enrichJobs.length > 0 ? (
-            <TabsTrigger value="output" className="gap-1">
+            <TabsTrigger value="output">
               Output
               {enrichOutput ? <TabCount n={1} /> : null}
             </TabsTrigger>
           ) : null}
-          <TabsTrigger value="jobs" className="gap-1">
+          <TabsTrigger value="jobs">
             Jobs
             <TabCount n={relatedJobs.length} />
           </TabsTrigger>

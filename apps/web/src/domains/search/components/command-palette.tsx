@@ -91,7 +91,7 @@ function PaletteActionGroup({
               {Icon ? <Icon /> : null}
               <span>{action.label}</span>
               {action.shortcut ? (
-                <CommandShortcut className="tracking-normal">
+                <CommandShortcut>
                   <ActionShortcutChord
                     chord={action.shortcut}
                     kbdClassName={MENU_KBD_CLASS}
