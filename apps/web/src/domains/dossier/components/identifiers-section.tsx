@@ -35,7 +35,6 @@ import {
   tableComposerKeyDown,
   useDataTable,
 } from "@/shared/ui/data-table";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   HANDLE_REQUIRES_PLATFORM,
   isHandleWithoutPlatform,
@@ -57,6 +56,7 @@ import {
   type IdentifierStatus,
   type IdentifierType,
 } from "@watchdog/schemas";
+import { FieldError } from "@watchdog/ui/components/field";
 
 export type IdentifiersSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug">;
@@ -330,7 +330,7 @@ export function IdentifiersSection({
             </div>
           }
         >
-          <FormInlineError>{submitError ?? updateError}</FormInlineError>
+          <FieldError>{submitError ?? updateError}</FieldError>
           <div className="flex flex-col gap-2">
             <DataTable
               table={table}

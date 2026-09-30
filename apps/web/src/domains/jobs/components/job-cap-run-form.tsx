@@ -21,13 +21,12 @@ import {
 } from "@/shared/layout/page-filter-menu";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import { Input } from "@/shared/ui/primitives/input";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
-import { Field, FieldLabel } from "@watchdog/ui/components/field";
+import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 
 const KIND_FILTERS = [
   { value: "", label: "All kinds" },
@@ -449,9 +448,7 @@ export function JobCapRunForm({
           }}
         </form.Subscribe>
       </form>
-      <FormInlineError className="max-w-md text-right">
-        {runError}
-      </FormInlineError>
+      <FieldError className="max-w-md text-right">{runError}</FieldError>
     </div>
   );
 }

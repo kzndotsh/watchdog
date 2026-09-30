@@ -3,7 +3,6 @@ import { useEffect, type SubmitEvent } from "react";
 
 import type { EntityRecord } from "@/domains/entities/types";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
@@ -16,7 +15,12 @@ import { Input } from "@/shared/ui/primitives/input";
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import { trimmedEntityKindSchema, type EntityKind } from "@watchdog/schemas";
-import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@watchdog/ui/components/field";
 
 export interface DossierEditFormValues {
   name: string;
@@ -160,7 +164,7 @@ export function DossierEditDialog({
             </form.Field>
           </FieldGroup>
 
-          <FormInlineError>{error}</FormInlineError>
+          <FieldError>{error}</FieldError>
 
           <DialogFooter>
             <Button

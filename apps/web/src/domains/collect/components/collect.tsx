@@ -27,7 +27,6 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { InlineLoading } from "@/shared/ui/inline-loading";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { QueueHeader } from "@/shared/ui/queue-header";
@@ -39,6 +38,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@watchdog/ui/components/alert";
+import { FieldError } from "@watchdog/ui/components/field";
 import { Separator } from "@watchdog/ui/components/separator";
 
 const EMPTY_CAPS: CapListItem[] = [];
@@ -161,7 +161,7 @@ function CollectWithCase({
         jobs={ws.jobs}
         actions={ingressActions}
       />
-      <FormInlineError>{ws.actionError}</FormInlineError>
+      <FieldError>{ws.actionError}</FieldError>
       <DumpDialogs
         open={ws.dumpModal}
         onOpenChange={handleDumpOpenChange}

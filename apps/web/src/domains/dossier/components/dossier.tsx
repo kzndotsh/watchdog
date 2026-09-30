@@ -42,10 +42,10 @@ import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { EntityKindGlyph } from "@/shared/ui/vocab";
+import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,
   TabsContent,
@@ -208,9 +208,7 @@ function DossierForEntity({
           }
           below={
             <>
-              {renameError ? (
-                <FormInlineError>{renameError}</FormInlineError>
-              ) : null}
+              {renameError ? <FieldError>{renameError}</FieldError> : null}
               <TabsList
                 variant="line"
                 className="h-8 max-w-full justify-start overflow-x-auto"

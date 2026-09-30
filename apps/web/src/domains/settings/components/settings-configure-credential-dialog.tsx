@@ -6,7 +6,6 @@ import { putCredentialFn } from "@/domains/settings/settings.functions";
 import { putCredentialInputSchema } from "@/domains/settings/types";
 import { errMessage } from "@/lib/utils";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import {
   AlertDialog,
@@ -188,7 +187,7 @@ export function ConfigureCredentialDialog({
             )}
           </form.Field>
 
-          <FormInlineError>{saveError}</FormInlineError>
+          <FieldError>{saveError}</FieldError>
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={form.state.isSubmitting}>

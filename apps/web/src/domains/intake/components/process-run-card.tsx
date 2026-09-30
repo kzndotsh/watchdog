@@ -9,7 +9,6 @@ import {
 import { jobActivityAt } from "@/domains/jobs/lib/status";
 import type { JobListRecord } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
@@ -18,6 +17,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@watchdog/ui/components/collapsible";
+import { FieldError } from "@watchdog/ui/components/field";
 
 function processRunIsLive(job: JobListRecord): boolean {
   return job.status === "queued" || job.status === "running";
@@ -124,7 +124,7 @@ export function ProcessRunCard({
               </div>
             ) : null}
 
-            <FormInlineError>{job.error}</FormInlineError>
+            <FieldError>{job.error}</FieldError>
 
             {job.output && job.output.length > 0 ? (
               <div className="flex flex-col gap-2">

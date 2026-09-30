@@ -48,9 +48,8 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `FetchErrorAlert` | Load-failure banner | Route / region fetch fail | Field validation | `FieldMessage` | canonical | yes | destructive |
 | `FieldSelect` | Dense string Select: CONTROL chrome | Cap / playbook / kind pickers | Native `<select>` · enum-specific atoms | `ConfidenceSelect` · `FieldCombobox` | canonical | yes | : |
 | `FieldCombobox` | Filterable string Combobox: CONTROL chrome; optional `group` → section headings | Long / searchable option lists (edge phrases) | Tiny closed enums | `FieldSelect` · `EntityCombobox` | canonical | no | : |
-| `FieldMessage` | TanStack Form field validation message (`FieldError`) | Under a control after touch/submit | Server / mutation failures | `FormInlineError` | canonical | yes | destructive |
-| `FormInlineError` | Field / form inline error | Mutation / server errors | Load failures | `FetchErrorAlert` | canonical | yes | destructive |
-| `FormInlineWarning` | Field / form inline warning | Soft confirm / evidence hints | Hard errors | `FormInlineError` | canonical | yes | warning |
+| `FieldMessage` | TanStack Form field validation message (`FieldError`) | Under a control after touch/submit | Server / mutation failures | `FieldError` | canonical | yes | destructive |
+| `FormInlineWarning` | Field / form inline warning | Soft confirm / evidence hints | Hard errors | `FieldError` | canonical | yes | warning |
 | `FormSection` | Settings fieldset card (`ACCENT_CARD_SURFACE`) | Auth/settings forms | Queue composers | `ComposerShell` | canonical | no | : |
 | `IdChip` | Opaque id/hash mono chip (whole-chip copy when `copyable`; `full` skips truncate) | UUIDs / hashes | Human labels | `MiddleTruncate` | canonical | yes | chip |
 | `IdentifierNotesCell` / `NotesIconCell` | Sticky-note icon → right Sheet + `RichTextEditor` Markdown (blur/close autosave) | Identifier + Entity table Notes columns (`/identifiers` · `/entities` · Dossier Identifiers) | Inline Notes cells · entity Summary/Notes tabs | `RichTextEditor` | canonical | no | : |
@@ -138,7 +137,7 @@ Fictional tokens (`probable`, `active`/`dormant`/`merged`, vault kinds, `--sever
 | Detail fetch wait | `InlineLoading` on buttons / artifact panels: never `DetailEmpty` for fetch |
 | Stack tab / panel first load | Generic stack: `ActiveTabBody` → `stackPendingFallback()`. Dossier tabs: hand `LoadingRegion` + `*SkeletonLayout` except tasks (`BoardSkeleton`); Case Overview → `CaseOverviewPending`: never "Loading…" copy in data slots |
 | Dashboard live data | `useLiveEvents` on Dashboard for jobs + proposals + tasks |
-| Mutation errors | Prefer `FormInlineError` **or** toast: not both (Entities Connections popover: inline; success may still toast) |
+| Mutation errors | Prefer `FieldError` **or** toast: not both (Entities Connections popover: inline; success may still toast) |
 | Copy confirmations | `toast.success` / `toast.error` via `shared/lib/toast-copy.ts` (`Copied` / `Couldn't copy`); `IdChip` tip is enough when copy is on-chip — no redundant toast |
 | Load failures | `FetchErrorAlert` (+ optional `onRetry` in region boundaries; `meta.silentError` when inline) |
 | Empties | `EmptyState` / `DetailEmpty`: not raw shadcn `Empty` in domains |

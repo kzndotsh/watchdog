@@ -27,7 +27,6 @@ import {
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import {
@@ -486,7 +485,7 @@ export function CaseList() {
         }
       />
 
-      <FormInlineError>{submitError}</FormInlineError>
+      <FieldError>{submitError}</FieldError>
 
       <PageToolbar
         center={

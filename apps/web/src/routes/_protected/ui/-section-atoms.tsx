@@ -15,10 +15,7 @@ import { EntityMention } from "@/shared/ui/entity-mention";
 import { ExternalUrl } from "@/shared/ui/external-url";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FieldSelect } from "@/shared/ui/field-select";
-import {
-  FormInlineError,
-  FormInlineWarning,
-} from "@/shared/ui/form-inline-message";
+import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { IdChip } from "@/shared/ui/id-chip";
 import { InlineLoading } from "@/shared/ui/inline-loading";
 import { Button } from "@/shared/ui/primitives/button";
@@ -47,6 +44,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@watchdog/ui/components/dropdown-menu";
+import { FieldError } from "@watchdog/ui/components/field";
 
 const DEMO_EXTERNAL_HREF = ["https", "://example.com/evidence"].join("");
 const SAMPLE_ID = "8680fa38-0c1d-4e2f-9a3b-595335c1d2e3";
@@ -296,11 +294,6 @@ const ATOM_CATALOG: AtomEntry[] = [
     ),
   },
   {
-    name: "FormInlineError",
-    blurb: "Field/mutation errors — not load failures.",
-    render: () => <FormInlineError>Field is required</FormInlineError>,
-  },
-  {
     name: "FormInlineWarning",
     blurb: "Soft confirm / evidence hints.",
     render: () => (
@@ -312,7 +305,7 @@ const ATOM_CATALOG: AtomEntry[] = [
     blurb: "Muted bordered add/edit surface.",
     render: () => (
       <ComposerShell className="max-w-sm">
-        <FormInlineError>Example composer body</FormInlineError>
+        <FieldError>Example composer body</FieldError>
       </ComposerShell>
     ),
   },

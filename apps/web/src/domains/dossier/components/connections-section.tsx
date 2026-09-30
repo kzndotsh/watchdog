@@ -30,7 +30,6 @@ import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +42,7 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { DossierConnectionsSkeletonLayout } from "@/shared/ui/skeletons";
 import { toast } from "@/shared/ui/toast";
+import { FieldError } from "@watchdog/ui/components/field";
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug" | "kind">;
@@ -319,7 +319,7 @@ export function ConnectionsSection({
                 later.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <FormInlineError>{deleteError}</FormInlineError>
+            <FieldError>{deleteError}</FieldError>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction

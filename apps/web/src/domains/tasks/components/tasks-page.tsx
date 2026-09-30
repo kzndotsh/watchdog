@@ -15,10 +15,10 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { Button } from "@/shared/ui/primitives/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
+import { FieldError } from "@watchdog/ui/components/field";
 
 interface Props {
   entityId?: string;
@@ -99,7 +99,7 @@ function TasksActive({
               placeholderDeemphasisClass(ws.tasksPlaceholder)
             )}
           >
-            <FormInlineError>{ws.quickCreateError}</FormInlineError>
+            <FieldError>{ws.quickCreateError}</FieldError>
             <TaskBoard
               items={ws.tasks}
               selectedId={ws.selected?.id}

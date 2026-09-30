@@ -15,7 +15,6 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { cn } from "@/lib/utils";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import {
   edgePhraseValue,
@@ -24,6 +23,7 @@ import {
 } from "@/shared/ui/vocab/edge-predicate";
 import { entityDisplayLabel } from "@watchdog/schemas";
 import type { EdgeOrientation } from "@watchdog/schemas";
+import { FieldError } from "@watchdog/ui/components/field";
 import {
   Popover,
   PopoverContent,
@@ -343,7 +343,7 @@ export function EntityConnectionsCell({
                 onChange={setForm}
                 disabled={busy}
               />
-              <FormInlineError>{saveError}</FormInlineError>
+              <FieldError>{saveError}</FieldError>
               <div className="flex items-center gap-1.5">
                 {isEdit ? (
                   <Button

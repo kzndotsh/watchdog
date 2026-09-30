@@ -27,7 +27,6 @@ import { cn, errMessage } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FieldMessage } from "@/shared/ui/field-message";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import { Input } from "@/shared/ui/primitives/input";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
@@ -35,6 +34,7 @@ import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import { toast } from "@/shared/ui/toast";
 import { Calendar } from "@watchdog/ui/components/calendar";
+import { FieldError } from "@watchdog/ui/components/field";
 import {
   Popover,
   PopoverContent,
@@ -420,7 +420,7 @@ export function EventsSection({
           />
         }
       >
-        <FormInlineError>{editor.error}</FormInlineError>
+        <FieldError>{editor.error}</FieldError>
 
         {showSpine ? (
           <TimelineSpine className="ml-2 pl-4">

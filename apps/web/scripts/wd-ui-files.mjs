@@ -136,7 +136,6 @@ export const WD_UI_FIXTURE_REQUIRED = [
   "DetailStatusChip",
   "InlineLoading",
   "FetchErrorAlert",
-  "FormInlineError",
   "FormInlineWarning",
   "ComposerShell",
   "ConfidenceSelect",

@@ -43,10 +43,7 @@ import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { FieldMessage } from "@/shared/ui/field-message";
-import {
-  FormInlineError,
-  FormInlineWarning,
-} from "@/shared/ui/form-inline-message";
+import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { Textarea } from "@/shared/ui/primitives/textarea";
@@ -55,6 +52,7 @@ import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { toast } from "@/shared/ui/toast";
 import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";
 import type { RetractKind } from "@watchdog/schemas";
+import { FieldError } from "@watchdog/ui/components/field";
 
 type ClaimAction = ClaimRowActionKind;
 type ActionState = { claimId: string; action: ClaimAction } | null;
@@ -551,7 +549,7 @@ export function ClaimsSection({
           />
         }
       >
-        <FormInlineError>{editor.error}</FormInlineError>
+        <FieldError>{editor.error}</FieldError>
 
         {editor.adding ? (
           <ClaimComposer

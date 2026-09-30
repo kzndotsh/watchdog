@@ -12,12 +12,12 @@ import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
 import { evidenceTitle } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { evidenceSourceFootnote } from "@/shared/ui/intake/evidence-option";
 import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { KindBadge } from "@/shared/ui/vocab";
 import { ButtonGroup } from "@watchdog/ui/components/button-group";
+import { FieldError } from "@watchdog/ui/components/field";
 
 const DUMP_KINDS = [
   { kind: "file" as const, label: "File", Icon: FileUpIcon },
@@ -192,7 +192,7 @@ export function EntityEvidenceSection({
           </ul>
         </div>
       </DossierSection>
-      <FormInlineError>{dump.dumpError}</FormInlineError>
+      <FieldError>{dump.dumpError}</FieldError>
       <DumpDialogs
         open={dumpModal}
         onOpenChange={handleDump}

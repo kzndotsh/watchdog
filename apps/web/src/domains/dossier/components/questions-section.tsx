@@ -35,7 +35,6 @@ import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { FieldMessage } from "@/shared/ui/field-message";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import { Textarea } from "@/shared/ui/primitives/textarea";
 import { SectionLabel } from "@/shared/ui/section-label";
@@ -43,6 +42,7 @@ import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import { toast } from "@/shared/ui/toast";
+import { FieldError } from "@watchdog/ui/components/field";
 
 function qIndex(i: number): string {
   return `Q${String(i + 1).padStart(2, "0")}`;
@@ -666,7 +666,7 @@ export function QuestionsSection({
           />
         }
       >
-        <FormInlineError>{editor.error}</FormInlineError>
+        <FieldError>{editor.error}</FieldError>
 
         {editor.adding ? (
           <QuestionComposer

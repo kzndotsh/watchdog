@@ -24,10 +24,7 @@ import {
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { EmptyState } from "@/shared/ui/empty-state";
-import {
-  FormInlineError,
-  FormInlineWarning,
-} from "@/shared/ui/form-inline-message";
+import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { JsonView } from "@/shared/ui/json-view";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
@@ -41,6 +38,7 @@ import {
   statusLabel,
 } from "@/shared/ui/vocab";
 import { STATUS_DOT } from "@/shared/ui/vocab/status.lib";
+import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,
   TabsContent,
@@ -281,7 +279,11 @@ function JobDetailHeader({
           {job.interpretError}
         </FormInlineWarning>
       ) : null}
-      <FormInlineError className="px-3">{job.error}</FormInlineError>
+      {job.error ? (
+        <div className="px-3">
+          <FieldError>{job.error}</FieldError>
+        </div>
+      ) : null}
 
       <div className="border-border border-b px-2 pb-0">
         <TabsList variant="line" className="h-8">

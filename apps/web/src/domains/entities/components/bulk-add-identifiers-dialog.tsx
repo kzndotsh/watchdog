@@ -9,7 +9,6 @@ import {
   TOAST_IMPORT_LOADING,
 } from "@/shared/lib/toast-copy";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
@@ -21,7 +20,7 @@ import {
 } from "@/shared/ui/primitives/dialog";
 import { Textarea } from "@/shared/ui/primitives/textarea";
 import { toast } from "@/shared/ui/toast";
-import { Field, FieldLabel } from "@watchdog/ui/components/field";
+import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 
 interface Props {
   open: boolean;
@@ -131,11 +130,11 @@ export function BulkAddIdentifiersDialog({
           />
         )}
 
-        <FormInlineError>
+        <FieldError>
           {importMutation.error
             ? errMessage(importMutation.error, "Failed to import")
             : null}
-        </FormInlineError>
+        </FieldError>
 
         <DialogFooter>
           {stage === "map" ? (

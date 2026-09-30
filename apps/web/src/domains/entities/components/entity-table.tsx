@@ -25,7 +25,6 @@ import {
 } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
@@ -34,6 +33,7 @@ import { trimmedEntityKindSchema, ENTITY_KINDS } from "@watchdog/schemas";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -166,7 +166,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
         }
       />
 
-      <FormInlineError>{submitError}</FormInlineError>
+      <FieldError>{submitError}</FieldError>
 
       <PageToolbar
         center={

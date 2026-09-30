@@ -21,7 +21,6 @@ import { CONFIRMED_REQUIRES_EVIDENCE } from "@/shared/lib/confirmed-evidence";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   EvidenceCiteChips,
   EvidencePicker,
@@ -31,6 +30,7 @@ import { Button } from "@/shared/ui/primitives/button";
 import { Textarea } from "@/shared/ui/primitives/textarea";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
+import { FieldError } from "@watchdog/ui/components/field";
 import { Kbd } from "@watchdog/ui/components/kbd";
 
 /** Inline shortcut hint inside a Button: inherits the button's ink. */
@@ -311,9 +311,11 @@ export function TriageDecideFooter({
             onRejectingChange={onRejectingChange}
           />
         </DetailFooter>
-        <FormInlineError className="border-border shrink-0 border-t px-4 pb-2">
-          {error}
-        </FormInlineError>
+        {error ? (
+          <div className="border-border shrink-0 border-t px-4 pb-2">
+            <FieldError>{error}</FieldError>
+          </div>
+        ) : null}
       </>
     );
   }
@@ -407,9 +409,11 @@ export function TriageDecideFooter({
           }}
         </acceptForm.Subscribe>
       </DetailFooter>
-      <FormInlineError className="border-border shrink-0 border-t px-4 pb-2">
-        {error}
-      </FormInlineError>
+      {error ? (
+        <div className="border-border shrink-0 border-t px-4 pb-2">
+          <FieldError>{error}</FieldError>
+        </div>
+      ) : null}
     </>
   );
 }

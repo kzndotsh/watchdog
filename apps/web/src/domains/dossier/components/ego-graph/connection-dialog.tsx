@@ -12,10 +12,7 @@ import {
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import {
-  FormInlineError,
-  FormInlineWarning,
-} from "@/shared/ui/form-inline-message";
+import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import {
@@ -44,7 +41,12 @@ import {
   type EdgePredicate,
   type EntityKind,
 } from "@watchdog/schemas";
-import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@watchdog/ui/components/field";
 
 export interface ConnectionPeerOption {
   id: string;
@@ -376,7 +378,7 @@ export function ConnectionDialog({
             }}
           </form.Subscribe>
 
-          <FormInlineError>{error}</FormInlineError>
+          <FieldError>{error}</FieldError>
 
           <DialogFooter>
             <Button

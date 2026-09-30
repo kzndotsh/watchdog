@@ -24,7 +24,6 @@ import {
 } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
 import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
@@ -37,6 +36,7 @@ import {
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -142,7 +142,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
         }
       />
 
-      <FormInlineError>{submitError}</FormInlineError>
+      <FieldError>{submitError}</FieldError>
 
       <PageToolbar
         center={

@@ -19,7 +19,7 @@ if (!atomName || !relPath) {
     "Usage: node scripts/new-atom-checklist.mjs <AtomName> <path-under-src/shared/ui>"
   );
   console.error(
-    "Example: node scripts/new-atom-checklist.mjs FormInlineError form-inline-message.tsx"
+    "Example: node scripts/new-atom-checklist.mjs FormInlineWarning form-inline-message.tsx"
   );
   process.exit(2);
 }
