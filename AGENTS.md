@@ -17,7 +17,7 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
 | Dev | `just dev` · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
-| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix + agents + docs + effect-edges + size + agent-skills · pre-push: typecheck + web DS |
+| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix (staged files) + agents + docs + effect-edges + size + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
 | Caps / client regen | `pnpm generate:caps` · `pnpm generate:client` |

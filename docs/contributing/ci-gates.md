@@ -9,7 +9,7 @@ Installed via `lefthook install` (auto in `nix develop`). Override with `lefthoo
 
 | Hook | Commands (glob-scoped; see `lefthook.yml`) |
 | --- | --- |
-| **pre-commit** | `pnpm fix` · `pnpm check:agents:strict` (AGENTS/docs) · `pnpm check:docs` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm validate:agents` (skills) |
+| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS/docs) · `pnpm check:docs` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm validate:agents` (skills) |
 | **pre-push** | `pnpm typecheck` · `pnpm ds:check` from `apps/web/` |
 
 Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference):

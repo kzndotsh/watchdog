@@ -12,15 +12,25 @@ pre-commit:
   commands:
     ultracite:
       glob:
-        - "*.{ts,tsx,js,mjs,json,yml,yaml,md}"
-        - "**/*.{ts,tsx,js,mjs,json,yml,yaml,md}"
+        - "*.{ts,tsx,js,json,yml,yaml,md}"
+        - "**/*.{ts,tsx,js,json,yml,yaml,md}"
       exclude:
         - "**/routeTree.gen.ts"
         - "packages/contract/src/generated/**"
         - "packages/caps/capabilities.gen.json"
         - "apps/web/src/shared/ui/shadcn/**"
-      run: pnpm fix
+      # Staged files only: a repo-wide fix rewrites files outside the commit
+      # and can break lefthook's restore of unstaged changes.
+      run: pnpm exec ultracite fix --disable-nested-config --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
+    ultracite-scripts:
+      # .mjs scripts lose type-aware context when linted by path, so check the
+      # whole repo instead. Read-only: never rewrites files, so it can't break
+      # the unstaged-changes restore either.
+      glob:
+        - "*.mjs"
+        - "**/*.mjs"
+      run: pnpm check
     agents:
       glob:
         - "{AGENTS.md,**/AGENTS.md}"
