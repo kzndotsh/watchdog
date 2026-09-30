@@ -64,7 +64,19 @@ function trustedAuthOrigins(base: string): string[] {
  * its framework.
  */
 export function createAuth<const T extends BetterAuthPlugin[] = []>(
-  options: { trailingPlugins?: T } = {}
+  options: {
+    trailingPlugins?: T;
+    /**
+     * Remove everything an organization owns (Cases and their artifacts) before the
+     * organization row goes. Organization deletion is only enabled when this is given,
+     * because Cases reference organizations by soft id and would be orphaned otherwise.
+     * Throw to abort the deletion.
+     */
+    beforeDeleteOrganization?: (input: {
+      organizationId: string;
+      actorId: string;
+    }) => Promise<void>;
+  } = {}
 ) {
   const authUrl = env.BETTER_AUTH_URL;
 
@@ -146,9 +158,19 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
             typeof candidate.role === "string" ? candidate.role : null
           ),
         creatorRole: "owner",
-        // Cases reference organizations by a soft id, so deleting one would orphan
-        // evidence and the Case Graph. Enable once deletion cascades/archives.
-        disableOrganizationDeletion: true,
+        disableOrganizationDeletion:
+          options.beforeDeleteOrganization === undefined,
+        organizationHooks: {
+          beforeDeleteOrganization: async ({
+            organization: doomed,
+            user: actor,
+          }) => {
+            await options.beforeDeleteOrganization?.({
+              organizationId: doomed.id,
+              actorId: actor.id,
+            });
+          },
+        },
         requireEmailVerificationOnInvitation: false,
         sendInvitationEmail,
       }),

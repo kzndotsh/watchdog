@@ -49,12 +49,12 @@ vi.mock("@/domains/settings/components/settings-credentials-form", () => ({
   SettingsCredentialsForm: () => <div>Credentials form</div>,
 }));
 
-vi.mock("@/auth/ui/team/team-settings", () => ({
-  TeamSettings: () => <div>Team panel</div>,
+vi.mock("@/domains/organization/components/organization-members", () => ({
+  OrganizationMembers: () => <div>Team panel</div>,
 }));
 
-vi.mock("@/auth/ui/users/users-settings", () => ({
-  UsersSettings: () => <div>Users panel</div>,
+vi.mock("@/domains/settings/components/settings-users", () => ({
+  SettingsUsers: () => <div>Users panel</div>,
 }));
 
 vi.mock("@/domains/settings/components/settings-shell", () => ({

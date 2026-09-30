@@ -4,28 +4,30 @@ import {
   useFetchOptions,
   useListAccounts,
   useRequestPasswordReset,
-  useSession
-} from "@better-auth-ui/react"
-import { Eye, EyeOff } from "lucide-react"
-import { type SyntheticEvent, useState } from "react"
-import { toast } from "@/shared/ui/toast"
+  useSession,
+} from "@better-auth-ui/react";
+import { Eye, EyeOff } from "lucide-react";
+import { type SyntheticEvent, useState } from "react";
 
-import { Button } from "@/shared/ui/primitives/button"
-import { Field, FieldError } from "@watchdog/ui/components/field"
-import { FormSection } from "@/shared/ui/form-section"
-import { Input } from "@watchdog/ui/components/input"
+import { FormSection } from "@/shared/ui/form-section";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
+import { Field, FieldError } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupInput
-} from "@watchdog/ui/components/input-group"
-import { Label } from "@watchdog/ui/components/label"
-import { Skeleton } from "@watchdog/ui/components/skeleton"
-import { Spinner } from "@watchdog/ui/components/spinner"
+  InputGroupInput,
+} from "@watchdog/ui/components/input-group";
+import { Label } from "@watchdog/ui/components/label";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-export type ChangePasswordProps = {
-  className?: string
+import { PasswordStrengthMeter } from "../../password-strength-meter";
+
+export interface ChangePasswordProps {
+  className?: string;
 }
 
 /**
@@ -38,17 +40,17 @@ export type ChangePasswordProps = {
  * @returns A JSX element containing the change-password or set-password card
  */
 export function ChangePassword({ className }: ChangePasswordProps) {
-  const { authClient, emailAndPassword, localization } = useAuth()
-  const { data: session } = useSession(authClient)
+  const { authClient, emailAndPassword, localization } = useAuth();
+  const { data: session } = useSession(authClient);
   const { data: accounts, isPending: isAccountsPending } =
-    useListAccounts(authClient)
+    useListAccounts(authClient);
 
   const hasCredentialAccount = accounts?.some(
     (account) => account.providerId === "credential"
-  )
+  );
 
   if (!isAccountsPending && !hasCredentialAccount) {
-    return <SetPassword className={className} />
+    return <SetPassword className={className} />;
   }
 
   return (
@@ -58,33 +60,33 @@ export function ChangePassword({ className }: ChangePasswordProps) {
       localization={localization}
       session={isAccountsPending ? undefined : session}
     />
-  )
+  );
 }
 
 function SetPassword({ className }: { className?: string }) {
-  const { authClient, localization, plugins } = useAuth()
-  const { data: session } = useSession(authClient)
-  const { fetchOptions, resetFetchOptions } = useFetchOptions()
+  const { authClient, localization, plugins } = useAuth();
+  const { data: session } = useSession(authClient);
+  const { fetchOptions, resetFetchOptions } = useFetchOptions();
 
   const { mutate: requestPasswordReset, isPending } = useRequestPasswordReset(
     authClient,
     {
       onError: () => {
-        resetFetchOptions()
+        resetFetchOptions();
       },
-      onSuccess: () => toast.success(localization.auth.passwordResetEmailSent)
+      onSuccess: () => toast.success(localization.auth.passwordResetEmailSent),
     }
-  )
+  );
 
   const Captcha = plugins.find(
     (plugin) => plugin.captchaComponent
-  )?.captchaComponent
+  )?.captchaComponent;
 
   const handleSetPassword = () => {
-    if (!session) return
+    if (!session) return;
 
-    requestPasswordReset({ email: session.user.email, fetchOptions })
-  }
+    requestPasswordReset({ email: session.user.email, fetchOptions });
+  };
 
   return (
     <FormSection
@@ -102,75 +104,75 @@ function SetPassword({ className }: { className?: string }) {
       }
     >
       <div>
-        <p className="text-sm font-medium leading-tight">
+        <p className="text-sm leading-tight font-medium">
           {localization.settings.setPassword}
         </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-0.5 text-xs">
           {localization.settings.setPasswordDescription}
         </p>
       </div>
       {Captcha ? <div>{Captcha}</div> : null}
     </FormSection>
-  )
+  );
 }
 
 function ChangePasswordForm({
   className,
   emailAndPassword,
   localization,
-  session
+  session,
 }: {
-  className?: string
-  emailAndPassword: ReturnType<typeof useAuth>["emailAndPassword"]
-  localization: ReturnType<typeof useAuth>["localization"]
-  session: ReturnType<typeof useSession>["data"]
+  className?: string;
+  emailAndPassword: ReturnType<typeof useAuth>["emailAndPassword"];
+  localization: ReturnType<typeof useAuth>["localization"];
+  session: ReturnType<typeof useSession>["data"];
 }) {
-  const { authClient } = useAuth()
-  const [currentPassword, setCurrentPassword] = useState("")
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
+  const { authClient } = useAuth();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const { mutate: changePassword, isPending } = useChangePassword(authClient, {
     onError: () => {
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     },
     onSuccess: () => {
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
-      toast.success(localization.settings.changePasswordSuccess)
-    }
-  })
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success(localization.settings.changePasswordSuccess);
+    },
+  });
 
-  const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false)
+  const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
-    useState(false)
+    useState(false);
 
   const [fieldErrors, setFieldErrors] = useState<{
-    currentPassword?: string
-    newPassword?: string
-    confirmPassword?: string
-  }>({})
+    currentPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+  }>({});
 
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (emailAndPassword.confirmPassword && newPassword !== confirmPassword) {
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
-      toast.error(localization.auth.passwordsDoNotMatch)
-      return
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.error(localization.auth.passwordsDoNotMatch);
+      return;
     }
 
     changePassword({
       currentPassword,
       newPassword,
-      revokeOtherSessions: true
-    })
-  }
+      revokeOtherSessions: true,
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -198,23 +200,23 @@ function ChangePasswordForm({
               placeholder={localization.settings.currentPasswordPlaceholder}
               value={currentPassword}
               onChange={(e) => {
-                setCurrentPassword(e.target.value)
+                setCurrentPassword(e.target.value);
 
                 setFieldErrors((prev) => ({
                   ...prev,
-                  currentPassword: undefined
-                }))
+                  currentPassword: undefined,
+                }));
               }}
               disabled={isPending}
               required
               onInvalid={(e) => {
-                e.preventDefault()
+                e.preventDefault();
 
                 setFieldErrors((prev) => ({
                   ...prev,
                   currentPassword: (e.target as HTMLInputElement)
-                    .validationMessage
-                }))
+                    .validationMessage,
+                }));
               }}
               aria-invalid={!!fieldErrors.currentPassword}
             />
@@ -240,24 +242,24 @@ function ChangePasswordForm({
                 placeholder={localization.auth.newPasswordPlaceholder}
                 value={newPassword}
                 onChange={(e) => {
-                  setNewPassword(e.target.value)
+                  setNewPassword(e.target.value);
 
                   setFieldErrors((prev) => ({
                     ...prev,
-                    newPassword: undefined
-                  }))
+                    newPassword: undefined,
+                  }));
                 }}
                 minLength={emailAndPassword.minPasswordLength}
                 maxLength={emailAndPassword.maxPasswordLength}
                 disabled={isPending}
                 required
                 onInvalid={(e) => {
-                  e.preventDefault()
+                  e.preventDefault();
                   setFieldErrors((prev) => ({
                     ...prev,
                     newPassword: (e.target as HTMLInputElement)
-                      .validationMessage
-                  }))
+                      .validationMessage,
+                  }));
                 }}
                 aria-invalid={!!fieldErrors.newPassword}
               />
@@ -270,7 +272,9 @@ function ChangePasswordForm({
                       ? localization.auth.hidePassword
                       : localization.auth.showPassword
                   }
-                  onClick={() => setIsNewPasswordVisible(!isNewPasswordVisible)}
+                  onClick={() => {
+                    setIsNewPasswordVisible(!isNewPasswordVisible);
+                  }}
                   disabled={isPending}
                 >
                   {isNewPasswordVisible ? <EyeOff /> : <Eye />}
@@ -284,6 +288,8 @@ function ChangePasswordForm({
           )}
 
           <FieldError>{fieldErrors.newPassword}</FieldError>
+
+          <PasswordStrengthMeter password={newPassword} />
         </Field>
 
         {emailAndPassword.confirmPassword ? (
@@ -302,25 +308,25 @@ function ChangePasswordForm({
                   placeholder={localization.auth.confirmPasswordPlaceholder}
                   value={confirmPassword}
                   onChange={(e) => {
-                    setConfirmPassword(e.target.value)
+                    setConfirmPassword(e.target.value);
 
                     setFieldErrors((prev) => ({
                       ...prev,
-                      confirmPassword: undefined
-                    }))
+                      confirmPassword: undefined,
+                    }));
                   }}
                   minLength={emailAndPassword.minPasswordLength}
                   maxLength={emailAndPassword.maxPasswordLength}
                   disabled={isPending}
                   required
                   onInvalid={(e) => {
-                    e.preventDefault()
+                    e.preventDefault();
 
                     setFieldErrors((prev) => ({
                       ...prev,
                       confirmPassword: (e.target as HTMLInputElement)
-                        .validationMessage
-                    }))
+                        .validationMessage,
+                    }));
                   }}
                   aria-invalid={!!fieldErrors.confirmPassword}
                 />
@@ -333,9 +339,9 @@ function ChangePasswordForm({
                         ? localization.auth.hidePassword
                         : localization.auth.showPassword
                     }
-                    onClick={() =>
-                      setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
-                    }
+                    onClick={() => {
+                      setIsConfirmPasswordVisible(!isConfirmPasswordVisible);
+                    }}
                     disabled={isPending}
                   >
                     {isConfirmPasswordVisible ? <EyeOff /> : <Eye />}
@@ -353,5 +359,5 @@ function ChangePasswordForm({
         ) : null}
       </FormSection>
     </form>
-  )
+  );
 }

@@ -1,26 +1,31 @@
 import {
   useAuth,
   useFetchOptions,
-  useRequestPasswordReset
-} from "@better-auth-ui/react"
-import { type SyntheticEvent, useState } from "react"
-import { toast } from "@/shared/ui/toast"
+  useRequestPasswordReset,
+} from "@better-auth-ui/react";
+import { type SyntheticEvent, useState } from "react";
 
-import { Button } from "@/shared/ui/primitives/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@watchdog/ui/components/card"
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@watchdog/ui/components/card";
 import {
   Field,
   FieldDescription,
   FieldError,
-  FieldGroup
-} from "@watchdog/ui/components/field"
-import { Input } from "@watchdog/ui/components/input"
-import { Label } from "@watchdog/ui/components/label"
-import { Spinner } from "@watchdog/ui/components/spinner"
-import { cn } from "@/lib/utils"
+  FieldGroup,
+} from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Label } from "@watchdog/ui/components/label";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-export type ForgotPasswordProps = {
-  className?: string
+export interface ForgotPasswordProps {
+  className?: string;
 }
 
 /**
@@ -40,38 +45,38 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
     localization,
     plugins,
     viewPaths,
-    Link
-  } = useAuth()
+    Link,
+  } = useAuth();
 
-  const { fetchOptions, resetFetchOptions } = useFetchOptions()
+  const { fetchOptions, resetFetchOptions } = useFetchOptions();
 
   const { mutate: requestPasswordReset, isPending } = useRequestPasswordReset(
     authClient,
     {
       onError: () => {
-        resetFetchOptions()
+        resetFetchOptions();
       },
-      onSuccess: () => toast.success(localization.auth.passwordResetEmailSent)
+      onSuccess: () => toast.success(localization.auth.passwordResetEmailSent),
     }
-  )
+  );
 
   function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
     requestPasswordReset({
       email: (formData.get("email") as string).trim(),
       redirectTo: `${baseURL}${basePaths.auth}/${viewPaths.auth.resetPassword}`,
-      fetchOptions
-    })
+      fetchOptions,
+    });
   }
 
   const Captcha = plugins.find(
     (plugin) => plugin.captchaComponent
-  )?.captchaComponent
+  )?.captchaComponent;
 
   const [fieldErrors, setFieldErrors] = useState<{
-    email?: string
-  }>({})
+    email?: string;
+  }>({});
 
   return (
     <Card className={cn("w-full max-w-sm", className)}>
@@ -98,20 +103,20 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
                 onChange={() => {
                   setFieldErrors((prev) => ({
                     ...prev,
-                    email: undefined
-                  }))
+                    email: undefined,
+                  }));
                 }}
                 onInvalid={(e) => {
-                  e.preventDefault()
-                  const el = e.target as HTMLInputElement
+                  e.preventDefault();
+                  const el = e.target as HTMLInputElement;
                   const msg = el.validity.valueMissing
                     ? localization.auth.fieldRequired
-                    : localization.auth.invalidEmail
+                    : localization.auth.invalidEmail;
 
                   setFieldErrors((prev) => ({
                     ...prev,
-                    email: msg
-                  }))
+                    email: msg,
+                  }));
                 }}
                 aria-invalid={!!fieldErrors.email}
               />
@@ -131,7 +136,7 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
           </FieldGroup>
         </form>
 
-        <div className="flex flex-col gap-3 items-center w-full mt-4">
+        <div className="mt-4 flex w-full flex-col items-center gap-3">
           <FieldDescription className="text-center">
             {localization.auth.rememberYourPassword}{" "}
             <Link
@@ -144,5 +149,5 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

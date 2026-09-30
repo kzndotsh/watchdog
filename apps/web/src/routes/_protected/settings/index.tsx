@@ -15,8 +15,7 @@ import { z } from "zod";
 import { authClient } from "@/auth/client";
 import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
-import { TeamSettings } from "@/auth/ui/team/team-settings";
-import { UsersSettings } from "@/auth/ui/users/users-settings";
+import { OrganizationMembers } from "@/domains/organization/components/organization-members";
 import { OrganizationProfile } from "@/domains/organization/components/organization-profile";
 import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
@@ -26,6 +25,7 @@ import {
   type SettingsNavItem,
   type SettingsTab,
 } from "@/domains/settings/components/settings-shell";
+import { SettingsUsers } from "@/domains/settings/components/settings-users";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
@@ -128,7 +128,7 @@ function SettingsPanel({
       return (
         <div className="flex max-w-2xl flex-col gap-8">
           <OrganizationProfile />
-          <TeamSettings />
+          <OrganizationMembers />
         </div>
       );
     }
@@ -147,7 +147,7 @@ function SettingsPanel({
           </p>
         );
       }
-      return <UsersSettings />;
+      return <SettingsUsers />;
     }
     case "credentials": {
       return <SettingsCredentialsForm />;

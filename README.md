@@ -225,7 +225,7 @@ Not there yet, worth knowing before you invest time:
 
 - **MCP server.** Not built. Agents use the OpenAPI surface today.
 - **Playbooks** are linear chains, with no branching and no conditionals.
-- **Hardened multi-tenancy.** Organizations are self-serve and Cases are org-scoped, but there is no billing, no org deletion, and no adversarial-tenant isolation review yet.
+- **Hardened multi-tenancy.** Organizations are self-serve and Cases are org-scoped, but there is no billing and no adversarial-tenant isolation review yet. Deleting an organization (owner only) deletes all of its Cases, evidence, and artifacts first.
 - **End-to-end coverage** — 18 Playwright specs in `e2e/specs/` (`@smoke` / `@custody` / `@journey`), including auth sign-up, team invite, and instance-admin Users, on top of unit, component, and integration tiers — not full manual-smoke parity yet.
 
 Investigation content (corpus, entity notes, mirrors) lives in a separate private repo and never enters this one.

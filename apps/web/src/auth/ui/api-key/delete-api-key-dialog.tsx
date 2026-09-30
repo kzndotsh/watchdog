@@ -1,56 +1,55 @@
 import type {
   ApiKeyAuthClient,
   ListedApiKey,
-} from "@better-auth-ui/core/plugins/api-key"
-import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
-import { useDeleteApiKey } from "@better-auth-ui/react/plugins/api-key"
-import { Key } from "lucide-react"
-import { useState } from "react"
+} from "@better-auth-ui/core/plugins/api-key";
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
+import { useDeleteApiKey } from "@better-auth-ui/react/plugins/api-key";
+import { Key } from "lucide-react";
+import { useState } from "react";
 
-import { apiKeyPlugin } from "@/auth/plugins/api-key"
+import { apiKeyPlugin } from "@/auth/plugins/api-key";
+import { errMessage } from "@/lib/utils";
+import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 
-import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog"
-import { errMessage } from "@/lib/utils"
-
-export type DeleteApiKeyDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  apiKey: ListedApiKey
+export interface DeleteApiKeyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  apiKey: ListedApiKey;
   /** Scope the delete payload to an organization (sets `configId`). */
-  organizationId?: string
+  organizationId?: string;
 }
 
 export function DeleteApiKeyDialog({
   open,
   onOpenChange,
   apiKey,
-  organizationId
+  organizationId,
 }: DeleteApiKeyDialogProps) {
-  const { authClient } = useAuth()
-  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin)
-  const [error, setError] = useState<string | null>(null)
+  const { authClient } = useAuth();
+  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
+  const [error, setError] = useState<string | null>(null);
 
   const { mutate: deleteApiKey, isPending: isDeleting } = useDeleteApiKey(
     authClient as ApiKeyAuthClient,
     {
       onSuccess: () => {
-        setError(null)
-        onOpenChange(false)
+        setError(null);
+        onOpenChange(false);
       },
       onError: (err: unknown) => {
-        setError(errMessage(err, "Delete failed"))
-      }
+        setError(errMessage(err, "Delete failed"));
+      },
     }
-  )
+  );
 
-  const phrase = apiKey.name?.trim() || apiKey.start || apiKey.id
+  const phrase = apiKey.name?.trim() || apiKey.start || apiKey.id;
 
   return (
     <DestructiveConfirmDialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) setError(null)
-        onOpenChange(next)
+        if (!next) setError(null);
+        onOpenChange(next);
       }}
       title={apiKeyLocalization.deleteApiKey}
       description={apiKeyLocalization.deleteApiKeyWarning}
@@ -61,12 +60,12 @@ export function DeleteApiKeyDialog({
       media={<Key />}
       loading={isDeleting}
       error={error}
-      onConfirm={() =>
+      onConfirm={() => {
         deleteApiKey({
           keyId: apiKey.id,
-          ...(organizationId ? { configId: "organization" } : {})
-        })
-      }
+          ...(organizationId ? { configId: "organization" } : {}),
+        });
+      }}
     />
-  )
+  );
 }

@@ -2,25 +2,25 @@
 
 import { useSession } from "@better-auth-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/shared/ui/toast";
 
 import { authClient } from "@/auth/client";
-import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
-import { errMessage, cn } from "@/lib/utils";
-import { FormSection } from "@/shared/ui/form-section";
+import { cn, errMessage, messageOr } from "@/lib/utils";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { queryLoadError } from "@/shared/lib/query-load-error";
+import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import {
   TOAST_SESSIONS_REVOKED,
   TOAST_USER_DISABLED,
   TOAST_USER_ENABLED,
 } from "@/shared/lib/toast-copy";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { FormSection } from "@/shared/ui/form-section";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
+import { toast } from "@/shared/ui/toast";
+import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
 import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 import { Spinner } from "@watchdog/ui/components/spinner";
-import { listPending } from "@/shared/lib/list-pending";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
-import { queryLoadError } from "@/shared/lib/query-load-error";
-import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 const USERS_QUERY_KEY = ["auth-admin", "users"] as const;
 
@@ -39,16 +39,16 @@ async function loadUsers(): Promise<ListedUser[]> {
     query: { limit: 100, sortBy: "createdAt", sortDirection: "asc" },
   });
   if (error) {
-    throw new Error(error.message || "Could not load users");
+    throw new Error(messageOr(error.message, "Could not load users"));
   }
-  return (data?.users ?? EMPTY_USERS) as ListedUser[];
+  return data?.users ?? EMPTY_USERS;
 }
 
 function roleLabel(role: string | null | undefined): string {
   return isInstanceAdmin(role) ? "Install admin" : "User";
 }
 
-export function UsersSettings() {
+export function SettingsUsers() {
   const queryClient = useQueryClient();
   const { data: session } = useSession(authClient);
   const selfId = session?.user.id;
@@ -58,7 +58,7 @@ export function UsersSettings() {
     placeholderData: placeholderDataForQueryKey(USERS_QUERY_KEY),
   });
 
-  const invalidate = () =>
+  const invalidate = async () =>
     queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
 
   const disableUser = useMutation({
@@ -67,10 +67,11 @@ export function UsersSettings() {
         userId,
         banReason: "disabled",
       });
-      if (error) throw new Error(error.message || "Could not disable user");
+      if (error)
+        throw new Error(messageOr(error.message, "Could not disable user"));
     },
     onSuccess: () => {
-      invalidate();
+      void invalidate();
       toast.success(TOAST_USER_DISABLED);
     },
     onError: (error) => {
@@ -81,10 +82,11 @@ export function UsersSettings() {
   const enableUser = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await authClient.admin.unbanUser({ userId });
-      if (error) throw new Error(error.message || "Could not enable user");
+      if (error)
+        throw new Error(messageOr(error.message, "Could not enable user"));
     },
     onSuccess: () => {
-      invalidate();
+      void invalidate();
       toast.success(TOAST_USER_ENABLED);
     },
     onError: (error) => {
@@ -96,11 +98,13 @@ export function UsersSettings() {
     mutationFn: async (userId: string) => {
       const { error } = await authClient.admin.revokeUserSessions({ userId });
       if (error) {
-        throw new Error(error.message || "Could not sign out sessions");
+        throw new Error(
+          messageOr(error.message, "Could not sign out sessions")
+        );
       }
     },
     onSuccess: () => {
-      invalidate();
+      void invalidate();
       toast.success(TOAST_SESSIONS_REVOKED);
     },
     onError: (error) => {

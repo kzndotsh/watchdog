@@ -126,6 +126,7 @@ export {
   getCaseBySlugEffect,
   updateCaseEffect,
   deleteCaseEffect,
+  deleteOrganizationCasesEffect,
   type CaseRecord,
   type CreateCaseInput,
 } from "./cases/cases";

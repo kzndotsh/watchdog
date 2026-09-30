@@ -5,6 +5,7 @@ import {
   DomainError,
   createCaseEffect,
   deleteCaseEffect,
+  deleteOrganizationCasesEffect,
   getCaseByIdEffect,
   getCaseBySlugEffect,
   updateCaseEffect,
@@ -165,5 +166,51 @@ describe("deleteCase", () => {
     );
     expect(Result.isFailure(missing)).toBe(true);
     expect(await entitiesRepo.getById(db, entity.id)).toBeNull();
+  });
+});
+
+describe("deleteOrganizationCases", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("removes every Case in the organization and leaves other organizations alone", async () => {
+    const otherOrganizationId = testId(91);
+    await runDomain(
+      createCaseEffect({
+        name: "One",
+        slug: "one",
+        organizationId: TEST_ORGANIZATION_ID,
+      })
+    );
+    await runDomain(
+      createCaseEffect({
+        name: "Two",
+        slug: "two",
+        organizationId: TEST_ORGANIZATION_ID,
+      })
+    );
+    const survivor = await runDomain(
+      createCaseEffect({
+        name: "Elsewhere",
+        slug: "elsewhere",
+        organizationId: otherOrganizationId,
+      })
+    );
+
+    const removed = await runDomain(
+      deleteOrganizationCasesEffect(TEST_ORGANIZATION_ID)
+    );
+
+    expect(removed).toBe(2);
+    await expect(
+      runDomain(getCaseBySlugEffect("one", TEST_ORGANIZATION_ID))
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+    );
+    const kept = await runDomain(
+      getCaseByIdEffect(survivor.id, otherOrganizationId)
+    );
+    expect(kept.slug).toBe("elsewhere");
   });
 });

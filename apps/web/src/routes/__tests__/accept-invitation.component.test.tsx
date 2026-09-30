@@ -19,13 +19,13 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("@/auth/ui/accept-invitation", () => ({
+vi.mock("@/domains/organization/components/accept-invitation", () => ({
   AcceptInvitation: ({ invitationId }: { invitationId: string }) => (
     <div>Accept invitation {invitationId}</div>
   ),
 }));
 
-vi.mock("@/auth/ui/auth-product-mark", () => ({
+vi.mock("@/shared/layout/auth-product-mark", () => ({
   AuthProductMark: () => <div>Watchdog mark</div>,
 }));
 

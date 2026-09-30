@@ -16,6 +16,16 @@ export function nextAutoSlug(
   return stillAuto ? slugifyName(nextName) : null;
 }
 
+/** A Better Auth / fetch error message, or `fallback` when it is missing or empty. */
+export function messageOr(
+  message: string | null | undefined,
+  fallback: string
+): string {
+  return message === undefined || message === null || message === ""
+    ? fallback
+    : message;
+}
+
 export function errMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }

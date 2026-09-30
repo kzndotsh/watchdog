@@ -1,12 +1,11 @@
-import type { ApiKeyAuthClient } from "@better-auth-ui/core/plugins/api-key"
-import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react"
-import { useCreateApiKey } from "@better-auth-ui/react/plugins/api-key"
-import { Key } from "lucide-react"
-import { type SyntheticEvent, useState } from "react"
+import type { ApiKeyAuthClient } from "@better-auth-ui/core/plugins/api-key";
+import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react";
+import { useCreateApiKey } from "@better-auth-ui/react/plugins/api-key";
+import { Key } from "lucide-react";
+import { type SyntheticEvent, useState } from "react";
 
-import { authClient as appAuthClient } from "@/auth/client"
-import { apiKeyPlugin } from "@/auth/plugins/api-key"
-
+import { authClient as appAuthClient } from "@/auth/client";
+import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -15,56 +14,57 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogMedia,
-  AlertDialogTitle
-} from "@/shared/ui/primitives/alert-dialog"
-import { Button } from "@/shared/ui/primitives/button"
-import { Field, FieldError } from "@watchdog/ui/components/field"
-import { Input } from "@watchdog/ui/components/input"
-import { Label } from "@watchdog/ui/components/label"
-import { Spinner } from "@watchdog/ui/components/spinner"
-import { NewApiKeyDialog } from "./new-api-key-dialog"
+  AlertDialogTitle,
+} from "@/shared/ui/primitives/alert-dialog";
+import { Button } from "@/shared/ui/primitives/button";
+import { Field, FieldError } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Label } from "@watchdog/ui/components/label";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-export type CreateApiKeyDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+import { NewApiKeyDialog } from "./new-api-key-dialog";
+
+export interface CreateApiKeyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   /** Create an organization-owned key by passing the organization id. */
-  organizationId?: string
+  organizationId?: string;
 }
 
 export function CreateApiKeyDialog({
   open,
   onOpenChange,
-  organizationId
+  organizationId,
 }: CreateApiKeyDialogProps) {
-  const { authClient, localization } = useAuth()
-  const { data: sessionData } = useSession(appAuthClient)
+  const { authClient, localization } = useAuth();
+  const { data: sessionData } = useSession(appAuthClient);
   // Keys act in the organization they were created in (checked again on every request).
   const scopedOrganizationId =
-    sessionData?.session.activeOrganizationId ?? undefined
-  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin)
+    sessionData?.session.activeOrganizationId ?? undefined;
+  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
 
   const { mutate: createApiKey, isPending: isCreating } = useCreateApiKey(
     authClient as ApiKeyAuthClient
-  )
+  );
 
-  const [isNewKeyDialogOpen, setIsNewKeyDialogOpen] = useState(false)
-  const [keyName, setKeyName] = useState<string | null>(null)
-  const [secretKey, setSecretKey] = useState<string | null>(null)
+  const [isNewKeyDialogOpen, setIsNewKeyDialogOpen] = useState(false);
+  const [keyName, setKeyName] = useState<string | null>(null);
+  const [secretKey, setSecretKey] = useState<string | null>(null);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      setKeyName(null)
-      setSecretKey(null)
+      setKeyName(null);
+      setSecretKey(null);
     }
 
-    onOpenChange(nextOpen)
-  }
+    onOpenChange(nextOpen);
+  };
 
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const formData = new FormData(e.target as HTMLFormElement)
-    const name = (formData.get("name") as string).trim()
+    const formData = new FormData(e.target as HTMLFormElement);
+    const name = (formData.get("name") as string).trim();
 
     const payload =
       name || organizationId || scopedOrganizationId
@@ -75,19 +75,19 @@ export function CreateApiKeyDialog({
               : {}),
             ...(!organizationId && scopedOrganizationId
               ? { metadata: { organizationId: scopedOrganizationId } }
-              : {})
+              : {}),
           }
-        : undefined
+        : undefined;
 
     createApiKey(payload, {
       onSuccess: (result) => {
-        handleOpenChange(false)
-        setKeyName(name)
-        setSecretKey(result.key)
-        setIsNewKeyDialogOpen(true)
-      }
-    })
-  }
+        handleOpenChange(false);
+        setKeyName(name);
+        setSecretKey(result.key);
+        setIsNewKeyDialogOpen(true);
+      },
+    });
+  };
 
   return (
     <>
@@ -144,5 +144,5 @@ export function CreateApiKeyDialog({
         name={keyName}
       />
     </>
-  )
+  );
 }

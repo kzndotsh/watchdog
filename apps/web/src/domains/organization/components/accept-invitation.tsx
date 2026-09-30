@@ -1,0 +1,235 @@
+"use client";
+
+import { useSession } from "@better-auth-ui/react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+
+import { authClient } from "@/auth/client";
+import { fetchInvitationPreview, inviteSignUp } from "@/auth/invitation-api";
+import { PasswordStrengthMeter } from "@/auth/ui/password-strength-meter";
+import { errMessage, messageOr } from "@/lib/utils";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { queryLoadError } from "@/shared/lib/query-load-error";
+import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { Button } from "@/shared/ui/primitives/button";
+import { invitationAcceptPath } from "@watchdog/auth/invitation-url";
+import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@watchdog/ui/components/card";
+import { Field, FieldGroup } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Label } from "@watchdog/ui/components/label";
+import { Spinner } from "@watchdog/ui/components/spinner";
+
+export function AcceptInvitation({ invitationId }: { invitationId: string }) {
+  const { data: session, isPending: sessionPending } = useSession(authClient);
+  const previewQueryKey = ["invitation-preview", invitationId] as const;
+  const previewQuery = useQuery({
+    queryKey: previewQueryKey,
+    queryFn: async () => fetchInvitationPreview(invitationId),
+    placeholderData: placeholderDataForQueryKey(previewQueryKey),
+  });
+
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const acceptExisting = useMutation({
+    mutationFn: async () => {
+      const { error } = await authClient.organization.acceptInvitation({
+        invitationId,
+      });
+      if (error)
+        throw new Error(
+          messageOr(error.message, "Could not accept invitation")
+        );
+    },
+    onSuccess: () => {
+      window.location.assign("/");
+    },
+  });
+
+  const registerInvitee = useMutation({
+    mutationFn: async () =>
+      inviteSignUp({
+        invitationId,
+        name: name.trim(),
+        password,
+      }),
+    onSuccess: () => {
+      window.location.assign("/");
+    },
+  });
+
+  const previewPending = listPending(previewQuery);
+  const previewLoadError = queryLoadError(
+    previewQuery,
+    previewPending,
+    "Could not load invitation"
+  );
+
+  if (previewPending || sessionPending) {
+    return (
+      <div className="flex justify-center py-10">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (previewLoadError !== null) {
+    return (
+      <FetchErrorAlert
+        error={previewLoadError}
+        onRetry={() => {
+          void previewQuery.refetch();
+        }}
+      />
+    );
+  }
+
+  if (!previewQuery.data) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>Invitation not found or expired.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  const preview = previewQuery.data;
+  const sessionEmail = session?.user.email?.toLowerCase();
+  const inviteEmail = preview.email.toLowerCase();
+  const signedIn = Boolean(session?.user);
+  const emailMatches = signedIn && sessionEmail === inviteEmail;
+  const pending = acceptExisting.isPending || registerInvitee.isPending;
+  let actionError = formError;
+  if (actionError === null && acceptExisting.error) {
+    actionError = errMessage(
+      acceptExisting.error,
+      "Could not accept invitation"
+    );
+  }
+  if (actionError === null && registerInvitee.error) {
+    actionError = errMessage(registerInvitee.error, "Could not create account");
+  }
+
+  return (
+    <Card
+      className={placeholderDeemphasisClass(previewQuery.isPlaceholderData)}
+    >
+      <CardHeader>
+        <CardTitle>Join {preview.organizationName}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <p className="text-muted-foreground text-sm">
+            Invitation for{" "}
+            <span className="text-foreground">{preview.email}</span> as{" "}
+            {preview.role}.
+          </p>
+
+          {actionError ? (
+            <Alert variant="destructive">
+              <AlertDescription>{actionError}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          {signedIn && !emailMatches ? (
+            <p className="text-sm">
+              You are signed in as {session?.user.email}. Sign out, then open
+              this link again with {preview.email}.
+            </p>
+          ) : null}
+
+          {emailMatches ? (
+            <Button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                setFormError(null);
+                acceptExisting.mutate();
+              }}
+            >
+              {pending ? <Spinner /> : null}
+              Accept invitation
+            </Button>
+          ) : null}
+
+          {signedIn ? null : (
+            <form
+              className="space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setFormError(null);
+                if (!name.trim() || !password) {
+                  setFormError("Name and password are required.");
+                  return;
+                }
+                registerInvitee.mutate();
+              }}
+            >
+              <FieldGroup>
+                <Field>
+                  <Label htmlFor="invite-email">Email</Label>
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    value={preview.email}
+                    readOnly
+                    autoComplete="username"
+                  />
+                </Field>
+                <Field>
+                  <Label htmlFor="invite-name">Name</Label>
+                  <Input
+                    id="invite-name"
+                    name="name"
+                    value={name}
+                    onChange={(event) => {
+                      setName(event.target.value);
+                    }}
+                    autoComplete="name"
+                    required
+                  />
+                </Field>
+                <Field>
+                  <Label htmlFor="invite-password">Password</Label>
+                  <Input
+                    id="invite-password"
+                    name="password"
+                    type="password"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                    }}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <PasswordStrengthMeter password={password} />
+                </Field>
+              </FieldGroup>
+              <Button type="submit" disabled={pending}>
+                {pending ? <Spinner /> : null}
+                Create account and join
+              </Button>
+              <p className="text-muted-foreground text-sm">
+                Already have an account?{" "}
+                <a
+                  className="text-foreground underline"
+                  href={`/auth/sign-in?redirectTo=${encodeURIComponent(invitationAcceptPath(invitationId))}`}
+                >
+                  Sign in
+                </a>
+              </p>
+            </form>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

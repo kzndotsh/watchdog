@@ -83,8 +83,6 @@ const watchdogIgnores = [
   "packages/db/drizzle/**",
   "**/dist/**",
   "node_modules/**",
-  // Better Auth UI + shadcn registry — do not lint
-  "apps/web/src/auth/ui/**",
   // Vendored shadcn primitives (@watchdog/ui): byte-identical to the CLI output, never linted.
   "packages/ui/src/components/**",
   "packages/ui/src/hooks/**",
@@ -746,6 +744,39 @@ export default defineConfig({
             ],
           },
         ],
+      },
+    },
+    {
+      // `auth/ui` started as Better Auth UI registry source (docs/reference/web/ui/auth-ui.md).
+      // It is linted and formatted like our code, but these rules are off because the
+      // upstream patterns trip them and their autofixes change behavior (`||` to `??`,
+      // dropping casts the types still need). Remove entries as the files get rewritten.
+      files: ["apps/web/src/auth/ui/**/*.{ts,tsx}"],
+      rules: {
+        "typescript/prefer-nullish-coalescing": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/no-unnecessary-type-assertion": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/no-misused-promises": "off",
+        "typescript/strict-void-return": "off",
+        "typescript/promise-function-async": "off",
+        "typescript/consistent-return": "off",
+        "typescript/consistent-type-definitions": "off",
+        "typescript/use-unknown-in-catch-callback-variable": "off",
+        "eslint/no-nested-ternary": "off",
+        "unicorn/no-nested-ternary": "off",
+        "eslint/no-use-before-define": "off",
+        "eslint/no-empty-function": "off",
+        "eslint/no-negated-condition": "off",
+        "unicorn/no-negated-condition": "off",
+        "unicorn/consistent-function-scoping": "off",
+        "jsdoc/check-tag-names": "off",
+        "promise/prefer-await-to-then": "off",
+        "promise/prefer-await-to-callbacks": "off",
       },
     },
     {

@@ -110,4 +110,21 @@ describe("createAuth", () => {
     expect(config.plugins).toHaveLength(5);
     expect(config.plugins.at(-1)).toEqual({ id: "framework-cookies" });
   });
+
+  it("enables organization deletion only with a cleanup hook, and runs it first", async () => {
+    const beforeDeleteOrganization = vi.fn(async () => {});
+    createAuth({ beforeDeleteOrganization });
+
+    const call = vi.mocked(organization).mock.calls.at(-1)?.[0];
+    expect(call?.disableOrganizationDeletion).toBe(false);
+
+    await call?.organizationHooks?.beforeDeleteOrganization?.({
+      organization: { id: "org-1" },
+      user: { id: "user-1" },
+    } as never);
+    expect(beforeDeleteOrganization).toHaveBeenCalledWith({
+      organizationId: "org-1",
+      actorId: "user-1",
+    });
+  });
 });

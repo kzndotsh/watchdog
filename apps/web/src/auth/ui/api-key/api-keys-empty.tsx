@@ -1,23 +1,22 @@
-import { useAuthPlugin } from "@better-auth-ui/react"
-import { Key } from "lucide-react"
+import { useAuthPlugin } from "@better-auth-ui/react";
+import { Key } from "lucide-react";
 
-import { apiKeyPlugin } from "@/auth/plugins/api-key"
+import { apiKeyPlugin } from "@/auth/plugins/api-key";
+import { Button } from "@/shared/ui/primitives/button";
+import { Card, CardContent } from "@watchdog/ui/components/card";
 
-import { Button } from "@/shared/ui/primitives/button"
-import { Card, CardContent } from "@watchdog/ui/components/card"
-
-export type ApiKeysEmptyProps = {
-  onCreatePress: () => void
-  hideCreate?: boolean
+export interface ApiKeysEmptyProps {
+  onCreatePress: () => void;
+  hideCreate?: boolean;
 }
 
 export function ApiKeysEmpty({ onCreatePress, hideCreate }: ApiKeysEmptyProps) {
-  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin)
+  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
 
   return (
-    <Card className="bg-transparent border-0 ring-0 shadow-none">
+    <Card className="border-0 bg-transparent shadow-none ring-0">
       <CardContent className="flex flex-col items-center justify-center gap-4">
-        <div className="flex size-10 items-center justify-center rounded-md bg-muted">
+        <div className="bg-muted flex size-10 items-center justify-center rounded-md">
           <Key className="size-4.5" />
         </div>
 
@@ -38,5 +37,5 @@ export function ApiKeysEmpty({ onCreatePress, hideCreate }: ApiKeysEmptyProps) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

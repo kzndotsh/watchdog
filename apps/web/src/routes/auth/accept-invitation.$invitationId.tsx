@@ -1,7 +1,7 @@
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 
-import { AcceptInvitation } from "@/auth/ui/accept-invitation";
-import { AuthProductMark } from "@/auth/ui/auth-product-mark";
+import { AcceptInvitation } from "@/domains/organization/components/accept-invitation";
+import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { trimmedUuidSchema } from "@watchdog/schemas";
 

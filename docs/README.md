@@ -98,5 +98,6 @@ Index: [`how-to/README.md`](how-to/README.md).
 | [`reference/web/ui/loading.md`](reference/web/ui/loading.md) | Skeletons + hydration rules |
 | [`reference/web/ui/atoms.md`](reference/web/ui/atoms.md) | Hand-owned atom highlights + primitive wrappers |
 | [`reference/web/ui/vendor.md`](reference/web/ui/vendor.md) | Vendored primitives: layers, lock, sync |
+| [`reference/web/ui/auth-ui.md`](reference/web/ui/auth-ui.md) | Auth screens: Better Auth UI origin, what is ours, routing rules |
 | [`reference/web/ui/motion.md`](reference/web/ui/motion.md) | Operate motion |
 | [`reference/web/ui/multi-mode.md`](reference/web/ui/multi-mode.md) | Detail / composers |

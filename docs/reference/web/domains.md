@@ -102,7 +102,7 @@ SQL for graph children lives in `@watchdog/db` `repos` + `@watchdog/core` servic
 | `cases` | Case list + Case Overview dashboard + active Case context | `/cases`, `/cases/$caseSlug` (+ cookie; UUID/`?tab=` redirects) | `case-list.tsx` (+ `lib/case-card-actions.ts`), `case-overview.tsx` (dashboard only), Overview stats reuse dashboard `MetricsSection`, `graph-page.tsx` (`/graph`), Overview tab `lib/overview-activity.ts` + `case-settings-form.tsx`; Case switcher lists flat Overview / Entities / Identifiers / Graph (Dashboard via WATCHDOG logo) | `cases.functions.ts` + `types.ts` + `queries.ts` (`caseBySlugQuery`) + `lib/active-case*` |
 | `tasks` | Case work board (kanban) + dossier tab | `/tasks` (`?entityId=`) | `tasks-page`, `task-board` (columns = `TASK_STATUSES` from `@watchdog/schemas`: no domain `board.ts` alias), `lib/task-board-dnd.ts` (`reconcileItems` keeps optimistic order), `lib/task-card-actions.ts`, `task-form-dialog`, `dossier-tasks-section`; shared `useTaskWorkspace` (`reorderTasksFn` / `handleCommitDrop`). | `tasks.functions.ts` + `types.ts` + `queries.ts` |
 | `organization` | Onboarding, sidebar org switcher, Organization settings profile | `/onboarding`, sidebar footer, `/settings?tab=team` | `create-organization-form`, `org-switcher`, `organization-profile` |
-| `settings` | Settings page (sidebar: Account / Security / Appearance / Team / Users / API Keys / Credentials) | `/settings` (`?tab=`) | `settings-shell`, `settings-appearance-section`, `settings-credentials-form` (+ `settings-credentials-handlers` bind* helpers); Team tab is `auth/ui/team`; Users tab is `auth/ui/users` (instance admin only) | `settings.functions.ts` + `types.ts` + `queries.ts` |
+| `settings` | Settings page (sidebar: Account / Security / Appearance / Organization / Users / API Keys / Credentials) | `/settings` (`?tab=`) | `settings-shell`, `settings-appearance-section`, `settings-credentials-form` (+ `settings-credentials-handlers` bind* helpers); Team tab is `auth/ui/team`; Users tab is `auth/ui/users` (instance admin only) | `settings.functions.ts` + `types.ts` + `queries.ts` |
 | `activity` | Cross-case recent activity read model (evidence / jobs / pending proposals / tasks) | : (data-only) | : | `activity.functions.ts` + `types.ts` + `queries.ts` |
 | `search` | Shell Mod+K command palette + Shortcuts dialog + inset ContextMenu chrome. Jump destinations follow sidebar nav and omit `/ui`. | : (shell chrome) | `search-chrome.tsx` (`SearchUiContext` + `AppInsetContextMenu`), `command-palette.tsx` (Jump to + idle Commands + `searchCase`), `hooks/use-search-ui` | `search.functions.ts` + `types.ts` + `queries.ts` |
 | `dashboard` | Dashboard (`/`): stats + Triage + Due + resizable Activity (`ScrollArea`) | `/` | `dashboard-home.tsx` (`Page density="split"` + vertical `ResizablePanelGroup`), `metrics-section.tsx`, `dashboard-panels.tsx`, `recent-activity.tsx`, `lib/selectors.ts` | Composes other domains' queries (+ `recentActivityQuery`) |
@@ -113,9 +113,9 @@ Auth is not a domain noun: it lives under `src/auth/`:
 | --- | --- |
 | `auth/` runtime (`client`, `server`, `session.server`, `ensure-session`, `middleware`, …) | Better Auth + route/API session; ServerFn `requireAuth` is wired globally in `src/start.ts` (not per domain `*.functions.ts`) |
 | `auth/invite-signup-*.ts` | Invite accept / sign-up plugin, schemas, endpoint, and flow helpers |
-| `auth/ui/` | BA UI account/security/sign-in views (vendor-shaped) |
+| `auth/ui/` | Sign-in / sign-up / reset / account + security settings / API keys, copied from the Better Auth UI registry and now owned ([`auth-ui.md`](ui/auth-ui.md)) |
 | `auth/plugins/` | BA UI plugin wiring (e.g. API keys) |
-| `domains/settings` | Settings shell + Cap credentials UI: BA account/security live under `auth/ui/` |
+| `domains/settings` | Settings shell + Cap credentials UI: BA account/security live under `auth/ui/`; instance-admin Users is `settings-users` |
 
 Shared chrome under `src/shared/`.
 

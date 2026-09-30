@@ -30,21 +30,21 @@ vi.mock("@/shared/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-import { UsersSettings } from "@/auth/ui/users/users-settings";
+import { SettingsUsers } from "@/domains/settings/components/settings-users";
 
 function wrap(children: ReactNode) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  );
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-describe("UsersSettings", () => {
+describe("SettingsUsers", () => {
   it("lists users without Impersonate and without actions on self", async () => {
     useSession.mockReturnValue({
-      data: { user: { id: "u-admin", email: "admin@mailhost.test", role: "admin" } },
+      data: {
+        user: { id: "u-admin", email: "admin@mailhost.test", role: "admin" },
+      },
     });
     listUsers.mockResolvedValue({
       data: {
@@ -68,9 +68,11 @@ describe("UsersSettings", () => {
       error: null,
     });
 
-    render(wrap(<UsersSettings />));
+    render(wrap(<SettingsUsers />));
 
-    expect(await screen.findByText("admin@mailhost.test · Install admin")).toBeInTheDocument();
+    expect(
+      await screen.findByText("admin@mailhost.test · Install admin")
+    ).toBeInTheDocument();
     expect(screen.getByText("other@mailhost.test · User")).toBeInTheDocument();
     expect(screen.queryByText("Impersonate")).not.toBeInTheDocument();
     expect(
@@ -101,16 +103,20 @@ describe("UsersSettings", () => {
     });
 
     const user = userEvent.setup();
-    render(wrap(<UsersSettings />));
+    render(wrap(<SettingsUsers />));
     await user.click(
       await screen.findByLabelText("Actions for other@mailhost.test")
     );
 
-    expect(screen.getByRole("menuitem", { name: "Disable" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: "Disable" })
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("menuitem", { name: "Sign out all sessions" })
     ).toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Impersonate" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Impersonate" })
+    ).not.toBeInTheDocument();
   });
 
   it("shows retry when the users query fails", async () => {
@@ -122,7 +128,7 @@ describe("UsersSettings", () => {
       error: { message: "forbidden" },
     });
 
-    render(wrap(<UsersSettings />));
+    render(wrap(<SettingsUsers />));
 
     expect(await screen.findByText("forbidden")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();

@@ -9,6 +9,7 @@ Build new foundations and atoms on `/ui` before adding chrome to live product pa
 | Gate | Command |
 | --- | --- |
 | Typecheck + DS bans | `pnpm --filter @watchdog/web ds:check` |
+| Auth screens (origin, what is ours) | [`auth-ui.md`](auth-ui.md) |
 | Vendored primitives lock | `pnpm check:vendor` (`pnpm ui:add` / `pnpm ui:sync` to change) |
 
 ## Chrome lexicon (UI parts)

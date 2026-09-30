@@ -3,27 +3,31 @@
 import { useSession } from "@better-auth-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "@/shared/ui/toast";
-import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 
 import { authClient } from "@/auth/client";
-import { buildInvitationAcceptUrl, invitationAcceptPath } from "@watchdog/auth/invitation-url";
-import { canManageTeam, INVITE_ROLE_OPTIONS } from "@watchdog/auth/org-roles";
-import { errMessage, cn } from "@/lib/utils";
+import { cn, errMessage, messageOr } from "@/lib/utils";
+import { listPending } from "@/shared/lib/list-pending";
+import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { queryLoadError } from "@/shared/lib/query-load-error";
+import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
+import { TOAST_COPIED } from "@/shared/lib/toast-copy";
+import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormSection } from "@/shared/ui/form-section";
-import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { Button } from "@/shared/ui/primitives/button";
+import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
+import { toast } from "@/shared/ui/toast";
+import {
+  buildInvitationAcceptUrl,
+  invitationAcceptPath,
+} from "@watchdog/auth/invitation-url";
+import { canManageTeam, INVITE_ROLE_OPTIONS } from "@watchdog/auth/org-roles";
+import { trimmedOrUndefined } from "@watchdog/schemas";
 import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 import { Field } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
-import { listPending } from "@/shared/lib/list-pending";
-import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
-import { queryLoadError } from "@/shared/lib/query-load-error";
-import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 
 interface OrgMember {
   id: string;
@@ -44,9 +48,17 @@ const EMPTY_INVITATIONS: OrgInvitation[] = [];
 
 const TEAM_QUERY_KEY = ["auth-org", "team"] as const;
 
+async function copyInviteLink(url: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success(TOAST_COPIED);
+  } catch (error) {
+    toast.error(errMessage(error, "Copy failed"));
+  }
+}
+
 function invitationAcceptUrl(invitationId: string): string {
-  const origin =
-    typeof window === "undefined" ? "" : window.location.origin;
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
   return origin
     ? buildInvitationAcceptUrl(origin, invitationId)
     : invitationAcceptPath(invitationId);
@@ -58,21 +70,26 @@ async function loadTeam() {
     authClient.organization.listInvitations(),
   ]);
   if (membersResult.error) {
-    throw new Error(membersResult.error.message || "Could not load members");
+    throw new Error(
+      messageOr(membersResult.error.message, "Could not load members")
+    );
   }
   if (invitationsResult.error) {
     throw new Error(
-      invitationsResult.error.message || "Could not load invitations"
+      messageOr(invitationsResult.error.message, "Could not load invitations")
     );
   }
   const members = membersResult.data?.members ?? EMPTY_MEMBERS;
   const invitations = (invitationsResult.data ?? EMPTY_INVITATIONS).filter(
     (row) => row.status === "pending"
   );
-  return { members: members as OrgMember[], invitations: invitations as OrgInvitation[] };
+  return {
+    members: members as OrgMember[],
+    invitations: invitations as OrgInvitation[],
+  };
 }
 
-export function TeamSettings() {
+export function OrganizationMembers() {
   const queryClient = useQueryClient();
   const { data: session } = useSession(authClient);
   const teamQuery = useQuery({
@@ -90,7 +107,7 @@ export function TeamSettings() {
   );
   const manage = canManageTeam(selfMember?.role ?? "");
 
-  const invalidate = () =>
+  const invalidate = async () =>
     queryClient.invalidateQueries({ queryKey: TEAM_QUERY_KEY });
 
   const invite = useMutation({
@@ -99,11 +116,14 @@ export function TeamSettings() {
         email,
         role,
       });
-      if (error) throw new Error(error.message || "Could not send invitation");
+      if (error)
+        throw new Error(messageOr(error.message, "Could not send invitation"));
     },
     onSuccess: async () => {
       setEmail("");
-      toast.success("Invitation created. Copy the link if mail is not configured.");
+      toast.success(
+        "Invitation created. Copy the link if mail is not configured."
+      );
       await invalidate();
     },
     onError: (error) => {
@@ -116,7 +136,10 @@ export function TeamSettings() {
       const { error } = await authClient.organization.cancelInvitation({
         invitationId,
       });
-      if (error) throw new Error(error.message || "Could not cancel invitation");
+      if (error)
+        throw new Error(
+          messageOr(error.message, "Could not cancel invitation")
+        );
     },
     onSuccess: invalidate,
     onError: (error) => {
@@ -127,7 +150,8 @@ export function TeamSettings() {
   const updateRole = useMutation({
     mutationFn: async (input: { memberId: string; role: string }) => {
       const { error } = await authClient.organization.updateMemberRole(input);
-      if (error) throw new Error(error.message || "Could not update role");
+      if (error)
+        throw new Error(messageOr(error.message, "Could not update role"));
     },
     onSuccess: invalidate,
     onError: (error) => {
@@ -140,7 +164,8 @@ export function TeamSettings() {
       const { error } = await authClient.organization.removeMember({
         memberIdOrEmail,
       });
-      if (error) throw new Error(error.message || "Could not remove member");
+      if (error)
+        throw new Error(messageOr(error.message, "Could not remove member"));
     },
     onSuccess: invalidate,
     onError: (error) => {
@@ -231,7 +256,10 @@ export function TeamSettings() {
         </form>
       ) : null}
 
-      <FormSection title="Members" description="Organization membership, not Case membership.">
+      <FormSection
+        title="Members"
+        description="Organization membership, not Case membership."
+      >
         <ul className="divide-y">
           {members.map((member) => (
             <li
@@ -240,18 +268,25 @@ export function TeamSettings() {
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
-                  {member.user?.name || member.user?.email || member.userId}
+                  {trimmedOrUndefined(member.user?.name) ??
+                    trimmedOrUndefined(member.user?.email) ??
+                    member.userId}
                 </p>
                 <p className="text-muted-foreground truncate text-xs">
                   {member.user?.email} · {member.role}
                 </p>
               </div>
               {manage && member.userId !== selfId && member.role !== "owner" ? (
-                <RowActionsMenu label={`Actions for ${member.user?.email ?? member.id}`}>
+                <RowActionsMenu
+                  label={`Actions for ${member.user?.email ?? member.id}`}
+                >
                   {member.role === "member" ? (
                     <DropdownMenuItem
                       onClick={() => {
-                        updateRole.mutate({ memberId: member.id, role: "admin" });
+                        updateRole.mutate({
+                          memberId: member.id,
+                          role: "admin",
+                        });
                       }}
                     >
                       Make admin
@@ -277,7 +312,9 @@ export function TeamSettings() {
         description="Copy the link when mail is not configured."
       >
         {invitations.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No pending invitations.</p>
+          <p className="text-muted-foreground text-sm">
+            No pending invitations.
+          </p>
         ) : (
           <ul className="divide-y">
             {invitations.map((row) => {
@@ -299,14 +336,7 @@ export function TeamSettings() {
                         variant="outline"
                         data-accept-url={url}
                         onClick={() => {
-                          void navigator.clipboard.writeText(url).then(
-                            () => {
-                              toast.success(TOAST_COPIED);
-                            },
-                            (error) => {
-                              toast.error(errMessage(error, "Copy failed"));
-                            }
-                          );
+                          void copyInviteLink(url);
                         }}
                       >
                         Copy link

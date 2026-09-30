@@ -276,3 +276,24 @@ export function deleteCaseEffect(
     );
   });
 }
+
+/**
+ * Delete every Case in an organization, one at a time, through the normal Case delete
+ * (graph rows cascade; artifacts and the Export shadow dir are removed). Used before an
+ * organization itself is deleted, so nothing is orphaned. Stops at the first failure.
+ */
+export function deleteOrganizationCasesEffect(
+  organizationId: string,
+  opts?: { actorId?: string }
+): Effect.Effect<number, DomainTag> {
+  return Effect.gen(function* deleteOrganizationCasesGen() {
+    const ids = yield* tryDb(() => casesRepo.listIds(db, organizationId));
+    for (const id of ids) {
+      yield* deleteCaseEffect(id, {
+        organizationId,
+        ...(opts?.actorId === undefined ? {} : { actorId: opts.actorId }),
+      });
+    }
+    return ids.length;
+  });
+}

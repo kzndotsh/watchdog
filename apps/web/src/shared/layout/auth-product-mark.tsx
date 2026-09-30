@@ -13,7 +13,7 @@ export function AuthProductMark({ className }: { className?: string }) {
     >
       <div className="flex items-center gap-2">
         <DogIcon className="size-5 shrink-0" aria-hidden />
-        <span className="font-heading text-sm font-medium tracking-[0.12em]">
+        <span className="font-heading tracking-eyebrow-sm text-sm font-medium">
           WATCHDOG
         </span>
       </div>

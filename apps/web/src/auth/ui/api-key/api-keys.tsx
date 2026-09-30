@@ -1,30 +1,30 @@
-import type { ApiKeyAuthClient } from "@better-auth-ui/core/plugins/api-key"
-import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
-import { useListApiKeys } from "@better-auth-ui/react/plugins/api-key"
-import { useState } from "react"
+import type { ApiKeyAuthClient } from "@better-auth-ui/core/plugins/api-key";
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
+import { useListApiKeys } from "@better-auth-ui/react/plugins/api-key";
+import { useState } from "react";
 
-import { apiKeyPlugin } from "@/auth/plugins/api-key"
+import { apiKeyPlugin } from "@/auth/plugins/api-key";
+import { cn } from "@/lib/utils";
+import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
+import { Button } from "@/shared/ui/primitives/button";
+import { Card, CardContent } from "@watchdog/ui/components/card";
+import { Separator } from "@watchdog/ui/components/separator";
 
-import { Button } from "@/shared/ui/primitives/button"
-import { Card, CardContent } from "@watchdog/ui/components/card"
-import { Separator } from "@watchdog/ui/components/separator"
-import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section"
-import { cn } from "@/lib/utils"
-import { ApiKey } from "./api-key"
-import { ApiKeySkeleton } from "./api-key-skeleton"
-import { ApiKeysEmpty } from "./api-keys-empty"
-import { CreateApiKeyDialog } from "./create-api-key-dialog"
+import { ApiKey } from "./api-key";
+import { ApiKeySkeleton } from "./api-key-skeleton";
+import { ApiKeysEmpty } from "./api-keys-empty";
+import { CreateApiKeyDialog } from "./create-api-key-dialog";
 
-export type ApiKeysProps = {
-  className?: string
+export interface ApiKeysProps {
+  className?: string;
   /** Scope the list and create payload to an organization. */
-  organizationId?: string
+  organizationId?: string;
   /** Force the loading skeleton and disable the list query. */
-  isPending?: boolean
+  isPending?: boolean;
   /** Hide the "Create API key" button (header + empty state). */
-  hideCreate?: boolean
+  hideCreate?: boolean;
   /** Hide the per-row delete button on listed keys. */
-  hideDelete?: boolean
+  hideDelete?: boolean;
 }
 
 export function ApiKeys({
@@ -32,10 +32,10 @@ export function ApiKeys({
   organizationId,
   isPending: isPendingProp,
   hideCreate,
-  hideDelete
+  hideDelete,
 }: ApiKeysProps) {
-  const { authClient } = useAuth()
-  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin)
+  const { authClient } = useAuth();
+  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
 
   const { data: listData, isPending: isListPending } = useListApiKeys(
     authClient as ApiKeyAuthClient,
@@ -43,13 +43,13 @@ export function ApiKeys({
       enabled: !isPendingProp,
       ...(organizationId
         ? { query: { organizationId, configId: "organization" } }
-        : {})
+        : {}),
     }
-  )
+  );
 
-  const isPending = isPendingProp || isListPending
+  const isPending = isPendingProp || isListPending;
 
-  const [createOpen, setCreateOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false);
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
@@ -63,7 +63,9 @@ export function ApiKeys({
             className="shrink-0"
             size="sm"
             disabled={isPending}
-            onClick={() => setCreateOpen(true)}
+            onClick={() => {
+              setCreateOpen(true);
+            }}
           >
             {apiKeyLocalization.createApiKey}
           </Button>
@@ -76,7 +78,9 @@ export function ApiKeys({
             <ApiKeySkeleton />
           ) : !listData?.apiKeys.length ? (
             <ApiKeysEmpty
-              onCreatePress={() => setCreateOpen(true)}
+              onCreatePress={() => {
+                setCreateOpen(true);
+              }}
               hideCreate={hideCreate}
             />
           ) : (
@@ -103,5 +107,5 @@ export function ApiKeys({
         />
       )}
     </div>
-  )
+  );
 }

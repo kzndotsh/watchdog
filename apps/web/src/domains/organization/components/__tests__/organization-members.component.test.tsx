@@ -28,18 +28,16 @@ vi.mock("@/shared/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-import { TeamSettings } from "@/auth/ui/team/team-settings";
+import { OrganizationMembers } from "@/domains/organization/components/organization-members";
 
 function wrap(children: ReactNode) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  );
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-describe("TeamSettings", () => {
+describe("OrganizationMembers", () => {
   it("hides the invite form for members", async () => {
     useSession.mockReturnValue({
       data: { user: { id: "u-member", email: "member@mailhost.test" } },
@@ -65,10 +63,12 @@ describe("TeamSettings", () => {
     });
     listInvitations.mockResolvedValue({ data: [], error: null });
 
-    render(wrap(<TeamSettings />));
+    render(wrap(<OrganizationMembers />));
 
     expect(await screen.findByText("Members")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Invite" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Invite" })
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
   });
 
@@ -91,9 +91,11 @@ describe("TeamSettings", () => {
     });
     listInvitations.mockResolvedValue({ data: [], error: null });
 
-    render(wrap(<TeamSettings />));
+    render(wrap(<OrganizationMembers />));
 
-    expect(await screen.findByRole("button", { name: "Invite" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Invite" })
+    ).toBeInTheDocument();
   });
 
   it("shows retry when the team query fails", async () => {
@@ -106,7 +108,7 @@ describe("TeamSettings", () => {
     });
     listInvitations.mockResolvedValue({ data: [], error: null });
 
-    render(wrap(<TeamSettings />));
+    render(wrap(<OrganizationMembers />));
 
     expect(await screen.findByText("network down")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();

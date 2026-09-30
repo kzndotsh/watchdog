@@ -59,6 +59,14 @@ export function OrganizationProfile() {
       await queryClient.invalidateQueries({ queryKey: authQueryKeys.all });
     },
   });
+  const remove = useMutation({
+    mutationFn: async (organizationId: string) => {
+      const { error } = await authClient.organization.delete({
+        organizationId,
+      });
+      if (error) throw new Error(error.message ?? "Could not delete");
+    },
+  });
   const leave = useMutation({
     mutationFn: async (organizationId: string) => {
       const { error } = await authClient.organization.leave({ organizationId });
@@ -69,6 +77,7 @@ export function OrganizationProfile() {
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [confirmName, setConfirmName] = useState("");
 
   if (isPending || !organization) {
     return (
@@ -79,6 +88,9 @@ export function OrganizationProfile() {
   }
 
   const canEdit = canManageTeam(roleData?.role ?? "");
+  const isOwner = (roleData?.role ?? "")
+    .split(",")
+    .some((part) => part.trim() === "owner");
   const name = draft?.name ?? organization.name;
   const slug = draft?.slug ?? organization.slug;
   const dirty =
@@ -200,6 +212,68 @@ export function OrganizationProfile() {
           Your role: {roleData?.role ?? "member"}
         </p>
       </FormSection>
+
+      {isOwner ? (
+        <FormSection
+          tone="error"
+          title="Delete organization"
+          description="Permanently deletes the organization with all of its Cases, evidence, artifacts, members, and invitations. This can't be undone."
+          footer={
+            <AlertDialog
+              onOpenChange={() => {
+                setConfirmName("");
+              }}
+            >
+              <AlertDialogTrigger
+                render={<Button variant="destructive" type="button" />}
+              >
+                Delete
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Delete {organization.name}?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Every Case and all evidence in this organization is deleted
+                    for everyone. Type the organization name to confirm.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  aria-label="Organization name"
+                  value={confirmName}
+                  placeholder={organization.name}
+                  onChange={(event) => {
+                    setConfirmName(event.target.value);
+                  }}
+                />
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <Button
+                    variant="destructive"
+                    disabled={confirmName !== organization.name}
+                    loading={remove.isPending}
+                    onClick={() => {
+                      remove.mutate(organization.id, {
+                        onSuccess: reloadIntoOrganization,
+                        onError: (mutationError) => {
+                          setError(
+                            errMessage(mutationError, "Could not delete")
+                          );
+                        },
+                      });
+                    }}
+                  >
+                    Delete everything
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          }
+        >
+          <FieldError>{error}</FieldError>
+        </FormSection>
+      ) : null}
     </div>
   );
 }
