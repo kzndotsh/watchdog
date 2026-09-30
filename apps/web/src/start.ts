@@ -18,6 +18,9 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
+/** nginx convention: client closed the connection before the response. */
+const CLIENT_CLOSED_REQUEST = 499;
+
 const API_EXCLUDE = [
   "/api/v1/health",
   "/api/v1/spec.json",
@@ -88,6 +91,14 @@ const evlogRequestMiddleware = createMiddleware().server(
           response: wrapped,
         };
       } catch (error: unknown) {
+        // Client went away mid-request (SSE reconnect, tab close, navigation).
+        // Node surfaces this as `aborted` / ECONNRESET; it isn't a server fault,
+        // so record it as 499 instead of rethrowing into an unhandled 500.
+        if (request.signal.aborted) {
+          logger.set({ aborted: true });
+          await finish({ status: CLIENT_CLOSED_REQUEST });
+          return new Response(null, { status: CLIENT_CLOSED_REQUEST });
+        }
         await finish({
           error: error instanceof Error ? error : new Error(String(error)),
         });

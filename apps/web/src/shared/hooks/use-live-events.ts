@@ -127,9 +127,14 @@ function subscribeLiveEvents(
   return () => {
     entry.handlers.delete(handleEvent);
     entry.refs -= 1;
-    if (entry.refs <= 0) {
-      closeConnection(caseId, entry);
-    }
+    if (entry.refs > 0) return;
+    // Defer so a resubscribe in the same commit (dep change, StrictMode
+    // remount, sibling mounting) reuses the stream instead of aborting it.
+    setTimeout(() => {
+      if (entry.refs <= 0 && connections.get(caseId) === entry) {
+        closeConnection(caseId, entry);
+      }
+    }, 0);
   };
 }
 

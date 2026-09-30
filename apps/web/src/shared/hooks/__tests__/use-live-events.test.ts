@@ -1,5 +1,5 @@
 import { renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
@@ -53,7 +53,18 @@ vi.stubGlobal("EventSource", EventSourceMock);
 
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 
+function flushDeferredClose(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
 describe("useLiveEvents", () => {
+  beforeEach(async () => {
+    // Let the previous test's deferred close (after auto-cleanup) run.
+    await flushDeferredClose();
+  });
+
   it("does not connect when caseId is null", () => {
     EventSourceMock.instances = [];
     renderHook(() => {
@@ -169,6 +180,38 @@ describe("useLiveEvents", () => {
     );
     expect(onEvent).toHaveBeenCalledWith(
       expect.objectContaining({ caseId, type: "job_update", status: "running" })
+    );
+  });
+
+  it("reuses the stream when a subscriber remounts in the same tick", async () => {
+    EventSourceMock.instances = [];
+    const caseId = testId(12);
+
+    const first = renderHook(() => {
+      useLiveEvents(caseId, vi.fn());
+    });
+    first.unmount();
+    renderHook(() => {
+      useLiveEvents(caseId, vi.fn());
+    });
+    await flushDeferredClose();
+
+    expect(EventSourceMock.instances).toHaveLength(1);
+    expect(EventSourceMock.instances[0]?.readyState).toBe(EventSourceMock.OPEN);
+  });
+
+  it("closes the stream once the last subscriber is gone", async () => {
+    EventSourceMock.instances = [];
+    const caseId = testId(13);
+
+    const hook = renderHook(() => {
+      useLiveEvents(caseId, vi.fn());
+    });
+    hook.unmount();
+    await flushDeferredClose();
+
+    expect(EventSourceMock.instances[0]?.readyState).toBe(
+      EventSourceMock.CLOSED
     );
   });
 });
