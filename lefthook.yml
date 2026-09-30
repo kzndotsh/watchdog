@@ -57,6 +57,13 @@ pre-commit:
         - "**/*.test.ts"
         - "**/*.test.tsx"
       run: pnpm check:effect-edges:strict
+    size-budget:
+      glob:
+        - "apps/*/src/**/*.{ts,tsx}"
+        - "packages/*/src/**/*.{ts,tsx}"
+        - "scripts/check-size-budget.mjs"
+        - "scripts/size-budget-baseline.json"
+      run: pnpm check:size
     agent-skills:
       glob:
         - "**/.agents/skills/**"
