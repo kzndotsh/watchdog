@@ -43,6 +43,7 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | `shared/layout/section-label.tsx` re-export check | — (file deleted) | **Dropped** | — |
 | `components.md` presence check | — (link checks already fail on a missing target) | **Dropped** | — |
 | Docs-affect `routes/**` → `scenarios.md` strict | Every route import edit needing a scenarios touch | **Downgraded to warn** | check:docs-affected |
+| Callers place components (layout, truncate) and pick a size or variant; no class patches to spacing, type, color, or shape (`no-restyle`) | Every screen re-deciding density: 140 hand-patched sites before the cleanup | **New** | lint |
 | Source files ≤ 600 lines (baseline may only shrink) | Files too long to review or hand to an agent | **New** | check:size |
 
 ## Taste
@@ -67,18 +68,18 @@ These restate [`design.md`](../../../explanation/design.md); change the brief fi
 
 ## `@shadcn/lint`
 
-Pinned at `0.2.0` (pre-1.0, single maintainer: bump deliberately). Web only. Audited 2026-09-29 against six rules:
+Pinned at `0.2.0` (pre-1.0, single maintainer: bump deliberately). Web only. Audited 2026-09-29 against six rules; `no-restyle` was turned on the same day after the cleanup:
 
 | Rule | State | Why |
 | --- | --- | --- |
 | `no-raw-colors` (`scanAllStrings`) | **On** | Class strings live in constants (`STATUS_TONES`), not just `className`. |
 | `no-arbitrary-values` (layout allowed, `scanAllStrings`) | **On** | Layout one-offs (`max-w-[12rem]`) are fine; type, color, and tracking are not. |
 | `no-unknown-classes` | **On** | Reads our real Tailwind theme + `@utility` roles. Known false positive: a prop named `claimClass` looks like a class prop (disable with a reason). |
-| `no-restyle` | **Off, undecided** | 292 hits at ~140 sites in `domains/` (Button 83, Input 40, FieldSet 24): fixing needs new Button / Input / Field variants first. It also reads our type roles (`text-label-meta-sm`, `text-chip`) as colors. Revisit with a design decision on variants. |
+| `no-restyle` (`allow: ["layout", "truncate"]`) | **On** in `domains/` + `routes/` | The audit found 292 errors at 140 sites. Most were repeats of a primitive's default (`size="sm"` + `h-6 text-xs`, `FieldSet border-0 p-0`); the rest became variants ([`atoms.md`](atoms.md#variants-not-overrides)). Four true one-offs carry a reasoned `oxlint-disable`. `shared/` is exempt: atoms own their style. It still reads our type roles (`text-label-meta-sm`, `text-chip`) as colors, so pass roles through a variant, not `className`. |
 | `no-inline-styles` | **Off** | 36 hits, mostly legitimate dynamic values (drag transforms, syntax colors, measured heights). |
 | `require-static-classes` | **Off** | Flags imported class constants and helper functions, which is our normal pattern. |
 
-Tests and `shared/ui/shadcn/` are exempt. `json-view.tsx` opts out of `no-arbitrary-values` with a file-level disable: it carries a Tokyo Night / GitHub syntax palette. Debt: move it to `--syntax-*` tokens.
+Tests and `shared/ui/shadcn/` are exempt (`no-restyle` also skips `shared/`). `json-view.tsx` opts out of `no-arbitrary-values` with a file-level disable: it carries a Tokyo Night / GitHub syntax palette. Debt: move it to `--syntax-*` tokens.
 
 ## Adding a rule
 

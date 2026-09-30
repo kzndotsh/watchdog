@@ -655,8 +655,8 @@ export default defineConfig({
     },
     {
       // Tailwind class checks on web UI. Class strings live in constants (STATUS_TONES,
-      // type roles), so scan every string. no-restyle / no-inline-styles /
-      // require-static-classes are deliberately off: see docs/reference/web/ui/rules.md.
+      // type roles), so scan every string. no-inline-styles / require-static-classes
+      // are deliberately off: see docs/reference/web/ui/rules.md.
       files: ["apps/web/src/**/*.{ts,tsx}"],
       rules: {
         "shadcn/no-raw-colors": ["error", { scanAllStrings: true }],
@@ -665,6 +665,18 @@ export default defineConfig({
           { allow: ["layout"], scanAllStrings: true },
         ],
         "shadcn/no-unknown-classes": "error",
+      },
+    },
+    {
+      // Domains and routes compose primitives; they don't restyle them. Callers may
+      // place (layout classes, truncate); size, color, and shape come from variants.
+      // shared/ atoms own their style, like shadcn's ui/ dir.
+      files: [
+        "apps/web/src/domains/**/*.{ts,tsx}",
+        "apps/web/src/routes/**/*.{ts,tsx}",
+      ],
+      rules: {
+        "shadcn/no-restyle": ["error", { allow: ["layout", "truncate"] }],
       },
     },
     {
@@ -677,6 +689,7 @@ export default defineConfig({
         "shadcn/no-raw-colors": "off",
         "shadcn/no-arbitrary-values": "off",
         "shadcn/no-unknown-classes": "off",
+        "shadcn/no-restyle": "off",
       },
     },
   ],
