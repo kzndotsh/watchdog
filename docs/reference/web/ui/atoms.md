@@ -51,7 +51,7 @@ Callers place components (layout classes, `truncate`) and pick a size or variant
 | `dialog`, `alert-dialog` | Enter confirms the default action (`enterConfirms`); `AlertDialogAction` runs on our Button so it can show `loading` |
 | `combobox` | `ComboboxInput tone="warning"` (data leaves the machine) |
 
-Anything that is only a different look is not a wrapper: use the stock component, or a CSS token if it should change everywhere. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`toast` helpers, `QueueRow`, `StatusDot`, `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`).
+A new wrapper must also be listed in `primitives/__tests__/wrapper-lint-coverage.test.ts`, which fails if the linter stops checking it. Anything that is only a different look is not a wrapper: use the stock component, or a CSS token if it should change everywhere. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`toast` helpers, `QueueRow`, `StatusDot`, `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`).
 
 Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`; Inputs 12px at `md+`), so don't add `text-xs` / `h-*` patches to match the old scale. Density comes from Mira, so don't add `text-xs` / `h-*` patches to a screen.
 

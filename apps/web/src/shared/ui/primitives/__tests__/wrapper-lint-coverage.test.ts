@@ -95,8 +95,8 @@ describe("wrapper lint coverage", () => {
     const modules = readdirSync(PRIMITIVES_DIR)
       .filter((name) => name.endsWith(".tsx"))
       .map((name) => name.replace(/\.tsx$/, ""))
-      .toSorted();
-    expect(modules).toEqual(Object.keys(WRAPPERS).toSorted());
+      .sort();
+    expect(modules).toEqual(Object.keys(WRAPPERS).sort());
   });
 
   it("flags className restyling on every wrapper component", () => {
