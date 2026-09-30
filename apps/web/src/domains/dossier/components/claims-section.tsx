@@ -42,6 +42,7 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
+import { FieldMessage } from "@/shared/ui/field-message";
 import {
   FormInlineError,
   FormInlineWarning,
@@ -262,23 +263,26 @@ function ClaimComposer({
         }}
       >
         {(field) => (
-          <Textarea
-            placeholder={textPlaceholder}
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => {
-              field.handleChange(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") onCancel();
-              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                e.preventDefault();
-                void form.handleSubmit();
-              }
-            }}
-            className={layout.textareaClass}
-            autoFocus
-          />
+          <>
+            <Textarea
+              placeholder={textPlaceholder}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") onCancel();
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  void form.handleSubmit();
+                }
+              }}
+              className={layout.textareaClass}
+              autoFocus
+            />
+            <FieldMessage meta={field.state.meta} />
+          </>
         )}
       </form.Field>
       <div className="flex flex-wrap items-center gap-2">
@@ -405,16 +409,19 @@ function ClaimActionForm({
         }}
       >
         {(field) => (
-          <Textarea
-            placeholder={ACTION_PLACEHOLDERS[action]}
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => {
-              field.handleChange(e.target.value);
-            }}
-            className="min-h-12"
-            autoFocus
-          />
+          <>
+            <Textarea
+              placeholder={ACTION_PLACEHOLDERS[action]}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+              }}
+              className="min-h-12"
+              autoFocus
+            />
+            <FieldMessage meta={field.state.meta} />
+          </>
         )}
       </actionForm.Field>
       <actionForm.Subscribe

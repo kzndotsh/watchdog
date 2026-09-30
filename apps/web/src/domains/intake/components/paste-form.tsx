@@ -1,10 +1,16 @@
 import { useForm } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
+import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { Button } from "@/shared/ui/primitives/button";
 import { Input } from "@/shared/ui/primitives/input";
 import { Textarea } from "@/shared/ui/primitives/textarea";
-import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@watchdog/ui/components/field";
 
 export interface PasteFormProps {
   disabled: boolean;
@@ -56,9 +62,10 @@ export function PasteForm({
           }}
         >
           {(field) => (
-            <Field>
+            <Field data-invalid={fieldInvalid(field.state.meta)}>
               <FieldLabel>Content</FieldLabel>
               <Textarea
+                aria-invalid={fieldInvalid(field.state.meta)}
                 mono
                 className="min-h-40"
                 placeholder="Paste page text, tool output, notes…"
@@ -69,6 +76,9 @@ export function PasteForm({
                 }}
                 disabled={disabled}
               />
+              {fieldInvalid(field.state.meta) ? (
+                <FieldError errors={fieldErrorList(field.state.meta)} />
+              ) : null}
             </Field>
           )}
         </form.Field>

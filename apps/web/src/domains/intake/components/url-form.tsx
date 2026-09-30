@@ -1,9 +1,15 @@
 import { useForm } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
+import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { Button } from "@/shared/ui/primitives/button";
 import { Input } from "@/shared/ui/primitives/input";
-import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@watchdog/ui/components/field";
 
 export interface UrlFormProps {
   disabled: boolean;
@@ -51,9 +57,10 @@ export function UrlForm({
           }}
         >
           {(field) => (
-            <Field>
+            <Field data-invalid={fieldInvalid(field.state.meta)}>
               <FieldLabel>URL</FieldLabel>
               <Input
+                aria-invalid={fieldInvalid(field.state.meta)}
                 placeholder="Link or hostname"
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -62,6 +69,9 @@ export function UrlForm({
                 }}
                 disabled={disabled}
               />
+              {fieldInvalid(field.state.meta) ? (
+                <FieldError errors={fieldErrorList(field.state.meta)} />
+              ) : null}
             </Field>
           )}
         </form.Field>

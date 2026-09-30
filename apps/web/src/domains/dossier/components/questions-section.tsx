@@ -31,8 +31,10 @@ import {
   updateQuestionInputSchema,
 } from "@/domains/entities/questions/types";
 import { cn, errMessage } from "@/lib/utils";
+import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ComposerShell } from "@/shared/ui/composer-shell";
+import { FieldMessage } from "@/shared/ui/field-message";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import { Textarea } from "@/shared/ui/primitives/textarea";
@@ -157,17 +159,21 @@ function QuestionComposer({
         }}
       >
         {(field) => (
-          <Textarea
-            placeholder="What do we need to find out?"
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => {
-              field.handleChange(e.target.value);
-            }}
-            className="min-h-16 resize-y"
-            autoFocus
-            onKeyDown={handleFieldKeyDown}
-          />
+          <>
+            <Textarea
+              aria-invalid={fieldInvalid(field.state.meta)}
+              placeholder="What do we need to find out?"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+              }}
+              className="min-h-16 resize-y"
+              autoFocus
+              onKeyDown={handleFieldKeyDown}
+            />
+            <FieldMessage meta={field.state.meta} />
+          </>
         )}
       </form.Field>
       {includeNote ? (

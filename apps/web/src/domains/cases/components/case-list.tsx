@@ -14,6 +14,7 @@ import {
   filterActionsForSurface,
   type AppAction,
 } from "@/shared/lib/app-action";
+import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { usePaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
@@ -42,7 +43,7 @@ import { Textarea } from "@/shared/ui/primitives/textarea";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
 import { CardGridSkeleton } from "@/shared/ui/skeletons";
-import { Field, FieldLabel } from "@watchdog/ui/components/field";
+import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
 function CaseCard({
@@ -227,7 +228,7 @@ function CreateCaseDialog({
             }}
           >
             {(field) => (
-              <Field data-invalid={!!field.state.meta.errors[0]}>
+              <Field data-invalid={fieldInvalid(field.state.meta)}>
                 <FieldLabel htmlFor="new-case-title">Case name</FieldLabel>
                 <Input
                   id="new-case-title"
@@ -243,9 +244,11 @@ function CreateCaseDialog({
                     field.handleChange(e.target.value);
                   }}
                   disabled={form.state.isSubmitting}
-                  aria-invalid={!!field.state.meta.errors[0]}
+                  aria-invalid={fieldInvalid(field.state.meta)}
                 />
-                <FormInlineError>{field.state.meta.errors[0]}</FormInlineError>
+                {fieldInvalid(field.state.meta) ? (
+                  <FieldError errors={fieldErrorList(field.state.meta)} />
+                ) : null}
               </Field>
             )}
           </form.Field>

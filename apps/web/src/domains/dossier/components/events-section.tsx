@@ -24,7 +24,9 @@ import {
   updateEventInputSchema,
 } from "@/domains/entities/events/types";
 import { cn, errMessage } from "@/lib/utils";
+import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { FieldMessage } from "@/shared/ui/field-message";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { Button } from "@/shared/ui/primitives/button";
 import { Input } from "@/shared/ui/primitives/input";
@@ -192,17 +194,21 @@ function EventNodeComposer({
         }}
       >
         {(field) => (
-          <Input
-            aria-label="What happened"
-            placeholder="What happened"
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => {
-              field.handleChange(e.target.value);
-            }}
-            onKeyDown={onFieldKeyDown}
-            autoFocus
-          />
+          <>
+            <Input
+              aria-invalid={fieldInvalid(field.state.meta)}
+              aria-label="What happened"
+              placeholder="What happened"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+              }}
+              onKeyDown={onFieldKeyDown}
+              autoFocus
+            />
+            <FieldMessage meta={field.state.meta} />
+          </>
         )}
       </form.Field>
 
