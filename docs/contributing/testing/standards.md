@@ -96,3 +96,4 @@ What this means when writing tests:
 
 - **Restore what you change.** `process.env`, `globalThis`, fake timers, `window` / DOM, and module-level state outside the module registry are shared by the files that run in the same worker. Set and restore them in `beforeEach` / `afterEach` (`vi.stubEnv` + `vi.unstubAllEnvs`, `vi.useFakeTimers` + `vi.useRealTimers`).
 - **A leak shows up as an order-dependent failure.** Reproduce with `pnpm exec vitest run --project <name> --sequence.shuffle.files`, then fix the test's cleanup; do not turn isolation back on for the project.
+- **Tests that spawn processes need their own timeout.** `wrapper-lint-coverage.test.ts` runs oxlint and sets 60s, because the default 5s is easy to exceed when the whole suite saturates the CPU.

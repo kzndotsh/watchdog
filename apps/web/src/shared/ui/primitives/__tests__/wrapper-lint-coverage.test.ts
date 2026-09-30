@@ -99,6 +99,7 @@ describe("wrapper lint coverage", () => {
     expect(modules).toEqual(Object.keys(WRAPPERS).sort());
   });
 
+  // Spawns oxlint: give it room when the whole suite is saturating the CPU.
   it("flags className restyling on every wrapper component", () => {
     const restyle = lintProbe()
       .filter((d) => d.code === "shadcn(no-restyle)")
@@ -110,5 +111,5 @@ describe("wrapper lint coverage", () => {
         `no-restyle does not check <${name}>: its wrapper hides className from the linter`
       ).toBe(true);
     }
-  });
+  }, 60_000);
 });
