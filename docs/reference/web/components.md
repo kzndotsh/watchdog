@@ -45,7 +45,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `EvidencePicker` | Dense multi-select Case Evidence (chip-height Add/+ · checklist popover; `layout="panel"` for parent shells; options as `readonly EvidenceOption[]`; label/filter helpers in `shared/ui/intake/evidence-option.ts`) | Dossier composers · identifier Link · Triage | Job cite display | `EvidenceCiteChips` | canonical (`shared/ui/intake/evidence-picker.tsx`) | no | : |
 | `EvidenceCiteChips` | Read-only Job/proposal cite chips | Triage decide band | Multi-select | `EvidencePicker` | canonical (same file) | no | : |
 | `EvidenceDetailSkeleton` | Evidence/Collect Detail skeleton: header · tabs · `ArtifactPreviewSkeleton` · `DetailFooter` | Collect/Triage detail data-slot | Static shell / select-none empty | generic header/body blocks | canonical | no | : |
-| `FetchErrorAlert` | Load-failure banner | Route / region fetch fail | Field validation | `FieldMessage` | canonical | yes | destructive |
+| `FetchErrorAlert` | Load-failure banner (Retry in `AlertAction`) | Route / region fetch fail | Field validation | `FieldMessage` | canonical | yes | destructive |
 | `FieldSelect` | Dense string Select: CONTROL chrome | Cap / playbook / kind pickers | Native `<select>` · enum-specific atoms | `ConfidenceSelect` · `FieldCombobox` | canonical | yes | : |
 | `FieldCombobox` | Filterable string Combobox: CONTROL chrome; optional `group` → section headings | Long / searchable option lists (edge phrases) | Tiny closed enums | `FieldSelect` · `EntityCombobox` | canonical | no | : |
 | `FieldMessage` | TanStack Form field validation message (`FieldError`) | Under a control after touch/submit | Server / mutation failures | `FieldError` | canonical | yes | destructive |

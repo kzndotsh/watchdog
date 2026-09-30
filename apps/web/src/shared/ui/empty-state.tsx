@@ -117,16 +117,14 @@ export function EmptyState({
     <Empty
       aria-live="polite"
       className={cn(
-        "min-h-0 flex-1 rounded-none border-0",
+        "min-h-0 flex-1",
         size === "sm" ? "py-6" : "py-12",
         framed && "border-border/60 rounded-lg border border-dashed",
         className
       )}
     >
       <EmptyHeader>
-        <EmptyTitle className="text-muted-foreground font-medium">
-          {title}
-        </EmptyTitle>
+        <EmptyTitle className="text-muted-foreground">{title}</EmptyTitle>
         {description ? (
           <EmptyDescription>{description}</EmptyDescription>
         ) : null}
