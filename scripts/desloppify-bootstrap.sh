@@ -21,7 +21,8 @@ patterns=(
   packages/contract/src/generated
   packages/caps/capabilities.gen.json
   apps/web/src/routeTree.gen.ts
-  apps/web/src/shared/ui/shadcn
+  packages/ui/src/components
+  packages/ui/src/hooks
   apps/web/src/auth/ui
   coverage
   playwright-report

@@ -318,7 +318,6 @@ export function JobCapRunForm({
                     <form.Field name="runInput">
                       {(runField) => (
                         <Input
-                          size="sm"
                           className="h-8 w-full"
                           placeholder={view.primaryField.placeholder}
                           value={runField.state.value}
@@ -364,7 +363,6 @@ export function JobCapRunForm({
                     <form.Field name="runInput">
                       {(runField) => (
                         <Input
-                          size="sm"
                           className="h-8 min-w-[12rem] flex-1 sm:max-w-xs"
                           placeholder={view.primaryField.placeholder}
                           value={runField.state.value}

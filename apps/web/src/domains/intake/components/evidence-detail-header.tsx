@@ -185,7 +185,7 @@ function EvidenceEntityMeta({
         <Button
           type="button"
           variant="ghost-muted"
-          size="icon-xs"
+          size="icon-sm"
           className="-mr-1.5"
           aria-label="Change entity"
           disabled={attaching}

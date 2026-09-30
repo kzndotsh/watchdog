@@ -1,0 +1,5 @@
+/*
+ * Target for `shadcn add` (components.json → tailwind.css). The app owns all real CSS
+ * (tokens, theme, base) in apps/web/src/styles.css; nothing imports this file.
+ */
+@import "tailwindcss";

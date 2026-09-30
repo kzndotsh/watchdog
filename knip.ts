@@ -9,6 +9,9 @@ const config: KnipConfig = {
   ignoreBinaries: ["check", "desloppify"],
   ignore: ["_legacy-v1/**", "_legacy-v2/**"],
   ignoreIssues: {
+    // Vendored shadcn output: unused *files* still surface; unused exports are upstream's.
+    "packages/ui/src/**": ["exports", "types"],
+    "apps/web/src/shared/ui/shadcn/**": ["exports", "types"],
     "apps/web/src/domains/**/types.ts": ["types"],
     "apps/web/src/domains/**/*.server.ts": ["types"],
     "apps/web/src/auth/server.ts": ["types"],
@@ -65,7 +68,6 @@ const config: KnipConfig = {
         "src/test-setup.ts",
       ],
       project: ["src/**/*.{ts,tsx}", "scripts/**/*.{mjs,ts,js}"],
-      ignore: ["src/shared/ui/shadcn/**"],
       ignoreFiles: ["src/shared/layout/section-label.tsx"],
       ignoreDependencies: [
         "@fontsource-variable/geist",

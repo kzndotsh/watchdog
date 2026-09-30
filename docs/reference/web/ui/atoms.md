@@ -41,9 +41,22 @@ Button sizes: PageHeader / toolbar → `sm` (or default); Queue row / dense icon
 
 ### Variants, not overrides
 
-Callers place components (layout classes: margin, width, grid/flex placement) and pick a size or variant; they don't patch a component's spacing, type, color, or shape with `className`. If a caller needs a look the component lacks, add a variant to the primitive. Examples: `Button size="xs"` (not `size="sm"` + `h-6 text-xs`); `FieldSet` is borderless with `gap-3` by default (the base CSS already zeroes border and padding); `FieldGroup density="cozy"` (gap-3, forms) / `"compact"` (gap-2, toolbars and popovers) and `Field density="compact"` (gap-1.5) replace hand-set gaps; `Label` is already 12px, so `FieldLabel` needs no `text-xs`.
+Callers place components (layout classes, `truncate`) and pick a size or variant; they don't patch a component's spacing, type, color, or shape with `className` (`no-restyle`, see [`rules.md`](rules.md)). If a screen needs a look the component lacks, add it in the facade, never in the vendored primitive.
 
-Control variants: `Input` / `Textarea` take `size="sm"` (12px) and `mono`; `Input` also `size="lg"` (inline titles) and `variant="ghost"` / `"ghost-muted"` (inline metadata until focused) / `"bare"` (no chrome). `Button` adds `ghost-muted`, `ghost-destructive`, and `outline-destructive`. `EditableTextCell variant="title"` is the page-header rename. `EmptyState size="sm"` (tab-sized) and `framed` (dashed page empty); `RowActionsMenu alwaysVisible`; `Kbd tone="inherit"` (inside a colored Button). `Button variant="dashed" size="chip"` (add / count pills); `ToggleGroup variant="segmented"` (view-mode switch); `Card size="flush"` (rows own their padding); `SheetContent flush` and `PopoverContent flush` (children own spacing); `SidebarMenuButton variant="muted"`; `ComboboxInput size="sm"` and `tone="warning"`; `SelectTrigger size="sm"` is 12px. Where a caller only repeated a primitive's default (`PopoverContent` gap-2.5, `RadioGroup` gap-2, `DetailStatusChip size="sm"` gap-0.5), the override is simply gone. These live in the vendored shadcn files: re-apply after `shadcn add` overwrites `input.tsx`, `textarea.tsx`, `button.tsx`, or `field.tsx`.
+**Two layers.** `@watchdog/ui` (`packages/ui`) holds the shadcn primitives exactly as the CLI writes them (`base-mira`); nobody edits them (see [`vendor.md`](vendor.md)). `apps/web/src/shared/ui/shadcn/` is the **facade**: the only place that imports `@watchdog/ui`. Most files are one-line re-exports. Files with real code are wrappers that compose the untouched upstream component and add only what Watchdog needs:
+
+| Wrapper | Adds |
+| --- | --- |
+| `button` | `loading`; variants `ghost-muted` / `ghost-destructive` / `outline-destructive` / `dashed`; size `chip`; `data-variant` / `data-size` / `data-loading` hooks |
+| `alert-dialog`, `dialog` | Enter confirms the default action (`enterConfirms`); `AlertDialogAction` runs on our Button |
+| `input`, `textarea` | `mono`; Input `variant` (`ghost`, `ghost-muted`, `bare`) and `size="lg"` |
+| `field` | `FieldGroup density` (`cozy` / `compact`), `Field density="compact"` |
+| `card`, `popover` | `Card size="flush"`, `PopoverContent flush` |
+| `toggle-group` | `variant="segmented"` |
+| `combobox`, `kbd`, `sidebar` | `ComboboxInput tone="warning"`, `Kbd tone="inherit"`, `SidebarMenuButton variant="muted"` |
+| `toast` | Watchdog-owned (status tints on Base UI toast), not a shadcn file |
+
+Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`; Inputs 12px at `md+`), so don't add `text-xs` / `h-*` patches to match the old scale. Domain code imports from `@/shared/ui/shadcn/*` only; oxlint bans `@watchdog/ui/*` elsewhere. Also: `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`.
 
 ## Gotchas
 

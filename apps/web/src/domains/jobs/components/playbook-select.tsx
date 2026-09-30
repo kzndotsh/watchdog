@@ -156,7 +156,6 @@ export function PlaybookSelect({
         showClear={value !== ""}
         aria-label="Playbook"
         placeholder="Select playbook…"
-        size="sm"
         tone={needsEgress ? "warning" : "default"}
         className={cn(
           CONTROL_HEIGHT,

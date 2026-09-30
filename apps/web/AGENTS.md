@@ -31,6 +31,7 @@ TanStack Start UI for Watchdog. When UI contracts disagree with root AGENTS, **[
 | --- | --- |
 | Split = Queue + Detail (`SplitView`) | Console / Workbench / Tape surfaces; a screen named `*Panel` ([naming rule](../../docs/reference/web/ui/README.md#chrome-lexicon-ui-parts)) |
 | Query cache SoT — `ensureQueryData` / `useSuspenseQuery` / named invalidation | Loader→`useState` forks; QueryClient singleton |
+| Import primitives from `@/shared/ui/shadcn/*` (the facade); add props / variants as facade wrappers | Import `@watchdog/ui/*` directly, or edit `packages/ui` |
 | Reuse domain `hooks/*` workspace hooks | Duplicate Queue/Detail mutation machines in components |
 | Read [`docs/reference/web/`](../../docs/reference/web/README.md) before inventing | Reinvent from `_legacy-v2` without reading it as reference |
 | Caps/agents → Proposal → Triage Accept | Land Cap/agent output as `confirmed` Graph |

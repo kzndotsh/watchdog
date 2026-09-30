@@ -1,84 +1,97 @@
-// @ts-nocheck — shadcn vendor; excluded from project checks
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
-import { cva, type VariantProps } from "class-variance-authority";
+import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
+import {
+  Button as BaseButton,
+  buttonVariants,
+} from "@watchdog/ui/components/button";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-const buttonVariants = cva(
-  "group/button focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 inline-flex shrink-0 items-center justify-center rounded-md border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:ring-3 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-3 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
-        outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground aria-expanded:bg-secondary aria-expanded:text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]",
-        ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
-        destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
-        // Watchdog: quiet secondary actions and red-on-hover destructive ones.
-        dashed:
-          "text-muted-foreground border-border/60 hover:bg-muted/40 hover:text-foreground border-dashed bg-transparent font-normal shadow-none",
-        "ghost-muted":
-          "text-muted-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
-        "ghost-destructive":
-          "text-destructive hover:bg-destructive/10 hover:text-destructive aria-expanded:bg-destructive/10 dark:hover:bg-destructive/20",
-        "outline-destructive":
-          "border-border bg-background text-destructive hover:bg-destructive/10 hover:text-destructive aria-expanded:bg-destructive/10 dark:border-input dark:bg-input/30 dark:hover:bg-destructive/20",
-      },
-      size: {
-        default:
-          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1 rounded-md px-2.5 text-label-meta-sm has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        icon: "size-8",
-        // Watchdog: pill-shaped dense control (count / add chips).
-        chip: "h-5 gap-0.5 rounded-full px-1.5 text-xs [&_svg:not([class*='size-'])]:size-3",
-        "icon-xs":
-          "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-7 rounded-md",
-        "icon-lg": "size-9",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-);
+export * from "@watchdog/ui/components/button";
+export { buttonVariants };
 
-function Button({
-  className,
-  variant = "default",
-  size = "default",
+type BaseProps = ComponentProps<typeof BaseButton>;
+type BaseVariant = NonNullable<BaseProps["variant"]>;
+type BaseSize = NonNullable<BaseProps["size"]>;
+
+/** Watchdog variants: an upstream variant plus the delta. Upstream stays untouched. */
+const EXTRA_VARIANTS = {
+  "ghost-muted": { base: "ghost", className: "text-muted-foreground" },
+  "ghost-destructive": {
+    base: "ghost",
+    className:
+      "text-destructive hover:bg-destructive/10 hover:text-destructive aria-expanded:bg-destructive/10 dark:hover:bg-destructive/20",
+  },
+  "outline-destructive": {
+    base: "outline",
+    className:
+      "text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20",
+  },
+  dashed: {
+    base: "ghost",
+    className:
+      "text-muted-foreground border-border/60 hover:bg-muted/40 hover:text-foreground border-dashed font-normal",
+  },
+} as const satisfies Record<string, { base: BaseVariant; className: string }>;
+
+/** Pill-shaped dense control (add / count chips). */
+const EXTRA_SIZES = {
+  chip: {
+    base: "xs",
+    className: "h-5 gap-0.5 rounded-full px-1.5 text-xs",
+  },
+} as const satisfies Record<string, { base: BaseSize; className: string }>;
+
+type ExtraVariant = keyof typeof EXTRA_VARIANTS;
+type ExtraSize = keyof typeof EXTRA_SIZES;
+
+function isExtraVariant(value: unknown): value is ExtraVariant {
+  return typeof value === "string" && value in EXTRA_VARIANTS;
+}
+
+function isExtraSize(value: unknown): value is ExtraSize {
+  return typeof value === "string" && value in EXTRA_SIZES;
+}
+
+export type ButtonProps = Omit<BaseProps, "variant" | "size"> & {
+  variant?: BaseVariant | ExtraVariant;
+  size?: BaseSize | ExtraSize;
+  /** Shows a Spinner and disables the control. */
+  loading?: boolean;
+};
+
+/**
+ * Watchdog Button: upstream shadcn Button + `loading`, extra variants / sizes, and
+ * `data-variant` / `data-size` / `data-loading` hooks (dialog Enter-to-confirm and
+ * coarse-pointer sizing key on them).
+ */
+export function Button({
+  variant,
+  size,
   loading = false,
   disabled,
+  className,
   children,
   ...props
-}: ButtonPrimitive.Props &
-  VariantProps<typeof buttonVariants> & {
-    /** Shows Spinner and disables the control (shadcn loading pattern). */
-    loading?: boolean;
-  }) {
+}: ButtonProps) {
+  const extraVariant = isExtraVariant(variant) ? EXTRA_VARIANTS[variant] : null;
+  const extraSize = isExtraSize(size) ? EXTRA_SIZES[size] : null;
+  const baseVariant = isExtraVariant(variant) ? extraVariant?.base : variant;
+  const baseSize = isExtraSize(size) ? extraSize?.base : size;
+
   return (
-    <ButtonPrimitive
-      data-slot="button"
-      data-variant={variant}
-      data-size={size}
+    <BaseButton
+      variant={baseVariant}
+      size={baseSize}
+      data-variant={variant ?? "default"}
+      data-size={size ?? "default"}
       data-loading={loading || undefined}
-      disabled={disabled || loading}
-      className={cn(buttonVariants({ variant, size, className }))}
+      disabled={(disabled ?? false) || loading}
+      className={cn(extraVariant?.className, extraSize?.className, className)}
       {...props}
     >
       {loading ? <Spinner data-icon="inline-start" /> : null}
       {children}
-    </ButtonPrimitive>
+    </BaseButton>
   );
 }
-
-export { Button, buttonVariants };

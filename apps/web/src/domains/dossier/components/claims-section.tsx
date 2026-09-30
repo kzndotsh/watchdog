@@ -163,12 +163,12 @@ function ClaimComposerActions({
 }) {
   return (
     <div className={cn("flex gap-1", className)}>
-      <Button type="button" size="xs" variant="ghost" onClick={onCancel}>
+      <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
         Cancel
       </Button>
       <Button
         type="submit"
-        size="xs"
+        size="sm"
         disabled={submitDisabled}
         title={submitTitle}
       >
@@ -406,7 +406,6 @@ function ClaimActionForm({
       >
         {(field) => (
           <Textarea
-            size="sm"
             placeholder={ACTION_PLACEHOLDERS[action]}
             value={field.state.value}
             onBlur={field.handleBlur}

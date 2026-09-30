@@ -70,7 +70,9 @@ const watchdogIgnores = [
   "node_modules/**",
   // Better Auth UI + shadcn registry — do not lint
   "apps/web/src/auth/ui/**",
-  "apps/web/src/shared/ui/shadcn/**",
+  // Vendored shadcn primitives (@watchdog/ui): byte-identical to the CLI output, never linted.
+  "packages/ui/src/components/**",
+  "packages/ui/src/hooks/**",
   ".cursor/**",
   ".agents/**",
   ".claude/**",
@@ -306,7 +308,8 @@ export default defineConfig({
       },
     },
     {
-      // Web must not import @watchdog/db except auth adapter + SSE listen.
+      // Web must not import @watchdog/db except auth adapter + SSE listen, and must reach the
+      // vendored shadcn primitives (@watchdog/ui) only through the shared/ui/shadcn facade.
       files: ["apps/web/src/**/*.{ts,tsx}"],
       rules: {
         "eslint/no-restricted-imports": [
@@ -317,6 +320,32 @@ export default defineConfig({
                 name: "@watchdog/db",
                 message:
                   "ServerFns call oRPC (@watchdog/api) → core → repos. Only auth/server.ts and routes/api/events.ts may import @watchdog/db.",
+              },
+            ],
+            patterns: [
+              {
+                group: ["@watchdog/ui/*"],
+                message:
+                  "Import primitives from @/shared/ui/shadcn/* (the Watchdog facade). Only that folder may import @watchdog/ui.",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      // The facade is the one place that composes @watchdog/ui (re-exports + wrappers).
+      files: ["apps/web/src/shared/ui/shadcn/**/*.{ts,tsx}"],
+      rules: {
+        // Re-export barrels + wrappers: fast-refresh boundaries don't apply here.
+        "react/only-export-components": "off",
+        "eslint/no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "@watchdog/db",
+                message: "The UI facade never touches the database.",
               },
             ],
           },
@@ -330,24 +359,6 @@ export default defineConfig({
       ],
       rules: {
         "eslint/no-restricted-imports": "off",
-      },
-    },
-    {
-      // shadcn registry primitives — not hand-owned DS.
-      files: ["apps/web/src/shared/ui/shadcn/**/*.{ts,tsx}"],
-      rules: {
-        "eslint/no-unused-vars": "off",
-        "typescript/no-unused-vars": "off",
-        "react/only-export-components": "off",
-        "unicorn/no-null": "off",
-      },
-    },
-    {
-      // shadcn-vendored hook — @ts-nocheck re-stamped by
-      // apps/web/scripts/shadcn-nocheck.mjs; excluded from tsconfig by design.
-      files: ["apps/web/src/shared/hooks/use-mobile.ts"],
-      rules: {
-        "typescript/ban-ts-comment": "off",
       },
     },
     {

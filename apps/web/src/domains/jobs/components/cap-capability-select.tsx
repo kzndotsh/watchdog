@@ -161,7 +161,6 @@ export function CapCapabilitySelect({
         showClear={value !== ""}
         aria-label="Capability"
         placeholder="Select Cap…"
-        size="sm"
         tone={needsEgress ? "warning" : "default"}
         className={cn(
           CONTROL_HEIGHT,

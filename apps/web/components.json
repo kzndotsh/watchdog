@@ -1,6 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "base-nova",
+  "style": "base-mira",
   "rsc": false,
   "tsx": true,
   "tailwind": {
@@ -15,7 +15,7 @@
   "aliases": {
     "components": "@/shared",
     "utils": "@/lib/utils",
-    "ui": "@/shared/ui/shadcn",
+    "ui": "@watchdog/ui/components",
     "lib": "@/lib",
     "hooks": "@/shared/hooks"
   },

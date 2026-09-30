@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* Vendored shadcn primitives live in the @watchdog/ui workspace package. */
+@source "../../../packages/ui/src";
 /* Fontsource variable faces — /wght.css is the documented import (weights 100–900). */
 @import "@fontsource-variable/geist/wght.css";
 @import "@fontsource-variable/geist-mono/wght.css";

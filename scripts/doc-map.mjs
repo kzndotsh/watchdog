@@ -14,6 +14,7 @@ export const DOC_MAP = [
     id: "web-ui",
     code: [
       /^apps\/web\/src\/shared\/ui\//,
+      /^packages\/ui\//,
       /^apps\/web\/scripts\/ds-ban-check\.mjs$/,
     ],
     docs: [

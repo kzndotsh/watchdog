@@ -39,7 +39,7 @@ function DumpKindButtons({
     <Button
       key={kind}
       type="button"
-      size={ghost ? "xs" : "sm"}
+      size={ghost ? "sm" : "default"}
       variant={variant}
       disabled={disabled}
       onClick={() => {

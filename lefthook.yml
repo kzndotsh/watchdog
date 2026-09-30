@@ -18,7 +18,8 @@ pre-commit:
         - "**/routeTree.gen.ts"
         - "packages/contract/src/generated/**"
         - "packages/caps/capabilities.gen.json"
-        - "apps/web/src/shared/ui/shadcn/**"
+        - "packages/ui/src/components/**"
+        - "packages/ui/src/hooks/**"
       # Staged files only: a repo-wide fix rewrites files outside the commit
       # and can break lefthook's restore of unstaged changes.
       run: pnpm exec ultracite fix --disable-nested-config --no-error-on-unmatched-pattern {staged_files}
@@ -67,6 +68,13 @@ pre-commit:
         - "**/*.test.ts"
         - "**/*.test.tsx"
       run: pnpm check:effect-edges:strict
+    vendor-lock:
+      glob:
+        - "packages/ui/src/components/**"
+        - "packages/ui/src/hooks/**"
+        - "packages/ui/vendor.json"
+        - "scripts/ui-vendor.mjs"
+      run: pnpm check:vendor
     size-budget:
       glob:
         - "apps/*/src/**/*.{ts,tsx}"

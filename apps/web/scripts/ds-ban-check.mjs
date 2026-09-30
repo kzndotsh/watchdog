@@ -8,7 +8,7 @@
  *   - fictional vocab         values not in @watchdog/schemas unions render as lies
  *   - loading doctrine        waterfalls, double pending surfaces, a11y-less loaders
  * Consistency (one way to do a thing):
- *   - SectionLabel SoT, NativeSelect, WD UI manifest + /ui fixtures
+ *   - SectionLabel SoT, WD UI manifest + /ui fixtures
  * Taste (the design brief, docs/explanation/design.md):
  *   - radius ladder, decorative effects, banned surface names
  *
@@ -214,25 +214,6 @@ for (const hit of surfaceHits) {
   fail(`Banned surface name (Console / Workbench / Tape): ${hit}`);
 }
 if (surfaceHits.length === 0) ok("No banned surface names");
-
-// ── 2c. NativeSelect banned — use FieldSelect / Select ───────────────────────
-const nativeSelectHits = [];
-for (const f of walk(src)) {
-  const r = rel(f);
-  if (r.startsWith("shared/ui/shadcn/")) continue;
-  const text = readFileSync(f, "utf-8");
-  if (/from\s+["']@\/shared\/ui\/shadcn\/native-select["']/.test(text)) {
-    nativeSelectHits.push(r);
-  }
-}
-for (const hit of nativeSelectHits) {
-  fail(
-    `Import native-select — use FieldSelect / ConfidenceSelect / Select: ${hit}`
-  );
-}
-if (nativeSelectHits.length === 0) {
-  ok("No NativeSelect imports (FieldSelect / Select is SoT)");
-}
 
 // ── 3. Opaque id / sha256 display via .slice (all domains) ───────────────────
 const ID_SLICE_RE =

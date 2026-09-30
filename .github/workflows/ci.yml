@@ -162,6 +162,10 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:effect-edges:strict
 
+      - name: Vendored UI lock
+        if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:vendor
+
       - name: File-size budget
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:size

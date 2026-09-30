@@ -191,7 +191,6 @@ function AcceptControls({
         <acceptForm.Field name="attestationText">
           {(field) => (
             <Textarea
-              size="sm"
               placeholder="Optional attestation note (creates Evidence on Accept)"
               value={field.state.value}
               onBlur={field.handleBlur}
@@ -224,7 +223,6 @@ function RejectComposer({
       <rejectForm.Field name="rejectReason">
         {(field) => (
           <Textarea
-            size="sm"
             placeholder="Reject reason (optional)"
             value={field.state.value}
             onBlur={field.handleBlur}
@@ -243,7 +241,7 @@ function RejectComposer({
       <div className="flex justify-end gap-1">
         <Button
           type="button"
-          size="xs"
+          size="sm"
           variant="ghost"
           disabled={pending}
           onClick={() => {
@@ -255,7 +253,7 @@ function RejectComposer({
         </Button>
         <Button
           type="button"
-          size="xs"
+          size="sm"
           variant="destructive"
           loading={pending && rejecting}
           onClick={() => {

@@ -6,11 +6,11 @@ This page covers delivery gates, the chrome lexicon, and the PR checklist. Token
 
 Build new foundations and atoms on `/ui` before adding chrome to live product pages. `shared/ui` is presentational only (**no I/O**). Domains wire data through hooks and ServerFns. Extract a named generic at the **second** call site.
 
-| Gate                      | Command                                      |
-| ------------------------- | -------------------------------------------- |
-| Typecheck + DS bans       | `pnpm --filter @watchdog/web ds:check`       |
-| Hand-owned atom checklist | `scripts/wd-ui-files.mjs`                    |
-| After `shadcn add`        | `pnpm --filter @watchdog/web shadcn:nocheck` |
+| Gate | Command |
+| --- | --- |
+| Typecheck + DS bans | `pnpm --filter @watchdog/web ds:check` |
+| Hand-owned atom checklist | `scripts/wd-ui-files.mjs` |
+| Vendored primitives lock | `pnpm check:vendor` (`pnpm ui:add` / `pnpm ui:sync` to change) |
 
 ## Chrome lexicon (UI parts)
 

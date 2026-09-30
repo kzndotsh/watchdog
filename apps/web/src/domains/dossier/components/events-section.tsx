@@ -235,7 +235,7 @@ function EventNodeComposer({
       </div>
 
       <div className="flex justify-end gap-1 pt-0.5">
-        <Button type="button" size="xs" variant="ghost" onClick={onCancel}>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <form.Subscribe
@@ -247,7 +247,7 @@ function EventNodeComposer({
           {({ isSubmitting, what }) => (
             <Button
               type="submit"
-              size="xs"
+              size="sm"
               disabled={isSubmitting || !what.trim()}
             >
               {submitLabel}

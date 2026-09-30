@@ -136,7 +136,6 @@ export function ConnectionComposerFields({
         <Field density="compact">
           <FieldLabel htmlFor="connection-notes">Notes</FieldLabel>
           <Input
-            size="sm"
             id="connection-notes"
             value={values.notes}
             onChange={(e) => {

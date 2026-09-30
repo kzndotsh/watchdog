@@ -303,7 +303,7 @@ export function IdentifiersSection({
             <div className="flex items-center gap-1">
               <Button
                 type="button"
-                size="xs"
+                size="sm"
                 variant="ghost"
                 onClick={() => {
                   setBulkOpen(true);
@@ -314,7 +314,7 @@ export function IdentifiersSection({
               </Button>
               <Button
                 type="button"
-                size="xs"
+                size="sm"
                 variant="ghost"
                 onClick={() => {
                   if (composing) {

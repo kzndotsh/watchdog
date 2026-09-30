@@ -4,7 +4,7 @@ This page defines colors, type roles, the refuse list, and design-system primiti
 
 ## Design system
 
-- Primitives: shadcn (Base UI / `base-nova`) in `src/shared/ui/shadcn/` (registry / `@ts-nocheck`)
+- Primitives: shadcn `base-mira` (Base UI) in the `@watchdog/ui` package, generated and locked ([`vendor.md`](vendor.md)); Watchdog wrappers in the `src/shared/ui/shadcn/` facade
 - Hand-owned atoms: `src/shared/ui/` (`QueueRow`, `SplitView`, data-table kit, etc.)
 - Page chrome: `shared/layout/{app-shell,app-sidebar,app-breadcrumbs,page,page-trail,use-page-trail,page-toolbar,page-filter-menu,route-pending,route-error,case-switcher,theme-toggle}`
 - Prefer `@/shared/ui/*` (owned) / `@/shared/ui/shadcn/*` (primitives) over raw HTML
@@ -25,7 +25,7 @@ This page defines colors, type roles, the refuse list, and design-system primiti
 - Display size: `--wd-display-scale` (product default **`1.1` Default**) on `:root`; `html { font-size: calc(100% * var(--wd-display-scale) * var(--wd-viewport-font-factor)); }` scales rem typography + Tailwind spacing. `--wd-viewport-font-factor` is `1.06` on wide hi-DPI viewports (4K). Presets `1.1 | 1.2 | 1.35` in `localStorage['wd-display-scale']`; Settings → Appearance + blocking init in `__root.tsx`. Browser zoom remains available (WCAG 1.4.4).
 - Root: `TooltipProvider delay={500}` + `Toaster` (dense hit targets: `WithTooltip` + `wrapSpan`)
 - Tooltip chrome: elevated dark tip (`--wd-neutral-800` / `--wd-neutral-50` + light ring) via `TooltipContent`: sits above dark page bg; `Timestamp` / `WithTooltip` / sidebar share it
-- shadcn folder excluded from typecheck; hand-owned `shared/ui` typechecked by default
+- `@watchdog/ui` is generated (not linted / formatted); the facade and `shared/ui` are hand-owned and typechecked
 - **Field focus ring:** `styles/wd-overrides.css` owns focus chrome. **Select / field triggers:** border `color-mix(--ring 50%)` + 2px outer ring at `color-mix(--ring 30%)`. **Writing fields** (input, textarea, input-group, combobox, rich-text): border tint only @ `color-mix(--ring 45%)` — no outer ring (avoids border + halo double line). Table cells keep quieter 1px overrides. Do not add `focus-visible:ring-3` on writing primitives.
 - Base UI: `Button` + `render={<Link … />}` → **`nativeButton={false}`**
 - **no-I/O litmus:** `shared/ui` never fetches, mutates, or routes. Domains own I/O.
@@ -34,17 +34,17 @@ This page defines colors, type roles, the refuse list, and design-system primiti
 
 ## Overlay primitives
 
-Vendored shadcn overlays live in `shared/ui/shadcn/`. **Dialog** is Watchdog-customized (not stock shadcn). Domain wrappers compose these primitives; do not fork a third modal stack.
+Overlays come from `@watchdog/ui` (upstream Mira look) through the `shared/ui/shadcn/` facade. Dialog and AlertDialog add only Enter-to-confirm. Domain wrappers compose these primitives; do not fork a third modal stack.
 
 | Primitive | Use when | Watchdog contract |
 | --- | --- | --- |
-| **Dialog** (`dialog.tsx`) | Create/edit forms, multi-field flows, dismissible overlays (Cases New Case, task form, dossier edit, bulk add) | `rounded-md`; `bg-card` + `border-border` + `shadow-lg` (not `popover` + ring); scrim `bg-background/75`; dense `p-3` / `gap-3`; title `text-heading-section`; description `text-copy-sm`; header `gap-1 pr-7` (close inset); footer plain `flex` + `gap-1.5` — **sm** buttons (`h-7` / `text-xs`), **no** full-width `border-t` chrome bar; motion `duration-(--duration-panel)`; default `sm:max-w-md` (override per surface, e.g. bulk add `max-w-5xl`) |
-| **AlertDialog** | Blocking confirm, medium-stakes cancel (`DestructiveConfirmDialog` for irreversible) | Stock shadcn layout (footer chrome bar); description `text-copy-sm` |
-| **Sheet** | Right-side notes / long editors | Slide-over; shares popover palette |
-| **Popover** | Filters, compact pickers, table cells | Dense `p-2.5`; set `modal` when clicks must not pass through rows |
+| **Dialog** (`dialog.tsx`) | Create/edit forms, multi-field flows, dismissible overlays (Cases New Case, task form, dossier edit, bulk add) | Upstream Mira surface (`bg-popover` + ring, ladder-capped radius, `p-4` / `gap-4`); default `sm:max-w-sm`, override per surface (e.g. bulk add `max-w-5xl`); Enter confirms |
+| **AlertDialog** | Blocking confirm, medium-stakes cancel (`DestructiveConfirmDialog` for irreversible) | Upstream layout; `AlertDialogAction` runs on our Button (`loading`) |
+| **Sheet** | Right-side notes / long editors | Upstream slide-over; shares popover palette |
+| **Popover** | Filters, compact pickers, table cells | Upstream `p-2.5` (`flush` for calendars / lists); set `modal` when clicks must not pass through rows |
 | **Toast** (`toast.tsx`) | Transient mutation OK/fail, copy confirmations | Base UI stack; `rounded-md`; neutral `bg-card` panel + icon chip (`status-*-bg` / `status-*-fg`); body stays `foreground` / `muted-foreground`; close on every toast; mount `<Toaster />` in root layout |
 
-**Enter confirms** (`shared/lib/dialog-default-action.ts`, wired into `DialogContent` + `AlertDialogContent`): Enter clicks `[data-dialog-default-action]`, else the AlertDialog action, else the single enabled primary/destructive footer `Button` (`data-variant`). Native Enter wins inside `<form>`, on buttons/links, comboboxes, menus, textareas (Mod+Enter confirms from a textarea), and during IME composition. Two primaries → no default. Opt out with `enterConfirms={false}`. Re-apply after `shadcn add` overwrites `dialog.tsx` / `alert-dialog.tsx` / `button.tsx`.
+**Enter confirms** (`shared/lib/dialog-default-action.ts`, wired into `DialogContent` + `AlertDialogContent`): Enter clicks `[data-dialog-default-action]`, else the AlertDialog action, else the single enabled primary/destructive footer `Button` (`data-variant`). Native Enter wins inside `<form>`, on buttons/links, comboboxes, menus, textareas (Mod+Enter confirms from a textarea), and during IME composition. Two primaries → no default. Opt out with `enterConfirms={false}`. Lives in the facade wrappers, so `pnpm ui:sync` never disturbs it.
 
 Pick **Dialog** over **AlertDialog** when the user may dismiss via backdrop or close, or when the body is a real form. Pick **AlertDialog** when the flow must stay focused until an explicit action.
 

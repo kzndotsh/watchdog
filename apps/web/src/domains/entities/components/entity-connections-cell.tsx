@@ -285,7 +285,7 @@ export function EntityConnectionsCell({
                   <Button
                     type="button"
                     variant="ghost-muted"
-                    size="icon-xs"
+                    size="icon-sm"
                     disabled={addDisabled}
                     aria-label={addAriaLabel}
                     title="Add connection"

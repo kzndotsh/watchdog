@@ -53,7 +53,9 @@
       "@watchdog/test-kit/*": ["./packages/test-kit/src/*"],
 
       "@watchdog/tools": ["./packages/tools/src/index.ts"],
-      "@watchdog/tools/*": ["./packages/tools/src/*"]
+      "@watchdog/tools/*": ["./packages/tools/src/*"],
+
+      "@watchdog/ui/*": ["./packages/ui/src/*"]
     }
   }
 }

@@ -17,9 +17,10 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
 | Dev | `just dev` · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
-| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix (staged files) + agents + docs + effect-edges + size + agent-skills · pre-push: typecheck + web DS |
+| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix (staged files) + agents + docs + effect-edges + vendor-lock + size + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
+| Vendored shadcn | `pnpm check:vendor` · `pnpm ui:add <name>` · `pnpm ui:sync` (never hand-edit `packages/ui/src/components`) |
 | Caps / client regen | `pnpm generate:caps` · `pnpm generate:client` |
 | AGENTS gate | `pnpm check:agents` · `pnpm check:agents:strict` |
 | Docs gate | `pnpm check:docs` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:size` |
@@ -46,7 +47,7 @@ Watchdog runtime conventions (run* edges, JobFibers, Cap `run`, browser policy) 
 
 ## Sub-AGENTS directory
 
-**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `apps/cli`, `packages/{db,core,api,caps,cap-sdk,env,client,contract,policy,schemas,ai,tools,log,test-kit}`.
+**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `apps/cli`, `packages/{db,core,api,caps,cap-sdk,env,client,contract,policy,schemas,ai,tools,log,test-kit,ui}`.
 
 ## Agent Skills
 

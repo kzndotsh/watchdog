@@ -43,6 +43,7 @@ const config = defineConfig({
       "@watchdog/policy",
       "@watchdog/schemas",
       "@watchdog/tools",
+      "@watchdog/ui",
     ],
   },
   // Belt for residual HMR / server-fn discovery after client code stays on

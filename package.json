@@ -48,7 +48,10 @@
     "desloppify:scan:ci": "bash scripts/desloppify-bootstrap.sh && PYTHONPATH= desloppify --lang typescript scan --path . --profile ci --no-badge",
     "desloppify:status": "desloppify status",
     "desloppify:next": "desloppify next",
-    "prepare": "effect-tsgo patch --oxlint"
+    "prepare": "effect-tsgo patch --oxlint",
+    "check:vendor": "node ./scripts/ui-vendor.mjs check",
+    "ui:sync": "node ./scripts/ui-vendor.mjs sync",
+    "ui:add": "node ./scripts/ui-vendor.mjs add"
   },
   "dependencies": {
     "@watchdog/cli": "workspace:*",

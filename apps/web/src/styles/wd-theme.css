@@ -2,6 +2,8 @@
   /* Uppercase eyebrow labels (404 kicker, sidebar wordmark). */
   --tracking-eyebrow: 0.16em;
   --tracking-eyebrow-sm: 0.12em;
+  /* Toast stack settle: fast start, soft landing. */
+  --ease-toast: cubic-bezier(0.22, 1, 0.36, 1);
   --font-heading: var(--font-sans);
   --font-sans: "Geist Variable", sans-serif;
   /* Fontsource family name — must match @font-face from geist-mono/wght.css. */
@@ -123,6 +125,11 @@
   --radius-sm: calc(var(--radius) * 0.5); /* 3px */
   --radius-md: var(--radius); /* 6px — default controls */
   --radius-lg: calc(var(--radius) * 1.5); /* 9px — surfaces */
+  /* Upstream primitives (Mira) ask for xl+ on dialogs / palettes; cap them at the ladder top. */
+  --radius-xl: var(--radius-lg);
+  --radius-2xl: var(--radius-lg);
+  --radius-3xl: var(--radius-lg);
+  --radius-4xl: var(--radius-lg);
 
   /*
     Typography scale (ops-dense) — Tailwind text-* SoT; semantic roles in

@@ -59,7 +59,6 @@ export function PasteForm({
             <Field>
               <FieldLabel>Content</FieldLabel>
               <Textarea
-                size="sm"
                 mono
                 className="min-h-40"
                 placeholder="Paste page text, tool output, notes…"

@@ -33,7 +33,9 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | Rule | Prevents | Verdict | Enforced by |
 | --- | --- | --- | --- |
 | One `SectionLabel` definition | Drifting duplicate label atoms | Keep | ds |
-| `FieldSelect` / `Select`, never `NativeSelect` | Two select stacks | Keep | ds |
+| `FieldSelect` / `Select`, never a native `<select>` | Two select stacks | Keep (the vendored `native-select` is gone, so nothing to ban) | review |
+| Vendored primitives are never hand-edited; Watchdog behavior goes in the facade or tokens (`check:vendor`) | Every `shadcn add`, codemod, or preset change becoming a merge conflict; agents quietly patching primitives | **New** | vendor lock |
+| Only the `shared/ui/shadcn` facade imports `@watchdog/ui/*` | A second, unwrapped import path that skips Watchdog wrappers | **New** | lint |
 | Type roles / `@theme` sizes, no `text-[Npx]` or other off-scale arbitrary values | One-off sizes and tracking that drift from the scale | Keep, **moved to lint** (`no-arbitrary-values`, layout values allowed) | lint |
 | Every Tailwind class must generate CSS (`no-unknown-classes`) | Typos and removed utilities failing silently (`hovr:flex`, a deleted `text-label-sm`) | **New** | lint |
 | `wd-ui-files.mjs` manifest + `/ui` fixtures for required atoms | Undocumented atoms | Keep (revisit if it slows atom work) | ds |

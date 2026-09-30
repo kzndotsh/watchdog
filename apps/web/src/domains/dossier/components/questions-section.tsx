@@ -174,7 +174,6 @@ function QuestionComposer({
         <form.Field name="note">
           {(field) => (
             <Textarea
-              size="sm"
               placeholder="What resolved this?"
               value={field.state.value}
               onBlur={field.handleBlur}
@@ -191,7 +190,7 @@ function QuestionComposer({
         <span className="text-chip text-muted-foreground self-center">
           ⌘↵ to save
         </span>
-        <Button type="button" size="xs" variant="ghost" onClick={onCancel}>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <form.Subscribe
@@ -203,7 +202,7 @@ function QuestionComposer({
           {({ isSubmitting, text }) => (
             <Button
               type="submit"
-              size="xs"
+              size="sm"
               disabled={isSubmitting || !text.trim()}
             >
               {submitLabel}
@@ -271,7 +270,6 @@ function ResolveForm({
       <resolveForm.Field name="resolveNote">
         {(field) => (
           <Textarea
-            size="sm"
             placeholder="What resolved this?"
             value={field.state.value}
             onBlur={field.handleBlur}
@@ -284,12 +282,12 @@ function ResolveForm({
         )}
       </resolveForm.Field>
       <div className="flex justify-end gap-1">
-        <Button type="button" size="xs" variant="ghost" onClick={onCancel}>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <resolveForm.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button type="submit" size="xs" disabled={isSubmitting}>
+            <Button type="submit" size="sm" disabled={isSubmitting}>
               Resolve
             </Button>
           )}

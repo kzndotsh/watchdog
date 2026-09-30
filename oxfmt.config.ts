@@ -20,7 +20,8 @@ const watchdogIgnores = [
   "pnpm-lock.yaml",
   // Better Auth UI + shadcn registry — do not reformat
   "apps/web/src/auth/ui/**",
-  "apps/web/src/shared/ui/shadcn/**",
+  "packages/ui/src/components/**",
+  "packages/ui/src/hooks/**",
   ".cursor/**",
   ".agents/**",
   ".claude/**",

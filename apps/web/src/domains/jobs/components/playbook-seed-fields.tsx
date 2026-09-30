@@ -168,7 +168,6 @@ export function PlaybookSeedFields({
             <form.Field name="url">
               {(field) => (
                 <Input
-                  size="sm"
                   className={
                     layout === "stacked"
                       ? "h-8 w-full"
@@ -189,7 +188,6 @@ export function PlaybookSeedFields({
             <form.Field name="evidenceId">
               {(field) => (
                 <Input
-                  size="sm"
                   mono
                   className={
                     layout === "stacked"

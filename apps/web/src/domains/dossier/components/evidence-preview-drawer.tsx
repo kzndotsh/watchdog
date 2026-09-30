@@ -178,7 +178,7 @@ export function EvidencePreviewDrawer({
         onClose();
       }}
     >
-      <SheetContent side="right" flush className="flex flex-col sm:max-w-lg">
+      <SheetContent side="right" className="sm:max-w-lg">
         {evidence === null ? null : (
           <EvidencePreviewBody evidence={evidence} caseId={caseId} />
         )}

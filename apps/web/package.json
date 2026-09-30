@@ -10,8 +10,7 @@
     "typecheck": "tsc --noEmit",
     "ds:ban": "node ./scripts/ds-ban-check.mjs",
     "ds:atom": "node ./scripts/new-atom-checklist.mjs",
-    "ds:check": "pnpm typecheck && pnpm ds:ban",
-    "shadcn:nocheck": "node ./scripts/shadcn-nocheck.mjs"
+    "ds:check": "pnpm typecheck && pnpm ds:ban"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -45,11 +44,10 @@
     "@watchdog/log": "workspace:*",
     "@watchdog/policy": "workspace:*",
     "@watchdog/schemas": "workspace:*",
+    "@watchdog/ui": "workspace:*",
     "better-auth": "1.7.5",
     "bowser": "^2.14.1",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "evlog": "2.29.0",
@@ -58,10 +56,8 @@
     "nodemailer": "^10.0.10",
     "platejs": "^53.3.11",
     "react": "^19.3.0",
-    "react-day-picker": "^10.0.1",
     "react-dom": "^19.3.0",
     "react-error-boundary": "^6.1.5",
-    "react-resizable-panels": "^4.12.4",
     "remark-gfm": "^4.0.1",
     "shadcn": "^4.21.0",
     "shiki": "^4.4.3",
