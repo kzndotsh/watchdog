@@ -1,8 +1,6 @@
-/* oxlint-disable react/only-export-components, react-doctor/only-export-components -- theme hooks + sidebar menu item */
+/* oxlint-disable react/only-export-components, react-doctor/only-export-components -- theme hooks + helpers */
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
-
-import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 
 export type ThemeMode = "light" | "dark" | "auto";
 
@@ -173,20 +171,4 @@ export function useThemeMode() {
       : `Theme mode: ${mode}. Click to switch mode.`;
 
   return { mode, toggleMode, setMode, Icon, ariaLabel };
-}
-
-/** Theme cycle control for the sidebar user dropdown. */
-export function ThemeMenuItem() {
-  const { mode, toggleMode, Icon, ariaLabel } = useThemeMode();
-
-  return (
-    <DropdownMenuItem
-      closeOnClick={false}
-      onClick={toggleMode}
-      aria-label={ariaLabel}
-    >
-      <Icon />
-      {modeLabel(mode)}
-    </DropdownMenuItem>
-  );
 }

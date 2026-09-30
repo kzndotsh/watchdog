@@ -7,6 +7,7 @@ import { SectionLabel } from "@/shared/ui/section-label";
 export const GUIDE_NAV = [
   { id: "foundations", label: "Foundations" },
   { id: "atoms", label: "Atoms" },
+  { id: "sidebar-footer", label: "Sidebar footer" },
 ] as const;
 
 /** Sticky section nav — sits under PageHeader (h-10 → top-10). */

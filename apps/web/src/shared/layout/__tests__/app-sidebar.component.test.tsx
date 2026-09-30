@@ -40,7 +40,34 @@ vi.mock("@/shared/layout/case-switcher", () => ({
 }));
 
 vi.mock("@/shared/layout/theme-toggle", () => ({
-  ThemeMenuItem: () => <div>Theme menu</div>,
+  modeLabel: () => "System",
+  useThemeMode: () => ({
+    mode: "auto",
+    toggleMode: vi.fn(),
+    Icon: () => <span>theme-icon</span>,
+    ariaLabel: "Theme mode: auto (system).",
+  }),
+}));
+
+vi.mock("@/shared/ui/primitives/button", () => ({
+  Button: ({
+    children,
+    render,
+    "aria-label": ariaLabel,
+  }: {
+    children: React.ReactNode;
+    render?: React.ReactElement;
+    "aria-label"?: string;
+  }) => (
+    <button type="button" aria-label={ariaLabel}>
+      {render}
+      {children}
+    </button>
+  ),
+}));
+
+vi.mock("@/shared/ui/timestamp", () => ({
+  WithTooltip: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 vi.mock("@watchdog/ui/components/avatar", () => ({
@@ -120,6 +147,7 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  SidebarSeparator: () => <hr />,
 }));
 
 vi.mock("@watchdog/ui/components/skeleton", () => ({
@@ -129,20 +157,21 @@ vi.mock("@watchdog/ui/components/skeleton", () => ({
 import { AppSidebar } from "@/shared/layout/app-sidebar";
 
 describe("AppSidebar", () => {
-  it("renders dashboard branding, search, case switcher, and user menu", () => {
+  it("renders dashboard branding, search, case switcher, and account strip", () => {
     render(<AppSidebar />);
 
     expect(screen.getByText("WATCHDOG")).toBeInTheDocument();
     expect(screen.getByText("Search trigger")).toBeInTheDocument();
     expect(screen.getByText("Case switcher")).toBeInTheDocument();
     expect(screen.getByText("Org switcher")).toBeInTheDocument();
-    expect(screen.getAllByText("Analyst").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Settings").length).toBeGreaterThan(0);
+    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByLabelText("Settings")).toBeInTheDocument();
+    expect(screen.getByLabelText("Sign out")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Theme mode/)).toBeInTheDocument();
     expect(screen.getByText("Tasks")).toBeInTheDocument();
     expect(screen.getByText("Collect")).toBeInTheDocument();
     expect(screen.getByText("Triage")).toBeInTheDocument();
     expect(screen.getByText("Cases")).toBeInTheDocument();
     expect(screen.queryByText("UI kit")).not.toBeInTheDocument();
-    expect(screen.getByText("Theme menu")).toBeInTheDocument();
   });
 });

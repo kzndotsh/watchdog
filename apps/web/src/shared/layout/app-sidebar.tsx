@@ -1,29 +1,17 @@
 import { useSession } from "@better-auth-ui/react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  ChevronsUpDownIcon,
-  DogIcon,
-  LogOutIcon,
-  SettingsIcon,
-} from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
 
 import { authClient } from "@/auth/client";
 import { NAV_GROUPS, pathActive } from "@/config/nav";
 import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
 import { CommandSearchTrigger } from "@/domains/search/components/command-search-trigger";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
-import { ThemeMenuItem } from "@/shared/layout/theme-toggle";
+import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
+import { Button } from "@/shared/ui/primitives/button";
+import { WithTooltip } from "@/shared/ui/timestamp";
 import { trimmedOrUndefined } from "@watchdog/schemas";
 import { Avatar, AvatarFallback } from "@watchdog/ui/components/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@watchdog/ui/components/dropdown-menu";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 import {
   Sidebar,
@@ -36,6 +24,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@watchdog/ui/components/sidebar";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 
@@ -59,118 +48,82 @@ function userInitials(name: string): string {
     .join("");
 }
 
-function NavUserSkeleton() {
+function AccountStripSkeleton() {
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          size="lg"
-          className="pointer-events-none border-0 bg-transparent shadow-none"
-        >
-          <Skeleton className="size-8 rounded-full" />
-          <div className="grid flex-1 gap-1.5 text-left">
-            <Skeleton className="h-3.5 w-24" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <div className="flex items-center gap-1 px-1">
+      <Skeleton className="size-6 rounded-full" />
+    </div>
   );
 }
 
-function NavUser() {
-  const navigate = useNavigate();
+/** Account controls as a strip: who you are, theme, settings, sign out. Icon mode keeps avatar + settings. */
+function AccountStrip() {
   const { data, isPending } = useSession(authClient);
+  const { mode, toggleMode, Icon: ThemeIcon, ariaLabel } = useThemeMode();
   const user = data?.user;
   const name = user ? userDisplayName(user) : "Investigator";
   const email = user?.email ?? "";
-  const initials = userInitials(name);
 
   if (isPending && !user) {
-    return <NavUserSkeleton />;
+    return <AccountStripSkeleton />;
   }
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton
-                size="lg"
-                className="hover:bg-sidebar-accent data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground border-0 bg-transparent shadow-none"
-              />
-            }
-          >
-            <Avatar size="sm">
-              <AvatarFallback className="text-xs" suppressHydrationWarning>
-                {initials || "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium" suppressHydrationWarning>
-                {name}
-              </span>
-              {email ? (
-                <span
-                  className="text-muted-foreground truncate text-sm"
-                  suppressHydrationWarning
-                >
-                  {email}
-                </span>
-              ) : null}
-            </div>
-            <ChevronsUpDownIcon className="ml-auto" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="min-w-56"
-            side="top"
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col gap-0.5">
-                  <span className="truncate font-medium">{name}</span>
-                  {email ? (
-                    <span className="text-muted-foreground truncate text-sm">
-                      {email}
-                    </span>
-                  ) : null}
-                </div>
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <ThemeMenuItem />
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => void navigate({ to: "/settings" })}
-              >
-                <SettingsIcon />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => {
-                  void navigate({
-                    to: "/auth/$path",
-                    params: { path: "sign-out" },
-                  });
-                }}
-              >
-                <LogOutIcon />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <div className="flex items-center gap-1 px-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:px-0">
+      <WithTooltip
+        side="right"
+        content={
+          <span className="flex flex-col">
+            <span className="font-medium">{name}</span>
+            {email ? <span className="opacity-80">{email}</span> : null}
+          </span>
+        }
+      >
+        <Avatar size="sm" aria-label={name}>
+          <AvatarFallback className="text-xs" suppressHydrationWarning>
+            {userInitials(name) || "?"}
+          </AvatarFallback>
+        </Avatar>
+      </WithTooltip>
+
+      <span className="flex-1 group-data-[collapsible=icon]:hidden" />
+
+      <WithTooltip content={`Theme: ${modeLabel(mode)}`}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={ariaLabel}
+          onClick={toggleMode}
+          className="text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+        >
+          <ThemeIcon />
+        </Button>
+      </WithTooltip>
+      <WithTooltip content="Settings" side="right">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Settings"
+          nativeButton={false}
+          render={<Link to="/settings" />}
+          className="text-sidebar-foreground"
+        >
+          <SettingsIcon />
+        </Button>
+      </WithTooltip>
+      <WithTooltip content="Sign out">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Sign out"
+          nativeButton={false}
+          render={<Link to="/auth/$path" params={{ path: "sign-out" }} />}
+          className="text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+        >
+          <LogOutIcon />
+        </Button>
+      </WithTooltip>
+    </div>
   );
 }
 
@@ -235,7 +188,8 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <OrgSwitcher />
-        <NavUser />
+        <SidebarSeparator />
+        <AccountStrip />
       </SidebarFooter>
     </Sidebar>
   );

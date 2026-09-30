@@ -18,6 +18,10 @@ vi.mock("@/routes/_protected/ui/-section-atoms", () => ({
   AtomsSection: () => <div>Atoms section</div>,
 }));
 
+vi.mock("@/routes/_protected/ui/-section-sidebar-footer", () => ({
+  SidebarFooterSection: () => <div>Sidebar footer section</div>,
+}));
+
 vi.mock("@/routes/_protected/ui/-section-foundations", () => ({
   FoundationsSection: () => <div>Foundations section</div>,
 }));
@@ -38,5 +42,6 @@ describe("ui style guide route", () => {
     expect(screen.getByText("Guide toc")).toBeInTheDocument();
     expect(screen.getByText("Foundations section")).toBeInTheDocument();
     expect(screen.getByText("Atoms section")).toBeInTheDocument();
+    expect(screen.getByText("Sidebar footer section")).toBeInTheDocument();
   });
 });
