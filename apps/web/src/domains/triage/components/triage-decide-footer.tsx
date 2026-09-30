@@ -28,9 +28,14 @@ import {
   EvidenceSlotSkeleton,
 } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/shadcn/button";
+import { Kbd } from "@/shared/ui/shadcn/kbd";
 import { Textarea } from "@/shared/ui/shadcn/textarea";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
+
+/** Inline shortcut hint inside a Button: inherits the button's ink. */
+const BUTTON_KBD_CLASS =
+  "-mr-0.5 ml-0.5 h-4 min-w-4 bg-current/15 text-current text-label-meta-sm";
 
 function JobEvidenceMissingHint({ missingCount }: { missingCount: number }) {
   if (missingCount < 1) return null;
@@ -360,6 +365,8 @@ export function TriageDecideFooter({
                 <Button
                   type="button"
                   size="sm"
+                  data-hotkey="a"
+                  aria-keyshortcuts="a"
                   loading={acceptBusy}
                   disabled={!gate.canAccept}
                   onClick={() => {
@@ -376,11 +383,16 @@ export function TriageDecideFooter({
                     <CheckIcon className="size-3" data-icon="inline-start" />
                   )}
                   Accept
+                  <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
+                    A
+                  </Kbd>
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
+                  data-hotkey="r"
+                  aria-keyshortcuts="r"
                   disabled={pending}
                   onClick={() => {
                     onRejectingChange(true);
@@ -389,6 +401,9 @@ export function TriageDecideFooter({
                 >
                   <XIcon className="size-3" data-icon="inline-start" />
                   Reject
+                  <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
+                    R
+                  </Kbd>
                 </Button>
               </>
             );

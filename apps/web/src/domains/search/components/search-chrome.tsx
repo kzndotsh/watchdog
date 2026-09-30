@@ -8,12 +8,13 @@ import {
   useSearchUi,
 } from "@/domains/search/hooks/use-search-ui";
 import type { AppAction } from "@/shared/lib/app-action";
+import { useDataHotkeys } from "@/shared/lib/data-hotkey";
 import type { HotkeyBinding } from "@/shared/lib/hotkeys";
 import { useGlobalHotkeys } from "@/shared/lib/use-global-hotkeys";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { useSidebar } from "@/shared/ui/shadcn/sidebar";
 
-/** Shell chrome: Mod+K palette, Mod+B sidebar, ? shortcuts. */
+/** Shell chrome: Mod+K palette, Mod+B sidebar, ? shortcuts, `data-hotkey` controls. */
 export function SearchChrome({ children }: { children: ReactNode }) {
   const { toggleSidebar } = useSidebar();
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -90,6 +91,7 @@ export function SearchChrome({ children }: { children: ReactNode }) {
   );
 
   useGlobalHotkeys(bindings);
+  useDataHotkeys();
 
   return (
     <SearchUiContext.Provider value={searchUi}>

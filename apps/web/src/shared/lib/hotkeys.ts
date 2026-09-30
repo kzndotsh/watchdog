@@ -34,6 +34,31 @@ export const HOTKEYS = [
     chord: "?",
     description: "Open this shortcuts list",
   },
+  {
+    id: "queue-next",
+    label: "Next row",
+    chord: "J",
+    description: "Select the next Queue row (or ↓ while the Queue has focus)",
+  },
+  {
+    id: "queue-previous",
+    label: "Previous row",
+    chord: "K",
+    description:
+      "Select the previous Queue row (or ↑ while the Queue has focus)",
+  },
+  {
+    id: "triage-accept",
+    label: "Accept",
+    chord: "A",
+    description: "Triage: accept the selected Proposal (when the gate allows)",
+  },
+  {
+    id: "triage-reject",
+    label: "Reject",
+    chord: "R",
+    description: "Triage: open the reject composer for the selected Proposal",
+  },
 ] as const;
 
 /** Duck-typed so unit tests work without a DOM. */
