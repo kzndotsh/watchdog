@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { SectionLabel } from "@/shared/ui/section-label";
 
 /**
- * Uppercase Queue column title + optional mono count / actions.
+ * Queue column title (normal-case SectionLabel) + optional mono count / actions.
  * Used at the top of the Queue column in every SplitView.
  */
 export function QueueHeader({

@@ -416,7 +416,7 @@ function CaseSettingsSkeleton() {
       className="border-border flex flex-col gap-3 rounded-md border p-3"
       aria-hidden
     >
-      <h2 className="text-label-sm text-muted-foreground relative w-fit font-medium">
+      <h2 className="text-label text-muted-foreground relative w-fit font-medium">
         <span className="invisible">Case settings</span>
         <Skeleton className="absolute inset-0 rounded-md" aria-hidden />
       </h2>

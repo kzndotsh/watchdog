@@ -11,8 +11,8 @@ vi.mock("@/domains/search/components/command-palette", () => ({
     open ? <div data-testid="palette-open">Palette</div> : null,
 }));
 
-vi.mock("@/domains/search/components/shortcuts-sheet", () => ({
-  ShortcutsSheet: ({ open }: { open: boolean }) =>
+vi.mock("@/domains/search/components/shortcuts-dialog", () => ({
+  ShortcutsDialog: ({ open }: { open: boolean }) =>
     open ? <div data-testid="shortcuts-open">Shortcuts</div> : null,
 }));
 

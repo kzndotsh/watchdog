@@ -14,7 +14,7 @@ export interface HotkeyBinding extends HotkeyChord {
   run: () => void;
 }
 
-/** Static catalog for the Shortcuts sheet (not runtime bindings). */
+/** Static catalog for the Shortcuts dialog (not runtime bindings). */
 export const HOTKEYS = [
   {
     id: "command-palette",

@@ -18,7 +18,6 @@ const twMerge = extendTailwindMerge({
             "heading-dossier",
             "heading-section",
             "label",
-            "label-sm",
             "label-meta",
             "label-meta-sm",
             "label-mono",

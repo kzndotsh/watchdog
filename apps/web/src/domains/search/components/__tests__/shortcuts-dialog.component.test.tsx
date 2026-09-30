@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ShortcutsSheet } from "@/domains/search/components/shortcuts-sheet";
+import { ShortcutsDialog } from "@/domains/search/components/shortcuts-dialog";
 import { HOTKEYS } from "@/shared/lib/hotkeys";
 
-describe("ShortcutsSheet", () => {
+describe("ShortcutsDialog", () => {
   it("lists keyboard shortcut catalog entries when open", () => {
-    render(<ShortcutsSheet open onOpenChange={vi.fn()} />);
+    render(<ShortcutsDialog open onOpenChange={vi.fn()} />);
 
     expect(
       screen.getByRole("heading", { name: "Shortcuts" })

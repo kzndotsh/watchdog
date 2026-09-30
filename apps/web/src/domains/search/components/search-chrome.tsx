@@ -2,7 +2,7 @@ import { KeyboardIcon, PanelLeftIcon, SearchIcon } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { CommandPalette } from "@/domains/search/components/command-palette";
-import { ShortcutsSheet } from "@/domains/search/components/shortcuts-sheet";
+import { ShortcutsDialog } from "@/domains/search/components/shortcuts-dialog";
 import {
   SearchUiContext,
   useSearchUi,
@@ -97,7 +97,7 @@ export function SearchChrome({ children }: { children: ReactNode }) {
     <SearchUiContext.Provider value={searchUi}>
       {children}
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-      <ShortcutsSheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </SearchUiContext.Provider>
   );
 }

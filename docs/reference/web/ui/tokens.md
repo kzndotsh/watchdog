@@ -66,7 +66,7 @@ Bind to **semantic** tokens only. `--wd-*` ramps define those semantics.
 | OK | `success` |
 | Caution | `warning` |
 
-Domain meaning: `--confidence-*` / `--status-*` / `--severity-*` / `--kind-*` only. Never freestyle `text-green-600` / `text-amber-400` for those meanings. Badges are **meaning-named** (`ConfidenceBadge`), never color-named (`variant="purple"`).
+Domain meaning: `--confidence-*` / `--status-*` / `--kind-*` only. Never freestyle `text-green-600` / `text-amber-400` for those meanings. Badges are **meaning-named** (`ConfidenceBadge`), never color-named (`variant="purple"`).
 
 Contrast fix: adjust OKLCH **L only**: keep hue/chroma stable.
 
@@ -85,7 +85,7 @@ No nested cards, colored side-tab accents, glow/halo, gradient text, icon-tile f
 | `text-heading-dossier` | `text-2xl` | 1.5 | 24 |
 | `text-heading-page` | `text-xl` | 1.25 | 20 |
 | `text-heading-section` / `text-copy` | `text-base` | 1 | 16 |
-| `text-copy-sm` / `text-label` / `text-label-sm` / `text-label-mono` | `text-sm` | 0.875 | 14 |
+| `text-copy-sm` / `text-label` / `text-label-mono` | `text-sm` | 0.875 | 14 |
 | `text-label-meta` / `text-meta` / `text-label-mono-sm` | `text-2xs` | 0.8125 | 13 |
 | `text-label-meta-sm` / `text-chip` | `text-xs` | 0.75 | 12 |
 

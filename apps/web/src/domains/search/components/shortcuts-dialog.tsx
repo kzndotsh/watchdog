@@ -8,12 +8,12 @@ import {
   DialogTitle,
 } from "@/shared/ui/shadcn/dialog";
 
-interface ShortcutsSheetProps {
+interface ShortcutsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function ShortcutsSheet({ open, onOpenChange }: ShortcutsSheetProps) {
+export function ShortcutsDialog({ open, onOpenChange }: ShortcutsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">

@@ -166,16 +166,16 @@ export function EntityEvidenceSection({
                         {label}
                       </span>
                       {row.processedAt === null ? (
-                        <span className="text-label-sm text-warning">
+                        <span className="text-label text-warning">
                           Unprocessed
                         </span>
                       ) : (
-                        <span className="text-label-sm text-success">
+                        <span className="text-label text-success">
                           Processed
                         </span>
                       )}
                     </div>
-                    <div className="text-label-sm text-muted-foreground flex flex-wrap items-center gap-3">
+                    <div className="text-label text-muted-foreground flex flex-wrap items-center gap-3">
                       {row.mime !== null && row.mime !== "" ? (
                         <span className="text-label-mono-sm">{row.mime}</span>
                       ) : null}

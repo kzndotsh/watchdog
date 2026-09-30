@@ -25,11 +25,6 @@
   line-height: 1.25;
 }
 
-@utility text-label-sm {
-  @apply text-sm font-medium;
-  line-height: 1.25;
-}
-
 @utility text-label-meta {
   @apply text-2xs font-medium;
   line-height: 1.25;

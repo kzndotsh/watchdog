@@ -227,7 +227,7 @@ export function CaseOverviewTab({
         )}
       >
         <section aria-label="Recent activity" className="min-w-0">
-          <h2 className="text-label-sm text-muted-foreground mb-2 font-medium">
+          <h2 className="text-label text-muted-foreground mb-2 font-medium">
             Recent activity
           </h2>
           {activity.length === 0 ? (

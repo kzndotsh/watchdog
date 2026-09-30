@@ -30,11 +30,6 @@ export const TYPE_SCALE_ROLES = [
     sample: "Field label",
   },
   {
-    name: "text-label-sm",
-    className: "text-label-sm",
-    sample: "Small label",
-  },
-  {
     name: "text-label-mono",
     className: "text-label-mono",
     sample: "entity-slug-01",
