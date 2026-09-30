@@ -39,9 +39,8 @@ function DumpKindButtons({
     <Button
       key={kind}
       type="button"
-      size="sm"
+      size={ghost ? "xs" : "sm"}
       variant={variant}
-      className={ghost ? "h-6 gap-1 px-2 text-xs" : undefined}
       disabled={disabled}
       onClick={() => {
         onDump(kind);

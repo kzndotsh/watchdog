@@ -434,7 +434,7 @@ export function JobCapRunForm({
                     <Button
                       type="submit"
                       size="sm"
-                      className="h-8 text-xs"
+                      className="h-8"
                       loading={isSubmitting}
                       disabled={
                         !view.canRun || visibleCaps.length === 0 || isSubmitting

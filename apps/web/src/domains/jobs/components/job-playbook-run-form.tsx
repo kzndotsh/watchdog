@@ -296,7 +296,7 @@ export function JobPlaybookRunForm({
                     <Button
                       type="submit"
                       size="sm"
-                      className="h-8 text-xs"
+                      className="h-8"
                       loading={isSubmitting}
                       disabled={!view.canRun || isSubmitting}
                     >

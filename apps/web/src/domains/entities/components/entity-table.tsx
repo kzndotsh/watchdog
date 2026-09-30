@@ -185,7 +185,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
               }}
               contentClassName="w-[16rem]"
             >
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Kind</FieldLegend>
                 <FieldGroup className="gap-2">
                   {ENTITY_KINDS.map((k) => {

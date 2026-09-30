@@ -78,7 +78,7 @@ export function CollectDumpButtons({
         type="button"
         size="sm"
         variant="default"
-        className="h-8 text-xs"
+        className="h-8"
         disabled={disabled}
         onClick={() => {
           onDump("file");
@@ -91,7 +91,7 @@ export function CollectDumpButtons({
         type="button"
         size="sm"
         variant="default"
-        className="h-8 text-xs"
+        className="h-8"
         disabled={disabled}
         onClick={() => {
           onDump("paste");
@@ -104,7 +104,7 @@ export function CollectDumpButtons({
         type="button"
         size="sm"
         variant="default"
-        className="h-8 text-xs"
+        className="h-8"
         disabled={disabled}
         onClick={() => {
           onDump("url");
@@ -130,12 +130,7 @@ export function CollectRunPopover({
     <Popover>
       <PopoverTrigger
         render={
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 text-xs"
-          />
+          <Button type="button" size="sm" variant="outline" className="h-8" />
         }
       >
         <PlayIcon data-icon="inline-start" />

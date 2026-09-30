@@ -39,6 +39,10 @@ Button sizes: PageHeader / toolbar → `sm` (or default); Queue row / dense icon
 - Single-key actions are declarative: put `data-hotkey="<key>"` + `aria-keyshortcuts` on the control and a `Kbd` hint inside it. `useDataHotkeys` (mounted in `SearchChrome`) clicks the first live match, so disabled / gated controls stay gated. Add every shortcut to `HOTKEYS` so the Shortcuts dialog lists it.
 - Page commands: a surface calls `usePaletteCommands(actions)` (`shared/lib/palette-commands.ts`) with its `page` AppActions; Mod+K lists them under **This Page** while it is mounted. Reuse the same AppAction the button or ⋯ menu runs; don't fork a palette-only handler.
 
+### Variants, not overrides
+
+Callers place components (layout classes: margin, width, grid/flex placement) and pick a size or variant; they don't patch a component's spacing, type, color, or shape with `className`. If a caller needs a look the component lacks, add a variant to the primitive. Examples: `Button size="xs"` (not `size="sm"` + `h-6 text-xs`); `FieldSet` is borderless with `gap-3` by default (the base CSS already zeroes border and padding).
+
 ## Gotchas
 
 - **`react-resizable-panels` v4 API**: `defaultSize`, `minSize`, `maxSize`: numbers = pixels, strings without units = percentages. Always use strings like `"34%"`. Vendor panel IDs must be unique per group: use `groupId` on `SplitView`. Do not put `autoSaveId` on the vendor wrapper (DOM warning).

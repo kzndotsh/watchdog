@@ -182,7 +182,6 @@ function DossierForEntity({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="gap-1.5"
                 onClick={() => {
                   setEditError(null);
                   setEditOpen(true);

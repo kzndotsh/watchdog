@@ -20,13 +20,7 @@ export function DossierSectionAddButton({ variant, noun, onClick }: Props) {
   }
 
   return (
-    <Button
-      type="button"
-      size="sm"
-      variant="ghost"
-      className="h-6 gap-1 px-2 text-xs"
-      onClick={onClick}
-    >
+    <Button type="button" size="xs" variant="ghost" onClick={onClick}>
       <PlusIcon className="size-3" />
       Add
     </Button>

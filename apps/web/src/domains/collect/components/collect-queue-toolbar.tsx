@@ -129,7 +129,7 @@ export function CollectQueueToolbar({
             contentClassName="w-[16rem]"
           >
             <div className="space-y-3">
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Show only</FieldLegend>
                 <FieldGroup className="gap-2">
                   <Field orientation="horizontal">
@@ -182,7 +182,7 @@ export function CollectQueueToolbar({
                   </Field>
                 </FieldGroup>
               </FieldSet>
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">State</FieldLegend>
                 <FieldGroup className="gap-2">
                   {COLLECT_STATE_FACET_OPTIONS.map((opt) => {
@@ -211,7 +211,7 @@ export function CollectQueueToolbar({
                 </FieldGroup>
               </FieldSet>
               {capOptions.length > 0 ? (
-                <FieldSet className="gap-3 border-0 p-0">
+                <FieldSet>
                   <FieldLegend variant="label">Cap / playbook</FieldLegend>
                   <FieldGroup className="max-h-40 gap-2 overflow-y-auto">
                     {capOptions.map((opt) => {

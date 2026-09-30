@@ -162,7 +162,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               }}
               contentClassName="w-[18rem] max-h-[min(28rem,70vh)] overflow-y-auto"
             >
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Type</FieldLegend>
                 <FieldGroup className="gap-2">
                   {IDENTIFIER_TYPE_OPTIONS.map((opt) => {
@@ -187,7 +187,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
                   })}
                 </FieldGroup>
               </FieldSet>
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Status</FieldLegend>
                 <FieldGroup className="gap-2">
                   {IDENTIFIER_STATUS_OPTIONS.map((opt) => {
@@ -212,7 +212,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
                   })}
                 </FieldGroup>
               </FieldSet>
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Confidence</FieldLegend>
                 <FieldGroup className="gap-2">
                   {CONFIDENCE_OPTIONS.map((opt) => {

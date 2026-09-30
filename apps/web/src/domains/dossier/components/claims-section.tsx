@@ -163,19 +163,12 @@ function ClaimComposerActions({
 }) {
   return (
     <div className={cn("flex gap-1", className)}>
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        className="h-6 text-xs"
-        onClick={onCancel}
-      >
+      <Button type="button" size="xs" variant="ghost" onClick={onCancel}>
         Cancel
       </Button>
       <Button
         type="submit"
-        size="sm"
-        className="h-6 text-xs"
+        size="xs"
         disabled={submitDisabled}
         title={submitTitle}
       >

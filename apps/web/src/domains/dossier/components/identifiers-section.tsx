@@ -303,9 +303,8 @@ export function IdentifiersSection({
             <div className="flex items-center gap-1">
               <Button
                 type="button"
-                size="sm"
+                size="xs"
                 variant="ghost"
-                className="h-6 gap-1 px-2 text-xs"
                 onClick={() => {
                   setBulkOpen(true);
                 }}
@@ -315,9 +314,8 @@ export function IdentifiersSection({
               </Button>
               <Button
                 type="button"
-                size="sm"
+                size="xs"
                 variant="ghost"
-                className="h-6 gap-1 px-2 text-xs"
                 onClick={() => {
                   if (composing) {
                     closeComposer();

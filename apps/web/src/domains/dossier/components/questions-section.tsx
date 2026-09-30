@@ -164,7 +164,7 @@ function QuestionComposer({
             onChange={(e) => {
               field.handleChange(e.target.value);
             }}
-            className="min-h-16 resize-y text-sm"
+            className="min-h-16 resize-y"
             autoFocus
             onKeyDown={handleFieldKeyDown}
           />
@@ -190,13 +190,7 @@ function QuestionComposer({
         <span className="text-chip text-muted-foreground self-center">
           ⌘↵ to save
         </span>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-6 text-xs"
-          onClick={onCancel}
-        >
+        <Button type="button" size="xs" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <form.Subscribe
@@ -208,8 +202,7 @@ function QuestionComposer({
           {({ isSubmitting, text }) => (
             <Button
               type="submit"
-              size="sm"
-              className="h-6 text-xs"
+              size="xs"
               disabled={isSubmitting || !text.trim()}
             >
               {submitLabel}
@@ -289,23 +282,12 @@ function ResolveForm({
         )}
       </resolveForm.Field>
       <div className="flex justify-end gap-1">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-6 text-xs"
-          onClick={onCancel}
-        >
+        <Button type="button" size="xs" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <resolveForm.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button
-              type="submit"
-              size="sm"
-              className="h-6 text-xs"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" size="xs" disabled={isSubmitting}>
               Resolve
             </Button>
           )}

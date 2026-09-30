@@ -196,7 +196,6 @@ export function TaskBoardColumn({
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className="h-7 px-2"
                   disabled={quickCreateBusy}
                   onClick={closeComposer}
                 >
@@ -206,7 +205,6 @@ export function TaskBoardColumn({
                 <Button
                   type="button"
                   size="sm"
-                  className="h-7 px-2"
                   disabled={!title.trim() || quickCreateBusy}
                   onClick={() => {
                     void submitComposer();

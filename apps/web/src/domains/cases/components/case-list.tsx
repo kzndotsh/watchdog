@@ -113,7 +113,7 @@ function CaseCard({
       <Button
         variant="default"
         size="sm"
-        className="mt-auto h-8 self-start text-xs"
+        className="mt-auto h-8 self-start"
         type="button"
         disabled={selecting}
         onClick={onWork}

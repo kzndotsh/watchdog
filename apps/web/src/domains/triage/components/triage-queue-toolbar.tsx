@@ -60,7 +60,7 @@ export function TriageQueueToolbar({
             }}
             contentClassName="w-[16rem]"
           >
-            <FieldSet className="gap-3 border-0 p-0">
+            <FieldSet>
               <FieldLegend variant="label">
                 Status
                 {pendingCount !== undefined && pendingCount > 0 ? (

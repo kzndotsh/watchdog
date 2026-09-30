@@ -68,9 +68,7 @@ export function DossierExportMenu({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<Button variant="outline" size="sm" className="gap-1.5" />}
-      >
+      <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
         <ClipboardIcon className="size-3.5" />
         Copy
       </DropdownMenuTrigger>

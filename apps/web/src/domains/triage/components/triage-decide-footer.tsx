@@ -242,9 +242,8 @@ function RejectComposer({
       <div className="flex justify-end gap-1">
         <Button
           type="button"
-          size="sm"
+          size="xs"
           variant="ghost"
-          className="h-6 text-xs"
           disabled={pending}
           onClick={() => {
             onRejectingChange(false);
@@ -255,9 +254,8 @@ function RejectComposer({
         </Button>
         <Button
           type="button"
-          size="sm"
+          size="xs"
           variant="destructive"
-          className="h-6 text-xs"
           loading={pending && rejecting}
           onClick={() => {
             void rejectForm.handleSubmit();
