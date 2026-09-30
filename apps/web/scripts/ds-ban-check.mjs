@@ -8,10 +8,12 @@
  *   - fictional vocab         values not in @watchdog/schemas unions render as lies
  *   - loading doctrine        waterfalls, double pending surfaces, a11y-less loaders
  * Consistency (one way to do a thing):
- *   - SectionLabel SoT, NativeSelect, arbitrary font sizes, WD UI manifest + /ui fixtures
+ *   - SectionLabel SoT, NativeSelect, WD UI manifest + /ui fixtures
  * Taste (the design brief, docs/explanation/design.md):
- *   - freestyle status colors, off-palette hues, radius ladder, decorative effects,
- *     banned surface names
+ *   - radius ladder, decorative effects, banned surface names
+ *
+ * Tailwind class checks (raw palette colors, undeclared tokens, arbitrary values,
+ * unknown classes) live in @shadcn/lint via oxlint.config.ts.
  *
  * Escape hatch: `// ds:allow-<rule> — reason` on the line above.
  */
@@ -151,58 +153,9 @@ if (sectionDefs.some((f) => rel(f) === allowedSection)) {
   fail("SectionLabel missing under shared/ui/section-label.tsx");
 }
 
-// ── 1b. Arbitrary font sizes (use @theme text-* or wd-typography roles) ───────
-const ARBITRARY_FONT_SIZE_RE = /\btext-\[(?:\d+(?:\.\d+)?px|\d*\.?\d+rem)\]/;
-const arbitraryFontHits = [];
-for (const f of walk(src)) {
-  const r = rel(f);
-  if (r.startsWith("shared/ui/shadcn/") || r.startsWith("styles/")) continue;
-  const lines = readFileSync(f, "utf-8").split("\n");
-  for (const [i, line] of lines.entries()) {
-    if (line.trimStart().startsWith("//") || line.trimStart().startsWith("*"))
-      continue;
-    if (!ARBITRARY_FONT_SIZE_RE.test(line)) continue;
-    if (consumeAllow(lines, i, "arbitrary-font-size")) continue;
-    arbitraryFontHits.push(`${r}:${i + 1}: ${line.trim()}`);
-  }
-}
-for (const hit of arbitraryFontHits) {
-  fail(
-    `Arbitrary font size — use text-2xs/xs/sm/base/xl/2xl or text-copy/text-label-* roles: ${hit}`
-  );
-}
-if (arbitraryFontHits.length === 0) {
-  ok("No arbitrary text-[Npx|Nrem] font sizes outside shadcn/styles");
-}
+// Raw palette colors, arbitrary font sizes / values, and undeclared tokens are
+// enforced by @shadcn/lint (oxlint.config.ts), not here.
 
-// ── 2. Freestyle confidence / status greens & ambers (all of src/) ───────────
-const COLOR_RE =
-  /\b(?:text|bg|border)-(?:green|amber|emerald|yellow|lime|orange|red)-(?:\d{2,3})\b|\bdark:(?:text|bg|border)-(?:green|amber|emerald|yellow)-/;
-const colorHits = [];
-for (const f of walk(src)) {
-  const r = rel(f);
-  if (r.startsWith("shared/ui/shadcn/")) continue;
-  const lines = readFileSync(f, "utf-8").split("\n");
-  for (const [i, line] of lines.entries()) {
-    if (line.trimStart().startsWith("//") || line.trimStart().startsWith("*"))
-      continue;
-    if (COLOR_RE.test(line)) {
-      colorHits.push(`${r}:${i + 1}: ${line.trim()}`);
-    }
-  }
-}
-for (const hit of colorHits) {
-  fail(`Freestyle Tailwind color (use domain tokens / badges): ${hit}`);
-}
-if (colorHits.length === 0) {
-  ok("No freestyle green/amber/red palette colors in src/");
-}
-
-// ── 2d. Off-palette Tailwind hues — tokens own color ─────────────────────────
-// Why: raw palette classes bypass light/dark tokens and reintroduce the
-// violet/gray SaaS defaults the brief refuses. Use semantic / domain tokens.
-const OFF_PALETTE_RE =
-  /\b(?:bg|text|border|ring|outline|fill|stroke|from|via|to|decoration|divide|shadow)-(?:blue|violet|purple|indigo|sky|fuchsia|pink|rose|teal|cyan|gray|slate|zinc|neutral|stone)-\d{2,3}\b/;
 // ── 2e. Radius ladder — sm / md / lg only ────────────────────────────────────
 const ROUNDED_RE = /\brounded(?:-[trblse]{1,2})?-(?:xl|2xl|3xl|4xl)\b/;
 // ── 2f. Decorative effects from the refuse list ──────────────────────────────
@@ -212,11 +165,6 @@ const DECORATIVE_RE =
 
 /** @type {{ rule: string; re: RegExp; msg: string }[]} */
 const TASTE_BANS = [
-  {
-    rule: "off-palette",
-    re: OFF_PALETTE_RE,
-    msg: "Off-palette Tailwind hue — use semantic/domain tokens",
-  },
   {
     rule: "radius",
     re: ROUNDED_RE,

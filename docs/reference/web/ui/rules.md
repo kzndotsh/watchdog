@@ -4,7 +4,7 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 
 **Kinds.** **Correctness** rules stop a bug class: keep unless the bug can no longer happen. **Consistency** rules keep one way to do a thing: cheap, keep while they cost nothing. **Taste** rules are design opinions: they live in the brief and change when the brief changes.
 
-**Enforced by:** `ds` = `pnpm --filter @watchdog/web ds:check` · `lint` = oxlint · `test` = unit/component test · `review` = PR checklist only.
+**Enforced by:** `ds` = `pnpm --filter @watchdog/web ds:check` · `lint` = oxlint (incl. `@shadcn/lint`) · `test` = unit/component test · `review` = PR checklist only.
 
 ## Correctness
 
@@ -34,7 +34,8 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | --- | --- | --- | --- |
 | One `SectionLabel` definition | Drifting duplicate label atoms | Keep | ds |
 | `FieldSelect` / `Select`, never `NativeSelect` | Two select stacks | Keep | ds |
-| Type roles / `@theme` sizes, no `text-[Npx]` | One-off font sizes | Keep | ds |
+| Type roles / `@theme` sizes, no `text-[Npx]` or other off-scale arbitrary values | One-off sizes and tracking that drift from the scale | Keep, **moved to lint** (`no-arbitrary-values`, layout values allowed) | lint |
+| Every Tailwind class must generate CSS (`no-unknown-classes`) | Typos and removed utilities failing silently (`hovr:flex`, a deleted `text-label-sm`) | **New** | lint |
 | `wd-ui-files.mjs` manifest + `/ui` fixtures for required atoms | Undocumented atoms | Keep (revisit if it slows atom work) | ds |
 | TanStack Form only (no react-hook-form) | Two form libraries | Keep | review |
 | Badges are meaning-named (`ConfidenceBadge`), never color-named | `variant="purple"` sprawl | Keep | review |
@@ -50,8 +51,8 @@ These restate [`design.md`](../../../explanation/design.md); change the brief fi
 
 | Rule | Verdict | Enforced by |
 | --- | --- | --- |
-| OKLCH cool neutrals (hue 250), steel-cyan primary (220), amber signal (75); no violet | Keep | ds (off-palette hues) |
-| Status / confidence / kind colors via tokens, never raw green/amber/red | Keep | ds |
+| OKLCH cool neutrals (hue 250), steel-cyan primary (220), amber signal (75); no violet | Keep | lint (`no-raw-colors`) |
+| Colors via declared tokens: no raw palette hues, no undeclared `--color-*` (`no-raw-colors`), no hex in SVG attrs | Keep, **moved to lint** and widened from green/amber/red to every hue | lint |
 | Radius ladder sm / md / lg; no `rounded-xl+` | Keep | ds (**now enforced**) |
 | Refuse list: gradients, gradient text, glass | Keep | ds (**now enforced**; `// ds:allow-decorative` for functional blur) |
 | Refuse list: nested cards, glow, icon-tile grids, bounce easing, mono-as-decoration | Keep | review |
@@ -63,6 +64,21 @@ These restate [`design.md`](../../../explanation/design.md); change the brief fi
 | Surface names: Console / Workbench / Tape banned; Panel only in its standard meaning | **Rewritten** ([naming rule](README.md#chrome-lexicon-ui-parts)) | ds (banned names) + review |
 | Copy: `Couldn't` / `Can't` / `Failed to`; no `Unable to` / `Oops` | Keep ([`ux.md`](../../../explanation/ux.md)) | review |
 | Field focus: writing fields tint the border only, no outer ring | Keep | review |
+
+## `@shadcn/lint`
+
+Pinned at `0.2.0` (pre-1.0, single maintainer: bump deliberately). Web only. Audited 2026-09-29 against six rules:
+
+| Rule | State | Why |
+| --- | --- | --- |
+| `no-raw-colors` (`scanAllStrings`) | **On** | Class strings live in constants (`STATUS_TONES`), not just `className`. |
+| `no-arbitrary-values` (layout allowed, `scanAllStrings`) | **On** | Layout one-offs (`max-w-[12rem]`) are fine; type, color, and tracking are not. |
+| `no-unknown-classes` | **On** | Reads our real Tailwind theme + `@utility` roles. Known false positive: a prop named `claimClass` looks like a class prop (disable with a reason). |
+| `no-restyle` | **Off, undecided** | 292 hits at ~140 sites in `domains/` (Button 83, Input 40, FieldSet 24): fixing needs new Button / Input / Field variants first. It also reads our type roles (`text-label-meta-sm`, `text-chip`) as colors. Revisit with a design decision on variants. |
+| `no-inline-styles` | **Off** | 36 hits, mostly legitimate dynamic values (drag transforms, syntax colors, measured heights). |
+| `require-static-classes` | **Off** | Flags imported class constants and helper functions, which is our normal pattern. |
+
+Tests and `shared/ui/shadcn/` are exempt. `json-view.tsx` opts out of `no-arbitrary-values` with a file-level disable: it carries a Tokyo Night / GitHub syntax palette. Debt: move it to `--syntax-*` tokens.
 
 ## Adding a rule
 

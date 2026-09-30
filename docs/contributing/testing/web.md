@@ -16,7 +16,7 @@ pnpm --filter @watchdog/web ds:check    # typecheck + ds:ban greps
 | --- | --- |
 | `typecheck` | App + hand-owned `shared/ui/**` (excludes `shadcn/` + `use-mobile`) |
 | `ds:check` | `typecheck` + design-system ban greps |
-| `ds:ban` | SectionLabel SoT, freestyle palette in domains, opaque-id `.slice`, WD manifest (`shared/ui` excl. `shadcn/` + `__tests__/`), **loading doctrine bans** (RoutePending in routes, domain skeleton imports, …: [`loading.md`](../../reference/web/ui/loading.md)) |
+| `ds:ban` | SectionLabel SoT, radius ladder / gradients / banned surface names, opaque-id `.slice`, WD manifest (`shared/ui` excl. `shadcn/` + `__tests__/`), **loading doctrine bans** (RoutePending in routes, domain skeleton imports, …: [`loading.md`](../../reference/web/ui/loading.md)) |
 
 Dirty UI paths also trip `.cursor/hooks/stop-gate.mjs` (runs `ds:ban` when web UI paths are dirty): fix violations before ending the turn.
 

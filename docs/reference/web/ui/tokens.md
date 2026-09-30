@@ -66,13 +66,13 @@ Bind to **semantic** tokens only. `--wd-*` ramps define those semantics.
 | OK | `success` |
 | Caution | `warning` |
 
-Domain meaning: `--confidence-*` / `--status-*` / `--kind-*` only. Never freestyle `text-green-600` / `text-amber-400` for those meanings. Badges are **meaning-named** (`ConfidenceBadge`), never color-named (`variant="purple"`).
+Domain meaning: `--confidence-*` / `--status-*` / `--kind-*` only. Never freestyle `text-green-600` / `text-amber-400` for those meanings (`@shadcn/lint` `no-raw-colors` fails it). Badges are **meaning-named** (`ConfidenceBadge`), never color-named (`variant="purple"`).
 
 Contrast fix: adjust OKLCH **L only**: keep hue/chroma stable.
 
 ## Refuse list (AI slop)
 
-No nested cards, decorative colored side borders (a thin state bar on a live row is fine), glow/halo, gradients or gradient text, icon-tile feature grids, bounce/elastic easing, decorative glass, mono-as-decoration, cream/violet brand defaults. `ds:check` enforces gradients / glass / `rounded-xl+` / off-palette hues; the rest is review. Why each rule exists: [`rules.md`](rules.md).
+No nested cards, decorative colored side borders (a thin state bar on a live row is fine), glow/halo, gradients or gradient text, icon-tile feature grids, bounce/elastic easing, decorative glass, mono-as-decoration, cream/violet brand defaults. `ds:check` enforces gradients / glass / `rounded-xl+`; `@shadcn/lint` enforces raw palette hues; the rest is review. Why each rule exists: [`rules.md`](rules.md).
 
 ## Type scale (hybrid)
 
@@ -89,4 +89,4 @@ No nested cards, decorative colored side borders (a thin state bar on a live row
 | `text-label-meta` / `text-meta` / `text-label-mono-sm` | `text-2xs` | 0.8125 | 13 |
 | `text-label-meta-sm` / `text-chip` | `text-xs` | 0.75 | 12 |
 
-`ds:check` bans `text-[Npx]` / `text-[Nrem]` outside `shadcn/` (`// ds:allow-arbitrary-font-size — reason` to escape). New role names: register in `lib/utils.ts` twMerge `font-size` group. **Input** uses `text-sm` (iOS zoom floor).
+`@shadcn/lint` `no-arbitrary-values` bans `text-[Npx]` / `text-[Nrem]` (and other off-scale values: use a theme token or add one, e.g. `tracking-eyebrow`); escape with `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason`. New role names: register in `lib/utils.ts` twMerge `font-size` group. **Input** uses `text-sm` (iOS zoom floor).
