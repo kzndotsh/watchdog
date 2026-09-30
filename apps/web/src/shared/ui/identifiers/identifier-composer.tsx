@@ -9,6 +9,7 @@ import {
   CONFIRMED_REQUIRES_EVIDENCE,
   isConfirmedBlocked,
 } from "@/shared/lib/confirmed-evidence";
+import { Chip } from "@/shared/ui/chip";
 import {
   DataTableComposerActions,
   DataTableComposerRow,
@@ -16,7 +17,6 @@ import {
   EditableSuggestCell,
   EditableTextCell,
 } from "@/shared/ui/data-table";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import {
@@ -176,13 +176,13 @@ function ComposerEvidenceField({
               }}
             >
               {primaryLabel ? (
-                <DetailStatusChip
+                <Chip
                   size="sm"
                   className="max-w-full min-w-0 flex-1 justify-start overflow-hidden"
                   title={primaryLabel}
                 >
                   <span className="block min-w-0 truncate">{primaryLabel}</span>
-                </DetailStatusChip>
+                </Chip>
               ) : null}
               {overflow > 0 ? (
                 <span className="text-muted-foreground shrink-0 text-xs leading-tight font-medium tabular-nums">

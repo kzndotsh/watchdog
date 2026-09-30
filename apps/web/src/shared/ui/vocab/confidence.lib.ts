@@ -1,5 +1,5 @@
+import type { ChipTone } from "@/shared/ui/chip";
 import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
-import type { VocabTone } from "@/shared/ui/vocab/vocab-badge";
 import {
   CONFIDENCE_TIERS,
   CONFIDENCE_TIER_LABELS,
@@ -8,7 +8,7 @@ import {
 
 export const CONFIDENCE_LABELS = CONFIDENCE_TIER_LABELS;
 
-export const CONFIDENCE_TONES: Record<ConfidenceTier, VocabTone> = {
+export const CONFIDENCE_TONES: Record<ConfidenceTier, ChipTone> = {
   confirmed: {
     low: "bg-confidence-confirmed-bg text-confidence-confirmed-fg",
     high: "bg-confidence-confirmed text-primary-foreground",

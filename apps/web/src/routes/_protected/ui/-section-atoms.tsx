@@ -4,11 +4,11 @@ import { GuideSection, Specimen } from "@/routes/_protected/ui/-guide-chrome";
 import { DropdownActionItems } from "@/shared/ui/action-list";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
+import { Chip } from "@/shared/ui/chip";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { EntityMention } from "@/shared/ui/entity-mention";
@@ -112,16 +112,16 @@ const ATOM_CATALOG: AtomEntry[] = [
     ),
   },
   {
-    name: "DetailStatusChip",
+    name: "Chip",
     blurb:
-      "Outcome/tag pill — outline chrome, same height/radius/type as VocabBadge.",
+      "Outcome/tag pill — outline chrome, same shape as the vocab badges (optional tone).",
     render: () => (
       <>
-        <DetailStatusChip>From cache</DetailStatusChip>
-        <DetailStatusChip>unattached</DetailStatusChip>
-        <DetailStatusChip size="sm">agent</DetailStatusChip>
+        <Chip>From cache</Chip>
+        <Chip>unattached</Chip>
+        <Chip size="sm">agent</Chip>
         <StatusBadge status="succeeded" size="md" />
-        <DetailStatusChip>Evidence only</DetailStatusChip>
+        <Chip>Evidence only</Chip>
       </>
     ),
   },

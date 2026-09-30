@@ -2,10 +2,7 @@ import { PaperclipIcon, PlusIcon, XIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import {
-  CHIP_SIZE_CLASS,
-  DetailStatusChip,
-} from "@/shared/ui/detail-status-chip";
+import { CHIP_SIZE_CLASS, Chip } from "@/shared/ui/chip";
 import {
   evidenceLabel,
   evidenceMatchesPickerFilter,
@@ -71,7 +68,7 @@ export function EvidenceCiteChips({
         <span className="text-muted-foreground text-xs">Evidence</span>
       )}
       {rows.map((row) => (
-        <DetailStatusChip
+        <Chip
           key={row.id}
           size="sm"
           className="max-w-[12rem] truncate"
@@ -79,7 +76,7 @@ export function EvidenceCiteChips({
         >
           {evidenceLabel(row)}
           <span className="text-muted-foreground">· Job</span>
-        </DetailStatusChip>
+        </Chip>
       ))}
     </div>
   );
@@ -320,7 +317,7 @@ export function EvidencePicker({
         </Popover>
 
         {selectedRows.map((row) => (
-          <DetailStatusChip
+          <Chip
             key={row.id}
             size="sm"
             className="max-w-[14rem] gap-0.5 pr-0.5"
@@ -337,7 +334,7 @@ export function EvidencePicker({
             >
               <XIcon className="size-3" />
             </button>
-          </DetailStatusChip>
+          </Chip>
         ))}
 
         {totalCount === 0 && !dashedWhenEmpty ? (

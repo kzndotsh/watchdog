@@ -1,7 +1,7 @@
 import { EyeOffIcon } from "lucide-react";
 
 import type { CollectRow, CollectState } from "@/domains/collect/types";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
 import {
@@ -97,9 +97,9 @@ export function CollectQueueList({
                   <div className="flex min-w-0 items-center gap-1.5">
                     <QueueRowTitle>{row.title}</QueueRowTitle>
                     {row.recipe === null ? null : (
-                      <DetailStatusChip className="shrink-0">
+                      <Chip className="shrink-0">
                         {row.recipe.step}/{row.recipe.total}
-                      </DetailStatusChip>
+                      </Chip>
                     )}
                   </div>
                   {row.hint !== null && row.hint !== "" ? (

@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
 import { ArtifactPreviewSkeleton } from "@/shared/ui/artifact-preview";
+import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import {
   DetailContextHeader,
   DetailContextSep,
 } from "@/shared/ui/detail-context-line";
 import { DetailFooter } from "@/shared/ui/detail-footer";
-import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
 import { TabCount } from "@/shared/ui/tab-count";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";

@@ -6,7 +6,7 @@ import {
   CONFIRMED_REQUIRES_EVIDENCE,
   isConfirmedBlocked,
 } from "@/shared/lib/confirmed-evidence";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { formatOpaqueId } from "@/shared/ui/format-opaque-id";
 import {
@@ -82,22 +82,22 @@ function LinkedEvidenceSummary({
             onEvidenceClick(primary.id);
           }}
         >
-          <DetailStatusChip
+          <Chip
             size="sm"
             className="w-full max-w-full min-w-0 justify-start overflow-hidden"
             title={primary.label}
           >
             {label}
-          </DetailStatusChip>
+          </Chip>
         </button>
       ) : (
-        <DetailStatusChip
+        <Chip
           size="sm"
           className="max-w-full min-w-0 flex-1 justify-start overflow-hidden"
           title={primary.label}
         >
           {label}
-        </DetailStatusChip>
+        </Chip>
       )}
       {overflow > 0 ? (
         <span className="text-muted-foreground shrink-0 text-xs leading-tight font-medium tabular-nums">

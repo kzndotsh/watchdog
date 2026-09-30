@@ -15,8 +15,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import type { ChipTone } from "@/shared/ui/chip";
 import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
-import type { VocabTone } from "@/shared/ui/vocab/vocab-badge";
 import {
   IDENTIFIER_STATUSES,
   IDENTIFIER_STATUS_LABELS,
@@ -58,7 +58,7 @@ export const IDENTIFIER_STATUS_OPTIONS = optionsFromLabels(
   IDENTIFIER_STATUS_LABELS
 );
 
-export const STATUS_TONES: Record<DisplayStatus, VocabTone> = {
+export const STATUS_TONES: Record<DisplayStatus, ChipTone> = {
   queued: {
     low: "bg-status-queued-bg text-status-queued-fg",
     high: "bg-status-queued text-primary-foreground",

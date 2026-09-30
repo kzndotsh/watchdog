@@ -2,7 +2,7 @@ import { FilterIcon, XIcon, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
+import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import { Button } from "@/shared/ui/primitives/button";
 import { Badge } from "@watchdog/ui/components/badge";
 import {

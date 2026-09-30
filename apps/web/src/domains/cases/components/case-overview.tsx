@@ -27,7 +27,7 @@ import {
   invalidateAfterCaseSwitch,
 } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
@@ -141,10 +141,10 @@ export function CaseOverview({ caseId }: { caseId: string }) {
         actions={
           <div className="flex items-center gap-2">
             {isActive ? (
-              <DetailStatusChip size="sm">
+              <Chip size="sm">
                 <CheckIcon className="size-2.5" />
                 Active
-              </DetailStatusChip>
+              </Chip>
             ) : (
               <Button
                 type="button"

@@ -24,7 +24,7 @@ import {
   CASE_CARD_SHELL_CLASS,
   CASE_CREATE_SHELL_CLASS,
 } from "@/shared/ui/case-card-shell";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
@@ -88,10 +88,10 @@ function CaseCard({
           </p>
         </div>
         {isActive ? (
-          <DetailStatusChip size="sm" className="shrink-0">
+          <Chip size="sm" className="shrink-0">
             <CheckIcon className="size-2.5" />
             Active
-          </DetailStatusChip>
+          </Chip>
         ) : null}
         <RowActionsMenu
           alwaysVisible

@@ -1,18 +1,15 @@
 import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { Chip } from "@/shared/ui/chip";
 import {
   STATUS_GLYPH,
   STATUS_LABELS,
   STATUS_TONES,
   type DisplayStatus,
 } from "@/shared/ui/vocab/status.lib";
-import { VocabBadge } from "@/shared/ui/vocab/vocab-badge";
 
-type StatusBadgeProps = Omit<
-  ComponentProps<typeof VocabBadge>,
-  "label" | "tone"
-> & {
+type StatusBadgeProps = Omit<ComponentProps<typeof Chip>, "label" | "tone"> & {
   status: DisplayStatus;
 };
 
@@ -24,15 +21,16 @@ export function StatusBadge({
   ...props
 }: StatusBadgeProps) {
   return (
-    <VocabBadge
+    <Chip
       label={STATUS_LABELS[status]}
       tone={STATUS_TONES[status]}
       contrast={contrast}
       className={className}
+      size="sm"
       {...props}
     >
       {children}
-    </VocabBadge>
+    </Chip>
   );
 }
 

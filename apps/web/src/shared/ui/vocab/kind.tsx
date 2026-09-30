@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { Chip } from "@/shared/ui/chip";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import {
   CLAIM_CLASS_LABELS,
@@ -15,7 +16,6 @@ import {
   kindBadgeTone,
   type KindValue,
 } from "@/shared/ui/vocab/kind.lib";
-import { VocabBadge } from "@/shared/ui/vocab/vocab-badge";
 import type { ClaimClass, EntityKind } from "@watchdog/schemas";
 
 /** Kind glyph for person / org / infra. */
@@ -72,10 +72,7 @@ export function EntityKindGlyph({
   );
 }
 
-type KindBadgeProps = Omit<
-  ComponentProps<typeof VocabBadge>,
-  "label" | "tone"
-> & {
+type KindBadgeProps = Omit<ComponentProps<typeof Chip>, "label" | "tone"> & {
   kind: KindValue;
 };
 
@@ -98,20 +95,21 @@ export function KindBadge({
   }
 
   return (
-    <VocabBadge
+    <Chip
       label={label}
       tone={kindBadgeTone(kind)}
       contrast={contrast}
       className={cn(isEntityKind(kind) && "gap-1.25", className)}
+      size="sm"
       {...props}
     >
       {content}
-    </VocabBadge>
+    </Chip>
   );
 }
 
 type ClaimClassBadgeProps = Omit<
-  ComponentProps<typeof VocabBadge>,
+  ComponentProps<typeof Chip>,
   "label" | "tone"
 > & {
   claimClass: ClaimClass;
@@ -125,14 +123,15 @@ export function ClaimClassBadge({
   ...props
 }: ClaimClassBadgeProps) {
   return (
-    <VocabBadge
+    <Chip
       label={CLAIM_CLASS_LABELS[claimClass]}
       tone={CLAIM_CLASS_TONES[claimClass]}
       contrast={contrast}
       className={className}
+      size="sm"
       {...props}
     >
       {children}
-    </VocabBadge>
+    </Chip>
   );
 }

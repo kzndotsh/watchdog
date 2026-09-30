@@ -22,7 +22,7 @@ import {
   CASE_CARD_MIN_HEIGHT_CLASS,
   CASE_CARD_SHELL_CLASS,
 } from "@/shared/ui/case-card-shell";
-import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
+import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import { EvidenceDetailSkeleton } from "@/shared/ui/evidence-detail-skeleton";
 import {
   GRAPH_CANVAS_CONNECTIONS_SHELL_CLASS,

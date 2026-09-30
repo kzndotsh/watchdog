@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
+import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import {
   ENTITY_NODE_SHELL_CLASS,
 } from "@/shared/ui/graph/entity-node-chrome";

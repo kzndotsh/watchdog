@@ -1,8 +1,8 @@
 import { Building2Icon, ServerIcon, UserIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
+import type { ChipTone } from "@/shared/ui/chip";
 import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
-import type { VocabTone } from "@/shared/ui/vocab/vocab-badge";
 import {
   CLAIM_CLASS_LABELS,
   ENTITY_KINDS,
@@ -46,7 +46,7 @@ export function isEntityKind(value: string): value is EntityKind {
   return value in ENTITY_KIND_LABELS;
 }
 
-const ENTITY_KIND_TONES: Record<EntityKind, VocabTone> = {
+const ENTITY_KIND_TONES: Record<EntityKind, ChipTone> = {
   person: {
     low: "bg-kind-person/15 text-kind-person",
     high: "bg-kind-person text-primary-foreground",
@@ -61,7 +61,7 @@ const ENTITY_KIND_TONES: Record<EntityKind, VocabTone> = {
   },
 };
 
-const EVIDENCE_KIND_TONES: Record<EvidenceKind, VocabTone> = {
+const EVIDENCE_KIND_TONES: Record<EvidenceKind, ChipTone> = {
   file: {
     low: "bg-kind-file/15 text-kind-file",
     high: "bg-kind-file text-primary-foreground",
@@ -80,7 +80,7 @@ const EVIDENCE_KIND_TONES: Record<EvidenceKind, VocabTone> = {
   },
 };
 
-const IDENTIFIER_TYPE_TONES: Record<IdentifierType, VocabTone> = {
+const IDENTIFIER_TYPE_TONES: Record<IdentifierType, ChipTone> = {
   email: {
     low: "bg-kind-email/15 text-kind-email",
     high: "bg-kind-email text-primary-foreground",
@@ -123,7 +123,7 @@ const IDENTIFIER_TYPE_TONES: Record<IdentifierType, VocabTone> = {
   },
 };
 
-export const CLAIM_CLASS_TONES: Record<ClaimClass, VocabTone> = {
+export const CLAIM_CLASS_TONES: Record<ClaimClass, ChipTone> = {
   observation: {
     low: "bg-kind-observation/15 text-kind-observation",
     high: "bg-kind-observation text-primary-foreground",
@@ -148,7 +148,7 @@ const KIND_LABELS: Record<KindValue, string> = {
   ...IDENTIFIER_TYPE_LABELS,
 };
 
-const KIND_TONES: Record<KindValue, VocabTone> = {
+const KIND_TONES: Record<KindValue, ChipTone> = {
   ...ENTITY_KIND_TONES,
   ...EVIDENCE_KIND_TONES,
   ...IDENTIFIER_TYPE_TONES,
@@ -190,6 +190,6 @@ export function kindBadgeLabel(kind: KindValue): string {
   return KIND_LABELS[kind];
 }
 
-export function kindBadgeTone(kind: KindValue): VocabTone {
+export function kindBadgeTone(kind: KindValue): ChipTone {
   return KIND_TONES[kind];
 }

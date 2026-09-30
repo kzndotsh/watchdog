@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidenceIdsForOp, evidenceLabel } from "@/domains/triage/lib/evidence";
 import { summarizePatchOpData } from "@/domains/triage/lib/patch-op-summary";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
 import { IdChip } from "@/shared/ui/id-chip";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
@@ -52,13 +52,9 @@ function EvidenceChips({
         }
         const label = evidenceLabel(row);
         const chip = (
-          <DetailStatusChip
-            size="sm"
-            className="max-w-[14rem] truncate"
-            title={label}
-          >
+          <Chip size="sm" className="max-w-[14rem] truncate" title={label}>
             {label}
-          </DetailStatusChip>
+          </Chip>
         );
         if (!onEvidenceClick) return <span key={id}>{chip}</span>;
         return (
@@ -105,12 +101,8 @@ function PatchOpRow({
         <span className="text-foreground text-xs font-medium">
           {meta.label}
         </span>
-        {colliding ? (
-          <DetailStatusChip size="sm">On another Entity</DetailStatusChip>
-        ) : null}
-        {invalid ? (
-          <DetailStatusChip size="sm">Invalid value</DetailStatusChip>
-        ) : null}
+        {colliding ? <Chip size="sm">On another Entity</Chip> : null}
+        {invalid ? <Chip size="sm">Invalid value</Chip> : null}
       </div>
       <p className="text-muted-foreground text-xs leading-snug break-words whitespace-pre-wrap">
         {summary}

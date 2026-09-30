@@ -2,11 +2,8 @@ import { ChevronDownIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { CHIP_SIZE_CLASS, Chip } from "@/shared/ui/chip";
 import { CodeBlock } from "@/shared/ui/code-block";
-import {
-  CHIP_SIZE_CLASS,
-  DetailStatusChip,
-} from "@/shared/ui/detail-status-chip";
 import { JsonView } from "@/shared/ui/json-view";
 import {
   Collapsible,
@@ -120,9 +117,9 @@ export function ArtifactPreview({
           {name}
         </span>
         {mime !== undefined && mime !== "" ? (
-          <DetailStatusChip size="sm" className="shrink-0">
+          <Chip size="sm" className="shrink-0">
             {mime}
-          </DetailStatusChip>
+          </Chip>
         ) : null}
         {headerAction === undefined ? null : (
           <>

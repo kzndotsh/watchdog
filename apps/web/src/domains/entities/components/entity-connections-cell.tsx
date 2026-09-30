@@ -13,7 +13,7 @@ import type {
 } from "@/domains/entities/lib/edge-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { cn } from "@/lib/utils";
-import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
+import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
 import {
