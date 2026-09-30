@@ -36,7 +36,7 @@ export function UserProfile({ className }: UserProfileProps) {
     name?: string;
   }>({});
 
-  async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
+  function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);

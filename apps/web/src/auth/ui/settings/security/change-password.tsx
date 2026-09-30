@@ -79,7 +79,7 @@ function SetPassword({ className }: { className?: string }) {
   );
 
   const Captcha = plugins.find(
-    (plugin) => plugin.captchaComponent
+    (plugin) => plugin.captchaComponent !== undefined
   )?.captchaComponent;
 
   const handleSetPassword = () => {

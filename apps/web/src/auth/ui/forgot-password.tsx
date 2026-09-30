@@ -71,7 +71,7 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
   }
 
   const Captcha = plugins.find(
-    (plugin) => plugin.captchaComponent
+    (plugin) => plugin.captchaComponent !== undefined
   )?.captchaComponent;
 
   const [fieldErrors, setFieldErrors] = useState<{

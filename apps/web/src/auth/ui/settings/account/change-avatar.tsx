@@ -46,8 +46,9 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
       updateUser(
         { image },
         {
-          onSuccess: () =>
-            toast.success(localization.settings.avatarChangedSuccess),
+          onSuccess: () => {
+            toast.success(localization.settings.avatarChangedSuccess);
+          },
         }
       );
     } catch (error) {
@@ -57,23 +58,27 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
     setIsUploading(false);
   }
 
-  async function handleDelete() {
+  async function removeStoredAvatar(currentImage: string | null | undefined) {
+    if (currentImage) {
+      setIsDeleting(true);
+      try {
+        await avatar.delete?.(currentImage);
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+
+    toast.success(localization.settings.avatarDeletedSuccess);
+  }
+
+  function handleDelete() {
     const currentImage = session?.user.image;
 
     updateUser(
       { image: null },
       {
-        onSuccess: async () => {
-          if (currentImage) {
-            setIsDeleting(true);
-            try {
-              await avatar.delete?.(currentImage);
-            } finally {
-              setIsDeleting(false);
-            }
-          }
-
-          toast.success(localization.settings.avatarDeletedSuccess);
+        onSuccess: () => {
+          void removeStoredAvatar(currentImage);
         },
       }
     );
@@ -88,7 +93,9 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={handleFileChange}
+        onChange={(event) => {
+          void handleFileChange(event);
+        }}
       />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -133,7 +140,7 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
               size="sm"
               disabled={!session?.user.image || isPending}
               onClick={() => {
-                void handleDelete();
+                handleDelete();
               }}
             >
               <Trash2 className="size-3.5" />

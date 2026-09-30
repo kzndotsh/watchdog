@@ -94,7 +94,7 @@ export function SignIn({ className, allowSignup = false }: SignInProps) {
   const isPending = signInMutating + signUpMutating > 0;
 
   const Captcha = plugins.find(
-    (plugin) => plugin.captchaComponent
+    (plugin) => plugin.captchaComponent !== undefined
   )?.captchaComponent;
 
   const [fieldErrors, setFieldErrors] = useState<{

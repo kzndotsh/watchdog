@@ -99,7 +99,7 @@ export function SignUp({ className }: SignUpProps) {
   const isPending = signInMutating + signUpMutating > 0;
 
   const Captcha = plugins.find(
-    (plugin) => plugin.captchaComponent
+    (plugin) => plugin.captchaComponent !== undefined
   )?.captchaComponent;
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -113,7 +113,7 @@ export function SignUp({ className }: SignUpProps) {
     confirmPassword?: string;
   }>({});
 
-  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);

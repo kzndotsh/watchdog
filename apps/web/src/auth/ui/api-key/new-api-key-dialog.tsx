@@ -87,7 +87,9 @@ export function NewApiKeyDialog({
             <InputGroupButton
               size="icon-xs"
               aria-label={localization.settings.copyToClipboard}
-              onClick={copySecretKey}
+              onClick={() => {
+                void copySecretKey();
+              }}
             >
               {copied ? <Check /> : <Copy />}
             </InputGroupButton>
