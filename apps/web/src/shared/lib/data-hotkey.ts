@@ -10,7 +10,7 @@ import { isEditableTarget } from "@/shared/lib/hotkeys";
  * `aria-hidden` (behind a modal) are skipped.
  */
 
-export const DATA_HOTKEY_ATTR = "data-hotkey";
+const DATA_HOTKEY_ATTR = "data-hotkey";
 
 /** Pure: does this element accept a hotkey press right now? */
 export function isHotkeyTargetLive(el: Element): boolean {
