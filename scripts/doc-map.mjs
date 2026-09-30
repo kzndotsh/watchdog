@@ -42,7 +42,8 @@ export const DOC_MAP = [
     id: "routes-scenarios",
     code: [/^apps\/web\/src\/routes\//],
     docs: ["docs/explanation/scenarios.md"],
-    strict: true,
+    // Warn only: most route edits (imports, fixtures) don't change a scenario.
+    strict: false,
   },
   {
     id: "domains-hooks-lib",

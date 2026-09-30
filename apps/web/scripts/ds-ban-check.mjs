@@ -1,9 +1,19 @@
 #!/usr/bin/env node
 /**
- * Design-system ban check.
- * Bidirectional shared/ui registry, fixture coverage, fictional vocab,
- * freestyle palette (full src), opaque-id .slice (all domains),
- * loading doctrine bans (RoutePending, skeleton imports, waterfalls, …).
+ * Design-system ban check. Every rule states what it prevents; the full
+ * inventory (taste vs correctness, verdicts) is docs/reference/web/ui/rules.md.
+ *
+ * Correctness (bugs we've shipped or can't see in review):
+ *   - opaque-id .slice        truncated ids collide and can't be searched
+ *   - fictional vocab         values not in @watchdog/schemas unions render as lies
+ *   - loading doctrine        waterfalls, double pending surfaces, a11y-less loaders
+ * Consistency (one way to do a thing):
+ *   - SectionLabel SoT, NativeSelect, arbitrary font sizes, WD UI manifest + /ui fixtures
+ * Taste (the design brief, docs/explanation/design.md):
+ *   - freestyle status colors, off-palette hues, radius ladder, decorative effects,
+ *     banned surface names
+ *
+ * Escape hatch: `// ds:allow-<rule> — reason` on the line above.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
@@ -141,16 +151,6 @@ if (sectionDefs.some((f) => rel(f) === allowedSection)) {
   fail("SectionLabel missing under shared/ui/section-label.tsx");
 }
 
-const layoutSl = path.join(src, "shared/layout/section-label.tsx");
-if (existsSync(layoutSl)) {
-  const text = readFileSync(layoutSl, "utf-8");
-  if (/export function SectionLabel\b/.test(text)) {
-    fail("shared/layout/section-label.tsx must re-export, not redefine");
-  } else {
-    ok("shared/layout/section-label.tsx is re-export only");
-  }
-}
-
 // ── 1b. Arbitrary font sizes (use @theme text-* or wd-typography roles) ───────
 const ARBITRARY_FONT_SIZE_RE = /\btext-\[(?:\d+(?:\.\d+)?px|\d*\.?\d+rem)\]/;
 const arbitraryFontHits = [];
@@ -198,21 +198,74 @@ if (colorHits.length === 0) {
   ok("No freestyle green/amber/red palette colors in src/");
 }
 
-// ── 2b. domain-badge shim banned — import from vocab ─────────────────────────
-const domainBadgeHits = [];
+// ── 2d. Off-palette Tailwind hues — tokens own color ─────────────────────────
+// Why: raw palette classes bypass light/dark tokens and reintroduce the
+// violet/gray SaaS defaults the brief refuses. Use semantic / domain tokens.
+const OFF_PALETTE_RE =
+  /\b(?:bg|text|border|ring|outline|fill|stroke|from|via|to|decoration|divide|shadow)-(?:blue|violet|purple|indigo|sky|fuchsia|pink|rose|teal|cyan|gray|slate|zinc|neutral|stone)-\d{2,3}\b/;
+// ── 2e. Radius ladder — sm / md / lg only ────────────────────────────────────
+const ROUNDED_RE = /\brounded(?:-[trblse]{1,2})?-(?:xl|2xl|3xl|4xl)\b/;
+// ── 2f. Decorative effects from the refuse list ──────────────────────────────
+// Why: gradients, gradient text, and glass read as template chrome.
+const DECORATIVE_RE =
+  /\b(?:bg-gradient-to-|bg-linear-|bg-radial|bg-conic|bg-clip-text|backdrop-blur)/;
+
+/** @type {{ rule: string; re: RegExp; msg: string }[]} */
+const TASTE_BANS = [
+  {
+    rule: "off-palette",
+    re: OFF_PALETTE_RE,
+    msg: "Off-palette Tailwind hue — use semantic/domain tokens",
+  },
+  {
+    rule: "radius",
+    re: ROUNDED_RE,
+    msg: "rounded-xl+ — radius ladder is sm / md / lg",
+  },
+  {
+    rule: "decorative",
+    re: DECORATIVE_RE,
+    msg: "Gradient / gradient text / glass — refuse list",
+  },
+];
+for (const { rule, re, msg } of TASTE_BANS) {
+  const hits = [];
+  for (const f of walk(src)) {
+    const r = rel(f);
+    if (r.startsWith("shared/ui/shadcn/") || r.startsWith("auth/ui/")) continue;
+    const lines = readFileSync(f, "utf-8").split("\n");
+    for (const [i, line] of lines.entries()) {
+      const t = line.trimStart();
+      if (t.startsWith("//") || t.startsWith("*")) continue;
+      if (!re.test(line)) continue;
+      if (consumeAllow(lines, i, rule)) continue;
+      hits.push(`${r}:${i + 1}: ${line.trim()}`);
+    }
+  }
+  for (const hit of hits) fail(`${msg}: ${hit}`);
+  if (hits.length === 0) ok(`No ${rule} violations`);
+}
+
+// ── 2g. Banned surface names (ui/README.md naming rule) ──────────────────────
+// Why: v2 named every Queue + Detail screen after a new metaphor; the name told
+// you nothing. Panel is allowed only in its standard meaning (reviewed by hand).
+const SURFACE_NAME_RE =
+  /export\s+(?:function|const)\s+(\w*(?:Console|Workbench|Tape))\b/;
+const surfaceHits = [];
 for (const f of walk(src)) {
   const r = rel(f);
-  const text = readFileSync(f, "utf-8");
-  if (/from\s+["']@\/shared\/ui\/domain-badge["']/.test(text)) {
-    domainBadgeHits.push(r);
+  const lines = readFileSync(f, "utf-8").split("\n");
+  for (const [i, line] of lines.entries()) {
+    const m = SURFACE_NAME_RE.exec(line);
+    if (!m) continue;
+    if (consumeAllow(lines, i, "surface-name")) continue;
+    surfaceHits.push(`${r}:${i + 1}: ${m[1]}`);
   }
 }
-for (const hit of domainBadgeHits) {
-  fail(`Import @/shared/ui/domain-badge — use @/shared/ui/vocab: ${hit}`);
+for (const hit of surfaceHits) {
+  fail(`Banned surface name (Console / Workbench / Tape): ${hit}`);
 }
-if (domainBadgeHits.length === 0) {
-  ok("No domain-badge imports (vocab is SoT)");
-}
+if (surfaceHits.length === 0) ok("No banned surface names");
 
 // ── 2c. NativeSelect banned — use FieldSelect / Select ───────────────────────
 const nativeSelectHits = [];
@@ -497,14 +550,6 @@ if (allowCount > 0) {
   ok(`${allowCount} ds:allow escape hatch(es) in use`);
 } else {
   ok("No ds:allow escape hatches in use");
-}
-
-// ── 8. COMPONENTS.md registry present ────────────────────────────────────────
-const componentsDoc = path.join(root, "../../docs/reference/web/components.md");
-if (existsSync(componentsDoc)) {
-  ok("COMPONENTS.md registry present");
-} else {
-  fail("Missing docs/reference/web/components.md registry");
 }
 
 if (failed) {

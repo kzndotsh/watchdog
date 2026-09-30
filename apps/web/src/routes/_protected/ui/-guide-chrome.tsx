@@ -15,6 +15,7 @@ export function GuideToc({ className }: { className?: string }) {
     <nav
       aria-label="Style guide sections"
       className={cn(
+        // ds:allow-decorative — sticky section nav over scrolling specimens; blur keeps labels legible
         "border-border bg-background/95 sticky top-10 z-10 -mx-3 flex h-9 shrink-0 items-center gap-x-4 overflow-x-auto border-b px-3 backdrop-blur-sm sm:-mx-4 sm:px-4",
         className
       )}
