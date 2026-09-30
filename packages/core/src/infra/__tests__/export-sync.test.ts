@@ -20,10 +20,12 @@ describe("safeFilename", () => {
 describe("export path guards", () => {
   it("ignores path-traversal slugs for remove and rename", async () => {
     await expect(
-      Effect.runPromise(removeCaseExportDirEffect("../outside"))
+      Effect.runPromise(removeCaseExportDirEffect("org-1", "../outside"))
     ).resolves.toBeUndefined();
     await expect(
-      Effect.runPromise(renameCaseExportDirEffect("../outside", "safe-slug"))
+      Effect.runPromise(
+        renameCaseExportDirEffect("org-1", "../outside", "safe-slug")
+      )
     ).resolves.toBeUndefined();
   });
 });

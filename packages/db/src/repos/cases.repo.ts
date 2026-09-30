@@ -137,21 +137,6 @@ export const casesRepo = {
     return row ?? null;
   },
 
-  /** Global slug uniqueness (index is not org-scoped). */
-  async getBySlugUnchecked(
-    exec: DbExec,
-    slug: string
-  ): Promise<CaseRow | null> {
-    const scopedSlug = slugForLookup(slug);
-    if (scopedSlug === undefined) return null;
-    const [row] = await exec
-      .select(caseColumns)
-      .from(cases)
-      .where(eq(cases.slug, scopedSlug))
-      .limit(1);
-    return row ?? null;
-  },
-
   async create(exec: DbExec, values: NewCase): Promise<CaseRow | null> {
     const [created] = await exec
       .insert(cases)

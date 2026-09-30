@@ -19,6 +19,31 @@ describe("createCase", () => {
     await resetTestDb();
   });
 
+  it("allows the same slug in a different organization", async () => {
+    const otherOrganizationId = testId(91);
+    const first = await runDomain(
+      createCaseEffect({
+        name: "Alpha",
+        slug: "shared-slug",
+        organizationId: TEST_ORGANIZATION_ID,
+      })
+    );
+    const second = await runDomain(
+      createCaseEffect({
+        name: "Alpha",
+        slug: "shared-slug",
+        organizationId: otherOrganizationId,
+      })
+    );
+
+    expect(second.id).not.toBe(first.id);
+    // Lookups stay inside the caller's organization.
+    const inOther = await runDomain(
+      getCaseBySlugEffect("shared-slug", otherOrganizationId)
+    );
+    expect(inOther.id).toBe(second.id);
+  });
+
   it("rejects a duplicate slug", async () => {
     await runDomain(
       createCaseEffect({

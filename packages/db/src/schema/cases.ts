@@ -1,4 +1,4 @@
-import { boolean, index, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 import { timestamps } from "./_helpers";
 
@@ -8,7 +8,7 @@ export const cases = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
-    slug: text("slug").notNull().unique(),
+    slug: text("slug").notNull(),
     description: text("description"),
     /**
      * Better Auth organization id (soft text ref, same pattern as
@@ -24,5 +24,8 @@ export const cases = pgTable(
       .default(false),
     ...timestamps,
   },
-  (t) => [index("cases_organization_id_idx").on(t.organizationId)]
+  // Slugs are unique per organization (two organizations may both have "acme").
+  (t) => [
+    uniqueIndex("cases_organization_id_slug_uidx").on(t.organizationId, t.slug),
+  ]
 );

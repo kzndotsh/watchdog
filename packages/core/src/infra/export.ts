@@ -41,6 +41,7 @@ import { tryDb } from "./postgres-effect";
 import type { DomainTag } from "./tagged-errors";
 
 export interface EntityExport {
+  organizationId: string;
   caseSlug: string;
   entitySlug: string;
   kind: EntityKind;
@@ -114,6 +115,7 @@ export function renderEntityMarkdownEffect(
     appendEvidenceSection(lines, entityEvidence);
 
     return {
+      organizationId: row.caseOrganizationId,
       caseSlug: row.caseSlug,
       entitySlug: row.slug,
       kind: row.kind,
@@ -125,6 +127,8 @@ export function renderEntityMarkdownEffect(
 interface CaseExportResult {
   files: Map<string, string>;
   evidenceRows: EvidenceRow[];
+  /** Where the shadow workspace lives: `<export>/<organizationId>/<caseSlug>`. Null when the Case is gone. */
+  location: { organizationId: string; caseSlug: string } | null;
 }
 
 /**
@@ -138,7 +142,11 @@ export function renderCaseExportEffect(
   return Effect.gen(function* renderCaseExportGen() {
     const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
     if (normalizedCaseId === undefined) {
-      return { files: new Map<string, string>(), evidenceRows: [] };
+      return {
+        files: new Map<string, string>(),
+        evidenceRows: [],
+        location: null,
+      };
     }
 
     const entityRows = yield* tryDb(() =>
@@ -184,6 +192,12 @@ export function renderCaseExportEffect(
       }
     }
 
-    return { files: mdFiles, evidenceRows };
+    return {
+      files: mdFiles,
+      evidenceRows,
+      location: caseRow
+        ? { organizationId: caseRow.organizationId, caseSlug: caseRow.slug }
+        : null,
+    };
   });
 }

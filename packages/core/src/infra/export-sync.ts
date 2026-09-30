@@ -2,8 +2,9 @@
  * export-sync.ts — File system sync for the live Export shadow workspace.
  *
  * Writes rendered entity markdown + evidence files to:
- *   <WD_EXPORT_DIR>/<case-slug>/{persons,infras,orgs}/<entity-slug>.md
- *   <WD_EXPORT_DIR>/<case-slug>/evidence/<id-prefix>--<label>.ext
+ *   <WD_EXPORT_DIR>/<organization-id>/<case-slug>/{persons,infras,orgs}/<entity-slug>.md
+ *   <WD_EXPORT_DIR>/<organization-id>/<case-slug>/evidence/<id-prefix>--<label>.ext
+ * (Case slugs are unique per organization, so the organization is part of the path.)
  */
 
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
@@ -35,6 +36,22 @@ function exportRoot(): string {
     env.WD_EXPORT_DIR ??
     nodePath.join(new URL("../../../../export", import.meta.url).pathname)
   );
+}
+
+/** `<export>/<organizationId>/<caseSlug>`; null if either segment would escape the export root. */
+function exportDirFor(organizationId: string, slug: string): string | null {
+  const root = nodePath.resolve(exportRoot());
+  const orgDir = nodePath.resolve(root, organizationId);
+  const dir = nodePath.resolve(orgDir, slug);
+  if (
+    orgDir === root ||
+    !orgDir.startsWith(`${root}${nodePath.sep}`) ||
+    dir === orgDir ||
+    !dir.startsWith(`${orgDir}${nodePath.sep}`)
+  ) {
+    return null;
+  }
+  return dir;
 }
 
 function writeEffect(
@@ -186,13 +203,12 @@ export function writeEntityExportEffect(
     );
     if (!exported) return;
     const kindDir = `${exported.kind}s`;
-    const path = nodePath.join(
-      exportRoot(),
-      exported.caseSlug,
-      kindDir,
-      `${exported.entitySlug}.md`
+    const dir = exportDirFor(exported.organizationId, exported.caseSlug);
+    if (dir === null) return;
+    yield* writeEffect(
+      nodePath.join(dir, kindDir, `${exported.entitySlug}.md`),
+      exported.markdown
     );
-    yield* writeEffect(path, exported.markdown);
   });
 }
 
@@ -200,21 +216,20 @@ export function writeCaseExportEffect(
   caseId: string
 ): Effect.Effect<void, ExportIOError> {
   return Effect.gen(function* writeCaseExportGen() {
-    const { files: mdFiles, evidenceRows } = yield* renderCaseExportEffect(
-      caseId
-    ).pipe(
+    const {
+      files: mdFiles,
+      evidenceRows,
+      location,
+    } = yield* renderCaseExportEffect(caseId).pipe(
       Effect.mapError(
         (error) => new ExportIOError({ reason: domainMessageOf(error) })
       )
     );
     if (mdFiles.size === 0) return;
 
-    const caseMd = mdFiles.get("CASE.md") ?? "";
-    const match = /^slug: (.+)$/m.exec(caseMd);
-    const caseSlug = match?.[1]?.trim();
-    if (caseSlug === undefined || caseSlug === "") return;
-
-    const root = nodePath.join(exportRoot(), caseSlug);
+    if (location === null || location.caseSlug === "") return;
+    const root = exportDirFor(location.organizationId, location.caseSlug);
+    if (root === null) return;
 
     yield* Effect.forEach(
       [...mdFiles],
@@ -341,20 +356,12 @@ export function scheduleCaseExportEffect(
   return Effect.runSync(claimExportJoin(normalizedCaseId, writeExport));
 }
 
-function exportDirForSlug(slug: string): string | null {
-  const root = nodePath.resolve(exportRoot());
-  const dir = nodePath.resolve(root, slug);
-  if (dir === root || !dir.startsWith(`${root}${nodePath.sep}`)) {
-    return null;
-  }
-  return dir;
-}
-
 /** Best-effort: drop the live Export shadow dir for a deleted Case. */
 export function removeCaseExportDirEffect(
+  organizationId: string,
   slug: string
 ): Effect.Effect<void, ExportIOError> {
-  const dir = exportDirForSlug(slug);
+  const dir = exportDirFor(organizationId, slug);
   if (dir === null) return Effect.void;
   return Effect.tryPromise({
     try: () => rm(dir, { recursive: true, force: true }),
@@ -364,12 +371,13 @@ export function removeCaseExportDirEffect(
 
 /** Best-effort: move the Export shadow dir when a Case slug changes. */
 export function renameCaseExportDirEffect(
+  organizationId: string,
   fromSlug: string,
   toSlug: string
 ): Effect.Effect<void, ExportIOError> {
   if (fromSlug === toSlug) return Effect.void;
-  const from = exportDirForSlug(fromSlug);
-  const to = exportDirForSlug(toSlug);
+  const from = exportDirFor(organizationId, fromSlug);
+  const to = exportDirFor(organizationId, toSlug);
   if (from === null || to === null) return Effect.void;
   return Effect.gen(function* renameCaseExportDirGen() {
     yield* Effect.tryPromise({

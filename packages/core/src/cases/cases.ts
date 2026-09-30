@@ -25,7 +25,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 
-const SLUG_UNIQUE_INDEX = "cases_slug_unique";
+const SLUG_UNIQUE_INDEX = "cases_organization_id_slug_uidx";
 
 export interface CaseRecord {
   id: string;
@@ -119,7 +119,9 @@ export function createCaseEffect(
     }
 
     const conflictReason = `Slug "${slug}" already exists`;
-    const existing = yield* tryDb(() => casesRepo.getBySlugUnchecked(db, slug));
+    const existing = yield* tryDb(() =>
+      casesRepo.getBySlug(db, slug, input.organizationId)
+    );
     if (existing) {
       return yield* new ConflictError({ reason: conflictReason });
     }
@@ -172,7 +174,7 @@ export function updateCaseEffect(input: {
       }
       if (slug !== existing.slug) {
         const taken = yield* tryDb(() =>
-          casesRepo.getBySlugUnchecked(db, slug)
+          casesRepo.getBySlug(db, slug, input.organizationId)
         );
         if (taken !== null && taken.id !== existing.id) {
           return yield* new ConflictError({
@@ -207,7 +209,11 @@ export function updateCaseEffect(input: {
     }
 
     if (nextSlug !== undefined) {
-      yield* renameCaseExportDirEffect(existing.slug, nextSlug).pipe(
+      yield* renameCaseExportDirEffect(
+        input.organizationId,
+        existing.slug,
+        nextSlug
+      ).pipe(
         Effect.catch((error) =>
           Effect.sync(() => {
             logSwallowed("rename-case-export", error, {
@@ -261,7 +267,7 @@ export function deleteCaseEffect(
         })
       )
     );
-    yield* removeCaseExportDirEffect(existing.slug).pipe(
+    yield* removeCaseExportDirEffect(opts.organizationId, existing.slug).pipe(
       Effect.catch((error) =>
         Effect.sync(() => {
           logSwallowed("delete-case-export", error, { slug: existing.slug });

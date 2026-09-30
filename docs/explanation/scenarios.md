@@ -112,7 +112,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
-| Cases CRUD + switch cookie | shipped | Org-scoped list/get/create/update/delete (active Better Auth organization). **Open** sets Active + opens Overview; **Set as active case** in card ⋯; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename (slug unique is still global); update/egress also via API/CLI |
+| Cases CRUD + switch cookie | shipped | Org-scoped list/get/create/update/delete (active Better Auth organization). **Open** sets Active + opens Overview; **Set as active case** in card ⋯; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename (slug is unique per organization: two organizations can both have `acme`); update/egress also via API/CLI |
 | Delete case | shipped | Type-to-confirm (`DestructiveConfirmDialog`) on Cases card ⋯ and Overview; cascades Graph/Jobs/Triage/Evidence; heals Active cookie; also `wd cases delete` |
 | Case overview page | shipped | `/cases/$caseSlug`: case dashboard (stats / activity / settings); landing via **Open** from Manage Cases; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks`; unknown slug → PageHeader + centered 404 + **Back to Cases**; stats grid reuses dashboard `MetricsSection` (borderless tiles, sans numerals) |
 | Unknown route (global) | shipped | Root `notFoundComponent` (`__root.tsx`): full-viewport centered flat card on `background` (no shadow); **Go to dashboard** |
