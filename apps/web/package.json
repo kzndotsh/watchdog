@@ -56,7 +56,6 @@
     "platejs": "^53.3.11",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-error-boundary": "^6.1.5",
     "remark-gfm": "^4.0.1",
     "shadcn": "^4.21.0",
     "shiki": "^4.4.3",
