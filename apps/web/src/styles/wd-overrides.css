@@ -178,9 +178,9 @@
   background: var(--graph-canvas-bg);
 }
 
-/* CapMatch — amber selection bar; cold roster, no card chrome */
+/* CapMatch — amber selection wash (same as QueueRow); cold roster, no card chrome */
 .cap-match-row-selected {
-  box-shadow: inset 3px 0 0 var(--signal);
+  background-color: color-mix(in oklab, var(--signal) 10%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

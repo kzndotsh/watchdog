@@ -12,7 +12,7 @@ import { RelativeTime } from "@/shared/ui/relative-time";
 
 type QueueRowProps = {
   selected?: boolean;
-  /** Left accent stripe (live/running jobs). */
+  /** Left state bar in the running hue (live jobs). Selection is the amber wash. */
   live?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;
@@ -57,9 +57,10 @@ export function QueueRow({
       data-selected={selected || undefined}
       data-live={live || undefined}
       className={cn(
-        "relative flex w-full min-w-0 cursor-pointer flex-nowrap items-start gap-2 px-3 py-1.5 text-left transition-colors",
+        "relative flex w-full min-w-0 cursor-pointer flex-nowrap items-start gap-2 px-3 py-1.5 text-left transition-colors duration-(--duration-fast)",
         "hover:bg-muted/40 focus-visible:bg-muted/50 focus-visible:outline-none",
-        selected && "bg-muted/45",
+        selected &&
+          "bg-signal/10 hover:bg-signal/15 focus-visible:bg-signal/15",
         className
       )}
       onClick={handleActivate}
@@ -69,7 +70,7 @@ export function QueueRow({
       {live ? (
         <span
           aria-hidden
-          className="bg-signal absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full"
+          className="bg-status-running absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full"
         />
       ) : null}
       {leading ? (

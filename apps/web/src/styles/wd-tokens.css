@@ -196,7 +196,6 @@
   /* Motion tokens — Emil-first tool timing */
   --duration-fast: 100ms;
   --duration-panel: 180ms;
-  --ease-out-strong: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (min-width: 2048px) and (min-resolution: 1.5dppx) {
