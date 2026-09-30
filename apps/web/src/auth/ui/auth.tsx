@@ -82,7 +82,7 @@ export function Auth({
   }
 
   const authView =
-    view ||
+    view ??
     (Object.keys(viewPaths.auth) as AuthView[]).find(
       (key) => viewPaths.auth[key] === path
     );

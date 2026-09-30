@@ -5,7 +5,7 @@ import { Check, Copy, Key } from "lucide-react";
 import { useState } from "react";
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
-import { errMessage } from "@/lib/utils";
+import { errMessage, firstNonEmpty } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,7 +73,7 @@ export function NewApiKeyDialog({
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="new-api-key-secret">
-            {name || apiKeyLocalization.apiKey}
+            {firstNonEmpty(name) ?? apiKeyLocalization.apiKey}
           </Label>
 
           <InputGroup>

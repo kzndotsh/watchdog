@@ -753,7 +753,6 @@ export default defineConfig({
       // dropping casts the types still need). Remove entries as the files get rewritten.
       files: ["apps/web/src/auth/ui/**/*.{ts,tsx}"],
       rules: {
-        "typescript/prefer-nullish-coalescing": "off",
         "typescript/no-unsafe-type-assertion": "off",
         "typescript/no-unnecessary-type-assertion": "off",
         "typescript/no-unsafe-assignment": "off",

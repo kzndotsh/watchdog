@@ -3,6 +3,7 @@ import type { Session } from "better-auth";
 import Bowser from "bowser";
 import { LogOut, Monitor, Smartphone, X } from "lucide-react";
 
+import { firstNonEmpty } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
 import { toast } from "@/shared/ui/toast";
@@ -36,7 +37,7 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
   );
 
   const isCurrentSession = activeSession.token === session?.session.token;
-  const ua = Bowser.parse(activeSession.userAgent || "");
+  const ua = Bowser.parse(activeSession.userAgent ?? "");
   const isMobile =
     ua.platform.type === "mobile" || ua.platform.type === "tablet";
 
@@ -53,12 +54,12 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
 
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-medium">
-            {ua.browser.name || "Unknown Browser"}
+            {firstNonEmpty(ua.browser.name) ?? "Unknown Browser"}
             {ua.os.name ? `, ${ua.os.name}` : ""}
           </span>
 
           <span className="text-muted-foreground truncate text-xs">
-            {activeSession.ipAddress || "No IP"}
+            {firstNonEmpty(activeSession.ipAddress) ?? "No IP"}
           </span>
 
           {isCurrentSession ? (

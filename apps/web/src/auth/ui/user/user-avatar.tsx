@@ -5,7 +5,7 @@ import type { User } from "better-auth";
 import { User2 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn, firstNonEmpty } from "@/lib/utils";
 import {
   Avatar,
   AvatarFallback,
@@ -53,9 +53,11 @@ export function UserAvatar({
       | (User & { username?: string | null; displayUsername?: string | null })
       | undefined);
 
-  const initials = (
-    resolvedUser?.username ||
-    resolvedUser?.name ||
+  // A custom fallback counts only when truthy ("" / false / 0 fall through to initials).
+  const hasFallback = Boolean(fallback);
+  const initials = firstNonEmpty(
+    resolvedUser?.username,
+    resolvedUser?.name,
     resolvedUser?.email
   )
     ?.slice(0, 2)
@@ -70,15 +72,15 @@ export function UserAvatar({
     >
       <AvatarImage
         src={resolvedUser?.image ?? undefined}
-        alt={
-          resolvedUser?.displayUsername ||
-          resolvedUser?.name ||
+        alt={firstNonEmpty(
+          resolvedUser?.displayUsername,
+          resolvedUser?.name,
           resolvedUser?.email
-        }
+        )}
       />
 
       <AvatarFallback className="text-muted-foreground!">
-        {fallback || initials || <User2 className="size-4" />}
+        {hasFallback ? fallback : (initials ?? <User2 className="size-4" />)}
       </AvatarFallback>
     </Avatar>
   );

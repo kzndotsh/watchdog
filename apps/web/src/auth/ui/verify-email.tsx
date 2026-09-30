@@ -64,9 +64,10 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
   } = useAuth();
 
   const isHydrated = useIsHydrated();
-  const [email, setEmail] = useState(
-    (isHydrated && sessionStorage.getItem("better-auth-ui.verify-email")) || ""
-  );
+  const storedEmail = isHydrated
+    ? sessionStorage.getItem("better-auth-ui.verify-email")
+    : null;
+  const [email, setEmail] = useState(storedEmail ?? "");
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
 
   useEffect(() => {

@@ -47,7 +47,7 @@ export function ApiKeys({
     }
   );
 
-  const isPending = isPendingProp || isListPending;
+  const isPending = Boolean(isPendingProp) || isListPending;
 
   const [createOpen, setCreateOpen] = useState(false);
 

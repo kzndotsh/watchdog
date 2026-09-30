@@ -4,7 +4,7 @@ import { Camera, Trash2, Upload } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
 
 import { UserAvatar } from "@/auth/ui/user/user-avatar";
-import { cn, errMessage } from "@/lib/utils";
+import { cn, errMessage, firstNonEmpty } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
 import { Field } from "@watchdog/ui/components/field";
@@ -40,8 +40,8 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
       const resized =
         (await avatar.resize?.(file, avatar.size, avatar.extension)) || file;
 
-      const image =
-        (await avatar.upload?.(resized)) || (await fileToBase64(resized));
+      const uploaded = await avatar.upload?.(resized);
+      const image = firstNonEmpty(uploaded) ?? (await fileToBase64(resized));
 
       updateUser(
         { image },

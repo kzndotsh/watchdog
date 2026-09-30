@@ -6,6 +6,7 @@ import { Key, X } from "lucide-react";
 import { useState } from "react";
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
+import { firstNonEmpty } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { Card, CardContent } from "@watchdog/ui/components/card";
 
@@ -35,7 +36,7 @@ export function ApiKey({ apiKey, hideDelete, organizationId }: ApiKeyProps) {
 
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-sm leading-tight font-medium">
-            {apiKey.name || apiKeyLocalization.apiKey}
+            {firstNonEmpty(apiKey.name) ?? apiKeyLocalization.apiKey}
           </span>
 
           <span className="text-muted-foreground truncate font-mono text-xs">

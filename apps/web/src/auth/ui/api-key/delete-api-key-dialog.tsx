@@ -8,7 +8,7 @@ import { Key } from "lucide-react";
 import { useState } from "react";
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
-import { errMessage } from "@/lib/utils";
+import { errMessage, firstNonEmpty } from "@/lib/utils";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 
 export interface DeleteApiKeyDialogProps {
@@ -42,7 +42,8 @@ export function DeleteApiKeyDialog({
     }
   );
 
-  const phrase = apiKey.name?.trim() || apiKey.start || apiKey.id;
+  const phrase =
+    firstNonEmpty(apiKey.name?.trim(), apiKey.start, apiKey.id) ?? apiKey.id;
 
   return (
     <DestructiveConfirmDialog

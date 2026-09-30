@@ -16,6 +16,19 @@ export function nextAutoSlug(
   return stillAuto ? slugifyName(nextName) : null;
 }
 
+/**
+ * The first string with visible characters, or `undefined` if none. Use it for display
+ * fallbacks: unlike `??` it skips `""` (an unnamed API key, an empty IP), and unlike `||`
+ * it is explicit about strings only.
+ */
+export function firstNonEmpty(
+  ...values: readonly (string | null | undefined)[]
+): string | undefined {
+  return values.find(
+    (value): value is string => typeof value === "string" && value.trim() !== ""
+  );
+}
+
 /** A Better Auth / fetch error message, or `fallback` when it is missing or empty. */
 export function messageOr(
   message: string | null | undefined,

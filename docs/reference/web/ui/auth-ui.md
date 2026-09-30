@@ -11,7 +11,7 @@ Sign-in, sign-up, password reset, account / security settings, and API keys. Ser
 - deleted what this app never renders (additional fields, social providers, linked accounts),
 - added `PasswordStrengthMeter` and the `ErrorToaster` presentation routing from the registry.
 
-It is **formatted and linted like the rest of the app**. A few type-strictness and style rules are off for this folder only (`oxlint.config.ts`, the `auth/ui` override) because the upstream patterns trip them and their autofixes change behavior; drop entries as files get rewritten.
+It is **formatted and linted like the rest of the app**. A few type-strictness and style rules are off for this folder only (`oxlint.config.ts`, the `auth/ui` override) because the upstream patterns trip them and their autofixes change behavior; drop entries as files get rewritten. `||` fallbacks were audited rather than converted to `??`: empty strings must fall through (an unnamed API key, an empty IP, a blank name), so display fallbacks use `firstNonEmpty` from `@/lib/utils`, and `??` only where the operand can be nothing but `null` / `undefined`.
 
 ## What is ours (not in the registry)
 

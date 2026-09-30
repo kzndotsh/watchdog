@@ -12,6 +12,7 @@ import {
 import type { BetterFetchError } from "better-auth/react";
 import { useEffect } from "react";
 
+import { firstNonEmpty } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
 /**
@@ -63,7 +64,9 @@ export function ErrorToaster() {
 
       const err = error as BetterFetchError;
       if (err.error?.code === "EMAIL_NOT_VERIFIED") return;
-      toast.error(err.error?.message || err.message);
+      toast.error(
+        firstNonEmpty(err.error?.message, err.message) ?? err.message
+      );
     };
 
     return () => {
