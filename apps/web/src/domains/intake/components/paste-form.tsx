@@ -59,7 +59,9 @@ export function PasteForm({
             <Field>
               <FieldLabel>Content</FieldLabel>
               <Textarea
-                className="min-h-40 font-mono text-xs"
+                size="sm"
+                mono
+                className="min-h-40"
                 placeholder="Paste page text, tool output, notes…"
                 value={field.state.value}
                 onBlur={field.handleBlur}

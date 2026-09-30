@@ -98,7 +98,6 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
               autoFocus
               disabled={createForm.state.isSubmitting}
               aria-label="Entity name"
-              className="font-medium"
             />
           )}
         </createForm.Field>

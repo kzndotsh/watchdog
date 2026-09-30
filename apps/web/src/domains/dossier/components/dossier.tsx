@@ -164,7 +164,8 @@ function DossierForEntity({
               placeholder="Name…"
               disabled={renameMutation.isPending}
               prefix={<EntityKindGlyph kind={entity.kind} size="md" />}
-              className="focus-within:border-border focus-within:ring-ring/40 w-auto max-w-[min(28rem,50vw)] min-w-[6rem] focus-within:bg-transparent focus-within:ring-1 hover:bg-transparent dark:bg-transparent [&_input]:text-sm [&_input]:font-semibold [&_input]:tracking-tight"
+              variant="title"
+              className="w-auto max-w-[min(28rem,50vw)] min-w-[6rem]"
               onCommit={(next) => {
                 const name = next.trim();
                 if (!name) return false;
@@ -193,9 +194,8 @@ function DossierForEntity({
               <DossierExportMenu caseId={caseId} entitySlug={entity.slug} />
               <Button
                 type="button"
-                variant="outline"
+                variant="outline-destructive"
                 size="sm"
-                className="text-destructive hover:text-destructive gap-1.5"
                 onClick={() => {
                   setDeleteOpen(true);
                 }}

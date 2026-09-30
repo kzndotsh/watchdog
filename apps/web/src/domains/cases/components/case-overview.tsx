@@ -173,9 +173,8 @@ export function CaseOverview({ caseId }: { caseId: string }) {
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="outline-destructive"
               size="sm"
-              className="text-destructive"
               onClick={() => {
                 setDeleteOpen(true);
               }}

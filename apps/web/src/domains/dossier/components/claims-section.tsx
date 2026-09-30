@@ -406,13 +406,14 @@ function ClaimActionForm({
       >
         {(field) => (
           <Textarea
+            size="sm"
             placeholder={ACTION_PLACEHOLDERS[action]}
             value={field.state.value}
             onBlur={field.handleBlur}
             onChange={(e) => {
               field.handleChange(e.target.value);
             }}
-            className="min-h-12 text-xs"
+            className="min-h-12"
             autoFocus
           />
         )}

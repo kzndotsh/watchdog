@@ -184,9 +184,9 @@ function EvidenceEntityMeta({
       <WithTooltip content="Change entity" wrapSpan>
         <Button
           type="button"
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground -mr-1.5 size-6 px-0 hover:bg-transparent dark:hover:bg-transparent"
+          variant="ghost-muted"
+          size="icon-xs"
+          className="-mr-1.5"
           aria-label="Change entity"
           disabled={attaching}
           onClick={handleStartEdit}

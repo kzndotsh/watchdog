@@ -168,10 +168,11 @@ export function PlaybookSeedFields({
             <form.Field name="url">
               {(field) => (
                 <Input
+                  size="sm"
                   className={
                     layout === "stacked"
-                      ? "h-8 w-full text-xs"
-                      : "h-8 min-w-[10rem] flex-1 text-xs sm:max-w-xs"
+                      ? "h-8 w-full"
+                      : "h-8 min-w-[10rem] flex-1 sm:max-w-xs"
                   }
                   placeholder="Host or domain name"
                   value={field.state.value}
@@ -188,10 +189,12 @@ export function PlaybookSeedFields({
             <form.Field name="evidenceId">
               {(field) => (
                 <Input
+                  size="sm"
+                  mono
                   className={
                     layout === "stacked"
-                      ? "h-8 w-full font-mono text-xs"
-                      : "h-8 min-w-[12rem] flex-1 font-mono text-xs sm:max-w-xs"
+                      ? "h-8 w-full"
+                      : "h-8 min-w-[12rem] flex-1 sm:max-w-xs"
                   }
                   placeholder="Evidence id"
                   value={field.state.value}

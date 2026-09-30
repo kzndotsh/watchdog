@@ -174,13 +174,14 @@ function QuestionComposer({
         <form.Field name="note">
           {(field) => (
             <Textarea
+              size="sm"
               placeholder="What resolved this?"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              className="min-h-12 resize-y text-xs"
+              className="min-h-12 resize-y"
               onKeyDown={handleFieldKeyDown}
             />
           )}
@@ -270,13 +271,14 @@ function ResolveForm({
       <resolveForm.Field name="resolveNote">
         {(field) => (
           <Textarea
+            size="sm"
             placeholder="What resolved this?"
             value={field.state.value}
             onBlur={field.handleBlur}
             onChange={(e) => {
               field.handleChange(e.target.value);
             }}
-            className="min-h-12 text-xs"
+            className="min-h-12"
             autoFocus
           />
         )}

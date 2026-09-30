@@ -59,10 +59,6 @@ function parseWhenDate(value: string): Date | undefined {
   return isValid(parsed) ? parsed : undefined;
 }
 
-/** Ghost input — reads as timeline metadata, not a peer field box. */
-const metaInputClass =
-  "h-8 border-transparent bg-transparent px-1 shadow-none focus-visible:border-input focus-visible:bg-background focus-visible:ring-1";
-
 /**
  * Typeable when + calendar icon. Picking a day writes `YYYY-MM-DD`; free-text
  * fuzzy dates (`~2019`, `2019-03`) remain editable.
@@ -92,19 +88,17 @@ function WhenDateField({
           onChange(e.target.value);
         }}
         onKeyDown={onKeyDown}
-        className={cn(
-          metaInputClass,
-          "text-muted-foreground w-36 font-mono text-sm"
-        )}
+        variant="ghost-muted"
+        mono
+        className="h-8 w-36"
       />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           render={
             <Button
               type="button"
-              variant="ghost"
+              variant="ghost-muted"
               size="icon-sm"
-              className="text-muted-foreground"
               aria-label="Pick date"
             />
           }
@@ -208,7 +202,8 @@ function EventNodeComposer({
               field.handleChange(e.target.value);
             }}
             onKeyDown={onFieldKeyDown}
-            className="focus-visible:border-input focus-visible:bg-background h-9 border-transparent bg-transparent px-1 text-base shadow-none focus-visible:ring-1"
+            variant="ghost"
+            size="lg"
             autoFocus
           />
         )}
@@ -232,10 +227,8 @@ function EventNodeComposer({
                 field.handleChange(e.target.value);
               }}
               onKeyDown={onFieldKeyDown}
-              className={cn(
-                metaInputClass,
-                "text-muted-foreground min-w-0 flex-1 text-sm"
-              )}
+              variant="ghost-muted"
+              className="h-8 min-w-0 flex-1"
             />
           )}
         </form.Field>

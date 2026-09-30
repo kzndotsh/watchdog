@@ -176,7 +176,8 @@ export function TaskBoardColumn({
                 disabled={quickCreateBusy}
                 placeholder="Task title"
                 aria-label={`New ${taskStatusLabel(column)} task title`}
-                className="h-8 border-0 bg-transparent shadow-none focus-visible:ring-0"
+                variant="bare"
+                className="h-8"
                 onChange={(e) => {
                   setTitle(e.target.value);
                 }}

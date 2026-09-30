@@ -43,6 +43,8 @@ Button sizes: PageHeader / toolbar → `sm` (or default); Queue row / dense icon
 
 Callers place components (layout classes: margin, width, grid/flex placement) and pick a size or variant; they don't patch a component's spacing, type, color, or shape with `className`. If a caller needs a look the component lacks, add a variant to the primitive. Examples: `Button size="xs"` (not `size="sm"` + `h-6 text-xs`); `FieldSet` is borderless with `gap-3` by default (the base CSS already zeroes border and padding); `FieldGroup density="cozy"` (gap-3, forms) / `"compact"` (gap-2, toolbars and popovers) and `Field density="compact"` (gap-1.5) replace hand-set gaps; `Label` is already 12px, so `FieldLabel` needs no `text-xs`.
 
+Control variants: `Input` / `Textarea` take `size="sm"` (12px) and `mono`; `Input` also `size="lg"` (inline titles) and `variant="ghost"` / `"ghost-muted"` (inline metadata until focused) / `"bare"` (no chrome). `Button` adds `ghost-muted`, `ghost-destructive`, and `outline-destructive`. `EditableTextCell variant="title"` is the page-header rename. These live in the vendored shadcn files: re-apply after `shadcn add` overwrites `input.tsx`, `textarea.tsx`, `button.tsx`, or `field.tsx`.
+
 ## Gotchas
 
 - **`react-resizable-panels` v4 API**: `defaultSize`, `minSize`, `maxSize`: numbers = pixels, strings without units = percentages. Always use strings like `"34%"`. Vendor panel IDs must be unique per group: use `groupId` on `SplitView`. Do not put `autoSaveId` on the vendor wrapper (DOM warning).

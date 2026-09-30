@@ -96,6 +96,7 @@ export function BulkAddIdentifiersDialog({
           <Field density="compact">
             <FieldLabel htmlFor="bulk-add-identifiers-paste">Paste</FieldLabel>
             <Textarea
+              mono
               id="bulk-add-identifiers-paste"
               value={paste}
               onChange={(e) => {
@@ -105,7 +106,7 @@ export function BulkAddIdentifiersDialog({
               placeholder={
                 "name,email,phone,twitter\nAlice,ada@example.com,+15551212,ada"
               }
-              className="min-h-36 font-mono"
+              className="min-h-36"
               data-1p-ignore
               data-lpignore="true"
               autoComplete="off"

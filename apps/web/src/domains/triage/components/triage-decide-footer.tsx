@@ -192,13 +192,14 @@ function AcceptControls({
         <acceptForm.Field name="attestationText">
           {(field) => (
             <Textarea
+              size="sm"
               placeholder="Optional attestation note (creates Evidence on Accept)"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              className="min-h-10 w-full text-xs"
+              className="min-h-10 w-full"
             />
           )}
         </acceptForm.Field>
@@ -224,13 +225,14 @@ function RejectComposer({
       <rejectForm.Field name="rejectReason">
         {(field) => (
           <Textarea
+            size="sm"
             placeholder="Reject reason (optional)"
             value={field.state.value}
             onBlur={field.handleBlur}
             onChange={(e) => {
               field.handleChange(e.target.value);
             }}
-            className="min-h-10 text-xs"
+            className="min-h-10"
             autoFocus
           />
         )}

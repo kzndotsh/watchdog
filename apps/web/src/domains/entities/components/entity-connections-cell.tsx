@@ -352,9 +352,8 @@ export function EntityConnectionsCell({
                 {isEdit ? (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="ghost-destructive"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
                     disabled={busy}
                     aria-label={`Unlink ${entityDisplayLabel({
                       name: mode.peer.peerName,
