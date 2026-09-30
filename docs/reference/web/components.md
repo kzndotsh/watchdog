@@ -74,7 +74,6 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `SectionHeaderBar` | Title + count + trailing | Sections / day groups | Page headers | `Page` header | canonical | no | : |
 | `SectionLabel` | Small meta section label (normal case) | Field / meta captions · dossier section titles | Page titles | : | canonical | yes | meta |
 | `LoadingRegion` | Three-channel a11y wrapper (`aria-busy` + sr-only `role="status"` + `aria-hidden` skeleton subtree) | Inside `PendingRegion` / hand skeletons | Domains spelling `aria-busy` directly | : | canonical | no | [`loading-region.tsx`](../../../apps/web/src/shared/ui/loading-region.tsx) |
-| `RegionBoundary` | `QueryErrorResetBoundary` → `ErrorBoundary` → `Suspense`: error + pending in the same footprint | Every in-page data region (Collect/Triage split, Dashboard panels, …) | Route-level error for region failures | raw `Suspense` alone | canonical | no | [`region-boundary.tsx`](../../../apps/web/src/shared/ui/region-boundary.tsx) |
 | `PendingRegion` | `LoadingRegion` + hand skeleton `fallback` when `loading={true}`; live children when ready | Domain data-slot loading (boards, grids, stack, split queue/detail, case overview) | **`DataTable`** (use `pending`) · graph (hand `GraphCanvasLoadingRegion`) · static chrome | hand skeletons in `skeletons.tsx` as `fallback` | canonical | no | [`pending-region.tsx`](../../../apps/web/src/shared/ui/pending-region.tsx) |
 | `QueueSkeleton` | Queue-row skeleton | `PendingRegion` fallback · `/ui` specimen | Full page chrome · stack tabs | : | canonical | yes | : |
 | `StackBodySkeleton` | Hand stack/tab skeleton | `PendingRegion` / `stackPendingFallback()` fallback · Settings Suspense | Primary stack pending (use `PendingRegion`) | `stackPendingFallback()` | canonical | yes | : |
@@ -101,8 +100,8 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `PageHeader` / `AppBreadcrumbs` | Sticky inset bar; trail is identity (`page-trail.ts`); `count=` + `countOn=` = `TabCount` | Every inset page | Second AppShell header; Detail slash-paths; `/ N entities` copy | Detail headers keep their own crumbs |
 | `PageToolbar` | leading/center/trailing strip under `PageHeader` | Page / queue toolbars | Detail headers | `DetailHeader` |
 | `PageFilterMenu` / `PageFilterChip` | Filter popover + chips | Queue / table toolbars | Search alone | `SearchField` |
-| `RoutePending` | Shared `pendingComponent` (`queue` \| `stack`) with `PendingRegion`; trail still paints | `defaultPendingComponent` floor · future `ssr:false` routes (`// ds:allow-route-pending`) | Shell-first data pages (Collect, tables, …): in-page `RegionBoundary` / `PendingRegion` instead | `DefaultRoutePendingShell` (`RoutePendingSkeletonLayout`) · `stackPendingFallback()` |
-| `RouteError` | Shared `defaultErrorComponent` + per-route override; **Retry** via `router.invalidate()` | Route / layout errors | Inline field errors | `FetchErrorAlert` in `RegionBoundary` |
+| `RoutePending` | Shared `pendingComponent` (`queue` \| `stack`) with `PendingRegion`; trail still paints | `defaultPendingComponent` floor · future `ssr:false` routes (`// ds:allow-route-pending`) | Shell-first data pages (Collect, tables, …): in-page `PendingRegion` instead | `DefaultRoutePendingShell` (`RoutePendingSkeletonLayout`) · `stackPendingFallback()` |
+| `RouteError` | Shared `defaultErrorComponent` + per-route override; **Retry** via `router.invalidate()` | Route / layout errors | Inline field errors | `FetchErrorAlert` (region errors) |
 
 ---
 
@@ -133,7 +132,7 @@ Fictional tokens (`probable`, `active`/`dormant`/`merged`, vault kinds, `--sever
 
 | Rule | Implementation |
 | --- | --- |
-| Static shell never skeleton | Domain owns `<Page>` + `PageHeader`; data slot = `RegionBoundary` + `PendingRegion` / hand fallback (`QueueSkeleton`, `BoardSkeleton`, …) or **`DataTable` `pending`** for tables: see [`loading.md`](ui/loading.md) · [`tables.md`](ui/tables.md) |
+| Static shell never skeleton | Domain owns `<Page>` + `PageHeader`; data slot = `PendingRegion` / hand fallback (`QueueSkeleton`, `BoardSkeleton`, …) or **`DataTable` `pending`** for tables: see [`loading.md`](ui/loading.md) · [`tables.md`](ui/tables.md) |
 | Detail fetch wait | `InlineLoading` on buttons / artifact panels: never `DetailEmpty` for fetch |
 | Stack tab / panel first load | Generic stack: `ActiveTabBody` → `stackPendingFallback()`. Dossier tabs: hand `LoadingRegion` + `*SkeletonLayout` except tasks (`BoardSkeleton`); Case Overview → `CaseOverviewPending`: never "Loading…" copy in data slots |
 | Dashboard live data | `useLiveEvents` on Dashboard for jobs + proposals + tasks |

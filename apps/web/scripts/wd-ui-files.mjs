@@ -28,7 +28,6 @@ export const WD_UI_FILES = [
   "src/shared/ui/evidence-detail-skeleton.tsx",
   "src/shared/ui/external-url.tsx",
   "src/shared/ui/fetch-error-alert.tsx",
-  "src/shared/ui/region-boundary.tsx",
   "src/shared/ui/field-combobox.tsx",
   "src/shared/ui/field-select.tsx",
   "src/shared/ui/field-message.tsx",

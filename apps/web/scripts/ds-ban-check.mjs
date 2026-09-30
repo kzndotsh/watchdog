@@ -355,7 +355,7 @@ for (const f of walk(path.join(src, "routes"))) {
 }
 for (const hit of routePendingHits) {
   fail(
-    `RoutePending import in routes/ — shell-first: in-page RegionBoundary + shape skeleton in the data slot instead. Exception: routes with ssr:false or ssr:'data-only' need pendingComponent (or defaultPendingComponent); use // ds:allow-route-pending — reason: ${hit}`
+    `RoutePending import in routes/ — shell-first: in-page PendingRegion + shape skeleton in the data slot instead. Exception: routes with ssr:false or ssr:'data-only' need pendingComponent (or defaultPendingComponent); use // ds:allow-route-pending — reason: ${hit}`
   );
 }
 if (routePendingHits.length === 0) {
