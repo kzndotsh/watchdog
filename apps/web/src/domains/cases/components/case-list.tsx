@@ -37,13 +37,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
-import { Input } from "@/shared/ui/primitives/input";
-import { Textarea } from "@/shared/ui/primitives/textarea";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
 import { CardGridSkeleton } from "@/shared/ui/skeletons";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 import { Spinner } from "@watchdog/ui/components/spinner";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 function CaseCard({
   caseRow,

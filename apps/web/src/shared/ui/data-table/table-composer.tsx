@@ -3,8 +3,8 @@ import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
-import { Input } from "@/shared/ui/primitives/input";
 import { WithTooltip } from "@/shared/ui/timestamp";
+import { Input } from "@watchdog/ui/components/input";
 import { TableCell, TableRow } from "@watchdog/ui/components/table";
 
 const TABLE_COMPOSER_INPUT_CLASS =

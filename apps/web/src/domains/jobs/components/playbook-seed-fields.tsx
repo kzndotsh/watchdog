@@ -4,8 +4,8 @@ import type { PlaybookSeedView } from "@/domains/jobs/lib/playbook-seed-view";
 import { cn } from "@/lib/utils";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { Input } from "@/shared/ui/primitives/input";
 import { trimmedOrUndefined, type PlaybookSeedKind } from "@watchdog/schemas";
+import { Input } from "@watchdog/ui/components/input";
 
 export interface UrlDumpOption {
   id: string;
@@ -188,11 +188,10 @@ export function PlaybookSeedFields({
             <form.Field name="evidenceId">
               {(field) => (
                 <Input
-                  mono
                   className={
                     layout === "stacked"
-                      ? "h-8 w-full"
-                      : "h-8 min-w-[12rem] flex-1 sm:max-w-xs"
+                      ? "h-8 w-full font-mono"
+                      : "h-8 min-w-[12rem] flex-1 font-mono sm:max-w-xs"
                   }
                   placeholder="Evidence id"
                   value={field.state.value}

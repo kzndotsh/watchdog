@@ -27,11 +27,11 @@ import {
   EvidenceSlotSkeleton,
 } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
-import { Textarea } from "@/shared/ui/primitives/textarea";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Kbd } from "@watchdog/ui/components/kbd";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 /** Inline shortcut hint inside a Button: inherits the button's ink. */
 const BUTTON_KBD_CLASS = "-mr-0.5 ml-0.5 h-4 min-w-4";

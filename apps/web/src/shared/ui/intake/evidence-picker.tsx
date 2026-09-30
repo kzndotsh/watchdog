@@ -11,10 +11,10 @@ import {
   evidenceMatchesPickerFilter,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
-import { Input } from "@/shared/ui/primitives/input";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
+import { Input } from "@watchdog/ui/components/input";
 import {
   Popover,
   PopoverContent,

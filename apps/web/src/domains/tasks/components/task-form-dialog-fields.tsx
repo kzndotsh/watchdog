@@ -1,14 +1,14 @@
 import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog-form";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { Input } from "@/shared/ui/primitives/input";
-import { Textarea } from "@/shared/ui/primitives/textarea";
 import { TASK_PRIORITY_OPTIONS, TASK_STATUS_OPTIONS } from "@/shared/ui/vocab";
 import {
   trimmedTaskPrioritySchema,
   trimmedTaskStatusSchema,
 } from "@watchdog/schemas";
 import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 export function TaskFormFields({
   form,

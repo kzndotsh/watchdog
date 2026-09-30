@@ -1,7 +1,6 @@
 import type { ConnectionComposerValues } from "@/domains/entities/lib/connection-composer";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
-import { Input } from "@/shared/ui/primitives/input";
 import {
   clampEdgePhrase,
   edgePhraseOptionsForPeers,
@@ -14,6 +13,7 @@ import {
 import type { EntityKind } from "@watchdog/schemas";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 interface Props {
   centerKind: EntityKind;

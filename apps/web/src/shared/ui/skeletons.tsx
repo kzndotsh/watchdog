@@ -29,8 +29,6 @@ import {
   GRAPH_CANVAS_EMBED_SHELL_CLASS,
   GraphCanvasLoadingRegion,
 } from "@/shared/ui/graph/graph-canvas-skeleton";
-import { Input } from "@/shared/ui/primitives/input";
-import { Textarea } from "@/shared/ui/primitives/textarea";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
 import { QueueRowMeta, QueueRowTitle } from "@/shared/ui/queue-row";
 import { SectionLabel } from "@/shared/ui/section-label";
@@ -46,8 +44,10 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 import { Switch } from "@watchdog/ui/components/switch";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 export {
   TASK_BOARD_COLUMN_SHELL_CLASS,

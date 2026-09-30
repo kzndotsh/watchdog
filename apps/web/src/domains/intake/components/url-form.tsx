@@ -3,13 +3,13 @@ import type { SubmitEvent } from "react";
 
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { Button } from "@/shared/ui/primitives/button";
-import { Input } from "@/shared/ui/primitives/input";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 export interface UrlFormProps {
   disabled: boolean;

@@ -33,7 +33,7 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | --- | --- | --- | --- |
 | `FieldSelect` / `Select`, never a native `<select>` | Two select stacks | Keep (the vendored `native-select` is gone, so nothing to ban) | review |
 | Vendored primitives are never hand-edited; Watchdog behavior goes in a `primitives` wrapper or tokens (`check:vendor`) | Every `shadcn add`, codemod, or preset change becoming a merge conflict; agents quietly patching primitives | **New** | vendor lock |
-| A component with a Watchdog wrapper is imported from `shared/ui/primitives`, never from `@watchdog/ui` (the ban list follows the folder) | Silently skipping `loading`, Enter-to-confirm, `mono` | **New** | lint |
+| A component with a Watchdog wrapper is imported from `shared/ui/primitives`, never from `@watchdog/ui` (the ban list follows the folder) | Silently skipping `loading`, Enter-to-confirm, the warning tone | **New** | lint |
 | `@theme` sizes and vanilla type classes, no `text-[Npx]` or other off-scale arbitrary values | One-off sizes and tracking that drift from the scale | Keep, **moved to lint** (`no-arbitrary-values`, layout values allowed) | lint |
 | Every Tailwind class must generate CSS (`no-unknown-classes`) | Typos and removed utilities failing silently (`hovr:flex`, a deleted `text-label-sm`) | **New** | lint |
 | `wd-ui-files.mjs` manifest + `/ui` fixtures for required atoms | Undocumented atoms | **Dropped**: `knip` finds dead files; `components.md` and `/ui` are documentation, not gates | — |
@@ -43,7 +43,7 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | `shared/layout/section-label.tsx` re-export check | — (file deleted) | **Dropped** | — |
 | `components.md` presence check | — (link checks already fail on a missing target) | **Dropped** | — |
 | Docs-affect `routes/**` → `scenarios.md` strict | Every route import edit needing a scenarios touch | **Downgraded to warn** | check:docs-affected |
-| Callers place components (layout, truncate) and pick a size or variant; no class patches to spacing, type, color, or shape (`no-restyle`) | Every screen re-deciding density: 140 hand-patched sites before the cleanup | **New** | lint |
+| Callers place components (layout, truncate) and pick a size or variant; no class patches to spacing, type, color, or shape (`no-restyle`; `font-mono` is allowed on Input / Textarea for code-like values) | Every screen re-deciding density: 140 hand-patched sites before the cleanup | **New** | lint |
 | Source files ≤ 600 lines (baseline may only shrink) | Files too long to review or hand to an agent | **New** | check:size |
 
 ## Taste

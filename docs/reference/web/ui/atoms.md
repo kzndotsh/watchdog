@@ -49,7 +49,6 @@ Callers place components (layout classes, `truncate`) and pick a size or variant
 | --- | --- |
 | `button` | `loading` spinner + disable; `data-variant` / `data-size` / `data-loading` hooks (dialog Enter-to-confirm and coarse-pointer sizing key on them) |
 | `dialog`, `alert-dialog` | Enter confirms the default action (`enterConfirms`); `AlertDialogAction` runs on our Button so it can show `loading` |
-| `input`, `textarea` | `mono` (ids, hashes, paths) |
 | `combobox` | `ComboboxInput tone="warning"` (data leaves the machine) |
 
 Anything that is only a different look is not a wrapper: use the stock component, or a CSS token if it should change everywhere. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`toast` helpers, `QueueRow`, `StatusDot`, `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`).

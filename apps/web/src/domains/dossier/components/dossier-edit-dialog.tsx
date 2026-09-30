@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
-import { Input } from "@/shared/ui/primitives/input";
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import { trimmedEntityKindSchema, type EntityKind } from "@watchdog/schemas";
@@ -21,6 +20,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 export interface DossierEditFormValues {
   name: string;

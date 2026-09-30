@@ -13,7 +13,7 @@ import { toast } from "@/shared/ui/toast"
 import { Button } from "@/shared/ui/primitives/button"
 import { Field, FieldError } from "@watchdog/ui/components/field"
 import { FormSection } from "@/shared/ui/form-section"
-import { Input } from "@/shared/ui/primitives/input"
+import { Input } from "@watchdog/ui/components/input"
 import {
   InputGroup,
   InputGroupAddon,

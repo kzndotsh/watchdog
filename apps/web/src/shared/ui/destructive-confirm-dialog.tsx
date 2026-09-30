@@ -10,8 +10,8 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { Input } from "@/shared/ui/primitives/input";
 import { Field, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 /**
  * Type-to-confirm destructive dialog. Presentational — caller owns open + onConfirm.

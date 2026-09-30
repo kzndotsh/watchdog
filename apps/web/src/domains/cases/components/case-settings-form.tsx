@@ -10,8 +10,6 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
-import { Input } from "@/shared/ui/primitives/input";
-import { Textarea } from "@/shared/ui/primitives/textarea";
 import { toast } from "@/shared/ui/toast";
 import {
   Field,
@@ -20,7 +18,9 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 import { Switch } from "@watchdog/ui/components/switch";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 interface CaseSettingsFormProps {
   caseId: string;

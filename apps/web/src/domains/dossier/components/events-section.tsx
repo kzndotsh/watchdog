@@ -28,13 +28,13 @@ import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FieldMessage } from "@/shared/ui/field-message";
 import { Button } from "@/shared/ui/primitives/button";
-import { Input } from "@/shared/ui/primitives/input";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import { toast } from "@/shared/ui/toast";
 import { Calendar } from "@watchdog/ui/components/calendar";
 import { FieldError } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 import {
   Popover,
   PopoverContent,
@@ -90,8 +90,7 @@ function WhenDateField({
           onChange(e.target.value);
         }}
         onKeyDown={onKeyDown}
-        mono
-        className="h-8 w-36"
+        className="h-8 w-36 font-mono"
       />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger

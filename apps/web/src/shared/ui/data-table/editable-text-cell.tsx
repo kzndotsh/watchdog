@@ -3,7 +3,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { CONTROL_CELL } from "@/shared/ui/control-chrome";
-import { Input } from "@/shared/ui/primitives/input";
+import { Input } from "@watchdog/ui/components/input";
 
 interface Props {
   value: string;

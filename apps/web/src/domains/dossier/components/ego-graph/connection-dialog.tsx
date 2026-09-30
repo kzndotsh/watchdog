@@ -22,7 +22,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
-import { Input } from "@/shared/ui/primitives/input";
 import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
   EDGE_PREDICATE_META,
@@ -47,6 +46,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 export interface ConnectionPeerOption {
   id: string;

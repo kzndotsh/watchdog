@@ -7,7 +7,7 @@ This page defines how shadcn primitives are vendored, locked, updated, and wrapp
 | Layer | Path | Owns | Edit? |
 | --- | --- | --- | --- |
 | Primitives | `packages/ui` (`@watchdog/ui`) | shadcn `base-mira` components + `use-mobile`, exactly as the CLI writes them | **Never by hand** |
-| Wrappers | `apps/web/src/shared/ui/primitives/` | Same-name wrappers where a behavior must apply everywhere (Button, Dialog, AlertDialog, Combobox, Input, Textarea) | Yes |
+| Wrappers | `apps/web/src/shared/ui/primitives/` | Same-name wrappers where a behavior must apply everywhere (Button, Dialog, AlertDialog, Combobox) | Yes |
 | Atoms | `apps/web/src/shared/ui/` | `QueueRow`, `SplitView`, status glyphs, data-table kit, `toast`, … (own names) | Yes |
 | Tokens / CSS | `apps/web/src/styles*` | Color, radius ladder, type scale, focus chrome (`data-slot` overrides) | Yes |
 

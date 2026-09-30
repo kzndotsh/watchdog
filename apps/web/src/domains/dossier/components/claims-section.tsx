@@ -46,13 +46,13 @@ import { FieldMessage } from "@/shared/ui/field-message";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
-import { Textarea } from "@/shared/ui/primitives/textarea";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { toast } from "@/shared/ui/toast";
 import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";
 import type { RetractKind } from "@watchdog/schemas";
 import { FieldError } from "@watchdog/ui/components/field";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 type ClaimAction = ClaimRowActionKind;
 type ActionState = { claimId: string; action: ClaimAction } | null;

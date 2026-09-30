@@ -10,12 +10,12 @@ import {
 import { frozenSortingStrategy } from "@/domains/tasks/lib/task-board-dnd";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
 import { Button } from "@/shared/ui/primitives/button";
-import { Input } from "@/shared/ui/primitives/input";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TASK_BOARD_COLUMN_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 import { taskStatusLabel } from "@/shared/ui/vocab";
 import type { TaskStatus } from "@watchdog/schemas";
+import { Input } from "@watchdog/ui/components/input";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 interface Props {

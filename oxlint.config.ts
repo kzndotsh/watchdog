@@ -735,7 +735,19 @@ export default defineConfig({
         "apps/web/src/routes/**/*.{ts,tsx}",
       ],
       rules: {
-        "shadcn/no-restyle": ["error", { allow: ["layout", "truncate"] }],
+        "shadcn/no-restyle": [
+          "error",
+          {
+            allow: ["layout", "truncate"],
+            // Code-like values (ids, timestamps, pasted handles) render monospace.
+            contracts: [
+              {
+                pattern: "^(Input|Textarea)$",
+                allow: ["layout", "truncate", "font-mono"],
+              },
+            ],
+          },
+        ],
       },
     },
     {

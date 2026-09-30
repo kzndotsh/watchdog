@@ -16,7 +16,7 @@ import {
   FieldGroup,
   FieldSeparator
 } from "@watchdog/ui/components/field"
-import { Input } from "@/shared/ui/primitives/input"
+import { Input } from "@watchdog/ui/components/input"
 import {
   InputGroup,
   InputGroupAddon,

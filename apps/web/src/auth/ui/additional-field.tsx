@@ -28,7 +28,7 @@ import {
   FieldError,
   FieldLabel
 } from "@watchdog/ui/components/field"
-import { Input } from "@/shared/ui/primitives/input"
+import { Input } from "@watchdog/ui/components/input"
 import {
   InputGroup,
   InputGroupAddon,
@@ -50,7 +50,7 @@ import {
 } from "@watchdog/ui/components/select"
 import { Slider } from "@watchdog/ui/components/slider"
 import { Switch } from "@watchdog/ui/components/switch"
-import { Textarea } from "@/shared/ui/primitives/textarea"
+import { Textarea } from "@watchdog/ui/components/textarea"
 import { cn } from "@/lib/utils"
 
 export type AdditionalFieldProps = {

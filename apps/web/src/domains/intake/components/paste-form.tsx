@@ -3,14 +3,14 @@ import type { SubmitEvent } from "react";
 
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { Button } from "@/shared/ui/primitives/button";
-import { Input } from "@/shared/ui/primitives/input";
-import { Textarea } from "@/shared/ui/primitives/textarea";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 export interface PasteFormProps {
   disabled: boolean;
@@ -66,8 +66,7 @@ export function PasteForm({
               <FieldLabel>Content</FieldLabel>
               <Textarea
                 aria-invalid={fieldInvalid(field.state.meta)}
-                mono
-                className="min-h-40"
+                className="min-h-40 font-mono"
                 placeholder="Paste page text, tool output, notes…"
                 value={field.state.value}
                 onBlur={field.handleBlur}

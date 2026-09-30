@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@watchdog/ui/components/card";
 import { Field, FieldGroup } from "@watchdog/ui/components/field";
-import { Input } from "@/shared/ui/primitives/input";
+import { Input } from "@watchdog/ui/components/input";
 import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
 import { listPending } from "@/shared/lib/list-pending";
