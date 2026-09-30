@@ -35,7 +35,7 @@ Domain code imports primitives from `@/shared/ui/shadcn/*`. oxlint bans `@watchd
 ## Gotchas
 
 - Run the CLI as `pnpm dlx shadcn@latest`. The repo's `zod` override breaks the locally installed `shadcn` binary (`o.deepPartial is not a function`).
-- Upstream components import `cn` from the `cn` package directly, not from `@/lib/utils`. Our `cn` (which knows the type roles) is used by atoms and wrappers; primitives use stock `cn`, which reads `text-label-*` roles as text **colors**. Keep type roles out of `className` passed into primitives (`no-restyle` enforces this).
+- Upstream components import `cn` from the `cn` package directly, not from `@/lib/utils`. Our `cn` (`createCn` from `cn/config`, extended with the type roles; replaces `clsx` + `tailwind-merge`) is used by atoms and wrappers; primitives use stock `cn`, which reads `text-label-*` roles as text **colors** (`cn("text-muted-foreground", "text-label-mono-sm")` drops the color). Keep type roles out of `className` passed into primitives (`no-restyle` enforces this).
 - `apps/web` tsconfig has `noUnusedLocals` off: upstream files pulled into its program carry unused `React` imports. oxlint `no-unused-vars` covers our own code.
 - `apps/web/components.json` mirrors `packages/ui/components.json` (`style`, `iconLibrary`, `baseColor`). Run `add` from `packages/ui`.
 - Presets: switching `base-mira` → another style is `components.json` `style` + `pnpm ui:sync`; wrappers written against upstream props are the only code that can break.

@@ -89,4 +89,4 @@ No nested cards, decorative colored side borders (a thin state bar on a live row
 | `text-label-meta` / `text-meta` / `text-label-mono-sm` | `text-2xs` | 0.8125 | 13 |
 | `text-label-meta-sm` / `text-chip` | `text-xs` | 0.75 | 12 |
 
-`@shadcn/lint` `no-arbitrary-values` bans `text-[Npx]` / `text-[Nrem]` (and other off-scale values: use a theme token or add one, e.g. `tracking-eyebrow`); escape with `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason`. New role names: register in `lib/utils.ts` twMerge `font-size` group. **Input** uses `text-sm` (iOS zoom floor).
+`@shadcn/lint` `no-arbitrary-values` bans `text-[Npx]` / `text-[Nrem]` (and other off-scale values: use a theme token or add one, e.g. `tracking-eyebrow`); escape with `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason`. New role names: register in the `lib/utils.ts` `createCn` `font-size` group (`cn/config`). **Input** uses `text-sm` (iOS zoom floor).

@@ -1,14 +1,15 @@
-import { clsx, type ClassValue } from "clsx";
-import { extendTailwindMerge } from "tailwind-merge";
+import { createCn } from "cn/config";
 
 import { slugifyName as schemaSlugifyName } from "@watchdog/schemas";
 
 /**
  * Type-role utilities (`text-label-mono-sm`, `text-chip`, …) must live in the
- * font-size group — otherwise twMerge treats them as text-color and strips them
+ * font-size group — otherwise cn treats them as text-color and strips them
  * when paired with `text-muted-foreground` (QueueRowMeta looked body-sized).
+ * Used by atoms and facade wrappers; vendored primitives use stock `cn`, so keep
+ * type roles out of `className` passed into them (see ui/vendor.md).
  */
-const twMerge = extendTailwindMerge({
+export const cn = createCn({
   extend: {
     classGroups: {
       "font-size": [
@@ -33,10 +34,6 @@ const twMerge = extendTailwindMerge({
     },
   },
 });
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export function slugifyName(name: string): string {
   return schemaSlugifyName(name);
