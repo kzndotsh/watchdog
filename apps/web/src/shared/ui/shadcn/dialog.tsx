@@ -8,6 +8,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/shadcn/button";
+import { handleDialogEnter } from "@/shared/lib/dialog-default-action";
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -45,9 +46,13 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  enterConfirms = true,
+  onKeyDown,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
+  /** Watchdog: Enter clicks the default action (see dialog-default-action.ts). */
+  enterConfirms?: boolean;
 }) {
   return (
     <DialogPortal>
@@ -58,6 +63,10 @@ function DialogContent({
           "bg-card text-card-foreground border-border fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-1.5rem)] -translate-x-1/2 -translate-y-1/2 gap-3 rounded-md border p-3 text-sm shadow-lg outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 duration-(--duration-panel) sm:max-w-md",
           className
         )}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          if (enterConfirms) handleDialogEnter(event);
+        }}
         {...props}
       >
         {children}

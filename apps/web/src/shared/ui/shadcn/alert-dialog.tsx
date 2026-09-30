@@ -6,6 +6,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/shadcn/button";
+import { handleDialogEnter } from "@/shared/lib/dialog-default-action";
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -42,9 +43,13 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   size = "default",
+  enterConfirms = true,
+  onKeyDown,
   ...props
 }: AlertDialogPrimitive.Popup.Props & {
   size?: "default" | "sm";
+  /** Watchdog: Enter clicks the default action (see dialog-default-action.ts). */
+  enterConfirms?: boolean;
 }) {
   return (
     <AlertDialogPortal>
@@ -56,6 +61,10 @@ function AlertDialogContent({
           "group/alert-dialog-content bg-popover text-popover-foreground ring-foreground/10 fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg p-4 ring-1 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm",
           className
         )}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          if (enterConfirms) handleDialogEnter(event);
+        }}
         {...props}
       />
     </AlertDialogPortal>

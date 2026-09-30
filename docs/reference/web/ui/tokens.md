@@ -44,6 +44,8 @@ Vendored shadcn overlays live in `shared/ui/shadcn/`. **Dialog** is Watchdog-cus
 | **Popover** | Filters, compact pickers, table cells | Dense `p-2.5`; set `modal` when clicks must not pass through rows |
 | **Toast** (`toast.tsx`) | Transient mutation OK/fail, copy confirmations | Base UI stack; `rounded-md`; neutral `bg-card` panel + icon chip (`status-*-bg` / `status-*-fg`); body stays `foreground` / `muted-foreground`; close on every toast; mount `<Toaster />` in root layout |
 
+**Enter confirms** (`shared/lib/dialog-default-action.ts`, wired into `DialogContent` + `AlertDialogContent`): Enter clicks `[data-dialog-default-action]`, else the AlertDialog action, else the single enabled primary/destructive footer `Button` (`data-variant`). Native Enter wins inside `<form>`, on buttons/links, comboboxes, menus, textareas (Mod+Enter confirms from a textarea), and during IME composition. Two primaries → no default. Opt out with `enterConfirms={false}`. Re-apply after `shadcn add` overwrites `dialog.tsx` / `alert-dialog.tsx` / `button.tsx`.
+
 Pick **Dialog** over **AlertDialog** when the user may dismiss via backdrop or close, or when the body is a real form. Pick **AlertDialog** when the flow must stay focused until an explicit action.
 
 Bind to **semantic** tokens only. `--wd-*` ramps define those semantics.
