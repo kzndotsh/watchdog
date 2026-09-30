@@ -1,8 +1,8 @@
 # Components: hand-owned atom registry
 
-This registry documents the hand-owned `src/shared/ui/` atoms, not `shadcn/`. Page chrome (`PageToolbar`, `PageFilterMenu`, `RoutePending`, `RouteError`) is in `shared/layout/`; see the section below. Domain composites such as `EvidencePicker` can appear with status **domain**, but are not in `wd-ui-files.mjs`. It does not cover the brand brief ([`tokens.md`](ui/tokens.md)), product IA (`docs/explanation/ux.md`), or Storybook.
+This registry documents the hand-owned `src/shared/ui/` atoms, not `shadcn/`. Page chrome (`PageToolbar`, `PageFilterMenu`, `RoutePending`, `RouteError`) is in `shared/layout/`; see the section below. It does not cover the brand brief ([`tokens.md`](ui/tokens.md)), product IA (`docs/explanation/ux.md`), or Storybook.
 
-The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundations · Atoms). Gates: `pnpm ds:check`. Manifest: `scripts/wd-ui-files.mjs`. New atoms: `node scripts/new-atom-checklist.mjs`.
+The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundations · Atoms). Gates: `pnpm ds:check`.
 
 **A new atom is complete when** it has a registry row, a `/ui` specimen, semantic-class tokens, no I/O, a justified second call site, and a passing checklist.
 
@@ -92,7 +92,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `DataTableAddRow` / `TableComposerInput` | Dashed append-row create chrome | Entity / identifier tables | Page composers · Cases New Case dialog | `ComposerShell` | canonical | no | : |
 | `vocab/*` | Exhaustive label+tone maps | All enum display | Schemas package | : | canonical | via badges | domain |
 
-### Page chrome (`shared/layout/`: not in `wd-ui-files.mjs`)
+### Page chrome (`shared/layout/`)
 
 | Piece | Purpose | Use when | Do not use when | Alternative |
 | --- | --- | --- | --- | --- |
@@ -144,16 +144,6 @@ Fictional tokens (`probable`, `active`/`dormant`/`merged`, vault kinds, `--sever
 
 ## Enforcement
 
-`scripts/ds-ban-check.mjs` enforces:
-
-- Bidirectional `wd-ui-files.mjs` ↔ `shared/ui` (excl. `shadcn/` and `__tests__/`)
-- Required `/ui` fixture atoms
-- Freestyle palette across all `src/`
-- Opaque-id `.slice` across all domains
-- Fictional vocab literals
-- Loading doctrine bans (RoutePending in routes, shadcn/skeleton in domains, animate-pulse / aria-busy outside shared/ui, loader `Promise.all`): see [`loading.md`](ui/loading.md)
-- `COMPONENTS.md` present
+`scripts/ds-ban-check.mjs` enforces only what a linter can't: opaque-id `.slice`, gradients/glass (refuse list) and banned surface names. Class checks, wrapper imports and the RoutePending/Skeleton import bans live in oxlint (see [`rules.md`](ui/rules.md)).
 
 Stop hook (`.cursor/hooks/stop-gate.mjs`) lint-checks files changed this turn and runs `ds:ban` when web UI paths are dirty; pre-push owns the full typecheck.
-
-New atoms: `node scripts/new-atom-checklist.mjs <Name> <file>`.

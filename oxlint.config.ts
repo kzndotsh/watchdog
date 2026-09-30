@@ -96,6 +96,27 @@ const watchdogIgnores = [
   "repos/**",
 ];
 
+/** `no-restricted-imports` options for web code; `extra` adds patterns for narrower trees. */
+const webImportRestrictions = (
+  extra: { group: string[]; message: string }[]
+) => ({
+  paths: [
+    {
+      name: "@watchdog/db",
+      message:
+        "ServerFns call oRPC (@watchdog/api) → core → repos. Only auth/server.ts and routes/api/events.ts may import @watchdog/db.",
+    },
+  ],
+  patterns: [
+    {
+      group: wrappedImportBans,
+      message:
+        "This primitive has a Watchdog wrapper: import it from @/shared/ui/primitives/<name> (loading, Enter-to-confirm, mono, ...).",
+    },
+    ...extra,
+  ],
+});
+
 export default defineConfig({
   extends: [core, react, tanstack, effecttsgoRecommended],
   ignorePatterns: [...(core.ignorePatterns ?? []), ...watchdogIgnores],
@@ -327,24 +348,31 @@ export default defineConfig({
       // Watchdog wrapper (not the vanilla @watchdog/ui primitive) wherever one exists.
       files: ["apps/web/src/**/*.{ts,tsx}"],
       rules: {
+        "eslint/no-restricted-imports": ["error", webImportRestrictions([])],
+      },
+    },
+    {
+      // Loading doctrine (docs/reference/web/ui/loading.md): pages own their pending surface
+      // with PendingRegion + shape skeletons; the route-level shell is the router's floor.
+      files: [
+        "apps/web/src/domains/**/*.{ts,tsx}",
+        "apps/web/src/routes/**/*.{ts,tsx}",
+      ],
+      rules: {
         "eslint/no-restricted-imports": [
           "error",
-          {
-            paths: [
-              {
-                name: "@watchdog/db",
-                message:
-                  "ServerFns call oRPC (@watchdog/api) → core → repos. Only auth/server.ts and routes/api/events.ts may import @watchdog/db.",
-              },
-            ],
-            patterns: [
-              {
-                group: wrappedImportBans,
-                message:
-                  "This primitive has a Watchdog wrapper: import it from @/shared/ui/primitives/<name> (loading, Enter-to-confirm, mono, ...).",
-              },
-            ],
-          },
+          webImportRestrictions([
+            {
+              group: ["@watchdog/ui/components/skeleton"],
+              message:
+                "Use the shape skeletons in @/shared/ui/skeletons (they own layout parity), not a raw Skeleton.",
+            },
+            {
+              group: ["@/shared/layout/route-pending"],
+              message:
+                "Shell-first: use an in-page PendingRegion + shape skeleton. RoutePending is the router's defaultPendingComponent floor only.",
+            },
+          ]),
         ],
       },
     },

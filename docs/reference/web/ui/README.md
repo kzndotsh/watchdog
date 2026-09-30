@@ -9,7 +9,6 @@ Build new foundations and atoms on `/ui` before adding chrome to live product pa
 | Gate | Command |
 | --- | --- |
 | Typecheck + DS bans | `pnpm --filter @watchdog/web ds:check` |
-| Hand-owned atom checklist | `scripts/wd-ui-files.mjs` |
 | Vendored primitives lock | `pnpm check:vendor` (`pnpm ui:add` / `pnpm ui:sync` to change) |
 
 ## Chrome lexicon (UI parts)
@@ -71,4 +70,4 @@ Never: *Console *Workbench *Tape  ·  never a screen named *Panel
 6. [ ] Opaque ids via `IdChip` / `formatOpaqueId` (no `.slice`)
 7. [ ] Right control for the job (ButtonGroup / ToggleGroup / SearchField / badges)
 8. [ ] `pnpm --filter @watchdog/web ds:check` passes
-9. [ ] New hand-owned atom? Update `wd-ui-files.mjs` + `COMPONENTS.md` (under `shared/ui/`, not `shadcn/` or `__tests__/`)
+9. [ ] New hand-owned atom? Add a `components.md` row and a `/ui` specimen

@@ -11,11 +11,11 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | Rule | Prevents | Verdict | Enforced by |
 | --- | --- | --- | --- |
 | Opaque ids via `IdChip` / `formatOpaqueId`, never `.slice(0,N)` | Truncated ids that collide and can't be searched | Keep | ds |
-| No fictional vocab (`probable`, `active`, `dormant`, `merged`) | UI values that aren't in `@watchdog/schemas` unions | Keep | ds |
-| Loaders await identity only; no `await Promise.all` in loaders | SSR TTFB waterfalls | Keep | ds |
-| No `RoutePending` in routes (one pending surface per region) | Double skeletons: route pending + in-page pending | Keep | ds |
-| `aria-busy` / `animate-pulse` only inside `shared/ui` | Loading regions without the three a11y channels or the reduced-motion guard | Keep | ds |
-| The sixteen loading rules ([`loading.md`](loading.md)) | Flashing skeletons, confident wrong values, blanked shells | Keep | ds (partial) + review |
+| No fictional vocab (`probable`, `active`, `dormant`, `merged`) | UI values that aren't in `@watchdog/schemas` unions | Keep, **moved to typecheck** (badge props are schema unions) | typecheck |
+| Loaders await identity only; parallel reads live in components | SSR TTFB waterfalls | Keep, **check dropped** (review only) | review |
+| No `RoutePending` in routes; no raw `Skeleton` in domains/routes (one pending surface per region) | Double skeletons: route pending + in-page pending | Keep, **moved to lint** (`no-restricted-imports`) | lint |
+| `aria-busy` / `animate-pulse` only inside `shared/ui` | Loading regions without the three a11y channels or the reduced-motion guard | Keep, **check dropped** (review only) | review |
+| The sixteen loading rules ([`loading.md`](loading.md)) | Flashing skeletons, confident wrong values, blanked shells | Keep | review |
 | No `@watchdog/policy` barrel / `@watchdog/core` root in client code | Effect, db, blob pulled into the browser bundle | Keep | review |
 | Web never imports `@watchdog/db` (except auth + SSE) | Bypassing oRPC → core → repos | Keep | lint |
 | One QueryClient per router, never a singleton | Cross-request cache bleed in SSR | Keep | review |
@@ -31,13 +31,12 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 
 | Rule | Prevents | Verdict | Enforced by |
 | --- | --- | --- | --- |
-| One `SectionLabel` definition | Drifting duplicate label atoms | Keep | ds |
 | `FieldSelect` / `Select`, never a native `<select>` | Two select stacks | Keep (the vendored `native-select` is gone, so nothing to ban) | review |
 | Vendored primitives are never hand-edited; Watchdog behavior goes in a `primitives` wrapper or tokens (`check:vendor`) | Every `shadcn add`, codemod, or preset change becoming a merge conflict; agents quietly patching primitives | **New** | vendor lock |
 | A component with a Watchdog wrapper is imported from `shared/ui/primitives`, never from `@watchdog/ui` (the ban list follows the folder) | Silently skipping `loading`, Enter-to-confirm, `mono` | **New** | lint |
 | `@theme` sizes and vanilla type classes, no `text-[Npx]` or other off-scale arbitrary values | One-off sizes and tracking that drift from the scale | Keep, **moved to lint** (`no-arbitrary-values`, layout values allowed) | lint |
 | Every Tailwind class must generate CSS (`no-unknown-classes`) | Typos and removed utilities failing silently (`hovr:flex`, a deleted `text-label-sm`) | **New** | lint |
-| `wd-ui-files.mjs` manifest + `/ui` fixtures for required atoms | Undocumented atoms | Keep (revisit if it slows atom work) | ds |
+| `wd-ui-files.mjs` manifest + `/ui` fixtures for required atoms | Undocumented atoms | **Dropped**: `knip` finds dead files; `components.md` and `/ui` are documentation, not gates | — |
 | TanStack Form only (no react-hook-form) | Two form libraries | Keep | review |
 | Badges are meaning-named (`ConfidenceBadge`), never color-named | `variant="purple"` sprawl | Keep | review |
 | `domain-badge` shim import ban | — (shim deleted; typecheck catches it) | **Dropped** | — |
@@ -55,7 +54,7 @@ These restate [`design.md`](../../../explanation/design.md); change the brief fi
 | --- | --- | --- |
 | OKLCH cool neutrals (hue 250), steel-cyan primary (220), amber signal (75); no violet | Keep | lint (`no-raw-colors`) |
 | Colors via declared tokens: no raw palette hues, no undeclared `--color-*` (`no-raw-colors`), no hex in SVG attrs | Keep, **moved to lint** and widened from green/amber/red to every hue | lint |
-| Radius ladder sm / md / lg; no `rounded-xl+` | Keep | ds (**now enforced**) |
+| Radius ladder sm / md / lg | Keep, **check dropped**: `--radius-xl..4xl` are capped to `--radius-lg` in `wd-theme.css`, so `rounded-xl+` cannot render bigger | theme |
 | Refuse list: gradients, gradient text, glass | Keep | ds (**now enforced**; `// ds:allow-decorative` for functional blur) |
 | Refuse list: nested cards, glow, icon-tile grids, bounce easing, mono-as-decoration | Keep | review |
 | Refuse list: "colored side-tab accents" | **Rewritten**: decorative side borders are out; a thin state bar on a row (live/running) is fine | review |

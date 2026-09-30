@@ -9,7 +9,6 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "ds:ban": "node ./scripts/ds-ban-check.mjs",
-    "ds:atom": "node ./scripts/new-atom-checklist.mjs",
     "ds:check": "pnpm typecheck && pnpm ds:ban"
   },
   "dependencies": {

@@ -73,15 +73,17 @@ Lead with "don't skeleton at all": skeletons are the fallback of last resort ([V
 
 ### ds:check loading bans
 
-| Ban | Use instead |
+Enforced by oxlint `no-restricted-imports`: `RoutePending` (`@/shared/layout/route-pending`) in `domains/` / `routes/` and the raw `Skeleton` primitive in `domains/` / `routes/`. The rest is review:
+
+| Avoid | Use instead |
 | --- | --- |
-| `RoutePending` import in `routes/**` | In-page `PendingRegion` (`// ds:allow-route-pending` only for `ssr:false` / `defaultPendingComponent`) |
-| `shadcn/skeleton` import in `domains/**` | `PendingRegion` from `@/shared/ui/pending-region` (fallback: `shared/ui/skeletons.tsx`). **Tables:** `DataTable` `pending` only: kit owns per-cell skeletons |
+| `RoutePending` in pages | In-page `PendingRegion` (the router's `defaultPendingComponent` is the only floor) |
+| Raw `Skeleton` in domains | `PendingRegion` from `@/shared/ui/pending-region` (fallback: `shared/ui/skeletons.tsx`). **Tables:** `DataTable` `pending` only: kit owns per-cell skeletons |
 | `animate-pulse` outside `shared/ui/` | `Skeleton` primitive (reduced-motion guard) |
 | `aria-busy` outside `shared/ui/` | `LoadingRegion` |
 | `await Promise.all` in route `loader` (excl. `routes/api/**`) | Thin loader + `warm*Queries` |
 
-Escape hatch: `// ds:allow-<rule>: reason` on the line above a flagged line; `ds:check` reports active allow count.
+Escape hatch for the remaining `ds:ban` rules: `// ds:allow-<rule>: reason` on the line above a flagged line.
 
 ### Warm helpers
 

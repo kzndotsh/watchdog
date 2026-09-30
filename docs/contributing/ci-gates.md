@@ -49,7 +49,7 @@ Doc-affect escape hatch: commit message, `.git/docs-allow-affect` stamp, or PR b
 
 ## Cursor stop hook
 
-`.cursor/hooks/stop-gate.mjs` lint-checks changed files, runs `ds:ban` when web UI paths are dirty, `check-agents.mjs --strict` when `AGENTS.md` is dirty, and `validate-agents.mjs` when `.agents/skills/**` or `.cursor/README.md` are dirty; fix violations before ending the turn. `wd-ui-files.mjs` is bidirectional with `shared/ui` except `shadcn/` and `__tests__/`.
+`.cursor/hooks/stop-gate.mjs` lint-checks changed files, runs `ds:ban` when web UI paths are dirty, `check-agents.mjs --strict` when `AGENTS.md` is dirty, and `validate-agents.mjs` when `.agents/skills/**` or `.cursor/README.md` are dirty; fix violations before ending the turn.
 
 ## Gotchas
 
