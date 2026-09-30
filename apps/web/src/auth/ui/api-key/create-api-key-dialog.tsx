@@ -1,4 +1,3 @@
-import type { ApiKeyAuthClient } from "@better-auth-ui/core/plugins/api-key";
 import { useAuth, useAuthPlugin, useSession } from "@better-auth-ui/react";
 import { useCreateApiKey } from "@better-auth-ui/react/plugins/api-key";
 import { Key } from "lucide-react";
@@ -22,6 +21,7 @@ import { Input } from "@watchdog/ui/components/input";
 import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
+import { formString } from "../form-data";
 import { NewApiKeyDialog } from "./new-api-key-dialog";
 
 export interface CreateApiKeyDialogProps {
@@ -36,16 +36,15 @@ export function CreateApiKeyDialog({
   onOpenChange,
   organizationId,
 }: CreateApiKeyDialogProps) {
-  const { authClient, localization } = useAuth();
+  const { localization } = useAuth();
   const { data: sessionData } = useSession(appAuthClient);
   // Keys act in the organization they were created in (checked again on every request).
   const scopedOrganizationId =
     sessionData?.session.activeOrganizationId ?? undefined;
   const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
 
-  const { mutate: createApiKey, isPending: isCreating } = useCreateApiKey(
-    authClient as ApiKeyAuthClient
-  );
+  const { mutate: createApiKey, isPending: isCreating } =
+    useCreateApiKey(appAuthClient);
 
   const [isNewKeyDialogOpen, setIsNewKeyDialogOpen] = useState(false);
   const [keyName, setKeyName] = useState<string | null>(null);
@@ -63,8 +62,8 @@ export function CreateApiKeyDialog({
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const formData = new FormData(e.target as HTMLFormElement);
-    const name = (formData.get("name") as string).trim();
+    const formData = new FormData(e.currentTarget);
+    const name = formString(formData, "name").trim();
 
     const payload =
       name || organizationId || scopedOrganizationId

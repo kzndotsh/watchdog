@@ -9,11 +9,12 @@ import {
   matchQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import type { BetterFetchError } from "better-auth/react";
 import { useEffect } from "react";
 
 import { firstNonEmpty } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
+
+import { authErrorDetails } from "./auth-error";
 
 /**
  * Toasts Better Auth UI query/mutation errors. Errors a form renders itself (a
@@ -32,9 +33,11 @@ export function ErrorToaster() {
       if (!matchQuery({ queryKey: authQueryKeys.all }, query)) return;
       if (getAuthErrorPresentation(query.meta) !== "toast") return;
 
-      const err = error as BetterFetchError;
-      if (err?.error?.code === "EMAIL_NOT_VERIFIED") return;
-      if (err?.error) toast.error(err.error.message);
+      const details = authErrorDetails(error);
+      if (details.code === "EMAIL_NOT_VERIFIED") return;
+      if (details.fromServer && details.message !== undefined) {
+        toast.error(details.message);
+      }
     };
 
     const mutationCache = queryClient.getMutationCache();
@@ -62,11 +65,9 @@ export function ErrorToaster() {
       // Forms that set a new password render this against the field: a toast repeats it.
       if (isPasswordCompromisedError(error)) return;
 
-      const err = error as BetterFetchError;
-      if (err.error?.code === "EMAIL_NOT_VERIFIED") return;
-      toast.error(
-        firstNonEmpty(err.error?.message, err.message) ?? err.message
-      );
+      const details = authErrorDetails(error);
+      if (details.code === "EMAIL_NOT_VERIFIED") return;
+      toast.error(firstNonEmpty(details.message) ?? "Something went wrong");
     };
 
     return () => {

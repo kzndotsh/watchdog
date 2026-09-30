@@ -214,8 +214,7 @@ function ChangePasswordForm({
 
                 setFieldErrors((prev) => ({
                   ...prev,
-                  currentPassword: (e.target as HTMLInputElement)
-                    .validationMessage,
+                  currentPassword: e.currentTarget.validationMessage,
                 }));
               }}
               aria-invalid={!!fieldErrors.currentPassword}
@@ -257,8 +256,7 @@ function ChangePasswordForm({
                   e.preventDefault();
                   setFieldErrors((prev) => ({
                     ...prev,
-                    newPassword: (e.target as HTMLInputElement)
-                      .validationMessage,
+                    newPassword: e.currentTarget.validationMessage,
                   }));
                 }}
                 aria-invalid={!!fieldErrors.newPassword}
@@ -324,8 +322,7 @@ function ChangePasswordForm({
 
                     setFieldErrors((prev) => ({
                       ...prev,
-                      confirmPassword: (e.target as HTMLInputElement)
-                        .validationMessage,
+                      confirmPassword: e.currentTarget.validationMessage,
                     }));
                   }}
                   aria-invalid={!!fieldErrors.confirmPassword}

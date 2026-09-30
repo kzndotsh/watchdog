@@ -35,6 +35,9 @@ import {
 import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
+import { authErrorDetails } from "./auth-error";
+import { formString } from "./form-data";
+
 export interface SignInProps {
   className?: string;
   allowSignup?: boolean;
@@ -70,7 +73,7 @@ export function SignIn({ className, allowSignup = false }: SignInProps) {
       onError: (error, { email }) => {
         setPassword("");
 
-        if (error.error?.code === "EMAIL_NOT_VERIFIED") {
+        if (authErrorDetails(error).code === "EMAIL_NOT_VERIFIED") {
           sessionStorage.setItem("better-auth-ui.verify-email", email);
           navigate({
             to: `${basePaths.auth}/${viewPaths.auth.verifyEmail}`,
@@ -106,7 +109,7 @@ export function SignIn({ className, allowSignup = false }: SignInProps) {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
-    const email = (formData.get("email") as string).trim();
+    const email = formString(formData, "email").trim();
     const rememberMe = formData.get("rememberMe") === "on";
 
     signInEmail({
@@ -149,7 +152,7 @@ export function SignIn({ className, allowSignup = false }: SignInProps) {
                     }}
                     onInvalid={(e) => {
                       e.preventDefault();
-                      const el = e.target as HTMLInputElement;
+                      const el = e.currentTarget;
                       const msg = el.validity.valueMissing
                         ? localization.auth.fieldRequired
                         : localization.auth.invalidEmail;
@@ -190,7 +193,7 @@ export function SignIn({ className, allowSignup = false }: SignInProps) {
                       disabled={isPending}
                       onInvalid={(e) => {
                         e.preventDefault();
-                        const el = e.target as HTMLInputElement;
+                        const el = e.currentTarget;
                         const min = emailAndPassword?.minPasswordLength;
                         const max = emailAndPassword?.maxPasswordLength;
                         const msg = el.validity.valueMissing

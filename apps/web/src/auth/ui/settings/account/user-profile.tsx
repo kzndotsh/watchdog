@@ -12,6 +12,7 @@ import { Label } from "@watchdog/ui/components/label";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
+import { formString } from "../../form-data";
 import { ChangeAvatar } from "./change-avatar";
 
 export interface UserProfileProps {
@@ -40,7 +41,7 @@ export function UserProfile({ className }: UserProfileProps) {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
-    const name = (formData.get("name") as string).trim();
+    const name = formString(formData, "name").trim();
 
     updateUser({
       name,
@@ -85,7 +86,7 @@ export function UserProfile({ className }: UserProfileProps) {
 
                 setFieldErrors((prev) => ({
                   ...prev,
-                  name: (e.target as HTMLInputElement).validationMessage,
+                  name: e.currentTarget.validationMessage,
                 }));
               }}
               aria-invalid={!!fieldErrors.name}

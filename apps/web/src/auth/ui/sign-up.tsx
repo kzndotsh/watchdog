@@ -33,6 +33,7 @@ import {
 import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
+import { formString } from "./form-data";
 import { PasswordStrengthMeter } from "./password-strength-meter";
 
 export interface SignUpProps {
@@ -118,8 +119,8 @@ export function SignUp({ className }: SignUpProps) {
 
     const formData = new FormData(e.currentTarget);
     // `emailAndPassword.name === false` hides the name field and submits "".
-    const name = ((formData.get("name") as string | null) ?? "").trim();
-    const email = (formData.get("email") as string).trim();
+    const name = formString(formData, "name").trim();
+    const email = formString(formData, "email").trim();
 
     if (emailAndPassword?.confirmPassword && password !== confirmPassword) {
       toast.error(localization.auth.passwordsDoNotMatch);
@@ -201,7 +202,7 @@ export function SignUp({ className }: SignUpProps) {
                     }}
                     onInvalid={(e) => {
                       e.preventDefault();
-                      const el = e.target as HTMLInputElement;
+                      const el = e.currentTarget;
                       const msg = el.validity.valueMissing
                         ? localization.auth.fieldRequired
                         : localization.auth.invalidEmail;
@@ -241,7 +242,7 @@ export function SignUp({ className }: SignUpProps) {
                       disabled={isPending}
                       onInvalid={(e) => {
                         e.preventDefault();
-                        const el = e.target as HTMLInputElement;
+                        const el = e.currentTarget;
                         const min = emailAndPassword?.minPasswordLength;
                         const max = emailAndPassword?.maxPasswordLength;
                         const msg = el.validity.valueMissing
@@ -320,7 +321,7 @@ export function SignUp({ className }: SignUpProps) {
                         disabled={isPending}
                         onInvalid={(e) => {
                           e.preventDefault();
-                          const el = e.target as HTMLInputElement;
+                          const el = e.currentTarget;
                           const min = emailAndPassword?.minPasswordLength;
                           const max = emailAndPassword?.maxPasswordLength;
                           const msg = el.validity.valueMissing

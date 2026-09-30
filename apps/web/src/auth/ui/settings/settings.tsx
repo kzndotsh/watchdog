@@ -1,7 +1,6 @@
 import type { SettingsView } from "@better-auth-ui/core";
 import { useAuth, useAuthenticate } from "@better-auth-ui/react";
 import { Shield, User2 } from "lucide-react";
-import { useMemo } from "react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -31,6 +30,13 @@ export interface SettingsProps {
  * @param hideNav - When `true`, hides the settings navigation tabs
  * @returns A JSX element rendering the settings layout and the selected settings panel
  */
+function settingsPathEntries(source: object | undefined): [string, string][] {
+  const entries: [string, unknown][] = Object.entries(source ?? {});
+  return entries.flatMap(([key, segment]) =>
+    typeof segment === "string" ? [[key, segment] as [string, string]] : []
+  );
+}
+
 export function Settings({ className, view, path, hideNav }: SettingsProps) {
   const { authClient, basePaths, localization, viewPaths, plugins, navigate } =
     useAuth();
@@ -42,27 +48,20 @@ export function Settings({ className, view, path, hideNav }: SettingsProps) {
     );
   }
 
-  const currentView = useMemo(() => {
-    if (view) return view;
-    if (!path) return;
+  // Built-in settings paths plus any a plugin contributes (view name -> segment).
+  const pathEntries = [
+    viewPaths.settings,
+    ...plugins.map((plugin) => plugin.viewPaths?.settings),
+  ].flatMap((source) => settingsPathEntries(source));
 
-    const match = [
-      viewPaths.settings,
-      ...plugins.map((plugin) => plugin.viewPaths?.settings),
-    ]
-      .flatMap((source) => Object.entries(source ?? {}))
-      .find(([, segment]) => segment === path);
-
-    return match?.[0] as SettingsView | undefined;
-  }, [view, path, viewPaths.settings, plugins]);
+  const currentView =
+    view ??
+    (path === undefined
+      ? undefined
+      : pathEntries.find(([, segment]) => segment === path)?.[0]);
 
   if (!currentView) {
-    const validPaths = [
-      viewPaths.settings,
-      ...plugins.map((plugin) => plugin.viewPaths?.settings),
-    ]
-      .flatMap((source) => Object.values(source ?? {}))
-      .join(", ");
+    const validPaths = pathEntries.map(([, segment]) => segment).join(", ");
     throw new Error(
       `[Better Auth UI] Unknown settings path "${path}". Valid paths are: ${validPaths}`
     );

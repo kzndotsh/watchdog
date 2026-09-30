@@ -1,8 +1,8 @@
-import type { ApiKeyAuthClient } from "@better-auth-ui/core/plugins/api-key";
-import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
+import { useAuthPlugin } from "@better-auth-ui/react";
 import { useListApiKeys } from "@better-auth-ui/react/plugins/api-key";
 import { useState } from "react";
 
+import { authClient } from "@/auth/client";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { cn } from "@/lib/utils";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
@@ -34,11 +34,10 @@ export function ApiKeys({
   hideCreate,
   hideDelete,
 }: ApiKeysProps) {
-  const { authClient } = useAuth();
   const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
 
   const { data: listData, isPending: isListPending } = useListApiKeys(
-    authClient as ApiKeyAuthClient,
+    authClient,
     {
       enabled: !isPendingProp,
       ...(organizationId

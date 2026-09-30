@@ -24,6 +24,8 @@ import { Input } from "@watchdog/ui/components/input";
 import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
+import { formString } from "./form-data";
+
 export interface ForgotPasswordProps {
   className?: string;
 }
@@ -64,7 +66,7 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     requestPasswordReset({
-      email: (formData.get("email") as string).trim(),
+      email: formString(formData, "email").trim(),
       redirectTo: `${baseURL}${basePaths.auth}/${viewPaths.auth.resetPassword}`,
       fetchOptions,
     });
@@ -108,7 +110,7 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
                 }}
                 onInvalid={(e) => {
                   e.preventDefault();
-                  const el = e.target as HTMLInputElement;
+                  const el = e.currentTarget;
                   const msg = el.validity.valueMissing
                     ? localization.auth.fieldRequired
                     : localization.auth.invalidEmail;

@@ -18,7 +18,7 @@ export type UserAvatarProps = {
   fallback?: ReactNode;
   isPending?: boolean;
   /** @remarks `User` */
-  user?: User & { username?: string | null; displayUsername?: string | null };
+  user?: User;
 };
 
 /**
@@ -47,19 +47,11 @@ export function UserAvatar({
     return <Skeleton className={cn("size-8 rounded-full", className)} />;
   }
 
-  const resolvedUser =
-    user ??
-    (session?.user as
-      | (User & { username?: string | null; displayUsername?: string | null })
-      | undefined);
+  const resolvedUser = user ?? session?.user;
 
   // A custom fallback counts only when truthy ("" / false / 0 fall through to initials).
   const hasFallback = Boolean(fallback);
-  const initials = firstNonEmpty(
-    resolvedUser?.username,
-    resolvedUser?.name,
-    resolvedUser?.email
-  )
+  const initials = firstNonEmpty(resolvedUser?.name, resolvedUser?.email)
     ?.slice(0, 2)
     .toUpperCase();
 
@@ -72,11 +64,7 @@ export function UserAvatar({
     >
       <AvatarImage
         src={resolvedUser?.image ?? undefined}
-        alt={firstNonEmpty(
-          resolvedUser?.displayUsername,
-          resolvedUser?.name,
-          resolvedUser?.email
-        )}
+        alt={firstNonEmpty(resolvedUser?.name, resolvedUser?.email)}
       />
 
       <AvatarFallback className="text-muted-foreground!">

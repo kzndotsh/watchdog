@@ -10,6 +10,8 @@ import { Label } from "@watchdog/ui/components/label";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
+import { formString } from "../../form-data";
+
 export interface ChangeEmailProps {
   className?: string;
 }
@@ -40,7 +42,7 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
 
     const formData = new FormData(e.currentTarget);
     changeEmail({
-      newEmail: (formData.get("email") as string).trim(),
+      newEmail: formString(formData, "email").trim(),
       callbackURL: `${baseURL}/${viewPaths.settings.account}`,
     });
   }
@@ -81,7 +83,7 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
                 e.preventDefault();
                 setFieldErrors((prev) => ({
                   ...prev,
-                  email: (e.target as HTMLInputElement).validationMessage,
+                  email: e.currentTarget.validationMessage,
                 }));
               }}
               aria-invalid={!!fieldErrors.email}

@@ -753,13 +753,6 @@ export default defineConfig({
       // dropping casts the types still need). Remove entries as the files get rewritten.
       files: ["apps/web/src/auth/ui/**/*.{ts,tsx}"],
       rules: {
-        "typescript/no-unsafe-type-assertion": "off",
-        "typescript/no-unnecessary-type-assertion": "off",
-        "typescript/no-unsafe-assignment": "off",
-        "typescript/no-unsafe-argument": "off",
-        "typescript/no-unsafe-call": "off",
-        "typescript/no-unsafe-member-access": "off",
-        "typescript/no-unsafe-return": "off",
         "typescript/consistent-return": "off",
         "typescript/consistent-type-definitions": "off",
         "typescript/use-unknown-in-catch-callback-variable": "off",

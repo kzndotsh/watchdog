@@ -1,12 +1,10 @@
-import type {
-  ApiKeyAuthClient,
-  ListedApiKey,
-} from "@better-auth-ui/core/plugins/api-key";
-import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
+import type { ListedApiKey } from "@better-auth-ui/core/plugins/api-key";
+import { useAuthPlugin } from "@better-auth-ui/react";
 import { useDeleteApiKey } from "@better-auth-ui/react/plugins/api-key";
 import { Key } from "lucide-react";
 import { useState } from "react";
 
+import { authClient } from "@/auth/client";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
 import { errMessage, firstNonEmpty } from "@/lib/utils";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
@@ -25,12 +23,11 @@ export function DeleteApiKeyDialog({
   apiKey,
   organizationId,
 }: DeleteApiKeyDialogProps) {
-  const { authClient } = useAuth();
   const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
   const [error, setError] = useState<string | null>(null);
 
   const { mutate: deleteApiKey, isPending: isDeleting } = useDeleteApiKey(
-    authClient as ApiKeyAuthClient,
+    authClient,
     {
       onSuccess: () => {
         setError(null);

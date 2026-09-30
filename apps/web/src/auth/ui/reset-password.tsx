@@ -26,6 +26,7 @@ import {
 import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
+import { formString } from "./form-data";
 import { PasswordStrengthMeter } from "./password-strength-meter";
 
 export interface ResetPasswordProps {
@@ -95,8 +96,8 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     }
 
     const formData = new FormData(e.currentTarget);
-    const newPassword = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
+    const newPassword = formString(formData, "password");
+    const confirmPassword = formString(formData, "confirmPassword");
 
     if (emailAndPassword?.confirmPassword && newPassword !== confirmPassword) {
       toast.error(localization.auth.passwordsDoNotMatch);
@@ -140,7 +141,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                   }}
                   onInvalid={(e) => {
                     e.preventDefault();
-                    const el = e.target as HTMLInputElement;
+                    const el = e.currentTarget;
                     const min = emailAndPassword?.minPasswordLength;
                     const max = emailAndPassword?.maxPasswordLength;
                     const msg = el.validity.valueMissing
@@ -214,7 +215,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                     }}
                     onInvalid={(e) => {
                       e.preventDefault();
-                      const el = e.target as HTMLInputElement;
+                      const el = e.currentTarget;
                       const min = emailAndPassword?.minPasswordLength;
                       const max = emailAndPassword?.maxPasswordLength;
                       const msg = el.validity.valueMissing

@@ -34,6 +34,16 @@ const PASSWORD_ONLY_VIEWS = new Set([
   "resetPassword",
 ]);
 
+/** Every view this app renders. Route allow-lists derive from it. */
+const AUTH_VIEW_LIST = [
+  "signIn",
+  "signOut",
+  "signUp",
+  "forgotPassword",
+  "resetPassword",
+  "verifyEmail",
+] as const satisfies readonly AuthView[];
+
 const AUTH_VIEWS: Partial<Record<AuthView, ComponentType<AuthProps>>> = {
   signIn: SignIn,
   signOut: SignOut,
@@ -48,7 +58,7 @@ const AUTH_VIEWS: Partial<Record<AuthView, ComponentType<AuthProps>>> = {
  * `viewPaths.auth` entry), for route allow-lists. A path outside this set would throw.
  */
 export const AUTH_VIEW_PATHS: ReadonlySet<string> = new Set(
-  (Object.keys(AUTH_VIEWS) as AuthView[]).flatMap((view) => {
+  AUTH_VIEW_LIST.flatMap((view) => {
     const segment: string | undefined = defaultViewPaths.auth[view];
     return segment === undefined ? [] : [segment];
   })
@@ -82,10 +92,7 @@ export function Auth({
   }
 
   const authView =
-    view ??
-    (Object.keys(viewPaths.auth) as AuthView[]).find(
-      (key) => viewPaths.auth[key] === path
-    );
+    view ?? AUTH_VIEW_LIST.find((key) => viewPaths.auth[key] === path);
 
   // When email + password auth is disabled, password-only views (signUp,
   // forgotPassword, resetPassword) have no meaning. Redirect them to signIn,
