@@ -17,7 +17,7 @@ import {
   normalizeRouteSegment,
 } from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 
 const routeApi = getRouteApi("/_protected/entities/$entitySlug");
 

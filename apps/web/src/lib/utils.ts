@@ -6,7 +6,7 @@ import { slugifyName as schemaSlugifyName } from "@watchdog/schemas";
  * Type-role utilities (`text-label-mono-sm`, `text-chip`, …) must live in the
  * font-size group — otherwise cn treats them as text-color and strips them
  * when paired with `text-muted-foreground` (QueueRowMeta looked body-sized).
- * Used by atoms and facade wrappers; vendored primitives use stock `cn`, so keep
+ * Used by atoms and primitive wrappers; vendored primitives use stock `cn`, so keep
  * type roles out of `className` passed into them (see ui/vendor.md).
  */
 export const cn = createCn({

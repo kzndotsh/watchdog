@@ -7,8 +7,8 @@ import {
 import type { ReactNode } from "react";
 
 import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
-import { Button } from "@/shared/ui/shadcn/button";
-import { ButtonGroup } from "@/shared/ui/shadcn/button-group";
+import { Button } from "@/shared/ui/primitives/button";
+import { ButtonGroup } from "@watchdog/ui/components/button-group";
 import {
   Popover,
   PopoverContent,
@@ -16,8 +16,11 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/shadcn/toggle-group";
+} from "@watchdog/ui/components/popover";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@watchdog/ui/components/toggle-group";
 
 const RUN_MODES = [
   { value: "cap", label: "Cap" },
@@ -46,7 +49,7 @@ export function CollectRunModeToggle({
         const mode = next[0];
         if (isRunMode(mode)) onValueChange(mode);
       }}
-      variant="segmented"
+      variant="outline"
     >
       {RUN_MODES.map((mode) => (
         <ToggleGroupItem key={mode.value} value={mode.value}>

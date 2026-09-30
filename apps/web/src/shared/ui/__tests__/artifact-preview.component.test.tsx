@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/shared/ui/shadcn/collapsible", () => ({
+vi.mock("@watchdog/ui/components/collapsible", () => ({
   Collapsible: ({
     children,
     ...props
@@ -31,7 +31,7 @@ vi.mock("@/shared/ui/code-block", () => ({
   CodeBlock: ({ code }: { code: string }) => <pre>{code}</pre>,
 }));
 
-vi.mock("@/shared/ui/shadcn/spinner", () => ({
+vi.mock("@watchdog/ui/components/spinner", () => ({
   Spinner: () => <span aria-label="Loading" />,
 }));
 

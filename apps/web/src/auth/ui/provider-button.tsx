@@ -4,8 +4,8 @@ import { useIsMutating } from "@tanstack/react-query"
 import type { SocialProvider } from "better-auth/social-providers"
 import type { ComponentProps } from "react"
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { Button } from "@/shared/ui/primitives/button"
+import { Spinner } from "@watchdog/ui/components/spinner"
 
 export type ProviderButtonProps = {
   provider: SocialProvider

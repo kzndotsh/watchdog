@@ -15,8 +15,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
-import { toast } from "@/shared/ui/shadcn/toast";
+} from "@/shared/ui/primitives/alert-dialog";
+import { toast } from "@/shared/ui/toast";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 
 export interface DeleteIdentifierTarget {

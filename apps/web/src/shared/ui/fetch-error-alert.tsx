@@ -1,5 +1,5 @@
-import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
+import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 
 /** Dismissible fetch error banner. Shows nothing when error is null. */
 export function FetchErrorAlert({

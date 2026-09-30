@@ -47,11 +47,11 @@ import {
   FormInlineWarning,
 } from "@/shared/ui/form-inline-message";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { Button } from "@/shared/ui/primitives/button";
+import { Textarea } from "@/shared/ui/primitives/textarea";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
+import { toast } from "@/shared/ui/toast";
 import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";
 import type { RetractKind } from "@watchdog/schemas";
 

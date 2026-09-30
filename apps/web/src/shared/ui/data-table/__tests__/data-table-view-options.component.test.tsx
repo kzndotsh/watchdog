@@ -2,7 +2,7 @@ import type { Column, ReactTable } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/shared/ui/shadcn/dropdown-menu", () => ({
+vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

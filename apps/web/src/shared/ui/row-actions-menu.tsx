@@ -4,12 +4,12 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { AppAction } from "@/shared/lib/app-action";
 import { DropdownActionItems } from "@/shared/ui/action-list";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
+} from "@watchdog/ui/components/dropdown-menu";
 
 /**
  * Hover-reveal row actions — `MoreHorizontal` + `DropdownMenu`.

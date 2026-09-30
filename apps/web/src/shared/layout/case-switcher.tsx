@@ -6,9 +6,9 @@ import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { SidebarGroupLabel, useSidebar } from "@/shared/ui/shadcn/sidebar";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
 import { trimmedOrUndefined } from "@watchdog/schemas";
+import { SidebarGroupLabel, useSidebar } from "@watchdog/ui/components/sidebar";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 import {
   CaseSwitcherCollapsed,

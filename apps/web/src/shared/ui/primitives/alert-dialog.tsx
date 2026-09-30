@@ -1,7 +1,7 @@
 import type { ComponentProps } from "react";
 
 import { handleDialogEnter } from "@/shared/lib/dialog-default-action";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import { AlertDialogContent as BaseAlertDialogContent } from "@watchdog/ui/components/alert-dialog";
 
 export * from "@watchdog/ui/components/alert-dialog";

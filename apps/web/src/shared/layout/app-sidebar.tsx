@@ -12,7 +12,8 @@ import { NAV_GROUPS, pathActive } from "@/config/nav";
 import { CommandSearchTrigger } from "@/domains/search/components/command-search-trigger";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
 import { ThemeMenuItem } from "@/shared/layout/theme-toggle";
-import { Avatar, AvatarFallback } from "@/shared/ui/shadcn/avatar";
+import { trimmedOrUndefined } from "@watchdog/schemas";
+import { Avatar, AvatarFallback } from "@watchdog/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +22,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
-import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
+} from "@watchdog/ui/components/dropdown-menu";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -34,9 +35,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/shared/ui/shadcn/sidebar";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+} from "@watchdog/ui/components/sidebar";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 function userDisplayName(user: {
   name?: string | null;

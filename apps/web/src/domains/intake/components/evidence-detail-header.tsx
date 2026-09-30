@@ -15,8 +15,7 @@ import {
   DetailContextSep,
 } from "@/shared/ui/detail-context-line";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
-import { Button } from "@/shared/ui/shadcn/button";
-import { TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";
+import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
@@ -24,6 +23,7 @@ import {
   entityDisplayLabel,
   parseOptionalTrimmedUuid,
 } from "@watchdog/schemas";
+import { TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 
 function attachedEntityLabel(opts: {
   attachedId: string;
@@ -184,7 +184,7 @@ function EvidenceEntityMeta({
       <WithTooltip content="Change entity" wrapSpan>
         <Button
           type="button"
-          variant="ghost-muted"
+          variant="ghost"
           size="icon-sm"
           className="-mr-1.5"
           aria-label="Change entity"

@@ -5,8 +5,8 @@ import type { User } from "better-auth"
 import { User2 } from "lucide-react"
 import type { ReactNode } from "react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/shadcn/avatar"
-import { Skeleton } from "@/shared/ui/shadcn/skeleton"
+import { Avatar, AvatarFallback, AvatarImage } from "@watchdog/ui/components/avatar"
+import { Skeleton } from "@watchdog/ui/components/skeleton"
 import { cn } from "@/lib/utils"
 
 export type UserAvatarProps = {

@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/shared/ui/shadcn/tooltip";
+} from "@watchdog/ui/components/tooltip";
 
 type TooltipSide = ComponentProps<typeof TooltipContent>["side"];
 

@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-router";
 
 import { Providers } from "@/shared/layout/providers";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Toaster } from "@/shared/ui/shadcn/toast";
-import { TooltipProvider } from "@/shared/ui/shadcn/tooltip";
+import { Button } from "@/shared/ui/primitives/button";
+import { Toaster } from "@/shared/ui/toast";
+import { TooltipProvider } from "@watchdog/ui/components/tooltip";
 
 import appCss from "../styles.css?url";
 

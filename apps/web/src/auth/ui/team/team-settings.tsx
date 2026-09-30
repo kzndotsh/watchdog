@@ -3,7 +3,7 @@
 import { useSession } from "@better-auth-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 
 import { authClient } from "@/auth/client";
@@ -13,12 +13,12 @@ import { errMessage, cn } from "@/lib/utils";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormSection } from "@/shared/ui/form-section";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { Button } from "@/shared/ui/shadcn/button";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
-import { Field } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Label } from "@/shared/ui/shadcn/label";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { Button } from "@/shared/ui/primitives/button";
+import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
+import { Field } from "@watchdog/ui/components/field";
+import { Input } from "@/shared/ui/primitives/input";
+import { Label } from "@watchdog/ui/components/label";
+import { Spinner } from "@watchdog/ui/components/spinner";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";

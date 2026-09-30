@@ -10,7 +10,7 @@ import {
 } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 
 function selectActiveCase(caseId: string) {
   return setActiveCaseIdFn({

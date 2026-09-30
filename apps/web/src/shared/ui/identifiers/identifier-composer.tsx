@@ -31,15 +31,7 @@ import {
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import { TableCell } from "@/shared/ui/shadcn/table";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   identifierPlatformOptionMatchesQuery,
   CONFIDENCE_OPTIONS,
@@ -55,6 +47,14 @@ import {
   type IdentifierStatus,
   type IdentifierType,
 } from "@watchdog/schemas";
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@watchdog/ui/components/popover";
+import { TableCell } from "@watchdog/ui/components/table";
 
 export const IDENTIFIER_CREATE_DEFAULTS = {
   entityId: "",

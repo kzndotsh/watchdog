@@ -1,8 +1,7 @@
 import type { ConnectionComposerValues } from "@/domains/entities/lib/connection-composer";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+import { Input } from "@/shared/ui/primitives/input";
 import {
   clampEdgePhrase,
   edgePhraseOptionsForPeers,
@@ -14,6 +13,7 @@ import {
 } from "@/shared/ui/vocab/edge-predicate";
 import type { EntityKind } from "@watchdog/schemas";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
+import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 
 interface Props {
   centerKind: EntityKind;
@@ -103,8 +103,8 @@ export function ConnectionComposerFields({
   }
 
   return (
-    <FieldGroup density="cozy">
-      <Field density="compact">
+    <FieldGroup>
+      <Field>
         <FieldLabel>Relationship</FieldLabel>
         <FieldCombobox
           value={values.phraseValue}
@@ -118,7 +118,7 @@ export function ConnectionComposerFields({
         />
       </Field>
 
-      <Field density="compact">
+      <Field>
         <FieldLabel>Peer</FieldLabel>
         <EntityCombobox
           entities={[...filteredPeerOptions]}
@@ -133,7 +133,7 @@ export function ConnectionComposerFields({
       </Field>
 
       {needsNotes ? (
-        <Field density="compact">
+        <Field>
           <FieldLabel htmlFor="connection-notes">Notes</FieldLabel>
           <Input
             id="connection-notes"

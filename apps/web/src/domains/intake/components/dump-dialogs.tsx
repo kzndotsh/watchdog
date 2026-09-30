@@ -4,7 +4,7 @@ import { FileDropZone } from "@/domains/intake/components/file-drop-zone";
 import { PasteForm } from "@/domains/intake/components/paste-form";
 import { UrlForm } from "@/domains/intake/components/url-form";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
   DialogContent,
@@ -12,8 +12,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
+} from "@/shared/ui/primitives/dialog";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
 const EMPTY_DUMP_ENTITIES: EntityOption[] = [];
 

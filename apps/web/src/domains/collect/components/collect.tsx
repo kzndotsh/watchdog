@@ -32,10 +32,14 @@ import { InlineLoading } from "@/shared/ui/inline-loading";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueShell } from "@/shared/ui/queue-shell";
-import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/shadcn/alert";
-import { Separator } from "@/shared/ui/shadcn/separator";
 import { CollectDetailSkeleton } from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@watchdog/ui/components/alert";
+import { Separator } from "@watchdog/ui/components/separator";
 
 const EMPTY_CAPS: CapListItem[] = [];
 const EMPTY_PLAYBOOKS: PlaybookListItem[] = [];

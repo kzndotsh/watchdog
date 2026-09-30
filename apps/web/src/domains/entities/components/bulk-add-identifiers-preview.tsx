@@ -18,14 +18,6 @@ import {
 } from "@/shared/ui/data-table";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/shadcn/table";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import {
   CONFIDENCE_OPTIONS,
@@ -40,6 +32,14 @@ import {
   trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
 } from "@watchdog/schemas";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@watchdog/ui/components/table";
 
 const PREVIEW_CONFIDENCE_OPTIONS = CONFIDENCE_OPTIONS.filter(
   (opt) => opt.value !== "confirmed"

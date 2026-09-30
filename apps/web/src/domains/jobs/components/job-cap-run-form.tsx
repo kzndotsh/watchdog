@@ -22,12 +22,12 @@ import {
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+import { Button } from "@/shared/ui/primitives/button";
+import { Input } from "@/shared/ui/primitives/input";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
 const KIND_FILTERS = [
   { value: "", label: "All kinds" },

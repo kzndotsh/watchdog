@@ -8,12 +8,12 @@ import {
 } from "@better-auth-ui/react"
 import type { Account, SocialProvider } from "better-auth"
 import { Link2, Link2Off, Plug } from "lucide-react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { toast } from "@/shared/ui/toast"
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
-import { Skeleton } from "@/shared/ui/shadcn/skeleton"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { Button } from "@/shared/ui/primitives/button"
+import { Card, CardContent } from "@watchdog/ui/components/card"
+import { Skeleton } from "@watchdog/ui/components/skeleton"
+import { Spinner } from "@watchdog/ui/components/spinner"
 import { cn } from "@/lib/utils"
 
 export type LinkedAccountProps = {

@@ -12,12 +12,12 @@ import { cn } from "@/lib/utils";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/shared/ui/shadcn/collapsible";
-import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
+} from "@watchdog/ui/components/collapsible";
 
 function processRunIsLive(job: JobListRecord): boolean {
   return job.status === "queued" || job.status === "running";

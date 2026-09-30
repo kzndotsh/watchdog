@@ -11,7 +11,7 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-vi.mock("@/shared/ui/shadcn/dropdown-menu", () => ({
+vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   DropdownMenuItem: ({
     children,
     onClick,

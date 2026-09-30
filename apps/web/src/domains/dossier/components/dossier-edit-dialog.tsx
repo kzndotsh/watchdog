@@ -4,19 +4,19 @@ import { useEffect, type SubmitEvent } from "react";
 import type { EntityRecord } from "@/domains/entities/types";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { RichTextEditor } from "@/shared/ui/rich-text";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+} from "@/shared/ui/primitives/dialog";
+import { Input } from "@/shared/ui/primitives/input";
+import { RichTextEditor } from "@/shared/ui/rich-text";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
 import { trimmedEntityKindSchema, type EntityKind } from "@watchdog/schemas";
+import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 
 export interface DossierEditFormValues {
   name: string;
@@ -87,7 +87,7 @@ export function DossierEditDialog({
             <DialogTitle>Edit entity</DialogTitle>
           </DialogHeader>
 
-          <FieldGroup density="cozy">
+          <FieldGroup>
             <form.Field name="name">
               {(field) => (
                 <Field>

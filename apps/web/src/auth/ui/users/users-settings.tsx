@@ -2,7 +2,7 @@
 
 import { useSession } from "@better-auth-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 
 import { authClient } from "@/auth/client";
 import { isInstanceAdmin } from "@/auth/instance-admin";
@@ -14,8 +14,8 @@ import {
   TOAST_USER_ENABLED,
 } from "@/shared/lib/toast-copy";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
+import { Spinner } from "@watchdog/ui/components/spinner";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";

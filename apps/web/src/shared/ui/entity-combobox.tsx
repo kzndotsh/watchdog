@@ -10,7 +10,7 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from "@/shared/ui/shadcn/combobox";
+} from "@/shared/ui/primitives/combobox";
 import { EntityKindIcon } from "@/shared/ui/vocab";
 import type { EntityKind } from "@watchdog/schemas";
 import { entityDisplayLabel, trimmedOrUndefined } from "@watchdog/schemas";

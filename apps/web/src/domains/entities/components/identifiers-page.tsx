@@ -26,22 +26,22 @@ import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
+import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from "@/shared/ui/shadcn/field";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_STATUS_OPTIONS,
   IDENTIFIER_TYPE_OPTIONS,
 } from "@/shared/ui/vocab";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@watchdog/ui/components/field";
 
 function IdentifiersActive({ active }: { active: CaseRecord }) {
   const {
@@ -164,7 +164,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
             >
               <FieldSet>
                 <FieldLegend variant="label">Type</FieldLegend>
-                <FieldGroup density="compact">
+                <FieldGroup>
                   {IDENTIFIER_TYPE_OPTIONS.map((opt) => {
                     const checked = typeFilter.includes(opt.value);
                     const id = `identifier-type-${opt.value}`;
@@ -189,7 +189,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               </FieldSet>
               <FieldSet>
                 <FieldLegend variant="label">Status</FieldLegend>
-                <FieldGroup density="compact">
+                <FieldGroup>
                   {IDENTIFIER_STATUS_OPTIONS.map((opt) => {
                     const checked = statusFilter.includes(opt.value);
                     const id = `identifier-status-${opt.value}`;
@@ -214,7 +214,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               </FieldSet>
               <FieldSet>
                 <FieldLegend variant="label">Confidence</FieldLegend>
-                <FieldGroup density="compact">
+                <FieldGroup>
                   {CONFIDENCE_OPTIONS.map((opt) => {
                     const checked = confidenceFilter.includes(opt.value);
                     const id = `identifier-confidence-${opt.value}`;

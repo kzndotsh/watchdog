@@ -2,12 +2,12 @@
 
 import { useAuth, useSendVerificationEmail } from "@better-auth-ui/react"
 import { useEffect, useState, useSyncExternalStore } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { toast } from "@/shared/ui/toast"
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card"
-import { FieldDescription } from "@/shared/ui/shadcn/field"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { Button } from "@/shared/ui/primitives/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@watchdog/ui/components/card"
+import { FieldDescription } from "@watchdog/ui/components/field"
+import { Spinner } from "@watchdog/ui/components/spinner"
 import { cn } from "@/lib/utils"
 import { OpenEmailButton } from "./open-email-button"
 

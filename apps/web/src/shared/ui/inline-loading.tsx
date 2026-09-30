@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
 /** Inline spinner + label — use inside Queue/Detail regions while fetching. */
 export function InlineLoading({

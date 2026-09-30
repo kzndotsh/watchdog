@@ -12,10 +12,16 @@ import {
   useDisplayScale,
 } from "@/shared/lib/display-scale";
 import { FormSection } from "@/shared/ui/form-section";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Label } from "@/shared/ui/shadcn/label";
-import { RadioGroup, RadioGroupItem } from "@/shared/ui/shadcn/radio-group";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/shadcn/toggle-group";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
+import { Label } from "@watchdog/ui/components/label";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@watchdog/ui/components/radio-group";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@watchdog/ui/components/toggle-group";
 
 const THEME_OPTIONS: {
   value: "light" | "dark" | "auto";

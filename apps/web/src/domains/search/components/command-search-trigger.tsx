@@ -2,13 +2,13 @@ import { SearchIcon } from "lucide-react";
 
 import { useSearchUi } from "@/domains/search/hooks/use-search-ui";
 import { modKeyLabel } from "@/shared/lib/hotkeys";
-import { Kbd, KbdGroup } from "@/shared/ui/shadcn/kbd";
+import { Kbd, KbdGroup } from "@watchdog/ui/components/kbd";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/shared/ui/shadcn/sidebar";
+} from "@watchdog/ui/components/sidebar";
 
 export function CommandSearchTrigger() {
   const { openPalette } = useSearchUi();
@@ -19,11 +19,7 @@ export function CommandSearchTrigger() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip="Search"
-          onClick={openPalette}
-          variant="muted"
-        >
+        <SidebarMenuButton tooltip="Search" onClick={openPalette}>
           <SearchIcon />
           {collapsed ? null : (
             <>

@@ -15,12 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle
-} from "@/shared/ui/shadcn/alert-dialog"
-import { Button } from "@/shared/ui/shadcn/button"
-import { Field, FieldError } from "@/shared/ui/shadcn/field"
-import { Input } from "@/shared/ui/shadcn/input"
-import { Label } from "@/shared/ui/shadcn/label"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+} from "@/shared/ui/primitives/alert-dialog"
+import { Button } from "@/shared/ui/primitives/button"
+import { Field, FieldError } from "@watchdog/ui/components/field"
+import { Input } from "@/shared/ui/primitives/input"
+import { Label } from "@watchdog/ui/components/label"
+import { Spinner } from "@watchdog/ui/components/spinner"
 import { NewApiKeyDialog } from "./new-api-key-dialog"
 
 export type CreateApiKeyDialogProps = {

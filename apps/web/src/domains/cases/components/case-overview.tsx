@@ -29,8 +29,8 @@ import {
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { Button } from "@/shared/ui/shadcn/button";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_IDENTIFIERS: CaseIdentifierRecord[] = [];
@@ -173,7 +173,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
             </Button>
             <Button
               type="button"
-              variant="outline-destructive"
+              variant="destructive"
               size="sm"
               onClick={() => {
                 setDeleteOpen(true);

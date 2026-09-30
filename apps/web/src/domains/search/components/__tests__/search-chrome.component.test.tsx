@@ -20,7 +20,7 @@ vi.mock("@/shared/lib/use-global-hotkeys", () => ({
   useGlobalHotkeys: (...args: unknown[]) => useGlobalHotkeysMock(...args),
 }));
 
-vi.mock("@/shared/ui/shadcn/sidebar", () => ({
+vi.mock("@watchdog/ui/components/sidebar", () => ({
   useSidebar: () => ({ toggleSidebar: toggleSidebarMock }),
 }));
 

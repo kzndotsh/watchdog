@@ -6,7 +6,7 @@ import {
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
-} from "@/shared/ui/shadcn/empty";
+} from "@watchdog/ui/components/empty";
 
 /**
  * Select-none empty for Detail column — quiet, no dashed frame.

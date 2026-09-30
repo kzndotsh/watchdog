@@ -16,7 +16,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   updateCaseFn: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/shadcn/toast", () => ({
+vi.mock("@/shared/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

@@ -22,7 +22,7 @@ vi.mock("@/domains/entities/components/delete-identifier-dialog", () => ({
   DeleteIdentifierDialog: () => null,
 }));
 
-vi.mock("@/shared/ui/shadcn/toast", () => ({
+vi.mock("@/shared/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

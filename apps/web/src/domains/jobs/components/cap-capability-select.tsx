@@ -16,7 +16,7 @@ import {
   ComboboxLabel,
   ComboboxList,
   ComboboxSeparator,
-} from "@/shared/ui/shadcn/combobox";
+} from "@/shared/ui/primitives/combobox";
 import { trimmedOrUndefined } from "@watchdog/schemas";
 
 interface CapCapabilitySelectProps {

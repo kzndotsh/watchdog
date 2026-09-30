@@ -7,9 +7,9 @@ import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { cn } from "@/lib/utils";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
+import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
-import { Button } from "@/shared/ui/shadcn/button";
 
 function DashedEmpty({ children }: { children: ReactNode }) {
   return (

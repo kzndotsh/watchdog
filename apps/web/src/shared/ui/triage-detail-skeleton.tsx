@@ -4,7 +4,7 @@ import {
   DetailContextSep,
 } from "@/shared/ui/detail-context-line";
 import { DetailFooter } from "@/shared/ui/detail-footer";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Triage detail skeleton — context strip + ledger + decide footer. */
 export function TriageDetailSkeleton({ className }: { className?: string }) {

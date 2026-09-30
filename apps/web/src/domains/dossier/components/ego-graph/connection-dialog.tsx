@@ -17,16 +17,15 @@ import {
   FormInlineWarning,
 } from "@/shared/ui/form-inline-message";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+} from "@/shared/ui/primitives/dialog";
+import { Input } from "@/shared/ui/primitives/input";
 import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
   EDGE_PREDICATE_META,
@@ -45,6 +44,7 @@ import {
   type EdgePredicate,
   type EntityKind,
 } from "@watchdog/schemas";
+import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 
 export interface ConnectionPeerOption {
   id: string;
@@ -184,7 +184,7 @@ export function ConnectionDialog({
             </DialogTitle>
           </DialogHeader>
 
-          <FieldGroup density="cozy">
+          <FieldGroup>
             <form.Subscribe
               selector={(s) => ({
                 predicate: s.values.predicate,

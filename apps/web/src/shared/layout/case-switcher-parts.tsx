@@ -3,8 +3,11 @@ import { CheckIcon, LayoutDashboardIcon } from "lucide-react";
 
 import { CASE_NAV_ITEMS, pathActive } from "@/config/nav";
 import type { CaseRecord } from "@/domains/cases/types";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
-import { SidebarMenuButton, SidebarMenuItem } from "@/shared/ui/shadcn/sidebar";
+import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@watchdog/ui/components/sidebar";
 
 export function CaseNavLinks({
   caseSlug,

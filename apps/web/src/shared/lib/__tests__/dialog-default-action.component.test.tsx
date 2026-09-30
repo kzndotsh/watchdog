@@ -1,13 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
+} from "@/shared/ui/primitives/dialog";
 
 function Harness({
   onSave,

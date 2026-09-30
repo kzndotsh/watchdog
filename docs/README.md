@@ -96,7 +96,7 @@ Index: [`how-to/README.md`](how-to/README.md).
 | [`reference/web/ui/forms.md`](reference/web/ui/forms.md) | Form library |
 | [`reference/web/ui/tables.md`](reference/web/ui/tables.md) | Column sizing + DataTable pending |
 | [`reference/web/ui/loading.md`](reference/web/ui/loading.md) | Skeletons + hydration rules |
-| [`reference/web/ui/atoms.md`](reference/web/ui/atoms.md) | Hand-owned atom highlights + facade wrappers |
+| [`reference/web/ui/atoms.md`](reference/web/ui/atoms.md) | Hand-owned atom highlights + primitive wrappers |
 | [`reference/web/ui/vendor.md`](reference/web/ui/vendor.md) | Vendored primitives: layers, lock, sync |
 | [`reference/web/ui/motion.md`](reference/web/ui/motion.md) | Operate motion |
 | [`reference/web/ui/multi-mode.md`](reference/web/ui/multi-mode.md) | Detail / composers |

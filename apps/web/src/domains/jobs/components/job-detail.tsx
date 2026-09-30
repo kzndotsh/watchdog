@@ -29,14 +29,8 @@ import {
   FormInlineWarning,
 } from "@/shared/ui/form-inline-message";
 import { JsonView } from "@/shared/ui/json-view";
+import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { Button } from "@/shared/ui/shadcn/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import {
@@ -47,6 +41,12 @@ import {
   statusLabel,
 } from "@/shared/ui/vocab";
 import { STATUS_DOT } from "@/shared/ui/vocab/status.lib";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@watchdog/ui/components/tabs";
 
 const EMPTY_RUN_SIBLINGS: JobListRecord[] = [];
 

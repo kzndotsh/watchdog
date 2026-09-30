@@ -1,7 +1,7 @@
 /**
- * Hand-owned Watchdog UI atoms under `src/shared/ui/` (not `shadcn/`).
+ * Hand-owned Watchdog UI atoms under `src/shared/ui/` (not `primitives/`, the wrappers over @watchdog/ui).
  * Bidirectional with ds-ban-check — every file here must exist; every
- * hand-owned *.ts(x) under shared/ui (except shadcn/, __tests__/, and *.lib.ts) must be listed.
+ * hand-owned *.ts(x) under shared/ui (except primitives/, __tests__/, and *.lib.ts) must be listed.
  */
 export const WD_UI_FILES = [
   "src/shared/ui/active-tab-body.tsx",
@@ -88,6 +88,7 @@ export const WD_UI_FILES = [
   "src/shared/ui/triage-detail-skeleton.tsx",
   "src/shared/ui/triage-split-pending-fallback.tsx",
   "src/shared/ui/timestamp.tsx",
+  "src/shared/ui/toast.tsx",
   "src/shared/ui/data-table/data-table-column-header.tsx",
   "src/shared/ui/data-table/data-table-pagination.tsx",
   "src/shared/ui/data-table/data-table-view-options.tsx",

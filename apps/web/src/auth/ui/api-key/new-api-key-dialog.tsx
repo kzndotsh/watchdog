@@ -3,7 +3,7 @@
 import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
 import { Check, Copy, Key } from "lucide-react"
 import { useState } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { toast } from "@/shared/ui/toast"
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key"
 
@@ -18,13 +18,13 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle
-} from "@/shared/ui/shadcn/alert-dialog"
+} from "@/shared/ui/primitives/alert-dialog"
 import {
   InputGroup,
   InputGroupButton,
   InputGroupInput
-} from "@/shared/ui/shadcn/input-group"
-import { Label } from "@/shared/ui/shadcn/label"
+} from "@watchdog/ui/components/input-group"
+import { Label } from "@watchdog/ui/components/label"
 
 export type NewApiKeyDialogProps = {
   open: boolean

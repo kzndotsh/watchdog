@@ -8,10 +8,10 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+} from "@/shared/ui/primitives/alert-dialog";
+import { Button } from "@/shared/ui/primitives/button";
+import { Input } from "@/shared/ui/primitives/input";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
 /**
  * Type-to-confirm destructive dialog. Presentational — caller owns open + onConfirm.

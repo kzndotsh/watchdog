@@ -20,9 +20,9 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { Button } from "@/shared/ui/primitives/button";
 import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueShell } from "@/shared/ui/queue-shell";
-import { Button } from "@/shared/ui/shadcn/button";
 import { SplitView } from "@/shared/ui/split-view";
 import { TriageSplitPendingFallback } from "@/shared/ui/triage-split-pending-fallback";
 import type { ProposalStatus } from "@watchdog/schemas";

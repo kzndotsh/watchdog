@@ -1,9 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
-import { Button } from "@/shared/ui/shadcn/button";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+import { Button } from "@/shared/ui/primitives/button";
+import { Input } from "@/shared/ui/primitives/input";
+import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 
 export interface UrlFormProps {
   disabled: boolean;

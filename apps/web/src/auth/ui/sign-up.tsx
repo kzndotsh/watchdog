@@ -6,25 +6,25 @@ import { useAuth, useFetchOptions, useSignUpEmail } from "@better-auth-ui/react"
 import { useIsMutating } from "@tanstack/react-query"
 import { Eye, EyeOff } from "lucide-react"
 import { type SyntheticEvent, useState } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card"
+import { toast } from "@/shared/ui/toast"
+import { Button } from "@/shared/ui/primitives/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@watchdog/ui/components/card"
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldSeparator
-} from "@/shared/ui/shadcn/field"
-import { Input } from "@/shared/ui/shadcn/input"
+} from "@watchdog/ui/components/field"
+import { Input } from "@/shared/ui/primitives/input"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput
-} from "@/shared/ui/shadcn/input-group"
-import { Label } from "@/shared/ui/shadcn/label"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+} from "@watchdog/ui/components/input-group"
+import { Label } from "@watchdog/ui/components/label"
+import { Spinner } from "@watchdog/ui/components/spinner"
 import { cn, errMessage } from "@/lib/utils"
 import { AdditionalField } from "./additional-field"
 import { ProviderButtons, type SocialLayout } from "./provider-buttons"

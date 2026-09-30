@@ -11,13 +11,13 @@ import {
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuShortcut,
-} from "@/shared/ui/shadcn/context-menu";
+} from "@watchdog/ui/components/context-menu";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
-} from "@/shared/ui/shadcn/dropdown-menu";
-import { Kbd, KbdGroup } from "@/shared/ui/shadcn/kbd";
+} from "@watchdog/ui/components/dropdown-menu";
+import { Kbd, KbdGroup } from "@watchdog/ui/components/kbd";
 
 /** Dense keys inside menus / command items. */
 export const MENU_KBD_CLASS = "h-4 min-w-4 px-1 text-label-meta-sm";

@@ -1,7 +1,7 @@
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;

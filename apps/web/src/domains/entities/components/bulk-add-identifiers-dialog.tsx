@@ -10,7 +10,7 @@ import {
 } from "@/shared/lib/toast-copy";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
   DialogContent,
@@ -18,10 +18,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import { toast } from "@/shared/ui/shadcn/toast";
+} from "@/shared/ui/primitives/dialog";
+import { Textarea } from "@/shared/ui/primitives/textarea";
+import { toast } from "@/shared/ui/toast";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
 interface Props {
   open: boolean;
@@ -93,7 +93,7 @@ export function BulkAddIdentifiersDialog({
         </DialogHeader>
 
         {stage === "paste" ? (
-          <Field density="compact">
+          <Field>
             <FieldLabel htmlFor="bulk-add-identifiers-paste">Paste</FieldLabel>
             <Textarea
               mono

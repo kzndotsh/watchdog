@@ -34,13 +34,13 @@ import { cn, errMessage } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
+import { Button } from "@/shared/ui/primitives/button";
+import { Textarea } from "@/shared/ui/primitives/textarea";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import { toast } from "@/shared/ui/shadcn/toast";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import { toast } from "@/shared/ui/toast";
 
 function qIndex(i: number): string {
   return `Q${String(i + 1).padStart(2, "0")}`;

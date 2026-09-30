@@ -9,14 +9,14 @@ import {
 } from "@/domains/tasks/components/task-card";
 import { frozenSortingStrategy } from "@/domains/tasks/lib/task-board-dnd";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
+import { Button } from "@/shared/ui/primitives/button";
+import { Input } from "@/shared/ui/primitives/input";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Input } from "@/shared/ui/shadcn/input";
-import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TASK_BOARD_COLUMN_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 import { taskStatusLabel } from "@/shared/ui/vocab";
 import type { TaskStatus } from "@watchdog/schemas";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 interface Props {
   column: TaskStatus;
@@ -176,7 +176,6 @@ export function TaskBoardColumn({
                 disabled={quickCreateBusy}
                 placeholder="Task title"
                 aria-label={`New ${taskStatusLabel(column)} task title`}
-                variant="bare"
                 className="h-8"
                 onChange={(e) => {
                   setTitle(e.target.value);

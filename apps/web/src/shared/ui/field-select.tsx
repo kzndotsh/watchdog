@@ -9,7 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/shared/ui/shadcn/select";
+} from "@watchdog/ui/components/select";
 
 /** Sentinel — Base UI Select disallows empty-string item values. */
 const EMPTY_VALUE = "__wd_empty__";

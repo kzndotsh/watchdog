@@ -50,11 +50,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
-import { Tabs, TabsContent } from "@/shared/ui/shadcn/tabs";
+} from "@/shared/ui/primitives/alert-dialog";
+import { Button } from "@/shared/ui/primitives/button";
 import { isOpenJobStatus } from "@watchdog/schemas";
+import { Spinner } from "@watchdog/ui/components/spinner";
+import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 
 type DetailTab = "content" | "output" | "jobs";
 

@@ -41,22 +41,20 @@ Button sizes: PageHeader / toolbar → `sm` (or default); Queue row / dense icon
 
 ### Variants, not overrides
 
-Callers place components (layout classes, `truncate`) and pick a size or variant; they don't patch a component's spacing, type, color, or shape with `className` (`no-restyle`, see [`rules.md`](rules.md)). If a screen needs a look the component lacks, add it in the facade, never in the vendored primitive.
+Callers place components (layout classes, `truncate`) and pick a size or variant; they don't patch a component's spacing, type, color, or shape with `className` (`no-restyle`, see [`rules.md`](rules.md)). If a screen needs a look the component lacks, use the stock component or a token; never patch the vendored primitive or the call site.
 
-**Two layers.** `@watchdog/ui` (`packages/ui`) holds the shadcn primitives exactly as the CLI writes them (`base-mira`); nobody edits them (see [`vendor.md`](vendor.md)). `apps/web/src/shared/ui/shadcn/` is the **facade**: the only place that imports `@watchdog/ui`. Most files are one-line re-exports. Files with real code are wrappers that compose the untouched upstream component and add only what Watchdog needs:
+**Two layers.** `@watchdog/ui` (`packages/ui`) holds the shadcn primitives exactly as the CLI writes them (`base-mira`); nobody edits them (see [`vendor.md`](vendor.md)). Domain code imports vanilla primitives straight from `@watchdog/ui/components/<name>`. Where a behavior must apply everywhere, `apps/web/src/shared/ui/primitives/<name>.tsx` is a **same-name wrapper** that composes the untouched upstream component; oxlint bans the vanilla path for exactly those components (the list follows the folder).
 
 | Wrapper | Adds |
 | --- | --- |
-| `button` | `loading`; variants `ghost-muted` / `ghost-destructive` / `outline-destructive` / `dashed`; size `chip`; `data-variant` / `data-size` / `data-loading` hooks |
-| `alert-dialog`, `dialog` | Enter confirms the default action (`enterConfirms`); `AlertDialogAction` runs on our Button |
-| `input`, `textarea` | `mono`; Input `variant` (`ghost`, `ghost-muted`, `bare`) and `size="lg"` |
-| `field` | `FieldGroup density` (`cozy` / `compact`), `Field density="compact"` |
-| `card`, `popover` | `Card size="flush"`, `PopoverContent flush` |
-| `toggle-group` | `variant="segmented"` |
-| `combobox`, `kbd`, `sidebar` | `ComboboxInput tone="warning"`, `Kbd tone="inherit"`, `SidebarMenuButton variant="muted"` |
-| `toast` | Watchdog-owned (status tints on Base UI toast), not a shadcn file |
+| `button` | `loading` spinner + disable; `data-variant` / `data-size` / `data-loading` hooks (dialog Enter-to-confirm and coarse-pointer sizing key on them) |
+| `dialog`, `alert-dialog` | Enter confirms the default action (`enterConfirms`); `AlertDialogAction` runs on our Button so it can show `loading` |
+| `input`, `textarea` | `mono` (ids, hashes, paths) |
+| `combobox` | `ComboboxInput tone="warning"` (data leaves the machine) |
 
-Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`; Inputs 12px at `md+`), so don't add `text-xs` / `h-*` patches to match the old scale. Domain code imports from `@/shared/ui/shadcn/*` only; oxlint bans `@watchdog/ui/*` elsewhere. Also: `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`.
+Anything that is only a different look is not a wrapper: use the stock component, or a CSS token if it should change everywhere. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`toast`, `QueueRow`, `StatusDot`, `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`).
+
+Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`; Inputs 12px at `md+`), so don't add `text-xs` / `h-*` patches to match the old scale. Density comes from Mira, so don't add `text-xs` / `h-*` patches to a screen.
 
 ## Gotchas
 

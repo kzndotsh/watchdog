@@ -34,8 +34,8 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | --- | --- | --- | --- |
 | One `SectionLabel` definition | Drifting duplicate label atoms | Keep | ds |
 | `FieldSelect` / `Select`, never a native `<select>` | Two select stacks | Keep (the vendored `native-select` is gone, so nothing to ban) | review |
-| Vendored primitives are never hand-edited; Watchdog behavior goes in the facade or tokens (`check:vendor`) | Every `shadcn add`, codemod, or preset change becoming a merge conflict; agents quietly patching primitives | **New** | vendor lock |
-| Only the `shared/ui/shadcn` facade imports `@watchdog/ui/*` | A second, unwrapped import path that skips Watchdog wrappers | **New** | lint |
+| Vendored primitives are never hand-edited; Watchdog behavior goes in a `primitives` wrapper or tokens (`check:vendor`) | Every `shadcn add`, codemod, or preset change becoming a merge conflict; agents quietly patching primitives | **New** | vendor lock |
+| A component with a Watchdog wrapper is imported from `shared/ui/primitives`, never from `@watchdog/ui` (the ban list follows the folder) | Silently skipping `loading`, Enter-to-confirm, `mono` | **New** | lint |
 | Type roles / `@theme` sizes, no `text-[Npx]` or other off-scale arbitrary values | One-off sizes and tracking that drift from the scale | Keep, **moved to lint** (`no-arbitrary-values`, layout values allowed) | lint |
 | Every Tailwind class must generate CSS (`no-unknown-classes`) | Typos and removed utilities failing silently (`hovr:flex`, a deleted `text-label-sm`) | **New** | lint |
 | `wd-ui-files.mjs` manifest + `/ui` fixtures for required atoms | Undocumented atoms | Keep (revisit if it slows atom work) | ds |
@@ -81,7 +81,7 @@ Pinned at `0.2.0` (pre-1.0, single maintainer: bump deliberately). Web only. Aud
 | `no-inline-styles` | **Off** | 36 hits, mostly legitimate dynamic values (drag transforms, syntax colors, measured heights). |
 | `require-static-classes` | **Off** | Flags imported class constants and helper functions, which is our normal pattern. |
 
-Tests and `shared/ui/shadcn/` are exempt (`no-restyle` also skips `shared/`). `json-view.tsx` opts out of `no-arbitrary-values` with a file-level disable: it carries a Tokyo Night / GitHub syntax palette. Debt: move it to `--syntax-*` tokens.
+Tests and the vendored package are exempt (`no-restyle` also skips `shared/`). `json-view.tsx` opts out of `no-arbitrary-values` with a file-level disable: it carries a Tokyo Night / GitHub syntax palette. Debt: move it to `--syntax-*` tokens.
 
 ## Adding a rule
 

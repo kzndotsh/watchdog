@@ -8,7 +8,7 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/shared/ui/shadcn/resizable";
+} from "@watchdog/ui/components/resizable";
 
 export interface SplitViewProps {
   /** Queue column. */

@@ -27,11 +27,11 @@ import {
   EvidencePicker,
   EvidenceSlotSkeleton,
 } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Kbd } from "@/shared/ui/shadcn/kbd";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { Button } from "@/shared/ui/primitives/button";
+import { Textarea } from "@/shared/ui/primitives/textarea";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
+import { Kbd } from "@watchdog/ui/components/kbd";
 
 /** Inline shortcut hint inside a Button: inherits the button's ink. */
 const BUTTON_KBD_CLASS = "-mr-0.5 ml-0.5 h-4 min-w-4";
@@ -380,7 +380,7 @@ export function TriageDecideFooter({
                     <CheckIcon className="size-3" data-icon="inline-start" />
                   )}
                   Accept
-                  <Kbd aria-hidden tone="inherit" className={BUTTON_KBD_CLASS}>
+                  <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
                     A
                   </Kbd>
                 </Button>
@@ -398,7 +398,7 @@ export function TriageDecideFooter({
                 >
                   <XIcon className="size-3" data-icon="inline-start" />
                   Reject
-                  <Kbd aria-hidden tone="inherit" className={BUTTON_KBD_CLASS}>
+                  <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
                     R
                   </Kbd>
                 </Button>

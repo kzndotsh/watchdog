@@ -24,13 +24,12 @@ import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { Alert, AlertDescription } from "@/shared/ui/shadcn/alert";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Card, CardContent } from "@/shared/ui/shadcn/card";
-import { Separator } from "@/shared/ui/shadcn/separator";
+import { Button } from "@/shared/ui/primitives/button";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { CredentialSlot } from "@watchdog/core";
+import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
+import { Separator } from "@watchdog/ui/components/separator";
 
 const EMPTY_CREDENTIAL_SLOTS: CredentialSlot[] = [];
 
@@ -108,8 +107,10 @@ function CredentialSlotGroup({
       <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {title}
       </h3>
-      <Card size="flush" className={ACCENT_CARD_SURFACE}>
-        <CardContent>
+      <div
+        className={cn("overflow-hidden rounded-lg ring-1", ACCENT_CARD_SURFACE)}
+      >
+        <div>
           {slots.map((slot, index) => (
             <div key={slot.name}>
               {index > 0 ? <Separator /> : null}
@@ -120,8 +121,8 @@ function CredentialSlotGroup({
               />
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -229,12 +230,17 @@ export function SettingsCredentialsForm() {
       ) : null}
 
       {slots.length === 0 ? (
-        <Card size="flush" className={ACCENT_CARD_SURFACE}>
+        <div
+          className={cn(
+            "overflow-hidden rounded-lg ring-1",
+            ACCENT_CARD_SURFACE
+          )}
+        >
           <div className="text-muted-foreground flex flex-col items-center gap-2 px-4 py-10 text-center text-sm">
             <KeyRoundIcon className="size-5" />
             No Cap credential slots registered.
           </div>
-        </Card>
+        </div>
       ) : (
         <div
           className={cn(

@@ -6,7 +6,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
+} from "@/shared/ui/primitives/dialog";
 
 interface ShortcutsDialogProps {
   open: boolean;

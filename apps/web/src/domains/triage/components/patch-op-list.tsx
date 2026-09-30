@@ -5,8 +5,8 @@ import { evidenceIdsForOp, evidenceLabel } from "@/domains/triage/lib/evidence";
 import { summarizePatchOpData } from "@/domains/triage/lib/patch-op-summary";
 import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { IdChip } from "@/shared/ui/id-chip";
+import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
-import { Button } from "@/shared/ui/shadcn/button";
 import { PATCH_RESOURCE_META, PatchOpBadge } from "@/shared/ui/vocab";
 import type { PatchOp } from "@watchdog/schemas";
 

@@ -17,7 +17,7 @@ import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
 
 interface Props {

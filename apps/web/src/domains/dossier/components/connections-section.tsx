@@ -40,9 +40,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
-import { toast } from "@/shared/ui/shadcn/toast";
+} from "@/shared/ui/primitives/alert-dialog";
 import { DossierConnectionsSkeletonLayout } from "@/shared/ui/skeletons";
+import { toast } from "@/shared/ui/toast";
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug" | "kind">;

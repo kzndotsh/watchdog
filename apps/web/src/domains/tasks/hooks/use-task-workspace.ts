@@ -39,7 +39,7 @@ import {
   TOAST_TASK_UPDATED,
 } from "@/shared/lib/toast-copy";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import type { TaskStatus } from "@watchdog/schemas";
 
 const EMPTY_TASKS: TaskRecord[] = [];

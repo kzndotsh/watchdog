@@ -14,13 +14,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
+} from "@watchdog/ui/components/dropdown-menu";
 import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/shared/ui/shadcn/sidebar";
+} from "@watchdog/ui/components/sidebar";
 
 import { CaseNavLinks, CasePickerItems } from "./case-switcher-parts";
 

@@ -1,7 +1,7 @@
 import type { ReactTable, RowData } from "@tanstack/react-table";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 
 import type { DataTableFeatures } from "./table-features";
 

@@ -16,7 +16,7 @@ vi.mock("@/shared/layout/app-sidebar", () => ({
   AppSidebar: () => <div data-testid="app-sidebar">Sidebar</div>,
 }));
 
-vi.mock("@/shared/ui/shadcn/sidebar", () => ({
+vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

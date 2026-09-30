@@ -12,13 +12,17 @@ import { cn } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/shadcn/alert";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import {
   listInvalidIdentifierOps,
   normalizeUuidList,
   patchOpText,
 } from "@watchdog/schemas";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@watchdog/ui/components/alert";
 
 function summaryIsRedundant(proposal: ProposalRecord): boolean {
   const summary = proposal.summary?.trim();

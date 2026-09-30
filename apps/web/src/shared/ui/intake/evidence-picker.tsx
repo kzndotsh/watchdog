@@ -11,16 +11,16 @@ import {
   evidenceMatchesPickerFilter,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Input } from "@/shared/ui/shadcn/input";
+import { Input } from "@/shared/ui/primitives/input";
+import { WithTooltip } from "@/shared/ui/timestamp";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
-import { WithTooltip } from "@/shared/ui/timestamp";
-import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+} from "@watchdog/ui/components/popover";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 export type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 

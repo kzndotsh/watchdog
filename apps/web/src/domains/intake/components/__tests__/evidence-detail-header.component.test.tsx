@@ -9,9 +9,9 @@ import {
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@/domains/jobs/types";
-import { Tabs } from "@/shared/ui/shadcn/tabs";
 import { capabilityLabel } from "@/shared/ui/vocab";
 import { testId } from "@watchdog/test-kit";
+import { Tabs } from "@watchdog/ui/components/tabs";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({

@@ -26,7 +26,7 @@ import {
   TOAST_ENTITY_CREATED,
   TOAST_ENTITY_UPDATED,
 } from "@/shared/lib/toast-copy";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import type { EntityKind } from "@watchdog/schemas";
 
 interface UpdateEntityVars {

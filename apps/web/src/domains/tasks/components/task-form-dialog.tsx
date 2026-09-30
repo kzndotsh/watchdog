@@ -11,7 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
+} from "@/shared/ui/primitives/dialog";
 import type { TaskStatus } from "@watchdog/schemas";
 
 interface BaseProps {

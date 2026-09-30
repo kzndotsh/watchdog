@@ -12,18 +12,18 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { ExternalUrl } from "@/shared/ui/external-url";
 import { IdChip } from "@/shared/ui/id-chip";
 import { MetaGrid, MetaGridItem, MetaRow } from "@/shared/ui/meta-row";
+import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
-import { Button } from "@/shared/ui/shadcn/button";
-import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
-import { Separator } from "@/shared/ui/shadcn/separator";
+import { KindBadge } from "@/shared/ui/vocab";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
+import { Separator } from "@watchdog/ui/components/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/shared/ui/shadcn/sheet";
-import { KindBadge } from "@/shared/ui/vocab";
+} from "@watchdog/ui/components/sheet";
 
 function EvidencePreviewBody({
   evidence,

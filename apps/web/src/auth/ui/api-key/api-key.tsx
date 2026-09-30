@@ -7,8 +7,8 @@ import { apiKeyPlugin } from "@/auth/plugins/api-key"
 import { Key, X } from "lucide-react"
 import { useState } from "react"
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
+import { Button } from "@/shared/ui/primitives/button"
+import { Card, CardContent } from "@watchdog/ui/components/card"
 import { DeleteApiKeyDialog } from "./delete-api-key-dialog"
 
 export type ApiKeyProps = {

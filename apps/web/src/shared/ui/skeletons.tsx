@@ -29,25 +29,25 @@ import {
   GRAPH_CANVAS_EMBED_SHELL_CLASS,
   GraphCanvasLoadingRegion,
 } from "@/shared/ui/graph/graph-canvas-skeleton";
+import { Input } from "@/shared/ui/primitives/input";
+import { Textarea } from "@/shared/ui/primitives/textarea";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
 import { QueueRowMeta, QueueRowTitle } from "@/shared/ui/queue-row";
 import { SectionLabel } from "@/shared/ui/section-label";
+import {
+  TASK_BOARD_COLUMN_SHELL_CLASS,
+  TASK_CARD_SHELL_CLASS,
+} from "@/shared/ui/task-board-shell";
+import { TASK_STATUSES } from "@watchdog/schemas";
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
-import { Switch } from "@/shared/ui/shadcn/switch";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import {
-  TASK_BOARD_COLUMN_SHELL_CLASS,
-  TASK_CARD_SHELL_CLASS,
-} from "@/shared/ui/task-board-shell";
-import { TASK_STATUSES } from "@watchdog/schemas";
+} from "@watchdog/ui/components/field";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Switch } from "@watchdog/ui/components/switch";
 
 export {
   TASK_BOARD_COLUMN_SHELL_CLASS,

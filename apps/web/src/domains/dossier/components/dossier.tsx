@@ -43,15 +43,15 @@ import { EditableTextCell } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
+import { TabCount } from "@/shared/ui/tab-count";
+import { EntityKindGlyph } from "@/shared/ui/vocab";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/shared/ui/shadcn/tabs";
-import { TabCount } from "@/shared/ui/tab-count";
-import { EntityKindGlyph } from "@/shared/ui/vocab";
+} from "@watchdog/ui/components/tabs";
 
 type DossierTab =
   | "overview"
@@ -195,7 +195,7 @@ function DossierForEntity({
               <DossierExportMenu caseId={caseId} entitySlug={entity.slug} />
               <Button
                 type="button"
-                variant="outline-destructive"
+                variant="destructive"
                 size="sm"
                 onClick={() => {
                   setDeleteOpen(true);

@@ -7,7 +7,7 @@ vi.mock("@/domains/search/hooks/use-search-ui", () => ({
   useSearchUi: () => ({ openPalette: openPaletteMock }),
 }));
 
-vi.mock("@/shared/ui/shadcn/sidebar", () => ({
+vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

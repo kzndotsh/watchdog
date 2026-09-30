@@ -18,7 +18,10 @@ import {
   type ListValue,
   type MarkValue,
 } from "@/shared/ui/rich-text/rich-text-toolbar-controls.lib";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/shadcn/toggle-group";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@watchdog/ui/components/toggle-group";
 
 function isHeadingValue(value: string | undefined): value is HeadingValue {
   return value === "h1" || value === "h2" || value === "h3";

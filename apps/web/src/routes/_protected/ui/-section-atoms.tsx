@@ -21,6 +21,7 @@ import {
 } from "@/shared/ui/form-inline-message";
 import { IdChip } from "@/shared/ui/id-chip";
 import { InlineLoading } from "@/shared/ui/inline-loading";
+import { Button } from "@/shared/ui/primitives/button";
 import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueRow, QueueRowMeta, QueueRowTitle } from "@/shared/ui/queue-row";
 import { RelativeTime } from "@/shared/ui/relative-time";
@@ -28,12 +29,6 @@ import { RichTextEditor } from "@/shared/ui/rich-text";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { Button } from "@/shared/ui/shadcn/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
 import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
 import { StatusDot } from "@/shared/ui/status-dot";
@@ -47,6 +42,11 @@ import {
   StatusBadge,
   StatusInk,
 } from "@/shared/ui/vocab";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@watchdog/ui/components/dropdown-menu";
 
 const DEMO_EXTERNAL_HREF = ["https", "://example.com/evidence"].join("");
 const SAMPLE_ID = "8680fa38-0c1d-4e2f-9a3b-595335c1d2e3";

@@ -17,7 +17,7 @@ import {
 } from "@/shared/ui/detail-context-line";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import { StatusInk } from "@/shared/ui/vocab";
 
 function ProducingCapLink({

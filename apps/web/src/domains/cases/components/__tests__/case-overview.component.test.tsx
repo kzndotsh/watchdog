@@ -12,7 +12,7 @@ vi.mock("@/shared/layout/app-breadcrumbs", () => ({
   AppBreadcrumbs: () => null,
 }));
 
-vi.mock("@/shared/ui/shadcn/sidebar", () => ({
+vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarTrigger: () => <button type="button">Menu</button>,
 }));
 
@@ -28,7 +28,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   setActiveCaseIdFn: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/shadcn/toast", () => ({
+vi.mock("@/shared/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

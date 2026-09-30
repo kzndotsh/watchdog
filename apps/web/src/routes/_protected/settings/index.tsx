@@ -31,7 +31,7 @@ import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
 import { normalizeRouteSegment } from "@/shared/lib/route-slug";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
 const routeApi = getRouteApi("/_protected/settings/");
 

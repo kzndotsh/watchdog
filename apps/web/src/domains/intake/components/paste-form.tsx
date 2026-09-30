@@ -1,10 +1,10 @@
 import { useForm } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
-import { Button } from "@/shared/ui/shadcn/button";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { Button } from "@/shared/ui/primitives/button";
+import { Input } from "@/shared/ui/primitives/input";
+import { Textarea } from "@/shared/ui/primitives/textarea";
+import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 
 export interface PasteFormProps {
   disabled: boolean;

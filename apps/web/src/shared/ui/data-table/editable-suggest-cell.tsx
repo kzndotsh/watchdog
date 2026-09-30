@@ -10,7 +10,7 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from "@/shared/ui/shadcn/combobox";
+} from "@/shared/ui/primitives/combobox";
 
 export type EditableSuggestOption = FieldSelectOption;
 

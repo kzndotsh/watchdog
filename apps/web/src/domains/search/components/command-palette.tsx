@@ -23,6 +23,13 @@ import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import { ActionShortcutChord, MENU_KBD_CLASS } from "@/shared/ui/action-list";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import {
+  statusLabel,
+  taskPriorityLabel,
+  taskStatusLabel,
+} from "@/shared/ui/vocab";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { entityDisplayLabel } from "@watchdog/schemas";
+import {
   Command,
   CommandDialog,
   CommandEmpty,
@@ -32,15 +39,8 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@/shared/ui/shadcn/command";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
-import {
-  statusLabel,
-  taskPriorityLabel,
-  taskStatusLabel,
-} from "@/shared/ui/vocab";
-import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import { entityDisplayLabel } from "@watchdog/schemas";
+} from "@watchdog/ui/components/command";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
 const DEBOUNCE_MS = 250;
 

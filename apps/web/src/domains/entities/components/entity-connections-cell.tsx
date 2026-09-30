@@ -16,12 +16,7 @@ import { cn } from "@/lib/utils";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   edgePhraseValue,
   parseEdgePhraseValue,
@@ -29,6 +24,11 @@ import {
 } from "@/shared/ui/vocab/edge-predicate";
 import { entityDisplayLabel } from "@watchdog/schemas";
 import type { EdgeOrientation } from "@watchdog/schemas";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@watchdog/ui/components/popover";
 
 const MAX_VISIBLE_CHIPS = 2;
 
@@ -212,8 +212,8 @@ export function EntityConnectionsCell({
                 render={
                   <Button
                     type="button"
-                    variant="dashed"
-                    size="chip"
+                    variant="outline"
+                    size="xs"
                     disabled={addDisabled}
                     aria-label={addAriaLabel}
                     title="Add connection"
@@ -266,8 +266,8 @@ export function EntityConnectionsCell({
                 {overflow > 0 ? (
                   <Button
                     type="button"
-                    variant="dashed"
-                    size="chip"
+                    variant="outline"
+                    size="xs"
                     aria-label={`${overflow} more connections`}
                     onClick={openBrowse}
                   >
@@ -284,7 +284,7 @@ export function EntityConnectionsCell({
                 render={
                   <Button
                     type="button"
-                    variant="ghost-muted"
+                    variant="ghost"
                     size="icon-sm"
                     disabled={addDisabled}
                     aria-label={addAriaLabel}
@@ -348,7 +348,7 @@ export function EntityConnectionsCell({
                 {isEdit ? (
                   <Button
                     type="button"
-                    variant="ghost-destructive"
+                    variant="destructive"
                     size="sm"
                     disabled={busy}
                     aria-label={`Unlink ${entityDisplayLabel({

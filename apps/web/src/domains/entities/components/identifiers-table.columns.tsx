@@ -36,7 +36,7 @@ import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evide
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import {
   CONFIDENCE_OPTIONS,
   EntityKindGlyph,

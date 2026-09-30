@@ -14,15 +14,15 @@ import {
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
+import type { ConfidenceTier } from "@watchdog/schemas";
 import {
   Popover,
   PopoverContent,
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import type { ConfidenceTier } from "@watchdog/schemas";
+} from "@watchdog/ui/components/popover";
 
 const PREVIEW_CHIP_MAX = 1;
 

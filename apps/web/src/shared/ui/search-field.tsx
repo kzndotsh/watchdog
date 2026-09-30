@@ -11,7 +11,7 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/shared/ui/shadcn/input-group";
+} from "@watchdog/ui/components/input-group";
 
 interface SearchFieldProps {
   value: string;

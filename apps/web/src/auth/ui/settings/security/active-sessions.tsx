@@ -1,9 +1,9 @@
 "use client"
 
 import { useAuth, useListSessions, useSession } from "@better-auth-ui/react"
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
-import { Separator } from "@/shared/ui/shadcn/separator"
-import { Skeleton } from "@/shared/ui/shadcn/skeleton"
+import { Card, CardContent } from "@watchdog/ui/components/card"
+import { Separator } from "@watchdog/ui/components/separator"
+import { Skeleton } from "@watchdog/ui/components/skeleton"
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section"
 import { cn } from "@/lib/utils"
 import { ActiveSession } from "./active-session"

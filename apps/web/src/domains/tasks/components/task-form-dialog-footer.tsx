@@ -1,6 +1,6 @@
 import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog-form";
-import { Button } from "@/shared/ui/shadcn/button";
-import { DialogFooter } from "@/shared/ui/shadcn/dialog";
+import { Button } from "@/shared/ui/primitives/button";
+import { DialogFooter } from "@/shared/ui/primitives/dialog";
 
 export function TaskFormDialogFooter({
   form,

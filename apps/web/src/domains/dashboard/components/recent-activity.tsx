@@ -24,14 +24,6 @@ import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
-import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/shadcn/select";
 import { DashboardActivitySkeletonLayout } from "@/shared/ui/skeletons";
 import {
   StatusBadge,
@@ -46,6 +38,14 @@ import {
   isProposalQueueLiveEvent,
   type TaskStatus,
 } from "@watchdog/schemas";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@watchdog/ui/components/select";
 
 const ALL_CASES = "__all__";
 const EMPTY_ACTIVITY_ITEMS: ActivityItem[] = [];

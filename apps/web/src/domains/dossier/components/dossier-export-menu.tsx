@@ -6,15 +6,15 @@ import {
   openEntityMarkdownInChat,
 } from "@/domains/entities/lib/entity-export";
 import { errMessage } from "@/lib/utils";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
-import { toast } from "@/shared/ui/shadcn/toast";
+} from "@watchdog/ui/components/dropdown-menu";
 
 async function handleCopyMarkdown(caseId: string, entitySlug: string) {
   try {

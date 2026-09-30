@@ -10,7 +10,7 @@ vi.mock("@/shared/hooks/use-mobile", () => ({
   useIsMobile: () => narrow.value,
 }));
 
-vi.mock("@/shared/ui/shadcn/resizable", () => ({
+vi.mock("@watchdog/ui/components/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="split-group">{children}</div>
   ),

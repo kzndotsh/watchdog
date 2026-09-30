@@ -1,6 +1,6 @@
 import { PlusIcon } from "lucide-react";
 
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 
 interface Props {
   /** Panel empty-state CTA uses a solid button + noun label; header uses ghost "Add". */

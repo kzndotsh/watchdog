@@ -13,7 +13,7 @@ The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. The style 
 | [`ui/forms.md`](ui/forms.md) | Form library |
 | [`ui/tables.md`](ui/tables.md) | Table columns + DataTable pending |
 | [`ui/loading.md`](ui/loading.md) | Skeletons + loading & hydration rules |
-| [`ui/atoms.md`](ui/atoms.md) | Hand-owned atom highlights + facade wrappers |
+| [`ui/atoms.md`](ui/atoms.md) | Hand-owned atom highlights + primitive wrappers |
 | [`ui/vendor.md`](ui/vendor.md) | Vendored primitives: layers, lock, sync |
 | [`ui/motion.md`](ui/motion.md) | Operate motion |
 | [`ui/multi-mode.md`](ui/multi-mode.md) | Detail / composers |

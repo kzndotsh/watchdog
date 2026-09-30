@@ -2,7 +2,7 @@
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
 
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
+import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 
 export type ThemeMode = "light" | "dark" | "auto";
 

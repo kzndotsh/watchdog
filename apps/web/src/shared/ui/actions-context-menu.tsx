@@ -7,7 +7,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuTrigger,
-} from "@/shared/ui/shadcn/context-menu";
+} from "@watchdog/ui/components/context-menu";
 
 /** ContextMenu with `render` trigger + action list; skips editables. */
 export function ActionsContextMenu({

@@ -12,8 +12,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/shared/ui/shadcn/collapsible";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
+} from "@watchdog/ui/components/collapsible";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 export type ArtifactPreviewBody =
   | { kind: "loading" }

@@ -10,6 +10,7 @@ import type {
 } from "@/shared/layout/page-trail";
 import { usePageTrail } from "@/shared/layout/use-page-trail";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
+import { TabCount } from "@/shared/ui/tab-count";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,9 +18,8 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/shared/ui/shadcn/breadcrumb";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
-import { TabCount } from "@/shared/ui/tab-count";
+} from "@watchdog/ui/components/breadcrumb";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 function CaseGlyph() {
   return (

@@ -28,9 +28,7 @@ import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
-import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { SearchField } from "@/shared/ui/search-field";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
   DialogContent,
@@ -38,12 +36,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
+} from "@/shared/ui/primitives/dialog";
+import { Input } from "@/shared/ui/primitives/input";
+import { Textarea } from "@/shared/ui/primitives/textarea";
+import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
+import { SearchField } from "@/shared/ui/search-field";
 import { CardGridSkeleton } from "@/shared/ui/skeletons";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
 function CaseCard({
   caseRow,

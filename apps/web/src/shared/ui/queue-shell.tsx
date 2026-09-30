@@ -2,7 +2,7 @@ import { useRef, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { useQueueKeyboard } from "@/shared/lib/queue-keyboard";
-import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 /**
  * Queue column — sticky header + scroll body (EmptyState can flex-center).

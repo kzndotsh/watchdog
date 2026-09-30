@@ -10,17 +10,17 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
+import { Input } from "@/shared/ui/primitives/input";
+import { Textarea } from "@/shared/ui/primitives/textarea";
+import { toast } from "@/shared/ui/toast";
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Switch } from "@/shared/ui/shadcn/switch";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import { toast } from "@/shared/ui/shadcn/toast";
+} from "@watchdog/ui/components/field";
+import { Switch } from "@watchdog/ui/components/switch";
 
 interface CaseSettingsFormProps {
   caseId: string;
@@ -79,7 +79,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
       <h2 className="text-label text-muted-foreground font-medium">
         Case settings
       </h2>
-      <FieldGroup density="cozy">
+      <FieldGroup>
         <Field>
           <FieldLabel htmlFor="case-name">Name</FieldLabel>
           <Input

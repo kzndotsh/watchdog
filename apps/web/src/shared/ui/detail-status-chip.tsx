@@ -2,7 +2,7 @@
 import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@/shared/ui/shadcn/badge";
+import { Badge } from "@watchdog/ui/components/badge";
 
 type ChipSize = "sm" | "md";
 

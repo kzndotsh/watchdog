@@ -39,7 +39,7 @@ vi.mock("@/shared/layout/theme-toggle", () => ({
   ThemeMenuItem: () => <div>Theme menu</div>,
 }));
 
-vi.mock("@/shared/ui/shadcn/avatar", () => ({
+vi.mock("@watchdog/ui/components/avatar", () => ({
   Avatar: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -48,7 +48,7 @@ vi.mock("@/shared/ui/shadcn/avatar", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/shadcn/dropdown-menu", () => ({
+vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -70,13 +70,13 @@ vi.mock("@/shared/ui/shadcn/dropdown-menu", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/shadcn/scroll-area", () => ({
+vi.mock("@watchdog/ui/components/scroll-area", () => ({
   ScrollArea: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
 }));
 
-vi.mock("@/shared/ui/shadcn/sidebar", () => ({
+vi.mock("@watchdog/ui/components/sidebar", () => ({
   Sidebar: ({ children }: { children: React.ReactNode }) => (
     <aside>{children}</aside>
   ),
@@ -118,7 +118,7 @@ vi.mock("@/shared/ui/shadcn/sidebar", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/shadcn/skeleton", () => ({
+vi.mock("@watchdog/ui/components/skeleton", () => ({
   Skeleton: () => <div>Skeleton</div>,
 }));
 

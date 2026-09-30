@@ -43,7 +43,7 @@ function ok(msg) {
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
   for (const name of readdirSync(dir)) {
-    if (name === "shadcn" || name === "node_modules") continue;
+    if (name === "node_modules") continue;
     const abs = path.join(dir, name);
     const st = statSync(abs);
     if (st.isDirectory()) walk(abs, out);
@@ -180,7 +180,8 @@ for (const { rule, re, msg } of TASTE_BANS) {
   const hits = [];
   for (const f of walk(src)) {
     const r = rel(f);
-    if (r.startsWith("shared/ui/shadcn/") || r.startsWith("auth/ui/")) continue;
+    if (r.startsWith("shared/ui/primitives/") || r.startsWith("auth/ui/"))
+      continue;
     const lines = readFileSync(f, "utf-8").split("\n");
     for (const [i, line] of lines.entries()) {
       const t = line.trimStart();
@@ -250,7 +251,7 @@ const FICTION_RE =
 const fictionHits = [];
 for (const f of walk(src)) {
   const r = rel(f);
-  if (r.startsWith("shared/ui/shadcn/")) continue;
+  if (r.startsWith("shared/ui/primitives/")) continue;
   const lines = readFileSync(f, "utf-8").split("\n");
   for (const [i, line] of lines.entries()) {
     if (line.trimStart().startsWith("//")) continue;
@@ -303,7 +304,7 @@ const onDisk = walk(path.join(src, "shared/ui"))
   .map((abs) => relFromRoot(abs))
   .filter(
     (r) =>
-      !r.includes("/shadcn/") &&
+      !r.includes("/primitives/") &&
       !r.includes("/__tests__/") &&
       !r.endsWith(".lib.ts")
   );
@@ -395,7 +396,7 @@ for (const f of walk(src)) {
 }
 for (const hit of animatePulseHits) {
   fail(
-    `animate-pulse outside shared/ui — use Skeleton from shared/ui/shadcn/skeleton (prefers-reduced-motion guard keys [data-slot=skeleton]): ${hit}`
+    `animate-pulse outside shared/ui — use Skeleton from @watchdog/ui/components/skeleton (prefers-reduced-motion guard keys [data-slot=skeleton]): ${hit}`
   );
 }
 if (animatePulseHits.length === 0) {

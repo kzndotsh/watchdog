@@ -10,8 +10,8 @@ import { spawnSync } from "node:child_process";
  *   node scripts/ui-vendor.mjs init           one-time: lock what is on disk (refuses if locked)
  *
  * Why: hand edits to vendored files make every `shadcn add --overwrite`, codemod and
- * preset change a merge conflict. Watchdog-specific behavior lives in the facade
- * (apps/web/src/shared/ui/shadcn); this lock makes an accidental edit fail loudly.
+ * preset change a merge conflict. Watchdog-specific behavior lives in
+ * apps/web/src/shared/ui/primitives (wrappers); this lock makes an accidental edit fail loudly.
  */
 import { createHash } from "node:crypto";
 import {
@@ -146,7 +146,7 @@ function check() {
   if (problems.length > 0) {
     for (const p of problems) console.error(`✗ ${p}`);
     console.error(
-      "\nVendored shadcn files are generated. Put Watchdog behavior in apps/web/src/shared/ui/shadcn (facade wrappers) or CSS tokens; to update primitives run `pnpm ui:sync` / `pnpm ui:add <name>`."
+      "\nVendored shadcn files are generated. Put Watchdog behavior in apps/web/src/shared/ui/primitives (wrappers) or CSS tokens; to update primitives run `pnpm ui:sync` / `pnpm ui:add <name>`."
     );
     process.exit(1);
   }
@@ -183,7 +183,7 @@ if (cmd === "check") {
   runCli(onDiskComponents());
   writeLock(readStyle(), onDiskComponents());
   console.log(
-    "vendor.json updated — review `git diff packages/ui`, then update facade wrappers if a component's API changed"
+    "vendor.json updated — review `git diff packages/ui`, then update wrappers if a component's API changed"
   );
 } else if (cmd === "remove") {
   const lock = readLock();

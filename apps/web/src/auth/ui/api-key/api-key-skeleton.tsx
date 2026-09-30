@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
-import { Skeleton } from "@/shared/ui/shadcn/skeleton"
+import { Card, CardContent } from "@watchdog/ui/components/card"
+import { Skeleton } from "@watchdog/ui/components/skeleton"
 
 export function ApiKeySkeleton() {
   return (

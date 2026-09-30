@@ -2,7 +2,7 @@ import { FileUpIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 
 export interface FileDropZoneProps {
   disabled: boolean;

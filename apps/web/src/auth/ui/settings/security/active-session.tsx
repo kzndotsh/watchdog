@@ -2,11 +2,11 @@ import { useAuth, useRevokeSession, useSession } from "@better-auth-ui/react"
 import type { Session } from "better-auth"
 import Bowser from "bowser"
 import { LogOut, Monitor, Smartphone, X } from "lucide-react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { toast } from "@/shared/ui/toast"
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { Button } from "@/shared/ui/primitives/button"
+import { Card, CardContent } from "@watchdog/ui/components/card"
+import { Spinner } from "@watchdog/ui/components/spinner"
 import { formatRelativeTime } from "@/shared/ui/relative-time.lib"
 
 export type ActiveSessionProps = {

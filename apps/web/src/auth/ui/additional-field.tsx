@@ -8,12 +8,12 @@ import { useAuth } from "@better-auth-ui/react"
 import { format } from "date-fns"
 import { CalendarIcon, Check, ChevronDownIcon, Copy } from "lucide-react"
 import { type ComponentType, useRef, useState } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { toast } from "@/shared/ui/toast"
 
 import { errMessage } from "@/lib/utils"
-import { buttonVariants } from "@/shared/ui/shadcn/button"
-import { Calendar } from "@/shared/ui/shadcn/calendar"
-import { Checkbox } from "@/shared/ui/shadcn/checkbox"
+import { buttonVariants } from "@/shared/ui/primitives/button"
+import { Calendar } from "@watchdog/ui/components/calendar"
+import { Checkbox } from "@watchdog/ui/components/checkbox"
 import {
   Combobox,
   ComboboxContent,
@@ -21,36 +21,36 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList
-} from "@/shared/ui/shadcn/combobox"
+} from "@/shared/ui/primitives/combobox"
 import {
   Field,
   FieldContent,
   FieldError,
   FieldLabel
-} from "@/shared/ui/shadcn/field"
-import { Input } from "@/shared/ui/shadcn/input"
+} from "@watchdog/ui/components/field"
+import { Input } from "@/shared/ui/primitives/input"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput
-} from "@/shared/ui/shadcn/input-group"
-import { Label } from "@/shared/ui/shadcn/label"
+} from "@watchdog/ui/components/input-group"
+import { Label } from "@watchdog/ui/components/label"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger
-} from "@/shared/ui/shadcn/popover"
+} from "@watchdog/ui/components/popover"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from "@/shared/ui/shadcn/select"
-import { Slider } from "@/shared/ui/shadcn/slider"
-import { Switch } from "@/shared/ui/shadcn/switch"
-import { Textarea } from "@/shared/ui/shadcn/textarea"
+} from "@watchdog/ui/components/select"
+import { Slider } from "@watchdog/ui/components/slider"
+import { Switch } from "@watchdog/ui/components/switch"
+import { Textarea } from "@/shared/ui/primitives/textarea"
 import { cn } from "@/lib/utils"
 
 export type AdditionalFieldProps = {

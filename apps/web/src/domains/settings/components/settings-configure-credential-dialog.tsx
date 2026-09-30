@@ -16,18 +16,18 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
+} from "@/shared/ui/primitives/alert-dialog";
+import { Button } from "@/shared/ui/primitives/button";
+import { StatusDot } from "@/shared/ui/status-dot";
+import type { CredentialSlot } from "@watchdog/core";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/shared/ui/shadcn/input-group";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
-import { StatusDot } from "@/shared/ui/status-dot";
-import type { CredentialSlot } from "@watchdog/core";
+} from "@watchdog/ui/components/input-group";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
 function secretFieldValidator({ value }: { value: string }) {
   return value.trim() ? undefined : "Enter a secret before saving";

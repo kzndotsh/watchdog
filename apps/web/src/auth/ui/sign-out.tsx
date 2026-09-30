@@ -2,7 +2,7 @@
 
 import { useAuth, useSignOut } from "@better-auth-ui/react"
 import { useEffect, useRef } from "react"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { Spinner } from "@watchdog/ui/components/spinner"
 import { cn } from "@/lib/utils"
 
 export type SignOutProps = {

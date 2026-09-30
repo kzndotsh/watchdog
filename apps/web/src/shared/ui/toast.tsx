@@ -1,7 +1,7 @@
+/* oxlint-disable react/only-export-components -- toast manager + typed helpers ship with the components (reworked next) */
 // Watchdog toast: Base UI primitive + status tint surfaces for typed toasts.
 "use client";
 
-import * as React from "react";
 import { Toast as ToastPrimitive } from "@base-ui/react/toast";
 import {
   CircleCheckIcon,
@@ -11,9 +11,10 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 
 const toastManager = ToastPrimitive.createToastManager();
 
@@ -70,7 +71,7 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
     <ToastPrimitive.Root
       data-slot="toast"
       className={cn(
-        "group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom rounded-md border border-border bg-card text-card-foreground shadow-lg will-change-transform outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+        "group/toast border-border bg-card text-card-foreground focus-visible:border-ring focus-visible:ring-ring/50 pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom rounded-md border shadow-lg will-change-transform outline-none select-none focus-visible:ring-3",
         "[--gap:0.75rem] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-offset-y)*-1+calc(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))] [--peek:0.75rem] [--scale:calc(max(0,1-(var(--toast-index)*0.1)))] [--shrink:calc(1-var(--scale))]",
         // oxlint-disable-next-line shadcn/no-arbitrary-values -- toast stack motion: composite transform + opacity + height transition
         "h-(--height) [transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)-(var(--toast-index)*var(--peek))-(var(--shrink)*var(--height))))_scale(var(--scale))] [transition:transform_500ms_cubic-bezier(0.22,1,0.36,1),opacity_500ms,height_150ms]",
@@ -98,7 +99,7 @@ function ToastContent({ className, ...props }: ToastPrimitive.Content.Props) {
     <ToastPrimitive.Content
       data-slot="toast-content"
       className={cn(
-        "flex h-full items-center gap-3 overflow-hidden p-3 transition-opacity duration-250 ease-toast data-behind:opacity-0 data-expanded:opacity-100",
+        "ease-toast flex h-full items-center gap-3 overflow-hidden p-3 transition-opacity duration-250 data-behind:opacity-0 data-expanded:opacity-100",
         className
       )}
       {...props}
@@ -123,7 +124,7 @@ function ToastDescription({
   return (
     <ToastPrimitive.Description
       data-slot="toast-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   );
@@ -159,7 +160,7 @@ function ToastClose({
       aria-label="Close toast"
       render={render}
       className={cn(
-        "relative shrink-0 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-foreground",
+        "text-muted-foreground hover:text-foreground relative shrink-0 after:absolute after:-inset-2 after:content-['']",
         className
       )}
       {...props}

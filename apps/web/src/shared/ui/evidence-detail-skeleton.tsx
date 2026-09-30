@@ -6,9 +6,9 @@ import {
 } from "@/shared/ui/detail-context-line";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 
 /** Size tab skeleton from real label metrics — fixed widths drift vs `text-sm` triggers. */
 function SkeletonTabLabel({ children }: { children: string }) {

@@ -12,7 +12,7 @@ import { useDataHotkeys } from "@/shared/lib/data-hotkey";
 import type { HotkeyBinding } from "@/shared/lib/hotkeys";
 import { useGlobalHotkeys } from "@/shared/lib/use-global-hotkeys";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
-import { useSidebar } from "@/shared/ui/shadcn/sidebar";
+import { useSidebar } from "@watchdog/ui/components/sidebar";
 
 /**
  * Shell chrome: Mod+K palette, ? shortcuts, `data-hotkey` controls. Mod+B is owned by

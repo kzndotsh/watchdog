@@ -1,14 +1,14 @@
 import { useAuth, useChangeEmail, useSession } from "@better-auth-ui/react"
 import { type SyntheticEvent, useState } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { toast } from "@/shared/ui/toast"
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Field, FieldError } from "@/shared/ui/shadcn/field"
+import { Button } from "@/shared/ui/primitives/button"
+import { Field, FieldError } from "@watchdog/ui/components/field"
 import { FormSection } from "@/shared/ui/form-section"
-import { Input } from "@/shared/ui/shadcn/input"
-import { Label } from "@/shared/ui/shadcn/label"
-import { Skeleton } from "@/shared/ui/shadcn/skeleton"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { Input } from "@/shared/ui/primitives/input"
+import { Label } from "@watchdog/ui/components/label"
+import { Skeleton } from "@watchdog/ui/components/skeleton"
+import { Spinner } from "@watchdog/ui/components/spinner"
 
 export type ChangeEmailProps = {
   className?: string

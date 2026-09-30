@@ -14,10 +14,10 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { evidenceSourceFootnote } from "@/shared/ui/intake/evidence-option";
+import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
-import { Button } from "@/shared/ui/shadcn/button";
-import { ButtonGroup } from "@/shared/ui/shadcn/button-group";
 import { KindBadge } from "@/shared/ui/vocab";
+import { ButtonGroup } from "@watchdog/ui/components/button-group";
 
 const DUMP_KINDS = [
   { kind: "file" as const, label: "File", Icon: FileUpIcon },

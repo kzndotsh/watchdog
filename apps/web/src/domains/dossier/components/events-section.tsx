@@ -26,18 +26,18 @@ import {
 import { cn, errMessage } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Calendar } from "@/shared/ui/shadcn/calendar";
-import { Input } from "@/shared/ui/shadcn/input";
+import { Button } from "@/shared/ui/primitives/button";
+import { Input } from "@/shared/ui/primitives/input";
+import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
+import { TargetActionsHost } from "@/shared/ui/target-actions-host";
+import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import { toast } from "@/shared/ui/toast";
+import { Calendar } from "@watchdog/ui/components/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import { toast } from "@/shared/ui/shadcn/toast";
-import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
-import { TargetActionsHost } from "@/shared/ui/target-actions-host";
-import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+} from "@watchdog/ui/components/popover";
 
 interface EventFormValues {
   when: string;
@@ -88,7 +88,6 @@ function WhenDateField({
           onChange(e.target.value);
         }}
         onKeyDown={onKeyDown}
-        variant="ghost-muted"
         mono
         className="h-8 w-36"
       />
@@ -97,7 +96,7 @@ function WhenDateField({
           render={
             <Button
               type="button"
-              variant="ghost-muted"
+              variant="ghost"
               size="icon-sm"
               aria-label="Pick date"
             />
@@ -105,7 +104,7 @@ function WhenDateField({
         >
           <CalendarIcon />
         </PopoverTrigger>
-        <PopoverContent flush className="w-auto overflow-hidden" align="start">
+        <PopoverContent className="w-auto overflow-hidden" align="start">
           <Calendar
             mode="single"
             selected={selected}
@@ -202,8 +201,6 @@ function EventNodeComposer({
               field.handleChange(e.target.value);
             }}
             onKeyDown={onFieldKeyDown}
-            variant="ghost"
-            size="lg"
             autoFocus
           />
         )}
@@ -227,7 +224,6 @@ function EventNodeComposer({
                 field.handleChange(e.target.value);
               }}
               onKeyDown={onFieldKeyDown}
-              variant="ghost-muted"
               className="h-8 min-w-0 flex-1"
             />
           )}

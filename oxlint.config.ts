@@ -1,3 +1,5 @@
+import { readdirSync } from "node:fs";
+
 import { recommended as effecttsgoRecommended } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "oxlint";
 import core from "ultracite/oxlint/core";
@@ -51,6 +53,19 @@ const effecttsgoTier1Warn = {
   "effecttsgo/try-catch-in-effect-gen": "warn",
   "effecttsgo/prefer-schema-over-json": "warn",
 } as const;
+
+/**
+ * Same-name Watchdog wrappers over shadcn primitives (apps/web/src/shared/ui/primitives).
+ * Their vanilla `@watchdog/ui/components/<name>` path is banned in app code so nobody
+ * silently skips the wrapper; the list follows the folder, so adding a wrapper bans its twin.
+ */
+/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- root config files sit outside every tsconfig project, so per-file (staged) lint cannot resolve node types */
+const wrappedImportBans: string[] = readdirSync(
+  new URL("apps/web/src/shared/ui/primitives/", import.meta.url)
+)
+  .filter((f) => f.endsWith(".tsx"))
+  .map((f) => `@watchdog/ui/components/${f.replace(/\.tsx$/, "")}`);
+/* oxlint-enable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return */
 
 const watchdogIgnores = [
   "_legacy-v1/**",
@@ -308,8 +323,8 @@ export default defineConfig({
       },
     },
     {
-      // Web must not import @watchdog/db except auth adapter + SSE listen, and must reach the
-      // vendored shadcn primitives (@watchdog/ui) only through the shared/ui/shadcn facade.
+      // Web must not import @watchdog/db except auth adapter + SSE listen, and must use the
+      // Watchdog wrapper (not the vanilla @watchdog/ui primitive) wherever one exists.
       files: ["apps/web/src/**/*.{ts,tsx}"],
       rules: {
         "eslint/no-restricted-imports": [
@@ -324,9 +339,9 @@ export default defineConfig({
             ],
             patterns: [
               {
-                group: ["@watchdog/ui/*"],
+                group: wrappedImportBans,
                 message:
-                  "Import primitives from @/shared/ui/shadcn/* (the Watchdog facade). Only that folder may import @watchdog/ui.",
+                  "This primitive has a Watchdog wrapper: import it from @/shared/ui/primitives/<name> (loading, Enter-to-confirm, mono, ...).",
               },
             ],
           },
@@ -334,10 +349,10 @@ export default defineConfig({
       },
     },
     {
-      // The facade is the one place that composes @watchdog/ui (re-exports + wrappers).
-      files: ["apps/web/src/shared/ui/shadcn/**/*.{ts,tsx}"],
+      // Wrappers are the one place that composes the vanilla primitives they wrap.
+      files: ["apps/web/src/shared/ui/primitives/**/*.{ts,tsx}"],
       rules: {
-        // Re-export barrels + wrappers: fast-refresh boundaries don't apply here.
+        // Wrappers re-export their base module (`export *`): fast-refresh boundaries don't apply.
         "react/only-export-components": "off",
         "eslint/no-restricted-imports": [
           "error",
@@ -345,7 +360,7 @@ export default defineConfig({
             paths: [
               {
                 name: "@watchdog/db",
-                message: "The UI facade never touches the database.",
+                message: "UI wrappers never touch the database.",
               },
             ],
           },
@@ -434,6 +449,8 @@ export default defineConfig({
         "scripts/**/*.{mjs,ts}",
         "vitest.config.ts",
         "playwright.config.ts",
+        "oxlint.config.ts",
+        "knip.ts",
       ],
       rules: effecttsgoOff,
     },

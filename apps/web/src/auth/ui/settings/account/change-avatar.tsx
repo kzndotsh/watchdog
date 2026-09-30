@@ -2,14 +2,14 @@ import { fileToBase64 } from "@better-auth-ui/core"
 import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react"
 import { Camera, Trash2, Upload } from "lucide-react"
 import { type ChangeEvent, useRef, useState } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { toast } from "@/shared/ui/toast"
 
 import { UserAvatar } from "@/auth/ui/user/user-avatar"
 import { cn, errMessage } from "@/lib/utils"
-import { Button } from "@/shared/ui/shadcn/button"
-import { Field } from "@/shared/ui/shadcn/field"
-import { Label } from "@/shared/ui/shadcn/label"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { Button } from "@/shared/ui/primitives/button"
+import { Field } from "@watchdog/ui/components/field"
+import { Label } from "@watchdog/ui/components/label"
+import { Spinner } from "@watchdog/ui/components/spinner"
 
 export type ChangeAvatarProps = {
   className?: string

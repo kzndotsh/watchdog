@@ -48,9 +48,9 @@ import {
   identifierCreateCanSubmit,
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
-import { Button } from "@/shared/ui/shadcn/button";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
+import { toast } from "@/shared/ui/toast";
 import {
   normalizeIdentifierPlatform,
   type ConfidenceTier,

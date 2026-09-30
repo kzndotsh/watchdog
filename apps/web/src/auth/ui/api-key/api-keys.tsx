@@ -5,9 +5,9 @@ import { useState } from "react"
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key"
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
-import { Separator } from "@/shared/ui/shadcn/separator"
+import { Button } from "@/shared/ui/primitives/button"
+import { Card, CardContent } from "@watchdog/ui/components/card"
+import { Separator } from "@watchdog/ui/components/separator"
 import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section"
 import { cn } from "@/lib/utils"
 import { ApiKey } from "./api-key"

@@ -9,7 +9,7 @@ import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_IDENTIFIER_UPDATED } from "@/shared/lib/toast-copy";
 import type { IdentifierFieldUpdate } from "@/shared/ui/identifiers/identifier-cells";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import type {
   ConfidenceTier,
   IdentifierStatus,

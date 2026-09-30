@@ -1,7 +1,7 @@
 import type { ReactTable, RowData } from "@tanstack/react-table";
 import { Settings2Icon } from "lucide-react";
 
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
+} from "@watchdog/ui/components/dropdown-menu";
 
 import type { DataTableFeatures } from "./table-features";
 

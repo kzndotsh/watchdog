@@ -19,14 +19,14 @@ import {
 } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { QueueFilterBar } from "@/shared/ui/queue-filter-bar";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,
   FieldGroup,
   FieldLabel,
   FieldLegend,
   FieldSet,
-} from "@/shared/ui/shadcn/field";
+} from "@watchdog/ui/components/field";
 
 export interface CollectQueueToolbarProps {
   filters: CollectFilters;
@@ -131,7 +131,7 @@ export function CollectQueueToolbar({
             <div className="space-y-3">
               <FieldSet>
                 <FieldLegend variant="label">Show only</FieldLegend>
-                <FieldGroup density="compact">
+                <FieldGroup>
                   <Field orientation="horizontal">
                     <Checkbox
                       id={hiddenOnlyId}
@@ -184,7 +184,7 @@ export function CollectQueueToolbar({
               </FieldSet>
               <FieldSet>
                 <FieldLegend variant="label">State</FieldLegend>
-                <FieldGroup density="compact">
+                <FieldGroup>
                   {COLLECT_STATE_FACET_OPTIONS.map((opt) => {
                     const checked = filters.states.includes(opt.value);
                     const id = `collect-state-${opt.value}`;
@@ -213,10 +213,7 @@ export function CollectQueueToolbar({
               {capOptions.length > 0 ? (
                 <FieldSet>
                   <FieldLegend variant="label">Cap / playbook</FieldLegend>
-                  <FieldGroup
-                    density="compact"
-                    className="max-h-40 overflow-y-auto"
-                  >
+                  <FieldGroup className="max-h-40 overflow-y-auto">
                     {capOptions.map((opt) => {
                       const checked = selectedCapabilityIds.has(opt.value);
                       const id = `collect-cap-${opt.value}`;

@@ -3,8 +3,8 @@ import { Key } from "lucide-react"
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key"
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
+import { Button } from "@/shared/ui/primitives/button"
+import { Card, CardContent } from "@watchdog/ui/components/card"
 
 export type ApiKeysEmptyProps = {
   onCreatePress: () => void
