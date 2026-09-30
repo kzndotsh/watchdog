@@ -27,10 +27,6 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 
 vi.mock("@/auth/client", () => ({ authClient: {} }));
 
-vi.mock("@/domains/search/components/command-search-trigger", () => ({
-  CommandSearchTrigger: () => <div>Search trigger</div>,
-}));
-
 vi.mock("@/domains/organization/components/org-switcher", () => ({
   OrgSwitcher: () => <div>Org switcher</div>,
 }));
@@ -157,11 +153,10 @@ vi.mock("@watchdog/ui/components/skeleton", () => ({
 import { AppSidebar } from "@/shared/layout/app-sidebar";
 
 describe("AppSidebar", () => {
-  it("renders dashboard, search, case switcher, and account row", () => {
+  it("renders dashboard, case switcher, and account row", () => {
     render(<AppSidebar />);
 
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Search trigger")).toBeInTheDocument();
     expect(screen.getByText("Case switcher")).toBeInTheDocument();
     expect(screen.getByText("Org switcher")).toBeInTheDocument();
     expect(screen.getAllByText("Analyst").length).toBeGreaterThan(0);

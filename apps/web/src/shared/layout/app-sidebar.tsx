@@ -5,7 +5,6 @@ import { LogOutIcon, SettingsIcon } from "lucide-react";
 import { authClient } from "@/auth/client";
 import { NAV_GROUPS, pathActive } from "@/config/nav";
 import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
-import { CommandSearchTrigger } from "@/domains/search/components/command-search-trigger";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
 import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
 import { Button } from "@/shared/ui/primitives/button";
@@ -164,9 +163,6 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <CommandSearchTrigger />
-        </SidebarGroup>
         <SidebarGroup>
           <CaseSwitcher />
         </SidebarGroup>
