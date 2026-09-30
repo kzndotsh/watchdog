@@ -109,6 +109,7 @@ function TriageActive({
       <SplitView
         key="inbox-split"
         groupId="inbox"
+        backLabel="Queue"
         list={
           <QueueShell
             aria-label="Proposal queue"

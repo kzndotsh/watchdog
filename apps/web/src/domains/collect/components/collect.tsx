@@ -187,6 +187,7 @@ function CollectWithCase({
       <SplitView
         key="collect-split"
         groupId="collect"
+        backLabel="Items"
         list={
           <QueueShell
             aria-label="Collect items"

@@ -237,3 +237,22 @@
 [data-slot="toast"] {
   font-family: var(--font-sans);
 }
+
+/*
+ * Touch targets — coarse pointers only (phones, tablets). Desktop density is
+ * untouched. Buttons and Queue rows grow toward the 44px touch target; table
+ * cells keep their fixed control height so the colgroup grid holds.
+ */
+@media (pointer: coarse) {
+  [data-slot="button"]:not(td [data-slot="button"]) {
+    min-height: 2.5rem;
+  }
+
+  [data-slot="button"][data-size^="icon"]:not(td [data-slot="button"]) {
+    min-width: 2.5rem;
+  }
+
+  [data-slot="queue-row"] {
+    padding-block: 0.75rem;
+  }
+}

@@ -1,7 +1,9 @@
-import type { ReactNode } from "react";
+import { ChevronLeftIcon } from "lucide-react";
+import { useState, type MouseEvent, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -33,6 +35,8 @@ export interface SplitViewProps {
    * Outer box around Queue+Detail. Off by default — the handle is the divider.
    */
   bordered?: boolean;
+  /** Narrow viewports: label of the back control above Detail. Default "Back". */
+  backLabel?: string;
   className?: string;
 }
 
@@ -40,6 +44,71 @@ function ColumnShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       {children}
+    </div>
+  );
+}
+
+/**
+ * Narrow viewports (< 768px): one column at a time. Queue first; tapping a
+ * Queue row shows Detail with a back control. Auto-selection (URL sync) does
+ * not flip the view — only a row activation inside the Queue does.
+ */
+function StackedSplit({
+  list,
+  detail,
+  backLabel,
+  className,
+}: {
+  list: ReactNode;
+  detail: ReactNode;
+  backLabel: string;
+  className?: string;
+}) {
+  const [pane, setPane] = useState<"list" | "detail">("list");
+
+  function handleListClick(event: MouseEvent<HTMLDivElement>) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest('[data-slot="queue-row"]')
+    ) {
+      setPane("detail");
+    }
+  }
+
+  if (pane === "list") {
+    return (
+      // oxlint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- delegated: rows own their own keyboard activation (Enter/Space → click)
+      <div
+        data-slot="split-view"
+        data-layout="stacked"
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-hidden",
+          className
+        )}
+        onClickCapture={handleListClick}
+      >
+        <ColumnShell>{list}</ColumnShell>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      data-slot="split-view"
+      data-layout="stacked"
+      className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", className)}
+    >
+      <button
+        type="button"
+        className="text-muted-foreground hover:text-foreground border-border flex h-10 shrink-0 items-center gap-1 border-b px-3 text-sm"
+        onClick={() => {
+          setPane("list");
+        }}
+      >
+        <ChevronLeftIcon aria-hidden className="size-4" />
+        {backLabel}
+      </button>
+      <ColumnShell>{detail}</ColumnShell>
     </div>
   );
 }
@@ -70,9 +139,22 @@ export function SplitView({
   middleMaxSize = "60%",
   detailMinSize = "30%",
   bordered = false,
+  backLabel = "Back",
   className,
 }: SplitViewProps) {
   const hydrated = useHydrated();
+  const narrow = useIsMobile();
+
+  if (hydrated && narrow && !middle) {
+    return (
+      <StackedSplit
+        list={list}
+        detail={detail}
+        backLabel={backLabel}
+        className={className}
+      />
+    );
+  }
 
   const groupClass = cn(
     "min-h-0 flex-1 overflow-hidden",
