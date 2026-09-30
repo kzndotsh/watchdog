@@ -1,5 +1,5 @@
 import {
-  BuildingIcon,
+  UsersRoundIcon,
   ChevronsUpDownIcon,
   DogIcon,
   LogOutIcon,
@@ -34,7 +34,7 @@ function IconButton({ children }: { children: ReactNode }) {
 function OrgButton({ showName = true }: { showName?: boolean }) {
   return (
     <span className="hover:bg-sidebar-accent flex h-7 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-xs [&_svg]:size-4 [&_svg]:shrink-0">
-      <BuildingIcon />
+      <UsersRoundIcon />
       {showName ? (
         <>
           <span className="truncate">{ORG}</span>
@@ -136,7 +136,7 @@ export function SidebarFooterSection() {
               <Brand />
               <div className="flex flex-col items-center gap-1">
                 <IconButton>
-                  <BuildingIcon />
+                  <UsersRoundIcon />
                 </IconButton>
                 <IconButton>
                   <Avatar />
@@ -168,7 +168,7 @@ export function SidebarFooterSection() {
               <Brand />
               <div className="flex flex-col items-center gap-1">
                 <IconButton>
-                  <BuildingIcon />
+                  <UsersRoundIcon />
                 </IconButton>
                 <IconButton>
                   <SettingsIcon />
@@ -209,7 +209,7 @@ export function SidebarFooterSection() {
               <Brand />
               <div className="flex flex-col items-center gap-1">
                 <IconButton>
-                  <BuildingIcon />
+                  <UsersRoundIcon />
                 </IconButton>
                 <IconButton>
                   <Avatar />
@@ -248,7 +248,7 @@ export function SidebarFooterSection() {
           collapsed={
             <>
               <IconButton>
-                <BuildingIcon />
+                <UsersRoundIcon />
               </IconButton>
               <IconButton>
                 <Avatar />
@@ -282,7 +282,7 @@ export function SidebarFooterSection() {
                   <Avatar />
                 </IconButton>
                 <IconButton>
-                  <BuildingIcon />
+                  <UsersRoundIcon />
                 </IconButton>
               </div>
             </>

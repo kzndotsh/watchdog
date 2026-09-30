@@ -1,13 +1,13 @@
 import { useSession } from "@better-auth-ui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogOutIcon, SettingsIcon } from "lucide-react";
+import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
 
 import { authClient } from "@/auth/client";
 import { NAV_GROUPS, pathActive } from "@/config/nav";
 import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
+import { SearchButton } from "@/domains/search/components/search-button";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
 import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
-import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { trimmedOrUndefined } from "@watchdog/schemas";
 import { Avatar, AvatarFallback } from "@watchdog/ui/components/avatar";
@@ -77,7 +77,7 @@ function AccountRow() {
   }
 
   return (
-    <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
+    <div className="flex items-center group-data-[collapsible=icon]:flex-col">
       <SidebarMenu className="min-w-0 flex-1">
         <SidebarMenuItem>
           <DropdownMenu>
@@ -86,9 +86,10 @@ function AccountRow() {
                 <SidebarMenuButton aria-label="Account menu" tooltip={name} />
               }
             >
-              <Avatar size="sm">
+              {/* Bigger than the 18px nav icons, but centered on their column (negative margins) so the text edge still lines up */}
+              <Avatar size="sm" className="-mx-0.5 data-[size=sm]:size-5">
                 <AvatarFallback className="text-xs" suppressHydrationWarning>
-                  {userInitials(name) || "?"}
+                  {userInitials(name).slice(0, 1) || "?"}
                 </AvatarFallback>
               </Avatar>
               <span className="truncate" suppressHydrationWarning>
@@ -137,18 +138,21 @@ function AccountRow() {
         </SidebarMenuItem>
       </SidebarMenu>
 
-      <WithTooltip content="Settings" side="right">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Settings"
-          nativeButton={false}
-          render={<Link to="/settings" />}
-          className="text-sidebar-foreground"
-        >
-          <SettingsIcon />
-        </Button>
-      </WithTooltip>
+      <SearchButton />
+
+      <SidebarMenu className="w-auto">
+        <SidebarMenuItem>
+          <WithTooltip content="Settings" side="right" wrapSpan>
+            <SidebarMenuButton
+              aria-label="Settings"
+              className="w-8 justify-center [&_svg]:size-3.5"
+              render={<Link to="/settings" />}
+            >
+              <SettingsIcon />
+            </SidebarMenuButton>
+          </WithTooltip>
+        </SidebarMenuItem>
+      </SidebarMenu>
     </div>
   );
 }
@@ -159,7 +163,21 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <OrgSwitcher />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={pathActive(pathname, "/")}
+              render={<Link to="/" />}
+              tooltip="Dashboard"
+              className="group-data-[collapsible=icon]:justify-center [&_svg]:size-4"
+            >
+              <DogIcon className="shrink-0" />
+              <span className="font-heading tracking-eyebrow-sm text-sm font-medium group-data-[collapsible=icon]:hidden">
+                WATCHDOG
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
@@ -195,6 +213,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        <OrgSwitcher />
         <AccountRow />
       </SidebarFooter>
     </Sidebar>

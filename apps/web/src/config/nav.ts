@@ -7,7 +7,6 @@ import {
   GitForkIcon,
   HashIcon,
   InboxIcon,
-  LayoutDashboardIcon,
   SettingsIcon,
   ShapesIcon,
   UploadIcon,
@@ -46,7 +45,6 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Work",
     items: [
-      { to: "/", label: "Dashboard", icon: LayoutDashboardIcon },
       { to: "/tasks", label: "Tasks", icon: CheckSquareIcon },
       { to: "/collect", label: "Collect", icon: UploadIcon },
       { to: "/triage", label: "Triage", icon: InboxIcon },

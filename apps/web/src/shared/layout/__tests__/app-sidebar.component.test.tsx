@@ -27,6 +27,10 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 
 vi.mock("@/auth/client", () => ({ authClient: {} }));
 
+vi.mock("@/domains/search/components/search-button", () => ({
+  SearchButton: () => <div>Search button</div>,
+}));
+
 vi.mock("@/domains/organization/components/org-switcher", () => ({
   OrgSwitcher: () => <div>Org switcher</div>,
 }));
@@ -131,11 +135,13 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarMenuButton: ({
     children,
     render,
+    "aria-label": ariaLabel,
   }: {
     children: React.ReactNode;
     render?: React.ReactElement;
+    "aria-label"?: string;
   }) => (
-    <div>
+    <div aria-label={ariaLabel}>
       {render}
       {children}
     </div>
@@ -156,9 +162,10 @@ describe("AppSidebar", () => {
   it("renders dashboard, case switcher, and account row", () => {
     render(<AppSidebar />);
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("WATCHDOG")).toBeInTheDocument();
     expect(screen.getByText("Case switcher")).toBeInTheDocument();
     expect(screen.getByText("Org switcher")).toBeInTheDocument();
+    expect(screen.getByText("Search button")).toBeInTheDocument();
     expect(screen.getAllByText("Analyst").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Settings")).toBeInTheDocument();
     expect(screen.getByText("Sign out")).toBeInTheDocument();

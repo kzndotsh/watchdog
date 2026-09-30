@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { HeaderSearchButton } from "@/domains/search/components/header-search-button";
 import { cn } from "@/lib/utils";
 import { AppBreadcrumbs } from "@/shared/layout/app-breadcrumbs";
 import type { CountOnTrailId } from "@/shared/layout/page-trail";
@@ -83,7 +82,6 @@ export function PageHeader({
         {actions ? (
           <div className="flex shrink-0 items-center gap-2">{actions}</div>
         ) : null}
-        <HeaderSearchButton />
       </div>
 
       {below === undefined ? null : <div className="px-2 pb-0">{below}</div>}

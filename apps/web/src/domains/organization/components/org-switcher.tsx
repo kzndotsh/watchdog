@@ -4,7 +4,7 @@ import {
   useSetActiveOrganization,
 } from "@better-auth-ui/react/plugins/organization";
 import {
-  BuildingIcon,
+  UsersRoundIcon,
   CheckIcon,
   ChevronsUpDownIcon,
   PlusIcon,
@@ -51,8 +51,8 @@ export function OrgSwitcher() {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton size="sm" disabled tooltip="Organization">
-            <BuildingIcon />
+          <SidebarMenuButton disabled tooltip="Organization">
+            <UsersRoundIcon />
             <span className="truncate">Organization</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -67,13 +67,10 @@ export function OrgSwitcher() {
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <SidebarMenuButton
-                  size="sm"
-                  tooltip={active?.name ?? "Organization"}
-                />
+                <SidebarMenuButton tooltip={active?.name ?? "Organization"} />
               }
             >
-              <BuildingIcon />
+              <UsersRoundIcon />
               <span className="truncate">{active?.name ?? "Organization"}</span>
               <ChevronsUpDownIcon className="ml-auto" />
             </DropdownMenuTrigger>

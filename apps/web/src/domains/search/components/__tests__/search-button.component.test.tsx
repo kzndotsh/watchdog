@@ -1,11 +1,33 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("@watchdog/ui/components/sidebar", () => ({
+  SidebarMenu: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SidebarMenuButton: ({
+    children,
+    onClick,
+    "aria-label": ariaLabel,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    "aria-label"?: string;
+  }) => (
+    <button type="button" aria-label={ariaLabel} onClick={onClick}>
+      {children}
+    </button>
+  ),
+}));
+
 vi.mock("@/shared/ui/timestamp", () => ({
   WithTooltip: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-import { HeaderSearchButton } from "@/domains/search/components/header-search-button";
+import { SearchButton } from "@/domains/search/components/search-button";
 import {
   SearchUiContext,
   type SearchUiValue,
@@ -21,13 +43,13 @@ function searchUi(openPalette: () => void): SearchUiValue {
   };
 }
 
-describe("HeaderSearchButton", () => {
+describe("SearchButton", () => {
   it("opens the command palette when clicked", () => {
     const openPalette = vi.fn();
     const value = searchUi(openPalette);
     render(
       <SearchUiContext.Provider value={value}>
-        <HeaderSearchButton />
+        <SearchButton />
       </SearchUiContext.Provider>
     );
 
@@ -36,7 +58,7 @@ describe("HeaderSearchButton", () => {
   });
 
   it("renders nothing outside the search chrome", () => {
-    const { container } = render(<HeaderSearchButton />);
+    const { container } = render(<SearchButton />);
     expect(container).toBeEmptyDOMElement();
   });
 });
