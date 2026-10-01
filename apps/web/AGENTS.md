@@ -52,5 +52,6 @@ Canonical contracts: [`docs/reference/contracts/`](../../docs/reference/contract
 | UI leaves | [`ui/`](../../docs/reference/web/ui/README.md) · loading · tables · page-shell |
 | Domains / Data | [`domains.md`](../../docs/reference/web/domains.md) · [`data.md`](../../docs/reference/web/data.md) |
 | Product / UX / Caps | [`product`](../../docs/explanation/product.md) · [`ux`](../../docs/explanation/ux.md) · [`caps-lexicon`](../../docs/reference/platform/caps-lexicon.md) |
+| Design direction | [`DESIGN.md`](../../DESIGN.md) · owned auth screens: [`auth-ui`](../../docs/reference/web/ui/auth-ui.md) |
 | Auth / local-dev | [`auth-setup`](../../docs/how-to/auth-setup.md) · [`local-dev`](../../docs/how-to/local-dev.md) |
 | Log package | [`packages/log/AGENTS.md`](../../packages/log/AGENTS.md) |

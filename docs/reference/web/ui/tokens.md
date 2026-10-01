@@ -67,7 +67,7 @@ Contrast fix: adjust OKLCH **L only**: keep hue/chroma stable.
 
 ## Refuse list
 
-The list itself is in [`/DESIGN.md`](../../../../DESIGN.md#dos-and-donts). Enforcement: `ds:check` covers gradients, glass, and `rounded-xl+`; `@shadcn/lint` covers raw palette hues; the rest is review. Why each rule exists: [`rules.md`](rules.md).
+The list itself is in [`/DESIGN.md`](../../../../DESIGN.md#dos-and-donts). Enforcement: `ds:check` covers gradients, glass, banned surface names, and opaque-id `.slice` (`--radius-xl..4xl` are capped in `wd-theme.css`); `@shadcn/lint` covers raw palette hues; the rest is review. Why each rule exists: [`rules.md`](rules.md).
 
 ## Type scale (hybrid)
 
@@ -84,8 +84,8 @@ The list itself is in [`/DESIGN.md`](../../../../DESIGN.md#dos-and-donts). Enfor
 | Label | `text-sm leading-tight` |
 | Meta label / compact meta label | `text-2xs` / `text-xs leading-tight` |
 | Mono value / compact mono (ids, timestamps) | `font-mono text-sm leading-tight` / `font-mono text-2xs` |
-| Chip | `text-xs tracking-wider uppercase` |
+| Chip | `text-2xs font-normal leading-none` (`CHIP_SIZE_CLASS`) |
 
-**Weights:** 400 is the default for everything (names, labels, chips, metadata, table text). 500 (`font-medium`) is only for section headings, column headers and the active nav row; 600 for page and dossier headings. Dates use `font-light` (300).
+**Weights:** 400 is the default for everything (names, labels, chips, metadata, table text). 500 (`font-medium`) is for `SectionLabel` headings, column headers, the active nav row, and the brand wordmark; 600 (`font-semibold`) for page, dossier, and settings card headings. Dates use `font-light` (300).
 
 `@shadcn/lint` `no-arbitrary-values` bans `text-[Npx]` / `text-[Nrem]` (and other off-scale values: use a theme token or add one, e.g. `tracking-eyebrow`); escape with `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason`. **Input** uses `text-sm` (iOS zoom floor).

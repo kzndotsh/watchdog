@@ -2,7 +2,7 @@
 
 Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that matches the question. One tree under `docs/`: platform + web namespaces (`reference/platform/`, `reference/web/`, `reference/contracts/`).
 
-**PRODUCT vs UX vs UI vs SCENARIOS:** PRODUCT = why / who / refuse. UX = how investigators experience the product. UI = how we build the interface. SCENARIOS = which journeys actually complete end-to-end.
+**PRODUCT vs UX vs UI vs SCENARIOS:** PRODUCT = why / who / refuse. UX = how investigators experience the product. UI = how we build the interface. SCENARIOS = which journeys actually complete end-to-end. Design direction and taste rules live in [`DESIGN.md`](../DESIGN.md) at the repo root.
 
 `.cursor/plans/` (incl. `_archived/`) are historical: durable contracts live here, not in plans.
 

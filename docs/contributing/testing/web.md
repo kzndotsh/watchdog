@@ -14,9 +14,9 @@ pnpm --filter @watchdog/web ds:check    # typecheck + ds:ban greps
 
 | Check | Covers |
 | --- | --- |
-| `typecheck` | App + hand-owned `shared/ui/**` (excludes `shadcn/` + `use-mobile`) |
+| `typecheck` | App + hand-owned `shared/ui/**` (imported `@watchdog/ui` files compile through the program) |
 | `ds:check` | `typecheck` + design-system ban greps |
-| `ds:ban` | SectionLabel SoT, radius ladder / gradients / banned surface names, opaque-id `.slice`, WD manifest (`shared/ui` excl. `shadcn/` + `__tests__/`), **loading doctrine bans** (RoutePending in routes, domain skeleton imports, …: [`loading.md`](../../reference/web/ui/loading.md)) |
+| `ds:ban` | Opaque-id `.slice`, gradients/glass, banned surface names (Console / Workbench / Tape). Tailwind class, wrapper-import, and loading-doctrine rules are enforced by oxlint and `@shadcn/lint` (inventory: [`ui/rules.md`](../../reference/web/ui/rules.md), [`loading.md`](../../reference/web/ui/loading.md)) |
 
 Dirty UI paths also trip `.cursor/hooks/stop-gate.mjs` (runs `ds:ban` when web UI paths are dirty): fix violations before ending the turn.
 
@@ -70,7 +70,7 @@ With `just up` (infra ready), `pnpm dev:web` (+ worker for Cap runs):
 6. **Settings**: sidebar `?tab=` in three groups: Personal (Account / Security / Appearance / API Keys / Credentials / Organizations), Organization (General / Members), Administration (Users, server admins only); Cap credentials list + Connect/Update dialog (vault). Members: search, Make owner, invite + resend + copy-link; Organizations: switch, accept / decline invitations; General: logo, short name availability. Users (first/bootstrap admin only): Disable/Enable, no Impersonate; Security sessions show IP + user agent.
 7. **Dashboard**: `/` trail last crumb Dashboard; 3×2 stat cards; Triage + Due panels (dashed empty when clear); Activity in a resizable bottom panel (`ScrollArea`) with case filter; Active Case switch re-scopes stats/lists (Activity stays cross-case unless filtered).
 8. **Case switch**: change Active Case → lists re-scope (no stale other-Case rows).
-9. **Cmd+K / hotkeys / context menus**: Mod+K (or sidebar Search…) opens palette; idle Jump to + Commands (sidebar / Shortcuts); type entity name → Enter → dossier; `?` → Shortcuts dialog; Mod+B still toggles sidebar. Right-click / ⋯ on Entities, Identifiers (incl. Dossier), dossier section rows, task cards, Cases cards, and ego nodes share target `AppAction`s; inset owns chrome; `/graph` omits node menus.
+9. **Cmd+K / hotkeys / context menus**: Mod+K (or the sidebar footer Search icon) opens palette; idle Jump to + Commands (sidebar / Shortcuts); type entity name → Enter → dossier; `?` → Shortcuts dialog; Mod+B still toggles sidebar. Right-click / ⋯ on Entities, Identifiers (incl. Dossier), dossier section rows, task cards, Cases cards, and ego nodes share target `AppAction`s; inset owns chrome; `/graph` omits node menus.
 10. **PageHeader trail**: Work page shows folder + `{name} / Collect` (etc.); dossier folder + `{name} / Entities / {name}`; click Case → Overview; click Entities → table. Entities / Identifiers / Tasks last crumb shows `TabCount` (hidden at 0); leave the page and the pill drops with the title. No Active Case → Case crumb omitted. No explainer suffix in the bar.
 
 `/ui` gallery: Foundations + Atoms specimens (required atom coverage for `ds:check`).

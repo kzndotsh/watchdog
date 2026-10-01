@@ -32,7 +32,7 @@ Repos do **not** re-validate display strings (required name/title/text, slugify-
 Repos **do** keep:
 
 - **Lookup scoping** — `trimCaseId` / `trimResourceId` / `trimActorId` on WHERE; invalid UUID → `[]` / `null`.
-- **Slug WHERE keys** — `slugForLookup` (`_slug-lookup.ts`) on `getBySlug` / `listSlugsInCase` (not write-only helpers).
+- **Slug WHERE keys** — `slugForLookup` (`_slug-lookup.ts`) on `getBySlug` / `listSlugsInCase` (not write-only helpers). Case slugs are unique per organization (`cases_organization_id_slug_uidx`, migration 0012), so case lookups by slug take `organizationId`. Migration 0013 folds the removed `urgent` task priority into `high`.
 - **Fail-closed graph ids** — `resolveNullableGraphIdForWrite`, job `input` UUID normalize, evidence-link uuid lists; garbage FK → `null` create.
 - **Actor integrity on proposals** — `trimActorId` on `createdBy` / `decidedBy`; explicit blank actor → `null` create (reject attribution).
 
@@ -82,7 +82,7 @@ Repos take `exec` first. Outside a TX pass `db`; inside pass `tx`. This **invert
 - **Tasks:** `position` int NOT NULL + `tasks_case_status_position_idx`. List order `position, createdAt`. `nextPosition` / `rewriteOrder` — do not order the board by `createdAt` only.
 - **Cap cache:** unique `(case_id, capability_id, input_hash)`; `lookupActive(exec, caseId, …)` is case-scoped. Migration `0006` wipes existing cache rows.
 - **`activity_events`**: append-only task activity rows for Dashboard Activity (status diffs); not a Graph table and not an SSE notify source by itself. Optional `actor_id` is the acting user id (display labels resolve in core).
-- **`auth.auth_event`**: append-only auth process rows (`session.created` + IP/UA). Insert via `insertAuthEvent` / `onAuthSessionCreated` in `src/auth/`, not a Graph repo. Not Graph audit and not an SSE notify source. Wipe keeps `auth.*`.
+- **`auth.auth_event`**: append-only auth process rows (`session.created` + IP/UA). Insert via `insertAuthEvent` / `onAuthSessionCreated` in `src/auth/`, not a Graph repo. `onAuthSessionCreated` also stamps `session.active_organization_id` from the user's membership (users with no organization land in onboarding). `src/auth/instance-bootstrap.ts` (`promoteFirstUserToInstanceAdmin`) runs from the auth `user.create.after` hook; the DB no longer auto-creates an organization. Not Graph audit and not an SSE notify source. Wipe keeps `auth.*`.
 - **Cases by id:** `casesRepo.getById(exec, id, organizationId)` is the default (org filter). `getByIdUnchecked` is only for worker/export internals where the Case id already came from a trusted Job or child row — core mirrors this with `assertCaseInOrgEffect` vs `assertCaseExistsUncheckedEffect`.
 - **Search `ilike`**: escape user terms in `src/repos/_ilike.ts` (`containsPattern`); do not concatenate `%` in repo callers.
 - **Scoped ids:** `repos/_scoped-ids.ts` trims + validates Case/graph UUIDs via `parseTrimmedCaseId`; blank or invalid → repo miss (`[]` / `null`). Activity org filter uses the same rule in `_org-case-filter.ts`.

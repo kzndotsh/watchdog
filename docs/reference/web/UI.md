@@ -17,5 +17,6 @@ The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. The style 
 | [`ui/vendor.md`](ui/vendor.md) | Vendored primitives: layers, lock, sync |
 | [`ui/motion.md`](ui/motion.md) | Operate motion |
 | [`ui/multi-mode.md`](ui/multi-mode.md) | Detail / composers |
+| [`ui/auth-ui.md`](ui/auth-ui.md) | Owned auth screens (Better Auth UI copies): what is ours |
 
 Links that point to `UI.md#tables` should use [`ui/tables.md`](ui/tables.md). Loading rules are in [`ui/loading.md`](ui/loading.md).

@@ -10,7 +10,7 @@
 3. **Infra:** `just up` (Postgres + MinIO + bucket + migrations)
 4. **Deps:** `pnpm install`
 5. **First account:** `BETTER_AUTH_ALLOW_SIGNUP=1` → restart web → `/auth/sign-up` → create your organization on the onboarding page → set `BETTER_AUTH_ALLOW_SIGNUP=0` if you want an invitation-only install → restart again ([`auth-setup.md`](auth-setup.md)).
-6. **Run:** `just dev` (infra + web + worker) — or `just up` then `pnpm dev:web` + `pnpm dev:worker` in two terminals ([`auth-setup.md`](auth-setup.md) for signup restart).
+6. **Run:** `just dev` (infra + web + marketing site :3001 + worker) — or `just up` then `pnpm dev:web` + `pnpm dev:worker` in two terminals ([`auth-setup.md`](auth-setup.md) for signup restart).
 7. **Smoke:** sign in → create a Case → optional Settings credentials for Caps you will run.
 
 `just bootstrap-hint` prints the signup checklist without running servers.

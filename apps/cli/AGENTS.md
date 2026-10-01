@@ -41,7 +41,7 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 
 ### Env
 
-- `WD_API_URL` (default `http://localhost:3000/api/v1`) + `WD_API_KEY` via `loadCliEnv()` in `src/env.ts` — validated on first API use, not on `--help`.
+- `WD_API_URL` (default `http://localhost:3000/api/v1`) + `WD_API_KEY` via `loadCliEnv()` in `src/env.ts` — validated on first API use, not on `--help`. A key acts in one organization (`metadata.organizationId`); a key whose owner left it is rejected, and legacy keys act in the owner's oldest organization. A foreign-org `caseId` is `not_found`; no organization context is 403.
 - Dotenv loads from **cwd** (then parent walk). Never hardcodes the monorepo path. From repo root, the existing `.env` still applies.
 
 ## Boundaries

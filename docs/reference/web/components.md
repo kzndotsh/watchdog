@@ -4,7 +4,7 @@ This registry documents the hand-owned `src/shared/ui/` atoms, not `shadcn/`. Pa
 
 The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundations · Atoms). Gates: `pnpm ds:check`.
 
-**A new atom is complete when** it has a registry row, a `/ui` specimen, semantic-class tokens, no I/O, a justified second call site, and a passing checklist.
+**A new atom is complete when** it has a registry row, a `/ui` specimen, semantic-class tokens, no I/O, a justified second call site, and a justified second call site.
 
 ---
 
@@ -23,12 +23,12 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `DetailEmpty` | Select-none Detail empty: quiet, no dashed frame | No queue selection | Loading / blank slate | `InlineLoading` · `EmptyState` | canonical | yes | muted |
 | `DetailFooter` | Bottom CTA bar for Detail | Accept / Cancel / Harvest · Enrich | Identity / meta | `DetailHeader` | canonical | yes | : |
 | `DetailHeader` | Detail identity: title · subject · meta · IdChip · status · note | Collect Evidence detail (custom crumb+tabs); Triage uses context strip + decide footer | Page headers · CTAs; Triage → `TriageDecideHeader` + `TriageDecideFooter`; Collect Evidence → `EvidenceDetailHeader`; Collect runs → inline header in `job-detail.tsx` | `DetailFooter` | canonical | yes | : |
-| `Chip` | The one dense outline chip: `Badge` + `CHIP_SIZE_CLASS` (IdChip height/radius; `text-2xs font-medium`), optional `tone` (vocab maps) and `size` `sm` \| `md`; neutral without a tone. Exports `CHIP_SIZE_CLASS` for skeleton shape parity | Identifier evidence preview · Triage patch-op warnings · table/composer tags | Detail context strips (use plain `span`s + `StatusInk` for lifecycle) | `StatusBadge` · `KindBadge` | canonical | yes | : |
+| `Chip` | The one dense outline chip: `Badge` + `CHIP_SIZE_CLASS` (IdChip height/radius; `text-2xs font-normal`), optional `tone` (vocab maps) and `size` `sm` \| `md`; neutral without a tone. Exports `CHIP_SIZE_CLASS` for skeleton shape parity | Identifier evidence preview · Triage patch-op warnings · table/composer tags | Detail context strips (use plain `span`s + `StatusInk` for lifecycle) | `StatusBadge` · `KindBadge` | canonical | yes | : |
 | `ConfidenceBadge` | Confidence chip | Graph confidence display | Job/proposal status | `StatusBadge` | canonical | yes | `--confidence-*` |
 | `StatusBadge` | Status chip | Tables / dense cells that still need a boxed label | Detail context strips | `StatusInk` | canonical | yes | `--status-*` |
 | `StatusInk` | Status as colored type + 6px dot | Collect / Triage / Jobs Detail strips | Table cells that need a chip | `StatusBadge` · `StatusDot` | canonical | yes | `--status-*` |
 | `TaskStatusBadge` | Task status chip (reuses `--status-*` tones) | Task board / compact tabs | Job status | `StatusBadge` | canonical | no | `--status-*` |
-| `TaskPriorityBadge` | Task priority chip (Low / Medium / High; reuses `--status-*` tones; `font-normal`, lighter than other chips) | Task board / compact tabs | Confidence | `StatusBadge` | canonical | no | `--status-*` |
+| `TaskPriorityBadge` | Task priority chip (Low / Medium / High; reuses `--status-*` tones; `font-normal`, lighter than other chips) | Priority chip outside the board card (the card draws its own tinted label via `taskPriorityShortLabel`) | Confidence | `StatusBadge` | canonical | no | `--status-*` |
 | `KindBadge` | Kind chip (+ entity kind icon for person/org/infra) | Evidence / identifier kind chips | Entity name rows (use `EntityKindGlyph`) | `EntityKindGlyph` | canonical | yes | `--kind-*` |
 | `EntityKindGlyph` | Entity kind icon + type tooltip | Before entity names (Entities table · Identifiers Entity column · dossier trail) | Evidence/identifier kind chips | `KindBadge` | canonical | no | `--kind-*` |
 | `ClaimClassBadge` | Claim-class chip | Claims / disprove | Entity kinds | `KindBadge` | canonical | yes | `--kind-*` |
@@ -43,7 +43,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `EditableSuggestCell` | Commit-on-pick suggest cell (uncontrolled selection: avoids snap-back to the stale saved value) | Inline table freeform+suggest | Forms | `EditableTextCell` · `FieldCombobox` | canonical | no | : |
 | `EvidencePicker` | Dense multi-select Case Evidence (chip-height Add/+ · checklist popover; `layout="panel"` for parent shells; options as `readonly EvidenceOption[]`; label/filter helpers in `shared/ui/intake/evidence-option.ts`) | Dossier composers · identifier Link · Triage | Job cite display | `EvidenceCiteChips` | canonical (`shared/ui/intake/evidence-picker.tsx`) | no | : |
 | `EvidenceCiteChips` | Read-only Job/proposal cite chips | Triage decide band | Multi-select | `EvidencePicker` | canonical (same file) | no | : |
-| `JobDetailSkeleton` | Collect Detail skeleton shaped like `JobDetailHeader`: headline → hint · status · By actor, Log / Input / Output tabs, log block | Collect/Triage detail data-slot | Static shell / select-none empty | generic header/body blocks | canonical | no | : |
+| `JobDetailSkeleton` | Collect Detail skeleton shaped like `JobDetailHeader`: headline → hint · status · By actor, Log / Input / Output tabs, log block | Collect detail data-slot (via `CollectDetailSkeleton`; Triage uses `TriageDetailSkeleton`) | Static shell / select-none empty | generic header/body blocks | canonical | no | : |
 | `FetchErrorAlert` | Load-failure banner (Retry in `AlertAction`) | Route / region fetch fail | Field validation | `FieldMessage` | canonical | yes | destructive |
 | `FieldSelect` | Dense string Select: CONTROL chrome | Cap / playbook / kind pickers | Native `<select>` · enum-specific atoms | `ConfidenceSelect` · `FieldCombobox` | canonical | yes | : |
 | `FieldCombobox` | Filterable string Combobox: CONTROL chrome; optional `group` → section headings | Long / searchable option lists (edge phrases) | Tiny closed enums | `FieldSelect` · `EntityCombobox` | canonical | no | : |
@@ -70,7 +70,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `ActionsContextMenu` | ContextMenu + editable capture skip | Table rows · inset fallback · graph nodes · Cases cards | Dropdown-only ⋯ | ContextMenu | canonical | no | : |
 | `TargetActionsHost` | ContextMenu shell + trailing ⋯ for a target `AppAction[]` | Dossier Connections / Claims / Events / Questions rows | Tables (use `getRowActions`) · Cases (manual header ⋯) | `ActionsContextMenu` · `RowActionsMenu` | canonical | no | : |
 | `SearchField` | Named search input: CONTROL chrome + fixed `SEARCH_FIELD_WIDTH` (`w-80`) | Filters / toolbars (Cases · Entities · Identifiers · Collect · Triage) | Debounced fetch inside atom · per-page width overrides | : | canonical | yes | : |
-| `SectionHeaderBar` | Title + count + trailing | Sections / day groups | Page headers | `Page` header | canonical | no | : |
+| `SectionHeaderBar` | Title on the left; count as a `TabCount` pill on the right, then the trailing action | Sections / day groups | Page headers | `Page` header | canonical | no | : |
 | `SectionLabel` | Small meta section label (normal case) | Field / meta captions · dossier section titles | Page titles | : | canonical | yes | meta |
 | `LoadingRegion` | Three-channel a11y wrapper (`aria-busy` + sr-only `role="status"` + `aria-hidden` skeleton subtree) | Inside `PendingRegion` / hand skeletons | Domains spelling `aria-busy` directly | : | canonical | no | [`loading-region.tsx`](../../../apps/web/src/shared/ui/loading-region.tsx) |
 | `PendingRegion` | `LoadingRegion` + hand skeleton `fallback` when `loading={true}`; live children when ready | Domain data-slot loading (boards, grids, stack, split queue/detail, case overview) | **`DataTable`** (use `pending`) · graph (hand `GraphCanvasLoadingRegion`) · static chrome | hand skeletons in `skeletons.tsx` as `fallback` | canonical | no | [`pending-region.tsx`](../../../apps/web/src/shared/ui/pending-region.tsx) |
@@ -82,7 +82,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `SplitView` | Queue \| Detail split; bleeds to the page edges by default (a wrapper undoes `Page`'s side padding) | Console surfaces | Stacked pages | : | canonical | yes | : |
 | `StatusDot` | Lifecycle color dot | Live job rows | Full status label | `StatusBadge` | canonical | yes | `--status-*` |
 | `TabCount` | Count pill on tabs / last crumb | Tab labels · `PageHeader count=` | Queue headers · `/ N entities` copy | `QueueHeader` count | canonical | no | : |
-| `task-board-shell` | Shared task column/card shell class tokens (card = tinted entity tab, title block, ruled footer with the priority chip (`Med` for medium); tab and footer are a fixed `h-6` so cards line up) | `TaskBoardColumn` · `TaskCard` · `BoardSkeleton` | Ad-hoc card chrome | : | canonical | no | : |
+| `task-board-shell` | Shared task column/card shell class tokens (title clamps to 2 lines with the full title on hover; card = tinted entity tab, title block, ruled footer with the priority chip (`Med` for medium); tab and footer are a fixed `h-6` so cards line up) | `TaskBoardColumn` · `TaskCard` · `BoardSkeleton` | Ad-hoc card chrome | : | canonical | no | : |
 | `TimelineSpine` / `TimelineDot` | Vertical timeline rail | Events / questions | Flat lists | : | canonical | yes | : |
 | `Timestamp` / `WithTooltip` | Instant + tooltip wrapper (`Timestamp` renders `font-light`; a caller class can override) | Time surfaces / dense hits | Bare titles | : | canonical | yes | : |
 | `CapabilityLabel` | Cap id → catalog title | Collect / Triage / Dashboard | Raw ids in UI | : | canonical | no | : |

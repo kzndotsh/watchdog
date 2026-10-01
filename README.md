@@ -73,16 +73,16 @@ nix develop                 # optional
 cp env.example .env         # set BETTER_AUTH_SECRET + WD_MASTER_VAULT_KEY
                             # openssl rand -base64 32
 pnpm install
-just dev                    # Postgres + MinIO + migrations + web + worker
+just dev                    # Postgres + MinIO + migrations + web + worker + marketing site (:3001)
 ```
 
 No account is seeded and registration is closed by default. See [`docs/how-to/onboarding.md`](docs/how-to/onboarding.md) and [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup, invites, and env detail.
 
-**Bootstrap:** set `BETTER_AUTH_ALLOW_SIGNUP=1`, create the first account at `/auth/sign-up`; it becomes the instance admin, then onboarding asks you to create your organization. Leave the flag on for an open install (anyone can sign up and create organizations), or set it back to `0` to lock the install to invitations (Settings → **Organization**: copy link, or optional SMTP in `.env`).
+**Bootstrap:** set `BETTER_AUTH_ALLOW_SIGNUP=1`, create the first account at `/auth/sign-up`; it becomes the instance admin, then onboarding asks you to create your organization. Leave the flag on for an open install (anyone can sign up and create organizations), or set it back to `0` to lock the install to invitations (Settings → Organization → **Members**: copy link, or optional SMTP in `.env`).
 
 **First investigation tutorial:** [`docs/tutorials/first-investigation.md`](docs/tutorials/first-investigation.md) (dump → Process → Triage → Dossier).
 
-Everything binds to loopback: product app on `:3000`, static marketing site on `:3001` (optional — no infra), Postgres on `:5432`, MinIO on `:9100` with its console on `:9101`. Agents: [`docs/how-to/agent-cli.md`](docs/how-to/agent-cli.md) · OpenAPI `/api/v1/spec.json`.
+Everything binds to loopback: product app on `:3000`, static marketing site on `:3001` (no infra; `just dev` starts it too), Postgres on `:5432`, MinIO on `:9100` with its console on `:9101`. Agents: [`docs/how-to/agent-cli.md`](docs/how-to/agent-cli.md) · OpenAPI `/api/v1/spec.json`.
 
 **pnpm only.** Version is pinned in `package.json`; npm and yarn will produce a broken workspace.
 
@@ -173,6 +173,8 @@ packages/
 ├── client/               Typed SDK for /api/v1, generated from OpenAPI
 ├── ai/                   LLM providers + structuredExtract, never writes Graph
 ├── log/                  evlog process logging, NDJSON + stdout
+├── auth/                 Better Auth server core: createAuth, createApiContext, invite signup, instance admin
+├── ui/                   Generated shadcn (base-mira) primitives, locked via vendor.json
 └── test-kit/             Dev-only fixtures, Postgres harness, MSW
 ```
 
@@ -207,7 +209,7 @@ A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker
 | Database | `pnpm db:migrate` · `pnpm db:generate` · `pnpm db:studio` |
 | Local infra | `just up` · `just down` · `just docker-up` (containers only) |
 | Reset case data, keep auth (orgs + vault) | `just wipe` |
-| Lint and format | `pnpm check` · `pnpm fix` |
+| Lint and format | `pnpm check` · `pnpm fix` · `pnpm check:design-tokens` (DESIGN.md colors vs CSS) · `pnpm check:vendor` (locked `packages/ui`) |
 | Types | `pnpm typecheck` |
 | Tests | `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Codegen | `pnpm generate:caps` · `pnpm generate:client` |
@@ -219,14 +221,14 @@ Integration and end-to-end runs need their own databases first: `just test-db`.
 
 Third design, first one that ships. A vault-plus-Python-pipeline version and a broad platform spec both got frozen before this; [`docs/explanation/product.md`](docs/explanation/product.md) records what each one taught and what not to resurrect.
 
-Today: **63 Caps**, **14 packages**, **~980 unit/property tests** plus component, integration, and Playwright tiers green. The investigator loop runs end to end: bootstrap auth, org-scoped cases, dump evidence, run Caps, accept proposals, export the package.
+Today: **63 Caps**, **16 packages**, **~980 unit/property tests** plus component, integration, and Playwright tiers green. The investigator loop runs end to end: bootstrap auth, org-scoped cases, dump evidence, run Caps, accept proposals, export the package.
 
 Not there yet, worth knowing before you invest time:
 
 - **MCP server.** Not built. Agents use the OpenAPI surface today.
 - **Playbooks** are linear chains, with no branching and no conditionals.
-- **Hardened multi-tenancy.** Organizations are self-serve and Cases are org-scoped, but there is no billing and no adversarial-tenant isolation review yet. Deleting an organization (owner only) deletes all of its Cases, evidence, and artifacts first.
-- **End-to-end coverage** — 18 Playwright specs in `e2e/specs/` (`@smoke` / `@custody` / `@journey`), including auth sign-up, team invite, and instance-admin Users, on top of unit, component, and integration tiers — not full manual-smoke parity yet.
+- **Hardened multi-tenancy.** Organizations are self-serve and Cases are org-scoped, but there is no billing and no external adversarial-tenant review yet (an automated tenant-isolation matrix, `packages/api/src/__tests__/org-isolation.int.test.ts`, and production rate limits on sign-up and organization actions exist). Deleting an organization (owner only) deletes all of its Cases, evidence, and artifacts first.
+- **End-to-end coverage** — 10 Playwright spec files in `e2e/specs/` (`@smoke` / `@custody` / `@journey`), including auth sign-up, team invite, and instance-admin Users, on top of unit, component, and integration tiers — not full manual-smoke parity yet.
 
 Investigation content (corpus, entity notes, mirrors) lives in a separate private repo and never enters this one.
 
@@ -242,6 +244,7 @@ Investigation content (corpus, entity notes, mirrors) lives in a separate privat
 | [`docs/reference/platform/types.md`](docs/reference/platform/types.md) | Shared Zod schemas and vocabulary |
 | [`docs/explanation/ux.md`](docs/explanation/ux.md) | Information architecture and investigator flows |
 | [`docs/reference/web/`](docs/reference/web/README.md) | UI, design system, domains, data fetching |
+| [`DESIGN.md`](DESIGN.md) | Design direction and taste rules |
 | [`apps/site/README.md`](apps/site/README.md) | Marketing site dev, build, `PUBLIC_APP_URL` for sign-in links |
 | [`AGENTS.md`](AGENTS.md) | Conventions for coding agents in this repo |
 

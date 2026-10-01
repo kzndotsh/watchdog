@@ -16,6 +16,7 @@ export const DOC_MAP = [
       /^apps\/web\/src\/shared\/ui\//,
       /^packages\/ui\//,
       /^apps\/web\/scripts\/ds-ban-check\.mjs$/,
+      /^scripts\/ui-vendor\.mjs$/,
     ],
     docs: [
       "docs/reference/web/ui/",
@@ -23,6 +24,22 @@ export const DOC_MAP = [
       "docs/reference/web/components.md",
     ],
     strict: true,
+  },
+  {
+    id: "design",
+    code: [
+      /^apps\/web\/src\/styles\/wd-.*\.css$/,
+      /^scripts\/check-design-tokens\.mjs$/,
+    ],
+    docs: ["DESIGN.md", "docs/reference/web/ui/tokens.md"],
+    strict: false,
+    note: "Token or weight changes should be reflected in DESIGN.md",
+  },
+  {
+    id: "auth",
+    code: [/^packages\/auth\//],
+    docs: ["packages/auth/AGENTS.md", "docs/how-to/auth-setup.md"],
+    strict: false,
   },
   {
     id: "caps",
@@ -35,7 +52,11 @@ export const DOC_MAP = [
   },
   {
     id: "e2e",
-    code: [/^e2e\//, /^playwright\.config\.ts$/, /^vitest\.config/],
+    code: [
+      /^e2e\//,
+      /^playwright\.config\.ts$/,
+      /^vitest\.(config|reset-modules)/,
+    ],
     docs: ["docs/contributing/testing/", "docs/contributing/testing/web.md"],
     strict: true,
   },

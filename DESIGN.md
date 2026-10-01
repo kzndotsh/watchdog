@@ -112,7 +112,7 @@ Anti-references: generic SaaS dashboards, decorative AI gradients and glow, term
 ## Typography
 
 - Geist Variable for UI, Geist Mono Variable for ids, hashes, paths, timestamps, and counts. Mono carries data, never decoration. Opaque ids render through `IdChip` / `formatOpaqueId` and are never sliced.
-- Weights: 400 by default for names, labels, chips, metadata, and table text. 500 only for section headings, column headers, and the active nav row; 600 for page and dossier headings; dates are 300.
+- Weights: 400 by default for names, labels, chips, metadata, and table text. 500 for `SectionLabel` headings, column headers, the active nav row, and the brand wordmark; 600 for page, dossier, and settings card headings; dates are 300.
 - Vanilla Tailwind scale (`text-xs`, `text-sm`, `text-base`, plus the theme's `text-2xs`). No `text-[Npx]`, no custom type-role classes. Counts use tabular numerals. Inputs stay `text-sm` (iOS zoom floor).
 - Self-hosted via Fontsource, not Vercel `geist` or `next/font`.
 
@@ -133,7 +133,7 @@ A three-step radius ladder: `rounded-sm` (3px, checkbox/tiny inset), `rounded-md
 
 ## Components
 
-- Primitives are shadcn `base-mira` (Base UI) in `packages/ui`, generated and locked. **Never hand-edit `packages/ui/src/components`**; Watchdog behavior goes in a same-name wrapper under `apps/web/src/shared/ui/primitives/` (import the wrapper, not the primitive) or in tokens.
+- Primitives are shadcn `base-mira` (Base UI) in `packages/ui`, generated and locked. **Never hand-edit `packages/ui/src/components`**; Watchdog behavior goes in a same-name wrapper under `apps/web/src/shared/ui/primitives/` (only Button, Dialog, AlertDialog, and Combobox have wrappers: import those from the wrapper, everything else from `@watchdog/ui/components/<name>`) or in tokens.
 - Hand-owned atoms live in `apps/web/src/shared/ui/` and never fetch, mutate, or route. Domains own I/O.
 - Chrome is **Queue + Detail**. Do not introduce Console, Workbench, or Tape surfaces, and never name a screen `*Panel`. Never name a component `Entity` (that word means the graph subject).
 - Keyboard first on work surfaces: `j`/`k` move through a Queue, single-key actions (`a` Accept, `r` Reject) sit on the buttons that own them and show their key, Enter confirms dialogs, Mod+K reaches every page and command.

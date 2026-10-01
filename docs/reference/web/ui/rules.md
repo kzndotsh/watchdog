@@ -1,6 +1,6 @@
 # UI: rules inventory
 
-This page lists every web UI rule, what it prevents, and whether it is kept. The design intent behind the taste rules is [`/DESIGN.md`](../../../../DESIGN.md). Last audited 2026-09-29.
+This page lists every web UI rule, what it prevents, and whether it is kept. The design intent behind the taste rules is [`/DESIGN.md`](../../../../DESIGN.md). Last audited 2026-10-01.
 
 **Kinds.** **Correctness** rules stop a bug class: keep unless the bug can no longer happen. **Consistency** rules keep one way to do a thing: cheap, keep while they cost nothing. **Taste** rules are design opinions: they live in the brief and change when the brief changes.
 
@@ -17,7 +17,7 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | `aria-busy` / `animate-pulse` only inside `shared/ui` | Loading regions without the three a11y channels or the reduced-motion guard | Keep, **check dropped** (review only) | review |
 | The sixteen loading rules ([`loading.md`](loading.md)) | Flashing skeletons, confident wrong values, blanked shells | Keep | review |
 | No `@watchdog/policy` barrel / `@watchdog/core` root in client code | Effect, db, blob pulled into the browser bundle | Keep | review |
-| Web never imports `@watchdog/db` (except auth + SSE) | Bypassing oRPC → core → repos | Keep | lint |
+| Web never imports `@watchdog/db` (except SSE `routes/api/events.ts`) | Bypassing oRPC → core → repos | Keep | lint |
 | One QueryClient per router, never a singleton | Cross-request cache bleed in SSR | Keep | review |
 | `<Navigate>` as a sibling, never an early return | Skeleton → blank → content flicker on cold load | Keep | review |
 | Base UI `Button` + `render={<Link/>}` sets `nativeButton={false}` | Nested interactive elements, wrong semantics | Keep | review |
@@ -74,7 +74,7 @@ Pinned at `0.2.0` (pre-1.0, single maintainer: bump deliberately). Web only. Aud
 | --- | --- | --- |
 | `no-raw-colors` (`scanAllStrings`) | **On** | Class strings live in constants (`STATUS_TONES`), not just `className`. |
 | `no-arbitrary-values` (layout allowed, `scanAllStrings`) | **On** | Layout one-offs (`max-w-[12rem]`) are fine; type, color, and tracking are not. |
-| `no-unknown-classes` | **On** | Reads our real Tailwind theme + `@utility` roles. Known false positive: a prop named `claimClass` looks like a class prop (disable with a reason). |
+| `no-unknown-classes` | **On** | Reads our real Tailwind theme (plus the `ligatures-none` utility). Known false positive: a prop named `claimClass` looks like a class prop (disable with a reason). |
 | `no-restyle` (`allow: ["layout", "truncate"]`) | **On** in `domains/` + `routes/` | The audit found 292 errors at 140 sites. Most were repeats of a primitive's default (`size="sm"` + `h-6 text-xs`, `FieldSet border-0 p-0`); the rest became variants ([`atoms.md`](atoms.md#variants-not-overrides)). Four true one-offs carry a reasoned `oxlint-disable`. `shared/` is exempt: atoms own their style. The linter follows the `shared/ui/primitives` wrappers to the vanilla primitive; `wrapper-lint-coverage.test.ts` (it spawns oxlint, so it carries a 60s timeout) fails if a wrapper stops being checked (or a new wrapper isn't listed). |
 | `no-inline-styles` | **Off** | 36 hits, mostly legitimate dynamic values (drag transforms, syntax colors, measured heights). |
 | `require-static-classes` | **Off** | Flags imported class constants and helper functions, which is our normal pattern. |

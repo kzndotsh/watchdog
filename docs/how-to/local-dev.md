@@ -9,11 +9,11 @@
 | --- | --- |
 | Enter toolchain | `nix develop` |
 | Infra (Postgres + MinIO + bucket + migrate) | `just up` |
-| Full stack (infra + web + worker) | `just dev` |
+| Full stack (infra + web + marketing site + worker) | `just dev` |
 | Containers only | `just docker-up` |
 | Install | `pnpm install` |
 | Web only | `pnpm dev:web` → http://127.0.0.1:3000 |
-| Marketing site only | `pnpm dev:site` → http://127.0.0.1:3001 (not part of `just dev`; no infra) |
+| Marketing site only | `pnpm dev:site` → http://127.0.0.1:3001 (`just dev` starts it too; it needs no infra) |
 | Worker only | `pnpm dev:worker` (required for Jobs/Collect/Process) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
 | Screenshot seed | `just seed-demo` · `just seed-demo --force` (fictional cases in the current org; sign up first) |
@@ -22,7 +22,7 @@
 
 Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets go in Settings vault, not `.env` ([`vault-setup.md`](vault-setup.md)).
 
-**Marketing site (`apps/site`):** static Astro landing at `:3001`; not started by `just dev`. Set `PUBLIC_APP_URL` in root `.env` (see `env.example`) so **Sign in** / **Get started** point at the product app (`:3000` locally). Build: `pnpm build:site`. Detail: [`../../apps/site/README.md`](../../apps/site/README.md).
+**Marketing site (`apps/site`):** static Astro landing at `:3001`; also started by `just dev`. Set `PUBLIC_APP_URL` in root `.env` (see `env.example`) so **Sign in** / **Get started** point at the product app (`:3000` locally). Build: `pnpm build:site`. Detail: [`../../apps/site/README.md`](../../apps/site/README.md).
 
 ## Services
 

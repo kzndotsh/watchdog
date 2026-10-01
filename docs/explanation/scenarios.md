@@ -128,7 +128,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Quick Launch paste → Collect | removed | Dump stays on Collect; Dashboard does not host paste |
 | Dashboard → Triage with proposalId | shipped | Triage panel rows deep-link `search.proposalId` |
 | Dashboard → Collect with jobId | removed | Jobs running tile links `/collect` without a selected job |
-| Settings tab URL sync | shipped | Sidebar tab changes write `?tab=` with `replace: true` (account omits param); deep links `/settings?tab=appearance | team | users | …` restore section on load |
+| Settings tab URL sync | shipped | Sidebar tab changes write `?tab=` with `replace: true` (account omits param); deep links `/settings?tab=appearance | members | users | …`(old`?tab=team`links open`members`) restore section on load |
 | Settings appearance | shipped | `/settings?tab=appearance`; theme (Light / Dark / System) + display size presets (Default 1.1 / Comfortable 1.2 / Large 1.35) via `--wd-display-scale` on `<html>`; product default **Default (1.1)** when unset; hi-DPI viewport factor on 4K; `localStorage` only; sidebar theme shortcut still cycles mode |
 | UI type scale specimen | shipped | `/ui` Foundations tab lists all wd-typography roles with live rem, px, weight, and line-height; updates with display scale |
 | Toolbar SearchField width | shipped | `SEARCH_FIELD_WIDTH` in `control-chrome` (`w-80`); Cases / Entities / Identifiers / Collect / Triage queues share one width; `/ui` Atoms specimen uses defaults (no per-page `className`) |
@@ -145,7 +145,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
-| Mod+K opens command palette | shipped | Toggle; works in editable fields; sidebar Search… trigger |
+| Mod+K opens command palette | shipped | Toggle; works in editable fields; sidebar footer Search icon button |
 | Jump to pages (idle) | shipped | Dashboard + Case nav + Work/Manage (no Dev /ui) |
 | Commands group (idle) | shipped | `SearchUi` `paletteCommands` (Toggle sidebar, Shortcuts); open-palette omitted by construction |
 | Type entity name → dossier | shipped | ≥2 chars; Active Case only; Enter → `/entities/$slug` |

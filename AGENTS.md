@@ -15,19 +15,19 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
 | Screenshot seed | `just seed-demo` · `just seed-demo --force` |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
-| Dev | `just dev` · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
+| Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
 | Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix (staged files) + agents + docs + design-tokens + effect-edges + vendor-lock + size + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
 | Vendored shadcn | `pnpm check:vendor` · `pnpm ui:add <name>` · `pnpm ui:sync` (never hand-edit `packages/ui/src/components`) |
 | Caps / client regen | `pnpm generate:caps` · `pnpm generate:client` |
-| AGENTS gate | `pnpm check:agents` · `pnpm check:agents:strict` |
+| AGENTS gate | `pnpm check:agents:strict` |
 | Docs gate | `pnpm check:docs` · `pnpm check:design-tokens` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:size` |
 | Skills gate | `pnpm validate:agents` |
 | Desloppify (local hygiene) | `pnpm desloppify:bootstrap` · `pnpm desloppify:scan` · `pnpm desloppify:status` · `pnpm desloppify:next` (state under `.desloppify/` is gitignored; bootstrap excludes `repos`, `data`, generated trees — see `scripts/desloppify-bootstrap.sh`) |
 
-Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0`. Package manager: **pnpm** only.
+Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0`. The first account is the instance admin; every account creates its own organization in onboarding, and the flag also gates self-serve organization creation. Vitest projects share workers (`isolate:false` + `vitest.reset-modules.ts`): tests must restore any `process.env`, `globalThis`, timers, or DOM they change. Package manager: **pnpm** only.
 
 ## Learning more about Effect
 
