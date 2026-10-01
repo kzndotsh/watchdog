@@ -199,36 +199,85 @@
   }
 }
 
-/* ── Thin scrollbars ───────────────────────────────────────────────────────── */
+/* ── Minimal scrollbars ────────────────────────────────────────────────────── */
+/* Native scrollers (Firefox: thin + colour only; WebKit: 4px thumb). Faint at rest, a bit
+   stronger while the pointer is over the scroller. No track, no corner. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 60%, transparent)
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 30%, transparent)
+    transparent;
+}
+
+*:hover {
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 55%, transparent)
     transparent;
 }
 
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
+  background: transparent;
 }
 
-*::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
   background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
   background-color: color-mix(
     in oklch,
-    var(--muted-foreground) 60%,
+    var(--muted-foreground) 30%,
     transparent
   );
+  background-clip: content-box;
+  border: 1px solid transparent;
   border-radius: 9999px;
   min-height: 40px;
 }
 
-*::-webkit-scrollbar-thumb:hover {
+*:hover::-webkit-scrollbar-thumb {
   background-color: color-mix(
     in oklch,
-    var(--muted-foreground) 85%,
+    var(--muted-foreground) 55%,
+    transparent
+  );
+}
+
+/* ScrollArea (Base UI) overlays the content, so it stays out of the way: a 6px rail that
+   appears only while hovering or scrolling, no border, a slim thumb. */
+html [data-slot="scroll-area-scrollbar"] {
+  border: 0;
+  padding: 1px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+html [data-slot="scroll-area-scrollbar"][data-orientation="vertical"] {
+  width: 6px;
+}
+
+html [data-slot="scroll-area-scrollbar"][data-orientation="horizontal"] {
+  height: 6px;
+}
+
+html [data-slot="scroll-area-scrollbar"][data-hovering],
+html [data-slot="scroll-area-scrollbar"][data-scrolling] {
+  opacity: 1;
+}
+
+html [data-slot="scroll-area-thumb"] {
+  background-color: color-mix(
+    in oklch,
+    var(--muted-foreground) 40%,
+    transparent
+  );
+}
+
+html [data-slot="scroll-area-thumb"]:hover {
+  background-color: color-mix(
+    in oklch,
+    var(--muted-foreground) 65%,
     transparent
   );
 }
