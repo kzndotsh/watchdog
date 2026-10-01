@@ -39,9 +39,12 @@ import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { RelativeTime } from "@/shared/ui/relative-time";
+import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import type { ProposalRecord } from "@watchdog/core";
-import { activityKindLabel, isProposalQueueLiveEvent } from "@watchdog/schemas";
+import type { ActivityKind } from "@watchdog/schemas";
+import { isProposalQueueLiveEvent } from "@watchdog/schemas";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 function inboxMetricTone(
   statsPending: boolean,
@@ -66,6 +69,26 @@ const EMPTY_EDGES: CaseEdgeRecord[] = [];
 const EMPTY_EVIDENCE: EvidenceRecord[] = [];
 const EMPTY_JOBS: JobListRecord[] = [];
 const EMPTY_PROPOSALS: ProposalRecord[] = [];
+
+const ACTIVITY_GROUP_LABELS: Record<ActivityKind, string> = {
+  evidence: "Evidence",
+  job: "Jobs",
+  proposal: "Proposals",
+  task: "Tasks",
+};
+
+/** One section per kind, ordered by whichever kind has the newest item; newest first inside. */
+function groupActivityByKind<T extends { kind: ActivityKind }>(
+  items: readonly T[]
+): { kind: ActivityKind; items: T[] }[] {
+  const groups = new Map<ActivityKind, T[]>();
+  for (const item of items) {
+    const bucket = groups.get(item.kind);
+    if (bucket) bucket.push(item);
+    else groups.set(item.kind, [item]);
+  }
+  return [...groups].map(([kind, rows]) => ({ kind, items: rows }));
+}
 
 export function CaseOverviewTab({
   caseId,
@@ -202,6 +225,11 @@ export function CaseOverviewTab({
     [evidence, hiddenEvidence, jobs, pendingProposals, entityLabels]
   );
 
+  const activityGroups = useMemo(
+    () => groupActivityByKind(activity),
+    [activity]
+  );
+
   return (
     <div className="flex flex-col gap-6">
       {overviewLoadError ? (
@@ -238,30 +266,39 @@ export function CaseOverviewTab({
               description="Evidence, jobs, and proposals for this Case will show up here."
             />
           ) : (
-            <TimelineSpine className="ml-2 pl-4">
-              {activity.map((item) => (
-                <div key={item.id} className="relative pb-3 last:pb-0">
-                  <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-muted-foreground shrink-0 text-xs tracking-wider uppercase">
-                      {activityKindLabel(item.kind)}
-                    </span>
-                    <Link
-                      to={item.href.to}
-                      search={item.href.search}
-                      title={item.label}
-                      className="min-w-0 flex-1 truncate text-sm underline-offset-2 hover:underline"
-                    >
-                      {item.label}
-                    </Link>
-                    <RelativeTime
-                      value={item.at}
-                      className="text-muted-foreground shrink-0 text-xs"
-                    />
+            <ScrollArea className="h-[min(30rem,65vh)]">
+              <div className="flex flex-col gap-5 pr-3">
+                {activityGroups.map((group) => (
+                  <div key={group.kind}>
+                    <h3 className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs">
+                      {ACTIVITY_GROUP_LABELS[group.kind]}
+                      <TabCount n={group.items.length} className="ml-0" />
+                    </h3>
+                    <TimelineSpine className="ml-2 pl-4">
+                      {group.items.map((item) => (
+                        <div key={item.id} className="relative pb-3 last:pb-0">
+                          <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
+                          <div className="flex items-baseline gap-4">
+                            <Link
+                              to={item.href.to}
+                              search={item.href.search}
+                              title={item.label}
+                              className="min-w-0 flex-1 truncate text-sm underline-offset-2 hover:underline"
+                            >
+                              {item.label}
+                            </Link>
+                            <RelativeTime
+                              value={item.at}
+                              className="text-muted-foreground shrink-0 text-xs"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </TimelineSpine>
                   </div>
-                </div>
-              ))}
-            </TimelineSpine>
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </section>
 
