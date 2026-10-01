@@ -18,7 +18,6 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import {
   CASE_CARD_ACTIVE_CLASS,
-  CASE_CARD_MIN_HEIGHT_CLASS,
   CASE_CARD_SHELL_CLASS,
   CASE_CREATE_SHELL_CLASS,
 } from "@/shared/ui/case-card-shell";
@@ -66,11 +65,8 @@ function CaseCard({
       trigger={<div className={shellClass} />}
     >
       <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm leading-tight">{caseRow.name}</p>
-          <p className="text-muted-foreground text-2xs truncate font-mono">
-            {caseRow.slug}
-          </p>
         </div>
         {isActive ? (
           <Chip size="sm" className="shrink-0">
@@ -122,15 +118,6 @@ function NewCaseCard({ onClick }: { onClick: () => void }) {
   );
 }
 
-function CaseSlotGhost() {
-  return (
-    <div
-      aria-hidden
-      className={cn("pointer-events-none", CASE_CARD_MIN_HEIGHT_CLASS)}
-    />
-  );
-}
-
 function exportActiveCaseZip(activeId: string): void {
   const a = document.createElement("a");
   a.href = `/api/v1/cases/${activeId}/export.zip`;
@@ -176,7 +163,6 @@ function CaseListGrid({
   filtered,
   activeId,
   selecting,
-  ghostCount,
   search,
   onClearSearch,
   onSelectCase,
@@ -192,7 +178,6 @@ function CaseListGrid({
   filtered: CaseRecord[];
   activeId: string;
   selecting: boolean;
-  ghostCount: number;
   search: string;
   onClearSearch: () => void;
   onSelectCase: (id: string) => void;
@@ -232,7 +217,7 @@ function CaseListGrid({
         label="Loading cases"
         fallback={<CardGridSkeleton />}
       >
-        <div className="grid h-full min-h-full auto-rows-[minmax(12rem,auto)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid auto-rows-[minmax(10rem,auto)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((caseRow) => (
             <CaseCard
               key={caseRow.id}
@@ -251,9 +236,6 @@ function CaseListGrid({
             />
           ))}
           <NewCaseCard onClick={onCreate} />
-          {Array.from({ length: ghostCount }, (_, i) => (
-            <CaseSlotGhost key={`ghost-${i}`} />
-          ))}
         </div>
       </PendingRegion>
     </div>
@@ -267,7 +249,6 @@ export function CaseList() {
     search,
     setSearch,
     filtered,
-    ghostCount,
     pending,
     casesLoadError,
     retryCases,
@@ -332,7 +313,6 @@ export function CaseList() {
         filtered={filtered}
         activeId={activeId}
         selecting={selecting}
-        ghostCount={ghostCount}
         search={search}
         onClearSearch={clearSearch}
         onSelectCase={selectCase}

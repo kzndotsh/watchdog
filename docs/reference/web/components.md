@@ -77,7 +77,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `QueueSkeleton` | Queue-row skeleton | `PendingRegion` fallback · `/ui` specimen | Full page chrome · stack tabs | : | canonical | yes | : |
 | `StackBodySkeleton` | Hand stack/tab skeleton | `PendingRegion` / `stackPendingFallback()` fallback | Primary stack pending (use `PendingRegion`) | `stackPendingFallback()` | canonical | yes | : |
 | `BoardSkeleton` | Task board column/card skeleton | `PendingRegion` fallback for task board | Full page chrome | : | canonical | yes | : |
-| `CardGridSkeleton` | Case grid slot skeleton | `PendingRegion` fallback for cases grid | Full page chrome | : | canonical | yes | : |
+| `CardGridSkeleton` | Case grid slot skeleton (rows `minmax(10rem, auto)`; no padding "ghost" cells, so the grid is only as tall as its cards) | `PendingRegion` fallback for cases grid | Full page chrome | : | canonical | yes | : |
 | `case-card-shell` | Shared case grid card/create shell class tokens | `CaseList` · `CardGridSkeleton` | Ad-hoc case card chrome | : | canonical | no | : |
 | `SplitView` | Queue \| Detail split; bleeds to the page edges by default (a wrapper undoes `Page`'s side padding) | Console surfaces | Stacked pages | : | canonical | yes | : |
 | `StatusDot` | Lifecycle color dot | Live job rows | Full status label | `StatusBadge` | canonical | yes | `--status-*` |
