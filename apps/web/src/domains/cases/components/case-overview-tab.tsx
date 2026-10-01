@@ -38,6 +38,7 @@ import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import { FormSection } from "@/shared/ui/form-section";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
@@ -254,10 +255,7 @@ export function CaseOverviewTab({
           placeholderDeemphasisClass(overviewPlaceholder)
         )}
       >
-        <section aria-label="Recent activity" className="min-w-0">
-          <h2 className="text-muted-foreground mb-2 text-sm leading-tight font-medium">
-            Recent activity
-          </h2>
+        <FormSection title="Recent activity" className="min-w-0">
           {activity.length === 0 ? (
             <EmptyState
               intent="blank-slate"
@@ -266,8 +264,8 @@ export function CaseOverviewTab({
               description="Evidence, jobs, and proposals for this Case will show up here."
             />
           ) : (
-            <ScrollArea className="h-[min(30rem,65vh)]">
-              <div className="flex flex-col gap-5 pr-3">
+            <ScrollArea className="-mx-1 h-[min(30rem,65vh)]">
+              <div className="flex flex-col gap-5 px-1 pr-3">
                 {activityGroups.map((group) => (
                   <div key={group.kind}>
                     <h3 className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs">
@@ -300,7 +298,7 @@ export function CaseOverviewTab({
               </div>
             </ScrollArea>
           )}
-        </section>
+        </FormSection>
 
         <CaseSettingsForm caseId={caseId} caseRow={caseRow} />
       </div>
