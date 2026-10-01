@@ -124,9 +124,7 @@ function renderForm(slots: CredentialSlot[]) {
 describe("SettingsCredentialsForm", () => {
   it("shows an empty state when no credential slots exist", () => {
     renderForm([]);
-    expect(
-      screen.getByText("No Cap credential slots registered.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("No services to connect yet.")).toBeInTheDocument();
   });
 
   it("shows loading instead of an error while credentials are refetching", () => {

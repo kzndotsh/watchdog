@@ -238,7 +238,7 @@ export function SettingsCredentialsForm() {
         >
           <div className="text-muted-foreground flex flex-col items-center gap-2 px-4 py-10 text-center text-sm">
             <KeyRoundIcon className="size-5" />
-            No Cap credential slots registered.
+            No services to connect yet.
           </div>
         </div>
       ) : (

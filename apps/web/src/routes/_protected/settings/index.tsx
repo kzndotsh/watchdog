@@ -72,7 +72,7 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
     id: "credentials",
     group: "Personal",
     label: "Credentials",
-    description: "Connect the third-party accounts your Caps use.",
+    description: "Connect the outside services Watchdog looks things up in.",
     icon: WrenchIcon,
   },
   {
