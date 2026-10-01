@@ -71,7 +71,7 @@ describe("SettingsUsers", () => {
     render(wrap(<SettingsUsers />));
 
     expect(
-      await screen.findByText("admin@mailhost.test · Install admin")
+      await screen.findByText("admin@mailhost.test · Server admin")
     ).toBeInTheDocument();
     expect(screen.getByText("other@mailhost.test · User")).toBeInTheDocument();
     expect(screen.queryByText("Impersonate")).not.toBeInTheDocument();

@@ -170,12 +170,12 @@ describe("settings index route", () => {
     const Page = Route.options.component!;
     render(<Page />);
     expect(
-      screen.getByText("Only install admins can manage users.")
+      screen.getByText("Only server admins can manage accounts.")
     ).toBeInTheDocument();
     expect(screen.queryByText("Users panel")).not.toBeInTheDocument();
   });
 
-  it("renders the users panel for install admins", () => {
+  it("renders the users panel for server admins", () => {
     useSession.mockReturnValue({
       data: { user: { id: "u-admin", role: "admin" } },
       isPending: false,

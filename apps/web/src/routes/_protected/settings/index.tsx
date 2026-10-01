@@ -99,10 +99,10 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
   },
   {
     id: "users",
-    group: "Install",
+    group: "Administration",
     label: "Users",
     description:
-      "Disable or enable install accounts. Organization membership is under Members.",
+      "Every account on this server, across all organizations. Disabling one blocks sign-in and ends its sessions.",
     icon: UserCogIcon,
   },
 ];
@@ -182,7 +182,7 @@ function SettingsPanel({
       if (!canManageUsers) {
         return (
           <p className="text-muted-foreground text-sm">
-            Only install admins can manage users.
+            Only server admins can manage accounts.
           </p>
         );
       }

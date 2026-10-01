@@ -45,7 +45,7 @@ async function loadUsers(): Promise<ListedUser[]> {
 }
 
 function roleLabel(role: string | null | undefined): string {
-  return isInstanceAdmin(role) ? "Install admin" : "User";
+  return isInstanceAdmin(role) ? "Server admin" : "User";
 }
 
 export function SettingsUsers() {
@@ -144,7 +144,7 @@ export function SettingsUsers() {
     <div className="max-w-2xl space-y-6">
       <FormSection
         title="Users"
-        description="Install accounts. Organization membership is under Organization → Members. Disable blocks sign-in and ends sessions."
+        description="Every account on this server, across all organizations. Removing someone from an organization is under Organization → Members; disabling an account here blocks sign-in and ends sessions."
       >
         <ul
           className={cn(

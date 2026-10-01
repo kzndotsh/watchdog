@@ -19,7 +19,11 @@ export const SETTINGS_TABS = [
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 
 /** Sidebar group headings, in display order. */
-export const SETTINGS_GROUPS = ["Personal", "Organization", "Install"] as const;
+export const SETTINGS_GROUPS = [
+  "Personal",
+  "Organization",
+  "Administration",
+] as const;
 
 export type SettingsGroup = (typeof SETTINGS_GROUPS)[number];
 
