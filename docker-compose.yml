@@ -30,7 +30,7 @@ services:
   minio:
     # Upstream `minio/minio` (Hub and Quay) is no longer pullable. coollabsio builds MinIO from
     # source and ships `mc` and bash, which the healthcheck and scripts/minio-init.sh use.
-    image: ghcr.io/coollabsio/minio:latest
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
     container_name: watchdog-minio
     restart: unless-stopped
     environment:
