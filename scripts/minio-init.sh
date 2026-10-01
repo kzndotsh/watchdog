@@ -23,8 +23,8 @@ ensure_bucket_with_docker_mc() {
     echo "${MINIO_CONTAINER} is not running — run just docker-up first" >&2
     exit 1
   fi
-  # The pinned MinIO server image ships its own `mc`, so no separate client image is
-  # pulled (the Hub and Quay mc images are private / tag-pruned). Inside the container
+  # The MinIO server image (ghcr.io/coollabsio/minio) ships its own `mc`, so no separate
+  # client image is pulled (the Hub and Quay mc images are private). Inside the container
   # MinIO is on localhost:9000; MC_HOST_* avoids an alias round-trip.
   docker exec \
     -e "MC_HOST_local=http://${ACCESS}:${SECRET}@localhost:9000" \
