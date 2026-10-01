@@ -20,26 +20,30 @@ export function orgInitials(name: string): string {
   return name.trim().slice(0, 1).toUpperCase() || "?";
 }
 
-async function loadImage(file: File): Promise<HTMLImageElement> {
-  const url = URL.createObjectURL(file);
-  try {
+/**
+ * Resolves on `load`, when the header is parsed and the dimensions are known, before the
+ * pixels are decoded; `decode()` would decode a huge image just to tell us it is huge.
+ */
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  // oxlint-disable-next-line promise/avoid-new -- wraps the image load event
+  return new Promise((resolve, reject) => {
     const image = new Image();
+    image.addEventListener("load", () => {
+      resolve(image);
+    });
+    image.addEventListener("error", () => {
+      reject(new Error("Couldn't read the image"));
+    });
     image.src = url;
-    await image.decode();
-    return image;
-  } catch {
-    throw new Error("Couldn't read the image");
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+  });
 }
 
-/** Center-crop to a square and downscale to a small PNG data URL. Browser only. */
-export async function resizeLogoToDataUrl(file: File): Promise<string> {
-  const image = await loadImage(file);
+function drawSquareLogo(image: HTMLImageElement): string {
   const { naturalWidth: width, naturalHeight: height } = image;
   if (width > MAX_LOGO_EDGE || height > MAX_LOGO_EDGE) {
-    throw new Error("Image is too large; use one under 8000 pixels wide");
+    throw new Error(
+      `Image is too large; use one up to ${MAX_LOGO_EDGE} pixels on each side`
+    );
   }
   const side = Math.min(width, height);
   const canvas = document.createElement("canvas");
@@ -59,4 +63,14 @@ export async function resizeLogoToDataUrl(file: File): Promise<string> {
     ORG_LOGO_SIZE
   );
   return canvas.toDataURL("image/png");
+}
+
+/** Center-crop to a square and downscale to a small PNG data URL. Browser only. */
+export async function resizeLogoToDataUrl(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    return drawSquareLogo(await loadImage(url));
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }

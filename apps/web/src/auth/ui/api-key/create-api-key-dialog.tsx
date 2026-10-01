@@ -37,7 +37,8 @@ export function CreateApiKeyDialog({
   organizationId,
 }: CreateApiKeyDialogProps) {
   const { localization } = useAuth();
-  const { data: sessionData } = useSession(appAuthClient);
+  const { data: sessionData, isPending: sessionPending } =
+    useSession(appAuthClient);
   // Keys act in the organization they were created in (checked again on every request).
   const scopedOrganizationId =
     sessionData?.session.activeOrganizationId ?? undefined;
@@ -65,13 +66,15 @@ export function CreateApiKeyDialog({
     const formData = new FormData(e.currentTarget);
     const name = formString(formData, "name").trim();
 
+    // Without an active organization the server uses the owner's oldest one anyway.
     const keyOrganizationId = organizationId ?? scopedOrganizationId;
-    if (!keyOrganizationId) return;
 
     const payload = {
       ...(name ? { name } : {}),
       ...(organizationId ? { organizationId, configId: "organization" } : {}),
-      metadata: { organizationId: keyOrganizationId },
+      ...(keyOrganizationId
+        ? { metadata: { organizationId: keyOrganizationId } }
+        : {}),
     };
 
     createApiKey(payload, {
@@ -122,12 +125,7 @@ export function CreateApiKeyDialog({
                 {localization.settings.cancel}
               </AlertDialogCancel>
 
-              <Button
-                type="submit"
-                disabled={
-                  isCreating || !(organizationId ?? scopedOrganizationId)
-                }
-              >
+              <Button type="submit" disabled={isCreating || sessionPending}>
                 {isCreating && <Spinner />}
 
                 {apiKeyLocalization.createApiKey}
