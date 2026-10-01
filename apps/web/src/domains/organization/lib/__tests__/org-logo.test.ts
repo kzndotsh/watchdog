@@ -21,8 +21,8 @@ describe("logoFileProblem", () => {
 });
 
 describe("orgInitials", () => {
-  it("uses the first letters of up to two words", () => {
-    expect(orgInitials("Acme Investigations Ltd")).toBe("AI");
+  it("uses the first letter, like the account avatar", () => {
+    expect(orgInitials("Acme Investigations Ltd")).toBe("A");
     expect(orgInitials("acme")).toBe("A");
   });
 

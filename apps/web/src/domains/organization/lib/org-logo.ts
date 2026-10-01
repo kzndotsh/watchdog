@@ -12,16 +12,9 @@ export function logoFileProblem(file: {
   return null;
 }
 
-/** Initials for the avatar fallback (first letters of up to two words). */
+/** One-letter avatar fallback, the same as the account avatar's. */
 export function orgInitials(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((word) => word[0]?.toUpperCase() ?? "")
-      .join("") || "?"
-  );
+  return name.trim().slice(0, 1).toUpperCase() || "?";
 }
 
 /** Center-crop to a square and downscale to a small PNG data URL. Browser only. */
