@@ -242,19 +242,18 @@ export function CaseOverviewTab({
               {activity.map((item) => (
                 <div key={item.id} className="relative pb-3 last:pb-0">
                   <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <div className="min-w-0">
-                      <span className="text-muted-foreground mr-1.5 text-xs tracking-wider uppercase">
-                        {activityKindLabel(item.kind)}
-                      </span>
-                      <Link
-                        to={item.href.to}
-                        search={item.href.search}
-                        className="text-sm underline-offset-2 hover:underline"
-                      >
-                        {item.label}
-                      </Link>
-                    </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-muted-foreground shrink-0 text-xs tracking-wider uppercase">
+                      {activityKindLabel(item.kind)}
+                    </span>
+                    <Link
+                      to={item.href.to}
+                      search={item.href.search}
+                      title={item.label}
+                      className="min-w-0 flex-1 truncate text-sm underline-offset-2 hover:underline"
+                    >
+                      {item.label}
+                    </Link>
                     <RelativeTime
                       value={item.at}
                       className="text-muted-foreground shrink-0 text-xs"
