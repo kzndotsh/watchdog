@@ -55,7 +55,7 @@ describe("CaseSettingsForm", () => {
   it("renders editable name and description fields from the case record", () => {
     renderForm();
     expect(
-      screen.getByRole("region", { name: "Case settings" })
+      screen.getByRole("heading", { name: "Case settings" })
     ).toBeInTheDocument();
     expect(screen.getByText("Case settings")).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveValue("Alpha Case");
