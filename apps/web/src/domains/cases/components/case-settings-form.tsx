@@ -10,6 +10,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
+import { FormSection } from "@/shared/ui/form-section";
 import { toast } from "@/shared/ui/toast";
 import {
   Field,
@@ -72,13 +73,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
   });
 
   return (
-    <section
-      aria-label="Case settings"
-      className="border-border flex flex-col gap-3 rounded-md border p-3"
-    >
-      <h2 className="text-muted-foreground text-sm leading-tight font-medium">
-        Case settings
-      </h2>
+    <FormSection title="Case settings">
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="case-name">Name</FieldLabel>
@@ -138,6 +133,6 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
           </FieldContent>
         </Field>
       </FieldGroup>
-    </section>
+    </FormSection>
   );
 }
