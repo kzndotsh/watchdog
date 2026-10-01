@@ -5,7 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type SubmitEvent } from "react";
 
 import { authClient } from "@/auth/client";
+import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
+import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
+import { useSlugAvailability } from "@/domains/organization/lib/use-slug-availability";
 import { errMessage } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
 import {
@@ -48,10 +51,19 @@ export function OrganizationProfile() {
     },
   });
   const update = useMutation({
-    mutationFn: async (input: { id: string; name: string; slug: string }) => {
+    mutationFn: async (input: {
+      id: string;
+      name: string;
+      slug: string;
+      logo: string | null;
+    }) => {
       const { error } = await authClient.organization.update({
         organizationId: input.id,
-        data: { name: input.name, slug: input.slug },
+        data: {
+          name: input.name,
+          slug: input.slug,
+          logo: input.logo ?? "",
+        },
       });
       if (error) throw new Error(error.message ?? "Could not save");
     },
@@ -73,11 +85,18 @@ export function OrganizationProfile() {
       if (error) throw new Error(error.message ?? "Could not leave");
     },
   });
-  const [draft, setDraft] = useState<{ name: string; slug: string } | null>(
-    null
-  );
+  const [draft, setDraft] = useState<{
+    name: string;
+    slug: string;
+    logo: string | null;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmName, setConfirmName] = useState("");
+
+  const availability = useSlugAvailability(
+    draft?.slug ?? "",
+    organization?.slug
+  );
 
   if (isPending || !organization) {
     return (
@@ -93,10 +112,13 @@ export function OrganizationProfile() {
     .some((part) => part.trim() === "owner");
   const name = draft?.name ?? organization.name;
   const slug = draft?.slug ?? organization.slug;
+  const logo = draft ? draft.logo : (organization.logo ?? null);
   const dirty =
     draft !== null &&
+    availability !== "taken" &&
     (draft.name.trim() !== organization.name ||
-      draft.slug.trim() !== organization.slug);
+      draft.slug.trim() !== organization.slug ||
+      draft.logo !== (organization.logo ?? null));
 
   function save(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -107,6 +129,7 @@ export function OrganizationProfile() {
         id: organization.id,
         name: draft.name.trim(),
         slug: draft.slug.trim(),
+        logo: draft.logo,
       },
       {
         onSuccess: () => {
@@ -141,6 +164,14 @@ export function OrganizationProfile() {
           }
         >
           <FieldGroup>
+            <OrgLogoField
+              name={name}
+              value={logo}
+              disabled={!canEdit || update.isPending}
+              onChange={(next) => {
+                setDraft({ name, slug, logo: next });
+              }}
+            />
             <Field>
               <FieldLabel htmlFor="org-name">Name</FieldLabel>
               <Input
@@ -148,22 +179,19 @@ export function OrganizationProfile() {
                 value={name}
                 disabled={!canEdit || update.isPending}
                 onChange={(event) => {
-                  setDraft({ name: event.target.value, slug });
+                  setDraft({ name: event.target.value, slug, logo });
                 }}
               />
             </Field>
-            <Field>
-              <FieldLabel htmlFor="org-slug">URL name</FieldLabel>
-              <Input
-                id="org-slug"
-                className="font-mono"
-                value={slug}
-                disabled={!canEdit || update.isPending}
-                onChange={(event) => {
-                  setDraft({ name, slug: event.target.value });
-                }}
-              />
-            </Field>
+            <OrgSlugField
+              id="org-slug"
+              value={slug}
+              availability={availability}
+              disabled={!canEdit || update.isPending}
+              onChange={(next) => {
+                setDraft({ name, slug: next, logo });
+              }}
+            />
           </FieldGroup>
           <FieldError>{error}</FieldError>
         </FormSection>

@@ -3,6 +3,9 @@ import { useForm } from "@tanstack/react-form";
 import { useRef, useState, type SubmitEvent } from "react";
 
 import { authClient } from "@/auth/client";
+import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
+import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
+import { useSlugAvailability } from "@/domains/organization/lib/use-slug-availability";
 import { errMessage, nextAutoSlug, slugifyName } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { FieldMessage } from "@/shared/ui/field-message";
@@ -24,6 +27,10 @@ export function CreateOrganizationForm({
   onCreated: () => void;
 }) {
   const [serverError, setServerError] = useState<string | null>(null);
+  const [logo, setLogo] = useState<string | null>(null);
+  // Mirrors of the form values: the logo preview and slug check render outside the fields.
+  const [nameValue, setNameValue] = useState("");
+  const [slugValue, setSlugValue] = useState("");
   const lastNameRef = useRef("");
   const create = useCreateOrganization(authClient);
 
@@ -35,6 +42,7 @@ export function CreateOrganizationForm({
         await create.mutateAsync({
           name: value.name.trim(),
           slug: value.slug.trim() || slugifyName(value.name),
+          ...(logo === null ? {} : { logo }),
         });
         onCreated();
       } catch (error) {
@@ -42,6 +50,8 @@ export function CreateOrganizationForm({
       }
     },
   });
+
+  const availability = useSlugAvailability(slugValue);
 
   return (
     <form
@@ -52,6 +62,12 @@ export function CreateOrganizationForm({
       className="flex flex-col gap-4"
     >
       <FieldGroup>
+        <OrgLogoField
+          name={nameValue}
+          value={logo}
+          onChange={setLogo}
+          disabled={create.isPending}
+        />
         <form.Field
           name="name"
           validators={{
@@ -60,6 +76,7 @@ export function CreateOrganizationForm({
           }}
           listeners={{
             onChange: ({ value }) => {
+              setNameValue(value);
               const auto = nextAutoSlug(
                 lastNameRef.current,
                 form.getFieldValue("slug"),
@@ -90,27 +107,32 @@ export function CreateOrganizationForm({
             </Field>
           )}
         </form.Field>
-        <form.Field name="slug">
+        <form.Field
+          name="slug"
+          listeners={{
+            onChange: ({ value }) => {
+              setSlugValue(value);
+            },
+          }}
+        >
           {(field) => (
-            <Field>
-              <FieldLabel htmlFor="organization-slug">URL name</FieldLabel>
-              <Input
-                id="organization-slug"
-                className="font-mono"
-                placeholder="acme-investigations"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) => {
-                  field.handleChange(event.target.value);
-                }}
-                disabled={create.isPending}
-              />
-            </Field>
+            <OrgSlugField
+              id="organization-slug"
+              placeholder="acme-investigations"
+              value={field.state.value}
+              onChange={field.handleChange}
+              availability={availability}
+              disabled={create.isPending}
+            />
           )}
         </form.Field>
       </FieldGroup>
       <FieldError>{serverError}</FieldError>
-      <Button type="submit" loading={create.isPending}>
+      <Button
+        type="submit"
+        loading={create.isPending}
+        disabled={availability === "taken"}
+      >
         {submitLabel}
       </Button>
     </form>

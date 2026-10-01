@@ -9,7 +9,7 @@ test.describe("Auth team invite", () => {
       const stamp = `${Date.now()}`;
       await authPage.signUp(stamp);
 
-      await page.goto("/settings?tab=team");
+      await page.goto("/settings?tab=members");
       await waitForHydrated(page);
       await expect(page.getByRole("button", { name: "Invite" })).toBeVisible({
         timeout: 30_000,

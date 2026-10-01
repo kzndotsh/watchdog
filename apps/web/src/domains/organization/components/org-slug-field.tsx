@@ -1,0 +1,58 @@
+import type { SlugAvailability } from "@/domains/organization/lib/use-slug-availability";
+import { cn } from "@/lib/utils";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+
+const STATUS_TEXT: Record<SlugAvailability, string | null> = {
+  idle: null,
+  checking: "Checking…",
+  available: "Available",
+  taken: "Already taken",
+};
+
+/** URL-name input with a live availability line under it. */
+export function OrgSlugField({
+  id,
+  value,
+  onChange,
+  availability,
+  placeholder,
+  disabled = false,
+}: {
+  id: string;
+  value: string;
+  onChange: (next: string) => void;
+  availability: SlugAvailability;
+  placeholder?: string;
+  disabled?: boolean;
+}) {
+  const status = STATUS_TEXT[availability];
+  return (
+    <Field data-invalid={availability === "taken" || undefined}>
+      <FieldLabel htmlFor={id}>URL name</FieldLabel>
+      <Input
+        id={id}
+        className="font-mono"
+        placeholder={placeholder}
+        value={value}
+        aria-invalid={availability === "taken" || undefined}
+        disabled={disabled}
+        onChange={(event) => {
+          onChange(event.target.value);
+        }}
+      />
+      {status === null ? null : (
+        <p
+          className={cn(
+            "text-xs",
+            availability === "taken"
+              ? "text-destructive"
+              : "text-muted-foreground"
+          )}
+        >
+          {status}
+        </p>
+      )}
+    </Field>
+  );
+}

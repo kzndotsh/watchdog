@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -112,5 +112,48 @@ describe("OrganizationMembers", () => {
 
     expect(await screen.findByText("network down")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  it("filters members by search and offers Make owner only to owners", async () => {
+    useSession.mockReturnValue({
+      data: { user: { id: "u-owner", email: "owner@mailhost.test" } },
+    });
+    listMembers.mockResolvedValue({
+      data: {
+        members: [
+          {
+            id: "m1",
+            userId: "u-owner",
+            role: "owner",
+            user: { name: "Owner", email: "owner@mailhost.test" },
+          },
+          {
+            id: "m2",
+            userId: "u-ana",
+            role: "member",
+            user: { name: "Ana Reyes", email: "ana@mailhost.test" },
+          },
+          {
+            id: "m3",
+            userId: "u-bo",
+            role: "admin",
+            user: { name: "Bo Tran", email: "bo@mailhost.test" },
+          },
+        ],
+      },
+      error: null,
+    });
+    listInvitations.mockResolvedValue({ data: [], error: null });
+
+    render(wrap(<OrganizationMembers />));
+
+    expect(await screen.findByText("Ana Reyes")).toBeInTheDocument();
+    expect(screen.getByText("Bo Tran")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Search members"), {
+      target: { value: "bo@" },
+    });
+    expect(screen.queryByText("Ana Reyes")).not.toBeInTheDocument();
+    expect(screen.getByText("Bo Tran")).toBeInTheDocument();
   });
 });

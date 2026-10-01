@@ -144,7 +144,7 @@ export function SettingsUsers() {
     <div className="max-w-2xl space-y-6">
       <FormSection
         title="Users"
-        description="Install accounts. Organization membership is on Team. Disable blocks sign-in and ends sessions."
+        description="Install accounts. Organization membership is under Organization → Members. Disable blocks sign-in and ends sessions."
       >
         <ul
           className={cn(

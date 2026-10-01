@@ -53,6 +53,14 @@ vi.mock("@/domains/organization/components/organization-members", () => ({
   OrganizationMembers: () => <div>Team panel</div>,
 }));
 
+vi.mock("@/domains/organization/components/organization-profile", () => ({
+  OrganizationProfile: () => <div>Organization profile</div>,
+}));
+
+vi.mock("@/domains/organization/components/your-organizations", () => ({
+  YourOrganizations: () => <div>Your organizations panel</div>,
+}));
+
 vi.mock("@/domains/settings/components/settings-users", () => ({
   SettingsUsers: () => <div>Users panel</div>,
 }));
@@ -62,10 +70,12 @@ vi.mock("@/domains/settings/components/settings-shell", () => ({
     "account",
     "security",
     "appearance",
-    "team",
-    "users",
     "api-keys",
     "credentials",
+    "organizations",
+    "organization",
+    "members",
+    "users",
   ],
   SettingsShell: ({
     activeTab,
@@ -121,6 +131,25 @@ describe("settings index route", () => {
     render(<Page />);
     expect(screen.getByText("Settings shell credentials")).toBeInTheDocument();
     expect(screen.getByText("Credentials form")).toBeInTheDocument();
+  });
+
+  it("renders the members and organization panels under the Organization group", () => {
+    useSearchMock.mockReturnValue({ tab: "members" } as never);
+    const Page = Route.options.component!;
+    const { unmount } = render(<Page />);
+    expect(screen.getByText("Team panel")).toBeInTheDocument();
+    unmount();
+
+    useSearchMock.mockReturnValue({ tab: "organization" } as never);
+    render(<Page />);
+    expect(screen.getByText("Organization profile")).toBeInTheDocument();
+  });
+
+  it("maps the legacy team tab to members", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "team" })).toEqual({ tab: "members" });
   });
 
   it("trims padded settings tab in validateSearch", () => {

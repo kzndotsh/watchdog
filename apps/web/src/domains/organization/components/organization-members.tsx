@@ -46,7 +46,33 @@ interface OrgInvitation {
 const EMPTY_MEMBERS: OrgMember[] = [];
 const EMPTY_INVITATIONS: OrgInvitation[] = [];
 
+const PAGE_SIZE = 10;
+
+const ROLE_FILTER_OPTIONS = [
+  { value: "all", label: "All roles" },
+  { value: "owner", label: "Owners" },
+  { value: "admin", label: "Admins" },
+  { value: "member", label: "Members" },
+] as const;
+
 const TEAM_QUERY_KEY = ["auth-org", "team"] as const;
+
+function hasRole(roles: string, role: string): boolean {
+  return roles.split(",").some((part) => part.trim() === role);
+}
+
+function memberMatches(
+  member: OrgMember,
+  search: string,
+  roleFilter: string
+): boolean {
+  if (roleFilter !== "all" && !hasRole(member.role, roleFilter)) return false;
+  const needle = search.trim().toLowerCase();
+  if (needle === "") return true;
+  return [member.user?.name, member.user?.email].some((value) =>
+    (value ?? "").toLowerCase().includes(needle)
+  );
+}
 
 async function copyInviteLink(url: string): Promise<void> {
   try {
@@ -100,12 +126,16 @@ export function OrganizationMembers() {
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"member" | "admin">("member");
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [page, setPage] = useState(0);
 
   const selfId = session?.user.id;
   const selfMember = teamQuery.data?.members.find(
     (member) => member.userId === selfId
   );
   const manage = canManageTeam(selfMember?.role ?? "");
+  const selfIsOwner = hasRole(selfMember?.role ?? "", "owner");
 
   const invalidate = async () =>
     queryClient.invalidateQueries({ queryKey: TEAM_QUERY_KEY });
@@ -144,6 +174,27 @@ export function OrganizationMembers() {
     onSuccess: invalidate,
     onError: (error) => {
       toast.error(errMessage(error, "Could not cancel invitation"));
+    },
+  });
+
+  const resendInvite = useMutation({
+    mutationFn: async (row: OrgInvitation) => {
+      const { error } = await authClient.organization.inviteMember({
+        email: row.email,
+        role: row.role === "admin" ? "admin" : "member",
+        resend: true,
+      });
+      if (error)
+        throw new Error(
+          messageOr(error.message, "Could not resend invitation")
+        );
+    },
+    onSuccess: async () => {
+      toast.success("Invitation sent again.");
+      await invalidate();
+    },
+    onError: (error) => {
+      toast.error(errMessage(error, "Could not resend invitation"));
     },
   });
 
@@ -201,6 +252,15 @@ export function OrganizationMembers() {
 
   const members = teamQuery.data?.members ?? EMPTY_MEMBERS;
   const invitations = teamQuery.data?.invitations ?? EMPTY_INVITATIONS;
+  const visibleMembers = members.filter((member) =>
+    memberMatches(member, search, roleFilter)
+  );
+  const pageCount = Math.max(1, Math.ceil(visibleMembers.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageMembers = visibleMembers.slice(
+    currentPage * PAGE_SIZE,
+    (currentPage + 1) * PAGE_SIZE
+  );
 
   return (
     <div
@@ -260,8 +320,31 @@ export function OrganizationMembers() {
         title="Members"
         description="Organization membership, not Case membership."
       >
+        {members.length > 1 ? (
+          <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
+            <Input
+              aria-label="Search members"
+              type="search"
+              placeholder="Search by name or email"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(0);
+              }}
+            />
+            <FieldSelect
+              aria-label="Filter by role"
+              value={roleFilter}
+              onValueChange={(next) => {
+                setRoleFilter(next);
+                setPage(0);
+              }}
+              options={[...ROLE_FILTER_OPTIONS]}
+            />
+          </div>
+        ) : null}
         <ul className="divide-y">
-          {members.map((member) => (
+          {pageMembers.map((member) => (
             <li
               key={member.id}
               className="group flex items-center justify-between gap-3 py-2"
@@ -280,6 +363,18 @@ export function OrganizationMembers() {
                 <RowActionsMenu
                   label={`Actions for ${member.user?.email ?? member.id}`}
                 >
+                  {selfIsOwner ? (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        updateRole.mutate({
+                          memberId: member.id,
+                          role: "owner",
+                        });
+                      }}
+                    >
+                      Make owner
+                    </DropdownMenuItem>
+                  ) : null}
                   {member.role === "member" ? (
                     <DropdownMenuItem
                       onClick={() => {
@@ -290,6 +385,18 @@ export function OrganizationMembers() {
                       }}
                     >
                       Make admin
+                    </DropdownMenuItem>
+                  ) : null}
+                  {member.role === "admin" ? (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        updateRole.mutate({
+                          memberId: member.id,
+                          role: "member",
+                        });
+                      }}
+                    >
+                      Make member
                     </DropdownMenuItem>
                   ) : null}
                   <DropdownMenuItem
@@ -305,6 +412,42 @@ export function OrganizationMembers() {
             </li>
           ))}
         </ul>
+        {visibleMembers.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No matching members.</p>
+        ) : null}
+        {visibleMembers.length > PAGE_SIZE ? (
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="text-muted-foreground text-xs">
+              {currentPage * PAGE_SIZE + 1}–
+              {Math.min((currentPage + 1) * PAGE_SIZE, visibleMembers.length)}{" "}
+              of {visibleMembers.length}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={currentPage === 0}
+                onClick={() => {
+                  setPage(currentPage - 1);
+                }}
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={currentPage >= pageCount - 1}
+                onClick={() => {
+                  setPage(currentPage + 1);
+                }}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </FormSection>
 
       <FormSection
@@ -340,6 +483,17 @@ export function OrganizationMembers() {
                         }}
                       >
                         Copy link
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={resendInvite.isPending}
+                        onClick={() => {
+                          resendInvite.mutate(row);
+                        }}
+                      >
+                        Resend
                       </Button>
                       <Button
                         type="button"

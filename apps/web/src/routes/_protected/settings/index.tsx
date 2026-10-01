@@ -1,8 +1,10 @@
 import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import {
+  BuildingIcon,
   KeyIcon,
   PaletteIcon,
+  SettingsIcon,
   ShieldIcon,
   UserCogIcon,
   UserIcon,
@@ -17,6 +19,7 @@ import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
 import { OrganizationMembers } from "@/domains/organization/components/organization-members";
 import { OrganizationProfile } from "@/domains/organization/components/organization-profile";
+import { YourOrganizations } from "@/domains/organization/components/your-organizations";
 import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
@@ -39,53 +42,80 @@ const routeApi = getRouteApi("/_protected/settings/");
 const SETTINGS_NAV: readonly SettingsNavItem[] = [
   {
     id: "account",
+    group: "Personal",
     label: "Account",
     description: "Name, avatar, and email.",
     icon: UserIcon,
   },
   {
     id: "security",
+    group: "Personal",
     label: "Security",
     description: "Password, sessions, and linked accounts.",
     icon: ShieldIcon,
   },
   {
     id: "appearance",
+    group: "Personal",
     label: "Appearance",
     description: "Theme, display size, and visual preferences.",
     icon: PaletteIcon,
   },
   {
-    id: "team",
-    label: "Organization",
-    description: "Name, members, invitations, and roles.",
-    icon: UsersIcon,
-  },
-  {
-    id: "users",
-    label: "Users",
-    description:
-      "Disable or enable install accounts. Organization membership is on Organization.",
-    icon: UserCogIcon,
-  },
-  {
     id: "api-keys",
+    group: "Personal",
     label: "API Keys",
     description: "Keys for API access.",
     icon: KeyIcon,
   },
   {
     id: "credentials",
+    group: "Personal",
     label: "Credentials",
     description: "Connect third-party API keys that Caps use at runtime.",
     icon: WrenchIcon,
   },
+  {
+    id: "organizations",
+    group: "Personal",
+    label: "Organizations",
+    description:
+      "Every organization you belong to, and invitations waiting for you.",
+    icon: BuildingIcon,
+  },
+  {
+    id: "organization",
+    group: "Organization",
+    label: "General",
+    description: "Name, logo, URL name, and leaving or deleting it.",
+    icon: SettingsIcon,
+  },
+  {
+    id: "members",
+    group: "Organization",
+    label: "Members",
+    description: "Invite people, change roles, and manage invitations.",
+    icon: UsersIcon,
+  },
+  {
+    id: "users",
+    group: "Install",
+    label: "Users",
+    description:
+      "Disable or enable install accounts. Organization membership is under Members.",
+    icon: UserCogIcon,
+  },
 ];
+
+/** Tab ids from older links. */
+const LEGACY_TABS: Record<string, SettingsTab> = { team: "members" };
 
 function parseSettingsTab(value: unknown): SettingsTab | undefined {
   const slug =
     typeof value === "string" ? normalizeRouteSegment(value) : undefined;
   if (slug === undefined) return undefined;
+  const legacy = LEGACY_TABS[slug];
+  if (legacy !== undefined) return legacy;
   for (const tab of SETTINGS_TABS) {
     if (tab === slug) return tab;
   }
@@ -124,13 +154,22 @@ function SettingsPanel({
         </div>
       );
     }
-    case "team": {
+    case "organizations": {
       return (
-        <div className="flex max-w-2xl flex-col gap-8">
-          <OrganizationProfile />
-          <OrganizationMembers />
+        <div className="max-w-2xl">
+          <YourOrganizations />
         </div>
       );
+    }
+    case "organization": {
+      return (
+        <div className="max-w-2xl">
+          <OrganizationProfile />
+        </div>
+      );
+    }
+    case "members": {
+      return <OrganizationMembers />;
     }
     case "users": {
       if (sessionPending) {

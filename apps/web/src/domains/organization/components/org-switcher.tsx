@@ -13,6 +13,7 @@ import { useState } from "react";
 
 import { authClient } from "@/auth/client";
 import { CreateOrganizationForm } from "@/domains/organization/components/create-organization-form";
+import { OrgAvatar } from "@/domains/organization/components/org-avatar";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
 import {
   Dialog,
@@ -70,7 +71,15 @@ export function OrgSwitcher() {
                 <SidebarMenuButton tooltip={active?.name ?? "Organization"} />
               }
             >
-              <UsersRoundIcon />
+              {active ? (
+                <OrgAvatar
+                  name={active.name}
+                  logo={active.logo}
+                  className="-mx-0.5 data-[size=sm]:size-5"
+                />
+              ) : (
+                <UsersRoundIcon />
+              )}
               <span className="truncate">{active?.name ?? "Organization"}</span>
               <ChevronsUpDownIcon className="ml-auto" />
             </DropdownMenuTrigger>
@@ -94,6 +103,7 @@ export function OrgSwitcher() {
                       );
                     }}
                   >
+                    <OrgAvatar name={org.name} logo={org.logo} />
                     <span className="truncate">{org.name}</span>
                     {org.id === active?.id ? (
                       <CheckIcon className="ml-auto" />
