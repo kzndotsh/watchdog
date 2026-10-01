@@ -234,7 +234,7 @@ function SettingsPage() {
   }, [navigate, tabSearch]);
 
   return (
-    <Page>
+    <Page className="gap-0">
       <PageHeader />
       <SettingsShell
         items={navItems}
