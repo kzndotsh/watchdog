@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 
+import { cn } from "@/lib/utils";
 import { Chip } from "@/shared/ui/chip";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import {
@@ -27,7 +28,7 @@ export function TaskPriorityBadge({
       label={TASK_PRIORITY_LABELS[priority]}
       tone={STATUS_TONES[TASK_PRIORITY_TONE_MAP[priority]]}
       contrast={contrast}
-      className={className}
+      className={cn("font-normal", className)}
       size="sm"
       {...props}
     >

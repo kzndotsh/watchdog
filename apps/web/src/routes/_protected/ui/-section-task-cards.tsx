@@ -106,7 +106,7 @@ function Chip({ priority }: { priority: TaskPriority }) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-medium tracking-wider uppercase",
+        "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-normal tracking-wider uppercase",
         STATUS_TONES[TASK_PRIORITY_TONE_MAP[priority]].low
       )}
     >
@@ -120,7 +120,7 @@ function Due({ sample }: { sample: Sample }) {
   return (
     <span
       className={cn(
-        "text-2xs inline-flex shrink-0 items-center gap-1 font-mono tabular-nums",
+        "text-2xs inline-flex shrink-0 items-center gap-1 font-mono font-light tabular-nums",
         sample.overdue ? "text-destructive" : "text-muted-foreground"
       )}
     >

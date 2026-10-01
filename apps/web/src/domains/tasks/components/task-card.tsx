@@ -83,7 +83,7 @@ function TaskCardBody({
           {task.priority ? (
             <span
               className={cn(
-                "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-medium tracking-wider uppercase",
+                "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-normal tracking-wider uppercase",
                 STATUS_TONES[TASK_PRIORITY_TONE_MAP[task.priority]].low
               )}
             >
@@ -93,7 +93,7 @@ function TaskCardBody({
           {task.dueDate ? (
             <span
               className={cn(
-                "ml-auto inline-flex shrink-0 items-center gap-1 font-mono text-xs tabular-nums",
+                "ml-auto inline-flex shrink-0 items-center gap-1 font-mono text-xs font-light tabular-nums",
                 overdue ? "text-destructive" : "text-muted-foreground"
               )}
             >

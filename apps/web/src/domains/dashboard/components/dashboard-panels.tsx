@@ -112,7 +112,7 @@ function DueBody({
                 value={task.dueDate}
                 dateOnly
                 className={cn(
-                  "text-2xs shrink-0 font-mono tabular-nums",
+                  "text-2xs shrink-0 font-mono font-light tabular-nums",
                   overdue && "text-destructive"
                 )}
               />
