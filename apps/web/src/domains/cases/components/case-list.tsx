@@ -232,7 +232,7 @@ function CaseListGrid({
         label="Loading cases"
         fallback={<CardGridSkeleton />}
       >
-        <div className="grid h-full min-h-full auto-rows-[minmax(9rem,1fr)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid h-full min-h-full auto-rows-[minmax(12rem,auto)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((caseRow) => (
             <CaseCard
               key={caseRow.id}

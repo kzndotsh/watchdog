@@ -216,7 +216,7 @@ export function CardGridSkeletonLayout({
   return (
     <div
       className={cn(
-        "grid h-full min-h-full auto-rows-[minmax(9rem,1fr)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3",
+        "grid h-full min-h-full auto-rows-[minmax(12rem,auto)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3",
         className
       )}
     >

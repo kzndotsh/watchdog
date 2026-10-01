@@ -1,17 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { updateCaseFn } from "@/domains/cases/cases.functions";
-import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
-import { writeCaseRecordCache } from "@/domains/cases/lib/case-cache";
-import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
+import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
 import type { CaseRecord } from "@/domains/cases/types";
-import { errMessage } from "@/lib/utils";
-import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
-import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
 import { FormSection } from "@/shared/ui/form-section";
-import { toast } from "@/shared/ui/toast";
 import {
   Field,
   FieldDescription,
@@ -28,9 +19,6 @@ interface CaseSettingsFormProps {
 }
 
 export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-
   const serverName = caseRow.name;
   const [nameDraft, setNameDraft] = useState(serverName);
   const [prevName, setPrevName] = useState(serverName);
@@ -47,29 +35,7 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
     setDescriptionDraft(serverDescription);
   }
 
-  const updateMutation = useMutation({
-    mutationFn: async (vars: {
-      name?: string;
-      description?: string | null;
-      allowThirdPartyEgress?: boolean;
-    }) => updateCaseFn({ data: buildUpdateCaseData(caseId, vars) }),
-    onSuccess: async (updated) => {
-      writeCaseRecordCache(queryClient, updated, { slug: caseRow.slug });
-      notifyCasesChanged();
-      toast.success(TOAST_CASE_UPDATED);
-      if (updated.slug !== caseRow.slug) {
-        await navigate({
-          to: "/cases/$caseSlug",
-          params: { caseSlug: updated.slug },
-          replace: true,
-        });
-      }
-      await invalidateAfterCaseSwitch(queryClient);
-    },
-    onError: (err) => {
-      toast.error(errMessage(err, "Update failed"));
-    },
-  });
+  const updateMutation = useUpdateCase(caseId, caseRow.slug);
 
   return (
     <FormSection title="Case settings">

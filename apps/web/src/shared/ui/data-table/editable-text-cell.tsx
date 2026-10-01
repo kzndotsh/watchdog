@@ -101,7 +101,7 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
       "data-form-type": "other",
     };
 
-    if (prefix) {
+    if (prefix || variant === "title") {
       return (
         <span
           className={cn(
