@@ -82,7 +82,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `SplitView` | Queue \| Detail split | Console surfaces | Stacked pages | : | canonical | yes | : |
 | `StatusDot` | Lifecycle color dot | Live job rows | Full status label | `StatusBadge` | canonical | yes | `--status-*` |
 | `TabCount` | Count pill on tabs / last crumb | Tab labels · `PageHeader count=` | Queue headers · `/ N entities` copy | `QueueHeader` count | canonical | no | : |
-| `task-board-shell` | Shared task column/card shell class tokens (card = entity header bar, title block, footer bar with the priority chip (`Med` for medium)) | `TaskBoardColumn` · `TaskCard` · `BoardSkeleton` | Ad-hoc card chrome | : | canonical | no | : |
+| `task-board-shell` | Shared task column/card shell class tokens (card = entity header bar, title block, footer bar with the priority chip (`Med` for medium); both bars are a fixed `h-6` so cards line up) | `TaskBoardColumn` · `TaskCard` · `BoardSkeleton` | Ad-hoc card chrome | : | canonical | no | : |
 | `TimelineSpine` / `TimelineDot` | Vertical timeline rail | Events / questions | Flat lists | : | canonical | yes | : |
 | `Timestamp` / `WithTooltip` | Instant + tooltip wrapper | Time surfaces / dense hits | Bare titles | : | canonical | yes | : |
 | `CapabilityLabel` | Cap id → catalog title | Collect / Triage / Dashboard | Raw ids in UI | : | canonical | no | : |

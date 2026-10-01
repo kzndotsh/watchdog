@@ -511,7 +511,7 @@ function TaskCardSkeleton({ showFooter = true }: { showFooter?: boolean }) {
   return (
     <div className={TASK_CARD_SHELL_CLASS}>
       {showFooter ? (
-        <div className="border-border flex items-center gap-1.5 border-b px-2.5 py-1.5">
+        <div className="border-border flex h-6 items-center gap-1.5 border-b px-2.5">
           <Skeleton className="h-3 w-3 shrink-0 rounded-xs" />
           <Skeleton className="h-3 w-24 shrink-0 rounded-sm" />
         </div>
@@ -520,7 +520,7 @@ function TaskCardSkeleton({ showFooter = true }: { showFooter?: boolean }) {
         <Skeleton className="h-4 w-4/5 rounded-sm" />
       </div>
       {showFooter ? (
-        <div className="border-border flex items-center gap-2 border-t px-2.5 py-1.5">
+        <div className="border-border flex h-6 items-center gap-2 border-t px-2.5">
           <Skeleton className="h-3 w-3 shrink-0 rounded-xs" />
           <Skeleton className="ml-auto h-3 w-12 shrink-0 rounded-sm" />
         </div>

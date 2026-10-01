@@ -53,7 +53,7 @@ function TaskCardBody({
   return (
     <div className="flex min-w-0 flex-col">
       {entity && entityLabel ? (
-        <div className="border-border bg-muted/20 flex min-w-0 items-center gap-1 border-b px-2.5 py-1 pr-7">
+        <div className="border-border bg-muted/20 flex h-6 min-w-0 items-center gap-1 border-b px-2.5 pr-7">
           <span
             className="text-muted-foreground inline-flex min-w-0 items-center gap-1 text-xs"
             title={entityLabel}
@@ -79,7 +79,7 @@ function TaskCardBody({
       </div>
 
       {hasFooter ? (
-        <div className="border-border bg-muted/20 flex min-w-0 items-center gap-2 border-t px-2.5 py-1">
+        <div className="border-border bg-muted/20 flex h-6 min-w-0 items-center gap-2 border-t px-2.5">
           {task.priority ? (
             <span
               className={cn(
