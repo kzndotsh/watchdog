@@ -1,6 +1,5 @@
 import type { ComponentProps } from "react";
 
-import { cn } from "@/lib/utils";
 import { Chip } from "@/shared/ui/chip";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import {
@@ -34,51 +33,5 @@ export function TaskPriorityBadge({
     >
       {children}
     </Chip>
-  );
-}
-
-const PRIORITY_RANK: Record<TaskPriority, number> = {
-  low: 1,
-  medium: 2,
-  high: 3,
-  urgent: 4,
-};
-
-/** Four ascending bars, one per priority: low = 1 lit … urgent = 4 (failed tone). */
-export function TaskPriorityBars({
-  priority,
-  className,
-}: {
-  priority: TaskPriority;
-  className?: string;
-}) {
-  const rank = PRIORITY_RANK[priority];
-  return (
-    <span
-      role="img"
-      aria-label={`${TASK_PRIORITY_LABELS[priority]} priority`}
-      title={`${TASK_PRIORITY_LABELS[priority]} priority`}
-      className={cn("inline-flex h-4 shrink-0 items-end gap-px", className)}
-    >
-      {[1, 2, 3, 4].map((bar) => {
-        let lit = "bg-foreground/15";
-        if (bar <= rank) {
-          lit = priority === "urgent" ? "bg-status-failed" : "bg-foreground/70";
-        }
-        return (
-          <span
-            key={bar}
-            className={cn(
-              "w-0.5 rounded-xs",
-              bar === 1 && "h-1",
-              bar === 2 && "h-2",
-              bar === 3 && "h-3",
-              bar === 4 && "h-4",
-              lit
-            )}
-          />
-        );
-      })}
-    </span>
   );
 }

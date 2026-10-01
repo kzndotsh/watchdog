@@ -63,12 +63,10 @@ export {
   taskStatusLabel,
 } from "@/shared/ui/vocab/task-status.lib";
 
-export {
-  TaskPriorityBadge,
-  TaskPriorityBars,
-} from "@/shared/ui/vocab/task-priority";
+export { TaskPriorityBadge } from "@/shared/ui/vocab/task-priority";
 export {
   TASK_PRIORITY_OPTIONS,
   TASK_PRIORITY_TONE_MAP,
   taskPriorityLabel,
+  taskPriorityShortLabel,
 } from "@/shared/ui/vocab/task-priority.lib";

@@ -28,7 +28,6 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `StatusBadge` | Status chip | Tables / dense cells that still need a boxed label | Detail context strips | `StatusInk` | canonical | yes | `--status-*` |
 | `StatusInk` | Status as colored type + 6px dot | Collect / Triage / Jobs Detail strips | Table cells that need a chip | `StatusBadge` · `StatusDot` | canonical | yes | `--status-*` |
 | `TaskStatusBadge` | Task status chip (reuses `--status-*` tones) | Task board / compact tabs | Job status | `StatusBadge` | canonical | no | `--status-*` |
-| `TaskPriorityBars` | Four ascending bars, one lit per priority step (urgent = all four, failed tone); the compact form on task cards. `TaskPriorityBadge` below is the labelled chip. | Task cards | Confidence | : | canonical | no | `--status-failed` |
 | `TaskPriorityBadge` | Task priority chip (reuses `--status-*` tones) | Task board / compact tabs | Confidence | `StatusBadge` | canonical | no | `--status-*` |
 | `KindBadge` | Kind chip (+ entity kind icon for person/org/infra) | Evidence / identifier kind chips | Entity name rows (use `EntityKindGlyph`) | `EntityKindGlyph` | canonical | yes | `--kind-*` |
 | `EntityKindGlyph` | Entity kind icon + type tooltip | Before entity names (Entities table · Identifiers Entity column · dossier trail) | Evidence/identifier kind chips | `KindBadge` | canonical | no | `--kind-*` |
@@ -83,7 +82,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `SplitView` | Queue \| Detail split | Console surfaces | Stacked pages | : | canonical | yes | : |
 | `StatusDot` | Lifecycle color dot | Live job rows | Full status label | `StatusBadge` | canonical | yes | `--status-*` |
 | `TabCount` | Count pill on tabs / last crumb | Tab labels · `PageHeader count=` | Queue headers · `/ N entities` copy | `QueueHeader` count | canonical | no | : |
-| `task-board-shell` | Shared task column/card shell class tokens (card = entity header bar, title block, footer bar) | `TaskBoardColumn` · `TaskCard` · `BoardSkeleton` | Ad-hoc card chrome | : | canonical | no | : |
+| `task-board-shell` | Shared task column/card shell class tokens (card = entity header bar, title block, footer bar with the priority chip (`Med` for medium)) | `TaskBoardColumn` · `TaskCard` · `BoardSkeleton` | Ad-hoc card chrome | : | canonical | no | : |
 | `TimelineSpine` / `TimelineDot` | Vertical timeline rail | Events / questions | Flat lists | : | canonical | yes | : |
 | `Timestamp` / `WithTooltip` | Instant + tooltip wrapper | Time surfaces / dense hits | Bare titles | : | canonical | yes | : |
 | `CapabilityLabel` | Cap id → catalog title | Collect / Triage / Dashboard | Raw ids in UI | : | canonical | no | : |

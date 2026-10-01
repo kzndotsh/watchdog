@@ -17,7 +17,12 @@ import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
-import { EntityKindIcon, TaskPriorityBars } from "@/shared/ui/vocab";
+import {
+  EntityKindIcon,
+  TASK_PRIORITY_TONE_MAP,
+  taskPriorityShortLabel,
+} from "@/shared/ui/vocab";
+import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import { entityDisplayLabel } from "@watchdog/schemas";
 
 interface Props {
@@ -61,7 +66,7 @@ function TaskCardBody({
 
       <div
         className={cn(
-          "line-clamp-3 px-2.5 py-2 text-sm leading-snug font-medium break-words",
+          "line-clamp-3 px-2.5 py-2 text-xs leading-snug font-normal break-words",
           !entity && "pr-7",
           done && "text-muted-foreground line-through",
           dropped && "text-muted-foreground"
@@ -72,7 +77,16 @@ function TaskCardBody({
 
       {hasFooter ? (
         <div className="border-border bg-muted/20 flex min-w-0 items-center gap-2 border-t px-2.5 py-1">
-          {task.priority ? <TaskPriorityBars priority={task.priority} /> : null}
+          {task.priority ? (
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-medium tracking-wider uppercase",
+                STATUS_TONES[TASK_PRIORITY_TONE_MAP[task.priority]].low
+              )}
+            >
+              {taskPriorityShortLabel(task.priority)}
+            </span>
+          ) : null}
           {task.dueDate ? (
             <span
               className={cn(

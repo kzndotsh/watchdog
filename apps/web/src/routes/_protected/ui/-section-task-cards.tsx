@@ -3,9 +3,11 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { GuideSection } from "@/routes/_protected/ui/-guide-chrome";
-import { TaskPriorityBars } from "@/shared/ui/vocab";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
-import { TASK_PRIORITY_TONE_MAP } from "@/shared/ui/vocab/task-priority.lib";
+import {
+  TASK_PRIORITY_TONE_MAP,
+  taskPriorityShortLabel,
+} from "@/shared/ui/vocab/task-priority.lib";
 import type { TaskPriority } from "@watchdog/schemas";
 
 /* Static mockups for choosing the task card layout. Plain elements on purpose: they are
@@ -84,7 +86,7 @@ const CARD =
 
 function titleClass(sample: Sample, extra?: string) {
   return cn(
-    "text-sm leading-snug font-medium break-words",
+    "text-xs leading-snug font-normal break-words",
     sample.done && "text-muted-foreground line-through",
     extra
   );
@@ -108,7 +110,7 @@ function Chip({ priority }: { priority: TaskPriority }) {
         STATUS_TONES[TASK_PRIORITY_TONE_MAP[priority]].low
       )}
     >
-      {priority}
+      {taskPriorityShortLabel(priority)}
     </span>
   );
 }
@@ -195,7 +197,7 @@ function CardLinear({ sample }: { sample: Sample }) {
       <div className="flex items-start gap-2">
         {sample.priority ? (
           <span className="mt-1">
-            <TaskPriorityBars priority={sample.priority} />
+            <Chip priority={sample.priority} />
           </span>
         ) : null}
         <div className={titleClass(sample, "line-clamp-3 min-w-0 flex-1")}>
@@ -266,14 +268,7 @@ function CardEyebrow({ sample }: { sample: Sample }) {
       <Desc sample={sample} />
       {sample.priority || sample.due ? (
         <div className="mt-1 flex items-center justify-between gap-2">
-          {sample.priority ? (
-            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs capitalize">
-              <TaskPriorityBars priority={sample.priority} />
-              {sample.priority}
-            </span>
-          ) : (
-            <span />
-          )}
+          {sample.priority ? <Chip priority={sample.priority} /> : <span />}
           <span className="inline-flex items-center gap-2">
             <Updated sample={sample} />
             <Due sample={sample} />
@@ -319,9 +314,7 @@ function CardFooterBar({ sample }: { sample: Sample }) {
       </div>
       {hasFooter ? (
         <div className="border-border bg-muted/20 flex min-w-0 items-center gap-2 border-t px-2.5 py-1">
-          {sample.priority ? (
-            <TaskPriorityBars priority={sample.priority} />
-          ) : null}
+          {sample.priority ? <Chip priority={sample.priority} /> : null}
           <EntityText sample={sample} />
           <span className="ml-auto inline-flex items-center gap-2">
             <Updated sample={sample} />
@@ -368,7 +361,7 @@ const VARIANTS: {
   {
     label: "B · Linear",
     blurb:
-      "Priority bars lead the title; entity is plain text; one footer line.",
+      "Priority chip leads the title; entity is plain text; one footer line.",
     Card: CardLinear,
   },
   {

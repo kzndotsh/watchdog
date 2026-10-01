@@ -59,9 +59,7 @@ describe("TaskCard", () => {
     );
 
     expect(screen.getByText("Verify alias")).toBeInTheDocument();
-    expect(
-      screen.getByRole("img", { name: "High priority" })
-    ).toBeInTheDocument();
+    expect(screen.getByText("High")).toBeInTheDocument();
     expect(screen.getByText("Target Alpha")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Verify alias/i }));

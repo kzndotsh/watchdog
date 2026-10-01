@@ -23,4 +23,9 @@ export function taskPriorityLabel(priority: TaskPriority): string {
   return TASK_PRIORITY_LABELS[priority];
 }
 
+/** Compact label for dense surfaces (task cards): `Medium` becomes `Med`. */
+export function taskPriorityShortLabel(priority: TaskPriority): string {
+  return priority === "medium" ? "Med" : TASK_PRIORITY_LABELS[priority];
+}
+
 export { TASK_PRIORITY_LABELS };
