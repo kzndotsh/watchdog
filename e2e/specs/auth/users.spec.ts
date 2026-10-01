@@ -11,14 +11,11 @@ test.describe("Auth users (instance admin)", () => {
 
       await page.goto("/settings?tab=users");
       await waitForHydrated(page);
-      const usersPanel = page
-        .locator("section")
-        .filter({ hasText: "Install accounts" });
-      await expect(
-        usersPanel.getByRole("heading", { name: "Users" })
-      ).toBeVisible({
+      // The tab title and subtitle come from the settings shell; the panel is the account list.
+      await expect(page.getByRole("heading", { name: "Users" })).toBeVisible({
         timeout: 30_000,
       });
+      const usersPanel = page.getByRole("main");
       await expect(
         usersPanel.getByText(`e2e.${stamp}@mailhost.test`, { exact: false })
       ).toBeVisible();
