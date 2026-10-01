@@ -218,7 +218,7 @@ export function AppSidebar() {
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="gap-1">
         <OrgSwitcher />
         <AccountRow />
       </SidebarFooter>
