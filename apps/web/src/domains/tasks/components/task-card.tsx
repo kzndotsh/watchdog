@@ -17,12 +17,7 @@ import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
-import {
-  TASK_PRIORITY_TONE_MAP,
-  KindBadge,
-  taskPriorityLabel,
-} from "@/shared/ui/vocab";
-import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
+import { EntityKindIcon, TaskPriorityBars } from "@/shared/ui/vocab";
 import { entityDisplayLabel } from "@watchdog/schemas";
 
 interface Props {
@@ -45,17 +40,29 @@ function TaskCardBody({
 }) {
   const done = task.status === "done";
   const dropped = task.status === "dropped";
-  const hasFooter =
-    Boolean(task.priority) || Boolean(entity) || Boolean(task.dueDate);
+  const hasFooter = Boolean(task.priority) || Boolean(task.dueDate);
   const entityLabel = entity
     ? entityDisplayLabel({ name: entity.name, slug: entity.slug })
     : null;
 
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col">
+      {entity && entityLabel ? (
+        <div className="border-border bg-muted/20 flex min-w-0 items-center gap-1 border-b px-2.5 py-1 pr-7">
+          <span
+            className="text-muted-foreground inline-flex min-w-0 items-center gap-1 text-xs"
+            title={entityLabel}
+          >
+            <EntityKindIcon kind={entity.kind} size="sm" />
+            <span className="truncate">{entityLabel}</span>
+          </span>
+        </div>
+      ) : null}
+
       <div
         className={cn(
-          "line-clamp-3 pr-4 text-sm leading-snug font-medium break-words",
+          "line-clamp-3 px-2.5 py-2 text-sm leading-snug font-medium break-words",
+          !entity && "pr-7",
           done && "text-muted-foreground line-through",
           dropped && "text-muted-foreground"
         )}
@@ -64,33 +71,12 @@ function TaskCardBody({
       </div>
 
       {hasFooter ? (
-        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
-          {task.priority ? (
-            <span
-              className={cn(
-                "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-medium tracking-wider uppercase",
-                STATUS_TONES[TASK_PRIORITY_TONE_MAP[task.priority]].low
-              )}
-            >
-              {taskPriorityLabel(task.priority)}
-            </span>
-          ) : null}
-
-          {entity && entityLabel ? (
-            <KindBadge
-              kind={entity.kind}
-              size="sm"
-              className="max-w-full min-w-0"
-              title={entityLabel}
-            >
-              <span className="truncate">{entityLabel}</span>
-            </KindBadge>
-          ) : null}
-
+        <div className="border-border bg-muted/20 flex min-w-0 items-center gap-2 border-t px-2.5 py-1">
+          {task.priority ? <TaskPriorityBars priority={task.priority} /> : null}
           {task.dueDate ? (
             <span
               className={cn(
-                "text-2xs ml-auto inline-flex shrink-0 items-center gap-1 font-mono tabular-nums",
+                "ml-auto inline-flex shrink-0 items-center gap-1 font-mono text-xs tabular-nums",
                 overdue ? "text-destructive" : "text-muted-foreground"
               )}
             >

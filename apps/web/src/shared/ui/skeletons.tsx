@@ -510,11 +510,18 @@ export function QueueSkeleton({
 function TaskCardSkeleton({ showFooter = true }: { showFooter?: boolean }) {
   return (
     <div className={TASK_CARD_SHELL_CLASS}>
-      <Skeleton className="h-4 w-4/5 rounded-sm" />
       {showFooter ? (
-        <div className="flex items-center gap-1.5">
-          <Skeleton className="h-4 w-10 shrink-0 rounded-sm" />
-          <Skeleton className={cn(CHIP_SIZE_CLASS.sm, "w-16 shrink-0")} />
+        <div className="border-border flex items-center gap-1.5 border-b px-2.5 py-1.5">
+          <Skeleton className="h-3 w-3 shrink-0 rounded-xs" />
+          <Skeleton className="h-3 w-24 shrink-0 rounded-sm" />
+        </div>
+      ) : null}
+      <div className="px-2.5 py-2">
+        <Skeleton className="h-4 w-4/5 rounded-sm" />
+      </div>
+      {showFooter ? (
+        <div className="border-border flex items-center gap-2 border-t px-2.5 py-1.5">
+          <Skeleton className="h-3 w-3 shrink-0 rounded-xs" />
           <Skeleton className="ml-auto h-3 w-12 shrink-0 rounded-sm" />
         </div>
       ) : null}
