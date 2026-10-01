@@ -73,7 +73,8 @@ export const Route = createFileRoute("/api/events")({
                   }
                 })
                 .catch(() => {
-                  // transient auth lookup failure: keep the stream, retry next beat
+                  // fail closed: without a successful check the stream must not keep delivering
+                  closeStream("Access could not be verified");
                 });
             }, 25_000);
 

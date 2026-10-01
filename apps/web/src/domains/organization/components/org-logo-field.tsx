@@ -28,6 +28,8 @@ export function OrgLogoField({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const locked = disabled || processing;
 
   async function pick(file: File | undefined) {
     if (!file) return;
@@ -36,11 +38,14 @@ export function OrgLogoField({
       setProblem(rejected);
       return;
     }
+    setProcessing(true);
     try {
       onChange(await resizeLogoToDataUrl(file));
       setProblem(null);
     } catch (error) {
       setProblem(errMessage(error, "Couldn't read the image"));
+    } finally {
+      setProcessing(false);
     }
   }
 
@@ -53,7 +58,7 @@ export function OrgLogoField({
         type="file"
         accept="image/*"
         className="hidden"
-        disabled={disabled}
+        disabled={locked}
         onChange={(event) => {
           void pick(event.target.files?.[0]);
           event.target.value = "";
@@ -64,7 +69,7 @@ export function OrgLogoField({
         <button
           type="button"
           className="group focus-visible:ring-ring/50 relative size-24 shrink-0 rounded-full outline-none focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50"
-          disabled={disabled}
+          disabled={locked}
           onClick={() => inputRef.current?.click()}
           aria-label="Change logo"
         >
@@ -89,7 +94,7 @@ export function OrgLogoField({
               type="button"
               variant="outline"
               size="sm"
-              disabled={disabled}
+              disabled={locked}
               onClick={() => inputRef.current?.click()}
             >
               <Upload className="size-3.5" />
@@ -99,7 +104,7 @@ export function OrgLogoField({
               type="button"
               variant="ghost"
               size="sm"
-              disabled={disabled || !value}
+              disabled={locked || !value}
               onClick={() => {
                 onChange(null);
               }}

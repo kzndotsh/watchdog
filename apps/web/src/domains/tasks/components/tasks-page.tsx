@@ -102,7 +102,9 @@ function TasksActive({
               placeholderDeemphasisClass(ws.tasksPlaceholder)
             )}
           >
-            <FieldError>{ws.quickCreateError}</FieldError>
+            <div className="px-3 sm:px-4">
+              <FieldError>{ws.quickCreateError}</FieldError>
+            </div>
             <TaskBoard
               items={ws.tasks}
               selectedId={ws.selected?.id}

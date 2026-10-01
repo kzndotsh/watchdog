@@ -65,18 +65,14 @@ export function CreateApiKeyDialog({
     const formData = new FormData(e.currentTarget);
     const name = formString(formData, "name").trim();
 
-    const payload =
-      name || organizationId || scopedOrganizationId
-        ? {
-            ...(name ? { name } : {}),
-            ...(organizationId
-              ? { organizationId, configId: "organization" }
-              : {}),
-            ...(!organizationId && scopedOrganizationId
-              ? { metadata: { organizationId: scopedOrganizationId } }
-              : {}),
-          }
-        : undefined;
+    const keyOrganizationId = organizationId ?? scopedOrganizationId;
+    if (!keyOrganizationId) return;
+
+    const payload = {
+      ...(name ? { name } : {}),
+      ...(organizationId ? { organizationId, configId: "organization" } : {}),
+      metadata: { organizationId: keyOrganizationId },
+    };
 
     createApiKey(payload, {
       onSuccess: (result) => {
@@ -126,7 +122,12 @@ export function CreateApiKeyDialog({
                 {localization.settings.cancel}
               </AlertDialogCancel>
 
-              <Button type="submit" disabled={isCreating}>
+              <Button
+                type="submit"
+                disabled={
+                  isCreating || !(organizationId ?? scopedOrganizationId)
+                }
+              >
                 {isCreating && <Spinner />}
 
                 {apiKeyLocalization.createApiKey}

@@ -23,7 +23,8 @@ export function useSlugAvailability(
   const skip = trimmed === "" || trimmed === current;
   const [result, setResult] = useState<{
     slug: string;
-    taken: boolean;
+    /** `null` when the check itself failed: the server decides at submit time. */
+    taken: boolean | null;
   } | null>(null);
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export function useSlugAvailability(
           });
           if (!cancelled) setResult({ slug: trimmed, taken: Boolean(error) });
         } catch {
-          if (!cancelled) setResult(null);
+          if (!cancelled) setResult({ slug: trimmed, taken: null });
         }
       })();
     }, DEBOUNCE_MS);
@@ -49,5 +50,6 @@ export function useSlugAvailability(
 
   if (skip) return "idle";
   if (result?.slug !== trimmed) return "checking";
+  if (result.taken === null) return "idle";
   return result.taken ? "taken" : "available";
 }

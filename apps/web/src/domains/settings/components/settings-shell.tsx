@@ -93,7 +93,7 @@ export function SettingsShell({
                           "ring-sidebar-ring active:bg-sidebar-accent active:text-sidebar-accent-foreground flex h-8 shrink-0 items-center gap-2 rounded-md px-2 text-left text-xs outline-hidden transition-colors focus-visible:ring-2 lg:w-full [&_svg]:size-4 [&_svg]:shrink-0",
                           selected
                             ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "text-primary hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         )}
                         aria-current={selected ? "page" : undefined}
                       >

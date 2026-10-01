@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
+import { toast } from "@/shared/ui/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,8 +46,7 @@ export function OrgSwitcher() {
   const setActive = useSetActiveOrganization(authClient);
 
   const activeId = sessionData?.session.activeOrganizationId ?? null;
-  const active =
-    organizations?.find((org) => org.id === activeId) ?? organizations?.[0];
+  const active = organizations?.find((org) => org.id === activeId);
 
   if (isPending && !organizations) {
     return (
@@ -96,10 +96,17 @@ export function OrgSwitcher() {
                     key={org.id}
                     disabled={setActive.isPending}
                     onClick={() => {
-                      if (org.id === active?.id) return;
+                      if (org.id === activeId) return;
                       setActive.mutate(
                         { organizationId: org.id },
-                        { onSuccess: reloadIntoOrganization }
+                        {
+                          onSuccess: reloadIntoOrganization,
+                          onError: (error) => {
+                            toast.error(
+                              error.message || "Could not switch organization"
+                            );
+                          },
+                        }
                       );
                     }}
                   >

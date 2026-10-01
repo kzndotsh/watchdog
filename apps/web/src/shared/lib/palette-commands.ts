@@ -60,7 +60,18 @@ export function usePaletteCommands(actions: readonly AppAction[]): void {
 
   // Re-register only when the visible shape changes, not on every closure.
   const shapeKey = actions
-    .map((a) => `${a.id}:${a.label}:${a.disabled === true ? 1 : 0}`)
+    .map((a) =>
+      JSON.stringify([
+        a.id,
+        a.label,
+        a.disabled === true,
+        a.group,
+        a.icon?.displayName ?? a.icon?.name,
+        a.shortcut,
+        a.keywords,
+        a.surfaces,
+      ])
+    )
     .join("|");
 
   useEffect(() => {

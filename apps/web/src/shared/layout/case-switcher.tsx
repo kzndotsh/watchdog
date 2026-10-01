@@ -99,6 +99,8 @@ export function CaseSwitcher() {
       onOpenChange={setCreateOpen}
       onCreated={() => {
         void invalidateAfterCaseSwitch(queryClient);
+        // The new case is now active; a page for the previous case's slug would be stale.
+        if (pathname.startsWith("/cases/")) void navigate({ to: "/cases" });
       }}
       onError={(message) => {
         toast.error(message);

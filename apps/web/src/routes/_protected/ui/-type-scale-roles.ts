@@ -56,7 +56,7 @@ export const TYPE_SCALE_ROLES = [
   },
   {
     name: "chip",
-    className: "text-xs tracking-wider uppercase",
+    className: "text-2xs leading-none font-normal",
     sample: "Status chip",
   },
 ] as const;

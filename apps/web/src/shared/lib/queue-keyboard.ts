@@ -75,7 +75,9 @@ function attachQueueKeyboard(ref: RefObject<HTMLElement | null>): () => void {
     const focusInQueue = container.contains(document.activeElement);
     const step = queueStepForKey(event, focusInQueue);
     if (step === null) return;
-    if (moveSelection(container, step)) event.preventDefault();
+    // Arrow keys at the first/last row are a no-op, not a page scroll.
+    event.preventDefault();
+    moveSelection(container, step);
   }
 
   window.addEventListener("keydown", onKeyDown);

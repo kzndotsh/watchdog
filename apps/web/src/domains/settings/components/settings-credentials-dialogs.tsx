@@ -43,7 +43,7 @@ export function SettingsCredentialsDialogs({
         title="Remove credential"
         description={
           deleteSlot
-            ? `Remove the stored secret for ${deleteSlot.label}. Lookups that need it will fail until you reconnect.`
+            ? `Remove the stored secret for ${deleteSlot.label}. Anything that needs it will fail until you reconnect.`
             : undefined
         }
         confirmLabel="Remove credential"

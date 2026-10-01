@@ -72,6 +72,7 @@ jobs:
               - '**/*.tsx'
               - '**/tsconfig*.json'
             config:
+              - 'packages/ui/vendor.json'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'

@@ -75,7 +75,11 @@ export function FieldSelect({
       <SelectTrigger
         id={id}
         size={size}
-        className={cn(CONTROL_TRIGGER, "min-w-0", className)}
+        className={cn(
+          CONTROL_TRIGGER,
+          "max-w-full min-w-0 overflow-hidden data-[size=default]:h-8 data-[size=sm]:h-7",
+          className
+        )}
         aria-label={ariaLabel}
         onKeyDown={onKeyDown}
       >

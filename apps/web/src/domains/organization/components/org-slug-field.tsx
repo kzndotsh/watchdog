@@ -42,6 +42,7 @@ export function OrgSlugField({
         }}
       />
       <p
+        aria-live="polite"
         className={cn(
           "text-xs",
           availability === "taken"

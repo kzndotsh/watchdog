@@ -7,11 +7,11 @@ import { TabCount } from "@/shared/ui/tab-count";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 
-/** Size tab skeleton from real label metrics — fixed widths drift vs `text-sm` triggers. */
+/** Size tab skeleton from real label metrics — fixed widths drift vs `text-xs` triggers. */
 function SkeletonTabLabel({ children }: { children: string }) {
   return (
     <span className="relative inline-block leading-none">
-      <span className="invisible text-sm" aria-hidden>
+      <span className="invisible text-xs" aria-hidden>
         {children}
       </span>
       <Skeleton className="absolute inset-0 rounded-sm" />

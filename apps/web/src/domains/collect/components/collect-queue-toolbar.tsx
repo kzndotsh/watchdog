@@ -126,7 +126,7 @@ export function CollectQueueToolbar({
             onClearAll={() => {
               onFiltersChange({ ...EMPTY_COLLECT_FILTERS, q: filters.q });
             }}
-            contentClassName="w-[16rem]"
+            contentClassName="max-h-[70vh] w-[16rem] overflow-y-auto"
           >
             <div className="space-y-3">
               <FieldSet>

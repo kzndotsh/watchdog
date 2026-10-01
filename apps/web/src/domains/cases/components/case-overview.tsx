@@ -79,6 +79,8 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
   const renameMutation = useUpdateCase(caseId, caseRow?.slug);
+  /** Bumped when a rename fails so the editor drops its unsaved draft. */
+  const [nameEditorKey, setNameEditorKey] = useState(0);
   const selectMutation = useMutation({
     mutationFn: async () =>
       setActiveCaseIdFn({
@@ -143,6 +145,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
       <PageHeader
         current={
           <EditableTextCell
+            key={nameEditorKey}
             value={caseRow.name}
             aria-label="Case name"
             placeholder="Case name…"
@@ -152,7 +155,15 @@ export function CaseOverview({ caseId }: { caseId: string }) {
             onCommit={(next) => {
               const name = next.trim();
               if (!name) return false;
-              if (name !== caseRow.name) renameMutation.mutate({ name });
+              if (name === caseRow.name) return false;
+              renameMutation.mutate(
+                { name },
+                {
+                  onError: () => {
+                    setNameEditorKey((k) => k + 1);
+                  },
+                }
+              );
               return true;
             }}
           />

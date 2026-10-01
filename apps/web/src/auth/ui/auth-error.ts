@@ -8,7 +8,7 @@ export interface AuthErrorDetails {
 }
 
 function text(value: unknown): string | undefined {
-  return typeof value === "string" ? value : undefined;
+  return typeof value === "string" && value.trim() !== "" ? value : undefined;
 }
 
 function isObject(value: unknown): value is object {
