@@ -14,7 +14,6 @@ import { FormSection } from "@/shared/ui/form-section";
 import { toast } from "@/shared/ui/toast";
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
@@ -117,21 +116,26 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
             }}
           />
         </Field>
-        <Field orientation="horizontal">
-          <Switch
-            id="case-egress"
-            checked={caseRow.allowThirdPartyEgress}
-            onCheckedChange={(checked) => {
-              updateMutation.mutate({ allowThirdPartyEgress: checked });
-            }}
-          />
-          <FieldContent>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-0.5">
             <FieldLabel htmlFor="case-egress">Third-party egress</FieldLabel>
             <FieldDescription>
-              Allow Caps that call external services.
+              Let lookups on this Case call outside services.
             </FieldDescription>
-          </FieldContent>
-        </Field>
+          </div>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="text-muted-foreground text-xs" aria-hidden>
+              {caseRow.allowThirdPartyEgress ? "On" : "Off"}
+            </span>
+            <Switch
+              id="case-egress"
+              checked={caseRow.allowThirdPartyEgress}
+              onCheckedChange={(checked) => {
+                updateMutation.mutate({ allowThirdPartyEgress: checked });
+              }}
+            />
+          </span>
+        </div>
       </FieldGroup>
     </FormSection>
   );

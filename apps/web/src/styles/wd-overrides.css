@@ -289,6 +289,25 @@ html [data-slot="scroll-area-thumb"]:hover {
   );
 }
 
+/* Switch: make on/off obvious in both themes. Off = a visible grey track; on = the accent
+   track; the thumb is always light so it never disappears into either track. */
+html [data-slot="switch"][data-unchecked] {
+  background-color: color-mix(
+    in oklch,
+    var(--muted-foreground) 45%,
+    transparent
+  );
+}
+
+html [data-slot="switch"][data-checked] {
+  background-color: var(--primary);
+}
+
+html [data-slot="switch-thumb"] {
+  background-color: var(--wd-neutral-50);
+  box-shadow: 0 1px 2px color-mix(in oklch, black 35%, transparent);
+}
+
 /* Toast — Base UI primitive; typed surfaces use status-* tokens in toast.tsx */
 [data-slot="toast"] {
   font-family: var(--font-sans);
