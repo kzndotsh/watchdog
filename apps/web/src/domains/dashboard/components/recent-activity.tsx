@@ -118,7 +118,7 @@ function ActivityRows({
         return (
           <li key={`${item.kind}-${item.id}`}>
             <div className="flex flex-wrap items-start justify-between gap-2 px-0 py-2.5">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-muted-foreground text-xs tracking-wider uppercase">
                     {activityKindLabel(item.kind)}
@@ -132,16 +132,19 @@ function ActivityRows({
                     <Link
                       to="/cases/$caseSlug"
                       params={{ caseSlug }}
-                      className="text-sm underline-offset-2 hover:underline"
+                      title={item.label}
+                      className="block truncate text-sm underline-offset-2 hover:underline"
                     >
                       {item.label}
                     </Link>
                   ) : (
-                    <span className="text-sm">{item.label}</span>
+                    <span className="block truncate text-sm" title={item.label}>
+                      {item.label}
+                    </span>
                   )}
                 </div>
                 {showMeta ? (
-                  <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                  <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-xs">
                     {hasTransition ? (
                       <StatusTransition
                         kind={item.kind}
@@ -163,12 +166,18 @@ function ActivityRows({
                           <Link
                             to="/cases/$caseSlug"
                             params={{ caseSlug }}
-                            className="underline-offset-2 hover:underline"
+                            title={item.caseName}
+                            className="max-w-[16rem] truncate underline-offset-2 hover:underline"
                           >
                             {item.caseName}
                           </Link>
                         ) : (
-                          <span>{item.caseName}</span>
+                          <span
+                            className="max-w-[16rem] truncate"
+                            title={item.caseName}
+                          >
+                            {item.caseName}
+                          </span>
                         )}
                       </>
                     ) : null}
