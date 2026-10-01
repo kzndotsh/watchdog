@@ -89,16 +89,23 @@ export function applyEntityOpEffect(
       if (idOwner) {
         return yield* new ConflictError({ reason: "Entity id is already in use" });
       }
-      const created = yield* tryDb(() =>
-        entitiesRepo.create(tx, {
-          id: op.id,
-          caseId,
-          kind,
-          name,
-          slug,
-          summary,
-          notes,
-        })
+      // The check above can lose a race with a concurrent patch using the same id; the primary
+      // key is the backstop and reports the same conflict.
+      const created = yield* tryDb(
+        () =>
+          entitiesRepo.create(tx, {
+            id: op.id,
+            caseId,
+            kind,
+            name,
+            slug,
+            summary,
+            notes,
+          }),
+        {
+          uniqueIndex: "entities_pkey",
+          conflictReason: "Entity id is already in use",
+        }
       );
       if (!created) {
         return yield* new InvalidError({ reason: "Failed to create Entity" });

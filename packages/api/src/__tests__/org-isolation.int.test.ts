@@ -876,6 +876,35 @@ describe("organization isolation matrix", () => {
     expect(await snapshotA()).toBe(before);
   });
 
+  it("reports a concurrent upsert of the same new entity id as a clean denial, not a database error", async () => {
+    const id = testId(90);
+    const write = (slug: string) =>
+      codeOf(async () =>
+        b.graph.write({
+          caseId: ids.caseB,
+          userOverride: true,
+          patch: [
+            {
+              op: "upsert",
+              resource: "entity",
+              id,
+              data: { kind: "person", name: "Racer", slug },
+            },
+          ],
+        })
+      );
+    try {
+      const outcomes = await Promise.all([write("racer-1"), write("racer-2")]);
+      expect(outcomes.filter((code) => code === "SUCCEEDED")).toHaveLength(1);
+      expect(
+        outcomes.filter((code) => code.startsWith("THROWN:")),
+        JSON.stringify(outcomes)
+      ).toEqual([]);
+    } finally {
+      await b.entities.delete({ caseId: ids.caseB, entityId: id });
+    }
+  });
+
   it("still serves org A its own data (the matrix is not just failing everything)", async () => {
     const entities = await a.entities.list({ caseId: ids.caseA });
     expect(entities.map((row) => row.id).sort()).toEqual(
