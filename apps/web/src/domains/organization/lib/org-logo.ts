@@ -40,6 +40,8 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
 
 function drawSquareLogo(image: HTMLImageElement): string {
   const { naturalWidth: width, naturalHeight: height } = image;
+  // A file that loads but has no readable size would otherwise draw a blank logo.
+  if (width === 0 || height === 0) throw new Error("Couldn't read the image");
   if (width > MAX_LOGO_EDGE || height > MAX_LOGO_EDGE) {
     throw new Error(
       `Image is too large; use one up to ${MAX_LOGO_EDGE} pixels on each side`
