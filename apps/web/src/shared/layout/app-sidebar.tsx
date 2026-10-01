@@ -10,7 +10,11 @@ import { CaseSwitcher } from "@/shared/layout/case-switcher";
 import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { trimmedOrUndefined } from "@watchdog/schemas";
-import { Avatar, AvatarFallback } from "@watchdog/ui/components/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@watchdog/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,6 +92,7 @@ function AccountRow() {
             >
               {/* Bigger than the 18px nav icons, but centered on their column (negative margins) so the text edge still lines up */}
               <Avatar size="sm" className="-mx-0.5 data-[size=sm]:size-5">
+                {user?.image ? <AvatarImage src={user.image} alt="" /> : null}
                 <AvatarFallback className="text-xs" suppressHydrationWarning>
                   {userInitials(name).slice(0, 1) || "?"}
                 </AvatarFallback>
