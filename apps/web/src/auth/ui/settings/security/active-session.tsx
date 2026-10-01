@@ -53,7 +53,7 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
         </div>
 
         <div className="flex min-w-0 flex-col">
-          <span className="truncate text-sm font-medium">
+          <span className="truncate text-sm">
             {firstNonEmpty(ua.browser.name) ?? "Unknown Browser"}
             {ua.os.name ? `, ${ua.os.name}` : ""}
           </span>
@@ -63,7 +63,7 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
           </span>
 
           {isCurrentSession ? (
-            <span className="bg-primary/10 text-primary w-fit rounded-full px-2 py-0.5 text-xs font-medium">
+            <span className="bg-primary/10 text-primary w-fit rounded-full px-2 py-0.5 text-xs">
               {localization.settings.currentSession}
             </span>
           ) : (

@@ -260,9 +260,7 @@ export function EntityConnectionsCell({
                         className="text-muted-foreground size-3 shrink-0"
                         aria-hidden
                       />
-                      <span className="min-w-0 truncate font-medium">
-                        {peerLabel}
-                      </span>
+                      <span className="min-w-0 truncate">{peerLabel}</span>
                     </button>
                   );
                 })}
@@ -348,7 +346,7 @@ export function EntityConnectionsCell({
                     <span className="text-muted-foreground shrink-0">
                       {predicateLabel(peer.predicate, peer.direction)}
                     </span>
-                    <span className="truncate font-medium">{peerLabel}</span>
+                    <span className="truncate">{peerLabel}</span>
                   </button>
                 );
               })}

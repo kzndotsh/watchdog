@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 function SkeletonTabLabel({ children }: { children: string }) {
   return (
     <span className="relative inline-block leading-none">
-      <span className="invisible text-sm font-medium" aria-hidden>
+      <span className="invisible text-sm" aria-hidden>
         {children}
       </span>
       <Skeleton className="absolute inset-0 rounded-sm" />

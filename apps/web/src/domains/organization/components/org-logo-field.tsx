@@ -68,7 +68,7 @@ export function OrgLogoField({
           onClick={() => inputRef.current?.click()}
           aria-label="Change logo"
         >
-          <span className="bg-muted text-muted-foreground flex size-24 items-center justify-center overflow-hidden rounded-full text-2xl font-medium">
+          <span className="bg-muted text-muted-foreground flex size-24 items-center justify-center overflow-hidden rounded-full text-2xl">
             {value ? (
               <img src={value} alt="" className="size-full object-cover" />
             ) : (

@@ -451,7 +451,7 @@ function Variant({
   return (
     <div className="space-y-2">
       <div>
-        <h3 className="text-sm font-medium">{label}</h3>
+        <h3 className="text-sm">{label}</h3>
         <p className="text-muted-foreground text-xs">{blurb}</p>
       </div>
       <div className="border-border bg-muted/10 flex w-[15.5rem] flex-col gap-1.5 rounded-md border p-1.5">

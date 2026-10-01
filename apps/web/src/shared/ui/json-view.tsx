@@ -275,7 +275,7 @@ function JsonNode({
         aria-label={open ? "Collapse" : "Expand"}
       >
         {fieldLabel}
-        <span className="text-xs leading-none font-medium select-none">
+        <span className="text-xs leading-none select-none">
           {open ? "▾" : "▸"}
         </span>
         <span className={t.bracket}>{openBracket}</span>

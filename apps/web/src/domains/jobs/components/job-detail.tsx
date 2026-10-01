@@ -93,7 +93,7 @@ function JobPlaybookSpine({
                     STATUS_DOT[step.status]
                   )}
                 />
-                <p className="text-xs font-medium">
+                <p className="text-xs">
                   {i + 1} · {capabilityLabel(step.capabilityId)}{" "}
                   <span className="text-muted-foreground font-normal">
                     {statusLabel(step.status)}
@@ -213,9 +213,7 @@ function JobDetailHeader({
   return (
     <header className="border-border flex shrink-0 flex-col">
       <DetailContextHeader>
-        <span className="text-foreground font-medium">
-          {jobHeadlineLabel(job)}
-        </span>
+        <span className="text-foreground">{jobHeadlineLabel(job)}</span>
         {job.playbookId ? (
           <>
             <DetailContextSep />
@@ -439,9 +437,7 @@ function JobDetailLoaded({
           <div className="flex flex-col gap-4 p-4">
             {view.capSummary !== "" || view.showAllKnownOutcome ? (
               <div className="bg-muted/30 rounded-md border px-3 py-2">
-                <p className="text-muted-foreground text-xs font-medium">
-                  Summary
-                </p>
+                <p className="text-muted-foreground text-xs">Summary</p>
                 {view.capSummary === "" ? null : (
                   <p className="mt-0.5 text-sm leading-relaxed">
                     {view.capSummary}

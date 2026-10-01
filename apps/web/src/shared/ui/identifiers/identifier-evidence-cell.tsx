@@ -100,7 +100,7 @@ function LinkedEvidenceSummary({
         </Chip>
       )}
       {overflow > 0 ? (
-        <span className="text-muted-foreground shrink-0 text-xs leading-tight font-medium tabular-nums">
+        <span className="text-muted-foreground shrink-0 text-xs leading-tight tabular-nums">
           +{overflow}
         </span>
       ) : null}

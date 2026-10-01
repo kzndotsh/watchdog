@@ -115,7 +115,7 @@ export function DestructiveConfirmDialog({
             className="block w-full whitespace-normal"
           >
             {verificationLabel}{" "}
-            <span className="bg-muted text-foreground rounded-md px-1.5 py-0.5 font-mono text-xs font-medium">
+            <span className="bg-muted text-foreground rounded-md px-1.5 py-0.5 font-mono text-xs">
               {verificationPhrase}
             </span>
           </FieldLabel>

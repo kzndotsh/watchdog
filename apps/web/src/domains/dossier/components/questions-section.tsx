@@ -193,7 +193,7 @@ function QuestionComposer({
         </form.Field>
       ) : null}
       <div className="flex justify-end gap-1">
-        <span className="text-muted-foreground self-center text-xs font-medium tracking-wider uppercase">
+        <span className="text-muted-foreground self-center text-xs tracking-wider uppercase">
           ⌘↵ to save
         </span>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>

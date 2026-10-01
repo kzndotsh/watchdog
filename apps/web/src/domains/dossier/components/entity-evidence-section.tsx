@@ -161,20 +161,20 @@ export function EntityEvidenceSection({
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <KindBadge kind={row.kind} />
-                      <span className="text-foreground min-w-0 truncate text-sm font-medium">
+                      <span className="text-foreground min-w-0 truncate text-sm">
                         {label}
                       </span>
                       {row.processedAt === null ? (
-                        <span className="text-warning text-sm leading-tight font-medium">
+                        <span className="text-warning text-sm leading-tight">
                           Unprocessed
                         </span>
                       ) : (
-                        <span className="text-success text-sm leading-tight font-medium">
+                        <span className="text-success text-sm leading-tight">
                           Processed
                         </span>
                       )}
                     </div>
-                    <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm leading-tight font-medium">
+                    <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm leading-tight">
                       {row.mime !== null && row.mime !== "" ? (
                         <span className="text-2xs font-mono">{row.mime}</span>
                       ) : null}

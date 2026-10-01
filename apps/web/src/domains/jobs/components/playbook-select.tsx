@@ -52,7 +52,7 @@ function PlaybookInfoCard({
   return (
     <div className="space-y-2 text-xs">
       <div>
-        <p className="font-medium">{playbook.title}</p>
+        <p>{playbook.title}</p>
         <p className="text-muted-foreground text-2xs font-mono leading-snug">
           {playbook.id}
         </p>

@@ -44,7 +44,7 @@ function CapInfoCard({
   return (
     <div className="space-y-2 text-xs">
       <div>
-        <p className="font-medium">{cap.title}</p>
+        <p>{cap.title}</p>
         <p className="text-muted-foreground text-2xs font-mono leading-snug">
           {cap.id}
         </p>

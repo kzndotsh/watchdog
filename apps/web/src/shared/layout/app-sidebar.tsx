@@ -110,7 +110,7 @@ function AccountRow() {
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col gap-0.5">
-                    <span className="truncate font-medium">{name}</span>
+                    <span className="truncate">{name}</span>
                     {email ? (
                       <span className="text-muted-foreground truncate">
                         {email}

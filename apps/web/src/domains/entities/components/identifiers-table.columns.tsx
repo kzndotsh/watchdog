@@ -185,7 +185,7 @@ function renderEntityCell(
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <EntityKindGlyph kind={row.entityKind} />
-      <span className="truncate text-xs font-medium">
+      <span className="truncate text-xs">
         {entityDisplayLabel({ name: row.entityName, slug: row.entitySlug })}
       </span>
     </div>

@@ -102,7 +102,7 @@ export function GraphEdgePath({
         >
           <div className="flex h-full w-full items-center justify-center">
             <div
-              className="bg-background text-muted-foreground text-xs font-medium tracking-wider uppercase max-w-[9rem] truncate rounded px-1.5 py-0.5 whitespace-nowrap"
+              className="bg-background text-muted-foreground text-xs tracking-wider uppercase max-w-[9rem] truncate rounded px-1.5 py-0.5 whitespace-nowrap"
               title={label}
             >
               {label}

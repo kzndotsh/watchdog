@@ -128,7 +128,7 @@ export function YourOrganizations() {
               <div className="flex min-w-0 items-center gap-2.5">
                 <OrgAvatar name={org.name} logo={org.logo} />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{org.name}</p>
+                  <p className="truncate text-sm">{org.name}</p>
                   <p className="text-muted-foreground truncate font-mono text-xs">
                     {org.slug}
                   </p>
@@ -172,7 +172,7 @@ export function YourOrganizations() {
                 className="flex items-center justify-between gap-3 py-2"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
+                  <p className="truncate text-sm">
                     {invitation.organizationName ?? "An organization"}
                   </p>
                   <p className="text-muted-foreground text-xs capitalize">

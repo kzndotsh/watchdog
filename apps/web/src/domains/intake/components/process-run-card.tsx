@@ -79,9 +79,7 @@ export function ProcessRunCard({
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-foreground text-xs font-medium">
-                {jobHeadlineLabel(job)}
-              </p>
+              <p className="text-foreground text-xs">{jobHeadlineLabel(job)}</p>
               <div className="flex items-center gap-1.5">
                 <StatusInk status={job.status} pulse={live} />
                 {live ? (
@@ -115,9 +113,7 @@ export function ProcessRunCard({
           <div className="border-border space-y-3 border-t px-3 py-3">
             {job.resultSummary !== null && job.resultSummary !== "" ? (
               <div className="bg-muted/30 rounded-md border px-3 py-2">
-                <p className="text-muted-foreground text-xs font-medium">
-                  Summary
-                </p>
+                <p className="text-muted-foreground text-xs">Summary</p>
                 <p className="mt-0.5 text-sm leading-relaxed">
                   {job.resultSummary}
                 </p>

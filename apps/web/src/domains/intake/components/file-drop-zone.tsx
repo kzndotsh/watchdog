@@ -40,7 +40,7 @@ export function FileDropZone({ disabled, onFiles }: FileDropZoneProps) {
     >
       <FileUpIcon className="text-muted-foreground size-6" aria-hidden />
       <div className="space-y-1">
-        <p className="text-foreground text-sm font-medium">Drop files here</p>
+        <p className="text-foreground text-sm">Drop files here</p>
         <p className="text-muted-foreground text-xs">
           One Evidence row per file · max 100 MB
         </p>

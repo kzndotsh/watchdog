@@ -244,13 +244,13 @@ export function CaseOverviewTab({
                   <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <div className="min-w-0">
-                      <span className="text-muted-foreground mr-1.5 text-xs font-medium tracking-wider uppercase">
+                      <span className="text-muted-foreground mr-1.5 text-xs tracking-wider uppercase">
                         {activityKindLabel(item.kind)}
                       </span>
                       <Link
                         to={item.href.to}
                         search={item.href.search}
-                        className="text-sm font-medium underline-offset-2 hover:underline"
+                        className="text-sm underline-offset-2 hover:underline"
                       >
                         {item.label}
                       </Link>

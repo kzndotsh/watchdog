@@ -94,9 +94,7 @@ export function QueueRowTitle({
   className?: string;
 }) {
   return (
-    <span
-      className={cn("text-foreground truncate text-sm font-medium", className)}
-    >
+    <span className={cn("text-foreground truncate text-sm", className)}>
       {children}
     </span>
   );

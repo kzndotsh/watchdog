@@ -64,9 +64,7 @@ export function PasswordStrengthMeter({
 
       <p aria-live="polite" className="text-muted-foreground text-xs">
         {localization.auth.passwordStrength}:{" "}
-        <span className="text-foreground font-medium">
-          {levelLabels[level]}
-        </span>
+        <span className="text-foreground">{levelLabels[level]}</span>
       </p>
     </div>
   );

@@ -33,7 +33,7 @@ typography:
   label:
     fontFamily: Geist Variable
     fontSize: 0.875rem
-    fontWeight: 500
+    fontWeight: 400
     lineHeight: 1.25
   section-heading:
     fontFamily: Geist Variable
@@ -43,12 +43,12 @@ typography:
   meta:
     fontFamily: Geist Variable
     fontSize: 0.8125rem
-    fontWeight: 500
+    fontWeight: 400
     lineHeight: 1.25
   chip:
     fontFamily: Geist Variable
     fontSize: 0.75rem
-    fontWeight: 500
+    fontWeight: 400
     letterSpacing: 0.05em
   mono:
     fontFamily: Geist Mono Variable
@@ -112,6 +112,7 @@ Anti-references: generic SaaS dashboards, decorative AI gradients and glow, term
 ## Typography
 
 - Geist Variable for UI, Geist Mono Variable for ids, hashes, paths, timestamps, and counts. Mono carries data, never decoration. Opaque ids render through `IdChip` / `formatOpaqueId` and are never sliced.
+- Weights: 400 by default for names, labels, chips, metadata, and table text. 500 only for section headings, column headers, and the active nav row; 600 for page and dossier headings; dates are 300.
 - Vanilla Tailwind scale (`text-xs`, `text-sm`, `text-base`, plus the theme's `text-2xs`). No `text-[Npx]`, no custom type-role classes. Counts use tabular numerals. Inputs stay `text-sm` (iOS zoom floor).
 - Self-hosted via Fontsource, not Vercel `geist` or `next/font`.
 

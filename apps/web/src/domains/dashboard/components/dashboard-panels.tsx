@@ -48,7 +48,7 @@ function TriageBody({
               className="hover:bg-muted/40 flex items-start justify-between gap-3 px-3 py-2.5 text-sm transition-colors"
             >
               <span className="min-w-0">
-                <span className="line-clamp-2 font-medium">{title}</span>
+                <span className="line-clamp-2">{title}</span>
               </span>
               <RelativeTime
                 value={p.createdAt}
@@ -95,10 +95,7 @@ function DueBody({
             >
               <span className="min-w-0">
                 <span
-                  className={cn(
-                    "line-clamp-2 font-medium",
-                    overdue && "text-destructive"
-                  )}
+                  className={cn("line-clamp-2", overdue && "text-destructive")}
                 >
                   {task.title}
                 </span>

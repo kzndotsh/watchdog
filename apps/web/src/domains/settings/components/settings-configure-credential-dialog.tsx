@@ -127,7 +127,7 @@ export function ConfigureCredentialDialog({
                 tooltip={false}
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{slot.label}</p>
+                <p className="truncate text-sm">{slot.label}</p>
                 <p className="text-muted-foreground text-2xs truncate font-mono">
                   {slot.name}
                 </p>

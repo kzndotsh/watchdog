@@ -35,7 +35,7 @@ export function ApiKey({ apiKey, hideDelete, organizationId }: ApiKeyProps) {
         </div>
 
         <div className="flex min-w-0 flex-col">
-          <span className="truncate text-sm leading-tight font-medium">
+          <span className="truncate text-sm leading-tight">
             {firstNonEmpty(apiKey.name) ?? apiKeyLocalization.apiKey}
           </span>
 

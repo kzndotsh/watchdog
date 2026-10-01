@@ -58,7 +58,7 @@ export function MetricsSection({
           >
             {tile.value}
           </span>
-          <span className="text-muted-foreground text-sm leading-tight font-medium">
+          <span className="text-muted-foreground text-sm leading-tight">
             {tile.label}
           </span>
         </Link>

@@ -80,9 +80,11 @@ The list itself is in [`/DESIGN.md`](../../../../DESIGN.md#dos-and-donts). Enfor
 | Page heading | `text-xl font-semibold leading-tight tracking-tight` |
 | Section heading | `text-base font-medium leading-snug` |
 | Body / secondary body | `text-base leading-normal` / `text-sm leading-normal` |
-| Label | `text-sm font-medium leading-tight` |
-| Meta label / compact meta label | `text-2xs font-medium` / `text-xs font-medium leading-tight` |
+| Label | `text-sm leading-tight` |
+| Meta label / compact meta label | `text-2xs` / `text-xs leading-tight` |
 | Mono value / compact mono (ids, timestamps) | `font-mono text-sm leading-tight` / `font-mono text-2xs` |
-| Chip | `text-xs font-medium tracking-wider uppercase` |
+| Chip | `text-xs tracking-wider uppercase` |
+
+**Weights:** 400 is the default for everything (names, labels, chips, metadata, table text). 500 (`font-medium`) is only for section headings, column headers and the active nav row; 600 for page and dossier headings. Dates use `font-light` (300).
 
 `@shadcn/lint` `no-arbitrary-values` bans `text-[Npx]` / `text-[Nrem]` (and other off-scale values: use a theme token or add one, e.g. `tracking-eyebrow`); escape with `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason`. **Input** uses `text-sm` (iOS zoom floor).

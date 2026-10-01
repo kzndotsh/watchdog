@@ -26,7 +26,7 @@ export const TYPE_SCALE_ROLES = [
   },
   {
     name: "label",
-    className: "text-sm font-medium leading-tight",
+    className: "text-sm leading-tight",
     sample: "Field label",
   },
   {
@@ -36,12 +36,12 @@ export const TYPE_SCALE_ROLES = [
   },
   {
     name: "label-meta",
-    className: "text-2xs font-medium",
+    className: "text-2xs",
     sample: "Queue · metadata",
   },
   {
     name: "label-meta-sm",
-    className: "text-xs font-medium leading-tight",
+    className: "text-xs leading-tight",
     sample: "Compact metadata",
   },
   {
@@ -56,7 +56,7 @@ export const TYPE_SCALE_ROLES = [
   },
   {
     name: "chip",
-    className: "text-xs font-medium tracking-wider uppercase",
+    className: "text-xs tracking-wider uppercase",
     sample: "Status chip",
   },
 ] as const;

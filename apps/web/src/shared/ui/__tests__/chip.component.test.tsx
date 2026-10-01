@@ -7,7 +7,7 @@ describe("Chip", () => {
   it("renders badge content with shared chip sizing", () => {
     render(<Chip size="sm">json</Chip>);
     expect(screen.getByText("json")).toBeInTheDocument();
-    expect(CHIP_SIZE_CLASS.sm).toContain("text-2xs font-medium");
+    expect(CHIP_SIZE_CLASS.sm).toContain("text-2xs");
   });
 
   it("renders label with tone classes", () => {

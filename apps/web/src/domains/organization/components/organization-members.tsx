@@ -343,7 +343,7 @@ export function OrganizationMembers() {
               className="group flex items-center justify-between gap-3 py-2"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
+                <p className="truncate text-sm">
                   {trimmedOrUndefined(member.user?.name) ??
                     trimmedOrUndefined(member.user?.email) ??
                     member.userId}
@@ -458,7 +458,7 @@ export function OrganizationMembers() {
                   className="group flex items-center justify-between gap-3 py-2"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{row.email}</p>
+                    <p className="truncate text-sm">{row.email}</p>
                     <p className="text-muted-foreground text-xs">{row.role}</p>
                   </div>
                   {manage ? (

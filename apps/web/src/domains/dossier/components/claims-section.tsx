@@ -396,9 +396,7 @@ function ClaimActionForm({
         void actionForm.handleSubmit();
       }}
     >
-      <p className="text-muted-foreground text-xs font-medium">
-        {ACTION_LABELS[action]}
-      </p>
+      <p className="text-muted-foreground text-xs">{ACTION_LABELS[action]}</p>
       <actionForm.Field
         name="actionReason"
         validators={{
@@ -605,7 +603,7 @@ export function ClaimsSection({
                         {row.text}
                       </p>
                     )}
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm leading-tight font-medium">
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm leading-tight">
                       <ClaimClassBadge claimClass={row.class} />
                       <ConfidenceBadge confidence={row.confidence} />
                       {row.evidenceIds.length > 0 ? (

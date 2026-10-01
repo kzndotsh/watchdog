@@ -105,7 +105,7 @@ function EvidencePreviewBody({
             <MetaRow
               label="Source URL"
               className="flex-col items-start gap-1"
-              labelClassName="text-xs font-medium"
+              labelClassName="text-xs"
             >
               <ExternalUrl href={evidence.sourceUrl} />
             </MetaRow>
@@ -113,9 +113,7 @@ function EvidencePreviewBody({
 
           {isImage && downloadUrl !== null && downloadUrl !== "" ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs font-medium">
-                Preview
-              </span>
+              <span className="text-muted-foreground text-xs">Preview</span>
               <img
                 src={downloadUrl}
                 alt={evidence.label ?? "evidence"}
@@ -126,9 +124,7 @@ function EvidencePreviewBody({
 
           {isText ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs font-medium">
-                Content
-              </span>
+              <span className="text-muted-foreground text-xs">Content</span>
               {textContent}
             </div>
           ) : null}

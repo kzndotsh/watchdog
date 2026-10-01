@@ -17,7 +17,7 @@ const ORG = "Acme Investigations";
 
 function Avatar() {
   return (
-    <span className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium">
+    <span className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs">
       EI
     </span>
   );
@@ -84,7 +84,7 @@ function Variant({
   return (
     <figure className="flex flex-col gap-2">
       <figcaption className="space-y-0.5">
-        <p className="text-sm font-medium">
+        <p className="text-sm">
           <span className="text-muted-foreground font-mono">{id}</span> ·{" "}
           {title}
         </p>

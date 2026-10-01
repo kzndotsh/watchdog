@@ -98,9 +98,7 @@ function PatchOpRow({
     <div className="border-border flex flex-col gap-1.5 border-b px-2.5 py-2 last:border-b-0">
       <div className="flex flex-wrap items-center gap-1.5">
         <PatchOpBadge op={op.op} />
-        <span className="text-foreground text-xs font-medium">
-          {meta.label}
-        </span>
+        <span className="text-foreground text-xs">{meta.label}</span>
         {colliding ? <Chip size="sm">On another Entity</Chip> : null}
         {invalid ? <Chip size="sm">Invalid value</Chip> : null}
       </div>

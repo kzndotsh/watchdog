@@ -67,9 +67,7 @@ function CaseCard({
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1 space-y-0.5">
-          <p className="truncate text-sm leading-tight font-medium">
-            {caseRow.name}
-          </p>
+          <p className="truncate text-sm leading-tight">{caseRow.name}</p>
           <p className="text-muted-foreground text-2xs truncate font-mono">
             {caseRow.slug}
           </p>
@@ -119,7 +117,7 @@ function NewCaseCard({ onClick }: { onClick: () => void }) {
       className={cn(CASE_CREATE_SHELL_CLASS, "h-full min-h-36 p-5")}
     >
       <PlusIcon className="size-5" />
-      <span className="text-sm font-medium">New Case</span>
+      <span className="text-sm">New Case</span>
     </button>
   );
 }

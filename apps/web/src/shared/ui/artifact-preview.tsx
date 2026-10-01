@@ -113,7 +113,7 @@ export function ArtifactPreview({
           className="text-muted-foreground size-3.5 shrink-0 transition-transform group-aria-expanded/artifact-trigger:rotate-180"
           aria-hidden
         />
-        <span className="text-foreground min-w-0 flex-1 truncate font-mono text-xs font-medium">
+        <span className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
           {name}
         </span>
         {mime !== undefined && mime !== "" ? (

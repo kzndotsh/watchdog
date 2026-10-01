@@ -297,7 +297,7 @@ function EvidenceContentPanel({
               <MetaRow
                 label="Source URL"
                 className="flex-col items-start gap-1"
-                labelClassName="text-xs font-medium"
+                labelClassName="text-xs"
               >
                 <ExternalUrl href={evidence.sourceUrl} />
               </MetaRow>

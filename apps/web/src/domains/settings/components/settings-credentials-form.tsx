@@ -51,9 +51,7 @@ function CredentialSlotRow({
       />
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-sm leading-tight font-medium">
-          {slot.label}
-        </span>
+        <span className="truncate text-sm leading-tight">{slot.label}</span>
         {slot.updatedAt ? (
           <p className="text-muted-foreground text-xs leading-snug">
             Updated <LocalDateTime value={slot.updatedAt} />
@@ -104,7 +102,7 @@ function CredentialSlotGroup({
 
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+      <h3 className="text-muted-foreground text-xs tracking-wide uppercase">
         {title}
       </h3>
       <div

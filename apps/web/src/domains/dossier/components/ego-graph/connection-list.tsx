@@ -90,7 +90,7 @@ function DirectionBlock({
 
   return (
     <li className="list-none">
-      <div className="bg-muted/30 text-muted-foreground sticky top-0 z-10 border-b px-3 py-1.5 text-xs font-medium tracking-wide uppercase">
+      <div className="bg-muted/30 text-muted-foreground sticky top-0 z-10 border-b px-3 py-1.5 text-xs tracking-wide uppercase">
         <span className="flex items-center justify-between gap-2">
           {title}
           <span className="font-mono tabular-nums">{edges.length}</span>

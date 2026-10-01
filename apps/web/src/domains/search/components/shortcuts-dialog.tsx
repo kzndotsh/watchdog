@@ -30,7 +30,7 @@ export function ShortcutsDialog({ open, onOpenChange }: ShortcutsDialogProps) {
               className="flex items-start justify-between gap-4 text-sm"
             >
               <div className="min-w-0">
-                <div className="font-medium">{entry.label}</div>
+                <div>{entry.label}</div>
                 <div className="text-muted-foreground">{entry.description}</div>
               </div>
               <ActionShortcutChord chord={entry.chord} />
