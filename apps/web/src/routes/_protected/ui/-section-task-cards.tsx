@@ -56,7 +56,7 @@ const SAMPLES: Sample[] = [
   },
   {
     title: "Hold the Lena / Marek merge",
-    priority: "urgent",
+    priority: "high",
     entity: { name: "Pell Receipts", kind: "org" },
     due: "Oct 12",
   },
@@ -75,7 +75,6 @@ const KIND_ICON: Record<EntityKind, typeof UserIcon> = {
 };
 
 const DOT_CLASS: Record<TaskPriority, string> = {
-  urgent: "bg-status-failed",
   high: "bg-status-pending",
   medium: "bg-status-running",
   low: "bg-status-unknown",
@@ -531,7 +530,7 @@ export function TaskCardsSection() {
     <GuideSection
       id="task-cards"
       title="Task cards"
-      blurb="Eleven layouts for the same six tasks (G–K are header/footer treatments that avoid the tinted-top-and-bottom sandwich) (the first carries every field: description, priority, entity, due date, updated stamp; then long title, short, no meta, urgent, done), at the narrowest column width. Pick one and the real card follows."
+      blurb="Eleven layouts for the same six tasks (G–K are header/footer treatments that avoid the tinted-top-and-bottom sandwich) (the first carries every field: description, priority, entity, due date, updated stamp; then long title, short, no meta, done), at the narrowest column width. Pick one and the real card follows."
     >
       <div className="flex flex-wrap gap-6">
         {VARIANTS.map(({ label, blurb, Card }) => (

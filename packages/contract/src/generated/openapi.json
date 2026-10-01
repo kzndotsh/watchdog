@@ -395,8 +395,7 @@
                                 "enum": [
                                   "low",
                                   "medium",
-                                  "high",
-                                  "urgent"
+                                  "high"
                                 ],
                                 "type": "string"
                               },
@@ -5141,8 +5140,7 @@
                             "enum": [
                               "low",
                               "medium",
-                              "high",
-                              "urgent"
+                              "high"
                             ],
                             "type": "string"
                           },
@@ -5239,8 +5237,7 @@
                         "enum": [
                           "low",
                           "medium",
-                          "high",
-                          "urgent"
+                          "high"
                         ],
                         "type": "string"
                       },
@@ -5333,8 +5330,7 @@
                           "enum": [
                             "low",
                             "medium",
-                            "high",
-                            "urgent"
+                            "high"
                           ],
                           "type": "string"
                         },
@@ -5466,8 +5462,7 @@
                           "enum": [
                             "low",
                             "medium",
-                            "high",
-                            "urgent"
+                            "high"
                           ],
                           "type": "string"
                         },
@@ -5578,8 +5573,7 @@
                         "enum": [
                           "low",
                           "medium",
-                          "high",
-                          "urgent"
+                          "high"
                         ],
                         "type": "string"
                       },
@@ -5669,8 +5663,7 @@
                           "enum": [
                             "low",
                             "medium",
-                            "high",
-                            "urgent"
+                            "high"
                           ],
                           "type": "string"
                         },
@@ -5873,8 +5866,7 @@
                             "enum": [
                               "low",
                               "medium",
-                              "high",
-                              "urgent"
+                              "high"
                             ],
                             "type": "string"
                           },

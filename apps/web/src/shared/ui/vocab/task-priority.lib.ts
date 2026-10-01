@@ -8,7 +8,6 @@ import {
 
 /** Map priorities onto existing `--status-*` token tones. */
 export const TASK_PRIORITY_TONE_MAP: Record<TaskPriority, DisplayStatus> = {
-  urgent: "failed",
   high: "pending",
   medium: "running",
   low: "unknown",

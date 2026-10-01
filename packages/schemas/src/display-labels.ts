@@ -97,7 +97,6 @@ export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
   low: "Low",
   medium: "Medium",
   high: "High",
-  urgent: "Urgent",
 };
 
 export const PLAYBOOK_SEED_KIND_LABELS: Record<PlaybookSeedKind, string> = {
