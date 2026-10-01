@@ -65,8 +65,9 @@ function TaskCardBody({
       ) : null}
 
       <div
+        title={task.title}
         className={cn(
-          "line-clamp-3 px-2.5 py-2 text-xs leading-snug font-normal break-words",
+          "line-clamp-2 px-2.5 py-2 text-xs leading-snug font-normal break-words",
           !entity && "pr-7",
           done && "text-muted-foreground line-through",
           dropped && "text-muted-foreground"

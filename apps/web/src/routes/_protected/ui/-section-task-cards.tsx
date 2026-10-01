@@ -174,7 +174,7 @@ function EntityPill({ sample }: { sample: Sample }) {
 function CardCurrent({ sample }: { sample: Sample }) {
   return (
     <div className={cn(CARD, "gap-1.5 px-2.5 py-2")}>
-      <div className={titleClass(sample, "line-clamp-3")}>{sample.title}</div>
+      <div className={titleClass(sample, "line-clamp-2")}>{sample.title}</div>
       <Desc sample={sample} />
       {sample.priority || sample.entity || sample.due ? (
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
@@ -200,7 +200,7 @@ function CardLinear({ sample }: { sample: Sample }) {
             <Chip priority={sample.priority} />
           </span>
         ) : null}
-        <div className={titleClass(sample, "line-clamp-3 min-w-0 flex-1")}>
+        <div className={titleClass(sample, "line-clamp-2 min-w-0 flex-1")}>
           {sample.title}
         </div>
       </div>
@@ -230,7 +230,7 @@ function CardQuiet({ sample }: { sample: Sample }) {
             <span className="bg-foreground/10 block size-1.5 rounded-full" />
           )}
         </span>
-        <div className={titleClass(sample, "line-clamp-3 min-w-0 flex-1")}>
+        <div className={titleClass(sample, "line-clamp-2 min-w-0 flex-1")}>
           {sample.title}
         </div>
       </div>
@@ -264,7 +264,7 @@ function CardEyebrow({ sample }: { sample: Sample }) {
   return (
     <div className={cn(CARD, "gap-1 px-2.5 py-2")}>
       {sample.entity ? <EntityText sample={sample} /> : null}
-      <div className={titleClass(sample, "line-clamp-3")}>{sample.title}</div>
+      <div className={titleClass(sample, "line-clamp-2")}>{sample.title}</div>
       <Desc sample={sample} />
       {sample.priority || sample.due ? (
         <div className="mt-1 flex items-center justify-between gap-2">
@@ -309,7 +309,7 @@ function CardFooterBar({ sample }: { sample: Sample }) {
   return (
     <div className={cn(CARD, "overflow-hidden")}>
       <div className="space-y-1 px-2.5 py-2">
-        <div className={titleClass(sample, "line-clamp-3")}>{sample.title}</div>
+        <div className={titleClass(sample, "line-clamp-2")}>{sample.title}</div>
         <Desc sample={sample} />
       </div>
       {hasFooter ? (
