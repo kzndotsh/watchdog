@@ -38,7 +38,18 @@ export interface SplitViewProps {
   /** Narrow viewports: label of the back control above Detail. Default "Back". */
   backLabel?: string;
   className?: string;
+  /**
+   * Run edge to edge of the page inset (undoes Page's side + bottom padding), so Queue and
+   * Detail touch the sidebar and the window edge. On by default.
+   */
+  bleed?: boolean;
 }
+
+/**
+ * Page pads px-3 (sm:px-4) and pb-3 (sm:pb-4). A wrapper carries the negative margins: the
+ * panel group sets its own inline width, so margins on the group itself cannot widen it.
+ */
+const SPLIT_BLEED_CLASS = "-mx-3 -mb-3 sm:-mx-4 sm:-mb-4";
 
 function ColumnShell({ children }: { children: ReactNode }) {
   return (
@@ -125,7 +136,7 @@ function pct(s: string): number {
  * Sizes must be strings without units — react-resizable-panels v4 interprets
  * bare strings as percentages and numbers as pixels.
  */
-export function SplitView({
+function SplitViewPanes({
   list,
   detail,
   middle,
@@ -141,7 +152,7 @@ export function SplitView({
   bordered = false,
   backLabel = "Back",
   className,
-}: SplitViewProps) {
+}: Omit<SplitViewProps, "bleed">) {
   const hydrated = useHydrated();
   const narrow = useIsMobile();
 
@@ -257,5 +268,15 @@ export function SplitView({
       <ResizableHandle withHandle />
       {listSide === "start" ? detailPanel : listPanel}
     </ResizablePanelGroup>
+  );
+}
+
+export function SplitView({ bleed = true, ...props }: SplitViewProps) {
+  return (
+    <div
+      className={cn("flex min-h-0 flex-1 flex-col", bleed && SPLIT_BLEED_CLASS)}
+    >
+      <SplitViewPanes {...props} />
+    </div>
   );
 }

@@ -22,7 +22,7 @@ import {
   CASE_CARD_SHELL_CLASS,
 } from "@/shared/ui/case-card-shell";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
-import { EvidenceDetailSkeleton } from "@/shared/ui/evidence-detail-skeleton";
+import { JobDetailSkeleton } from "@/shared/ui/evidence-detail-skeleton";
 import {
   GRAPH_CANVAS_CONNECTIONS_SHELL_CLASS,
   GRAPH_CANVAS_EMBED_SHELL_CLASS,
@@ -180,11 +180,11 @@ export function CollectQueueSkeleton({
   );
 }
 
-/** Collect detail column — composes EvidenceDetailSkeleton (PendingRegion owns LoadingRegion). */
+/** Collect detail column — composes JobDetailSkeleton (PendingRegion owns LoadingRegion). */
 export function CollectDetailSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
-      <EvidenceDetailSkeleton className="min-h-0 flex-1" />
+      <JobDetailSkeleton className="min-h-0 flex-1" />
     </div>
   );
 }

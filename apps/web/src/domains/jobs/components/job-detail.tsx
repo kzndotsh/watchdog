@@ -272,13 +272,13 @@ function JobDetailHeader({
       </DetailContextHeader>
 
       {view.interpretFailed ? (
-        <FormInlineWarning className="px-3">
+        <FormInlineWarning className="px-3 py-2">
           Evidence captured; interpretation failed — no Proposal created.{" "}
           {job.interpretError}
         </FormInlineWarning>
       ) : null}
       {job.error ? (
-        <div className="px-3">
+        <div className="px-3 py-2">
           <FieldError>{job.error}</FieldError>
         </div>
       ) : null}

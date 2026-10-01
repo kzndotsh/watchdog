@@ -13,7 +13,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | Atom | Purpose | Use when | Do not use when | Alternative | Status | `/ui` | Tokens |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `ActiveTabBody` | Inactive → null; pending → `PendingRegion` + `stackPendingFallback()` (hand `StackBodySkeleton` fallback) | Stack / Detail tab gates (Case · Dossier · Settings) | React `<Activity>` for heavy canvases | `SuspenseTabBody` inside | canonical | yes | : |
-| `ArtifactPreview` | Presentational artifact chrome (+ `ArtifactPreviewSkeleton` loading layout) | Showing named mime body | Fetching artifacts | : | canonical | no | : |
+| `ArtifactPreview` | Presentational artifact chrome | Showing named mime body | Fetching artifacts | : | canonical | no | : |
 | `CodeBlock` | Shiki highlighted code | Logs / JSON dumps | Editable fields | `JsonView` for trees | canonical | no | : |
 | `ClickableIdChip` | Preview `IdChip` (eye glyph) | Click-to-preview evidence ids | Plain / copy chips | `IdChip` | canonical | yes | : |
 | `ComposerShell` | Muted bordered composer surface | Add/edit dossier forms | Callouts / dashed rows | : | canonical | yes | muted |
@@ -43,7 +43,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `EditableSuggestCell` | Commit-on-pick suggest cell (uncontrolled selection: avoids snap-back to the stale saved value) | Inline table freeform+suggest | Forms | `EditableTextCell` · `FieldCombobox` | canonical | no | : |
 | `EvidencePicker` | Dense multi-select Case Evidence (chip-height Add/+ · checklist popover; `layout="panel"` for parent shells; options as `readonly EvidenceOption[]`; label/filter helpers in `shared/ui/intake/evidence-option.ts`) | Dossier composers · identifier Link · Triage | Job cite display | `EvidenceCiteChips` | canonical (`shared/ui/intake/evidence-picker.tsx`) | no | : |
 | `EvidenceCiteChips` | Read-only Job/proposal cite chips | Triage decide band | Multi-select | `EvidencePicker` | canonical (same file) | no | : |
-| `EvidenceDetailSkeleton` | Evidence/Collect Detail skeleton: header · tabs · `ArtifactPreviewSkeleton` · `DetailFooter` | Collect/Triage detail data-slot | Static shell / select-none empty | generic header/body blocks | canonical | no | : |
+| `JobDetailSkeleton` | Collect Detail skeleton shaped like `JobDetailHeader`: headline → hint · status · By actor, Log / Input / Output tabs, log block | Collect/Triage detail data-slot | Static shell / select-none empty | generic header/body blocks | canonical | no | : |
 | `FetchErrorAlert` | Load-failure banner (Retry in `AlertAction`) | Route / region fetch fail | Field validation | `FieldMessage` | canonical | yes | destructive |
 | `FieldSelect` | Dense string Select: CONTROL chrome | Cap / playbook / kind pickers | Native `<select>` · enum-specific atoms | `ConfidenceSelect` · `FieldCombobox` | canonical | yes | : |
 | `FieldCombobox` | Filterable string Combobox: CONTROL chrome; optional `group` → section headings | Long / searchable option lists (edge phrases) | Tiny closed enums | `FieldSelect` · `EntityCombobox` | canonical | no | : |
@@ -79,7 +79,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `BoardSkeleton` | Task board column/card skeleton | `PendingRegion` fallback for task board | Full page chrome | : | canonical | yes | : |
 | `CardGridSkeleton` | Case grid slot skeleton | `PendingRegion` fallback for cases grid | Full page chrome | : | canonical | yes | : |
 | `case-card-shell` | Shared case grid card/create shell class tokens | `CaseList` · `CardGridSkeleton` | Ad-hoc case card chrome | : | canonical | no | : |
-| `SplitView` | Queue \| Detail split | Console surfaces | Stacked pages | : | canonical | yes | : |
+| `SplitView` | Queue \| Detail split; bleeds to the page edges by default (a wrapper undoes `Page`'s side padding) | Console surfaces | Stacked pages | : | canonical | yes | : |
 | `StatusDot` | Lifecycle color dot | Live job rows | Full status label | `StatusBadge` | canonical | yes | `--status-*` |
 | `TabCount` | Count pill on tabs / last crumb | Tab labels · `PageHeader count=` | Queue headers · `/ N entities` copy | `QueueHeader` count | canonical | no | : |
 | `task-board-shell` | Shared task column/card shell class tokens (card = tinted entity tab, title block, ruled footer with the priority chip (`Med` for medium); tab and footer are a fixed `h-6` so cards line up) | `TaskBoardColumn` · `TaskCard` · `BoardSkeleton` | Ad-hoc card chrome | : | canonical | no | : |

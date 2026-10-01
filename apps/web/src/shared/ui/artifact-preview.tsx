@@ -2,7 +2,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { CHIP_SIZE_CLASS, Chip } from "@/shared/ui/chip";
+import { Chip } from "@/shared/ui/chip";
 import { CodeBlock } from "@/shared/ui/code-block";
 import { JsonView } from "@/shared/ui/json-view";
 import {
@@ -145,54 +145,6 @@ export function ArtifactPreview({
 
         <div className="bg-muted/40 rounded-b-md p-3">
           <ArtifactPreviewBodyView body={body} />
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
-/** Artifact preview skeleton — same chrome as {@link ArtifactPreview} (open by default). */
-export function ArtifactPreviewSkeleton({
-  className,
-  defaultOpen = true,
-  showMeta = false,
-}: {
-  className?: string;
-  defaultOpen?: boolean;
-  showMeta?: boolean;
-}) {
-  return (
-    <Collapsible
-      defaultOpen={defaultOpen}
-      data-slot="artifact-preview-skeleton"
-      className={cn(
-        "border-border flex flex-col overflow-hidden rounded-md border",
-        className
-      )}
-    >
-      <div className="border-border group/artifact-trigger flex w-full items-center gap-2 border-b px-3 py-2">
-        <ChevronDownIcon
-          className="text-muted-foreground size-3.5 shrink-0"
-          aria-hidden
-        />
-        <Skeleton className="h-3 max-w-full min-w-0 flex-1 basis-36 rounded-sm" />
-        <Skeleton className={cn(CHIP_SIZE_CLASS.md, "w-[4.5rem] shrink-0")} />
-      </div>
-
-      <CollapsibleContent>
-        {showMeta ? (
-          <div className="border-border space-y-1.5 border-b px-3 py-2">
-            <Skeleton className="h-3 w-20" />
-          </div>
-        ) : null}
-
-        <div className="bg-muted/40 rounded-b-md p-3">
-          <div className="space-y-2">
-            <Skeleton className="h-40 w-full rounded-md" />
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-5/6" />
-            <Skeleton className="h-3 w-2/3" />
-          </div>
         </div>
       </CollapsibleContent>
     </Collapsible>

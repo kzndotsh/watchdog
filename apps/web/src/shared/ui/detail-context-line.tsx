@@ -11,7 +11,7 @@ export function DetailContextLine({
   className?: string;
 }) {
   return (
-    <p
+    <div
       data-slot="detail-context-line"
       className={cn(
         "text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs",
@@ -19,7 +19,7 @@ export function DetailContextLine({
       )}
     >
       {children}
-    </p>
+    </div>
   );
 }
 
