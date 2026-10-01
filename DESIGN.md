@@ -13,7 +13,7 @@ colors:
   on-primary: "oklch(0.18 0.02 250)"
   ring: "oklch(0.68 0.11 220)"
   signal: "oklch(0.78 0.14 75)"
-  success: "oklch(0.72 0.14 155)"
+  success: "oklch(0.76 0.13 155)"
   destructive: "oklch(0.76 0.16 25)"
   # Light theme. Source of truth: apps/web/src/styles/wd-tokens.css
   light-background: "oklch(0.985 0.004 250)"

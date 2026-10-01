@@ -49,6 +49,12 @@ pre-commit:
         - "scripts/doc-map.mjs"
         - "scripts/check-docs-affected.mjs"
       run: pnpm check:docs
+    design-tokens:
+      glob:
+        - "DESIGN.md"
+        - "apps/web/src/styles/wd-*.css"
+        - "scripts/check-design-tokens.mjs"
+      run: pnpm check:design-tokens
     docs-affect:
       glob:
         - "apps/web/src/**"
