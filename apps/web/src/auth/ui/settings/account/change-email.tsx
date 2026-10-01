@@ -50,7 +50,7 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
   return (
     <form onSubmit={handleSubmit}>
       <FormSection
-        title={localization.settings.changeEmail}
+        title="Email"
         className={className}
         footer={
           <Button type="submit" size="sm" disabled={isPending || !session}>
