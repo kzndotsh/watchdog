@@ -1,6 +1,6 @@
 # UI: design system hub
 
-This index covers how the interface is built. Product IA is in [`../../explanation/ux.md`](../../explanation/ux.md); the design brief the rules trace back to is [`../../explanation/design.md`](../../explanation/design.md).
+This index covers how the interface is built. Product IA is in [`../../explanation/ux.md`](../../explanation/ux.md); the design direction and taste rules live in [`/DESIGN.md`](../../../DESIGN.md).
 
 The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. The style guide is **/ui**.
 

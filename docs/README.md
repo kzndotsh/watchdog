@@ -31,7 +31,6 @@ Documentation charter (Diátaxis, page shape, update rules): [`explanation/docum
 | --- | --- | --- |
 | [`explanation/product.md`](explanation/product.md) | Intent, personas, refuse | Phase checkboxes, pixels |
 | [`explanation/ux.md`](explanation/ux.md) | IA, flows, copy meaning | Component APIs, tokens |
-| [`explanation/design.md`](explanation/design.md) | Design brief: direction, color, surfaces, interaction | Tokens, atoms |
 | [`explanation/scenarios.md`](explanation/scenarios.md) | Walked journeys (`shipped` / `partial` / `missing` / `lying`) | Cap unit tests |
 | [`explanation/documentation.md`](explanation/documentation.md) | Doc IA charter (Diátaxis) | Gate scripts |
 

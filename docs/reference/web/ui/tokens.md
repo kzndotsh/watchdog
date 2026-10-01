@@ -8,18 +8,12 @@ This page defines colors, type scale, the refuse list, and design-system primiti
 - Hand-owned atoms: `src/shared/ui/` (`QueueRow`, `SplitView`, data-table kit, etc.)
 - Page chrome: `shared/layout/{app-shell,app-sidebar,app-breadcrumbs,page,page-trail,use-page-trail,page-toolbar,page-filter-menu,route-pending,route-error,case-switcher,theme-toggle}`
 - Prefer `@/shared/ui/*` (owned) / `@watchdog/ui/components/*` (primitives; `@/shared/ui/primitives/*` where a wrapper exists) over raw HTML
-- Theme: OKLCH cool neutrals (~250), **steel-cyan** accent (~220), and **amber** signal (~75). **No violet brand.**
+- Theme and palette: see [`/DESIGN.md`](../../../../DESIGN.md#colors); values live in `styles/wd-tokens.css` and `styles/wd-dark.css`
 - Font (Fontsource, self-hosted: not Vercel `geist` / Next `next/font`):
   - Sans: **Geist Variable** → `--font-sans` via `@fontsource-variable/geist/wght.css`
   - Mono: **Geist Mono Variable** → `--font-mono` via `@fontsource-variable/geist-mono/wght.css`
   - Family names must match the package `@font-face` strings exactly (`"Geist Variable"` / `"Geist Mono Variable"`).
-  - Radius ladder (only three + exceptions):
-    - **`--radius: 0.375rem`** = medium base (**6px**): default via `rounded-md`
-    - `rounded-sm` (3px): checkbox / tiny inset
-    - `rounded-md` (6px): controls, chips, dense panels, **dialogs**, **sidebar nav** (`SidebarMenuButton`, `SidebarMenuSubButton`, menu skeleton in `sidebar.tsx`)
-    - `rounded-lg` (9px): cards, menus, larger surfaces
-    - Exceptions: `rounded-full` · `rounded-none` · `rounded-[inherit]`
-    - Ban `rounded-xl` / `2xl` / `3xl` / `4xl` and arbitrary `rounded-[min(…)]` / `calc(var(--radius)±Npx)`
+  - Radius ladder (three steps, [`/DESIGN.md`](../../../../DESIGN.md#shapes)): `--radius: 0.375rem` is the `rounded-md` base. Exceptions: `rounded-full` · `rounded-none` · `rounded-[inherit]`. `--radius-xl..4xl` are capped to `--radius-lg` in `wd-theme.css`; arbitrary `rounded-[min(…)]` / `calc(var(--radius)±Npx)` are banned.
 - Mode: **Operate** (consistency over surprise)
 - Theme toggle: `.dark` / `.light` on `<html>`; toast surfaces inherit theme tokens
 - Display size: `--wd-display-scale` (product default **`1.1` Default**) on `:root`; `html { font-size: calc(100% * var(--wd-display-scale) * var(--wd-viewport-font-factor)); }` scales rem typography + Tailwind spacing. `--wd-viewport-font-factor` is `1.06` on wide hi-DPI viewports (4K). Presets `1.1 | 1.2 | 1.35` in `localStorage['wd-display-scale']`; Settings → Appearance + blocking init in `__root.tsx`. Browser zoom remains available (WCAG 1.4.4).
@@ -70,9 +64,9 @@ Domain meaning: `--confidence-*` / `--status-*` / `--kind-*` only. Never freesty
 
 Contrast fix: adjust OKLCH **L only**: keep hue/chroma stable.
 
-## Refuse list (AI slop)
+## Refuse list
 
-No nested cards, decorative colored side borders (a thin state bar on a live row is fine), glow/halo, gradients or gradient text, icon-tile feature grids, bounce/elastic easing, decorative glass, mono-as-decoration, cream/violet brand defaults. `ds:check` enforces gradients / glass / `rounded-xl+`; `@shadcn/lint` enforces raw palette hues; the rest is review. Why each rule exists: [`rules.md`](rules.md).
+The list itself is in [`/DESIGN.md`](../../../../DESIGN.md#dos-and-donts). Enforcement: `ds:check` covers gradients, glass, and `rounded-xl+`; `@shadcn/lint` covers raw palette hues; the rest is review. Why each rule exists: [`rules.md`](rules.md).
 
 ## Type scale (hybrid)
 

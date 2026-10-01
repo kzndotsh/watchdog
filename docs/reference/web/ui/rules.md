@@ -1,6 +1,6 @@
 # UI: rules inventory
 
-This page lists every web UI rule, what it prevents, and whether it is kept. The design intent behind the taste rules is [`../../../explanation/design.md`](../../../explanation/design.md). Last audited 2026-09-29.
+This page lists every web UI rule, what it prevents, and whether it is kept. The design intent behind the taste rules is [`/DESIGN.md`](../../../../DESIGN.md). Last audited 2026-09-29.
 
 **Kinds.** **Correctness** rules stop a bug class: keep unless the bug can no longer happen. **Consistency** rules keep one way to do a thing: cheap, keep while they cost nothing. **Taste** rules are design opinions: they live in the brief and change when the brief changes.
 
@@ -48,7 +48,7 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 
 ## Taste
 
-These restate [`design.md`](../../../explanation/design.md); change the brief first, then the rule.
+These restate [`DESIGN.md`](../../../../DESIGN.md), which owns the wording; change it first, then the rule.
 
 | Rule | Verdict | Enforced by |
 | --- | --- | --- |

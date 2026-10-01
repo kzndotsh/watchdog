@@ -58,7 +58,7 @@ Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per
 | Task | Primary path |
 | --- | --- |
 | Product / architecture / UX / types | `docs/` |
-| Design brief / why a UI rule exists | [`docs/explanation/design.md`](docs/explanation/design.md) · [`docs/reference/web/ui/rules.md`](docs/reference/web/ui/rules.md) |
+| Design direction, taste rules, tokens / why a UI rule exists | [`DESIGN.md`](DESIGN.md) (CSS in `apps/web/src/styles/` wins on values) · [`docs/reference/web/ui/rules.md`](docs/reference/web/ui/rules.md) |
 | UI / DS / domains / Query | `docs/reference/web/` |
 | Product nouns / Cap loop | [`docs/explanation/product.md`](docs/explanation/product.md) |
 | Caps / playbooks | [`docs/reference/platform/caps-lexicon.md`](docs/reference/platform/caps-lexicon.md) · [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md) |

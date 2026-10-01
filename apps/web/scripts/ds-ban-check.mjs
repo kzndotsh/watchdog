@@ -5,7 +5,7 @@
  * docs/reference/web/ui/rules.md.
  *
  *   - opaque-id .slice   truncated ids collide and can't be searched
- *   - decorative         gradients / glass (refuse list, docs/explanation/design.md)
+ *   - decorative         gradients / glass (refuse list, DESIGN.md)
  *   - surface names      Console / Workbench / Tape (ui/README.md naming rule)
  *
  * Tailwind class checks (raw colors, undeclared tokens, arbitrary values, unknown
