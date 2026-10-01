@@ -326,6 +326,120 @@ function CardFooterBar({ sample }: { sample: Sample }) {
   );
 }
 
+/* G. Header only: entity + priority share one tinted top bar; title and due date sit on the plain body. */
+function CardTopBar({ sample }: { sample: Sample }) {
+  const hasBar = sample.entity !== undefined || sample.priority !== undefined;
+  return (
+    <div className={cn(CARD, "overflow-hidden")}>
+      {hasBar ? (
+        <div className="border-border bg-muted/20 flex h-6 min-w-0 items-center gap-2 border-b px-2.5">
+          <EntityText sample={sample} />
+          {sample.priority ? (
+            <span className="ml-auto">
+              <Chip priority={sample.priority} />
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="space-y-1 px-2.5 py-2">
+        <div className={titleClass(sample, "line-clamp-2")}>{sample.title}</div>
+        {sample.due ? <Due sample={sample} /> : null}
+      </div>
+    </div>
+  );
+}
+
+/* H. Header bar, bare footer: the entity bar stays; priority and due sit on the body with no tint or rule. */
+function CardHeaderOnly({ sample }: { sample: Sample }) {
+  return (
+    <div className={cn(CARD, "overflow-hidden")}>
+      {sample.entity ? (
+        <div className="border-border bg-muted/20 flex h-6 min-w-0 items-center border-b px-2.5">
+          <EntityText sample={sample} />
+        </div>
+      ) : null}
+      <div className="space-y-1.5 px-2.5 py-2">
+        <div className={titleClass(sample, "line-clamp-2")}>{sample.title}</div>
+        {sample.priority || sample.due ? (
+          <div className="flex items-center justify-between gap-2">
+            {sample.priority ? <Chip priority={sample.priority} /> : <span />}
+            <Due sample={sample} />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/* I. Two tones: the tinted header is darker than the body, and the footer shares the body's tone,
+ * separated by a rule only. Reads as a "tab" on top instead of a sandwich. */
+function CardTab({ sample }: { sample: Sample }) {
+  return (
+    <div className={cn(CARD, "overflow-hidden")}>
+      {sample.entity ? (
+        <div className="bg-muted/40 flex h-6 min-w-0 items-center px-2.5">
+          <EntityText sample={sample} />
+        </div>
+      ) : null}
+      <div className="px-2.5 py-2">
+        <div className={titleClass(sample, "line-clamp-2")}>{sample.title}</div>
+      </div>
+      {sample.priority || sample.due ? (
+        <div className="border-border flex h-6 min-w-0 items-center gap-2 border-t px-2.5">
+          {sample.priority ? <Chip priority={sample.priority} /> : null}
+          <span className="ml-auto">
+            <Due sample={sample} />
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/* J. Dividers only: no tint anywhere. Entity line, title, and footer are separated by hairlines. */
+function CardRuled({ sample }: { sample: Sample }) {
+  return (
+    <div className={cn(CARD, "divide-border divide-y overflow-hidden")}>
+      {sample.entity ? (
+        <div className="flex h-6 min-w-0 items-center px-2.5">
+          <EntityText sample={sample} />
+        </div>
+      ) : null}
+      <div className="px-2.5 py-2">
+        <div className={titleClass(sample, "line-clamp-2")}>{sample.title}</div>
+      </div>
+      {sample.priority || sample.due ? (
+        <div className="flex h-6 min-w-0 items-center gap-2 px-2.5">
+          {sample.priority ? <Chip priority={sample.priority} /> : null}
+          <span className="ml-auto">
+            <Due sample={sample} />
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/* K. Entity as a tinted pill in the body (the old chip), footer bar only. */
+function CardPillFooter({ sample }: { sample: Sample }) {
+  return (
+    <div className={cn(CARD, "overflow-hidden")}>
+      <div className="space-y-1.5 px-2.5 py-2">
+        <div className={titleClass(sample, "line-clamp-2")}>{sample.title}</div>
+        <EntityPill sample={sample} />
+      </div>
+      {sample.priority || sample.due ? (
+        <div className="border-border bg-muted/20 flex h-6 min-w-0 items-center gap-2 border-t px-2.5">
+          {sample.priority ? <Chip priority={sample.priority} /> : null}
+          <span className="ml-auto">
+            <Due sample={sample} />
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function Variant({
   label,
   blurb,
@@ -384,6 +498,32 @@ const VARIANTS: {
     blurb: "Title block over a ruled footer that holds every attribute.",
     Card: CardFooterBar,
   },
+  {
+    label: "G · Top bar",
+    blurb: "One tinted bar on top: entity left, priority right. No footer bar.",
+    Card: CardTopBar,
+  },
+  {
+    label: "H · Header only",
+    blurb: "Tinted entity header; priority and due sit bare on the body.",
+    Card: CardHeaderOnly,
+  },
+  {
+    label: "I · Tab",
+    blurb:
+      "Darker header like a tab; footer is just a rule, same tone as the body.",
+    Card: CardTab,
+  },
+  {
+    label: "J · Ruled",
+    blurb: "No tint at all: hairlines separate entity, title, and footer.",
+    Card: CardRuled,
+  },
+  {
+    label: "K · Pill + footer",
+    blurb: "Entity as a pill under the title; only the footer is tinted.",
+    Card: CardPillFooter,
+  },
 ];
 
 export function TaskCardsSection() {
@@ -391,7 +531,7 @@ export function TaskCardsSection() {
     <GuideSection
       id="task-cards"
       title="Task cards"
-      blurb="Six layouts for the same six tasks (the first carries every field: description, priority, entity, due date, updated stamp; then long title, short, no meta, urgent, done), at the narrowest column width. Pick one and the real card follows."
+      blurb="Eleven layouts for the same six tasks (G–K are header/footer treatments that avoid the tinted-top-and-bottom sandwich) (the first carries every field: description, priority, entity, due date, updated stamp; then long title, short, no meta, urgent, done), at the narrowest column width. Pick one and the real card follows."
     >
       <div className="flex flex-wrap gap-6">
         {VARIANTS.map(({ label, blurb, Card }) => (
