@@ -64,16 +64,18 @@ function TaskCardBody({
         </div>
       ) : null}
 
-      <div
-        title={task.title}
-        className={cn(
-          "line-clamp-2 px-2.5 py-2 text-xs leading-snug font-normal break-words",
-          !entity && "pr-7",
-          done && "text-muted-foreground line-through",
-          dropped && "text-muted-foreground"
-        )}
-      >
-        {task.title}
+      {/* Padding lives on the wrapper: line-clamp hides overflow inside its own padding box, so padding on the clamped element lets the third line peek out. */}
+      <div className={cn("px-2.5 py-2", !entity && "pr-7")}>
+        <div
+          title={task.title}
+          className={cn(
+            "line-clamp-2 text-xs leading-snug font-normal break-words",
+            done && "text-muted-foreground line-through",
+            dropped && "text-muted-foreground"
+          )}
+        >
+          {task.title}
+        </div>
       </div>
 
       {hasFooter ? (
