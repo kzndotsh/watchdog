@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Web + worker in one terminal. Ctrl+C or either process exit stops both.
+# Web + marketing site + worker in one terminal. Ctrl+C or either process exit stops both.
 set -euo pipefail
 
 cleanup() {
@@ -12,8 +12,9 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "Starting web → http://127.0.0.1:3000"
+echo "Starting web → http://127.0.0.1:3000 · site → http://127.0.0.1:3001"
 pnpm dev:web &
+pnpm dev:site &
 pnpm dev:worker &
 wait -n
 status=$?
