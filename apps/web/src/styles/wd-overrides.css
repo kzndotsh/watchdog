@@ -247,6 +247,8 @@
 /* ScrollArea (Base UI) overlays the content, so it stays out of the way: a 6px rail that
    appears only while hovering or scrolling, no border, a slim thumb. */
 html [data-slot="scroll-area-scrollbar"] {
+  /* Above sticky section bars (z-10) so the thumb is never cut at the day dividers. */
+  z-index: 20;
   border: 0;
   padding: 1px;
   opacity: 0;
