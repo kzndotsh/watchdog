@@ -41,10 +41,10 @@ const PRIORITY_RANK: Record<TaskPriority, number> = {
   low: 1,
   medium: 2,
   high: 3,
-  urgent: 3,
+  urgent: 4,
 };
 
-/** Three ascending bars (Linear-style): low = 1 lit, medium = 2, high = 3, urgent = 3 in the failed tone. */
+/** Four ascending bars, one per priority: low = 1 lit … urgent = 4 (failed tone). */
 export function TaskPriorityBars({
   priority,
   className,
@@ -58,9 +58,9 @@ export function TaskPriorityBars({
       role="img"
       aria-label={`${TASK_PRIORITY_LABELS[priority]} priority`}
       title={`${TASK_PRIORITY_LABELS[priority]} priority`}
-      className={cn("inline-flex h-3 shrink-0 items-end gap-px", className)}
+      className={cn("inline-flex h-4 shrink-0 items-end gap-px", className)}
     >
-      {[1, 2, 3].map((bar) => {
+      {[1, 2, 3, 4].map((bar) => {
         let lit = "bg-foreground/15";
         if (bar <= rank) {
           lit = priority === "urgent" ? "bg-status-failed" : "bg-foreground/70";
@@ -69,10 +69,11 @@ export function TaskPriorityBars({
           <span
             key={bar}
             className={cn(
-              "w-[3px] rounded-xs",
+              "w-0.5 rounded-xs",
               bar === 1 && "h-1",
               bar === 2 && "h-2",
               bar === 3 && "h-3",
+              bar === 4 && "h-4",
               lit
             )}
           />

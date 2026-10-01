@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { GuideSection } from "@/routes/_protected/ui/-guide-chrome";
+import { TaskPriorityBars } from "@/shared/ui/vocab";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import { TASK_PRIORITY_TONE_MAP } from "@/shared/ui/vocab/task-priority.lib";
 import type { TaskPriority } from "@watchdog/schemas";
@@ -71,13 +72,6 @@ const KIND_ICON: Record<EntityKind, typeof UserIcon> = {
   org: BuildingIcon,
 };
 
-const PRIORITY_RANK: Record<TaskPriority, number> = {
-  low: 1,
-  medium: 2,
-  high: 3,
-  urgent: 4,
-};
-
 const DOT_CLASS: Record<TaskPriority, string> = {
   urgent: "bg-status-failed",
   high: "bg-status-pending",
@@ -93,32 +87,6 @@ function titleClass(sample: Sample, extra?: string) {
     "text-sm leading-snug font-medium break-words",
     sample.done && "text-muted-foreground line-through",
     extra
-  );
-}
-
-function PriorityBars({ priority }: { priority: TaskPriority }) {
-  const rank = PRIORITY_RANK[priority];
-  const urgent = priority === "urgent";
-  return (
-    <span
-      role="img"
-      aria-label={`${priority} priority`}
-      className="inline-flex h-3 shrink-0 items-end gap-px"
-    >
-      {[1, 2, 3].map((bar) => (
-        <span
-          key={bar}
-          className={cn(
-            "w-[3px] rounded-xs",
-            bar === 1 && "h-1",
-            bar === 2 && "h-2",
-            bar === 3 && "h-3",
-            urgent || bar <= rank ? "bg-foreground/70" : "bg-foreground/15",
-            urgent && "bg-status-failed"
-          )}
-        />
-      ))}
-    </span>
   );
 }
 
@@ -227,7 +195,7 @@ function CardLinear({ sample }: { sample: Sample }) {
       <div className="flex items-start gap-2">
         {sample.priority ? (
           <span className="mt-1">
-            <PriorityBars priority={sample.priority} />
+            <TaskPriorityBars priority={sample.priority} />
           </span>
         ) : null}
         <div className={titleClass(sample, "line-clamp-3 min-w-0 flex-1")}>
@@ -300,7 +268,7 @@ function CardEyebrow({ sample }: { sample: Sample }) {
         <div className="mt-1 flex items-center justify-between gap-2">
           {sample.priority ? (
             <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs capitalize">
-              <PriorityBars priority={sample.priority} />
+              <TaskPriorityBars priority={sample.priority} />
               {sample.priority}
             </span>
           ) : (
@@ -351,7 +319,9 @@ function CardFooterBar({ sample }: { sample: Sample }) {
       </div>
       {hasFooter ? (
         <div className="border-border bg-muted/20 flex min-w-0 items-center gap-2 border-t px-2.5 py-1">
-          {sample.priority ? <PriorityBars priority={sample.priority} /> : null}
+          {sample.priority ? (
+            <TaskPriorityBars priority={sample.priority} />
+          ) : null}
           <EntityText sample={sample} />
           <span className="ml-auto inline-flex items-center gap-2">
             <Updated sample={sample} />
