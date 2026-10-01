@@ -37,7 +37,7 @@ const INVITATIONS_KEY = ["auth-org", "user-invitations"] as const;
 async function loadUserInvitations(): Promise<UserInvitation[]> {
   const { data, error } = await authClient.organization.listUserInvitations();
   if (error) {
-    throw new Error(messageOr(error.message, "Could not load invitations"));
+    throw new Error(messageOr(error.message, "Couldn't load invitations"));
   }
   return (data as UserInvitation[]).filter((row) => row.status === "pending");
 }
@@ -61,7 +61,7 @@ export function YourOrganizations() {
         invitationId: invitation.id,
       });
       if (error) {
-        throw new Error(messageOr(error.message, "Could not accept"));
+        throw new Error(messageOr(error.message, "Couldn't accept"));
       }
       return invitation.organizationId;
     },
@@ -72,7 +72,7 @@ export function YourOrganizations() {
       );
     },
     onError: (error) => {
-      toast.error(errMessage(error, "Could not accept the invitation"));
+      toast.error(errMessage(error, "Couldn't accept the invitation"));
     },
   });
 
@@ -82,14 +82,14 @@ export function YourOrganizations() {
         invitationId,
       });
       if (error) {
-        throw new Error(messageOr(error.message, "Could not decline"));
+        throw new Error(messageOr(error.message, "Couldn't decline"));
       }
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: INVITATIONS_KEY });
     },
     onError: (error) => {
-      toast.error(errMessage(error, "Could not decline the invitation"));
+      toast.error(errMessage(error, "Couldn't decline the invitation"));
     },
   });
 
@@ -106,8 +106,6 @@ export function YourOrganizations() {
   return (
     <div className="flex flex-col gap-6">
       <FormSection
-        title="Organizations"
-        description="Each one has its own Cases, members, and API keys. Switching reloads the app into that organization."
         footer={
           <Button
             type="button"
@@ -161,10 +159,7 @@ export function YourOrganizations() {
         </ul>
       </FormSection>
 
-      <FormSection
-        title="Invitations"
-        description="Invitations sent to your email address."
-      >
+      <FormSection title="Invitations">
         {pendingInvitations.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             No pending invitations.

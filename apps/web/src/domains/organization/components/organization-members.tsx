@@ -97,12 +97,12 @@ async function loadTeam() {
   ]);
   if (membersResult.error) {
     throw new Error(
-      messageOr(membersResult.error.message, "Could not load members")
+      messageOr(membersResult.error.message, "Couldn't load members")
     );
   }
   if (invitationsResult.error) {
     throw new Error(
-      messageOr(invitationsResult.error.message, "Could not load invitations")
+      messageOr(invitationsResult.error.message, "Couldn't load invitations")
     );
   }
   const members = membersResult.data?.members ?? EMPTY_MEMBERS;
@@ -147,7 +147,7 @@ export function OrganizationMembers() {
         role,
       });
       if (error)
-        throw new Error(messageOr(error.message, "Could not send invitation"));
+        throw new Error(messageOr(error.message, "Couldn't send invitation"));
     },
     onSuccess: async () => {
       setEmail("");
@@ -157,7 +157,7 @@ export function OrganizationMembers() {
       await invalidate();
     },
     onError: (error) => {
-      toast.error(errMessage(error, "Could not send invitation"));
+      toast.error(errMessage(error, "Couldn't send invitation"));
     },
   });
 
@@ -167,13 +167,11 @@ export function OrganizationMembers() {
         invitationId,
       });
       if (error)
-        throw new Error(
-          messageOr(error.message, "Could not cancel invitation")
-        );
+        throw new Error(messageOr(error.message, "Couldn't cancel invitation"));
     },
     onSuccess: invalidate,
     onError: (error) => {
-      toast.error(errMessage(error, "Could not cancel invitation"));
+      toast.error(errMessage(error, "Couldn't cancel invitation"));
     },
   });
 
@@ -185,16 +183,14 @@ export function OrganizationMembers() {
         resend: true,
       });
       if (error)
-        throw new Error(
-          messageOr(error.message, "Could not resend invitation")
-        );
+        throw new Error(messageOr(error.message, "Couldn't resend invitation"));
     },
     onSuccess: async () => {
       toast.success("Invitation sent again.");
       await invalidate();
     },
     onError: (error) => {
-      toast.error(errMessage(error, "Could not resend invitation"));
+      toast.error(errMessage(error, "Couldn't resend invitation"));
     },
   });
 
@@ -202,11 +198,11 @@ export function OrganizationMembers() {
     mutationFn: async (input: { memberId: string; role: string }) => {
       const { error } = await authClient.organization.updateMemberRole(input);
       if (error)
-        throw new Error(messageOr(error.message, "Could not update role"));
+        throw new Error(messageOr(error.message, "Couldn't update role"));
     },
     onSuccess: invalidate,
     onError: (error) => {
-      toast.error(errMessage(error, "Could not update role"));
+      toast.error(errMessage(error, "Couldn't update role"));
     },
   });
 
@@ -216,11 +212,11 @@ export function OrganizationMembers() {
         memberIdOrEmail,
       });
       if (error)
-        throw new Error(messageOr(error.message, "Could not remove member"));
+        throw new Error(messageOr(error.message, "Couldn't remove member"));
     },
     onSuccess: invalidate,
     onError: (error) => {
-      toast.error(errMessage(error, "Could not remove member"));
+      toast.error(errMessage(error, "Couldn't remove member"));
     },
   });
 
@@ -228,7 +224,7 @@ export function OrganizationMembers() {
   const teamLoadError = queryLoadError(
     teamQuery,
     teamPending,
-    "Could not load team"
+    "Couldn't load team"
   );
 
   if (teamPending) {
@@ -277,8 +273,8 @@ export function OrganizationMembers() {
           }}
         >
           <FormSection
-            title="Invite"
-            description="Public sign-up stays closed. Share the invitation link if SMTP is not set."
+            title="Invite someone"
+            description="They get an email if mail is set up. Otherwise copy the link from Pending invitations below."
             footer={
               <Button type="submit" size="sm" disabled={invite.isPending}>
                 {invite.isPending ? <Spinner /> : null}
@@ -316,10 +312,7 @@ export function OrganizationMembers() {
         </form>
       ) : null}
 
-      <FormSection
-        title="Members"
-        description="Organization membership, not Case membership."
-      >
+      <FormSection>
         {members.length > 1 ? (
           <div className="grid gap-2 sm:grid-cols-[1fr_9rem]">
             <Input
@@ -450,10 +443,7 @@ export function OrganizationMembers() {
         ) : null}
       </FormSection>
 
-      <FormSection
-        title="Pending invitations"
-        description="Copy the link when mail is not configured."
-      >
+      <FormSection title="Pending invitations">
         {invitations.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             No pending invitations.

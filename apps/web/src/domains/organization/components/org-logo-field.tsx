@@ -40,7 +40,7 @@ export function OrgLogoField({
       onChange(await resizeLogoToDataUrl(file));
       setProblem(null);
     } catch (error) {
-      setProblem(errMessage(error, "Could not read the image"));
+      setProblem(errMessage(error, "Couldn't read the image"));
     }
   }
 
@@ -82,7 +82,7 @@ export function OrgLogoField({
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <p className="text-muted-foreground text-xs">
-            PNG, JPG, or GIF. Click the picture or use Upload.
+            Square images work best. Click the picture to change it.
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -93,7 +93,7 @@ export function OrgLogoField({
               onClick={() => inputRef.current?.click()}
             >
               <Upload className="size-3.5" />
-              Upload logo
+              Upload
             </Button>
             <Button
               type="button"
@@ -105,7 +105,7 @@ export function OrgLogoField({
               }}
             >
               <Trash2 className="size-3.5" />
-              Delete logo
+              Remove
             </Button>
           </div>
         </div>

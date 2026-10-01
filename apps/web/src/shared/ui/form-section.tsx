@@ -23,7 +23,8 @@ export function FormSection({
   className,
   contentClassName,
 }: {
-  title: ReactNode;
+  /** Omit when the surrounding page already shows this section's heading. */
+  title?: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -38,12 +39,16 @@ export function FormSection({
       data-tone={tone}
       className={cn("space-y-3", className)}
     >
-      <div className="space-y-1">
-        <h2 className="text-foreground text-sm font-semibold">{title}</h2>
-        {description ? (
-          <p className="text-muted-foreground text-xs">{description}</p>
-        ) : null}
-      </div>
+      {title || description ? (
+        <div className="space-y-1">
+          {title ? (
+            <h2 className="text-foreground text-sm font-semibold">{title}</h2>
+          ) : null}
+          {description ? (
+            <p className="text-muted-foreground text-xs">{description}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <Card
         className={cn(

@@ -6,8 +6,8 @@ import { Input } from "@watchdog/ui/components/input";
 const STATUS_TEXT: Record<SlugAvailability, string | null> = {
   idle: null,
   checking: "Checking…",
-  available: "Available",
-  taken: "Already taken",
+  available: "That name is free",
+  taken: "That name is already in use",
 };
 
 /** URL-name input with a live availability line under it. */
@@ -29,7 +29,7 @@ export function OrgSlugField({
   const status = STATUS_TEXT[availability];
   return (
     <Field data-invalid={availability === "taken" || undefined}>
-      <FieldLabel htmlFor={id}>URL name</FieldLabel>
+      <FieldLabel htmlFor={id}>Short name</FieldLabel>
       <Input
         id={id}
         className="font-mono"
@@ -41,18 +41,16 @@ export function OrgSlugField({
           onChange(event.target.value);
         }}
       />
-      {status === null ? null : (
-        <p
-          className={cn(
-            "text-xs",
-            availability === "taken"
-              ? "text-destructive"
-              : "text-muted-foreground"
-          )}
-        >
-          {status}
-        </p>
-      )}
+      <p
+        className={cn(
+          "text-xs",
+          availability === "taken"
+            ? "text-destructive"
+            : "text-muted-foreground"
+        )}
+      >
+        {status ?? "Used in links. Lowercase letters, numbers, and dashes."}
+      </p>
     </Field>
   );
 }

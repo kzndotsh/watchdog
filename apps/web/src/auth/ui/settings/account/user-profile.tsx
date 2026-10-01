@@ -51,7 +51,7 @@ export function UserProfile({ className }: UserProfileProps) {
   return (
     <form onSubmit={handleSubmit}>
       <FormSection
-        title={localization.settings.userProfile}
+        title="Profile"
         className={className}
         footer={
           <Button type="submit" size="sm" disabled={isPending || !session}>

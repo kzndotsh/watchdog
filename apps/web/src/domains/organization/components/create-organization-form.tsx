@@ -46,7 +46,7 @@ export function CreateOrganizationForm({
         });
         onCreated();
       } catch (error) {
-        setServerError(errMessage(error, "Could not create the organization"));
+        setServerError(errMessage(error, "Couldn't create the organization"));
       }
     },
   });

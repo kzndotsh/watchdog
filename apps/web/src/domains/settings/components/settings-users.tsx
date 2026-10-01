@@ -142,10 +142,7 @@ export function SettingsUsers() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <FormSection
-        title="Users"
-        description="Every account on this server, across all organizations. Removing someone from an organization is under Organization → Members; disabling an account here blocks sign-in and ends sessions."
-      >
+      <FormSection>
         <ul
           className={cn(
             "divide-y",

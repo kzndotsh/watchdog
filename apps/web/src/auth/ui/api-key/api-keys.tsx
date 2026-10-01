@@ -52,11 +52,8 @@ export function ApiKeys({
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <div className="flex items-end justify-between gap-3">
-        <h2 className="truncate text-sm font-semibold">
-          {apiKeyLocalization.apiKeys}
-        </h2>
-
+      {/* The settings page already titles this "API Keys", so only the action sits above the list. */}
+      <div className="flex items-end justify-end gap-3">
         {!hideCreate && (
           <Button
             className="shrink-0"

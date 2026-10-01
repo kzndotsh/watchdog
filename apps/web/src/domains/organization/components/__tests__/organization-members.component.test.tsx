@@ -65,7 +65,7 @@ describe("OrganizationMembers", () => {
 
     render(wrap(<OrganizationMembers />));
 
-    expect(await screen.findByText("Members")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Search members")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Invite" })
     ).not.toBeInTheDocument();

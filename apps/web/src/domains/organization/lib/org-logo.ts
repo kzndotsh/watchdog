@@ -33,7 +33,7 @@ export async function resizeLogoToDataUrl(file: File): Promise<string> {
     canvas.width = ORG_LOGO_SIZE;
     canvas.height = ORG_LOGO_SIZE;
     const context = canvas.getContext("2d");
-    if (!context) throw new Error("Could not read the image");
+    if (!context) throw new Error("Couldn't read the image");
     context.drawImage(
       bitmap,
       (bitmap.width - side) / 2,

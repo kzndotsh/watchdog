@@ -80,21 +80,23 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
     group: "Personal",
     label: "Organizations",
     description:
-      "Every organization you belong to, and invitations waiting for you.",
+      "Switch between organizations, create one, or answer an invitation.",
     icon: BuildingIcon,
   },
   {
     id: "organization",
     group: "Organization",
     label: "General",
-    description: "Name, logo, URL name, and leaving or deleting it.",
+    description:
+      "The organization's name and logo, plus leaving or deleting it.",
     icon: SettingsIcon,
   },
   {
     id: "members",
     group: "Organization",
     label: "Members",
-    description: "Invite people, change roles, and manage invitations.",
+    description:
+      "Invite people, change their roles, and manage pending invitations.",
     icon: UsersIcon,
   },
   {
@@ -102,7 +104,7 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
     group: "Administration",
     label: "Users",
     description:
-      "Every account on this server, across all organizations. Disabling one blocks sign-in and ends its sessions.",
+      "See every account on this server, across all organizations, and disable any that shouldn't sign in.",
     icon: UserCogIcon,
   },
 ];

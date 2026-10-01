@@ -46,9 +46,7 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
         invitationId,
       });
       if (error)
-        throw new Error(
-          messageOr(error.message, "Could not accept invitation")
-        );
+        throw new Error(messageOr(error.message, "Couldn't accept invitation"));
     },
     onSuccess: () => {
       window.location.assign("/");
@@ -71,7 +69,7 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   const previewLoadError = queryLoadError(
     previewQuery,
     previewPending,
-    "Could not load invitation"
+    "Couldn't load invitation"
   );
 
   if (previewPending || sessionPending) {
@@ -111,11 +109,11 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   if (actionError === null && acceptExisting.error) {
     actionError = errMessage(
       acceptExisting.error,
-      "Could not accept invitation"
+      "Couldn't accept invitation"
     );
   }
   if (actionError === null && registerInvitee.error) {
-    actionError = errMessage(registerInvitee.error, "Could not create account");
+    actionError = errMessage(registerInvitee.error, "Couldn't create account");
   }
 
   return (

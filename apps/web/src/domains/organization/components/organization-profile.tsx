@@ -32,6 +32,16 @@ import {
 import { Input } from "@watchdog/ui/components/input";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
+function roleSentence(role: string): string {
+  if (role.split(",").some((part) => part.trim() === "owner")) {
+    return "You're an owner of this organization.";
+  }
+  if (role.split(",").some((part) => part.trim() === "admin")) {
+    return "You're an admin of this organization.";
+  }
+  return "You're a member of this organization.";
+}
+
 /** The active organization: rename it (owner / admin) or leave it (anyone but the last owner). */
 export function OrganizationProfile() {
   const queryClient = useQueryClient();
@@ -46,7 +56,7 @@ export function OrganizationProfile() {
     queryFn: async () => {
       const { data, error } =
         await authClient.organization.getActiveMemberRole();
-      if (error) throw new Error(error.message ?? "Could not load your role");
+      if (error) throw new Error(error.message ?? "Couldn't load your role");
       return data;
     },
   });
@@ -65,7 +75,7 @@ export function OrganizationProfile() {
           logo: input.logo ?? "",
         },
       });
-      if (error) throw new Error(error.message ?? "Could not save");
+      if (error) throw new Error(error.message ?? "Couldn't save");
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: authQueryKeys.all });
@@ -76,13 +86,13 @@ export function OrganizationProfile() {
       const { error } = await authClient.organization.delete({
         organizationId,
       });
-      if (error) throw new Error(error.message ?? "Could not delete");
+      if (error) throw new Error(error.message ?? "Couldn't delete");
     },
   });
   const leave = useMutation({
     mutationFn: async (organizationId: string) => {
       const { error } = await authClient.organization.leave({ organizationId });
-      if (error) throw new Error(error.message ?? "Could not leave");
+      if (error) throw new Error(error.message ?? "Couldn't leave");
     },
   });
   const [draft, setDraft] = useState<{
@@ -136,7 +146,7 @@ export function OrganizationProfile() {
           setDraft(null);
         },
         onError: (mutationError) => {
-          setError(errMessage(mutationError, "Could not save"));
+          setError(errMessage(mutationError, "Couldn't save"));
         },
       }
     );
@@ -146,8 +156,6 @@ export function OrganizationProfile() {
     <div className="flex flex-col gap-6">
       <form onSubmit={save}>
         <FormSection
-          title="Organization"
-          description="Cases, members, and API keys belong to one organization."
           footer={
             canEdit ? (
               <Button
@@ -160,7 +168,7 @@ export function OrganizationProfile() {
             ) : undefined
           }
           footerStatus={
-            canEdit ? undefined : "Only owners and admins can edit this."
+            canEdit ? undefined : "Ask an owner or admin to change these."
           }
         >
           <FieldGroup>
@@ -199,8 +207,8 @@ export function OrganizationProfile() {
 
       <FormSection
         tone="warning"
-        title="Leave organization"
-        description="You lose access to its Cases. The last owner can't leave: promote someone else first."
+        title="Leave this organization"
+        description="You'll lose access to its Cases until someone invites you back. If you're the only owner, make someone else an owner first (see Members)."
         footer={
           <AlertDialog>
             <AlertDialogTrigger
@@ -212,7 +220,8 @@ export function OrganizationProfile() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Leave {organization.name}?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You can only rejoin if someone invites you again.
+                  You&apos;ll lose access to its Cases and can only rejoin if
+                  someone invites you again.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -224,7 +233,7 @@ export function OrganizationProfile() {
                     leave.mutate(organization.id, {
                       onSuccess: reloadIntoOrganization,
                       onError: (mutationError) => {
-                        setError(errMessage(mutationError, "Could not leave"));
+                        setError(errMessage(mutationError, "Couldn't leave"));
                       },
                     });
                   }}
@@ -237,15 +246,15 @@ export function OrganizationProfile() {
         }
       >
         <p className="text-muted-foreground text-sm">
-          Your role: {roleData?.role ?? "member"}
+          {roleSentence(roleData?.role ?? "member")}
         </p>
       </FormSection>
 
       {isOwner ? (
         <FormSection
           tone="error"
-          title="Delete organization"
-          description="Permanently deletes the organization with all of its Cases, evidence, artifacts, members, and invitations. This can't be undone."
+          title="Delete this organization"
+          description="Permanently removes the organization and everything in it. This can't be undone."
           footer={
             <AlertDialog
               onOpenChange={() => {
@@ -263,8 +272,8 @@ export function OrganizationProfile() {
                     Delete {organization.name}?
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Every Case and all evidence in this organization is deleted
-                    for everyone. Type the organization name to confirm.
+                    This deletes every Case and all evidence for everyone in{" "}
+                    {organization.name}. Type the organization name to confirm.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <Input
@@ -286,13 +295,13 @@ export function OrganizationProfile() {
                         onSuccess: reloadIntoOrganization,
                         onError: (mutationError) => {
                           setError(
-                            errMessage(mutationError, "Could not delete")
+                            errMessage(mutationError, "Couldn't delete")
                           );
                         },
                       });
                     }}
                   >
-                    Delete everything
+                    Delete organization
                   </Button>
                 </AlertDialogFooter>
               </AlertDialogContent>
