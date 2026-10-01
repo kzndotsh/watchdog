@@ -90,7 +90,7 @@ function SetPassword({ className }: { className?: string }) {
 
   return (
     <FormSection
-      title={localization.settings.changePassword}
+      title="Password"
       className={className}
       footer={
         <Button
@@ -177,7 +177,7 @@ function ChangePasswordForm({
   return (
     <form onSubmit={handleSubmit}>
       <FormSection
-        title={localization.settings.changePassword}
+        title="Password"
         className={className}
         footer={
           <Button type="submit" size="sm" disabled={isPending || !session}>
