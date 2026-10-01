@@ -64,7 +64,7 @@ function TasksActive({
   }, [taskId, ws, onTaskIdChange]);
 
   return (
-    <Page density="split" className="gap-3">
+    <Page density="split" className="gap-0">
       <PageHeader
         count={ws.pending ? undefined : ws.tasks.length}
         countOn="tasks"
@@ -85,13 +85,16 @@ function TasksActive({
         loading={ws.pending}
         label="Loading board"
         fallback={<BoardSkeleton />}
-        className="flex min-h-0 min-w-0 flex-1 flex-col"
+        // Board bleeds to the inset edges (undoes Page's side + bottom padding).
+        className="-mx-3 -mb-3 flex min-h-0 min-w-0 flex-1 flex-col sm:-mx-4 sm:-mb-4"
       >
         {ws.tasksLoadError ? (
-          <FetchErrorAlert
-            error={ws.tasksLoadError}
-            onRetry={ws.handleRetryBoard}
-          />
+          <div className="px-3 sm:px-4">
+            <FetchErrorAlert
+              error={ws.tasksLoadError}
+              onRetry={ws.handleRetryBoard}
+            />
+          </div>
         ) : (
           <div
             className={cn(

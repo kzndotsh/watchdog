@@ -1,5 +1,4 @@
 /* oxlint-disable react/only-export-components, react-doctor/only-export-components -- skeleton layout tokens + components */
-import { GripVerticalIcon } from "lucide-react";
 /**
  * Skeleton loading states for each major surface.
  *
@@ -511,24 +510,14 @@ export function QueueSkeleton({
 function TaskCardSkeleton({ showFooter = true }: { showFooter?: boolean }) {
   return (
     <div className={TASK_CARD_SHELL_CLASS}>
-      <span
-        aria-hidden
-        className="text-muted-foreground mt-0.5 shrink-0 opacity-25"
-      >
-        <GripVerticalIcon className="size-3.5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <Skeleton className="h-4 min-w-0 flex-1 basis-0 rounded-sm" />
-          <Skeleton className="mt-0.5 h-4 w-10 shrink-0 rounded-sm" />
+      <Skeleton className="h-4 w-4/5 rounded-sm" />
+      {showFooter ? (
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-4 w-10 shrink-0 rounded-sm" />
+          <Skeleton className={cn(CHIP_SIZE_CLASS.sm, "w-16 shrink-0")} />
+          <Skeleton className="ml-auto h-3 w-12 shrink-0 rounded-sm" />
         </div>
-        {showFooter ? (
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <Skeleton className={cn(CHIP_SIZE_CLASS.sm, "w-16 shrink-0")} />
-            <Skeleton className="h-3 w-14 shrink-0 rounded-sm" />
-          </div>
-        ) : null}
-      </div>
+      ) : null}
     </div>
   );
 }
@@ -541,14 +530,14 @@ function TaskBoardColumnSkeleton({
 }) {
   return (
     <div className={TASK_BOARD_COLUMN_SHELL_CLASS}>
-      <header className="border-border bg-background sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
+      <header className="border-border bg-background sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-2.5 py-2">
         <SectionLabel as="h3">
           <Skeleton className="inline-block h-3 w-20 align-middle" />
           <Skeleton className="ml-2 inline-block h-3 w-4 align-middle tabular-nums" />
         </SectionLabel>
         <Skeleton className="size-5 shrink-0 rounded-md" />
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-1.5">
         {Array.from({ length: cards }).map((_, cardIndex) => (
           <TaskCardSkeleton key={cardIndex} showFooter={cardIndex % 2 === 0} />
         ))}

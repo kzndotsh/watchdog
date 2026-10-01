@@ -104,7 +104,7 @@ export function TaskBoardColumn({
 
   return (
     <div className={TASK_BOARD_COLUMN_SHELL_CLASS}>
-      <header className="border-border bg-background sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
+      <header className="border-border bg-background sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-2.5 py-2">
         <SectionLabel as="h3">
           {taskStatusLabel(column)}
           <TabCount n={items.length} />
@@ -126,7 +126,7 @@ export function TaskBoardColumn({
       <ScrollArea className="min-h-0 flex-1">
         <div
           ref={setNodeRef}
-          className="flex min-h-[8rem] flex-col gap-1.5 p-2"
+          className="flex min-h-[8rem] flex-col gap-1.5 p-1.5"
         >
           <SortableContext
             id={column}
