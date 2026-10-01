@@ -12,13 +12,17 @@ import { cn } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/shadcn/alert";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import {
   listInvalidIdentifierOps,
   normalizeUuidList,
   patchOpText,
 } from "@watchdog/schemas";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@watchdog/ui/components/alert";
 
 function summaryIsRedundant(proposal: ProposalRecord): boolean {
   const summary = proposal.summary?.trim();
@@ -90,9 +94,7 @@ export function TriagePatchBody({
           proposal.summary !== null &&
           proposal.summary !== "" ? (
             <div className="bg-muted/30 rounded-md border px-3 py-2">
-              <p className="text-muted-foreground text-xs font-medium">
-                Summary
-              </p>
+              <p className="text-muted-foreground text-xs">Summary</p>
               <p className="mt-0.5 text-sm leading-relaxed text-pretty">
                 {proposal.summary}
               </p>
@@ -113,7 +115,7 @@ export function TriagePatchBody({
                 <ul className="mt-1 flex flex-col gap-1">
                   {invalidIdentifierOps.map((hit) => (
                     <li key={hit.opId}>
-                      <span className="text-foreground font-medium">
+                      <span className="text-foreground">
                         {kindLabel(hit.type)}: {hit.value || "(empty)"}
                       </span>
                       {" — "}
@@ -132,7 +134,7 @@ export function TriagePatchBody({
                 <ul className="mt-1 flex flex-col gap-1">
                   {collisions.map((hit) => (
                     <li key={`${hit.opId}-${hit.entityId}`}>
-                      <span className="text-foreground font-medium">
+                      <span className="text-foreground">
                         {kindLabel(hit.type)}: {hit.value}
                       </span>
                       {" on "}

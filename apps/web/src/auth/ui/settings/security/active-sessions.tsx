@@ -1,15 +1,17 @@
-"use client"
+"use client";
 
-import { useAuth, useListSessions, useSession } from "@better-auth-ui/react"
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
-import { Separator } from "@/shared/ui/shadcn/separator"
-import { Skeleton } from "@/shared/ui/shadcn/skeleton"
-import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section"
-import { cn } from "@/lib/utils"
-import { ActiveSession } from "./active-session"
+import { useAuth, useListSessions, useSession } from "@better-auth-ui/react";
 
-export type ActiveSessionsProps = {
-  className?: string
+import { cn } from "@/lib/utils";
+import { ACCENT_CARD_SURFACE } from "@/shared/ui/form-section";
+import { Card, CardContent } from "@watchdog/ui/components/card";
+import { Separator } from "@watchdog/ui/components/separator";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
+
+import { ActiveSession } from "./active-session";
+
+export interface ActiveSessionsProps {
+  className?: string;
 }
 
 /**
@@ -21,25 +23,25 @@ export type ActiveSessionsProps = {
  * @returns A JSX element containing the sessions card
  */
 export function ActiveSessions({ className }: ActiveSessionsProps) {
-  const { authClient, localization } = useAuth()
-  const { data: session } = useSession(authClient)
+  const { authClient, localization } = useAuth();
+  const { data: session } = useSession(authClient);
 
-  const { data: sessions, isPending } = useListSessions(authClient)
+  const { data: sessions, isPending } = useListSessions(authClient);
 
-  const currentToken = session?.session.token
+  const currentToken = session?.session.token;
 
   const activeSessions = [...(sessions ?? [])].sort((a, b) => {
-    const aCurrent = a.token === currentToken
-    const bCurrent = b.token === currentToken
-    if (aCurrent !== bCurrent) return aCurrent ? -1 : 1
-    const aAt = a.createdAt ? Date.parse(String(a.createdAt)) : 0
-    const bAt = b.createdAt ? Date.parse(String(b.createdAt)) : 0
-    return bAt - aAt
-  })
+    const aCurrent = a.token === currentToken;
+    const bCurrent = b.token === currentToken;
+    if (aCurrent !== bCurrent) return aCurrent ? -1 : 1;
+    const aAt = a.createdAt ? Date.parse(String(a.createdAt)) : 0;
+    const bAt = b.createdAt ? Date.parse(String(b.createdAt)) : 0;
+    return bAt - aAt;
+  });
 
   return (
     <div>
-      <h2 className="text-sm font-semibold mb-3">
+      <h2 className="mb-3 text-sm font-semibold">
         {localization.settings.activeSessions}
       </h2>
 
@@ -59,12 +61,12 @@ export function ActiveSessions({ className }: ActiveSessionsProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 function SessionRowSkeleton() {
   return (
-    <Card className="bg-transparent border-0 ring-0 shadow-none">
+    <Card className="border-0 bg-transparent shadow-none ring-0">
       <CardContent className="flex items-center gap-3">
         <Skeleton className="size-10 rounded-md" />
 
@@ -74,5 +76,5 @@ function SessionRowSkeleton() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -9,14 +9,16 @@ import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
 import { useTaskWorkspace } from "@/domains/tasks/hooks/use-task-workspace";
 import { cn } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
+import type { AppAction } from "@/shared/lib/app-action";
+import { usePaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
+import { FieldError } from "@watchdog/ui/components/field";
 
 interface Props {
   entityId?: string;
@@ -31,6 +33,23 @@ function TasksActive({
   onTaskIdChange,
 }: Props & { active: CaseRecord }) {
   const ws = useTaskWorkspace(active.id, { entityId });
+  const { openCreate } = ws;
+  const paletteActions = useMemo<AppAction[]>(
+    () => [
+      {
+        id: "tasks-new",
+        label: "New task",
+        group: "page",
+        icon: PlusIcon,
+        keywords: "create add todo",
+        run: () => {
+          openCreate("backlog");
+        },
+      },
+    ],
+    [openCreate]
+  );
+  usePaletteCommands(paletteActions);
 
   useEffect(() => {
     const normalizedTaskId = scopeOptionalUuid(taskId);
@@ -45,7 +64,7 @@ function TasksActive({
   }, [taskId, ws, onTaskIdChange]);
 
   return (
-    <Page density="split" className="gap-3">
+    <Page density="split" className="gap-0">
       <PageHeader
         count={ws.pending ? undefined : ws.tasks.length}
         countOn="tasks"
@@ -66,13 +85,16 @@ function TasksActive({
         loading={ws.pending}
         label="Loading board"
         fallback={<BoardSkeleton />}
-        className="flex min-h-0 min-w-0 flex-1 flex-col"
+        // Board bleeds to the inset edges (undoes Page's side + bottom padding).
+        className="-mx-3 -mb-3 flex min-h-0 min-w-0 flex-1 flex-col sm:-mx-4 sm:-mb-4"
       >
         {ws.tasksLoadError ? (
-          <FetchErrorAlert
-            error={ws.tasksLoadError}
-            onRetry={ws.handleRetryBoard}
-          />
+          <div className="px-3 sm:px-4">
+            <FetchErrorAlert
+              error={ws.tasksLoadError}
+              onRetry={ws.handleRetryBoard}
+            />
+          </div>
         ) : (
           <div
             className={cn(
@@ -80,7 +102,9 @@ function TasksActive({
               placeholderDeemphasisClass(ws.tasksPlaceholder)
             )}
           >
-            <FormInlineError>{ws.quickCreateError}</FormInlineError>
+            <div className="px-3 sm:px-4">
+              <FieldError>{ws.quickCreateError}</FieldError>
+            </div>
             <TaskBoard
               items={ws.tasks}
               selectedId={ws.selected?.id}

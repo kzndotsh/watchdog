@@ -15,11 +15,20 @@ import {
   SEARCH_MIN_QUERY_LENGTH,
   type SearchCaseResult,
 } from "@/domains/search/types";
+import type { AppAction } from "@/shared/lib/app-action";
+import { useRegisteredPaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import { ActionShortcutChord, MENU_KBD_CLASS } from "@/shared/ui/action-list";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
+import {
+  statusLabel,
+  taskPriorityLabel,
+  taskStatusLabel,
+} from "@/shared/ui/vocab";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { entityDisplayLabel } from "@watchdog/schemas";
 import {
   Command,
   CommandDialog,
@@ -30,15 +39,8 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@/shared/ui/shadcn/command";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
-import {
-  statusLabel,
-  taskPriorityLabel,
-  taskStatusLabel,
-} from "@/shared/ui/vocab";
-import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import { entityDisplayLabel } from "@watchdog/schemas";
+} from "@watchdog/ui/components/command";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
 const DEBOUNCE_MS = 250;
 
@@ -58,6 +60,52 @@ function taskHitShortcut(hit: {
   return priority === null ? status : `${status} · ${priority}`;
 }
 
+/** Separated group of AppAction commands (hidden when empty). */
+function PaletteActionGroup({
+  heading,
+  actions,
+  onRun,
+}: {
+  heading: string;
+  actions: readonly AppAction[];
+  onRun: (run: () => void) => void;
+}) {
+  if (actions.length === 0) return null;
+  return (
+    <>
+      <CommandSeparator />
+      <CommandGroup heading={heading}>
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <CommandItem
+              key={action.id}
+              value={`command ${action.label} ${action.keywords ?? ""}`}
+              disabled={action.disabled}
+              onSelect={() => {
+                onRun(() => {
+                  action.run();
+                });
+              }}
+            >
+              {Icon ? <Icon /> : null}
+              <span>{action.label}</span>
+              {action.shortcut ? (
+                <CommandShortcut>
+                  <ActionShortcutChord
+                    chord={action.shortcut}
+                    kbdClassName={MENU_KBD_CLASS}
+                  />
+                </CommandShortcut>
+              ) : null}
+            </CommandItem>
+          );
+        })}
+      </CommandGroup>
+    </>
+  );
+}
+
 interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -68,6 +116,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const { paletteCommands: commandActions } = useSearchUi();
+  const pageActions = useRegisteredPaletteCommands();
 
   const {
     cases,
@@ -226,39 +275,16 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   );
                 })}
               </CommandGroup>
-              {commandActions.length > 0 ? (
-                <>
-                  <CommandSeparator />
-                  <CommandGroup heading="Commands">
-                    {commandActions.map((action) => {
-                      const Icon = action.icon;
-                      return (
-                        <CommandItem
-                          key={action.id}
-                          value={`command ${action.label} ${action.keywords ?? ""}`}
-                          disabled={action.disabled}
-                          onSelect={() => {
-                            closeThen(() => {
-                              action.run();
-                            });
-                          }}
-                        >
-                          {Icon ? <Icon /> : null}
-                          <span>{action.label}</span>
-                          {action.shortcut ? (
-                            <CommandShortcut className="tracking-normal">
-                              <ActionShortcutChord
-                                chord={action.shortcut}
-                                kbdClassName={MENU_KBD_CLASS}
-                              />
-                            </CommandShortcut>
-                          ) : null}
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </>
-              ) : null}
+              <PaletteActionGroup
+                heading="This Page"
+                actions={pageActions}
+                onRun={closeThen}
+              />
+              <PaletteActionGroup
+                heading="Commands"
+                actions={commandActions}
+                onRun={closeThen}
+              />
             </>
           )}
 

@@ -13,8 +13,8 @@ describe("FoundationsSection", () => {
     expect(screen.getByText("confirmed")).toBeInTheDocument();
     expect(screen.getByText("queued")).toBeInTheDocument();
     expect(screen.getByText("person")).toBeInTheDocument();
-    expect(screen.getByText("text-heading-page")).toBeInTheDocument();
-    expect(screen.getByText("text-label-meta-sm")).toBeInTheDocument();
+    expect(screen.getByText("heading-page")).toBeInTheDocument();
+    expect(screen.getByText("label-meta-sm")).toBeInTheDocument();
     expect(
       screen.getByRole("columnheader", { name: "px" })
     ).toBeInTheDocument();

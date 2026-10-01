@@ -1,5 +1,5 @@
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 
 const EXTERNAL_AI_URL_MAX = 1800;
 

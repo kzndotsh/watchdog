@@ -34,6 +34,7 @@ const config = defineConfig({
     noExternal: [
       "@watchdog/ai",
       "@watchdog/api",
+      "@watchdog/auth",
       "@watchdog/cap-sdk",
       "@watchdog/caps",
       "@watchdog/core",
@@ -43,6 +44,7 @@ const config = defineConfig({
       "@watchdog/policy",
       "@watchdog/schemas",
       "@watchdog/tools",
+      "@watchdog/ui",
     ],
   },
   // Belt for residual HMR / server-fn discovery after client code stays on

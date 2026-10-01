@@ -4,9 +4,9 @@ This page highlights Queue, SplitView, IdChip, and related atoms.
 
 ## Hand-owned atoms (highlights)
 
-Key atoms include `ActiveTabBody` / `SuspenseTabBody`, `LoadingRegion`, `RegionBoundary`, `PendingRegion`, `DetailContextStrip` / `DetailContextHeader` (muted inline context under split detail), `SectionLabel`, `SectionHeaderBar`, `FormSection`, and `MetaRow` / `MetaGrid` (Detail/drawer key-value, not form helpers or queue titles). The inventory also includes `shared/ui/vocab` badges; `StatusInk` (dot + colored word in Detail strips); `IdChip` + `MiddleTruncate` (opaque ids/hashes; `ds:ban` blocks `.slice(0,N)`); `EntityMention` (linked entity names, not for row-click tables); `ActorMention` (optional `By` prefix, AtSign glyph + handle, no chip); `RelativeTime`; `Timestamp`; `StatusDot`; `SearchField`; and `DestructiveConfirmDialog`.
+Key atoms include `ActiveTabBody`, `LoadingRegion`, `PendingRegion`, `DetailContextLine` / `DetailContextHeader` (muted inline context under split detail), `SectionLabel`, `SectionHeaderBar`, `FormSection`, and `MetaRow` / `MetaGrid` (Detail/drawer key-value, not form helpers or queue titles). The inventory also includes `shared/ui/vocab` badges; `StatusInk` (status glyph + colored word in Detail strips); `IdChip` + `MiddleTruncate` (opaque ids/hashes; `ds:ban` blocks `.slice(0,N)`); `EntityMention` (linked entity names, not for row-click tables); `ActorMention` (optional `By` prefix, AtSign glyph + handle, no chip); `RelativeTime`; `Timestamp`; `StatusDot`; `SearchField`; and `DestructiveConfirmDialog`.
 
-Picker atoms are `EntityCombobox` / `FieldCombobox` / `FieldSelect` / `ConfidenceSelect` (options in, no I/O; Combobox may set `group` for headings). Other shared atoms are `FormInlineError` / `ComposerShell`, Queue + Detail + `QueueShell` + `SplitView` + `ArtifactPreview`, `DetailFooter` / `DetailStatusChip`, the `DataTable` kit (+ editable cells / append composer; **`pending` per cell**), the graph kit (`GraphCanvas` / `EntityNode` / `GraphEdgePath`), `RichTextEditor` (Markdown string source of truth for dossier Summary/Notes), `InlineLoading`, `Spinner`, `FetchErrorAlert`, `Empty` / `EmptyState`, and hand skeletons in `skeletons.tsx`. Page chrome (`PageToolbar` / `PageFilterMenu` / `RouteError`; `RoutePending` for `defaultPendingComponent` only) is in `shared/layout/`. The style guide is **`/ui`**. Add new atoms with `pnpm --filter @watchdog/web ds:atom: <Name> <file>`.
+Picker atoms are `EntityCombobox` / `FieldCombobox` / `FieldSelect` / `ConfidenceSelect` (options in, no I/O; Combobox may set `group` for headings). Other shared atoms are `FormInlineWarning` / `ComposerShell`, Queue + Detail + `QueueShell` + `SplitView` + `ArtifactPreview`, `DetailFooter` / `Chip`, the `DataTable` kit (+ editable cells / append composer; **`pending` per cell**), the graph kit (`GraphCanvas` / `EntityNode` / `GraphEdgePath`), `RichTextEditor` (Markdown string source of truth for dossier Summary/Notes), `InlineLoading`, `Spinner`, `FetchErrorAlert`, `Empty` / `EmptyState`, and hand skeletons in `skeletons.tsx`. Page chrome (`PageToolbar` / `PageFilterMenu` / `RouteError`; `RoutePending` for `defaultPendingComponent` only) is in `shared/layout/`. The style guide is **`/ui`**. New atoms go in `shared/ui/` (see the rules in `docs/reference/web/ui/rules.md`).
 
 Evidence pickers live in `shared/ui/intake/evidence-picker.tsx` (`EvidencePicker`, `EvidenceCiteChips`); dossier composers + Triage Accept import them from there.
 
@@ -14,7 +14,7 @@ Evidence pickers live in `shared/ui/intake/evidence-picker.tsx` (`EvidencePicker
 
 | Need | Use |
 | --- | --- |
-| Dense job lifecycle in a row | `StatusDot` (`pulse` only when `running` + opted in) |
+| Dense job lifecycle in a row | `StatusDot`: shape-coded glyph from `STATUS_GLYPH` (same-hue statuses never share a shape); `pulse` spins `running` only |
 | Scannable text status | `StatusInk` (Detail strips) · `StatusBadge` (tables) |
 | Confidence / kind / review | domain badges: ≤1-2 per row cluster |
 | Opaque id / hash / path | `IdChip` (not Badge) |
@@ -32,6 +32,28 @@ Evidence pickers live in `shared/ui/intake/evidence-picker.tsx` (`EvidencePicker
 | Button icons / Spinner in Button | `data-icon="inline-start\|inline-end"` |
 
 Button sizes: PageHeader / toolbar → `sm` (or default); Queue row / dense icon actions → `xs`.
+
+### Keyboard
+
+- `QueueShell` owns Queue keyboard flow (`shared/lib/queue-keyboard.ts`): `j` / `k` anywhere outside editable fields, ↑ / ↓ while focus is in the Queue. It clicks the next `[data-slot=queue-row]`, so each Queue keeps its own `onSelect` → URL wiring. Only the most recently mounted Queue listens; opt out with `keyboard={false}`.
+- Single-key actions are declarative: put `data-hotkey="<key>"` + `aria-keyshortcuts` on the control and a `Kbd` hint inside it. `useDataHotkeys` (mounted in `SearchChrome`) clicks the first live match, so disabled / gated controls stay gated. Add every shortcut to `HOTKEYS` so the Shortcuts dialog lists it.
+- Page commands: a surface calls `usePaletteCommands(actions)` (`shared/lib/palette-commands.ts`) with its `page` AppActions; Mod+K lists them under **This Page** while it is mounted. Reuse the same AppAction the button or ⋯ menu runs; don't fork a palette-only handler.
+
+### Variants, not overrides
+
+Callers place components (layout classes, `truncate`) and pick a size or variant; they don't patch a component's spacing, type, color, or shape with `className` (`no-restyle`, see [`rules.md`](rules.md)). If a screen needs a look the component lacks, use the stock component or a token; never patch the vendored primitive or the call site.
+
+**Two layers.** `@watchdog/ui` (`packages/ui`) holds the shadcn primitives exactly as the CLI writes them (`base-mira`); nobody edits them (see [`vendor.md`](vendor.md)). Domain code imports vanilla primitives straight from `@watchdog/ui/components/<name>`. Where a behavior must apply everywhere, `apps/web/src/shared/ui/primitives/<name>.tsx` is a **same-name wrapper** that composes the untouched upstream component; oxlint bans the vanilla path for exactly those components (the list follows the folder).
+
+| Wrapper | Adds |
+| --- | --- |
+| `button` | `loading` spinner + disable; `data-variant` / `data-size` / `data-loading` hooks (dialog Enter-to-confirm and coarse-pointer sizing key on them) |
+| `dialog`, `alert-dialog` | Enter confirms the default action (`enterConfirms`); `AlertDialogAction` runs on our Button so it can show `loading` |
+| `combobox` | `ComboboxInput tone="warning"` (data leaves the machine) |
+
+A new wrapper must also be listed in `primitives/__tests__/wrapper-lint-coverage.test.ts`, which fails if the linter stops checking it. Anything that is only a different look is not a wrapper: use the stock component, or a CSS token if it should change everywhere. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`toast` helpers, `QueueRow`, `StatusDot`, `EditableTextCell variant="title"`, `EmptyState size="sm"` / `framed`, `RowActionsMenu alwaysVisible`).
+
+Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`; Inputs 12px at `md+`), so don't add `text-xs` / `h-*` patches to match the old scale.
 
 ## Gotchas
 

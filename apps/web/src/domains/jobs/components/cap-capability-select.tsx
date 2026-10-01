@@ -16,7 +16,7 @@ import {
   ComboboxLabel,
   ComboboxList,
   ComboboxSeparator,
-} from "@/shared/ui/shadcn/combobox";
+} from "@/shared/ui/primitives/combobox";
 import { trimmedOrUndefined } from "@watchdog/schemas";
 
 interface CapCapabilitySelectProps {
@@ -44,8 +44,8 @@ function CapInfoCard({
   return (
     <div className="space-y-2 text-xs">
       <div>
-        <p className="font-medium">{cap.title}</p>
-        <p className="text-muted-foreground text-label-mono-sm font-mono leading-snug">
+        <p>{cap.title}</p>
+        <p className="text-muted-foreground text-2xs font-mono leading-snug">
           {cap.id}
         </p>
       </div>
@@ -62,7 +62,7 @@ function CapInfoCard({
               <dd
                 className={
                   row.mono === true
-                    ? "text-label-mono-sm font-mono leading-snug break-all"
+                    ? "text-2xs font-mono leading-snug break-all"
                     : "leading-snug"
                 }
               >
@@ -161,18 +161,17 @@ export function CapCapabilitySelect({
         showClear={value !== ""}
         aria-label="Capability"
         placeholder="Select Cap…"
+        tone={needsEgress ? "warning" : "default"}
         className={cn(
           CONTROL_HEIGHT,
-          "w-full max-w-full min-w-[12rem] [&_[data-slot=input-group-control]]:text-xs",
-          needsEgress &&
-            "border-warning/40 [&_[data-slot=input-group-control]]:text-warning",
+          "w-full max-w-full min-w-[12rem]",
           className
         )}
       />
 
       <ComboboxContent
         align="center"
-        className="flex w-[min(100vw-2rem,36rem)] min-w-[22rem] flex-row overflow-hidden p-0"
+        className="flex w-[min(100vw-2rem,36rem)] min-w-[22rem] flex-row overflow-hidden"
       >
         <div className="flex min-w-0 flex-1 flex-col">
           <ComboboxEmpty>No Caps match.</ComboboxEmpty>
@@ -180,7 +179,7 @@ export function CapCapabilitySelect({
             {(group: CapGroup, index: number) => (
               <ComboboxGroup key={group.value} items={group.items}>
                 {index > 0 ? <ComboboxSeparator /> : null}
-                <ComboboxLabel className="px-1.5">{group.value}</ComboboxLabel>
+                <ComboboxLabel>{group.value}</ComboboxLabel>
                 <ComboboxCollection>
                   {(cap: CapListItem) => (
                     <ComboboxItem key={cap.id} value={cap}>

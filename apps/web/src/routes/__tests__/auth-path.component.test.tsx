@@ -27,6 +27,14 @@ vi.mock("@/auth/ensure-session", () => ({
 }));
 
 vi.mock("@/auth/ui/auth", () => ({
+  AUTH_VIEW_PATHS: new Set([
+    "sign-in",
+    "sign-up",
+    "sign-out",
+    "forgot-password",
+    "reset-password",
+    "verify-email",
+  ]),
   Auth: ({ path }: { path: string }) => <div>Auth view {path}</div>,
 }));
 
@@ -47,6 +55,20 @@ describe("auth path route", () => {
       })
     );
   });
+
+  it.each(["error", "callback", "redirect", "reset-link-sent"])(
+    "redirects %s, which <Auth> has no view for",
+    async (path) => {
+      await expect(
+        Route.options.beforeLoad!({
+          params: { path },
+          context: { queryClient: {} },
+        } as never)
+      ).rejects.toEqual(
+        expect.objectContaining({ params: { path: "sign-in" } })
+      );
+    }
+  );
 
   it("redirects signed-in users away from sign-in", async () => {
     vi.mocked(ensureAppSession).mockResolvedValue({

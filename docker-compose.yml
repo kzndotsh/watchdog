@@ -28,8 +28,9 @@ services:
       retries: 10
 
   minio:
-    # Hub `minio/minio:latest` is no longer pullable; community images live on Quay (pinned).
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    # Upstream `minio/minio` (Hub and Quay) is no longer pullable. coollabsio builds MinIO from
+    # source and ships `mc` and bash, which the healthcheck and scripts/minio-init.sh use.
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
     container_name: watchdog-minio
     restart: unless-stopped
     environment:
@@ -44,7 +45,12 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      # No curl in the image: speak HTTP over bash's /dev/tcp.
+      test:
+        - CMD
+        - bash
+        - -c
+        - 'exec 3<>/dev/tcp/127.0.0.1/9000; printf "GET /minio/health/live HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3; read -r line <&3; [[ "$$line" == *" 200 "* ]]'
       interval: 10s
       timeout: 5s
       retries: 5

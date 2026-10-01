@@ -1,8 +1,6 @@
 import type { ConnectionComposerValues } from "@/domains/entities/lib/connection-composer";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
 import {
   clampEdgePhrase,
   edgePhraseOptionsForPeers,
@@ -14,6 +12,8 @@ import {
 } from "@/shared/ui/vocab/edge-predicate";
 import type { EntityKind } from "@watchdog/schemas";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
+import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 interface Props {
   centerKind: EntityKind;
@@ -103,9 +103,9 @@ export function ConnectionComposerFields({
   }
 
   return (
-    <FieldGroup className="gap-3">
-      <Field className="gap-1.5">
-        <FieldLabel className="text-xs">Relationship</FieldLabel>
+    <FieldGroup>
+      <Field>
+        <FieldLabel>Relationship</FieldLabel>
         <FieldCombobox
           value={values.phraseValue}
           onValueChange={setPhrase}
@@ -118,8 +118,8 @@ export function ConnectionComposerFields({
         />
       </Field>
 
-      <Field className="gap-1.5">
-        <FieldLabel className="text-xs">Peer</FieldLabel>
+      <Field>
+        <FieldLabel>Peer</FieldLabel>
         <EntityCombobox
           entities={[...filteredPeerOptions]}
           value={values.peerId}
@@ -127,16 +127,15 @@ export function ConnectionComposerFields({
           allowEmpty={false}
           emptyLabel="Select peer…"
           size="sm"
+          className="w-full flex-none"
           aria-label="Connection peer"
           disabled={disabled}
         />
       </Field>
 
       {needsNotes ? (
-        <Field className="gap-1.5">
-          <FieldLabel className="text-xs" htmlFor="connection-notes">
-            Notes
-          </FieldLabel>
+        <Field>
+          <FieldLabel htmlFor="connection-notes">Notes</FieldLabel>
           <Input
             id="connection-notes"
             value={values.notes}
@@ -145,7 +144,6 @@ export function ConnectionComposerFields({
             }}
             placeholder="Why related…"
             disabled={disabled}
-            className="h-7 text-xs"
           />
         </Field>
       ) : null}

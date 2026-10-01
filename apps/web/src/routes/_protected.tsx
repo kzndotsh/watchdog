@@ -4,6 +4,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { authClient } from "@/auth/client";
 import { ensureAppSession } from "@/auth/ensure-session";
 import { casesContextQuery } from "@/domains/cases/queries";
+import { organizationStateQuery } from "@/domains/organization/queries";
 import { AppShell } from "@/shared/layout/app-shell";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
@@ -31,6 +32,15 @@ export const Route = createFileRoute("/_protected")({
         // BA UI AuthProvider reads `redirectTo` from the URL search string.
         search: { redirectTo: returnTo },
       });
+    }
+
+    // Signed in but in no organization yet (self-serve signup): create one first.
+    const { organizationId } = await queryClient.query(
+      organizationStateQuery()
+    );
+    if (!organizationId) {
+      // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's redirect() throws a Response, per docs
+      throw redirect({ to: "/onboarding" });
     }
 
     // Sidebar CaseSwitcher + case nav need cases context on every protected route.

@@ -49,12 +49,20 @@ vi.mock("@/domains/settings/components/settings-credentials-form", () => ({
   SettingsCredentialsForm: () => <div>Credentials form</div>,
 }));
 
-vi.mock("@/auth/ui/team/team-settings", () => ({
-  TeamSettings: () => <div>Team panel</div>,
+vi.mock("@/domains/organization/components/organization-members", () => ({
+  OrganizationMembers: () => <div>Team panel</div>,
 }));
 
-vi.mock("@/auth/ui/users/users-settings", () => ({
-  UsersSettings: () => <div>Users panel</div>,
+vi.mock("@/domains/organization/components/organization-profile", () => ({
+  OrganizationProfile: () => <div>Organization profile</div>,
+}));
+
+vi.mock("@/domains/organization/components/your-organizations", () => ({
+  YourOrganizations: () => <div>Your organizations panel</div>,
+}));
+
+vi.mock("@/domains/settings/components/settings-users", () => ({
+  SettingsUsers: () => <div>Users panel</div>,
 }));
 
 vi.mock("@/domains/settings/components/settings-shell", () => ({
@@ -62,10 +70,12 @@ vi.mock("@/domains/settings/components/settings-shell", () => ({
     "account",
     "security",
     "appearance",
-    "team",
-    "users",
     "api-keys",
     "credentials",
+    "organizations",
+    "organization",
+    "members",
+    "users",
   ],
   SettingsShell: ({
     activeTab,
@@ -123,6 +133,25 @@ describe("settings index route", () => {
     expect(screen.getByText("Credentials form")).toBeInTheDocument();
   });
 
+  it("renders the members and organization panels under the Organization group", () => {
+    useSearchMock.mockReturnValue({ tab: "members" } as never);
+    const Page = Route.options.component!;
+    const { unmount } = render(<Page />);
+    expect(screen.getByText("Team panel")).toBeInTheDocument();
+    unmount();
+
+    useSearchMock.mockReturnValue({ tab: "organization" } as never);
+    render(<Page />);
+    expect(screen.getByText("Organization profile")).toBeInTheDocument();
+  });
+
+  it("maps the legacy team tab to members", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "team" })).toEqual({ tab: "members" });
+  });
+
   it("trims padded settings tab in validateSearch", () => {
     const validateSearch = Route.options.validateSearch as {
       parse: (value: unknown) => { tab?: string };
@@ -141,12 +170,12 @@ describe("settings index route", () => {
     const Page = Route.options.component!;
     render(<Page />);
     expect(
-      screen.getByText("Only install admins can manage users.")
+      screen.getByText("Only server admins can manage accounts.")
     ).toBeInTheDocument();
     expect(screen.queryByText("Users panel")).not.toBeInTheDocument();
   });
 
-  it("renders the users panel for install admins", () => {
+  it("renders the users panel for server admins", () => {
     useSession.mockReturnValue({
       data: { user: { id: "u-admin", role: "admin" } },
       isPending: false,

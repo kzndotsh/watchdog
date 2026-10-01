@@ -11,8 +11,8 @@ vi.mock("@/domains/search/components/command-palette", () => ({
     open ? <div data-testid="palette-open">Palette</div> : null,
 }));
 
-vi.mock("@/domains/search/components/shortcuts-sheet", () => ({
-  ShortcutsSheet: ({ open }: { open: boolean }) =>
+vi.mock("@/domains/search/components/shortcuts-dialog", () => ({
+  ShortcutsDialog: ({ open }: { open: boolean }) =>
     open ? <div data-testid="shortcuts-open">Shortcuts</div> : null,
 }));
 
@@ -20,7 +20,7 @@ vi.mock("@/shared/lib/use-global-hotkeys", () => ({
   useGlobalHotkeys: (...args: unknown[]) => useGlobalHotkeysMock(...args),
 }));
 
-vi.mock("@/shared/ui/shadcn/sidebar", () => ({
+vi.mock("@watchdog/ui/components/sidebar", () => ({
   useSidebar: () => ({ toggleSidebar: toggleSidebarMock }),
 }));
 
@@ -71,7 +71,7 @@ describe("SearchChrome", () => {
     );
   });
 
-  it("registers global hotkey bindings for palette, sidebar, and shortcuts", () => {
+  it("registers global hotkey bindings for palette and shortcuts (Mod+B belongs to SidebarProvider)", () => {
     render(
       <SearchChrome>
         <div>Child</div>
@@ -83,7 +83,6 @@ describe("SearchChrome", () => {
     }[];
     expect(bindings.map((binding) => binding.id)).toEqual([
       "command-palette",
-      "toggle-sidebar",
       "shortcuts",
     ]);
   });

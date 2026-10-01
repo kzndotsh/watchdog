@@ -9,8 +9,8 @@ import {
 
 describe("task-priority vocab", () => {
   it("maps priorities to labels and status tones", () => {
-    expect(taskPriorityLabel("urgent")).toBe("Urgent");
-    expect(TASK_PRIORITY_TONE_MAP.urgent).toBe("failed");
+    expect(taskPriorityLabel("high")).toBe("High");
+    expect(TASK_PRIORITY_TONE_MAP.high).toBe("pending");
   });
 
   it("renders priority badge copy", () => {

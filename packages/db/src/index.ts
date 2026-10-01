@@ -1,12 +1,9 @@
 export { db, client, type Db } from "./client";
 export type { DbTx, DbExec } from "./exec";
 export {
-  bootstrapWatchdogOrganization,
+  promoteFirstUserToInstanceAdmin,
   setSessionActiveOrganization,
-  WATCHDOG_ORGANIZATION_NAME,
-  WATCHDOG_ORGANIZATION_SLUG,
-} from "./auth/bootstrap-organization";
-export type { BootstrapOrganizationResult } from "./auth/bootstrap-organization";
+} from "./auth/instance-bootstrap";
 export { insertAuthEvent } from "./auth/auth-events";
 export type { InsertAuthEventInput } from "./auth/auth-events";
 export { onAuthSessionCreated } from "./auth/on-session-created";

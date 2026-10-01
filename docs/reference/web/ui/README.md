@@ -6,11 +6,11 @@ This page covers delivery gates, the chrome lexicon, and the PR checklist. Token
 
 Build new foundations and atoms on `/ui` before adding chrome to live product pages. `shared/ui` is presentational only (**no I/O**). Domains wire data through hooks and ServerFns. Extract a named generic at the **second** call site.
 
-| Gate                      | Command                                      |
-| ------------------------- | -------------------------------------------- |
-| Typecheck + DS bans       | `pnpm --filter @watchdog/web ds:check`       |
-| Hand-owned atom checklist | `scripts/wd-ui-files.mjs`                    |
-| After `shadcn add`        | `pnpm --filter @watchdog/web shadcn:nocheck` |
+| Gate | Command |
+| --- | --- |
+| Typecheck + DS bans | `pnpm --filter @watchdog/web ds:check` |
+| Auth screens (origin, what is ours) | [`auth-ui.md`](auth-ui.md) |
+| Vendored primitives lock | `pnpm check:vendor` (`pnpm ui:add` / `pnpm ui:sync` to change) |
 
 ## Chrome lexicon (UI parts)
 
@@ -37,12 +37,17 @@ Name the **layout kind**, then the **parts**. These are component/layout words: 
 
 **Bar** only in compounds (`QueueFilterBar`, `SectionHeaderBar`).
 
-**Banned as UI surface names:** Console · Workbench · Tape · Panel · Pane · Rail · Strip.  
-Vendor exception: `react-resizable-panels` / `data-slot="resizable-panel*"`.
+**Naming rule:** name a surface by its layout kind and parts above. Don't invent a new layout word for a screen.
+
+| Word | Status | Why |
+| --- | --- | --- |
+| Console · Workbench · Tape | **Banned** | v2 metaphor names (`JobsConsole`, `ReviewTape`, `CopilotWorkbench`) for what were Queue + Detail. No standard web-UI meaning. |
+| Panel | Standard meaning only | A tab's content region (ARIA `tabpanel`: `SettingsPanel`, `EvidenceContentPanel`) or a resizable region (`ResizablePanel`, dashboard panels). Never a whole screen (`JobsPanel`). |
+| Pane · Rail · Strip | Avoid | Use the lexicon part instead (Detail, Section, Toolbar, `…Line`). Vendor `SidebarRail` is fine. |
 
 ```
 SplitView → Queue | Detail
-Never: *Console *Workbench *Panel *Pane *Rail *Strip *Tape
+Never: *Console *Workbench *Tape  ·  never a screen named *Panel
 ```
 
 ```
@@ -61,9 +66,9 @@ Never: *Console *Workbench *Panel *Pane *Rail *Strip *Tape
 1. [ ] Semantic tokens / existing primitives: refuse list above
 2. [ ] Shell not replaced by skeleton; loading matrix followed
 3. [ ] Loading / empty / error / success share footprint in the data region
-4. [ ] Chrome lexicon above: no banned surface nouns
+4. [ ] Chrome lexicon above: no banned surface nouns (Console / Workbench / Tape); Panel only in its standard meaning
 5. [ ] `shared/ui` remains no-I/O
 6. [ ] Opaque ids via `IdChip` / `formatOpaqueId` (no `.slice`)
 7. [ ] Right control for the job (ButtonGroup / ToggleGroup / SearchField / badges)
 8. [ ] `pnpm --filter @watchdog/web ds:check` passes
-9. [ ] New hand-owned atom? Update `wd-ui-files.mjs` + `COMPONENTS.md` (under `shared/ui/`, not `shadcn/` or `__tests__/`)
+9. [ ] New hand-owned atom? Add a `components.md` row and a `/ui` specimen

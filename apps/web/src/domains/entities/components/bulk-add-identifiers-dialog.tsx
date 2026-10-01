@@ -9,8 +9,7 @@ import {
   TOAST_IMPORT_LOADING,
 } from "@/shared/lib/toast-copy";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
   DialogContent,
@@ -18,10 +17,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import { toast } from "@/shared/ui/shadcn/toast";
+} from "@/shared/ui/primitives/dialog";
+import { toast } from "@/shared/ui/toast";
+import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 interface Props {
   open: boolean;
@@ -93,7 +92,7 @@ export function BulkAddIdentifiersDialog({
         </DialogHeader>
 
         {stage === "paste" ? (
-          <Field className="gap-1">
+          <Field>
             <FieldLabel htmlFor="bulk-add-identifiers-paste">Paste</FieldLabel>
             <Textarea
               id="bulk-add-identifiers-paste"
@@ -130,11 +129,11 @@ export function BulkAddIdentifiersDialog({
           />
         )}
 
-        <FormInlineError>
+        <FieldError>
           {importMutation.error
             ? errMessage(importMutation.error, "Failed to import")
             : null}
-        </FormInlineError>
+        </FieldError>
 
         <DialogFooter>
           {stage === "map" ? (

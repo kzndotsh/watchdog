@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
-import { Button } from "@/shared/ui/shadcn/button";
 
 interface QueueFilterBarProps {
   value: string;

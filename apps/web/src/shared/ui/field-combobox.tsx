@@ -14,7 +14,7 @@ import {
   ComboboxItem,
   ComboboxLabel,
   ComboboxList,
-} from "@/shared/ui/shadcn/combobox";
+} from "@/shared/ui/primitives/combobox";
 
 export type { FieldComboboxOption } from "@/shared/ui/field-combobox.lib";
 

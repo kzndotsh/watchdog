@@ -7,8 +7,8 @@ import {
 import type { ReactNode } from "react";
 
 import type { DumpModal } from "@/domains/intake/components/dump-dialogs";
-import { Button } from "@/shared/ui/shadcn/button";
-import { ButtonGroup } from "@/shared/ui/shadcn/button-group";
+import { Button } from "@/shared/ui/primitives/button";
+import { ButtonGroup } from "@watchdog/ui/components/button-group";
 import {
   Popover,
   PopoverContent,
@@ -16,8 +16,11 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/shadcn/toggle-group";
+} from "@watchdog/ui/components/popover";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@watchdog/ui/components/toggle-group";
 
 const RUN_MODES = [
   { value: "cap", label: "Cap" },
@@ -46,15 +49,10 @@ export function CollectRunModeToggle({
         const mode = next[0];
         if (isRunMode(mode)) onValueChange(mode);
       }}
-      className="bg-muted h-7 rounded-lg p-0.5"
+      variant="outline"
     >
       {RUN_MODES.map((mode) => (
-        <ToggleGroupItem
-          key={mode.value}
-          value={mode.value}
-          size="sm"
-          className="text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground h-6 px-2.5 text-xs aria-pressed:shadow-sm"
-        >
+        <ToggleGroupItem key={mode.value} value={mode.value}>
           {mode.label}
         </ToggleGroupItem>
       ))}
@@ -72,13 +70,14 @@ export function CollectDumpButtons({
   return (
     <ButtonGroup
       aria-label="Dump evidence"
+      // oxlint-disable-next-line shadcn/no-restyle -- ButtonGroup squares the last child's corner; this group ends in a rounded primary action
       className="[&>[data-slot]:not(:has(~[data-slot]))]:rounded-r-md!"
     >
       <Button
         type="button"
         size="sm"
         variant="default"
-        className="h-8 text-xs"
+        className="h-8"
         disabled={disabled}
         onClick={() => {
           onDump("file");
@@ -91,7 +90,7 @@ export function CollectDumpButtons({
         type="button"
         size="sm"
         variant="default"
-        className="h-8 text-xs"
+        className="h-8"
         disabled={disabled}
         onClick={() => {
           onDump("paste");
@@ -104,7 +103,7 @@ export function CollectDumpButtons({
         type="button"
         size="sm"
         variant="default"
-        className="h-8 text-xs"
+        className="h-8"
         disabled={disabled}
         onClick={() => {
           onDump("url");
@@ -130,22 +129,14 @@ export function CollectRunPopover({
     <Popover>
       <PopoverTrigger
         render={
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 text-xs"
-          />
+          <Button type="button" size="sm" variant="outline" className="h-8" />
         }
       >
         <PlayIcon data-icon="inline-start" />
         Run
       </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        className="w-[min(32rem,calc(100vw-2rem))] gap-3 p-3"
-      >
-        <PopoverHeader className="gap-2">
+      <PopoverContent align="end" className="w-[min(32rem,calc(100vw-2rem))]">
+        <PopoverHeader>
           <div className="flex items-center justify-between gap-2">
             <PopoverTitle>Run Cap or Playbook</PopoverTitle>
             <CollectRunModeToggle

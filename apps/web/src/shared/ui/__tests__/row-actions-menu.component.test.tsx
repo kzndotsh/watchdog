@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { cloneElement, type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/shared/ui/shadcn/dropdown-menu", () => ({
+vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
   ),

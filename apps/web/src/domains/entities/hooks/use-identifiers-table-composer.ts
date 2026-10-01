@@ -17,7 +17,7 @@ import {
   identifierCreateCanSubmit,
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import { normalizeIdentifierPlatform } from "@watchdog/schemas";
 
 type IdentifierCreateValues = Parameters<

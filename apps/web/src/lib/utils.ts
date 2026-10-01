@@ -1,43 +1,6 @@
-import { clsx, type ClassValue } from "clsx";
-import { extendTailwindMerge } from "tailwind-merge";
-
 import { slugifyName as schemaSlugifyName } from "@watchdog/schemas";
 
-/**
- * Type-role utilities (`text-label-mono-sm`, `text-chip`, …) must live in the
- * font-size group — otherwise twMerge treats them as text-color and strips them
- * when paired with `text-muted-foreground` (QueueRowMeta looked body-sized).
- */
-const twMerge = extendTailwindMerge({
-  extend: {
-    classGroups: {
-      "font-size": [
-        {
-          text: [
-            "heading-page",
-            "heading-dossier",
-            "heading-section",
-            "label",
-            "label-sm",
-            "label-meta",
-            "label-meta-sm",
-            "label-mono",
-            "label-mono-sm",
-            "copy",
-            "copy-sm",
-            "meta",
-            "chip",
-            "2xs",
-          ],
-        },
-      ],
-    },
-  },
-});
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn } from "cn";
 
 export function slugifyName(name: string): string {
   return schemaSlugifyName(name);
@@ -51,6 +14,29 @@ export function nextAutoSlug(
 ): string | null {
   const stillAuto = !previousSlug || previousSlug === slugifyName(previousName);
   return stillAuto ? slugifyName(nextName) : null;
+}
+
+/**
+ * The first string with visible characters, or `undefined` if none. Use it for display
+ * fallbacks: unlike `??` it skips `""` (an unnamed API key, an empty IP), and unlike `||`
+ * it is explicit about strings only.
+ */
+export function firstNonEmpty(
+  ...values: readonly (string | null | undefined)[]
+): string | undefined {
+  return values.find(
+    (value): value is string => typeof value === "string" && value.trim() !== ""
+  );
+}
+
+/** A Better Auth / fetch error message, or `fallback` when it is missing or empty. */
+export function messageOr(
+  message: string | null | undefined,
+  fallback: string
+): string {
+  return message === undefined || message === null || message === ""
+    ? fallback
+    : message;
 }
 
 export function errMessage(err: unknown, fallback: string): string {

@@ -16,7 +16,7 @@ vi.mock("@/domains/cases/cases.functions", () => ({
   updateCaseFn: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/shadcn/toast", () => ({
+vi.mock("@/shared/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
@@ -55,7 +55,7 @@ describe("CaseSettingsForm", () => {
   it("renders editable name and description fields from the case record", () => {
     renderForm();
     expect(
-      screen.getByRole("region", { name: "Case settings" })
+      screen.getByRole("heading", { name: "Case settings" })
     ).toBeInTheDocument();
     expect(screen.getByText("Case settings")).toBeInTheDocument();
     expect(screen.getByLabelText("Name")).toHaveValue("Alpha Case");

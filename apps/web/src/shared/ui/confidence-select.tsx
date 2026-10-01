@@ -3,19 +3,19 @@ import {
   CONTROL_TRIGGER,
   resolveSelectValue,
 } from "@/shared/ui/control-chrome";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/shadcn/select";
 import { CONFIDENCE_LABELS } from "@/shared/ui/vocab";
 import {
   CONFIDENCE_TIERS,
   trimmedConfidenceTierSchema,
   type ConfidenceTier,
 } from "@watchdog/schemas";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@watchdog/ui/components/select";
 
 interface SelectProps {
   value: ConfidenceTier;

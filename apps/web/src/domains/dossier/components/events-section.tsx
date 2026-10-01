@@ -24,20 +24,22 @@ import {
   updateEventInputSchema,
 } from "@/domains/entities/events/types";
 import { cn, errMessage } from "@/lib/utils";
+import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Calendar } from "@/shared/ui/shadcn/calendar";
-import { Input } from "@/shared/ui/shadcn/input";
+import { FieldMessage } from "@/shared/ui/field-message";
+import { Button } from "@/shared/ui/primitives/button";
+import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
+import { TargetActionsHost } from "@/shared/ui/target-actions-host";
+import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import { toast } from "@/shared/ui/toast";
+import { Calendar } from "@watchdog/ui/components/calendar";
+import { FieldError } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import { toast } from "@/shared/ui/shadcn/toast";
-import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
-import { TargetActionsHost } from "@/shared/ui/target-actions-host";
-import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+} from "@watchdog/ui/components/popover";
 
 interface EventFormValues {
   when: string;
@@ -58,10 +60,6 @@ function parseWhenDate(value: string): Date | undefined {
   const parsed = parse(trimmed, WHEN_FORMAT, new Date());
   return isValid(parsed) ? parsed : undefined;
 }
-
-/** Ghost input — reads as timeline metadata, not a peer field box. */
-const metaInputClass =
-  "h-8 border-transparent bg-transparent px-1 shadow-none focus-visible:border-input focus-visible:bg-background focus-visible:ring-1";
 
 /**
  * Typeable when + calendar icon. Picking a day writes `YYYY-MM-DD`; free-text
@@ -92,10 +90,7 @@ function WhenDateField({
           onChange(e.target.value);
         }}
         onKeyDown={onKeyDown}
-        className={cn(
-          metaInputClass,
-          "text-muted-foreground w-36 font-mono text-sm"
-        )}
+        className="h-8 w-36 font-mono"
       />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
@@ -104,14 +99,13 @@ function WhenDateField({
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="text-muted-foreground"
               aria-label="Pick date"
             />
           }
         >
           <CalendarIcon />
         </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+        <PopoverContent className="w-auto overflow-hidden" align="start">
           <Calendar
             mode="single"
             selected={selected}
@@ -199,18 +193,21 @@ function EventNodeComposer({
         }}
       >
         {(field) => (
-          <Input
-            aria-label="What happened"
-            placeholder="What happened"
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => {
-              field.handleChange(e.target.value);
-            }}
-            onKeyDown={onFieldKeyDown}
-            className="focus-visible:border-input focus-visible:bg-background h-9 border-transparent bg-transparent px-1 text-base shadow-none focus-visible:ring-1"
-            autoFocus
-          />
+          <>
+            <Input
+              aria-invalid={fieldInvalid(field.state.meta)}
+              aria-label="What happened"
+              placeholder="What happened"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+              }}
+              onKeyDown={onFieldKeyDown}
+              autoFocus
+            />
+            <FieldMessage meta={field.state.meta} />
+          </>
         )}
       </form.Field>
 
@@ -232,23 +229,14 @@ function EventNodeComposer({
                 field.handleChange(e.target.value);
               }}
               onKeyDown={onFieldKeyDown}
-              className={cn(
-                metaInputClass,
-                "text-muted-foreground min-w-0 flex-1 text-sm"
-              )}
+              className="h-8 min-w-0 flex-1"
             />
           )}
         </form.Field>
       </div>
 
       <div className="flex justify-end gap-1 pt-0.5">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-6 text-xs"
-          onClick={onCancel}
-        >
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <form.Subscribe
@@ -261,7 +249,6 @@ function EventNodeComposer({
             <Button
               type="submit"
               size="sm"
-              className="h-6 text-xs"
               disabled={isSubmitting || !what.trim()}
             >
               {submitLabel}
@@ -432,7 +419,7 @@ export function EventsSection({
           />
         }
       >
-        <FormInlineError>{editor.error}</FormInlineError>
+        <FieldError>{editor.error}</FieldError>
 
         {showSpine ? (
           <TimelineSpine className="ml-2 pl-4">

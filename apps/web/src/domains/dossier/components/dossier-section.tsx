@@ -52,15 +52,18 @@ function renderSectionBody({
   if (emptyPresentation === "panel") {
     return (
       <EmptyState
+        framed
         intent="blank-slate"
         items={emptyItems ?? "items"}
         description={emptyDescription ?? emptyText}
         action={emptyAction}
-        className="border-border/60 min-h-0 flex-1 rounded-lg border border-dashed py-12"
+        className="min-h-0 flex-1"
       />
     );
   }
-  return <p className="text-copy-sm text-muted-foreground">{emptyText}</p>;
+  return (
+    <p className="text-muted-foreground text-sm leading-normal">{emptyText}</p>
+  );
 }
 
 export function DossierSection({

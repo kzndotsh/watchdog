@@ -1,18 +1,20 @@
 import { useSession } from "@better-auth-ui/react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  ChevronsUpDownIcon,
-  DogIcon,
-  LogOutIcon,
-  SettingsIcon,
-} from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { DogIcon, LogOutIcon, SettingsIcon } from "lucide-react";
 
 import { authClient } from "@/auth/client";
 import { NAV_GROUPS, pathActive } from "@/config/nav";
-import { CommandSearchTrigger } from "@/domains/search/components/command-search-trigger";
+import { OrgSwitcher } from "@/domains/organization/components/org-switcher";
+import { SearchButton } from "@/domains/search/components/search-button";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
-import { ThemeMenuItem } from "@/shared/layout/theme-toggle";
-import { Avatar, AvatarFallback } from "@/shared/ui/shadcn/avatar";
+import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
+import { WithTooltip } from "@/shared/ui/timestamp";
+import { trimmedOrUndefined } from "@watchdog/schemas";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@watchdog/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +23,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
-import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
+} from "@watchdog/ui/components/dropdown-menu";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 import {
   Sidebar,
   SidebarContent,
@@ -34,9 +36,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/shared/ui/shadcn/sidebar";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+} from "@watchdog/ui/components/sidebar";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 function userDisplayName(user: {
   name?: string | null;
@@ -58,118 +59,106 @@ function userInitials(name: string): string {
     .join("");
 }
 
-function NavUserSkeleton() {
+function AccountRowSkeleton() {
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          size="lg"
-          className="pointer-events-none border-0 bg-transparent shadow-none"
-        >
-          <Skeleton className="size-8 rounded-full" />
-          <div className="grid flex-1 gap-1.5 text-left">
-            <Skeleton className="h-3.5 w-24" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <div className="flex items-center gap-2 px-2">
+      <Skeleton className="size-6 rounded-full" />
+      <Skeleton className="h-3.5 w-24" />
+    </div>
   );
 }
 
-function NavUser() {
-  const navigate = useNavigate();
+/** Slim footer row: the account menu (name, theme, sign out) plus a settings shortcut. */
+function AccountRow() {
   const { data, isPending } = useSession(authClient);
+  const { mode, toggleMode, Icon: ThemeIcon, ariaLabel } = useThemeMode();
   const user = data?.user;
   const name = user ? userDisplayName(user) : "Investigator";
   const email = user?.email ?? "";
-  const initials = userInitials(name);
 
   if (isPending && !user) {
-    return <NavUserSkeleton />;
+    return <AccountRowSkeleton />;
   }
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <SidebarMenuButton
-                size="lg"
-                className="hover:bg-sidebar-accent data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground border-0 bg-transparent shadow-none"
-              />
-            }
-          >
-            <Avatar size="sm">
-              <AvatarFallback className="text-xs" suppressHydrationWarning>
-                {initials || "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium" suppressHydrationWarning>
+    <div className="flex items-center group-data-[collapsible=icon]:flex-col">
+      <SidebarMenu className="min-w-0 flex-1">
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <SidebarMenuButton aria-label="Account menu" tooltip={name} />
+              }
+            >
+              {/* Bigger than the 18px nav icons, but centered on their column (negative margins) so the text edge still lines up */}
+              <Avatar size="sm" className="-mx-0.5 data-[size=sm]:size-5">
+                {user?.image ? <AvatarImage src={user.image} alt="" /> : null}
+                <AvatarFallback className="text-xs" suppressHydrationWarning>
+                  {userInitials(name).slice(0, 1) || "?"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate" suppressHydrationWarning>
                 {name}
               </span>
-              {email ? (
-                <span
-                  className="text-muted-foreground truncate text-sm"
-                  suppressHydrationWarning
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="min-w-56"
+              side="top"
+              align="start"
+              sideOffset={4}
+            >
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="truncate">{name}</span>
+                    {email ? (
+                      <span className="text-muted-foreground truncate">
+                        {email}
+                      </span>
+                    ) : null}
+                  </div>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  closeOnClick={false}
+                  aria-label={ariaLabel}
+                  onClick={toggleMode}
                 >
-                  {email}
-                </span>
-              ) : null}
-            </div>
-            <ChevronsUpDownIcon className="ml-auto" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="min-w-56"
-            side="top"
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col gap-0.5">
-                  <span className="truncate font-medium">{name}</span>
-                  {email ? (
-                    <span className="text-muted-foreground truncate text-sm">
-                      {email}
-                    </span>
-                  ) : null}
-                </div>
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <ThemeMenuItem />
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => void navigate({ to: "/settings" })}
-              >
-                <SettingsIcon />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={() => {
-                  void navigate({
-                    to: "/auth/$path",
-                    params: { path: "sign-out" },
-                  });
-                }}
-              >
-                <LogOutIcon />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+                  <ThemeIcon />
+                  {modeLabel(mode)}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  render={
+                    <Link to="/auth/$path" params={{ path: "sign-out" }} />
+                  }
+                >
+                  <LogOutIcon />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+
+      <SearchButton />
+
+      <SidebarMenu className="w-auto">
+        <SidebarMenuItem>
+          <WithTooltip content="Settings" side="right" wrapSpan>
+            <SidebarMenuButton
+              aria-label="Settings"
+              className="w-8 justify-center [&_svg]:size-3.5"
+              render={<Link to="/settings" />}
+            >
+              <SettingsIcon />
+            </SidebarMenuButton>
+          </WithTooltip>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </div>
   );
 }
 
@@ -178,18 +167,18 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="pb-0">
+      {/* Same height as the page header (44px + its 1px border), logo and wordmark centered on its line */}
+      <SidebarHeader className="border-sidebar-border box-content h-10 justify-center border-b p-0 px-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              size="default"
               isActive={pathActive(pathname, "/")}
               render={<Link to="/" />}
               tooltip="Dashboard"
-              className="h-9 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2! [&_svg]:size-4"
+              className="group-data-[collapsible=icon]:justify-center [&_svg]:size-4"
             >
               <DogIcon className="shrink-0" />
-              <span className="font-heading text-sm font-medium tracking-[0.12em] group-data-[collapsible=icon]:hidden">
+              <span className="font-heading tracking-eyebrow-sm text-sm font-medium group-data-[collapsible=icon]:hidden">
                 WATCHDOG
               </span>
             </SidebarMenuButton>
@@ -198,9 +187,6 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <CommandSearchTrigger />
-        </SidebarGroup>
         <SidebarGroup>
           <CaseSwitcher />
         </SidebarGroup>
@@ -232,8 +218,9 @@ export function AppSidebar() {
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter>
-        <NavUser />
+      <SidebarFooter className="gap-0">
+        <OrgSwitcher />
+        <AccountRow />
       </SidebarFooter>
     </Sidebar>
   );

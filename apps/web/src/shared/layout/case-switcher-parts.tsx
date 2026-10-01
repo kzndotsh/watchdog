@@ -1,10 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { CheckIcon, LayoutDashboardIcon } from "lucide-react";
+import { CheckIcon, LayoutDashboardIcon, PlusIcon } from "lucide-react";
 
 import { CASE_NAV_ITEMS, pathActive } from "@/config/nav";
 import type { CaseRecord } from "@/domains/cases/types";
-import { DropdownMenuItem } from "@/shared/ui/shadcn/dropdown-menu";
-import { SidebarMenuButton, SidebarMenuItem } from "@/shared/ui/shadcn/sidebar";
+import {
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@watchdog/ui/components/dropdown-menu";
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@watchdog/ui/components/sidebar";
 
 export function CaseNavLinks({
   caseSlug,
@@ -52,31 +60,42 @@ export function CaseNavLinks({
   );
 }
 
+/** Case list for the switcher menu, ending with "Create case". */
 export function CasePickerItems({
   cases,
   activeId,
   onSelect,
+  onCreate,
 }: {
   cases: CaseRecord[];
   activeId: string;
   onSelect: (id: string) => void;
+  onCreate: () => void;
 }) {
   return (
     <>
-      {cases.map((c) => {
-        const selected = c.id === activeId;
-        return (
-          <DropdownMenuItem
-            key={c.id}
-            onClick={() => {
-              onSelect(c.id);
-            }}
-          >
-            <span className="truncate">{c.name}</span>
-            {selected ? <CheckIcon className="ml-auto size-4" /> : null}
-          </DropdownMenuItem>
-        );
-      })}
+      <DropdownMenuGroup>
+        <DropdownMenuLabel>Cases</DropdownMenuLabel>
+        {cases.map((c) => {
+          const selected = c.id === activeId;
+          return (
+            <DropdownMenuItem
+              key={c.id}
+              onClick={() => {
+                onSelect(c.id);
+              }}
+            >
+              <span className="truncate">{c.name}</span>
+              {selected ? <CheckIcon className="ml-auto" /> : null}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuGroup>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={onCreate}>
+        <PlusIcon />
+        Create case
+      </DropdownMenuItem>
     </>
   );
 }

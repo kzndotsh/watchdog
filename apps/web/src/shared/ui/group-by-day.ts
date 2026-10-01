@@ -43,11 +43,3 @@ export function groupItemsByDay<T>(
     items: dayItems,
   }));
 }
-
-/** Compact clock for queue meta (locale 2-digit hour/minute). */
-export function formatClockTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}

@@ -9,14 +9,14 @@ import {
 } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { QueueFilterBar } from "@/shared/ui/queue-filter-bar";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,
   FieldGroup,
   FieldLabel,
   FieldLegend,
   FieldSet,
-} from "@/shared/ui/shadcn/field";
+} from "@watchdog/ui/components/field";
 
 interface TriageQueueToolbarProps {
   filters: TriageQueueFilters;
@@ -60,16 +60,16 @@ export function TriageQueueToolbar({
             }}
             contentClassName="w-[16rem]"
           >
-            <FieldSet className="gap-3 border-0 p-0">
+            <FieldSet>
               <FieldLegend variant="label">
                 Status
                 {pendingCount !== undefined && pendingCount > 0 ? (
-                  <span className="text-label-mono-sm text-muted-foreground ml-1">
+                  <span className="text-2xs text-muted-foreground ml-1 font-mono">
                     ({pendingCount} pending)
                   </span>
                 ) : null}
               </FieldLegend>
-              <FieldGroup className="gap-2">
+              <FieldGroup>
                 {STATUS_FACET_OPTIONS.map((opt) => {
                   const checked = filters.statuses.includes(opt.value);
                   const id = `triage-status-${opt.value}`;

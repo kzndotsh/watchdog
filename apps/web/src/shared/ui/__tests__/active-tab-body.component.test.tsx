@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { ActiveTabBody, SuspenseTabBody } from "@/shared/ui/active-tab-body";
+import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 
 describe("ActiveTabBody", () => {
   it("renders nothing when inactive", () => {
@@ -29,16 +29,5 @@ describe("ActiveTabBody", () => {
       </ActiveTabBody>
     );
     expect(screen.getByText("Ready")).toBeInTheDocument();
-  });
-});
-
-describe("SuspenseTabBody", () => {
-  it("wraps children in suspense with a skeleton fallback", () => {
-    render(
-      <SuspenseTabBody>
-        <p>Suspense child</p>
-      </SuspenseTabBody>
-    );
-    expect(screen.getByText("Suspense child")).toBeInTheDocument();
   });
 });

@@ -5,7 +5,7 @@ import {
   SearchChrome,
 } from "@/domains/search/components/search-chrome";
 import { AppSidebar } from "@/shared/layout/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/shared/ui/shadcn/sidebar";
+import { SidebarInset, SidebarProvider } from "@watchdog/ui/components/sidebar";
 
 type SidebarStyle = CSSProperties & { "--sidebar-width"?: string };
 

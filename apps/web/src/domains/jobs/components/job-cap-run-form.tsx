@@ -21,13 +21,12 @@ import {
 } from "@/shared/layout/page-filter-menu";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
+import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 const KIND_FILTERS = [
   { value: "", label: "All kinds" },
@@ -318,7 +317,7 @@ export function JobCapRunForm({
                     <form.Field name="runInput">
                       {(runField) => (
                         <Input
-                          className="h-8 w-full text-xs"
+                          className="h-8 w-full"
                           placeholder={view.primaryField.placeholder}
                           value={runField.state.value}
                           onBlur={runField.handleBlur}
@@ -363,7 +362,7 @@ export function JobCapRunForm({
                     <form.Field name="runInput">
                       {(runField) => (
                         <Input
-                          className="h-8 min-w-[12rem] flex-1 text-xs sm:max-w-xs"
+                          className="h-8 min-w-[12rem] flex-1 sm:max-w-xs"
                           placeholder={view.primaryField.placeholder}
                           value={runField.state.value}
                           onBlur={runField.handleBlur}
@@ -434,7 +433,7 @@ export function JobCapRunForm({
                     <Button
                       type="submit"
                       size="sm"
-                      className="h-8 text-xs"
+                      className="h-8"
                       loading={isSubmitting}
                       disabled={
                         !view.canRun || visibleCaps.length === 0 || isSubmitting
@@ -449,9 +448,7 @@ export function JobCapRunForm({
           }}
         </form.Subscribe>
       </form>
-      <FormInlineError className="max-w-md text-right">
-        {runError}
-      </FormInlineError>
+      <FieldError className="max-w-md text-right">{runError}</FieldError>
     </div>
   );
 }

@@ -112,7 +112,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
-| Cases CRUD + switch cookie | shipped | Org-scoped list/get/create/update/delete (active Better Auth organization). **Open** sets Active + opens Overview; **Set as active case** in card ⋯; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename (slug unique is still global); update/egress also via API/CLI |
+| Cases CRUD + switch cookie | shipped | Org-scoped list/get/create/update/delete (active Better Auth organization). **Open** sets Active + opens Overview; **Set as active case** in card ⋯; New Case dialog (slug auto from name); name/description/egress edit on overview settings (name regenerates slug + Overview URL); slug collision conflicts on create and rename (slug is unique per organization: two organizations can both have `acme`); update/egress also via API/CLI |
 | Delete case | shipped | Type-to-confirm (`DestructiveConfirmDialog`) on Cases card ⋯ and Overview; cascades Graph/Jobs/Triage/Evidence; heals Active cookie; also `wd cases delete` |
 | Case overview page | shipped | `/cases/$caseSlug`: case dashboard (stats / activity / settings); landing via **Open** from Manage Cases; UUID/`?tab=` redirect to slug or `/entities` `/identifiers` `/graph` `/tasks`; unknown slug → PageHeader + centered 404 + **Back to Cases**; stats grid reuses dashboard `MetricsSection` (borderless tiles, sans numerals) |
 | Unknown route (global) | shipped | Root `notFoundComponent` (`__root.tsx`): full-viewport centered flat card on `background` (no shadow); **Go to dashboard** |
@@ -128,13 +128,13 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Quick Launch paste → Collect | removed | Dump stays on Collect; Dashboard does not host paste |
 | Dashboard → Triage with proposalId | shipped | Triage panel rows deep-link `search.proposalId` |
 | Dashboard → Collect with jobId | removed | Jobs running tile links `/collect` without a selected job |
-| Settings tab URL sync | shipped | Sidebar tab changes write `?tab=` with `replace: true` (account omits param); deep links `/settings?tab=appearance | team | users | …` restore section on load |
+| Settings tab URL sync | shipped | Sidebar tab changes write `?tab=` with `replace: true` (account omits param); deep links `/settings?tab=appearance | members | users | …`(old`?tab=team`links open`members`) restore section on load |
 | Settings appearance | shipped | `/settings?tab=appearance`; theme (Light / Dark / System) + display size presets (Default 1.1 / Comfortable 1.2 / Large 1.35) via `--wd-display-scale` on `<html>`; product default **Default (1.1)** when unset; hi-DPI viewport factor on 4K; `localStorage` only; sidebar theme shortcut still cycles mode |
 | UI type scale specimen | shipped | `/ui` Foundations tab lists all wd-typography roles with live rem, px, weight, and line-height; updates with display scale |
 | Toolbar SearchField width | shipped | `SEARCH_FIELD_WIDTH` in `control-chrome` (`w-80`); Cases / Entities / Identifiers / Collect / Triage queues share one width; `/ui` Atoms specimen uses defaults (no per-page `className`) |
 | Protected cases context warm | shipped | `_protected` beforeLoad prefetches cases context so sidebar case switcher does not skeleton on Settings and other routes without a cases loader |
 | Settings vault credentials | shipped | `/settings?tab=credentials`; Connect/Update dialog; needs `WD_MASTER_VAULT_KEY`; also `wd credentials` / `PUT /credentials/{name}` (never plaintext) |
-| Settings Team invite / accept | shipped | `/settings?tab=team`; owner/admin invite `admin` or `member`; copy-link + optional SMTP; accept at `/auth/accept-invitation/{id}` where `{id}` must be a UUID (malformed links fail before preview fetch; invite-only register; public sign-up stays gated) |
+| Settings Organization: create / switch / invite / accept | shipped | Onboarding (`/onboarding`) after sign-up when the user has no organization; sidebar-footer switcher (reloads into the chosen org); `/settings` under the Organization group (General: name, logo, short name with availability check, leave, delete; Members: search, roles incl. Make owner, invite, resend, copy link) and Personal → Organizations (your orgs, switch, invitations addressed to you); owner/admin invite `admin` or `member`; copy-link + optional SMTP; accept at `/auth/accept-invitation/{id}` where `{id}` must be a UUID (malformed links fail before preview fetch; invite-only register; public sign-up stays gated) |
 | Settings Users (instance admin) | shipped | `/settings?tab=users` (hidden unless `auth.user.role` is `admin`); Disable/Enable + sign out all sessions; no impersonation; direct `?tab=users` for others is denied copy |
 | Export zip from Cases UI | shipped | Session or API key. Zip 404 if Case missing / out of org or zero entities; entity `export.md` 404 if Case/slug missing or foreign-org `caseId`. Evidence blob entry names use `evidenceActivityLabel` (human label, not raw id slice). Also `wd export zip` / `md` |
 | Evidence hide / restore / download | shipped | UI + `wd evidence hide` / `restore` / `download` |
@@ -145,14 +145,14 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
-| Mod+K opens command palette | shipped | Toggle; works in editable fields; sidebar Search… trigger |
+| Mod+K opens command palette | shipped | Toggle; works in editable fields; sidebar footer Search icon button |
 | Jump to pages (idle) | shipped | Dashboard + Case nav + Work/Manage (no Dev /ui) |
 | Commands group (idle) | shipped | `SearchUi` `paletteCommands` (Toggle sidebar, Shortcuts); open-palette omitted by construction |
 | Type entity name → dossier | shipped | ≥2 chars; Active Case only; Enter → `/entities/$slug` |
 | Identifier / Evidence / Task / Job / Triage hits | shipped | Deep links: identifiers tab, `?id=` (Collect Evidence or Job), `?entityId=` (Tasks), `?proposalId=` (Triage) |
 | Cases group switches Active | shipped | Sets cookie + opens Overview |
-| `?` Shortcuts sheet | shipped | Global list only (no per-surface matrices); HOTKEYS catalog stays static |
-| Mod+B toggles sidebar | shipped | Via `useGlobalHotkeys` in `SearchChrome` (not shadcn-only listener) |
+| `?` Shortcuts dialog | shipped | Global list incl. Queue `j`/`k` and Triage `a`/`r`; HOTKEYS catalog stays static |
+| Mod+B toggles sidebar | shipped | Upstream `SidebarProvider` owns the listener (vendored, unpatched); `SearchChrome` binds only Mod+K and `?` |
 | Entities/Identifiers row context menu | shipped | Same labels as ⋯; target-only; editables keep native menu; Dossier Identifiers included |
 | Ego graph node menu | shipped | ContextMenu + ⋯ DropdownMenu from `getNodeActions`; Case overview graph omits |
 | Dossier section row menus | shipped | Connections / Claims / Events / Questions: `AppAction` factories + ContextMenu + ⋯ |

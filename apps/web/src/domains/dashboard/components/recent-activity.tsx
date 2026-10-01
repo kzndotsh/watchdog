@@ -24,14 +24,6 @@ import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
-import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/shadcn/select";
 import { DashboardActivitySkeletonLayout } from "@/shared/ui/skeletons";
 import {
   StatusBadge,
@@ -46,6 +38,14 @@ import {
   isProposalQueueLiveEvent,
   type TaskStatus,
 } from "@watchdog/schemas";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@watchdog/ui/components/select";
 
 const ALL_CASES = "__all__";
 const EMPTY_ACTIVITY_ITEMS: ActivityItem[] = [];
@@ -118,12 +118,12 @@ function ActivityRows({
         return (
           <li key={`${item.kind}-${item.id}`}>
             <div className="flex flex-wrap items-start justify-between gap-2 px-0 py-2.5">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-muted-foreground text-chip uppercase">
+                  <span className="text-muted-foreground text-xs tracking-wider uppercase">
                     {activityKindLabel(item.kind)}
                   </span>
-                  <span className="text-foreground text-chip font-medium uppercase">
+                  <span className="text-foreground text-xs tracking-wider uppercase">
                     {item.action}
                   </span>
                 </div>
@@ -132,16 +132,19 @@ function ActivityRows({
                     <Link
                       to="/cases/$caseSlug"
                       params={{ caseSlug }}
-                      className="text-sm font-medium underline-offset-2 hover:underline"
+                      title={item.label}
+                      className="block truncate text-sm underline-offset-2 hover:underline"
                     >
                       {item.label}
                     </Link>
                   ) : (
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="block truncate text-sm" title={item.label}>
+                      {item.label}
+                    </span>
                   )}
                 </div>
                 {showMeta ? (
-                  <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                  <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-xs">
                     {hasTransition ? (
                       <StatusTransition
                         kind={item.kind}
@@ -163,12 +166,18 @@ function ActivityRows({
                           <Link
                             to="/cases/$caseSlug"
                             params={{ caseSlug }}
-                            className="underline-offset-2 hover:underline"
+                            title={item.caseName}
+                            className="max-w-[16rem] truncate underline-offset-2 hover:underline"
                           >
                             {item.caseName}
                           </Link>
                         ) : (
-                          <span>{item.caseName}</span>
+                          <span
+                            className="max-w-[16rem] truncate"
+                            title={item.caseName}
+                          >
+                            {item.caseName}
+                          </span>
                         )}
                       </>
                     ) : null}
@@ -354,7 +363,7 @@ export function RecentActivity({
               <SelectTrigger
                 aria-label="Filter activity by case"
                 size="sm"
-                className="h-7 w-[11rem] text-xs"
+                className="w-[11rem] data-[size=sm]:h-7"
               >
                 <SelectValue placeholder="All cases">
                   {(value: string | null) => {

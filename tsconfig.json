@@ -10,6 +10,8 @@
       "@watchdog/api": ["./packages/api/src/index.ts"],
       "@watchdog/api/*": ["./packages/api/src/*"],
 
+      "@watchdog/auth/*": ["./packages/auth/src/*"],
+
       "@watchdog/cap-sdk": ["./packages/cap-sdk/src/index.ts"],
       "@watchdog/cap-sdk/*": ["./packages/cap-sdk/src/*"],
 
@@ -53,7 +55,9 @@
       "@watchdog/test-kit/*": ["./packages/test-kit/src/*"],
 
       "@watchdog/tools": ["./packages/tools/src/index.ts"],
-      "@watchdog/tools/*": ["./packages/tools/src/*"]
+      "@watchdog/tools/*": ["./packages/tools/src/*"],
+
+      "@watchdog/ui/*": ["./packages/ui/src/*"]
     }
   }
 }

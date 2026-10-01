@@ -8,7 +8,8 @@ import {
 
 /** Map task statuses onto existing `--status-*` token tones. */
 export const TASK_STATUS_TONE_MAP: Record<TaskStatus, DisplayStatus> = {
-  backlog: "pending",
+  // Neutral, not amber: backlog is resting work, not a warning.
+  backlog: "queued",
   in_progress: "running",
   blocked: "blocked",
   done: "succeeded",

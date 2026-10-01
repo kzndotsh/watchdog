@@ -2,15 +2,15 @@ import { StickyNoteIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
 import { RichTextEditor } from "@/shared/ui/rich-text";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Separator } from "@/shared/ui/shadcn/separator";
+import { Separator } from "@watchdog/ui/components/separator";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@/shared/ui/shadcn/sheet";
+} from "@watchdog/ui/components/sheet";
 
 function notesPresent(notes: string | null | undefined): boolean {
   return (notes ?? "").trim() !== "";

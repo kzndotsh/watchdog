@@ -20,23 +20,14 @@ import { CodeBlock } from "@/shared/ui/code-block";
 import {
   DetailContextHeader,
   DetailContextSep,
-} from "@/shared/ui/detail-context-strip";
+} from "@/shared/ui/detail-context-line";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { EmptyState } from "@/shared/ui/empty-state";
-import {
-  FormInlineError,
-  FormInlineWarning,
-} from "@/shared/ui/form-inline-message";
+import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { JsonView } from "@/shared/ui/json-view";
+import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { Button } from "@/shared/ui/shadcn/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/shared/ui/shadcn/tabs";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import {
@@ -47,6 +38,13 @@ import {
   statusLabel,
 } from "@/shared/ui/vocab";
 import { STATUS_DOT } from "@/shared/ui/vocab/status.lib";
+import { FieldError } from "@watchdog/ui/components/field";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@watchdog/ui/components/tabs";
 
 const EMPTY_RUN_SIBLINGS: JobListRecord[] = [];
 
@@ -95,7 +93,7 @@ function JobPlaybookSpine({
                     STATUS_DOT[step.status]
                   )}
                 />
-                <p className="text-xs font-medium">
+                <p className="text-xs">
                   {i + 1} · {capabilityLabel(step.capabilityId)}{" "}
                   <span className="text-muted-foreground font-normal">
                     {statusLabel(step.status)}
@@ -130,11 +128,11 @@ function JobLogTabBody({
     if (alongsideSpine) return null;
     return (
       <EmptyState
+        size="sm"
         intent="blank-slate"
         items="logs"
         title="No logs yet"
         description="Logs appear here while the job runs."
-        className="py-6"
       />
     );
   }
@@ -151,11 +149,11 @@ function JobInputTabBody({ input }: { input: JobRecord["input"] }) {
   if (Object.keys(input).length === 0) {
     return (
       <EmptyState
+        size="sm"
         intent="blank-slate"
         items="input"
         title="No input"
         description="This job has no recorded input."
-        className="py-6"
       />
     );
   }
@@ -176,6 +174,7 @@ function JobOutputTabBody({
   if (orderedOutput.length === 0) {
     return (
       <EmptyState
+        size="sm"
         intent="blank-slate"
         items="output"
         title="No output yet"
@@ -184,7 +183,6 @@ function JobOutputTabBody({
             ? "Still running — output appears when the job finishes."
             : "This job produced no artifacts."
         }
-        className="py-6"
       />
     );
   }
@@ -215,9 +213,7 @@ function JobDetailHeader({
   return (
     <header className="border-border flex shrink-0 flex-col">
       <DetailContextHeader>
-        <span className="text-foreground font-medium">
-          {jobHeadlineLabel(job)}
-        </span>
+        <span className="text-foreground">{jobHeadlineLabel(job)}</span>
         {job.playbookId ? (
           <>
             <DetailContextSep />
@@ -276,12 +272,16 @@ function JobDetailHeader({
       </DetailContextHeader>
 
       {view.interpretFailed ? (
-        <FormInlineWarning className="px-3">
+        <FormInlineWarning className="px-3 py-2">
           Evidence captured; interpretation failed — no Proposal created.{" "}
           {job.interpretError}
         </FormInlineWarning>
       ) : null}
-      <FormInlineError className="px-3">{job.error}</FormInlineError>
+      {job.error ? (
+        <div className="px-3 py-2">
+          <FieldError>{job.error}</FieldError>
+        </div>
+      ) : null}
 
       <div className="border-border border-b px-2 pb-0">
         <TabsList variant="line" className="h-8">
@@ -437,9 +437,7 @@ function JobDetailLoaded({
           <div className="flex flex-col gap-4 p-4">
             {view.capSummary !== "" || view.showAllKnownOutcome ? (
               <div className="bg-muted/30 rounded-md border px-3 py-2">
-                <p className="text-muted-foreground text-xs font-medium">
-                  Summary
-                </p>
+                <p className="text-muted-foreground text-xs">Summary</p>
                 {view.capSummary === "" ? null : (
                   <p className="mt-0.5 text-sm leading-relaxed">
                     {view.capSummary}

@@ -210,4 +210,43 @@ describe("api events route", () => {
     expect(casesRepoMock.getById).toHaveBeenCalledWith({}, caseId, "org-1");
     await response.body?.cancel();
   });
+
+  it("closes the stream when the actor loses the organization mid-stream", async () => {
+    vi.useFakeTimers();
+    try {
+      const actor = {
+        userId: "u1",
+        email: null,
+        name: null,
+        organizationId: "org-1",
+      };
+      createApiContextMock.mockResolvedValue({ actor });
+      const end = vi.fn();
+      listenForEventsMock.mockReturnValue({ end });
+      const handlers = (
+        Route.options as {
+          server: {
+            handlers: Record<
+              string,
+              (ctx: { request: Request }) => Promise<Response>
+            >;
+          };
+        }
+      ).server.handlers;
+
+      const response = await handlers.GET({
+        request: new Request(testHttpOrigin("localhost", "/api/events")),
+      });
+
+      // Removed from the organization: the next beat must end the stream.
+      createApiContextMock.mockResolvedValue({ actor: null });
+      await vi.advanceTimersByTimeAsync(25_000);
+
+      expect(end).toHaveBeenCalled();
+      await response.body?.cancel();
+    } finally {
+      vi.useRealTimers();
+      createApiContextMock.mockResolvedValue({ actor: null });
+    }
+  });
 });

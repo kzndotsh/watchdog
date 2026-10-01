@@ -58,14 +58,10 @@ describe("Skeletons", () => {
     ).toBeGreaterThan(0);
 
     const { container: detail } = render(<CollectDetailSkeleton />);
-    expect(detail.querySelector(".h-40")).toBeInTheDocument();
+    expect(
+      detail.querySelector("[data-slot='detail-context-line']")
+    ).toBeInTheDocument();
     expect(detail.querySelector("[data-slot='tabs-list']")).toBeInTheDocument();
-    expect(
-      detail.querySelector("[data-slot='detail-footer']")
-    ).toBeInTheDocument();
-    expect(
-      detail.querySelector("[data-slot='artifact-preview-skeleton']")
-    ).toBeInTheDocument();
     expect(detail.querySelectorAll("[data-slot='meta-row']")).toHaveLength(0);
   });
 

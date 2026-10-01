@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/shared/ui/shadcn/toast", () => ({
+vi.mock("@/shared/ui/toast", () => ({
   toast: {
     success: vi.fn(),
     warning: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
 
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
 import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 
 const useMutationMock = vi.hoisted(() => vi.fn());
 

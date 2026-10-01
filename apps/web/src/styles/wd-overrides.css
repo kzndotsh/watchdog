@@ -161,8 +161,13 @@
   box-shadow: 0 0 0 var(--tw-ring-width) var(--tw-ring-color);
 }
 
-.dark [data-slot="tabs-trigger"][data-active],
-.dark [data-slot="tabs-trigger"][aria-selected="true"] {
+/* Pill tabs only: line tabs show just the underline, no outline on the active trigger. */
+.dark
+  [data-slot="tabs-list"][data-variant="default"]
+  [data-slot="tabs-trigger"][data-active],
+.dark
+  [data-slot="tabs-list"][data-variant="default"]
+  [data-slot="tabs-trigger"][aria-selected="true"] {
   border-color: color-mix(in oklab, var(--input) 40%, transparent);
 }
 
@@ -178,9 +183,9 @@
   background: var(--graph-canvas-bg);
 }
 
-/* CapMatch — amber selection bar; cold roster, no card chrome */
+/* CapMatch — amber selection wash (same as QueueRow); cold roster, no card chrome */
 .cap-match-row-selected {
-  box-shadow: inset 3px 0 0 var(--signal);
+  background-color: color-mix(in oklab, var(--signal) 10%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -199,41 +204,130 @@
   }
 }
 
-/* ── Thin scrollbars ───────────────────────────────────────────────────────── */
+/* ── Minimal scrollbars ────────────────────────────────────────────────────── */
+/* Native scrollers (Firefox: thin + colour only; WebKit: 4px thumb). Faint at rest, a bit
+   stronger while the pointer is over the scroller. No track, no corner. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 60%, transparent)
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 30%, transparent)
+    transparent;
+}
+
+*:hover {
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 55%, transparent)
     transparent;
 }
 
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
+  background: transparent;
 }
 
-*::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
   background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
   background-color: color-mix(
     in oklch,
-    var(--muted-foreground) 60%,
+    var(--muted-foreground) 30%,
     transparent
   );
+  background-clip: content-box;
+  border: 1px solid transparent;
   border-radius: 9999px;
   min-height: 40px;
 }
 
-*::-webkit-scrollbar-thumb:hover {
+*:hover::-webkit-scrollbar-thumb {
   background-color: color-mix(
     in oklch,
-    var(--muted-foreground) 85%,
+    var(--muted-foreground) 55%,
     transparent
   );
+}
+
+/* ScrollArea (Base UI) overlays the content, so it stays out of the way: a 6px rail that
+   appears only while hovering or scrolling, no border, a slim thumb. */
+html [data-slot="scroll-area-scrollbar"] {
+  /* Above sticky section bars (z-10) so the thumb is never cut at the day dividers. */
+  z-index: 20;
+  border: 0;
+  padding: 1px;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+html [data-slot="scroll-area-scrollbar"][data-orientation="vertical"] {
+  width: 6px;
+}
+
+html [data-slot="scroll-area-scrollbar"][data-orientation="horizontal"] {
+  height: 6px;
+}
+
+html [data-slot="scroll-area-scrollbar"][data-hovering],
+html [data-slot="scroll-area-scrollbar"][data-scrolling] {
+  opacity: 1;
+}
+
+html [data-slot="scroll-area-thumb"] {
+  background-color: color-mix(
+    in oklch,
+    var(--muted-foreground) 40%,
+    transparent
+  );
+}
+
+html [data-slot="scroll-area-thumb"]:hover {
+  background-color: color-mix(
+    in oklch,
+    var(--muted-foreground) 65%,
+    transparent
+  );
+}
+
+/* Switch: make on/off obvious in both themes. Off = a visible grey track; on = the accent
+   track; the thumb is always light so it never disappears into either track. */
+html [data-slot="switch"][data-unchecked] {
+  background-color: color-mix(
+    in oklch,
+    var(--muted-foreground) 45%,
+    transparent
+  );
+}
+
+html [data-slot="switch"][data-checked] {
+  background-color: var(--primary);
+}
+
+html [data-slot="switch-thumb"] {
+  background-color: var(--wd-neutral-50);
+  box-shadow: 0 1px 2px color-mix(in oklch, black 35%, transparent);
 }
 
 /* Toast — Base UI primitive; typed surfaces use status-* tokens in toast.tsx */
 [data-slot="toast"] {
   font-family: var(--font-sans);
+}
+
+/*
+ * Touch targets — coarse pointers only (phones, tablets). Desktop density is
+ * untouched. Buttons and Queue rows grow toward the 44px touch target; table
+ * cells keep their fixed control height so the colgroup grid holds.
+ */
+@media (pointer: coarse) {
+  [data-slot="button"]:not(td [data-slot="button"]) {
+    min-height: 2.5rem;
+  }
+
+  [data-slot="button"][data-size^="icon"]:not(td [data-slot="button"]) {
+    min-width: 2.5rem;
+  }
+
+  [data-slot="queue-row"] {
+    padding-block: 0.75rem;
+  }
 }

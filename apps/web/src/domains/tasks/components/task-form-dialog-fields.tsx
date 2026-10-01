@@ -1,14 +1,14 @@
 import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog-form";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
 import { TASK_PRIORITY_OPTIONS, TASK_STATUS_OPTIONS } from "@/shared/ui/vocab";
 import {
   trimmedTaskPrioritySchema,
   trimmedTaskStatusSchema,
 } from "@watchdog/schemas";
+import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 export function TaskFormFields({
   form,
@@ -20,7 +20,7 @@ export function TaskFormFields({
   busy: boolean;
 }) {
   return (
-    <FieldGroup className="gap-3">
+    <FieldGroup>
       <form.Field name="title">
         {(field) => (
           <Field>

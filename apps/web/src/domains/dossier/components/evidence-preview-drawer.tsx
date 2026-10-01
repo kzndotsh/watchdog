@@ -12,18 +12,18 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { ExternalUrl } from "@/shared/ui/external-url";
 import { IdChip } from "@/shared/ui/id-chip";
 import { MetaGrid, MetaGridItem, MetaRow } from "@/shared/ui/meta-row";
+import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
-import { Button } from "@/shared/ui/shadcn/button";
-import { ScrollArea } from "@/shared/ui/shadcn/scroll-area";
-import { Separator } from "@/shared/ui/shadcn/separator";
+import { KindBadge } from "@/shared/ui/vocab";
+import { ScrollArea } from "@watchdog/ui/components/scroll-area";
+import { Separator } from "@watchdog/ui/components/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/shared/ui/shadcn/sheet";
-import { KindBadge } from "@/shared/ui/vocab";
+} from "@watchdog/ui/components/sheet";
 
 function EvidencePreviewBody({
   evidence,
@@ -58,16 +58,16 @@ function EvidencePreviewBody({
 
   return (
     <>
-      <SheetHeader className="px-5 pt-5 pb-4">
+      <SheetHeader>
         <div className="flex items-center gap-2">
           <KindBadge kind={evidence.kind} />
           {evidence.mime !== null && evidence.mime !== undefined ? (
-            <span className="text-label-mono-sm text-muted-foreground">
+            <span className="text-2xs text-muted-foreground font-mono">
               {evidence.mime}
             </span>
           ) : null}
         </div>
-        <SheetTitle className="text-base">{title}</SheetTitle>
+        <SheetTitle>{title}</SheetTitle>
         {evidence.notes !== null && evidence.notes !== "" ? (
           <SheetDescription>{evidence.notes}</SheetDescription>
         ) : null}
@@ -76,12 +76,9 @@ function EvidencePreviewBody({
       <Separator />
 
       <ScrollArea
-        className={cn(
-          "flex-1 px-5 py-4",
-          placeholderDeemphasisClass(blobPlaceholder)
-        )}
+        className={cn("flex-1", placeholderDeemphasisClass(blobPlaceholder))}
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 px-5 py-4">
           <MetaGrid>
             <MetaGridItem label="Captured">
               <RelativeTime value={evidence.capturedAt} />
@@ -108,7 +105,7 @@ function EvidencePreviewBody({
             <MetaRow
               label="Source URL"
               className="flex-col items-start gap-1"
-              labelClassName="text-xs font-medium"
+              labelClassName="text-xs"
             >
               <ExternalUrl href={evidence.sourceUrl} />
             </MetaRow>
@@ -116,9 +113,7 @@ function EvidencePreviewBody({
 
           {isImage && downloadUrl !== null && downloadUrl !== "" ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs font-medium">
-                Preview
-              </span>
+              <span className="text-muted-foreground text-xs">Preview</span>
               <img
                 src={downloadUrl}
                 alt={evidence.label ?? "evidence"}
@@ -129,9 +124,7 @@ function EvidencePreviewBody({
 
           {isText ? (
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs font-medium">
-                Content
-              </span>
+              <span className="text-muted-foreground text-xs">Content</span>
               {textContent}
             </div>
           ) : null}
@@ -181,10 +174,7 @@ export function EvidencePreviewDrawer({
         onClose();
       }}
     >
-      <SheetContent
-        side="right"
-        className="flex flex-col gap-0 p-0 sm:max-w-lg"
-      >
+      <SheetContent side="right" className="sm:max-w-lg">
         {evidence === null ? null : (
           <EvidencePreviewBody evidence={evidence} caseId={caseId} />
         )}

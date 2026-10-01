@@ -29,7 +29,7 @@ import {
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import type { ProposalRecord } from "@watchdog/core";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import {

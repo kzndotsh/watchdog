@@ -10,7 +10,7 @@ import {
   type IdentifierPasteTable,
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { errMessage } from "@/lib/utils";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 
 export function useBulkAddIdentifiersImport(options: {
   caseId: string;

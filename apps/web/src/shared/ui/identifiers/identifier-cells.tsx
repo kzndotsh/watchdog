@@ -29,9 +29,9 @@ import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
+import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { Button } from "@/shared/ui/shadcn/button";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,

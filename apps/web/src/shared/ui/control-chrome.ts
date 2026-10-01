@@ -6,7 +6,7 @@
  * Surface matches InputGroup: transparent light, dark:bg-input/30.
  */
 export const CONTROL_HEIGHT = "h-8";
-export const CONTROL_TEXT = "text-label-meta-sm";
+export const CONTROL_TEXT = "text-xs leading-tight";
 /** Fixed toolbar search width — queue + page toolbars stay aligned. */
 export const SEARCH_FIELD_WIDTH = "w-80 max-w-full shrink-0";
 const CONTROL_RADIUS = "rounded-md";
@@ -44,7 +44,7 @@ export const CONTROL_CELL =
  * Table CSS applies the same quiet border/fill as SelectTrigger.
  */
 export const CONTROL_CELL_SHELL =
-  "h-7 w-full min-w-0 max-w-full rounded-md border-transparent bg-transparent py-0 shadow-none dark:bg-transparent hover:bg-muted/40 focus-within:border-ring focus-within:bg-background [&_[data-slot=input-group-control]]:h-7 [&_[data-slot=input-group-control]]:min-w-0 [&_[data-slot=input-group-control]]:truncate [&_[data-slot=input-group-control]]:text-label-meta-sm";
+  "h-7 w-full min-w-0 max-w-full rounded-md border-transparent bg-transparent py-0 shadow-none dark:bg-transparent hover:bg-muted/40 focus-within:border-ring focus-within:bg-background [&_[data-slot=input-group-control]]:h-7 [&_[data-slot=input-group-control]]:min-w-0 [&_[data-slot=input-group-control]]:truncate [&_[data-slot=input-group-control]]:text-xs [&_[data-slot=input-group-control]]:leading-tight";
 
 /** Base UI Select `onValueChange` may pass string | string[]. */
 export function resolveSelectValue(next: unknown): string | null {

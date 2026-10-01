@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
 import type { AppAction } from "@/shared/lib/app-action";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
+import { TABLE_BODY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 import {
   Table,
   TableBody,
@@ -28,8 +29,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/ui/shadcn/table";
-import { TABLE_BODY_SKELETON_ROW_COUNT } from "@/shared/ui/skeletons";
+} from "@watchdog/ui/components/table";
 
 import type { DataTableFeatures } from "./table-features";
 

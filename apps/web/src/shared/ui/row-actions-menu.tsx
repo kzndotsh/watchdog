@@ -4,12 +4,12 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { AppAction } from "@/shared/lib/app-action";
 import { DropdownActionItems } from "@/shared/ui/action-list";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
+} from "@watchdog/ui/components/dropdown-menu";
 
 /**
  * Hover-reveal row actions — `MoreHorizontal` + `DropdownMenu`.
@@ -21,8 +21,11 @@ export function RowActionsMenu({
   className,
   children,
   actions,
+  alwaysVisible = false,
 }: {
   label: string;
+  /** Skip the hover reveal (e.g. on touch surfaces or short lists). */
+  alwaysVisible?: boolean;
   className?: string;
   children?: ReactNode;
   actions?: readonly AppAction[];
@@ -37,7 +40,9 @@ export function RowActionsMenu({
             size="sm"
             aria-label={label}
             className={cn(
-              "h-6 w-6 shrink-0 p-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100",
+              "h-6 w-6 shrink-0 p-0 transition-opacity",
+              !alwaysVisible &&
+                "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
               className
             )}
           />

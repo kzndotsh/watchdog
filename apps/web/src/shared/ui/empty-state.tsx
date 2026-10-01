@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Empty,
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
-} from "@/shared/ui/shadcn/empty";
+} from "@watchdog/ui/components/empty";
 
 /**
  * Queue / page empty intents (Geist catalog).
@@ -30,6 +30,8 @@ export function EmptyState({
   title: titleOverride,
   description: descriptionOverride,
   action,
+  size = "default",
+  framed = false,
   className,
 }: {
   intent: EmptyStateIntent;
@@ -42,6 +44,10 @@ export function EmptyState({
   description?: ReactNode;
   /** Overrides default Clear / Show all button. */
   action?: ReactNode;
+  /** `sm` = compact blank slate inside a tab or panel (py-6). */
+  size?: "default" | "sm";
+  /** Dashed frame for a whole-page empty (Dossier section). */
+  framed?: boolean;
   className?: string;
 }) {
   const Items = capitalize(items);
@@ -110,12 +116,15 @@ export function EmptyState({
   return (
     <Empty
       aria-live="polite"
-      className={cn("min-h-0 flex-1 rounded-none border-0 py-12", className)}
+      className={cn(
+        "min-h-0 flex-1",
+        size === "sm" ? "py-6" : "py-12",
+        framed && "border-border/60 rounded-lg border border-dashed",
+        className
+      )}
     >
       <EmptyHeader>
-        <EmptyTitle className="text-muted-foreground font-medium">
-          {title}
-        </EmptyTitle>
+        <EmptyTitle className="text-muted-foreground">{title}</EmptyTitle>
         {description ? (
           <EmptyDescription>{description}</EmptyDescription>
         ) : null}

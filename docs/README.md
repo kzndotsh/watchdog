@@ -2,7 +2,7 @@
 
 Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that matches the question. One tree under `docs/`: platform + web namespaces (`reference/platform/`, `reference/web/`, `reference/contracts/`).
 
-**PRODUCT vs UX vs UI vs SCENARIOS:** PRODUCT = why / who / refuse. UX = how investigators experience the product. UI = how we build the interface. SCENARIOS = which journeys actually complete end-to-end.
+**PRODUCT vs UX vs UI vs SCENARIOS:** PRODUCT = why / who / refuse. UX = how investigators experience the product. UI = how we build the interface. SCENARIOS = which journeys actually complete end-to-end. Design direction and taste rules live in [`DESIGN.md`](../DESIGN.md) at the repo root.
 
 `.cursor/plans/` (incl. `_archived/`) are historical: durable contracts live here, not in plans.
 
@@ -90,10 +90,13 @@ Index: [`how-to/README.md`](how-to/README.md).
 | [`reference/web/UI.md`](reference/web/UI.md) | UI hub → `ui/` leaves |
 | [`reference/web/ui/README.md`](reference/web/ui/README.md) | Delivery gates, chrome lexicon |
 | [`reference/web/ui/tokens.md`](reference/web/ui/tokens.md) | Colors, type, refuse list |
+| [`reference/web/ui/rules.md`](reference/web/ui/rules.md) | Every UI rule: reason, kind, verdict, enforcer |
 | [`reference/web/ui/page-shell.md`](reference/web/ui/page-shell.md) | Page / trail / toolbar |
 | [`reference/web/ui/forms.md`](reference/web/ui/forms.md) | Form library |
 | [`reference/web/ui/tables.md`](reference/web/ui/tables.md) | Column sizing + DataTable pending |
 | [`reference/web/ui/loading.md`](reference/web/ui/loading.md) | Skeletons + hydration rules |
-| [`reference/web/ui/atoms.md`](reference/web/ui/atoms.md) | Hand-owned atom highlights |
+| [`reference/web/ui/atoms.md`](reference/web/ui/atoms.md) | Hand-owned atom highlights + primitive wrappers |
+| [`reference/web/ui/vendor.md`](reference/web/ui/vendor.md) | Vendored primitives: layers, lock, sync |
+| [`reference/web/ui/auth-ui.md`](reference/web/ui/auth-ui.md) | Auth screens: Better Auth UI origin, what is ours, routing rules |
 | [`reference/web/ui/motion.md`](reference/web/ui/motion.md) | Operate motion |
 | [`reference/web/ui/multi-mode.md`](reference/web/ui/multi-mode.md) | Detail / composers |

@@ -23,11 +23,11 @@ vi.mock("@/shared/layout/providers", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/shadcn/toast", () => ({
+vi.mock("@/shared/ui/toast", () => ({
   Toaster: () => null,
 }));
 
-vi.mock("@/shared/ui/shadcn/tooltip", () => ({
+vi.mock("@watchdog/ui/components/tooltip", () => ({
   TooltipProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 

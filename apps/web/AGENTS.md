@@ -29,8 +29,9 @@ TanStack Start UI for Watchdog. When UI contracts disagree with root AGENTS, **[
 
 | Do | Don’t |
 | --- | --- |
-| Split = Queue + Detail (`SplitView`) | Console / Tape / Panel / Pane / Rail / Strip as surfaces |
-| Query cache SoT — `ensureQueryData` / `useSuspenseQuery` / named invalidation | Loader→`useState` forks; QueryClient singleton |
+| Split = Queue + Detail (`SplitView`) | Console / Workbench / Tape surfaces; a screen named `*Panel` ([naming rule](../../docs/reference/web/ui/README.md#chrome-lexicon-ui-parts)) |
+| Query cache SoT — `ensureQueryData` loaders + `useQuery` / named invalidation | Loader→`useState` forks; QueryClient singleton |
+| Import vanilla primitives from `@watchdog/ui/components/*`; import wrapped ones (Button, Dialog, AlertDialog, Combobox) from `@/shared/ui/primitives/*` | Edit `packages/ui`, or patch a primitive with `className` |
 | Reuse domain `hooks/*` workspace hooks | Duplicate Queue/Detail mutation machines in components |
 | Read [`docs/reference/web/`](../../docs/reference/web/README.md) before inventing | Reinvent from `_legacy-v2` without reading it as reference |
 | Caps/agents → Proposal → Triage Accept | Land Cap/agent output as `confirmed` Graph |
@@ -51,5 +52,6 @@ Canonical contracts: [`docs/reference/contracts/`](../../docs/reference/contract
 | UI leaves | [`ui/`](../../docs/reference/web/ui/README.md) · loading · tables · page-shell |
 | Domains / Data | [`domains.md`](../../docs/reference/web/domains.md) · [`data.md`](../../docs/reference/web/data.md) |
 | Product / UX / Caps | [`product`](../../docs/explanation/product.md) · [`ux`](../../docs/explanation/ux.md) · [`caps-lexicon`](../../docs/reference/platform/caps-lexicon.md) |
+| Design direction | [`DESIGN.md`](../../DESIGN.md) · owned auth screens: [`auth-ui`](../../docs/reference/web/ui/auth-ui.md) |
 | Auth / local-dev | [`auth-setup`](../../docs/how-to/auth-setup.md) · [`local-dev`](../../docs/how-to/local-dev.md) |
 | Log package | [`packages/log/AGENTS.md`](../../packages/log/AGENTS.md) |

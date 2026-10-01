@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { CalendarIcon, GripVerticalIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import {
   useMemo,
   type KeyboardEvent,
@@ -18,12 +18,11 @@ import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 import {
+  EntityKindIcon,
   TASK_PRIORITY_TONE_MAP,
-  KindBadge,
-  taskPriorityLabel,
+  taskPriorityShortLabel,
 } from "@/shared/ui/vocab";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
-import type { TaskPriority } from "@watchdog/schemas";
 import { entityDisplayLabel } from "@watchdog/schemas";
 
 interface Props {
@@ -33,27 +32,6 @@ interface Props {
   onDelete?: (task: TaskRecord) => void;
   entityById?: Map<string, TaskEntityLabel>;
   dragDisabled?: boolean;
-}
-
-function priorityRailClass(priority: TaskPriority): string {
-  switch (priority) {
-    case "urgent": {
-      return "bg-status-failed";
-    }
-    case "high": {
-      return "bg-status-pending";
-    }
-    case "medium": {
-      return "bg-status-running";
-    }
-    case "low": {
-      return "bg-status-unknown";
-    }
-    default: {
-      const _exhaustive: never = priority;
-      return _exhaustive;
-    }
-  }
 }
 
 function TaskCardBody({
@@ -67,57 +45,55 @@ function TaskCardBody({
 }) {
   const done = task.status === "done";
   const dropped = task.status === "dropped";
-  const hasFooter = Boolean(entity) || Boolean(task.dueDate);
+  const hasFooter = Boolean(task.priority) || Boolean(task.dueDate);
   const entityLabel = entity
     ? entityDisplayLabel({ name: entity.name, slug: entity.slug })
     : null;
 
   return (
-    <div className="min-w-0 flex-1">
-      <div className="flex items-start gap-2">
+    <div className="flex min-w-0 flex-col">
+      {entity && entityLabel ? (
+        <div className="bg-muted/40 flex h-6 min-w-0 items-center gap-1 px-2.5 pr-7">
+          <span
+            className="text-muted-foreground inline-flex min-w-0 items-center gap-1 text-xs"
+            title={entityLabel}
+          >
+            <EntityKindIcon kind={entity.kind} size="sm" />
+            <span className="truncate">{entityLabel}</span>
+          </span>
+        </div>
+      ) : null}
+
+      {/* Padding lives on the wrapper: line-clamp hides overflow inside its own padding box, so padding on the clamped element lets the third line peek out. */}
+      <div className={cn("px-2.5 py-2", !entity && "pr-7")}>
         <div
+          title={task.title}
           className={cn(
-            "min-w-0 flex-1 text-sm leading-snug font-medium",
+            "line-clamp-2 text-xs leading-snug font-normal break-words",
             done && "text-muted-foreground line-through",
             dropped && "text-muted-foreground"
           )}
         >
           {task.title}
         </div>
-        {task.priority ? (
-          <span
-            className={cn(
-              "text-chip mt-0.5 inline-flex shrink-0 items-center rounded-sm px-1 py-px leading-none",
-              STATUS_TONES[TASK_PRIORITY_TONE_MAP[task.priority]].low
-            )}
-          >
-            {taskPriorityLabel(task.priority)}
-          </span>
-        ) : null}
       </div>
 
       {hasFooter ? (
-        <div
-          className={cn(
-            "mt-2 flex items-center gap-2",
-            entity ? "justify-between" : "justify-end"
-          )}
-        >
-          {entity && entityLabel ? (
-            <KindBadge
-              kind={entity.kind}
-              size="sm"
-              className="max-w-[10rem] min-w-0"
-              title={entityLabel}
+        <div className="border-border flex h-6 min-w-0 items-center gap-2 border-t px-2.5">
+          {task.priority ? (
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-normal tracking-wider uppercase",
+                STATUS_TONES[TASK_PRIORITY_TONE_MAP[task.priority]].low
+              )}
             >
-              <span className="truncate">{entityLabel}</span>
-            </KindBadge>
+              {taskPriorityShortLabel(task.priority)}
+            </span>
           ) : null}
-
           {task.dueDate ? (
             <span
               className={cn(
-                "text-label-mono-sm inline-flex shrink-0 items-center gap-1 tabular-nums",
+                "ml-auto inline-flex shrink-0 items-center gap-1 font-mono text-xs font-light tabular-nums",
                 overdue ? "text-destructive" : "text-muted-foreground"
               )}
             >
@@ -197,29 +173,12 @@ export function TaskCard({
   }
 
   const inner = (
-    <div
-      className={cn("flex min-w-0 flex-1 gap-1.5", isDragging && "invisible")}
-    >
-      {task.priority ? (
-        <span
-          aria-hidden
-          className={cn(
-            "absolute inset-y-0 left-0 w-0.5",
-            priorityRailClass(task.priority)
-          )}
-        />
-      ) : null}
-      <span
-        aria-hidden
-        className="text-muted-foreground mt-0.5 shrink-0 opacity-25 group-hover:opacity-60"
-      >
-        <GripVerticalIcon className="size-3.5" />
-      </span>
+    <div className={cn("min-w-0 flex-1", isDragging && "invisible")}>
       <TaskCardBody task={task} entity={entity} overdue={overdue} />
       {dropdownActions.length > 0 && !isDragging ? (
         // oxlint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- stop ⋯ pointer from selecting/dragging the card
         <div
-          className="shrink-0 self-start"
+          className="absolute top-1 right-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
           onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
             event.stopPropagation();
           }}
@@ -288,21 +247,6 @@ export function TaskCardPreview({
 
   return (
     <div className={cn(TASK_CARD_SHELL_CLASS, "cursor-grabbing")}>
-      {task.priority ? (
-        <span
-          aria-hidden
-          className={cn(
-            "absolute inset-y-0 left-0 w-0.5",
-            priorityRailClass(task.priority)
-          )}
-        />
-      ) : null}
-      <span
-        aria-hidden
-        className="text-muted-foreground mt-0.5 shrink-0 opacity-60"
-      >
-        <GripVerticalIcon className="size-3.5" />
-      </span>
       <TaskCardBody task={task} entity={entity} overdue={overdue} />
     </div>
   );

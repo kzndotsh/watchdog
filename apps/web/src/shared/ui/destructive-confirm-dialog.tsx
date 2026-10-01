@@ -8,10 +8,10 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+} from "@/shared/ui/primitives/alert-dialog";
+import { Button } from "@/shared/ui/primitives/button";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 /**
  * Type-to-confirm destructive dialog. Presentational — caller owns open + onConfirm.
@@ -115,7 +115,7 @@ export function DestructiveConfirmDialog({
             className="block w-full whitespace-normal"
           >
             {verificationLabel}{" "}
-            <span className="bg-muted text-foreground rounded-md px-1.5 py-0.5 font-mono text-xs font-medium">
+            <span className="bg-muted text-foreground rounded-md px-1.5 py-0.5 font-mono text-xs">
               {verificationPhrase}
             </span>
           </FieldLabel>

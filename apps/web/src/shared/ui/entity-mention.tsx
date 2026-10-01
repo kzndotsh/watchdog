@@ -38,7 +38,7 @@ export function EntityMention({
   const nameEl = (
     <span
       className={cn(
-        "text-foreground min-w-0 truncate font-medium underline-offset-2",
+        "text-foreground min-w-0 truncate underline-offset-2",
         NAME_SIZE_CLASS[size],
         nameClassName
       )}

@@ -1,6 +1,6 @@
 import { PlusIcon } from "lucide-react";
 
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 
 interface Props {
   /** Panel empty-state CTA uses a solid button + noun label; header uses ghost "Add". */
@@ -20,13 +20,7 @@ export function DossierSectionAddButton({ variant, noun, onClick }: Props) {
   }
 
   return (
-    <Button
-      type="button"
-      size="sm"
-      variant="ghost"
-      className="h-6 gap-1 px-2 text-xs"
-      onClick={onClick}
-    >
+    <Button type="button" size="sm" variant="ghost" onClick={onClick}>
       <PlusIcon className="size-3" />
       Add
     </Button>

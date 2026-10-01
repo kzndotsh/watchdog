@@ -1,14 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
+import { CreateCaseDialog } from "@/domains/cases/components/create-case-dialog";
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
-import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
+import {
+  bindCasesChangedInvalidation,
+  invalidateAfterCaseSwitch,
+} from "@/shared/lib/query-invalidation";
 import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { SidebarGroupLabel, useSidebar } from "@/shared/ui/shadcn/sidebar";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
+import { toast } from "@/shared/ui/toast";
 import { trimmedOrUndefined } from "@watchdog/schemas";
+import { SidebarGroupLabel, useSidebar } from "@watchdog/ui/components/sidebar";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 import {
   CaseSwitcherCollapsed,
@@ -50,6 +55,8 @@ export function CaseSwitcher() {
     silentError: true,
   });
 
+  const [createOpen, setCreateOpen] = useState(false);
+
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
   const selectMutation = useSelectActiveCase({
@@ -86,24 +93,50 @@ export function CaseSwitcher() {
     return <CaseSwitcherEmpty collapsed={collapsed} />;
   }
 
+  const createDialog = (
+    <CreateCaseDialog
+      open={createOpen}
+      onOpenChange={setCreateOpen}
+      onCreated={() => {
+        void invalidateAfterCaseSwitch(queryClient);
+        // The new case is now active; a page for the previous case's slug would be stale.
+        if (pathname.startsWith("/cases/")) void navigate({ to: "/cases" });
+      }}
+      onError={(message) => {
+        toast.error(message);
+      }}
+    />
+  );
+  const openCreate = () => {
+    setCreateOpen(true);
+  };
+
   if (collapsed) {
     return (
-      <CaseSwitcherCollapsed
-        cases={cases}
-        active={active}
-        activeId={activeId}
-        onSelectCase={selectCase}
-      />
+      <>
+        <CaseSwitcherCollapsed
+          cases={cases}
+          active={active}
+          activeId={activeId}
+          onSelectCase={selectCase}
+          onCreate={openCreate}
+        />
+        {createDialog}
+      </>
     );
   }
 
   return (
-    <CaseSwitcherExpanded
-      cases={cases}
-      active={active}
-      activeId={activeId}
-      collapsed={collapsed}
-      onSelectCase={selectCase}
-    />
+    <>
+      <CaseSwitcherExpanded
+        cases={cases}
+        active={active}
+        activeId={activeId}
+        collapsed={collapsed}
+        onSelectCase={selectCase}
+        onCreate={openCreate}
+      />
+      {createDialog}
+    </>
   );
 }

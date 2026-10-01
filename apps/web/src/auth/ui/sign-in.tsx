@@ -1,54 +1,55 @@
-"use client"
+"use client";
 
-import { authMutationKeys } from "@better-auth-ui/core"
-import { useAuth, useFetchOptions, useSignInEmail } from "@better-auth-ui/react"
-import { useIsMutating } from "@tanstack/react-query"
-import { Eye, EyeOff } from "lucide-react"
-import { type SyntheticEvent, useState } from "react"
+import { authMutationKeys } from "@better-auth-ui/core";
+import {
+  useAuth,
+  useFetchOptions,
+  useSignInEmail,
+} from "@better-auth-ui/react";
+import { useIsMutating } from "@tanstack/react-query";
+import { Eye, EyeOff } from "lucide-react";
+import { type SyntheticEvent, useState } from "react";
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card"
-import { Checkbox } from "@/shared/ui/shadcn/checkbox"
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@watchdog/ui/components/card";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
-  FieldSeparator
-} from "@/shared/ui/shadcn/field"
-import { Input } from "@/shared/ui/shadcn/input"
+} from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupInput
-} from "@/shared/ui/shadcn/input-group"
-import { Label } from "@/shared/ui/shadcn/label"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
-import { cn } from "@/lib/utils"
-import { ProviderButtons, type SocialLayout } from "./provider-buttons"
+  InputGroupInput,
+} from "@watchdog/ui/components/input-group";
+import { Label } from "@watchdog/ui/components/label";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-export type SignInProps = {
-  className?: string
-  socialLayout?: SocialLayout
-  socialPosition?: "top" | "bottom"
-  allowSignup?: boolean
+import { authErrorDetails } from "./auth-error";
+import { formString } from "./form-data";
+
+export interface SignInProps {
+  className?: string;
+  allowSignup?: boolean;
 }
 
 /**
- * Render the sign-in form UI with email/password, magic link, and social provider options.
+ * Render the sign-in form UI with email and password.
  *
  * @param className - Optional additional container class names
- * @param socialLayout - Layout style for social provider buttons
- * @param socialPosition - Position of social provider buttons; `"top"` or `"bottom"`. Defaults to `"bottom"`.
  * @returns The rendered sign-in UI as a JSX element
  */
-export function SignIn({
-  className,
-  socialLayout,
-  socialPosition = "bottom",
-  allowSignup = false
-}: SignInProps) {
+export function SignIn({ className, allowSignup = false }: SignInProps) {
   const {
     authClient,
     basePaths,
@@ -56,70 +57,68 @@ export function SignIn({
     localization,
     plugins,
     redirectTo,
-    socialProviders,
     viewPaths,
     navigate,
-    Link
-  } = useAuth()
+    Link,
+  } = useAuth();
 
-  const { fetchOptions, resetFetchOptions } = useFetchOptions()
+  const { fetchOptions, resetFetchOptions } = useFetchOptions();
 
-  const [password, setPassword] = useState("")
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const { mutate: signInEmail, isPending: signInEmailPending } = useSignInEmail(
     authClient,
     {
       onError: (error, { email }) => {
-        setPassword("")
+        setPassword("");
 
-        if (error.error?.code === "EMAIL_NOT_VERIFIED") {
-          sessionStorage.setItem("better-auth-ui.verify-email", email)
+        if (authErrorDetails(error).code === "EMAIL_NOT_VERIFIED") {
+          sessionStorage.setItem("better-auth-ui.verify-email", email);
           navigate({
-            to: `${basePaths.auth}/${viewPaths.auth.verifyEmail}`
-          })
+            to: `${basePaths.auth}/${viewPaths.auth.verifyEmail}`,
+          });
         }
 
-        resetFetchOptions()
+        resetFetchOptions();
       },
-      onSuccess: () => navigate({ to: redirectTo })
+      onSuccess: () => {
+        navigate({ to: redirectTo });
+      },
     }
-  )
+  );
 
   const signInMutating = useIsMutating({
-    mutationKey: authMutationKeys.signIn.all
-  })
+    mutationKey: authMutationKeys.signIn.all,
+  });
   const signUpMutating = useIsMutating({
-    mutationKey: authMutationKeys.signUp.all
-  })
-  const isPending = signInMutating + signUpMutating > 0
+    mutationKey: authMutationKeys.signUp.all,
+  });
+  const isPending = signInMutating + signUpMutating > 0;
 
   const Captcha = plugins.find(
-    (plugin) => plugin.captchaComponent
-  )?.captchaComponent
+    (plugin) => plugin.captchaComponent !== undefined
+  )?.captchaComponent;
 
   const [fieldErrors, setFieldErrors] = useState<{
-    email?: string
-    password?: string
-  }>({})
+    email?: string;
+    password?: string;
+  }>({});
 
   const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    const formData = new FormData(e.currentTarget)
-    const email = (formData.get("email") as string).trim()
-    const rememberMe = formData.get("rememberMe") === "on"
+    const formData = new FormData(e.currentTarget);
+    const email = formString(formData, "email").trim();
+    const rememberMe = formData.get("rememberMe") === "on";
 
     signInEmail({
       email,
       password,
       ...(emailAndPassword?.rememberMe ? { rememberMe } : {}),
-      fetchOptions
-    })
-  }
-
-  const showSeparator =
-    emailAndPassword?.enabled && socialProviders && socialProviders.length > 0
+      fetchOptions,
+    });
+  };
 
   return (
     <Card className={cn("w-full max-w-sm", className)}>
@@ -131,20 +130,6 @@ export function SignIn({
 
       <CardContent>
         <div className="flex flex-col gap-6">
-          {socialPosition === "top" && (
-            <>
-              {socialProviders && socialProviders.length > 0 && (
-                <ProviderButtons socialLayout={socialLayout} />
-              )}
-
-              {showSeparator && (
-                <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card m-0 text-xs flex items-center">
-                  {localization.auth.or}
-                </FieldSeparator>
-              )}
-            </>
-          )}
-
           {emailAndPassword?.enabled && (
             <form onSubmit={handleSubmit}>
               <FieldGroup>
@@ -162,20 +147,20 @@ export function SignIn({
                     onChange={() => {
                       setFieldErrors((prev) => ({
                         ...prev,
-                        email: undefined
-                      }))
+                        email: undefined,
+                      }));
                     }}
                     onInvalid={(e) => {
-                      e.preventDefault()
-                      const el = e.target as HTMLInputElement
+                      e.preventDefault();
+                      const el = e.currentTarget;
                       const msg = el.validity.valueMissing
                         ? localization.auth.fieldRequired
-                        : localization.auth.invalidEmail
+                        : localization.auth.invalidEmail;
 
                       setFieldErrors((prev) => ({
                         ...prev,
-                        email: msg
-                      }))
+                        email: msg,
+                      }));
                     }}
                     aria-invalid={!!fieldErrors.email}
                   />
@@ -194,12 +179,12 @@ export function SignIn({
                       autoComplete="current-password"
                       value={password}
                       onChange={(e) => {
-                        setPassword(e.target.value)
+                        setPassword(e.target.value);
 
                         setFieldErrors((prev) => ({
                           ...prev,
-                          password: undefined
-                        }))
+                          password: undefined,
+                        }));
                       }}
                       placeholder={localization.auth.passwordPlaceholder}
                       required
@@ -207,10 +192,10 @@ export function SignIn({
                       maxLength={emailAndPassword?.maxPasswordLength}
                       disabled={isPending}
                       onInvalid={(e) => {
-                        e.preventDefault()
-                        const el = e.target as HTMLInputElement
-                        const min = emailAndPassword?.minPasswordLength
-                        const max = emailAndPassword?.maxPasswordLength
+                        e.preventDefault();
+                        const el = e.currentTarget;
+                        const min = emailAndPassword?.minPasswordLength;
+                        const max = emailAndPassword?.maxPasswordLength;
                         const msg = el.validity.valueMissing
                           ? localization.auth.fieldRequired
                           : el.validity.tooShort
@@ -221,12 +206,12 @@ export function SignIn({
                             : localization.auth.tooLong.replace(
                                 "{{max}}",
                                 String(max)
-                              )
+                              );
 
                         setFieldErrors((prev) => ({
                           ...prev,
-                          password: msg
-                        }))
+                          password: msg,
+                        }));
                       }}
                       aria-invalid={!!fieldErrors.password}
                     />
@@ -245,7 +230,7 @@ export function SignIn({
                             : localization.auth.showPassword
                         }
                         onClick={() => {
-                          setIsPasswordVisible(!isPasswordVisible)
+                          setIsPasswordVisible(!isPasswordVisible);
                         }}
                       >
                         {isPasswordVisible ? <EyeOff /> : <Eye />}
@@ -298,23 +283,9 @@ export function SignIn({
               </FieldGroup>
             </form>
           )}
-
-          {socialPosition === "bottom" && (
-            <>
-              {showSeparator && (
-                <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card text-xs flex items-center">
-                  {localization.auth.or}
-                </FieldSeparator>
-              )}
-
-              {socialProviders && socialProviders.length > 0 && (
-                <ProviderButtons socialLayout={socialLayout} />
-              )}
-            </>
-          )}
         </div>
 
-        <div className="flex flex-col gap-3 items-center w-full mt-4">
+        <div className="mt-4 flex w-full flex-col items-center gap-3">
           {emailAndPassword?.enabled && emailAndPassword?.forgotPassword && (
             <Link
               href={`${basePaths.auth}/${viewPaths.auth.forgotPassword}`}
@@ -338,5 +309,5 @@ export function SignIn({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

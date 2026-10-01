@@ -57,12 +57,25 @@ export const Route = createFileRoute("/api/events")({
             let closed = false;
             let listener: ReturnType<typeof listenForEvents> | undefined;
 
+            // Membership is re-checked on every beat: a user removed from the organization (or a
+            // revoked key) must not keep receiving its events until they reconnect.
             const heartbeat = setInterval(() => {
               try {
                 controller.enqueue(enc.encode(": heartbeat\n\n"));
               } catch {
                 clearInterval(heartbeat);
+                return;
               }
+              void createApiContext(request)
+                .then((current) => {
+                  if (current.actor?.organizationId !== organizationId) {
+                    closeStream("Access revoked");
+                  }
+                })
+                .catch(() => {
+                  // fail closed: without a successful check the stream must not keep delivering
+                  closeStream("Access could not be verified");
+                });
             }, 25_000);
 
             function send(eventType: string, data: string) {

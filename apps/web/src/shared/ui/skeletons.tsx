@@ -1,5 +1,4 @@
 /* oxlint-disable react/only-export-components, react-doctor/only-export-components -- skeleton layout tokens + components */
-import { GripVerticalIcon } from "lucide-react";
 /**
  * Skeleton loading states for each major surface.
  *
@@ -22,8 +21,8 @@ import {
   CASE_CARD_MIN_HEIGHT_CLASS,
   CASE_CARD_SHELL_CLASS,
 } from "@/shared/ui/case-card-shell";
-import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
-import { EvidenceDetailSkeleton } from "@/shared/ui/evidence-detail-skeleton";
+import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
+import { JobDetailSkeleton } from "@/shared/ui/evidence-detail-skeleton";
 import {
   GRAPH_CANVAS_CONNECTIONS_SHELL_CLASS,
   GRAPH_CANVAS_EMBED_SHELL_CLASS,
@@ -33,21 +32,21 @@ import { QueueDayGroup } from "@/shared/ui/queue-day-group";
 import { QueueRowMeta, QueueRowTitle } from "@/shared/ui/queue-row";
 import { SectionLabel } from "@/shared/ui/section-label";
 import {
+  TASK_BOARD_COLUMN_SHELL_CLASS,
+  TASK_CARD_SHELL_CLASS,
+} from "@/shared/ui/task-board-shell";
+import { TASK_STATUSES } from "@watchdog/schemas";
+import {
   Field,
   FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
-import { Switch } from "@/shared/ui/shadcn/switch";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import {
-  TASK_BOARD_COLUMN_SHELL_CLASS,
-  TASK_CARD_SHELL_CLASS,
-} from "@/shared/ui/task-board-shell";
-import { TASK_STATUSES } from "@watchdog/schemas";
+} from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Switch } from "@watchdog/ui/components/switch";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 export {
   TASK_BOARD_COLUMN_SHELL_CLASS,
@@ -181,11 +180,11 @@ export function CollectQueueSkeleton({
   );
 }
 
-/** Collect detail column — composes EvidenceDetailSkeleton (PendingRegion owns LoadingRegion). */
+/** Collect detail column — composes JobDetailSkeleton (PendingRegion owns LoadingRegion). */
 export function CollectDetailSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
-      <EvidenceDetailSkeleton className="min-h-0 flex-1" />
+      <JobDetailSkeleton className="min-h-0 flex-1" />
     </div>
   );
 }
@@ -217,7 +216,7 @@ export function CardGridSkeletonLayout({
   return (
     <div
       className={cn(
-        "grid h-full min-h-full auto-rows-[minmax(9rem,1fr)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3",
+        "grid auto-rows-[minmax(10rem,auto)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3",
         className
       )}
     >
@@ -416,7 +415,7 @@ function CaseSettingsSkeleton() {
       className="border-border flex flex-col gap-3 rounded-md border p-3"
       aria-hidden
     >
-      <h2 className="text-label-sm text-muted-foreground relative w-fit font-medium">
+      <h2 className="text-muted-foreground relative w-fit text-sm leading-tight font-medium">
         <span className="invisible">Case settings</span>
         <Skeleton className="absolute inset-0 rounded-md" aria-hidden />
       </h2>
@@ -511,24 +510,21 @@ export function QueueSkeleton({
 function TaskCardSkeleton({ showFooter = true }: { showFooter?: boolean }) {
   return (
     <div className={TASK_CARD_SHELL_CLASS}>
-      <span
-        aria-hidden
-        className="text-muted-foreground mt-0.5 shrink-0 opacity-25"
-      >
-        <GripVerticalIcon className="size-3.5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <Skeleton className="h-4 min-w-0 flex-1 basis-0 rounded-sm" />
-          <Skeleton className="mt-0.5 h-4 w-10 shrink-0 rounded-sm" />
+      {showFooter ? (
+        <div className="bg-muted/40 flex h-6 items-center gap-1.5 px-2.5">
+          <Skeleton className="h-3 w-3 shrink-0 rounded-xs" />
+          <Skeleton className="h-3 w-24 shrink-0 rounded-sm" />
         </div>
-        {showFooter ? (
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <Skeleton className={cn(CHIP_SIZE_CLASS.sm, "w-16 shrink-0")} />
-            <Skeleton className="h-3 w-14 shrink-0 rounded-sm" />
-          </div>
-        ) : null}
+      ) : null}
+      <div className="px-2.5 py-2">
+        <Skeleton className="h-4 w-4/5 rounded-sm" />
       </div>
+      {showFooter ? (
+        <div className="border-border flex h-6 items-center gap-2 border-t px-2.5">
+          <Skeleton className="h-3 w-3 shrink-0 rounded-xs" />
+          <Skeleton className="ml-auto h-3 w-12 shrink-0 rounded-sm" />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -541,14 +537,14 @@ function TaskBoardColumnSkeleton({
 }) {
   return (
     <div className={TASK_BOARD_COLUMN_SHELL_CLASS}>
-      <header className="border-border bg-background sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
+      <header className="border-border bg-background sticky top-0 z-[1] flex shrink-0 items-center justify-between gap-2 border-b px-2.5 py-2">
         <SectionLabel as="h3">
           <Skeleton className="inline-block h-3 w-20 align-middle" />
           <Skeleton className="ml-2 inline-block h-3 w-4 align-middle tabular-nums" />
         </SectionLabel>
         <Skeleton className="size-5 shrink-0 rounded-md" />
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-1.5">
         {Array.from({ length: cards }).map((_, cardIndex) => (
           <TaskCardSkeleton key={cardIndex} showFooter={cardIndex % 2 === 0} />
         ))}

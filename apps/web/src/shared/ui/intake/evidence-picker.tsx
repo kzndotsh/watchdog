@@ -2,25 +2,22 @@ import { PaperclipIcon, PlusIcon, XIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import {
-  CHIP_SIZE_CLASS,
-  DetailStatusChip,
-} from "@/shared/ui/detail-status-chip";
+import { CHIP_SIZE_CLASS, Chip } from "@/shared/ui/chip";
 import {
   evidenceLabel,
   evidenceMatchesPickerFilter,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Input } from "@/shared/ui/shadcn/input";
+import { WithTooltip } from "@/shared/ui/timestamp";
+import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
+import { Input } from "@watchdog/ui/components/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import { Skeleton } from "@/shared/ui/shadcn/skeleton";
-import { WithTooltip } from "@/shared/ui/timestamp";
-import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+} from "@watchdog/ui/components/popover";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 export type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 
@@ -71,7 +68,7 @@ export function EvidenceCiteChips({
         <span className="text-muted-foreground text-xs">Evidence</span>
       )}
       {rows.map((row) => (
-        <DetailStatusChip
+        <Chip
           key={row.id}
           size="sm"
           className="max-w-[12rem] truncate"
@@ -79,7 +76,7 @@ export function EvidenceCiteChips({
         >
           {evidenceLabel(row)}
           <span className="text-muted-foreground">· Job</span>
-        </DetailStatusChip>
+        </Chip>
       ))}
     </div>
   );
@@ -206,7 +203,7 @@ function EvidenceChecklist({
                   <span className="min-w-0 flex-1 truncate" title={label}>
                     {label}
                   </span>
-                  <span className="text-muted-foreground text-chip shrink-0">
+                  <span className="text-muted-foreground shrink-0 text-xs tracking-wider uppercase">
                     {kindLabel(row.kind)}
                   </span>
                 </label>
@@ -320,7 +317,7 @@ export function EvidencePicker({
         </Popover>
 
         {selectedRows.map((row) => (
-          <DetailStatusChip
+          <Chip
             key={row.id}
             size="sm"
             className="max-w-[14rem] gap-0.5 pr-0.5"
@@ -337,7 +334,7 @@ export function EvidencePicker({
             >
               <XIcon className="size-3" />
             </button>
-          </DetailStatusChip>
+          </Chip>
         ))}
 
         {totalCount === 0 && !dashedWhenEmpty ? (

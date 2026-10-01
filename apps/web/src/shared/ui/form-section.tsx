@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardFooter } from "@/shared/ui/shadcn/card";
+import { Card, CardContent, CardFooter } from "@watchdog/ui/components/card";
 
 type FormSectionTone = "default" | "error" | "warning";
 
@@ -23,7 +23,8 @@ export function FormSection({
   className,
   contentClassName,
 }: {
-  title: ReactNode;
+  /** Omit when the surrounding page already shows this section's heading. */
+  title?: ReactNode;
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -38,20 +39,23 @@ export function FormSection({
       data-tone={tone}
       className={cn("space-y-3", className)}
     >
-      <div className="space-y-1">
-        <h2 className="text-foreground text-sm font-semibold">{title}</h2>
-        {description ? (
-          <p className="text-muted-foreground text-xs">{description}</p>
-        ) : null}
-      </div>
+      {title || description ? (
+        <div className="space-y-1">
+          {title ? (
+            <h2 className="text-foreground text-sm font-semibold">{title}</h2>
+          ) : null}
+          {description ? (
+            <p className="text-muted-foreground text-xs">{description}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <Card
         className={cn(
           ACCENT_CARD_SURFACE,
           tone === "error" &&
             "bg-destructive/5 ring-destructive/40 dark:bg-destructive/10",
-          tone === "warning" &&
-            "bg-[color-mix(in_oklab,var(--wd-signal-500)_8%,transparent)] ring-[var(--wd-signal-500)]/35"
+          tone === "warning" && "bg-signal/8 ring-signal/35"
         )}
       >
         <CardContent className={cn("flex flex-col gap-6", contentClassName)}>

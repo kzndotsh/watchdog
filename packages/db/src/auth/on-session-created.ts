@@ -1,10 +1,12 @@
 import type { DbExec } from "../exec";
 import { insertAuthEvent } from "./auth-events";
-import {
-  bootstrapWatchdogOrganization,
-  setSessionActiveOrganization,
-} from "./bootstrap-organization";
+import { setSessionActiveOrganization } from "./instance-bootstrap";
+import { resolveUserOrganizationId } from "./resolve-organization";
 
+/**
+ * A fresh session starts in the user's oldest organization (if any) and records
+ * `session.created`. Users with no organization yet land in onboarding instead.
+ */
 export async function onAuthSessionCreated(
   exec: DbExec,
   created: {
@@ -14,10 +16,7 @@ export async function onAuthSessionCreated(
     userAgent?: string | null;
   }
 ): Promise<void> {
-  const { organizationId } = await bootstrapWatchdogOrganization(
-    exec,
-    created.userId
-  );
+  const organizationId = await resolveUserOrganizationId(exec, created.userId);
   if (organizationId) {
     await setSessionActiveOrganization(exec, created.id, organizationId);
   }

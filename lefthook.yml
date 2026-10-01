@@ -12,15 +12,29 @@ pre-commit:
   commands:
     ultracite:
       glob:
-        - "*.{ts,tsx,js,mjs,json,yml,yaml,md}"
-        - "**/*.{ts,tsx,js,mjs,json,yml,yaml,md}"
+        - "*.{ts,tsx,js,json,yml,yaml,md}"
+        - "**/*.{ts,tsx,js,json,yml,yaml,md}"
       exclude:
         - "**/routeTree.gen.ts"
         - "packages/contract/src/generated/**"
         - "packages/caps/capabilities.gen.json"
-        - "apps/web/src/shared/ui/shadcn/**"
-      run: pnpm fix
+        - "packages/ui/src/components/**"
+        - "packages/ui/src/hooks/**"
+        # Root-level e2e files lose type-aware context when linted by path (see ultracite-scripts).
+        - "e2e/**"
+      # Staged files only: a repo-wide fix rewrites files outside the commit
+      # and can break lefthook's restore of unstaged changes.
+      run: pnpm exec ultracite fix --disable-nested-config --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
+    ultracite-scripts:
+      # .mjs scripts lose type-aware context when linted by path, so check the
+      # whole repo instead. Read-only: never rewrites files, so it can't break
+      # the unstaged-changes restore either.
+      glob:
+        - "*.mjs"
+        - "**/*.mjs"
+        - "e2e/**/*.ts"
+      run: pnpm check
     agents:
       glob:
         - "{AGENTS.md,**/AGENTS.md}"
@@ -35,6 +49,12 @@ pre-commit:
         - "scripts/doc-map.mjs"
         - "scripts/check-docs-affected.mjs"
       run: pnpm check:docs
+    design-tokens:
+      glob:
+        - "DESIGN.md"
+        - "apps/web/src/styles/wd-*.css"
+        - "scripts/check-design-tokens.mjs"
+      run: pnpm check:design-tokens
     docs-affect:
       glob:
         - "apps/web/src/**"
@@ -57,6 +77,20 @@ pre-commit:
         - "**/*.test.ts"
         - "**/*.test.tsx"
       run: pnpm check:effect-edges:strict
+    vendor-lock:
+      glob:
+        - "packages/ui/src/components/**"
+        - "packages/ui/src/hooks/**"
+        - "packages/ui/vendor.json"
+        - "scripts/ui-vendor.mjs"
+      run: pnpm check:vendor
+    size-budget:
+      glob:
+        - "apps/*/src/**/*.{ts,tsx}"
+        - "packages/*/src/**/*.{ts,tsx}"
+        - "scripts/check-size-budget.mjs"
+        - "scripts/size-budget-baseline.json"
+      run: pnpm check:size
     agent-skills:
       glob:
         - "**/.agents/skills/**"

@@ -29,7 +29,7 @@ Production build: `PUBLIC_APP_URL=https://app.watchdog.com pnpm build:site`
 | `cn()` for conditional classes | Scroll animations, `backdrop-blur`, `tracking-*` |
 | Distinct layout per section: centered hero, full-width demo, visual how-it-works, split contrast, collector grid | Repeating the same heading+card-grid template every section |
 
-Not part of `just dev` — no infra dependency.
+Started by `just dev` (alongside web and worker) on :3001; it needs no infra itself. Standalone: `pnpm dev:site`.
 
 ## Design
 

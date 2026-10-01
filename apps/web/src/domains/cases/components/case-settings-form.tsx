@@ -1,26 +1,17 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { updateCaseFn } from "@/domains/cases/cases.functions";
-import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
-import { writeCaseRecordCache } from "@/domains/cases/lib/case-cache";
-import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
+import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
 import type { CaseRecord } from "@/domains/cases/types";
-import { errMessage } from "@/lib/utils";
-import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
-import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
+import { FormSection } from "@/shared/ui/form-section";
 import {
   Field,
-  FieldContent,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Switch } from "@/shared/ui/shadcn/switch";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import { toast } from "@/shared/ui/shadcn/toast";
+} from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Switch } from "@watchdog/ui/components/switch";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 interface CaseSettingsFormProps {
   caseId: string;
@@ -28,9 +19,6 @@ interface CaseSettingsFormProps {
 }
 
 export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-
   const serverName = caseRow.name;
   const [nameDraft, setNameDraft] = useState(serverName);
   const [prevName, setPrevName] = useState(serverName);
@@ -47,39 +35,11 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
     setDescriptionDraft(serverDescription);
   }
 
-  const updateMutation = useMutation({
-    mutationFn: async (vars: {
-      name?: string;
-      description?: string | null;
-      allowThirdPartyEgress?: boolean;
-    }) => updateCaseFn({ data: buildUpdateCaseData(caseId, vars) }),
-    onSuccess: async (updated) => {
-      writeCaseRecordCache(queryClient, updated, { slug: caseRow.slug });
-      notifyCasesChanged();
-      toast.success(TOAST_CASE_UPDATED);
-      if (updated.slug !== caseRow.slug) {
-        await navigate({
-          to: "/cases/$caseSlug",
-          params: { caseSlug: updated.slug },
-          replace: true,
-        });
-      }
-      await invalidateAfterCaseSwitch(queryClient);
-    },
-    onError: (err) => {
-      toast.error(errMessage(err, "Update failed"));
-    },
-  });
+  const updateMutation = useUpdateCase(caseId, caseRow.slug);
 
   return (
-    <section
-      aria-label="Case settings"
-      className="border-border flex flex-col gap-3 rounded-md border p-3"
-    >
-      <h2 className="text-label-sm text-muted-foreground font-medium">
-        Case settings
-      </h2>
-      <FieldGroup className="gap-3">
+    <FormSection title="Case settings">
+      <FieldGroup>
         <Field>
           <FieldLabel htmlFor="case-name">Name</FieldLabel>
           <Input
@@ -122,22 +82,27 @@ export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
             }}
           />
         </Field>
-        <Field orientation="horizontal">
-          <Switch
-            id="case-egress"
-            checked={caseRow.allowThirdPartyEgress}
-            onCheckedChange={(checked) => {
-              updateMutation.mutate({ allowThirdPartyEgress: checked });
-            }}
-          />
-          <FieldContent>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-0.5">
             <FieldLabel htmlFor="case-egress">Third-party egress</FieldLabel>
             <FieldDescription>
-              Allow Caps that call external services.
+              Let lookups on this Case call outside services.
             </FieldDescription>
-          </FieldContent>
-        </Field>
+          </div>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="text-muted-foreground text-xs" aria-hidden>
+              {caseRow.allowThirdPartyEgress ? "On" : "Off"}
+            </span>
+            <Switch
+              id="case-egress"
+              checked={caseRow.allowThirdPartyEgress}
+              onCheckedChange={(checked) => {
+                updateMutation.mutate({ allowThirdPartyEgress: checked });
+              }}
+            />
+          </span>
+        </div>
       </FieldGroup>
-    </section>
+    </FormSection>
   );
 }

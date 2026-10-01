@@ -11,7 +11,6 @@ import {
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { pasteEntityErrorLabel } from "@/domains/entities/lib/paste-entity-error-label";
 import { parsePasteTarget } from "@/domains/entities/lib/use-bulk-add-identifiers-paste";
-import { cn } from "@/lib/utils";
 import {
   EditableSelectCell,
   EditableSuggestCell,
@@ -19,14 +18,6 @@ import {
 } from "@/shared/ui/data-table";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/shadcn/table";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import {
   CONFIDENCE_OPTIONS,
@@ -41,6 +32,14 @@ import {
   trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
 } from "@watchdog/schemas";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@watchdog/ui/components/table";
 
 const PREVIEW_CONFIDENCE_OPTIONS = CONFIDENCE_OPTIONS.filter(
   (opt) => opt.value !== "confirmed"
@@ -96,7 +95,7 @@ export function BulkAddColumnMapper({
 }) {
   return (
     <div className="overflow-hidden rounded-md border">
-      <div className="text-muted-foreground grid grid-cols-[1fr_auto_minmax(12rem,1fr)] items-center gap-3 border-b px-3 py-2 text-xs font-medium">
+      <div className="text-muted-foreground grid grid-cols-[1fr_auto_minmax(12rem,1fr)] items-center gap-3 border-b px-3 py-2 text-xs">
         <div>Your column</div>
         <div />
         <div>Watchdog field</div>
@@ -111,7 +110,7 @@ export function BulkAddColumnMapper({
             className="grid grid-cols-[1fr_auto_minmax(12rem,1fr)] items-center gap-3 border-b px-3 py-2 last:border-b-0"
           >
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium">
+              <div className="truncate text-sm">
                 {label || `Column ${index + 1}`}
               </div>
               {samples.length > 0 ? (
@@ -172,7 +171,7 @@ export function BulkAddIdentifiersPreviewTable({
             <TableHead className="overflow-hidden">Platform</TableHead>
             <TableHead className="overflow-hidden">Status</TableHead>
             <TableHead className="overflow-hidden">Confidence</TableHead>
-            <TableHead className="overflow-hidden px-1 text-center">
+            <TableHead className="overflow-hidden text-center">
               <span className="sr-only">Note</span>
             </TableHead>
           </TableRow>
@@ -211,10 +210,7 @@ export function BulkAddIdentifiersPreviewTable({
                       variant="cell"
                       showClear={false}
                       disabled={busy}
-                      className={cn(
-                        "w-full",
-                        entityHint !== null && "text-destructive"
-                      )}
+                      className="w-full"
                       aria-invalid={entityHint !== null}
                       aria-label={`Entity for ${row.value || "row"}`}
                     />
@@ -282,7 +278,7 @@ export function BulkAddIdentifiersPreviewTable({
                     }}
                   />
                 </TableCell>
-                <TableCell className="overflow-hidden px-1 text-center">
+                <TableCell className="overflow-hidden text-center">
                   {previewNote(row)}
                 </TableCell>
               </TableRow>

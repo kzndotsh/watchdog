@@ -1,10 +1,14 @@
 import { cn } from "@/lib/utils";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import { STATUS_DOT, statusLabel, type DisplayStatus } from "@/shared/ui/vocab";
+import {
+  STATUS_GLYPH,
+  statusLabel,
+  type DisplayStatus,
+} from "@/shared/ui/vocab";
 
 interface StatusDotProps {
   status: DisplayStatus;
-  /** Pulse for live statuses (running). */
+  /** Spin the glyph for live statuses (running). */
   pulse?: boolean;
   className?: string;
   /** Hide tooltip (parent already labels). */
@@ -12,7 +16,8 @@ interface StatusDotProps {
 }
 
 /**
- * 6–8px lifecycle/status dot for dense Queue rows.
+ * 12px lifecycle/status glyph for dense Queue rows. Shape carries the state
+ * (see `STATUS_GLYPH`), so rows read without color or hover.
  * Prefer StatusInk in Detail strips; StatusBadge when a table cell needs a chip.
  */
 export function StatusDot({
@@ -21,18 +26,22 @@ export function StatusDot({
   className,
   tooltip = true,
 }: StatusDotProps) {
+  const { icon: Icon, color } = STATUS_GLYPH[status];
   const dot = (
     <span
+      role="img"
       data-slot="status-dot"
       data-status={status}
       aria-label={statusLabel(status)}
       className={cn(
-        "inline-flex size-2 shrink-0 rounded-full",
-        STATUS_DOT[status],
-        pulse && status === "running" && "animate-pulse",
+        "inline-flex size-3 shrink-0 items-center justify-center",
+        color,
+        pulse && status === "running" && "animate-spin",
         className
       )}
-    />
+    >
+      <Icon aria-hidden className="size-3" strokeWidth={2.25} />
+    </span>
   );
 
   if (!tooltip) return dot;

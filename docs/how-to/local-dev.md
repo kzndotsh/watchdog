@@ -9,11 +9,11 @@
 | --- | --- |
 | Enter toolchain | `nix develop` |
 | Infra (Postgres + MinIO + bucket + migrate) | `just up` |
-| Full stack (infra + web + worker) | `just dev` |
+| Full stack (infra + web + marketing site + worker) | `just dev` |
 | Containers only | `just docker-up` |
 | Install | `pnpm install` |
 | Web only | `pnpm dev:web` → http://127.0.0.1:3000 |
-| Marketing site only | `pnpm dev:site` → http://127.0.0.1:3001 (not part of `just dev`; no infra) |
+| Marketing site only | `pnpm dev:site` → http://127.0.0.1:3001 (`just dev` starts it too; it needs no infra) |
 | Worker only | `pnpm dev:worker` (required for Jobs/Collect/Process) |
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
 | Screenshot seed | `just seed-demo` · `just seed-demo --force` (fictional cases in the current org; sign up first) |
@@ -22,12 +22,12 @@
 
 Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets go in Settings vault, not `.env` ([`vault-setup.md`](vault-setup.md)).
 
-**Marketing site (`apps/site`):** static Astro landing at `:3001`; not started by `just dev`. Set `PUBLIC_APP_URL` in root `.env` (see `env.example`) so **Sign in** / **Get started** point at the product app (`:3000` locally). Build: `pnpm build:site`. Detail: [`../../apps/site/README.md`](../../apps/site/README.md).
+**Marketing site (`apps/site`):** static Astro landing at `:3001`; also started by `just dev`. Set `PUBLIC_APP_URL` in root `.env` (see `env.example`) so **Sign in** / **Get started** point at the product app (`:3000` locally). Build: `pnpm build:site`. Detail: [`../../apps/site/README.md`](../../apps/site/README.md).
 
 ## Services
 
 - **Postgres 18** — `127.0.0.1:5432`, app user from `DATABASE_URL`; migrations may use `DATABASE_URL_MIGRATE` (superuser). Compose mounts the data volume at `/var/lib/postgresql` (PG 18 Docker layout). Upgrading from 16: stop containers, remove the old `postgres_data` volume (or dump/restore if you need data), then `just up` so init scripts recreate roles/DBs.
-- **MinIO** — S3-compatible evidence storage at `S3_ENDPOINT` (default `http://127.0.0.1:9100`). `just up` runs `minio-init` (idempotent); use `just minio-init` alone after a fresh volume if you skipped `up`. Bucket create uses host `mc` when present, otherwise the pinned `quay.io/minio/mc` image (no `nix develop` required for this step).
+- **MinIO** — S3-compatible evidence storage at `S3_ENDPOINT` (default `http://127.0.0.1:9100`). `just up` runs `minio-init` (idempotent); use `just minio-init` alone after a fresh volume if you skipped `up`. Bucket create uses host `mc` when present, otherwise the `mc` bundled in the running `watchdog-minio` container (no `nix develop` and no extra image pull).
 - **Worker** — Without `pnpm dev:worker`, Jobs stay queued; web UI still loads.
 
 ## Common fixes

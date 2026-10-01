@@ -28,11 +28,11 @@ export function EntityNode({
     >
       <div className="flex items-start justify-between gap-1">
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm leading-snug font-medium">
+          <div className="truncate text-sm leading-snug">
             {data.label}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1">
-            <KindBadge kind={data.kind} className="text-chip" />
+            <KindBadge kind={data.kind} className="text-xs tracking-wider uppercase" />
           </div>
         </div>
         {actions && actions.length > 0 ? (

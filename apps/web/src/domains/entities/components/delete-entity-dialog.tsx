@@ -10,7 +10,7 @@ import {
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import { entityDisplayLabel } from "@watchdog/schemas";
 
 export function DeleteEntityDialog({

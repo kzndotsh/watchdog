@@ -24,24 +24,24 @@ import {
 } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
+import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from "@/shared/ui/shadcn/field";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_STATUS_OPTIONS,
   IDENTIFIER_TYPE_OPTIONS,
 } from "@/shared/ui/vocab";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@watchdog/ui/components/field";
 
 function IdentifiersActive({ active }: { active: CaseRecord }) {
   const {
@@ -142,7 +142,7 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
         }
       />
 
-      <FormInlineError>{submitError}</FormInlineError>
+      <FieldError>{submitError}</FieldError>
 
       <PageToolbar
         center={
@@ -162,9 +162,9 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
               }}
               contentClassName="w-[18rem] max-h-[min(28rem,70vh)] overflow-y-auto"
             >
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Type</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup>
                   {IDENTIFIER_TYPE_OPTIONS.map((opt) => {
                     const checked = typeFilter.includes(opt.value);
                     const id = `identifier-type-${opt.value}`;
@@ -187,9 +187,9 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
                   })}
                 </FieldGroup>
               </FieldSet>
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Status</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup>
                   {IDENTIFIER_STATUS_OPTIONS.map((opt) => {
                     const checked = statusFilter.includes(opt.value);
                     const id = `identifier-status-${opt.value}`;
@@ -212,9 +212,9 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
                   })}
                 </FieldGroup>
               </FieldSet>
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Confidence</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup>
                   {CONFIDENCE_OPTIONS.map((opt) => {
                     const checked = confidenceFilter.includes(opt.value);
                     const id = `identifier-confidence-${opt.value}`;

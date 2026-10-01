@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 
-import type { VocabTone } from "@/shared/ui/vocab/vocab-badge";
+import type { ChipTone } from "@/shared/ui/chip";
 import {
   patchOpVerbLabel,
   patchResourceLabel,
@@ -18,7 +18,7 @@ import {
 type Op = PatchOp["op"];
 type Resource = PatchOp["resource"];
 
-export const PATCH_OP_TONES: Record<Op, VocabTone> = {
+export const PATCH_OP_TONES: Record<Op, ChipTone> = {
   create: {
     low: "bg-status-succeeded-bg text-status-succeeded-fg",
     high: "bg-status-succeeded text-primary-foreground",

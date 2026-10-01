@@ -25,6 +25,27 @@ export class AuthPage {
     await this.page.waitForURL((url) => !url.pathname.includes("/auth/"), {
       timeout: 30_000,
     });
+    await this.completeOnboarding(stamp);
+  }
+
+  /** A new account starts with no organization: create one when onboarding asks. */
+  private async completeOnboarding(stamp: string): Promise<void> {
+    // The protected layout redirects an account with no organization here. The URL
+    // changes before the route renders, so wait for the form itself: until then the
+    // sign-up fields are still on screen and a fill would land on them.
+    await this.page.waitForURL(/\/onboarding/, { timeout: 30_000 });
+    await this.page
+      .getByText("Create your organization")
+      .waitFor({ state: "visible", timeout: 30_000 });
+    await this.page
+      .getByRole("textbox", { name: "Name", exact: true })
+      .fill(`E2E Org ${stamp}`);
+    await this.page
+      .getByRole("button", { name: "Create organization" })
+      .click();
+    await this.page.waitForURL((url) => !url.pathname.includes("/onboarding"), {
+      timeout: 30_000,
+    });
   }
 
   async signOut(): Promise<void> {

@@ -7,7 +7,7 @@ export function TabCount({ n, className }: { n: number; className?: string }) {
     <span
       data-slot="tab-count"
       className={cn(
-        "bg-secondary text-label-mono-sm text-secondary-foreground ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-sm px-1 tabular-nums",
+        "bg-secondary text-2xs text-secondary-foreground ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-sm px-1 font-mono tabular-nums",
         className
       )}
     >

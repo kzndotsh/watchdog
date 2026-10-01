@@ -21,7 +21,7 @@
 | Cannot sign in on fresh install | Signup closed | `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0` ([`auth-setup.md`](auth-setup.md)) |
 | Sign-in 401, log `User not found`, account exists | Missing `auth.account.issuer` after Better Auth 1.7 | `pnpm db:migrate` (adds `local:credential` on credential rows) |
 | Invitee cannot register | Public sign-up is closed on purpose | Use the invitation link (`/auth/accept-invitation/{id}`), not `/auth/sign-up` |
-| Invitation email missing | SMTP unset | Copy link on Settings → Team; optional `SMTP_HOST` + `SMTP_FROM`. URL is also in evlog |
+| Invitation email missing | SMTP unset | Copy link under Settings → Organization → Members → Pending invitations; optional `SMTP_HOST` + `SMTP_FROM`. URL is also in evlog |
 | Signed out but UI still “in” | Stale session cache | Sign out via `/auth/sign-out` (BA UI), not raw `authClient.signOut()` |
 | ServerFn **403** with `csrf` in logs | CSRF middleware | Expected on bad CSRF token; see [`auth-setup.md#gotchas`](auth-setup.md#gotchas) |
 | `wd` commands fail auth | Missing `WD_API_KEY` | Create key in Settings; set `WD_API_URL` + `WD_API_KEY` |

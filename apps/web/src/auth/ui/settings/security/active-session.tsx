@@ -1,16 +1,17 @@
-import { useAuth, useRevokeSession, useSession } from "@better-auth-ui/react"
-import type { Session } from "better-auth"
-import Bowser from "bowser"
-import { LogOut, Monitor, Smartphone, X } from "lucide-react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { useAuth, useRevokeSession, useSession } from "@better-auth-ui/react";
+import type { Session } from "better-auth";
+import Bowser from "bowser";
+import { LogOut, Monitor, Smartphone, X } from "lucide-react";
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent } from "@/shared/ui/shadcn/card"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
-import { formatRelativeTime } from "@/shared/ui/relative-time.lib"
+import { firstNonEmpty } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
+import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
+import { toast } from "@/shared/ui/toast";
+import { Card, CardContent } from "@watchdog/ui/components/card";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-export type ActiveSessionProps = {
-  activeSession: Session
+export interface ActiveSessionProps {
+  activeSession: Session;
 }
 
 /**
@@ -23,25 +24,27 @@ export type ActiveSessionProps = {
  * @returns A JSX element containing the active session row
  */
 export function ActiveSession({ activeSession }: ActiveSessionProps) {
-  const { authClient, basePaths, localization, viewPaths, navigate } = useAuth()
-  const { data: session } = useSession(authClient, { refetchOnMount: false })
+  const { authClient, basePaths, localization, viewPaths, navigate } =
+    useAuth();
+  const { data: session } = useSession(authClient, { refetchOnMount: false });
 
   const { mutate: revokeSession, isPending: isRevoking } = useRevokeSession(
     authClient,
     {
-      onSuccess: () => toast.success(localization.settings.revokeSessionSuccess)
+      onSuccess: () =>
+        toast.success(localization.settings.revokeSessionSuccess),
     }
-  )
+  );
 
-  const isCurrentSession = activeSession.token === session?.session.token
-  const ua = Bowser.parse(activeSession.userAgent || "")
+  const isCurrentSession = activeSession.token === session?.session.token;
+  const ua = Bowser.parse(activeSession.userAgent ?? "");
   const isMobile =
-    ua.platform.type === "mobile" || ua.platform.type === "tablet"
+    ua.platform.type === "mobile" || ua.platform.type === "tablet";
 
   return (
-    <Card className="bg-transparent border-0 ring-0 shadow-none">
+    <Card className="border-0 bg-transparent shadow-none ring-0">
       <CardContent className="flex items-center justify-between gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted">
+        <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md">
           {isMobile ? (
             <Smartphone className="size-4.5" />
           ) : (
@@ -49,23 +52,23 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
           )}
         </div>
 
-        <div className="flex flex-col min-w-0">
-          <span className="text-sm font-medium truncate">
-            {ua.browser.name || "Unknown Browser"}
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-sm">
+            {firstNonEmpty(ua.browser.name) ?? "Unknown Browser"}
             {ua.os.name ? `, ${ua.os.name}` : ""}
           </span>
 
-          <span className="text-xs text-muted-foreground truncate">
-            {activeSession.ipAddress || "No IP"}
+          <span className="text-muted-foreground truncate text-xs">
+            {firstNonEmpty(activeSession.ipAddress) ?? "No IP"}
           </span>
 
           {isCurrentSession ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary w-fit">
+            <span className="bg-primary/10 text-primary w-fit rounded-full px-2 py-0.5 text-xs">
               {localization.settings.currentSession}
             </span>
           ) : (
             activeSession.createdAt && (
-              <span className="text-xs text-muted-foreground capitalize">
+              <span className="text-muted-foreground text-xs capitalize">
                 {formatRelativeTime(activeSession.createdAt)}
               </span>
             )
@@ -76,13 +79,15 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
           className="ml-auto shrink-0"
           variant="outline"
           size="sm"
-          onClick={() =>
-            isCurrentSession
-              ? navigate({
-                  to: `${basePaths.auth}/${viewPaths.auth.signOut}`
-                })
-              : revokeSession(activeSession)
-          }
+          onClick={() => {
+            if (isCurrentSession) {
+              navigate({
+                to: `${basePaths.auth}/${viewPaths.auth.signOut}`,
+              });
+            } else {
+              revokeSession(activeSession);
+            }
+          }}
           disabled={isRevoking}
           aria-label={
             isCurrentSession
@@ -98,5 +103,5 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -9,7 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/shared/ui/shadcn/select";
+} from "@watchdog/ui/components/select";
 
 /** Sentinel — Base UI Select disallows empty-string item values. */
 const EMPTY_VALUE = "__wd_empty__";
@@ -75,7 +75,11 @@ export function FieldSelect({
       <SelectTrigger
         id={id}
         size={size}
-        className={cn(CONTROL_TRIGGER, "min-w-0", className)}
+        className={cn(
+          CONTROL_TRIGGER,
+          "max-w-full min-w-0 overflow-hidden data-[size=default]:h-8 data-[size=sm]:h-7",
+          className
+        )}
         aria-label={ariaLabel}
         onKeyDown={onKeyDown}
       >

@@ -6,15 +6,15 @@ import {
   openEntityMarkdownInChat,
 } from "@/domains/entities/lib/entity-export";
 import { errMessage } from "@/lib/utils";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
-import { toast } from "@/shared/ui/shadcn/toast";
+} from "@watchdog/ui/components/dropdown-menu";
 
 async function handleCopyMarkdown(caseId: string, entitySlug: string) {
   try {
@@ -68,13 +68,11 @@ export function DossierExportMenu({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<Button variant="outline" size="sm" className="gap-1.5" />}
-      >
+      <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
         <ClipboardIcon className="size-3.5" />
         Copy
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-44 text-xs">
+      <DropdownMenuContent align="end" className="min-w-44">
         <DropdownMenuItem
           onClick={() => {
             void handleCopyMarkdown(caseId, entitySlug);

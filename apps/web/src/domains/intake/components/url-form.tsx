@@ -1,9 +1,15 @@
 import { useForm } from "@tanstack/react-form";
 import type { SubmitEvent } from "react";
 
-import { Button } from "@/shared/ui/shadcn/button";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
+import { Button } from "@/shared/ui/primitives/button";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 export interface UrlFormProps {
   disabled: boolean;
@@ -51,9 +57,10 @@ export function UrlForm({
           }}
         >
           {(field) => (
-            <Field>
+            <Field data-invalid={fieldInvalid(field.state.meta)}>
               <FieldLabel>URL</FieldLabel>
               <Input
+                aria-invalid={fieldInvalid(field.state.meta)}
                 placeholder="Link or hostname"
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -62,6 +69,9 @@ export function UrlForm({
                 }}
                 disabled={disabled}
               />
+              {fieldInvalid(field.state.meta) ? (
+                <FieldError errors={fieldErrorList(field.state.meta)} />
+              ) : null}
             </Field>
           )}
         </form.Field>

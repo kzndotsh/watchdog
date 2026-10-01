@@ -18,7 +18,7 @@ import {
   ComboboxLabel,
   ComboboxList,
   ComboboxSeparator,
-} from "@/shared/ui/shadcn/combobox";
+} from "@/shared/ui/primitives/combobox";
 import { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
 import { capabilityLabel } from "@/shared/ui/vocab/capability";
 import { trimmedOrUndefined } from "@watchdog/schemas";
@@ -52,8 +52,8 @@ function PlaybookInfoCard({
   return (
     <div className="space-y-2 text-xs">
       <div>
-        <p className="font-medium">{playbook.title}</p>
-        <p className="text-muted-foreground text-label-mono-sm font-mono leading-snug">
+        <p>{playbook.title}</p>
+        <p className="text-muted-foreground text-2xs font-mono leading-snug">
           {playbook.id}
         </p>
       </div>
@@ -64,7 +64,7 @@ function PlaybookInfoCard({
       )}
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
         <dt className="text-muted-foreground">Steps</dt>
-        <dd className="text-label-mono-sm leading-snug">
+        <dd className="text-2xs font-mono leading-snug">
           {playbook.steps.map((step) => capabilityLabel(step)).join(" → ")}
         </dd>
         <dt className="text-muted-foreground">Seed</dt>
@@ -156,18 +156,17 @@ export function PlaybookSelect({
         showClear={value !== ""}
         aria-label="Playbook"
         placeholder="Select playbook…"
+        tone={needsEgress ? "warning" : "default"}
         className={cn(
           CONTROL_HEIGHT,
-          "w-full max-w-full min-w-[12rem] [&_[data-slot=input-group-control]]:text-xs",
-          needsEgress &&
-            "border-warning/40 [&_[data-slot=input-group-control]]:text-warning",
+          "w-full max-w-full min-w-[12rem]",
           className
         )}
       />
 
       <ComboboxContent
         align="center"
-        className="flex w-[min(100vw-2rem,36rem)] min-w-[22rem] flex-row overflow-hidden p-0"
+        className="flex w-[min(100vw-2rem,36rem)] min-w-[22rem] flex-row overflow-hidden"
       >
         <div className="flex min-w-0 flex-1 flex-col">
           <ComboboxEmpty>No playbooks match.</ComboboxEmpty>
@@ -175,7 +174,7 @@ export function PlaybookSelect({
             {(group: PlaybookGroup, index: number) => (
               <ComboboxGroup key={group.value} items={group.items}>
                 {index > 0 ? <ComboboxSeparator /> : null}
-                <ComboboxLabel className="px-1.5">{group.value}</ComboboxLabel>
+                <ComboboxLabel>{group.value}</ComboboxLabel>
                 <ComboboxCollection>
                   {(playbook: PlaybookListItem) => (
                     <ComboboxItem key={playbook.id} value={playbook}>

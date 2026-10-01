@@ -1043,7 +1043,7 @@ export async function seedPlover(kit: SeedKit, organizationId: string) {
     entityId: landing,
     title: "Clear the triage queue before adding more hops",
     status: "in_progress",
-    priority: "urgent",
+    priority: "high",
     position: 0,
     at: hoursAgo(10),
   });

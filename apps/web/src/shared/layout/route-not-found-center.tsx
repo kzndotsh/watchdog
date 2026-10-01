@@ -12,7 +12,7 @@ export function RouteNotFoundCenter({
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-8">
       <div className="bg-background text-foreground flex w-full max-w-lg flex-col gap-4 rounded-md border p-6 sm:p-8">
-        <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+        <p className="text-muted-foreground tracking-eyebrow text-xs font-semibold uppercase">
           404
         </p>
         <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">

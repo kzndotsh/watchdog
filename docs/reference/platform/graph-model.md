@@ -7,7 +7,7 @@
 
 - **Postgres Case Graph** is the source of truth (entities, identifiers, edges, claims, events, questions).
 - **Evidence** (MinIO bytes + metadata) is custody input, not Graph. Collect and file dumps create Evidence; Process/interpret creates **Proposals**; **Triage Accept** applies patch ops to Graph.
-- **Case Export** (`export/<case-slug>/`) is a regenerable markdown projection — never edit it as a second SoT. See [`../contracts/ingress.md`](../contracts/ingress.md).
+- **Case Export** (`export/<organization-id>/<case-slug>/`) is a regenerable markdown projection — never edit it as a second SoT. See [`../contracts/ingress.md`](../contracts/ingress.md).
 
 ## Entity kinds
 

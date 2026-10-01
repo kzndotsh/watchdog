@@ -5,7 +5,7 @@ import { useState, type SyntheticEvent } from "react";
 import { putCredentialFn } from "@/domains/settings/settings.functions";
 import { putCredentialInputSchema } from "@/domains/settings/types";
 import { errMessage } from "@/lib/utils";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
+import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import {
   AlertDialog,
@@ -16,18 +16,18 @@ import {
   AlertDialogHeader,
   AlertDialogMedia,
   AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
+} from "@/shared/ui/primitives/alert-dialog";
+import { Button } from "@/shared/ui/primitives/button";
+import { StatusDot } from "@/shared/ui/status-dot";
+import type { CredentialSlot } from "@watchdog/core";
+import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/shared/ui/shadcn/input-group";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
-import { StatusDot } from "@/shared/ui/status-dot";
-import type { CredentialSlot } from "@watchdog/core";
+} from "@watchdog/ui/components/input-group";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
 function secretFieldValidator({ value }: { value: string }) {
   return value.trim() ? undefined : "Enter a secret before saving";
@@ -127,17 +127,17 @@ export function ConfigureCredentialDialog({
                 tooltip={false}
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{slot.label}</p>
-                <p className="text-muted-foreground text-label-mono-sm truncate">
+                <p className="truncate text-sm">{slot.label}</p>
+                <p className="text-muted-foreground text-2xs truncate font-mono">
                   {slot.name}
                 </p>
               </div>
               {configured && slot.updatedAt ? (
-                <p className="text-muted-foreground text-label-mono-sm shrink-0">
+                <p className="text-muted-foreground text-2xs shrink-0 font-mono">
                   Updated <LocalDateTime value={slot.updatedAt} />
                 </p>
               ) : (
-                <p className="text-muted-foreground text-label-mono-sm shrink-0">
+                <p className="text-muted-foreground text-2xs shrink-0 font-mono">
                   Not connected
                 </p>
               )}
@@ -149,7 +149,7 @@ export function ConfigureCredentialDialog({
             validators={{ onSubmit: secretFieldValidator }}
           >
             {(field) => (
-              <Field data-invalid={!!field.state.meta.errors[0]}>
+              <Field data-invalid={fieldInvalid(field.state.meta)}>
                 <FieldLabel htmlFor="credential-secret">
                   {configured ? "New secret" : "API key / secret"}
                 </FieldLabel>
@@ -166,7 +166,7 @@ export function ConfigureCredentialDialog({
                       handleSecretChange(e.target.value);
                     }}
                     disabled={form.state.isSubmitting}
-                    aria-invalid={!!field.state.meta.errors[0]}
+                    aria-invalid={fieldInvalid(field.state.meta)}
                   />
                   <InputGroupAddon align="inline-end">
                     <InputGroupButton
@@ -180,12 +180,14 @@ export function ConfigureCredentialDialog({
                     </InputGroupButton>
                   </InputGroupAddon>
                 </InputGroup>
-                <FormInlineError>{field.state.meta.errors[0]}</FormInlineError>
+                {fieldInvalid(field.state.meta) ? (
+                  <FieldError errors={fieldErrorList(field.state.meta)} />
+                ) : null}
               </Field>
             )}
           </form.Field>
 
-          <FormInlineError>{saveError}</FormInlineError>
+          <FieldError>{saveError}</FieldError>
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={form.state.isSubmitting}>

@@ -19,6 +19,12 @@ vi.mock("@/domains/cases/queries", () => ({
   })),
 }));
 
+vi.mock("@/domains/organization/queries", () => ({
+  organizationStateQuery: vi.fn(() => ({
+    queryKey: ["organization", "state"],
+  })),
+}));
+
 vi.mock("@/shared/lib/warm-query", () => ({
   ensureAppQueryData: vi.fn().mockResolvedValue({ cases: [], active: null }),
 }));
@@ -70,7 +76,10 @@ describe("_protected route", () => {
       session: { id: "sess-1" },
       user: { id: "user-1", name: "Analyst" },
     };
-    const queryClient = { id: "qc-1" };
+    const queryClient = {
+      id: "qc-1",
+      query: vi.fn().mockResolvedValue({ organizationId: "org-1" }),
+    };
     vi.mocked(ensureAppSession).mockResolvedValue(
       session as Awaited<ReturnType<typeof ensureAppSession>>
     );
@@ -89,6 +98,23 @@ describe("_protected route", () => {
       queryClient,
       casesContextQuery()
     );
+  });
+
+  it("sends signed-in users without an organization to onboarding", async () => {
+    const session = { session: { id: "sess-1" }, user: { id: "user-1" } };
+    vi.mocked(ensureAppSession).mockResolvedValue(
+      session as Awaited<ReturnType<typeof ensureAppSession>>
+    );
+    const queryClient = {
+      query: vi.fn().mockResolvedValue({ organizationId: null }),
+    };
+
+    await expect(
+      Route.options.beforeLoad!({
+        context: { queryClient },
+        location: { href: "/tasks" },
+      } as never)
+    ).rejects.toEqual(expect.objectContaining({ to: "/onboarding" }));
   });
 
   it("renders the authenticated app shell", () => {

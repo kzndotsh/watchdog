@@ -14,10 +14,10 @@ import { ComposerShell } from "@/shared/ui/composer-shell";
 import {
   DetailContextHeader,
   DetailContextSep,
-} from "@/shared/ui/detail-context-strip";
+} from "@/shared/ui/detail-context-line";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import { StatusInk } from "@/shared/ui/vocab";
 
 function ProducingCapLink({
@@ -54,7 +54,7 @@ function DecideHeaderSubject({
 }) {
   return (
     <>
-      <span className="text-foreground/80 inline-flex min-w-0 items-center gap-1 font-medium">
+      <span className="text-foreground/80 inline-flex min-w-0 items-center gap-1">
         {view.entityName ? (
           <>
             <span className="text-muted-foreground shrink-0 font-normal">

@@ -20,10 +20,10 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 
 | Suffix | Tier |
 | --- | --- |
-| `*.test.ts` | Unit (pure, zero IO). Under `apps/web/` these files still run in the **component** (jsdom) project: `pnpm test:component`, not `pnpm test:unit`. |
+| `*.test.ts` | Unit (pure, zero IO). Under `apps/web/` these files still run in the **component** (happy-dom) project: `pnpm test:component`, not `pnpm test:unit`. |
 | `*.property.test.ts` | fast-check |
 | `*.int.test.ts` | Postgres via `withTestTx` / `resetTestDb` |
-| `*.component.test.tsx` | jsdom + Testing Library |
+| `*.component.test.tsx` | happy-dom + Testing Library |
 | `*.spec.ts` | Playwright only, under `e2e/specs/` |
 
 ## Helpers (`@watchdog/test-kit`)
@@ -45,7 +45,7 @@ Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting patch
 
 Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-kit/db` (`testDb`, seeds). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
-Do not add tests for generated client JSON, `shared/ui/shadcn/`, ServerFn wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, `DomainError` codes, CLI JSON): not mocks of internals.
+Do not add tests for generated client JSON, `packages/ui` (generated primitives), ServerFn wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, `DomainError` codes, CLI JSON): not mocks of internals.
 
 ## Anti-cheat
 
@@ -87,3 +87,13 @@ Each Playwright test runs after an automatic `_resetDb` fixture that calls `rese
 ## Adding an e2e spec
 
 Add when the behavior crosses pages, real browser timing, or auth/session chrome that unit/integration/component tests cannot structurally cover. Put the spec in the matching `e2e/specs/<area>/` folder, reuse fixtures and page objects, and assert on persisted/API-visible outcomes: not mock internals.
+
+## Test speed: shared workers
+
+Every Vitest project (unit, web-unit, property, component, integration) runs with `isolate: false` plus `vitest.reset-modules.ts`. A fresh worker per file re-evaluated `effect`, `drizzle`, and `postgres` for each file, and that import work was about 75% of the run (unit 41s, component 34s, integration 79s; now about 16s, 14s, 22s). Without isolation those load once per worker, and the setup file clears the module registry before every file, so `vi.mock` still applies to our own modules.
+
+What this means when writing tests:
+
+- **Restore what you change.** `process.env`, `globalThis`, fake timers, `window` / DOM, and module-level state outside the module registry are shared by the files that run in the same worker. Set and restore them in `beforeEach` / `afterEach` (`vi.stubEnv` + `vi.unstubAllEnvs`, `vi.useFakeTimers` + `vi.useRealTimers`).
+- **A leak shows up as an order-dependent failure.** Reproduce with `pnpm exec vitest run --project <name> --sequence.shuffle.files`, then fix the test's cleanup; do not turn isolation back on for the project.
+- **Tests that spawn processes need their own timeout.** `wrapper-lint-coverage.test.ts` runs oxlint and sets 60s, because the default 5s is easy to exceed when the whole suite saturates the CPU.

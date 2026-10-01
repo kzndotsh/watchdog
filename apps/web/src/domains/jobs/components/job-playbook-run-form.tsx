@@ -18,11 +18,10 @@ import { cn } from "@/lib/utils";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
+import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/timestamp";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
+import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 
 export interface PlaybookRunVars {
   playbookId: string;
@@ -296,7 +295,7 @@ export function JobPlaybookRunForm({
                     <Button
                       type="submit"
                       size="sm"
-                      className="h-8 text-xs"
+                      className="h-8"
                       loading={isSubmitting}
                       disabled={!view.canRun || isSubmitting}
                     >
@@ -309,9 +308,7 @@ export function JobPlaybookRunForm({
           }}
         </form.Subscribe>
       </form>
-      <FormInlineError className="max-w-md text-right">
-        {runError}
-      </FormInlineError>
+      <FieldError className="max-w-md text-right">{runError}</FieldError>
     </div>
   );
 }

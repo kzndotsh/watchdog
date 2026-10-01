@@ -42,18 +42,17 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
-import {
-  FormInlineError,
-  FormInlineWarning,
-} from "@/shared/ui/form-inline-message";
+import { FieldMessage } from "@/shared/ui/field-message";
+import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
+import { toast } from "@/shared/ui/toast";
 import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";
 import type { RetractKind } from "@watchdog/schemas";
+import { FieldError } from "@watchdog/ui/components/field";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 type ClaimAction = ClaimRowActionKind;
 type ActionState = { claimId: string; action: ClaimAction } | null;
@@ -163,19 +162,12 @@ function ClaimComposerActions({
 }) {
   return (
     <div className={cn("flex gap-1", className)}>
-      <Button
-        type="button"
-        size="sm"
-        variant="ghost"
-        className="h-6 text-xs"
-        onClick={onCancel}
-      >
+      <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
         Cancel
       </Button>
       <Button
         type="submit"
         size="sm"
-        className="h-6 text-xs"
         disabled={submitDisabled}
         title={submitTitle}
       >
@@ -269,23 +261,26 @@ function ClaimComposer({
         }}
       >
         {(field) => (
-          <Textarea
-            placeholder={textPlaceholder}
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => {
-              field.handleChange(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") onCancel();
-              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                e.preventDefault();
-                void form.handleSubmit();
-              }
-            }}
-            className={layout.textareaClass}
-            autoFocus
-          />
+          <>
+            <Textarea
+              placeholder={textPlaceholder}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") onCancel();
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  void form.handleSubmit();
+                }
+              }}
+              className={layout.textareaClass}
+              autoFocus
+            />
+            <FieldMessage meta={field.state.meta} />
+          </>
         )}
       </form.Field>
       <div className="flex flex-wrap items-center gap-2">
@@ -401,9 +396,7 @@ function ClaimActionForm({
         void actionForm.handleSubmit();
       }}
     >
-      <p className="text-muted-foreground text-xs font-medium">
-        {ACTION_LABELS[action]}
-      </p>
+      <p className="text-muted-foreground text-xs">{ACTION_LABELS[action]}</p>
       <actionForm.Field
         name="actionReason"
         validators={{
@@ -412,16 +405,19 @@ function ClaimActionForm({
         }}
       >
         {(field) => (
-          <Textarea
-            placeholder={ACTION_PLACEHOLDERS[action]}
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => {
-              field.handleChange(e.target.value);
-            }}
-            className="min-h-12 text-xs"
-            autoFocus
-          />
+          <>
+            <Textarea
+              placeholder={ACTION_PLACEHOLDERS[action]}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+              }}
+              className="min-h-12"
+              autoFocus
+            />
+            <FieldMessage meta={field.state.meta} />
+          </>
         )}
       </actionForm.Field>
       <actionForm.Subscribe
@@ -551,7 +547,7 @@ export function ClaimsSection({
           />
         }
       >
-        <FormInlineError>{editor.error}</FormInlineError>
+        <FieldError>{editor.error}</FieldError>
 
         {editor.adding ? (
           <ClaimComposer
@@ -607,7 +603,7 @@ export function ClaimsSection({
                         {row.text}
                       </p>
                     )}
-                    <div className="text-label-sm mt-1 flex flex-wrap items-center gap-1.5">
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm leading-tight">
                       <ClaimClassBadge claimClass={row.class} />
                       <ConfidenceBadge confidence={row.confidence} />
                       {row.evidenceIds.length > 0 ? (

@@ -8,5 +8,8 @@
   "files.exclude": {
     "repos/**": false
   },
-  "typescript.preferences.autoImportFileExcludePatterns": ["**/repos/**"]
+  "typescript.preferences.autoImportFileExcludePatterns": ["**/repos/**"],
+  "nixEnvSelector.nixFile": "${workspaceFolder}/flake.nix",
+  "nixEnvSelector.useFlakes": true,
+  "nixEnvSelector.flakeShell": "default"
 }

@@ -16,7 +16,7 @@ import {
   invalidateAfterTaskMutation,
 } from "@/shared/lib/query-invalidation";
 import { TOAST_ENTITY_UPDATED } from "@/shared/lib/toast-copy";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import {
   isProposalQueueLiveEvent,
   type WatchdogEvent,

@@ -25,21 +25,21 @@ import {
 } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
+import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Checkbox } from "@/shared/ui/shadcn/checkbox";
+import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
+import { ENTITY_KIND_LABELS, ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
+import { trimmedEntityKindSchema, ENTITY_KINDS } from "@watchdog/schemas";
+import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
   FieldSet,
-} from "@/shared/ui/shadcn/field";
-import { TableCell } from "@/shared/ui/shadcn/table";
-import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
-import { ENTITY_KIND_LABELS, ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
-import { trimmedEntityKindSchema, ENTITY_KINDS } from "@watchdog/schemas";
+} from "@watchdog/ui/components/field";
+import { TableCell } from "@watchdog/ui/components/table";
 
 function EntityTableActive({ active }: { active: CaseRecord }) {
   const {
@@ -98,7 +98,6 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
               autoFocus
               disabled={createForm.state.isSubmitting}
               aria-label="Entity name"
-              className="font-medium"
             />
           )}
         </createForm.Field>
@@ -167,7 +166,7 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
         }
       />
 
-      <FormInlineError>{submitError}</FormInlineError>
+      <FieldError>{submitError}</FieldError>
 
       <PageToolbar
         center={
@@ -185,9 +184,9 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
               }}
               contentClassName="w-[16rem]"
             >
-              <FieldSet className="gap-3 border-0 p-0">
+              <FieldSet>
                 <FieldLegend variant="label">Kind</FieldLegend>
-                <FieldGroup className="gap-2">
+                <FieldGroup>
                   {ENTITY_KINDS.map((k) => {
                     const checked = kindFilter.includes(k);
                     const id = `entity-kind-${k}`;

@@ -36,7 +36,7 @@ import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evide
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import {
   CONFIDENCE_OPTIONS,
   EntityKindGlyph,
@@ -185,7 +185,7 @@ function renderEntityCell(
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <EntityKindGlyph kind={row.entityKind} />
-      <span className="truncate text-xs font-medium">
+      <span className="truncate text-xs">
         {entityDisplayLabel({ name: row.entityName, slug: row.entitySlug })}
       </span>
     </div>

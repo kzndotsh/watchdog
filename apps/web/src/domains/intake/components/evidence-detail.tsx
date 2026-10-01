@@ -50,11 +50,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/shared/ui/shadcn/alert-dialog";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
-import { Tabs, TabsContent } from "@/shared/ui/shadcn/tabs";
+} from "@/shared/ui/primitives/alert-dialog";
+import { Button } from "@/shared/ui/primitives/button";
 import { isOpenJobStatus } from "@watchdog/schemas";
+import { Spinner } from "@watchdog/ui/components/spinner";
+import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 
 type DetailTab = "content" | "output" | "jobs";
 
@@ -126,11 +126,11 @@ function EvidenceOutputTab({
   }
   return (
     <EmptyState
+      size="sm"
       intent="blank-slate"
       items="enrich output"
       title="No Enrich output yet"
       description="Run Enrich to fetch live + Wayback. Result stays on this dump (Output) — not a new Intake row. Then Harvest reads from it."
-      className="py-6"
     />
   );
 }
@@ -149,6 +149,7 @@ function EvidenceJobsTab({
   if (relatedJobs.length === 0) {
     return (
       <EmptyState
+        size="sm"
         intent="blank-slate"
         items="Cap runs"
         title="No Cap runs"
@@ -157,7 +158,6 @@ function EvidenceJobsTab({
             ? "Enrich writes Job output (see Output tab). Harvest / Extract propose identifiers into Triage when an Entity is attached."
             : "Harvest (deterministic) or Extract (AI) propose identifiers from Evidence text. Analyze file / Analyze EML run from Collect — they are not Harvest. With an Entity attached, candidates land in Triage."
         }
-        className="py-6"
       />
     );
   }
@@ -234,11 +234,11 @@ function evidenceContentBody({
     kind: "custom",
     children: (
       <EmptyState
+        size="sm"
         intent="blank-slate"
         items="preview"
         title="No inline preview"
         description={noPreviewMessage(canEnrich, hasUri)}
-        className="py-4"
       />
     ),
   };
@@ -297,7 +297,7 @@ function EvidenceContentPanel({
               <MetaRow
                 label="Source URL"
                 className="flex-col items-start gap-1"
-                labelClassName="text-xs font-medium"
+                labelClassName="text-xs"
               >
                 <ExternalUrl href={evidence.sourceUrl} />
               </MetaRow>

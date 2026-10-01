@@ -18,29 +18,10 @@ function caseMatchesSearch(c: CaseRecord, query: string): boolean {
   );
 }
 
-function caseGridGhostCount(occupied: number, minRows = 4, cols = 3): number {
-  const minSlots = minRows * cols;
-  if (occupied >= minSlots) {
-    const rem = occupied % cols;
-    return rem === 0 ? cols : cols - rem;
-  }
-  return minSlots - occupied;
-}
-
 function filterCases(cases: CaseRecord[], search: string): CaseRecord[] {
   return [...cases]
     .filter((c) => caseMatchesSearch(c, search))
     .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-function caseListGhostCount(
-  cases: CaseRecord[],
-  filtered: CaseRecord[]
-): number {
-  const occupiedSlots = filtered.length + 1;
-  return cases.length > 0 && filtered.length === 0
-    ? 0
-    : caseGridGhostCount(occupiedSlots);
 }
 
 export function useCaseList() {
@@ -69,8 +50,6 @@ export function useCaseList() {
     setSearch
   );
 
-  const ghostCount = caseListGhostCount(cases, filtered);
-
   return {
     activeId,
     cases,
@@ -81,7 +60,6 @@ export function useCaseList() {
     search,
     setSearch,
     filtered,
-    ghostCount,
     submitError,
     createOpen,
     setCreateOpen,

@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-router";
 
 import { Providers } from "@/shared/layout/providers";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Toaster } from "@/shared/ui/shadcn/toast";
-import { TooltipProvider } from "@/shared/ui/shadcn/tooltip";
+import { Button } from "@/shared/ui/primitives/button";
+import { Toaster } from "@/shared/ui/toast";
+import { TooltipProvider } from "@watchdog/ui/components/tooltip";
 
 import appCss from "../styles.css?url";
 
@@ -26,7 +26,7 @@ function NotFoundPage() {
   return (
     <main className="mx-auto flex min-h-svh max-w-lg flex-col justify-center px-4 py-12">
       <div className="bg-background text-foreground flex flex-col gap-4 rounded-md border p-6 sm:p-8">
-        <p className="text-muted-foreground text-xs font-semibold tracking-[0.16em] uppercase">
+        <p className="text-muted-foreground tracking-eyebrow text-xs font-semibold uppercase">
           404
         </p>
         <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">

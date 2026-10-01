@@ -2,18 +2,23 @@ import { KeyboardIcon, PanelLeftIcon, SearchIcon } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { CommandPalette } from "@/domains/search/components/command-palette";
-import { ShortcutsSheet } from "@/domains/search/components/shortcuts-sheet";
+import { ShortcutsDialog } from "@/domains/search/components/shortcuts-dialog";
 import {
   SearchUiContext,
   useSearchUi,
 } from "@/domains/search/hooks/use-search-ui";
 import type { AppAction } from "@/shared/lib/app-action";
+import { useDataHotkeys } from "@/shared/lib/data-hotkey";
 import type { HotkeyBinding } from "@/shared/lib/hotkeys";
 import { useGlobalHotkeys } from "@/shared/lib/use-global-hotkeys";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
-import { useSidebar } from "@/shared/ui/shadcn/sidebar";
+import { useSidebar } from "@watchdog/ui/components/sidebar";
 
-/** Shell chrome: Mod+K palette, Mod+B sidebar, ? shortcuts. */
+/**
+ * Shell chrome: Mod+K palette, ? shortcuts, `data-hotkey` controls. Mod+B is owned by
+ * the upstream `SidebarProvider` listener (vendored, unpatched): binding it here too
+ * would toggle twice.
+ */
 export function SearchChrome({ children }: { children: ReactNode }) {
   const { toggleSidebar } = useSidebar();
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -74,28 +79,22 @@ export function SearchChrome({ children }: { children: ReactNode }) {
         run: searchUi.togglePalette,
       },
       {
-        id: "toggle-sidebar",
-        key: "b",
-        mod: true,
-        allowInEditable: true,
-        run: toggleSidebar,
-      },
-      {
         id: "shortcuts",
         key: "?",
         run: searchUi.openShortcuts,
       },
     ],
-    [searchUi, toggleSidebar]
+    [searchUi]
   );
 
   useGlobalHotkeys(bindings);
+  useDataHotkeys();
 
   return (
     <SearchUiContext.Provider value={searchUi}>
       {children}
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-      <ShortcutsSheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </SearchUiContext.Provider>
   );
 }

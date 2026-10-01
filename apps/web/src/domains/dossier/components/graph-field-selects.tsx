@@ -3,19 +3,19 @@ import {
   CONTROL_TRIGGER,
   resolveSelectValue,
 } from "@/shared/ui/control-chrome";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/shadcn/select";
 import { CLAIM_CLASS_LABELS } from "@/shared/ui/vocab";
 import {
   CLAIM_CLASSES,
   trimmedClaimClassSchema,
   type ClaimClass,
 } from "@watchdog/schemas";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@watchdog/ui/components/select";
 
 interface SelectProps<T extends string> {
   value: T;

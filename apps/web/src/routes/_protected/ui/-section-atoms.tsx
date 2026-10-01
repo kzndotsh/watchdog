@@ -2,25 +2,23 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { GuideSection, Specimen } from "@/routes/_protected/ui/-guide-chrome";
 import { DropdownActionItems } from "@/shared/ui/action-list";
-import { ActiveTabBody, SuspenseTabBody } from "@/shared/ui/active-tab-body";
+import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
+import { Chip } from "@/shared/ui/chip";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { ExternalUrl } from "@/shared/ui/external-url";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FieldSelect } from "@/shared/ui/field-select";
-import {
-  FormInlineError,
-  FormInlineWarning,
-} from "@/shared/ui/form-inline-message";
+import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { IdChip } from "@/shared/ui/id-chip";
 import { InlineLoading } from "@/shared/ui/inline-loading";
+import { Button } from "@/shared/ui/primitives/button";
 import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueRow, QueueRowMeta, QueueRowTitle } from "@/shared/ui/queue-row";
 import { RelativeTime } from "@/shared/ui/relative-time";
@@ -28,12 +26,6 @@ import { RichTextEditor } from "@/shared/ui/rich-text";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { Button } from "@/shared/ui/shadcn/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/shared/ui/shadcn/dropdown-menu";
 import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
 import { StatusDot } from "@/shared/ui/status-dot";
@@ -47,6 +39,12 @@ import {
   StatusBadge,
   StatusInk,
 } from "@/shared/ui/vocab";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@watchdog/ui/components/dropdown-menu";
+import { FieldError } from "@watchdog/ui/components/field";
 
 const DEMO_EXTERNAL_HREF = ["https", "://example.com/evidence"].join("");
 const SAMPLE_ID = "8680fa38-0c1d-4e2f-9a3b-595335c1d2e3";
@@ -114,16 +112,16 @@ const ATOM_CATALOG: AtomEntry[] = [
     ),
   },
   {
-    name: "DetailStatusChip",
+    name: "Chip",
     blurb:
-      "Outcome/tag pill — outline chrome, same height/radius/type as VocabBadge.",
+      "Outcome/tag pill — outline chrome, same shape as the vocab badges (optional tone).",
     render: () => (
       <>
-        <DetailStatusChip>From cache</DetailStatusChip>
-        <DetailStatusChip>unattached</DetailStatusChip>
-        <DetailStatusChip size="sm">agent</DetailStatusChip>
+        <Chip>From cache</Chip>
+        <Chip>unattached</Chip>
+        <Chip size="sm">agent</Chip>
         <StatusBadge status="succeeded" size="md" />
-        <DetailStatusChip>Evidence only</DetailStatusChip>
+        <Chip>Evidence only</Chip>
       </>
     ),
   },
@@ -156,9 +154,9 @@ const ATOM_CATALOG: AtomEntry[] = [
       "Inline entity name — link when slug set. Kind glyph lives on KindBadge.",
     render: () => (
       <>
-        <EntityMention name="Ada Lovelace" />
-        <EntityMention name="Acme Corp" slug="acme-corp" />
-        <EntityMention name="acme.com" slug="acme-com" />
+        <EntityMention name="Ada Lovelace" size="sm" />
+        <EntityMention name="Acme Corp" slug="acme-corp" size="sm" />
+        <EntityMention name="acme.com" slug="acme-com" size="sm" />
       </>
     ),
   },
@@ -178,7 +176,9 @@ const ATOM_CATALOG: AtomEntry[] = [
     blurb: "Claim class — not KindBadge.",
     render: () => (
       <>
+        {/* oxlint-disable-next-line shadcn/no-unknown-classes, shadcn/no-restyle -- claimClass is a vocab value, not a CSS class */}
         <ClaimClassBadge claimClass="observation" />
+        {/* oxlint-disable-next-line shadcn/no-unknown-classes, shadcn/no-restyle -- claimClass is a vocab value, not a CSS class */}
         <ClaimClassBadge claimClass="allegation" />
       </>
     ),
@@ -294,11 +294,6 @@ const ATOM_CATALOG: AtomEntry[] = [
     ),
   },
   {
-    name: "FormInlineError",
-    blurb: "Field/mutation errors — not load failures.",
-    render: () => <FormInlineError>Field is required</FormInlineError>,
-  },
-  {
     name: "FormInlineWarning",
     blurb: "Soft confirm / evidence hints.",
     render: () => (
@@ -310,7 +305,7 @@ const ATOM_CATALOG: AtomEntry[] = [
     blurb: "Muted bordered add/edit surface.",
     render: () => (
       <ComposerShell className="max-w-sm">
-        <FormInlineError>Example composer body</FormInlineError>
+        <FieldError>Example composer body</FieldError>
       </ComposerShell>
     ),
   },
@@ -387,7 +382,9 @@ const ATOM_CATALOG: AtomEntry[] = [
     render: () => (
       <TimelineSpine className="ml-2 min-h-10 pl-4">
         <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
-        <span className="text-copy-sm text-muted-foreground">Milestone</span>
+        <span className="text-muted-foreground text-sm leading-normal">
+          Milestone
+        </span>
       </TimelineSpine>
     ),
   },
@@ -405,19 +402,8 @@ const ATOM_CATALOG: AtomEntry[] = [
           <p className="text-xs">Hidden when pending</p>
         </ActiveTabBody>
         <ActiveTabBody active>
-          <p className="text-copy-sm">Active tab body</p>
+          <p className="text-sm leading-normal">Active tab body</p>
         </ActiveTabBody>
-      </div>
-    ),
-  },
-  {
-    name: "SuspenseTabBody",
-    blurb: "Suspense + StackBodySkeleton inside ActiveTabBody.",
-    render: () => (
-      <div className="border-border w-full max-w-sm rounded-md border p-3">
-        <SuspenseTabBody>
-          <p className="text-copy-sm">Resolved tab content</p>
-        </SuspenseTabBody>
       </div>
     ),
   },
@@ -497,14 +483,14 @@ const ATOM_CATALOG: AtomEntry[] = [
           groupId="ui-atom-split"
           list={
             <aside className="flex h-full min-h-0 flex-col p-2">
-              <span className="text-label-mono-sm text-muted-foreground">
+              <span className="text-2xs text-muted-foreground font-mono">
                 Queue
               </span>
             </aside>
           }
           detail={
             <div className="flex h-full min-h-0 flex-col p-2">
-              <span className="text-label-mono-sm text-muted-foreground">
+              <span className="text-2xs text-muted-foreground font-mono">
                 Detail
               </span>
             </div>

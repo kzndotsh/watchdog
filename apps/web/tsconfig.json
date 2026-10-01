@@ -1,11 +1,6 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": [
-    "src/shared/ui/shadcn/**",
-    "src/shared/hooks/use-mobile.ts",
-    "node_modules",
-    "dist"
-  ],
+  "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
@@ -25,7 +20,9 @@
     /* Linting */
     "skipLibCheck": true,
     "strict": true,
-    "noUnusedLocals": true,
+    /* Off: upstream primitives in @watchdog/ui (imported into this program) carry unused
+       React imports; oxlint no-unused-vars covers locals for our own code. */
+    "noUnusedLocals": false,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true

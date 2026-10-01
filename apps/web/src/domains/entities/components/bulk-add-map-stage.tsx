@@ -12,8 +12,8 @@ import type {
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
 import { IDENTIFIER_PLATFORM_OPTIONS } from "@/shared/ui/vocab";
+import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
 interface BulkAddMapStageProps {
   table: IdentifierPasteTable;
@@ -54,7 +54,7 @@ export function BulkAddMapStage({
   return (
     <>
       <div className="flex flex-wrap items-end gap-2">
-        <Field className="gap-1">
+        <Field>
           <FieldLabel>Entity</FieldLabel>
           <EntityCombobox
             entities={
@@ -82,7 +82,7 @@ export function BulkAddMapStage({
           ) : null}
         </Field>
         {showPlatform ? (
-          <Field className="gap-1">
+          <Field>
             <FieldLabel>Platform</FieldLabel>
             <FieldSelect
               value={defaultPlatform}

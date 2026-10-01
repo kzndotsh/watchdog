@@ -42,16 +42,16 @@ import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { EditableTextCell } from "@/shared/ui/data-table";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
+import { TabCount } from "@/shared/ui/tab-count";
+import { EntityKindGlyph } from "@/shared/ui/vocab";
+import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/shared/ui/shadcn/tabs";
-import { TabCount } from "@/shared/ui/tab-count";
-import { EntityKindGlyph } from "@/shared/ui/vocab";
+} from "@watchdog/ui/components/tabs";
 
 type DossierTab =
   | "overview"
@@ -154,6 +154,7 @@ function DossierForEntity({
         onValueChange={(v) => {
           onTabChange(parseDossierTab(typeof v === "string" ? v : undefined));
         }}
+        // oxlint-disable-next-line shadcn/no-restyle -- Dossier stack rhythm: gap-4 between the PageHeader and the tab body, both direct Tabs children
         className="flex min-h-0 w-full flex-1 flex-col gap-4"
       >
         <PageHeader
@@ -164,7 +165,8 @@ function DossierForEntity({
               placeholder="Name…"
               disabled={renameMutation.isPending}
               prefix={<EntityKindGlyph kind={entity.kind} size="md" />}
-              className="focus-within:border-border focus-within:ring-ring/40 w-auto max-w-[min(28rem,50vw)] min-w-[6rem] focus-within:bg-transparent focus-within:ring-1 hover:bg-transparent dark:bg-transparent [&_input]:text-sm [&_input]:font-semibold [&_input]:tracking-tight"
+              variant="title"
+              className="w-auto max-w-[min(28rem,50vw)] min-w-[6rem]"
               onCommit={(next) => {
                 const name = next.trim();
                 if (!name) return false;
@@ -182,7 +184,6 @@ function DossierForEntity({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="gap-1.5"
                 onClick={() => {
                   setEditError(null);
                   setEditOpen(true);
@@ -194,9 +195,8 @@ function DossierForEntity({
               <DossierExportMenu caseId={caseId} entitySlug={entity.slug} />
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 size="sm"
-                className="text-destructive hover:text-destructive gap-1.5"
                 onClick={() => {
                   setDeleteOpen(true);
                 }}
@@ -208,9 +208,7 @@ function DossierForEntity({
           }
           below={
             <>
-              {renameError ? (
-                <FormInlineError>{renameError}</FormInlineError>
-              ) : null}
+              {renameError ? <FieldError>{renameError}</FieldError> : null}
               <TabsList
                 variant="line"
                 className="h-8 max-w-full justify-start overflow-x-auto"
@@ -434,7 +432,6 @@ function DossierForEntity({
           </ActiveTabBody>
         </TabsContent>
       </Tabs>
-
       <EvidencePreviewDrawer
         evidence={previewEvidence}
         caseId={caseId}

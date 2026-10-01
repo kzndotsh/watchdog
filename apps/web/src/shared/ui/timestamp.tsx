@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/shared/ui/shadcn/tooltip";
+} from "@watchdog/ui/components/tooltip";
 
 type TooltipSide = ComponentProps<typeof TooltipContent>["side"];
 
@@ -46,7 +46,7 @@ export function Timestamp({
   side = "top",
 }: TimestampProps) {
   if (!isValidIso(value)) {
-    return <span className={className}>{children}</span>;
+    return <span className={cn("font-light", className)}>{children}</span>;
   }
 
   const local = formatFullLocalDateTime(value);
@@ -57,7 +57,7 @@ export function Timestamp({
         render={
           <time
             dateTime={value}
-            className={cn("cursor-default tabular-nums", className)}
+            className={cn("cursor-default font-light tabular-nums", className)}
           />
         }
       >

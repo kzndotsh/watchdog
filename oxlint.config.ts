@@ -1,3 +1,5 @@
+import { readdirSync } from "node:fs";
+
 import { recommended as effecttsgoRecommended } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "oxlint";
 import core from "ultracite/oxlint/core";
@@ -52,6 +54,19 @@ const effecttsgoTier1Warn = {
   "effecttsgo/prefer-schema-over-json": "warn",
 } as const;
 
+/**
+ * Same-name Watchdog wrappers over shadcn primitives (apps/web/src/shared/ui/primitives).
+ * Their vanilla `@watchdog/ui/components/<name>` path is banned in app code so nobody
+ * silently skips the wrapper; the list follows the folder, so adding a wrapper bans its twin.
+ */
+/* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- root config files sit outside every tsconfig project, so per-file (staged) lint cannot resolve node types */
+const wrappedImportBans: string[] = readdirSync(
+  new URL("apps/web/src/shared/ui/primitives/", import.meta.url)
+)
+  .filter((f) => f.endsWith(".tsx"))
+  .map((f) => `@watchdog/ui/components/${f.replace(/\.tsx$/, "")}`);
+/* oxlint-enable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return */
+
 const watchdogIgnores = [
   "_legacy-v1/**",
   "_legacy-v2/**",
@@ -68,9 +83,9 @@ const watchdogIgnores = [
   "packages/db/drizzle/**",
   "**/dist/**",
   "node_modules/**",
-  // Better Auth UI + shadcn registry — do not lint
-  "apps/web/src/auth/ui/**",
-  "apps/web/src/shared/ui/shadcn/**",
+  // Vendored shadcn primitives (@watchdog/ui): byte-identical to the CLI output, never linted.
+  "packages/ui/src/components/**",
+  "packages/ui/src/hooks/**",
   ".cursor/**",
   ".agents/**",
   ".claude/**",
@@ -78,6 +93,27 @@ const watchdogIgnores = [
   "skills/**",
   "repos/**",
 ];
+
+/** `no-restricted-imports` options for web code; `extra` adds patterns for narrower trees. */
+const webImportRestrictions = (
+  extra: { group: string[]; message: string }[]
+) => ({
+  paths: [
+    {
+      name: "@watchdog/db",
+      message:
+        "ServerFns call oRPC (@watchdog/api) → core → repos. Only routes/api/events.ts (SSE listen) may import @watchdog/db; auth lives in @watchdog/auth.",
+    },
+  ],
+  patterns: [
+    {
+      group: wrappedImportBans,
+      message:
+        "This primitive has a Watchdog wrapper: import it from @/shared/ui/primitives/<name> (loading, Enter-to-confirm, mono, ...).",
+    },
+    ...extra,
+  ],
+});
 
 export default defineConfig({
   extends: [core, react, tanstack, effecttsgoRecommended],
@@ -89,6 +125,9 @@ export default defineConfig({
   // effecttsgo comes from `@effect/tsgo/oxlint-presets` after `effect-tsgo patch --oxlint`.
   jsPlugins: [
     { name: "react-doctor", specifier: "oxlint-plugin-react-doctor" },
+    // Tailwind v4-aware class checks (theme tokens, unknown classes, arbitrary values).
+    // Web only — enabled in the apps/web override below. Pin exact: pre-1.0.
+    "@shadcn/lint",
   ],
   rules: {
     // --- Permanent off: low signal / huge churn (lint debt burn-down P7) ---
@@ -303,17 +342,54 @@ export default defineConfig({
       },
     },
     {
-      // Web must not import @watchdog/db except auth adapter + SSE listen.
+      // Web must not import @watchdog/db except auth adapter + SSE listen, and must use the
+      // Watchdog wrapper (not the vanilla @watchdog/ui primitive) wherever one exists.
       files: ["apps/web/src/**/*.{ts,tsx}"],
       rules: {
+        "eslint/no-restricted-imports": ["error", webImportRestrictions([])],
+      },
+    },
+    {
+      // Loading doctrine (docs/reference/web/ui/loading.md): pages own their pending surface
+      // with PendingRegion + shape skeletons; the route-level shell is the router's floor.
+      files: [
+        "apps/web/src/domains/**/*.{ts,tsx}",
+        "apps/web/src/routes/**/*.{ts,tsx}",
+      ],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          webImportRestrictions([
+            {
+              group: ["@watchdog/ui/components/skeleton"],
+              message:
+                "Use the shape skeletons in @/shared/ui/skeletons (they own layout parity), not a raw Skeleton.",
+            },
+            {
+              group: ["@/shared/layout/route-pending"],
+              message:
+                "Shell-first: use an in-page PendingRegion + shape skeleton. RoutePending is the router's defaultPendingComponent floor only.",
+            },
+          ]),
+        ],
+      },
+    },
+    {
+      // Wrappers are the one place that composes the vanilla primitives they wrap.
+      files: [
+        "apps/web/src/shared/ui/primitives/**/*.{ts,tsx}",
+        "apps/web/src/shared/ui/toast.tsx",
+      ],
+      rules: {
+        // Wrappers re-export their base module (`export *`): fast-refresh boundaries don't apply.
+        "react/only-export-components": "off",
         "eslint/no-restricted-imports": [
           "error",
           {
             paths: [
               {
                 name: "@watchdog/db",
-                message:
-                  "ServerFns call oRPC (@watchdog/api) → core → repos. Only auth/server.ts and routes/api/events.ts may import @watchdog/db.",
+                message: "UI wrappers never touch the database.",
               },
             ],
           },
@@ -321,30 +397,9 @@ export default defineConfig({
       },
     },
     {
-      files: [
-        "apps/web/src/auth/server.ts",
-        "apps/web/src/routes/api/events.ts",
-      ],
+      files: ["apps/web/src/routes/api/events.ts"],
       rules: {
         "eslint/no-restricted-imports": "off",
-      },
-    },
-    {
-      // shadcn registry primitives — not hand-owned DS.
-      files: ["apps/web/src/shared/ui/shadcn/**/*.{ts,tsx}"],
-      rules: {
-        "eslint/no-unused-vars": "off",
-        "typescript/no-unused-vars": "off",
-        "react/only-export-components": "off",
-        "unicorn/no-null": "off",
-      },
-    },
-    {
-      // shadcn-vendored hook — @ts-nocheck re-stamped by
-      // apps/web/scripts/shadcn-nocheck.mjs; excluded from tsconfig by design.
-      files: ["apps/web/src/shared/hooks/use-mobile.ts"],
-      rules: {
-        "typescript/ban-ts-comment": "off",
       },
     },
     {
@@ -415,11 +470,14 @@ export default defineConfig({
         "packages/test-kit/src/**/*.{ts,tsx}",
         "packages/client/src/**/*.{ts,tsx}",
         "packages/api/src/**/*.{ts,tsx}",
+        "packages/auth/src/**/*.{ts,tsx}",
         "apps/**/*.{ts,tsx,mjs}",
         "e2e/**/*.{ts,tsx}",
         "scripts/**/*.{mjs,ts}",
         "vitest.config.ts",
         "playwright.config.ts",
+        "oxlint.config.ts",
+        "knip.ts",
       ],
       rules: effecttsgoOff,
     },
@@ -648,6 +706,79 @@ export default defineConfig({
       rules: {
         "react/only-export-components": "off",
         "unicorn/prefer-export-from": "off",
+      },
+    },
+    {
+      // Tailwind class checks on web UI. Class strings live in constants (STATUS_TONES),
+      // so scan every string. no-inline-styles / require-static-classes
+      // are deliberately off: see docs/reference/web/ui/rules.md.
+      files: ["apps/web/src/**/*.{ts,tsx}"],
+      rules: {
+        "shadcn/no-raw-colors": ["error", { scanAllStrings: true }],
+        "shadcn/no-arbitrary-values": [
+          "error",
+          { allow: ["layout"], scanAllStrings: true },
+        ],
+        "shadcn/no-unknown-classes": "error",
+      },
+    },
+    {
+      // Domains and routes compose primitives; they don't restyle them. Callers may
+      // place (layout classes, truncate); size, color, and shape come from variants.
+      // shared/ atoms own their style, like shadcn's ui/ dir.
+      files: [
+        "apps/web/src/domains/**/*.{ts,tsx}",
+        "apps/web/src/routes/**/*.{ts,tsx}",
+      ],
+      rules: {
+        "shadcn/no-restyle": [
+          "error",
+          {
+            allow: ["layout", "truncate"],
+            // Code-like values (ids, timestamps, pasted handles) render monospace.
+            contracts: [
+              {
+                pattern: "^(Input|Textarea)$",
+                allow: ["layout", "truncate", "font-mono"],
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      // `auth/ui` started as Better Auth UI registry source (docs/reference/web/ui/auth-ui.md).
+      // It is linted and formatted like our code, but these rules are off because the
+      // upstream patterns trip them and their autofixes change behavior (`||` to `??`,
+      // dropping casts the types still need). Remove entries as the files get rewritten.
+      files: ["apps/web/src/auth/ui/**/*.{ts,tsx}"],
+      rules: {
+        "typescript/consistent-return": "off",
+        "typescript/consistent-type-definitions": "off",
+        "typescript/use-unknown-in-catch-callback-variable": "off",
+        "eslint/no-nested-ternary": "off",
+        "unicorn/no-nested-ternary": "off",
+        "eslint/no-use-before-define": "off",
+        "eslint/no-empty-function": "off",
+        "eslint/no-negated-condition": "off",
+        "unicorn/no-negated-condition": "off",
+        "unicorn/consistent-function-scoping": "off",
+        "jsdoc/check-tag-names": "off",
+        "promise/prefer-await-to-then": "off",
+        "promise/prefer-await-to-callbacks": "off",
+      },
+    },
+    {
+      // Fixtures assert on made-up class / token names.
+      files: [
+        "apps/web/src/**/__tests__/**/*.{ts,tsx}",
+        "apps/web/src/**/*.{test,spec}.{ts,tsx}",
+      ],
+      rules: {
+        "shadcn/no-raw-colors": "off",
+        "shadcn/no-arbitrary-values": "off",
+        "shadcn/no-unknown-classes": "off",
+        "shadcn/no-restyle": "off",
       },
     },
   ],

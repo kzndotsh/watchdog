@@ -1,17 +1,19 @@
-import { useAuth, useChangeEmail, useSession } from "@better-auth-ui/react"
-import { type SyntheticEvent, useState } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { useAuth, useChangeEmail, useSession } from "@better-auth-ui/react";
+import { type SyntheticEvent, useState } from "react";
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Field, FieldError } from "@/shared/ui/shadcn/field"
-import { FormSection } from "@/shared/ui/form-section"
-import { Input } from "@/shared/ui/shadcn/input"
-import { Label } from "@/shared/ui/shadcn/label"
-import { Skeleton } from "@/shared/ui/shadcn/skeleton"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { FormSection } from "@/shared/ui/form-section";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
+import { Field, FieldError } from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
+import { Label } from "@watchdog/ui/components/label";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-export type ChangeEmailProps = {
-  className?: string
+import { formString } from "../../form-data";
+
+export interface ChangeEmailProps {
+  className?: string;
 }
 
 /**
@@ -24,31 +26,31 @@ export type ChangeEmailProps = {
  * @returns A JSX element rendering the change-email card and form
  */
 export function ChangeEmail({ className }: ChangeEmailProps) {
-  const { authClient, baseURL, localization, viewPaths } = useAuth()
-  const { data: session } = useSession(authClient)
+  const { authClient, baseURL, localization, viewPaths } = useAuth();
+  const { data: session } = useSession(authClient);
 
   const { mutate: changeEmail, isPending } = useChangeEmail(authClient, {
-    onSuccess: () => toast.success(localization.settings.changeEmailSuccess)
-  })
+    onSuccess: () => toast.success(localization.settings.changeEmailSuccess),
+  });
 
   const [fieldErrors, setFieldErrors] = useState<{
-    email?: string
-  }>({})
+    email?: string;
+  }>({});
 
   function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault()
+    e.preventDefault();
 
-    const formData = new FormData(e.currentTarget)
+    const formData = new FormData(e.currentTarget);
     changeEmail({
-      newEmail: (formData.get("email") as string).trim(),
-      callbackURL: `${baseURL}/${viewPaths.settings.account}`
-    })
+      newEmail: formString(formData, "email").trim(),
+      callbackURL: `${baseURL}/${viewPaths.settings.account}`,
+    });
   }
 
   return (
     <form onSubmit={handleSubmit}>
       <FormSection
-        title={localization.settings.changeEmail}
+        title="Email"
         className={className}
         footer={
           <Button type="submit" size="sm" disabled={isPending || !session}>
@@ -74,15 +76,15 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
               onChange={() => {
                 setFieldErrors((prev) => ({
                   ...prev,
-                  email: undefined
-                }))
+                  email: undefined,
+                }));
               }}
               onInvalid={(e) => {
-                e.preventDefault()
+                e.preventDefault();
                 setFieldErrors((prev) => ({
                   ...prev,
-                  email: (e.target as HTMLInputElement).validationMessage
-                }))
+                  email: e.currentTarget.validationMessage,
+                }));
               }}
               aria-invalid={!!fieldErrors.email}
             />
@@ -96,5 +98,5 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
         </Field>
       </FormSection>
     </form>
-  )
+  );
 }

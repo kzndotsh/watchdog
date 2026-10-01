@@ -21,16 +21,20 @@ import { CONFIRMED_REQUIRES_EVIDENCE } from "@/shared/lib/confirmed-evidence";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   EvidenceCiteChips,
   EvidencePicker,
   EvidenceSlotSkeleton,
 } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
+import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
+import { FieldError } from "@watchdog/ui/components/field";
+import { Kbd } from "@watchdog/ui/components/kbd";
+import { Textarea } from "@watchdog/ui/components/textarea";
+
+/** Inline shortcut hint inside a Button: inherits the button's ink. */
+const BUTTON_KBD_CLASS = "-mr-0.5 ml-0.5 h-4 min-w-4";
 
 function JobEvidenceMissingHint({ missingCount }: { missingCount: number }) {
   if (missingCount < 1) return null;
@@ -193,7 +197,7 @@ function AcceptControls({
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              className="min-h-10 w-full text-xs"
+              className="min-h-10 w-full"
             />
           )}
         </acceptForm.Field>
@@ -225,7 +229,7 @@ function RejectComposer({
             onChange={(e) => {
               field.handleChange(e.target.value);
             }}
-            className="min-h-10 text-xs"
+            className="min-h-10"
             autoFocus
           />
         )}
@@ -239,7 +243,6 @@ function RejectComposer({
           type="button"
           size="sm"
           variant="ghost"
-          className="h-6 text-xs"
           disabled={pending}
           onClick={() => {
             onRejectingChange(false);
@@ -252,7 +255,6 @@ function RejectComposer({
           type="button"
           size="sm"
           variant="destructive"
-          className="h-6 text-xs"
           loading={pending && rejecting}
           onClick={() => {
             void rejectForm.handleSubmit();
@@ -309,9 +311,11 @@ export function TriageDecideFooter({
             onRejectingChange={onRejectingChange}
           />
         </DetailFooter>
-        <FormInlineError className="border-border shrink-0 border-t px-4 pb-2">
-          {error}
-        </FormInlineError>
+        {error ? (
+          <div className="border-border shrink-0 border-t px-4 pb-2">
+            <FieldError>{error}</FieldError>
+          </div>
+        ) : null}
       </>
     );
   }
@@ -360,6 +364,8 @@ export function TriageDecideFooter({
                 <Button
                   type="button"
                   size="sm"
+                  data-hotkey="a"
+                  aria-keyshortcuts="a"
                   loading={acceptBusy}
                   disabled={!gate.canAccept}
                   onClick={() => {
@@ -376,11 +382,16 @@ export function TriageDecideFooter({
                     <CheckIcon className="size-3" data-icon="inline-start" />
                   )}
                   Accept
+                  <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
+                    A
+                  </Kbd>
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
+                  data-hotkey="r"
+                  aria-keyshortcuts="r"
                   disabled={pending}
                   onClick={() => {
                     onRejectingChange(true);
@@ -389,15 +400,20 @@ export function TriageDecideFooter({
                 >
                   <XIcon className="size-3" data-icon="inline-start" />
                   Reject
+                  <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
+                    R
+                  </Kbd>
                 </Button>
               </>
             );
           }}
         </acceptForm.Subscribe>
       </DetailFooter>
-      <FormInlineError className="border-border shrink-0 border-t px-4 pb-2">
-        {error}
-      </FormInlineError>
+      {error ? (
+        <div className="border-border shrink-0 border-t px-4 pb-2">
+          <FieldError>{error}</FieldError>
+        </div>
+      ) : null}
     </>
   );
 }

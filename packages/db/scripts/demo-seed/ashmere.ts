@@ -674,7 +674,7 @@ export async function seedAshmere(
     description:
       "Contested once. Reopen only with a second identifier that is not the billing role address.",
     status: "blocked",
-    priority: "urgent",
+    priority: "high",
     position: 0,
     at: hoursAgo(24 * 3),
   });

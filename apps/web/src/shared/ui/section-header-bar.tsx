@@ -2,11 +2,12 @@ import type { ElementType, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { SectionLabel } from "@/shared/ui/section-label";
+import { TabCount } from "@/shared/ui/tab-count";
 
 type SectionHeaderBarVariant = "sticky" | "panel" | "inline";
 
 /**
- * Title + optional count + optional trailing action.
+ * Title on the left; count pill (same `TabCount` as the page header) and optional action on the right.
  * Presentational only.
  */
 export function SectionHeaderBar({
@@ -43,13 +44,15 @@ export function SectionHeaderBar({
         density={variant === "panel" ? "compact" : "default"}
       >
         {title}
-        {typeof count === "number" ? (
-          <span className="text-muted-foreground ml-2 font-mono font-normal normal-case tabular-nums">
-            {count}
-          </span>
-        ) : null}
       </SectionLabel>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {typeof count === "number" || action ? (
+        <div className="flex shrink-0 items-center gap-2">
+          {typeof count === "number" ? (
+            <TabCount n={count} className="ml-0" />
+          ) : null}
+          {action}
+        </div>
+      ) : null}
     </div>
   );
 }

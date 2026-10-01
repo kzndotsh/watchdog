@@ -44,7 +44,7 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   bindCasesChangedInvalidation: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/shadcn/sidebar", () => ({
+vi.mock("@watchdog/ui/components/sidebar", () => ({
   SidebarGroupLabel: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -69,11 +69,17 @@ vi.mock("@/shared/ui/shadcn/sidebar", () => ({
   useSidebar: () => ({ state: "expanded", isMobile: false }),
 }));
 
-vi.mock("@/shared/ui/shadcn/dropdown-menu", () => ({
+vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
   DropdownMenuItem: ({

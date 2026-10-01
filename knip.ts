@@ -9,6 +9,9 @@ const config: KnipConfig = {
   ignoreBinaries: ["check", "desloppify"],
   ignore: ["_legacy-v1/**", "_legacy-v2/**"],
   ignoreIssues: {
+    // Vendored shadcn output: unused *files* still surface; unused exports are upstream's.
+    "packages/ui/src/**": ["exports", "types"],
+    "apps/web/src/shared/ui/primitives/**": ["exports", "types"],
     "apps/web/src/domains/**/types.ts": ["types"],
     "apps/web/src/domains/**/*.server.ts": ["types"],
     "apps/web/src/auth/server.ts": ["types"],
@@ -44,7 +47,8 @@ const config: KnipConfig = {
         "scripts/**/*.{mjs,js,ts}",
       ],
       // Root depends on @watchdog/cli so `pnpm exec wd` / node_modules/.bin/wd work.
-      ignoreDependencies: ["@watchdog/cli"],
+      // `cn` is resolved by @shadcn/lint at lint time (grammar >= 0.3.2); nothing imports it.
+      ignoreDependencies: ["@watchdog/cli", "cn"],
     },
     "apps/site": {
       entry: ["src/pages/**/*.{astro,ts}", "astro.config.mjs"],
@@ -64,7 +68,6 @@ const config: KnipConfig = {
         "src/test-setup.ts",
       ],
       project: ["src/**/*.{ts,tsx}", "scripts/**/*.{mjs,ts,js}"],
-      ignore: ["src/shared/ui/shadcn/**"],
       ignoreFiles: ["src/shared/layout/section-label.tsx"],
       ignoreDependencies: [
         "@fontsource-variable/geist",
@@ -98,6 +101,16 @@ const config: KnipConfig = {
     "packages/api": {
       entry: ["src/index.ts", "scripts/**/*.ts", "src/**/__tests__/**/*.ts"],
       project: ["src/**/*.ts", "scripts/**/*.ts"],
+    },
+    "packages/auth": {
+      entry: [
+        "src/server.ts",
+        "src/instance-admin.ts",
+        "src/org-roles.ts",
+        "src/invitation-url.ts",
+        "src/**/__tests__/**/*.test.ts",
+      ],
+      project: ["src/**/*.ts"],
     },
     "packages/cap-sdk": {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],

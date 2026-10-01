@@ -10,12 +10,14 @@ import {
 const ITEMS: SettingsNavItem[] = [
   {
     id: "account",
+    group: "Personal",
     label: "Account",
     description: "Profile and identity settings.",
     icon: ShieldIcon,
   },
   {
     id: "credentials",
+    group: "Organization",
     label: "Credentials",
     description: "Cap provider secrets stored in the vault.",
     icon: KeyRoundIcon,
@@ -37,6 +39,17 @@ describe("SettingsShell", () => {
       screen.getByText("Profile and identity settings.")
     ).toBeInTheDocument();
     expect(screen.getByText("Account panel")).toBeInTheDocument();
+  });
+
+  it("shows a heading for each nav group", () => {
+    render(
+      <SettingsShell items={ITEMS} activeTab="account" onTabChange={vi.fn()}>
+        <div>Panel</div>
+      </SettingsShell>
+    );
+
+    expect(screen.getByText("Personal")).toBeInTheDocument();
+    expect(screen.getByText("Organization")).toBeInTheDocument();
   });
 
   it("calls onTabChange when a nav item is selected", () => {

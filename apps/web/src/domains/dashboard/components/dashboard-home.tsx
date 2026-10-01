@@ -45,16 +45,16 @@ import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/shared/ui/shadcn/resizable";
-import {
   DashboardActivityPanelSkeleton,
   DashboardOverviewSkeleton,
 } from "@/shared/ui/skeletons";
 import type { ProposalRecord } from "@watchdog/core";
 import { isProposalQueueLiveEvent } from "@watchdog/schemas";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@watchdog/ui/components/resizable";
 
 const OVERVIEW_DEFAULT = "68%";
 const ACTIVITY_DEFAULT = "32%";

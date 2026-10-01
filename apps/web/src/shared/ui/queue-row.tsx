@@ -6,13 +6,12 @@ import type {
 } from "react";
 
 import { cn } from "@/lib/utils";
-import { formatClockTime } from "@/shared/ui/group-by-day";
 import { IdChip } from "@/shared/ui/id-chip";
 import { RelativeTime } from "@/shared/ui/relative-time";
 
 type QueueRowProps = {
   selected?: boolean;
-  /** Left accent stripe (live/running jobs). */
+  /** Left state bar in the running hue (live jobs). Selection is the amber wash. */
   live?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;
@@ -57,9 +56,10 @@ export function QueueRow({
       data-selected={selected || undefined}
       data-live={live || undefined}
       className={cn(
-        "relative flex w-full min-w-0 cursor-pointer flex-nowrap items-start gap-2 px-3 py-1.5 text-left transition-colors",
+        "relative flex w-full min-w-0 cursor-pointer flex-nowrap items-start gap-2 px-3 py-1.5 text-left transition-colors duration-(--duration-fast)",
         "hover:bg-muted/40 focus-visible:bg-muted/50 focus-visible:outline-none",
-        selected && "bg-muted/45",
+        selected &&
+          "bg-signal/10 hover:bg-signal/15 focus-visible:bg-signal/15",
         className
       )}
       onClick={handleActivate}
@@ -69,7 +69,7 @@ export function QueueRow({
       {live ? (
         <span
           aria-hidden
-          className="bg-signal absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full"
+          className="bg-status-running absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full"
         />
       ) : null}
       {leading ? (
@@ -94,9 +94,7 @@ export function QueueRowTitle({
   className?: string;
 }) {
   return (
-    <span
-      className={cn("text-foreground truncate text-sm font-medium", className)}
-    >
+    <span className={cn("text-foreground truncate text-sm", className)}>
       {children}
     </span>
   );
@@ -113,7 +111,7 @@ export function QueueRowMeta({
   return (
     <span
       className={cn(
-        "text-label-mono-sm text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5",
+        "text-2xs text-muted-foreground flex min-w-0 flex-wrap items-center gap-x-1.5 font-mono",
         className
       )}
     >
@@ -136,8 +134,6 @@ export function QueueRowInstantMeta({
 }) {
   return (
     <QueueRowMeta className={className}>
-      <span className="tabular-nums">{formatClockTime(value)}</span>
-      <span aria-hidden>·</span>
       <RelativeTime value={value} />
       <span aria-hidden>·</span>
       <IdChip value={id} copyable className="opacity-80" />

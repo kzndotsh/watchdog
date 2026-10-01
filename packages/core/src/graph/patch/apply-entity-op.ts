@@ -84,16 +84,28 @@ export function applyEntityOpEffect(
             "Entity slug already belongs to a different Entity in this Case",
         });
       }
-      const created = yield* tryDb(() =>
-        entitiesRepo.create(tx, {
-          id: op.id,
-          caseId,
-          kind,
-          name,
-          slug,
-          summary,
-          notes,
-        })
+      // An id that already exists (here or in another Case) must not reach the primary key.
+      const idOwner = yield* tryDb(() => entitiesRepo.getById(tx, op.id));
+      if (idOwner) {
+        return yield* new ConflictError({ reason: "Entity id is already in use" });
+      }
+      // The check above can lose a race with a concurrent patch using the same id; the primary
+      // key is the backstop and reports the same conflict.
+      const created = yield* tryDb(
+        () =>
+          entitiesRepo.create(tx, {
+            id: op.id,
+            caseId,
+            kind,
+            name,
+            slug,
+            summary,
+            notes,
+          }),
+        {
+          uniqueIndex: "entities_pkey",
+          conflictReason: "Entity id is already in use",
+        }
       );
       if (!created) {
         return yield* new InvalidError({ reason: "Failed to create Entity" });

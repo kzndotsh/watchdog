@@ -1,22 +1,28 @@
-"use client"
+"use client";
 
-import { useAuth, useSendVerificationEmail } from "@better-auth-ui/react"
-import { useEffect, useState, useSyncExternalStore } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { useAuth, useSendVerificationEmail } from "@better-auth-ui/react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
-import { Button } from "@/shared/ui/shadcn/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/shadcn/card"
-import { FieldDescription } from "@/shared/ui/shadcn/field"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
-import { cn } from "@/lib/utils"
-import { OpenEmailButton } from "./open-email-button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@watchdog/ui/components/card";
+import { FieldDescription } from "@watchdog/ui/components/field";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-export type VerifyEmailProps = {
-  className?: string
+import { OpenEmailButton } from "./open-email-button";
+
+export interface VerifyEmailProps {
+  className?: string;
 }
 
 /** Seconds the resend button stays disabled to prevent spamming the endpoint. */
-const RESEND_COOLDOWN_SECONDS = 60
+const RESEND_COOLDOWN_SECONDS = 60;
 
 /**
  * Returns `true` once the component is mounted on the client (hydrated) and
@@ -26,12 +32,12 @@ const RESEND_COOLDOWN_SECONDS = 60
  * @returns Whether the component has hydrated on the client.
  */
 function useIsHydrated() {
-  const subscribe = () => () => {}
+  const subscribe = () => () => {};
   return useSyncExternalStore(
     subscribe,
     () => true,
     () => false
-  )
+  );
 }
 
 /**
@@ -54,40 +60,43 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
     localization,
     redirectTo,
     viewPaths,
-    Link
-  } = useAuth()
+    Link,
+  } = useAuth();
 
-  const isHydrated = useIsHydrated()
-  const [email, setEmail] = useState(
-    (isHydrated && sessionStorage.getItem("better-auth-ui.verify-email")) || ""
-  )
-  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS)
-
-  useEffect(() => {
-    setEmail(sessionStorage.getItem("better-auth-ui.verify-email") ?? "")
-  }, [])
+  const isHydrated = useIsHydrated();
+  const storedEmail = isHydrated
+    ? sessionStorage.getItem("better-auth-ui.verify-email")
+    : null;
+  const [email, setEmail] = useState(storedEmail ?? "");
+  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
 
   useEffect(() => {
-    if (cooldown <= 0 || !email) return
+    setEmail(sessionStorage.getItem("better-auth-ui.verify-email") ?? "");
+  }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0 || !email) return;
 
     const interval = setInterval(() => {
-      setCooldown((current) => (current > 0 ? current - 1 : 0))
-    }, 1000)
+      setCooldown((current) => (current > 0 ? current - 1 : 0));
+    }, 1000);
 
-    return () => clearInterval(interval)
-  }, [cooldown, email])
+    return () => {
+      clearInterval(interval);
+    };
+  }, [cooldown, email]);
 
   const { mutate: sendVerificationEmail, isPending } = useSendVerificationEmail(
     authClient,
     {
       onSuccess: () => {
-        toast.success(localization.auth.verificationEmailSent)
-        setCooldown(RESEND_COOLDOWN_SECONDS)
-      }
+        toast.success(localization.auth.verificationEmailSent);
+        setCooldown(RESEND_COOLDOWN_SECONDS);
+      },
     }
-  )
+  );
 
-  const isCoolingDown = cooldown > 0
+  const isCoolingDown = cooldown > 0;
 
   return (
     <Card className={cn("w-full max-w-sm", className)}>
@@ -111,12 +120,12 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
                 type="button"
                 variant="outline"
                 disabled={!email || isCoolingDown || isPending}
-                onClick={() =>
+                onClick={() => {
                   sendVerificationEmail({
                     email,
-                    callbackURL: `${baseURL}${redirectTo}`
-                  })
-                }
+                    callbackURL: `${baseURL}${redirectTo}`,
+                  });
+                }}
               >
                 {isPending && <Spinner />}
 
@@ -131,7 +140,7 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
           )}
         </div>
 
-        <div className="flex flex-col gap-3 items-center w-full mt-4">
+        <div className="mt-4 flex w-full flex-col items-center gap-3">
           <FieldDescription className="text-center">
             {localization.auth.alreadyVerifiedYourEmail}{" "}
             <Link
@@ -144,5 +153,5 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

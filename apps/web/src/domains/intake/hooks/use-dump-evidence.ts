@@ -14,7 +14,7 @@ import {
   TOAST_UPLOAD_FAILED,
   TOAST_UPLOAD_LOADING,
 } from "@/shared/lib/toast-copy";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { toast } from "@/shared/ui/toast";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 
 export interface UseDumpEvidenceOptions {

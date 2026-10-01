@@ -13,15 +13,9 @@ import type {
 } from "@/domains/entities/lib/edge-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { cn } from "@/lib/utils";
-import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
+import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
-import { Button } from "@/shared/ui/shadcn/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   edgePhraseValue,
   parseEdgePhraseValue,
@@ -29,11 +23,15 @@ import {
 } from "@/shared/ui/vocab/edge-predicate";
 import { entityDisplayLabel } from "@watchdog/schemas";
 import type { EdgeOrientation } from "@watchdog/schemas";
+import { FieldError } from "@watchdog/ui/components/field";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@watchdog/ui/components/popover";
 
-const MAX_VISIBLE_CHIPS = 2;
-
-const DASHED_PILL_CLASS =
-  "text-muted-foreground hover:text-foreground border-border/60 hover:bg-muted/40 h-5 gap-0.5 rounded-full border border-dashed bg-transparent px-1.5 text-xs font-normal shadow-none";
+// A lone connection shows as a named chip; several collapse to direction counts so the row stays on one line.
+const MAX_VISIBLE_CHIPS = 1;
 
 const EMPTY_FORM: ConnectionComposerValues = {
   peerId: "",
@@ -88,8 +86,10 @@ export function EntityConnectionsCell({
   const [unlinkingEdgeId, setUnlinkingEdgeId] = useState<string | null>(null);
 
   const peerChoices = entityOptions.filter((o) => o.id !== entity.id);
-  const visible = peers.slice(0, MAX_VISIBLE_CHIPS);
+  const visible = peers.length > MAX_VISIBLE_CHIPS ? [] : peers;
   const overflow = peers.length - visible.length;
+  const outCount = peers.filter((p) => p.direction === "out").length;
+  const inCount = peers.length - outCount;
   const addDisabled = peerChoices.length === 0;
   const isEdit = mode.kind === "edit";
   const showComposer = mode.kind === "create" || mode.kind === "edit";
@@ -209,15 +209,14 @@ export function EntityConnectionsCell({
         modal
       >
         <div className="flex min-w-0 flex-1 items-center gap-1">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+          <div className="flex min-w-0 flex-1 items-center gap-1">
             {peers.length === 0 ? (
               <PopoverTrigger
                 render={
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className={DASHED_PILL_CLASS}
+                    variant="outline"
+                    size="xs"
                     disabled={addDisabled}
                     aria-label={addAriaLabel}
                     title="Add connection"
@@ -251,7 +250,7 @@ export function EntityConnectionsCell({
                       aria-label={`Edit connection ${phrase}`}
                       className={cn(
                         CHIP_SIZE_CLASS.sm,
-                        "text-foreground/80 bg-secondary hover:bg-secondary/80 inline-flex max-w-full min-w-0 cursor-pointer items-center gap-1 border-transparent"
+                        "text-foreground/80 bg-secondary hover:bg-secondary/80 inline-flex max-w-full min-w-0 shrink cursor-pointer items-center gap-1 border-transparent"
                       )}
                       onClick={() => {
                         openEdit(peer);
@@ -261,22 +260,37 @@ export function EntityConnectionsCell({
                         className="text-muted-foreground size-3 shrink-0"
                         aria-hidden
                       />
-                      <span className="min-w-0 truncate font-medium">
-                        {peerLabel}
-                      </span>
+                      <span className="min-w-0 truncate">{peerLabel}</span>
                     </button>
                   );
                 })}
                 {overflow > 0 ? (
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className={DASHED_PILL_CLASS}
-                    aria-label={`${overflow} more connections`}
+                    variant="outline"
+                    size="xs"
+                    aria-label={`${peers.length} connections`}
+                    title={`${outCount} outgoing, ${inCount} incoming`}
                     onClick={openBrowse}
                   >
-                    +{overflow}
+                    {outCount > 0 ? (
+                      <span className="inline-flex items-center gap-0.5">
+                        <ArrowUpRightIcon
+                          className="text-muted-foreground size-3"
+                          aria-hidden
+                        />
+                        {outCount}
+                      </span>
+                    ) : null}
+                    {inCount > 0 ? (
+                      <span className="inline-flex items-center gap-0.5">
+                        <ArrowDownLeftIcon
+                          className="text-muted-foreground size-3"
+                          aria-hidden
+                        />
+                        {inCount}
+                      </span>
+                    ) : null}
                   </Button>
                 ) : null}
               </>
@@ -284,28 +298,29 @@ export function EntityConnectionsCell({
           </div>
 
           {peers.length > 0 ? (
-            <PopoverTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-0"
-                  disabled={addDisabled}
-                  aria-label={addAriaLabel}
-                  title="Add connection"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    openCreate();
-                  }}
-                />
-              }
-            >
-              <PlusIcon className="size-3" aria-hidden />
-            </PopoverTrigger>
+            <span className="inline-flex shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 has-disabled:opacity-0">
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={addDisabled}
+                    aria-label={addAriaLabel}
+                    title="Add connection"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openCreate();
+                    }}
+                  />
+                }
+              >
+                <PlusIcon className="size-3" aria-hidden />
+              </PopoverTrigger>
+            </span>
           ) : null}
         </div>
-        <PopoverContent align="end" className="w-80 gap-2.5">
+        <PopoverContent align="end" className="w-80">
           {showConnectionList ? (
             <div className="flex max-h-28 flex-col gap-1 overflow-y-auto border-b pb-2">
               {peers.map((peer) => {
@@ -331,7 +346,7 @@ export function EntityConnectionsCell({
                     <span className="text-muted-foreground shrink-0">
                       {predicateLabel(peer.predicate, peer.direction)}
                     </span>
-                    <span className="truncate font-medium">{peerLabel}</span>
+                    <span className="truncate">{peerLabel}</span>
                   </button>
                 );
               })}
@@ -347,14 +362,13 @@ export function EntityConnectionsCell({
                 onChange={setForm}
                 disabled={busy}
               />
-              <FormInlineError>{saveError}</FormInlineError>
+              <FieldError>{saveError}</FieldError>
               <div className="flex items-center gap-1.5">
                 {isEdit ? (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
                     disabled={busy}
                     aria-label={`Unlink ${entityDisplayLabel({
                       name: mode.peer.peerName,

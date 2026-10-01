@@ -53,6 +53,14 @@ const integrationEnv = {
   WD_MASTER_VAULT_KEY: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 } as const;
 
+/*
+ * Speed: projects run with `isolate: false` plus `vitest.reset-modules.ts`.
+ * A fresh worker per file re-evaluated effect / drizzle / postgres for each of ~1,000
+ * files (import was ~75% of run time). Without isolation, externals load once per worker,
+ * while the setup file clears the module registry before every file so `vi.mock` still
+ * applies to our own modules. The catch: process-wide state (process.env, globalThis,
+ * fake timers, DOM) is shared between files in a worker, so tests must restore what they change.
+ */
 export default defineConfig({
   test: {
     // Vitest 5 clears mock history before each test. Suites assert calls
@@ -95,6 +103,8 @@ export default defineConfig({
           ],
           exclude: unitExclude,
           environment: "node",
+          isolate: false,
+          setupFiles: ["vitest.reset-modules.ts"],
           env: webTestEnv,
         },
       },
@@ -115,6 +125,8 @@ export default defineConfig({
             ...webDomTestGlobs,
           ],
           environment: "node",
+          isolate: false,
+          setupFiles: ["vitest.reset-modules.ts"],
           env: webTestEnv,
         },
       },
@@ -127,6 +139,8 @@ export default defineConfig({
           ],
           exclude: ["**/node_modules/**", "_legacy-v1/**", "_legacy-v2/**"],
           environment: "node",
+          isolate: false,
+          setupFiles: ["vitest.reset-modules.ts"],
           env: webTestEnv,
         },
       },
@@ -145,7 +159,8 @@ export default defineConfig({
           ],
           environment: "happy-dom",
           pool: "threads",
-          setupFiles: ["apps/web/src/test-setup.ts"],
+          isolate: false,
+          setupFiles: ["vitest.reset-modules.ts", "apps/web/src/test-setup.ts"],
           deps: {
             optimizer: {
               client: {
@@ -167,6 +182,8 @@ export default defineConfig({
           environment: "node",
           fileParallelism: false,
           maxWorkers: 1,
+          isolate: false,
+          setupFiles: ["vitest.reset-modules.ts"],
           env: integrationEnv,
         },
       },

@@ -3,7 +3,7 @@ import type { ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const BASE =
-  "text-label-meta text-muted-foreground normal-case tracking-normal";
+  "text-2xs font-medium text-muted-foreground normal-case tracking-normal";
 
 interface SectionLabelProps {
   children: ReactNode;
@@ -23,7 +23,7 @@ export function SectionLabel({
     <Comp
       className={cn(
         BASE,
-        density === "compact" && "text-label-meta-sm",
+        density === "compact" && "text-xs leading-tight font-medium",
         className
       )}
     >

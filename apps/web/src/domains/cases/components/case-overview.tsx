@@ -12,6 +12,7 @@ import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
 import { CaseOverviewPending } from "@/domains/cases/components/case-overview-pending";
 import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
+import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import { caseByIdQuery, casesContextQuery } from "@/domains/cases/queries";
 import { setActiveCaseIdInputSchema } from "@/domains/cases/types";
@@ -27,10 +28,11 @@ import {
   invalidateAfterCaseSwitch,
 } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
+import { EditableTextCell } from "@/shared/ui/data-table";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { Button } from "@/shared/ui/shadcn/button";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
 
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_IDENTIFIERS: CaseIdentifierRecord[] = [];
@@ -76,6 +78,9 @@ export function CaseOverview({ caseId }: { caseId: string }) {
 
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
+  const renameMutation = useUpdateCase(caseId, caseRow?.slug);
+  /** Bumped when a rename fails so the editor drops its unsaved draft. */
+  const [nameEditorKey, setNameEditorKey] = useState(0);
   const selectMutation = useMutation({
     mutationFn: async () =>
       setActiveCaseIdFn({
@@ -138,13 +143,38 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   return (
     <Page>
       <PageHeader
+        current={
+          <EditableTextCell
+            key={nameEditorKey}
+            value={caseRow.name}
+            aria-label="Case name"
+            placeholder="Case name…"
+            disabled={renameMutation.isPending}
+            variant="title"
+            className="w-auto max-w-[min(28rem,50vw)] min-w-[6rem]"
+            onCommit={(next) => {
+              const name = next.trim();
+              if (!name) return false;
+              if (name === caseRow.name) return false;
+              renameMutation.mutate(
+                { name },
+                {
+                  onError: () => {
+                    setNameEditorKey((k) => k + 1);
+                  },
+                }
+              );
+              return true;
+            }}
+          />
+        }
         actions={
           <div className="flex items-center gap-2">
             {isActive ? (
-              <DetailStatusChip size="sm" className="gap-0.5">
+              <Chip size="sm">
                 <CheckIcon className="size-2.5" />
                 Active
-              </DetailStatusChip>
+              </Chip>
             ) : (
               <Button
                 type="button"
@@ -173,9 +203,8 @@ export function CaseOverview({ caseId }: { caseId: string }) {
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="destructive"
               size="sm"
-              className="text-destructive"
               onClick={() => {
                 setDeleteOpen(true);
               }}

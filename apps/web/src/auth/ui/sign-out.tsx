@@ -1,12 +1,13 @@
-"use client"
+"use client";
 
-import { useAuth, useSignOut } from "@better-auth-ui/react"
-import { useEffect, useRef } from "react"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
-import { cn } from "@/lib/utils"
+import { useAuth, useSignOut } from "@better-auth-ui/react";
+import { useEffect, useRef } from "react";
 
-export type SignOutProps = {
-  className?: string
+import { cn } from "@/lib/utils";
+import { Spinner } from "@watchdog/ui/components/spinner";
+
+export interface SignOutProps {
+  className?: string;
 }
 
 /**
@@ -16,30 +17,31 @@ export type SignOutProps = {
  * @returns The spinner shown during sign-out
  */
 export function SignOut({ className }: SignOutProps) {
-  const { authClient, basePaths, navigate, viewPaths } = useAuth()
+  const { authClient, basePaths, navigate, viewPaths } = useAuth();
 
   const { mutate: signOut } = useSignOut(authClient, {
     onError: () => {
       navigate({
         to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
-        replace: true
-      })
+        replace: true,
+      });
     },
-    onSuccess: () =>
+    onSuccess: () => {
       navigate({
         to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
-        replace: true
-      })
-  })
+        replace: true,
+      });
+    },
+  });
 
-  const hasSignedOut = useRef(false)
+  const hasSignedOut = useRef(false);
 
   useEffect(() => {
-    if (hasSignedOut.current) return
-    hasSignedOut.current = true
+    if (hasSignedOut.current) return;
+    hasSignedOut.current = true;
 
-    signOut()
-  }, [signOut])
+    signOut();
+  }, [signOut]);
 
-  return <Spinner className={cn("mx-auto my-auto", className)} />
+  return <Spinner className={cn("mx-auto my-auto", className)} />;
 }

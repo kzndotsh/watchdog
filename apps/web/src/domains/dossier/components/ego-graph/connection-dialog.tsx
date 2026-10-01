@@ -12,21 +12,16 @@ import {
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import {
-  FormInlineError,
-  FormInlineWarning,
-} from "@/shared/ui/form-inline-message";
+import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
-import { Field, FieldGroup, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
+} from "@/shared/ui/primitives/dialog";
 import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
   EDGE_PREDICATE_META,
@@ -45,6 +40,13 @@ import {
   type EdgePredicate,
   type EntityKind,
 } from "@watchdog/schemas";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@watchdog/ui/components/field";
+import { Input } from "@watchdog/ui/components/input";
 
 export interface ConnectionPeerOption {
   id: string;
@@ -184,7 +186,7 @@ export function ConnectionDialog({
             </DialogTitle>
           </DialogHeader>
 
-          <FieldGroup className="gap-3">
+          <FieldGroup>
             <form.Subscribe
               selector={(s) => ({
                 predicate: s.values.predicate,
@@ -376,7 +378,7 @@ export function ConnectionDialog({
             }}
           </form.Subscribe>
 
-          <FormInlineError>{error}</FormInlineError>
+          <FieldError>{error}</FieldError>
 
           <DialogFooter>
             <Button

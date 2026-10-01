@@ -2,14 +2,14 @@ import { FilterIcon, XIcon, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { CHIP_SIZE_CLASS } from "@/shared/ui/detail-status-chip";
-import { Badge } from "@/shared/ui/shadcn/badge";
-import { Button } from "@/shared/ui/shadcn/button";
+import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
+import { Button } from "@/shared/ui/primitives/button";
+import { Badge } from "@watchdog/ui/components/badge";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
+} from "@watchdog/ui/components/popover";
 
 export interface PageFilterChip {
   id: string;

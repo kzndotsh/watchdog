@@ -31,16 +31,18 @@ import {
   updateQuestionInputSchema,
 } from "@/domains/entities/questions/types";
 import { cn, errMessage } from "@/lib/utils";
+import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ComposerShell } from "@/shared/ui/composer-shell";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
+import { FieldMessage } from "@/shared/ui/field-message";
+import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
-import { Button } from "@/shared/ui/shadcn/button";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
-import { toast } from "@/shared/ui/shadcn/toast";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import { toast } from "@/shared/ui/toast";
+import { FieldError } from "@watchdog/ui/components/field";
+import { Textarea } from "@watchdog/ui/components/textarea";
 
 function qIndex(i: number): string {
   return `Q${String(i + 1).padStart(2, "0")}`;
@@ -65,7 +67,7 @@ function QuestionLine({
 
   return (
     <div className="flex items-baseline gap-2">
-      <span className="text-label-mono-sm text-muted-foreground shrink-0 tabular-nums">
+      <span className="text-2xs text-muted-foreground shrink-0 font-mono tabular-nums">
         {label}
       </span>
       {onEdit ? (
@@ -157,17 +159,21 @@ function QuestionComposer({
         }}
       >
         {(field) => (
-          <Textarea
-            placeholder="What do we need to find out?"
-            value={field.state.value}
-            onBlur={field.handleBlur}
-            onChange={(e) => {
-              field.handleChange(e.target.value);
-            }}
-            className="min-h-16 resize-y text-sm"
-            autoFocus
-            onKeyDown={handleFieldKeyDown}
-          />
+          <>
+            <Textarea
+              aria-invalid={fieldInvalid(field.state.meta)}
+              placeholder="What do we need to find out?"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+              }}
+              className="min-h-16 resize-y"
+              autoFocus
+              onKeyDown={handleFieldKeyDown}
+            />
+            <FieldMessage meta={field.state.meta} />
+          </>
         )}
       </form.Field>
       {includeNote ? (
@@ -180,23 +186,17 @@ function QuestionComposer({
               onChange={(e) => {
                 field.handleChange(e.target.value);
               }}
-              className="min-h-12 resize-y text-xs"
+              className="min-h-12 resize-y"
               onKeyDown={handleFieldKeyDown}
             />
           )}
         </form.Field>
       ) : null}
       <div className="flex justify-end gap-1">
-        <span className="text-chip text-muted-foreground self-center">
+        <span className="text-muted-foreground self-center text-xs tracking-wider uppercase">
           ⌘↵ to save
         </span>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-6 text-xs"
-          onClick={onCancel}
-        >
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <form.Subscribe
@@ -209,7 +209,6 @@ function QuestionComposer({
             <Button
               type="submit"
               size="sm"
-              className="h-6 text-xs"
               disabled={isSubmitting || !text.trim()}
             >
               {submitLabel}
@@ -283,29 +282,18 @@ function ResolveForm({
             onChange={(e) => {
               field.handleChange(e.target.value);
             }}
-            className="min-h-12 text-xs"
+            className="min-h-12"
             autoFocus
           />
         )}
       </resolveForm.Field>
       <div className="flex justify-end gap-1">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-6 text-xs"
-          onClick={onCancel}
-        >
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <resolveForm.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
-            <Button
-              type="submit"
-              size="sm"
-              className="h-6 text-xs"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" size="sm" disabled={isSubmitting}>
               Resolve
             </Button>
           )}
@@ -678,7 +666,7 @@ export function QuestionsSection({
           />
         }
       >
-        <FormInlineError>{editor.error}</FormInlineError>
+        <FieldError>{editor.error}</FieldError>
 
         {editor.adding ? (
           <QuestionComposer

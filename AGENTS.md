@@ -15,18 +15,19 @@ On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)
 | Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
 | Screenshot seed | `just seed-demo` · `just seed-demo --force` |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
-| Dev | `just dev` · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
+| Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
-| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix + agents + docs + effect-edges + agent-skills · pre-push: typecheck + web DS |
+| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix (staged files) + agents + docs + design-tokens + effect-edges + vendor-lock + size + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
+| Vendored shadcn | `pnpm check:vendor` · `pnpm ui:add <name>` · `pnpm ui:sync` (never hand-edit `packages/ui/src/components`) |
 | Caps / client regen | `pnpm generate:caps` · `pnpm generate:client` |
-| AGENTS gate | `pnpm check:agents` · `pnpm check:agents:strict` |
-| Docs gate | `pnpm check:docs` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` |
+| AGENTS gate | `pnpm check:agents:strict` |
+| Docs gate | `pnpm check:docs` · `pnpm check:design-tokens` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:size` |
 | Skills gate | `pnpm validate:agents` |
 | Desloppify (local hygiene) | `pnpm desloppify:bootstrap` · `pnpm desloppify:scan` · `pnpm desloppify:status` · `pnpm desloppify:next` (state under `.desloppify/` is gitignored; bootstrap excludes `repos`, `data`, generated trees — see `scripts/desloppify-bootstrap.sh`) |
 
-Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0`. Package manager: **pnpm** only.
+Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0`. The first account is the instance admin; every account creates its own organization in onboarding, and the flag also gates self-serve organization creation. Vitest projects share workers (`isolate:false` + `vitest.reset-modules.ts`): tests must restore any `process.env`, `globalThis`, timers, or DOM they change. Package manager: **pnpm** only.
 
 ## Learning more about Effect
 
@@ -46,7 +47,7 @@ Watchdog runtime conventions (run* edges, JobFibers, Cap `run`, browser policy) 
 
 ## Sub-AGENTS directory
 
-**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `apps/cli`, `packages/{db,core,api,caps,cap-sdk,env,client,contract,policy,schemas,ai,tools,log,test-kit}`.
+**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `apps/cli`, `packages/{db,core,api,auth,caps,cap-sdk,env,client,contract,policy,schemas,ai,tools,log,test-kit,ui}`.
 
 ## Agent Skills
 
@@ -57,6 +58,7 @@ Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per
 | Task | Primary path |
 | --- | --- |
 | Product / architecture / UX / types | `docs/` |
+| Design direction, taste rules, tokens / why a UI rule exists | [`DESIGN.md`](DESIGN.md) (CSS in `apps/web/src/styles/` wins on values) · [`docs/reference/web/ui/rules.md`](docs/reference/web/ui/rules.md) |
 | UI / DS / domains / Query | `docs/reference/web/` |
 | Product nouns / Cap loop | [`docs/explanation/product.md`](docs/explanation/product.md) |
 | Caps / playbooks | [`docs/reference/platform/caps-lexicon.md`](docs/reference/platform/caps-lexicon.md) · [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md) |
@@ -72,7 +74,7 @@ Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.
 | Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | [`ingress`](docs/reference/contracts/ingress.md) · [`custody`](docs/reference/contracts/custody.md) |
 | Agents/CLI default: propose; graph write needs `userOverride` → Graph @ `unverified` + `graph_writes` | Silent machine Graph writes; mid-build verbs (<!-- check:agents allow-banned --> promote / Scratch / Door A / Candidate theater) | [`agent-ingress`](docs/reference/contracts/agent-ingress.md) |
 | Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | — |
-| Chrome: Queue + Detail | Console / Tape / Panel / Pane / Rail / Strip | — |
+| Chrome: Queue + Detail | Console / Workbench / Tape surfaces; a screen named `*Panel` | [ui lexicon](docs/reference/web/ui/README.md#chrome-lexicon-ui-parts) |
 | Process logs via `@watchdog/log` (evlog NDJSON) | Secrets/Evidence body in logs; treat evlog as Graph audit | [`evlog`](docs/reference/contracts/evlog.md) |
 | Extend the tracked packages/apps | Extend `_legacy-*` | — |
 

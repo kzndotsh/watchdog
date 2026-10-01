@@ -16,7 +16,8 @@ Use `@tanstack/react-form` only. Do not add `react-hook-form`.
 **Conventions**
 
 - Wire client validators to the same domain Zod schemas used on ServerFns when shapes align (Zod v4 Standard Schema: no `@tanstack/zod-form-adapter`).
-- For server or mutation failures, use `catch` → `FormInlineError` / toast via plain `useState`, not TanStack Form's error map / `isSubmitSuccessful`.
+- Field-level validation messages render with shadcn's pattern via `@/shared/lib/field-errors`: `<Field data-invalid={fieldInvalid(field.state.meta)}>`, `aria-invalid` on the control, then `<FieldError errors={fieldErrorList(field.state.meta)} />`. Compact inline composers (no `Field` wrapper) still set `aria-invalid` and render `FieldError` beneath the control.
+- For server or mutation failures, use `catch` → `FieldError` / toast via plain `useState`, not TanStack Form's error map / `isSubmitSuccessful`.
 - One self-contained `useForm` per composer; do not split one form across children via context. Create vs edit = two `useForm` instances (share config with `formOptions` if needed).
 - Shared claim create/edit: `dossier/lib/claim-form.ts` (`claimFormOptions`, `claimEvidenceIdsValidator`) → one `ClaimComposer` in `claims-section.tsx`.
 - Triage Accept/Reject: `useTriageDetailForms` (`triage/hooks/use-triage-detail-forms.ts`): two `useForm` instances; do not split across children. Accept composer values: `AcceptFormValues` in `triage/types.ts` (imported by hooks + Detail: not defined under `components/`).

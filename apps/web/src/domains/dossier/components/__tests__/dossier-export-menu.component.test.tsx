@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-vi.mock("@/shared/ui/shadcn/toast", () => ({
+vi.mock("@/shared/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 

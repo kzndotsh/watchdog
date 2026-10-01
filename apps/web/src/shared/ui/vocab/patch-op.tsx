@@ -1,15 +1,12 @@
 import type { ComponentProps } from "react";
 
+import { Chip } from "@/shared/ui/chip";
 import { PATCH_OP_TONES, patchOpLabel } from "@/shared/ui/vocab/patch-op.lib";
-import { VocabBadge } from "@/shared/ui/vocab/vocab-badge";
 import type { PatchOp } from "@watchdog/schemas";
 
 type Op = PatchOp["op"];
 
-type PatchOpBadgeProps = Omit<
-  ComponentProps<typeof VocabBadge>,
-  "label" | "tone"
-> & {
+type PatchOpBadgeProps = Omit<ComponentProps<typeof Chip>, "label" | "tone"> & {
   op: Op;
 };
 
@@ -21,14 +18,15 @@ export function PatchOpBadge({
   ...props
 }: PatchOpBadgeProps) {
   return (
-    <VocabBadge
+    <Chip
       label={patchOpLabel(op)}
       tone={PATCH_OP_TONES[op]}
       contrast={contrast}
       className={className}
+      size="sm"
       {...props}
     >
       {children}
-    </VocabBadge>
+    </Chip>
   );
 }

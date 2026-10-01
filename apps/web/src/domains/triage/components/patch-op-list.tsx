@@ -3,10 +3,10 @@ import { Link } from "@tanstack/react-router";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidenceIdsForOp, evidenceLabel } from "@/domains/triage/lib/evidence";
 import { summarizePatchOpData } from "@/domains/triage/lib/patch-op-summary";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
 import { IdChip } from "@/shared/ui/id-chip";
+import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
-import { Button } from "@/shared/ui/shadcn/button";
 import { PATCH_RESOURCE_META, PatchOpBadge } from "@/shared/ui/vocab";
 import type { PatchOp } from "@watchdog/schemas";
 
@@ -52,13 +52,9 @@ function EvidenceChips({
         }
         const label = evidenceLabel(row);
         const chip = (
-          <DetailStatusChip
-            size="sm"
-            className="max-w-[14rem] truncate"
-            title={label}
-          >
+          <Chip size="sm" className="max-w-[14rem] truncate" title={label}>
             {label}
-          </DetailStatusChip>
+          </Chip>
         );
         if (!onEvidenceClick) return <span key={id}>{chip}</span>;
         return (
@@ -102,15 +98,9 @@ function PatchOpRow({
     <div className="border-border flex flex-col gap-1.5 border-b px-2.5 py-2 last:border-b-0">
       <div className="flex flex-wrap items-center gap-1.5">
         <PatchOpBadge op={op.op} />
-        <span className="text-foreground text-xs font-medium">
-          {meta.label}
-        </span>
-        {colliding ? (
-          <DetailStatusChip size="sm">On another Entity</DetailStatusChip>
-        ) : null}
-        {invalid ? (
-          <DetailStatusChip size="sm">Invalid value</DetailStatusChip>
-        ) : null}
+        <span className="text-foreground text-xs">{meta.label}</span>
+        {colliding ? <Chip size="sm">On another Entity</Chip> : null}
+        {invalid ? <Chip size="sm">Invalid value</Chip> : null}
       </div>
       <p className="text-muted-foreground text-xs leading-snug break-words whitespace-pre-wrap">
         {summary}

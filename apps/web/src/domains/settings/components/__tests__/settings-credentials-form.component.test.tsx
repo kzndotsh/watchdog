@@ -54,7 +54,7 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterCredentialMutation: vi.fn(),
 }));
 
-vi.mock("@/shared/ui/shadcn/toast", () => ({
+vi.mock("@/shared/ui/toast", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -124,9 +124,7 @@ function renderForm(slots: CredentialSlot[]) {
 describe("SettingsCredentialsForm", () => {
   it("shows an empty state when no credential slots exist", () => {
     renderForm([]);
-    expect(
-      screen.getByText("No Cap credential slots registered.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("No services to connect yet.")).toBeInTheDocument();
   });
 
   it("shows loading instead of an error while credentials are refetching", () => {

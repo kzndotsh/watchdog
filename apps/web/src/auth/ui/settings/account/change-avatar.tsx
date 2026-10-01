@@ -1,82 +1,87 @@
-import { fileToBase64 } from "@better-auth-ui/core"
-import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react"
-import { Camera, Trash2, Upload } from "lucide-react"
-import { type ChangeEvent, useRef, useState } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { fileToBase64 } from "@better-auth-ui/core";
+import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
+import { Camera, Trash2, Upload } from "lucide-react";
+import { type ChangeEvent, useRef, useState } from "react";
 
-import { UserAvatar } from "@/auth/ui/user/user-avatar"
-import { cn, errMessage } from "@/lib/utils"
-import { Button } from "@/shared/ui/shadcn/button"
-import { Field } from "@/shared/ui/shadcn/field"
-import { Label } from "@/shared/ui/shadcn/label"
-import { Spinner } from "@/shared/ui/shadcn/spinner"
+import { UserAvatar } from "@/auth/ui/user/user-avatar";
+import { cn, errMessage, firstNonEmpty } from "@/lib/utils";
+import { Button } from "@/shared/ui/primitives/button";
+import { toast } from "@/shared/ui/toast";
+import { Field } from "@watchdog/ui/components/field";
+import { Label } from "@watchdog/ui/components/label";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
-export type ChangeAvatarProps = {
-  className?: string
+export interface ChangeAvatarProps {
+  className?: string;
 }
 
 export function ChangeAvatar({ className }: ChangeAvatarProps) {
-  const { authClient, localization, avatar } = useAuth()
-  const { data: session } = useSession(authClient)
+  const { authClient, localization, avatar } = useAuth();
+  const { data: session } = useSession(authClient);
 
   const { mutate: updateUser, isPending: updatePending } =
-    useUpdateUser(authClient)
+    useUpdateUser(authClient);
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const isPending = updatePending || isUploading || isDeleting
+  const isPending = updatePending || isUploading || isDeleting;
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    e.target.value = ""
+    e.target.value = "";
 
-    setIsUploading(true)
+    setIsUploading(true);
 
     try {
       const resized =
-        (await avatar.resize?.(file, avatar.size, avatar.extension)) || file
+        (await avatar.resize?.(file, avatar.size, avatar.extension)) || file;
 
-      const image =
-        (await avatar.upload?.(resized)) || (await fileToBase64(resized))
+      const uploaded = await avatar.upload?.(resized);
+      const image = firstNonEmpty(uploaded) ?? (await fileToBase64(resized));
 
       updateUser(
         { image },
         {
-          onSuccess: () =>
-            toast.success(localization.settings.avatarChangedSuccess)
+          onSuccess: () => {
+            toast.success(localization.settings.avatarChangedSuccess);
+          },
         }
-      )
+      );
     } catch (error) {
-      toast.error(errMessage(error, "Avatar upload failed"))
+      toast.error(errMessage(error, "Avatar upload failed"));
     }
 
-    setIsUploading(false)
+    setIsUploading(false);
   }
 
-  async function handleDelete() {
-    const currentImage = session?.user.image
+  async function removeStoredAvatar(currentImage: string | null | undefined) {
+    if (currentImage) {
+      setIsDeleting(true);
+      try {
+        await avatar.delete?.(currentImage);
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+
+    toast.success(localization.settings.avatarDeletedSuccess);
+  }
+
+  function handleDelete() {
+    const currentImage = session?.user.image;
 
     updateUser(
       { image: null },
       {
-        onSuccess: async () => {
-          if (currentImage) {
-            setIsDeleting(true)
-            try {
-              await avatar.delete?.(currentImage)
-            } finally {
-              setIsDeleting(false)
-            }
-          }
-
-          toast.success(localization.settings.avatarDeletedSuccess)
-        }
+        onSuccess: () => {
+          void removeStoredAvatar(currentImage);
+        },
       }
-    )
+    );
   }
 
   return (
@@ -88,13 +93,15 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={handleFileChange}
+        onChange={(event) => {
+          void handleFileChange(event);
+        }}
       />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <button
           type="button"
-          className="group relative size-24 shrink-0 rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+          className="group focus-visible:ring-ring/50 relative size-24 shrink-0 rounded-full outline-none focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50"
           disabled={isPending || !session}
           onClick={() => fileInputRef.current?.click()}
           aria-label={localization.settings.changeAvatar}
@@ -133,7 +140,7 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
               size="sm"
               disabled={!session?.user.image || isPending}
               onClick={() => {
-                void handleDelete()
+                handleDelete();
               }}
             >
               <Trash2 className="size-3.5" />
@@ -143,5 +150,5 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
         </div>
       </div>
     </Field>
-  )
+  );
 }

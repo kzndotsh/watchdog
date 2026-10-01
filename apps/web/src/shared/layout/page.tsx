@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { AppBreadcrumbs } from "@/shared/layout/app-breadcrumbs";
 import type { CountOnTrailId } from "@/shared/layout/page-trail";
-import { SidebarTrigger } from "@/shared/ui/shadcn/sidebar";
+import { SidebarTrigger } from "@watchdog/ui/components/sidebar";
 
 export type PageDensity = "default" | "split";
 

@@ -1,8 +1,10 @@
 import { useSession } from "@better-auth-ui/react";
 import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 import {
+  BuildingIcon,
   KeyIcon,
   PaletteIcon,
+  SettingsIcon,
   ShieldIcon,
   UserCogIcon,
   UserIcon,
@@ -13,12 +15,12 @@ import { useCallback, useEffect } from "react";
 import { z } from "zod";
 
 import { authClient } from "@/auth/client";
-import { isInstanceAdmin } from "@/auth/instance-admin";
 import { ApiKeys } from "@/auth/ui/api-key/api-keys";
 import { Settings as AuthSettings } from "@/auth/ui/settings/settings";
-import { TeamSettings } from "@/auth/ui/team/team-settings";
-import { UsersSettings } from "@/auth/ui/users/users-settings";
-import { SettingsAppearancePanel } from "@/domains/settings/components/settings-appearance-panel";
+import { OrganizationMembers } from "@/domains/organization/components/organization-members";
+import { OrganizationProfile } from "@/domains/organization/components/organization-profile";
+import { YourOrganizations } from "@/domains/organization/components/your-organizations";
+import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
   SETTINGS_TABS,
@@ -26,65 +28,94 @@ import {
   type SettingsNavItem,
   type SettingsTab,
 } from "@/domains/settings/components/settings-shell";
+import { SettingsUsers } from "@/domains/settings/components/settings-users";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
 import { normalizeRouteSegment } from "@/shared/lib/route-slug";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
+import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
+import { Spinner } from "@watchdog/ui/components/spinner";
 
 const routeApi = getRouteApi("/_protected/settings/");
 
 const SETTINGS_NAV: readonly SettingsNavItem[] = [
   {
     id: "account",
+    group: "Personal",
     label: "Account",
-    description: "Name, avatar, and email.",
+    description: "Update your name, photo, and email.",
     icon: UserIcon,
   },
   {
     id: "security",
+    group: "Personal",
     label: "Security",
-    description: "Password, sessions, and linked accounts.",
+    description: "Change your password and review where you're signed in.",
     icon: ShieldIcon,
   },
   {
     id: "appearance",
+    group: "Personal",
     label: "Appearance",
-    description: "Theme, display size, and visual preferences.",
+    description: "Pick a theme and set how large the app looks.",
     icon: PaletteIcon,
   },
   {
-    id: "team",
-    label: "Team",
-    description: "Invite investigators and manage organization membership.",
-    icon: UsersIcon,
-  },
-  {
-    id: "users",
-    label: "Users",
-    description:
-      "Disable or enable install accounts. Organization membership is on Team.",
-    icon: UserCogIcon,
-  },
-  {
     id: "api-keys",
+    group: "Personal",
     label: "API Keys",
-    description: "Keys for API access.",
+    description: "Create and revoke keys for the API.",
     icon: KeyIcon,
   },
   {
     id: "credentials",
+    group: "Personal",
     label: "Credentials",
-    description: "Connect third-party API keys that Caps use at runtime.",
+    description: "Connect the outside services Watchdog looks things up in.",
     icon: WrenchIcon,
   },
+  {
+    id: "organizations",
+    group: "Personal",
+    label: "Organizations",
+    description: "Switch organizations, create one, or answer an invitation.",
+    icon: BuildingIcon,
+  },
+  {
+    id: "organization",
+    group: "Organization",
+    label: "General",
+    description:
+      "Rename the organization, change its logo, or leave or delete it.",
+    icon: SettingsIcon,
+  },
+  {
+    id: "members",
+    group: "Organization",
+    label: "Members",
+    description: "Invite people, change roles, and manage pending invitations.",
+    icon: UsersIcon,
+  },
+  {
+    id: "users",
+    group: "Administration",
+    label: "Users",
+    description:
+      "Review every account on this server and disable any that shouldn't sign in.",
+    icon: UserCogIcon,
+  },
 ];
+
+/** Tab ids from older links. */
+const LEGACY_TABS: Record<string, SettingsTab> = { team: "members" };
 
 function parseSettingsTab(value: unknown): SettingsTab | undefined {
   const slug =
     typeof value === "string" ? normalizeRouteSegment(value) : undefined;
   if (slug === undefined) return undefined;
+  const legacy = LEGACY_TABS[slug];
+  if (legacy !== undefined) return legacy;
   for (const tab of SETTINGS_TABS) {
     if (tab === slug) return tab;
   }
@@ -114,7 +145,7 @@ function SettingsPanel({
       );
     }
     case "appearance": {
-      return <SettingsAppearancePanel />;
+      return <SettingsAppearanceSection />;
     }
     case "api-keys": {
       return (
@@ -123,8 +154,22 @@ function SettingsPanel({
         </div>
       );
     }
-    case "team": {
-      return <TeamSettings />;
+    case "organizations": {
+      return (
+        <div className="max-w-2xl">
+          <YourOrganizations />
+        </div>
+      );
+    }
+    case "organization": {
+      return (
+        <div className="max-w-2xl">
+          <OrganizationProfile />
+        </div>
+      );
+    }
+    case "members": {
+      return <OrganizationMembers />;
     }
     case "users": {
       if (sessionPending) {
@@ -137,11 +182,11 @@ function SettingsPanel({
       if (!canManageUsers) {
         return (
           <p className="text-muted-foreground text-sm">
-            Only install admins can manage users.
+            Only server admins can manage accounts.
           </p>
         );
       }
-      return <UsersSettings />;
+      return <SettingsUsers />;
     }
     case "credentials": {
       return <SettingsCredentialsForm />;
@@ -189,7 +234,7 @@ function SettingsPage() {
   }, [navigate, tabSearch]);
 
   return (
-    <Page>
+    <Page className="gap-0">
       <PageHeader />
       <SettingsShell
         items={navItems}

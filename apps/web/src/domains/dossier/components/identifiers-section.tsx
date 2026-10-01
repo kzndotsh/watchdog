@@ -35,7 +35,6 @@ import {
   tableComposerKeyDown,
   useDataTable,
 } from "@/shared/ui/data-table";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   HANDLE_REQUIRES_PLATFORM,
   isHandleWithoutPlatform,
@@ -48,15 +47,16 @@ import {
   identifierCreateCanSubmit,
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
-import { Button } from "@/shared/ui/shadcn/button";
-import { toast } from "@/shared/ui/shadcn/toast";
+import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
+import { toast } from "@/shared/ui/toast";
 import {
   normalizeIdentifierPlatform,
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
 } from "@watchdog/schemas";
+import { FieldError } from "@watchdog/ui/components/field";
 
 export type IdentifiersSectionProps = DossierSectionWithEvidenceProps & {
   entity: Pick<EntityRecord, "id" | "name" | "slug">;
@@ -305,7 +305,6 @@ export function IdentifiersSection({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-6 gap-1 px-2 text-xs"
                 onClick={() => {
                   setBulkOpen(true);
                 }}
@@ -317,7 +316,6 @@ export function IdentifiersSection({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-6 gap-1 px-2 text-xs"
                 onClick={() => {
                   if (composing) {
                     closeComposer();
@@ -332,7 +330,7 @@ export function IdentifiersSection({
             </div>
           }
         >
-          <FormInlineError>{submitError ?? updateError}</FormInlineError>
+          <FieldError>{submitError ?? updateError}</FieldError>
           <div className="flex flex-col gap-2">
             <DataTable
               table={table}

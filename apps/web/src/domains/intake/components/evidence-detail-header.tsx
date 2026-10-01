@@ -13,10 +13,9 @@ import { ActorMention } from "@/shared/ui/actor-mention";
 import {
   DetailContextHeader,
   DetailContextSep,
-} from "@/shared/ui/detail-context-strip";
+} from "@/shared/ui/detail-context-line";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
-import { Button } from "@/shared/ui/shadcn/button";
-import { TabsList, TabsTrigger } from "@/shared/ui/shadcn/tabs";
+import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
@@ -24,6 +23,7 @@ import {
   entityDisplayLabel,
   parseOptionalTrimmedUuid,
 } from "@watchdog/schemas";
+import { TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 
 function attachedEntityLabel(opts: {
   attachedId: string;
@@ -185,8 +185,8 @@ function EvidenceEntityMeta({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="text-muted-foreground -mr-1.5 size-6 px-0 hover:bg-transparent dark:hover:bg-transparent"
+          size="icon-sm"
+          className="-mr-1.5"
           aria-label="Change entity"
           disabled={attaching}
           onClick={handleStartEdit}
@@ -357,6 +357,7 @@ export function EvidenceDetailHeader({
               <Button
                 type="button"
                 variant="link"
+                // oxlint-disable-next-line shadcn/no-restyle -- inline text link inside a context line: muted ink, no padding; a one-off, not a Button treatment
                 className="text-foreground/80 h-auto min-h-0 p-0 text-xs font-normal underline-offset-2 hover:underline"
                 onClick={() => {
                   onShowProducingRun?.(producingCap.id);
@@ -376,12 +377,12 @@ export function EvidenceDetailHeader({
         <TabsList variant="line" className="h-8">
           <TabsTrigger value="content">Content</TabsTrigger>
           {canEnrich || enrichJobs.length > 0 ? (
-            <TabsTrigger value="output" className="gap-1">
+            <TabsTrigger value="output">
               Output
               {enrichOutput ? <TabCount n={1} /> : null}
             </TabsTrigger>
           ) : null}
-          <TabsTrigger value="jobs" className="gap-1">
+          <TabsTrigger value="jobs">
             Jobs
             <TabCount n={relatedJobs.length} />
           </TabsTrigger>

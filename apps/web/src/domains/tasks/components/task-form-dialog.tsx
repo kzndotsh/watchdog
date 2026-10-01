@@ -5,14 +5,14 @@ import { useTaskFormDialog } from "@/domains/tasks/components/use-task-form-dial
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
 import type { TaskRecord } from "@/domains/tasks/types";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
+} from "@/shared/ui/primitives/dialog";
 import type { TaskStatus } from "@watchdog/schemas";
+import { FieldError } from "@watchdog/ui/components/field";
 
 interface BaseProps {
   open: boolean;
@@ -79,7 +79,7 @@ export function TaskFormDialog(props: Props) {
 
           <TaskFormFields form={form} entities={entities} busy={busy} />
 
-          {error ? <FormInlineError>{error}</FormInlineError> : null}
+          {error ? <FieldError>{error}</FieldError> : null}
 
           <TaskFormDialogFooter
             form={form}

@@ -11,27 +11,21 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-vi.mock("@/shared/ui/shadcn/dropdown-menu", () => ({
-  DropdownMenuItem: ({
-    children,
-    onClick,
-    ...props
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => (
-    <button type="button" onClick={onClick} {...props}>
-      {children}
+import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
+
+function ThemeProbe() {
+  const { mode, toggleMode, ariaLabel } = useThemeMode();
+  return (
+    <button type="button" aria-label={ariaLabel} onClick={toggleMode}>
+      {modeLabel(mode)}
     </button>
-  ),
-}));
+  );
+}
 
-import { ThemeMenuItem } from "@/shared/layout/theme-toggle";
-
-describe("ThemeMenuItem", () => {
+describe("useThemeMode", () => {
   it("cycles theme mode and persists the choice", () => {
     window.localStorage.clear();
-    render(<ThemeMenuItem />);
+    render(<ThemeProbe />);
 
     const button = screen.getByRole("button", {
       name: /Theme mode: auto \(system\)/,

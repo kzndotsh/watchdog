@@ -58,7 +58,7 @@ Partner TLDR: **Dump → Enrich (URL) → Process → Triage Accept** (human set
 
 ## Case Export
 
-Worker / API write a live markdown shadow under `export/<case-slug>/` (default; override with `WD_EXPORT_DIR`). Directory is **gitignored**: regenerable projection, not vault SoT. A Case name rename regenerates the slug and best-effort `rename`s that dir, then `scheduleCaseExportEffect`. UI offers Case Export zip; agents use authenticated file routes `GET …/cases/{id}/export.zip` and `…/entities/{slug}/export.md` (API key OK) via `wd export zip|md`. Details: `@watchdog/core` `infra/export-sync`.
+Worker / API write a live markdown shadow under `export/<organization-id>/<case-slug>/` (default; override with `WD_EXPORT_DIR`). Directory is **gitignored**: regenerable projection, not vault SoT (case slugs are unique per organization, so the organization is part of the path; a pre-multi-org `export/<case-slug>/` folder is stale and can be deleted). A Case name rename regenerates the slug and best-effort `rename`s that dir, then `scheduleCaseExportEffect`. UI offers Case Export zip; agents use authenticated file routes `GET …/cases/{id}/export.zip` and `…/entities/{slug}/export.md` (API key OK) via `wd export zip|md`. Details: `@watchdog/core` `infra/export-sync`.
 
 ## Controlled vocab
 

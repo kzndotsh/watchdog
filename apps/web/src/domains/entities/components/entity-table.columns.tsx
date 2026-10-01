@@ -160,9 +160,7 @@ function renderNameCell(ctx: CellContext<DataTableFeatures, EntityRecord>) {
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <EntityKindGlyph kind={row.kind} />
-      <span className="block min-w-0 truncate text-sm font-medium">
-        {label}
-      </span>
+      <span className="block min-w-0 truncate text-sm">{label}</span>
     </div>
   );
 }
@@ -239,7 +237,7 @@ function renderUpdatedAtCell(
 ) {
   const { updatedAt, createdAt } = ctx.row.original;
   if (!updatedAt) {
-    return <span className="text-muted-foreground text-label-mono-sm">—</span>;
+    return <span className="text-muted-foreground text-2xs font-mono">—</span>;
   }
 
   return (
@@ -254,7 +252,7 @@ function renderUpdatedAtCell(
     >
       <time
         dateTime={updatedAt}
-        className="text-muted-foreground text-label-mono-sm cursor-default whitespace-nowrap tabular-nums"
+        className="text-muted-foreground text-2xs cursor-default font-mono whitespace-nowrap tabular-nums"
       >
         <span suppressHydrationWarning>{formatRelativeTime(updatedAt)}</span>
       </time>

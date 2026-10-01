@@ -2,7 +2,7 @@ import { FileUpIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 
 export interface FileDropZoneProps {
   disabled: boolean;
@@ -40,7 +40,7 @@ export function FileDropZone({ disabled, onFiles }: FileDropZoneProps) {
     >
       <FileUpIcon className="text-muted-foreground size-6" aria-hidden />
       <div className="space-y-1">
-        <p className="text-foreground text-sm font-medium">Drop files here</p>
+        <p className="text-foreground text-sm">Drop files here</p>
         <p className="text-muted-foreground text-xs">
           One Evidence row per file · max 100 MB
         </p>

@@ -1,14 +1,11 @@
-"use client"
+"use client";
 
-import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
-import { Check, Copy, Key } from "lucide-react"
-import { useState } from "react"
-import { toast } from "@/shared/ui/shadcn/toast"
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react";
+import { Check, Copy, Key } from "lucide-react";
+import { useState } from "react";
 
-import { apiKeyPlugin } from "@/auth/plugins/api-key"
-
-import { errMessage } from "@/lib/utils"
-
+import { apiKeyPlugin } from "@/auth/plugins/api-key";
+import { errMessage, firstNonEmpty } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,44 +14,47 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogMedia,
-  AlertDialogTitle
-} from "@/shared/ui/shadcn/alert-dialog"
+  AlertDialogTitle,
+} from "@/shared/ui/primitives/alert-dialog";
+import { toast } from "@/shared/ui/toast";
 import {
   InputGroup,
   InputGroupButton,
-  InputGroupInput
-} from "@/shared/ui/shadcn/input-group"
-import { Label } from "@/shared/ui/shadcn/label"
+  InputGroupInput,
+} from "@watchdog/ui/components/input-group";
+import { Label } from "@watchdog/ui/components/label";
 
-export type NewApiKeyDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  name: string | null
-  secretKey: string | null
+export interface NewApiKeyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  name: string | null;
+  secretKey: string | null;
 }
 
 export function NewApiKeyDialog({
   open,
   onOpenChange,
   name,
-  secretKey
+  secretKey,
 }: NewApiKeyDialogProps) {
-  const { localization } = useAuth()
-  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin)
+  const { localization } = useAuth();
+  const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin);
 
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   const copySecretKey = async () => {
-    if (!secretKey) return
+    if (!secretKey) return;
 
     try {
-      await navigator.clipboard.writeText(secretKey)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
+      await navigator.clipboard.writeText(secretKey);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 1500);
     } catch (error) {
-      toast.error(errMessage(error, "Copy failed"))
+      toast.error(errMessage(error, "Copy failed"));
     }
-  }
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -73,7 +73,7 @@ export function NewApiKeyDialog({
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="new-api-key-secret">
-            {name || apiKeyLocalization.apiKey}
+            {firstNonEmpty(name) ?? apiKeyLocalization.apiKey}
           </Label>
 
           <InputGroup>
@@ -87,7 +87,9 @@ export function NewApiKeyDialog({
             <InputGroupButton
               size="icon-xs"
               aria-label={localization.settings.copyToClipboard}
-              onClick={copySecretKey}
+              onClick={() => {
+                void copySecretKey();
+              }}
             >
               {copied ? <Check /> : <Copy />}
             </InputGroupButton>
@@ -95,11 +97,15 @@ export function NewApiKeyDialog({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogAction onClick={() => onOpenChange(false)}>
+          <AlertDialogAction
+            onClick={() => {
+              onOpenChange(false);
+            }}
+          >
             {apiKeyLocalization.dismissNewKey}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

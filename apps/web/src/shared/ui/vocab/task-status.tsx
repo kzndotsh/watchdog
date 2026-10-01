@@ -1,15 +1,15 @@
 import type { ComponentProps } from "react";
 
+import { Chip } from "@/shared/ui/chip";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import {
   TASK_STATUS_LABELS,
   TASK_STATUS_TONE_MAP,
 } from "@/shared/ui/vocab/task-status.lib";
-import { VocabBadge } from "@/shared/ui/vocab/vocab-badge";
 import type { TaskStatus } from "@watchdog/schemas";
 
 type TaskStatusBadgeProps = Omit<
-  ComponentProps<typeof VocabBadge>,
+  ComponentProps<typeof Chip>,
   "label" | "tone"
 > & {
   status: TaskStatus;
@@ -23,14 +23,15 @@ export function TaskStatusBadge({
   ...props
 }: TaskStatusBadgeProps) {
   return (
-    <VocabBadge
+    <Chip
       label={TASK_STATUS_LABELS[status]}
       tone={STATUS_TONES[TASK_STATUS_TONE_MAP[status]]}
       contrast={contrast}
       className={className}
+      size="sm"
       {...props}
     >
       {children}
-    </VocabBadge>
+    </Chip>
   );
 }

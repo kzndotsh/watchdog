@@ -6,7 +6,7 @@ import {
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
-} from "@/shared/ui/shadcn/empty";
+} from "@watchdog/ui/components/empty";
 
 /**
  * Select-none empty for Detail column — quiet, no dashed frame.
@@ -22,14 +22,9 @@ export function DetailEmpty({
   className?: string;
 }) {
   return (
-    <Empty
-      aria-live="polite"
-      className={cn("h-full rounded-none border-0", className)}
-    >
+    <Empty aria-live="polite" className={cn("h-full", className)}>
       <EmptyHeader>
-        <EmptyTitle className="text-muted-foreground font-medium">
-          {title}
-        </EmptyTitle>
+        <EmptyTitle className="text-muted-foreground">{title}</EmptyTitle>
         {description ? (
           <EmptyDescription>{description}</EmptyDescription>
         ) : null}

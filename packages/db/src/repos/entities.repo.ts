@@ -45,6 +45,7 @@ export interface EntityPeerRow {
 export type EntityWithCaseRow = EntityRow & {
   caseSlug: string;
   caseName: string;
+  caseOrganizationId: string;
 };
 
 export type NewEntity = Pick<
@@ -191,6 +192,7 @@ export const entitiesRepo = {
         ...entityColumns,
         caseSlug: cases.slug,
         caseName: cases.name,
+        caseOrganizationId: cases.organizationId,
       })
       .from(entities)
       .innerJoin(cases, eq(cases.id, entities.caseId))

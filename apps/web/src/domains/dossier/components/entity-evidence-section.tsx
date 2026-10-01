@@ -12,12 +12,12 @@ import { useDumpEvidence } from "@/domains/intake/hooks/use-dump-evidence";
 import { evidenceTitle } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { evidenceSourceFootnote } from "@/shared/ui/intake/evidence-option";
+import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
-import { Button } from "@/shared/ui/shadcn/button";
-import { ButtonGroup } from "@/shared/ui/shadcn/button-group";
 import { KindBadge } from "@/shared/ui/vocab";
+import { ButtonGroup } from "@watchdog/ui/components/button-group";
+import { FieldError } from "@watchdog/ui/components/field";
 
 const DUMP_KINDS = [
   { kind: "file" as const, label: "File", Icon: FileUpIcon },
@@ -39,9 +39,8 @@ function DumpKindButtons({
     <Button
       key={kind}
       type="button"
-      size="sm"
+      size={ghost ? "sm" : "default"}
       variant={variant}
-      className={ghost ? "h-6 gap-1 px-2 text-xs" : undefined}
       disabled={disabled}
       onClick={() => {
         onDump(kind);
@@ -162,26 +161,26 @@ export function EntityEvidenceSection({
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <KindBadge kind={row.kind} />
-                      <span className="text-foreground min-w-0 truncate text-sm font-medium">
+                      <span className="text-foreground min-w-0 truncate text-sm">
                         {label}
                       </span>
                       {row.processedAt === null ? (
-                        <span className="text-label-sm text-warning">
+                        <span className="text-warning text-sm leading-tight">
                           Unprocessed
                         </span>
                       ) : (
-                        <span className="text-label-sm text-success">
+                        <span className="text-success text-sm leading-tight">
                           Processed
                         </span>
                       )}
                     </div>
-                    <div className="text-label-sm text-muted-foreground flex flex-wrap items-center gap-3">
+                    <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm leading-tight">
                       {row.mime !== null && row.mime !== "" ? (
-                        <span className="text-label-mono-sm">{row.mime}</span>
+                        <span className="text-2xs font-mono">{row.mime}</span>
                       ) : null}
                       <RelativeTime value={row.capturedAt} />
                       {sourceFootnote === null ? null : (
-                        <span className="text-label-mono-sm truncate">
+                        <span className="text-2xs truncate font-mono">
                           {sourceFootnote}
                         </span>
                       )}
@@ -193,7 +192,7 @@ export function EntityEvidenceSection({
           </ul>
         </div>
       </DossierSection>
-      <FormInlineError>{dump.dumpError}</FormInlineError>
+      <FieldError>{dump.dumpError}</FieldError>
       <DumpDialogs
         open={dumpModal}
         onOpenChange={handleDump}

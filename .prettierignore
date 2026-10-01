@@ -11,7 +11,6 @@ templates/
 packages/client/src/generated/
 packages/caps/capabilities.gen.json
 packages/db/drizzle/
-apps/web/src/auth/ui/
 apps/web/src/shared/ui/shadcn/
 apps/web/src/routeTree.gen.ts
 .cursor/

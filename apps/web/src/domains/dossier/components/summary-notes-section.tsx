@@ -10,8 +10,8 @@ import { errMessage } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { scopeCaseSlug } from "@/shared/lib/query-ingress";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { RichTextEditor } from "@/shared/ui/rich-text";
+import { FieldError } from "@watchdog/ui/components/field";
 
 /**
  * Local draft of entity prose (Markdown). Remount owner with `key={entity.id}`
@@ -100,7 +100,7 @@ export function SummarySection({
         ) : null
       }
     >
-      <FormInlineError>{error}</FormInlineError>
+      <FieldError>{error}</FieldError>
       <RichTextEditor
         editorKey={editorKey}
         value={summary}
@@ -151,7 +151,7 @@ export function NotesSection({
       }
     >
       <div className="flex min-h-0 flex-1 flex-col gap-2">
-        <FormInlineError>{error}</FormInlineError>
+        <FieldError>{error}</FieldError>
         <RichTextEditor
           editorKey={editorKey}
           value={notes}

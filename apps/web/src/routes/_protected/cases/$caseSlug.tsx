@@ -31,7 +31,7 @@ import {
   normalizeRouteSegment,
 } from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
 import { uuidSchema } from "@watchdog/schemas";
 
 const routeApi = getRouteApi("/_protected/cases/$caseSlug");

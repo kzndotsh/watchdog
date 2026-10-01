@@ -3,7 +3,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { CONTROL_CELL } from "@/shared/ui/control-chrome";
-import { Input } from "@/shared/ui/shadcn/input";
+import { Input } from "@watchdog/ui/components/input";
 
 interface Props {
   value: string;
@@ -17,6 +17,8 @@ interface Props {
   sanitize?: (next: string) => string;
   "aria-label"?: string;
   mono?: boolean;
+  /** `title` = page-header rename: 14px semibold, no hover fill, ring on focus. */
+  variant?: "cell" | "title";
   autoFocus?: boolean;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
   /** Leading control inside the field chrome (e.g. entity kind glyph). */
@@ -42,6 +44,7 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
       sanitize,
       "aria-label": ariaLabel,
       mono = false,
+      variant = "cell",
       autoFocus = false,
       onKeyDown: externalKeyDown,
       prefix,
@@ -98,12 +101,14 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
       "data-form-type": "other",
     };
 
-    if (prefix) {
+    if (prefix || variant === "title") {
       return (
         <span
           className={cn(
             "group inline-flex h-7 min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1.5 py-0 shadow-none",
             "hover:bg-muted/40 focus-within:border-ring focus-within:bg-background",
+            variant === "title" &&
+              "focus-within:border-border focus-within:ring-ring/40 focus-within:bg-transparent focus-within:ring-1 hover:bg-transparent dark:bg-transparent",
             className
           )}
         >
@@ -112,6 +117,7 @@ export const EditableTextCell = forwardRef<HTMLInputElement, Props>(
             {...sharedInputProps}
             className={cn(
               "text-foreground placeholder:text-muted-foreground h-auto min-w-0 flex-1 border-0 bg-transparent p-0 text-xs outline-none focus:outline-none focus-visible:outline-none",
+              variant === "title" && "text-sm font-semibold tracking-tight",
               mono && "font-mono"
             )}
           />

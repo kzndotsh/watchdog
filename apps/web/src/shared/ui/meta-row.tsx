@@ -43,7 +43,7 @@ export function MetaGrid({
     <div
       data-slot="meta-grid"
       className={cn(
-        "text-label-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5",
+        "grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm leading-tight",
         className
       )}
     >

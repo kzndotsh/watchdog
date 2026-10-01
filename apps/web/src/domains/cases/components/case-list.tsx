@@ -1,45 +1,35 @@
-import { useForm } from "@tanstack/react-form";
 import { CheckIcon, DownloadIcon, PlusIcon } from "lucide-react";
-import { useRef } from "react";
+import { useMemo } from "react";
 
-import { createCaseFn } from "@/domains/cases/cases.functions";
+import { CreateCaseDialog } from "@/domains/cases/components/create-case-dialog";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 import { useCaseList } from "@/domains/cases/hooks/use-case-list";
 import { caseCardActions } from "@/domains/cases/lib/case-card-actions";
-import { createCaseInputSchema, type CaseRecord } from "@/domains/cases/types";
-import { cn, errMessage, nextAutoSlug } from "@/lib/utils";
+import type { CaseRecord } from "@/domains/cases/types";
+import { cn } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
-import { filterActionsForSurface } from "@/shared/lib/app-action";
+import {
+  filterActionsForSurface,
+  type AppAction,
+} from "@/shared/lib/app-action";
+import { usePaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import {
   CASE_CARD_ACTIVE_CLASS,
-  CASE_CARD_MIN_HEIGHT_CLASS,
   CASE_CARD_SHELL_CLASS,
   CASE_CREATE_SHELL_CLASS,
 } from "@/shared/ui/case-card-shell";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { FormInlineError } from "@/shared/ui/form-inline-message";
 import { PendingRegion } from "@/shared/ui/pending-region";
+import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { SearchField } from "@/shared/ui/search-field";
-import { Button } from "@/shared/ui/shadcn/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/shadcn/dialog";
-import { Field, FieldLabel } from "@/shared/ui/shadcn/field";
-import { Input } from "@/shared/ui/shadcn/input";
-import { Spinner } from "@/shared/ui/shadcn/spinner";
-import { Textarea } from "@/shared/ui/shadcn/textarea";
 import { CardGridSkeleton } from "@/shared/ui/skeletons";
+import { FieldError } from "@watchdog/ui/components/field";
 
 function CaseCard({
   caseRow,
@@ -75,23 +65,18 @@ function CaseCard({
       trigger={<div className={shellClass} />}
     >
       <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1 space-y-0.5">
-          <p className="truncate text-sm leading-tight font-medium">
-            {caseRow.name}
-          </p>
-          <p className="text-muted-foreground text-label-mono-sm truncate">
-            {caseRow.slug}
-          </p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm leading-tight">{caseRow.name}</p>
         </div>
         {isActive ? (
-          <DetailStatusChip size="sm" className="shrink-0 gap-0.5">
+          <Chip size="sm" className="shrink-0">
             <CheckIcon className="size-2.5" />
             Active
-          </DetailStatusChip>
+          </Chip>
         ) : null}
         <RowActionsMenu
+          alwaysVisible
           label="Case actions"
-          className="opacity-100"
           actions={dropdownActions}
         />
       </div>
@@ -109,7 +94,7 @@ function CaseCard({
       <Button
         variant="default"
         size="sm"
-        className="mt-auto h-8 self-start text-xs"
+        className="mt-auto h-8 self-start"
         type="button"
         disabled={selecting}
         onClick={onWork}
@@ -128,175 +113,8 @@ function NewCaseCard({ onClick }: { onClick: () => void }) {
       className={cn(CASE_CREATE_SHELL_CLASS, "h-full min-h-36 p-5")}
     >
       <PlusIcon className="size-5" />
-      <span className="text-sm font-medium">New Case</span>
+      <span className="text-sm">New Case</span>
     </button>
-  );
-}
-
-function CaseSlotGhost() {
-  return (
-    <div
-      aria-hidden
-      className={cn("pointer-events-none", CASE_CARD_MIN_HEIGHT_CLASS)}
-    />
-  );
-}
-
-function CreateCaseDialog({
-  open,
-  onOpenChange,
-  onCreated,
-  onError,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onCreated: () => void;
-  onError: (message: string) => void;
-}) {
-  const lastNameRef = useRef("");
-
-  const form = useForm({
-    defaultValues: { name: "", slug: "", description: "" },
-    onSubmit: async ({ value }) => {
-      try {
-        await createCaseFn({
-          data: createCaseInputSchema.parse({
-            name: value.name,
-            slug: value.slug || undefined,
-            description: value.description || undefined,
-          }),
-        });
-        form.reset();
-        lastNameRef.current = "";
-        onOpenChange(false);
-        onCreated();
-      } catch (error) {
-        onError(errMessage(error, "Create failed"));
-      }
-    },
-  });
-
-  function handleOpenChange(next: boolean) {
-    if (!next) {
-      form.reset();
-      lastNameRef.current = "";
-    }
-    onOpenChange(next);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <form
-          className="flex flex-col gap-3"
-          autoComplete="off"
-          data-1p-ignore
-          data-lpignore="true"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void form.handleSubmit();
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>New Case</DialogTitle>
-            <DialogDescription>
-              Cases are an isolated workspace for managing your investigation.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form.Field
-            name="name"
-            validators={{
-              onSubmit: ({ value }) =>
-                value.trim() ? undefined : "Enter a case name",
-            }}
-            listeners={{
-              onChange: ({ value }) => {
-                const auto = nextAutoSlug(
-                  lastNameRef.current,
-                  form.getFieldValue("slug"),
-                  value
-                );
-                lastNameRef.current = value;
-                if (auto !== null) form.setFieldValue("slug", auto);
-              },
-            }}
-          >
-            {(field) => (
-              <Field data-invalid={!!field.state.meta.errors[0]}>
-                <FieldLabel htmlFor="new-case-title">Case name</FieldLabel>
-                <Input
-                  id="new-case-title"
-                  autoFocus
-                  autoComplete="off"
-                  data-1p-ignore
-                  data-lpignore="true"
-                  data-form-type="other"
-                  placeholder="Case name…"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => {
-                    field.handleChange(e.target.value);
-                  }}
-                  disabled={form.state.isSubmitting}
-                  aria-invalid={!!field.state.meta.errors[0]}
-                />
-                <FormInlineError>{field.state.meta.errors[0]}</FormInlineError>
-              </Field>
-            )}
-          </form.Field>
-
-          <form.Field name="description">
-            {(field) => (
-              <Field>
-                <FieldLabel htmlFor="case-description">Description</FieldLabel>
-                <Textarea
-                  id="case-description"
-                  placeholder="Optional description…"
-                  rows={3}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => {
-                    field.handleChange(e.target.value);
-                  }}
-                  disabled={form.state.isSubmitting}
-                />
-              </Field>
-            )}
-          </form.Field>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={form.state.isSubmitting}
-              onClick={() => {
-                handleOpenChange(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <form.Subscribe
-              selector={(state) => ({
-                canSubmit: state.canSubmit,
-                isSubmitting: state.isSubmitting,
-                name: state.values.name,
-              })}
-            >
-              {({ canSubmit, isSubmitting, name }) => (
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || !canSubmit || !name.trim()}
-                >
-                  {isSubmitting ? <Spinner /> : null}
-                  Create
-                </Button>
-              )}
-            </form.Subscribe>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -345,7 +163,6 @@ function CaseListGrid({
   filtered,
   activeId,
   selecting,
-  ghostCount,
   search,
   onClearSearch,
   onSelectCase,
@@ -361,7 +178,6 @@ function CaseListGrid({
   filtered: CaseRecord[];
   activeId: string;
   selecting: boolean;
-  ghostCount: number;
   search: string;
   onClearSearch: () => void;
   onSelectCase: (id: string) => void;
@@ -401,7 +217,7 @@ function CaseListGrid({
         label="Loading cases"
         fallback={<CardGridSkeleton />}
       >
-        <div className="grid h-full min-h-full auto-rows-[minmax(9rem,1fr)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid auto-rows-[minmax(10rem,auto)] grid-cols-1 gap-3 p-px sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((caseRow) => (
             <CaseCard
               key={caseRow.id}
@@ -420,9 +236,6 @@ function CaseListGrid({
             />
           ))}
           <NewCaseCard onClick={onCreate} />
-          {Array.from({ length: ghostCount }, (_, i) => (
-            <CaseSlotGhost key={`ghost-${i}`} />
-          ))}
         </div>
       </PendingRegion>
     </div>
@@ -436,7 +249,6 @@ export function CaseList() {
     search,
     setSearch,
     filtered,
-    ghostCount,
     pending,
     casesLoadError,
     retryCases,
@@ -456,6 +268,20 @@ export function CaseList() {
     closeDeleteDialog,
     handleCaseDeleted,
   } = useCaseList();
+  const paletteActions = useMemo<AppAction[]>(
+    () => [
+      {
+        id: "cases-new",
+        label: "New Case",
+        group: "page",
+        icon: PlusIcon,
+        keywords: "create add investigation",
+        run: openCreate,
+      },
+    ],
+    [openCreate]
+  );
+  usePaletteCommands(paletteActions);
 
   return (
     <Page className="min-h-0 overflow-hidden">
@@ -465,7 +291,7 @@ export function CaseList() {
         }
       />
 
-      <FormInlineError>{submitError}</FormInlineError>
+      <FieldError>{submitError}</FieldError>
 
       <PageToolbar
         center={
@@ -487,7 +313,6 @@ export function CaseList() {
         filtered={filtered}
         activeId={activeId}
         selecting={selecting}
-        ghostCount={ghostCount}
         search={search}
         onClearSearch={clearSearch}
         onSelectCase={selectCase}

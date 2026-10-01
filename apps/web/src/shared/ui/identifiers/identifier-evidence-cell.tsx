@@ -6,7 +6,7 @@ import {
   CONFIRMED_REQUIRES_EVIDENCE,
   isConfirmedBlocked,
 } from "@/shared/lib/confirmed-evidence";
-import { DetailStatusChip } from "@/shared/ui/detail-status-chip";
+import { Chip } from "@/shared/ui/chip";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { formatOpaqueId } from "@/shared/ui/format-opaque-id";
 import {
@@ -14,15 +14,15 @@ import {
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
-import { Button } from "@/shared/ui/shadcn/button";
+import { Button } from "@/shared/ui/primitives/button";
+import type { ConfidenceTier } from "@watchdog/schemas";
 import {
   Popover,
   PopoverContent,
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/shared/ui/shadcn/popover";
-import type { ConfidenceTier } from "@watchdog/schemas";
+} from "@watchdog/ui/components/popover";
 
 const PREVIEW_CHIP_MAX = 1;
 
@@ -82,25 +82,25 @@ function LinkedEvidenceSummary({
             onEvidenceClick(primary.id);
           }}
         >
-          <DetailStatusChip
+          <Chip
             size="sm"
             className="w-full max-w-full min-w-0 justify-start overflow-hidden"
             title={primary.label}
           >
             {label}
-          </DetailStatusChip>
+          </Chip>
         </button>
       ) : (
-        <DetailStatusChip
+        <Chip
           size="sm"
           className="max-w-full min-w-0 flex-1 justify-start overflow-hidden"
           title={primary.label}
         >
           {label}
-        </DetailStatusChip>
+        </Chip>
       )}
       {overflow > 0 ? (
-        <span className="text-muted-foreground text-label-meta-sm shrink-0 tabular-nums">
+        <span className="text-muted-foreground shrink-0 text-xs leading-tight tabular-nums">
           +{overflow}
         </span>
       ) : null}

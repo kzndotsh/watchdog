@@ -14,7 +14,7 @@ const PRESET: Record<IdChipPreset, { head: number; tail: number }> = {
 };
 
 const VALUE_TOOLTIP_CLASS =
-  "max-w-[12rem] break-all px-2 py-1 font-mono text-label-mono-sm leading-snug";
+  "max-w-[12rem] break-all px-2 py-1 font-mono text-2xs leading-snug";
 
 interface IdChipProps {
   value: string;
@@ -66,9 +66,9 @@ export function IdChip({
   const shown = display?.trim() ? display.trim() : value;
 
   const chrome = cn(
-    "border-border/60 bg-muted/60 inline-flex w-fit max-w-full min-w-0 gap-1 rounded-md border pl-1.5 [font-variant-ligatures:none]",
+    "border-border/60 bg-muted/60 ligatures-none inline-flex w-fit max-w-full min-w-0 gap-1 rounded-md border pl-1.5",
     full ? "h-auto min-h-5 items-start py-0.5" : "items-center",
-    size === "sm" ? "text-label-mono-sm" : "text-label-mono",
+    size === "sm" ? "text-2xs font-mono" : "font-mono text-sm leading-tight",
     !full && (size === "sm" ? "h-5" : "h-6"),
     interactive ? "pr-1" : "pr-1.5",
     interactive &&

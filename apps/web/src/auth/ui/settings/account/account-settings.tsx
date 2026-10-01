@@ -1,14 +1,15 @@
-"use client"
+"use client";
 
-import { useAuth } from "@better-auth-ui/react"
-import type { ComponentProps } from "react"
+import { useAuth } from "@better-auth-ui/react";
+import type { ComponentProps } from "react";
 
-import { cn } from "@/lib/utils"
-import { ChangeEmail } from "./change-email"
-import { UserProfile } from "./user-profile"
+import { cn } from "@/lib/utils";
 
-export type AccountSettingsProps = {
-  className?: string
+import { ChangeEmail } from "./change-email";
+import { UserProfile } from "./user-profile";
+
+export interface AccountSettingsProps {
+  className?: string;
 }
 
 /**
@@ -26,9 +27,9 @@ export function AccountSettings({
   className,
   ...props
 }: AccountSettingsProps & ComponentProps<"div">) {
-  const { emailAndPassword, plugins } = useAuth()
+  const { emailAndPassword, plugins } = useAuth();
 
-  const hasMagicLink = plugins.some((plugin) => plugin.id === "magicLink")
+  const hasMagicLink = plugins.some((plugin) => plugin.id === "magicLink");
 
   return (
     <div
@@ -44,5 +45,5 @@ export function AccountSettings({
           )) ?? []
       )}
     </div>
-  )
+  );
 }
