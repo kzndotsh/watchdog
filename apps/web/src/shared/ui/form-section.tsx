@@ -63,7 +63,7 @@ export function FormSection({
         </CardContent>
 
         {footer || footerStatus ? (
-          <CardFooter className="border-accent/20 dark:border-accent/25 justify-between gap-3 border-t">
+          <CardFooter className="border-accent/20 dark:border-accent/25 justify-between gap-3">
             <div className="text-muted-foreground min-w-0 text-xs">
               {footerStatus}
             </div>

@@ -49,7 +49,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `FieldCombobox` | Filterable string Combobox: CONTROL chrome; optional `group` → section headings | Long / searchable option lists (edge phrases) | Tiny closed enums | `FieldSelect` · `EntityCombobox` | canonical | no | : |
 | `FieldMessage` | TanStack Form field validation message (`FieldError`) | Under a control after touch/submit | Server / mutation failures | `FieldError` | canonical | yes | destructive |
 | `FormInlineWarning` | Field / form inline warning | Soft confirm / evidence hints | Hard errors | `FieldError` | canonical | yes | warning |
-| `FormSection` | Settings fieldset card (`ACCENT_CARD_SURFACE`); `title` is optional: omit it when the settings tab heading already says the same | Auth/settings forms | Queue composers | `ComposerShell` | canonical | no | : |
+| `FormSection` | Settings fieldset card (`ACCENT_CARD_SURFACE`); `title` is optional: omit it when the settings tab heading already says the same; the footer has no top rule | Auth/settings forms | Queue composers | `ComposerShell` | canonical | no | : |
 | `IdChip` | Opaque id/hash mono chip (whole-chip copy when `copyable`; `full` skips truncate) | UUIDs / hashes | Human labels | `MiddleTruncate` | canonical | yes | chip |
 | `IdentifierNotesCell` / `NotesIconCell` | Sticky-note icon → right Sheet + `RichTextEditor` Markdown (blur/close autosave) | Identifier + Entity table Notes columns (`/identifiers` · `/entities` · Dossier Identifiers) | Inline Notes cells · entity Summary/Notes tabs | `RichTextEditor` | canonical | no | : |
 | `InlineLoading` | Spinner + label region wait | In-flight Detail / panel | Full-page pending | `RoutePending` | canonical | yes | : |
