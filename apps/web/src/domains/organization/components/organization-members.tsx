@@ -274,7 +274,7 @@ export function OrganizationMembers() {
         >
           <FormSection
             title="Invite someone"
-            description="They get an email if mail is set up. Otherwise copy the link from Pending invitations below."
+            description="Send an invitation by email. If mail isn't set up, copy the link from Pending invitations."
             footer={
               <Button type="submit" size="sm" disabled={invite.isPending}>
                 {invite.isPending ? <Spinner /> : null}

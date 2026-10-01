@@ -208,7 +208,7 @@ export function OrganizationProfile() {
       <FormSection
         tone="warning"
         title="Leave this organization"
-        description="You'll lose access to its Cases until someone invites you back. If you're the only owner, make someone else an owner first (see Members)."
+        description="You'll lose access until someone invites you back. Only owner? Make someone else an owner first."
         footer={
           <AlertDialog>
             <AlertDialogTrigger

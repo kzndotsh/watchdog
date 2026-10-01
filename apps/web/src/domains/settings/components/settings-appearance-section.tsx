@@ -42,7 +42,7 @@ export function SettingsAppearanceSection() {
     <div className="max-w-2xl space-y-8">
       <FormSection
         title="Theme"
-        description="Choose light, dark, or match your system setting."
+        description="Pick light or dark, or follow your system."
       >
         <Field>
           <FieldLabel>Color mode</FieldLabel>
@@ -79,7 +79,7 @@ export function SettingsAppearanceSection() {
 
       <FormSection
         title="Display size"
-        description="Scale typography and spacing together. Browser zoom still works for larger sizes."
+        description="Make text and spacing larger or smaller."
       >
         <Field>
           <FieldLabel>Size preset</FieldLabel>

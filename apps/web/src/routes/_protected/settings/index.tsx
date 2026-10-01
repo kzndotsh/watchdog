@@ -44,43 +44,42 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
     id: "account",
     group: "Personal",
     label: "Account",
-    description: "Name, avatar, and email.",
+    description: "Update your name, photo, and email.",
     icon: UserIcon,
   },
   {
     id: "security",
     group: "Personal",
     label: "Security",
-    description: "Password, sessions, and linked accounts.",
+    description: "Change your password and review where you're signed in.",
     icon: ShieldIcon,
   },
   {
     id: "appearance",
     group: "Personal",
     label: "Appearance",
-    description: "Theme, display size, and visual preferences.",
+    description: "Pick a theme and set how large the app looks.",
     icon: PaletteIcon,
   },
   {
     id: "api-keys",
     group: "Personal",
     label: "API Keys",
-    description: "Keys for API access.",
+    description: "Create and revoke keys for the API.",
     icon: KeyIcon,
   },
   {
     id: "credentials",
     group: "Personal",
     label: "Credentials",
-    description: "Connect third-party API keys that Caps use at runtime.",
+    description: "Connect the third-party accounts your Caps use.",
     icon: WrenchIcon,
   },
   {
     id: "organizations",
     group: "Personal",
     label: "Organizations",
-    description:
-      "Switch between organizations, create one, or answer an invitation.",
+    description: "Switch organizations, create one, or answer an invitation.",
     icon: BuildingIcon,
   },
   {
@@ -88,15 +87,14 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
     group: "Organization",
     label: "General",
     description:
-      "The organization's name and logo, plus leaving or deleting it.",
+      "Rename the organization, change its logo, or leave or delete it.",
     icon: SettingsIcon,
   },
   {
     id: "members",
     group: "Organization",
     label: "Members",
-    description:
-      "Invite people, change their roles, and manage pending invitations.",
+    description: "Invite people, change roles, and manage pending invitations.",
     icon: UsersIcon,
   },
   {
@@ -104,7 +102,7 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
     group: "Administration",
     label: "Users",
     description:
-      "See every account on this server, across all organizations, and disable any that shouldn't sign in.",
+      "Review every account on this server and disable any that shouldn't sign in.",
     icon: UserCogIcon,
   },
 ];
