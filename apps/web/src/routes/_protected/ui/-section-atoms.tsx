@@ -154,9 +154,9 @@ const ATOM_CATALOG: AtomEntry[] = [
       "Inline entity name — link when slug set. Kind glyph lives on KindBadge.",
     render: () => (
       <>
-        <EntityMention name="Ada Lovelace" />
-        <EntityMention name="Acme Corp" slug="acme-corp" />
-        <EntityMention name="acme.com" slug="acme-com" />
+        <EntityMention name="Ada Lovelace" size="sm" />
+        <EntityMention name="Acme Corp" slug="acme-corp" size="sm" />
+        <EntityMention name="acme.com" slug="acme-com" size="sm" />
       </>
     ),
   },

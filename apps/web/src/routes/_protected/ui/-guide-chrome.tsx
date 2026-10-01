@@ -92,7 +92,8 @@ export function Specimen({
           <p className="text-muted-foreground text-xs leading-snug">{blurb}</p>
         ) : null}
       </div>
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
+      {/* text-xs: the density most atoms are used at; atoms with no size of their own (StatusInk, Timestamp) inherit it. */}
+      <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs">
         {children}
       </div>
     </div>
