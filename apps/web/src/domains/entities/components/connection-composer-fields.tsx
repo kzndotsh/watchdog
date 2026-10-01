@@ -127,6 +127,7 @@ export function ConnectionComposerFields({
           allowEmpty={false}
           emptyLabel="Select peer…"
           size="sm"
+          className="w-full flex-none"
           aria-label="Connection peer"
           disabled={disabled}
         />
