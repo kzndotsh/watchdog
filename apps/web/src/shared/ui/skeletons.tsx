@@ -511,7 +511,7 @@ function TaskCardSkeleton({ showFooter = true }: { showFooter?: boolean }) {
   return (
     <div className={TASK_CARD_SHELL_CLASS}>
       {showFooter ? (
-        <div className="border-border flex h-6 items-center gap-1.5 border-b px-2.5">
+        <div className="bg-muted/40 flex h-6 items-center gap-1.5 px-2.5">
           <Skeleton className="h-3 w-3 shrink-0 rounded-xs" />
           <Skeleton className="h-3 w-24 shrink-0 rounded-sm" />
         </div>
