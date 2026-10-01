@@ -6,7 +6,6 @@ import type {
 } from "react";
 
 import { cn } from "@/lib/utils";
-import { formatClockTime } from "@/shared/ui/group-by-day";
 import { IdChip } from "@/shared/ui/id-chip";
 import { RelativeTime } from "@/shared/ui/relative-time";
 
@@ -137,8 +136,6 @@ export function QueueRowInstantMeta({
 }) {
   return (
     <QueueRowMeta className={className}>
-      <span className="tabular-nums">{formatClockTime(value)}</span>
-      <span aria-hidden>·</span>
       <RelativeTime value={value} />
       <span aria-hidden>·</span>
       <IdChip value={id} copyable className="opacity-80" />

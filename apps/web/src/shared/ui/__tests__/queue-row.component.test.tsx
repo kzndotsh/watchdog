@@ -29,7 +29,7 @@ describe("QueueRow", () => {
     expect(screen.getByText("Queued")).toBeInTheDocument();
   });
 
-  it("renders clock, relative time, and id chip meta", () => {
+  it("renders relative time and id chip meta", () => {
     render(
       <QueueRowInstantMeta
         value="2026-01-15T12:00:00.000Z"

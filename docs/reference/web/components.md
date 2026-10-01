@@ -61,7 +61,7 @@ The code source of truth is `src/shared/ui/`. Style guide: **`/ui`** (Foundation
 | `QueueFilterBar` | Search + facets + reset | Split Queue filters | Page-level filters only | `PageFilterMenu` (`shared/layout/`) | canonical | no | : |
 | `QueueHeader` | Queue column title + count | Split Queue | Page titles | : | canonical | yes | : |
 | `QueueShell` | Queue scrollport: sticky header + ScrollArea; body flex-fills so EmptyState can center. `scrollable={false}` swaps `ScrollArea` for a plain `overflow-hidden` clip: use while skeleton rows fill the pane so loading never shows its own scrollbar | Collect / Triage Queue | Nested scroll + outer header | `SplitView` · `ScrollArea` | canonical | no | : |
-| `QueueRow` (+ Title/Meta) | Queue hit-target row | Homogeneous work lists | Card stacks | : | canonical | yes | : |
+| `QueueRow` (+ Title/Meta) | Queue hit-target row (`QueueRowInstantMeta` = relative time · id, no clock time) | Homogeneous work lists | Card stacks | : | canonical | yes | : |
 | `RecentActivity` | Dashboard Activity: header + case filter + ScrollArea feed (lives in vertical resizable panel) | Dashboard Activity panel | Page-level dump / paste | `ScrollArea` · `ResizablePanelGroup` | **domain** (`dashboard/components/recent-activity.tsx`) | no | : |
 | `RelativeTime` | Relative + tooltip absolute | Queue/activity times | Exact wall clock alone | `LocalDateTime` | canonical | yes | : |
 | `RichTextEditor` | Plate Markdown editor (marks · headings · lists); toolbar state helpers in `rich-text-toolbar-controls.lib.ts` | Dossier Summary / Notes · Edit dialog prose | Claim/identifier note fields · Plate JSON persistence | `Textarea` | canonical | yes | : |
