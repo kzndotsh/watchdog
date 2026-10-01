@@ -84,6 +84,11 @@ export function applyEntityOpEffect(
             "Entity slug already belongs to a different Entity in this Case",
         });
       }
+      // An id that already exists (here or in another Case) must not reach the primary key.
+      const idOwner = yield* tryDb(() => entitiesRepo.getById(tx, op.id));
+      if (idOwner) {
+        return yield* new ConflictError({ reason: "Entity id is already in use" });
+      }
       const created = yield* tryDb(() =>
         entitiesRepo.create(tx, {
           id: op.id,

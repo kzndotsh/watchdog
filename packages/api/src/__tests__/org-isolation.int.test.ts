@@ -868,13 +868,9 @@ describe("organization isolation matrix", () => {
       // oxlint-disable-next-line eslint/no-await-in-loop -- attacks run one at a time so a leak is attributable
       outcomes[name] = await codeOf(run);
     }
-    const allowed = new Set(["NOT_FOUND", "BAD_REQUEST"]);
-    // Re-using another case's entity id in an upsert hits the primary key and surfaces as an
-    // unmapped database error (a 500, nothing written); still a denial, but not a clean one.
+    const allowed = new Set(["NOT_FOUND", "BAD_REQUEST", "CONFLICT"]);
     const leaks = Object.entries(outcomes).filter(
-      ([name, code]) =>
-        !allowed.has(code) &&
-        !(name.startsWith("graph.write(upsert") && code.startsWith("THROWN:"))
+      ([, code]) => !allowed.has(code)
     );
     expect(leaks, `unexpected outcomes: ${JSON.stringify(leaks)}`).toEqual([]);
     expect(await snapshotA()).toBe(before);
