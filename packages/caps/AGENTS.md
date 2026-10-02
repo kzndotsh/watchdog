@@ -23,7 +23,7 @@ Cap implementations, registry, and Playbooks. Caps never write the Graph — `in
 
 ## SPI (`@watchdog/caps/sdk`, `src/sdk/`)
 
-Merged from the former `@watchdog/cap-sdk`. SPI for Caps: `defineCapability`, CapContext, interpret types. No Graph / DB / network helpers (caps has no `@watchdog/db` dependency; keep it that way). The runtime consumer (`core`) imports the SPI from the subpath `@watchdog/caps/sdk` so they never load the catalog; code inside `packages/caps` imports it by relative path (`../../sdk`) because Vite does not resolve package self-references.
+Merged from the former `@watchdog/cap-sdk`. SPI for Caps: `defineCapability`, CapContext, interpret types. No Graph / DB / network helpers (caps has no `@watchdog/db` dependency; keep it that way). `core` imports the SPI (types, `runCap`) from the subpath `@watchdog/caps/sdk` and the catalog from `@watchdog/caps`; code inside `packages/caps` imports it by relative path (`../../sdk`) because Vite does not resolve package self-references.
 
 `run` is `Effect<CapRunResult, ToolsTag, CapServices>` (`CapRun`). `CapServices` is `HttpClient` (`toolsHttpClientLayer` provided by `runCap` / job collect). `interpret` stays pure/sync. Cap I/O on `CapContext` is Effect (`uploadArtifact`, `getCredential`, `hasCredential`, `readArtifact`); optional slots use `optionalCapCredential`. `signal` stays AbortSignal.
 

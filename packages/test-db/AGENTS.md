@@ -21,11 +21,11 @@ Dev-only Postgres harness and `seed*` fixtures for integration tests. Split out 
 
 | Do | Don't |
 | --- | --- |
-| `seed*` via real repos; use `build*` (`@watchdog/schemas/testing`) for in-memory values | Raw SQL seeds that hide repo contract breaks |
+| `seed*` via real repos (exceptions: `seedAuthUser` writes `auth.user` directly and `seedEntityBlankDisplayName` inserts a legacy row on purpose); use `build*` (`@watchdog/schemas/testing`) for in-memory values | Raw SQL seeds that hide repo contract breaks |
 | `withTestTx` when the code under test takes `tx` (truncates, then always rolls back `fn`) | Assume service-level `db.transaction()` sees an uncommitted test tx |
 | `resetTestDb()` for Accept / job / race tests that must COMMIT | Truncate `auth.*` or drizzle migration tables from integration tests |
-| `resetE2eDb()` from Playwright only (`e2e/support/db-reset`) — wipes `public` + `auth` | Call `resetE2eDb` from `*.int.test.ts` (keeps seeded auth users) |
-| Import `@watchdog/test-db` from integration tests only | Import it from unit/property tests (loads Postgres) |
+| `resetE2eDb()` from Playwright only (`e2e/support/db-reset`) — wipes `public` + `auth`, including seeded users | Call `resetE2eDb` from `*.int.test.ts`; integration tests use `resetTestDb()`, which keeps `auth.*` |
+| Import `@watchdog/test-db` from integration tests and the e2e DB-reset support (`e2e/support/db-reset`) | Import it from unit/property tests (loads Postgres) |
 
 ## Gotchas
 

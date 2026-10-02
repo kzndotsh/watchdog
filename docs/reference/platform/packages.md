@@ -12,7 +12,7 @@
 | `@watchdog/env` | (nothing in-workspace) | db, caps, core, api, apps, schemas, … |
 | `@watchdog/schemas` | (nothing in-workspace) | db, caps, core, api, apps, tools, policy, env |
 | `@watchdog/policy` | schemas | db, caps, core, api, apps, tools, ai |
-| `@watchdog/db` | schemas, **env** (runtime); drizzle-kit via dotenv: see [`packages/db/AGENTS.md`](../../../packages/db/AGENTS.md). Owns **schema + `repos`** (SQL only). | caps, core, api, apps |
+| `@watchdog/db` | schemas, **env** (runtime); drizzle-kit via dotenv: see [`packages/db/AGENTS.md`](../../../packages/db/AGENTS.md). Owns **schema + `repos`** (SQL only). Dev only: `test-db` (its integration tests use the harness; the one allowed cycle, see [`packages/test-db/AGENTS.md`](../../../packages/test-db/AGENTS.md)). | caps, core, api, apps |
 | `@watchdog/ai` | schemas | db, caps, core |
 | `@watchdog/tools` | schemas (only if needed; prefer zero) | db, caps, core, ai, api, apps |
 | `@watchdog/caps` (incl. SPI `@watchdog/caps/sdk`) | schemas, ai, **tools** | **db**, core, api, apps |

@@ -26,7 +26,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `*.component.test.tsx` | happy-dom + Testing Library |
 | `*.spec.ts` | Playwright only, under `e2e/specs/` |
 
-## Helpers (`@watchdog/test-kit`, `@watchdog/test-db`, `@watchdog/schemas/testing`, `caps/src/testing`)
+## Helpers (`@watchdog/test-kit`, `@watchdog/test-db`, `@watchdog/schemas/testing`, `packages/caps/src/testing`)
 
 | Prefix / name | Meaning |
 | --- | --- |

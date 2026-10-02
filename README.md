@@ -177,7 +177,7 @@ packages/
 └── test-kit/             Dev-only ids, URLs, fast-check, MSW; no workspace deps
 ```
 
-Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and only `core` touches repos. Full matrix in [`docs/reference/platform/README.md`](docs/reference/platform/README.md).
+Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and in production code only `core` touches repos (the dev-only `test-db` seeds use them too). Full matrix in [`docs/reference/platform/README.md`](docs/reference/platform/README.md).
 
 ### Effect
 
