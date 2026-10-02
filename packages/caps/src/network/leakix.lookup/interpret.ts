@@ -1,7 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-
 import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
@@ -11,6 +9,7 @@ import {
   identifierTruncationNote,
   querySeedBatches,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { leakixLookupInput } from "./input";
 import type { LeakixLookupSnapshot } from "./report-schema";
 

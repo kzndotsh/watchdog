@@ -1,12 +1,12 @@
 import { Effect, Result } from "effect";
 import type { z } from "zod";
 
+import { requireCapability } from "@watchdog/caps";
 import type {
   CapabilityDef,
   CapJobPolicy,
   JsonObject,
-} from "@watchdog/cap-sdk";
-import { requireCapability } from "@watchdog/caps";
+} from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
 import { parseTrimmedCaseId } from "@watchdog/schemas";
 

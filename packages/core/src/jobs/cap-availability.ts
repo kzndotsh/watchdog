@@ -1,13 +1,13 @@
 import { Effect } from "effect";
 import type { z } from "zod";
 
-import type { CapabilityDef } from "@watchdog/cap-sdk";
 import {
   checkCapabilityAvailability,
   toCapDescriptor,
   type AvailabilityError,
   type AvailabilityResult,
 } from "@watchdog/caps";
+import type { CapabilityDef } from "@watchdog/caps/sdk";
 import { casesRepo, db } from "@watchdog/db";
 
 import { tryDb } from "../infra/postgres-effect";

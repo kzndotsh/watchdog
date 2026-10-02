@@ -1,9 +1,8 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { torExitLookupInput } from "./input";
 import type { TorExitLookupSnapshot } from "./report-schema";
 

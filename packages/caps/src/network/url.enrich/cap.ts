@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 
-import { defineCapability } from "@watchdog/cap-sdk";
 import {
   ENRICHED_MD_ARTIFACT,
   URL_ENRICH_CAPABILITY_ID,
@@ -11,6 +10,7 @@ import {
   ValidationVendorError,
 } from "@watchdog/tools";
 
+import { defineCapability } from "../../sdk";
 import { ingestRemotePageEffect } from "./ingest-page";
 import { networkUrlEnrichInput } from "./input";
 import type { EnrichSummary, IngestResult } from "./types";

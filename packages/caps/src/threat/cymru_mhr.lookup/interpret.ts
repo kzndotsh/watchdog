@@ -1,9 +1,8 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { hashSeedBatch } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { cymruMhrLookupInput } from "./input";
 import type { CymruMhrLookupSnapshot } from "./report-schema";
 

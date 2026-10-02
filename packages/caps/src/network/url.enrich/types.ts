@@ -1,4 +1,4 @@
-import type { CapArtifact } from "@watchdog/cap-sdk";
+import type { CapArtifact } from "../../sdk";
 
 /** How we got Markdown — mirrors markdown.new / CF Markdown-for-Agents tiers (in-process). */
 export type MdMethod =

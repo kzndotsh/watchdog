@@ -13,7 +13,7 @@ tagged `E` channels.
 | `packages/core/src/infra/run-domain.ts` | Test/compat `runDomain` |
 | `packages/core/src/infra/postgres-tx.ts` | Nested `runPromise` inside Drizzle `transact` |
 | `packages/core/src/infra/export-sync.ts` | Coalesce claim via `runSync` |
-| `packages/cap-sdk/src/run.ts` | `runCap` Promise edge (provides `toolsHttpClientLayer`) |
+| `packages/caps/src/sdk/run.ts` | `runCap` Promise edge (provides `toolsHttpClientLayer`) |
 
 New production `run*` → add to this allowlist **and** document why in the
 nearest `AGENTS.md`. Tests under `__tests__` / `*.test.ts` are skipped by

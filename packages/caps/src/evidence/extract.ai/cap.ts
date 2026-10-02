@@ -6,7 +6,6 @@ import {
   structuredExtractEffect,
   type EvidenceSnapshot,
 } from "@watchdog/ai";
-import { defineCapability, type CapContext } from "@watchdog/cap-sdk";
 import {
   EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   IDENTIFIER_PLATFORM_SLUGS,
@@ -14,6 +13,7 @@ import {
 } from "@watchdog/schemas";
 import { ValidationVendorError } from "@watchdog/tools";
 
+import { defineCapability, type CapContext } from "../../sdk";
 import {
   interpretProcessDraft,
   uploadProcessArtifacts,

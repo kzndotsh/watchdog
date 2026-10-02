@@ -15,7 +15,7 @@ Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs 
        ↓
 @watchdog/policy      ← assertPatchGates / patchNeedsConfidence (pure; schemas only;
                          browser: @watchdog/policy/patch-needs-confidence)
-@watchdog/cap-sdk     ← defineCapability SPI + CapDescriptor / toCapDescriptor
+@watchdog/caps/sdk    ← defineCapability SPI + CapDescriptor / toCapDescriptor
                          + CapContext / interpret types (schemas + zod)
 @watchdog/tools       ← dumb HTML/DNS/WHOIS/HTTP/Wayback fetch+parse + producer Zod
                          (dns/whois report schemas; prefer no Cap/Graph deps)
@@ -30,8 +30,7 @@ Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs 
                          (no policy re-exports; `MAX_UPLOAD_BYTES` is the one
                           schemas value re-exported, via infra/blob.ts)
 @watchdog/api         ← oRPC procedure I/O (composes schemas atoms)
-@watchdog/contract    ← generated OpenAPI + minified router JSON (client artifact)
-@watchdog/client      ← createWatchdogClient over @watchdog/contract (CLI/agents)
+@watchdog/client      ← generated OpenAPI + minified router JSON (src/generated) + createWatchdogClient (CLI/agents)
 @watchdog/cli         ← `wd` over client (+ authenticated file fetch for Case Export)
 apps/web domains      ← types.ts: domain mutation Zod + DTOs (import schemas atoms;
                          do not re-export vocab)
@@ -48,7 +47,7 @@ apps/web domains      ← types.ts: domain mutation Zod + DTOs (import schemas a
 | Cap folder `input.ts` | Runtime Zod Cap inputs colocated with each Cap (`host` + optional `entityId`, …) |
 | `@watchdog/tools` (producer Zod) | DNS/WHOIS/oEmbed report shapes: `dnsRecordsSchema` / `whoisSnapshotSchema` / `oembedSnapshotSchema` (+ inferred types) next to fetch/parse: single SoT |
 | Cap folder `report-schema.ts` | Re-exports tools producer Zod for Collect Caps; `interpret` / Cap `safeParse` import from here (do not redefine shapes) |
-| `@watchdog/cap-sdk` CapDescriptor | Serializable catalog + `input` / `inputForm` JSON Schema (`pnpm generate:caps`) |
+| `@watchdog/caps/sdk` CapDescriptor | Serializable catalog + `input` / `inputForm` JSON Schema (`pnpm generate:caps`) |
 | `@watchdog/caps` (Process lib) | `evidence/lib/draft-to-patch-ops`, `process-shared` (`uploadProcessArtifacts`, …) |
 | `@watchdog/caps` (harvest) | `evidence/harvest/harvest.ts` (`harvestDeterministic`); `quote-strip.ts` masks IPB/phpBB quoted spans (text after the quote still harvests); `extractors/` (`HARVEST_EXTRACTORS`: quotes, URLs+filename forensics, searchable selectors). Harvest does **not** emit "run oEmbed" Questions. |
 | `@watchdog/caps` (Collect shared) | `lib/collect/`: `define-collect-cap.ts`, `upload-json-report-pair.ts`, `interpret-observation-claim.ts`, `interpret-identifier-batches.ts` (`interpretTypedIdentifiers` thin re-export), `interpret-whois-snapshot.ts` (Claim + optional near-expiry Event; no NS Identifiers); per-Cap `interpret.ts` |

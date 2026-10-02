@@ -1,9 +1,8 @@
 import { writeFileSync } from "node:fs";
 
-import { toCapDescriptor } from "@watchdog/cap-sdk";
-
 import { listKnownCredentials } from "./known-credentials";
 import { CAPABILITIES } from "./registry";
+import { toCapDescriptor } from "./sdk";
 
 /** Validate credential slots and write CapDescriptor JSON. Returns descriptor count. */
 export function writeCapabilitiesGenFile(outPath: string): number {

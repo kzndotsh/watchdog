@@ -1,6 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { DnsRecords } from "@watchdog/tools";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
@@ -11,6 +10,7 @@ import {
   ipValuesBatch,
   querySeedBatches,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { dnsLookupInput } from "./input";
 
 type DnsInput = z.infer<typeof dnsLookupInput>;

@@ -1,6 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { UnshortenSnapshot } from "@watchdog/tools";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
@@ -10,6 +9,7 @@ import {
   identifierTruncationNote,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { urlUnshortenInput } from "./input";
 
 type Input = z.infer<typeof urlUnshortenInput>;

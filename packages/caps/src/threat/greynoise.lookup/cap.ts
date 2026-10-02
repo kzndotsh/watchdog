@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 
-import { optionalCapCredential } from "@watchdog/cap-sdk";
 import { fetchGreynoiseCommunityEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { optionalCapCredential } from "../../sdk";
 import { greynoiseLookupInput } from "./input";
 import { interpretGreynoiseLookupReport } from "./interpret";
 import { greynoiseLookupSnapshotSchema } from "./report-schema";

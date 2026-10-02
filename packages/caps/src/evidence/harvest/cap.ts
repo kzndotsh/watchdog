@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 
-import { defineCapability } from "@watchdog/cap-sdk";
 import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/schemas";
 import { ValidationVendorError } from "@watchdog/tools";
 
+import { defineCapability } from "../../sdk";
 import {
   interpretProcessDraft,
   uploadProcessArtifacts,

@@ -1,7 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   HANDLE_IDENTIFIER_BATCH_LIMIT,
@@ -10,6 +8,7 @@ import {
   identifierTruncationNote,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { keybaseLookupInput } from "./input";
 import type { KeybaseLookupSnapshot } from "./report-schema";
 

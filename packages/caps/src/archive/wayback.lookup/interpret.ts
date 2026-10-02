@@ -1,10 +1,10 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { WaybackLookupSnapshot } from "@watchdog/tools";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { urlSeedBatch } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { waybackLookupInput } from "./input";
 
 type Input = z.infer<typeof waybackLookupInput>;

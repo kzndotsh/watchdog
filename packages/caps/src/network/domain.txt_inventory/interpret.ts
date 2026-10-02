@@ -1,9 +1,9 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { TxtInventorySnapshot } from "@watchdog/tools";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { txtInventoryInput } from "./input";
 
 type TxtInput = z.infer<typeof txtInventoryInput>;

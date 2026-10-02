@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 
-import { optionalCapCredential } from "@watchdog/cap-sdk";
 import { fetchFeodoLookupEffect, normalizeIp } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { optionalCapCredential } from "../../sdk";
 import { feodoLookupInput } from "./input";
 import { interpretFeodoLookupReport } from "./interpret";
 import { feodoLookupSnapshotSchema } from "./report-schema";

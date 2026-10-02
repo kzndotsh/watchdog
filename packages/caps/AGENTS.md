@@ -21,6 +21,18 @@ Cap implementations, registry, and Playbooks. Caps never write the Graph — `in
 | Set `timeoutMs` on the Cap (drives abort / expire / stale reclaim) | Hardcode those timeouts in worker/core |
 | Import Caps from `../registry` inside `playbooks/` | Import via `@watchdog/caps` barrel from playbooks |
 
+## SPI (`@watchdog/caps/sdk`, `src/sdk/`)
+
+Merged from the former `@watchdog/cap-sdk`. SPI for Caps: `defineCapability`, CapContext, interpret types. No Graph / DB / network helpers (caps has no `@watchdog/db` dependency; keep it that way). Runtime consumers (`core`, `test-kit`) import the SPI from the subpath `@watchdog/caps/sdk` so they never load the catalog; code inside `packages/caps` imports it by relative path (`../../sdk`) because Vite does not resolve package self-references.
+
+`run` is `Effect<CapRunResult, ToolsTag, CapServices>` (`CapRun`). `CapServices` is `HttpClient` (`toolsHttpClientLayer` provided by `runCap` / job collect). `interpret` stays pure/sync. Cap I/O on `CapContext` is Effect (`uploadArtifact`, `getCredential`, `hasCredential`, `readArtifact`); optional slots use `optionalCapCredential`. `signal` stays AbortSignal.
+
+Cap `run()` tests call `runCap` (Promise edge; provides HttpClient; `src/sdk/run.ts` is an allowed edge in `check-effect-edges`). Job collect yields `cap.run(ctx)` under `toolsHttpClientLayer` — do not wrap leftover async bodies; Caps are Effect.
+
+- `handoff?: (report) => JobHandoff | undefined` is pure; core persists bags on Job success (including cache hits). Independent of `produces`.
+- `CapIoKind` includes `hash` (playbook seed / bind). Fail-closed Identifier filtering lives in caps `interpret-identifier-batches`; the SPI does not implement it.
+- SPI unit tests: `src/sdk/__tests__/`.
+
 ## Gotchas
 
 - Layout: one folder per Cap id (dots → path segments). Minimal Collect: `network/dns.lookup/{cap.ts, interpret.ts, input.ts, report-schema.ts}`. Fat Caps add sibling modules (e.g. `url.enrich/{fetch-bytes, ingest-page, wayback, types}.ts`). Shared: Process → `evidence/lib/` (`draft-to-patch-ops.ts` — `draftToPatchOps` returns `[]` on bad ctx; `draftToOutcome` owns failed/empty summaries); Collect → `lib/collect/` (`define-collect-cap.ts` — `run` is `Effect.gen`; `fetch` returns Effect (`ToolsTag`); `uploadJsonReportPair` is Effect; `upload-json-report-pair.ts`, `interpret-observation-claim.ts` — blank observation text with a valid entity uses `emptyTextSummary` (default `No observation to attach`), not `noEntitySummary`; invalid `entityId` on Collect interpret returns `INVALID_COLLECT_ENTITY_SUMMARY` in the result; Process interpret throws on malformed ctx ids — see `entity-id-failure-contract.test.ts`; `query-seed-batches.ts` — emit `validatedIdentifierValue` normalized seeds (collect-aligned with Process); `identifier-normalization-contract.test.ts` locks `querySeedBatches` / `domainValuesBatch` / `ipValuesBatch` to those outputs; `validated-identifier-value.ts` — IPv6 values canonicalize to compressed lowercase via `canonicalIpLiteral` so vendor spellings dedupe with seeds; `filter-related-identifiers.ts` — drop related values that normalize to the same identifier as the query seed (IPv6 spellings, domain case); `interpret-identifier-batches.ts` — skip invalid Identifier values via `validatedIdentifierValue` (collect-aligned with Process `draft-to-patch-ops`), dedupe across batches, and when `limit` is omitted apply type-specific defaults from `query-seed-batches.ts` (domain 80, url/email/handle 40, other 40); `network.dns.lookup` / `network.mnemonic.lookup` interpret — equivalent IPv6 A/AAAA answers must not produce duplicate ip Identifiers; `network.mnemonic.lookup` interpret — IP-kind observation claims note related-IP truncation as well as domain truncation; `interpret-whois-snapshot.ts` — `interpretTypedIdentifiers` is a thin re-export); harvest regex → `evidence/harvest/extractors/` + `HARVEST_EXTRACTORS`; harvest `pushId` uses `validatedIdentifierValue` so Process drafts dedupe IPv6 like Collect; `uri-schemes` strips `bitcoin:` / `ethereum:` / `monero:` payloads before `pushId` (`validBtc` on bitcoin). Quoted forum tails: mask spans (`quote-strip.ts`), don’t chop to EOF. Do not emit harvest Questions that tell the investigator to run another Cap (e.g. oEmbed). `evidence.file.analyze` / `evidence.eml.analyze` `run()` fail when there is no `uri` and empty snapshot text (Job fails at Collect, not interpret throw). Harvest / file.analyze / eml.analyze / extract.ai / url.enrich `run` is `Effect.gen`. Prefer vendor `*Effect` helpers (e.g. `fetchShodanHostEffect`) when the Cap `fetch` is already an Effect.
@@ -37,7 +49,6 @@ Cap implementations, registry, and Playbooks. Caps never write the Graph — `in
 | Need | File |
 | --- | --- |
 | Cap naming / lexicon | [`docs/reference/platform/caps-lexicon.md`](../../docs/reference/platform/caps-lexicon.md) |
-| Cap SPI | [`packages/cap-sdk/AGENTS.md`](../cap-sdk/AGENTS.md) |
 | Job runner | [`packages/core/AGENTS.md`](../core/AGENTS.md) |
 | Dumb helpers | [`packages/tools/AGENTS.md`](../tools/AGENTS.md) |
 | Platform architecture | [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md) |

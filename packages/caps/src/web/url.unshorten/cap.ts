@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 
-import type { JobHandoff } from "@watchdog/cap-sdk";
 import { fetchUnshortenEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import type { JobHandoff } from "../../sdk";
 import { urlUnshortenInput } from "./input";
 import { interpretUnshortenReport } from "./interpret";
 import { unshortenSnapshotSchema } from "./report-schema";

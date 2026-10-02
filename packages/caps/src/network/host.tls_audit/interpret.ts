@@ -1,9 +1,9 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { TlsAuditSnapshot } from "@watchdog/tools";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { tlsAuditInput } from "./input";
 
 type TlsInput = z.infer<typeof tlsAuditInput>;

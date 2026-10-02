@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 
-import type { CapArtifact } from "@watchdog/cap-sdk";
 import {
   decodeHtml,
   extractOutboundFromHtml,
@@ -15,6 +14,7 @@ import {
   type ToolsTag,
 } from "@watchdog/tools";
 
+import type { CapArtifact } from "../../sdk";
 import { fetchBytesEffect } from "./fetch-bytes";
 import {
   ACCEPT_MARKDOWN_FIRST,

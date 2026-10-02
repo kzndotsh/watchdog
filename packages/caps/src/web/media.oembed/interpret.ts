@@ -1,6 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import { normalizeIdentifierPlatform } from "@watchdog/schemas";
 import type { OembedSnapshot } from "@watchdog/tools";
 
@@ -9,6 +8,7 @@ import {
   URL_IDENTIFIER_BATCH_LIMIT,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { mediaOembedInput } from "./input";
 
 type Input = z.infer<typeof mediaOembedInput>;

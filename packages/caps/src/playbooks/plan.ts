@@ -1,10 +1,3 @@
-import type {
-  CapDescriptorCredential,
-  CapEgress,
-  CapFlag,
-  CapIoKind,
-} from "@watchdog/cap-sdk";
-import { toCapDescriptor } from "@watchdog/cap-sdk";
 import {
   parseCapJobInput,
   parseGraphUuidList,
@@ -15,6 +8,13 @@ import {
 } from "@watchdog/schemas";
 
 import { CAPABILITIES, requireCapability } from "../registry";
+import type {
+  CapDescriptorCredential,
+  CapEgress,
+  CapFlag,
+  CapIoKind,
+} from "../sdk";
+import { toCapDescriptor } from "../sdk";
 import {
   presentSeedKinds,
   seedKindToCapIo,

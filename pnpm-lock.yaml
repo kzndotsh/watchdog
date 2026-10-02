@@ -484,36 +484,11 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
-  packages/cap-sdk:
-    dependencies:
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
-      '@watchdog/tools':
-        specifier: workspace:*
-        version: link:../tools
-      effect:
-        specifier: 4.0.0-rc.115
-        version: 4.0.0-rc.115
-      zod:
-        specifier: ^4.4.3
-        version: 4.5.4
-    devDependencies:
-      '@types/node':
-        specifier: ^26.4.1
-        version: 26.6.1
-      typescript:
-        specifier: 7.0.2
-        version: 7.0.2
-
   packages/caps:
     dependencies:
       '@watchdog/ai':
         specifier: workspace:*
         version: link:../ai
-      '@watchdog/cap-sdk':
-        specifier: workspace:*
-        version: link:../cap-sdk
       '@watchdog/schemas':
         specifier: workspace:*
         version: link:../schemas
@@ -548,18 +523,6 @@ importers:
       '@orpc/openapi-client':
         specifier: ^1.15.1
         version: 1.15.1(@opentelemetry/api@1.9.1)
-      '@watchdog/contract':
-        specifier: workspace:*
-        version: link:../contract
-    devDependencies:
-      '@types/node':
-        specifier: ^26.5.1
-        version: 26.6.1
-      typescript:
-        specifier: 7.0.2
-        version: 7.0.2
-
-  packages/contract:
     devDependencies:
       '@types/node':
         specifier: ^26.5.1
@@ -576,9 +539,6 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1133.0
         version: 3.1135.0
-      '@watchdog/cap-sdk':
-        specifier: workspace:*
-        version: link:../cap-sdk
       '@watchdog/caps':
         specifier: workspace:*
         version: link:../caps
@@ -722,9 +682,9 @@ importers:
 
   packages/test-kit:
     dependencies:
-      '@watchdog/cap-sdk':
+      '@watchdog/caps':
         specifier: workspace:*
-        version: link:../cap-sdk
+        version: link:../caps
       '@watchdog/db':
         specifier: workspace:*
         version: link:../db

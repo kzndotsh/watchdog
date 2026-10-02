@@ -112,19 +112,11 @@ const config: KnipConfig = {
       ],
       project: ["src/**/*.ts"],
     },
-    "packages/cap-sdk": {
-      entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
-      project: ["src/**/*.ts"],
-    },
     "packages/caps": {
       entry: ["src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
     "packages/client": {
-      entry: ["src/index.ts"],
-      project: ["src/**/*.ts"],
-    },
-    "packages/contract": {
       entry: ["src/index.ts"],
       project: ["src/**/*.ts", "!src/generated/**"],
     },

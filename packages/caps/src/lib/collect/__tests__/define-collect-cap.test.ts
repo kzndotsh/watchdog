@@ -16,8 +16,7 @@ vi.mock("../upload-json-report-pair", () => ({
   uploadJsonReportPair: uploadJsonReportPairMock,
 }));
 
-import { runCap } from "@watchdog/cap-sdk";
-
+import { runCap } from "../../../sdk";
 import { defineCollectCap } from "../define-collect-cap";
 
 const baseDef = {

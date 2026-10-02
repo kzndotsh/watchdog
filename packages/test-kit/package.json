@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@watchdog/cap-sdk": "workspace:*",
+    "@watchdog/caps": "workspace:*",
     "@watchdog/db": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "drizzle-orm": "^0.45.2",

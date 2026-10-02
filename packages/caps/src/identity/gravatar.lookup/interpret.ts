@@ -1,7 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   EMAIL_IDENTIFIER_BATCH_LIMIT,
@@ -12,6 +10,7 @@ import {
   identifierTruncationNote,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { gravatarLookupInput } from "./input";
 import type { GravatarLookupSnapshot } from "./report-schema";
 

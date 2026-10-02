@@ -1,7 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   DOMAIN_IDENTIFIER_BATCH_LIMIT,
@@ -10,6 +8,7 @@ import {
   identifierTruncationNote,
   ipSeedBatch,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { shodanLookupInput } from "./input";
 import type { ShodanLookupSnapshot } from "./report-schema";
 

@@ -1,11 +1,11 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { WhoisSnapshot } from "@watchdog/tools";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import { interpretWhoisSnapshot } from "../../lib/collect/interpret-whois-snapshot";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { whoxyLookupInput } from "./input";
 import type { WhoxyLookupSnapshot } from "./report-schema";
 

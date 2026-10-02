@@ -165,12 +165,10 @@ packages/
 ├── policy/               Accept gates and custody rules, pure and DB-free
 ├── db/                   Drizzle schema + repos (the only SQL)
 ├── core/                 Effect domain layer: jobs, graph, evidence, export sync
-├── caps/                 Cap implementations + playbooks
-├── cap-sdk/              Cap SPI: defineCapability, CapContext
+├── caps/                 Cap implementations + playbooks; Cap SPI in `caps/sdk`
 ├── tools/                Dumb fetch/parse helpers, no Graph types
 ├── api/                  oRPC router, Zod procedures
-├── contract/             Generated OpenAPI / minified router for clients
-├── client/               Typed SDK for /api/v1, generated from OpenAPI
+├── client/               Typed SDK for /api/v1 + the generated OpenAPI contract
 ├── ai/                   LLM providers + structuredExtract, never writes Graph
 ├── log/                  evlog process logging, NDJSON + stdout
 ├── auth/                 Better Auth server core: createAuth, createApiContext, invite signup, instance admin
