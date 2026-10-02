@@ -28,7 +28,7 @@ describe("uploadFileEvidence", () => {
       "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
     const file = new File(["hello"], "note.txt", { type: "text/plain" });
     presignUploadFn.mockResolvedValue({
-      url: testHttpUrl("minio.test/put"),
+      url: testHttpUrl("s3.test/put"),
       headers: { "Content-Type": "text/plain" },
       uri: `${caseId}/${sha256}/note.txt`,
       sha256,
@@ -53,7 +53,7 @@ describe("uploadFileEvidence", () => {
     });
 
     expect(fetch).toHaveBeenCalledWith(
-      testHttpUrl("minio.test/put"),
+      testHttpUrl("s3.test/put"),
       expect.objectContaining({ method: "PUT", body: file })
     );
     expect(confirmFileUploadFn).toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe("uploadFileEvidence", () => {
       "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
     const file = new File(["hello"], "note.txt", { type: "text/plain" });
     presignUploadFn.mockResolvedValue({
-      url: testHttpUrl("minio.test/put"),
+      url: testHttpUrl("s3.test/put"),
       headers: { "Content-Type": "text/plain" },
       uri: `${caseId}/${sha256}/note.txt`,
       sha256,

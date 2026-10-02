@@ -44,7 +44,7 @@ function getClient(): S3Client {
       secretAccessKey: cfg.secretAccessKey,
     },
     forcePathStyle: true,
-    // Avoid AWS SDK CRC32 query params — MinIO + browser PUT reject them.
+    // Avoid AWS SDK CRC32 query params — S3-compatible servers + browser PUT reject them.
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
   });
@@ -146,7 +146,9 @@ export function createPresignedPutEffect(input: {
 
     const cfg = s3Config();
     const uri = artifactUri(input.caseId, sha256, input.name);
-    const headers = { "Content-Type": mime };
+    // The sha256 travels as a signed header, not a query parameter: AWS S3 accepts either,
+    // but SeaweedFS silently drops `x-amz-meta-*` query parameters.
+    const headers = { "Content-Type": mime, "x-amz-meta-sha256": sha256 };
     const command = new PutObjectCommand({
       Bucket: cfg.bucket,
       Key: uri,
@@ -156,7 +158,8 @@ export function createPresignedPutEffect(input: {
     const url = yield* blobTry(() =>
       getSignedUrl(getClient(), command, {
         expiresIn: PRESIGN_EXPIRES_IN,
-        signableHeaders: new Set(["content-type"]),
+        signableHeaders: new Set(["content-type", "x-amz-meta-sha256"]),
+        unhoistableHeaders: new Set(["x-amz-meta-sha256"]),
       })
     );
     return {

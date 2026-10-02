@@ -135,7 +135,7 @@ Only when Case load or workflow demands it.
 - ~~OpenAPI/CLI: credentials vault; export zip/md; evidence soft-delete/restore/download; graph-child CLI verbs; `cases.update` + egress~~ **done** (binary export stays file routes + `wd export`; OpenAPI declares `x-api-key`)
 - ~~ServerFn → oRPC for Collect Process+Enrich~~ **done**
 - ~~Retire deprecated `analysis.json` alias~~ **done**; ~~`PROCESS_CAPABILITY_ID` aliases~~ **done**
-- Postgres + MinIO backup/restore story
+- Postgres + object-storage backup/restore story
 - Error monitoring (Sentry or equivalent) — deferred
 - Process logging (`@watchdog/log` / evlog NDJSON under `apps/*/.evlog/logs/`) — **shipped**
 - Ops `.audit/` hash-chain / `evlog/ai` — deferred

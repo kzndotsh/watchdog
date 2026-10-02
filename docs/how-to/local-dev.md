@@ -1,6 +1,6 @@
 # Local development
 
-**What this is:** `just` / docker lifecycle, wipe, test databases, MinIO, dev servers.  
+**What this is:** `just` / docker lifecycle, wipe, test databases, S3 storage, dev servers.  
 **What this is not:** first-time signup ([`onboarding.md`](onboarding.md)).
 
 ## Daily workflow
@@ -8,7 +8,7 @@
 | Task | Command |
 | --- | --- |
 | Enter toolchain | `nix develop` |
-| Infra (Postgres + MinIO + bucket + migrate) | `just up` |
+| Infra (Postgres + S3 + bucket + migrate) | `just up` |
 | Full stack (infra + web + marketing site + worker) | `just dev` |
 | Containers only | `just docker-up` |
 | Install | `pnpm install` |
@@ -27,7 +27,7 @@ Copy [`env.example`](../../env.example) to `.env` before first run. Cap secrets 
 ## Services
 
 - **Postgres 18** — `127.0.0.1:5432`, app user from `DATABASE_URL`; migrations may use `DATABASE_URL_MIGRATE` (superuser). Compose mounts the data volume at `/var/lib/postgresql` (PG 18 Docker layout). Upgrading from 16: stop containers, remove the old `postgres_data` volume (or dump/restore if you need data), then `just up` so init scripts recreate roles/DBs.
-- **MinIO** — S3-compatible evidence storage at `S3_ENDPOINT` (default `http://127.0.0.1:9100`). `just up` runs `minio-init` (idempotent); use `just minio-init` alone after a fresh volume if you skipped `up`. Bucket create uses host `mc` when present, otherwise the `mc` bundled in the running `watchdog-minio` container (no `nix develop` and no extra image pull).
+- **S3 (SeaweedFS)** — S3-compatible evidence storage at `S3_ENDPOINT` (default `http://127.0.0.1:9100`), the `s3` service in `docker-compose.yml` running SeaweedFS in single-node `mini` mode (MinIO is archived upstream and its images are gone). `just up` runs `s3-init` (idempotent); use `just s3-init` alone after a fresh volume if you skipped `up`. It creates the bucket and its browser-upload CORS rules with plain `curl` (SigV4), so there is no client to install. Admin credentials come from the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` variables in the compose file; the dev credentials are `watchdog` / `watchdog-dev-secret` (see `env.example`), so an older `.env` that still has the MinIO-era keys needs `S3_ACCESS_KEY` / `S3_SECRET_KEY` updated to match. Presigned uploads send `x-amz-meta-sha256` as a signed header (SeaweedFS ignores it as a query parameter). Coming from MinIO: local evidence bytes are not migrated. Run `docker compose down --remove-orphans` (this removes the old `watchdog-minio` container and frees port 9100; it keeps your Postgres data), delete only the old MinIO volume (`docker volume ls | grep minio_data`, then `docker volume rm <name>`), then `just up`. Do not use `down -v`: it also deletes the Postgres volume.
 - **Worker** — Without `pnpm dev:worker`, Jobs stay queued; web UI still loads.
 
 ## Common fixes

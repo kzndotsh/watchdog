@@ -338,7 +338,7 @@ function claimExportJoin(
 /**
  * Schedule a Case export write. Concurrent calls for the same case coalesce
  * into one in-flight write, then at most one follow-up if more events arrived.
- * `writeExport` is injectable so unit tests can assert coalesce without MinIO.
+ * `writeExport` is injectable so unit tests can assert coalesce without object storage.
  *
  * Marks dirty and starts-or-joins the write fiber when this function is
  * called, not when the returned Effect is interpreted. Fire-and-forget

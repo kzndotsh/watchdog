@@ -25,7 +25,7 @@ export const evidence = pgTable(
     label: text("label"),
     notes: text("notes"),
     mime: text("mime"),
-    /** MinIO object key (or future URI). Required for file / url_archive. */
+    /** S3 object key (or future URI). Required for file / url_archive. */
     uri: text("uri"),
     /**
      * Content hash. Required for file / url_archive; nullable for attestation

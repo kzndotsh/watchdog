@@ -19,8 +19,8 @@ describe("env fragments", () => {
   it("defaults S3_REGION", () => {
     const parsed = z.object(s3Fields).parse({
       S3_ENDPOINT: "http://127.0.0.1:9100",
-      S3_ACCESS_KEY: "minioadmin",
-      S3_SECRET_KEY: "minioadmin",
+      S3_ACCESS_KEY: "watchdog",
+      S3_SECRET_KEY: "watchdog-dev-secret",
       S3_BUCKET: "watchdog-evidence",
     });
     expect(parsed.S3_REGION).toBe("us-east-1");

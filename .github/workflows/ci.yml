@@ -23,8 +23,8 @@ env:
   BETTER_AUTH_ALLOW_SIGNUP: "1"
   DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
   S3_ENDPOINT: http://127.0.0.1:9100
-  S3_ACCESS_KEY: minioadmin
-  S3_SECRET_KEY: minioadmin
+  S3_ACCESS_KEY: watchdog
+  S3_SECRET_KEY: watchdog-dev-secret
   S3_BUCKET: watchdog-evidence
   S3_REGION: us-east-1
   WD_MASTER_VAULT_KEY: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -313,27 +313,23 @@ jobs:
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog
         run: pnpm test-db
 
-      - name: Start MinIO
+      - name: Start S3 (SeaweedFS)
         run: |
-          docker run -d --name minio \
-            -p 9100:9000 \
-            -e MINIO_ROOT_USER=minioadmin \
-            -e MINIO_ROOT_PASSWORD=minioadmin \
-            ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z server /data
+          docker run -d --name s3 \
+            -p 9100:8333 \
+            -e AWS_ACCESS_KEY_ID=watchdog \
+            -e AWS_SECRET_ACCESS_KEY=watchdog-dev-secret \
+            chrislusf/seaweedfs:4.48 mini -dir=/data
           for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:9100/minio/health/live && exit 0
+            curl -sf http://127.0.0.1:9100/healthz && exit 0
             sleep 2
           done
-          echo "MinIO failed to become healthy" >&2
-          docker logs minio
+          echo "S3 server failed to become healthy" >&2
+          docker logs s3
           exit 1
 
       - name: Create evidence bucket
-        run: |
-          # The server image bundles `mc` (the standalone mc images are private).
-          docker exec \
-            -e MC_HOST_local=http://minioadmin:minioadmin@localhost:9000 \
-            minio mc mb --ignore-existing local/watchdog-evidence
+        run: bash scripts/s3-init.sh
 
       - name: Integration tests
         if: |

@@ -149,13 +149,13 @@ export async function uploadEvidenceFile(input: UploadEvidenceFileInput) {
       error instanceof Error ? error.message : "unknown connection error";
     return fail(
       "UPLOAD_FAILED",
-      `MinIO upload failed (cannot reach ${host}): ${cause}. Presigned URLs use the server's S3_ENDPOINT, not WD_API_URL.`,
+      `Upload failed (cannot reach ${host}): ${cause}. Presigned URLs use the server's S3_ENDPOINT, not WD_API_URL.`,
       { help: UPLOAD_HELP }
     );
   }
 
   if (!res.ok) {
-    return fail("UPLOAD_FAILED", `MinIO upload failed (${res.status})`, {
+    return fail("UPLOAD_FAILED", `Upload failed (${res.status})`, {
       help: UPLOAD_HELP,
     });
   }
@@ -176,7 +176,7 @@ export async function uploadEvidenceFile(input: UploadEvidenceFileInput) {
     );
   } catch (error) {
     const hint =
-      `Confirm failed — object may be orphaned in MinIO. Retry with matching metadata:\n` +
+      `Confirm failed — object may be orphaned in the evidence bucket. Retry with matching metadata:\n` +
       `  uri=${put.uri}\n` +
       `  sha256=${put.sha256}\n` +
       `  mime=${put.mime}\n` +

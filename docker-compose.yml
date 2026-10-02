@@ -1,4 +1,4 @@
-# Greenfield Day-0 — Postgres + MinIO. No Redis until earned.
+# Greenfield Day-0 — Postgres + S3-compatible storage (SeaweedFS). No Redis until earned.
 #
 # Ports are loopback-bound. If mid-build `watchdog-postgres` already owns :5432,
 # either stop it or point DATABASE_URL at that instance + a dedicated DB
@@ -27,35 +27,29 @@ services:
       timeout: 5s
       retries: 10
 
-  minio:
-    # Upstream `minio/minio` (Hub and Quay) is no longer pullable. coollabsio builds MinIO from
-    # source and ships `mc` and bash, which the healthcheck and scripts/minio-init.sh use.
-    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
-    container_name: watchdog-minio
+  s3:
+    # SeaweedFS in single-node `mini` mode (master + volume + filer + S3 gateway in one process).
+    # Upstream MinIO is archived and no longer published; see docs/how-to/local-dev.md.
+    image: chrislusf/seaweedfs:4.48
+    container_name: watchdog-s3
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-      MINIO_API_CORS_ALLOW_ORIGIN: "http://localhost:3000,http://127.0.0.1:3000"
-    # Host 9100/9101 — :9000 often taken
+      # SeaweedFS reads its admin S3 identity from the standard AWS variables.
+      AWS_ACCESS_KEY_ID: watchdog
+      AWS_SECRET_ACCESS_KEY: watchdog-dev-secret
+    # Host 9100 — :8333 is SeaweedFS's S3 port inside the container
     ports:
-      - "127.0.0.1:9100:9000"
-      - "127.0.0.1:9101:9001"
-    command: server /data --console-address ":9001"
+      - "127.0.0.1:9100:8333"
+    command: mini -dir=/data
     volumes:
-      - minio_data:/data
+      - s3_data:/data
     healthcheck:
-      # No curl in the image: speak HTTP over bash's /dev/tcp.
-      test:
-        - CMD
-        - bash
-        - -c
-        - 'exec 3<>/dev/tcp/127.0.0.1/9000; printf "GET /minio/health/live HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3; read -r line <&3; [[ "$$line" == *" 200 "* ]]'
+      test: ["CMD", "curl", "-f", "http://localhost:8333/healthz"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 15s
 
 volumes:
   postgres_data:
-  minio_data:
+  s3_data:

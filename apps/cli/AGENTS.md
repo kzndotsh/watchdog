@@ -56,7 +56,7 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 
 ## Gotchas
 
-- Evidence upload helpers live here; hashes/immutability still follow Intake rules.
+- Evidence upload helpers live here; hashes/immutability still follow Intake rules. File uploads PUT to the presigned URL with exactly the `headers` the server returns (including the signed `x-amz-meta-sha256`).
 - `wd evidence process|enrich` is the Intake path (dedupe active Jobs; Enrich asserts http(s)). `wd jobs start --cap evidence.harvest` still works but skips that glue.
 - `wd jobs start -i` must be a JSON **object** (not an array or bare string); parse errors vs shape errors return distinct USAGE messages.
 - `events update` accepts a partial patch — provide at least one of `--when`, `--what`, or `--where`.
