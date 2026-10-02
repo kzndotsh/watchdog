@@ -6,8 +6,7 @@ import {
   type NewEntity,
 } from "@watchdog/db";
 import { slugifyName } from "@watchdog/schemas";
-
-import { testId } from "../../fixtures/ids.ts";
+import { testId } from "@watchdog/test-kit/fixtures";
 
 export async function seedEntity(
   exec: DbExec,

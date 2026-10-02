@@ -4,8 +4,7 @@ import {
   type NewPlaybookRun,
   type PlaybookRunRow,
 } from "@watchdog/db";
-
-import { TEST_ACTOR_ID } from "../../fixtures/ids.ts";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 export async function seedPlaybookRun(
   exec: DbExec,

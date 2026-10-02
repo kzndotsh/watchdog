@@ -467,6 +467,7 @@ export default defineConfig({
         "packages/log/src/**/*.{ts,tsx}",
         "packages/schemas/src/**/*.{ts,tsx}",
         "packages/test-kit/src/**/*.{ts,tsx}",
+        "packages/test-db/src/**/*.{ts,tsx}",
         "packages/client/src/**/*.{ts,tsx}",
         "packages/api/src/**/*.{ts,tsx}",
         "packages/auth/src/**/*.{ts,tsx}",
@@ -532,7 +533,12 @@ export default defineConfig({
     },
     {
       // Integration helpers — intentional empty stubs in test kit.
-      files: ["packages/test-kit/src/**/*.{ts,tsx}"],
+      files: [
+        "packages/test-kit/src/**/*.{ts,tsx}",
+        "packages/test-db/src/**/*.{ts,tsx}",
+        "packages/caps/src/testing/**/*.{ts,tsx}",
+        "packages/schemas/src/testing/**/*.{ts,tsx}",
+      ],
       rules: {
         "eslint/no-empty-function": "off",
       },

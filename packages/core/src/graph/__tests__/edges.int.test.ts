@@ -13,7 +13,7 @@ import {
   seedCase,
   seedEntity,
   seedEvidence,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
 
 describe("createEdge", () => {
   beforeEach(async () => {

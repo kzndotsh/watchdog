@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { seedCase, seedJob, withTestTx } from "@watchdog/test-kit/db";
+import { seedCase, seedJob, withTestTx } from "@watchdog/test-db";
 
 import { jobs } from "../../schema/jobs.ts";
 import { capCacheRepo } from "../cap-cache.repo.ts";

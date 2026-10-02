@@ -2,7 +2,9 @@
 
 > Scope: `packages/test-kit` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import from production code.
+Dev-only, **dependency-free** test helpers: ids, URLs, fast-check, MSW. No `@watchdog/*` dependencies, so every package can use it without a dependency cycle. Never import from production code.
+
+Helpers that need a workspace package live with that package instead: Postgres harness + seeds in [`@watchdog/test-db`](../test-db/AGENTS.md), patch `build*` fixtures in `@watchdog/schemas/testing`, Cap test helpers in `packages/caps/src/testing/`.
 
 ## Commands
 
@@ -10,38 +12,28 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 | --- | --- |
 | Typecheck | `pnpm --filter @watchdog/test-kit typecheck` |
 | Unit / property (import `/fc` `/fixtures`) | `pnpm test:unit` · `pnpm test:property` |
-| Integration (`withTestTx` / `resetTestDb`) | `just test-db` then `pnpm test:integration` |
 
 ## Entrypoints
 
 | Import | Purpose |
 | --- | --- |
-| `@watchdog/test-kit` | `testId`, `TEST_ACTOR_ID`, `TEST_ORGANIZATION_ID`, `build*` patch fixtures |
+| `@watchdog/test-kit` | `testId`, `TEST_ACTOR_ID`, `TEST_ORGANIZATION_ID`, `testHttpUrl` / `testHttpOrigin` / `testUrlBase`, `fc` |
 | `@watchdog/test-kit/fc` | fast-check (unit/property only) |
-| `@watchdog/test-kit/fixtures` | ids without Postgres |
-| `@watchdog/test-kit/db` | `testDb`, `resetTestDb`, `resetE2eDb`, `withTestTx`, `seed*` |
+| `@watchdog/test-kit/fixtures` | ids + URLs only (no fast-check, no MSW) |
 | `@watchdog/test-kit/http` | `http`, `HttpResponse`, `mockServer`, `mockJson` |
-| `@watchdog/test-kit/it` | `itRejectsIncompleteReport`, `itRunsCollectCap`, `createCapRunHarness`, `runCap` |
 
 ## Boundaries
 
-| Do | Don’t |
+| Do | Don't |
 | --- | --- |
-| `build*` for in-memory values; `seed*` via real repos | Raw SQL seeds that hide repo contract breaks |
-| `withTestTx` when the code under test takes `tx` (truncates, then always rolls back `fn`) | Assume service-level `db.transaction()` sees an uncommitted test tx |
-| `resetTestDb()` for Accept / job / race tests that must COMMIT | Truncate `auth.*` or drizzle migration tables from integration tests |
-| `resetE2eDb()` from Playwright only (`e2e/support/db-reset`) — wipes `public` + `auth` | Call `resetE2eDb` from `*.int.test.ts` (keeps seeded auth users) |
-| `itRejectsIncompleteReport` for Cap interpret shape | Copy-paste the same reject body into 58 files |
-| `itRunsCollectCap` for Collect `run()` (3 Caps max unless `run()` is not `defineCollectCap`) | One MSW `run()` file per vendor Cap |
-| Import `@watchdog/test-kit/db` from integration tests | Import `/db` from unit/property tests |
-| Import `@watchdog/test-kit/fc` from property tests | Pull `/db` (loads Postgres) into unit tests |
+| Keep this package free of `@watchdog/*` dependencies | Import `schemas`, `db`, `caps`, … here (that recreates the cycles) |
 | Import MSW from `@watchdog/test-kit/http` | Import `msw` from tools/caps/web tests |
+| Import `@watchdog/test-kit/fc` from property tests | Pull Postgres helpers into unit tests |
+| Use extensionless relative imports (consumers typecheck these files) | `.ts` import extensions: they break stricter consumer tsconfigs |
 
 ## Gotchas
 
 - `testId(1)` is `11111111-1111-4111-8111-000000000001` — UUID-v4 shaped, greppable. `TEST_ACTOR_ID` is `"test-actor"`.
-- Caps `interpret` tests stay `interpret.test.ts` (pure). `run.test.ts` is still **unit** (MSW / harness) — do not rename to `.int` unless it hits Postgres.
-- Seeds: `seedCase` / `seedEntity` / `seedEvidence` / `seedIdentifier` / `seedJob` / `seedProposal` / `seedGraphWrite` / `seedFindingSuppression` / `seedPlaybookRun` / `seedAuthUser` (auth.user display row; not a Graph repo). `seedJob` overrides include `playbookFanIndex` and `handoff`. Playbook tests seed step 0 (optionally one historical `blocked` row for the release shim) — do not seed a full blocked recipe.
 - MSW: listen/reset/close in the test file (or `src/http/msw-setup.ts`). Vitest workers are shared across files (`isolate:false` + `vitest.reset-modules.ts`): restore `process.env`, `globalThis`, fake timers, and DOM in `afterEach`, and `close()` MSW in `afterAll` — see `docs/contributing/testing/standards.md`.
 - Effect programs that need `TestClock` or scoped Layers: `it.effect` from `@effect/vitest` (provides `TestClock`). Do not return a bare Effect from a plain vitest `it()`.
 
@@ -51,3 +43,4 @@ Dev-only fixtures, Postgres harness, MSW, and Cap `it*` factories. Never import 
 | --- | --- |
 | Methodology | [`docs/contributing/testing/standards.md`](../../docs/contributing/testing/standards.md) |
 | Commands / tiers | [`docs/contributing/testing/index.md`](../../docs/contributing/testing/index.md) |
+| DB harness + seeds | [`packages/test-db/AGENTS.md`](../test-db/AGENTS.md) |

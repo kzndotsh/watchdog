@@ -10,12 +10,12 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { activityEventsRepo, db } from "@watchdog/db";
+import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import {
   TEST_ACTOR_ID,
   TEST_ORGANIZATION_ID,
   testId,
 } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
 
 describe("createTask", () => {
   beforeEach(async () => {

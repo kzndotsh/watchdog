@@ -26,24 +26,24 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | `*.component.test.tsx` | happy-dom + Testing Library |
 | `*.spec.ts` | Playwright only, under `e2e/specs/` |
 
-## Helpers (`@watchdog/test-kit`)
+## Helpers (`@watchdog/test-kit`, `@watchdog/test-db`, `@watchdog/schemas/testing`, `caps/src/testing`)
 
 | Prefix / name | Meaning |
 | --- | --- |
-| `build*` | Pure in-memory value |
-| `seed*` | Persist via real repos (`seedCase`, `seedGraphWrite`, `seedFindingSuppression`, `seedPlaybookRun`, …) |
-| `testId(seed)` | `testId(1)` → `11111111-1111-4111-8111-000000000001` |
+| `build*` | Pure in-memory value (`@watchdog/schemas/testing`) |
+| `seed*` | Persist via real repos, from `@watchdog/test-db` (`seedCase`, `seedGraphWrite`, `seedFindingSuppression`, `seedPlaybookRun`, …) |
+| `testId(seed)` | From `@watchdog/test-kit`: `testId(1)` → `11111111-1111-4111-8111-000000000001` |
 | `withTestTx(fn)` | Always-rollback transaction |
 | `resetTestDb()` | `TRUNCATE` public tables (tests that must COMMIT); keeps `auth.*` |
 | `resetE2eDb()` | Playwright only: `TRUNCATE` public + `auth` so each signup bootstraps an org |
-| `expect*` | Assert inside an existing `it` |
-| `it<Behavior>(…)` | Factory that calls `it()` (`itRejectsIncompleteReport`, `itRunsCollectCap`) |
+| `expect*` | Assert inside an existing `it` (Cap helpers in `packages/caps/src/testing`) |
+| `it<Behavior>(…)` | Factory that calls `it()` (`itRejectsIncompleteReport`, `itRunsCollectCap`; `packages/caps/src/testing`) |
 | `createCapRunHarness` | Fake `CapContext` (upload / credentials) for Cap `run()` |
 | `mockServer` / `mockJson` / `http` | MSW via `@watchdog/test-kit/http` |
 
-Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting patch/ids live in test-kit.
+Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting ids/URLs live in test-kit; helpers that need a workspace package live with it (see above).
 
-Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-kit/db` (`testDb`, seeds). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
+Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-db` (`testDb`, seeds). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
 Do not add tests for generated client JSON, `packages/ui` (generated primitives), ServerFn wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, `DomainError` codes, CLI JSON): not mocks of internals.
 

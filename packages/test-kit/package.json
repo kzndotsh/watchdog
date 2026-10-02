@@ -6,20 +6,12 @@
     ".": "./src/index.ts",
     "./fc": "./src/fc.ts",
     "./fixtures": "./src/fixtures.ts",
-    "./expect": "./src/expect/patch.ts",
-    "./it": "./src/it/index.ts",
-    "./http": "./src/http/mock-server.ts",
-    "./db": "./src/db.ts"
+    "./http": "./src/http/mock-server.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@watchdog/caps": "workspace:*",
-    "@watchdog/db": "workspace:*",
-    "@watchdog/schemas": "workspace:*",
-    "drizzle-orm": "^0.45.2",
-    "effect": "4.0.0-rc.115",
     "fast-check": "^4.10.1",
     "msw": "^2.15.0",
     "vitest": "^5.0.1"

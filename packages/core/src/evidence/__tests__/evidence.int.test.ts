@@ -13,16 +13,16 @@ import {
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
 import {
-  TEST_ACTOR_ID,
-  testId,
-  TEST_ORGANIZATION_ID,
-} from "@watchdog/test-kit";
-import {
   resetTestDb,
   seedAuthUser,
   seedCase,
   seedEntity,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import {
+  TEST_ACTOR_ID,
+  testId,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/test-kit";
 
 describe("dumpUrl", () => {
   beforeEach(async () => {

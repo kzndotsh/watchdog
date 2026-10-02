@@ -4,8 +4,7 @@ import {
   type EvidenceRow,
   type NewEvidence,
 } from "@watchdog/db";
-
-import { TEST_ACTOR_ID } from "../../fixtures/ids.ts";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 const DEFAULT_EVIDENCE: Omit<NewEvidence, "caseId"> = {
   entityId: null,

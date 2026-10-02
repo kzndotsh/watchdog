@@ -14,6 +14,7 @@ Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normaliz
 
 ## Rules
 
+- `src/testing/` (`@watchdog/schemas/testing`): `build*Op` patch fixtures for tests; dev-only, never import from production code. Ids come from `@watchdog/test-kit/fixtures`.
 - `api-caller.ts`: `ApiActor`, `ApiAuthMethod`, `ApiCaller` — plain types for "who is calling" shared by `@watchdog/api` (`ApiContext extends ApiCaller`, adds the logger) and `@watchdog/auth` (`createApiContext`). No logger or framework types here.
 
 - No DB, Caps, or app imports — leaf dependency.

@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import type { JsonObject } from "@watchdog/caps/sdk";
+import type { JsonObject } from "../sdk";
 
 interface InterpretableCap {
   id: string;

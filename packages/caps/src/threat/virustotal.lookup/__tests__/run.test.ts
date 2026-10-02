@@ -2,8 +2,8 @@ import { afterAll, afterEach, beforeAll, describe } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 import { mockJson, mockServer } from "@watchdog/test-kit/http";
-import { itRunsCollectCap } from "@watchdog/test-kit/it";
 
+import { itRunsCollectCap } from "../../../testing";
 import { virusTotalLookup } from "../cap.ts";
 
 describe("threat.virustotal.lookup run", () => {

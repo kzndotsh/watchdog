@@ -1,9 +1,10 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas";
-import { createCapRunHarness, runCap, testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 
+import { createCapRunHarness, runCap } from "../../../testing";
 import { urlEnrich } from "../cap.ts";
 
 describe("network.url.enrich run", () => {

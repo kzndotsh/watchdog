@@ -12,8 +12,8 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { credentialsRepo, db } from "@watchdog/db";
+import { resetTestDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
-import { resetTestDb } from "@watchdog/test-kit/db";
 
 const OTHER_USER = "other-actor";
 

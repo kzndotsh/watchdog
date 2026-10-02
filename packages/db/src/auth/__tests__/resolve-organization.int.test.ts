@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { withTestTx } from "@watchdog/test-kit/db";
+import { withTestTx } from "@watchdog/test-db";
 
 import { member, organization, user } from "../../schema/auth";
 import { resolveUserOrganizationId } from "../resolve-organization";

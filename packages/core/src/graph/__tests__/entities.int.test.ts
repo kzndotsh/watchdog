@@ -13,7 +13,7 @@ import {
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
-import { resetTestDb, seedCase } from "@watchdog/test-kit/db";
+import { resetTestDb, seedCase } from "@watchdog/test-db";
 
 describe("createEntity", () => {
   beforeEach(async () => {

@@ -55,7 +55,7 @@ Writes only inside the new Cap's folder
 6. Add the Cap to the registry, then run `pnpm generate:caps` and commit
    the resulting `capabilities.gen.json` diff.
 7. Add `__tests__/interpret.test.ts`; use `itRunsCollectCap` from
-   `@watchdog/test-kit/it` unless the Cap needs a dedicated `run.test.ts`
+   `src/testing` (`itRunsCollectCap`) unless the Cap needs a dedicated `run.test.ts`
    (harvest / extract.ai / url.enrich / file.analyze / eml.analyze pattern).
 
 ## Gotchas

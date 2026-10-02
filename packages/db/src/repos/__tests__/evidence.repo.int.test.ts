@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
 import {
   seedCase,
   seedEntity,
   seedEvidence,
   withTestTx,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import { testId } from "@watchdog/test-kit";
 
 import { evidenceRepo } from "../evidence.repo.ts";
 

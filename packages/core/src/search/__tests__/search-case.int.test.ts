@@ -3,11 +3,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { searchCaseEffect, runDomain } from "@watchdog/core";
 import { db, edgesRepo, evidenceRepo, jobsRepo, tasksRepo } from "@watchdog/db";
 import {
-  TEST_ORGANIZATION_ID,
   buildClaimCreateOp,
   buildEntityCreateOp,
-  testId,
-} from "@watchdog/test-kit";
+} from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
@@ -18,7 +16,8 @@ import {
   seedJob,
   seedPlaybookRun,
   seedProposal,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 
 describe("searchCase", () => {
   beforeEach(async () => {

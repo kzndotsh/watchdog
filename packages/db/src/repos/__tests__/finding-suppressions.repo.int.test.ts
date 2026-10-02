@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { buildClaimCreateOp, testId } from "@watchdog/test-kit";
-import { seedCase, seedProposal, withTestTx } from "@watchdog/test-kit/db";
+import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import { seedCase, seedProposal, withTestTx } from "@watchdog/test-db";
+import { testId } from "@watchdog/test-kit";
 
 import { findingSuppressionsRepo } from "../finding-suppressions.repo.ts";
 

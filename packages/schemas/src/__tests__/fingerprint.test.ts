@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
+import { fingerprintPatchOp } from "../fingerprint.ts";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
   buildEventCreateOp,
   buildIdentifierCreateOp,
-  testId,
-} from "@watchdog/test-kit";
-
-import { fingerprintPatchOp } from "../fingerprint.ts";
+} from "../testing";
 
 describe("fingerprintPatchOp", () => {
   it("is stable for the same claim op", () => {

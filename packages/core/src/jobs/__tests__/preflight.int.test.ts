@@ -3,13 +3,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain, updateCaseEffect } from "@watchdog/core";
 import { db, jobsRepo } from "@watchdog/db";
-import { buildClaimCreateOp, testId } from "@watchdog/test-kit";
+import { buildClaimCreateOp } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
   seedJob,
   seedProposal,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import { testId } from "@watchdog/test-kit";
 
 import { preflightEffect } from "../stages/preflight.ts";
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { testId,buildClaimCreateOp } from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
+import { buildClaimCreateOp } from "@watchdog/schemas/testing";
 
 import { attachEvidenceIds } from "../attach-evidence";
 

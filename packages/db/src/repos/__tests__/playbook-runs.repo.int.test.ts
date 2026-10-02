@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { seedCase, seedPlaybookRun, withTestTx } from "@watchdog/test-kit/db";
+import { seedCase, seedPlaybookRun, withTestTx } from "@watchdog/test-db";
 
 import { playbookRunsRepo } from "../playbook-runs.repo.ts";
 

@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { putCredentialSlotEffect, runDomain } from "@watchdog/core";
 import type { ApiActor } from "@watchdog/schemas";
+import { resetTestDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
-import { resetTestDb } from "@watchdog/test-kit/db";
 
 import type { ApiContext } from "../context";
 import { router } from "../router";

@@ -1,20 +1,20 @@
 import { Effect } from "effect";
 import { expect, it } from "vitest";
 
-import type {
-  CapContext,
-  CapInterpretOpts,
-  CapInterpretResult,
-  CapRun,
-} from "@watchdog/caps/sdk";
-import { runCap } from "@watchdog/caps/sdk";
 import {
   parseJsonValue,
   REPORT_JSON_ARTIFACT,
   type JsonValue,
 } from "@watchdog/schemas";
+import { testId } from "@watchdog/test-kit/fixtures";
 
-import { testId } from "../fixtures/ids.ts";
+import type {
+  CapContext,
+  CapInterpretOpts,
+  CapInterpretResult,
+  CapRun,
+} from "../sdk";
+import { runCap } from "../sdk";
 
 const SHA = "ab".repeat(32);
 

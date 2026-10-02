@@ -11,7 +11,7 @@ import {
 } from "@watchdog/core";
 import { db, questionsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
+import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 
 describe("createEvent", () => {
   beforeEach(async () => {

@@ -11,16 +11,16 @@ import {
 } from "@watchdog/core";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
-  TEST_ACTOR_ID,
-  TEST_ORGANIZATION_ID,
-  testId,
-} from "@watchdog/test-kit";
-import {
   resetTestDb,
   seedCase,
   seedEntity,
   seedEvidence,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import {
+  TEST_ACTOR_ID,
+  TEST_ORGANIZATION_ID,
+  testId,
+} from "@watchdog/test-kit";
 
 describe("processEvidence", () => {
   beforeEach(async () => {

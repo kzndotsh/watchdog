@@ -6,8 +6,8 @@ import {
   softDeleteEvidenceEffect,
   runDomain,
 } from "@watchdog/core";
+import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, testDb } from "@watchdog/test-kit/db";
 
 describe("evidence procedures (core services)", () => {
   beforeEach(async () => {

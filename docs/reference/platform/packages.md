@@ -3,7 +3,7 @@
 **What this is:** monorepo package list and forbidden-import matrix.  
 **Not:** Cap SPI / Intake tutorial ([`caps-boundary.md`](caps-boundary.md)), jobs/oRPC ([`jobs-orpc.md`](jobs-orpc.md)), web Start/Query ([`../web/architecture.md`](../web/architecture.md)).
 
-`apps/*` + `packages/*`: `@watchdog/env` (T3 Env boot secrets), `@watchdog/db` (Drizzle + events), `@watchdog/schemas` / `@watchdog/policy` / `@watchdog/ai`, `@watchdog/caps` (catalog + Cap SPI at `@watchdog/caps/sdk`) / `@watchdog/tools`, `@watchdog/core`, `@watchdog/log` (evlog process logs), `@watchdog/auth` (Better Auth server: instance, invite signup, instance admin, actor resolution), `@watchdog/ui` (generated shadcn primitives), `@watchdog/test-kit` (test fixtures, dev only), `@watchdog/api` (oRPC), `@watchdog/client` (generated OpenAPI / minified router + typed SDK), `apps/cli` (`@watchdog/cli` / `wd`), `apps/worker` (pg-boss), `apps/site` (`@watchdog/site` — static marketing; no `@watchdog/*` runtime deps).
+`apps/*` + `packages/*`: `@watchdog/env` (T3 Env boot secrets), `@watchdog/db` (Drizzle + events), `@watchdog/schemas` / `@watchdog/policy` / `@watchdog/ai`, `@watchdog/caps` (catalog + Cap SPI at `@watchdog/caps/sdk`) / `@watchdog/tools`, `@watchdog/core`, `@watchdog/log` (evlog process logs), `@watchdog/auth` (Better Auth server: instance, invite signup, instance admin, actor resolution), `@watchdog/ui` (generated shadcn primitives), `@watchdog/test-kit` (dependency-free test helpers, dev only), `@watchdog/test-db` (Postgres harness + seeds, dev only), `@watchdog/api` (oRPC), `@watchdog/client` (generated OpenAPI / minified router + typed SDK), `apps/cli` (`@watchdog/cli` / `wd`), `apps/worker` (pg-boss), `apps/site` (`@watchdog/site` — static marketing; no `@watchdog/*` runtime deps).
 
 ## Package import direction (forbidden imports)
 
@@ -19,7 +19,8 @@
 | `@watchdog/auth` | db, env, log, schemas; `better-auth` + nodemailer | api, core, caps, apps; `@tanstack/*` (apps pass framework plugins in) |
 | `@watchdog/core` | db (**repos only**: no `drizzle-orm`), caps (+ `caps/sdk`), schemas, **policy**, **env**, **log**, **tools** | api, apps: layout: `jobs/` · `cases/` · `proposals/` · `graph/` · `tasks/` · `search/` · `activity/` · `evidence/` · `infra/`; worker imports `@watchdog/core/worker` |
 | `@watchdog/ui` | (nothing in-workspace; shadcn primitives, generated and locked) | db, core, api, caps, apps |
-| `@watchdog/test-kit` | schemas, db, caps/sdk (dev only) | imported from production code |
+| `@watchdog/test-kit` | (nothing in-workspace; dev only) | any `@watchdog/*` package; must not be imported from production code |
+| `@watchdog/test-db` | db, schemas, test-kit (dev only) | caps, core, api, apps; must not be imported from production code |
 | `@watchdog/log` | (nothing in-workspace; pin `evlog`) | apps, cli, client, core, api, db, caps, … |
 | `@watchdog/api` | core (+ schemas), **log** (`ApiContext.log?`) | apps, **db**, drizzle-orm |
 | `@watchdog/client` | (nothing in-workspace at runtime; generated JSON in `src/generated`, oRPC client libs; type entry `app-router` aliases live API `AppRouter` in-monorepo only) | api, apps, db, caps, core, **log** |

@@ -9,7 +9,7 @@ import {
   seedCase,
   seedJob,
   seedPlaybookRun,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
 
 import { runDomain } from "../../infra/run-domain.ts";
 import {

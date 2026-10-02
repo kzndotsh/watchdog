@@ -4,7 +4,7 @@ const ORIGINAL_ENV = { ...process.env };
 
 const resetE2eDbKit = vi.fn(async () => {});
 
-vi.mock("@watchdog/test-kit/db", () => ({
+vi.mock("@watchdog/test-db", () => ({
   resetE2eDb: resetE2eDbKit,
 }));
 

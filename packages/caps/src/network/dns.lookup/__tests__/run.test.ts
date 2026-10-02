@@ -1,8 +1,8 @@
 import { describe, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
-import { itRunsCollectCap } from "@watchdog/test-kit/it";
 
+import { itRunsCollectCap } from "../../../testing";
 import { dnsLookup } from "../cap.ts";
 
 vi.mock("node:dns/promises", () => {

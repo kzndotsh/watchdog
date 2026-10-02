@@ -173,7 +173,8 @@ packages/
 ├── log/                  evlog process logging, NDJSON + stdout
 ├── auth/                 Better Auth server core: createAuth, createApiContext, invite signup, instance admin
 ├── ui/                   Generated shadcn (base-mira) primitives, locked via vendor.json
-└── test-kit/             Dev-only fixtures, Postgres harness, MSW
+├── test-db/              Dev-only Postgres harness + seeds
+└── test-kit/             Dev-only ids, URLs, fast-check, MSW; no workspace deps
 ```
 
 Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and only `core` touches repos. Full matrix in [`docs/reference/platform/README.md`](docs/reference/platform/README.md).

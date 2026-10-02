@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 import {
   seedCase,
   seedEntity,
@@ -9,7 +8,8 @@ import {
   seedJob,
   seedPlaybookRun,
   withTestTx,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { jobs } from "../../schema/jobs.ts";
 import { evidenceRepo } from "../evidence.repo.ts";

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import * as dbModule from "@watchdog/db";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-kit/db";
+import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
 
 import type { CollectResult } from "../stages/collect.ts";
 import { createJobLog } from "../stages/helpers.ts";

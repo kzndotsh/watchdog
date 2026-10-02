@@ -65,6 +65,7 @@
     "@shadcn/lint": "0.2.0",
     "@vitejs/plugin-react": "^6.1.1",
     "@vitest/coverage-v8": "^5.0.1",
+    "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
     "cn": "0.3.2",
     "happy-dom": "^20.14.3",

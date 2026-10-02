@@ -20,12 +20,9 @@ import {
 } from "@watchdog/db";
 import { fingerprintPatchOp, entityDisplayLabel } from "@watchdog/schemas";
 import {
-  TEST_ACTOR_ID,
   buildClaimCreateOp,
   buildIdentifierCreateOp,
-  testId,
-  TEST_ORGANIZATION_ID,
-} from "@watchdog/test-kit";
+} from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
@@ -33,7 +30,12 @@ import {
   seedEvidence,
   seedIdentifier,
   seedProposal,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import {
+  TEST_ACTOR_ID,
+  testId,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/test-kit";
 
 describe("acceptProposal", () => {
   beforeEach(async () => {

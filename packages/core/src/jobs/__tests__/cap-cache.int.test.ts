@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { runDomain } from "@watchdog/core";
 import { db } from "@watchdog/db";
-import { resetTestDb, seedCase } from "@watchdog/test-kit/db";
+import { resetTestDb, seedCase } from "@watchdog/test-db";
 
 import { lookupCapCacheEffect, storeCapCacheEffect } from "../cap-cache.ts";
 

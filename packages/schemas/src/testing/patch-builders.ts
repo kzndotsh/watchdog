@@ -1,6 +1,7 @@
-import type { JsonObject, PatchOp } from "@watchdog/schemas";
+import { testId } from "@watchdog/test-kit/fixtures";
 
-import { testId } from "./ids.ts";
+import type { JsonObject } from "../json";
+import type { PatchOp } from "../patch";
 
 export function buildPatchOp(
   overrides: Partial<PatchOp> & Pick<PatchOp, "resource">

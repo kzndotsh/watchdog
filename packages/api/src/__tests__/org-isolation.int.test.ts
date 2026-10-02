@@ -2,11 +2,6 @@ import { ORPCError, createRouterClient } from "@orpc/server";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import {
-  TEST_ACTOR_ID,
-  TEST_ORGANIZATION_ID,
-  testId,
-} from "@watchdog/test-kit";
-import {
   resetTestDb,
   seedCase,
   seedEntity,
@@ -16,7 +11,12 @@ import {
   seedJob,
   seedProposal,
   testDb,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import {
+  TEST_ACTOR_ID,
+  TEST_ORGANIZATION_ID,
+  testId,
+} from "@watchdog/test-kit";
 
 import type { ApiContext } from "../context";
 import { router } from "../router";
