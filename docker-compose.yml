@@ -35,8 +35,8 @@ services:
     restart: unless-stopped
     environment:
       # SeaweedFS reads its admin S3 identity from the standard AWS variables.
-      AWS_ACCESS_KEY_ID: minioadmin
-      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_ACCESS_KEY_ID: watchdog
+      AWS_SECRET_ACCESS_KEY: watchdog-dev-secret
     # Host 9100 — :8333 is SeaweedFS's S3 port inside the container
     ports:
       - "127.0.0.1:9100:8333"

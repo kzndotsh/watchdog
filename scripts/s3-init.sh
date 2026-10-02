@@ -4,8 +4,8 @@
 set -euo pipefail
 
 ENDPOINT="${S3_ENDPOINT:-http://127.0.0.1:9100}"
-ACCESS="${S3_ACCESS_KEY:-minioadmin}"
-SECRET="${S3_SECRET_KEY:-minioadmin}"
+ACCESS="${S3_ACCESS_KEY:-watchdog}"
+SECRET="${S3_SECRET_KEY:-watchdog-dev-secret}"
 BUCKET="${S3_BUCKET:-watchdog-evidence}"
 REGION="${S3_REGION:-us-east-1}"
 # Origins that may PUT straight to the bucket from the browser (presigned uploads).

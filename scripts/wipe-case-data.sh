@@ -81,8 +81,8 @@ SELECT
 SQL
 
 endpoint="${S3_ENDPOINT:-http://127.0.0.1:9100}"
-access="${S3_ACCESS_KEY:-minioadmin}"
-secret="${S3_SECRET_KEY:-minioadmin}"
+access="${S3_ACCESS_KEY:-watchdog}"
+secret="${S3_SECRET_KEY:-watchdog-dev-secret}"
 bucket="${S3_BUCKET:-watchdog-evidence}"
 
 # SeaweedFS has no recursive delete over the S3 API from the shell, so drop the bucket (and its

@@ -39,8 +39,8 @@ export const e2eEnv: Record<string, string> = {
   BETTER_AUTH_URL: e2eEnvOr("BETTER_AUTH_URL", e2eOrigin),
   BETTER_AUTH_ALLOW_SIGNUP: e2eEnvOr("BETTER_AUTH_ALLOW_SIGNUP", "1"),
   S3_ENDPOINT: e2eEnvOr("S3_ENDPOINT", `http://127.0.0.1:${s3Port}`),
-  S3_ACCESS_KEY: e2eEnvOr("S3_ACCESS_KEY", "minioadmin"),
-  S3_SECRET_KEY: e2eEnvOr("S3_SECRET_KEY", "minioadmin"),
+  S3_ACCESS_KEY: e2eEnvOr("S3_ACCESS_KEY", "watchdog"),
+  S3_SECRET_KEY: e2eEnvOr("S3_SECRET_KEY", "watchdog-dev-secret"),
   S3_BUCKET: e2eEnvOr("S3_BUCKET", "watchdog-evidence"),
   S3_REGION: e2eEnvOr("S3_REGION", "us-east-1"),
   WD_MASTER_VAULT_KEY: e2eEnvOr(
