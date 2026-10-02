@@ -6,8 +6,8 @@ import type {
   CapInterpretOpts,
   CapInterpretResult,
   CapRun,
-} from "@watchdog/cap-sdk";
-import { runCap } from "@watchdog/cap-sdk";
+} from "@watchdog/caps/sdk";
+import { runCap } from "@watchdog/caps/sdk";
 import {
   parseJsonValue,
   REPORT_JSON_ARTIFACT,

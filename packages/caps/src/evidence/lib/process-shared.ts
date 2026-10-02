@@ -5,11 +5,6 @@ import {
   type EvidenceSnapshot,
   type ProcessExtractDraft,
 } from "@watchdog/ai";
-import type {
-  CapArtifact,
-  CapInterpretOpts,
-  CapInterpretResult,
-} from "@watchdog/cap-sdk";
 import {
   DERIVED_JSON_ARTIFACT,
   EVIDENCE_SNAPSHOT_ARTIFACT,
@@ -19,6 +14,11 @@ import {
 } from "@watchdog/schemas";
 import type { ToolsTag } from "@watchdog/tools";
 
+import type {
+  CapArtifact,
+  CapInterpretOpts,
+  CapInterpretResult,
+} from "../../sdk";
 import { draftToOutcome } from "./draft-to-patch-ops";
 
 type UploadFn = (input: {

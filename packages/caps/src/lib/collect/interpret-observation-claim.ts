@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { CapInterpretResult } from "@watchdog/cap-sdk";
-
+import type { CapInterpretResult } from "../../sdk";
 import {
   INVALID_COLLECT_ENTITY_SUMMARY,
   resolveCollectEntityId,

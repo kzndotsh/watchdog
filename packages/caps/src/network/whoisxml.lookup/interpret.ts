@@ -1,9 +1,9 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { WhoisSnapshot } from "@watchdog/tools";
 
 import { interpretWhoisSnapshot } from "../../lib/collect/interpret-whois-snapshot";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { whoisXmlLookupInput } from "./input";
 
 type WhoisXmlInput = z.infer<typeof whoisXmlLookupInput>;

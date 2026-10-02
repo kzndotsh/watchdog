@@ -1,13 +1,12 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   identifierTruncationNote,
   querySeedBatches,
 } from "../../lib/collect/query-seed-batches";
 import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { pgpLookupInput } from "./input";
 import type { PgpLookupSnapshot } from "./report-schema";
 

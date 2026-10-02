@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { Data, Effect } from "effect";
 
-import type { CapContext } from "@watchdog/cap-sdk";
+import type { CapContext } from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobArtifact } from "@watchdog/db";
 import type { EvidenceSnapshot } from "@watchdog/schemas";
 import {

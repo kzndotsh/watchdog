@@ -1,9 +1,9 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { HttpProbeSnapshot } from "@watchdog/tools";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { httpProbeInput } from "./input";
 
 type HttpInput = z.infer<typeof httpProbeInput>;

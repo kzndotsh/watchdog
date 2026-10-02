@@ -1,10 +1,10 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { HibpLookupSnapshot } from "@watchdog/tools";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { hibpLookupInput } from "./input";
 
 type HibpInput = z.infer<typeof hibpLookupInput>;

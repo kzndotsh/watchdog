@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 
-import type { CapInterpretResult } from "@watchdog/cap-sdk";
 import {
   validateIdentifierWrite,
   type IdentifierType,
 } from "@watchdog/schemas";
 
+import type { CapInterpretResult } from "../../sdk";
 import { eligibleCtDomains } from "./eligible-domain-hosts";
 import {
   DOMAIN_IDENTIFIER_BATCH_LIMIT,

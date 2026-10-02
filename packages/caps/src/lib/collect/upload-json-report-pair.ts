@@ -1,8 +1,9 @@
 import { Effect } from "effect";
 
-import type { CapArtifact } from "@watchdog/cap-sdk";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
 import type { ToolsTag } from "@watchdog/tools";
+
+import type { CapArtifact } from "../../sdk";
 
 type UploadFn = (input: {
   bytes: Uint8Array;

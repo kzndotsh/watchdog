@@ -1,9 +1,10 @@
-import type { CapIoKind } from "@watchdog/cap-sdk";
 import {
   PLAYBOOK_SEED_KINDS,
   type JsonObject,
   type PlaybookSeedKind,
 } from "@watchdog/schemas";
+
+import type { CapIoKind } from "../sdk";
 
 export type { PlaybookSeedKind };
 

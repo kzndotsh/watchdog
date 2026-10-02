@@ -35,7 +35,6 @@ const config = defineConfig({
       "@watchdog/ai",
       "@watchdog/api",
       "@watchdog/auth",
-      "@watchdog/cap-sdk",
       "@watchdog/caps",
       "@watchdog/core",
       "@watchdog/db",

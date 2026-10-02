@@ -25,7 +25,7 @@ const ALLOW = new Set([
   "packages/core/src/infra/run-domain.ts",
   "packages/core/src/infra/postgres-tx.ts",
   "packages/core/src/infra/export-sync.ts",
-  "packages/cap-sdk/src/run.ts",
+  "packages/caps/src/sdk/run.ts",
 ]);
 
 const ROOTS = [
@@ -33,7 +33,6 @@ const ROOTS = [
   "packages/api/src",
   "packages/tools/src",
   "packages/policy/src",
-  "packages/cap-sdk/src",
   "packages/caps/src",
   "packages/ai/src",
   "packages/db/src",

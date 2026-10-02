@@ -16,7 +16,7 @@ pre-commit:
         - "**/*.{ts,tsx,js,json,yml,yaml,md}"
       exclude:
         - "**/routeTree.gen.ts"
-        - "packages/contract/src/generated/**"
+        - "packages/client/src/generated/**"
         - "packages/caps/capabilities.gen.json"
         - "packages/ui/src/components/**"
         - "packages/ui/src/hooks/**"

@@ -18,7 +18,7 @@ WD_API_KEY=<key-from-settings>
 
 4. After `pnpm install` and `pnpm build:cli`, `wd` is on PATH (`pnpm exec wd` / `node_modules/.bin/wd`). `wd --help` works without a key; authenticated verbs need both vars. From the repo root, dotenv picks up `.env`.
 
-Regenerate client after API changes: `pnpm generate:client` (writes `@watchdog/contract`). `@watchdog/api`, `@watchdog/client`, `@watchdog/contract`, and `@watchdog/cli` typecheck with workspace TypeScript **7.0.2** — keep `"typescript": "7.0.2"` in those `package.json` files; do not float `^6`.
+Regenerate client after API changes: `pnpm generate:client` (writes `packages/client/src/generated/`). `@watchdog/api`, `@watchdog/client`, and `@watchdog/cli` typecheck with workspace TypeScript **7.0.2** — keep `"typescript": "7.0.2"` in those `package.json` files; do not float `^6`.
 
 ## Interactive API docs
 

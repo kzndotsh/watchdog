@@ -3,9 +3,8 @@ import path from "node:path";
 
 import { describe, it, expect } from "vitest";
 
-import { toCapDescriptor } from "@watchdog/cap-sdk";
-
 import { CAPABILITIES, listCapabilities } from "../registry.ts";
+import { toCapDescriptor } from "../sdk";
 
 const root = path.join(import.meta.dirname, "../..");
 const genPath = path.join(root, "capabilities.gen.json");

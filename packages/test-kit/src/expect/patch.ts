@@ -1,6 +1,6 @@
 import { expect } from "vitest";
 
-import type { CapInterpretResult } from "@watchdog/cap-sdk";
+import type { CapInterpretResult } from "@watchdog/caps/sdk";
 import type { PatchOp } from "@watchdog/schemas";
 
 export function expectPatchCreates(

@@ -1,6 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { PageEnrichSnapshot } from "@watchdog/tools";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
@@ -8,6 +7,7 @@ import {
   URL_IDENTIFIER_BATCH_LIMIT,
   urlValuesBatch,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { pageEnrichInput } from "./input";
 
 type Input = z.infer<typeof pageEnrichInput>;

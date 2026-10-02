@@ -1,6 +1,6 @@
 /**
  * Export a minified oRPC contract (+ OpenAPI JSON + AppRouter type entry)
- * for @watchdog/contract / @watchdog/client.
+ * for @watchdog/client.
  * Run: pnpm --filter @watchdog/api export-contract
  */
 import { writeFileSync } from "node:fs";
@@ -9,7 +9,7 @@ import path from "node:path";
 import { exportContract } from "../src/export-contract.ts";
 
 const here = import.meta.dirname;
-const outDir = path.join(here, "../../contract/src/generated");
+const outDir = path.join(here, "../../client/src/generated");
 await exportContract(outDir);
 
 const appRouterEntry = `/**

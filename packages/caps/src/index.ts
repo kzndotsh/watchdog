@@ -1,4 +1,4 @@
-/** Cap SPI re-export for catalog implementations; runtime services should import `@watchdog/cap-sdk` directly. */
+/** Cap SPI re-export for catalog implementations; runtime services (core, test-kit) import the SPI from `@watchdog/caps/sdk`. */
 export {
   defineCapability,
   DEFAULT_CAP_TIMEOUT_MS,
@@ -19,7 +19,7 @@ export {
   type CapabilityDef,
   type JsonObject,
   type PatchOp,
-} from "@watchdog/cap-sdk";
+} from "./sdk";
 export {
   CAPABILITIES,
   requireCapability,

@@ -12,7 +12,7 @@ import {
   Result,
 } from "effect";
 
-import { capTimeoutMs } from "@watchdog/cap-sdk";
+import { capTimeoutMs } from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobRow } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas";
 import { isToolsTag, taggedToToolsError, type ToolsTag } from "@watchdog/tools";

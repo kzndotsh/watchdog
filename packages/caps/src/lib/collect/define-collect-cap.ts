@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 import type { z } from "zod";
 
+import type { JsonValue } from "@watchdog/schemas";
+import type { ToolsTag } from "@watchdog/tools";
+
 import {
   defineCapability,
   type CapContext,
@@ -8,10 +11,7 @@ import {
   type CapInterpretResult,
   type CapServices,
   type CapabilityDef,
-} from "@watchdog/cap-sdk";
-import type { JsonValue } from "@watchdog/schemas";
-import type { ToolsTag } from "@watchdog/tools";
-
+} from "../../sdk";
 import { uploadJsonReportPair } from "./upload-json-report-pair";
 
 interface CollectSnap<TSnap> {

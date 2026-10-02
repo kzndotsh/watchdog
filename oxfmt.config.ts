@@ -12,7 +12,7 @@ const watchdogIgnores = [
   "reports/**",
   "templates/**",
   "**/routeTree.gen.ts",
-  "packages/contract/src/generated/**",
+  "packages/client/src/generated/**",
   "packages/caps/capabilities.gen.json",
   "packages/db/drizzle/**",
   "**/dist/**",

@@ -1,7 +1,5 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
-
 import { withSeedHost } from "../../lib/collect/eligible-domain-hosts";
 import { interpretTypedIdentifiers } from "../../lib/collect/interpret-typed-identifiers";
 import {
@@ -9,6 +7,7 @@ import {
   eligibleDomainCount,
   identifierTruncationNote,
 } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { certspotterLookupInput } from "./input";
 import type { CertspotterLookupSnapshot } from "./report-schema";
 

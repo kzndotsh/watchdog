@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
-import { defineCapability } from "@watchdog/cap-sdk";
 import { analyzeEmlText, ValidationVendorError } from "@watchdog/tools";
 
+import { defineCapability } from "../../sdk";
 import {
   interpretProcessDraft,
   uploadProcessArtifacts,

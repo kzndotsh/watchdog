@@ -1,12 +1,5 @@
 import type { z } from "zod";
 
-import {
-  capTimeoutMs,
-  toCapDescriptor,
-  type CapDescriptor,
-  type CapabilityDef,
-} from "@watchdog/cap-sdk";
-
 import { commoncrawlLookup } from "./archive/commoncrawl.lookup/cap";
 import { urlSubmit } from "./archive/url.submit/cap";
 import { waybackFetch } from "./archive/wayback.fetch/cap";
@@ -50,6 +43,12 @@ import { urlscanSubmit } from "./network/urlscan.submit/cap";
 import { whoisLookup } from "./network/whois.lookup/cap";
 import { whoisXmlLookup } from "./network/whoisxml.lookup/cap";
 import { whoxyLookup } from "./network/whoxy.lookup/cap";
+import {
+  capTimeoutMs,
+  toCapDescriptor,
+  type CapDescriptor,
+  type CapabilityDef,
+} from "./sdk";
 import { abuseIpdbLookup } from "./threat/abuseipdb.lookup/cap";
 import { bgprankingLookup } from "./threat/bgpranking.lookup/cap";
 import { cymruMhrLookup } from "./threat/cymru_mhr.lookup/cap";

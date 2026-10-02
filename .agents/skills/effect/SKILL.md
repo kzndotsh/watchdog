@@ -10,7 +10,7 @@ description: >-
   Watchdog runtime conventions only.
 metadata:
   owner: watchdog
-  sources: packages/core/AGENTS.md, packages/api/AGENTS.md, packages/cap-sdk/AGENTS.md, packages/tools/AGENTS.md, apps/worker/AGENTS.md, scripts/check-effect-edges.mjs, docs/reference/platform/jobs-orpc.md
+  sources: packages/core/AGENTS.md, packages/api/AGENTS.md, packages/caps/AGENTS.md, packages/tools/AGENTS.md, apps/worker/AGENTS.md, scripts/check-effect-edges.mjs, docs/reference/platform/jobs-orpc.md
 ---
 
 # Effect (Watchdog)

@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 
-import { optionalCapCredential } from "@watchdog/cap-sdk";
 import { fetchGithubUserEffect } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
+import { optionalCapCredential } from "../../sdk";
 import { githubLookupInput } from "./input";
 import { interpretGithubLookupReport } from "./interpret";
 import { githubUserSnapshotSchema } from "./report-schema";

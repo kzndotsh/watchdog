@@ -1,10 +1,10 @@
 import type { z } from "zod";
 
-import type { CapInterpretOpts, CapInterpretResult } from "@watchdog/cap-sdk";
 import type { ArchiveSubmitSnapshot } from "@watchdog/tools";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { urlSeedBatch } from "../../lib/collect/query-seed-batches";
+import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { archiveUrlSubmitInput } from "./input";
 
 type SubmitInput = z.infer<typeof archiveUrlSubmitInput>;
