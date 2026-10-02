@@ -8,8 +8,9 @@ ACCESS="${S3_ACCESS_KEY:-watchdog}"
 SECRET="${S3_SECRET_KEY:-watchdog-dev-secret}"
 BUCKET="${S3_BUCKET:-watchdog-evidence}"
 REGION="${S3_REGION:-us-east-1}"
-# Origins that may PUT straight to the bucket from the browser (presigned uploads).
-ORIGINS="${S3_CORS_ORIGINS:-http://localhost:3000 http://127.0.0.1:3000}"
+# Origins that may PUT straight to the bucket from the browser (presigned uploads): the dev app
+# on :3000 and the Playwright app on :3300. Space-separated; `*` is allowed.
+read -r -a ORIGINS <<<"${S3_CORS_ORIGINS:-http://localhost:3000 http://127.0.0.1:3000 http://localhost:3300 http://127.0.0.1:3300}"
 
 s3() {
   curl -sS --aws-sigv4 "aws:amz:${REGION}:s3" --user "${ACCESS}:${SECRET}" "$@"
@@ -21,7 +22,7 @@ status() {
 
 cors_xml() {
   printf '<CORSConfiguration><CORSRule>'
-  for origin in $ORIGINS; do printf '<AllowedOrigin>%s</AllowedOrigin>' "$origin"; done
+  for origin in "${ORIGINS[@]}"; do printf '<AllowedOrigin>%s</AllowedOrigin>' "$origin"; done
   printf '<AllowedMethod>PUT</AllowedMethod><AllowedMethod>GET</AllowedMethod><AllowedMethod>HEAD</AllowedMethod>'
   printf '<AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader></CORSRule></CORSConfiguration>'
 }

@@ -85,17 +85,30 @@ access="${S3_ACCESS_KEY:-watchdog}"
 secret="${S3_SECRET_KEY:-watchdog-dev-secret}"
 bucket="${S3_BUCKET:-watchdog-evidence}"
 
-# SeaweedFS has no recursive delete over the S3 API from the shell, so drop the bucket (and its
-# objects) with `weed shell` inside the container, then recreate it with its CORS rules.
+# SeaweedFS has no recursive delete over the S3 API, so drop the bucket (and its objects) with
+# `weed shell` inside the compose container, then recreate it with its CORS rules. That only works
+# for the local compose server: a remote endpoint, or a container that is not running, is skipped.
 S3_CONTAINER="${S3_CONTAINER:-watchdog-s3}"
-if docker inspect "$S3_CONTAINER" >/dev/null 2>&1; then
+case "$endpoint" in
+  http://127.0.0.1:* | http://localhost:*) endpoint_is_local=1 ;;
+  *) endpoint_is_local=0 ;;
+esac
+
+if [[ "$endpoint_is_local" -eq 1 ]] \
+  && [[ "$(docker inspect -f '{{.State.Running}}' "$S3_CONTAINER" 2>/dev/null || true)" == "true" ]]; then
   docker exec -i "$S3_CONTAINER" weed shell -master=localhost:9333 >/dev/null 2>&1 \
     <<<"s3.bucket.delete -name ${bucket}" || true
+  # Deleting must have worked; otherwise recreating would report an emptied bucket that is not.
+  if [[ "$(curl -s -o /dev/null -w '%{http_code}' -I --aws-sigv4 "aws:amz:${S3_REGION:-us-east-1}:s3" \
+    --user "${access}:${secret}" "${endpoint}/${bucket}")" == "200" ]]; then
+    echo "Database wiped, but the evidence bucket ${bucket} could not be emptied. Remove it manually, then run: just s3-init" >&2
+    exit 1
+  fi
   S3_ENDPOINT="$endpoint" S3_ACCESS_KEY="$access" S3_SECRET_KEY="$secret" S3_BUCKET="$bucket" \
     bash "$(dirname "$0")/s3-init.sh" >/dev/null
   echo "Evidence bucket emptied: ${bucket} @ ${endpoint}"
 else
-  echo "${S3_CONTAINER} is not running — skipped emptying the evidence bucket (DB wipe still applied)" >&2
+  echo "Skipped emptying the evidence bucket: ${S3_CONTAINER} is not running, or S3_ENDPOINT is not the local compose server. The database wipe still applied." >&2
 fi
 
 echo "Wiped case data. Auth + vault credentials kept. Restart the worker if it was running."
