@@ -34,7 +34,7 @@ Before the next Cap or UI slice: happy path + 2-3 sad paths + done-when → walk
 | Scenario | Status | Pitfall |
 | --- | --- | --- |
 | Paste dump → Evidence + hash | shipped | No client size cap on paste |
-| File upload → Evidence | shipped | Orphan MinIO if confirm fails; also `wd evidence file` (same loop) |
+| File upload → Evidence | shipped | Orphan object if confirm fails; also `wd evidence file` (same loop) |
 | URL dump → Evidence + Enrich | partial | Enrich is a separate verb (UI + `wd evidence enrich`); no hash on URL row |
 | Hide / soft-delete | shipped | Filters → Hidden + Restore on Detail |
 | Process Cap from Intake | shipped | Also `wd evidence process` (Harvest glue; dedupes active Jobs) |

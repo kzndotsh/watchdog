@@ -150,7 +150,7 @@ UI never imports `*.server.ts` directly. Auth is global `functionMiddleware`: no
 - Collect Evidence detail tabs: **Content** (dump) · **Output** (latest Enrich `enriched.md`) · **Runs**.
 - Artifact **display** text: `artifactContentQuery` (`useQuery`): Collect run detail + Evidence detail.
 - Evidence Content tab blob/text: `hooks/use-evidence-blob.ts` (`useQuery` on download URL + artifact content; parent passes loaded evidence row).
-- Blobs: MinIO via presigned PUT; see platform ARCHITECTURE Evidence / Export sections.
+- Blobs: S3 object storage via presigned PUT; see platform ARCHITECTURE Evidence / Export sections.
 
 ## Tables
 

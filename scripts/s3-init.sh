@@ -1,40 +1,43 @@
 #!/usr/bin/env bash
-# Create MinIO Evidence bucket (CORS via docker-compose MINIO_API_CORS_ALLOW_ORIGIN).
-# Prefer host `mc` (nix develop); fall back to the `mc` bundled in the MinIO server container.
+# Create the Evidence bucket and its CORS rules on the local S3 server (SeaweedFS).
+# Plain curl with SigV4, so there is no client to install. Idempotent.
 set -euo pipefail
 
 ENDPOINT="${S3_ENDPOINT:-http://127.0.0.1:9100}"
 ACCESS="${S3_ACCESS_KEY:-minioadmin}"
 SECRET="${S3_SECRET_KEY:-minioadmin}"
 BUCKET="${S3_BUCKET:-watchdog-evidence}"
-MINIO_CONTAINER="${MINIO_CONTAINER:-watchdog-minio}"
+REGION="${S3_REGION:-us-east-1}"
+# Origins that may PUT straight to the bucket from the browser (presigned uploads).
+ORIGINS="${S3_CORS_ORIGINS:-http://localhost:3000 http://127.0.0.1:3000}"
 
-ensure_bucket_with_host_mc() {
-  mc alias set local "$ENDPOINT" "$ACCESS" "$SECRET" --api S3v4
-  mc mb --ignore-existing "local/${BUCKET}"
+s3() {
+  curl -sS --aws-sigv4 "aws:amz:${REGION}:s3" --user "${ACCESS}:${SECRET}" "$@"
 }
 
-ensure_bucket_with_docker_mc() {
-  if ! command -v docker >/dev/null 2>&1; then
-    echo "minio-client (mc) required — install via nix develop / pkgs.minio-client, or ensure docker is available for the in-container mc fallback" >&2
-    exit 1
-  fi
-  if ! docker inspect "$MINIO_CONTAINER" >/dev/null 2>&1; then
-    echo "${MINIO_CONTAINER} is not running — run just docker-up first" >&2
-    exit 1
-  fi
-  # The MinIO server image (ghcr.io/coollabsio/minio) ships its own `mc`, so no separate
-  # client image is pulled (the Hub and Quay mc images are private). Inside the container
-  # MinIO is on localhost:9000; MC_HOST_* avoids an alias round-trip.
-  docker exec \
-    -e "MC_HOST_local=http://${ACCESS}:${SECRET}@localhost:9000" \
-    "$MINIO_CONTAINER" mc mb --ignore-existing "local/${BUCKET}"
+status() {
+  s3 -o /dev/null -w '%{http_code}' "$@"
 }
 
-if command -v mc >/dev/null 2>&1; then
-  ensure_bucket_with_host_mc
-else
-  ensure_bucket_with_docker_mc
+cors_xml() {
+  printf '<CORSConfiguration><CORSRule>'
+  for origin in $ORIGINS; do printf '<AllowedOrigin>%s</AllowedOrigin>' "$origin"; done
+  printf '<AllowedMethod>PUT</AllowedMethod><AllowedMethod>GET</AllowedMethod><AllowedMethod>HEAD</AllowedMethod>'
+  printf '<AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader></CORSRule></CORSConfiguration>'
+}
+
+if [ "$(status -I "${ENDPOINT}/${BUCKET}")" != "200" ]; then
+  code="$(status -X PUT "${ENDPOINT}/${BUCKET}")"
+  if [ "$code" != "200" ]; then
+    echo "Could not create bucket ${BUCKET} at ${ENDPOINT} (HTTP ${code}). Is the S3 server up? Try: just docker-up" >&2
+    exit 1
+  fi
+fi
+
+code="$(status -X PUT -H 'Content-Type: application/xml' --data "$(cors_xml)" "${ENDPOINT}/${BUCKET}?cors")"
+if [ "$code" != "200" ]; then
+  echo "Could not set CORS on ${BUCKET} (HTTP ${code})" >&2
+  exit 1
 fi
 
 echo "Bucket ready: ${BUCKET} @ ${ENDPOINT}"

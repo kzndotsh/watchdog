@@ -13,7 +13,7 @@ afterEach(() => {
 describe("e2e env", () => {
   it("defaults ports and database URLs when unset", async () => {
     delete process.env.E2E_WEB_PORT;
-    delete process.env.E2E_MINIO_PORT;
+    delete process.env.E2E_S3_PORT;
     delete process.env.DATABASE_URL;
     delete process.env.DATABASE_URL_MIGRATE;
 

@@ -463,7 +463,7 @@ export function getEvidenceDownloadUrlEffect(
 }
 
 /**
- * Human attestation note — text-only Evidence (no MinIO blob).
+ * Human attestation note — text-only Evidence (no stored blob).
  * Used on Inbox Accept when the investigator pastes a citeable note.
  * Caller must already have org-scoped the case (Accept path).
  */

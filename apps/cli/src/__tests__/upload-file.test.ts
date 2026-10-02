@@ -112,7 +112,7 @@ describe("uploadEvidenceFile", () => {
     expect(apiMocks.presign).not.toHaveBeenCalled();
   });
 
-  it("fails with UPLOAD_FAILED when MinIO PUT is not ok", async () => {
+  it("fails with UPLOAD_FAILED when the S3 PUT is not ok", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response(null, { status: 403 }))
@@ -120,7 +120,7 @@ describe("uploadEvidenceFile", () => {
 
     await expect(
       uploadEvidenceFile({ caseId: CASE_ID, path: "/tmp/note.txt" })
-    ).rejects.toThrow(/UPLOAD_FAILED: MinIO upload failed \(403\)/);
+    ).rejects.toThrow(/UPLOAD_FAILED: Upload failed \(403\)/);
     expect(apiMocks.confirmFile).not.toHaveBeenCalled();
   });
 });

@@ -1,20 +1,20 @@
 # Watchdog greenfield — local infra via just.
-# `just up` = healthy Postgres + MinIO + bucket + migrations (not docker-only).
+# `just up` = healthy Postgres + S3 (SeaweedFS) + bucket + migrations (not docker-only).
 
 set dotenv-load := true
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# Postgres + MinIO + bucket + migrations (daily / first-run infra)
-up: docker-up wait-healthy minio-init migrate
+# Postgres + S3 (SeaweedFS) + bucket + migrations (daily / first-run infra)
+up: docker-up wait-healthy s3-init migrate
 
 # Docker only — use when you need containers without migrate/bucket
 docker-up:
-    docker compose up -d postgres minio
+    docker compose up -d postgres s3
 
-# Block until Postgres + MinIO healthchecks pass
+# Block until Postgres + S3 (SeaweedFS) healthchecks pass
 wait-healthy:
-    @echo "Waiting for Postgres + MinIO…"
-    docker compose up -d --wait postgres minio
+    @echo "Waiting for Postgres + S3 (SeaweedFS)…"
+    docker compose up -d --wait postgres s3
 
 down:
     docker compose down
@@ -22,8 +22,8 @@ down:
 migrate:
     pnpm db:migrate
 
-minio-init:
-    bash scripts/minio-init.sh
+s3-init:
+    bash scripts/s3-init.sh
 
 # Empty Case Graph / Jobs / Inbox / Evidence. Keeps auth (including orgs) + vault. `just wipe yes` skips prompt.
 wipe *args:

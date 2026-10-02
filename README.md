@@ -73,7 +73,7 @@ nix develop                 # optional
 cp env.example .env         # set BETTER_AUTH_SECRET + WD_MASTER_VAULT_KEY
                             # openssl rand -base64 32
 pnpm install
-just dev                    # Postgres + MinIO + migrations + web + worker + marketing site (:3001)
+just dev                    # Postgres + S3 + migrations + web + worker + marketing site (:3001)
 ```
 
 No account is seeded and registration is closed by default. See [`docs/how-to/onboarding.md`](docs/how-to/onboarding.md) and [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup, invites, and env detail.
@@ -82,7 +82,7 @@ No account is seeded and registration is closed by default. See [`docs/how-to/on
 
 **First investigation tutorial:** [`docs/tutorials/first-investigation.md`](docs/tutorials/first-investigation.md) (dump → Process → Triage → Dossier).
 
-Everything binds to loopback: product app on `:3000`, static marketing site on `:3001` (no infra; `just dev` starts it too), Postgres on `:5432`, MinIO on `:9100` with its console on `:9101`. Agents: [`docs/how-to/agent-cli.md`](docs/how-to/agent-cli.md) · OpenAPI `/api/v1/spec.json`.
+Everything binds to loopback: product app on `:3000`, static marketing site on `:3001` (no infra; `just dev` starts it too), Postgres on `:5432`, S3 storage (SeaweedFS) on `:9100`. Agents: [`docs/how-to/agent-cli.md`](docs/how-to/agent-cli.md) · OpenAPI `/api/v1/spec.json`.
 
 **pnpm only.** Version is pinned in `package.json`; npm and yarn will produce a broken workspace.
 
@@ -194,7 +194,7 @@ A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker
 | --- | --- |
 | **Frontend** | TanStack Start · React · Tailwind 4 · shadcn/ui · TanStack Query |
 | **API** | oRPC (RPC for the app, OpenAPI for agents) · Zod |
-| **Data** | Postgres 18 · Drizzle ORM · MinIO/S3 |
+| **Data** | Postgres 18 · Drizzle ORM · S3-compatible storage |
 | **Jobs** | pg-boss · dedicated worker process · Effect fibers + tagged errors |
 | **Auth** | Better Auth (sessions, orgs, invites, API keys, instance admin) |
 | **Observability** | evlog structured wide events |

@@ -58,7 +58,7 @@ export function uploadFileEvidence(input: {
         body: input.file,
       }).then((res) => {
         if (!res.ok) {
-          throw new Error(`MinIO upload failed (${res.status})`);
+          throw new Error(`Upload failed (${res.status})`);
         }
         return { put, sha256, mime };
       })

@@ -45,7 +45,7 @@ const integrationEnv = {
     "postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test",
   BETTER_AUTH_SECRET: "test-secret-must-be-at-least-32-chars",
   BETTER_AUTH_URL: "http://127.0.0.1:3000",
-  S3_ENDPOINT: "http://127.0.0.1:9100",
+  S3_ENDPOINT: process.env.S3_ENDPOINT ?? "http://127.0.0.1:9100",
   S3_ACCESS_KEY: "minioadmin",
   S3_SECRET_KEY: "minioadmin",
   S3_BUCKET: "watchdog-evidence",

@@ -139,10 +139,9 @@
             pkgs.pnpm              # JS monorepo package manager
             pkgs.uv                # Python workspace (api, worker, wd-core, wd-cli)
             pkgs.turbo             # Turborepo task runner (optional; pnpm dlx turbo also fine)
-            pkgs.docker-compose    # Compose for Postgres/Redis/MinIO
+            pkgs.docker-compose    # Compose for Postgres + S3 (SeaweedFS)
             pkgs.postgresql_18     # psql client + local tooling
             pkgs.redis             # redis-cli
-            pkgs.minio-client      # mc — MinIO admin
             pkgs.caddy             # reverse proxy (local / VPS)
             pkgs.openssl           # certs / JWT debugging
             pkgs.curl

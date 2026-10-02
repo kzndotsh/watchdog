@@ -19,7 +19,7 @@ fi
 if [[ "$YES" -ne 1 ]]; then
   echo "Deletes all cases, entities, evidence, jobs, proposals, and tasks."
   echo "Keeps: login (auth.* including organizations), API keys, vault credentials, migrations."
-  echo "Also empties the MinIO evidence bucket (bucket stays)."
+  echo "Also empties the evidence bucket (it is recreated)."
   read -r -p "Type wipe to continue: " answer
   if [[ "$answer" != "wipe" ]]; then
     echo "Aborted."
@@ -85,13 +85,17 @@ access="${S3_ACCESS_KEY:-minioadmin}"
 secret="${S3_SECRET_KEY:-minioadmin}"
 bucket="${S3_BUCKET:-watchdog-evidence}"
 
-if command -v mc >/dev/null 2>&1; then
-  mc alias set local "$endpoint" "$access" "$secret" --api S3v4 >/dev/null
-  # Prefix wipe — keep the bucket. Empty bucket is not an error.
-  mc rm --recursive --force "local/${bucket}/" >/dev/null 2>&1 || true
-  echo "MinIO emptied: ${bucket} @ ${endpoint}"
+# SeaweedFS has no recursive delete over the S3 API from the shell, so drop the bucket (and its
+# objects) with `weed shell` inside the container, then recreate it with its CORS rules.
+S3_CONTAINER="${S3_CONTAINER:-watchdog-s3}"
+if docker inspect "$S3_CONTAINER" >/dev/null 2>&1; then
+  docker exec -i "$S3_CONTAINER" weed shell -master=localhost:9333 >/dev/null 2>&1 \
+    <<<"s3.bucket.delete -name ${bucket}" || true
+  S3_ENDPOINT="$endpoint" S3_ACCESS_KEY="$access" S3_SECRET_KEY="$secret" S3_BUCKET="$bucket" \
+    bash "$(dirname "$0")/s3-init.sh" >/dev/null
+  echo "Evidence bucket emptied: ${bucket} @ ${endpoint}"
 else
-  echo "mc not found — skipped MinIO empty (DB wipe still applied)" >&2
+  echo "${S3_CONTAINER} is not running — skipped emptying the evidence bucket (DB wipe still applied)" >&2
 fi
 
 echo "Wiped case data. Auth + vault credentials kept. Restart the worker if it was running."
