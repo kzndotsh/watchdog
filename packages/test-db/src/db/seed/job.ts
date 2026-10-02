@@ -5,8 +5,7 @@ import {
   type JobRow,
   type NewJob,
 } from "@watchdog/db";
-
-import { TEST_ACTOR_ID } from "../../fixtures/ids.ts";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 type SeedJobOverrides = Partial<NewJob> &
   Partial<Pick<JobPatch, "resultSummary">>;

@@ -6,13 +6,13 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { claimsRepo, db, evidenceRepo, graphWritesRepo } from "@watchdog/db";
+import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import {
   TEST_ACTOR_ID,
-  buildClaimCreateOp,
   testId,
   TEST_ORGANIZATION_ID,
 } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-kit/db";
 
 describe("writeGraphFromAgent", () => {
   beforeEach(async () => {

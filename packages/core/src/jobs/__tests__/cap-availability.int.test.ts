@@ -7,8 +7,8 @@ import {
   updateCaseEffect,
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
+import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
-import { resetTestDb, seedCase } from "@watchdog/test-kit/db";
 
 import { evaluateCapAvailabilityEffect } from "../cap-availability.ts";
 

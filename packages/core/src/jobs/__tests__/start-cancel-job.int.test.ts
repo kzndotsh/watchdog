@@ -9,14 +9,14 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { db, evidenceRepo } from "@watchdog/db";
-import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedAuthUser,
   seedCase,
   seedEvidence,
   seedJob,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 describe("startJob", () => {
   beforeEach(async () => {

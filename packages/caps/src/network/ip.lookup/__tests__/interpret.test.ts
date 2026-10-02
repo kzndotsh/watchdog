@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
 import {
   claimText,
   expectNoConfidenceOnPatch,
   itRejectsIncompleteReport,
-  testId,
-} from "@watchdog/test-kit";
-
+} from "../../../testing";
 import { ipLookup } from "../cap.ts";
 import { interpretIpLookupReport } from "../interpret.ts";
 

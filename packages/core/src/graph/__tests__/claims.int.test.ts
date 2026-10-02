@@ -9,7 +9,7 @@ import {
 } from "@watchdog/core";
 import { db, evidenceRepo } from "@watchdog/db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, seedEntity, seedEvidence } from "@watchdog/test-kit/db";
+import { resetTestDb, seedCase, seedEntity, seedEvidence } from "@watchdog/test-db";
 
 describe("createClaim", () => {
   beforeEach(async () => {

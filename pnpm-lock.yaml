@@ -44,6 +44,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^5.0.1
         version: 5.0.1(vitest@5.0.1)
+      '@watchdog/test-db':
+        specifier: workspace:*
+        version: link:packages/test-db
       '@watchdog/test-kit':
         specifier: workspace:*
         version: link:packages/test-kit
@@ -431,6 +434,9 @@ importers:
       '@types/node':
         specifier: ^26.4.1
         version: 26.6.1
+      '@watchdog/test-db':
+        specifier: workspace:*
+        version: link:../test-db
       '@watchdog/test-kit':
         specifier: workspace:*
         version: link:../test-kit
@@ -570,6 +576,9 @@ importers:
       '@types/node':
         specifier: ^26.4.1
         version: 26.6.1
+      '@watchdog/test-db':
+        specifier: workspace:*
+        version: link:../test-db
       '@watchdog/test-kit':
         specifier: workspace:*
         version: link:../test-kit
@@ -598,6 +607,9 @@ importers:
       '@types/node':
         specifier: ^26.5.1
         version: 26.6.1
+      '@watchdog/test-db':
+        specifier: workspace:*
+        version: link:../test-db
       '@watchdog/test-kit':
         specifier: workspace:*
         version: link:../test-kit
@@ -677,23 +689,33 @@ importers:
         specifier: ^4.4.3
         version: 4.5.4
 
-  packages/test-kit:
+  packages/test-db:
     dependencies:
-      '@watchdog/caps':
-        specifier: workspace:*
-        version: link:../caps
       '@watchdog/db':
         specifier: workspace:*
         version: link:../db
       '@watchdog/schemas':
         specifier: workspace:*
         version: link:../schemas
+      '@watchdog/test-kit':
+        specifier: workspace:*
+        version: link:../test-kit
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@opentelemetry/api@1.9.1)(kysely@0.29.5)(pg@8.23.0)(postgres@3.4.9)
-      effect:
-        specifier: 4.0.0-rc.115
-        version: 4.0.0-rc.115
+      vitest:
+        specifier: ^5.0.1
+        version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.1)(@vitest/coverage-v8@5.0.1)(happy-dom@20.14.5)(jsdom@30.0.1(@noble/hashes@2.4.0))(msw@2.15.0(@types/node@26.6.1)(typescript@7.0.2))(vite@8.3.0(@types/node@26.6.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.0))
+    devDependencies:
+      '@types/node':
+        specifier: ^26.5.1
+        version: 26.6.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
+  packages/test-kit:
+    dependencies:
       fast-check:
         specifier: ^4.10.1
         version: 4.10.1

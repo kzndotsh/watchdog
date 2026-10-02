@@ -140,15 +140,17 @@ const config: KnipConfig = {
       entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
       project: ["src/**/*.ts"],
     },
+    "packages/test-db": {
+      entry: ["src/index.ts", "src/**/__tests__/**/*.test.ts"],
+      project: ["src/**/*.ts"],
+    },
     "packages/test-kit": {
       entry: [
         "src/index.ts",
         "src/fc.ts",
         "src/fixtures.ts",
-        "src/db.ts",
         "src/http/msw-setup.ts",
         "src/http/mock-server.ts",
-        "src/it/index.ts",
       ],
       project: ["src/**/*.ts"],
     },

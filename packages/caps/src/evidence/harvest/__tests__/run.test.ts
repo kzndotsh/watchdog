@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { parseJsonValue, REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
-import { createCapRunHarness, runCap, testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
 
+import { createCapRunHarness, runCap } from "../../../testing";
 import { harvest } from "../cap.ts";
 
 describe("evidence.harvest run", () => {

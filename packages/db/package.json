@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
+    "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",

@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
 import {
   claimText,
   expectProposesIdentifier,
   itRejectsIncompleteReport,
-  testId,
-} from "@watchdog/test-kit";
-
+} from "../../../testing";
 import { waybackLookup } from "../cap.ts";
 import { interpretWaybackLookupReport } from "../interpret.ts";
 

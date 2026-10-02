@@ -42,8 +42,9 @@
       "@watchdog/schemas": ["./packages/schemas/src/index.ts"],
       "@watchdog/schemas/*": ["./packages/schemas/src/*"],
 
+      "@watchdog/test-db": ["./packages/test-db/src/index.ts"],
+
       "@watchdog/test-kit": ["./packages/test-kit/src/index.ts"],
-      "@watchdog/test-kit/expect": ["./packages/test-kit/src/expect/patch.ts"],
       "@watchdog/test-kit/http": [
         "./packages/test-kit/src/http/mock-server.ts"
       ],

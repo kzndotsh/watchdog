@@ -1,11 +1,8 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  claimText,
-  itRejectsIncompleteReport,
-  testId,
-} from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
 
+import { claimText, itRejectsIncompleteReport } from "../../../testing";
 import { virusTotalLookup } from "../cap.ts";
 import { interpretVirusTotalLookupReport } from "../interpret.ts";
 

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
+import { interpretWhoisSnapshot } from "../../../lib/collect/interpret-whois-snapshot.ts";
 import {
   expectNoConfidenceOnPatch,
   expectProposesClaim,
   itRejectsIncompleteReport,
-  testId,
-} from "@watchdog/test-kit";
-
-import { interpretWhoisSnapshot } from "../../../lib/collect/interpret-whois-snapshot.ts";
+} from "../../../testing";
 import { whoisLookup } from "../cap.ts";
 import { interpretWhoisReport } from "../interpret.ts";
 

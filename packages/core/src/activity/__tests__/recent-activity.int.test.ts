@@ -7,12 +7,7 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { db, evidenceRepo } from "@watchdog/db";
-import {
-  TEST_ACTOR_ID,
-  TEST_ORGANIZATION_ID,
-  buildClaimCreateOp,
-  testId,
-} from "@watchdog/test-kit";
+import { buildClaimCreateOp } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
@@ -21,7 +16,12 @@ import {
   seedJob,
   seedPlaybookRun,
   seedProposal,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import {
+  TEST_ACTOR_ID,
+  TEST_ORGANIZATION_ID,
+  testId,
+} from "@watchdog/test-kit";
 
 describe("listRecentActivity", () => {
   beforeEach(async () => {

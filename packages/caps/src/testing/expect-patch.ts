@@ -1,9 +1,10 @@
 import { expect } from "vitest";
 
-import type { CapInterpretResult } from "@watchdog/caps/sdk";
 import type { PatchOp } from "@watchdog/schemas";
 
-export function expectPatchCreates(
+import type { CapInterpretResult } from "../sdk";
+
+function expectPatchCreates(
   patch: PatchOp[],
   resource: PatchOp["resource"],
   dataMatch: Record<string, unknown>

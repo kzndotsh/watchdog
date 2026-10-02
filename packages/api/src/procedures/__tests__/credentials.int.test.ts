@@ -5,8 +5,8 @@ import {
   putCredentialSlotEffect,
   runDomain,
 } from "@watchdog/core";
+import { resetTestDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
-import { resetTestDb } from "@watchdog/test-kit/db";
 
 describe("credentials (core services)", () => {
   beforeEach(async () => {

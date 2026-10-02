@@ -1,26 +1,3 @@
-export { runCap } from "@watchdog/caps/sdk";
-export { fc } from "./fc.ts";
-export { TEST_ACTOR_ID, TEST_ORGANIZATION_ID, testId } from "./fixtures/ids.ts";
-export { testHttpOrigin, testHttpUrl, testUrlBase } from "./fixtures/urls.ts";
-export {
-  buildClaimCreateOp,
-  buildEdgeCreateOp,
-  buildEntityCreateOp,
-  buildEventCreateOp,
-  buildIdentifierCreateOp,
-  buildPatchOp,
-  buildQuestionCreateOp,
-} from "./fixtures/patch.ts";
-export {
-  claimText,
-  expectNoConfidenceOnPatch,
-  expectPatchCreates,
-  expectProposesClaim,
-  expectProposesIdentifier,
-} from "./expect/patch.ts";
-export { itRejectsIncompleteReport } from "./it/rejects-incomplete-report.ts";
-export {
-  createCapRunHarness,
-  itRunsCollectCap,
-} from "./it/runs-collect-cap.ts";
-export { mockJson, mockServer } from "./http/mock-server.ts";
+export { fc } from "./fc";
+export { TEST_ACTOR_ID, TEST_ORGANIZATION_ID, testId } from "./fixtures/ids";
+export { testHttpOrigin, testHttpUrl, testUrlBase } from "./fixtures/urls";

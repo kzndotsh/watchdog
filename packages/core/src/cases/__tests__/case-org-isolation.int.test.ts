@@ -11,8 +11,8 @@ import {
   listRecentActivityEffect,
   runDomain,
 } from "@watchdog/core";
+import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, testDb } from "@watchdog/test-kit/db";
 
 const OTHER_ORG_ID = testId(91);
 

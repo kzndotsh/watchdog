@@ -9,8 +9,8 @@ import {
   updateCaseEffect,
 } from "@watchdog/core";
 import { db, evidenceRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
-import { resetTestDb, seedCase, seedJob } from "@watchdog/test-kit/db";
 
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
 

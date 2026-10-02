@@ -1,0 +1,22 @@
+{
+  "name": "@watchdog/test-db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@watchdog/db": "workspace:*",
+    "@watchdog/schemas": "workspace:*",
+    "@watchdog/test-kit": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "vitest": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "typescript": "7.0.2"
+  }
+}

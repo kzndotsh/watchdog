@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
-import { createCapRunHarness, runCap, testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
 
+import { createCapRunHarness, runCap } from "../../../testing";
 import { extractAi } from "../cap.ts";
 
 describe("evidence.extract.ai run", () => {

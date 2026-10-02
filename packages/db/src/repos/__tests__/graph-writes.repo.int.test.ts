@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { TEST_ACTOR_ID, buildClaimCreateOp, testId } from "@watchdog/test-kit";
-import { seedCase, seedEntity, withTestTx } from "@watchdog/test-kit/db";
+import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import { seedCase, seedEntity, withTestTx } from "@watchdog/test-db";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { graphWritesRepo } from "../graph-writes.repo.ts";
 

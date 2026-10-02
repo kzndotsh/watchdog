@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { db, usersRepo } from "@watchdog/db";
-import { seedAuthUser, withTestTx } from "@watchdog/test-kit/db";
+import { seedAuthUser, withTestTx } from "@watchdog/test-db";
 
 describe("usersRepo.getByIds", () => {
   it("loads display rows by primary key", async () => {

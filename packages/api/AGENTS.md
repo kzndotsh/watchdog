@@ -36,7 +36,7 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Controllers call `@watchdog/co
 - Unknown errors must be 500, not 400.
 - `toOrpcError` maps `DomainTag` via `Match.tagsExhaustive` (ORPCError). Application Effects run via `runApp` (`Effect.mapError(toOrpcError)` then `appRuntime.runPromise`). `AppLive` is `Layer.empty` (no unused identity Layers). Graph child CRUD, Evidence, Proposals, Graph write, Case, Task, Search, Activity, Job (including playbook run/cancel), Credentials, and Capabilities/Playbooks list are Effect-only.
 - Optional `ApiContext.log` — Start ALS via `peekRequestLogger` on HTTP + ServerFn. `evlog()` sets `operation`; shared middleware lifts ids from input — do not stamp `context.log?.set` per handler. Never `withEvlog` on handlers.
-- Integration tests call **core services** (not HTTP) with `@watchdog/test-kit/db`. Do not import `@watchdog/db` from this package's tests.
+- Integration tests call **core services** (not HTTP) with `@watchdog/test-db`. Do not import `@watchdog/db` from this package's tests.
 
 ## See also / External References
 

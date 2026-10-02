@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
+    "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
     "tsx": "^4.23.13",
     "typescript": "7.0.2"

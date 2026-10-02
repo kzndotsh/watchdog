@@ -15,21 +15,14 @@ import {
   identifiersRepo,
   questionsRepo,
 } from "@watchdog/db";
-import {
-  buildClaimCreateOp,
-  buildEdgeCreateOp,
-  buildEntityCreateOp,
-  buildEventCreateOp,
-  buildIdentifierCreateOp,
-  buildQuestionCreateOp,
-  testId,
-} from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
+import { buildClaimCreateOp, buildEdgeCreateOp, buildEntityCreateOp, buildEventCreateOp, buildIdentifierCreateOp, buildQuestionCreateOp } from "@watchdog/schemas/testing";
 import {
   seedCase,
   seedEntity,
   seedEvidence,
   withTestTx,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
 
 describe("applyPatch", () => {
   it("persists create ops for every patch resource", async () => {

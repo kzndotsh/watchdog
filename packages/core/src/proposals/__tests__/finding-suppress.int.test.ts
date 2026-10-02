@@ -14,16 +14,15 @@ import {
   buildEntityCreateOp,
   buildEventCreateOp,
   buildIdentifierCreateOp,
-  TEST_ORGANIZATION_ID,
-  testId,
-} from "@watchdog/test-kit";
+} from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
   seedEntity,
   seedFindingSuppression,
   seedProposal,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 
 describe("suppressKnownFindingsEffect", () => {
   beforeEach(async () => {

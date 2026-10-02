@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
 import {
   expectNoConfidenceOnPatch,
   expectProposesIdentifier,
   itRejectsIncompleteReport,
-  testId,
-} from "@watchdog/test-kit";
-
+} from "../../../testing";
 import { dnsLookup } from "../cap.ts";
 import { interpretDnsReport } from "../interpret.ts";
 

@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll } from "vitest";
 
-import { mockServer } from "./mock-server.ts";
+import { mockServer } from "./mock-server";
 
 beforeAll(() => {
   mockServer.listen({ onUnhandledRequest: "bypass" });

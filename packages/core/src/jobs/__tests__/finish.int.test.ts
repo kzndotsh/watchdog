@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { cancelJobEffect, runDomain } from "@watchdog/core";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedCase,
   seedEvidence,
   seedJob,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 import { finishEffect } from "../stages/finish.ts";
 import { createJobLog } from "../stages/helpers.ts";

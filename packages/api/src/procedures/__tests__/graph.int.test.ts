@@ -5,18 +5,13 @@ import {
   writeGraphFromAgentEffect,
   runDomain,
 } from "@watchdog/core";
+import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
 import {
   TEST_ACTOR_ID,
-  buildClaimCreateOp,
   testId,
   TEST_ORGANIZATION_ID,
 } from "@watchdog/test-kit";
-import {
-  resetTestDb,
-  seedCase,
-  seedEntity,
-  testDb,
-} from "@watchdog/test-kit/db";
 
 describe("graph write (core service)", () => {
   beforeEach(async () => {

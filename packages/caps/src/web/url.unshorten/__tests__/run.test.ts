@@ -2,8 +2,8 @@ import { afterAll, afterEach, beforeAll, describe } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
-import { itRunsCollectCap } from "@watchdog/test-kit/it";
 
+import { itRunsCollectCap } from "../../../testing";
 import { urlUnshorten } from "../cap.ts";
 
 describe("web.url.unshorten run", () => {

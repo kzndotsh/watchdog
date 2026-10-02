@@ -5,7 +5,8 @@ import {
   runDomain
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
-import { buildIdentifierCreateOp, testId, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+import { testId, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+import { buildIdentifierCreateOp } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
@@ -13,7 +14,7 @@ import {
   seedEntityBlankDisplayName,
   seedIdentifier,
   seedProposal,
-} from "@watchdog/test-kit/db";
+} from "@watchdog/test-db";
 
 describe("loadIdentifierCollisions", () => {
   beforeEach(async () => {
