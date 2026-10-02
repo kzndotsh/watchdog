@@ -1,7 +1,9 @@
 import { ORPCError, os } from "@orpc/server";
 import { evlog } from "evlog/orpc";
 
-import type { ApiActor, ApiAuthMethod, ApiContext } from "./context";
+import type { ApiActor, ApiAuthMethod } from "@watchdog/schemas";
+
+import type { ApiContext } from "./context";
 import { assertAgentChildWriteCustody } from "./custody";
 
 function apiKeyFromHeaders(headers: Headers): string | null {

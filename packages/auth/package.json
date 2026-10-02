@@ -14,7 +14,6 @@
   "dependencies": {
     "@better-auth/api-key": "1.7.5",
     "@better-auth/drizzle-adapter": "1.7.5",
-    "@watchdog/api": "workspace:*",
     "@watchdog/db": "workspace:*",
     "@watchdog/env": "workspace:*",
     "@watchdog/log": "workspace:*",

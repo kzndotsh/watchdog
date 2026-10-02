@@ -1,20 +1,7 @@
 import type { AuditableLogger } from "@watchdog/log";
+import type { ApiCaller } from "@watchdog/schemas";
 
-export type ApiAuthMethod = "session" | "apiKey";
-
-export interface ApiActor {
-  userId: string;
-  email: string | null;
-  name: string | null;
-  /** Active Better Auth organization; null if the user has no membership. */
-  organizationId: string | null;
-}
-
-export interface ApiContext {
-  headers: Headers;
-  actor: ApiActor | null;
-  /** How the caller authenticated — session (Dossier) vs API key (agent ingress). */
-  authMethod?: ApiAuthMethod;
+export interface ApiContext extends ApiCaller {
   /** Present when Start ALS has bound a request/ServerFn logger. */
   log?: AuditableLogger;
 }

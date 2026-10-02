@@ -2,8 +2,9 @@ import "@tanstack/react-start/server-only";
 import { createRouterClient, type RouterClient } from "@orpc/server";
 
 import { actorFromSession } from "@/auth/api-context.server";
-import { router, type ApiActor, type AppRouter } from "@watchdog/api";
+import { router, type AppRouter } from "@watchdog/api";
 import { peekRequestLogger } from "@watchdog/log";
+import type { ApiActor } from "@watchdog/schemas";
 
 export { orpcNullIfNotFound } from "@/lib/orpc-null-if-not-found";
 

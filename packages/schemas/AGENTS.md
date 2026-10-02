@@ -14,6 +14,8 @@ Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normaliz
 
 ## Rules
 
+- `api-caller.ts`: `ApiActor`, `ApiAuthMethod`, `ApiCaller` — plain types for "who is calling" shared by `@watchdog/api` (`ApiContext extends ApiCaller`, adds the logger) and `@watchdog/auth` (`createApiContext`). No logger or framework types here.
+
 - No DB, Caps, or app imports — leaf dependency.
 - Enums/vocab stay here; drizzle uses `text().$type<T>()`, never `pgEnum` for domain vocab.
 - Prefer extending existing primitives over parallel one-off types.

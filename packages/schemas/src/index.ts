@@ -1,3 +1,5 @@
+export type { ApiActor, ApiAuthMethod, ApiCaller } from "./api-caller";
+
 export type {
   ClaimClass,
   ConfidenceTier,

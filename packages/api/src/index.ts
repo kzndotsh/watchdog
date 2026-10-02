@@ -1,4 +1,4 @@
-export type { ApiActor, ApiAuthMethod, ApiContext } from "./context";
+export type { ApiContext } from "./context";
 export { pub, authed, graphChildWrite } from "./os";
 export { generateOpenAPISpec, openApiSpecGenerateOptions } from "./openapi";
 export { router, type AppRouter } from "./router";

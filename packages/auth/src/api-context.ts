@@ -1,5 +1,6 @@
-import type { ApiActor, ApiContext } from "@watchdog/api";
 import { identifyUser, peekRequestLogger } from "@watchdog/log";
+import type { AuditableLogger } from "@watchdog/log";
+import type { ApiActor, ApiCaller } from "@watchdog/schemas";
 
 import { resolveActorOrganizationId } from "./actor";
 import type { createAuth } from "./create-auth";
@@ -9,6 +10,9 @@ type ApiContextAuth = Pick<
   ReturnType<typeof createAuth>["api"],
   "getSession" | "verifyApiKey"
 >;
+
+/** Same shape as `@watchdog/api`'s `ApiContext` (caller + optional request logger). */
+export type AuthedApiContext = ApiCaller & { log?: AuditableLogger };
 
 export function actorFromSession(
   session: {
@@ -65,7 +69,7 @@ function extractApiKey(headers: Headers): string | null {
 export async function createApiContext(
   auth: { api: ApiContextAuth },
   request: Request
-): Promise<ApiContext> {
+): Promise<AuthedApiContext> {
   const log = peekRequestLogger();
   const session = await auth.api.getSession({ headers: request.headers });
   if (session?.user) {

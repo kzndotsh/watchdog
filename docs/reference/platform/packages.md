@@ -16,7 +16,7 @@
 | `@watchdog/ai` | schemas | db, caps, core |
 | `@watchdog/tools` | schemas (only if needed; prefer zero) | db, caps, core, ai, api, apps |
 | `@watchdog/caps` (incl. SPI `@watchdog/caps/sdk`) | schemas, ai, **tools** | **db**, core, api, apps |
-| `@watchdog/auth` | db, env, log, schemas, **api (types only)**; `better-auth` + nodemailer | core, caps, apps; `@tanstack/*` (apps pass framework plugins in) |
+| `@watchdog/auth` | db, env, log, schemas; `better-auth` + nodemailer | api, core, caps, apps; `@tanstack/*` (apps pass framework plugins in) |
 | `@watchdog/core` | db (**repos only**: no `drizzle-orm`), caps (+ `caps/sdk`), schemas, **policy**, **env**, **log**, **tools** | api, apps: layout: `jobs/` · `cases/` · `proposals/` · `graph/` · `tasks/` · `search/` · `activity/` · `evidence/` · `infra/`; worker imports `@watchdog/core/worker` |
 | `@watchdog/ui` | (nothing in-workspace; shadcn primitives, generated and locked) | db, core, api, caps, apps |
 | `@watchdog/test-kit` | schemas, db, caps/sdk (dev only) | imported from production code |

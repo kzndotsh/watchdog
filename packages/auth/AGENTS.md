@@ -25,7 +25,7 @@ The server side of identity: the Better Auth instance, invite-only signup, insta
 | Pass framework plugins (`tanstackStartCookies()`) through `createAuth({ trailingPlugins })`: they must be last | Import `@tanstack/*` or `better-auth/tanstack-start` here |
 | Gate org creation on `BETTER_AUTH_ALLOW_SIGNUP` or instance admin; keep signup/org-create/role-change `rateLimit.customRules` (production only) | Open org creation or signup without a rate limit |
 | Read env inside `createAuth()`, not at import time in pure modules | Import `@watchdog/env/server` from the pure entry points (they ship to the browser) |
-| Depend on `@watchdog/api` for **types only** (`ApiActor`, `ApiContext`) | Depend on core, caps, or apps |
+| Get `ApiActor` / `ApiCaller` from `@watchdog/schemas`; `createApiContext` returns `ApiCaller & { log? }`, the same shape as the API's `ApiContext` | Depend on api, core, caps, or apps |
 
 ## See also
 

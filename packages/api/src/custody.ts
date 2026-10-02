@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
 
-import type { ApiAuthMethod } from "./context";
+import type { ApiAuthMethod } from "@watchdog/schemas";
 
 const CHILD_WRITE_OVERRIDE_MSG =
   "Child Graph writes require userOverride: true. Prefer proposals create or graph write.";
