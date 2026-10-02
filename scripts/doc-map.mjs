@@ -76,14 +76,14 @@ export const DOC_MAP = [
   },
   {
     id: "api-client",
-    code: [/^packages\/api\//, /^packages\/client\//, /^packages\/contract\//],
+    code: [/^packages\/api\//, /^packages\/client\//],
     docs: [
       "docs/reference/platform/jobs-orpc.md",
       "docs/how-to/agent-cli.md",
-      "packages/contract/AGENTS.md",
+      "packages/client/AGENTS.md",
     ],
     strict: false,
-    note: "Skip when only packages/contract/src/generated/ changes",
+    note: "Skip when only packages/client/src/generated/ changes",
   },
   {
     id: "cli",
@@ -108,7 +108,7 @@ export const DOC_MAP = [
  * @returns {boolean}
  */
 export function isGeneratedClientOnly(rel) {
-  return rel.startsWith("packages/contract/src/generated/");
+  return rel.startsWith("packages/client/src/generated/");
 }
 
 /**
@@ -122,9 +122,7 @@ export function matchRules(changedRelPaths) {
     if (rule.id === "api-client") {
       const nonGenerated = changedRelPaths.filter(
         (p) =>
-          (p.startsWith("packages/api/") ||
-            p.startsWith("packages/client/") ||
-            p.startsWith("packages/contract/")) &&
+          (p.startsWith("packages/api/") || p.startsWith("packages/client/")) &&
           !isGeneratedClientOnly(p)
       );
       if (nonGenerated.length === 0) continue;

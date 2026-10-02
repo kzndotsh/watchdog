@@ -12,8 +12,7 @@
   "dependencies": {
     "@orpc/client": "^1.15.1",
     "@orpc/contract": "^1.15.1",
-    "@orpc/openapi-client": "^1.15.1",
-    "@watchdog/contract": "workspace:*"
+    "@orpc/openapi-client": "^1.15.1"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",

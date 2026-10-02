@@ -77,7 +77,7 @@ export default defineConfig({
         "**/*.gen.ts",
         "**/generated/**",
         "**/drizzle/**",
-        "packages/contract/src/generated/**",
+        "packages/client/src/generated/**",
       ],
     },
     projects: [

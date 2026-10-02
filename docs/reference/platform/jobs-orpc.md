@@ -29,7 +29,7 @@ One boss per process: web/API via `enqueueCapJobEffect` / `ensureBossProducerEff
 - **Edge writes:** `edges.create` / `edges.update` reject self-links (`fromId === toId`) at ingress. `related_to` requires non-empty `notes` on create and when `predicate` is patched to `related_to` on update.
 - **Evidence list filters:** `GET /cases/{caseId}/evidence` accepts `hiddenOnly`, `unprocessedOnly`, and `unattachedOnly`; `hiddenOnly` is mutually exclusive with the other two (Zod refine on the procedure).
 - Docs: [https://orpc.dev/llms.txt](https://orpc.dev/llms.txt).
-- **External SDK:** `@watchdog/client`: `createWatchdogClient({ baseUrl, apiKey })` over OpenAPI (`/api/v1`). Blank or whitespace-only `apiKey` throws at construction (`apiKey is required`). Contract JSON lives in `@watchdog/contract` and is regenerated with `pnpm generate:client` after API route changes. CLI uses this; agents/MCP should too. Do not hand-roll `/api/v1` JSON paths (binary **Case Export** zip/md are authenticated file routes outside `contract.json`: `wd export` uses raw `fetch` + `x-api-key`).
+- **External SDK:** `@watchdog/client`: `createWatchdogClient({ baseUrl, apiKey })` over OpenAPI (`/api/v1`). Blank or whitespace-only `apiKey` throws at construction (`apiKey is required`). Contract JSON lives in `packages/client/src/generated/` and is regenerated with `pnpm generate:client` after API route changes. CLI uses this; agents/MCP should too. Do not hand-roll `/api/v1` JSON paths (binary **Case Export** zip/md are authenticated file routes outside `contract.json`: `wd export` uses raw `fetch` + `x-api-key`).
 
 ## Process logging (evlog)
 

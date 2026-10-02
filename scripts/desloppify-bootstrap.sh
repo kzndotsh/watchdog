@@ -18,7 +18,7 @@ patterns=(
   .direnv
   dist
   .turbo
-  packages/contract/src/generated
+  packages/client/src/generated
   packages/caps/capabilities.gen.json
   apps/web/src/routeTree.gen.ts
   packages/ui/src/components
