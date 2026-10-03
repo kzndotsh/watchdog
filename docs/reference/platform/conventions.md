@@ -104,6 +104,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
 | Repos: no `notifyEvent`, no throw, no transaction, no `SQL`-typed parameters, leading `exec: DbExec`, no `trimmedOrNull` | db | `packages/db/AGENTS.md` Repo contract | `pnpm --filter @watchdog/db check:repos` | enforced |
+| Job status sets (open, cancellable, live, terminal) live once in `@watchdog/schemas` vocab; repos hold no array literal of two or more job statuses | db, schemas | `packages/db/AGENTS.md` Repo contract | `pnpm --filter @watchdog/db check:repos` | enforced |
 | Repos return rows, not DTOs (`check:repos` only flags `.toISOString()` calls) | db | `packages/db/AGENTS.md` Repo contract | guidance | guidance |
 | Services own transactions and pass `exec` first to repos (the repo side is in the row above; nothing checks services) | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
 | Repo lookups trim scoped ids; an invalid UUID returns `[]` / `null` | db | `packages/db/AGENTS.md` Repo contract | `packages/db/src/repos/__tests__/scoped-ids.test.ts` | enforced |

@@ -36,6 +36,7 @@ import { invalidateAfterJobMutation } from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 import {
+  isLiveJobStatus,
   playbookSeedInputSchema,
   trimmedOrNull,
   trimmedOrUndefined,
@@ -161,7 +162,7 @@ export function useJobsWorkspace(
   const stuckJobs = useMemo(
     () =>
       jobs.filter((j) => {
-        if (j.status !== "queued" && j.status !== "running") return false;
+        if (!isLiveJobStatus(j.status)) return false;
         const anchor =
           j.status === "running" && j.startedAt !== null && j.startedAt !== ""
             ? j.startedAt
