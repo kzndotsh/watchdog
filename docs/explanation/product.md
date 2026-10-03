@@ -97,6 +97,10 @@ The `_legacy-*` trees that record this history are untracked and live outside th
 
 ---
 
+## Investigation doctrine
+
+Never claim without evidence. Zero assumptions. Cite everything. Disclose uncertainty. Adversarial-test identity links before treating them as fact. Accept tiers and breach caveats are in [`custody`](../reference/contracts/custody.md). These are guidance for people and agents working Cases, not rules a gate checks.
+
 ## Design doctrine
 
 1. **Field ≠ design**: pain and personas only; never habit-copy.

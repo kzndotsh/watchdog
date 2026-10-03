@@ -153,9 +153,7 @@ async function checkMarkdownFile(absPath, opts) {
   const lines = text.split("\n").length;
 
   if (opts.checkLength) {
-    const allow =
-      text.includes("<!-- docs:allow-length -->") ||
-      rel === "docs/explanation/scenarios.md";
+    const allow = text.includes("<!-- docs:allow-length -->");
     if (!allow) {
       if (lines > 600) {
         note(
