@@ -26,6 +26,12 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 const pkg = path.join(root, "packages/ui");
 const lockPath = path.join(pkg, "vendor.json");
+/**
+ * Exact shadcn CLI version every `sync`/`add` runs, so output is reproducible. It is
+ * recorded in vendor.json and `check` fails if the two differ. Bump both together
+ * (edit this, run `pnpm ui:sync`, review `git diff packages/ui`).
+ */
+const SHADCN_VERSION = "4.21.0";
 /** Directories whose contents are owned by the shadcn CLI. */
 const VENDORED_DIRS = ["src/components", "src/hooks"];
 
@@ -48,7 +54,7 @@ function listVendored() {
   return files;
 }
 
-/** @returns {{ style: string; components: string[]; files: Record<string, string> } | null} */
+/** @returns {{ style: string; shadcn: string | null; components: string[]; files: Record<string, string> } | null} */
 function readLock() {
   if (!existsSync(lockPath)) return null;
   /** @type {unknown} */
@@ -68,13 +74,17 @@ function readLock() {
     "style" in parsed && typeof parsed.style === "string"
       ? parsed.style
       : "base-mira";
+  const shadcn =
+    "shadcn" in parsed && typeof parsed.shadcn === "string"
+      ? parsed.shadcn
+      : null;
   /** @type {Record<string, string>} */
   const files = {};
   for (const [file, hash] of Object.entries(parsed.files)) {
     if (typeof hash === "string") files[file] = hash;
   }
   const components = parsed.components.filter((c) => typeof c === "string");
-  return { style, components, files };
+  return { style, shadcn, components, files };
 }
 
 /**
@@ -85,7 +95,16 @@ function writeLock(style, components) {
   const sorted = [...new Set(components)].sort();
   writeFileSync(
     lockPath,
-    `${JSON.stringify({ style, components: sorted, files: listVendored() }, null, 2)}\n`
+    `${JSON.stringify(
+      {
+        style,
+        shadcn: SHADCN_VERSION,
+        components: sorted,
+        files: listVendored(),
+      },
+      null,
+      2
+    )}\n`
   );
 }
 
@@ -116,7 +135,7 @@ function readStyle() {
 function runCli(names) {
   const result = spawnSync(
     "pnpm",
-    ["dlx", "shadcn@latest", "add", ...names, "--overwrite", "-y"],
+    ["dlx", `shadcn@${SHADCN_VERSION}`, "add", ...names, "--overwrite", "-y"],
     { cwd: pkg, stdio: "inherit" }
   );
   if (result.status !== 0) {
@@ -136,6 +155,11 @@ function check() {
   const disk = listVendored();
   /** @type {string[]} */
   const problems = [];
+  if (lock.shadcn !== SHADCN_VERSION) {
+    problems.push(
+      `shadcn CLI version: vendor.json records ${lock.shadcn ?? "none"} but ui-vendor.mjs pins ${SHADCN_VERSION}; re-run \`pnpm ui:sync\` after bumping the pin`
+    );
+  }
   for (const [file, hash] of Object.entries(lock.files)) {
     if (!(file in disk)) problems.push(`missing: ${file}`);
     else if (disk[file] !== hash) problems.push(`edited by hand: ${file}`);
@@ -151,7 +175,7 @@ function check() {
     process.exit(1);
   }
   console.log(
-    `check:vendor: ok (${Object.keys(lock.files).length} vendored file(s), ${lock.style})`
+    `check:vendor: ok (${Object.keys(lock.files).length} vendored file(s), ${lock.style}, shadcn ${lock.shadcn})`
   );
 }
 
