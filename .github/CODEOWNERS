@@ -12,6 +12,7 @@
 /GLOSSARY.md @kzndotsh
 /.agents/ @kzndotsh
 /.cursor/ @kzndotsh
+/.claude/ @kzndotsh
 /skills-lock.json @kzndotsh
 
 # CI, hooks and gate scripts
