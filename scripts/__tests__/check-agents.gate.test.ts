@@ -1,0 +1,121 @@
+import { describe, expect, it } from "vitest";
+
+import { gateRepoFactory } from "./helpers/gate-repo";
+
+const createGateRepo = gateRepoFactory();
+
+const ROOT_AGENTS = `# AGENTS.md — Fixture
+
+## Quick reference
+
+| Task | Command |
+| --- | --- |
+| Test | \`pnpm test\` |
+`;
+
+const PKG_AGENTS = `# AGENTS.md — \`@fixture/core\`
+
+> Scope: \`packages/core\` (inherits root AGENTS.md)
+
+## Commands
+
+- \`pnpm test\`
+`;
+
+/** A repo that passes the gate: root + CLAUDE bridge + one package. */
+function cleanRepo() {
+  const repo = createGateRepo(["check-agents.mjs"]);
+  repo.write("AGENTS.md", ROOT_AGENTS);
+  repo.write("CLAUDE.md", "@AGENTS.md\n");
+  repo.write("packages/core/AGENTS.md", PKG_AGENTS);
+  return repo;
+}
+
+const strict = ["--strict"];
+
+describe("check-agents gate", () => {
+  it("passes a clean fixture with zero findings", () => {
+    const repo = cleanRepo();
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.output).toContain("0 finding(s)");
+    expect(res.code).toBe(0);
+  });
+
+  it("fails a banned mid-build term", () => {
+    const repo = cleanRepo();
+    repo.write("packages/core/AGENTS.md", `${PKG_AGENTS}\nUse Door A here.\n`);
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("banned");
+  });
+
+  it("fails a package AGENTS.md without a Commands section", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "packages/core/AGENTS.md",
+      "# AGENTS.md\n\n> Scope: `packages/core`\n"
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("Commands");
+  });
+
+  it("fails a package AGENTS.md without a Scope blurb", () => {
+    const repo = cleanRepo();
+    repo.write("packages/core/AGENTS.md", "# AGENTS.md\n\n## Commands\n");
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("Scope");
+  });
+
+  it("fails a package directory with no AGENTS.md", () => {
+    const repo = cleanRepo();
+    repo.write("packages/other/index.ts", "export {};\n");
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("missing packages/other/AGENTS.md");
+  });
+
+  it("fails an oversized nested AGENTS.md", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "packages/core/AGENTS.md",
+      `${PKG_AGENTS}${"- filler line\n".repeat(160)}`
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("nested >150 lines");
+  });
+
+  it("fails a broken relative link in an AGENTS.md", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "packages/core/AGENTS.md",
+      `${PKG_AGENTS}\nSee [gone](./nope.md).\n`
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("broken link");
+  });
+
+  it("does not flag link count or docs-tree content", () => {
+    const repo = cleanRepo();
+    const links = Array.from(
+      { length: 30 },
+      (_, i) => `[a${i}](./packages/core/AGENTS.md)`
+    ).join(" ");
+    repo.write("AGENTS.md", `${ROOT_AGENTS}\n${links}\n`);
+    repo.write("docs/broken.md", "[x](./missing.md)\n");
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.output).toContain("0 finding(s)");
+    expect(res.code).toBe(0);
+  });
+
+  it("requires CLAUDE.md to reference @AGENTS.md", () => {
+    const repo = cleanRepo();
+    repo.write("CLAUDE.md", "# nothing\n");
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("@AGENTS.md");
+  });
+});

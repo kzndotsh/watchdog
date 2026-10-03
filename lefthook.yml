@@ -38,9 +38,8 @@ pre-commit:
     agents:
       glob:
         - "{AGENTS.md,**/AGENTS.md}"
+        - "CLAUDE.md"
         - "scripts/check-agents.mjs"
-        - "docs/**"
-        - "scripts/check-docs.mjs"
       run: pnpm check:agents:strict
     docs:
       glob:

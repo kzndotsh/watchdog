@@ -9,7 +9,7 @@ Installed via `lefthook install` (auto in `nix develop`). Override with `lefthoo
 
 | Hook | Commands (glob-scoped; see `lefthook.yml`) |
 | --- | --- |
-| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS/docs) · `pnpm check:docs` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm check:design-tokens` (DESIGN.md colors vs CSS; pre-commit only) · `pnpm check:vendor` (locked `packages/ui`) · `pnpm validate:agents` (skills) |
+| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS.md) · `pnpm check:docs` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm check:design-tokens` (DESIGN.md colors vs CSS; pre-commit only) · `pnpm check:vendor` (locked `packages/ui`) · `pnpm validate:agents` (skills) |
 | **pre-push** | `pnpm typecheck` · `pnpm ds:check` from `apps/web/` |
 
 Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference):
@@ -18,7 +18,7 @@ Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference)
 | --- | --- |
 | `pnpm check` | Oxlint + Oxfmt (Ultracite). `effecttsgo` recommended is on; warn-severity Effect rules do not fail this gate. `@shadcn/lint` (pinned, web only) fails raw palette colors, undeclared tokens, off-scale arbitrary values, and Tailwind classes that generate no CSS. |
 | `pnpm typecheck` | Workspace TS |
-| `pnpm check:agents:strict` | AGENTS.md hygiene + doc length on agents |
+| `pnpm check:agents:strict` | AGENTS.md hygiene: presence in every `apps/*` / `packages/*`, size budget, Scope + Commands sections, relative links, banned terms, CLAUDE.md `@AGENTS.md` bridge. Docs-tree links and length are `check:docs` only |
 | `pnpm check:docs:strict` | Docs links, index, leaf length budget |
 | `pnpm check:docs-affected:strict` | Changed code must touch mapped docs |
 | `pnpm check:effect-edges:strict` | `Effect.runPromise` / `runSync` only on allowlisted edges; `tryPromise`/`try` must use `{ try, catch }`; no production `throw new DomainError` |
