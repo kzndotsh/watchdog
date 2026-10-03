@@ -7,7 +7,7 @@ const config: KnipConfig = {
     function: true,
   },
   ignoreBinaries: ["check", "desloppify"],
-  ignore: ["_legacy-v1/**", "_legacy-v2/**"],
+  ignore: ["_legacy-v1/**", "_legacy-v2/**", ".claude/worktrees/**"],
   ignoreIssues: {
     // Vendored shadcn output: unused *files* still surface; unused exports are upstream's.
     "packages/ui/src/**": ["exports", "types"],
