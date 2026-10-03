@@ -1,19 +1,19 @@
 # Watchdog web docs
 
-Start with [`../../../apps/web/AGENTS.md`](../../../apps/web/AGENTS.md), then open the relevant leaf. Platform docs are in [`docs/README.md`](../../README.md).
+Start with [`../../../apps/web/AGENTS.md`](../../../apps/web/AGENTS.md), then open the relevant leaf. Platform docs are in [`docs/README.md`](../../README.md). Design direction and taste rules are in [`/DESIGN.md`](../../../DESIGN.md); the CSS in `apps/web/src/styles/` and the components in `shared/ui/` are the source of truth for values. The style guide page is `/ui`.
 
-| Doc | Owns | Does not own |
-| --- | --- | --- |
-| [`architecture.md`](architecture.md) | Start/Vite/Router, chrome, web server-fn boundary | Package import graph, Caps (→ [`../platform/README.md`](../platform/README.md)) |
-| [`domains.md`](domains.md) | `src/domains/*` ownership map, hooks/lib, Page ownership | Flows, tokens |
-| [`data.md`](data.md) | Query cache, Case cookie, SSE, invalidation | Cap worker internals |
-| [`UI.md`](UI.md) · [`ui/`](ui/README.md) | Design system, loading, tables, atoms (split under `ui/`) | Product flows, copy |
-| [`components.md`](components.md) | Hand-owned atom registry | Brand brief, Storybook |
-| [`../../contributing/testing/web.md`](../../contributing/testing/web.md) | Web gates + remaining manual smoke | Platform test index |
+| Doc | Owns |
+| --- | --- |
+| [`architecture.md`](architecture.md) | Start/Router/Vite shape, auth layers, web server-fn boundary, oRPC wiring |
+| [`domains.md`](domains.md) | `src/domains/*` folder shape, page ownership, cross-domain rules |
+| [`data.md`](data.md) | Query cache, Case cookie, invalidation contracts, SSE |
+| [`ui/README.md`](ui/README.md) | Chrome lexicon, delivery rules |
+| [`ui/rules.md`](ui/rules.md) | Each UI rule and what enforces it |
+| [`ui/page-shell.md`](ui/page-shell.md) · [`ui/loading.md`](ui/loading.md) · [`ui/tables.md`](ui/tables.md) · [`ui/forms.md`](ui/forms.md) · [`ui/atoms.md`](ui/atoms.md) | Page chrome, loading doctrine, tables, forms, atoms and keyboard |
+| [`ui/vendor.md`](ui/vendor.md) · [`ui/auth-ui.md`](ui/auth-ui.md) | Vendored primitives; owned auth screens |
+| [`../../contributing/testing/web.md`](../../contributing/testing/web.md) | Web gates and remaining manual smoke |
 
-**Platform:** [`product`](../../explanation/product.md) · [`ux`](../../explanation/ux.md) · [`types`](../platform/types.md) · [`caps-lexicon`](../platform/caps-lexicon.md) · [`scenarios`](../../explanation/scenarios.md) · [`platform hub`](../platform/README.md).
-
-The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. Loading: [`ui/loading.md`](ui/loading.md). Tables: [`ui/tables.md`](ui/tables.md).
+Also: [`product`](../../explanation/product.md), [`ux`](../../explanation/ux.md), [`types`](../platform/types.md), [`caps-lexicon`](../platform/caps-lexicon.md), [`platform hub`](../platform/README.md).
 
 ## Traps index
 
@@ -29,5 +29,4 @@ The code source of truth is `apps/web/src/styles.css` + `shared/ui/`. Loading: [
 | DataTable / Identifiers table | [`ui/tables.md#gotchas`](ui/tables.md#gotchas) |
 | Domains vocab / Tasks / Dashboard | [`domains.md#gotchas`](domains.md#gotchas) |
 | QueryClient / SSE | [`data.md#gotchas`](data.md#gotchas) |
-| Case shell IA | [`../../explanation/ux.md#gotchas`](../../explanation/ux.md#gotchas) |
 | Stop hook / plans-not-SoT / duplicate React | [`../../contributing/ci-gates.md#gotchas`](../../contributing/ci-gates.md#gotchas) |

@@ -83,6 +83,6 @@ With `just up` (infra ready), `pnpm dev:web` (+ worker for Cap runs):
 
 ## When you change chrome
 
-- Touch a `shared/ui` atom: add or update its `components.md` row and `/ui` specimen, then `ds:check`. Suites under `shared/ui/__tests__/` are not atoms.
+- Touch a `shared/ui` atom: add or update its `/ui` specimen, then `ds:check`. Suites under `shared/ui/__tests__/` are not atoms.
 - Add / update a primitive → `pnpm ui:add <name>` / `pnpm ui:sync` (lands in `packages/ui`, never `shared/ui/primitives/`); then `pnpm check:vendor`.
-- Rename lexicon words → update [`UI.md`](../../reference/web/UI.md) / [`docs/explanation/ux.md`](../../explanation/ux.md) if product meaning changed; run typecheck.
+- Rename lexicon words → update [`ui/README.md`](../../reference/web/ui/README.md) / [`docs/explanation/ux.md`](../../explanation/ux.md) if product meaning changed; run typecheck.

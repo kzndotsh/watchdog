@@ -1,177 +1,113 @@
 # Domains: `src/domains/`
 
-This document maps product surfaces to their owning folders and defines where I/O lives. For UI details, see [`UI.md`](UI.md) and [`ui/`](ui/README.md). For investigator flows, see [`docs/explanation/ux.md`](../../../docs/explanation/ux.md).
+Where each product surface lives and where I/O is allowed. File-level detail is in the code; this page holds the folder-shape contract, the page-ownership table, and the cross-domain rules. Unless a row names an enforcer, a rule here is `guidance`. UI mechanics: [`ui/`](ui/README.md); investigator conventions: [`ux.md`](../../explanation/ux.md); data rules: [`data.md`](data.md).
 
 ## Shape
 
-Use this TanStack Start-aligned split. Omit files that do not have a clear responsibility.
+Omit files that have no clear responsibility.
 
 ```
 domains/{noun}/
   components/              # React UI: imports queries + *.functions + types + hooks
-  types.ts                 # DTOs + Zod input schemas (import schemas atoms; no vocab re-export)
+  types.ts                 # DTOs + Zod input schemas (no vocab re-export)
   queries.ts               # queryOptions + key factories (import Fns; no side effects)
-  {noun}.functions.ts      # RPC surface: createServerFn → orpcForActor (preferred)
-  {noun}.server.ts         # omit unless web-local secrets/cookies (no Drizzle)
-  hooks/                   # React hooks (workspace / forms / Query): no createServerFn, no *.server
+  {noun}.functions.ts      # RPC surface: createServerFn -> orpcFromContext(context)
+  {noun}.server.ts         # rare web-local secrets/cookies (no Drizzle)
+  hooks/                   # React hooks (workspace, forms, Query): no createServerFn, no *.server
   lib/                     # pure helpers (filters, views, formOptions, status maps)
 ```
 
 | File | Owns | UI may import? |
 | --- | --- | --- |
-| `*.functions.ts` | Domain RPC: `createServerFn` + `.validator(schema)` + thin `orpcForActor` handlers | Yes |
-| `*.server.ts` | Rare web-local secrets/cookies (`server-only`): **not** SQL | **No** |
-| `types.ts` | DTOs + Zod input schemas (Record types often re-exported from `@watchdog/core`) | Yes |
-| `queries.ts` | `queryOptions` + keys only (no components, no invalidate side effects) | Yes |
-| `hooks/*` | Client React hooks that call Fns / Query / local UI state | Yes |
-| `lib/*` | Pure filters, status maps, formOptions, browser helpers (no React hooks) | Yes |
+| `*.functions.ts` | `createServerFn` + `.validator(schema)` + thin `orpcFromContext` handlers | Yes |
+| `*.server.ts` | Rare web-local secrets or cookies (`server-only`), never SQL | No |
+| `types.ts` | DTOs + Zod input schemas (record types often re-exported from `@watchdog/core`) | Yes |
+| `queries.ts` | `queryOptions` + keys only | Yes |
+| `hooks/*` | Client hooks that call Fns, Query, or local UI state | Yes |
+| `lib/*` | Pure filters, status maps, `formOptions`, browser helpers | Yes |
 | `*.client.ts` | True browser-only utils (rare) | Client only |
 
-Invalidation contracts live in `shared/lib/query-invalidation.ts` (not in `queries.ts`). Data rules: [`data.md`](data.md).
+Naming: `*.functions` are things you call across the network (RPC, not "client code"); `*.server` must never ship to the browser; `*.client` is wrong for server functions (they run on the server during SSR and loaders).
 
-Zod / schemas contract: [`docs/reference/platform/types.md`](../../../docs/reference/platform/types.md).
+**`lib/` vs `hooks/` is guidance, not a rule.** The intent: pure helpers in `lib/`, React hooks in `hooks/`. Nothing enforces it and four hooks already sit elsewhere (`entities/lib/use-bulk-add-identifiers-{paste,import}.ts`, `organization/lib/use-slug-availability.ts`, `tasks/components/use-task-form-dialog.ts`); move them when you touch them rather than copying the pattern. Cross-domain plumbing hooks live in `shared/hooks/` (`use-live-events`); UI-kit hooks sit beside their atom.
 
-### Naming
-
-- **`*.functions`** = things you _call_ across the network (RPC). Not "client code."
-- **`*.server`** = must never ship to the browser (cookies / rare local secrets only).
-- **`*.client`** is wrong for server functions (they run on the server during SSR/loaders).
-
-### What goes in `lib/` vs `hooks/`
-
-| Put in `lib/` | Put in `hooks/` | Do not put in either |
-| --- | --- | --- |
-| Pure transforms / filters | Workspace hooks (`use-*-workspace`) | `createServerFn` → `*.functions.ts` |
-| Status / label maps (no I/O) | Form / blob / table hooks that call Fns | Domain writes → oRPC / `@watchdog/core` |
-| `formOptions` / pure validators | Section editors / invalidate helpers | DTOs / Zod → `types.ts` |
-| Browser helpers that aren't components |  | React UI → `components/` |
-|  |  | Graph child RPC → `entities/{child}/` |
-
-Cross-domain plumbing hooks stay in `shared/hooks/` (e.g. `use-live-events`). UI-kit hooks stay next to their atom (e.g. `shared/ui/data-table/use-data-table.ts`).
-
-Omit `lib/` / `hooks/` when the domain has nothing but components + functions.
-
-**Dossier section chrome:** shared create/edit state lives in `dossier/hooks/use-dossier-section-editor.ts` (`adding` / `editId` / `error` + empty gate). Shell data (counts, evidence options, rename/edit mutations, live invalidation) lives in `dossier/hooks/use-dossier-shell.ts`. Export actions: `dossier/components/dossier-export-menu.tsx`. Ghost / panel Add CTAs use `dossier/components/dossier-section-add-button.tsx`. Evidence tab dump (File/Paste/URL, Entity locked) lives in `entity-evidence-section.tsx` via Intake `useDumpEvidence` + `DumpDialogs`: no `dossier.functions.ts`. Confirmed↔evidence Accept gate + copy: `shared/lib/confirmed-evidence.ts` (also used by Triage + connection dialog). Claim create/edit share `dossier/lib/claim-form.ts` (`formOptions`) via one `ClaimComposer`. Section Graph writes (claims / questions / identifiers / events / connections) use `useMutation`: do not leave bare `await …Fn()` siblings beside mutation-backed create/update.
-
-### Graph children (`entities`)
-
-```
-domains/entities/
-  components/
-  types.ts
-  entities.functions.ts    # orpcForActor → api.entities.*
-  claims/                  # types.ts + claims.functions.ts (no .server.ts)
-  identifiers/ …
-  edges/ …                 # graph Edge CRUD; Dossier surface = Connections tab
-  events/ …
-  questions/ …
-```
-
-SQL for graph children lives in `@watchdog/db` `repos` + `@watchdog/core` services + `@watchdog/api` procedures. Dossier chrome stays under `dossier/components/`: no `dossier.functions.ts`.
-
-**Connections UI** (not under `edges/`):
-
-- **Dossier:** `dossier/components/connections-section.tsx` + `dossier/components/ego-graph/*` (list, dialog, ego canvas). Full confidence + evidence.
-- **Entities table:** `entity-connections-cell.tsx` + `connection-composer-fields.tsx` (chips ≤2 + `+N` browse; Add/edit popover with connection list; edit footer **Unlink** bottom-left; relationship then peer). Writes: `hooks/use-entity-table-mutations.ts` (`createConnection` / `updateConnection` / `deleteConnection` → `edges.*` Fns). Always `unverified`, no evidence.
-- **Shared writes:** `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`): both surfaces. Peers index: `entities/lib/connection-peers.ts`. Phrase helpers: web `shared/ui/vocab/edge-predicate.ts` (`preferredEdgePhrase` / `clampEdgePhrase` / grouped `edgePhraseOptions` / `edgePhraseOptionsForPeers` / `filterPeerOptionsForPhrase` — relationship + peer pickers both respect `EDGE_PREDICATE_META.validKinds` and available case peers).
-- **Bulk add identifiers** (table + Dossier): public parse API `entities/lib/parse-identifier-paste.ts` (ingest; identity in `infer-paste-identity.ts`, resolve in `resolve-identifier-paste.ts`). Paste UI state lives in `entities/lib/use-bulk-add-identifiers-paste.ts`. Dialog `entities/components/bulk-add-identifiers-dialog.tsx` (paste, then left/right column match). Type comes from the column or values: no required Type default. Default Entity fills **empty** Entity cells only; a mapped name/slug miss stays empty and shows **Not found** / **Ambiguous** on the Entity cell (does not silently use the default). Preview cells are editable (empty Type/Platform = **: **, not the field name). Also accepts markdown tables, labeled notes, JSON, profile URLs, mailto/tel, bullets. One `useMutation` loops `createIdentifierFn`. Dossier locks Entity (mapper hides the Entity destination). Row errors from schemas `validateIdentifierWrite` (value + handle→platform): do not fork a second regex set. Inline edit commits share `entities/lib/commit-identifier-field.ts`.
-- Edge RPC stays `entities/edges/` (entity-scoped + case-wide `listForCase`). Shared graph chrome: `shared/ui/graph/` (`GraphCanvas`, `EntityNode`, optional `getNodeActions` → ContextMenu + ⋯; Case overview omits). Case graph page: `cases/components/case-graph/*` + `graph-page.tsx` (`/graph`).
-- **Row / node actions** (shared ⋯ + ContextMenu): pure factories in `entities/lib/entity-row-actions.ts`, `entities/lib/identifier-row-actions.ts`, `dossier/lib/*-row-actions.ts`, `cases/lib/case-card-actions.ts`, `tasks/lib/task-card-actions.ts` (`AppAction[]`). Tables use `DataTable` `getRowActions` + Actions column; list/card rows use `TargetActionsHost` (or manual `ActionsContextMenu` + `RowActionsMenu`). Target only — chrome lives on inset. Dossier Identifiers shares `identifierRowActions` (⋯ + row ContextMenu).
+Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts` and its own `*.functions.ts`. Dossier chrome stays under `dossier/components/` and has no `dossier.functions.ts`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
 
 ## Rules
 
-1. One noun = one product concern. Don't put Cap run chrome under Triage.
-2. Prefer `@/domains/{noun}/...` imports (no relative hops between domains).
-3. No `createServerFn` inside `components/`, `hooks/`, `lib/`, or `queries.ts`.
-4. Handlers call **`orpcForActor(actorFromSession(...)).…`** for domain I/O (same pattern as `jobs` / `triage` / graph children).
-5. `lib/` and `hooks/` never import `*.server.ts`. Hooks may call `*.functions` only.
-6. **Never import `@watchdog/db` from web domains**: oxlint-enforced, no exceptions (auth's db access lives in `@watchdog/auth`; the SSE route `routes/api/events.ts` authorizes and listens through `@watchdog/core`).
-7. Domains with RPC inputs keep Zod in `types.ts` (jobs/triage included).
-8. Domains with server lists keep `queries.ts`; invalidate via `shared/lib/query-invalidation.ts`.
+| Rule | Enforced by |
+| --- | --- |
+| Never import `@watchdog/db` from web (auth's db access lives in `@watchdog/auth`; `routes/api/events.ts` goes through `@watchdog/core`) | oxlint `no-restricted-imports` |
+| No `createServerFn` in `components/`, `hooks/`, `lib/`, or `queries.ts` | `guidance` |
+| `*.server.ts` is never imported from client components, `lib/`, or `hooks/`; hooks call `*.functions` only | `guidance` (Start's import protection may fail a client build) |
+| Handlers call `orpcFromContext(context)` for domain I/O | `guidance` |
+| Domains with RPC inputs keep Zod in `types.ts`; DTO and form-value types never live in `components/` | `guidance` |
+| Domains with server lists keep `queries.ts` and invalidate through `shared/lib/query-invalidation.ts` | `guidance` |
+| Predicate, confidence, and kind options come from `@watchdog/schemas` (labels from `shared/ui/vocab/`); don't re-export them through domain `types.ts` | `typecheck` for the unions; otherwise `guidance` |
+| Client code imports `@watchdog/policy/patch-needs-confidence`, never the `@watchdog/policy` barrel (Effect stays off the client) | `guidance` |
+| One noun is one product concern (no Cap run chrome under Triage); prefer `@/domains/{noun}/...` imports | `guidance` |
 
 ## Map
 
-| Domain | Owns | Route(s) | Entry UI | ServerFns |
-| --- | --- | --- | --- | --- |
-| `collect` | Evidence ingress + Cap/Job runs (merged queue) | `/collect` | `collect.tsx` composes `use-collect-workspace` → `CollectDetail` / `CollectQueueBody` / `CollectRunForm` (Evidence tabs + job/playbook run forms); queue `collect-queue-list.tsx` + `collect-queue-toolbar.tsx`; multi-row `buildCollectIndex` under `lib/collect-*.ts` + `lib/collect-filters.ts` (imports Evidence↔Job join helpers from Intake) | Reuses `intake.functions.ts`, `jobs.functions.ts` + domain queries |
-| `triage` | Proposals: accept / reject | `/triage` | `triage.tsx` → `TriageDetail` → `triage-decide-header.tsx` (context strip) + `triage-patch-body.tsx` + `triage-decide-footer.tsx` (shared `lib/decide-header-view.ts` `decideMode`); identifier collision Alert + per-op chip (warn, don't block); invalid Identifier ops via schemas `listInvalidIdentifierOps` (chip + **disable Accept**); workspace `hooks/use-triage-workspace.ts` (filters, selection, accept/reject, SSE); forms `hooks/use-triage-detail-forms.ts`; Accept gate `lib/accept-gate.ts` + `lib/accept-validation.ts` + `shared/lib/confirmed-evidence.ts`; confidence UI via `@watchdog/policy/patch-needs-confidence` (not the `@watchdog/policy` barrel — Effect stays off the client); Accept composer DTO `AcceptFormValues` in `types.ts` | `triage.functions.ts` + `types.ts` + `queries.ts` |
-| `intake` | Evidence RPC + shared detail components (no standalone route) | : (via Collect) | `evidence-detail.tsx`, `process-run-card.tsx`, dump dialogs/forms; `lib/evidence-runs.ts` owns `CollectRow` join + `collectRowForEvidence` (Collect queue imports this); consumed by Collect + Dossier Evidence tab | `intake.functions.ts` + `types.ts` + `queries.ts` |
-| `jobs` | Cap Jobs RPC + shared job detail/artifact/run forms (no standalone route) | : (via Collect) | `job-detail.tsx`, `artifact-content.tsx`, `job-cap-run-form.tsx` / `job-playbook-run-form.tsx` (+ shared `playbook-seed-fields.tsx`); workspace `hooks/use-jobs-workspace.ts` | `jobs.functions.ts` + `queries.ts` |
-| `entities` | Entity CRUD + graph children (entity-scoped + case-wide identifiers/edges reads) | `/entities`, `/identifiers` | `entity-table.tsx` + Connections cell; `identifiers-page.tsx` (case-wide table); row action factories `lib/entity-row-actions.ts` / `lib/identifier-row-actions.ts` | `entities.functions.ts` + `{claims,edges,identifiers,…}/queries.ts` |
-| `dossier` | Subject dossier chrome (editable title + `EntityKindGlyph`; `DossierEditDialog`; Notes + Tasks tabs use `density="split"`: Notes fills `RichTextEditor`, Tasks = entity-scoped `TaskBoard`; Evidence tab dumps File/Paste/URL via Intake hook with Entity locked) | `/entities/$slug` | `dossier.tsx` (+ `hooks/use-dossier-shell.ts`, `dossier-export-menu.tsx`), section chrome per § hooks/lib (`lib/*-row-actions.ts` for Connections / Claims / Events / Questions), `summary-notes-section.tsx` (`RichTextEditor` Markdown blur-autosave), `dossier-edit-dialog.tsx`, `entity-evidence-section.tsx` | Uses entities / intake / tasks queries + Fns. Questions rows: Edit + Delete (immediate, like Events) + Resolve/Reopen via `question-row-actions.ts`. |
-| `cases` | Case list + Case Overview dashboard + active Case context | `/cases`, `/cases/$caseSlug` (+ cookie; UUID/`?tab=` redirects) | `case-list.tsx` (+ `lib/case-card-actions.ts`), `case-overview.tsx` (dashboard only; the page header carries the inline Case rename via `EditableTextCell variant="title"`), `hooks/use-update-case.ts` (shared Case update: name / description / egress; a slug change replace-navigates), Overview stats reuse dashboard `MetricsSection`, `graph-page.tsx` (`/graph`), Overview tab `lib/overview-activity.ts` + `case-settings-form.tsx`; Case switcher lists flat Overview / Entities / Identifiers / Graph (Dashboard via WATCHDOG logo) | `cases.functions.ts` + `types.ts` + `queries.ts` (`caseBySlugQuery`) + `lib/active-case*` |
-| `tasks` | Case work board (kanban) + dossier tab | `/tasks` (`?entityId=`) | `tasks-page`, `task-board` (columns = `TASK_STATUSES` from `@watchdog/schemas`: no domain `board.ts` alias), `lib/task-board-dnd.ts` (`reconcileItems` keeps optimistic order), `lib/task-card-actions.ts`, `task-form-dialog`, `dossier-tasks-section`; shared `useTaskWorkspace` (`reorderTasksFn` / `handleCommitDrop`). | `tasks.functions.ts` + `types.ts` + `queries.ts` |
-| `organization` | Onboarding, sidebar org switcher, Organization settings profile | `/onboarding`, sidebar footer, `/settings?tab=organization` · `?tab=members` · `?tab=organizations` | `create-organization-form`, `org-switcher`, `org-avatar` (logo or initial), `organization-profile`, `organization-members`, `your-organizations`, `org-logo-field`, `org-slug-field` |
-| `settings` | Settings page (sidebar groups: Personal = Account / Security / Appearance / API Keys / Credentials / Organizations; Organization = General / Members; Administration = Users) | `/settings` (`?tab=`) | `settings-shell`, `settings-appearance-section`, `settings-credentials-form` (+ `settings-credentials-handlers` bind* helpers); Organization tabs are `domains/organization`; Users tab is `settings-users` (server admin only) | `settings.functions.ts` + `types.ts` + `queries.ts` |
-| `activity` | Cross-case recent activity read model (evidence / jobs / pending proposals / tasks) | : (data-only) | : | `activity.functions.ts` + `types.ts` + `queries.ts` |
-| `search` | Shell Mod+K command palette + Shortcuts dialog + inset ContextMenu chrome. Jump destinations follow sidebar nav and omit `/ui`. | : (shell chrome) | `search-chrome.tsx` (`SearchUiContext` + `AppInsetContextMenu`), `search-button.tsx` (sidebar footer icon button), `shortcuts-dialog.tsx`, `command-palette.tsx` (Jump to + idle Commands + `searchCase`), `hooks/use-search-ui` | `search.functions.ts` + `types.ts` + `queries.ts` |
-| `dashboard` | Dashboard (`/`): stats + Triage + Due + resizable Activity (`ScrollArea`) | `/` | `dashboard-home.tsx` (`Page density="split"` + vertical `ResizablePanelGroup`), `metrics-section.tsx`, `dashboard-panels.tsx`, `recent-activity.tsx`, `lib/selectors.ts` | Composes other domains' queries (+ `recentActivityQuery`) |
+| Domain | Owns | Route(s) |
+| --- | --- | --- |
+| `collect` | Evidence ingress + Cap/Job runs in one queue | `/collect` |
+| `triage` | Proposals: accept / reject | `/triage` |
+| `intake` | Evidence RPC + shared Evidence detail components | via Collect |
+| `jobs` | Cap Jobs RPC + shared job detail and run forms | via Collect |
+| `entities` | Entity CRUD + graph children, Entities and Identifiers tables | `/entities`, `/identifiers` |
+| `dossier` | Subject dossier chrome and section editors | `/entities/$slug` |
+| `cases` | Case list, Case Overview, case graph, active Case context | `/cases`, `/cases/$caseSlug`, `/graph` |
+| `tasks` | Case work board + dossier Tasks tab | `/tasks` |
+| `organization` | Onboarding, org switcher, Organization settings | `/onboarding`, `/settings?tab=organization`, `members`, `organizations` |
+| `settings` | Settings shell, Cap credentials UI, instance-admin Users | `/settings` |
+| `activity` | Cross-case recent activity read model | data-only |
+| `search` | Shell Mod+K palette, Shortcuts dialog, inset ContextMenu chrome | shell chrome |
+| `dashboard` | Stats, Triage and Due panels, resizable Activity | `/` |
 
-Auth is not a domain noun: it lives under `src/auth/`:
-
-| Path | Owns |
-| --- | --- |
-| `auth/` runtime (`client`, `server`, `session.server`, `ensure-session`, `middleware`, …) | Better Auth + route/API session; ServerFn `requireAuth` is wired globally in `src/start.ts` (not per domain `*.functions.ts`) |
-| `@watchdog/auth` (`packages/auth`) | Better Auth server core: `createAuth`, `createApiContext`, invite signup (endpoint / plugin / schemas / flow), instance admin, org roles, actor resolution. Web's `auth/server.ts` only wires framework plugins and `beforeDeleteOrganization` |
-| `auth/ui/` | Sign-in / sign-up / reset / account + security settings / API keys, copied from the Better Auth UI registry and now owned ([`auth-ui.md`](ui/auth-ui.md)) |
-| `auth/plugins/` | BA UI plugin wiring (e.g. API keys) |
-| `domains/settings` | Settings shell + Cap credentials UI: BA account/security live under `auth/ui/`; instance-admin Users is `settings-users` |
-
-Shared chrome under `src/shared/`.
+Auth is not a domain: runtime, plugins, and the copied Better Auth UI live under `src/auth/` ([`ui/auth-ui.md`](ui/auth-ui.md)); `requireAuth` is wired globally in `src/start.ts`; server core is `@watchdog/auth`. Shared chrome lives under `src/shared/`.
 
 ## Page ownership
 
-| Layout kind | Route owns | Domain entry owns |
-| --- | --- | --- |
-| **Split-view** (Collect, Triage) | Thin loader (identity + `ensureCollectQueueQueries` / `warmCollectCatalogQueries` / `warmTriageQueries`) | `<Page density="split">` + `PageHeader` + `SplitView`; queue/detail **`PendingRegion`** + hand skeletons (`QueueSkeleton`, `CollectDetailSkeleton`) |
-| **Table** (`/entities`, `/identifiers`) | Thin loader + `warmEntitiesQueries` / `warmIdentifiersQueries` | `<Page>` + `PageHeader` + `DataTable` with `pending={listPending(...)}`: per-cell skeletons, not `PendingRegion` ([`tables.md`](ui/tables.md)) |
-| **Board** (`/tasks`) | Thin loader + `warmTasksQueries` | `<Page>` + `PageHeader` + `TaskBoard`; board slot **`PendingRegion`** + `BoardSkeleton` |
-| **Card grid** (`/cases`) | Thin loader (identity only) | `case-list.tsx`; grid slot **`PendingRegion`** + `CardGridSkeleton` |
-| **Graph** (`/graph`) | Thin loader + `ensureGraphQueries` | `graph-page.tsx`; `GraphCanvasLoadingRegion` while loading; then `CaseGraphCanvas` |
-| **Stack** (Dossier, Case Overview, Dashboard) | Thin loader + matching `warm*` helper | Full `<Page>` shell; tab bodies **`ActiveTabBody`** + `stackPendingFallback()`; Case Overview pending uses **`CaseOverviewPending`** |
-| **Mixed / split stack** (Dashboard) | Thin loader + `warmDashboardQueries` | `dashboard-home.tsx`: `Page density="split"`; Activity panel uses `PendingRegion` |
-| **Settings** | `<Page>` + `PageHeader` | `SettingsShell` + tab panels; credentials tab `stackPendingFallback(1)` while pending |
+One copy of "layout kind to who owns the Page, loader, and pending UI". The domain entry owns `<Page>` + `PageHeader` everywhere except Settings ([`page-shell.md`](ui/page-shell.md)).
 
-Split-view domains own the full page shell including `<Page>` (Collect/Triage pattern). Table/board/stack domains own the shell in the domain entry (`actions=`, `count=` + `countOn=` on table/board last crumbs, and `below=` line tabs live with the tab state they drive). Identity is the PageHeader trail: see [`page-shell.md`](ui/page-shell.md). Do not pass per-page identity titles or explainer `description=` (404 missing-slug copy only).
+| Layout kind | Route loader | Pending UI (in the domain entry) |
+| --- | --- | --- |
+| **Split Queue** (Collect, Triage) | Collect: identity + awaited `ensureCollectQueueQueries` (+ job detail when `?id=`). Triage: identity + `warmTriageQueries` | `<Page density="split">` + `SplitView`; `PendingRegion` only on cache miss (Collect), `TriageSplitPendingFallback` (Triage) |
+| **Table** (`/entities`, `/identifiers`) | identity + `warmEntitiesQueries` / `warmIdentifiersQueries` | `DataTable pending={listPending(...)}` ([`tables.md`](ui/tables.md)) |
+| **Board** (`/tasks`) | identity + `warmTasksQueries` | `PendingRegion` + `BoardSkeleton` |
+| **Card grid** (`/cases`) | identity only | `PendingRegion` + `CardGridSkeleton` |
+| **Graph** (`/graph`) | identity + `ensureGraphQueries` | `GraphCanvasLoadingRegion` |
+| **Stack** (Dossier, Case Overview) | identity + `warmDossierQueries` / `warmCaseOverviewQueries` | `ActiveTabBody` + `stackPendingFallback()`; Case Overview uses `CaseOverviewPending` |
+| **Dashboard** (`/`) | identity + `warmDashboardQueries` | `Page density="split"`; `PendingRegion` + hand skeletons (not `stackPendingFallback`) |
+| **Settings** | route owns `<Page>` + `PageHeader` | `SettingsShell` tab panels; credentials tab uses `stackPendingFallback(1)` |
 
 ## Cross-domain rules
 
 | Need | Do |
 | --- | --- |
-| Entity picker | `EntityCombobox`: parent passes options (no I/O in combobox). Intake dump toolbar + File/Paste/URL dialogs share one target Entity (Unattached allowed). Dossier Evidence dump locks Entity (`DumpDialogs` `entityLocked`; `useDumpEvidence`) |
-| Entities Connections column | `/entities` joins `edgesForCaseQuery`; chips = direction arrow (`↗` out / `↙` in) + peer name; hover `title` = full phrase (e.g. “Associate of John Doe”). ≤2 chips + `+N` browse; hover-reveal `+` opens Add/edit popover (`connection-composer-fields`; relationship first). Chip click opens edit composer only; footer **Unlink** bottom-left. Top connection list only for `+N` browse / overflow. Mutations: `use-entity-table-mutations` + `use-entity-table-state` → `createConnection` / `updateConnection` / `deleteConnection` (`deleteEdgeFn`); create/update payloads via `lib/edge-write.ts` @ `unverified` (no evidence). Dossier Connections uses the same builders + full confidence/evidence dialog + confirm-before-remove. Interactive controls are buttons so row-click still opens dossier. **Updated** column shows relative `updatedAt`; tooltip includes full Updated + Created local times (no separate Created column). Notes column: sticky-note icon → Sheet (`NotesIconCell`). Actions column + row ContextMenu: `lib/entity-row-actions.ts` → Open entity / Copy link / Copy Markdown / Delete (`DeleteEntityDialog` type-name confirm). |
-| Identifiers table | `/identifiers`: `identifiers-page.tsx` + `hooks/use-identifiers-table.ts` + `identifiers-table.columns.tsx`. Columns: Entity · Value · Type · Platform · Status · Confidence · Evidence · Notes (narrow icon) · Actions (Open identifier / Copy value / Delete via `lib/identifier-row-actions.ts`, shared with Dossier Identifiers ⋯ + row ContextMenu). Row ContextMenu uses the same factory (target only). SearchField + PageFilterMenu (Type / Status / Confidence `columnFilters`). Loading: `DataTable` `pending` (not `PendingRegion`). In-place create reuses `useIdentifierCreateForm` + optional Entity combobox; Evidence links via the Evidence column (popover `EvidencePicker`, same control as row edit). Notes open a right Sheet with `RichTextEditor` Markdown (blur/close autosave) — not an inline cell. **Bulk add** = dialog + `parse-identifier-paste.ts` + `use-bulk-add-identifiers-paste.ts` (Dossier Identifiers reuses the same dialog; Entity locked). Preview cells editable; mapped Entity miss → **Not found** / **Ambiguous** (does not silently use the default Entity). Handle without platform blocked. Row click → Dossier Identifiers. Do not put this table under `cases/`. |
-| Artifact bytes in Detail | Domain wrapper / parent loads (`ArtifactContent` + `getArtifactContentFn`) |
-| Evidence options in dossier / Triage | Parent loads Case Evidence (`evidenceListQuery(caseId)`: full Case list; EvidencePicker needs every dump). Pass options as **`readonly EvidenceOption[]`** (picker props are readonly). Dossier Evidence tab client-filters `entityId` and dumps via `useDumpEvidence` (Intake RPC). Dossier composers → `EvidencePicker` (chip-height Add/+ · checklist; `layout="panel"` inside identifier Link popovers). Job-linked Triage cites → `EvidenceCiteChips` (read-only; no Add). Both live in `shared/ui/intake/evidence-picker.tsx`. |
-| Case switch | `cases` + `CASES_CHANGED_EVENT`: see [`data.md`](data.md) |
-| Task surfaces | `useTaskWorkspace(caseId, { entityId?, live? })` owns queries / mutations / selection / dialogs. `handleCommitDrop` = status change (cross-column) + `reorderTasks` (`position` within the dest column). Card ⋯ / right-click = `taskCardActions` (Open + Delete) via `onDelete` on `TaskBoard`; delete accepts an optional task (dialog uses selection). Dossier section passes `live: false`: parent dossier already listens for `task_changed` (tab counts). Do not fork a third create/edit machine. Cards are a tinted entity tab, title block, and priority chip (`Low` / `Med` / `High`) + due footer (ruled, untinted; all fields `text-xs`); the whole card is the drag handle, and ⋯ appears on hover. The board bleeds to the inset edges, so its column dividers reach the page header. |
-| Jobs workspace | `useJobsWorkspace(caseId, { jobId, onJobIdChange, …, jobsListFetching?, live? })` owns selection, detail fetch, cap/playbook start/cancel, SSE `job_update`. `jobId: null` = no selection (no first-row fallback). Collect wraps it with `live: false` and passes `resolveCollectJobDetailId` as `jobId` because playbook queue rows are keyed by run id. On start: seed list+detail cache before `onJobIdChange` so URL selection resolves without a Navigate remount. Run UI: `JobCapRunForm` / `JobPlaybookRunForm` in Collect. Start/cancel errors → inline in run form (`setError`); no success toast (queue row is feedback). Do not fork a second jobs mutation machine. |
-| Intake actions (Collect) | `useIntakeActions` — Harvest/Extract/Enrich/Hide/Restore/Attach: errors → `actionError` / Collect `FieldError`; no success toast (job queue + detail are feedback). Dump (file/paste/URL) via `useDumpEvidence`: `toast.promise` for uploads + success toasts for paste/URL. |
-| Triage workspace | `useTriageWorkspace(caseId, { proposalId, initialStatus })` owns filters, selection, accept/reject mutations, SSE `proposal_created` + `proposal_queue_changed`. First paint = pending-only (`PENDING_TRIAGE_FILTERS`). URL auto-fallback via `<Navigate replace>` + `resolveQueueSelection`. `decide-header-view` / footer / workspace call `patchNeedsConfidence` from `@watchdog/policy/patch-needs-confidence` only — do not import the policy package root (pulls Effect into the browser). Do not fork a second triage mutation machine. |
-| Identifier evidence column | `shared/ui/identifiers/identifier-evidence-cell.tsx`: labeled chip summary + edit popover (Save); preview click when Dossier wires `onEvidenceClick`; confirmed gate disables Save. Used by Dossier Identifiers and `/identifiers`. |
-| Identifier notes column | `shared/ui/identifiers/identifier-notes-cell.tsx` (`NotesIconCell` + `IdentifierNotesCell` alias): sticky-note icon → right Sheet + `RichTextEditor` Markdown (blur/close autosave). Narrow column (~52). Used by Dossier Identifiers, `/identifiers`, and `/entities` (entity notes). |
-| Dashboard | Composes triage / tasks / jobs / entities / activity queries; selection helpers in `dashboard/lib/selectors.ts`. Activity = vertical resizable panel + `ScrollArea` (`recent-activity.tsx`). Do not put dump/paste on Dashboard: Collect owns dump. |
-| Command palette / hotkeys / context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts` / `use-global-hotkeys`. Mod+K / Mod+B / `?` registered once in `SearchChrome` (inside `SidebarProvider`); menu `run`s share the same closures as hotkeys (palette toggles). Idle palette = Jump to + `paletteCommands` (no open-palette). Inset `#app-main` right-click = `chromeActions`; row/node menus are target-only. Shortcut glyphs: `Kbd` / `KbdGroup` via `ActionShortcutChord` (dense in menus). The Mod glyph comes from `useModKeyLabel` (`shared/hooks`): "Ctrl" on the server and first client render, platform glyph after mount; never call `modKeyLabel()` during render. Do not add a second window listener in shadcn sidebar. |
-| Predicate / confidence / kind | Options from `@watchdog/schemas` (+ web `vocab/` labels). Connection create/edit uses `edgePhraseOptions` / `FieldCombobox` with schema `group` headings: no freestyle predicate strings. Do not fork `resolveEdgeEndpoints` payloads; use `entities/lib/edge-write.ts`. |
+| Entity picker | `EntityCombobox`: the parent passes options (no I/O in the combobox). The Dossier Evidence dump locks the Entity (`DumpDialogs entityLocked`, `useDumpEvidence`) |
+| Evidence options in Dossier or Triage | Parent loads the full Case list (`evidenceListQuery(caseId)`) and passes `readonly EvidenceOption[]`; composers use `EvidencePicker`, Job-linked cites use `EvidenceCiteChips` |
+| Workspaces | `useJobsWorkspace`, `useTriageWorkspace`, `useTaskWorkspace`, `useIntakeActions` own selection, queries, mutations, and SSE for their surface. Don't fork a second mutation machine for the same noun. Collect wraps the jobs workspace with `live: false` |
+| Row and node menus | Pure `AppAction[]` factories (`entities/lib/entity-row-actions.ts`, `identifier-row-actions.ts`, `cases/lib/case-card-actions.ts`, `tasks/lib/task-card-actions.ts`, `dossier/lib/*-row-actions.ts`) feed both the actions menu and the row ContextMenu. Target actions only; chrome lives on the inset |
+| Bulk-add identifiers | `entities/lib/parse-identifier-paste.ts` is the parse API; row errors come from schemas `validateIdentifierWrite` (don't fork a second regex set). One `useMutation` loops `createIdentifierFn`; Dossier locks the Entity |
+| Palette, hotkeys, context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts`. `SearchChrome` registers Mod+K and `?`; Mod+B belongs to the vendored `SidebarProvider` ([`atoms.md`](ui/atoms.md#keyboard)) |
+| Triage Accept | Policy lives in core and [`custody`](../contracts/custody.md); UX-only rules in [`ux.md`](../../explanation/ux.md#triage-accept-ux-only-rules). The Accept gate uses `shared/lib/confirmed-evidence.ts` |
 
 ## Anti-patterns
 
-- New `createServerFn` inside a component file
-- Importing `*.server.ts` from a client component or from `lib/`
-- Importing DTOs / form value types from `components/` into `lib/` or `hooks/` (put them in `types.ts`)
-- Fetch/mutate inside `shared/ui` atoms
-- Duplicating Queue/Detail chrome instead of shared atoms ([`UI.md`](UI.md))
-- Putting dossier section logic under `entities/components/` (table Connections cell + shared `connection-composer-fields` / `edge-write` are the exception: dossier keeps the full Dialog)
-- Graph child RPC under `entities/lib/` (use `entities/{child}/`; `lib/edge-write.ts` is payload builders only, not RPC)
-- Alias files that only re-export schema consts (e.g. deleted `tasks/lib/board.ts`)
-- Forking edge create/update endpoint resolution outside `entities/lib/edge-write.ts`
-- Remounting Entities columns from a global `connectionBusy` flag: keep saving state local to the open cell
-- Dual toast + inline error for the same table connection mutation (prefer inline in the popover)
+- A new `createServerFn` inside a component file.
+- Importing `*.server.ts` from a client component or `lib/`.
+- Fetching or mutating inside a `shared/ui` atom.
+- Duplicating Queue/Detail chrome instead of the shared atoms.
+- Dossier section logic under `entities/components/` (the Connections cell and `edge-write` are the sanctioned overlap).
+- Graph child RPC under `entities/lib/` (use `entities/{child}/`; `edge-write.ts` is payload builders, not RPC).
+- A global busy flag that remounts Entities columns; keep `saving` local to the open cell.
+- A toast plus an inline error for the same mutation.
 
 ## Gotchas
 
-- **Dashboard Activity**: cross-case feed (`recentActivityQuery`) has no dedicated SSE type; soft-invalidate via named contracts (`invalidateAfterTaskMutation` / job / proposal / evidence). UI: vertical resizable panel under overview (`Page density="split"`) with `ScrollArea` inside `recent-activity.tsx`. Rows link to `/cases/$caseSlug` only (resolve slug from Cases context; cookie-scoped routes like `/collect` / `/triage` / `/tasks` must not be deep-linked from a foreign Case). Case filter lives on that section alone: do not re-scope Collect/Triage panels to a non-active Case without addressing Active Case routing. Task rows come from append-only `activity_events` (create / status_changed / deleted) so status diffs are real `from → to`, not inferred from the current task row; evidence / jobs / pending proposals are still live-row snapshots until those paths write events too. Evidence, job, and task rows show **`By` + handle** (or `api-key:…`); do not display raw `actorId`.
-- **Vocab in UI**: edge predicates, confidence, kinds come from `@watchdog/schemas` directly (do not re-export via domain `types.ts` / `*.functions.ts`). Freestyle options in dossier pickers drift from the write gate. Connection create stores `{predicate, orientation}`; encode/decode phrases only at the `FieldCombobox` boundary (`edgePhraseValue` / `parseEdgePhraseValue`). Phrase options carry schema `group` → Combobox section headings (`EDGE_PREDICATE_GROUP_LABELS`). Use `preferredEdgePhrase` / `clampEdgePhrase` for kind-pair defaults: do not reintroduce a private dossier `clampRelation`.
-- **Task due dates**: UI is `<input type="date">` / `LocalDateTime dateOnly`. Persist via `dueDateToIso` (local noon ISO) so calendar-day semantics survive timezone display; overdue is day-based (`isTaskDueOverdue`), not wall-clock; Dashboard "Tasks due soon" / Due panel uses `isTaskDueSoon(..., 7)` (today + 7 calendar days, excluding overdue).
-- **Task board DnD**: cross-column drag changes status; within-column drag persists order via `reorderTasks` (`position`, then `createdAt` in the repo). `reconcileItems` keeps optimistic placement across refetch: do not drop reorder without updating `position` on the server.
-- **Dashboard "Jobs running"**: tile count uses `LIVE_STATUSES` (`queued` + `running`), not `running` alone.
+- **Dashboard Activity:** the cross-case feed has no SSE type; rows link to `/cases/$caseSlug` only (resolve the slug from Cases context), because cookie-scoped routes like `/collect` must not be deep-linked at a foreign Case. The Case filter lives on that section alone. Task rows come from append-only `activity_events` (create, `status_changed`, delete) so `from -> to` diffs are real; evidence, jobs, and pending proposals are still live-row snapshots. Show `By` + handle (or `api-key:...`), never a raw `actorId`.
+- **Vocab in UI:** connection create stores `{predicate, orientation}`; encode and decode phrases only at the `FieldCombobox` boundary (`edgePhraseValue` / `parseEdgePhraseValue`). Use `preferredEdgePhrase` / `clampEdgePhrase` for kind-pair defaults.
+- **Task due dates:** persist with `dueDateToIso` (local noon ISO) so calendar-day semantics survive timezone display; overdue is day-based (`isTaskDueOverdue`), and "due soon" is today + 7 days excluding overdue (`isTaskDueSoon`).
+- **Task board drag:** cross-column changes status; within-column persists order via `reorderTasks` (`position`, then `createdAt`). `reconcileItems` keeps optimistic placement across refetch.
