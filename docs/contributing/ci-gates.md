@@ -79,9 +79,11 @@ Files GitHub reads from the repository, kept under `.github/` unless noted:
 - `.github/PULL_REQUEST_TEMPLATE.md`: linked issue, gates run, docs affected and the custody checklist.
 - [`SECURITY.md`](../../SECURITY.md) (repo root): supported versions and private vulnerability reporting.
 
-## Cursor stop hook
+## Stop hook (Cursor and Claude Code)
 
-`.cursor/hooks/stop-gate.mjs` lint-checks changed files, runs `ds:ban` when web UI paths are dirty, `check-agents.mjs --strict` when `AGENTS.md` is dirty, `check-docs.mjs --strict --fail-length` when `docs/**` is dirty, and `validate-agents.mjs` when `.agents/skills/**` or `.cursor/README.md` are dirty. Fix violations before ending the turn.
+One script, `.cursor/hooks/stop-gate.mjs`, serves both harnesses through a small adapter: Cursor registers it in `.cursor/hooks.json` with `--client=cursor` (payload `status`, `loop_count`; answers `followup_message`; `loop_limit: 2`), and Claude Code registers it in `.claude/settings.json` (`hooks.Stop`) with `--client=claude` (payload `stop_hook_active`; answers `{"decision":"block","reason":...}`; a second pass with `stop_hook_active: true` is allowed to stop). Both run through `.cursor/hooks/run-node.sh` with a 60 s timeout, and without the flag the script sniffs the payload. `.claude/settings.json` also keeps commit and PR attribution off (`attribution.commit` and `attribution.pr` set to empty strings). A structural test in `hook-policy.gate.test.ts` pins both facts.
+
+The gate lint-checks changed files, runs `ds:ban` when web UI paths are dirty, `check-agents.mjs --strict` when `AGENTS.md` is dirty, `check-docs.mjs --strict --fail-length` when `docs/**` is dirty, and `validate-agents.mjs` when `.agents/skills/**` or `.cursor/README.md` are dirty. Fix violations before ending the turn.
 
 ## Gotchas
 

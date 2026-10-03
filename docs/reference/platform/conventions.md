@@ -154,6 +154,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Third-party actions are pinned to a 40-char SHA with a version comment | repo | `docs/contributing/ci-gates.md` Pinning | `check:action-pins` | enforced |
 | CODEOWNERS paths resolve and every owned path has an owner | repo | `.github/CODEOWNERS` | `check:codeowners` | enforced |
 | Code mapped in `scripts/doc-map.mjs` changes with its doc (or `docs:allow-affect - reason`) | repo | `docs/contributing/ci-gates.md` Doc-affect escape hatch | `check:docs-affected:strict` | enforced |
+| Claude Code project settings keep commit and PR attribution off and register only the shared Stop hook | repo | `docs/contributing/ci-gates.md` Stop hook | `scripts/__tests__/hook-policy.gate.test.ts` | enforced |
 | Local skipping goes through `lefthook-local.yml`; `--no-verify` is not an escape hatch | repo | `docs/contributing/ci-gates.md` Gates | guidance | guidance |
 | Vitest projects share workers (`isolate:false`): tests restore `process.env`, `globalThis`, timers and DOM | repo | `docs/contributing/testing/standards.md` Test speed | guidance | guidance |
 | Test naming and shape: `describe(subject)` + `it("rejects X when Y")`, AAA, one behavior, no bare `test()`, no `sleep` | repo | `docs/contributing/testing/standards.md` AAA, one behavior | guidance | guidance |
