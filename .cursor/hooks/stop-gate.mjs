@@ -138,10 +138,17 @@ function main() {
     // breaks tsconfig resolution and floods output with bogus "error typed
     // value" findings. Run repo-wide (oxlint alone is sub-10s here even
     // cold), then keep only the lines that touch files this turn changed.
-    const lint = spawnSync(oxlintBin, ["-c", "oxlint.config.ts", "."], {
-      cwd: root,
-      encoding: "utf8",
-    });
+    // Explicit `unix` format (one `file:line:col: message` per line): oxlint only
+    // switches to it by itself when it detects an AI agent in the environment,
+    // so without the flag the filter below sees nothing in a plain shell or CI.
+    const lint = spawnSync(
+      oxlintBin,
+      ["--format=unix", "-c", "oxlint.config.ts", "."],
+      {
+        cwd: root,
+        encoding: "utf8",
+      }
+    );
     const relevant = (lint.stdout ?? "")
       .split("\n")
       .filter((line) => lintable.has(line.split(":")[0] ?? ""));
