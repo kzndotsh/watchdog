@@ -13,6 +13,7 @@
 /.agents/ @kzndotsh
 /.cursor/ @kzndotsh
 /.claude/ @kzndotsh
+/.mcp.json @kzndotsh
 /skills-lock.json @kzndotsh
 
 # CI, hooks and gate scripts
