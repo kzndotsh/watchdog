@@ -31,7 +31,7 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 
 ### Output contract (agent-first)
 
-- **Default:** compact JSON on stdout. Lists: `{ "count", "items", "help?" }`. Mutations: object or `{ "ok": true, … }`. Errors: `{ "ok": false, "error": { "code", "message" }, "help?" }` (stdout), exit 1; unknown flags exit 2; server-side failures (`INTERNAL_SERVER_ERROR` / HTTP 5xx / tagged `InternalError`) exit 3. ORPC errors and tagged `_tag` domain errors (`NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError`) map into that envelope in `handleCliError`. The CLI still talks HTTP via `@watchdog/client` (same application programs as the API, not in-process core Effects).
+- **Default:** compact JSON on stdout. Lists: `{ "count", "items", "help?" }`. Mutations: object or `{ "ok": true, … }`. Errors: `{ "ok": false, "error": { "code", "message" }, "help?" }` (stdout), exit 1; unknown flags exit 2; server-side failures (`INTERNAL_SERVER_ERROR` / HTTP 5xx / tagged `InternalError`, including binary export downloads) exit 3. ORPC errors and tagged `_tag` domain errors (`NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError`) map into that envelope in `handleCliError`. The CLI still talks HTTP via `@watchdog/client` (same application programs as the API, not in-process core Effects).
 - **`--table`:** human ASCII tables for lists.
 - **`--full`:** restore untruncated / full fields (list projections are minimal by default).
 - **`--raw`:** bare path/URL for `export` / `evidence download` (shell `$(…)`).

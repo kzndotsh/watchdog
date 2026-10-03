@@ -313,7 +313,7 @@ function taggedErrorEnvelope(error: unknown): {
 }
 
 /** Exit status for server-side failures; invalid input and other errors exit 1. */
-const SERVER_ERROR_EXIT_CODE = 3;
+export const SERVER_ERROR_EXIT_CODE = 3;
 
 function isServerError(code: string, status?: number): boolean {
   return (
