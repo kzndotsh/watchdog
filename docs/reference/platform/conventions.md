@@ -2,9 +2,9 @@
 
 Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint rule or gate, labeled `guidance`, or deleted. This table is the one index: rule, where it is stated, and what fails when it is broken. Agents follow what a tool enforces; `guidance` rows are judgment calls checked in review.
 
-**Adding a rule:** add its row here in the same change as the rule (or the prose that states it). Name the enforcer in the `enforced by` cell: a lint rule id, a gate or script (`check:size`), a test file path, a type or dependency shape, or exactly `guidance`. `pnpm check:docs:strict` fails a row with an empty enforcer, a status outside the three below, an `enforced` or `baselined` row that says `guidance`, a named script that no `package.json` defines, or a named test file that does not exist.
+**Adding a rule:** add its row here in the same change as the rule (or the prose that states it). Name the enforcer in the `enforced by` cell: a lint rule id, a gate or script (`check:size`), a test file path, a type, or exactly `guidance`. `pnpm check:docs:strict` fails a row with an empty enforcer, a status outside the three below, an `enforced` or `baselined` row that says `guidance`, a named script that no `package.json` defines, or a named test file that does not exist.
 
-**Status:** `enforced` fails the build when broken. `baselined` has an enforcer that tolerates known violations (a shrink-only baseline file or a warn-level rule). `guidance` has no enforcer. One row per rule; `stated in` names the single doc that owns it, and other docs link there.
+**Status:** `enforced` fails the build when broken. `baselined` has an enforcer that tolerates known violations (a shrink-only baseline file or a warn-level rule). `guidance` has no enforcer. A `package.json` dependency list, CSS or a doc is not an enforcer: nothing fails when it changes, so such a rule is `guidance`. One row per rule; `stated in` names the single doc that owns it, and other docs link there. For a rule the code breaks today, the rule cell records the decision (fix and enforce, or delete); the status stays `guidance` until the enforcer exists.
 
 ## Ingress and custody
 
@@ -12,7 +12,8 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | --- | --- | --- | --- | --- |
 | Postgres Case Graph is the SoT; Export is a projection, never hand-edited | repo | `docs/reference/contracts/ingress.md` Rules | guidance | guidance |
 | Investigation content (corpus, entity notes, vault vocabulary) never enters this repo | repo | `AGENTS.md` intro | guidance | guidance |
-| Caps `interpret` yields Proposal ops only; Caps and machines never write the Graph | caps | `docs/reference/contracts/ingress.md` Rules | dependency shape: no `@watchdog/db` in `packages/caps/package.json` | enforced |
+| Caps `interpret` is pure and returns Proposal ops (`CapInterpretResult`): it receives the report only, no `ctx` | caps | `docs/reference/contracts/ingress.md` Rules | type: `CapabilityDef.interpret` in `packages/caps/src/sdk/define.ts` | enforced |
+| Caps and machines never write the Graph (`packages/caps` declares no `@watchdog/db` today; nothing fails if one is added) | caps, core | `docs/reference/contracts/ingress.md` Rules | guidance | guidance |
 | `PatchOp` claim/identifier/edge ops carry no `confidence`; the human picks it at Accept | schemas, policy | `docs/reference/contracts/custody.md` Accept tiers | `packages/schemas/src/__tests__/patch.test.ts` | enforced |
 | `confirmed` needs human Accept or Dossier with evidence; agent and CLI writes land `unverified` | policy, cli | `docs/reference/contracts/custody.md` Accept tiers | `packages/policy/src/__tests__/patch-gates.test.ts`, `apps/cli/src/__tests__/custody.test.ts`, `e2e/specs/custody/accept-gates.spec.ts` | enforced |
 | Agents propose by default; a graph write needs `userOverride` and lands `unverified` with a `graph_writes` row in the same tx | api, core, cli | `docs/reference/contracts/agent-ingress.md` Escape hatch | `packages/core/src/proposals/__tests__/agent-ingress.int.test.ts`, `packages/api/src/procedures/__tests__/graph.int.test.ts` | enforced |
@@ -27,15 +28,15 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
-| Import direction follows the matrix: an undeclared `@watchdog/*` import does not resolve | packages, apps | `docs/reference/platform/packages.md` Enforcement | dependency shape: declared `dependencies` under pnpm strict `node_modules` | enforced |
+| A `@watchdog/*` import must be a declared dependency (pnpm strict `node_modules`: an undeclared import does not resolve) | packages, apps | `docs/reference/platform/packages.md` Enforcement | `pnpm typecheck` | enforced |
+| Import direction follows the matrix in `packages.md` (nothing fails when a package declares a forbidden dependency) | packages, apps | `docs/reference/platform/packages.md` Forbidden imports | guidance | guidance |
 | Web never imports `@watchdog/db` | web | `docs/reference/platform/packages.md` Forbidden imports | oxlint `eslint/no-restricted-imports` | enforced |
 | A component with a Watchdog wrapper imports from `@/shared/ui/primitives/*`, not `@watchdog/ui/components/*` | web | `docs/reference/web/ui/vendor.md` Layers | oxlint `eslint/no-restricted-imports`, `apps/web/src/shared/ui/primitives/__tests__/wrapper-lint-coverage.test.ts` | enforced |
-| The CLI imports only `@watchdog/client` and schemas (no core, db, api, env, log) | cli | `apps/cli/AGENTS.md` | oxlint `eslint/no-restricted-imports` | enforced |
-| `@watchdog/log` is not imported from cli or client (stdout is the agent contract) | cli, client | `docs/reference/contracts/evlog.md` | oxlint `eslint/no-restricted-imports` | enforced |
+| The CLI never imports `@watchdog/core`, `db`, `api`, `env` or `log` (it talks HTTP through `@watchdog/client`; stdout is the agent contract) | cli | `apps/cli/AGENTS.md` | oxlint `eslint/no-restricted-imports` | enforced |
+| `@watchdog/client` lists neither `@watchdog/api` (it aliases `AppRouter` type-only) nor `@watchdog/log` | client | `packages/client/AGENTS.md` Rules | guidance | guidance |
 | No import cycles | repo | `docs/reference/platform/packages.md` Enforcement | oxlint `import/no-cycle` | enforced |
-| core, api and caps have no `drizzle-orm`; api and caps have no `@watchdog/db` | core, api, caps | `docs/reference/platform/packages.md` Forbidden imports | dependency shape in each `package.json` | enforced |
-| `apps/site` imports no `@watchdog/*` runtime package; tokens are copied | site | `apps/site/AGENTS.md` | dependency shape: empty `@watchdog` dependency list | enforced |
-| `@watchdog/client` never lists `@watchdog/api` (type-only alias of `AppRouter`) | client | `packages/client/AGENTS.md` Rules | dependency shape in `packages/client/package.json` | enforced |
+| core, api and caps declare no `drizzle-orm`; api and caps declare no `@watchdog/db` | core, api, caps | `docs/reference/platform/packages.md` Forbidden imports | guidance | guidance |
+| `apps/site` declares no `@watchdog/*` runtime package; tokens are copied | site | `apps/site/AGENTS.md` | guidance | guidance |
 | `test-kit` and `test-db` are never imported from production code | test-kit, test-db | `docs/reference/platform/packages.md` Forbidden imports | guidance | guidance |
 | Browser code imports `@watchdog/policy/patch-needs-confidence` and `@watchdog/core/job-display`, never the package roots | web | `docs/reference/web/domains.md` Rules | guidance | guidance |
 | Product vocab comes from `@watchdog/schemas`; domains never re-export it through `types.ts` or `*.functions.ts` | web, api | `docs/reference/platform/types.md` File map | guidance | guidance |
@@ -67,16 +68,16 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Never a screen named `*Panel`; never a component named `Entity` | web | `docs/reference/web/ui/README.md` Chrome lexicon | guidance | guidance |
 | No gradients, gradient text, glass or backdrop blur (`// ds:allow-decorative - reason` for functional blur) | web | `DESIGN.md` Do's and Don'ts | `ds:check` (`ds:ban` `decorative`) | enforced |
 | Status is never color-only (one glyph shape per status via `STATUS_GLYPH`) | web | `DESIGN.md` Colors | `apps/web/src/shared/ui/__tests__/status.component.test.tsx` | enforced |
-| Badge props are schema unions; no fictional vocab (`probable`, `dormant`, `merged`) | web | `docs/reference/web/ui/atoms.md` Which atom | `ds:check` (typecheck) | enforced |
+| Label and tone maps in `shared/ui/vocab/` are exhaustive `Record`s over schema unions; no fictional vocab (`probable`, `dormant`, `merged`) | web | `docs/reference/web/ui/atoms.md` Which atom | `pnpm typecheck` | enforced |
 | Router keeps `scrollRestoration: false`, `defaultPendingMs` 400, `defaultPendingMinMs` 500, `defaultPreloadStaleTime` 0 | web | `docs/reference/web/ui/loading.md` Doctrine | `apps/web/src/__tests__/router.test.ts` | enforced |
-| Radius ladder sm / md / lg (`--radius-xl..4xl` capped); writing fields tint the border on focus, no outer ring | web | `DESIGN.md` Shapes | CSS in `apps/web/src/styles/wd-theme.css` and `wd-overrides.css` | enforced |
+| Radius ladder sm / md / lg (`--radius-xl..4xl` capped); writing fields tint the border on focus, no outer ring | web | `DESIGN.md` Shapes | guidance | guidance |
 | `DESIGN.md` front-matter colors equal `wd-tokens.css` and `wd-dark.css` | web | `DESIGN.md` | `check:design-tokens` | enforced |
 | `shared/ui` never fetches, mutates or routes | web | `docs/reference/web/ui/atoms.md` | guidance | guidance |
-| TanStack Form only (`@tanstack/react-form`), no `react-hook-form` | web | `docs/reference/web/ui/forms.md` | dependency shape: absent from `apps/web/package.json` | enforced |
+| TanStack Form only (`@tanstack/react-form`), no `react-hook-form` (it is absent from `apps/web/package.json` today) | web | `docs/reference/web/ui/forms.md` | guidance | guidance |
 | Field errors render through `fieldInvalid` / `fieldErrorList`; one `useForm` per composer | web | `docs/reference/web/ui/forms.md` Conventions | guidance | guidance |
-| One QueryClient per request via `createAppQueryClient()`; never copy server lists from `useLoaderData` into `useState` | web | `docs/reference/web/data.md` TanStack Query | guidance | guidance |
+| One QueryClient per request via `createAppQueryClient()`; never copy server lists from `useLoaderData` into `useState` (`task-board.tsx` does; decision: fix and enforce with a lint rule, planned in spec #55 / #62) | web | `docs/reference/web/data.md` TanStack Query | guidance | guidance |
 | Loaders await identity only; lists via `void prefetchQuery` in `warm*Queries` | web | `docs/reference/web/ui/loading.md` Rules | guidance | guidance |
-| Mutations and SSE use the named contracts in `shared/lib/query-invalidation.ts`, not ad-hoc `invalidateQueries` lists | web | `docs/reference/web/data.md` Invalidation contracts | guidance | guidance |
+| Mutations and SSE use the named contracts in `shared/lib/query-invalidation.ts`, not ad-hoc `invalidateQueries` lists; one mutation machine per noun (13 stray sites and a few forks exist; decision: fix and enforce with a lint rule, planned in spec #55 / #62) | web | `docs/reference/web/data.md` Invalidation contracts | guidance | guidance |
 | One `useLiveEvents` connection per case; nested workspaces pass `live: false`; no manual Refresh on live paths | web | `docs/reference/web/data.md` Live events | guidance | guidance |
 | Skeleton gating via `listPending()`, never on error; `DataTable` takes `pending`, never `PendingRegion` | web | `docs/reference/web/ui/loading.md` Rules | guidance | guidance |
 | The rest of the loading doctrine (shape parity, hydration-safe skeletons, one pending surface, error granularity) | web | `docs/reference/web/ui/loading.md` Rules | guidance | guidance |
@@ -86,9 +87,10 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Every shortcut is listed in `HOTKEYS`; Mod+B belongs to the vendored `SidebarProvider`, never rebind it | web | `docs/reference/web/ui/atoms.md` Keyboard | guidance | guidance |
 | `PageHeader` is the sole inset top chrome; no identity titles or `description=`; Case id never in Work URLs | web | `docs/reference/web/ui/page-shell.md` Page shell | guidance | guidance |
 | Domain folder shape: `createServerFn` only in `*.functions.ts`; `*.server.ts` never reaches the client; DTOs in `types.ts` | web | `docs/reference/web/domains.md` Rules | guidance | guidance |
+| Types and DTOs are imported from a domain's `types.ts`, never from its `*.functions.ts` (violations exist; decision: fix and enforce with a lint rule, planned in spec #55 / #62) | web | `docs/reference/web/architecture.md` Shape | guidance | guidance |
 | Handlers call `orpcFromContext(context)`; no Drizzle in `apps/web` (its `package.json` still lists `drizzle-orm`) | web | `docs/reference/web/architecture.md` Server boundary | guidance | guidance |
 | Auth is the global `requireAuth` in `start.ts`; no per-function `.middleware([requireAuth])`; public endpoints go in `routes/api/*` | web | `docs/reference/web/architecture.md` Server boundary | guidance | guidance |
-| Hand-written files use the `@/*` alias, not relative hops (violations exist today) | web | `docs/reference/web/architecture.md` Shape | guidance | guidance |
+| Hand-written files use the `@/*` alias, not relative hops (violations exist; decision: fix and enforce with a lint rule, planned in spec #55 / #62) | web | `docs/reference/web/architecture.md` Shape | guidance | guidance |
 | `lib/` holds pure helpers and hooks live in `hooks/` (four hooks sit elsewhere today) | web | `docs/reference/web/domains.md` Shape | guidance | guidance |
 | Taste: no nested cards, glow, icon-tile grids or bounce easing; flat surfaces; selection is an amber wash; motion budgets | web | `DESIGN.md` Do's and Don'ts | guidance | guidance |
 | Copy: `Couldn't` / `Can't` / `Failed to`, never `Unable to` or `Oops`; Title Case labels; `Verb + Noun` primaries | web | `docs/explanation/ux.md` | guidance | guidance |
@@ -99,11 +101,13 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
-| Repos: rows not DTOs, no `notifyEvent`, no throw, no transaction, plain values in signatures, leading `exec: DbExec`, no `trimmedOrNull` | db | `packages/db/AGENTS.md` Repo contract | `pnpm --filter @watchdog/db check:repos` | enforced |
-| Services own transactions and call repos with `exec` first | core | `packages/core/AGENTS.md` Rules | `pnpm --filter @watchdog/db check:repos` | enforced |
+| Repos: no `notifyEvent`, no throw, no transaction, no `SQL`-typed parameters, leading `exec: DbExec`, no `trimmedOrNull` | db | `packages/db/AGENTS.md` Repo contract | `pnpm --filter @watchdog/db check:repos` | enforced |
+| Repos return rows, not DTOs (`check:repos` only flags `.toISOString()` calls) | db | `packages/db/AGENTS.md` Repo contract | guidance | guidance |
+| Services own transactions and pass `exec` first to repos (the repo side is in the row above; nothing checks services) | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
 | Repo lookups trim scoped ids; an invalid UUID returns `[]` / `null` | db | `packages/db/AGENTS.md` Repo contract | `packages/db/src/repos/__tests__/scoped-ids.test.ts` | enforced |
 | Soft delete is the repo's job: only `evidence`, excluded by default, `includeDeleted` is explicit | db | `packages/db/AGENTS.md` Repo contract | guidance | guidance |
-| Enums via `text().$type<T>()`, never `pgEnum`; builder API only (no `db.query`, no `relations()`) | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
+| Enums via `text().$type<T>()`, never `pgEnum`; no `relations()` | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
+| Repos use the builder API only: no `db.query`, no raw `sql` fragments (fragments exist in repos today; decision: fix and enforce by extending `check:repos`, Tier 2 in spec #55) | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
 | Never set `updatedAt` by hand; migrations keep `drizzle/meta` in sync with `_journal.json` | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
 | Case lookup defaults to `getById(exec, id, organizationId)`; `getByIdUnchecked` only for worker and export | db, core | `packages/db/AGENTS.md` Gotchas | guidance | guidance |
 | Normalize display fields (trim, slugify, `InvalidError`) in services before repo writes | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
@@ -119,17 +123,18 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Playbook ids are kebab-case with the first token equal to `seedKinds[0]` | caps | `docs/reference/platform/caps-lexicon.md` What is enforced | `packages/caps/src/playbooks/__tests__/naming.test.ts` | enforced |
 | Cap ids are `<category>.<axis>.<method>`, lowercase snake_case, path mirrors id (`evidence.harvest` is the exception) | caps | `docs/reference/platform/caps-lexicon.md` Three layers | guidance | guidance |
 | Method vocabulary, categories, D1-D5 pre-code decisions, one Cap per source contract | caps | `docs/reference/platform/caps-lexicon.md` Pre-code decisions | guidance | guidance |
-| Banned mid-build terms (`wd promote`, `Door A`, `Candidate theater`, `Scratch`) in `AGENTS.md` files | repo | `docs/reference/platform/caps-lexicon.md` What is enforced | `check:agents:strict` | enforced |
-| Other refuse words (module, analyzer, neuron, enricher, transform, connector, Mutation, Candidate, Promote) in UI, docs and Cap titles | repo | `docs/reference/platform/caps-lexicon.md` What is enforced | guidance | guidance |
+| Banned mid-build terms: the `_Banned_` lines of `GLOSSARY.md`, in `AGENTS.md` files | repo | `GLOSSARY.md` header | `check:agents:strict` | enforced |
+| Other refuse words (module, analyzer, neuron, enricher, transform, connector) in UI, docs and Cap titles, and the `_Avoid_` lines of `GLOSSARY.md` | repo | `docs/reference/platform/caps-lexicon.md` What is enforced | guidance | guidance |
 | Tools own producer Zod; Caps re-export it from a Cap-local `report-schema.ts` | caps, tools | `packages/caps/AGENTS.md` Rules | guidance | guidance |
 | Inside `playbooks/`, import Caps from `../registry`, not the `@watchdog/caps` barrel | caps | `packages/caps/AGENTS.md` Rules | guidance | guidance |
 | Do not proxy investigation URLs through `markdown.new` (OPSEC) | caps | `docs/reference/platform/caps-boundary.md` Intake | guidance | guidance |
+| Playbooks are user-initiated: a Playbook run never auto-fires | caps, core | `docs/reference/platform/caps-boundary.md` Caps (boundary) | guidance | guidance |
 
 ## Errors and logging
 
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
-| `InvalidError` only for caller-fixable input; unknown errors are 500 with a fixed message | api, core | `docs/reference/contracts/README.md` Error taxonomy | `packages/api/src/__tests__/map-domain-error.test.ts` | enforced |
+| `InvalidError` maps to 400 and `InternalError` to a 500 with a fixed message, its cause going only to the request log (untagged defects are not covered by this test) | api, core | `docs/reference/contracts/README.md` Error taxonomy | `packages/api/src/__tests__/map-domain-error.test.ts` | enforced |
 | CLI stdout is compact JSON; failures are `{ ok: false, error }` on stdout with exit 1 (error) or 3 (server failure) | cli | `apps/cli/AGENTS.md` Contract | `apps/cli/src/__tests__/output-contract.test.ts` | enforced |
 | Never `log.set({ error })`; use `log.error(err)` or `{ name, message }`; auth denials are `warn` + `auth.denied` | log, worker, web | `docs/reference/contracts/evlog.md` Rules | guidance | guidance |
 | Never log secrets, Evidence bodies or Bearer / `x-api-key` plaintext (the redaction preset covers part) | repo | `docs/reference/contracts/evlog.md` Rules | guidance | guidance |

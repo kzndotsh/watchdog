@@ -24,7 +24,7 @@ Which atom for which need, the keyboard contracts, and the traps. The atoms them
 
 Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dense icon actions use `xs`. Button icons use `data-icon="inline-start|inline-end"`.
 
-**Labels:** display labels for schema enums live in `shared/ui/vocab/` (exhaustive label and tone maps). `@watchdog/schemas` stays free of UI and the CLI emits raw enums. Tone maps reuse the existing `--status-*` tokens; a badge is named for its meaning (`ConfidenceBadge`), never its color. There is no fictional vocab (`probable`, `dormant`, `merged`): badge props are schema unions, so typecheck enforces it.
+**Labels:** display labels for schema enums live in `shared/ui/vocab/` (exhaustive label and tone maps). `@watchdog/schemas` stays free of UI and the CLI emits raw enums. Tone maps reuse the existing `--status-*` tokens; a badge is named for its meaning (`ConfidenceBadge`), never its color. There is no fictional vocab (`probable`, `dormant`, `merged`): the label and tone maps are exhaustive `Record`s over the schema unions, so typecheck enforces it for them.
 
 ## Keyboard
 

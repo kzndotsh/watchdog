@@ -19,7 +19,7 @@ Domain services for Case Graph, Jobs, Evidence, Tasks (case work items, not Grap
 | Services call repos with `exec: DbExec` first and own transactions (`transact`); repos never open one | `pnpm --filter @watchdog/db check:repos` (repo side) |
 | Normalize display fields (trim, slugify, `InvalidError`) before repo writes; repos do not reject blank name/text. Trim `actorLabel` with `actorLabelForPersist` | guidance |
 | Caps via catalog + `interpret` → Proposal; Caps and Jobs never write Graph directly | guidance (root Boundaries) |
-| Enqueue only through `enqueueCapJobEffect` / the boss helpers; one pg-boss boss per process | runtime guard returns `InternalError` |
+| Enqueue only through `enqueueCapJobEffect` / the boss helpers; one pg-boss boss per process | guidance (a second boss role in one process fails at runtime with `InternalError`; nothing blocks a direct `boss.send`) |
 | Service programs are `*Effect` and keep `DomainTag` in `E`; tests bridge with `runDomain` | `pnpm check:effect-edges:strict` for `run*` sites; the rest is guidance |
 | Inbox Accept/Reject is one `transact`: attestation + patch + status, with `proposalsRepo.lockInCase` (`FOR UPDATE`) then a re-check of `status = 'pending'` | integration tests |
 | `InvalidError` is caller-fixable input (400). A write that returns no row is `InternalError`; an update/delete of a caller-supplied id matching nothing is `NotFoundError` | `map-domain-error.test.ts`; no lint |
