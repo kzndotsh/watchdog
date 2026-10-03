@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
@@ -109,10 +109,10 @@ export function useTaskWorkspace(
     setCreateOpen(true);
   }
 
-  function selectTask(task: TaskRecord) {
+  const selectTask = useCallback((task: TaskRecord) => {
     setFormError(null);
     setSelected(task);
-  }
+  }, []);
 
   function closeSelected() {
     setSelected(null);

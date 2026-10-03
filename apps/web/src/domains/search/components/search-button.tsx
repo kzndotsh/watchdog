@@ -2,7 +2,7 @@ import { SearchIcon } from "lucide-react";
 import { useContext } from "react";
 
 import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
-import { modKeyLabel } from "@/shared/lib/hotkeys";
+import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import {
   SidebarMenu,
@@ -17,6 +17,7 @@ import {
  */
 export function SearchButton() {
   const search = useContext(SearchUiContext);
+  const modKeyLabel = useModKeyLabel();
   if (!search) return null;
   const { openPalette } = search;
 
@@ -24,7 +25,7 @@ export function SearchButton() {
     <SidebarMenu className="w-auto">
       <SidebarMenuItem>
         <WithTooltip
-          content={`Search (${modKeyLabel()} K)`}
+          content={`Search (${modKeyLabel} K)`}
           side="right"
           wrapSpan
         >
