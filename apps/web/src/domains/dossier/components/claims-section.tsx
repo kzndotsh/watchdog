@@ -371,6 +371,7 @@ function ClaimActionForm({
     },
   });
 
+  const failureCopy = `Couldn't ${ACTION_LABELS[action].toLowerCase()} claim`;
   const actionForm = useForm({
     defaultValues: { actionReason: "" },
     onSubmit: async ({ value }) => {
@@ -380,7 +381,7 @@ function ClaimActionForm({
       try {
         await retractMutation.mutateAsync(reason);
       } catch (caughtError) {
-        onError(errMessage(caughtError, `${action} failed`));
+        onError(errMessage(caughtError, failureCopy));
       }
     },
   });
