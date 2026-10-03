@@ -41,7 +41,7 @@ Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference)
 | `SKILL.md` present, frontmatter parses, `name` (matches folder) and `description` present | yes | yes |
 | Folder content hash equals the lock's `computedHash` | yes: a hand edit fails, naming the folder and the reinstall command (`npx skills add <source> --skill <name>`) | no |
 | `metadata.owner` / `metadata.sources`, trigger clause in `description`, `references/` hints, staleness | no | yes |
-| Staleness: warns only when a `metadata.sources` path changed in the diff and the skill's own files did not. Diff = `--staged` (pre-commit), `--range=<a..b>` (CI: PR base or pushed range), default working tree. A clean tree never warns | no | yes (warn) |
+| Staleness: warns only when a `metadata.sources` path changed in the diff and the skill's own files did not. Diff = `--staged` (pre-commit), `--range=<a..b>` (CI pull request), `--before=<sha> --after=<sha>` (CI push; an all-zero `before` falls back to the merge base with `main`), default working tree. An unresolvable range or SHA fails the gate; it never skips the check. A clean tree never warns | no | yes (warn) |
 | `SKILL.md` line budget | no | warn above 400 lines, fail above 500 |
 
 Hash scheme (same as the `skills` CLI): sha256 over every file in the skill folder (excluding `.git`, `node_modules`), sorted by forward-slash relative path with `localeCompare`, feeding each file's relative path then its bytes. Never edit a vendored skill; update it with the CLI so the lock is rewritten with it. Claude Code frontmatter keys (`disable-model-invocation`, `argument-hint`, `user-invocable`, `allowed-tools`, `model`) are accepted on both kinds.
@@ -55,7 +55,7 @@ Every hook either blocks (exits non-zero, or for the Cursor `stop` hook reports 
 | `ultracite fix` / `pnpm check` | pre-commit | always blocks | none |
 | `pnpm check:agents:strict` | pre-commit, CI, Cursor stop | `--strict` | none |
 | `pnpm check:docs:strict` | pre-commit, CI, Cursor stop | `--strict --fail-length` | none |
-| `pnpm check:docs-affected:strict` | pre-commit, CI | `--strict --strict-only` | `docs:allow-affect — reason` (commit message), `DOCS_ALLOW_AFFECT=1`, PR body keyword |
+| `pnpm check:docs-affected:strict` | commit-msg, CI | `--strict --strict-only` | `docs:allow-affect — <reason>` in the commit's own message (CI: a message in the pushed range, or the PR body) |
 | `pnpm check:effect-edges:strict` | pre-commit, CI | `--strict` | none |
 | `pnpm check:size` / `check:vendor` / `check:design-tokens` | pre-commit (+ CI for size, vendor) | always blocks | none |
 | `pnpm validate:agents` | pre-commit (`--staged`), CI (`--range`), Cursor stop | fails on errors; staleness is a warning | none |
@@ -65,7 +65,13 @@ Local, per-clone skipping goes through `lefthook-local.yml`; `--no-verify` is no
 
 ## Gate tests
 
-Vitest project `gate` (`pnpm test:gate`, also in `pnpm test`): `scripts/__tests__/*.gate.test.ts`. Each test builds a temporary git repo, copies the gate script in (`scripts/__tests__/helpers/gate-repo.ts`), runs `node scripts/<gate>.mjs` as lefthook or CI would, and asserts on the exit code and key output phrases. Tests never import gate internals. Every gate needs a must-fail and a must-pass fixture; changing a gate script means changing its test.
+Vitest project `gate` (`pnpm test:gate`, also in `pnpm test`): `scripts/__tests__/*.gate.test.ts`, named `<script basename>.gate.test.ts`. Each test builds a temporary git repo, copies the gate script in (`scripts/__tests__/helpers/gate-repo.ts`; gates that resolve paths from their own location, such as `packages/db/scripts/check-repo-rules.mjs` and `apps/web/scripts/ds-ban-check.mjs`, keep their package layout), runs `node <script>` as lefthook or CI would, and asserts on the exit code and key output phrases. Tests never import gate internals. Every gate needs a must-fail and a must-pass fixture; changing a gate script means changing its test.
+
+The fixture strips `CI`, `GITHUB_*`, `DOCS_AFFECT_*` and `GIT_*` from the environment a gate sees, so a suite running under GitHub Actions cannot flip a gate into CI mode. A test that wants CI mode passes those variables through the `env` option.
+
+**Meta-test.** `scripts/__tests__/gate-coverage.gate.test.ts` reads `lefthook.yml` (pre-commit, commit-msg, pre-push) and the CI `gates` job, resolves every `pnpm` command through `package.json` (including `pnpm --filter <pkg> <script>` and package-level scripts), and collects the gate scripts under `scripts/`, `packages/db/scripts/` and `apps/web/scripts/`. Each needs a `*.gate.test.ts` with at least one test named like `fails` / `must fail` / `rejects`. Third-party tools (ultracite, tsc, astro, vitest, knip, tsx) are allow-listed by name in that file; any other command wired into a hook or the gates job fails the meta-test, so a new gate cannot land untested.
+
+**Shared git helpers.** `scripts/lib/git-range.mjs` is the one place gates talk to git for diffs: `git` throws with git's stderr instead of returning an empty result, `resolvePushRange` handles `before..after` (an all-zero `before` falls back to the merge base with `origin/main`, then `main`; anything unresolvable throws), and `hasSubstantiveChange` returns true only on `git diff --quiet -w --ignore-blank-lines` exit 1 and throws on any other failure. A broken diff therefore fails `check-docs-affected` and `validate-agents` rather than counting as a doc touch or "no changes". The Cursor stop hook uses the same helper but keeps its documented fail-open contract (a hook never blocks the agent because it broke): its top-level catch answers `{}` and says so on stderr, while real gate failures still surface as `followup_message`.
 
 ## Pinning and CI permissions
 

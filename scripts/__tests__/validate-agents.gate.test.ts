@@ -39,7 +39,7 @@ function lockfile(hash: string) {
 }
 
 function vendoredRepo(hash = VENDORED_HASH) {
-  const repo = createGateRepo(["validate-agents.mjs"]);
+  const repo = createGateRepo(["validate-agents.mjs", "lib/git-range.mjs"]);
   repo.write(".agents/skills/vendored-demo/SKILL.md", VENDORED_SKILL);
   repo.write(".agents/skills/vendored-demo/agents/openai.yaml", VENDORED_AUX);
   repo.write("skills-lock.json", lockfile(hash));
@@ -60,7 +60,7 @@ ${body}`;
 }
 
 function ownedRepo(skillMd: string) {
-  const repo = createGateRepo(["validate-agents.mjs"]);
+  const repo = createGateRepo(["validate-agents.mjs", "lib/git-range.mjs"]);
   repo.write("AGENTS.md", "# Fixture\n");
   repo.write(".agents/skills/owned-demo/SKILL.md", skillMd);
   repo.commitAll("add owned skill");
@@ -195,6 +195,81 @@ describe("validate-agents gate", () => {
       ).not.toContain("stale");
     });
 
+    it("fails loudly, rather than skipping staleness, when --range cannot be resolved", () => {
+      const repo = ownedRepo(ownedSkill());
+
+      const result = repo.run("validate-agents.mjs", [
+        "--range=no-such-ref..HEAD",
+      ]);
+
+      expect(result.code).toBe(1);
+      expect(result.output).toContain("validate:agents");
+      expect(result.output).toContain("no-such-ref");
+    });
+
+    describe("pushed range (--before / --after)", () => {
+      const ZERO = "0".repeat(40);
+
+      it("judges the range between two SHAs", () => {
+        const repo = ownedRepo(ownedSkill());
+        const before = repo.git("rev-parse", "HEAD").trim();
+        repo.write("AGENTS.md", "# Fixture\n\nchanged\n");
+        repo.commitAll("source only");
+        const after = repo.git("rev-parse", "HEAD").trim();
+
+        const result = repo.run("validate-agents.mjs", [
+          `--before=${before}`,
+          `--after=${after}`,
+        ]);
+
+        expect(result.code).toBe(0);
+        expect(result.output).toContain("may be stale");
+      });
+
+      it("falls back to the merge base with main when before is all zeros", () => {
+        const repo = ownedRepo(ownedSkill());
+        repo.git("checkout", "--quiet", "-b", "feature");
+        repo.write("AGENTS.md", "# Fixture\n\nchanged\n");
+        repo.commitAll("source only on a new branch");
+        const after = repo.git("rev-parse", "HEAD").trim();
+
+        const result = repo.run("validate-agents.mjs", [
+          `--before=${ZERO}`,
+          `--after=${after}`,
+        ]);
+
+        expect(result.code).toBe(0);
+        expect(result.output).toContain("may be stale");
+      });
+
+      it("fails loudly when the before SHA is not in the clone", () => {
+        const repo = ownedRepo(ownedSkill());
+        const after = repo.git("rev-parse", "HEAD").trim();
+
+        const result = repo.run("validate-agents.mjs", [
+          `--before=${"1".repeat(40)}`,
+          `--after=${after}`,
+        ]);
+
+        expect(result.code).toBe(1);
+        expect(result.output).toContain("not a commit in this clone");
+      });
+
+      it("fails loudly when before is all zeros and main cannot be found", () => {
+        const repo = ownedRepo(ownedSkill());
+        repo.git("branch", "-m", "trunk");
+        const after = repo.git("rev-parse", "HEAD").trim();
+
+        const result = repo.run("validate-agents.mjs", [
+          `--before=${ZERO}`,
+          `--after=${after}`,
+        ]);
+
+        expect(result.code).toBe(1);
+        expect(result.output).toContain("no merge base with main");
+      });
+    });
+
     it("never applies to vendored skills", () => {
       const repo = vendoredRepo();
       repo.write(".agents/skills/vendored-demo/extra.md", "x\n");
@@ -214,7 +289,7 @@ describe("validate-agents gate", () => {
     });
 
     it("fails a pinned skill that has no description even when its hash matches", () => {
-      const repo = createGateRepo(["validate-agents.mjs"]);
+      const repo = createGateRepo(["validate-agents.mjs", "lib/git-range.mjs"]);
       repo.write(
         ".agents/skills/vendored-demo/SKILL.md",
         "---\nname: vendored-demo\n---\n\n# Bare\n"

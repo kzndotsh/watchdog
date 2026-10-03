@@ -6,10 +6,12 @@
  * fix -> rerun loop stays sub-second. Replaces the retired ds-ban-stop.mjs,
  * which duplicated pre-push's full `tsc` run.
  */
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { git } from "../../scripts/lib/git-range.mjs";
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -49,20 +51,13 @@ function clip(text) {
   return t.length > 3500 ? `${t.slice(0, 3500)}\n…` : t || "(no output)";
 }
 
+/** @returns {string[]} dirty paths; throws when git fails (main()'s top-level catch fails open) */
 function changedFiles() {
-  try {
-    const out = execFileSync("git", ["status", "--porcelain"], {
-      cwd: root,
-      encoding: "utf8",
-    });
-    return out
-      .split("\n")
-      .map((line) => line.slice(3).trim())
-      .filter(Boolean)
-      .map((entry) => (entry.includes(" -> ") ? entry.split(" -> ")[1] : entry));
-  } catch {
-    return [];
-  }
+  return git(["status", "--porcelain"], root)
+    .split("\n")
+    .map((line) => line.slice(3).trim())
+    .filter(Boolean)
+    .map((entry) => (entry.includes(" -> ") ? entry.split(" -> ")[1] : entry));
 }
 
 function main() {
@@ -201,4 +196,18 @@ function main() {
   respond({ followup_message: parts.join("\n") });
 }
 
-main();
+/**
+ * Fail-open is deliberate and documented (docs/contributing/ci-gates.md): a hook
+ * must never block the agent because the hook itself broke (git unreadable, bad
+ * input). Real gate failures are not swallowed here: each gate's non-zero exit is
+ * reported through `followup_message` inside main(). Only an internal error lands
+ * in this catch, and it is announced on stderr instead of vanishing.
+ */
+try {
+  main();
+} catch (error) {
+  process.stderr.write(
+    `stop-gate: internal error, failing open: ${error instanceof Error ? error.message : String(error)}\n`
+  );
+  respond({});
+}

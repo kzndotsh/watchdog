@@ -10,17 +10,24 @@
  * - CI push: diffs the pushed range before..after (GITHUB_EVENT_PATH payload, or
  *   DOCS_AFFECT_BEFORE / DOCS_AFFECT_AFTER env). An all-zero before SHA falls back
  *   to the merge base with main. A range that cannot be resolved FAILS: it never
- *   degrades to "no changes".
+ *   degrades to "no changes". Neither does a git error while judging a doc: the
+ *   shared helpers (scripts/lib/git-range.mjs) throw, and this gate dies on it.
  *
  * Escape hatch: `docs:allow-affect — <reason>` in the commit message being
  * written (reason required). In CI, a pull request body or any commit message in
  * the pushed range may carry it. There are no other fallbacks.
  */
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { DOC_MAP, hasAllowAffect, matchRules } from "./doc-map.mjs";
+import {
+  changedPaths,
+  git,
+  hasSubstantiveChange,
+  mergeBaseWith,
+  resolvePushRange,
+} from "./lib/git-range.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const args = process.argv.slice(2);
@@ -29,7 +36,6 @@ const strict =
 const strictOnly = args.includes("--strict-only");
 const msgFile = args.find((a) => !a.startsWith("--"));
 const inCI = process.env.GITHUB_ACTIONS === "true" || process.env.CI === "true";
-const ZERO_SHA = /^0+$/;
 
 const ESCAPE_SYNTAX = "docs:allow-affect — <reason>";
 
@@ -40,42 +46,6 @@ const ESCAPE_SYNTAX = "docs:allow-affect — <reason>";
 function die(message) {
   console.error(`FAIL  check:docs-affected: ${message}`);
   process.exit(1);
-}
-
-/**
- * @param {string[]} gitArgs
- * @returns {string} stdout; throws when git fails
- */
-function git(gitArgs) {
-  return execFileSync("git", gitArgs, {
-    cwd: root,
-    encoding: "utf-8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-}
-
-/**
- * @param {string[]} gitArgs
- * @returns {string | null} trimmed stdout, null when git fails
- */
-function tryGit(gitArgs) {
-  try {
-    return git(gitArgs).trim();
-  } catch {
-    return null;
-  }
-}
-
-/** @param {string} text */
-function lines(text) {
-  return [
-    ...new Set(
-      text
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean)
-    ),
-  ];
 }
 
 /** Self-check: no rule may list the same doc twice. */
@@ -89,11 +59,6 @@ function checkDocMap() {
       seen.add(doc);
     }
   }
-}
-
-/** @param {string} sha */
-function commitExists(sha) {
-  return tryGit(["cat-file", "-e", `${sha}^{commit}`]) !== null;
 }
 
 /**
@@ -128,15 +93,6 @@ function readEvent() {
   };
 }
 
-/** @param {string} baseRef */
-function mergeBaseWith(baseRef) {
-  for (const ref of [`origin/${baseRef}`, baseRef]) {
-    const mb = tryGit(["merge-base", ref, "HEAD"]);
-    if (mb) return mb;
-  }
-  return null;
-}
-
 /**
  * Resolve what is being judged.
  * @returns {{ label: string; diffArgs: string[]; messages: string[] }}
@@ -157,7 +113,7 @@ function resolveChange() {
   const event = readEvent();
   if (event.isPullRequest) {
     const baseRef = process.env.GITHUB_BASE_REF ?? "main";
-    const mb = mergeBaseWith(baseRef);
+    const mb = mergeBaseWith(baseRef, root);
     if (!mb)
       die(
         `cannot resolve merge base with ${baseRef}; refusing to report "no changes"`
@@ -169,68 +125,19 @@ function resolveChange() {
     };
   }
 
-  const before = event.before ?? process.env.DOCS_AFFECT_BEFORE ?? "";
-  const after = event.after ?? process.env.DOCS_AFFECT_AFTER ?? "HEAD";
-  if (!commitExists(after))
-    die(`push range end ${after} is not a commit in this clone`);
-  let start = before;
-  if (!before || ZERO_SHA.test(before)) {
-    start = "";
-    for (const ref of ["origin/main", "main"]) {
-      start = tryGit(["merge-base", ref, after]) ?? "";
-      if (start) break;
-    }
-    if (!start)
-      die("before SHA is empty and no merge base with main can be found");
-  } else if (!commitExists(before)) {
-    die(
-      `push range start ${before} is not a commit in this clone (shallow fetch or force-push?)`
-    );
-  }
-  const log = tryGit(["log", "--format=%B%x00", `${start}..${after}`]);
-  if (log === null) die(`cannot list commits in ${start}..${after}`);
+  const { start, after } = resolvePushRange(
+    {
+      before: event.before ?? process.env.DOCS_AFFECT_BEFORE ?? "",
+      after: event.after ?? process.env.DOCS_AFFECT_AFTER ?? "HEAD",
+    },
+    root
+  );
+  const log = git(["log", "--format=%B%x00", `${start}..${after}`], root);
   return {
     label: `push (${start.slice(0, 8)}..${after.slice(0, 8)})`,
     diffArgs: [`${start}..${after}`],
     messages: log.split("\0"),
   };
-}
-
-/**
- * @param {string[]} diffArgs
- * @returns {string[]} changed paths
- */
-function changedPaths(diffArgs) {
-  try {
-    return lines(
-      git(["diff", "--name-only", "--diff-filter=ACMR", ...diffArgs, "--"])
-    );
-  } catch (error) {
-    return die(`git diff ${diffArgs.join(" ")} failed: ${String(error)}`);
-  }
-}
-
-/**
- * A doc counts as touched only when its diff has a non-whitespace change.
- * @param {string} file
- * @param {string[]} diffArgs
- */
-function substantive(file, diffArgs) {
-  try {
-    git([
-      "diff",
-      "--quiet",
-      "-w",
-      "--ignore-blank-lines",
-      ...diffArgs,
-      "--",
-      file,
-    ]);
-    // Exit 0: no differences once whitespace is ignored.
-    return false;
-  } catch {
-    return true;
-  }
 }
 
 /**
@@ -244,7 +151,7 @@ function docTouched(docPattern, changed, diffArgs) {
         (f) => f.startsWith(docPattern) || f === docPattern.slice(0, -1)
       )
     : changed.filter((f) => f === docPattern);
-  return candidates.some((f) => substantive(f, diffArgs));
+  return candidates.some((f) => hasSubstantiveChange(f, diffArgs, root));
 }
 
 function main() {
@@ -256,7 +163,7 @@ function main() {
     process.exit(0);
   }
 
-  const changed = changedPaths(diffArgs);
+  const changed = changedPaths(diffArgs, root);
   if (changed.length === 0) {
     console.log(`check:docs-affected: no changes in ${label}`);
     process.exit(0);
@@ -299,4 +206,8 @@ function main() {
   process.exit(strict ? 1 : 0);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  die(error instanceof Error ? error.message : String(error));
+}

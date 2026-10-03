@@ -11,13 +11,19 @@
  * exit) but uses a real YAML parser instead of a line-by-line splitter, so
  * multi-line block scalars and nested maps parse correctly.
  */
-import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { parse as parseYaml } from "yaml";
+
+import {
+  changedPaths,
+  git,
+  lines,
+  resolvePushRange,
+} from "./lib/git-range.mjs";
 
 const repoRoot = path.resolve(import.meta.dirname, "..");
 
@@ -99,7 +105,7 @@ async function computeSkillFolderHash(skillDir) {
   return hash.digest("hex");
 }
 
-const changed = changedPaths();
+const changed = resolveChangedPaths();
 
 /** @type {{ level: "warn" | "fail"; msg: string }[]} */
 const findings = [];
@@ -176,35 +182,50 @@ async function listSkillDirs(root) {
 }
 
 /**
+ * @param {string} name e.g. "--range"
+ * @returns {string | undefined} the value of `--name=value`
+ */
+function flagValue(name) {
+  return process.argv
+    .find((a) => a.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
+}
+
+/**
  * Paths changed in the diff the staleness check looks at (repo-relative, forward slashes).
  *   --staged       the index (pre-commit)
  *   --range=<r>    a committed range, e.g. origin/main...HEAD (CI: PR base or push)
  *   (default)      the working tree against HEAD, plus untracked files
- * An unresolvable range yields no changes, so staleness is silently skipped.
+ *   --before=<sha> --after=<sha>   a pushed range (CI push); an empty or all-zero
+ *                  before falls back to the merge base with main
+ * An unresolvable range FAILS the gate (exit 1): staleness is never skipped silently.
  * @returns {Set<string>}
  */
-function changedPaths() {
-  const range = process.argv
-    .find((a) => a.startsWith("--range="))
-    ?.slice("--range=".length);
-  const staged = process.argv.includes("--staged");
-  /** @param {string[]} args */
-  const lines = (args) => {
-    try {
-      return execFileSync("git", args, { cwd: repoRoot, encoding: "utf-8" })
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean);
-    } catch {
-      return [];
+function resolveChangedPaths() {
+  const range = flagValue("--range");
+  const before = flagValue("--before");
+  const after = flagValue("--after");
+  try {
+    if (range) return new Set(changedPaths([range], repoRoot));
+    if (before !== undefined || after !== undefined) {
+      const pushed = resolvePushRange({ before, after }, repoRoot);
+      return new Set(
+        changedPaths([`${pushed.start}..${pushed.after}`], repoRoot)
+      );
     }
-  };
-  if (range) return new Set(lines(["diff", "--name-only", range]));
-  if (staged) return new Set(lines(["diff", "--name-only", "--cached"]));
-  return new Set([
-    ...lines(["diff", "--name-only", "HEAD"]),
-    ...lines(["ls-files", "--others", "--exclude-standard"]),
-  ]);
+    if (process.argv.includes("--staged")) {
+      return new Set(changedPaths(["--cached"], repoRoot));
+    }
+    return new Set([
+      ...changedPaths(["HEAD"], repoRoot),
+      ...lines(git(["ls-files", "--others", "--exclude-standard"], repoRoot)),
+    ]);
+  } catch (error) {
+    console.error(
+      `FAIL  validate:agents: cannot determine the changed paths for the staleness check: ${error instanceof Error ? error.message : String(error)}`
+    );
+    return process.exit(1);
+  }
 }
 
 /** @param {Set<string>} paths @param {string} rel */

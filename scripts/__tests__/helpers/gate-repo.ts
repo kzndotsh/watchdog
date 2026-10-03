@@ -58,9 +58,17 @@ export interface GateRepo {
   ) => GateResult;
 }
 
+/**
+ * Ambient variables a gate must never inherit: `GIT_*` would aim fixture git at the
+ * real repository; `CI` / `GITHUB_*` / `DOCS_AFFECT_*` would silently switch gates
+ * into CI mode when the suite itself runs under GitHub Actions. A test that wants
+ * CI mode passes them explicitly through the `env` option.
+ */
+const AMBIENT = /^(GIT_|GITHUB_|DOCS_AFFECT_)/;
+
 function cleanEnv(extra: Record<string, string> = {}) {
   const inherited = Object.entries(process.env).filter(
-    ([key]) => !key.startsWith("GIT_")
+    ([key]) => !AMBIENT.test(key) && key !== "CI"
   );
   return { ...Object.fromEntries(inherited), ...extra };
 }
@@ -107,6 +115,10 @@ export function gateRepoFactory() {
 
     mkdirSync(path.join(dir, "scripts"));
     for (const script of scripts) {
+      // Nested entries such as `lib/git-range.mjs` keep their layout.
+      mkdirSync(path.dirname(path.join(dir, "scripts", script)), {
+        recursive: true,
+      });
       cpSync(
         path.join(repoRoot, "scripts", script),
         path.join(dir, "scripts", script)
@@ -147,15 +159,7 @@ export function gateRepoFactory() {
         };
       },
       run(script, args = [], env = {}) {
-        const res = spawnSync(
-          process.execPath,
-          [path.join("scripts", script), ...args],
-          { cwd: dir, encoding: "utf-8", env: cleanEnv(env) }
-        );
-        return {
-          code: res.status ?? -1,
-          output: `${res.stdout}${res.stderr}`,
-        };
+        return this.runFile(path.join("scripts", script), { args, env });
       },
     };
   };

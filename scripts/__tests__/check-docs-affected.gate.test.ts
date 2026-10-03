@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -8,13 +8,13 @@ import type { GateRepo } from "./helpers/gate-repo";
 
 const createGateRepo = gateRepoFactory();
 
-const SCRIPTS = ["check-docs-affected.mjs", "doc-map.mjs"];
+const SCRIPTS = ["check-docs-affected.mjs", "doc-map.mjs", "lib/git-range.mjs"];
 const CODE = "apps/cli/src/index.ts";
 const DOC = "docs/how-to/agent-cli.md";
 const MARKER = "docs:allow-affect";
 
 // Local runs must not inherit CI detection from the environment running the tests.
-const LOCAL_ENV = { GITHUB_ACTIONS: "", CI: "" };
+const LOCAL_ENV = {};
 
 function baseRepo() {
   const repo = createGateRepo(SCRIPTS);
@@ -188,5 +188,44 @@ describe("docs-affect gate: CI push", () => {
     repo.commitAll(`feat: code\n\n${MARKER} — generated output`);
     const after = repo.git("rev-parse", "HEAD").trim();
     expect(pushRun(repo, before, after).code).toBe(0);
+  });
+
+  it("fails, rather than counting a doc as touched, when the doc diff cannot be read", () => {
+    const repo = baseRepo();
+    const before = repo.git("rev-parse", "HEAD").trim();
+    repo.write(CODE, "export const v = 2;\n");
+    repo.write(DOC, "# Agent CLI\n\nDocumented in the new commit.\n");
+    repo.commitAll("feat: code and doc");
+    const after = repo.git("rev-parse", "HEAD").trim();
+
+    // Delete the doc's new blob: the tree diff still lists the path, but its content cannot be read.
+    const blob = repo.git("rev-parse", `${after}:${DOC}`).trim();
+    rmSync(
+      path.join(repo.dir, ".git", "objects", blob.slice(0, 2), blob.slice(2))
+    );
+
+    const res = pushRun(repo, before, after);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("FAIL");
+  });
+});
+
+describe("docs-affect gate: CI pull request", () => {
+  it("fails loudly when the merge base with the base branch cannot be resolved", () => {
+    const repo = baseRepo();
+    const res = repo.run(
+      "check-docs-affected.mjs",
+      ["--strict", "--strict-only"],
+      {
+        GITHUB_ACTIONS: "true",
+        GITHUB_EVENT_NAME: "pull_request",
+        GITHUB_BASE_REF: "no-such-branch",
+      }
+    );
+    expect(res.code).toBe(1);
+    expect(res.output).toContain(
+      "cannot resolve merge base with no-such-branch"
+    );
+    expect(res.output).not.toContain("check:docs-affected: no changes");
   });
 });

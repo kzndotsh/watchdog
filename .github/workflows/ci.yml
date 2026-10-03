@@ -176,9 +176,17 @@ jobs:
       - name: Agent Skills validation
         if: github.event_name != 'pull_request' || needs.changes.outputs.agents == 'true' || needs.changes.outputs.config == 'true'
         env:
-          # Staleness is diff-based: PR range, or the pushed range.
-          DIFF_RANGE: ${{ github.event_name == 'pull_request' && format('origin/{0}...HEAD', github.base_ref) || format('{0}..{1}', github.event.before, github.sha) }}
-        run: pnpm validate:agents --range="$DIFF_RANGE"
+          # Staleness is diff-based: PR range, or the pushed before/after pair
+          # (the gate resolves an all-zero before SHA to the merge base with main).
+          DIFF_RANGE: ${{ github.event_name == 'pull_request' && format('origin/{0}...HEAD', github.base_ref) || '' }}
+          DIFF_BEFORE: ${{ github.event.before }}
+          DIFF_AFTER: ${{ github.sha }}
+        run: |
+          if [ -n "$DIFF_RANGE" ]; then
+            pnpm validate:agents --range="$DIFF_RANGE"
+          else
+            pnpm validate:agents --before="$DIFF_BEFORE" --after="$DIFF_AFTER"
+          fi
 
       - name: Action SHA pins
         if: github.event_name != 'pull_request' || needs.changes.outputs.config == 'true'

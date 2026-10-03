@@ -30,7 +30,7 @@ pnpm --filter @watchdog/db check:repos
 | --- | --- | --- |
 | Unit | `packages/*/src/**/__tests__/**/*.test.ts` + `apps/worker` + `apps/cli` | Pure; `SKIP_ENV_VALIDATION=1` |
 | Property | `*.property.test.ts` under `packages/*` or `apps/*` | fast-check via `@watchdog/test-kit/fc` |
-| Gate | `scripts/__tests__/*.gate.test.ts` | Runs a gate script as a CLI in a temp git repo; asserts exit code + output; never imports gate code. Helpers: `scripts/__tests__/helpers/` ([`ci-gates.md`](../ci-gates.md#gate-tests)) |
+| Gate | `scripts/__tests__/*.gate.test.ts` | Runs a gate script as a CLI in a temp git repo; asserts exit code + output; never imports gate code. Helpers: `scripts/__tests__/helpers/`; `gate-coverage.gate.test.ts` fails when a gate wired into hooks or CI has no test ([`ci-gates.md`](../ci-gates.md#gate-tests)) |
 | Component | `apps/web/src/**/__tests__/**` (`*.test.ts` + `*.component.test.tsx`) | happy-dom + Testing Library |
 | Integration | `*.int.test.ts` under `packages/*` or `apps/*` | `watchdog_test`; `withTestTx` or `resetTestDb` |
 | E2E parser | `e2e/**/*.test.ts` (not under `specs/`) | Pure; guards the E2E harness itself |

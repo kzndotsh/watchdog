@@ -12,6 +12,7 @@ function stopGateRepo() {
     "check-docs.mjs",
     "check-agents.mjs",
     "validate-agents.mjs",
+    "lib/git-range.mjs",
   ]);
   repo.copyFromRepo(STOP_GATE);
   repo.write("AGENTS.md", "# Agents\n");
@@ -42,6 +43,17 @@ describe("cursor stop-gate", () => {
       followup_message?: string;
     };
     expect(reply.followup_message).toContain("broken anchor");
+  });
+
+  it("fails open, never blocking the agent, when its own git probe breaks, and says so on stderr", () => {
+    const repo = stopGateRepo();
+    repo.write("docs/page.md", "# Page\n\n[gone](missing.md)\n");
+    repo.write(".git/HEAD", "garbage\n");
+    const res = runStop(repo);
+    expect(res.code).toBe(0);
+    expect(res.output).toContain("failing open");
+    expect(res.output).toContain("{}");
+    expect(res.output).not.toContain("followup_message");
   });
 
   it("stays silent when the dirty docs are clean", () => {
