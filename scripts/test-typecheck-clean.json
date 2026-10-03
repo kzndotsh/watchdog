@@ -1,5 +1,6 @@
 [
   "packages/ai",
+  "packages/api",
   "packages/client",
   "packages/db",
   "packages/schemas",
