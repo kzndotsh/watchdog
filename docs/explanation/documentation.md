@@ -8,7 +8,7 @@
 | Quadrant | Folder | Purpose | Example |
 | --- | --- | --- | --- |
 | **Tutorial** | [`../tutorials/`](../tutorials/) | Learning path; guaranteed checkpoints | [`first-investigation.md`](../tutorials/first-investigation.md) |
-| **How-to** | [`../how-to/`](../how-to/) | Solve a specific task when you already know the product | [`vault-setup.md`](../how-to/vault-setup.md) |
+| **How-to** | [`../how-to/`](../how-to/) | Solve a specific task when you already know the product | [`agent-cli.md`](../how-to/agent-cli.md) |
 | **Reference** | [`../reference/`](../reference/) | Facts: APIs, types, UI atoms, contracts | [`../reference/platform/types.md`](../reference/platform/types.md) |
 | **Explanation** | [`explanation/`](./) | Why and context; IA and journeys | [`product.md`](product.md), [`ux.md`](ux.md), [`scenarios.md`](scenarios.md) |
 

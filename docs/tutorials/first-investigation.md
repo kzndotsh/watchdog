@@ -1,11 +1,11 @@
 # Tutorial: first investigation
 
 **What this is:** a learning-oriented walk through one Case from empty install to an accepted Claim on the Graph (~30 min).  
-**What this is not:** toolchain-only setup ([`../how-to/onboarding.md`](../how-to/onboarding.md)) or Cap authoring reference.
+**What this is not:** toolchain-only setup ([`../how-to/local-dev.md`](../how-to/local-dev.md)) or Cap authoring reference.
 
 **Done-when:** You have a Case, one Evidence row from a paste dump, one Proposal in Triage, and an accepted Claim visible on an Entity Dossier.
 
-**Prerequisites:** [`../how-to/onboarding.md`](../how-to/onboarding.md) steps 1–6 complete (web + worker running, signed in).
+**Prerequisites:** [`../how-to/local-dev.md`](../how-to/local-dev.md) and [`../how-to/auth-setup.md`](../how-to/auth-setup.md) done (web + worker running, signed in).
 
 ---
 
@@ -64,7 +64,7 @@ If interpret failed (amber text in the job detail strip), Evidence and Job still
 
 | Goal | Doc |
 | --- | --- |
-| Cap credentials for DNS/AI Caps | [`../how-to/vault-setup.md`](../how-to/vault-setup.md) |
+| Cap credentials for DNS/AI Caps | [`../reference/platform/caps-boundary.md`](../reference/platform/caps-boundary.md#cap-credentials) |
 | CLI / agent API | [`../how-to/agent-cli.md`](../how-to/agent-cli.md) |
 | Full journey matrix | [`../explanation/scenarios.md`](../explanation/scenarios.md) |
 | Why Accept gates exist | [`../reference/contracts/custody.md`](../reference/contracts/custody.md) |

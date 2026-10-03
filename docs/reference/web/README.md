@@ -9,7 +9,6 @@ Start with [`../../../apps/web/AGENTS.md`](../../../apps/web/AGENTS.md), then op
 | [`data.md`](data.md) | Query cache, Case cookie, SSE, invalidation | Cap worker internals |
 | [`UI.md`](UI.md) · [`ui/`](ui/README.md) | Design system, loading, tables, atoms (split under `ui/`) | Product flows, copy |
 | [`components.md`](components.md) | Hand-owned atom registry | Brand brief, Storybook |
-| [`../../contributing/testing/web.md`](../../contributing/testing/web.md) | Web gates + remaining manual smoke | Platform test index |
 
 **Platform:** [`product`](../../explanation/product.md) · [`ux`](../../explanation/ux.md) · [`types`](../platform/types.md) · [`caps-lexicon`](../platform/caps-lexicon.md) · [`scenarios`](../../explanation/scenarios.md) · [`platform hub`](../platform/README.md).
 
