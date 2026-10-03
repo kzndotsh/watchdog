@@ -3,7 +3,11 @@ import type { HttpClient } from "effect/unstable/http";
 import { z } from "zod";
 
 import { normalizeIpEffect } from "../dns/reverse";
-import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
+import {
+  MissingCredentialError,
+  ParseVendorError,
+  type ToolsTag,
+} from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
@@ -36,40 +40,48 @@ interface ShodanOptions {
   userAgent?: string;
 }
 
-function stringList(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
-}
+const optionalString = z.string().nullish();
 
-function numberList(value: unknown): number[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is number => typeof item === "number")
-    : [];
-}
+/** Fields read from Shodan's minified host body; a wrong type is a vendor parse failure. */
+const shodanHostBodySchema = z.object({
+  org: optionalString,
+  isp: optionalString,
+  asn: optionalString,
+  hostnames: z.array(z.string()).nullish(),
+  ports: z.array(z.number().int()).nullish(),
+  tags: z.array(z.string()).nullish(),
+  os: optionalString,
+  country_code: optionalString,
+  city: optionalString,
+  last_update: optionalString,
+});
 
 function snapshotFromBody(
   ip: string,
+  queriedAt: string,
   status: number,
   body: Record<string, unknown>
-): ShodanLookupSnapshot {
-  return shodanLookupSnapshotSchema.parse({
+): ShodanLookupSnapshot | undefined {
+  const parsed = shodanHostBodySchema.safeParse(body);
+  if (!parsed.success) return undefined;
+  const host = parsed.data;
+  const snapshot = shodanLookupSnapshotSchema.safeParse({
     ip,
-    queriedAt: new Date().toISOString(),
+    queriedAt,
     found: true,
     status,
-    org: typeof body.org === "string" ? body.org : null,
-    isp: typeof body.isp === "string" ? body.isp : null,
-    asn: typeof body.asn === "string" ? body.asn : null,
-    hostnames: stringList(body.hostnames),
-    ports: numberList(body.ports),
-    tags: stringList(body.tags),
-    os: typeof body.os === "string" ? body.os : null,
-    countryCode:
-      typeof body.country_code === "string" ? body.country_code : null,
-    city: typeof body.city === "string" ? body.city : null,
-    lastUpdate: typeof body.last_update === "string" ? body.last_update : null,
+    org: host.org ?? null,
+    isp: host.isp ?? null,
+    asn: host.asn ?? null,
+    hostnames: host.hostnames ?? [],
+    ports: host.ports ?? [],
+    tags: host.tags ?? [],
+    os: host.os ?? null,
+    countryCode: host.country_code ?? null,
+    city: host.city ?? null,
+    lastUpdate: host.last_update ?? null,
   });
+  return snapshot.success ? snapshot.data : undefined;
 }
 
 export function fetchShodanHostEffect(
@@ -124,6 +136,10 @@ export function fetchShodanHostEffect(
       });
     }
 
-    return snapshotFromBody(ip, status, body);
+    const snapshot = snapshotFromBody(ip, queriedAt, status, body);
+    if (snapshot === undefined) {
+      return yield* new ParseVendorError({ service: "Shodan", subject: ip });
+    }
+    return snapshot;
   });
 }
