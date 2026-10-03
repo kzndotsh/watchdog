@@ -14,11 +14,11 @@
     "@base-ui/react": "^1.8.0",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
-    "cn": "0.3.2",
+    "cn": "0.4.0",
     "date-fns": "^4.4.0",
-    "lucide-react": "^1.46.0",
+    "lucide-react": "^1.49.0",
     "react-day-picker": "^10.0.1",
-    "react-resizable-panels": "^4.12.4"
+    "react-resizable-panels": "^4.14.1"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

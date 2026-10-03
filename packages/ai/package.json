@@ -9,10 +9,10 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.54",
-    "@ai-sdk/openai-compatible": "^3.0.49",
+    "@ai-sdk/anthropic": "^4.0.69",
+    "@ai-sdk/openai-compatible": "^3.0.60",
     "@watchdog/schemas": "workspace:*",
-    "ai": "^7.0.102",
+    "ai": "^7.0.123",
     "effect": "4.0.0-rc.115"
   },
   "devDependencies": {

@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1133.0",
-    "@aws-sdk/s3-request-presigner": "^3.1133.0",
+    "@aws-sdk/client-s3": "^3.1143.0",
+    "@aws-sdk/s3-request-presigner": "^3.1143.0",
     "@watchdog/caps": "workspace:*",
     "@watchdog/db": "workspace:*",
     "@watchdog/env": "workspace:*",
@@ -23,7 +23,7 @@
     "@watchdog/schemas": "workspace:*",
     "@watchdog/tools": "workspace:*",
     "effect": "4.0.0-rc.115",
-    "pg-boss": "^12.32.0",
+    "pg-boss": "^12.35.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
