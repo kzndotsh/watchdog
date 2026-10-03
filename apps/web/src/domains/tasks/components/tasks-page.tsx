@@ -33,7 +33,7 @@ function TasksActive({
   onTaskIdChange,
 }: Props & { active: CaseRecord }) {
   const ws = useTaskWorkspace(active.id, { entityId });
-  const { openCreate } = ws;
+  const { openCreate, handleSelect, pending, tasks } = ws;
   const paletteActions = useMemo<AppAction[]>(
     () => [
       {
@@ -53,15 +53,15 @@ function TasksActive({
 
   useEffect(() => {
     const normalizedTaskId = scopeOptionalUuid(taskId);
-    if (!normalizedTaskId || ws.pending) return;
-    const task = ws.tasks.find((row) => row.id === normalizedTaskId);
+    if (!normalizedTaskId || pending) return;
+    const task = tasks.find((row) => row.id === normalizedTaskId);
     if (!task) {
       onTaskIdChange?.();
       return;
     }
-    ws.handleSelect(task);
+    handleSelect(task);
     onTaskIdChange?.();
-  }, [taskId, ws, onTaskIdChange]);
+  }, [taskId, pending, tasks, handleSelect, onTaskIdChange]);
 
   return (
     <Page density="split" className="gap-0">
