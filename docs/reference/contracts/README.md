@@ -1,31 +1,23 @@
 # Platform contracts
 
-Canonical platform invariants. Elsewhere: **link only** — do not restate.
+Canonical platform invariants. Each rule has one home below; elsewhere, link and do not restate.
 
-## When to read which
-
-| You are… | Start here |
+| Rule | Home |
 | --- | --- |
-| Adding Collect / Process / Cap code | [`ingress.md`](ingress.md) |
-| Setting confidence, Accept, or confirmed gates | [`custody.md`](custody.md) |
-| Building CLI/API agent flows | [`agent-ingress.md`](agent-ingress.md) |
-| Adding logs or debugging worker/web | [`evlog.md`](evlog.md) |
+| Collect, Evidence, Proposal, Triage Accept, Graph | [`ingress.md`](ingress.md) |
+| Accept tiers, `confirmed` gates, identifier collisions and invalid values, breach caveat | [`custody.md`](custody.md) |
+| CLI/API propose vs `userOverride` graph write | [`agent-ingress.md`](agent-ingress.md) |
+| Process logging (evlog) | [`evlog.md`](evlog.md) |
+| Error taxonomy, org isolation | this page |
 
-Product nouns and investigator loop: [`../../explanation/product.md`](../../explanation/product.md). Graph enums and patch shape: [`../platform/types.md`](../platform/types.md).
+Product nouns and the investigator loop: [`../../explanation/product.md`](../../explanation/product.md). Graph enums and patch shape: [`../platform/types.md`](../platform/types.md).
 
-## Index
+## Error taxonomy
 
-| Doc | Owns |
-| --- | --- |
-| [`ingress.md`](ingress.md) | Collect → Evidence → Proposal → Triage → Graph |
-| [`custody.md`](custody.md) | Accept tiers, confirmed gates, breach caveats |
-| [`agent-ingress.md`](agent-ingress.md) | CLI/API propose vs `userOverride` graph write |
-| [`evlog.md`](evlog.md) | Process logging rules |
+Failures on the API, CLI and worker edges are tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError` (same codes as `DomainError`). `InvalidError` is caller-fixable input (HTTP 400). `InternalError` is a server-side failure (failed write, queue driver): HTTP 500 with a generic message, its reason and cause going only to the request log.
 
-Runtime errors on the API/CLI/worker edge are tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError` (same codes as `DomainError`). `InvalidError` is caller-fixable input (HTTP 400); `InternalError` is a server-side failure (failed write, queue driver) and maps to HTTP 500 with a generic message, its reason and cause going only to the request log. Ingress and custody contracts are unchanged.
+## Org isolation
 
-**Org isolation:** Cases are org-scoped. Case-child reads/writes that take `caseId` must resolve against the actor’s organization; a foreign-org Case is **`not_found`** (no cross-org bleed, no distinct wrong-org error). Missing org context on session/API key is **403**. Ids of another org's children (entity, claim, evidence, job, proposal…) passed under your own Case are rejected too; `packages/api/src/__tests__/org-isolation.int.test.ts` attacks every case-scoped procedure both ways and must list any new one. The live-events stream re-checks membership on every heartbeat. Product noun: [`../../explanation/product.md`](../../explanation/product.md).
+Cases are org-scoped. Case-child reads and writes that take `caseId` resolve against the actor's organization; a foreign-org Case is **`not_found`** (no distinct wrong-org error). Missing org context on the session or API key is **403**. Ids of another org's children (entity, claim, evidence, job, proposal) passed under your own Case are rejected too. The live-events stream re-checks membership on every heartbeat.
 
-## See also
-
-- Tutorial: [`../../tutorials/first-investigation.md`](../../tutorials/first-investigation.md)
+Enforced by `packages/api/src/__tests__/org-isolation.int.test.ts`, which attacks a hardcoded list of case-scoped procedures both ways. Guidance: add every new case-scoped procedure to that list; nothing enumerates the router to check completeness.

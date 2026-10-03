@@ -1,30 +1,28 @@
 # Auth setup
 
-**What this is:** Better Auth layers, session cache, API keys, CSRF, ServerFn vs route auth.  
-**What this is not:** product IA for sign-in screens ([`../explanation/ux.md`](../explanation/ux.md)).
+**What this is:** first account, Better Auth layers, session cache, CSRF, ServerFn vs route auth.  
+**What this is not:** product IA for sign-in screens ([`../explanation/ux.md`](../explanation/ux.md)); API keys for agents ([`agent-cli.md`](agent-cli.md)).
 
 ## Bootstrap (solo install)
 
 No account is seeded; registration is closed by default.
 
-1. In `.env`, set `BETTER_AUTH_SECRET` (≥32 chars: `openssl rand -base64 32`) and `BETTER_AUTH_URL=http://127.0.0.1:3000`.
+1. In `.env`, set `BETTER_AUTH_SECRET` (32+ chars: `openssl rand -base64 32`) and `BETTER_AUTH_URL=http://127.0.0.1:3000`.
 2. Set `BETTER_AUTH_ALLOW_SIGNUP=1`, restart `pnpm dev:web`.
-3. Register at `/auth/sign-up` (or run `just bootstrap-hint` for the checklist).
-4. Set `BETTER_AUTH_ALLOW_SIGNUP=0`, restart web again.
+3. Register at `/auth/sign-up` (`just bootstrap-hint` prints this checklist).
+4. For an invitation-only install, set `BETTER_AUTH_ALLOW_SIGNUP=0` and restart web again.
 
-The first account becomes the instance admin (`auth.user.role` `admin`). Every new account then lands on onboarding to create an organization (name and URL slug; the creator is its owner). With the flag on, anyone can sign up and create organizations; with it off, sign-up is closed, only the instance admin can create organizations, and everyone else joins by invite from Settings → Organization → **Members**. The sign-in page hides the sign-up link when the flag is off. Users in several organizations switch from the sidebar footer; switching reloads the app in the new organization. Only an organization's owner can delete it (Settings → Organization → General → Delete, confirmed by typing the name): every Case, its evidence and artifacts, and its export folder are deleted first, then members and invitations. It cannot be undone.
+The first account becomes the instance admin (`auth.user.role` `admin`). Every new account lands on onboarding to create an organization (name + URL slug; the creator is its owner).
 
-Owner and organization **admin** can invite with role `admin` or `member`. Members cannot invite. Accept is `/auth/accept-invitation/{id}`: the invitee creates an account on that page (public `/auth/sign-up` stays closed) or signs in if the email already has an account. Invitation URLs are written to process logs; set `SMTP_HOST` + `SMTP_FROM` (optional `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`) to also send mail. The Organization tab always has **Copy link**.
+- **Flag on:** anyone can sign up and create organizations.
+- **Flag off:** sign-up is closed, only the instance admin can create organizations, and everyone else joins by invite (Settings → Organization → **Members**: Copy link; set `SMTP_HOST` + `SMTP_FROM`, optionally `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`, to also send mail. Invitation URLs are also written to process logs). Accept is `/auth/accept-invitation/{id}`: the invitee creates an account on that page or signs in.
+- **Roles:** org owner and org **admin** can invite as `admin` or `member`; members cannot. Org admin is not instance admin. Only an owner can delete an organization (typed-name confirm; deletes every Case, its evidence, artifacts and export folder first).
+- **Instance admins** also see Settings → **Users** (Disable / Enable, Sign out all sessions). Impersonation is not enabled.
+- `just wipe` keeps `auth.*`, including `auth_event`.
 
-Instance admins also see Settings → **Users**: Disable / Enable (Better Auth `banUser` / `unbanUser`; UI never says “ban”), and **Sign out all sessions**. Impersonation is not enabled. A disabled account that tries to sign in sees **This account is disabled.** Organization **admin** is not instance admin. `just wipe` keeps `auth.*` including `auth_event` (session create + IP/UA).
+Surfaces that show who acted use the user's handle (from `auth.user.name`, slugged; else email local-part), not the raw id. CLI/API-key runs store `api-key:<key name>` in `actor_label`; vault and Graph still key off the **user** id. Caps never set actor.
 
-Job, Evidence, Triage, Graph-write, and Dashboard Activity surfaces show **who acted** as `By` plus an AtSign glyph + handle from `auth.user.name` (slug; else email local-part), not the raw user id or a masked email. CLI/API-key runs store a snapshot `api-key:<key name>` on the row (`actor_label`); vault and Graph still key off the **user** id. Caps never set actor.
-
-A signed-in user with pending invitations can accept or decline them under Settings → **Organizations**, which also lists, switches, and creates organizations. Delete lives under Settings → Organization → **General**.
-
-**Rate limits** (production only, per IP, in memory): sign-up 10/hour, organization create/delete 5/hour each, invite 20/min, role change 10/min, member remove 20/min (`rateLimit.customRules` in `packages/auth/src/create-auth.ts`). The server core (`createAuth`, `createApiContext`, invite signup, instance admin) lives in `packages/auth`; `apps/web/src/auth/` keeps the client, views, and routes.
-
-First-run toolchain order: [`onboarding.md`](onboarding.md).
+Sign-up, organization and invite actions are rate-limited in production only (`rateLimit.customRules` in `packages/auth/src/create-auth.ts`). The server core (`createAuth`, `createApiContext`, invite signup, instance admin) lives in `packages/auth`; `apps/web/src/auth/` keeps the client, views and routes.
 
 ## Auth layers
 
@@ -32,26 +30,17 @@ First-run toolchain order: [`onboarding.md`](onboarding.md).
 | --- | --- |
 | **Better Auth** | Cookie session; routes under `/auth/*` (BA UI) |
 | **`_protected` layout** | Redirects unauthenticated users; seeds `authQueryKeys.session` via `ensureAppSession` |
-| **`requireAuth` (global)** | All domain `createServerFn` handlers in `src/start.ts`; throws `UnauthorizedError` |
-| **`routes/api/*`** | Public HTTP (Better Auth handler, OpenAPI, file export) — not ServerFns |
-| **API keys** | Settings → API Keys; used by `wd` and OpenAPI clients (`WD_API_KEY`); each key acts in the organization that was active when it was created |
+| **`requireAuth` (global)** | All domain `createServerFn` handlers, installed in `src/start.ts`; throws `UnauthorizedError` |
+| **`routes/api/*`** | Public HTTP (Better Auth handler, OpenAPI, file export), not ServerFns |
+| **API keys** | Settings → API Keys; used by `wd` and OpenAPI clients; each key acts in the organization that was active when it was created |
 
 Optional: `BETTER_AUTH_TRUSTED_ORIGINS` for extra origins (comma-separated).
 
-## API keys for CLI
-
-1. Settings → **API Keys** → create a key.
-2. In `.env` (or shell): `WD_API_URL=http://localhost:3000/api/v1`, `WD_API_KEY=<key>`.
-3. `wd --help` works without a key; authenticated verbs need both vars (`loadCliEnv()` in `@watchdog/cli`).
-
-## See also
-
-- Full CLI surface: [`agent-cli.md`](agent-cli.md)
-- Troubleshooting: [`troubleshooting.md`](troubleshooting.md)
-
 ## Gotchas
 
-- **Auth session cache**: `_protected` seeds BA UI's `authQueryKeys.session` via `ensureAppSession` (`createIsomorphicFn`). Use `useSession(authClient)` from `@better-auth-ui/react` in UI: not `authClient.useSession()`. Post-sign-in return URL search param is **`redirectTo`** (BA UI), not `redirect`. Sign out via `/auth/sign-out` (BA UI clears cookie **and** removes auth queries); raw `authClient.signOut()` leaves a stale session cache and bounces you back in.
-- **Better Auth versions**: runtime `better-auth` / `@better-auth/core` / `@better-auth/api-key` / `@better-auth/drizzle-adapter` are **1.7.5**. Forked `@better-auth-ui/{core,react}` are **1.7.23** (exact, no caret). Workspace `overrides` pin `better-auth` and `@better-auth/core` so the catalog cannot keep a 1.6 core. API keys are user-owned and carry the active organization in `metadata.organizationId`; do not enable organization-owned keys (`referenceId`) until `createApiContext` maps `referenceId` without stamping an org id onto `actor.userId`. Password sign-in matches `auth.account.issuer` (`local:credential`); pre-1.7 rows need that column (migration `0011`).
-- **ServerFn auth ≠ route auth**: `_protected` redirects for UX; domain ServerFns are gated by global `requireAuth` in `src/start.ts` (`UnauthorizedError`). Do not re-add `.middleware([requireAuth])` on `*.functions.ts`. No public ServerFn: use `routes/api/*`. Detect denials with `isUnauthorizedError`, not `message === "Unauthorized"`.
-- **CSRF on ServerFns**: custom `start.ts` disables Start's auto CSRF; keep CSRF **after** evlog in `requestMiddleware`. CSRF 403s on `/_serverFn` log `auth.reason: "csrf"` (request logger otherwise skips ServerFns).
+- **Session cache:** `_protected` seeds BA UI's `authQueryKeys.session` via `ensureAppSession` (`createIsomorphicFn`). Use `useSession(authClient)` from `@better-auth-ui/react`, not `authClient.useSession()`. The post-sign-in return param is **`redirectTo`** (BA UI), not `redirect`. Sign out via `/auth/sign-out` (clears the cookie and removes auth queries); raw `authClient.signOut()` leaves a stale cache and bounces you back in.
+- **Versions:** `better-auth`, `@better-auth/core`, `@better-auth/api-key` and `@better-auth/drizzle-adapter` move together, and the forked `@better-auth-ui/{core,react}` are pinned exact (no caret); workspace `overrides` in `pnpm-workspace.yaml` pin `better-auth` and `@better-auth/core` so the catalog cannot keep an old core. API keys are user-owned and carry the active organization in `metadata.organizationId`; do not enable organization-owned keys (`referenceId`) until `createApiContext` maps `referenceId` without stamping an org id onto `actor.userId`. Password sign-in matches `auth.account.issuer` (`local:credential`); pre-1.7 rows need that column (migration `0011`; `pnpm db:migrate`).
+- **ServerFn auth is not route auth:** `_protected` redirects for UX; domain ServerFns are gated by the global `requireAuth` in `src/start.ts`. Do not add `.middleware([requireAuth])` on `*.functions.ts` (guidance; no lint). There is no public ServerFn; use `routes/api/*`. Detect denials with `isUnauthorizedError`, not `message === "Unauthorized"`.
+- **CSRF on ServerFns:** the custom `start.ts` disables Start's auto CSRF; keep CSRF **after** evlog in `requestMiddleware` ([`../reference/platform/jobs-orpc.md`](../reference/platform/jobs-orpc.md#process-logging-evlog)). CSRF 403s on `/_serverFn` log `auth.reason: "csrf"`.
+
+See also: [`troubleshooting.md`](troubleshooting.md).

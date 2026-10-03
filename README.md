@@ -51,7 +51,7 @@ In most of them the collector writes the graph. SpiderFoot persists every event 
 
 Confidence works differently too. These tools express it as numeric scores, decay models, or severity labels. Claims here land as `unverified` and a human moves them to `possible` or `confirmed` at Accept, where `confirmed` requires cited evidence. There's also no automatic fan-out and no crawler. Jobs start explicitly and reason over one case, because a seed that expands into hundreds of module runs is how you end up with more data and less clarity.
 
-The boundary is enforced by types rather than convention: a Cap's runtime context has no database handle, and the patch schema rejects any operation carrying a `confidence` value. Postgres holds the truth, and the markdown export is a projection you can delete and regenerate.
+The boundary is enforced by types rather than convention: a Cap's runtime context has no database handle, and the patch schema rejects `confidence` on claim, identifier and edge operations (it is chosen at Accept). Postgres holds the truth, and the markdown export is a projection you can delete and regenerate.
 
 ```mermaid
 flowchart LR
@@ -76,7 +76,7 @@ pnpm install
 just dev                    # Postgres + S3 + migrations + web + worker + marketing site (:3001)
 ```
 
-No account is seeded and registration is closed by default. See [`docs/how-to/onboarding.md`](docs/how-to/onboarding.md) and [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup, invites, and env detail.
+No account is seeded and registration is closed by default. See [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup, invites, and env detail, and [`docs/how-to/local-dev.md`](docs/how-to/local-dev.md) for services and traps.
 
 **Bootstrap:** set `BETTER_AUTH_ALLOW_SIGNUP=1`, create the first account at `/auth/sign-up`; it becomes the instance admin, then onboarding asks you to create your organization. Leave the flag on for an open install (anyone can sign up and create organizations), or set it back to `0` to lock the install to invitations (Settings → Organization → **Members**: copy link, or optional SMTP in `.env`).
 
@@ -139,17 +139,17 @@ Agents propose by default. `wd graph write` skips Triage: it always sends `userO
 
 Each Cap is a folder under `packages/caps/src/` named for its id, such as `network/dns.lookup/`, holding a `run` that collects and a pure `interpret` that maps the report to proposed operations. Keeping `interpret` pure means it tests against recorded fixtures with no network.
 
-| Category | Count | Examples |
-| --- | --- | --- |
-| `network` | 25 | DNS, WHOIS/RDAP, certificate transparency, TLS audit, Shodan, urlscan |
-| `threat` | 17 | VirusTotal, AbuseIPDB, GreyNoise, URLhaus, OTX, Safe Browsing |
-| `identity` | 6 | GitHub, Keybase, Gravatar, PGP, email reputation |
-| `breach` | 4 | HIBP, Dehashed, Snusbase, Hudson Rock |
-| `archive` | 4 | Wayback lookup and fetch, Common Crawl, save-page |
-| `evidence` | 4 | Deterministic harvest, AI extraction, file and `.eml` analysis |
-| `web` | 3 | URL unshortening, page enrichment |
+| Category | Examples |
+| --- | --- |
+| `network` | DNS, WHOIS/RDAP, certificate transparency, TLS audit, Shodan, urlscan |
+| `threat` | VirusTotal, AbuseIPDB, GreyNoise, URLhaus, OTX, Safe Browsing |
+| `identity` | GitHub, Keybase, Gravatar, PGP, email reputation |
+| `breach` | HIBP, Dehashed, Snusbase, Hudson Rock |
+| `archive` | Wayback lookup and fetch, Common Crawl, save-page |
+| `evidence` | Deterministic harvest, AI extraction, file and `.eml` analysis |
+| `web` | URL unshortening, page enrichment |
 
-Every Cap declares its egress (29 make no third-party call at all) and tags itself `Passive` or `Active`, so you know before running one whether it touches the target. Credentials come from an encrypted vault at runtime via `ctx.getCredential`, never from environment variables or job input. Run `pnpm generate:caps` after adding one.
+Every Cap declares its egress (many make no third-party call at all) and tags itself `Passive` or `Active`, so you know before running one whether it touches the target. Credentials come from an encrypted vault at runtime via `ctx.getCredential`, never from environment variables or job input. Run `pnpm generate:caps` after adding one.
 
 ## Architecture
 
@@ -177,7 +177,7 @@ packages/
 └── test-kit/             Dev-only ids, URLs, fast-check, MSW; no workspace deps
 ```
 
-Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and in production code only `core` touches repos (the dev-only `test-db` seeds use them too). Full matrix in [`docs/reference/platform/README.md`](docs/reference/platform/README.md).
+Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and `web` cannot import `db`. Only `core` calls repos for product logic (`auth` depends on `db` for its Better Auth adapter, and the dev-only `test-db` seeds use repos too). Matrix and what enforces it: [`docs/reference/platform/packages.md`](docs/reference/platform/packages.md).
 
 ### Effect
 
@@ -201,33 +201,20 @@ A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker
 
 ## Commands
 
-| Task | Command |
-| --- | --- |
-| Dev servers | `just dev` · `pnpm dev:web` · `pnpm dev:worker` · `pnpm dev:site` (marketing, no infra) |
-| Marketing build | `pnpm build:site` → `apps/site/dist/` |
-| Database | `pnpm db:migrate` · `pnpm db:generate` · `pnpm db:studio` |
-| Local infra | `just up` · `just down` · `just docker-up` (containers only) |
-| Reset case data, keep auth (orgs + vault) | `just wipe` |
-| Lint and format | `pnpm check` · `pnpm fix` · `pnpm check:design-tokens` (DESIGN.md colors vs CSS) · `pnpm check:vendor` (locked `packages/ui`) |
-| Types | `pnpm typecheck` |
-| Tests | `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
-| Codegen | `pnpm generate:caps` · `pnpm generate:client` |
-| Desloppify (optional) | `pnpm desloppify:scan` · `pnpm desloppify:status` · `pnpm desloppify:next` (`.desloppify/` gitignored) |
-
-Integration and end-to-end runs need their own databases first: `just test-db`.
+The quick-reference table (dev, database, lint, test, codegen, desloppify) is in [`AGENTS.md`](AGENTS.md#quick-reference); the `justfile` and `package.json` scripts are the SoT. Integration and end-to-end runs need their own databases first: `just test-db`.
 
 ## Status
 
 Third design, first one that ships. A vault-plus-Python-pipeline version and a broad platform spec both got frozen before this; [`docs/explanation/product.md`](docs/explanation/product.md) records what each one taught and what not to resurrect.
 
-Today: **63 Caps**, **16 packages**, **~980 unit/property tests** plus component, integration, and Playwright tiers green. The investigator loop runs end to end: bootstrap auth, org-scoped cases, dump evidence, run Caps, accept proposals, export the package.
+Today: 15 packages and 4 apps, with unit, property, component, integration and Playwright tiers. The Cap catalog is `packages/caps/capabilities.gen.json`. The investigator loop runs end to end: bootstrap auth, org-scoped cases, dump evidence, run Caps, accept proposals, export the package.
 
 Not there yet, worth knowing before you invest time:
 
 - **MCP server.** Not built. Agents use the OpenAPI surface today.
 - **Playbooks** are linear chains, with no branching and no conditionals.
 - **Hardened multi-tenancy.** Organizations are self-serve and Cases are org-scoped, but there is no billing and no external adversarial-tenant review yet (an automated tenant-isolation matrix, `packages/api/src/__tests__/org-isolation.int.test.ts`, and production rate limits on sign-up and organization actions exist). Deleting an organization (owner only) deletes all of its Cases, evidence, and artifacts first.
-- **End-to-end coverage** — 10 Playwright spec files in `e2e/specs/` (`@smoke` / `@custody` / `@journey`), including auth sign-up, team invite, and instance-admin Users, on top of unit, component, and integration tiers — not full manual-smoke parity yet.
+- **End-to-end coverage.** Playwright specs in `e2e/specs/` (`@smoke` / `@custody` / `@journey`) cover the core loop, custody gates and auth on top of the lower tiers; they do not cover every screen.
 
 Investigation content (corpus, entity notes, mirrors) lives in a separate private repo and never enters this one.
 
@@ -236,7 +223,7 @@ Investigation content (corpus, entity notes, mirrors) lives in a separate privat
 | Read | For |
 | --- | --- |
 | [`docs/explanation/product.md`](docs/explanation/product.md) | Intent, personas, what this refuses to build and why |
-| [`docs/reference/platform/README.md`](docs/reference/platform/README.md) | Packages, import rules, jobs, oRPC, logging |
+| [`docs/reference/platform/`](docs/reference/platform/README.md) | Packages and import rules ([`packages.md`](docs/reference/platform/packages.md)), jobs, oRPC, Caps, schemas |
 | [`docs/reference/platform/jobs-orpc.md`](docs/reference/platform/jobs-orpc.md) | Jobs queue, oRPC/OpenAPI, Effect runtime edges |
 | [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) | Bootstrap, orgs, invites, API keys, actor labels |
 | [`docs/reference/platform/caps-lexicon.md`](docs/reference/platform/caps-lexicon.md) · [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md) | Cap naming, method vocabulary, ship gates, how to write one |

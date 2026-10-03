@@ -1,10 +1,10 @@
 # Tutorial: first investigation
 
-A walk through one Case from empty install to accepted Graph content (~30 min). It mirrors the `@journey` e2e (`e2e/specs/journeys/core-loop.spec.ts`). Toolchain setup is in [`../how-to/onboarding.md`](../how-to/onboarding.md).
+A walk through one Case from empty install to accepted Graph content (~30 min). It mirrors the `@journey` e2e (`e2e/specs/journeys/core-loop.spec.ts`). Toolchain setup is in [`../how-to/local-dev.md`](../how-to/local-dev.md).
 
 **Done-when:** You have a Case, one Evidence row from a paste dump, one Proposal in Triage, and the accepted patch visible on an Entity Dossier.
 
-**Prerequisites:** [`../how-to/onboarding.md`](../how-to/onboarding.md) steps 1–6 complete (web + worker running, signed in).
+**Prerequisites:** [`../how-to/local-dev.md`](../how-to/local-dev.md) and [`../how-to/auth-setup.md`](../how-to/auth-setup.md) done (web + worker running, signed in).
 
 ---
 
@@ -63,7 +63,7 @@ If interpret failed (amber text in the job detail strip), Evidence and Job still
 
 ## Next steps
 
-- Cap credentials for DNS/AI Caps: [`../how-to/vault-setup.md`](../how-to/vault-setup.md)
+- Cap credentials for DNS/AI Caps: [`../reference/platform/caps-boundary.md#cap-credentials`](../reference/platform/caps-boundary.md#cap-credentials)
 - CLI and agent API: [`../how-to/agent-cli.md`](../how-to/agent-cli.md)
 - Why Accept gates exist: [`../reference/contracts/custody.md`](../reference/contracts/custody.md)
 - The product loop: [`../explanation/product.md`](../explanation/product.md)

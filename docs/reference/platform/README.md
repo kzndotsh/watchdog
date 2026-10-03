@@ -1,17 +1,12 @@
 # Platform architecture
 
-Hub for package layout, jobs/oRPC/evlog, and Caps/Intake/Export. Split leaves below are SoT.
+Package layout, jobs/oRPC, and Caps. Leaves are SoT; this page only routes.
 
-| Doc | Owns |
-| --- | --- |
-| [`packages.md`](packages.md) | Import direction / package matrix |
-| [`jobs-orpc.md`](jobs-orpc.md) | Jobs path, oRPC, process logging |
-| [`caps-boundary.md`](caps-boundary.md) | Caps SPI, credentials, Intake, Export, vocab pointer |
-| [`types.md`](types.md) | Schema / Zod ownership |
-| [`caps-lexicon.md`](caps-lexicon.md) | Cap id/title/kind, D1-D5 |
-| [`graph-model.md`](graph-model.md) | Entity / evidence / patch model |
-| [`../contracts/`](../contracts/README.md) | Ingress, custody, agent writes, evlog contracts |
+- [`packages.md`](packages.md): package list and import-direction matrix.
+- [`jobs-orpc.md`](jobs-orpc.md): Cap job path, oRPC/OpenAPI boundary, where evlog is installed.
+- [`caps-boundary.md`](caps-boundary.md): Cap SPI, credentials, Intake, Export.
+- [`caps-lexicon.md`](caps-lexicon.md): Cap id/title/kind, D1-D5, ship gates.
+- [`types.md`](types.md): schema and Zod ownership.
+- [`../contracts/`](../contracts/README.md): ingress, custody, agent writes, evlog, error taxonomy, org isolation.
 
-Runtime failures on API/CLI/worker edges use tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError` (same codes as `DomainError`). `InvalidError` is caller-fixable input (HTTP 400); `InternalError` is a server-side failure (failed write, queue driver) and maps to HTTP 500 with a generic message, its reason and cause going only to the request log. Ingress and custody contracts are unchanged.
-
-**Not:** TanStack Start chrome or Query/SSE. That lives under [`docs/reference/web/`](../web/README.md).
+TanStack Start chrome and Query/SSE live under [`../web/`](../web/README.md).
