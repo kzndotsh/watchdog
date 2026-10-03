@@ -6,9 +6,9 @@ remains — draft grouped conventional commits, then stop for approval.
 ## Review
 
 Read all uncommitted work before grouping: `git status --porcelain`,
-`git diff` (unstaged + staged), and `git log -15 --format='%s'` for this
-repo's subject style. Include untracked files. Exclude secrets (`.env*`,
-credentials, keys).
+`git diff` (unstaged), `git diff --cached` (staged), and
+`git log -15 --format='%s'` for this repo's subject style. Read the contents
+of untracked files. Exclude secrets (`.env*`, credentials, keys).
 
 ## Grouping (more commits, not fewer)
 

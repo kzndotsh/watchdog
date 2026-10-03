@@ -32,8 +32,8 @@ Read-only. Reports inline with citations. Never edits code, docs, or config.
 
 1. Identify the subsystem from the user's message (a path, a PR diff, or "this change"). If ambiguous, ask.
 2. Read the nearest `AGENTS.md` up the tree (package → root) and the relevant contract in `docs/reference/contracts/`. Extract the guidance rules, Accept-tier language, and source-of-truth rules.
-3. Read the actual code, not a summary. Follow imports one level where a rule depends on a neighbor.
-4. Check each rule: the "Do" is followed and the "Don't" is absent. Check whether new code sets `confirmed` outside a human Accept path, and whether Cap or agent output lands as anything but `unverified` plus `userOverride` when it writes the Graph.
+3. Read the actual code, not a summary. Follow imports one level where a rule depends on a neighbor (e.g. "Caps never write the Graph" requires checking Caps do not import `@watchdog/db`).
+4. Check each rule: the "Do" is followed and the "Don't" is absent. Check whether new code sets `confirmed` outside a human Accept path. Check Caps and agents separately: a Cap never writes the Graph, with or without `userOverride`; an agent or CLI Graph write must land as `unverified` with `userOverride`.
 5. Report inline, one finding per rule, each with a code citation (`path:line`) and the rule's source line. Never claim a violation without both citations. If everything holds, say so in one line per area.
 
 ## Gotchas
