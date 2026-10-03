@@ -1,6 +1,7 @@
 import { ORPCError, createRouterClient } from "@orpc/server";
 import { beforeAll, describe, expect, it } from "vitest";
 
+import { listVisibleCaseIdsEffect, runDomain } from "@watchdog/core";
 import {
   resetTestDb,
   seedCase,
@@ -913,5 +914,14 @@ describe("organization isolation matrix", () => {
     await expect(b.entities.list({ caseId: ids.caseB })).resolves.toHaveLength(
       1
     );
+  });
+
+  it("lists only the caller's own Case ids for the live events stream", async () => {
+    await expect(runDomain(listVisibleCaseIdsEffect(ORG_A))).resolves.toEqual([
+      ids.caseA,
+    ]);
+    await expect(runDomain(listVisibleCaseIdsEffect(ORG_B))).resolves.toEqual([
+      ids.caseB,
+    ]);
   });
 });

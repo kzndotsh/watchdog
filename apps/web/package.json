@@ -37,7 +37,6 @@
     "@watchdog/api": "workspace:*",
     "@watchdog/auth": "workspace:*",
     "@watchdog/core": "workspace:*",
-    "@watchdog/db": "workspace:*",
     "@watchdog/env": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/policy": "workspace:*",

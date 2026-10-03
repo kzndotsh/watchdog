@@ -122,6 +122,7 @@ export {
 export {
   createCaseEffect,
   listCasesEffect,
+  listVisibleCaseIdsEffect,
   getCaseByIdEffect,
   getCaseBySlugEffect,
   updateCaseEffect,
