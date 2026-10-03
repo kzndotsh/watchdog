@@ -31,30 +31,61 @@ function note(level, msg) {
 }
 
 /**
+ * The heading anchor algorithm used by the GitHub markdown renderer: lowercase,
+ * drop everything except letters, numbers, marks, underscores, spaces and
+ * hyphens (unicode letters stay; an em dash vanishes and leaves its
+ * surrounding spaces), then each space becomes a hyphen.
  * @param {string} heading
  * @returns {string}
  */
 function slugify(heading) {
   return heading
+    .replaceAll(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .toLowerCase()
-    .replaceAll(/[^\w\s-]/g, "")
-    .trim()
-    .replaceAll(/\s+/g, "-");
+    .replaceAll(/[^\p{L}\p{M}\p{N}_ -]/gu, "")
+    .replaceAll(" ", "-");
 }
 
 /**
+ * Anchors generated for a document; repeated headings get -1, -2, ... suffixes.
+ * Headings inside code fences are not headings.
  * @param {string} text
  * @returns {Set<string>}
  */
 function collectAnchors(text) {
   /** @type {Set<string>} */
   const set = new Set();
+  /** @type {Map<string, number>} */
+  const seen = new Map();
+  let fence = "";
   for (const line of text.split("\n")) {
+    const marker = /^\s*(`{3,}|~{3,})/.exec(line)?.[1];
+    if (marker) {
+      if (!fence) fence = marker[0] ?? "";
+      else if (marker.startsWith(fence)) fence = "";
+      continue;
+    }
+    if (fence) continue;
     const m = HEADING.exec(line);
     if (!m?.[1]) continue;
-    set.add(slugify(m[1]));
+    const base = slugify(m[1]);
+    const n = seen.get(base) ?? 0;
+    seen.set(base, n + 1);
+    set.add(n === 0 ? base : `${base}-${n}`);
   }
   return set;
+}
+
+/**
+ * @param {string} hash
+ * @returns {string}
+ */
+function fragment(hash) {
+  try {
+    return decodeURIComponent(hash).toLowerCase();
+  } catch {
+    return hash.toLowerCase();
+  }
 }
 
 /**
@@ -145,9 +176,7 @@ async function checkMarkdownFile(absPath, opts) {
       continue;
 
     if (href.startsWith("#")) {
-      const slug = slugify(href.slice(1).replaceAll("-", " ")) || href.slice(1);
-      const frag = href.slice(1).toLowerCase();
-      if (!(anchors.has(frag) || anchors.has(slug))) {
+      if (!anchors.has(fragment(href.slice(1)))) {
         note(opts.failLevel, `${rel}: broken anchor → ${href}`);
       }
       continue;
@@ -181,8 +210,7 @@ async function checkMarkdownFile(absPath, opts) {
     const hash = resolved.hash;
     if (!(target && hash)) continue;
     const targetAnchors = anchorByTarget.get(target);
-    const frag = hash.toLowerCase();
-    if (!targetAnchors?.has(frag)) {
+    if (!targetAnchors?.has(fragment(hash))) {
       note(
         opts.failLevel,
         `${rel}: broken anchor → ${href} (no #${hash} in ${path.relative(root, target)})`

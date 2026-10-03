@@ -172,6 +172,17 @@ export default defineConfig({
         },
       },
       {
+        // Gate scripts run as CLIs against temporary git repos (scripts/__tests__/helpers).
+        test: {
+          name: "gate",
+          include: ["scripts/__tests__/**/*.gate.test.ts"],
+          environment: "node",
+          isolate: false,
+          setupFiles: ["vitest.reset-modules.ts"],
+          testTimeout: 30_000,
+        },
+      },
+      {
         test: {
           name: "integration",
           include: [

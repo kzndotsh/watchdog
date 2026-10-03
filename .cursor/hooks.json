@@ -1,12 +1,6 @@
 {
   "version": 1,
   "hooks": {
-    "afterFileEdit": [
-      {
-        "command": ".cursor/hooks/run-node.sh .cursor/hooks/validate-on-edit.mjs",
-        "timeout": 30
-      }
-    ],
     "stop": [
       {
         "command": ".cursor/hooks/run-node.sh .cursor/hooks/stop-gate.mjs",

@@ -21,7 +21,7 @@ Domain code imports vanilla primitives from `@watchdog/ui/components/<name>` and
 
 ## Lock
 
-`packages/ui/vendor.json` lists the components, the style, and a sha256 for every vendored file. `pnpm check:vendor` (pre-commit and CI) fails on an edited, missing, or unlisted file. The formatter, linter, and lefthook skip `src/components` and `src/hooks` so bytes stay identical to the CLI's.
+`packages/ui/vendor.json` lists the components, the style, the exact shadcn CLI version (`shadcn`, pinned in `scripts/ui-vendor.mjs`, never `latest`), and a sha256 for every vendored file. `pnpm check:vendor` (pre-commit and CI) fails on an edited, missing, or unlisted file, or when the recorded CLI version differs from the pinned one. To bump the CLI, change the pin in the script, then `pnpm ui:sync`. The formatter, linter, and lefthook skip `src/components` and `src/hooks` so bytes stay identical to the CLI's.
 
 | Task | Command |
 | --- | --- |
@@ -34,7 +34,7 @@ Domain code imports vanilla primitives from `@watchdog/ui/components/<name>` and
 
 ## Gotchas
 
-- Run the CLI as `pnpm dlx shadcn@latest`. The repo's `zod` override breaks the locally installed `shadcn` binary (`o.deepPartial is not a function`).
+- Run the CLI as `pnpm dlx shadcn@<pinned version>` (the script does; `@latest` would make syncs irreproducible). The repo's `zod` override breaks the locally installed `shadcn` binary (`o.deepPartial is not a function`).
 - Upstream components import `cn` from the `cn` package directly, not from `@/lib/utils`. `@/lib/utils` re-exports the same stock `cn` (replaces `clsx` + `tailwind-merge`). There are no custom type-role utilities, so nothing needs to be registered: `text-2xs` parses as a t-shirt size and every other `text-*` is vanilla.
 - `apps/web` tsconfig has `noUnusedLocals` off: upstream files pulled into its program carry unused `React` imports. oxlint `no-unused-vars` covers our own code.
 - `apps/web/components.json` mirrors `packages/ui/components.json` (`style`, `iconLibrary`, `baseColor`). Run `add` from `packages/ui`.

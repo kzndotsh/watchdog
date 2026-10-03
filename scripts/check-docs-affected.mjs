@@ -1,143 +1,171 @@
 #!/usr/bin/env node
 /**
- * Warn (default) or fail (--strict / --strict-only) when code changes lack a
- * paired doc touch per scripts/doc-map.mjs.
+ * Docs-affect gate: code changes need a paired, substantive doc touch per
+ * scripts/doc-map.mjs, judged on exactly the change being made.
+ *
+ * Stages:
+ * - commit-msg (lefthook): `node scripts/check-docs-affected.mjs --strict --strict-only {1}`.
+ *   Reads the real message file `{1}` and diffs the index (staged changes) only.
+ * - CI pull_request: diffs merge-base(origin/<base>, HEAD)...HEAD.
+ * - CI push: diffs the pushed range before..after (GITHUB_EVENT_PATH payload, or
+ *   DOCS_AFFECT_BEFORE / DOCS_AFFECT_AFTER env). An all-zero before SHA falls back
+ *   to the merge base with main. A range that cannot be resolved FAILS: it never
+ *   degrades to "no changes". Neither does a git error while judging a doc: the
+ *   shared helpers (scripts/lib/git-range.mjs) throw, and this gate dies on it.
+ *
+ * Escape hatch: `docs:allow-affect — <reason>` in the commit message being
+ * written (reason required). In CI, a pull request body or any commit message in
+ * the pushed range may carry it. There are no other fallbacks.
  */
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { hasAllowAffect, matchRules } from "./doc-map.mjs";
+import { DOC_MAP, hasAllowAffect, matchRules } from "./doc-map.mjs";
+import {
+  changedPaths,
+  git,
+  hasSubstantiveChange,
+  mergeBaseWith,
+  resolvePushRange,
+} from "./lib/git-range.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
+const args = process.argv.slice(2);
 const strict =
-  process.argv.includes("--strict") || process.env.CHECK_DOCS_STRICT === "1";
-const strictOnly = process.argv.includes("--strict-only");
+  args.includes("--strict") || process.env.CHECK_DOCS_STRICT === "1";
+const strictOnly = args.includes("--strict-only");
+const msgFile = args.find((a) => !a.startsWith("--"));
+const inCI = process.env.GITHUB_ACTIONS === "true" || process.env.CI === "true";
+
+const ESCAPE_SYNTAX = "docs:allow-affect — <reason>";
 
 /**
- * @param {string[]} args
- * @returns {string}
+ * @param {string} message
+ * @returns {never}
  */
-function git(args) {
-  try {
-    return execFileSync("git", args, { cwd: root, encoding: "utf-8" });
-  } catch {
-    return "";
+function die(message) {
+  console.error(`FAIL  check:docs-affected: ${message}`);
+  process.exit(1);
+}
+
+/** Self-check: no rule may list the same doc twice. */
+function checkDocMap() {
+  for (const rule of DOC_MAP) {
+    const seen = new Set();
+    for (const doc of rule.docs) {
+      if (seen.has(doc)) {
+        die(`doc map rule "${rule.id}" lists ${doc} twice`);
+      }
+      seen.add(doc);
+    }
   }
 }
 
 /**
- * @param {string} filePath
- * @returns {boolean}
+ * @param {unknown} value
+ * @returns {string | undefined}
  */
-function fileAllows(filePath) {
-  if (!(filePath && existsSync(filePath))) return false;
-  try {
-    return hasAllowAffect(readFileSync(filePath, "utf-8"));
-  } catch {
-    return false;
-  }
+function str(value) {
+  return typeof value === "string" ? value : undefined;
 }
 
-function changedFiles() {
-  if (process.env.GITHUB_ACTIONS === "true" || process.env.CI === "true") {
-    const baseRef = process.env.GITHUB_BASE_REF
-      ? `origin/${process.env.GITHUB_BASE_REF}`
-      : (process.env.DOCS_AFFECT_BASE ?? "origin/main");
-    const mergeBase = git(["merge-base", baseRef, "HEAD"]).trim();
-    if (mergeBase) {
-      return [
-        ...new Set(
-          git(["diff", "--name-only", `${mergeBase}...HEAD`])
-            .split("\n")
-            .map((l) => l.trim())
-            .filter(Boolean)
-        ),
-      ];
-    }
-  }
-
-  const staged = git(["diff", "--cached", "--name-only", "--diff-filter=ACMR"]);
-  const unstaged = git(["diff", "--name-only", "--diff-filter=ACMR"]);
-  const untracked = git(["ls-files", "--others", "--exclude-standard"]);
-  return [
-    ...new Set(
-      [...staged.split("\n"), ...unstaged.split("\n"), ...untracked.split("\n")]
-        .map((l) => l.trim())
-        .filter(Boolean)
-    ),
-  ];
-}
-
-function allow() {
-  if (process.env.DOCS_ALLOW_AFFECT === "1") return true;
-
-  const msgPath = process.env.DOCS_ALLOW_AFFECT_MSG;
-  if (fileAllows(msgPath ?? "")) return true;
-
-  // In-flight commit message (available during pre-commit for `git commit -m`).
-  if (fileAllows(path.join(root, ".git", "COMMIT_EDITMSG"))) return true;
-
-  // Stamp written by commit-msg hook (amend / later hooks).
-  const stamp = path.join(root, ".git", "docs-allow-affect");
-  if (existsSync(stamp)) {
-    try {
-      const stamped = readFileSync(stamp, "utf-8").trim();
-      if (stamped && fileAllows(stamped)) return true;
-      if (stamped && hasAllowAffect(stamped)) return true;
-    } catch {
-      // ignore
-    }
-  }
-
-  // PR body fallback (CI).
+/** @returns {{ isPullRequest: boolean; prBody: string; before?: string; after?: string }} */
+function readEvent() {
   const eventPath = process.env.GITHUB_EVENT_PATH;
+  /** @type {unknown} */
+  let event = {};
   if (eventPath && existsSync(eventPath)) {
     try {
-      /** @type {unknown} */
-      const event = JSON.parse(readFileSync(eventPath, "utf-8"));
-      const body =
-        event &&
-        typeof event === "object" &&
-        "pull_request" in event &&
-        event.pull_request &&
-        typeof event.pull_request === "object" &&
-        "body" in event.pull_request &&
-        typeof event.pull_request.body === "string"
-          ? event.pull_request.body
-          : "";
-      if (hasAllowAffect(body)) return true;
+      event = JSON.parse(readFileSync(eventPath, "utf-8"));
     } catch {
-      // ignore
+      event = {};
     }
   }
+  const e = event && typeof event === "object" ? event : {};
+  const pr = "pull_request" in e ? e.pull_request : undefined;
+  return {
+    isPullRequest:
+      process.env.GITHUB_EVENT_NAME === "pull_request" || pr !== undefined,
+    prBody:
+      pr && typeof pr === "object" && "body" in pr ? (str(pr.body) ?? "") : "",
+    before: "before" in e ? str(e.before) : undefined,
+    after: "after" in e ? str(e.after) : undefined,
+  };
+}
 
-  const last = git(["log", "-1", "--format=%B"]);
-  return Boolean(last && hasAllowAffect(last));
+/**
+ * Resolve what is being judged.
+ * @returns {{ label: string; diffArgs: string[]; messages: string[] }}
+ *   `diffArgs` go between `git diff` and `--`; `messages` carry escape hatches.
+ */
+function resolveChange() {
+  if (!inCI) {
+    const message =
+      msgFile && existsSync(msgFile) ? readFileSync(msgFile, "utf-8") : "";
+    // Comment lines are stripped by git before the commit is created.
+    const body = message
+      .split("\n")
+      .filter((l) => !l.startsWith("#"))
+      .join("\n");
+    return { label: "staged", diffArgs: ["--cached"], messages: [body] };
+  }
+
+  const event = readEvent();
+  if (event.isPullRequest) {
+    const baseRef = process.env.GITHUB_BASE_REF ?? "main";
+    const mb = mergeBaseWith(baseRef, root);
+    if (!mb)
+      die(
+        `cannot resolve merge base with ${baseRef}; refusing to report "no changes"`
+      );
+    return {
+      label: `pull request (${mb.slice(0, 8)}...HEAD)`,
+      diffArgs: [`${mb}...HEAD`],
+      messages: [event.prBody],
+    };
+  }
+
+  const { start, after } = resolvePushRange(
+    {
+      before: event.before ?? process.env.DOCS_AFFECT_BEFORE ?? "",
+      after: event.after ?? process.env.DOCS_AFFECT_AFTER ?? "HEAD",
+    },
+    root
+  );
+  const log = git(["log", "--format=%B%x00", `${start}..${after}`], root);
+  return {
+    label: `push (${start.slice(0, 8)}..${after.slice(0, 8)})`,
+    diffArgs: [`${start}..${after}`],
+    messages: log.split("\0"),
+  };
 }
 
 /**
  * @param {string} docPattern
  * @param {string[]} changed
+ * @param {string[]} diffArgs
  */
-function docTouched(docPattern, changed) {
-  if (docPattern.endsWith("/")) {
-    return changed.some(
-      (f) => f.startsWith(docPattern) || f === docPattern.slice(0, -1)
-    );
-  }
-  return changed.includes(docPattern);
+function docTouched(docPattern, changed, diffArgs) {
+  const candidates = docPattern.endsWith("/")
+    ? changed.filter(
+        (f) => f.startsWith(docPattern) || f === docPattern.slice(0, -1)
+      )
+    : changed.filter((f) => f === docPattern);
+  return candidates.some((f) => hasSubstantiveChange(f, diffArgs, root));
 }
 
 function main() {
-  if (allow()) {
+  checkDocMap();
+
+  const { label, diffArgs, messages } = resolveChange();
+  if (messages.some((m) => hasAllowAffect(m))) {
     console.log("check:docs-affected: allow-affect present — skip");
     process.exit(0);
   }
 
-  const changed = changedFiles();
+  const changed = changedPaths(diffArgs, root);
   if (changed.length === 0) {
-    console.log("check:docs-affected: no changes");
+    console.log(`check:docs-affected: no changes in ${label}`);
     process.exit(0);
   }
 
@@ -151,15 +179,15 @@ function main() {
       existsSync(path.join(root, d))
     );
     if (existingDocs.length === 0) continue;
-    if (existingDocs.some((d) => docTouched(d, changed))) continue;
+    if (existingDocs.some((d) => docTouched(d, changed, diffArgs))) continue;
     missing.push(
-      `[${rule.id}] code ${matchedCode.slice(0, 3).join(", ")}${matchedCode.length > 3 ? "…" : ""} needs one of: ${existingDocs.join(" | ")}`
+      `[${rule.id}] changed ${matchedCode.slice(0, 3).join(", ")}${matchedCode.length > 3 ? "…" : ""} — update one of: ${existingDocs.join(" | ")}`
     );
   }
 
   if (missing.length === 0) {
     console.log(
-      `check:docs-affected: ok (${hits.length} rule hit(s))${strict ? " [strict]" : " [warn]"}`
+      `check:docs-affected: ok (${hits.length} rule hit(s), ${label})${strict ? " [strict]" : " [warn]"}`
     );
     process.exit(0);
   }
@@ -169,13 +197,17 @@ function main() {
     console[strict ? "error" : "warn"](`${level}  ${m}`);
   }
   console.log(
-    `check:docs-affected: ${missing.length} missing doc touch(es)${strict ? " [strict]" : " [warn]"}`
+    `check:docs-affected: ${missing.length} missing doc touch(es) in ${label}${strict ? " [strict]" : " [warn]"}`
   );
   console.log(
-    "Add the listed doc(s), or put docs:allow-affect — <reason> in the commit message / PR body."
+    `Make a substantive (non-whitespace) edit to a listed doc, or excuse this commit with ${ESCAPE_SYNTAX} (reason required) in its own commit message.`
   );
 
   process.exit(strict ? 1 : 0);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  die(error instanceof Error ? error.message : String(error));
+}

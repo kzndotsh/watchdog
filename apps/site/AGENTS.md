@@ -2,6 +2,8 @@
 
 Static marketing landing for Watchdog (`watchdog.com`). No Case Graph, auth, or worker — link out to the product app and docs only.
 
+> Scope: `apps/site` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
+
 ## Scope
 
 - Single landing page (`/`) — no auth, DB, worker, or Cap runtime

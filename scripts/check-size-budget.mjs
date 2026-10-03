@@ -33,10 +33,10 @@ function trackedSources() {
     "git",
     [
       "ls-files",
-      "apps/*/src/**/*.ts",
-      "apps/*/src/**/*.tsx",
-      "packages/*/src/**/*.ts",
-      "packages/*/src/**/*.tsx",
+      ":(glob)apps/*/src/**/*.ts",
+      ":(glob)apps/*/src/**/*.tsx",
+      ":(glob)packages/*/src/**/*.ts",
+      ":(glob)packages/*/src/**/*.tsx",
     ],
     { cwd: root, encoding: "utf-8" }
   );

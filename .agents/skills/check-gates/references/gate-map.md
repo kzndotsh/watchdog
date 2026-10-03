@@ -17,7 +17,7 @@ ds/agents/docs → unit/component → integration → e2e.
 | `*.ts` / `*.tsx` / `tsconfig*.json` | `pnpm check`, `pnpm typecheck`, `pnpm check:effect-edges:strict`, `pnpm knip` |
 | `packages/**` or `apps/**` TS | plus `pnpm test:unit`, `pnpm test:property`. CI also `pnpm test:integration` (needs `pnpm test-db` + Postgres; **Blocked** if services are down — do not skip silently) |
 | `AGENTS.md`, `scripts/check-agents.mjs` | `pnpm check:agents:strict` |
-| `docs/**`, `scripts/check-docs.mjs`, `scripts/doc-map.mjs`, `scripts/check-docs-affected.mjs` | `pnpm check:docs:strict`, `pnpm check:docs-affected:strict`. Lefthook also `check:agents:strict` on `docs/**` |
+| `docs/**`, `scripts/check-docs.mjs`, `scripts/doc-map.mjs`, `scripts/check-docs-affected.mjs` | `pnpm check:docs:strict`, `pnpm check:docs-affected:strict`. |
 | `.agents/skills/**`, `scripts/validate-agents.mjs`, `.cursor/README.md` | `pnpm validate:agents`. CI `agents` filter also runs `check:agents:strict` |
 | `apps/web/**` | `pnpm --filter @watchdog/web ds:check`, `pnpm test:component`, `pnpm doctor:react` (advisory; CI Advisory job, does not fail **Check**). CI also runs full `pnpm test:e2e` — locally use `pnpm test:e2e:smoke` unless `e2e/` is dirty or the user asked for full e2e |
 | `apps/web/src/**`, `apps/web/scripts/**` | plus `pnpm check:docs-affected:strict` (lefthook) |

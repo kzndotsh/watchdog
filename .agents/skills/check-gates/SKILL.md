@@ -40,6 +40,6 @@ May edit any file a failing gate points at, to make that gate pass. Does not cha
 ## Gotchas
 
 - `generate:caps` / `generate:client` fail on drift — run the generator; do not hand-edit generated output.
-- `check:docs-affected:strict` needs paired doc touches in the same commit (or `docs:allow-affect — reason` / `DOCS_ALLOW_AFFECT=1` when split). It also runs on mapped **code** paths, not only `docs/**`.
+- `check:docs-affected:strict` needs paired doc touches in the same commit (or `docs:allow-affect — reason` in that commit's own message when split). It runs at commit-msg on the staged diff, not the working tree. It also runs on mapped **code** paths, not only `docs/**`.
 - `pnpm --filter @watchdog/db check:repos` is mechanical only; passing is not the same as satisfying review-only repo rules in `packages/db/AGENTS.md`.
 - `pnpm doctor:react` is advisory. Desloppify is CI-on-main advisory only.
