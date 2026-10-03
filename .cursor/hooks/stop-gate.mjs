@@ -178,12 +178,12 @@ function main() {
   if (docsChanged) {
     const res = spawnSync(
       process.execPath,
-      [path.join(root, "scripts/check-docs.mjs")],
+      [path.join(root, "scripts/check-docs.mjs"), "--strict", "--fail-length"],
       { cwd: root, encoding: "utf8" }
     );
     if (res.status !== 0) {
       parts.push(
-        "`pnpm check:docs` failed after a docs edit. Fix broken links/anchors, then stop.",
+        "`pnpm check:docs:strict` failed after a docs edit. Fix broken links/anchors, then stop.",
         "",
         "```",
         clip(formatSpawn(res)),

@@ -6,7 +6,7 @@
 
 | Path | What | Why it's here and not `.agents/` |
 | --- | --- | --- |
-| [`hooks/`](hooks/) | `stop-gate.mjs`, `validate-on-edit.mjs`, `run-node.sh` | Cursor-specific hook runtime; no portable hook spec exists |
+| [`hooks/`](hooks/) | `stop-gate.mjs`, `run-node.sh` | Cursor-specific hook runtime; no portable hook spec exists |
 | [`hooks.json`](hooks.json) | Hook registration (events, timeouts, `failClosed`) | Same — Cursor-only config format |
 | `README.md` | This file | — |
 
@@ -16,11 +16,10 @@ Portable agent-facing content lives outside `.cursor/`: `AGENTS.md` (root + nest
 
 | Event | Script | Fails closed? | Does |
 | --- | --- | --- | --- |
-| `afterFileEdit` | [`validate-on-edit.mjs`](hooks/validate-on-edit.mjs) via [`run-node.sh`](hooks/run-node.sh) | No | Re-runs `check-agents.mjs --strict` on `AGENTS.md` edits, `check:docs` on `docs/**` edits, or `validate-agents.mjs` on edits under [`.agents/skills/`](../.agents/skills/) or this file. Failures print to stderr only — the `stop` hook is what surfaces findings to the agent. |
-| `stop` | [`stop-gate.mjs`](hooks/stop-gate.mjs) via [`run-node.sh`](hooks/run-node.sh) | No | Scoped to dirty working-tree paths: lints them (`oxlint`, filtered from a repo-wide run — type-aware mode needs the whole project graph), runs `ds:ban` if web UI paths are dirty, runs agent-skills / `AGENTS.md` / **docs** validators when those paths are dirty. Does **not** follow up on `check:docs-affected` (lefthook pre-commit / CI own that; WARN + `docs:allow-affect` cannot be fixed mid-turn). `loop_limit: 2` — surfaces a finding at most twice per turn, then lets the agent stop rather than looping forever on something it can't fix. |
+| `stop` | [`stop-gate.mjs`](hooks/stop-gate.mjs) via [`run-node.sh`](hooks/run-node.sh) | No | Scoped to dirty working-tree paths: lints them (`oxlint`, filtered from a repo-wide run — type-aware mode needs the whole project graph), runs `ds:ban` if web UI paths are dirty, runs agent-skills / `AGENTS.md` / **docs** validators (`check:docs:strict`, `check:agents:strict`, `validate:agents`) when those paths are dirty. Does **not** follow up on `check:docs-affected` (lefthook pre-commit / CI own that; WARN + `docs:allow-affect` cannot be fixed mid-turn). `loop_limit: 2` — surfaces a finding at most twice per turn, then lets the agent stop rather than looping forever on something it can't fix. |
 
-Local git hooks ([`lefthook.yml`](../lefthook.yml)): pre-commit runs `check:docs` + `check:docs-affected:strict` (four high-signal rows); commit-msg records `docs:allow-affect — reason` escape hatch.
-Both non-`failClosed` hooks always print valid JSON and exit `0`, even on their own internal error — a hook must never block the agent because *it* broke.
+Local git hooks ([`lefthook.yml`](../lefthook.yml)): pre-commit runs `check:docs:strict` + `check:docs-affected:strict` (four high-signal rows); commit-msg records `docs:allow-affect — reason` escape hatch. Every hook either blocks or is deleted: see [`docs/contributing/ci-gates.md`](../docs/contributing/ci-gates.md).
+The non-`failClosed` `stop` hook always prints valid JSON and exits `0`, even on its own internal error — a hook must never block the agent because *it* broke. It still reports gate failures as a `followup_message`.
 
 **Cursor spawns hooks with its own extension-host environment, not the project's nix devshell** — `node`/`pnpm` are absent from that `PATH` (verified live by probing the real hook environment). [`run-node.sh`](hooks/run-node.sh) tries `node` directly first — install it globally (e.g. `nix profile install nixpkgs#nodejs`) and this path is instant — then falls back to `direnv exec` to pick up the flake devshell's `node`. The flake's shellHook banner lands on stderr, so stdout stays clean JSON either way.
 

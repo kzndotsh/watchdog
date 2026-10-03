@@ -122,6 +122,87 @@ describe("validate-agents gate", () => {
     });
   });
 
+  describe("staleness (diff-based)", () => {
+    const SKILL = ".agents/skills/owned-demo/SKILL.md";
+
+    it("has no staleness warning on a clean tree, even if sources are newer than the skill", () => {
+      const repo = ownedRepo(ownedSkill());
+      repo.write("AGENTS.md", "# Fixture\n\nchanged\n");
+      repo.commitAll("source changes after the skill");
+
+      const result = repo.run("validate-agents.mjs");
+
+      expect(result.code).toBe(0);
+      expect(result.output).not.toContain("stale");
+    });
+
+    it("warns when a declared source changed in the working tree and the skill did not", () => {
+      const repo = ownedRepo(ownedSkill());
+      repo.write("AGENTS.md", "# Fixture\n\nchanged\n");
+
+      const result = repo.run("validate-agents.mjs");
+
+      expect(result.code).toBe(0);
+      expect(result.output).toContain("may be stale");
+      expect(result.output).toContain("AGENTS.md");
+    });
+
+    it("does not warn when the skill changed in the same diff", () => {
+      const repo = ownedRepo(ownedSkill());
+      repo.write("AGENTS.md", "# Fixture\n\nchanged\n");
+      repo.write(SKILL, ownedSkill("", "# Owned demo\n\nrevised\n"));
+
+      expect(repo.run("validate-agents.mjs").output).not.toContain("stale");
+    });
+
+    it("does not warn when only an undeclared file changed", () => {
+      const repo = ownedRepo(ownedSkill());
+      repo.write("README.md", "unrelated\n");
+
+      expect(repo.run("validate-agents.mjs").output).not.toContain("stale");
+    });
+
+    it("--staged looks only at the index", () => {
+      const repo = ownedRepo(ownedSkill());
+      repo.write("AGENTS.md", "# Fixture\n\nchanged\n");
+
+      expect(
+        repo.run("validate-agents.mjs", ["--staged"]).output
+      ).not.toContain("stale");
+
+      repo.git("add", "AGENTS.md");
+
+      expect(repo.run("validate-agents.mjs", ["--staged"]).output).toContain(
+        "may be stale"
+      );
+    });
+
+    it("--range looks at a committed range", () => {
+      const repo = ownedRepo(ownedSkill());
+      repo.write("AGENTS.md", "# Fixture\n\nchanged\n");
+      repo.commitAll("source only");
+
+      const stale = repo.run("validate-agents.mjs", ["--range=HEAD~1..HEAD"]);
+      expect(stale.code).toBe(0);
+      expect(stale.output).toContain("may be stale");
+
+      repo.write(SKILL, ownedSkill("", "# Owned demo\n\nrevised\n"));
+      repo.write("AGENTS.md", "# Fixture\n\nchanged again\n");
+      repo.commitAll("source and skill");
+
+      expect(
+        repo.run("validate-agents.mjs", ["--range=HEAD~1..HEAD"]).output
+      ).not.toContain("stale");
+    });
+
+    it("never applies to vendored skills", () => {
+      const repo = vendoredRepo();
+      repo.write(".agents/skills/vendored-demo/extra.md", "x\n");
+
+      expect(repo.run("validate-agents.mjs").output).not.toContain("stale");
+    });
+  });
+
   describe("vendored skills", () => {
     it("passes a skill whose content matches its pin and uses Claude Code keys", () => {
       const repo = vendoredRepo();

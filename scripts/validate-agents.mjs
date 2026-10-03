@@ -13,7 +13,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, statSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -99,6 +99,8 @@ async function computeSkillFolderHash(skillDir) {
   return hash.digest("hex");
 }
 
+const changed = changedPaths();
+
 /** @type {{ level: "warn" | "fail"; msg: string }[]} */
 const findings = [];
 /** @param {"warn" | "fail"} level @param {string} msg */
@@ -173,23 +175,42 @@ async function listSkillDirs(root) {
     .map((e) => path.join(root, e.name));
 }
 
-/** @param {string} filePath */
-function gitMtimeSeconds(filePath) {
-  try {
-    const rel = path.relative(repoRoot, filePath);
-    const out = execFileSync("git", ["log", "-1", "--format=%ct", "--", rel], {
-      cwd: repoRoot,
-      encoding: "utf-8",
-    }).trim();
-    return out ? Number(out) : null;
-  } catch {
-    return null;
-  }
+/**
+ * Paths changed in the diff the staleness check looks at (repo-relative, forward slashes).
+ *   --staged       the index (pre-commit)
+ *   --range=<r>    a committed range, e.g. origin/main...HEAD (CI: PR base or push)
+ *   (default)      the working tree against HEAD, plus untracked files
+ * An unresolvable range yields no changes, so staleness is silently skipped.
+ * @returns {Set<string>}
+ */
+function changedPaths() {
+  const range = process.argv
+    .find((a) => a.startsWith("--range="))
+    ?.slice("--range=".length);
+  const staged = process.argv.includes("--staged");
+  /** @param {string[]} args */
+  const lines = (args) => {
+    try {
+      return execFileSync("git", args, { cwd: repoRoot, encoding: "utf-8" })
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  };
+  if (range) return new Set(lines(["diff", "--name-only", range]));
+  if (staged) return new Set(lines(["diff", "--name-only", "--cached"]));
+  return new Set([
+    ...lines(["diff", "--name-only", "HEAD"]),
+    ...lines(["ls-files", "--others", "--exclude-standard"]),
+  ]);
 }
 
-/** @param {string} filePath */
-function mtimeSeconds(filePath) {
-  return gitMtimeSeconds(filePath) ?? statSync(filePath).mtimeMs / 1000;
+/** @param {Set<string>} paths @param {string} rel */
+function touches(paths, rel) {
+  const prefix = rel.endsWith("/") ? rel : `${rel}/`;
+  return [...paths].some((c) => c === rel || c.startsWith(prefix));
 }
 
 /**
@@ -280,7 +301,7 @@ async function checkSkill(skillDir, namesSeen, locked) {
     return;
   }
 
-  checkMetadata(parsed.metadata, rel, skillMd);
+  checkMetadata(parsed.metadata, rel);
 
   if (totalLines > LINE_FAIL) {
     note(
@@ -300,9 +321,8 @@ async function checkSkill(skillDir, namesSeen, locked) {
 /**
  * @param {unknown} metadata
  * @param {string} rel
- * @param {string} skillMd
  */
-function checkMetadata(metadata, rel, skillMd) {
+function checkMetadata(metadata, rel) {
   if (!isPlainObject(metadata)) {
     note(
       "fail",
@@ -346,10 +366,11 @@ function checkMetadata(metadata, rel, skillMd) {
       );
       continue;
     }
-    if (mtimeSeconds(srcAbs) > mtimeSeconds(skillMd)) {
+    // Diff-based: a source changed in this diff while the skill's own files did not.
+    if (touches(changed, srcRel) && !touches(changed, rel)) {
       note(
         "warn",
-        `${rel}/SKILL.md: may be stale — ${srcRel} changed more recently than this skill`
+        `${rel}/SKILL.md: may be stale — ${srcRel} changed in this diff but the skill did not`
       );
     }
   }

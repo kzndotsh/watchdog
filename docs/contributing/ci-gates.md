@@ -9,7 +9,7 @@ Installed via `lefthook install` (auto in `nix develop`). Override with `lefthoo
 
 | Hook | Commands (glob-scoped; see `lefthook.yml`) |
 | --- | --- |
-| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS.md) · `pnpm check:docs` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm check:design-tokens` (DESIGN.md colors vs CSS; pre-commit only) · `pnpm check:vendor` (locked `packages/ui`) · `pnpm validate:agents` (skills) |
+| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS.md) · `pnpm check:docs:strict` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm check:design-tokens` (DESIGN.md colors vs CSS; pre-commit only) · `pnpm check:vendor` (locked `packages/ui`) · `pnpm validate:agents` (skills) |
 | **pre-push** | `pnpm typecheck` · `pnpm ds:check` from `apps/web/` |
 
 Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference):
@@ -39,9 +39,27 @@ Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference)
 | `SKILL.md` present, frontmatter parses, `name` (matches folder) and `description` present | yes | yes |
 | Folder content hash equals the lock's `computedHash` | yes: a hand edit fails, naming the folder and the reinstall command (`npx skills add <source> --skill <name>`) | no |
 | `metadata.owner` / `metadata.sources`, trigger clause in `description`, `references/` hints, staleness | no | yes |
+| Staleness: warns only when a `metadata.sources` path changed in the diff and the skill's own files did not. Diff = `--staged` (pre-commit), `--range=<a..b>` (CI: PR base or pushed range), default working tree. A clean tree never warns | no | yes (warn) |
 | `SKILL.md` line budget | no | warn above 400 lines, fail above 500 |
 
 Hash scheme (same as the `skills` CLI): sha256 over every file in the skill folder (excluding `.git`, `node_modules`), sorted by forward-slash relative path with `localeCompare`, feeding each file's relative path then its bytes. Never edit a vendored skill; update it with the CLI so the lock is rewritten with it. Claude Code frontmatter keys (`disable-model-invocation`, `argument-hint`, `user-invocable`, `allowed-tools`, `model`) are accepted on both kinds.
+
+## Hook policy: block or delete
+
+Every hook either blocks (exits non-zero, or for the Cursor `stop` hook reports a `followup_message`) or is deleted. No hook runs a gate in a mode that always exits 0. Warn-only modes (`pnpm check:docs`, non-strict `pnpm check:docs-affected`) exist for manual use only and are never wired to a hook or CI. Warnings that stay (skills staleness, line budgets) are advisory output of a gate that still fails on real errors.
+
+| Gate | Stage | Strict mode | Escape hatch |
+| --- | --- | --- | --- |
+| `ultracite fix` / `pnpm check` | pre-commit | always blocks | none |
+| `pnpm check:agents:strict` | pre-commit, CI, Cursor stop | `--strict` | none |
+| `pnpm check:docs:strict` | pre-commit, CI, Cursor stop | `--strict --fail-length` | none |
+| `pnpm check:docs-affected:strict` | pre-commit, CI | `--strict --strict-only` | `docs:allow-affect — reason` (commit message), `DOCS_ALLOW_AFFECT=1`, PR body keyword |
+| `pnpm check:effect-edges:strict` | pre-commit, CI | `--strict` | none |
+| `pnpm check:size` / `check:vendor` / `check:design-tokens` | pre-commit (+ CI for size, vendor) | always blocks | none |
+| `pnpm validate:agents` | pre-commit (`--staged`), CI (`--range`), Cursor stop | fails on errors; staleness is a warning | none |
+| `pnpm typecheck` / `pnpm ds:check` | pre-push, CI | always blocks | none |
+
+Local, per-clone skipping goes through `lefthook-local.yml`; `--no-verify` is not an escape hatch. The Cursor `afterFileEdit` hook was deleted: Cursor never read its output.
 
 ## Gate tests
 
@@ -69,7 +87,7 @@ Doc-affect escape hatch: commit message, `.git/docs-allow-affect` stamp, or PR b
 
 ## Cursor stop hook
 
-`.cursor/hooks/stop-gate.mjs` lint-checks changed files, runs `ds:ban` when web UI paths are dirty, `check-agents.mjs --strict` when `AGENTS.md` is dirty, and `validate-agents.mjs` when `.agents/skills/**` or `.cursor/README.md` are dirty; fix violations before ending the turn.
+`.cursor/hooks/stop-gate.mjs` lint-checks changed files, runs `ds:ban` when web UI paths are dirty, `check-agents.mjs --strict` when `AGENTS.md` is dirty, `check-docs.mjs --strict --fail-length` when `docs/**` is dirty, and `validate-agents.mjs` when `.agents/skills/**` or `.cursor/README.md` are dirty; fix violations before ending the turn.
 
 ## Gotchas
 

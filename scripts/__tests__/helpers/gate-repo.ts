@@ -39,6 +39,17 @@ export interface GateRepo {
   git: (...args: string[]) => string;
   /** Stage everything and commit. */
   commitAll: (message: string) => void;
+  /** Copy a file from the real repo into the same relative path in the fixture. */
+  copyFromRepo: (rel: string) => void;
+  /** Run `node <rel> ...args` in the fixture, optionally feeding stdin. */
+  runFile: (
+    rel: string,
+    options?: {
+      args?: readonly string[];
+      input?: string;
+      env?: Record<string, string>;
+    }
+  ) => GateResult;
   /** Run `node scripts/<script> ...args` in the fixture. */
   run: (
     script: string,
@@ -118,6 +129,22 @@ export function gateRepoFactory() {
       commitAll(message) {
         git("add", "-A");
         git("commit", "--quiet", "-m", message);
+      },
+      copyFromRepo(rel) {
+        mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+        cpSync(path.join(repoRoot, rel), path.join(dir, rel));
+      },
+      runFile(rel, { args = [], input, env = {} } = {}) {
+        const res = spawnSync(process.execPath, [rel, ...args], {
+          cwd: dir,
+          encoding: "utf-8",
+          env: cleanEnv(env),
+          input,
+        });
+        return {
+          code: res.status ?? -1,
+          output: `${res.stdout}${res.stderr}`,
+        };
       },
       run(script, args = [], env = {}) {
         const res = spawnSync(
