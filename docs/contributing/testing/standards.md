@@ -4,7 +4,7 @@ How to write tests in this repo so they catch regressions instead of existing to
 
 Tiers, runner facts and file layout: [`index.md`](index.md).
 
-**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, the `describe`/`it`/`test` naming rules in `oxlint.config.ts`, and the shared-worker restore rule only through order-dependent failures.
+**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, and the shared-worker restore rule only through order-dependent failures. The `describe`/`it`/`test` naming rules below are `guidance`: `oxlint.config.ts` has no rule for them.
 
 ## AAA, one behavior
 

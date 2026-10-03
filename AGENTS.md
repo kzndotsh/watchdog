@@ -38,6 +38,8 @@ Workflows live in [`.agents/skills/`](.agents/skills/) (and per package, e.g. [`
 
 ## Boundaries
 
+Every convention is enforced by a lint rule or gate, labeled guidance, or deleted: [`docs/reference/platform/conventions.md`](docs/reference/platform/conventions.md) is the table (add a rule's row in the same change as the rule).
+
 Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.md). Package import boundaries are enforced by `package.json` dependencies and `no-restricted-imports` in `oxlint.config.ts`, not restated here.
 
 | Do | Don’t | Enforced by |
