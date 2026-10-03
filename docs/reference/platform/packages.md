@@ -25,7 +25,7 @@
 | `@watchdog/api` | core (+ schemas), **log** (`ApiContext.log?`) | apps, **db**, drizzle-orm |
 | `@watchdog/client` | (nothing in-workspace at runtime; generated JSON in `src/generated`, oRPC client libs; type entry `app-router` aliases live API `AppRouter` in-monorepo only) | api, apps, db, caps, core, **log** |
 | `apps/cli` (`@watchdog/cli`) | client + schemas (+ own `WD_API_*`) | core, db, api, env, **log**, other apps |
-| `apps/web` / `apps/worker` | api / **auth** (web) / core / caps / schemas / **env** / **log** / **ui** (web) as needed | web must not import **db** except SSE `routes/api/events.ts` (auth's db access is `@watchdog/auth`) |
+| `apps/web` / `apps/worker` | api / **auth** (web) / core / caps / schemas / **env** / **log** / **ui** (web) as needed | web must not import **db** (auth's db access is `@watchdog/auth`; the SSE route uses core) |
 | `apps/site` (`@watchdog/site`) | Astro + Tailwind only (tokens copied from web, not imported) | **db**, **core**, **api**, **caps**, `apps/web/src` |
 
 `PatchOp` and `patchOpSchema` live in **`@watchdog/schemas`** so Caps never depend on Drizzle. `EvidenceSnapshot` also lives in schemas (re-exported from `@watchdog/ai` for Process helpers). Accept / apply-patch custody (`assertPatchGates`, `patchNeedsConfidence`) lives in **`@watchdog/policy`**: pure, DB-free; import policy/schemas directly (do not re-export through core). Client UI: `@watchdog/policy/patch-needs-confidence` — not the package barrel (Effect stays off the browser).

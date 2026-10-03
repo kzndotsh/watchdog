@@ -65,6 +65,17 @@ export function listCasesEffect(
   );
 }
 
+/**
+ * Ids of every Case the organization can see. The live events stream filters
+ * NOTIFY payloads against this set, so Case visibility is decided here, with the
+ * same organization scope as every other Case read.
+ */
+export function listVisibleCaseIdsEffect(
+  organizationId: string
+): Effect.Effect<string[], DomainTag> {
+  return tryDb(() => casesRepo.listIds(db, organizationId));
+}
+
 export function getCaseByIdEffect(
   id: string,
   organizationId: string

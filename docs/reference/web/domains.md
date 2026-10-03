@@ -85,7 +85,7 @@ SQL for graph children lives in `@watchdog/db` `repos` + `@watchdog/core` servic
 3. No `createServerFn` inside `components/`, `hooks/`, `lib/`, or `queries.ts`.
 4. Handlers call **`orpcForActor(actorFromSession(...)).…`** for domain I/O (same pattern as `jobs` / `triage` / graph children).
 5. `lib/` and `hooks/` never import `*.server.ts`. Hooks may call `*.functions` only.
-6. **Never import `@watchdog/db` from web domains**: oxlint-enforced; allowlist only `routes/api/events.ts` (auth's db access lives in `@watchdog/auth`).
+6. **Never import `@watchdog/db` from web domains**: oxlint-enforced, no exceptions (auth's db access lives in `@watchdog/auth`; the SSE route `routes/api/events.ts` authorizes and listens through `@watchdog/core`).
 7. Domains with RPC inputs keep Zod in `types.ts` (jobs/triage included).
 8. Domains with server lists keep `queries.ts`; invalidate via `shared/lib/query-invalidation.ts`.
 

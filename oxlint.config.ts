@@ -102,7 +102,7 @@ const webImportRestrictions = (
     {
       name: "@watchdog/db",
       message:
-        "ServerFns call oRPC (@watchdog/api) → core → repos. Only routes/api/events.ts (SSE listen) may import @watchdog/db; auth lives in @watchdog/auth.",
+        "ServerFns call oRPC (@watchdog/api) → core → repos. Auth's db access lives in @watchdog/auth.",
     },
   ],
   patterns: [
@@ -394,12 +394,6 @@ export default defineConfig({
             ],
           },
         ],
-      },
-    },
-    {
-      files: ["apps/web/src/routes/api/events.ts"],
-      rules: {
-        "eslint/no-restricted-imports": "off",
       },
     },
     {
