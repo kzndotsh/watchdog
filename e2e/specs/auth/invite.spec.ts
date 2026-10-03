@@ -1,5 +1,5 @@
 import { expect, test } from "../../fixtures/test";
-import { waitForHydrated } from "../../support/hydration";
+import { waitForHydrated, waitForPageHydrated } from "../../support/hydration";
 
 test.describe("Auth team invite", () => {
   test(
@@ -10,7 +10,7 @@ test.describe("Auth team invite", () => {
       await authPage.signUp(stamp);
 
       await page.goto("/settings?tab=members");
-      await waitForHydrated(page);
+      await waitForPageHydrated(page);
       await expect(page.getByRole("button", { name: "Invite" })).toBeVisible({
         timeout: 30_000,
       });
