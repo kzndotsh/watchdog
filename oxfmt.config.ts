@@ -27,7 +27,6 @@ const watchdogIgnores = [
   ".kiro/**",
   "skills/**",
   "repos/**",
-  // One entry per line so parallel tickets merge cleanly
 ];
 
 export default defineConfig({
