@@ -48,7 +48,63 @@ const TRIM_RE = /\btrimmedOr(?:Null|Undefined)\s*\(/;
 /** Job statuses (mirrors JOB_STATUSES in @watchdog/schemas vocab). */
 const JOB_STATUS_LITERAL =
   /["'](queued|running|blocked|succeeded|failed|cancelled)["']/g;
-const ARRAY_LITERAL = /\[[^[\]]*\]/g;
+
+/**
+ * Blank `//` and block comments, keeping newlines (line numbers stay true) and leaving
+ * string contents alone so a `//` inside a quoted string is not taken for a comment.
+ * @param {string} text
+ */
+function stripComments(text) {
+  let out = "";
+  let quote = null;
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text[i];
+    const next = text[i + 1];
+    if (quote) {
+      out += c;
+      if (c === "\\") {
+        out += next ?? "";
+        i += 1;
+      } else if (c === quote) quote = null;
+    } else if (c === '"' || c === "'" || c === "`") {
+      quote = c;
+      out += c;
+    } else if (c === "/" && next === "/") {
+      while (i < text.length && text[i] !== "\n") i += 1;
+      out += "\n";
+    } else if (c === "/" && next === "*") {
+      const end = text.indexOf("*/", i + 2);
+      const stop = end === -1 ? text.length : end + 2;
+      out += text.slice(i, stop).replaceAll(/[^\n]/g, "");
+      i = stop - 1;
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+
+/**
+ * Outermost `[...]` spans, found by bracket depth so nested brackets such as
+ * `[x[0], "queued", "running"]` stay one array.
+ * @param {string} text
+ * @returns {{ start: number, text: string }[]}
+ */
+function outerArrays(text) {
+  const spans = [];
+  let depth = 0;
+  let start = -1;
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] === "[") {
+      if (depth === 0) start = i;
+      depth += 1;
+    } else if (text[i] === "]" && depth > 0) {
+      depth -= 1;
+      if (depth === 0) spans.push({ start, text: text.slice(start, i + 1) });
+    }
+  }
+  return spans;
+}
 
 /** Every repo takes the pool-or-transaction handle as its first parameter. */
 const METHOD = /^ {2}async (\w+)\((.*)$/;
@@ -128,21 +184,18 @@ for (const [fileIndex, file] of files.entries()) {
 // A repo defines no job status set: array literals of two or more job
 // statuses belong in the vocabulary (OPEN_/CANCELLABLE_/LIVE_/TERMINAL_JOB_STATUSES).
 for (const [fileIndex, file] of files.entries()) {
-  const text = fileTexts[fileIndex]
-    .split("\n")
-    .map((l) => (/^\s*(\/\/|\*|\/\*)/.test(l) ? "" : l))
-    .join("\n");
-  for (const m of text.matchAll(ARRAY_LITERAL)) {
+  const text = stripComments(fileTexts[fileIndex]);
+  for (const m of outerArrays(text)) {
     const found = new Set(
-      [...m[0].matchAll(JOB_STATUS_LITERAL)].map((x) => x[1])
+      [...m.text.matchAll(JOB_STATUS_LITERAL)].map((x) => x[1])
     );
     if (found.size < 2) continue;
-    const lineNo = text.slice(0, m.index).split("\n").length;
+    const lineNo = text.slice(0, m.start).split("\n").length;
     fail(
       file,
       lineNo,
       "job status set literal: repos define no status sets — use the named sets and predicates from @watchdog/schemas vocab (OPEN_JOB_STATUSES, CANCELLABLE_JOB_STATUSES, LIVE_JOB_STATUSES, TERMINAL_JOB_STATUSES)",
-      m[0].split("\n")[0]
+      m.text.split("\n")[0]
     );
   }
 }
