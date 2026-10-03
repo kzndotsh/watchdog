@@ -17,6 +17,11 @@ const testConfig = (include: string[]) =>
     include,
   });
 
+const PLAYWRIGHT_CONFIG = `export default { testDir: "./e2e/specs" };\n`;
+
+const PW_SPEC =
+  'import { test } from "@playwright/test";\ntest("x", () => {});\n';
+
 const SPEC = 'import { it } from "vitest";\nit("x", () => {});\n';
 
 function repoWith(files: Record<string, string>) {
@@ -93,5 +98,36 @@ describe("check-test-coverage-guard gate", () => {
 
     expect(res.code).toBe(1);
     expect(res.output).toContain("no test files");
+  });
+
+  it("passes when a Playwright spec is covered by a tsconfig.test.json", () => {
+    const repo = repoWith({
+      "packages/a/tsconfig.test.json": testConfig(["src"]),
+      "packages/a/src/__tests__/a.test.ts": SPEC,
+      "playwright.config.ts": PLAYWRIGHT_CONFIG,
+      "e2e/tsconfig.test.json": testConfig(["**/*.ts"]),
+      "e2e/specs/flow.spec.ts": PW_SPEC,
+    });
+
+    const res = repo.run(GATE);
+
+    expect(res.code).toBe(0);
+    expect(res.output).toContain("check:test-coverage-guard: ok");
+  });
+
+  it("fails a Playwright spec that sits outside every test config's include", () => {
+    const repo = repoWith({
+      "packages/a/tsconfig.test.json": testConfig(["src"]),
+      "packages/a/src/__tests__/a.test.ts": SPEC,
+      "playwright.config.ts": PLAYWRIGHT_CONFIG,
+      "e2e/tsconfig.test.json": testConfig(["**/*.test.ts"]),
+      "e2e/specs/flow.spec.ts": PW_SPEC,
+    });
+
+    const res = repo.run(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("e2e/specs/flow.spec.ts");
+    expect(res.output).not.toContain("packages/a/src/__tests__/a.test.ts");
   });
 });

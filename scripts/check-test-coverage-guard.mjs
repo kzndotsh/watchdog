@@ -7,7 +7,9 @@
  * include/exclude patterns in vitest.config.ts. The covered set is the expanded
  * `files` list of `tsc -p <config> --showConfig` for every tsconfig.test.json in the
  * repo (include and exclude already applied). Any file in the first set and not the
- * second fails the gate.
+ * second fails the gate. Playwright specs (not listed by vitest) are added to the
+ * first set from `playwright test --list`, so `playwright.config.ts` testDir/testMatch
+ * is the single source for what counts as an e2e spec.
  *
  * Why: main tsconfigs exclude tests, which is how tests escaped the typecheck in the
  * first place. Without this guard a new test directory (or a vitest project added
@@ -15,7 +17,7 @@
  * typecheck would stop meaning the tests match the types (spec #54).
  */
 import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -64,6 +66,54 @@ function vitestFiles() {
       }
     }
   }
+  return files;
+}
+
+/**
+ * Playwright specs are invisible to vitest, so they are listed from the Playwright
+ * config itself (`playwright test --list`, which reads testDir/testMatch and neither
+ * starts the web server nor runs globalSetup). No config means no Playwright suite.
+ * @returns {Set<string>} repo-relative Playwright spec files.
+ */
+function playwrightFiles() {
+  /** @type {Set<string>} */
+  const files = new Set();
+  if (!existsSync(path.join(root, "playwright.config.ts"))) return files;
+  const res = spawnSync(
+    bin("playwright"),
+    ["test", "--list", "--reporter=json"],
+    { cwd: root, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 }
+  );
+  if (res.status !== 0) {
+    console.error(
+      `check:test-coverage-guard: \`playwright test --list\` failed (exit ${res.status}).\n${res.stdout}${res.stderr}`
+    );
+    process.exit(1);
+  }
+  /** @type {unknown} */
+  const listed = JSON.parse(res.stdout);
+  if (typeof listed !== "object" || listed === null) return files;
+  const rootDir =
+    "config" in listed &&
+    typeof listed.config === "object" &&
+    listed.config !== null &&
+    "rootDir" in listed.config &&
+    typeof listed.config.rootDir === "string"
+      ? listed.config.rootDir
+      : root;
+  /** @param {unknown} suite */
+  const walk = (suite) => {
+    if (typeof suite !== "object" || suite === null) return;
+    if ("file" in suite && typeof suite.file === "string") {
+      files.add(rel(path.resolve(rootDir, suite.file)));
+    }
+    if ("suites" in suite && Array.isArray(suite.suites)) {
+      /** @type {unknown[]} */
+      const children = suite.suites;
+      for (const child of children) walk(child);
+    }
+  };
+  walk(listed);
   return files;
 }
 
@@ -118,6 +168,8 @@ if (discovered.size === 0) {
   );
   process.exit(1);
 }
+
+for (const file of playwrightFiles()) discovered.add(file);
 
 /** @type {Set<string>} */
 const covered = new Set();

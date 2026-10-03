@@ -19,7 +19,7 @@ Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference)
 | --- | --- |
 | `pnpm check` | Oxlint + Oxfmt (Ultracite). `effecttsgo` recommended is on; warn-severity Effect rules do not fail this gate. `@shadcn/lint` (pinned, web only) fails raw palette colors, undeclared tokens, off-scale arbitrary values, and Tailwind classes that generate no CSS. |
 | `pnpm typecheck` | Workspace TS, source and tests: each package runs its `tsconfig.json` and `tsconfig.test.json`, then root runs `scripts/tsconfig.test.json`, `e2e/tsconfig.test.json` and the test coverage guard. Pre-push and the CI gates job run it |
-| `pnpm check:test-coverage-guard` | Every test file `vitest list` discovers is included by some `tsconfig.test.json` (`scripts/check-test-coverage-guard.mjs`). Runs as part of `pnpm typecheck`; also callable alone |
+| `pnpm check:test-coverage-guard` | Every test file `vitest list` discovers, plus every Playwright spec `playwright test --list` reports (from `playwright.config.ts`), is included by some `tsconfig.test.json` (`scripts/check-test-coverage-guard.mjs`). Runs as part of `pnpm typecheck`; also callable alone |
 | `pnpm check:agents:strict` | AGENTS.md hygiene: presence in every `apps/*` / `packages/*`, size budget, Scope + Commands sections, relative links, banned terms, CLAUDE.md `@AGENTS.md` bridge. Docs-tree links and length are `check:docs` only |
 | `pnpm check:docs:strict` | Docs links, index, leaf length budget |
 | `pnpm check:docs-affected:strict` | Changed code must touch mapped docs |
