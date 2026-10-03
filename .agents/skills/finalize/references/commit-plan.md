@@ -6,55 +6,41 @@ remains — draft grouped conventional commits, then stop for approval.
 ## Review
 
 Read all uncommitted work before grouping: `git status --porcelain`,
-`git diff` (unstaged + staged), `git diff --cached`, and
-`git log -15 --format='%s'` for this repo's subject style.
-
-Include untracked files. Exclude secrets (`.env*`, credentials, keys).
+`git diff` (unstaged + staged), and `git log -15 --format='%s'` for this
+repo's subject style. Include untracked files. Exclude secrets (`.env*`,
+credentials, keys).
 
 ## Grouping (more commits, not fewer)
 
-Each commit is one reviewable concern. Prefer splitting over a blob.
+Each commit is one reviewable concern.
 
 Keep together: a behavior + its tests; mapped docs with the code that
-triggered `scripts/doc-map.mjs` (commit-msg `docs-affect` fails if
-the code lands first); a generator run with its artifact.
+triggered `scripts/doc-map.mjs` (commit-msg `docs-affect` fails if the code
+lands first); a generator run with its artifact.
 
 Split: shared primitive vs first consumer vs later surfaces; `fix` vs
 `feat`; docs-only vs product; CI/config vs app code.
 
-Assign **whole files** to a commit. Do not `git add -p` or `git add -i`.
-If one file mixes two concerns, put it with the later consumer and note
-that in the plan, or ask.
-
-Order: dependencies first (shared lib → callers → docs-only leftovers).
+Assign **whole files** to a commit (no `git add -p` / `-i`). If one file
+mixes two concerns, put it with the later consumer and note that in the
+plan. Order: dependencies first.
 
 ## Message
 
-Conventional: `type(scope): subject`
+Conventional: `type(scope): subject`. Types: `feat` `fix` `docs`
+`refactor` `test` `chore` `ci` `perf`. Scopes seen in `git log`: `web`,
+`api`, `db`, `core`, `cli`, `worker`, `scripts`, `e2e`; match `git log`
+when unsure. Subject: imperative, lowercase after the colon, no trailing
+period, ~72 chars. Body (when needed): why, not a file list. No emojis.
 
-Types: `feat` `fix` `docs` `refactor` `test` `chore` `ci` `perf`.
-Scopes used here: `web`, `graph`, `ci`, package names (`db`, `api`,
-`caps`, …). Match `git log` when unsure.
-
-Subject: imperative, lowercase after the colon, no trailing period,
-~72 chars. Body (when needed): why, not a file list. No emojis.
-
-Do not invent `CHANGELOG.md`. Use `docs:allow-affect — <reason>` in
-the body only when mapped docs are intentionally omitted.
+Use `docs:allow-affect — <reason>` in the body only when mapped docs are
+intentionally omitted.
 
 ## Approval gate
 
 Post the plan as a numbered list: files, proposed message (subject +
-body). **Stop. Do not run `git commit`.**
-
-Commit only on an explicit yes in a later turn (`commit that`, `lgtm`,
-`approved`, edits to the plan). Re-read status before executing — if
-the tree changed, re-draft and stop again.
-
-## Execute (after approval only)
-
-User git protocol: `git status`, `git diff`, `git log -15 --format='%s'`
-in parallel, then for each approved commit: `git add` those paths,
-`git commit` with HEREDOC (`-m "$(cat <<'EOF' … EOF)"`). No `--no-verify`,
-`--amend` (unless the user's amend rules are all met), or push.
-After the last commit, `git status` and report SHAs.
+body). **Stop. Do not run `git commit`.** Commit only on an explicit yes
+in a later turn (`commit that`, `lgtm`, `approved`, edits to the plan).
+Re-read status before executing; if the tree changed, re-draft and stop
+again. Then `git add` the planned paths and `git commit` per commit; never
+`--no-verify`, never push. After the last commit, `git status` and report SHAs.
