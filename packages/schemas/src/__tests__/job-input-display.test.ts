@@ -137,7 +137,7 @@ describe("evidenceTitleMapForJobInputs", () => {
         {
           id: evidenceA,
           label: "screenshot.png",
-          kind: "screenshot",
+          kind: "file",
         },
         {
           id: evidenceB,

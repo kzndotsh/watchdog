@@ -1,1 +1,7 @@
-["packages/db"]
+[
+  "packages/ai",
+  "packages/client",
+  "packages/db",
+  "packages/schemas",
+  "packages/tools"
+]

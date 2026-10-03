@@ -24,14 +24,16 @@ describe("llmProviderConfigSchema", () => {
   });
 
   it("trims padded openai_compat baseUrl", () => {
-    expect(
-      llmProviderConfigSchema.parse({
-        kind: "openai_compat",
-        apiKey: "sk-test",
-        baseUrl: `  ${testHttpOrigin("127.0.0.1:4000", "/v1")}  `,
-        model: "gpt-4o",
-      }).baseUrl
-    ).toBe(testHttpOrigin("127.0.0.1:4000", "/v1"));
+    const parsed = llmProviderConfigSchema.parse({
+      kind: "openai_compat",
+      apiKey: "sk-test",
+      baseUrl: `  ${testHttpOrigin("127.0.0.1:4000", "/v1")}  `,
+      model: "gpt-4o",
+    });
+    expect(parsed).toMatchObject({
+      kind: "openai_compat",
+      baseUrl: testHttpOrigin("127.0.0.1:4000", "/v1"),
+    });
   });
 
   it("rejects a missing discriminator", () => {
