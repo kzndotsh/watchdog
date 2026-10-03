@@ -5,10 +5,7 @@ import { LinkIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
-import {
-  CONFIRMED_REQUIRES_EVIDENCE,
-  isConfirmedBlocked,
-} from "@/shared/lib/confirmed-evidence";
+import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { Chip } from "@/shared/ui/chip";
 import {
   DataTableComposerActions,
@@ -36,6 +33,7 @@ import {
   identifierPlatformOptionMatchesQuery,
   CONFIDENCE_OPTIONS,
 } from "@/shared/ui/vocab";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,

@@ -9,7 +9,7 @@ Platform Accept tiers: **`unverified` / `possible` / `confirmed`**.
 
 - Cap/agent output stays **`unverified`** until human Accept.
 - CLI/agent graph writes land at **`unverified`** only; CLI refuses `confidence=confirmed`.
-- **`confirmed`** requires human Accept (Triage) or Dossier with evidence gates: never Cap/agent alone.
+- **`confirmed`** requires human Accept (Triage) or Dossier with evidence gates: never Cap/agent alone. The rule and its message have one home, `packages/policy/src/confirmed-evidence.ts` (`confirmedNeedsEvidence`, `CONFIRMED_REQUIRES_EVIDENCE`; browser subpath `@watchdog/policy/confirmed-evidence`). Callers count the Evidence (attachments, linked job Evidence, an attestation) and pass the total; the message text is never copied.
 
 ## Identifier / patch gates
 

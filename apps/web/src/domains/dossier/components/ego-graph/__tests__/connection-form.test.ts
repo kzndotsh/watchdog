@@ -4,10 +4,7 @@ import {
   connectionFormIssues,
   type ConnectionFormValues,
 } from "@/domains/dossier/components/ego-graph/connection-dialog";
-import {
-  CONFIRMED_REQUIRES_EVIDENCE,
-  CONFIRMED_REQUIRES_EVIDENCE_HINT,
-} from "@/shared/lib/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 
 const BASE: ConnectionFormValues = {
   peerId: "peer-1",
@@ -52,6 +49,5 @@ describe("connectionFormIssues", () => {
         evidenceIds: [],
       })
     ).toContain(CONFIRMED_REQUIRES_EVIDENCE);
-    expect(CONFIRMED_REQUIRES_EVIDENCE_HINT.length).toBeGreaterThan(10);
   });
 });

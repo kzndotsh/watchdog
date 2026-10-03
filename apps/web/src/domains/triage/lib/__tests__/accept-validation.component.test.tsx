@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { AcceptGateMessage } from "@/domains/triage/components/accept-gate-message";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@/shared/lib/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 
 describe("AcceptGateMessage", () => {
   it("shows the confirmed-requires-evidence text when the gate is blocked", async () => {

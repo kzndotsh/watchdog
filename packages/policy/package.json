@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./patch-needs-confidence": "./src/patch-needs-confidence.ts"
+    "./patch-needs-confidence": "./src/patch-needs-confidence.ts",
+    "./confirmed-evidence": "./src/confirmed-evidence.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"

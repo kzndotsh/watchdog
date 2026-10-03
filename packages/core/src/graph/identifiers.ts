@@ -272,11 +272,7 @@ export function updateIdentifierEffect(
           }
 
           const nextConfidence = input.confidence ?? existing.confidence;
-          if (nextConfidence === "confirmed" && nextIds.length === 0) {
-            return yield* new InvalidError({
-              reason: "confirmed requires at least one Evidence attachment",
-            });
-          }
+          yield* assertConfidenceEvidenceEffect(nextConfidence, nextIds);
 
           const patch: Parameters<typeof identifiersRepo.updateInCase>[3] = {};
           if (

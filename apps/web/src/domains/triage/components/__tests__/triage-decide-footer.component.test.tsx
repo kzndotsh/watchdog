@@ -9,6 +9,7 @@ import type {
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
 import type { ProposalRecord } from "@watchdog/core";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import type { ConfidenceTier } from "@watchdog/schemas";
 import { testId } from "@watchdog/test-kit";
 
@@ -145,7 +146,7 @@ async function chooseConfidence(label: string) {
   await userEvent.click(await screen.findByRole("option", { name: label }));
 }
 
-const CONFIRMED_WARNING = /confirmed requires at least 1 evidence item/;
+const CONFIRMED_WARNING = CONFIRMED_REQUIRES_EVIDENCE;
 
 /** Entity-only patch: Accept needs no confidence tier. */
 function proposalWithoutConfidence(): ProposalRecord {

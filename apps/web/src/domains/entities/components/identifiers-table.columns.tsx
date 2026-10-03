@@ -14,10 +14,7 @@ import {
 } from "@/domains/entities/lib/commit-identifier-field";
 import { entityMatchesQuery } from "@/domains/entities/lib/entity-options";
 import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
-import {
-  CONFIRMED_REQUIRES_EVIDENCE_HINT,
-  isConfirmedBlocked,
-} from "@/shared/lib/confirmed-evidence";
+import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import {
   DataTableColumnHeader,
   EditableSelectCell,
@@ -45,6 +42,7 @@ import {
   statusLabel,
 } from "@/shared/ui/vocab";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
   trimmedConfidenceTierSchema,
   entityDisplayLabel,
@@ -294,7 +292,7 @@ function renderConfidenceCell(
         const confidence = trimmedConfidenceTierSchema.parse(next);
         if (confidence === row.confidence) return;
         if (isConfirmedBlocked(confidence, row.evidenceIds)) {
-          toast.error(CONFIRMED_REQUIRES_EVIDENCE_HINT);
+          toast.error(CONFIRMED_REQUIRES_EVIDENCE);
           return;
         }
         meta.updateField(row.id, { confidence });

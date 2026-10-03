@@ -276,11 +276,7 @@ export function updateClaimEffect(
         }
 
         const nextConfidence = input.confidence ?? existing.confidence;
-        if (nextConfidence === "confirmed" && nextIds.length === 0) {
-          return yield* new InvalidError({
-            reason: "confirmed requires at least one Evidence attachment",
-          });
-        }
+        yield* assertConfidenceEvidenceEffect(nextConfidence, nextIds);
 
         const updated = yield* tryDb(() =>
           claimsRepo.updateInCase(tx, scopedCaseId, claimId, {

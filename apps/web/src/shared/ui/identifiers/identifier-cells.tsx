@@ -13,10 +13,7 @@ import {
   tryCommitIdentifierValue,
 } from "@/domains/entities/lib/commit-identifier-field";
 import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
-import {
-  CONFIRMED_REQUIRES_EVIDENCE_HINT,
-  isConfirmedBlocked,
-} from "@/shared/lib/confirmed-evidence";
+import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import {
   DataTableColumnHeader,
@@ -39,6 +36,7 @@ import {
   IDENTIFIER_TYPE_OPTIONS,
   identifierPlatformOptionMatchesQuery,
 } from "@/shared/ui/vocab";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,
@@ -260,7 +258,7 @@ function renderIdentifierConfidenceCell(
       onCommit={(next) => {
         const confidence = trimmedConfidenceTierSchema.parse(next);
         if (isConfirmedBlocked(confidence, row.evidenceIds)) {
-          toast.error(CONFIRMED_REQUIRES_EVIDENCE_HINT);
+          toast.error(CONFIRMED_REQUIRES_EVIDENCE);
           return;
         }
         meta.updateField(row.id, { confidence });
