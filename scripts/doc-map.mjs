@@ -2,8 +2,8 @@
  * Doc-affect map (SoT). Code globs → docs that should be touched in the same
  * commit. Consumed by check-docs-affected.mjs.
  *
- * Escape hatch: commit message (commit-msg stage) or PR body containing
- * `docs:allow-affect — <reason>`.
+ * Escape hatch: the commit's own message (commit-msg stage) or PR body containing
+ * `docs:allow-affect — <reason>` (reason required).
  */
 
 /** @typedef {{ id: string; code: RegExp[]; docs: string[]; strict: boolean; note?: string }} DocMapRule */
@@ -70,7 +70,7 @@ export const DOC_MAP = [
   {
     id: "domains-hooks-lib",
     code: [/^apps\/web\/src\/domains\/.+\/(hooks|lib)\//],
-    docs: ["docs/reference/web/domains.md", "docs/reference/web/domains.md"],
+    docs: ["docs/reference/web/domains.md"],
     strict: false,
     note: "Fires only for new/changed files under domains/*/hooks|lib/",
   },
@@ -143,5 +143,5 @@ export function matchRules(changedRelPaths) {
  * @returns {boolean}
  */
 export function hasAllowAffect(text) {
-  return /docs:allow-affect\s*[\u2014\u2013-]\s*/i.test(text);
+  return /docs:allow-affect\s*[\u2014\u2013-][^\S\n]*\S/i.test(text);
 }

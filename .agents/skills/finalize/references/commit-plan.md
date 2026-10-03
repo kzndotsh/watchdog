@@ -16,7 +16,7 @@ Include untracked files. Exclude secrets (`.env*`, credentials, keys).
 Each commit is one reviewable concern. Prefer splitting over a blob.
 
 Keep together: a behavior + its tests; mapped docs with the code that
-triggered `scripts/doc-map.mjs` (pre-commit `docs-affected` fails if
+triggered `scripts/doc-map.mjs` (commit-msg `docs-affect` fails if
 the code lands first); a generator run with its artifact.
 
 Split: shared primitive vs first consumer vs later surfaces; `fix` vs

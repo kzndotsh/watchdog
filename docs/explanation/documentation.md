@@ -36,7 +36,7 @@ Hub pages (`README.md` indexes) may omit Next steps if the table is the router.
 | Cap id / D1–D5 / ship gate | [`../reference/platform/caps-lexicon.md`](../reference/platform/caps-lexicon.md) |
 | Web UI atom / loading / DS ban | [`../reference/web/`](../reference/web/README.md) |
 | OpenAPI / `wd` verb | [`../how-to/agent-cli.md`](../how-to/agent-cli.md) + regen client |
-| Code change under doc-affect map | Mapped doc(s) in same commit or `docs:allow-affect — reason` |
+| Code change under doc-affect map | Mapped doc(s) (non-whitespace edit) in same commit or `docs:allow-affect — reason` in that commit's own message |
 
 `scenarios.md` is the honesty index for end-to-end journeys (`shipped` / `partial` / `missing` / `lying`). Walk the path before marking `shipped`.
 

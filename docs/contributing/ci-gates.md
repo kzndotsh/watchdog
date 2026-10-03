@@ -9,7 +9,8 @@ Installed via `lefthook install` (auto in `nix develop`). Override with `lefthoo
 
 | Hook | Commands (glob-scoped; see `lefthook.yml`) |
 | --- | --- |
-| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS/docs) · `pnpm check:docs` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm check:design-tokens` (DESIGN.md colors vs CSS; pre-commit only) · `pnpm check:vendor` (locked `packages/ui`) · `pnpm validate:agents` (skills) |
+| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS/docs) · `pnpm check:docs` (docs) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm check:design-tokens` (DESIGN.md colors vs CSS; pre-commit only) · `pnpm check:vendor` (locked `packages/ui`) · `pnpm validate:agents` (skills) |
+| **commit-msg** | `pnpm check:docs-affected:strict {1}` (mapped code paths vs the staged diff, reading the real message file) |
 | **pre-push** | `pnpm typecheck` · `pnpm ds:check` from `apps/web/` |
 
 Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference):
@@ -65,7 +66,7 @@ Parallel after File detection: **Gates** (Ultracite, AGENTS/docs/effect/skills, 
 
 Dependabot version updates: [`.github/dependabot.yml`](../../.github/dependabot.yml) (npm/pnpm root lockfile, GitHub Actions, docker-compose, Nix flakes) — weekly Mondays, grouped minor/patch.
 
-Doc-affect escape hatch: commit message, `.git/docs-allow-affect` stamp, or PR body keyword (see `scripts/check-docs-affected.mjs`).
+Doc-affect escape hatch: `docs:allow-affect — <reason>` (reason required) must be in the commit's own message; it excuses only that commit. The gate runs at commit-msg on the staged diff only, and in CI diffs the pull-request range or the pushed `before..after` range (all-zero `before` falls back to the merge base with `main`; an unresolvable range fails). A doc counts as touched only for a non-whitespace change. In CI, the PR body or any commit message in the pushed range may carry the marker (see `scripts/check-docs-affected.mjs`).
 
 ## Cursor stop hook
 

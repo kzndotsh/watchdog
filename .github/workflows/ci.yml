@@ -156,6 +156,9 @@ jobs:
 
       - name: Docs affect (strict map)
         if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.config == 'true'
+        env:
+          DOCS_AFFECT_BEFORE: ${{ github.event.before }}
+          DOCS_AFFECT_AFTER: ${{ github.event.after }}
         run: pnpm check:docs-affected:strict
 
       - name: Effect run* edges

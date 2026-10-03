@@ -55,17 +55,6 @@ pre-commit:
         - "apps/web/src/styles/wd-*.css"
         - "scripts/check-design-tokens.mjs"
       run: pnpm check:design-tokens
-    docs-affect:
-      glob:
-        - "apps/web/src/**"
-        - "apps/web/scripts/**"
-        - "packages/caps/**"
-        - "packages/api/**"
-        - "packages/client/**"
-        - "apps/cli/**"
-        - "e2e/**"
-        - "playwright.config.ts"
-      run: pnpm check:docs-affected:strict
     effect-edges:
       glob:
         - "packages/**/*.ts"
@@ -99,9 +88,13 @@ pre-commit:
       run: pnpm validate:agents
 
 commit-msg:
+  skip:
+    - merge
+    - rebase
   commands:
-    docs-allow-affect:
-      run: node ./scripts/docs-allow-affect-msg.mjs {1}
+    # Runs here (not pre-commit) so it can read the real message file {1}.
+    docs-affect:
+      run: pnpm check:docs-affected:strict {1}
 
 pre-push:
   parallel: true
