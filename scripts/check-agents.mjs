@@ -6,6 +6,8 @@
  *   - required sections: root `Quick reference`/`Commands`; nested `> Scope:` blurb + `## Commands`
  *   - relative markdown links in AGENTS.md files resolve
  *   - banned mid-build terms, read from the `_Banned_:` lines of root GLOSSARY.md (required)
+ *   - optional `## Canonical helpers` table (see `checkCanonicalHelpers`): each row's module exists
+ *     and exports the named identifier
  *   - CLAUDE.md bridges to @AGENTS.md
  *
  * Every finding is a failure. `--strict` (or CHECK_AGENTS_STRICT=1) makes the
@@ -15,7 +17,7 @@
  * Link *count* is deliberately not checked: a hub file that indexes many docs is
  * legitimate and a count threshold carried no signal.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
@@ -196,6 +198,88 @@ async function checkFile(absPath, banned) {
   }
 
   checkBanned(rel, text, banned);
+  checkCanonicalHelpers(rel, text);
+}
+
+/**
+ * Does `source` export `name`? A pragmatic text match, not a parse. Counts:
+ * `export [declare] [async] function|const|let|var|class|abstract class|type|interface|enum NAME`,
+ * and `export [type] { a, b as NAME }` with or without `from` (so a name re-exported
+ * from another module by name counts: a barrel is a valid place to point at).
+ * `export * from` does NOT count: it hides what is exported, so name the module
+ * that declares the helper or list it with `export { NAME } from`.
+ * @param {string} source
+ * @param {string} name
+ */
+function exportsName(source, name) {
+  const id = escapeRegExp(name);
+  const declared = new RegExp(
+    String.raw`^\s*export\s+(?:declare\s+)?(?:async\s+)?(?:function\*?|const|let|var|class|abstract\s+class|type|interface|enum)\s+${id}(?![\w$])`,
+    "m"
+  );
+  if (declared.test(source)) return true;
+  for (const m of source.matchAll(/^\s*export\s+(?:type\s+)?\{([^}]*)\}/gm)) {
+    const names = (m[1] ?? "").split(",").map((part) =>
+      part
+        .trim()
+        .replace(/^type\s+/, "")
+        .split(/\s+as\s+/)
+        .pop()
+    );
+    if (names.includes(name)) return true;
+  }
+  return false;
+}
+
+/**
+ * Optional check. A `## Canonical helpers` heading followed by a markdown table
+ * `| Concern | Module | Export |` is verified row by row: Module is a repo-relative
+ * path in backticks, Export one or more identifiers in backticks. The module file
+ * must exist and export each identifier (see `exportsName`). No such heading, no check.
+ * @param {string} rel
+ * @param {string} text
+ */
+function checkCanonicalHelpers(rel, text) {
+  const lines = text.split("\n");
+  const start = lines.findIndex((l) => /^##\s+Canonical helpers\s*$/i.test(l));
+  if (start === -1) return;
+  let headerSeen = false;
+  for (let i = start + 1; i < lines.length; i += 1) {
+    const line = (lines[i] ?? "").trim();
+    if (/^#{1,6}\s/.test(line)) break;
+    if (!line.startsWith("|")) continue;
+    const cells = line
+      .replaceAll(/^\||\|$/g, "")
+      .split("|")
+      .map((c) => c.trim());
+    if (cells.every((c) => /^:?-+:?$/.test(c))) continue;
+    if (!headerSeen) {
+      headerSeen = true;
+      continue;
+    }
+    const mod = /^`([^`]+)`$/.exec(cells[1] ?? "")?.[1];
+    const names = [...(cells[2] ?? "").matchAll(/`([^`]+)`/g)].map(
+      (m) => m[1] ?? ""
+    );
+    if (cells.length !== 3 || !mod || names.length === 0) {
+      fail(
+        `${rel}:${i + 1}: malformed Canonical helpers row (need | concern | \`module path\` | \`Export\` |)`
+      );
+      continue;
+    }
+    const where = `${rel}:${i + 1}: Canonical helpers row "${cells[0]}"`;
+    const abs = path.join(repoRoot, mod);
+    if (!existsSync(abs)) {
+      fail(`${where}: module not found: ${mod}`);
+      continue;
+    }
+    const source = readFileSync(abs, "utf-8");
+    for (const name of names) {
+      if (!exportsName(source, name)) {
+        fail(`${where}: ${mod} does not export \`${name}\``);
+      }
+    }
+  }
 }
 
 /** @param {string[]} dirs */

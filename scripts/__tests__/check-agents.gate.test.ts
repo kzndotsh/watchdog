@@ -246,4 +246,116 @@ describe("check-agents gate", () => {
     expect(res.code).toBe(1);
     expect(res.output).toContain("@AGENTS.md");
   });
+
+  describe("Canonical helpers section", () => {
+    const section = (rows: string) =>
+      `${ROOT_AGENTS}\n## Canonical helpers\n\n| Concern | Module | Export |\n| --- | --- | --- |\n${rows}\n`;
+
+    function helperRepo(rows: string, source?: string) {
+      const repo = cleanRepo();
+      repo.write("AGENTS.md", section(rows));
+      if (source !== undefined) repo.write("packages/core/src/util.ts", source);
+      return repo;
+    }
+
+    it("passes a row whose module exports the identifier", () => {
+      const repo = helperRepo(
+        "| Thing | `packages/core/src/util.ts` | `thing` |",
+        "export function thing() {}\n"
+      );
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.output).toContain("0 finding(s)");
+      expect(res.code).toBe(0);
+    });
+
+    it("passes const, class, type, interface and renamed list exports", () => {
+      const repo = helperRepo(
+        [
+          "| A | `packages/core/src/util.ts` | `a` |",
+          "| B | `packages/core/src/util.ts` | `B` |",
+          "| C | `packages/core/src/util.ts` | `C` |",
+          "| D | `packages/core/src/util.ts` | `D` |",
+          "| E | `packages/core/src/util.ts` | `renamed` |",
+        ].join("\n"),
+        [
+          "export const a = 1;",
+          "export class B {}",
+          "export type C = string;",
+          "export interface D {}",
+          "const inner = 1;",
+          "export { inner as renamed };",
+        ].join("\n")
+      );
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.output).toContain("0 finding(s)");
+      expect(res.code).toBe(0);
+    });
+
+    it("passes an identifier re-exported by name with export { X } from", () => {
+      const repo = helperRepo(
+        "| Thing | `packages/core/src/util.ts` | `thing` |",
+        'export {\n  other,\n  thing,\n} from "./impl";\n'
+      );
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.output).toContain("0 finding(s)");
+      expect(res.code).toBe(0);
+    });
+
+    it("fails an identifier reachable only through export * from", () => {
+      const repo = helperRepo(
+        "| Thing | `packages/core/src/util.ts` | `thing` |",
+        'export * from "./impl";\n'
+      );
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("does not export `thing`");
+    });
+
+    it("fails a row naming an export the module does not have", () => {
+      const repo = helperRepo(
+        "| Thing | `packages/core/src/util.ts` | `gone` |",
+        "export function thing() {}\n"
+      );
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("does not export `gone`");
+      expect(res.output).toContain("Thing");
+    });
+
+    it("fails a row whose module file is missing", () => {
+      const repo = helperRepo(
+        "| Thing | `packages/core/src/nope.ts` | `thing` |"
+      );
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain(
+        "module not found: packages/core/src/nope.ts"
+      );
+    });
+
+    it("fails a row that is not module and export in backticks", () => {
+      const repo = helperRepo("| Thing | packages/core/src/util.ts | thing |");
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("malformed Canonical helpers row");
+    });
+
+    it("checks a nested AGENTS.md that has the section", () => {
+      const repo = cleanRepo();
+      repo.write(
+        "packages/core/AGENTS.md",
+        `${PKG_AGENTS}\n## Canonical helpers\n\n| Concern | Module | Export |\n| --- | --- | --- |\n| Thing | \`packages/core/nope.ts\` | \`thing\` |\n`
+      );
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("packages/core/AGENTS.md");
+    });
+
+    it("runs no check when there is no Canonical helpers section", () => {
+      const repo = cleanRepo();
+      const res = repo.run("check-agents.mjs", strict);
+      expect(res.output).toContain("0 finding(s)");
+      expect(res.code).toBe(0);
+    });
+  });
 });

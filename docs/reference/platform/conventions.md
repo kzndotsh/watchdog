@@ -170,5 +170,6 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Every convention row names an enforcer and a valid status (this table) | docs | `docs/reference/platform/conventions.md` | `check:docs:strict` | enforced |
 | Every doc leaf is listed in `docs/README.md` (warning only) | docs | `docs/contributing/ci-gates.md` Gates | `check:docs` | baselined |
 | `AGENTS.md` hygiene: present in every app and package, size budget, Scope + Commands sections, links, `CLAUDE.md` bridge | agents | `docs/contributing/ci-gates.md` Gates | `check:agents:strict` | enforced |
+| Every row of an `AGENTS.md` `Canonical helpers` table still resolves: the module exists and exports the helper (an `export *` does not count) | agents | `AGENTS.md` Canonical helpers | `check:agents:strict` (`scripts/__tests__/check-agents.gate.test.ts`) | enforced |
 | Agent skills have valid frontmatter; vendored skills match the lock hash | agents | `docs/contributing/ci-gates.md` Skills gate | `validate:agents` | enforced |
 | Read the nested `AGENTS.md` before editing its tree | agents | `AGENTS.md` Nested AGENTS.md | guidance | guidance |
