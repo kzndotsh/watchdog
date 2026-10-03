@@ -9,3 +9,4 @@ export {
   CustodyViolation,
   type PatchGateOpts,
 } from "./patch-gates";
+export * from "./custody-child-write";

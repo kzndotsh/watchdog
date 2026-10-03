@@ -16,6 +16,7 @@
     "@orpc/zod": "^1.15.1",
     "@watchdog/core": "workspace:*",
     "@watchdog/log": "workspace:*",
+    "@watchdog/policy": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "effect": "4.0.0-rc.115",
     "evlog": "2.29.0",

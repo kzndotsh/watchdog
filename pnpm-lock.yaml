@@ -101,6 +101,9 @@ importers:
       '@watchdog/client':
         specifier: workspace:*
         version: link:../../packages/client
+      '@watchdog/policy':
+        specifier: workspace:*
+        version: link:../../packages/policy
       '@watchdog/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
@@ -418,6 +421,9 @@ importers:
       '@watchdog/log':
         specifier: workspace:*
         version: link:../log
+      '@watchdog/policy':
+        specifier: workspace:*
+        version: link:../policy
       '@watchdog/schemas':
         specifier: workspace:*
         version: link:../schemas

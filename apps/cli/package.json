@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@watchdog/client": "workspace:*",
+    "@watchdog/policy": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "citty": "^0.2.2",
     "dotenv": "^17.4.2",

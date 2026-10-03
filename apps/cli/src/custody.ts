@@ -1,5 +1,6 @@
 /** Custody gates for dossier-child Graph writes from the CLI. */
 
+import { childWriteViolation } from "@watchdog/policy";
 import {
   trimmedConfidenceTierSchema,
   type ConfidenceTier,
@@ -18,18 +19,18 @@ export const userOverrideArg = {
 } as const;
 
 export function requireUserOverride(enabled: boolean): void {
-  if (!enabled) {
-    fail(
-      "CUSTODY",
-      "Child Graph writes require --user-override. Prefer proposals create or graph write.",
-      {
-        help: [
-          "wd proposals create -c <caseId> --patch-file <path>",
-          "wd graph write -c <caseId> --patch-file <path>",
-          'wd claims create -c <caseId> --entity <slug> --text "…" --confidence unverified --user-override',
-        ],
-      }
-    );
+  const violation = childWriteViolation({
+    userOverride: enabled,
+    confidence: undefined,
+  });
+  if (violation) {
+    fail("CUSTODY", violation.message, {
+      help: [
+        "wd proposals create -c <caseId> --patch-file <path>",
+        "wd graph write -c <caseId> --patch-file <path>",
+        'wd claims create -c <caseId> --entity <slug> --text "…" --confidence unverified --user-override',
+      ],
+    });
   }
 }
 
@@ -48,17 +49,14 @@ export function parseOptionalConfidence(
 
 /** Core only checks evidence count for confirmed — CLI refuses it outright. */
 export function refuseConfirmed(confidence: ConfidenceTier | undefined): void {
-  if (confidence === "confirmed") {
-    fail(
-      "CUSTODY",
-      "CLI refuses confidence=confirmed on child Graph writes. Accept via Inbox or edit in Dossier.",
-      {
-        help: [
-          "wd proposals accept -c <caseId> <proposalId> --confidence confirmed",
-          'wd claims create -c <caseId> --entity <slug> --text "…" --confidence unverified --user-override',
-        ],
-      }
-    );
+  const violation = childWriteViolation({ userOverride: true, confidence });
+  if (violation) {
+    fail("CUSTODY", violation.message, {
+      help: [
+        "wd proposals accept -c <caseId> <proposalId> --confidence confirmed",
+        'wd claims create -c <caseId> --entity <slug> --text "…" --confidence unverified --user-override',
+      ],
+    });
   }
 }
 

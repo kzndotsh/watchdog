@@ -15,7 +15,7 @@ Platform Accept tiers: **`unverified` / `possible` / `confirmed`**.
 
 - Invalid Identifier ops **block** Accept (`listInvalidIdentifierOps`).
 - Identifier collisions **warn** (Alert + chip); Accept still allowed.
-- Custody helpers live in `@watchdog/policy` (`assertPatchGates`, `patchNeedsConfidence`): pure, DB-free. Browser UI imports `patchNeedsConfidence` from `@watchdog/policy/patch-needs-confidence` only (package root pulls Effect-tagged gates into the client).
+- Custody helpers live in `@watchdog/policy` (`assertPatchGates`, `patchNeedsConfidence`, `childWriteViolation` for the agent/CLI child-write rule shared by API and CLI): pure, DB-free. Browser UI imports `patchNeedsConfidence` from `@watchdog/policy/patch-needs-confidence` only (package root pulls Effect-tagged gates into the client).
 
 Enforced by: the patch schema rejects `confidence` on claim/identifier/edge ops (`packages/schemas/src/patch.ts`), `assertPatchGates` in `@watchdog/policy`, the core write gate (`validateIdentifierWrite`), and CLI custody envelopes (`apps/cli`). Collisions are annotated on `ProposalRecord.identifierCollisions` by core when listing Proposals. The browser-import rule is enforced only by the package exports map; no lint rule.
 
