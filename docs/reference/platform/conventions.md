@@ -171,7 +171,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | --- | --- | --- | --- | --- |
 | Docs links and anchors resolve; leaf files stay at most 600 lines | docs | `docs/contributing/ci-gates.md` Gates | `check:docs:strict` | enforced |
 | Every convention row names an enforcer and a valid status (this table) | docs | `docs/reference/platform/conventions.md` | `check:docs:strict` | enforced |
-| Dev MCP config (`.mcp.json`): Postgres connects as the read-only role, MCP packages are pinned to exact versions, no literal credentials | repo | `docs/how-to/local-dev.md` Agent MCP servers | `scripts/__tests__/mcp-config.gate.test.ts` | enforced |
+| Dev MCP config (`.mcp.json`): Postgres connects as the read-only role, local MCP packages are pinned to exact versions, remote servers are https-only on a host allowlist without headers or credentials, no literal credentials | repo | `docs/how-to/local-dev.md` Agent MCP servers | `scripts/__tests__/mcp-config.gate.test.ts` | enforced |
 | Every doc leaf is listed in `docs/README.md` (warning only) | docs | `docs/contributing/ci-gates.md` Gates | `check:docs` | baselined |
 | `AGENTS.md` hygiene: present in every app and package, size budget, Scope + Commands sections, links, `CLAUDE.md` bridge | agents | `docs/contributing/ci-gates.md` Gates | `check:agents:strict` | enforced |
 | Every row of an `AGENTS.md` `Canonical helpers` table still resolves: the module exists and exports the helper (an `export *` does not count) | agents | `AGENTS.md` Canonical helpers | `check:agents:strict` (`scripts/__tests__/check-agents.gate.test.ts`) | enforced |
