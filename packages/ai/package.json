@@ -6,8 +6,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.54",

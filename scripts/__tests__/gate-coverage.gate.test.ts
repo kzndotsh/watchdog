@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 
 /**
- * Meta-test: every gate script wired into a local hook or a CI gate job (gates, test-typecheck) has
+ * Meta-test: every gate script wired into a local hook or a CI gates job has
  * a `<script basename>.gate.test.ts` in scripts/__tests__ holding at least one
  * must-fail test. Reads checked-in config as data (lefthook.yml, ci.yml,
  * package.json files); never imports gate code.
@@ -20,7 +20,7 @@ const TEST_DIR = path.join(repoRoot, "scripts/__tests__");
 
 const GATE_DIRS = ["scripts/", "packages/db/scripts/", "apps/web/scripts/"];
 const HOOKS = ["pre-commit", "commit-msg", "pre-push"];
-const CI_JOBS = ["gates", "test-typecheck"];
+const CI_JOBS = ["gates"];
 const MUST_FAIL = /fails|must fail|rejects/i;
 
 /**

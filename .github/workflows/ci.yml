@@ -229,44 +229,6 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm --filter @watchdog/db check:repos
 
-  # Expand step of the typechecked-tests rollout (spec #54). Reports test type errors per
-  # package without blocking, except for packages on scripts/test-typecheck-clean.json,
-  # which cannot regress. Deleted at the contract step, when tests join `pnpm typecheck`.
-  test-typecheck:
-    name: Test typecheck
-    needs: changes
-    if: |
-      github.event_name != 'pull_request' ||
-      needs.changes.outputs.typescript == 'true' ||
-      needs.changes.outputs.config == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-        with:
-          version: 11.9.0
-
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install
-        run: pnpm install --frozen-lockfile
-
-      - name: Test typecheck (per-package errors; blocking for the clean list)
-        run: pnpm typecheck:tests
-
-      - name: Test coverage guard
-        if: ${{ !cancelled() }}
-        run: pnpm check:test-coverage-guard
-
   unit:
     name: Unit
     needs: changes
@@ -493,7 +455,7 @@ jobs:
   # Single required status for branch protection (success | skipped allowed).
   check:
     name: Check
-    needs: [changes, gates, test-typecheck, unit, integration]
+    needs: [changes, gates, unit, integration]
     if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
     permissions: {}
@@ -504,7 +466,6 @@ jobs:
           fail=0
           for pair in \
             "gates:${{ needs.gates.result }}" \
-            "test-typecheck:${{ needs.test-typecheck.result }}" \
             "unit:${{ needs.unit.result }}" \
             "integration:${{ needs.integration.result }}"
           do

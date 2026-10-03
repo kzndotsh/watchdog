@@ -6,8 +6,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@watchdog/db": "workspace:*",

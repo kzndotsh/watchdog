@@ -7,8 +7,7 @@
     "./testing": "./src/testing/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",

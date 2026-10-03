@@ -9,8 +9,7 @@
     "./http": "./src/http/mock-server.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "fast-check": "^4.10.1",

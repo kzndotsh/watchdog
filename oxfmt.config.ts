@@ -28,7 +28,6 @@ const watchdogIgnores = [
   "skills/**",
   "repos/**",
   // One entry per line so parallel tickets merge cleanly
-  "scripts/test-typecheck-clean.json",
 ];
 
 export default defineConfig({

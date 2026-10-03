@@ -10,7 +10,7 @@ Thin Cap Job runner: pg-boss `work` → `executeJobOnMap`, cancel poll, export e
 | --- | --- |
 | Dev | `pnpm dev:worker` |
 | Typecheck | `pnpm --filter @watchdog/worker typecheck` |
-| Typecheck tests | `pnpm --filter @watchdog/worker typecheck:tests` (`tsconfig.test.json`; on the clean list) |
+| Typecheck tests | included in `pnpm --filter @watchdog/worker typecheck` (`tsconfig.test.json`; see [`testing/standards.md`](../../docs/contributing/testing/standards.md#tests-are-typechecked)) |
 | Unit tests | `pnpm test:unit` |
 
 ## Boundaries
