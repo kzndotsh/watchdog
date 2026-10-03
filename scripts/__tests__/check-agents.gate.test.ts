@@ -22,10 +22,27 @@ const PKG_AGENTS = `# AGENTS.md — \`@fixture/core\`
 - \`pnpm test\`
 `;
 
-/** A repo that passes the gate: root + CLAUDE bridge + one package. */
+const GLOSSARY = `# Fixture
+
+## Language
+
+**Proposal**:
+A pending change.
+_Avoid_: Candidate
+
+## Retired vocabulary
+
+**Door A**:
+Retired write path.
+_Banned_: Door A, Doorway Z
+_Use_: Proposal
+`;
+
+/** A repo that passes the gate: root + glossary + CLAUDE bridge + one package. */
 function cleanRepo() {
   const repo = createGateRepo(["check-agents.mjs"]);
   repo.write("AGENTS.md", ROOT_AGENTS);
+  repo.write("GLOSSARY.md", GLOSSARY);
   repo.write("CLAUDE.md", "@AGENTS.md\n");
   repo.write("packages/core/AGENTS.md", PKG_AGENTS);
   return repo;
@@ -47,6 +64,63 @@ describe("check-agents gate", () => {
     const res = repo.run("check-agents.mjs", strict);
     expect(res.code).toBe(1);
     expect(res.output).toContain("banned");
+  });
+
+  it("fails a synonym banned by the fixture glossary, not by a built-in list", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "packages/core/AGENTS.md",
+      `${PKG_AGENTS}\nThe Doorway Z path.\n`
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain('mid-build term "Doorway Z"');
+  });
+
+  it("does not ban a term the glossary does not list", () => {
+    const repo = cleanRepo();
+    repo.write("packages/core/AGENTS.md", `${PKG_AGENTS}\nA Scratch pad.\n`);
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.output).toContain("0 finding(s)");
+    expect(res.code).toBe(0);
+  });
+
+  it("passes a banned term carrying the allowlist comment", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "packages/core/AGENTS.md",
+      `${PKG_AGENTS}\nNever use Door A. <!-- check:agents allow-banned -->\n`
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.output).toContain("0 finding(s)");
+    expect(res.code).toBe(0);
+  });
+
+  it("ignores banned terms after a Revision heading", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "packages/core/AGENTS.md",
+      `${PKG_AGENTS}\n## Revision\n\nWas Door A.\n`
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(0);
+  });
+
+  it("fails loudly when GLOSSARY.md is missing", () => {
+    const bare = createGateRepo(["check-agents.mjs"]);
+    bare.write("AGENTS.md", ROOT_AGENTS);
+    bare.write("CLAUDE.md", "@AGENTS.md\n");
+    const res = bare.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("GLOSSARY.md");
+  });
+
+  it("fails when the glossary defines no banned terms", () => {
+    const repo = cleanRepo();
+    repo.write("GLOSSARY.md", "# Fixture\n\n**Case**:\nAn investigation.\n");
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("_Banned_");
   });
 
   it("fails a package AGENTS.md without a Commands section", () => {

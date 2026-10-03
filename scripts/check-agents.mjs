@@ -5,7 +5,7 @@
  *   - size budget (bytes and lines)
  *   - required sections: root `Quick reference`/`Commands`; nested `> Scope:` blurb + `## Commands`
  *   - relative markdown links in AGENTS.md files resolve
- *   - banned mid-build terms
+ *   - banned mid-build terms, read from the `_Banned_:` lines of root GLOSSARY.md (required)
  *   - CLAUDE.md bridges to @AGENTS.md
  *
  * Every finding is a failure. `--strict` (or CHECK_AGENTS_STRICT=1) makes the
@@ -27,12 +27,12 @@ const MAX_BYTES = 32 * 1024;
 const MAX_ROOT_LINES = 200;
 const MAX_NESTED_LINES = 150;
 
-const BANNED = [
-  { re: /\bwd\s+promote\b/i, label: "wd promote" },
-  { re: /\bDoor\s+A\b/, label: "Door A" },
-  { re: /\bCandidate\s+theater\b/i, label: "Candidate theater" },
-  { re: /\bScratch\b/, label: "Scratch" },
-];
+const BANNED_LINE = /^_Banned_:\s*(.+)$/;
+
+/** @param {string} term */
+function escapeRegExp(term) {
+  return term.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+}
 
 const MD_LINK = /\[([^\]]*)\]\(([^)]+)\)/g;
 
@@ -88,16 +88,52 @@ function collectInScopeAgents(dirs) {
 }
 
 /**
+ * Banned phrases from the glossary's `_Banned_: a, b` lines. Matching is exact-case,
+ * whitespace-flexible and whole-word. Returns null (after recording a finding) when
+ * the glossary is missing or lists nothing, so the gate cannot go silently inert.
+ * @returns {Promise<{ re: RegExp, label: string }[] | null>}
+ */
+async function loadBanned() {
+  const glossary = path.join(repoRoot, "GLOSSARY.md");
+  if (!existsSync(glossary)) {
+    fail("missing root GLOSSARY.md (source of the banned-terms list)");
+    return null;
+  }
+  const text = await readFile(glossary, "utf-8");
+  const terms = text
+    .split("\n")
+    .flatMap((line) => BANNED_LINE.exec(line)?.[1]?.split(",") ?? [])
+    .map((term) => term.replaceAll("`", "").trim())
+    .filter(Boolean);
+  if (terms.length === 0) {
+    fail(
+      "GLOSSARY.md has no `_Banned_:` lines (the banned-terms gate would be inert)"
+    );
+    return null;
+  }
+  return terms.map((label) => ({
+    label,
+    re: new RegExp(
+      String.raw`\b${label
+        .split(/\s+/)
+        .map(escapeRegExp)
+        .join(String.raw`\s+`)}\b`
+    ),
+  }));
+}
+
+/**
  * @param {string} fileRel
  * @param {string} text
+ * @param {{ re: RegExp, label: string }[]} banned
  */
-function checkBanned(fileRel, text) {
+function checkBanned(fileRel, text, banned) {
   const lines = text.split("\n");
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i] ?? "";
     if (line.includes("<!-- check:agents allow-banned -->")) continue;
     if (/^##\s+Revision\b/i.test(line)) break;
-    for (const { re, label } of BANNED) {
+    for (const { re, label } of banned) {
       if (re.test(line)) {
         fail(
           `${fileRel}:${i + 1}: banned mid-build term "${label}" (allowlist with <!-- check:agents allow-banned -->)`
@@ -107,8 +143,11 @@ function checkBanned(fileRel, text) {
   }
 }
 
-/** @param {string} absPath */
-async function checkFile(absPath) {
+/**
+ * @param {string} absPath
+ * @param {{ re: RegExp, label: string }[]} banned
+ */
+async function checkFile(absPath, banned) {
   const rel = path.relative(repoRoot, absPath);
   const text = await readFile(absPath, "utf-8");
   const lineCount = text.split("\n").length;
@@ -146,7 +185,7 @@ async function checkFile(absPath) {
     }
   }
 
-  checkBanned(rel, text);
+  checkBanned(rel, text, banned);
 }
 
 /** @param {string[]} dirs */
@@ -174,7 +213,10 @@ async function main() {
   const dirs = await listPackageAppDirs();
   checkPresence(dirs);
   await checkClaude();
-  await Promise.all(collectInScopeAgents(dirs).map(async (f) => checkFile(f)));
+  const banned = (await loadBanned()) ?? [];
+  await Promise.all(
+    collectInScopeAgents(dirs).map(async (f) => checkFile(f, banned))
+  );
 
   for (const msg of findings) console.error(`FAIL  ${msg}`);
   console.log(
