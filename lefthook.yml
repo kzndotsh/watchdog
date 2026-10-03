@@ -93,6 +93,12 @@ pre-commit:
         - ".github/workflows/**"
         - "scripts/check-action-pins.mjs"
       run: pnpm check:action-pins
+    codeowners:
+      # Also depends on which files exist (a rename can orphan a pattern), so CI reruns it on every change.
+      glob:
+        - ".github/CODEOWNERS"
+        - "scripts/check-codeowners.mjs"
+      run: pnpm check:codeowners
     agent-skills:
       glob:
         - "**/.agents/skills/**"

@@ -195,6 +195,9 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.config == 'true'
         run: pnpm check:action-pins
 
+      - name: CODEOWNERS paths
+        run: pnpm check:codeowners
+
       - name: Typecheck
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm typecheck

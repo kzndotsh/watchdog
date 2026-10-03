@@ -19,6 +19,7 @@ Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthoo
 | `pnpm check:vendor` | `packages/ui` generated primitives match `vendor.json` (never hand-edit), and the shadcn CLI version recorded there equals the one `scripts/ui-vendor.mjs` pins | pre-commit, CI | none |
 | `pnpm check:design-tokens` | `DESIGN.md` front-matter colors match `wd-tokens.css` / `wd-dark.css` | pre-commit | none |
 | `pnpm check:action-pins` | Every third-party action in `.github/workflows/*.{yml,yaml}` is pinned to a 40-char SHA with a version comment ([Pinning](#pinning-and-ci-permissions)) | pre-commit, CI | none |
+| `pnpm check:codeowners` | Every `.github/CODEOWNERS` pattern matches a tracked file, every rule has an owner, and owners are `@user`, `@org/team` or an email. Runs in CI on every change because renaming or deleting a file can orphan a pattern | pre-commit (when CODEOWNERS or the gate changes), CI | none |
 | `pnpm validate:agents` | Agent Skills ([Skills gate](#skills-gate)) | pre-commit (`--staged`), CI (`--range`), Cursor stop | none; staleness is a warning |
 | `pnpm --filter @watchdog/web ds:check` | Web design-system bans (inventory: [`ui/rules.md`](../reference/web/ui/rules.md)) | pre-push, CI | none |
 | `pnpm test:gate` | The gate tests below | part of `pnpm test`; pre-push when `scripts/**` changes | none |
@@ -68,6 +69,15 @@ The fixture strips `CI`, `GITHUB_*`, `DOCS_AFFECT_*` and `GIT_*` from the enviro
 ## GitHub CI (summary)
 
 Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show docs-only; push to `main` runs full CI. After File detection, three run in parallel: **Gates** (the table above, plus knip, the site build when `apps/site/**` changes, cap/client drift and db repos), **Unit** (`pnpm test:coverage`; Codecov upload is non-blocking) and **Integration + e2e** (Postgres + S3). Advisory (React Doctor / Desloppify via `pnpm desloppify:scan:ci`) runs separately and does not block. The aggregator job **Check** is the required status (it treats skipped siblings as OK). Dependabot ([`.github/dependabot.yml`](../../.github/dependabot.yml)) updates npm/pnpm, GitHub Actions, docker-compose and Nix weekly on Mondays, grouped minor/patch.
+
+## Repo meta
+
+Files GitHub reads from the repository, kept under `.github/` unless noted:
+
+- `.github/CODEOWNERS`: default owner plus agent configuration, CI, gate scripts and workspace config; kept honest by `check:codeowners`.
+- `.github/ISSUE_TEMPLATE/`: bug report and feature request forms (the feature form uses the spec headings agents write) and `config.yml`, which disables blank issues and links the security policy. Not gated: a form schema error hides a template silently, so parse new forms with the `yaml` package.
+- `.github/PULL_REQUEST_TEMPLATE.md`: linked issue, gates run, docs affected and the custody checklist.
+- [`SECURITY.md`](../../SECURITY.md) (repo root): supported versions and private vulnerability reporting.
 
 ## Cursor stop hook
 

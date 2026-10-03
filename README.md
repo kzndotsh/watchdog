@@ -233,6 +233,7 @@ Investigation content (corpus, entity notes, mirrors) lives in a separate privat
 | [`DESIGN.md`](DESIGN.md) | Design direction and taste rules |
 | [`apps/site/README.md`](apps/site/README.md) | Marketing site dev, build, `PUBLIC_APP_URL` for sign-in links |
 | [`AGENTS.md`](AGENTS.md) | Conventions for coding agents in this repo |
+| [`SECURITY.md`](SECURITY.md) | Supported versions and private vulnerability reporting |
 
 ## License
 

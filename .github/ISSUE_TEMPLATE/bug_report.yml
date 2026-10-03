@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in the Watchdog platform code is broken.
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!WARNING]
+        > **This tracker is public.** Do not paste Case content, Evidence, credentials, tokens, vault secrets or any investigation material, including in screenshots and logs. Describe the problem with synthetic data. Security vulnerabilities go through [private reporting](https://github.com/kzndotsh/watchdog/security/advisories/new), not here.
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: This report contains no Case content, Evidence, credentials or investigation material.
+          required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include error messages, with anything sensitive removed.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The short commit hash you are running (there are no tagged releases yet).
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node version, how you run it (`just dev`, containers), browser if the web app is involved.
+    validations:
+      required: true

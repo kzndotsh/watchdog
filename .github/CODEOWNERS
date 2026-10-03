@@ -1,0 +1,36 @@
+# Code owners. Last matching pattern wins; every pattern must match a tracked
+# file and carry an owner (enforced by `pnpm check:codeowners`).
+# Agent configuration is listed first on purpose: files that instruct agents are
+# the highest-leverage place for an unreviewed change.
+
+* @kzndotsh
+
+# Agent configuration and instructions
+/AGENTS.md @kzndotsh
+**/AGENTS.md @kzndotsh
+/CLAUDE.md @kzndotsh
+/GLOSSARY.md @kzndotsh
+/.agents/ @kzndotsh
+/.cursor/ @kzndotsh
+/skills-lock.json @kzndotsh
+
+# CI, hooks and gate scripts
+/.github/ @kzndotsh
+/scripts/ @kzndotsh
+/packages/db/scripts/ @kzndotsh
+/apps/web/scripts/ @kzndotsh
+/lefthook.yml @kzndotsh
+
+# Workspace, package manager and tooling config
+/pnpm-workspace.yaml @kzndotsh
+/pnpm-lock.yaml @kzndotsh
+/package.json @kzndotsh
+/oxlint.config.ts @kzndotsh
+/oxfmt.config.ts @kzndotsh
+/knip.ts @kzndotsh
+/vitest.config.ts @kzndotsh
+
+# Local infrastructure
+/docker-compose.yml @kzndotsh
+/docker/ @kzndotsh
+/flake.nix @kzndotsh

@@ -152,6 +152,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Every gate wired into a hook or CI has a `*.gate.test.ts` with a must-fail case | scripts | `docs/contributing/ci-gates.md` Gate tests | `scripts/__tests__/gate-coverage.gate.test.ts` | enforced |
 | Every hook blocks or is deleted; none runs a gate in a mode that always exits 0 | repo | `docs/contributing/ci-gates.md` Hook policy | `scripts/__tests__/hook-policy.gate.test.ts` | enforced |
 | Third-party actions are pinned to a 40-char SHA with a version comment | repo | `docs/contributing/ci-gates.md` Pinning | `check:action-pins` | enforced |
+| CODEOWNERS paths resolve and every owned path has an owner | repo | `.github/CODEOWNERS` | `check:codeowners` | enforced |
 | Code mapped in `scripts/doc-map.mjs` changes with its doc (or `docs:allow-affect - reason`) | repo | `docs/contributing/ci-gates.md` Doc-affect escape hatch | `check:docs-affected:strict` | enforced |
 | Local skipping goes through `lefthook-local.yml`; `--no-verify` is not an escape hatch | repo | `docs/contributing/ci-gates.md` Gates | guidance | guidance |
 | Vitest projects share workers (`isolate:false`): tests restore `process.env`, `globalThis`, timers and DOM | repo | `docs/contributing/testing/standards.md` Test speed | guidance | guidance |
