@@ -380,12 +380,51 @@ export const JOB_STATUSES = [
 ] as const;
 export type JobStatus = (typeof JOB_STATUSES)[number];
 
-/** Jobs that still block a playbook join. */
+/**
+ * Jobs that still block a playbook join. Also the per-evidence cap dedup set
+ * (a job in flight blocks a duplicate enqueue).
+ */
 export const OPEN_JOB_STATUSES = ["queued", "running", "blocked"] as const;
 export type OpenJobStatus = (typeof OPEN_JOB_STATUSES)[number];
 
+/** Finished jobs: the complement of {@link OPEN_JOB_STATUSES} in {@link JOB_STATUSES}. */
+export const TERMINAL_JOB_STATUSES = [
+  "succeeded",
+  "failed",
+  "cancelled",
+] as const;
+export type TerminalJobStatus = (typeof TERMINAL_JOB_STATUSES)[number];
+
+/**
+ * Jobs a cancel may still act on. Today this is exactly the open set (a
+ * finished job cannot be cancelled, an in-flight or waiting one can). Kept as
+ * its own name so a future split (e.g. a non-cancellable running state) edits
+ * one place; do not fork a local list.
+ */
+export const CANCELLABLE_JOB_STATUSES = OPEN_JOB_STATUSES;
+
+/**
+ * Open jobs that are not waiting: a worker may claim or resume them
+ * (`queued`, `running`). Differs from open by excluding `blocked` (a legacy
+ * playbook wait); the preflight claim and the web "live" indicators use this.
+ */
+export const LIVE_JOB_STATUSES = ["queued", "running"] as const;
+export type LiveJobStatus = (typeof LIVE_JOB_STATUSES)[number];
+
 export function isOpenJobStatus(status: JobStatus): boolean {
   return (OPEN_JOB_STATUSES as readonly string[]).includes(status);
+}
+
+export function isTerminalJobStatus(status: JobStatus): boolean {
+  return (TERMINAL_JOB_STATUSES as readonly string[]).includes(status);
+}
+
+export function isCancellableJobStatus(status: JobStatus): boolean {
+  return (CANCELLABLE_JOB_STATUSES as readonly string[]).includes(status);
+}
+
+export function isLiveJobStatus(status: JobStatus): boolean {
+  return (LIVE_JOB_STATUSES as readonly string[]).includes(status);
 }
 
 /** When collapsing playbook step rows, pick the most significant status. */
