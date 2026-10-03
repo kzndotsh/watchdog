@@ -1,4 +1,10 @@
 export {
+  CONFIRMED_REQUIRES_EVIDENCE,
+  confirmedEvidenceViolation,
+  confirmedNeedsEvidence,
+  type ConfirmedEvidenceInput,
+} from "./confirmed-evidence";
+export {
   assertPatchGates,
   assertPatchShape,
   isOneOf,
