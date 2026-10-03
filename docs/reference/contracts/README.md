@@ -22,7 +22,7 @@ Product nouns and investigator loop: [`../../explanation/product.md`](../../expl
 | [`agent-ingress.md`](agent-ingress.md) | CLI/API propose vs `userOverride` graph write |
 | [`evlog.md`](evlog.md) | Process logging rules |
 
-Runtime errors on the API/CLI/worker edge are tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` (same codes as `DomainError`). Ingress and custody contracts are unchanged.
+Runtime errors on the API/CLI/worker edge are tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError` (same codes as `DomainError`). `InvalidError` is caller-fixable input (HTTP 400); `InternalError` is a server-side failure (failed write, queue driver) and maps to HTTP 500 with a generic message, its reason and cause going only to the request log. Ingress and custody contracts are unchanged.
 
 **Org isolation:** Cases are org-scoped. Case-child reads/writes that take `caseId` must resolve against the actor’s organization; a foreign-org Case is **`not_found`** (no cross-org bleed, no distinct wrong-org error). Missing org context on session/API key is **403**. Ids of another org's children (entity, claim, evidence, job, proposal…) passed under your own Case are rejected too; `packages/api/src/__tests__/org-isolation.int.test.ts` attacks every case-scoped procedure both ways and must list any new one. The live-events stream re-checks membership on every heartbeat. Product noun: [`../../explanation/product.md`](../../explanation/product.md).
 

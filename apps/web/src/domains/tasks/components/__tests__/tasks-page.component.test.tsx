@@ -194,4 +194,54 @@ describe("TasksPage", () => {
     });
     expect(onTaskIdChange).toHaveBeenCalled();
   });
+
+  it("selects a deep-linked task once across re-renders with the same task id", () => {
+    const taskId = testId(20);
+    const tasks = [{ id: taskId, title: "Follow up" }];
+    const handleSelect = vi.fn();
+    const onTaskIdChange = vi.fn();
+    useQueryMock.mockReturnValue(
+      queryLoaded({ cases: [ACTIVE], active: ACTIVE })
+    );
+    // A fresh workspace object per render, like the real hook returns.
+    useTaskWorkspaceMock.mockImplementation(() => ({
+      tasks,
+      pending: false,
+      entities: [],
+      entityById: new Map(),
+      selected: null,
+      formError: null,
+      quickCreateError: null,
+      createOpen: false,
+      createStatus: "backlog",
+      createBusy: false,
+      updateBusy: false,
+      quickCreateBusy: false,
+      openCreate: openCreateMock,
+      handleSelect,
+      closeSelected: vi.fn(),
+      handleCreateOpenChange: vi.fn(),
+      handleCreate: vi.fn(),
+      handleUpdate: vi.fn(),
+      handleDelete: vi.fn(),
+      handleCommitDrop: vi.fn(),
+      handleQuickCreate: vi.fn(),
+      tasksPlaceholder: false,
+    }));
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    // A new element each time so React really re-renders (identical elements bail out).
+    const page = () => (
+      <QueryClientProvider client={client}>
+        <TasksPage taskId={taskId} onTaskIdChange={onTaskIdChange} />
+      </QueryClientProvider>
+    );
+    const { rerender } = render(page());
+    rerender(page());
+    rerender(page());
+
+    expect(handleSelect).toHaveBeenCalledTimes(1);
+  });
 });

@@ -24,7 +24,7 @@ import {
 import { notifyJobUpdateEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
+import { InternalError, type DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { parseValidatedCapInputEffect } from "../cap-input";
 
@@ -141,7 +141,7 @@ function enqueueStepJobsEffect(opts: {
             })
           );
           if (!row) {
-            return yield* new InvalidError({
+            return yield* new InternalError({
               reason: `Failed to create playbook Job at step ${step} · ${fanIndex}`,
             });
           }

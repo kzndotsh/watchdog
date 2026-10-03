@@ -4,7 +4,11 @@ import { questionsRepo, type DbTx } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
+import {
+  InternalError,
+  InvalidError,
+  type DomainTag,
+} from "../../infra/tagged-errors";
 import { requireDomainStringEffect, requireDomainUuidEffect } from "./apply-patch-helpers";
 import { assertEntityInCaseEffect } from "./guards";
 
@@ -31,7 +35,7 @@ export function applyQuestionOpEffect(
       })
     );
     if (!created) {
-      return yield* new InvalidError({ reason: "Failed to create Question" });
+      return yield* new InternalError({ reason: "Failed to create Question" });
     }
   });
 }

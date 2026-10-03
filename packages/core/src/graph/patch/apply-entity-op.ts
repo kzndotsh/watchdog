@@ -9,7 +9,13 @@ import {
 } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
-import { InvalidError, NotFoundError, ConflictError, type DomainTag } from "../../infra/tagged-errors";
+import {
+  ConflictError,
+  InternalError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "../edge-update";
 import { seedDefaultQuestionsEffect } from "../questions";
 import {
@@ -68,9 +74,7 @@ export function applyEntityOpEffect(
             })
           );
           if (!updated) {
-            return yield* new InvalidError({
-              reason: "Failed to update Entity",
-            });
+            return yield* new NotFoundError({ resource: "Entity not found" });
           }
           return;
         }
@@ -108,7 +112,7 @@ export function applyEntityOpEffect(
         }
       );
       if (!created) {
-        return yield* new InvalidError({ reason: "Failed to create Entity" });
+        return yield* new InternalError({ reason: "Failed to create Entity" });
       }
       yield* seedDefaultQuestionsEffect(tx, created);
       return;

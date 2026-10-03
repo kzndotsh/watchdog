@@ -34,4 +34,13 @@ describe("createAppQueryClient", () => {
     } as never);
     expect(toastErrorMock).not.toHaveBeenCalled();
   });
+
+  it("toasts house copy, not the raw message, for a server failure", () => {
+    const cache = createAppQueryClient().getQueryCache();
+    toastErrorMock.mockClear();
+    cache.config.onError?.(new Error("Internal server error"), {
+      meta: {},
+    } as never);
+    expect(toastErrorMock).toHaveBeenCalledWith("Couldn't load. Try again.");
+  });
 });

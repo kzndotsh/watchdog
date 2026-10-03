@@ -15,10 +15,15 @@ vi.mock("../client", () => ({
   })),
 }));
 
-vi.mock("../io", () => ({
-  fail: vi.fn((code: string, message: string) => {
+const failMock = vi.hoisted(() =>
+  vi.fn((code: string, message: string, _opts?: { exitCode?: number }) => {
     throw new Error(`${code}: ${message}`);
-  }),
+  })
+);
+
+vi.mock("../io", () => ({
+  fail: failMock,
+  SERVER_ERROR_EXIT_CODE: 3,
 }));
 
 import { downloadToFile } from "../download";
@@ -74,5 +79,38 @@ describe("downloadToFile", () => {
     });
 
     expect(outPath).toBe(path.join(process.cwd(), "case-export.zip"));
+  });
+  it("exits with the server-error code when the export route answers 5xx", async () => {
+    failMock.mockClear();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("boom", { status: 502 }))
+    );
+
+    await expect(
+      downloadToFile({
+        urlPath: "/cases/case-1/export.zip",
+        fallbackFilename: "case.zip",
+      })
+    ).rejects.toThrow("DOWNLOAD_FAILED");
+
+    expect(failMock.mock.calls[0]?.[2]?.exitCode).toBe(3);
+  });
+
+  it("keeps the default exit code for a 4xx export response", async () => {
+    failMock.mockClear();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("nope", { status: 404 }))
+    );
+
+    await expect(
+      downloadToFile({
+        urlPath: "/cases/case-1/export.zip",
+        fallbackFilename: "case.zip",
+      })
+    ).rejects.toThrow("DOWNLOAD_FAILED");
+
+    expect(failMock.mock.calls[0]?.[2]?.exitCode).toBeUndefined();
   });
 });

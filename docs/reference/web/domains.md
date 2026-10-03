@@ -85,7 +85,7 @@ SQL for graph children lives in `@watchdog/db` `repos` + `@watchdog/core` servic
 3. No `createServerFn` inside `components/`, `hooks/`, `lib/`, or `queries.ts`.
 4. Handlers call **`orpcForActor(actorFromSession(...)).…`** for domain I/O (same pattern as `jobs` / `triage` / graph children).
 5. `lib/` and `hooks/` never import `*.server.ts`. Hooks may call `*.functions` only.
-6. **Never import `@watchdog/db` from web domains**: oxlint-enforced; allowlist only `routes/api/events.ts` (auth's db access lives in `@watchdog/auth`).
+6. **Never import `@watchdog/db` from web domains**: oxlint-enforced, no exceptions (auth's db access lives in `@watchdog/auth`; the SSE route `routes/api/events.ts` authorizes and listens through `@watchdog/core`).
 7. Domains with RPC inputs keep Zod in `types.ts` (jobs/triage included).
 8. Domains with server lists keep `queries.ts`; invalidate via `shared/lib/query-invalidation.ts`.
 
@@ -151,7 +151,7 @@ Split-view domains own the full page shell including `<Page>` (Collect/Triage pa
 | Identifier evidence column | `shared/ui/identifiers/identifier-evidence-cell.tsx`: labeled chip summary + edit popover (Save); preview click when Dossier wires `onEvidenceClick`; confirmed gate disables Save. Used by Dossier Identifiers and `/identifiers`. |
 | Identifier notes column | `shared/ui/identifiers/identifier-notes-cell.tsx` (`NotesIconCell` + `IdentifierNotesCell` alias): sticky-note icon → right Sheet + `RichTextEditor` Markdown (blur/close autosave). Narrow column (~52). Used by Dossier Identifiers, `/identifiers`, and `/entities` (entity notes). |
 | Dashboard | Composes triage / tasks / jobs / entities / activity queries; selection helpers in `dashboard/lib/selectors.ts`. Activity = vertical resizable panel + `ScrollArea` (`recent-activity.tsx`). Do not put dump/paste on Dashboard: Collect owns dump. |
-| Command palette / hotkeys / context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts` / `use-global-hotkeys`. Mod+K / Mod+B / `?` registered once in `SearchChrome` (inside `SidebarProvider`); menu `run`s share the same closures as hotkeys (palette toggles). Idle palette = Jump to + `paletteCommands` (no open-palette). Inset `#app-main` right-click = `chromeActions`; row/node menus are target-only. Shortcut glyphs: `Kbd` / `KbdGroup` via `ActionShortcutChord` (dense in menus). Do not add a second window listener in shadcn sidebar. |
+| Command palette / hotkeys / context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts` / `use-global-hotkeys`. Mod+K / Mod+B / `?` registered once in `SearchChrome` (inside `SidebarProvider`); menu `run`s share the same closures as hotkeys (palette toggles). Idle palette = Jump to + `paletteCommands` (no open-palette). Inset `#app-main` right-click = `chromeActions`; row/node menus are target-only. Shortcut glyphs: `Kbd` / `KbdGroup` via `ActionShortcutChord` (dense in menus). The Mod glyph comes from `useModKeyLabel` (`shared/hooks`): "Ctrl" on the server and first client render, platform glyph after mount; never call `modKeyLabel()` during render. Do not add a second window listener in shadcn sidebar. |
 | Predicate / confidence / kind | Options from `@watchdog/schemas` (+ web `vocab/` labels). Connection create/edit uses `edgePhraseOptions` / `FieldCombobox` with schema `group` headings: no freestyle predicate strings. Do not fork `resolveEdgeEndpoints` payloads; use `entities/lib/edge-write.ts`. |
 
 ## Anti-patterns

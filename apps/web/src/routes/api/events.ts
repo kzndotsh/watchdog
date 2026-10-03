@@ -1,8 +1,8 @@
 /**
  * GET /api/events
  *
- * Server-Sent Events endpoint. Uses listenForEvents() from @watchdog/db
- * (which holds the postgres dep) to stream notifications to the browser.
+ * Server-Sent Events endpoint. Streams NOTIFY events (listenForEvents, via core)
+ * to the browser; Case visibility is decided by core, never by repos.
  *
  * Query params:
  *   caseId  — filter events to this Case (optional)
@@ -10,14 +10,29 @@
  * Auth: session cookie, Bearer token, or x-api-key (same as OpenAPI routes).
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
 import {
   applyWatchdogCors,
   corsPreflightResponse,
 } from "@/lib/api-cors.server";
-import { casesRepo, db, isWatchdogEvent, listenForEvents } from "@watchdog/db";
+import { runApp } from "@watchdog/api";
+import {
+  assertCaseInOrgEffect,
+  isWatchdogEvent,
+  listenForEvents,
+  listVisibleCaseIdsEffect,
+} from "@watchdog/core";
+import { createLogger } from "@watchdog/log";
 import { parseSseCaseIdParam } from "@watchdog/schemas";
+
+/** Process log for a dropped live event; carries the error only, never Case or Evidence data. */
+function logVisibilityRefreshFailure(error: unknown): void {
+  const log = createLogger({ scope: "sse.visibility_refresh" });
+  log.error(error instanceof Error ? error : new Error(String(error)));
+  void log.emit();
+}
 
 export const Route = createFileRoute("/api/events")({
   server: {
@@ -43,13 +58,20 @@ export const Route = createFileRoute("/api/events")({
         }
         const caseId = caseIdParsed.value.caseId;
         if (caseId !== null) {
-          const scoped = await casesRepo.getById(db, caseId, organizationId);
-          if (!scoped) {
+          const visible = await runApp(
+            assertCaseInOrgEffect(caseId, organizationId).pipe(
+              Effect.as(true),
+              Effect.catchTag("NotFoundError", () => Effect.succeed(false))
+            )
+          );
+          if (!visible) {
             return new Response("Not Found", { status: 404 });
           }
         }
 
-        let allowed = new Set(await casesRepo.listIds(db, organizationId));
+        let allowed = new Set(
+          await runApp(listVisibleCaseIdsEffect(organizationId))
+        );
 
         const stream = new ReadableStream({
           start(controller) {
@@ -115,12 +137,19 @@ export const Route = createFileRoute("/api/events")({
                     send(parsed.type, rawPayload);
                     return;
                   }
-                  void casesRepo.listIds(db, organizationId).then((ids) => {
-                    allowed = new Set(ids);
-                    if (allowed.has(eventCaseId)) {
-                      send(parsed.type, rawPayload);
-                    }
-                  });
+                  void runApp(listVisibleCaseIdsEffect(organizationId))
+                    .then((ids) => {
+                      allowed = new Set(ids);
+                      if (allowed.has(eventCaseId)) {
+                        send(parsed.type, rawPayload);
+                      }
+                    })
+                    .catch((error: unknown) => {
+                      // Fail closed: without a visibility read the event is dropped.
+                      // Log the failure (error only: no Case id, no payload) so a
+                      // dropped live update is observable.
+                      logVisibilityRefreshFailure(error);
+                    });
                 } catch {
                   // malformed — skip
                 }

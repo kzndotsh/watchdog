@@ -226,9 +226,6 @@ importers:
       '@watchdog/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@watchdog/db':
-        specifier: workspace:*
-        version: link:../../packages/db
       '@watchdog/env':
         specifier: workspace:*
         version: link:../../packages/env

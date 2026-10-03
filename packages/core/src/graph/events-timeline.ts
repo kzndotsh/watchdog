@@ -6,6 +6,7 @@ import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -97,7 +98,7 @@ export function createEventEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to create Event" });
+      return yield* new InternalError({ reason: "Failed to create Event" });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -153,7 +154,9 @@ export function updateEventEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to update Event" });
+      return yield* new NotFoundError({
+        resource: "Event not found in this Case",
+      });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -184,7 +187,9 @@ export function deleteEventEffect(
       eventsRepo.deleteInCase(db, scopedCaseId, normalizedEventId)
     );
     if (!deleted) {
-      return yield* new InvalidError({ reason: "Failed to delete Event" });
+      return yield* new NotFoundError({
+        resource: "Event not found in this Case",
+      });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
   });

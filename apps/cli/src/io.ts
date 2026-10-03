@@ -299,10 +299,26 @@ function taggedErrorEnvelope(error: unknown): {
     case "ForbiddenError": {
       return { code: "FORBIDDEN", message };
     }
+    case "InternalError": {
+      // `reason` is log-only on the server; never echo it.
+      return {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Internal server error",
+      };
+    }
     default: {
       return null;
     }
   }
+}
+
+/** Exit status for server-side failures; invalid input and other errors exit 1. */
+export const SERVER_ERROR_EXIT_CODE = 3;
+
+function isServerError(code: string, status?: number): boolean {
+  return (
+    code === "INTERNAL_SERVER_ERROR" || (status !== undefined && status >= 500)
+  );
 }
 
 const CONFIG_HELP = ["export WD_API_KEY=<key>", "wd --help"];
@@ -323,12 +339,20 @@ export function handleCliError(error: unknown): never {
   }
   const tagged = taggedErrorEnvelope(error);
   if (tagged !== null) {
-    fail(tagged.code, tagged.message, { help: ["wd --help"] });
+    fail(tagged.code, tagged.message, {
+      help: ["wd --help"],
+      ...(isServerError(tagged.code)
+        ? { exitCode: SERVER_ERROR_EXIT_CODE }
+        : {}),
+    });
   }
   if (isOrpcError(error)) {
     fail(error.code, error.message, {
       status: error.status,
       help: ["wd --help"],
+      ...(isServerError(error.code, error.status)
+        ? { exitCode: SERVER_ERROR_EXIT_CODE }
+        : {}),
     });
   }
   if (error instanceof Error) {

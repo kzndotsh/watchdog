@@ -16,6 +16,7 @@ import {
 
 import { tryDb } from "../../infra/postgres-effect";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -117,7 +118,7 @@ export function applyEdgeOpEffect(
       })
     );
     if (!created) {
-      return yield* new InvalidError({ reason: "Failed to create Edge" });
+      return yield* new InternalError({ reason: "Failed to create Edge" });
     }
     const linked = yield* tryDb(() =>
       evidenceLinksRepo.linkEdge(tx, created.id, evidenceIds)

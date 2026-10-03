@@ -17,7 +17,7 @@ This page lists every web UI rule, what it prevents, and whether it is kept. The
 | `aria-busy` / `animate-pulse` only inside `shared/ui` | Loading regions without the three a11y channels or the reduced-motion guard | Keep, **check dropped** (review only) | review |
 | The sixteen loading rules ([`loading.md`](loading.md)) | Flashing skeletons, confident wrong values, blanked shells | Keep | review |
 | No `@watchdog/policy` barrel / `@watchdog/core` root in client code | Effect, db, blob pulled into the browser bundle | Keep | review |
-| Web never imports `@watchdog/db` (except SSE `routes/api/events.ts`) | Bypassing oRPC → core → repos | Keep | lint |
+| Web never imports `@watchdog/db` | Bypassing oRPC → core → repos | Keep | lint |
 | One QueryClient per router, never a singleton | Cross-request cache bleed in SSR | Keep | review |
 | `<Navigate>` as a sibling, never an early return | Skeleton → blank → content flicker on cold load | Keep | review |
 | Base UI `Button` + `render={<Link/>}` sets `nativeButton={false}` | Nested interactive elements, wrong semantics | Keep | review |

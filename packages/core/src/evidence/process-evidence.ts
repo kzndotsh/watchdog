@@ -35,6 +35,7 @@ import {
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -135,7 +136,7 @@ function startCapForEvidenceEffect(input: {
           })
         );
         if (!row) {
-          return yield* new InvalidError({ reason: "Failed to create Job" });
+          return yield* new InternalError({ reason: "Failed to create Job" });
         }
         return { kind: "created" as const, job: row };
       })

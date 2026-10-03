@@ -23,6 +23,7 @@ import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -263,7 +264,7 @@ export function createEdgeEffect(
             })
           );
           if (!row) {
-            return yield* new InvalidError({
+            return yield* new InternalError({
               reason: "Failed to create Edge",
             });
           }
@@ -385,7 +386,9 @@ export function deleteEdgeEffect(
       edgesRepo.deleteInCase(db, scopedCaseId, normalizedEdgeId)
     );
     if (!deleted) {
-      return yield* new InvalidError({ reason: "Failed to delete Edge" });
+      return yield* new NotFoundError({
+        resource: "Edge not found in this Case",
+      });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);

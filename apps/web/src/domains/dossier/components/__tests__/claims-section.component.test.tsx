@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ClaimRecord } from "@/domains/entities/claims/types";
@@ -39,6 +40,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { ClaimsSection } from "@/domains/dossier/components/claims-section";
+import { retractClaimFn } from "@/domains/entities/claims/claims.functions";
 
 const ACTIVE: ClaimRecord = {
   id: testId(1),
@@ -122,5 +124,23 @@ describe("ClaimsSection", () => {
     expect(
       screen.getByRole("button", { name: "Preview evidence: leaked-db.csv" })
     ).toBeInTheDocument();
+  });
+
+  it.each([
+    ["Contest", "Couldn't contest claim"],
+    ["Disprove", "Couldn't disprove claim"],
+    ["Retract", "Couldn't retract claim"],
+  ])("reads %s failures as house failure copy", async (label, expected) => {
+    // Non-Error rejection, so the fallback copy is what renders.
+    vi.mocked(retractClaimFn).mockRejectedValueOnce("boom");
+    const user = userEvent.setup();
+    renderClaims([ACTIVE]);
+
+    await user.click(screen.getByRole("button", { name: "Claim actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: label }));
+    await user.type(screen.getByRole("textbox"), "because");
+    await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(await screen.findByText(expected)).toBeInTheDocument();
   });
 });

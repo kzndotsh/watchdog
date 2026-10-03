@@ -9,6 +9,7 @@ import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -131,7 +132,7 @@ export function createEntityEffect(
             })
           );
           if (!row) {
-            return yield* new InvalidError({
+            return yield* new InternalError({
               reason: "Failed to create Entity",
             });
           }
@@ -193,7 +194,7 @@ export function updateEntityFieldsEffect(
       })
     );
     if (!updated) {
-      return yield* new InvalidError({ reason: "Failed to update Entity" });
+      return yield* new NotFoundError({ resource: "Entity not found" });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);
@@ -223,7 +224,7 @@ export function deleteEntityEffect(
       entitiesRepo.deleteInCase(db, scopedCaseId, normalizedEntityId)
     );
     if (!deleted) {
-      return yield* new InvalidError({ reason: "Failed to delete Entity" });
+      return yield* new NotFoundError({ resource: "Entity not found" });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);

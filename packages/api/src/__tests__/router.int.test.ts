@@ -3,8 +3,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { putCredentialSlotEffect, runDomain } from "@watchdog/core";
 import type { ApiActor } from "@watchdog/schemas";
-import { resetTestDb } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+import { buildEntityCreateOp } from "@watchdog/schemas/testing";
+import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
+import {
+  TEST_ACTOR_ID,
+  TEST_ORGANIZATION_ID,
+  testId,
+} from "@watchdog/test-kit";
 
 import type { ApiContext } from "../context";
 import { router } from "../router";
@@ -74,5 +79,19 @@ describe("oRPC router (in-process)", () => {
         secret: "",
       })
     ).rejects.toSatisfy((error: unknown) => error instanceof ORPCError);
+  });
+
+  it("graph.write reports an Entity id already in use as HTTP 409 CONFLICT", async () => {
+    const cased = await seedCase(testDb);
+    const entity = await seedEntity(testDb, cased.id, { id: testId(25) });
+    await expect(
+      routerClient().graph.write({
+        caseId: cased.id,
+        userOverride: true,
+        patch: [
+          buildEntityCreateOp("Dup", "dup-slug", "person", { id: entity.id }),
+        ],
+      })
+    ).rejects.toMatchObject({ code: "CONFLICT", status: 409 });
   });
 });

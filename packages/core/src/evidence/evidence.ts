@@ -37,6 +37,7 @@ import {
 import { notifyEvidenceChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -246,7 +247,7 @@ export function dumpPasteEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to create Evidence" });
+      return yield* new InternalError({ reason: "Failed to create Evidence" });
     }
     const record = yield* labeledEvidence(row);
     yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
@@ -283,7 +284,7 @@ export function dumpUrlEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to create Evidence" });
+      return yield* new InternalError({ reason: "Failed to create Evidence" });
     }
     const record = yield* labeledEvidence(row);
     yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
@@ -427,7 +428,7 @@ export function confirmFileUploadEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to create Evidence" });
+      return yield* new InternalError({ reason: "Failed to create Evidence" });
     }
     const record = yield* labeledEvidence(row);
     yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
@@ -499,7 +500,7 @@ export function createAttestationEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({
+      return yield* new InternalError({
         reason: "Failed to create attestation",
       });
     }

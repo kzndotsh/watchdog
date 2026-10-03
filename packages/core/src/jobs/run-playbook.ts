@@ -34,6 +34,7 @@ import { logProcess } from "../infra/process-log";
 import {
   ConflictError,
   ForbiddenError,
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -195,7 +196,7 @@ export function runPlaybookEffect(
           })
         );
         if (!run) {
-          return yield* new InvalidError({
+          return yield* new InternalError({
             reason: "Failed to create playbook run",
           });
         }
@@ -220,7 +221,7 @@ export function runPlaybookEffect(
           })
         );
         if (!row) {
-          return yield* new InvalidError({
+          return yield* new InternalError({
             reason: `Failed to create Job for step ${plan.step.playbookStep}`,
           });
         }

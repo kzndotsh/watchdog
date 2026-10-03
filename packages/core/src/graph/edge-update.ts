@@ -243,7 +243,9 @@ export function applyValidatedEdgeUpdateEffect(
         edgesRepo.updateInCase(tx, input.caseId, input.edgeId, patch)
       );
       if (!updated) {
-        return yield* new InvalidError({ reason: "Failed to update Edge" });
+        return yield* new NotFoundError({
+          resource: "Edge not found in this Case",
+        });
       }
     }
 

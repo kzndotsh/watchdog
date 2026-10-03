@@ -13,6 +13,7 @@ import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import {
   ConflictError,
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -90,7 +91,7 @@ export function seedDefaultQuestionsEffect(
       { concurrency: "unbounded" }
     );
     if (seeded.some((question) => question === null)) {
-      return yield* new InvalidError({
+      return yield* new InternalError({
         reason: `Failed to seed ${row.kind} Questions`,
       });
     }
@@ -151,7 +152,7 @@ export function createQuestionEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to create Question" });
+      return yield* new InternalError({ reason: "Failed to create Question" });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -186,7 +187,7 @@ export function resolveQuestionEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to resolve Question" });
+      return yield* new NotFoundError({ resource: "Question not found" });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -236,7 +237,7 @@ export function updateQuestionEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to update Question" });
+      return yield* new NotFoundError({ resource: "Question not found" });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -272,7 +273,7 @@ export function reopenQuestionEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to reopen Question" });
+      return yield* new NotFoundError({ resource: "Question not found" });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -301,7 +302,7 @@ export function deleteQuestionEffect(
       questionsRepo.deleteInCase(db, scopedCaseId, normalizedQuestionId)
     );
     if (!deleted) {
-      return yield* new InvalidError({ reason: "Failed to delete Question" });
+      return yield* new NotFoundError({ resource: "Question not found" });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
   });

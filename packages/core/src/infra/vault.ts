@@ -12,7 +12,12 @@ import { env } from "@watchdog/env/server";
 import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas";
 
 import { tryDb } from "./postgres-effect";
-import { InvalidError, NotFoundError, type DomainTag } from "./tagged-errors";
+import {
+  InternalError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "./tagged-errors";
 
 const NONCE_LEN = 12;
 const TAG_LEN = 16;
@@ -183,7 +188,7 @@ export function putCredentialEffect(
         })
       );
       if (!updated) {
-        return yield* new InvalidError({
+        return yield* new InternalError({
           reason: "Failed to update credential",
         });
       }
@@ -198,7 +203,7 @@ export function putCredentialEffect(
       })
     );
     if (!created) {
-      return yield* new InvalidError({
+      return yield* new InternalError({
         reason: "Failed to create credential",
       });
     }

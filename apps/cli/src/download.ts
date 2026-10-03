@@ -2,7 +2,7 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { getConfig } from "./client";
-import { fail } from "./io";
+import { SERVER_ERROR_EXIT_CODE, fail } from "./io";
 
 const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -62,6 +62,7 @@ export async function downloadToFile(
     fail("DOWNLOAD_FAILED", `HTTP ${res.status}: ${body || res.statusText}`, {
       status: res.status,
       help: ["wd --help"],
+      ...(res.status >= 500 ? { exitCode: SERVER_ERROR_EXIT_CODE } : {}),
     });
   }
 

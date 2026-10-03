@@ -15,7 +15,12 @@ import {
 } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
+import {
+  InternalError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../../infra/tagged-errors";
 import {
   requireDomainEnumEffect,
   requireDomainStringEffect,
@@ -81,8 +86,8 @@ export function applyIdentifierOpEffect(
           })
         );
         if (!updated) {
-          return yield* new InvalidError({
-            reason: "Failed to update Identifier",
+          return yield* new NotFoundError({
+            resource: "Identifier not found in this Case",
           });
         }
         const linked = yield* tryDb(() =>
@@ -105,7 +110,9 @@ export function applyIdentifierOpEffect(
       })
     );
     if (!created) {
-      return yield* new InvalidError({ reason: "Failed to create Identifier" });
+      return yield* new InternalError({
+        reason: "Failed to create Identifier",
+      });
     }
     const linked = yield* tryDb(() =>
       evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)

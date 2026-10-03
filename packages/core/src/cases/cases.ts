@@ -20,6 +20,7 @@ import { tryDb } from "../infra/postgres-effect";
 import { logProcess, logSwallowed } from "../infra/process-log";
 import {
   ConflictError,
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -63,6 +64,17 @@ export function listCasesEffect(
   return tryDb(() => casesRepo.list(db, organizationId)).pipe(
     Effect.map((rows) => rows.map(toRecord))
   );
+}
+
+/**
+ * Ids of every Case the organization can see. The live events stream filters
+ * NOTIFY payloads against this set, so Case visibility is decided here, with the
+ * same organization scope as every other Case read.
+ */
+export function listVisibleCaseIdsEffect(
+  organizationId: string
+): Effect.Effect<string[], DomainTag> {
+  return tryDb(() => casesRepo.listIds(db, organizationId));
 }
 
 export function getCaseByIdEffect(
@@ -136,7 +148,7 @@ export function createCaseEffect(
       { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
     );
     if (!created) {
-      return yield* new InvalidError({ reason: "Failed to create Case" });
+      return yield* new InternalError({ reason: "Failed to create Case" });
     }
     return toRecord(created);
   });
@@ -249,7 +261,7 @@ export function deleteCaseEffect(
       casesRepo.delete(db, caseId, opts.organizationId)
     );
     if (!deleted) {
-      return yield* new InvalidError({ reason: "Failed to delete Case" });
+      return yield* new NotFoundError({ resource: "Case not found" });
     }
     const logActorId = optionalActorId(opts?.actorId);
     if (logActorId) {

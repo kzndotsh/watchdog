@@ -6,11 +6,11 @@ import type {
   TriageAcceptForm,
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
-import { acceptGate, gatedAcceptInput } from "@/domains/triage/lib/accept-gate";
 import {
-  isConfirmedWithoutBundle,
-  totalEvidenceCount,
-} from "@/domains/triage/lib/accept-validation";
+  acceptGate,
+  type AcceptGateResult,
+  gatedAcceptInput,
+} from "@/domains/triage/lib/accept-gate";
 import {
   buildDecideHeaderView,
   type DecideEvidenceMode,
@@ -29,12 +29,35 @@ import {
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
+import type { ConfidenceTier } from "@watchdog/schemas";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Kbd } from "@watchdog/ui/components/kbd";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
 /** Inline shortcut hint inside a Button: inherits the button's ink. */
 const BUTTON_KBD_CLASS = "-mr-0.5 ml-0.5 h-4 min-w-4";
+
+/** The one place the footer turns form state into an accept-gate result. */
+function gateForForm(
+  proposal: ProposalRecord,
+  linkedIds: string[],
+  values: {
+    confidence: ConfidenceTier;
+    evidenceIds: string[];
+    attestationText: string;
+  }
+): AcceptGateResult {
+  const patch = proposalPatch(proposal);
+  return acceptGate(
+    gatedAcceptInput({
+      ...values,
+      linkedIds,
+      patch,
+      needsConfidence: patchNeedsConfidence(patch),
+      identifierCollisions: proposal.identifierCollisions,
+    })
+  );
+}
 
 function JobEvidenceMissingHint({ missingCount }: { missingCount: number }) {
   if (missingCount < 1) return null;
@@ -50,12 +73,14 @@ function JobEvidenceMissingHint({ missingCount }: { missingCount: number }) {
 function renderAcceptEvidenceSlot({
   evidenceLoading,
   evidenceMode,
+  proposal,
   linkedIds,
   caseEvidence,
   acceptForm,
 }: {
   evidenceLoading: boolean;
   evidenceMode: DecideEvidenceMode;
+  proposal: ProposalRecord;
   linkedIds: string[];
   caseEvidence: EvidenceRecord[];
   acceptForm: TriageAcceptForm;
@@ -74,10 +99,14 @@ function renderAcceptEvidenceSlot({
     <acceptForm.Field
       name="evidenceIds"
       validators={{
-        onChangeListenTo: ["confidence"],
+        onChangeListenTo: ["confidence", "attestationText"],
         onChange: ({ value, fieldApi }) => {
-          const confidence = fieldApi.form.getFieldValue("confidence");
-          if (isConfirmedWithoutBundle(confidence, value, [], "")) {
+          const gate = gateForForm(proposal, linkedIds, {
+            confidence: fieldApi.form.getFieldValue("confidence"),
+            evidenceIds: value,
+            attestationText: fieldApi.form.getFieldValue("attestationText"),
+          });
+          if (gate.confirmedWithoutBundle) {
             return CONFIRMED_REQUIRES_EVIDENCE;
           }
           // oxlint-disable-next-line unicorn/no-useless-undefined -- TanStack Form: undefined = valid
@@ -101,9 +130,11 @@ function renderAcceptEvidenceSlot({
 
 function AcceptWarnings({
   acceptForm,
+  proposal,
   linkedIds,
 }: {
   acceptForm: TriageAcceptForm;
+  proposal: ProposalRecord;
   linkedIds: string[];
 }) {
   return (
@@ -115,24 +146,16 @@ function AcceptWarnings({
       })}
     >
       {({ confidence, evidenceIds, attestationText }) => {
-        const totalEvidence = totalEvidenceCount(
-          evidenceIds,
-          linkedIds,
-          attestationText
-        );
-        const confirmedWithoutBundle = isConfirmedWithoutBundle(
+        const gate = gateForForm(proposal, linkedIds, {
           confidence,
           evidenceIds,
-          linkedIds,
-          attestationText
-        );
-        const zeroEvidenceWarn =
-          confidence !== "confirmed" && totalEvidence === 0;
+          attestationText,
+        });
 
         return (
           <AcceptGateMessage
-            confirmedWithoutBundle={confirmedWithoutBundle}
-            zeroEvidenceWarn={zeroEvidenceWarn}
+            confirmedWithoutBundle={gate.confirmedWithoutBundle}
+            zeroEvidenceWarn={gate.zeroEvidenceWarn}
           />
         );
       }}
@@ -142,6 +165,7 @@ function AcceptWarnings({
 
 function AcceptControls({
   acceptForm,
+  proposal,
   linkedIds,
   caseEvidence,
   missingJobEvidenceCount,
@@ -150,6 +174,7 @@ function AcceptControls({
   showAttestation,
 }: {
   acceptForm: TriageAcceptForm;
+  proposal: ProposalRecord;
   linkedIds: string[];
   caseEvidence: EvidenceRecord[];
   missingJobEvidenceCount: number;
@@ -181,6 +206,7 @@ function AcceptControls({
         {renderAcceptEvidenceSlot({
           evidenceLoading,
           evidenceMode,
+          proposal,
           linkedIds,
           caseEvidence,
           acceptForm,
@@ -202,7 +228,11 @@ function AcceptControls({
           )}
         </acceptForm.Field>
       ) : null}
-      <AcceptWarnings acceptForm={acceptForm} linkedIds={linkedIds} />
+      <AcceptWarnings
+        acceptForm={acceptForm}
+        proposal={proposal}
+        linkedIds={linkedIds}
+      />
     </div>
   );
 }
@@ -297,7 +327,6 @@ export function TriageDecideFooter({
     linkedIds,
     rejecting,
   });
-  const needsConfidence = patchNeedsConfidence(proposalPatch(proposal));
   const acceptBusy = pending && view.decideMode === "accepting";
 
   if (view.showRejectComposer) {
@@ -329,6 +358,7 @@ export function TriageDecideFooter({
           view.showAcceptBand ? (
             <AcceptControls
               acceptForm={acceptForm}
+              proposal={proposal}
               linkedIds={linkedIds}
               caseEvidence={caseEvidence}
               missingJobEvidenceCount={missingJobEvidenceCount}
@@ -347,17 +377,11 @@ export function TriageDecideFooter({
           })}
         >
           {({ confidence, evidenceIds, attestationText }) => {
-            const gate = acceptGate(
-              gatedAcceptInput({
-                confidence,
-                evidenceIds,
-                linkedIds,
-                attestationText,
-                patch: proposalPatch(proposal),
-                needsConfidence,
-                identifierCollisions: proposal.identifierCollisions,
-              })
-            );
+            const gate = gateForForm(proposal, linkedIds, {
+              confidence,
+              evidenceIds,
+              attestationText,
+            });
 
             return (
               <>
