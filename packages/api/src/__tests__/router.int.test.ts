@@ -1,4 +1,5 @@
 import { ORPCError, createRouterClient } from "@orpc/server";
+import type { RouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { putCredentialSlotEffect, runDomain } from "@watchdog/core";
@@ -16,7 +17,7 @@ import { router } from "../router";
 
 function routerClient(
   context: Partial<ApiContext> = {}
-): ReturnType<typeof createRouterClient<typeof router>> {
+): RouterClient<typeof router> {
   const actor: ApiActor = {
     userId: TEST_ACTOR_ID,
     email: "agent@test.local",

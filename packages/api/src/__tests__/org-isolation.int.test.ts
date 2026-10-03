@@ -359,7 +359,7 @@ describe("organization isolation matrix", () => {
           b.questions.resolve({
             caseId,
             questionId: ids.questionA,
-            answer: "x",
+            resolvedNote: "x",
           }),
       ],
       [
@@ -684,7 +684,7 @@ describe("organization isolation matrix", () => {
           b.questions.resolve({
             caseId,
             questionId: ids.questionA,
-            answer: "x",
+            resolvedNote: "x",
           }),
       ],
       [
