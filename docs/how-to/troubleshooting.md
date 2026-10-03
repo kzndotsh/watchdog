@@ -47,11 +47,10 @@
 
 ## Next steps
 
-| Goal | Doc |
-| --- | --- |
-| Daily commands | [`local-dev.md`](local-dev.md) |
+| Goal                | Doc                            |
+| ------------------- | ------------------------------ |
+| Daily commands      | [`local-dev.md`](local-dev.md) |
 | Agent/CLI reference | [`agent-cli.md`](agent-cli.md) |
-| Journey status matrix | [`../explanation/scenarios.md`](../explanation/scenarios.md) |
 
 ## See also
 

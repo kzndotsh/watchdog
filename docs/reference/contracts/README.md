@@ -28,5 +28,4 @@ Runtime errors on the API/CLI/worker edge are tagged `NotFoundError` / `Conflict
 
 ## See also
 
-- Documentation charter: [`../../explanation/documentation.md`](../../explanation/documentation.md)
 - Tutorial: [`../../tutorials/first-investigation.md`](../../tutorials/first-investigation.md)

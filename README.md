@@ -185,7 +185,7 @@ Most server-side product logic runs on **[Effect](https://effect.website)** (v4)
 
 ### Organizations and tenancy
 
-Better Auth **organizations** bound the case graph: each Case row carries an `organization_id`; list/get/create/update/delete and search filter on the active org. Users create organizations themselves (onboarding, or the sidebar switcher when signup is open) or join by invitation (`/auth/accept-invitation/{id}`) with org role `admin` or `member`. Instance admins (`auth.user.role`, the first account) manage accounts under Settings → **Users**; org owners and admins invite under **Organization**. Missing org context on an API call is **403**, not a silent cross-org leak. Details: [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) · [`docs/explanation/scenarios.md`](docs/explanation/scenarios.md).
+Better Auth **organizations** bound the case graph: each Case row carries an `organization_id`; list/get/create/update/delete and search filter on the active org. Users create organizations themselves (onboarding, or the sidebar switcher when signup is open) or join by invitation (`/auth/accept-invitation/{id}`) with org role `admin` or `member`. Instance admins (`auth.user.role`, the first account) manage accounts under Settings → **Users**; org owners and admins invite under **Organization**. Missing org context on an API call is **403**, not a silent cross-org leak. Details: [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md).
 
 A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to Triage → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
 
