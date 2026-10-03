@@ -6,6 +6,9 @@ on:
   push:
     branches: [main, master]
   pull_request:
+    # ready_for_review is not a default type: without it a PR opened as a draft
+    # (jobs are skipped while draft) never gets CI after it is marked ready.
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 concurrency:
