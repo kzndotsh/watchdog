@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { Toaster } from "@/shared/ui/toast";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -9,9 +11,11 @@ vi.mock("@/auth/server", () => ({
 }));
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
-const useSelectActiveCaseMock = vi.hoisted(() =>
-  vi.fn(() => ({ mutate: vi.fn() }))
-);
+const setActiveCaseIdFn = vi.hoisted(() => vi.fn());
+
+vi.mock("@/domains/cases/cases.functions", () => ({
+  setActiveCaseIdFn,
+}));
 
 vi.mock("@/domains/cases/hooks/use-cases-context", () => ({
   useCasesContext: () => useCasesContextMock(),
@@ -35,10 +39,6 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
     }) => select({ location: { pathname: "/tasks", search: {} } }),
   };
 });
-
-vi.mock("@/domains/cases/hooks/use-select-active-case", () => ({
-  useSelectActiveCase: () => useSelectActiveCaseMock(),
-}));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
   bindCasesChangedInvalidation: vi.fn(),
@@ -101,77 +101,49 @@ vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
 
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
 
-const ACTIVE = {
+const ALPHA = {
   id: testId(10),
   slug: "alpha",
   name: "Alpha Case",
   description: null,
   allowThirdPartyEgress: false,
 };
+const BETA = {
+  id: testId(11),
+  slug: "beta",
+  name: "Beta Case",
+  description: null,
+  allowThirdPartyEgress: false,
+};
 
-function renderCaseSwitcher() {
-  const client = new QueryClient();
-  return render(
-    <QueryClientProvider client={client}>
-      <CaseSwitcher />
-    </QueryClientProvider>
-  );
-}
-
-describe("CaseSwitcher", () => {
-  it("prompts to create a case when none exist", () => {
+describe("CaseSwitcher switching", () => {
+  it("shows the shared switch failure copy when the server rejects the switch", async () => {
+    setActiveCaseIdFn.mockRejectedValueOnce(
+      Object.assign(new Error("Internal server error"), { status: 500 })
+    );
     useCasesContextMock.mockReturnValue({
-      casesCtx: { active: null, cases: [] },
-      cases: [],
-      active: null,
+      casesCtx: { active: ALPHA, cases: [ALPHA, BETA] },
+      cases: [ALPHA, BETA],
+      active: ALPHA,
       pending: false,
       loadError: null,
       retry: vi.fn(),
       placeholder: false,
     });
-
-    renderCaseSwitcher();
-    expect(screen.getByText("Create a case…")).toBeInTheDocument();
-    expect(screen.queryByText("Overview")).not.toBeInTheDocument();
-    expect(useCasesContextMock).toHaveBeenCalled();
-  });
-
-  it("shows the active case name when cases exist", () => {
-    useCasesContextMock.mockReturnValue({
-      casesCtx: { active: ACTIVE, cases: [ACTIVE] },
-      cases: [ACTIVE],
-      active: ACTIVE,
-      pending: false,
-      loadError: null,
-      retry: vi.fn(),
-      placeholder: false,
+    const client = new QueryClient({
+      defaultOptions: { mutations: { retry: false } },
     });
+    render(
+      <QueryClientProvider client={client}>
+        <Toaster />
+        <CaseSwitcher />
+      </QueryClientProvider>
+    );
 
-    renderCaseSwitcher();
-    expect(screen.getAllByText("Alpha Case").length).toBeGreaterThan(0);
-    expect(screen.getByText("Overview")).toBeInTheDocument();
-    expect(screen.getByText("Entities")).toBeInTheDocument();
-    expect(useSelectActiveCaseMock).toHaveBeenCalled();
-  });
+    await userEvent.click(screen.getByRole("button", { name: /Beta Case/ }));
 
-  it("shows a retry banner when the cases query fails", () => {
-    const retry = vi.fn();
-    useCasesContextMock.mockReturnValue({
-      casesCtx: undefined,
-      cases: [],
-      active: null,
-      pending: false,
-      loadError: "Cases unavailable",
-      retry,
-      placeholder: false,
-    });
-
-    renderCaseSwitcher();
-    expect(screen.getByText("Cases unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
-    expect(screen.queryByText("Create a case…")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    expect(retry).toHaveBeenCalledTimes(1);
+    expect(
+      await screen.findByText("Couldn't switch Case. Try again.")
+    ).toBeInTheDocument();
   });
 });

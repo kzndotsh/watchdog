@@ -8,24 +8,16 @@ import {
 } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
+import { healActiveCaseFn } from "@/domains/cases/cases.functions";
 import { CaseOverview } from "@/domains/cases/components/case-overview";
 import { getActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { warmCaseOverviewQueries } from "@/domains/cases/lib/prefetch-case-overview";
-import {
-  caseByIdQuery,
-  caseBySlugQuery,
-  casesContextQuery,
-  casesKeys,
-} from "@/domains/cases/queries";
-import {
-  setActiveCaseIdInputSchema,
-  type CaseRecord,
-  type CasesContext,
-} from "@/domains/cases/types";
+import { caseByIdQuery, caseBySlugQuery } from "@/domains/cases/queries";
+import type { CaseRecord } from "@/domains/cases/types";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
 import { RouteNotFoundCenter } from "@/shared/layout/route-not-found-center";
+import { finalizeActiveCaseSwitch } from "@/shared/lib/active-case-switch";
 import {
   normalizeEntitySlug,
   normalizeRouteSegment,
@@ -96,51 +88,29 @@ function CaseOverviewPage() {
   return <CaseOverview caseId={caseRow.id} />;
 }
 
-function isCurrentOverviewSlug(caseSlug: string): boolean {
-  if (typeof window === "undefined") return true;
-  const path = window.location.pathname;
-  return (
-    path === `/cases/${caseSlug}` || path.startsWith(`/cases/${caseSlug}/`)
-  );
-}
-
-function healAborted(epoch: number, caseSlug: string): boolean {
-  return epoch !== getActiveCaseHealEpoch() || !isCurrentOverviewSlug(caseSlug);
-}
-
-/** Cookie follows `/cases/$slug`. Abort if a newer switch already moved Active Case. */
+/**
+ * Cookie follows `/cases/$slug`. The server compares and writes (healActiveCaseFn); the
+ * client only settles its caches through the shared switch helper. An intent preload never
+ * heals, and a newer switch (epoch bump) wins over a stale loader.
+ */
 async function healActiveCaseToOverview(
   queryClient: QueryClient,
   caseRow: CaseRecord,
-  caseSlug: string
+  preload: boolean
 ): Promise<void> {
-  if (!isCurrentOverviewSlug(caseSlug)) return;
+  if (preload) return;
 
   const epoch = getActiveCaseHealEpoch();
-  const ctx = await ensureAppQueryData(queryClient, casesContextQuery());
-  if (healAborted(epoch, caseSlug)) return;
+  const { changed } = await healActiveCaseFn({ data: { caseId: caseRow.id } });
+  if (!changed || epoch !== getActiveCaseHealEpoch()) return;
 
-  if (ctx.active?.id === caseRow.id) {
-    return;
-  }
-
-  await setActiveCaseIdFn({
-    data: setActiveCaseIdInputSchema.parse({ caseId: caseRow.id }),
-  });
-  if (healAborted(epoch, caseSlug)) return;
-
-  await queryClient.invalidateQueries({
-    queryKey: casesKeys.context(),
-  });
-  queryClient.setQueryData<CasesContext>(casesKeys.context(), (prev) =>
-    prev ? { ...prev, active: caseRow } : prev
-  );
+  await finalizeActiveCaseSwitch(queryClient, caseRow);
 }
 
 export const Route = createFileRoute("/_protected/cases/$caseSlug")({
   validateSearch: caseOverviewSearchSchema,
   loaderDeps: ({ search }) => ({ tab: search.tab }),
-  loader: async ({ context: { queryClient }, params, deps }) => {
+  loader: async ({ context: { queryClient }, params, deps, preload }) => {
     const caseSlug = normalizeEntitySlug(params.caseSlug);
     if (caseSlug === undefined) {
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs
@@ -177,7 +147,7 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
 
     // Legacy overview tabs → first-class Active-Case routes.
     if (deps.tab) {
-      await healActiveCaseToOverview(queryClient, caseRow, caseSlug);
+      await healActiveCaseToOverview(queryClient, caseRow, preload);
       // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router redirect() throws
       throw redirect({
         to: LEGACY_TAB_REDIRECT[deps.tab],
@@ -186,7 +156,7 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
     }
 
     // Heal Active Case cookie to match the overview URL.
-    await healActiveCaseToOverview(queryClient, caseRow, caseSlug);
+    await healActiveCaseToOverview(queryClient, caseRow, preload);
 
     queryClient.setQueryData(caseByIdQuery(caseRow.id).queryKey, caseRow);
     warmCaseOverviewQueries(queryClient, caseRow.id);

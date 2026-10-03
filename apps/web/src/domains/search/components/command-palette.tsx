@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
+import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { useSearchUi } from "@/domains/search/hooks/use-search-ui";
 import {
   searchEvidenceHitLabel,
@@ -19,7 +20,6 @@ import type { AppAction } from "@/shared/lib/app-action";
 import { useRegisteredPaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
-import { useSelectActiveCase } from "@/shared/lib/use-select-active-case";
 import { ActionShortcutChord, MENU_KBD_CLASS } from "@/shared/ui/action-list";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import {
