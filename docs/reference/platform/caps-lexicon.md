@@ -13,9 +13,9 @@ Everything in this page is **guidance** unless named here.
 | Playbook ids: kebab-case, no dots, first token === `seedKinds[0]`, at least two Caps | `packages/caps/src/playbooks/__tests__/naming.test.ts` |
 | Cap ids are `<category>.<axis>.<method>` (3 segments), lowercase snake_case, path mirrors id | nothing: `CapabilityDef.id` is a plain `string` and no test checks shape. `evidence.harvest` (2 segments) is the one exception today |
 | Method vocabulary, categories, D1-D5, ship gates | review |
-| Refuse words below | `pnpm check:agents:strict` bans only `Scratch`, `Door A`, `Candidate theater`, `wd promote`, and only in `AGENTS.md` files. The rest is review |
+| Refuse words below | `pnpm check:agents:strict` bans the `_Banned_` terms of [`GLOSSARY.md`](../../../GLOSSARY.md), and only in `AGENTS.md` files. The rest is review |
 
-Refuse in UI, docs and Cap titles: module · analyzer · neuron · enricher · transform · connector · Mutation · Scratch · Candidate · Promote. UI says **Cap**; SPI may say `CapabilityDef`.
+Refuse in UI, docs and Cap titles: module · analyzer · neuron · enricher · transform · connector, plus the retired terms and `_Avoid_` words in [`GLOSSARY.md`](../../../GLOSSARY.md). UI says **Cap**; SPI may say `CapabilityDef`.
 
 ## Pre-code decisions (locked)
 
