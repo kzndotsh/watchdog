@@ -2,54 +2,37 @@
 
 > Scope: `packages/caps` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-Cap implementations, registry, and Playbooks. Caps never write the Graph — `interpret` → Proposal only; **Triage Accept** (or Dossier) applies Graph writes.
+Cap implementations, the registry, Playbooks, and the Cap SPI (`@watchdog/caps/sdk`, `src/sdk/`). Caps never write the Graph: `interpret` returns Proposal ops only, and **Triage Accept** (or Dossier) applies them. New Cap: load `/create-cap`. Naming, layers, and ship gates D1–D5: [`caps-lexicon`](../../docs/reference/platform/caps-lexicon.md).
 
 ## Commands
 
-| Task | Command |
+| Task                    | Command                                  |
+| ----------------------- | ---------------------------------------- |
+| Typecheck (src + tests) | `pnpm --filter @watchdog/caps typecheck` |
+| Regen catalog           | `pnpm generate:caps`                     |
+| Cap unit tests          | `pnpm test:unit`                         |
+
+## Rules
+
+| Rule | Enforced by |
 | --- | --- |
-| Typecheck | `pnpm --filter @watchdog/caps typecheck` (workspace TypeScript **7.0.2**; keep the exact pin in `package.json`, do not float `^6`) |
-| Typecheck tests | included in `pnpm --filter @watchdog/caps typecheck` (`tsconfig.test.json`; see [`testing/standards.md`](../../docs/contributing/testing/standards.md#tests-are-typechecked)) |
-| Regen catalog | `pnpm generate:caps` |
-| Cap unit tests | `pnpm test:unit` |
-
-## Boundaries
-
-| Do | Don’t |
-| --- | --- |
-| `run` returns Effect `CapRun` (tests use `runCap`); secrets via `ctx.getCredential` (Effect) | Import `@watchdog/db` or apps; put secrets in `Job.input`; a Promise-typed `run` on `CapabilityDef` |
-| Pure `interpret(report, opts)` → Proposal ops | Hand-edit `capabilities.gen.json` |
-| Set `timeoutMs` on the Cap (drives abort / expire / stale reclaim) | Hardcode those timeouts in worker/core |
-| Import Caps from `../registry` inside `playbooks/` | Import via `@watchdog/caps` barrel from playbooks |
-
-## SPI (`@watchdog/caps/sdk`, `src/sdk/`)
-
-Merged from the former `@watchdog/cap-sdk`. SPI for Caps: `defineCapability`, CapContext, interpret types. No Graph / DB / network helpers (caps has no `@watchdog/db` dependency; keep it that way). `core` imports the SPI (types, `runCap`) from the subpath `@watchdog/caps/sdk` and the catalog from `@watchdog/caps`; code inside `packages/caps` imports it by relative path (`../../sdk`) because Vite does not resolve package self-references.
-
-`run` is `Effect<CapRunResult, ToolsTag, CapServices>` (`CapRun`). `CapServices` is `HttpClient` (`toolsHttpClientLayer` provided by `runCap` / job collect). `interpret` stays pure/sync. Cap I/O on `CapContext` is Effect (`uploadArtifact`, `getCredential`, `hasCredential`, `readArtifact`); optional slots use `optionalCapCredential`. `signal` stays AbortSignal.
-
-Cap `run()` tests call `runCap` (Promise edge; provides HttpClient; `src/sdk/run.ts` is an allowed edge in `check-effect-edges`). Job collect yields `cap.run(ctx)` under `toolsHttpClientLayer` — do not wrap leftover async bodies; Caps are Effect.
-
-- `handoff?: (report) => JobHandoff | undefined` is pure; core persists bags on Job success (including cache hits). Independent of `produces`.
-- `CapIoKind` includes `hash` (playbook seed / bind). Fail-closed Identifier filtering lives in caps `interpret-identifier-batches`; the SPI does not implement it.
-- SPI unit tests: `src/sdk/__tests__/`.
+| `run` returns an Effect (`CapRun`: `Effect<CapRunResult, ToolsTag, CapServices>`); `interpret(report, opts)` is pure/sync and returns Proposal ops. Cap I/O on `CapContext` (`uploadArtifact`, `getCredential`, `readArtifact`, …) is Effect | types (`src/sdk/define.ts`) |
+| Secrets via `ctx.getCredential`; never in `Job.input` or logs. Caps have no `@watchdog/db` dependency | `package.json` + knip for the dependency; the rest is guidance |
+| Set `timeoutMs` on the Cap; it drives abort/expire/stale reclaim, so do not hardcode those timeouts in worker/core | guidance |
+| Never hand-edit `capabilities.gen.json`; run `pnpm generate:caps` | CI drift job (`ci.yml`) |
+| Playbook ids are kebab-case and the first token equals `seedKinds[0]`; Cap ids keep dots | `src/playbooks/__tests__/naming.test.ts` (ids), nothing for Cap ids |
+| Inside `playbooks/`, import Caps from `../registry`, not the `@watchdog/caps` barrel | guidance |
+| Every Collect Cap has `__tests__/interpret.test.ts`; mock HTTP with `@watchdog/test-kit/http`, never `msw` | guidance |
+| Tools (`@watchdog/tools`) own producer Zod and fetch/parse; Caps re-export those schemas from Cap-local `report-schema.ts` (not from `interpret.ts`), own artifact upload and `interpret` | guidance |
 
 ## Gotchas
 
-- Layout: one folder per Cap id (dots → path segments). Minimal Collect: `network/dns.lookup/{cap.ts, interpret.ts, input.ts, report-schema.ts}`. Fat Caps add sibling modules (e.g. `url.enrich/{fetch-bytes, ingest-page, wayback, types}.ts`). Shared: Process → `evidence/lib/` (`draft-to-patch-ops.ts` — `draftToPatchOps` returns `[]` on bad ctx; `draftToOutcome` owns failed/empty summaries); Collect → `lib/collect/` (`define-collect-cap.ts` — `run` is `Effect.gen`; `fetch` returns Effect (`ToolsTag`); `uploadJsonReportPair` is Effect; `upload-json-report-pair.ts`, `interpret-observation-claim.ts` — blank observation text with a valid entity uses `emptyTextSummary` (default `No observation to attach`), not `noEntitySummary`; invalid `entityId` on Collect interpret returns `INVALID_COLLECT_ENTITY_SUMMARY` in the result; Process interpret throws on malformed ctx ids — see `entity-id-failure-contract.test.ts`; `query-seed-batches.ts` — emit `validatedIdentifierValue` normalized seeds (collect-aligned with Process); `identifier-normalization-contract.test.ts` locks `querySeedBatches` / `domainValuesBatch` / `ipValuesBatch` to those outputs; `validated-identifier-value.ts` — IPv6 values canonicalize to compressed lowercase via `canonicalIpLiteral` so vendor spellings dedupe with seeds; `filter-related-identifiers.ts` — drop related values that normalize to the same identifier as the query seed (IPv6 spellings, domain case); `interpret-identifier-batches.ts` — skip invalid Identifier values via `validatedIdentifierValue` (collect-aligned with Process `draft-to-patch-ops`), dedupe across batches, and when `limit` is omitted apply type-specific defaults from `query-seed-batches.ts` (domain 80, url/email/handle 40, other 40); `network.dns.lookup` / `network.mnemonic.lookup` interpret — equivalent IPv6 A/AAAA answers must not produce duplicate ip Identifiers; `network.mnemonic.lookup` interpret — IP-kind observation claims note related-IP truncation as well as domain truncation; `interpret-whois-snapshot.ts` — `interpretTypedIdentifiers` is a thin re-export); harvest regex → `evidence/harvest/extractors/` + `HARVEST_EXTRACTORS`; harvest `pushId` uses `validatedIdentifierValue` so Process drafts dedupe IPv6 like Collect; `uri-schemes` strips `bitcoin:` / `ethereum:` / `monero:` payloads before `pushId` (`validBtc` on bitcoin). Quoted forum tails: mask spans (`quote-strip.ts`), don’t chop to EOF. Do not emit harvest Questions that tell the investigator to run another Cap (e.g. oEmbed). `evidence.file.analyze` / `evidence.eml.analyze` `run()` fail when there is no `uri` and empty snapshot text (Job fails at Collect, not interpret throw). Harvest / file.analyze / eml.analyze / extract.ai / url.enrich `run` is `Effect.gen`. Prefer vendor `*Effect` helpers (e.g. `fetchShodanHostEffect`) when the Cap `fetch` is already an Effect.
-- **Naming / ship gates:** [`docs/reference/platform/caps-lexicon.md`](../../docs/reference/platform/caps-lexicon.md) — id/title/kind layers, method vocabulary, D1–D5 (incl. breach credential bodies), passive=`useCases` Passive/Footprint vs active=`invasive`+Active, one HTTP-surface Cap, public-vs-paid split. Collect `input.ts` seeds use `@watchdog/schemas` `*SeedSchema` helpers (`hostSeedSchema`, `ipSeedSchema`, `emailSeedSchema`, `ipOrHostSeedSchema`, `hashSeedSchema`, `dehashedQuerySeedSchema`, `pgpQuerySeedSchema`, other breach/IOC variants) — not bare `nonEmptyTrimmed`. Seeds normalize via Zod transforms at parse time; `toCapDescriptor` emits JSON Schema from the input shape (`io: input`, `unrepresentable: any`) so `pnpm generate:caps` stays green.
-- Playbook ids are kebab-case; first token === `seedKinds[0]`; Cap ids keep dots. Seeds: host/url/evidence/ip/email/hash/handle. Bind fills the next Job from seed, `evidenceIds`, or Cap `handoff` bags when the step is created (not Proposals). Fan-out inserts capped sibling Jobs (`playbookFanIndex`); empty fan-out skips (finish), not abandon. Join before the next recipe step. Shipped: `host-footprint`, `host-posture`, plus reputation/history/ip/email/hash/handle books, bind (`host-contacts`, `url-resolve`, `evidence-file`), `host-enumerate` (CT→DNS max 25). Do not fold harvest+extract.ai or act Caps into default books. `planPlaybook` validates the whole recipe and emits step 0 only; later steps are created after the previous Job succeeds. New playbook Jobs are always `queued` — `blocked` remains in job vocab for historical rows only. `decidePlaybookAdvance` still treats all-`blocked` steps as releasable (`blockedOnly` shim in `advance.ts`); remove that branch once no in-flight runs carry pre-inserted `blocked` rows.
-- Authoring checklist: fill interpret target · named source · credential · passive/active · egress before registering a Cap; then `pnpm generate:caps`.
-- **Breach corpus (D5):** paid dump Caps may put recovered passwords/hashes in Evidence + Claim samples. Do not strip credential fields “for safety.” Still never `ctx.log` those bodies. Metadata-only vendors (HIBP / Hudson Rock) stay counts-only because their APIs do not return plaintext. HIBP interpret claims use `breachCount` for totals even when the Evidence snapshot truncates breach rows.
-- Tools (`@watchdog/tools`) return dumb fetch/parse results and own **producer Zod** (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`) — no PatchOp / Graph / Cap SPI. Caps re-export those schemas from Cap-local `report-schema.ts` only (not from `interpret.ts`), own artifact upload, and `interpret`. HTTP/Wayback helpers (`fetchBytesEffect`, `closestWaybackTimestampEffect`, `fetchOembedEffect`) take UA/limits as params; Cap OPSEC constants stay in Cap `types.ts`. `url.enrich` ingest/CDX wrappers are Effect-first.
-- DNS/WHOIS Collect Caps call `normalizeHost` before resolve/lookup. DNS interpret: A/AAAA as `ip`; NS/MX in the Claim only. WHOIS interpret: `interpretWhoisSnapshot` (Claim + optional expiry Event). Typed snapshots: annotate `WhoisSnapshot` / `DnsRecords` in Cap `run` (tools inferred types).
-- **Tests:** every Collect Cap keeps `__tests__/interpret.test.ts`. Do not add 58 `run()` suites — `itRunsCollectCap` from `src/testing` covers three Caps; harvest / extract.ai / url.enrich / file.analyze / eml.analyze have dedicated `run.test.ts`. Process report bodies live in Cap-local `report-schema.ts` (schema only; no separate exported report type alias). HTTP mocks: `@watchdog/test-kit/http`, never `msw`.
+- `core` imports SPI types and `runCap` from `@watchdog/caps/sdk` and the catalog from `@watchdog/caps`. Inside this package import the SDK by relative path (`../../sdk`): Vite does not resolve package self-references.
+- `runCap` is the Promise edge for `run()` tests (it provides `toolsHttpClientLayer`; allowlisted in `check-effect-edges`). Job collect yields `cap.run(ctx)` directly. `itRunsCollectCap` (`src/testing`) covers the thin Collect Caps; harvest, extract.ai, url.enrich, file.analyze, and eml.analyze have dedicated `run.test.ts`.
+- Layout: one folder per Cap id, dots → path segments (`network/dns.lookup/{cap,interpret,input,report-schema}.ts`); shared helpers in `evidence/lib/` (Process) and `lib/collect/` (Collect, `defineCollectCap`). Collect `input.ts` seeds use the `@watchdog/schemas` `*SeedSchema` helpers, not bare `nonEmptyTrimmed`; seeds normalize at parse time, and `toCapDescriptor` must emit JSON Schema from the input shape so `pnpm generate:caps` stays green.
+- Collect interpret emits `validatedIdentifierValue`-normalized identifiers so Collect and Process dedupe the same way (IPv6 canonicalized, related values equal to the query seed dropped). Process interpret throws on malformed ctx ids; Collect returns `INVALID_COLLECT_ENTITY_SUMMARY`.
+- Playbooks: `planPlaybook` validates the whole recipe and emits step 0 only; later steps are created after the previous Job succeeds. Bind fills the next Job from the seed, `evidenceIds`, or Cap `handoff` bags (pure `handoff?: (report) => JobHandoff | undefined`, persisted by core on success including cache hits). Fan-out inserts capped sibling Jobs (`playbookFanIndex`); an empty fan-out finishes rather than abandons. Do not fold harvest + extract.ai or act Caps into default books. Legacy `blocked` rows: see [`jobs.md`](../../.agents/skills/effect/references/jobs.md).
+- Breach corpus (D5): paid dump Caps may put recovered credentials in Evidence and Claim samples; do not strip them "for safety", and never `ctx.log` them. HIBP / Hudson Rock stay counts-only because their APIs return no plaintext.
+- DNS/WHOIS Collect Caps call `normalizeHost` before resolving.
 
-## See also / External References
-
-| Need | File |
-| --- | --- |
-| Cap naming / lexicon | [`docs/reference/platform/caps-lexicon.md`](../../docs/reference/platform/caps-lexicon.md) |
-| Job runner | [`packages/core/AGENTS.md`](../core/AGENTS.md) |
-| Dumb helpers | [`packages/tools/AGENTS.md`](../tools/AGENTS.md) |
-| Platform architecture | [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md) |
+See also: [`packages/core/AGENTS.md`](../core/AGENTS.md) · [`packages/tools/AGENTS.md`](../tools/AGENTS.md) · [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md).

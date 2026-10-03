@@ -2,7 +2,9 @@
 /**
  * Durable-docs gate: recursive docs/** link + anchor checks, root markdown
  * (README/ROADMAP/CLAUDE), AGENTS.md links at fail level, docs/README.md index
- * coverage, and optional leaf line-budget warns.
+ * coverage, the conventions table (docs/reference/platform/conventions.md:
+ * every row has an enforced-by cell and a valid status, named scripts and
+ * test files exist), and optional leaf line-budget warns.
  *
  * --strict (or CHECK_DOCS_STRICT=1): exit 1 on any fail.
  * --fail-length: treat leaf line-budget exceeds as fails (D6).
@@ -153,9 +155,7 @@ async function checkMarkdownFile(absPath, opts) {
   const lines = text.split("\n").length;
 
   if (opts.checkLength) {
-    const allow =
-      text.includes("<!-- docs:allow-length -->") ||
-      rel === "docs/explanation/scenarios.md";
+    const allow = text.includes("<!-- docs:allow-length -->");
     if (!allow) {
       if (lines > 600) {
         note(
@@ -251,6 +251,175 @@ async function checkReadmeIndex() {
   }
 }
 
+const CONVENTIONS_PATH = "docs/reference/platform/conventions.md";
+const CONVENTION_HEADER = [
+  "Rule",
+  "Scope",
+  "Stated in",
+  "Enforced by",
+  "Status",
+];
+const STATUSES = new Set(["enforced", "baselined", "guidance"]);
+/** Backticked enforced-by tokens shaped like a package script (`check:size`, `ds:check`). */
+const SCRIPT_TOKEN = /^(?:check|validate|test|ds):[\w:-]+$/;
+const TEST_FILE_TOKEN = /\/.+\.(?:test|spec)\.tsx?$/;
+
+/**
+ * Script names defined by one package.json ([] when absent or unreadable).
+ * @param {string} file
+ * @returns {Promise<string[]>}
+ */
+async function readScriptNames(file) {
+  if (!existsSync(file)) return [];
+  try {
+    /** @type {unknown} */
+    const parsed = JSON.parse(await readFile(file, "utf-8"));
+    const scripts =
+      typeof parsed === "object" && parsed !== null && "scripts" in parsed
+        ? parsed.scripts
+        : undefined;
+    return typeof scripts === "object" && scripts !== null
+      ? Object.keys(scripts)
+      : [];
+  } catch {
+    note("fail", `${path.relative(root, file)}: unreadable package.json`);
+    return [];
+  }
+}
+
+/**
+ * Names of every script in the root package.json and each apps/* / packages/* one.
+ * @returns {Promise<Set<string>>}
+ */
+async function collectScriptNames() {
+  const groups = await Promise.all(
+    ["apps", "packages"].map(async (top) => {
+      const abs = path.join(root, top);
+      if (!existsSync(abs)) return [];
+      const names = await readdir(abs);
+      return names.map((name) => path.join(abs, name, "package.json"));
+    })
+  );
+  const manifests = [path.join(root, "package.json"), ...groups.flat()];
+  const names = await Promise.all(manifests.map(readScriptNames));
+  return new Set(names.flat());
+}
+
+/**
+ * Split a markdown table row into trimmed cells (no escaped-pipe support: rows are terse).
+ * @param {string} line
+ * @returns {string[]}
+ */
+function tableCells(line) {
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((c) => c.trim());
+}
+
+/**
+ * Problems with one conventions row: [rule, scope, stated in, enforced by, status].
+ * @param {string[]} cells
+ * @param {Set<string>} scripts
+ * @returns {string[]}
+ */
+function conventionRowProblems(cells, scripts) {
+  if (cells.length !== 5) {
+    return [
+      `expected 5 cells (${CONVENTION_HEADER.join(", ").toLowerCase()}), got ${cells.length}; escaped pipes (\\|) are not supported inside a cell`,
+    ];
+  }
+  const rule = cells[0] ?? "";
+  const enforcedBy = cells[3] ?? "";
+  const status = cells[4] ?? "";
+  /** @type {string[]} */
+  const problems = [];
+  if (!rule) problems.push("empty rule cell");
+  if (!enforcedBy) return [...problems, "empty enforced-by cell"];
+  if (!STATUSES.has(status)) {
+    problems.push(
+      `invalid status "${status}" (use enforced, baselined or guidance)`
+    );
+  }
+  if (enforcedBy === "guidance") {
+    if (status === "enforced" || status === "baselined") {
+      problems.push(`status "${status}" but enforced-by is guidance`);
+    }
+    return problems;
+  }
+  for (const span of enforcedBy.matchAll(/`([^`]+)`/g)) {
+    // `pnpm --filter @watchdog/db check:repos` names the script check:repos.
+    const words = (span[1] ?? "")
+      .split(/\s+/)
+      .filter((w) => w !== "pnpm" && !w.startsWith("-") && !w.startsWith("@"));
+    const token = words.at(-1) ?? "";
+    if (SCRIPT_TOKEN.test(token) && !scripts.has(token)) {
+      problems.push(`script "${token}" is not defined in any package.json`);
+    } else if (
+      TEST_FILE_TOKEN.test(token) &&
+      !existsSync(path.join(root, token))
+    ) {
+      problems.push(`file "${token}" does not exist`);
+    }
+  }
+  return problems;
+}
+
+/**
+ * Conventions table gate: every table has the exact header, and every rule row names
+ * what enforces it and its status.
+ * A row claiming `enforced` or `baselined` cannot say `guidance`; named scripts
+ * and test files must exist.
+ */
+async function checkConventions() {
+  const abs = path.join(root, CONVENTIONS_PATH);
+  if (!existsSync(abs)) {
+    note(
+      "fail",
+      `${CONVENTIONS_PATH}: missing (the conventions table is required)`
+    );
+    return;
+  }
+  const scripts = await collectScriptNames();
+  const text = await readFile(abs, "utf-8");
+  let tables = 0;
+  let inTable = false;
+  let headerOk = false;
+  for (const line of text.split("\n")) {
+    if (!line.trim().startsWith("|")) {
+      inTable = false;
+      continue;
+    }
+    const cells = tableCells(line);
+    if (!inTable) {
+      // First pipe line after prose is a table header: every table on the page must match.
+      inTable = true;
+      tables += 1;
+      headerOk = CONVENTION_HEADER.every((h, i) => cells[i] === h);
+      if (!headerOk || cells.length !== CONVENTION_HEADER.length) {
+        headerOk = false;
+        note(
+          "fail",
+          `${CONVENTIONS_PATH}: table header must be exactly | ${CONVENTION_HEADER.join(" | ")} | in that order → ${line.trim()}`
+        );
+      }
+      continue;
+    }
+    if (!headerOk || cells.every((c) => /^:?-{3,}:?$/.test(c))) continue;
+    for (const why of conventionRowProblems(cells, scripts)) {
+      note("fail", `${CONVENTIONS_PATH}: ${why} → ${line.trim()}`);
+    }
+  }
+  if (tables === 0) {
+    note(
+      "fail",
+      `${CONVENTIONS_PATH}: no conventions table (header must be | ${CONVENTION_HEADER.join(" | ")} |)`
+    );
+  }
+}
+
 async function main() {
   const docLeaves = await walkMd(path.join(root, "docs"));
 
@@ -260,7 +429,7 @@ async function main() {
     )
   );
 
-  const rootMd = ["README.md", "ROADMAP.md", "CLAUDE.md"]
+  const rootMd = ["README.md", "ROADMAP.md", "CLAUDE.md", "GLOSSARY.md"]
     .map((n) => path.join(root, n))
     .filter((p) => existsSync(p));
   await Promise.all(
@@ -288,6 +457,7 @@ async function main() {
   );
 
   await checkReadmeIndex();
+  await checkConventions();
 
   let warns = 0;
   let fails = 0;

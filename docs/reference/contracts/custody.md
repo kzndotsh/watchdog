@@ -17,6 +17,8 @@ Platform Accept tiers: **`unverified` / `possible` / `confirmed`**.
 - Identifier collisions **warn** (Alert + chip); Accept still allowed.
 - Custody helpers live in `@watchdog/policy` (`assertPatchGates`, `patchNeedsConfidence`): pure, DB-free. Browser UI imports `patchNeedsConfidence` from `@watchdog/policy/patch-needs-confidence` only (package root pulls Effect-tagged gates into the client).
 
+Enforced by: the patch schema rejects `confidence` on claim/identifier/edge ops (`packages/schemas/src/patch.ts`), `assertPatchGates` in `@watchdog/policy`, the core write gate (`validateIdentifierWrite`), and CLI custody envelopes (`apps/cli`). Collisions are annotated on `ProposalRecord.identifierCollisions` by core when listing Proposals. The browser-import rule is enforced only by the package exports map; no lint rule.
+
 ## Breach caveat
 
-Treat a breach hit as evidence that a record exists in a dump, not as proof the person controls the account. Adversarial-test every identity link before proposing it. Cap D5: [`../platform/caps-lexicon.md`](../platform/caps-lexicon.md).
+Treat a breach hit as evidence that a record exists in a dump, not as proof the person controls the account. Adversarial-test every identity link before proposing it (guidance; nothing enforces it). Cap D5: [`../platform/caps-lexicon.md`](../platform/caps-lexicon.md).

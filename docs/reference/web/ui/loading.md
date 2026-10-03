@@ -1,136 +1,46 @@
 # UI: loading and skeletons
 
-This page defines skeletons, sixteen rules, route patterns, and the loading inventory.
-<!-- docs:allow-length -->
+How a page loads without flashing, blanking, or lying. Which route uses which loader and pending component is in [`domains.md`](../domains.md#page-ownership); warm-helper parity is in [`data.md`](../data.md). Only two things here are mechanically enforced: the import bans in [Enforcement](#enforcement) and the router thresholds (test `apps/web/src/__tests__/router.test.ts`). Everything else is `guidance`.
 
-## Loading skeletons
+## Doctrine
 
-Hand-built skeleton components in [`skeletons.tsx`](../../../../apps/web/src/shared/ui/skeletons.tsx) mirror the real layout, so pending-to-loaded transitions avoid layout shift. Domains wrap **data slots only** with `PendingRegion` from [`pending-region.tsx`](../../../../apps/web/src/shared/ui/pending-region.tsx). It uses `LoadingRegion` plus a `fallback` skeleton when `loading` is true. **`DataTable` is the exception**: see [`tables.md`](tables.md); do not wrap table bodies in `PendingRegion`.
+Thin loader, warm helper, in-page pending region. A loader awaits identity only; lists are warmed with `void queryClient.prefetchQuery(...)` in a `warm*Queries` helper; the data slot shows its own pending state. `useQuery` returns pending on the server and fetches after hydration, so a thin loader trades a fully populated first paint for responsive client navigation. That trade is deliberate.
 
-| Piece | Path |
-| --- | --- |
-| Gate | [`pending-region.tsx`](../../../../apps/web/src/shared/ui/pending-region.tsx): `loading` + `label` + `fallback` |
-| Shapes | [`skeletons.tsx`](../../../../apps/web/src/shared/ui/skeletons.tsx): `*Skeleton` fallbacks + `*SkeletonLayout` building blocks |
-| Stack tabs | [`stack-pending-fallback.tsx`](../../../../apps/web/src/shared/ui/stack-pending-fallback.tsx): `stackPendingFallback(sections?)` |
-| Router floor | [`default-route-pending-shell.tsx`](../../../../apps/web/src/shared/ui/default-route-pending-shell.tsx) (`RoutePendingSkeletonLayout`: title bar + `StackBodySkeleton` sections) |
+Router: `defaultPendingMs` 400, `defaultPendingMinMs` 500, `defaultPendingComponent` (minimal shell floor), `defaultErrorComponent: RouteError` (retry via `router.invalidate()`).
 
-Share row counts and grid templates between live UI and skeletons through exported constants (for example, `COLLECT_QUEUE_SKELETON_ROW_COUNT`). Status-chip placeholders import `CHIP_SIZE_CLASS` from [`chip.tsx`](../../../../apps/web/src/shared/ui/chip.tsx) so skeleton chips match live `Chip` height and radius. **`PendingRegion` fallbacks use `*Skeleton`;** inner blocks are `*SkeletonLayout`. For an unknown shape, use a small centered spinner (`InlineLoading`), not a misleading skeleton.
+Building blocks (all under `apps/web/src/shared/ui/`): `PendingRegion` (`loading` + `label` + `fallback`, built on `LoadingRegion`), hand-built `*Skeleton` fallbacks and `*SkeletonLayout` blocks in `skeletons.tsx`, `stackPendingFallback()` for stack tabs, and `RoutePendingSkeletonLayout` as the router floor. Share row counts and grid templates between live UI and skeleton through exported constants, and use `CHIP_SIZE_CLASS` for chip placeholders. `DataTable` is the exception: it takes `pending` and never a `PendingRegion` ([`tables.md`](tables.md)). Button or mutation wait uses `loading` / `InlineLoading` / `Spinner`, not a page skeleton. No data is `EmptyState` / `DetailEmpty`, never a skeleton.
 
-## Loading & hydration (implementation)
+## Rules
 
-**SSR split:** `useQuery` returns pending on the server and fetches after hydration; loaders that `ensureQueryData` put data in the cache before render. Thin loaders + in-page skeletons trade a fully-populated first paint for client-navigation responsiveness: deliberate for this app.
+Skeletons are the fallback of last resort; reach for less first.
 
-Router: `defaultPendingMs=400`, `defaultPendingMinMs=500`, `defaultPendingComponent` (minimal shell floor), `defaultErrorComponent: RouteError` (retry via `router.invalidate()`).
+1. **Static shell never skeletons:** `Page`, `PageHeader`, toolbar, filter chrome, tab strip, split frame, table header and pagination, queue header.
+2. **Loaders await identity only:** `casesContextQuery` plus at most one title row; lists via `warm*Queries`.
+3. **Shape parity or nothing:** skeletons inside the real container, row count and grid template from a constant both import, median row count not max. Unknown shape: a small centered `InlineLoading`. Tables: `DataTable` `pending` per-cell rows under the real `<colgroup>`.
+4. **Keep router thresholds:** no sub-400ms skeletons; they read as a glitch.
+5. **Refetch is not pending; loading is not empty:** `listPending()` (`isLoading || !isFetched`) gates the skeleton; an error shows error UI; empty only when settled. `isFetching` is at most a soft `opacity-60` de-emphasis.
+6. **No confident wrong values:** a `0` meaning "unknown" is worse than a bone; no fabricated placeholder objects in live chrome.
+7. **One loading event, three channels:** `LoadingRegion` puts `aria-busy` on the region, `aria-hidden` on the skeleton subtree, and a sibling sr-only `role="status"` label outside the hidden subtree.
+8. **Reduced motion stops animation:** in-place pulse only (`animate-pulse` on `[data-slot=skeleton]`); no travelling shimmer.
+9. **Hydration-safe skeletons:** no `window`, `localStorage`, `Date.now()`, or random values in skeleton output.
+10. **Fetch only what is visible:** no query in collapsed panels or inside `.map()`; gate artifact content on `open`.
+11. **One SSE connection per case:** `useLiveEvents` ref-counts a shared `EventSource`; nested workspaces pass `live: false`.
+12. **Skeleton is last resort:** if a lesser but true rendering exists, show it and upgrade in place. `code-block.tsx` renders raw code in the same `<pre>` while shiki tokenizes.
+13. **Key change is an update, not a new page:** filter, sort, and search use `placeholderData: keepPreviousData` plus a subtle `isPlaceholderData` de-emphasis. Never `initialData` to fake a filtered page.
+14. **One pending surface per route:** `pendingComponent` or an in-page `PendingRegion`, never both for the same region. `ssr:false` / `ssr:'data-only'` routes need `pendingComponent` (or the default).
+15. **Error granularity equals pending granularity:** a region's query error renders `FetchErrorAlert` + retry inside that region; one failed region must not blank the shell. Route-level failures use `RouteError`; mutations stay on `onError` and toasts.
 
-### Sixteen rules
+Not adopted on Operate surfaces: shimmer, staggered section entry, content fade-in, in-page minimum display time. They conflict with the motion budgets in [`DESIGN.md`](../../../../DESIGN.md#motion) and rules 4, 8, and 12.
 
-Lead with "don't skeleton at all": skeletons are the fallback of last resort ([Viget](https://www.viget.com/articles/a-bone-to-pick-with-skeleton-screens): skeletons can feel slower than blank or spinner on unfamiliar UIs; our operator-facing queues are familiar enough that shape-correct skeletons still help, but reach for less first).
+## Enforcement
 
-#### Don't skeleton at all (14-15)
-
-| # | Rule |
-| --- | --- |
-| 14 | **Skeleton is last resort.** If a lesser-but-_true_ rendering exists, show it and upgrade in place: never cover real content with a skeleton overlay. Reference: [`code-block.tsx`](../../../../apps/web/src/shared/ui/code-block.tsx) renders raw code in the same `<pre>` while shiki tokenizes; no skeleton, no layout shift. |
-| 15 | **Key change = update, not new page.** Filter/sort/search transitions use `placeholderData: keepPreviousData` + subtle `isPlaceholderData` de-emphasis (`opacity-60`). Never `initialData` to fake a filtered page: that caches a guess as fetched. |
-
-#### Shape (1, 3, 12)
-
-| # | Rule |
-| --- | --- |
-| 1 | **Static shell never suspends or skeletons**: `Page`, `PageHeader`, toolbar, filter chrome, tab strip, split frame, table header + pagination, queue header. |
-| 3 | **Shape parity or nothing**: skeletons inside the real container; row count / grid template from a shared constant both live + skeleton import. Median row count, not max. Unknown shape → small centred spinner. **Tables:** shape parity = `DataTable` `pending` per-cell rows under real `<colgroup>`. |
-| 12 | **Hydration-safe skeletons**: no `window`, `localStorage`, `Date.now()`, or random values in skeleton output. |
-
-#### State (4-6)
-
-| # | Rule |
-| --- | --- |
-| 4 | **Keep router thresholds**: no sub-400ms skeletons (reads as glitch). |
-| 5 | **Refetch ≠ pending; loading ≠ empty**: `listPending()` / `isLoading \|\| !isFetched` gates skeleton; error → error UI; empty only when settled. `isFetching` → at most soft de-emphasis ([`recent-activity.tsx`](../../../../apps/web/src/domains/dashboard/components/recent-activity.tsx) `opacity-60`). |
-| 6 | **No confident wrong values**: `0` meaning "unknown" is worse than a bone; no fabricated placeholder objects in live chrome. |
-
-#### A11y & motion (7-8)
-
-| # | Rule |
-| --- | --- |
-| 7 | **One loading event, three channels**: `LoadingRegion`: `aria-busy` on region, `aria-hidden` on skeleton subtree, sibling `role="status"` sr-only label _outside_ the hidden subtree. |
-| 8 | **`prefers-reduced-motion` stops animation**: in-place pulse only (`animate-pulse` on `[data-slot=skeleton]`); no travelling shimmer. |
-
-#### Fetch discipline (2, 9-11)
-
-| # | Rule |
-| --- | --- |
-| 2 | **Loaders await identity only**: `casesContextQuery` + at most one title row; lists via `warm*Queries`. |
-| 10 | **Fetch only what's visible**: no query in collapsed panels or inside `.map()`; gate artifact content on `open`. |
-| 11 | **One SSE connection per case**: `useLiveEvents` ref-counts a shared `EventSource`; nested workspaces pass `live: false`. |
-
-#### Boundaries (13, 16)
-
-| # | Rule |
-| --- | --- |
-| 13 | **One pending surface per route**: `pendingComponent` _or_ in-page `PendingRegion` + skeleton, never both for the same region. Exception: `ssr:false` / `ssr:'data-only'` routes need `pendingComponent` (or `defaultPendingComponent`). |
-| 16 | **Error granularity = pending granularity**: a region's query error renders `FetchErrorAlert` + retry inside that region; one failed region must not blank the shell. Route-level failures use `RouteError`. Mutations stay on `onError` / toasts. |
-
-### ds:check loading bans
-
-Enforced by oxlint `no-restricted-imports`: `RoutePending` (`@/shared/layout/route-pending`) in `domains/` / `routes/` and the raw `Skeleton` primitive in `domains/` / `routes/`. The rest is review:
-
-| Avoid | Use instead |
-| --- | --- |
-| `RoutePending` in pages | In-page `PendingRegion` (the router's `defaultPendingComponent` is the only floor) |
-| Raw `Skeleton` in domains | `PendingRegion` from `@/shared/ui/pending-region` (fallback: `shared/ui/skeletons.tsx`). **Tables:** `DataTable` `pending` only: kit owns per-cell skeletons |
-| `animate-pulse` outside `shared/ui/` | `Skeleton` primitive (reduced-motion guard) |
-| `aria-busy` outside `shared/ui/` | `LoadingRegion` |
-| `await Promise.all` in route `loader` (excl. `routes/api/**`) | Thin loader + `warm*Queries` |
-
-Escape hatch for the remaining `ds:ban` rules: `// ds:allow-<rule>: reason` on the line above a flagged line.
-
-### Warm helpers
-
-Loaders await **identity only**; each route calls its matching helper with `void queryClient.prefetchQuery(...)` (never `await Promise.all` in loaders: `routes/api/**` excluded).
-
-See [`data.md`](../data.md) for the full helper ↔ route table and parity rule.
-
-### Route patterns
-
-| Layout | Loader | Pending UI |
-| --- | --- | --- |
-| **Split Queue** (Collect, Triage) | Collect: identity + **await** `ensureCollectQueueQueries` (+ `ensureCollectJobDetailWhenSelected` when `?id=`); Triage: identity + `warmTriageQueries` | Collect: `PendingRegion` only on cache miss / hidden filter / job detail. Triage: `TriageSplitPendingFallback` |
-| **Table** (Entities, Identifiers) | Identity + `warmEntitiesQueries` / `warmIdentifiersQueries` | `DataTable` `pending` + `pendingLabel`: per-cell skeleton rows ([§ Tables](tables.md)) |
-| **Board** (Tasks) | Identity + `warmTasksQueries` | `PendingRegion` + `BoardSkeleton` |
-| **Card grid** (Cases) | Identity only | `PendingRegion` + `CardGridSkeleton` |
-| **Graph** | Identity + `ensureGraphQueries` | `GraphCanvasLoadingRegion` (hand skeleton) |
-| **Stack** (Dossier, Settings tabs) | Identity + `warmDossierQueries` / … | `ActiveTabBody` + `stackPendingFallback()` |
-| **Dashboard** (`/`) | Identity + `warmDashboardQueries` | `PendingRegion` + `DashboardOverviewSkeleton` / `DashboardActivityPanelSkeleton` / `DashboardActivitySkeletonLayout` (overview, cases-pending split, activity list) — not `stackPendingFallback()` |
-| **Case Overview** | Identity + `warmCaseOverviewQueries` | `CaseOverviewPending` → `CaseOverviewSkeleton` (`MetricTilesSkeletonLayout` + activity column + `CaseSettingsSkeleton` ghost Field stack) |
-
-Button / mutation wait: Button `loading` / `InlineLoading` / `Spinner`: not page skeleton. No data: `EmptyState` / `DetailEmpty`: never Skeleton.
-
-### Loading & empty inventory
-
-Per-surface map for first paint, filtered empty, and fetch failure. Load failures use `FetchErrorAlert` (or route `RouteError` for route-level failures): never `EmptyState`.
-
-| Surface | First load | No results / cleared | Fetch error | Notes |
-| --- | --- | --- | --- | --- |
-| **Collect** queue | `PendingRegion` + queue skeleton only on `listPending` cache miss (loader awaits evidence/jobs/entities) | `EmptyState` `blank-slate` / `no-results` | `FetchErrorAlert` in queue body | Hidden filter may skeleton once; job-only detail skeleton until `jobDetailQuery` settles (loader awaits when `?id=` is a job). |
-| **Triage** queue + detail | `TriageSplitPendingFallback` | `EmptyState` `blank-slate` / `cleared` / `no-results` | `FetchErrorAlert` |  |
-| **Tasks** board | `PendingRegion` + `BoardSkeleton` (`listPending`) | implicit empty columns | route `RouteError` |  |
-| **Cases** grid | `PendingRegion` + `CardGridSkeleton` | `EmptyState` `no-results` (search) | route `RouteError` | `casesContextQuery` via `useQuery` + `listPending`. |
-| **Entities** / **Identifiers** tables | `DataTable` `pending` + per-cell skeletons | `EmptyState` in table body | route `RouteError` |  |
-| **Dashboard** panels | `PendingRegion` + hand skeletons per panel (`DashboardOverviewSkeleton`, `DashboardActivityPanelSkeleton`, activity list `DashboardActivitySkeletonLayout`) | Recent Activity `EmptyState`; triage/tasks panels dashed inline empty | `FetchErrorAlert` in panel body | Activity header stays mounted; list slot skeletons only. Cases-pending keeps split chrome. |
-
-### Rejected loading "delight" patterns
-
-External skeleton/loading skills often recommend shimmer, staggered section entry, content fade-in, and in-page min-display (~500ms). **Do not adopt** on Operate surfaces: they conflict with [Motion](motion.md) and rules 4, 8, 14 above. Router-only pending floor (`defaultPendingMs` / `defaultPendingMinMs`) stays; in-page `listPending()` must drop instantly on cache hit.
-
-Hydration: suppress relative time / session name when needed; no nested `<button>` (`WithTooltip` `wrapSpan`; full-width run headers use `CollapsibleTrigger` `nativeButton={false}` + `render={<div />}` with `stopPropagation` on copyable `IdChip`); `SplitView` static flex pre-hydration.
+oxlint `no-restricted-imports` bans `RoutePending` (`@/shared/layout/route-pending`) and the raw `Skeleton` primitive in `domains/` and `routes/`. Nothing enforces the rest: not `await Promise.all` in route loaders (outside `routes/api/**`), not `animate-pulse` or `aria-busy` outside `shared/ui`. The `// ds:allow-<rule> - reason` escape (a dash or em dash plus a reason) applies to `ds:ban` rules only.
 
 ## Gotchas
 
-- **Stack loading (Case / Dossier / Settings)**: loader awaits identity only (`casesContext` / case row / entity); warm lists with `void prefetchQuery` (`warmCaseOverviewQueries` / `warmDossierQueries`). Tab bodies use `ActiveTabBody` → `PendingRegion` + `stackPendingFallback()`. **Dashboard** (`/`) is split-stack, not stack tabs: overview/activity data slots use hand `*Skeleton` fallbacks inline (`dashboard-home.tsx`, `recent-activity.tsx`). Case Overview settings sidebar uses `CaseSettingsSkeleton` (invisible `Field` / `Input` / `Textarea` / `Switch` chrome + overlay `Skeleton` for box-model parity). No route-level `RoutePending` on these pages; no "Loading…" copy in data slots.
-- **Split Queue loading (Collect / Triage)**: Collect loader awaits `ensureCollectQueueQueries` (+ job detail when `?id=`); catalogs warm in background via `warmCollectCatalogQueries`. Triage: thin loader + `warmTriageQueries`. Domain owns `<Page>` + `PageHeader` + toolbars; queue/detail data slots use `PendingRegion` only on cache miss. Triage shows `TriageSplitPendingFallback` while pending.
-- **`QueueShell scrollable={false}` while loading**: skeleton row counts (`COLLECT_QUEUE_SKELETON_ROW_COUNT`, `QueueSkeleton rows={10}` in `TriageSplitPendingFallback`) are sized generously and can overflow a short viewport, popping a scrollbar that disappears once real (usually shorter) content lands. Pass `scrollable={!loading}` to `QueueShell` (Collect: `!queuePending`; Triage's only skeleton is `TriageSplitPendingFallback`, always `scrollable={false}`) so the pane clips instead of scrolling during the skeleton state. **`CollectQueueSkeleton`** uses `QueueDayGroup` with **`headerVariant="panel"`** (not sticky): sticky day bars inside a clipped pane overlap mid-list rows.
-- **Router `defaultPendingComponent`**: `RoutePendingSkeletonLayout` is a single **`flex-col`** shell (title bar + scrollable `StackBodySkeleton` body). Do not return a fragment of siblings from skeleton layouts meant to fill a flex parent — sections need an inner `gap-6` column (`StackBodySkeletonLayout`).
-- **Table/board loading (Entities / Identifiers / Tasks / Graph / Cases)**: thin loader + warm helper; `useQuery` + `listPending` or in-page skeleton in the data slot only; shell stays mounted. **Entities / Identifiers tables:** `DataTable` `pending` + per-cell skeleton rows: never `PendingRegion` (colgroup grid). See [`tables.md`](tables.md) § Tables.
-- **Collect run selection**: Cap/Playbook start lives in Collect detail; seed jobs cache from the start response before updating `?id=`; use workspace hooks for SSE + invalidation. Do not Navigate-clobber a just-created selection: that remounts the split and flickers the page.
-- **`<Navigate>` for split URL sync: sibling, never an early return.** Collect/Triage keep `?id=`/`?proposalId=` aligned with resolved selection (e.g. auto-picking the first row when the URL has no id) by rendering `<Navigate replace>` (renders `null`; navigates in a layout effect: safe as a sibling). An early `return <Navigate .../>` before the rest of the JSX unmounts the toolbar + split + `PendingRegion` skeleton for a frame while the URL updates, producing a skeleton → blank flash → content flicker right after cold load. Compute the out-of-sync boolean, then render `{outOfSync ? <Navigate .../> : null}` as the first child of the same return that renders the toolbar/split.
+- **`<Navigate>` for split URL sync is a sibling, never an early return.** Collect and Triage keep `?id=` / `?proposalId=` aligned with the resolved selection by rendering `<Navigate replace>` (renders `null`, navigates in a layout effect). An early `return <Navigate .../>` unmounts the toolbar, split, and skeleton for a frame, giving a skeleton, blank, content flicker after cold load. Compute the out-of-sync boolean and render `{outOfSync ? <Navigate .../> : null}` as a child of the same return as the toolbar and split.
+- **`QueueShell scrollable={false}` while loading.** Skeleton row counts are generous and can overflow a short viewport, popping a scrollbar that vanishes when real content lands. Pass `scrollable={!loading}` so the pane clips during the skeleton state. `CollectQueueSkeleton` uses `QueueDayGroup` with `headerVariant="panel"` (not sticky) because sticky day bars inside a clipped pane overlap rows.
+- **Router `defaultPendingComponent`:** `RoutePendingSkeletonLayout` is a single `flex-col` shell (title bar + scrollable `StackBodySkeleton`). Skeleton layouts meant to fill a flex parent must not return a fragment of siblings; sections need an inner `gap-6` column (`StackBodySkeletonLayout`).
+- **Stack pages** (Case, Dossier, Settings tabs): tab bodies use `ActiveTabBody` + `stackPendingFallback()`. The Dashboard is not a stack-tab page: its overview and activity slots use hand `*Skeleton` fallbacks inline. No "Loading..." copy in data slots.
+- **Collect run selection:** seed the jobs cache from the start response before updating `?id=`, and use the workspace hooks for SSE and invalidation. A `<Navigate>` that clobbers a just-created selection remounts the split and flickers.
+- **Hydration:** suppress relative time and session name where needed, and keep `SplitView` as static flex before hydration.

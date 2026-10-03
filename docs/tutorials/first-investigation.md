@@ -1,11 +1,10 @@
 # Tutorial: first investigation
 
-**What this is:** a learning-oriented walk through one Case from empty install to an accepted Claim on the Graph (~30 min).  
-**What this is not:** toolchain-only setup ([`../how-to/onboarding.md`](../how-to/onboarding.md)) or Cap authoring reference.
+A walk through one Case from empty install to accepted Graph content (~30 min). It mirrors the `@journey` e2e (`e2e/specs/journeys/core-loop.spec.ts`). Toolchain setup is in [`../how-to/local-dev.md`](../how-to/local-dev.md).
 
-**Done-when:** You have a Case, one Evidence row from a paste dump, one Proposal in Triage, and an accepted Claim visible on an Entity Dossier.
+**Done-when:** You have a Case, one Evidence row from a paste dump, one Proposal in Triage, and the accepted patch visible on an Entity Dossier.
 
-**Prerequisites:** [`../how-to/onboarding.md`](../how-to/onboarding.md) steps 1–6 complete (web + worker running, signed in).
+**Prerequisites:** [`../how-to/local-dev.md`](../how-to/local-dev.md) and [`../how-to/auth-setup.md`](../how-to/auth-setup.md) done (web + worker running, signed in).
 
 ---
 
@@ -22,10 +21,12 @@
 ## 2. Paste evidence
 
 1. Go to **Collect** (`/collect`).
-2. **Paste** in the toolbar → paste a short text note (e.g. `Subject uses example.com for mail.`) → confirm dump.
+2. **Paste** in the toolbar → paste a short text note (e.g. `Contact alice@mailhost.test, profile at https://wiki.mailhost.test/ada`) → confirm dump.
 3. Pick **Unattached** or create/select an Entity in the dump dialog.
 
 **Checkpoint:** A new row appears in the Collect queue; Detail **Content** tab shows your text and a content hash.
+
+Use a real-looking address like the one above: Harvest only extracts emails, phones, and handles, and it discards placeholder domains such as `example.com`, so a note without one yields no Proposal in step 3.
 
 ---
 
@@ -62,15 +63,7 @@ If interpret failed (amber text in the job detail strip), Evidence and Job still
 
 ## Next steps
 
-| Goal | Doc |
-| --- | --- |
-| Cap credentials for DNS/AI Caps | [`../how-to/vault-setup.md`](../how-to/vault-setup.md) |
-| CLI / agent API | [`../how-to/agent-cli.md`](../how-to/agent-cli.md) |
-| Full journey matrix | [`../explanation/scenarios.md`](../explanation/scenarios.md) |
-| Why Accept gates exist | [`../reference/contracts/custody.md`](../reference/contracts/custody.md) |
-
-## See also
-
-- Product loop: [`../explanation/product.md`](../explanation/product.md)
-- Ingress contract: [`../reference/contracts/ingress.md`](../reference/contracts/ingress.md)
-- Daily dev commands: [`../how-to/local-dev.md`](../how-to/local-dev.md)
+- Cap credentials for DNS/AI Caps: [`../reference/platform/caps-boundary.md#cap-credentials`](../reference/platform/caps-boundary.md#cap-credentials)
+- CLI and agent API: [`../how-to/agent-cli.md`](../how-to/agent-cli.md)
+- Why Accept gates exist: [`../reference/contracts/custody.md`](../reference/contracts/custody.md)
+- The product loop: [`../explanation/product.md`](../explanation/product.md)

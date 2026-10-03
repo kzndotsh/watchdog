@@ -117,7 +117,7 @@ function main() {
     });
     if (ban.status !== 0) {
       parts.push(
-        "`pnpm --filter @watchdog/web ds:check` failed after web UI edits. Read `docs/reference/web/` (loading / tables / components) and `docs/explanation/ux.md`, fix the violation, then stop.",
+        "`pnpm --filter @watchdog/web ds:check` failed after web UI edits. Read `docs/reference/web/ui/rules.md` and `docs/explanation/ux.md`, fix the violation, then stop.",
         "",
         "```",
         clip(formatSpawn(ban)),

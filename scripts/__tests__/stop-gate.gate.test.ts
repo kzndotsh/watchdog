@@ -18,6 +18,17 @@ function stopGateRepo() {
   repo.write("AGENTS.md", "# Agents\n");
   repo.write("docs/README.md", "# Docs\n\n- [Page](page.md)\n");
   repo.write("docs/page.md", "# Page\n\n[home](README.md)\n");
+  repo.write(
+    "docs/reference/platform/conventions.md",
+    [
+      "# Conventions",
+      "",
+      "| Rule | Scope | Stated in | Enforced by | Status |",
+      "| --- | --- | --- | --- | --- |",
+      "| Be kind | repo | `docs/page.md` | guidance | guidance |",
+      "",
+    ].join("\n")
+  );
   repo.commitAll("clean docs");
   return repo;
 }

@@ -1,162 +1,80 @@
 # Data: Query, Case scope, live events
 
-This document covers how data reaches the UI and when it refreshes. It does not cover oRPC router internals (see [`ARCHITECTURE.md`](architecture.md) · [`docs/reference/platform/README.md`](../../../docs/reference/platform/README.md)) or package DB schemas.
+How data reaches the UI and when it refreshes. oRPC internals are in [`architecture.md`](architecture.md) and [`../platform/README.md`](../platform/README.md). Nothing here is mechanically enforced except where a test or type is named; the rest is `guidance`.
 
 ## Case scope
 
-- Active Case id = httpOnly cookie `watchdog.active-case-id` (not in the URL).
-- Tabs share one Active Case; deep links do not encode Case.
-- After Case switch: `notifyCasesChanged()` + `invalidateAfterCaseSwitch(queryClient)` (see `shared/lib/query-invalidation.ts`).
-
-Almost all list/detail queries take `caseId` (keys include it). Never assume "global" graph data.
+Active Case id is the httpOnly cookie `watchdog.active-case-id`, not part of the URL: tabs share one Active Case and deep links do not encode it. Almost every list and detail query takes `caseId` (keys include it); never assume "global" graph data. After a Case switch call `notifyCasesChanged()` + `invalidateAfterCaseSwitch(queryClient)` (`shared/lib/query-invalidation.ts`).
 
 ## TanStack Query (cache SoT)
 
-Query owns server-state caching. Router `defaultPreloadStaleTime` is `0`, so Query controls freshness.
+Query owns server-state caching. The router's `defaultPreloadStaleTime` is `0` (asserted in `apps/web/src/__tests__/router.test.ts`), so Query controls freshness.
 
 | Path | Use when |
 | --- | --- |
-| Route `loader` + `queryClient.ensureQueryData(queryOptions)` | Prefetch during navigation / SSR |
-| `useQuery(queryOptions)` | Page and region reads: branch on `isPending` (`PendingRegion` / skeleton) and `error` (`FetchErrorAlert` + retry) |
-| `useMutation` + **named invalidation contract** | Writes |
-| SSE `useLiveEvents` → same contracts | Server-pushed job/proposal/entity/task updates |
+| Route `loader` + `queryClient.ensureQueryData(queryOptions)` | Prefetch during navigation and SSR |
+| `useQuery(queryOptions)` | Page and region reads: branch on `listPending` (skeleton) and `error` (`FetchErrorAlert` + retry) |
+| `useMutation` + a named invalidation contract | Writes |
+| SSE `useLiveEvents` calling the same contracts | Server-pushed job, proposal, entity, evidence, task updates |
 
-**Do not** copy server lists from `useLoaderData` into `useState`. Local state is only for UI concerns such as selection, dialogs, form drafts, and client filters.
-
-**Do not** export a module-level `QueryClient` singleton. Create per request in `getRouter()` via `createAppQueryClient()`.
-
-### File layout
+- Never copy server lists from `useLoaderData` into `useState`; local state is for selection, dialogs, form drafts, and client filters.
+- One `QueryClient` per request, created by `createAppQueryClient()` inside `getRouter()`. Never `export const queryClient = new QueryClient()`.
 
 | File | Owns |
 | --- | --- |
-| `domains/{noun}/queries.ts` | `queryOptions` + key factories (import Fns; no components, no side effects) |
-| `shared/lib/query-stale.ts` | `STALE_*` / `GC_*` tiers |
-| `shared/lib/query-invalidation.ts` | Named contracts (`invalidateAfterJobMutation`, …) |
+| `domains/{noun}/queries.ts` | `queryOptions` + key factories (no components, no side effects) |
+| `shared/lib/query-stale.ts` | `STALE_*` / `GC_*` tiers: `STALE_REALTIME` 10s (jobs, proposals), `STALE_DEFAULT` 30s (entities, evidence, case context), `STALE_STABLE` 5m (capabilities, credentials). `gcTime >= staleTime` holds by construction. |
+| `shared/lib/query-invalidation.ts` | Named invalidation contracts |
 | `shared/lib/query-client.ts` | `createAppQueryClient` + global `QueryCache.onError` toast |
-| `shared/lib/queue-selection.ts` | Cross-domain pure `resolveQueueSelection` (URL SoT → first visible row) for split-view queues; optional `holdMissingUrlId` keeps a URL id not yet in rows (Collect cap start race / filtered-out job). Pair with render-time `<Navigate replace>` in Collect / Triage (not a parent-callback sync effect) |
-| `router.tsx` | QueryClient in context + `setupRouterSsrQueryIntegration` |
-
-### Stale tiers
-
-| Tier                   | Use for                          |
-| ---------------------- | -------------------------------- |
-| `STALE_REALTIME` (10s) | Jobs, proposals (SSE-backed)     |
-| `STALE_DEFAULT` (30s)  | Entities, evidence, case context |
-| `STALE_STABLE` (5m)    | Capabilities, credentials        |
-
-Rule: `gcTime ≥ staleTime` for the tier you pick.
+| `shared/lib/queue-selection.ts` | `resolveQueueSelection` (URL SoT, then first visible row) for split-view queues; `holdMissingUrlId` keeps a just-started or filtered-out id. Pair with a render-time `<Navigate replace>` ([`loading.md`](ui/loading.md#gotchas)), not a parent-callback sync effect |
 
 ### Invalidation contracts
 
-Call these from mutations and SSE: do not scatter ad-hoc `invalidateQueries` key lists:
+Mutations and SSE call the named contracts in `shared/lib/query-invalidation.ts` (`invalidateAfterCaseSwitch`, `invalidateAfterJobMutation`, `invalidateAfterProposalAccept`, `invalidateAfterProposalQueueChange`, `invalidateAfterEntityChanged`, `invalidateAfterTaskMutation`, `invalidateAfterEvidenceMutation`, `invalidateAfterCredentialMutation`), not scattered `invalidateQueries` key lists. Inside them, soft settle is `invalidateQueries({ refetchType: "none" })` then `refetchQueries({ type: "active" })`, so nothing flashes a loading state. `invalidateAfterEntityChanged` soft-invalidates the `entities` plus `edges` / `identifiers` prefixes so case-wide lists refresh denormalized labels.
 
-- `invalidateAfterCaseSwitch`
-- `invalidateAfterJobMutation` (optional staggered retry when worker lag matters)
-- `invalidateAfterProposalAccept`
-- `invalidateAfterProposalQueueChange` (accept/reject / `proposal_created` / `proposal_queue_changed`)
-- `invalidateAfterEntityChanged` (soft-invalidates `entities` + `edges`/`identifiers` **prefixes** so case-wide `forCase` lists refresh denormalized labels; entity-scoped claims/events/questions when `entityId` set)
-- `invalidateAfterTaskMutation`
-- `invalidateEvidence` / `invalidateCredentials`
+### Loaders, warm helpers, pending
 
-Soft settle (no loading flash): `invalidateQueries({ refetchType: "none" })` then `refetchQueries({ type: "active" })`: used inside the contracts.
+Loaders `ensureQueryData` identity only and call a `warm*Queries` helper with `void prefetchQuery` (the per-layout table is in [`domains.md`](domains.md#page-ownership); helpers live in each domain's `lib/prefetch-*.ts`). Collect is the exception: its loader awaits `ensureCollectQueueQueries` (plus the job detail when `?id=` is a job).
 
-### Key shape (hierarchical)
+**Warm-helper parity:** every `warm*Queries` helper should prefetch the queries the page reads on first paint; otherwise that region shows its skeleton on a cache miss. When touching a page, compare its query keys with its helper. The dossier shell hook (`use-dossier-shell-queries`) is the implicit warm layer for tab counts.
 
-```ts
-["cases"] /
-  ["cases", "context"] /
-  ["cases", "detail", caseId][("jobs", caseId)][
-    ("jobs", caseId, "detail", jobId)
-  ][("proposals", caseId)][("evidence", caseId)][("entities", caseId)][
-    ("entity", caseId, slug)
-  ][
-    ("claims" | "edges" | "events" | "identifiers" | "questions",
-    caseId,
-    entityId)
-  ][("edges" | "identifiers", caseId, "case")][("tasks", caseId)][
-    ("tasks", caseId, filters)
-  ]["capabilities"] /
-  ["credentials"][("artifact", uri, mime)];
-```
-
-**Router gotcha:** child `loader({ context })` gets `beforeLoad` context (e.g. `{ session, user }` + `queryClient`), **not** parent loader return data. Sibling pages share data via **Query keys**, not parent loader inheritance. See [`README.md#traps-index`](README.md#traps-index).
-
-### Conditional queries
-
-Gate optional reads with `enabled` (`caseId` / `entityId` may be absent); split components only when it keeps the tree simpler (`Collect` → active detail, `Dossier` → `DossierForCase` → `DossierForEntity`).
-
-Stack pages: loader `ensureQueryData` identity only + warm helpers (`warmDossierQueries` / `warmCaseOverviewQueries` / `warmDashboardQueries`). Shell counts = `useQuery`; tab/panel bodies = `ActiveTabBody` + `stackPendingFallback()`. Queue pages: Collect loader **awaits** `ensureCollectQueueQueries` (+ job detail when `?id=`); Triage stays identity + `warmTriageQueries`. In-page `PendingRegion` remains for cache misses: not route-level `RoutePending`. Table pages (`/entities`, `/identifiers`): `listPending` → `DataTable` `pending` ([`tables.md`](ui/tables.md)).
-
-**Warm-helper parity:** every `warm*Queries` helper should prefetch the queries the page reads on first paint; otherwise that region shows its `PendingRegion` skeleton on a cache miss. The dossier shell hook (`use-dossier-shell-queries`) is the implicit warm layer for tab counts; compare query keys when touching dossier sections.
-
-| Helper | Route / surface | Prefetch module |
-| --- | --- | --- |
-| `ensureCollectQueueQueries` | `/collect` (loader await) | `collect/lib/prefetch-collect.ts` |
-| `warmCollectCatalogQueries` | `/collect` (fire-and-forget after queue ensure) | `collect/lib/prefetch-collect.ts` |
-| `warmTriageQueries` | `/triage` | `triage/lib/prefetch-triage.ts` |
-| `warmEntitiesQueries` | `/entities` | `entities/lib/prefetch-entities.ts` |
-| `warmIdentifiersQueries` | `/identifiers` | `entities/lib/prefetch-identifiers.ts` |
-| `ensureGraphQueries` | `/graph` | `cases/lib/prefetch-graph.ts` |
-| `warmTasksQueries` | `/tasks` | `tasks/lib/prefetch-tasks.ts` |
-| `warmCaseOverviewQueries` | Case overview tab | `cases/lib/prefetch-case-overview.ts` |
-| `warmDossierQueries` | Dossier | `dossier/lib/prefetch-dossier.ts` |
-| `warmDashboardQueries` | `/` Dashboard | `dashboard/lib/prefetch-dashboard.ts` |
-
-**List pending gate:** table/board/graph list surfaces use `listPending()` from `shared/lib/list-pending.ts`: `isLoading || !isFetched`, not `isPending` alone; never show skeleton on `isError`.
+**List pending gate:** table, board, and graph surfaces use `listPending()` (`shared/lib/list-pending.ts`): `isLoading || !isFetched`, not `isPending` alone, and never a skeleton on `isError`. Gate optional reads with `enabled` (`caseId` / `entityId` may be absent).
 
 ## Live events
 
-Hook: `shared/hooks/use-live-events` → `useLiveEvents(caseId, onEvent)` → `EventSource` `/api/events?caseId=…`.
+`useLiveEvents(caseId, onEvent)` in `shared/hooks/use-live-events` opens an `EventSource` on `/api/events?caseId=...`. One shared `EventSource` per `caseId` is ref-counted, so mounting it in several places does not open several connections; the server side of that route listens through a dedicated postgres.js connection ([`packages/db/AGENTS.md`](../../../packages/db/AGENTS.md)). Event shapes are typed in `packages/schemas/src/watchdog-events.ts`.
 
 | Type | Contract |
 | --- | --- |
-| `job_update` | `invalidateAfterJobMutation` (+ evidence on Collect / Case overview / Dossier where jobs touch intake) |
-| `proposal_created` | `invalidateAfterProposalQueueChange` (workspace flips to pending-only, same as first paint) |
-| `proposal_queue_changed` | `invalidateAfterProposalQueueChange` (accept/reject from another tab or CLI) |
+| `job_update` | `invalidateAfterJobMutation` (+ evidence where jobs touch intake) |
+| `proposal_created`, `proposal_queue_changed` | `invalidateAfterProposalQueueChange` (test with `isProposalQueueLiveEvent` from `@watchdog/schemas`) |
+| `entity_changed` | `invalidateAfterEntityChanged` |
+| `evidence_changed` | `invalidateAfterEvidenceMutation` |
+| `task_changed` | `invalidateAfterTaskMutation` |
 
-Web handlers use `isProposalQueueLiveEvent` from `@watchdog/schemas` for both inbox queue types. | `entity_changed` | `invalidateAfterEntityChanged` | | `evidence_changed` | `invalidateAfterEvidenceMutation` | | `task_changed` | `invalidateAfterTaskMutation` |
+The cross-case Dashboard Activity feed (`recentActivityQuery`) has no SSE type of its own; the task, job, proposal, and evidence contracts soft-invalidate `activityKeys.all`. Don't invent a workspace-wide channel for it.
 
-Cross-case **Activity** on Dashboard (`recentActivityQuery` / `GET /activity/recent`) has no dedicated SSE type. Soft-invalidate `activityKeys.all` from task / job / proposal / evidence named contracts (same as live Dashboard handlers). Do not invent a workspace-wide SSE channel just for this feed.
+- A `null` `caseId` means no connection. A nested workspace passes `live: false` (e.g. `useTaskWorkspace(caseId, { live: false })` in `dossier-tasks-section.tsx`) when its parent already listens.
+- No manual Refresh buttons on live paths. Keep previous rows on refetch; don't remount the split skeleton.
+- Optimistic writes settle through the same contract: board drag may `setQueriesData` under `tasksKeys.all(caseId)`, and a Cap start may seed `jobsKeys.all` and `jobsKeys.detail` from the mutation result before `onJobIdChange`, so URL selection does not flicker. Don't invent a second local list SoT.
 
-Rules:
+## Mutations to UI
 
-- Pass `null` caseId to `useLiveEvents` → no SSE connection.
-- `useTaskWorkspace(caseId, { live: false })` skips SSE (passes `null` to `useLiveEvents`) when a parent already listens: e.g. `dossier-tasks-section.tsx`.
-- No manual Refresh buttons for these paths: live + post-mutation invalidate.
-- Keep previous rows on refetch; don't remount the whole split skeleton.
-- Board status drag may optimistically `setQueriesData` under `tasksKeys.all(caseId)` then settle via the same invalidate contract: do not invent a second local list SoT.
-- Jobs Cap/Playbook start may optimistically seed `jobsKeys.all(caseId)` + `jobsKeys.detail(caseId, jobId)` from the mutation result **before** `onJobIdChange` / `invalidateAfterJobMutation`, so URL selection does not Navigate-flicker while the list settles.
+1. `useMutation` calls a ServerFn (toast on failure; query errors toast globally via `QueryCache.onError`).
+2. On success, call the named contract; never an imperative `refresh()`.
+3. When the worker finishes later, SSE calls the same contracts.
 
-## Mutations → UI
+## Evidence and artifacts
 
-1. `useMutation` → serverFn (toast on failure; global query errors toast via `QueryCache.onError`).
-2. On success: named invalidation contract (not imperative list `refresh()`).
-3. Case switch: `notifyCasesChanged()` + `invalidateAfterCaseSwitch`.
-4. Worker finishes later: SSE → same contracts.
-
-## ServerFn boundary (reminder)
-
-```
-UI / loader  →  queries.ts (queryOptions) → *.functions.ts (createServerFn)
-                                                    ↓ global requireAuth (start.ts)
-                                               *.server.ts / orpcForActor / @watchdog/core / db
-```
-
-UI never imports `*.server.ts` directly. Auth is global `functionMiddleware`: not per-fn middleware.
-
-## Evidence / artifacts
-
-- Evidence rows: `intake` domain (`evidenceListQuery` / upload Fns): one row per dump; Enrich/Process internals stay on the Job. Dossier Evidence tab dumps with `entityId` set (same Fns; `useDumpEvidence`).
-- Collect Evidence detail tabs: **Content** (dump) · **Output** (latest Enrich `enriched.md`) · **Runs**.
-- Artifact **display** text: `artifactContentQuery` (`useQuery`): Collect run detail + Evidence detail.
-- Evidence Content tab blob/text: `hooks/use-evidence-blob.ts` (`useQuery` on download URL + artifact content; parent passes loaded evidence row).
-- Blobs: S3 object storage via presigned PUT. Browsers PUT with `Content-Type` and the signed `x-amz-meta-sha256` header, so a deployed bucket's CORS `AllowedHeaders` must allow both (or `*`); see platform ARCHITECTURE Evidence / Export sections.
+- Evidence rows come from the `intake` domain (`evidenceListQuery` and the upload Fns): one row per dump; Enrich/Process internals stay on the Job. The Dossier Evidence tab dumps with `entityId` set through the same Fns (`useDumpEvidence`).
+- Artifact display text is `artifactContentQuery`; the Evidence Content tab uses `hooks/use-evidence-blob.ts`.
+- Blobs are S3 objects via presigned PUT. Browsers PUT with `Content-Type` and the signed `x-amz-meta-sha256` header, so a deployed bucket's CORS `AllowedHeaders` must allow both (or `*`).
 
 ## Tables
 
-Client-side sort/filter/page via `shared/ui/data-table` is correct for Day-0 case-scoped lists. Hoist `globalFilterFn` (stable reference). Entities / Identifiers use dense defaults + `EditableTextCell` / append-row composer (`DataTableAddRow`) where the surface edits inline. Every column needs TanStack `size`: `DataTable` maps those to a `<colgroup>` (see [`tables.md`](ui/tables.md#table-columns)). **Loading:** `pending={listPending(...)}` renders skeleton bars per cell: never `PendingRegion` on table bodies ([`tables.md`](ui/tables.md)). Entities: `entities/hooks/use-entity-table.ts` (`entityGlobalFilterFn` from `entity-table.columns.tsx`). Identifiers: `entities/hooks/use-identifiers-table.ts` (`identifiersGlobalFilterFn` from `identifiers-table.columns.tsx`); Type / Status / Confidence via TanStack `columnFilters`. Cases use a searchable card grid + New Case **`Dialog`** ([`tokens.md`](ui/tokens.md#overlay-primitives)). Virtualization / server paging later when volume demands.
+Client-side sort, filter, and paging through `shared/ui/data-table` is correct for Day-0 case-scoped lists; hoist `globalFilterFn` to a stable reference. Column sizing and pending: [`tables.md`](ui/tables.md). Virtualization or server paging comes when volume demands it.
 
 ## Gotchas
 
-- **No QueryClient singleton**: only `createAppQueryClient()` inside `getRouter()`. Never `export const queryClient = new QueryClient()`.
-- **SSE**: one `listenForEvents` connection per browser tab (dedicated postgres.js conn: see [`packages/db/AGENTS.md`](../../../packages/db/AGENTS.md)). Prefer one `useLiveEvents` listener per surface tree: nested sections should pass `live: false` into `useTaskWorkspace` when the parent already invalidates on `task_changed`.
+- **Router loaders do not inherit parent loader data**; sibling pages share data via Query keys ([`architecture.md#gotchas`](architecture.md#gotchas)).
+- **SSE:** `useLiveEvents` ref-counts one `EventSource` per `caseId`; still prefer a single listener per surface tree and pass `live: false` into nested workspaces so one event doesn't run two handlers.

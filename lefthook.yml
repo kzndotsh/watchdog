@@ -22,6 +22,14 @@ pre-commit:
         - "packages/ui/src/hooks/**"
         # Root-level e2e files lose type-aware context when linted by path (see ultracite-scripts).
         - "e2e/**"
+        # Formatter-ignored trees (oxfmt.config.ts / .prettierignore): if every staged file is ignored,
+        # ultracite exits 2 ("Expected at least one target file") and blocks the commit.
+        - ".agents/**"
+        - ".cursor/**"
+        - ".claude/**"
+        - ".kiro/**"
+        - "GLOSSARY.md"
+        - "packages/db/drizzle/**"
       # Staged files only: a repo-wide fix rewrites files outside the commit
       # and can break lefthook's restore of unstaged changes.
       run: pnpm exec ultracite fix --disable-nested-config --no-error-on-unmatched-pattern {staged_files}

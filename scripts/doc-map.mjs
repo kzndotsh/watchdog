@@ -2,6 +2,12 @@
  * Doc-affect map (SoT). Code globs → docs that should be touched in the same
  * commit. Consumed by check-docs-affected.mjs.
  *
+ * Only `strict: true` rules run in the wired stages (commit-msg and CI use
+ * `--strict --strict-only`); the others are advisory in a manual
+ * `pnpm check:docs-affected` run. A rule needs a doc that stays useful to
+ * maintain: do not map code to a registry or index that duplicates the code.
+ * Docs that no longer exist are skipped, and a rule with none left is inert.
+ *
  * Escape hatch: the commit's own message (commit-msg stage) or PR body containing
  * `docs:allow-affect — <reason>` (reason required).
  */
@@ -11,27 +17,12 @@
 /** @type {DocMapRule[]} */
 export const DOC_MAP = [
   {
-    id: "web-ui",
-    code: [
-      /^apps\/web\/src\/shared\/ui\//,
-      /^packages\/ui\//,
-      /^apps\/web\/scripts\/ds-ban-check\.mjs$/,
-      /^scripts\/ui-vendor\.mjs$/,
-    ],
-    docs: [
-      "docs/reference/web/ui/",
-      "docs/reference/web/UI.md",
-      "docs/reference/web/components.md",
-    ],
-    strict: true,
-  },
-  {
     id: "design",
     code: [
       /^apps\/web\/src\/styles\/wd-.*\.css$/,
       /^scripts\/check-design-tokens\.mjs$/,
     ],
-    docs: ["DESIGN.md", "docs/reference/web/ui/tokens.md"],
+    docs: ["DESIGN.md"],
     strict: false,
     note: "Token or weight changes should be reflected in DESIGN.md",
   },
@@ -57,15 +48,8 @@ export const DOC_MAP = [
       /^playwright\.config\.ts$/,
       /^vitest\.(config|reset-modules)/,
     ],
-    docs: ["docs/contributing/testing/", "docs/contributing/testing/web.md"],
+    docs: ["docs/contributing/testing/"],
     strict: true,
-  },
-  {
-    id: "routes-scenarios",
-    code: [/^apps\/web\/src\/routes\//],
-    docs: ["docs/explanation/scenarios.md"],
-    // Warn only: most route edits (imports, fixtures) don't change a scenario.
-    strict: false,
   },
   {
     id: "domains-hooks-lib",
@@ -94,12 +78,9 @@ export const DOC_MAP = [
   {
     id: "e2e-journey",
     code: [/^e2e\/specs\/journeys\//],
-    docs: [
-      "docs/explanation/scenarios.md",
-      "docs/tutorials/first-investigation.md",
-    ],
+    docs: ["docs/tutorials/first-investigation.md"],
     strict: false,
-    note: "Core loop e2e should stay aligned with tutorial + scenarios",
+    note: "Core loop e2e should stay aligned with the tutorial",
   },
 ];
 

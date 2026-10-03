@@ -1,30 +1,9 @@
 # Testing: platform index
 
-**What this is:** where tests live and which command runs which tier.  
-**Not:** how to write a good test. See [`TESTING_STANDARDS.md`](standards.md).  
-**Not:** web DS gates. See [`docs/contributing/testing/web.md`](../../../docs/contributing/testing/web.md).
+**What this is:** where tests live, what each tier needs, and the non-obvious runner facts. Commands are the `test*` scripts in `package.json`.  
+**What this is not:** how to write a good test ([`standards.md`](standards.md)) or web design-system gates (`pnpm --filter @watchdog/web ds:check`, [`ci-gates.md`](../ci-gates.md)).
 
-## Commands
-
-```bash
-pnpm test                 # unit + property + gate (no Postgres)
-pnpm test:unit
-pnpm test:property
-pnpm test:gate            # gate scripts as CLIs against temp git repos
-pnpm test:component       # happy-dom + Testing Library
-just test-db              # create + migrate watchdog_test / watchdog_e2e
-pnpm test:integration     # real Postgres, rollback-per-test
-pnpm test:e2e             # full Playwright suite
-pnpm test:e2e:smoke       # @smoke + @custody (fast gate)
-pnpm test:e2e:journey     # @journey only (core loop)
-pnpm exec vitest run --project e2e-parser  # pure harness unit tests under e2e/
-pnpm test:coverage        # v8 report under coverage/ (not a %). CI uploads coverage/lcov.info to Codecov.
-pnpm test:watch
-pnpm typecheck            # source AND test files (blocking; pre-push + CI) plus the coverage guard
-pnpm check:test-coverage-guard  # every vitest-discovered test file is in a tsconfig.test.json (also run by typecheck)
-pnpm --filter @watchdog/web ds:check
-pnpm --filter @watchdog/db check:repos
-```
+Run order that matters: `pnpm test` runs unit + property + gate (no Postgres). `just test-db` creates and migrates `watchdog_test` / `watchdog_e2e` before `pnpm test:integration` or `pnpm test:e2e`. `pnpm test:e2e:smoke` is `@smoke` + `@custody`; `pnpm test:e2e:journey` is `@journey` only. `pnpm exec vitest run --project e2e-parser` runs the harness unit tests under `e2e/`. `pnpm test:coverage` writes a v8 report (a reviewer signal, not a percentage gate).
 
 ## Tiers
 
@@ -32,29 +11,26 @@ pnpm --filter @watchdog/db check:repos
 | --- | --- | --- |
 | Unit | `packages/*/src/**/__tests__/**/*.test.ts` + `apps/worker` + `apps/cli` | Pure; `SKIP_ENV_VALIDATION=1` |
 | Property | `*.property.test.ts` under `packages/*` or `apps/*` | fast-check via `@watchdog/test-kit/fc` |
-| Gate | `scripts/__tests__/*.gate.test.ts` | Runs a gate script as a CLI in a temp git repo; asserts exit code + output; never imports gate code. Helpers: `scripts/__tests__/helpers/`; `gate-coverage.gate.test.ts` fails when a gate wired into hooks or CI has no test ([`ci-gates.md`](../ci-gates.md#gate-tests)) |
+| Gate | `scripts/__tests__/*.gate.test.ts` | Runs a gate script as a CLI in a temp git repo; asserts exit code + output ([`ci-gates.md`](../ci-gates.md#gate-tests)) |
 | Component | `apps/web/src/**/__tests__/**` (`*.test.ts` + `*.component.test.tsx`) | happy-dom + Testing Library |
 | Integration | `*.int.test.ts` under `packages/*` or `apps/*` | `watchdog_test`; `withTestTx` or `resetTestDb` |
 | E2E parser | `e2e/**/*.test.ts` (not under `specs/`) | Pure; guards the E2E harness itself |
 | E2E | `e2e/specs/**/*.spec.ts` | `watchdog_e2e` + web + worker; tags `@smoke`, `@custody`, `@journey`; no retries |
 
-Sibling `__tests__/` next to source. Shared helpers: `@watchdog/test-kit` (`/fc`, `/fixtures`, `/http`; dependency-free), `@watchdog/test-db` (Postgres harness + seeds), `@watchdog/schemas/testing` (`build*`), `packages/caps/src/testing` (Cap `it*` / `expect*`). **E2E prereqs:** Postgres + S3 storage (`just up` or `just test-db` + `just docker-up`). Integration and e2e read the S3 endpoint and keys from `S3_ENDPOINT` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` when set (defaults `http://127.0.0.1:9100`, `watchdog`, `watchdog-dev-secret`; e2e also takes `E2E_S3_PORT`). Playwright starts web on port **3300** (does not reuse `:3000`) and the worker with `pnpm --filter @watchdog/worker start`: not `dev`/`tsx watch`, which would kill a daily worker watching the same files. Each browser test wipes `watchdog_e2e` public + `auth` (and cookies) via the auto `_resetDb` fixture before running. NixOS: enter `nix develop` so Chromium comes from the flake; CI installs Playwright's own Chromium.
+Sibling `__tests__/` next to source. Shared helpers: `@watchdog/test-kit` (`/fc`, `/fixtures`, `/http`; dependency-free), `@watchdog/test-db` (Postgres harness + seeds), `@watchdog/schemas/testing` (`build*`), `packages/caps/src/testing` (Cap `it*` / `expect*`). Naming of helpers and suffixes: [`standards.md`](standards.md).
 
-All Vitest projects share workers (`isolate: false` + `vitest.reset-modules.ts`): tests must restore any `process.env`, `globalThis`, fake timers, or DOM they change (see [`standards.md`](standards.md)). Tenant isolation: every new case-scoped API procedure belongs in `packages/api/src/__tests__/org-isolation.int.test.ts`.
+## Runner facts
 
-**Web lib tests run in the component project** (happy-dom), not `pnpm test:unit`. Unit is packages + worker + CLI. Vitest 5 clears mock call history before each test. `vitest.config.ts` sets `clearMocks: false` so assertions on calls made at import time or in `beforeAll` still see that history.
-
-Collect Caps ship `__tests__/interpret.test.ts`. Do not add a `run()` file per Cap: prove `report.json` + interpret via `itRunsCollectCap` (`packages/caps/src/testing`) on **three** Caps (`network.dns.lookup`, `web.url.unshorten`, `threat.virustotal.lookup`). Special `run()` (not `defineCollectCap`): `evidence.harvest`, `evidence.extract.ai`, `network.url.enrich`, `evidence.file.analyze`, `evidence.eml.analyze`. Web does not re-test Cap handlers. MSW: import `http` / `HttpResponse` / `mockServer` / `mockJson` from `@watchdog/test-kit/http`, not `msw`. Effect unit tests that sleep or use Layers: `it.effect` from `@effect/vitest` (TestClock is provided). Examples: `apps/worker/src/__tests__/cancel-poll.test.ts`, `packages/policy/src/__tests__/patch-gates.test.ts`.
-
-CLI unit tests live under `apps/cli/src/**/__tests__/` and cover `--help`, custody envelopes (`CUSTODY` without `--user-override` on identifier/edge/event/question writes), and `loadPatch`. Generated `packages/client/src/generated/` is CI regen, not a test target.
-
-Playwright suite under `e2e/specs/` (**10 files**): `@journey` core loop; `@custody` Accept gates; `@smoke` auth (sign-up + onboarding, second-organization create, invite accept, instance-admin Users), cases, Collect paste, Triage reject, and per-route navigation smoke (+ dossier). Harness: `e2e/support/`, `e2e/api/`, `e2e/fixtures/test.ts` (import `test`/`expect` here: not `@playwright/test`), `e2e/pages/`.
+- **E2E prereqs:** Postgres + S3 (`just up`, or `just test-db` + `just docker-up`). Integration and e2e read `S3_ENDPOINT` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` when set (defaults `http://127.0.0.1:9100`, `watchdog`, `watchdog-dev-secret`; e2e also takes `E2E_S3_PORT`). Playwright starts web on port **3300** (it does not reuse `:3000`) and the worker with `pnpm --filter @watchdog/worker start`, not `dev`/`tsx watch`, which would kill a daily worker watching the same files. An auto `_resetDb` fixture wipes `watchdog_e2e` public + `auth` and cookies before every browser test. On NixOS enter `nix develop` so Chromium comes from the flake; CI installs Playwright's own Chromium.
+- **Shared workers:** all Vitest projects use `isolate: false` + `vitest.reset-modules.ts`; tests must restore any `process.env`, `globalThis`, fake timers or DOM they change ([`standards.md`](standards.md#test-speed-shared-workers)).
+- **Web lib tests run in the component project** (happy-dom), not `pnpm test:unit`; unit is packages + worker + CLI. Vitest clears mock call history before each test; `vitest.config.ts` sets `clearMocks: false` so assertions on calls made at import time or in `beforeAll` still see that history.
+- **Tenant isolation:** every new case-scoped API procedure belongs in `packages/api/src/__tests__/org-isolation.int.test.ts` (guidance; nothing enumerates the router, see [`../../reference/contracts/README.md`](../../reference/contracts/README.md#org-isolation)).
+- **Collect Caps** ship `__tests__/interpret.test.ts`. Do not add a `run()` file per Cap: prove `report.json` + interpret with `itRunsCollectCap` (`packages/caps/src/testing`), used on three Caps today (`network.dns.lookup`, `web.url.unshorten`, `threat.virustotal.lookup`). Caps with a hand-written `run()` (not `defineCollectCap`) carry their own tests. Web does not re-test Cap handlers: fix and test `@watchdog/core` / `@watchdog/policy` / the Cap, then check the page. Guidance.
+- **MSW:** import `http` / `HttpResponse` / `mockServer` / `mockJson` from `@watchdog/test-kit/http`, not `msw`. Effect tests that sleep or use Layers use `it.effect` from `@effect/vitest` (TestClock provided); see `apps/worker/src/__tests__/cancel-poll.test.ts`, `packages/policy/src/__tests__/patch-gates.test.ts`. Guidance.
+- CLI unit tests live under `apps/cli/src/**/__tests__/` and cover `--help`, custody envelopes and `loadPatch`. Generated `packages/client/src/generated/` is CI regen, not a test target.
+- **Playwright layout:** specs under `e2e/specs/<area>/`; harness in `e2e/support/`, `e2e/api/`, `e2e/pages/`; import `test` / `expect` from `e2e/fixtures/test.ts`, not `@playwright/test` (guidance).
 
 ## See also
 
-| Need | Doc |
-| --- | --- |
-| Methodology / anti-cheat | [`TESTING_STANDARDS.md`](standards.md) |
-| Web gates + remaining manual smoke | [`docs/contributing/testing/web.md`](../../../docs/contributing/testing/web.md) |
-| Day-0 journeys | [`SCENARIOS.md`](../../explanation/scenarios.md) |
-| test-kit | [`packages/test-kit/AGENTS.md`](../../../packages/test-kit/AGENTS.md) · [`packages/test-db/AGENTS.md`](../../../packages/test-db/AGENTS.md) |
+- Methodology and anti-cheat: [`standards.md`](standards.md)
+- Package harnesses: [`packages/test-kit/AGENTS.md`](../../../packages/test-kit/AGENTS.md) · [`packages/test-db/AGENTS.md`](../../../packages/test-db/AGENTS.md)

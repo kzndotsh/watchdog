@@ -1,16 +1,8 @@
-<!-- intent-skills:start -->
-
-## Skill Loading
-
-No `apps/web`-scoped skill exists yet. Root-level Agent Skills in [`.agents/skills/`](../../.agents/skills/) (`audit-contract`, `check-gates`, `finalize`) apply here too. Load explicitly (`/audit-contract`, `/check-gates`, `/finalize`) rather than relying on auto-selection.
-
-<!-- intent-skills:end -->
-
 # Watchdog web (`@watchdog/web`)
 
 > Scope: `apps/web` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-TanStack Start UI for Watchdog. When UI contracts disagree with root AGENTS, **[`docs/reference/web/`](../../docs/reference/web/README.md) wins**; platform nouns → **[`docs/`](../../docs/README.md)**.
+TanStack Start UI. UI contracts live in **[`docs/reference/web/`](../../docs/reference/web/README.md)** (it wins over this file); web traps are indexed at [`README.md#traps-index`](../../docs/reference/web/README.md#traps-index). Design direction: [`DESIGN.md`](../../DESIGN.md).
 
 ## Commands
 
@@ -19,39 +11,23 @@ TanStack Start UI for Watchdog. When UI contracts disagree with root AGENTS, **[
 | Dev | `pnpm dev:web` |
 | Typecheck | `pnpm --filter @watchdog/web typecheck` |
 | DS bans | `pnpm --filter @watchdog/web ds:check` |
-| Unit tests | `pnpm test:unit` (packages + worker only — web `*.test.ts` runs in `pnpm test:component`) |
-| Component tests | `pnpm test:component` (`*.component.test.tsx` + web lib/hook `*.test.ts`) |
+| Unit tests | `pnpm test:unit` (includes the `web-unit` project: `apps/web/src/**/__tests__/**/*.test.ts`) |
+| Component tests | `pnpm test:component` |
 | E2E | `pnpm test:e2e` · `pnpm test:e2e:smoke` · `pnpm test:e2e:journey` |
 | Generate routes | `pnpm generate-routes` |
 | Build | `pnpm build` |
 
-## Boundaries
+## Rules
 
-| Do | Don’t |
+| Rule | Enforced by |
 | --- | --- |
-| Split = Queue + Detail (`SplitView`) | Console / Workbench / Tape surfaces; a screen named `*Panel` ([naming rule](../../docs/reference/web/ui/README.md#chrome-lexicon-ui-parts)) |
-| Query cache SoT — `ensureQueryData` loaders + `useQuery` / named invalidation | Loader→`useState` forks; QueryClient singleton |
-| Import vanilla primitives from `@watchdog/ui/components/*`; import wrapped ones (Button, Dialog, AlertDialog, Combobox) from `@/shared/ui/primitives/*` | Edit `packages/ui`, or patch a primitive with `className` |
-| Reuse domain `hooks/*` workspace hooks | Duplicate Queue/Detail mutation machines in components |
-| Read [`docs/reference/web/`](../../docs/reference/web/README.md) before inventing | Reinvent from `_legacy-v2` without reading it as reference |
-| Caps/agents → Proposal → Triage Accept | Land Cap/agent output as `confirmed` Graph |
-| Process logs via `@watchdog/log` + `src/start.ts` middleware | Secrets / Evidence bodies in log fields; treat NDJSON as Graph audit |
+| Primitives: vanilla from `@watchdog/ui/components/*`, wrapped ones from `@/shared/ui/primitives/*` (the wrapped list is derived in `oxlint.config.ts`) | oxlint `no-restricted-imports`; `shadcn/no-restyle` bans `className` restyling in `domains/**` and `routes/**` |
+| Split view = Queue + Detail (`SplitView`); no `*Console` / `*Workbench` / `*Tape` exports | `ds:check` (a `*Panel` screen name is reviewed by hand) |
+| Query cache is the source of truth: `ensureQueryData` loaders and `useQuery` / named invalidation; no loader→`useState` forks, no QueryClient singleton | guidance |
+| Caps/agents → Proposal → Triage Accept; never land output as `confirmed` Graph | guidance (root Boundaries) |
 
 ## Gotchas
 
-- Artifact bytes from object storage are `readArtifactBytesEffect`. Job Detail uses `getArtifactContentFn` in `jobs-artifact.functions.ts` (keeps `@watchdog/api` / `@watchdog/core` off the client import graph); zip/md export routes use `runApp` directly.
-- Client UI must not import `@watchdog/policy` barrel (pulls Effect into the browser). Use `@watchdog/policy/patch-needs-confidence` for Triage confidence UI. Use `@watchdog/core/job-display` for job/playbook label helpers — not `@watchdog/core` (pulls blob/db/env). Import `JobListRecord` / `JobRecord` from `@/domains/jobs/types`, not `jobs.functions` (server fns). Vite `optimizeDeps.include: ["effect"]` is a safety net for residual server-fn / HMR discovery.
-
-Canonical contracts: [`docs/reference/contracts/`](../../docs/reference/contracts/README.md). Web traps: [`docs/reference/web/README.md#traps-index`](../../docs/reference/web/README.md#traps-index).
-
-## See also
-
-| Need | File |
-| --- | --- |
-| Web docs | [`docs/reference/web/README.md`](../../docs/reference/web/README.md) |
-| UI leaves | [`ui/`](../../docs/reference/web/ui/README.md) · loading · tables · page-shell |
-| Domains / Data | [`domains.md`](../../docs/reference/web/domains.md) · [`data.md`](../../docs/reference/web/data.md) |
-| Product / UX / Caps | [`product`](../../docs/explanation/product.md) · [`ux`](../../docs/explanation/ux.md) · [`caps-lexicon`](../../docs/reference/platform/caps-lexicon.md) |
-| Design direction | [`DESIGN.md`](../../DESIGN.md) · owned auth screens: [`auth-ui`](../../docs/reference/web/ui/auth-ui.md) |
-| Auth / local-dev | [`auth-setup`](../../docs/how-to/auth-setup.md) · [`local-dev`](../../docs/how-to/local-dev.md) |
-| Log package | [`packages/log/AGENTS.md`](../../packages/log/AGENTS.md) |
+- Keep server code off the client import graph: Job Detail reads artifacts through `getArtifactContentFn` in `jobs-artifact.functions.ts` (not `@watchdog/api`/`core` directly); zip/md export routes use `runApp`.
+- Client UI must not import the `@watchdog/policy` barrel (pulls Effect into the browser): use `@watchdog/policy/patch-needs-confidence`. For job/playbook labels use `@watchdog/core/job-display`, not `@watchdog/core`. Import `JobListRecord` / `JobRecord` from `@/domains/jobs/types`, not `jobs.functions`. Guidance only: no lint rule covers these.
+- Process logging goes through `@watchdog/log` and the `src/start.ts` middleware.
