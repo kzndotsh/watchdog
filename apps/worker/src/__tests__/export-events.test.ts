@@ -105,7 +105,7 @@ describe("handleExportEventEffect", () => {
 
   it("propagates export scheduling failures", async () => {
     scheduleCaseExportEffect.mockReturnValueOnce(
-      Effect.fail(new Error("disk full"))
+      Effect.die(new Error("disk full"))
     );
 
     await expect(

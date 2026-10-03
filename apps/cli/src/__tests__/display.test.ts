@@ -208,7 +208,14 @@ describe("display helpers", () => {
       proposalListSummary({
         summary: "",
         capabilityId: null,
-        patch: [{ op: "create", resource: "claim", data: {} }],
+        patch: [
+          {
+            op: "create",
+            resource: "claim",
+            id: "11111111-1111-4111-8111-000000000001",
+            data: {},
+          },
+        ],
       })
     ).toBe("Create Claim");
   });

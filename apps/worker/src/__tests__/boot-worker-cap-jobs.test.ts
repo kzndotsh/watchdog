@@ -25,7 +25,7 @@ describe("processCapJobEffect", () => {
 
   it("does not run jobs for invalid payloads", async () => {
     const runJob = vi.fn(() =>
-      Effect.succeed({ outcome: "succeeded" as const })
+      Effect.succeed({ outcome: "succeeded" as const, durationMs: 1 })
     );
 
     await expect(
@@ -42,7 +42,7 @@ describe("processCapJobEffect", () => {
 
   it("fails empty pg-boss batches", async () => {
     const runJob = vi.fn(() =>
-      Effect.succeed({ outcome: "succeeded" as const })
+      Effect.succeed({ outcome: "succeeded" as const, durationMs: 1 })
     );
 
     await expect(
