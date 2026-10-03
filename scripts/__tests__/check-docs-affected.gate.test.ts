@@ -112,6 +112,29 @@ describe("docs-affect gate: commit-msg stage", () => {
     expect(res.output).toContain("docs:allow-affect — <reason>");
   });
 
+  it("does not demand a doc touch for web UI changes (no strict web-ui rule)", () => {
+    const repo = baseRepo();
+    repo.write("apps/web/src/shared/ui/chip.tsx", "export const Chip = 1;\n");
+    repo.write("packages/ui/src/index.ts", "export {};\n");
+    repo.git("add", "-A");
+    const res = commitMsg(repo, "feat: ui tweak\n");
+    expect(res.code).toBe(0);
+    expect(res.output).not.toContain("web-ui");
+  });
+
+  it("still requires a doc touch for strict-rule paths such as Caps", () => {
+    const repo = baseRepo();
+    repo.write("packages/caps/src/registry.ts", "export const r = 1;\n");
+    repo.write("packages/caps/AGENTS.md", "# Caps\n");
+    repo.write("docs/reference/platform/caps-lexicon.md", "# Lexicon\n");
+    repo.commitAll("base caps");
+    repo.write("packages/caps/src/registry.ts", "export const r = 2;\n");
+    repo.git("add", "-A");
+    const res = commitMsg(repo, "feat: caps\n");
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("[caps]");
+  });
+
   it("fails when a doc-map rule lists the same doc twice", () => {
     const repo = baseRepo();
     repo.write(
