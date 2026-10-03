@@ -160,6 +160,56 @@ describe("CLI output contract", () => {
     });
   });
 
+  describe("handleCliError exit status", () => {
+    async function runHandle(error: unknown) {
+      const { handleCliError } = await import("../io");
+      const lines: string[] = [];
+      const original = console.log;
+      console.log = (msg?: unknown) => {
+        lines.push(String(msg));
+      };
+      let thrown: unknown;
+      try {
+        handleCliError(error);
+      } catch (error) {
+        thrown = error;
+      } finally {
+        console.log = original;
+      }
+      return { thrown, body: JSON.parse(lines[0] ?? "{}") };
+    }
+
+    it("exits 3 with a generic message for a tagged InternalError", async () => {
+      const { thrown, body } = await runHandle({
+        _tag: "InternalError",
+        reason: "Failed to create Case",
+      });
+      expect(thrown).toBeInstanceOf(CliExitError);
+      expect((thrown as CliExitError).exitCode).toBe(3);
+      expect(body.error).toEqual({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Internal server error",
+      });
+    });
+
+    it("exits 3 for a server-side API error and 1 for invalid input", async () => {
+      const server = await runHandle({
+        name: "ORPCError",
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Internal server error",
+        status: 500,
+      });
+      const invalid = await runHandle({
+        name: "ORPCError",
+        code: "BAD_REQUEST",
+        message: "Name must contain letters or numbers",
+        status: 400,
+      });
+      expect((server.thrown as CliExitError).exitCode).toBe(3);
+      expect((invalid.thrown as CliExitError).exitCode).toBe(1);
+    });
+  });
+
   it("fail prints { ok: false, error } and throws CliExitError", async () => {
     const { fail } = await import("../io");
     const lines: string[] = [];

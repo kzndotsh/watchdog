@@ -60,7 +60,7 @@ Package detail: [`../../apps/cli/AGENTS.md`](../../apps/cli/AGENTS.md). oRPC lay
 
 - Default stdout: compact JSON (`{ count, items }` on lists).
 - `--table` for human tables; `--raw` for export/download URLs.
-- Errors: `{ ok: false, error: { code, message }, help? }`, exit 1.
+- Errors: `{ ok: false, error: { code, message }, help? }`, exit 1; server-side failures (`INTERNAL_SERVER_ERROR`, HTTP 5xx) exit 3 so scripts can tell them from invalid input.
 
 ## Next steps
 
