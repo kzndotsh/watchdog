@@ -5,7 +5,7 @@ set dotenv-load := true
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # Postgres + S3 (SeaweedFS) + bucket + migrations (daily / first-run infra)
-up: docker-up wait-healthy s3-init migrate
+up: docker-up wait-healthy s3-init migrate readonly-role
 
 # Docker only — use when you need containers without migrate/bucket
 docker-up:
@@ -21,6 +21,10 @@ down:
 
 migrate:
     pnpm db:migrate
+
+# Local-only read-only Postgres role for the dev MCP server (idempotent; `up` runs it after migrate)
+readonly-role:
+    bash scripts/ensure-readonly-role.sh watchdog
 
 s3-init:
     bash scripts/s3-init.sh

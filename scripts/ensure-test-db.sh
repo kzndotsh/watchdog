@@ -55,4 +55,7 @@ DATABASE_URL_MIGRATE="${BASE}/watchdog_e2e" pnpm --filter @watchdog/db migrate
 grant_app watchdog_test
 grant_app watchdog_e2e
 
+# Local-only read-only role (dev MCP Postgres). After migrations so every table is covered.
+bash "$ROOT/scripts/ensure-readonly-role.sh" watchdog_test watchdog_e2e
+
 echo "test databases ready: watchdog_test, watchdog_e2e"

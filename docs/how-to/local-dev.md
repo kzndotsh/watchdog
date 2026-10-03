@@ -23,6 +23,31 @@ Everything binds to loopback.
 - **S3 (SeaweedFS)**: the `s3` service in `docker-compose.yml`, single-node `mini` mode (MinIO is archived upstream). `just up` runs `s3-init` (idempotent); run `just s3-init` alone after a fresh volume if you skipped `up`. It creates the bucket and its browser-upload CORS rules with plain `curl` (SigV4); no client to install. Dev credentials are `watchdog` / `watchdog-dev-secret` (see `env.example`), so an older `.env` with MinIO-era keys needs `S3_ACCESS_KEY` / `S3_SECRET_KEY` updated. Presigned uploads send `x-amz-meta-sha256` as a signed header (SeaweedFS ignores it as a query parameter). Coming from MinIO: local evidence bytes are not migrated. Run `docker compose down --remove-orphans` (frees port 9100, keeps Postgres data), delete only the old MinIO volume (`docker volume ls | grep minio_data`, then `docker volume rm <name>`), then `just up`. Do not use `down -v`: it also deletes the Postgres volume.
 - **Vault key:** rotating or losing `WD_MASTER_VAULT_KEY` makes stored Cap credentials unreadable; `just wipe` keeps auth and vault rows. Cap secrets go in Settings → Credentials, not `.env` ([`caps-boundary.md`](../reference/platform/caps-boundary.md#cap-credentials)).
 
+## Read-only database role
+
+`watchdog_readonly` is a **local-only** login role for tools that inspect the dev database (the Postgres MCP server below). It is not the app role and never exists in a deployment: real deployments never run `docker/postgres/init.sql`, and `scripts/ensure-readonly-role.sh` is a local-dev script. Never point it, or `WATCHDOG_MCP_DATABASE_URL`, at a real deployment or investigation data.
+
+|  |  |
+| --- | --- |
+| Login | `watchdog_readonly` / `watchdog_readonly` (fixed local-dev value, not a secret; `postgresql://watchdog_readonly:watchdog_readonly@127.0.0.1:5432/watchdog`) |
+| Can | `CONNECT`; `USAGE` on schemas `public` and `auth`; `SELECT` on their tables, current and future (`ALTER DEFAULT PRIVILEGES`) |
+| Cannot | `INSERT` / `UPDATE` / `DELETE` / `TRUNCATE`, DDL, `CREATE` on any schema, anything on other schemas |
+| Session defaults | `default_transaction_read_only = on`, `statement_timeout = 30s` (a client can `SET` these away; the grants are the boundary) |
+| Hidden tables | `auth.account` (password hashes, OAuth tokens), `auth.apikey` (key hashes), `auth.session` (session tokens), `auth.verification` (one-time tokens), `auth.invitation` (the id is the accept link), `public.credentials` (vault ciphertext): `SELECT` on them is denied |
+
+`auth.user` stays readable (names and emails of local accounts). A new table is readable by default; if it holds a secret, add it to `EXCLUDED_TABLES` in `scripts/ensure-readonly-role.sh` and to `packages/db/src/__tests__/readonly-role.int.test.ts`. That test fails when an unlisted table is unreadable, a listed one is readable, or a readable column is named like a password, token, secret, ciphertext or `key`.
+
+**Creating or refreshing it:** `just up` runs `just readonly-role` after migrations, so a first run, an existing container and a new table all end up covered. Run `just readonly-role` by hand after `pnpm db:migrate` alone. A fresh volume also creates the role from `docker/postgres/init.sql`; an already-running container never re-runs that file, which is why the script is the idempotent source of truth. `pnpm test-db` (CI included) applies it to `watchdog_test` and `watchdog_e2e`.
+
+## Agent MCP servers
+
+`.mcp.json` (repo root) declares two dev-only MCP servers, both started with `npx` at pinned versions (bump deliberately; `scripts/__tests__/mcp-config.gate.test.ts` rejects `latest`, ranges and unpinned packages):
+
+- **`postgres`** (`@yawlabs/postgres-mcp`): connects as `watchdog_readonly` to `127.0.0.1:5432/watchdog` and runs queries in `BEGIN READ ONLY`; writes stay off (`ALLOW_WRITES` unset). The connection string is `${WATCHDOG_MCP_DATABASE_URL:-<local read-only URL>}`: export that variable to use another local database (for example `watchdog_test`), always with the read-only role. Needs `just up` first.
+- **`playwright`** (`@playwright/mcp`): headless, isolated profile (nothing saved to disk), scoped with `--allowed-origins` to `http://127.0.0.1:3000` / `localhost:3000` (the web dev server; edit both entries if you move the port). It is a convenience scope, not a security boundary. Install the browser once with `pnpm exec playwright install chromium`.
+
+**Claude Code** reads `.mcp.json` itself: start `claude` in the repo, approve the project servers when prompted (`/mcp` shows status; `claude mcp reset-project-choices` resets the approval). **Cursor** does not read the root `.mcp.json`: add the same two entries under Settings → MCP (or a personal `.cursor/mcp.json`), keeping the pinned versions and the read-only URL; Cursor's own expansion syntax is `${env:VAR}`, with no `:-default`, so write the local URL out.
+
 ## Common fixes
 
 - **Stale Graph / inbox after experiments:** `just wipe yes`, then `just seed-demo` for the screenshot cases (sign up first; it seeds the current org).
