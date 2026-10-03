@@ -1,7 +1,12 @@
 import { ORPCError, createRouterClient } from "@orpc/server";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { listVisibleCaseIdsEffect, runDomain } from "@watchdog/core";
+import {
+  assertCaseInOrgEffect,
+  DomainError,
+  listVisibleCaseIdsEffect,
+  runDomain,
+} from "@watchdog/core";
 import {
   resetTestDb,
   seedCase,
@@ -923,5 +928,16 @@ describe("organization isolation matrix", () => {
     await expect(runDomain(listVisibleCaseIdsEffect(ORG_B))).resolves.toEqual([
       ids.caseB,
     ]);
+  });
+
+  it("rejects another organization's Case through core's org-scoped assertion as not_found", async () => {
+    await expect(
+      runDomain(assertCaseInOrgEffect(ids.caseA, ORG_B))
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+    );
+    await expect(
+      runDomain(assertCaseInOrgEffect(ids.caseA, ORG_A))
+    ).resolves.toBe(ids.caseA);
   });
 });

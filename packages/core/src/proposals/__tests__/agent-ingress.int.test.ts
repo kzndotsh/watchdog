@@ -6,7 +6,10 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { claimsRepo, db, evidenceRepo, graphWritesRepo } from "@watchdog/db";
-import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import {
+  buildClaimCreateOp,
+  buildEntityCreateOp,
+} from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import {
   TEST_ACTOR_ID,
@@ -102,6 +105,59 @@ describe("writeGraphFromAgent", () => {
 
     const rows = await graphWritesRepo.listForCase(db, cased.id);
     expect(rows).toHaveLength(0);
+  });
+
+  it("surfaces an Entity id already in use as a conflict (not a failed write) without an idempotency key", async () => {
+    const cased = await seedCase(db);
+    const existing = await seedEntity(db, cased.id, { id: testId(23) });
+
+    await expect(
+      runDomain(
+        writeGraphFromAgentEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
+          userOverride: true,
+          patch: [
+            buildEntityCreateOp("Dup", "dup-slug", "person", {
+              id: existing.id,
+            }),
+          ],
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) =>
+        DomainError.is(error) &&
+        error.code === "conflict" &&
+        error.message.includes("already in use")
+    );
+    expect(await graphWritesRepo.listForCase(db, cased.id)).toHaveLength(0);
+  });
+
+  it("surfaces the conflict when a keyed write conflicts and no earlier write holds the key", async () => {
+    const cased = await seedCase(db);
+    const existing = await seedEntity(db, cased.id, { id: testId(24) });
+
+    await expect(
+      runDomain(
+        writeGraphFromAgentEffect({
+          caseId: cased.id,
+          organizationId: TEST_ORGANIZATION_ID,
+          actorId: TEST_ACTOR_ID,
+          actorLabel: TEST_ACTOR_ID,
+          userOverride: true,
+          patch: [
+            buildEntityCreateOp("Dup", "dup-slug-2", "person", {
+              id: existing.id,
+            }),
+          ],
+          idempotencyKey: "never-recorded",
+        })
+      )
+    ).rejects.toSatisfy(
+      (error: unknown) => DomainError.is(error) && error.code === "conflict"
+    );
   });
 
   describe("concurrency", () => {
