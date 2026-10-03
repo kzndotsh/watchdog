@@ -111,6 +111,12 @@ pre-push:
   commands:
     typecheck:
       run: pnpm typecheck
+    gate-tests:
+      glob:
+        - "scripts/**"
+        - "skills-lock.json"
+        - "vitest.config.ts"
+      run: pnpm test:gate
     web-ds:
       root: apps/web/
       glob: "apps/web/**"

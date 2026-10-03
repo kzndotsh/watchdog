@@ -22,6 +22,7 @@ Co-located sibling `__tests__/` next to source. One suffix per file.
 | --- | --- |
 | `*.test.ts` | Unit (pure, zero IO). Under `apps/web/` these files still run in the **component** (happy-dom) project: `pnpm test:component`, not `pnpm test:unit`. |
 | `*.property.test.ts` | fast-check |
+| `*.gate.test.ts` | Gate script run as a CLI against a temp git repo (`scripts/__tests__/`) |
 | `*.int.test.ts` | Postgres via `withTestTx` / `resetTestDb` |
 | `*.component.test.tsx` | happy-dom + Testing Library |
 | `*.spec.ts` | Playwright only, under `e2e/specs/` |
