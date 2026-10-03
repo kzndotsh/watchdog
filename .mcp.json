@@ -21,6 +21,10 @@
       "env": {
         "npm_config_ignore_scripts": "true"
       }
+    },
+    "better-auth": {
+      "type": "http",
+      "url": "https://mcp.better-auth.com/mcp"
     }
   }
 }

@@ -4,9 +4,11 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Structural gate for the committed project MCP config (`.mcp.json`): both dev
- * servers present, packages pinned to exact versions, Postgres connecting as the
- * local-only read-only role over loopback, and no literal credentials.
+ * Structural gate for the committed project MCP config (`.mcp.json`): the three
+ * dev servers present, local packages pinned to exact versions, Postgres
+ * connecting as the local-only read-only role over loopback, remote servers
+ * limited to an https host allowlist with no headers/env/credentials, and no
+ * literal credentials.
  * Reads the file as data; the validator below is also run against bad configs so
  * the rules themselves are proven to fail.
  */
@@ -23,6 +25,9 @@ const READONLY_DSN_EXPANSION =
 
 /** `scheme://user:password@host`, anywhere in a string. */
 const URL_WITH_PASSWORD = /[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:[^\s/@]+@/i;
+
+/** Remote (HTTP) MCP servers are outside the npm pins: only these hosts. */
+const REMOTE_HOST_ALLOWLIST = new Set(["mcp.better-auth.com"]);
 
 function strings(value: unknown): string[] {
   if (typeof value === "string") return [value];
@@ -53,16 +58,60 @@ function npxPackage(srv: Json): string | undefined {
   );
 }
 
+/** Problems with a remote (`type: "http"`) server entry. */
+function remoteProblems(name: string, srv: Json): string[] {
+  const problems: string[] = [];
+  if (srv.command !== undefined || srv.args !== undefined) {
+    problems.push(`${name}: a remote server must not have command/args`);
+  }
+  if (srv.headers !== undefined) {
+    problems.push(`${name}: a remote server must not set headers`);
+  }
+  if (srv.env !== undefined) {
+    problems.push(`${name}: a remote server must not set env`);
+  }
+  let url: URL | undefined;
+  try {
+    url = typeof srv.url === "string" ? new URL(srv.url) : undefined;
+  } catch {
+    url = undefined;
+  }
+  if (!url) {
+    problems.push(`${name}: url must be a valid absolute URL`);
+    return problems;
+  }
+  if (url.protocol !== "https:") {
+    problems.push(`${name}: remote url must be https`);
+  }
+  if (!REMOTE_HOST_ALLOWLIST.has(url.hostname)) {
+    problems.push(`${name}: host "${url.hostname}" is not on the allowlist`);
+  }
+  if (url.username || url.password || url.search || url.hash) {
+    problems.push(
+      `${name}: remote url must not carry credentials, a query string or a fragment`
+    );
+  }
+  return problems;
+}
+
 /** Every violation found in an MCP config (empty means it passes). */
 function validateMcpConfig(config: Json): string[] {
   const problems: string[] = [];
   const servers = (config.mcpServers ?? {}) as Record<string, Json>;
 
-  for (const name of ["postgres", "playwright"]) {
+  for (const name of ["postgres", "playwright", "better-auth"]) {
     if (!servers[name]) problems.push(`missing server "${name}"`);
   }
 
   for (const [name, srv] of Object.entries(servers)) {
+    if (srv.type !== undefined) {
+      if (srv.type === "http") {
+        problems.push(...remoteProblems(name, srv));
+      } else {
+        problems.push(`${name}: type must be "http" when present`);
+      }
+      continue;
+    }
     if (srv.command !== "npx") {
       problems.push(`${name}: command must be npx with a pinned package`);
       continue;
@@ -130,9 +179,10 @@ function mutated(change: (cfg: Json) => void): string[] {
 }
 
 describe(".mcp.json", () => {
-  it("passes: both servers present, pinned, read-only role, no literal credentials", () => {
+  it("passes: all servers present, pinned or allowlisted, read-only role, no literal credentials", () => {
     expect(validateMcpConfig(committed)).toEqual([]);
     expect(Object.keys(committed.mcpServers as Json).sort()).toEqual([
+      "better-auth",
       "playwright",
       "postgres",
     ]);
@@ -228,5 +278,77 @@ describe(".mcp.json", () => {
       );
     });
     expect(scoped.join("\n")).toContain("--allowed-origins");
+  });
+
+  describe("remote servers", () => {
+    it("declares better-auth as a plain https http server", () => {
+      expect(must(committed, "better-auth")).toEqual({
+        type: "http",
+        url: "https://mcp.better-auth.com/mcp",
+      });
+    });
+
+    it.each([
+      [
+        "a non-https url",
+        { url: "http://mcp.better-auth.com/mcp" },
+        "must be https",
+      ],
+      [
+        "an unknown host",
+        { url: "https://evil.example.com/mcp" },
+        "not on the allowlist",
+      ],
+      [
+        "a look-alike host",
+        { url: "https://mcp.better-auth.com.evil.io/mcp" },
+        "not on the allowlist",
+      ],
+      [
+        "a header",
+        { headers: { Authorization: "Bearer x" } },
+        "must not set headers",
+      ],
+      ["an env block", { env: { TOKEN: "x" } }, "must not set env"],
+      [
+        "credentials in the url",
+        { url: "https://u:p@mcp.better-auth.com/mcp" },
+        "credentials",
+      ],
+      [
+        "a token in the query string",
+        { url: "https://mcp.better-auth.com/mcp?token=abc" },
+        "query string",
+      ],
+      [
+        "a command",
+        { command: "npx", args: ["-y", "x@1.0.0"] },
+        "command/args",
+      ],
+      ["a malformed url", { url: "not a url" }, "valid absolute URL"],
+    ])("fails on %s", (_label, change, expected) => {
+      const problems = mutated((c) => {
+        Object.assign(must(c, "better-auth"), change);
+      });
+      expect(problems.join("\n")).toContain(expected);
+    });
+
+    it.each(["sse", "streamable-http", "HTTP", "", 1])(
+      "fails on type %j",
+      (type) => {
+        const problems = mutated((c) => {
+          must(c, "better-auth").type = type;
+        });
+        expect(problems.join("\n")).toContain('type must be "http"');
+      }
+    );
+
+    it("fails when the better-auth server is removed", () => {
+      expect(
+        mutated((c) => {
+          delete (c.mcpServers as Json)["better-auth"];
+        })
+      ).toContain('missing server "better-auth"');
+    });
   });
 });
