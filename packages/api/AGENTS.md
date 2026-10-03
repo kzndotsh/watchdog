@@ -2,7 +2,7 @@
 
 > Scope: `packages/api` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-oRPC procedures + OpenAPI contract for `/api/v1`. Controllers call `@watchdog/core`; no SQL here.
+oRPC procedures + OpenAPI contract for `/api/v1`. Procedures call `@watchdog/core`; there is no SQL here (api has no `@watchdog/db` dependency, so its integration tests call core services and seed through `@watchdog/test-db`).
 
 ## Commands
 
@@ -13,36 +13,21 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Controllers call `@watchdog/co
 | Export OpenAPI contract | `pnpm --filter @watchdog/api export-contract` |
 | Regen HTTP client       | `pnpm generate:client`                        |
 
-## Boundaries
+## Rules
 
-| Do | Don’t |
+| Rule | Enforced by |
 | --- | --- |
-| Map `DomainTag` → HTTP via `toOrpcError` / `runApp` | Leak raw DB rows / drizzle types on the wire |
-| Keep Zod inputs next to procedures | Hand-edit `packages/client/src/generated/` |
-| Call core services | Import `@watchdog/db` repos from procedures |
+| After any route/input change: export contract → `pnpm generate:client`, commit `packages/client/src/generated/*` | CI drift job (`ci.yml`) |
+| Procedures taking `caseId` pass the actor's `organizationId` into core; a foreign or missing Case is `not_found`, with no distinct "wrong org" signal. Org resolution lives in `@watchdog/auth` (`createApiContext`); `authed` throws FORBIDDEN without an organization, so procedures never resolve org themselves | `src/__tests__/org-isolation.int.test.ts` (hand-enumerated: add every new case-scoped procedure) |
+| Unknown errors are 500, not 400. `InternalError` maps to `INTERNAL_SERVER_ERROR` with the fixed message `"Internal server error"`; its `reason`/`cause` go only to the request log (`peekRequestLogger`). `InvalidError` stays 400 for caller-fixable input; `graph.write` id/slug collisions are `ConflictError` (409) | `map-domain-error.test.ts` |
+| Name nested wire objects in `schemas.ts` (e.g. `identifierCollisionSchema`); no anonymous inline Zod on the wire. Do not leak DB rows or drizzle types | guidance |
+| Credentials procedures expose vault **slots** only, never plaintext | guidance |
 
 ## Gotchas
 
-- **Org scope on case children** — procedures that take `caseId` must pass the actor’s `organizationId` into core. Foreign or missing Case is **`not_found`** (same as a missing id); do not return data or a distinct “wrong org” signal. Org resolution lives in `@watchdog/auth` (`createApiContext`: session `activeOrganizationId`, or the API key's `metadata.organizationId`, membership re-checked every call). `authed` throws FORBIDDEN when the actor has no organization and narrows `actor.organizationId` to `string` — procedures never resolve org themselves. Every new case-scoped procedure must be added to `src/__tests__/org-isolation.int.test.ts`.
-- After route/input changes: export contract → `pnpm generate:client` (CI drifts if skipped). Named nested objects (e.g. `identifierCollisionSchema` on `proposalSchema`) stay in `schemas.ts` — don’t inline anonymous Zod on the wire.
-- Playbook run (`POST …/playbooks/{playbookId}/run`): seeds `host|url|evidence|ip|email|hash|handle`; only step 0 is queued at start. `jobSchema` carries `playbookFanIndex` + `playbookRunStatus`. Capabilities list uses `PLAYBOOK_SEED_KINDS` for playbook `seedKinds`.
-- Tasks: `POST /cases/{caseId}/tasks/reorder` (`status` + `orderedIds`); `taskSchema.position`. Regen client after this route/input change.
-- Intake Process/Enrich are evidence verbs (`POST …/process`, `…/enrich`) wrapping core glue — prefer those over `jobs.start` for Harvest/Extract/URL Enrich so dedupe + URL-assert stay in one place.
-- OpenAPI: `search.case` (`GET /cases/{caseId}/search`) is Active Case `searchCase` — keep hit DTOs named in `schemas.ts`.
-- OpenAPI security: Bearer + **`apiKeyAuth` (`x-api-key`)** + session cookie — `@watchdog/client` / `wd` send `x-api-key`.
-- Credentials procedures expose vault **slots** only (never plaintext); Cap secrets stay in core vault.
-- Case Export zip/md are authenticated **file routes** on web (not oRPC) — CLI uses raw `fetch` + `x-api-key`.
-- Activity: `GET`-style recent feed procedure is read-only (core `listRecentActivity`); no SSE type for it.
-- Unknown errors must be 500, not 400. `InternalError` (failed write, queue driver) maps to `INTERNAL_SERVER_ERROR` with the fixed message `"Internal server error"`; its `reason` and `cause` go only to the request log (`peekRequestLogger`): an `Error` cause as `{ name, message, stack }`, anything else as a truncated string. Graph writes (`graph.write`) surface an id/slug already in use as `ConflictError` (409), not a masked 400. `InvalidError` stays 400 for caller-fixable input only.
-- `toOrpcError` maps `DomainTag` via `Match.tagsExhaustive` (ORPCError). Application Effects run via `runApp` (`Effect.mapError(toOrpcError)` then `appRuntime.runPromise`). `AppLive` is `Layer.empty` (no unused identity Layers). Graph child CRUD, Evidence, Proposals, Graph write, Case, Task, Search, Activity, Job (including playbook run/cancel), Credentials, and Capabilities/Playbooks list are Effect-only.
-- Optional `ApiContext.log` — Start ALS via `peekRequestLogger` on HTTP + ServerFn. `evlog()` sets `operation`; shared middleware lifts ids from input — do not stamp `context.log?.set` per handler. Never `withEvlog` on handlers.
-- Integration tests call **core services** (not HTTP) with `@watchdog/test-db`. Do not import `@watchdog/db` from this package's tests.
+- `toOrpcError` maps `DomainTag` via `Match.tagsExhaustive`; run Effects through `runApp`. `AppLive` is `Layer.empty`.
+- Logging: shared middleware stamps ids from input, so do not call `context.log?.set` per handler. `ApiContext.log` comes from `peekRequestLogger`.
+- Prefer the evidence verbs (`POST …/process`, `…/enrich`) over `jobs.start` for Harvest/Extract/URL Enrich so dedupe and URL-assert stay in one place.
+- Case Export zip/md are authenticated file routes on web, not oRPC; the CLI uses raw `fetch` + `x-api-key`. OpenAPI security accepts Bearer, `x-api-key`, or the session cookie.
 
-## See also / External References
-
-| Need | File |
-| --- | --- |
-| Generated client | [`packages/client/AGENTS.md`](../client/AGENTS.md) |
-| Core services | [`packages/core/AGENTS.md`](../core/AGENTS.md) |
-| Playbooks | [`docs/reference/platform/caps-lexicon.md`](../../docs/reference/platform/caps-lexicon.md) |
-| Process logging | [`packages/log/AGENTS.md`](../log/AGENTS.md) · [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md) |
+See also: [`packages/client/AGENTS.md`](../client/AGENTS.md) · [`packages/core/AGENTS.md`](../core/AGENTS.md) · [`docs/reference/platform/README.md`](../../docs/reference/platform/README.md).

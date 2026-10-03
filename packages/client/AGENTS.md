@@ -2,7 +2,7 @@
 
 > Scope: `packages/client` (inherits root AGENTS.md)
 
-Typed HTTP SDK for `/api/v1` (generated OpenAPI contract in `src/generated/` + `createWatchdogClient`). Used by CLI and agents.
+Typed HTTP SDK for `/api/v1`: the generated OpenAPI contract in `src/generated/` plus `createWatchdogClient`. Used by the CLI and agents; prefer it over hand-rolled `fetch`. Case Export zip/md are not on the contract (the CLI uses authenticated `fetch`).
 
 ## Commands
 
@@ -14,8 +14,5 @@ Typed HTTP SDK for `/api/v1` (generated OpenAPI contract in `src/generated/` + `
 
 ## Rules
 
-- `src/generated/` (`contract.json`, `openapi.json`, `app-router.ts`) is the router artifact — never list `@watchdog/api` in this `package.json`. `app-router.ts` is a type-only alias of the live API `AppRouter` by relative path (monorepo-local until a contract-first router becomes the type SoT); `contract.json` is minified route metadata with schemas stripped. Never hand-edit `src/generated/`.
-- After API route/input changes: `pnpm generate:client` (commit `packages/client/src/generated/*`).
-- Prefer this client over hand-rolled `fetch`.
-- Tests cover `createWatchdogClient` (base URL slash-strip + `x-api-key`). Do not unit-test contract generated JSON.
-- Case Export zip/md are **not** on the oRPC contract — CLI uses authenticated file `fetch` + `x-api-key` (see `apps/cli`).
+- Never hand-edit `src/generated/` (`contract.json`, `openapi.json`, `app-router.ts`); after API route/input changes run `pnpm generate:client` and commit the output. Enforced by the CI drift job.
+- Never list `@watchdog/api` in this `package.json`: `app-router.ts` is a type-only alias of the live API `AppRouter` by relative path.
