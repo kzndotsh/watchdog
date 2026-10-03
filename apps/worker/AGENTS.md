@@ -6,11 +6,12 @@ Thin Cap Job runner: pg-boss `work` → `executeJobOnMap`, cancel poll, export e
 
 ## Commands
 
-| Task       | Command                                    |
-| ---------- | ------------------------------------------ |
-| Dev        | `pnpm dev:worker`                          |
-| Typecheck  | `pnpm --filter @watchdog/worker typecheck` |
-| Unit tests | `pnpm test:unit`                           |
+| Task | Command |
+| --- | --- |
+| Dev | `pnpm dev:worker` |
+| Typecheck | `pnpm --filter @watchdog/worker typecheck` |
+| Typecheck tests | included in `pnpm --filter @watchdog/worker typecheck` (`tsconfig.test.json`; see [`testing/standards.md`](../../docs/contributing/testing/standards.md#tests-are-typechecked)) |
+| Unit tests | `pnpm test:unit` |
 
 ## Boundaries
 

@@ -14,6 +14,7 @@ import {
 } from "./authenticated-case";
 
 interface E2eFixtures {
+  _resetDb: null;
   api: E2eApi;
   authenticatedCase: AuthenticatedCase;
   authPage: AuthPage;
@@ -28,10 +29,8 @@ export const test = base.extend<E2eFixtures>({
     async ({ page }, use) => {
       await resetE2eDb();
       // Stale session cookies point at wiped auth rows → shell 403s without New Case.
-      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Playwright fixture deps typed loosely
       await page.context().clearCookies();
-      // oxlint-disable-next-line typescript/no-unsafe-call -- Playwright fixture `use` is typed loosely
-      await use();
+      await use(null);
     },
     { auto: true },
   ],

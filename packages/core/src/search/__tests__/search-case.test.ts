@@ -28,7 +28,7 @@ function jobRow(
       actorLabel: "actor",
       playbookRunId: null,
       playbookStep: null,
-      playbookFanIndex: null,
+      playbookFanIndex: 0,
       createdAt: now,
       updatedAt: now,
       startedAt: null,

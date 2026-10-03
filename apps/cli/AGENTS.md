@@ -12,6 +12,7 @@
 | Build | `pnpm --filter @watchdog/cli build` (esbuild single ESM → `dist/main.js`; workspace packages inlined) |
 | Pack proof | `pnpm --filter @watchdog/cli pack:smoke` · `--live` with `WD_API_*` |
 | Typecheck | `pnpm --filter @watchdog/cli typecheck` (workspace TypeScript **7.0.2**; exact pin in `package.json`) |
+| Typecheck tests | included in `pnpm --filter @watchdog/cli typecheck` (`tsconfig.test.json`; see [`testing/standards.md`](../../docs/contributing/testing/standards.md#tests-are-typechecked)) |
 | Unit tests | `pnpm test:unit` |
 
 ### Surface (agent ingress)
@@ -66,6 +67,7 @@ Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
 - Destructive verbs support `--dry-run` (prints planned JSON only — does **not** validate against the API).
 - Paste body: `--body`, `-b -`, `--stdin`, or non-TTY stdin (`readStdin` in `load-patch.ts`).
 - Breaking: `wd caps` → `wd caps list` (also content-first `wd caps`).
+- Command unit tests resolve subcommands and build run contexts through the typed `subCommand` / `ctx` helpers in `commands/__tests__/commands.test.ts` (no `as never`); tests are typechecked and `apps/cli` is on the clean list.
 - Tests: `--help` / output contract, `CUSTODY` JSON when child writes omit `--user-override`, `loadPatch` reject paths. Live API is e2e / integration, not CLI unit.
 
 ## See also / External References

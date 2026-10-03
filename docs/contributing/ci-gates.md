@@ -18,7 +18,8 @@ Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference)
 | Command | Purpose |
 | --- | --- |
 | `pnpm check` | Oxlint + Oxfmt (Ultracite). `effecttsgo` recommended is on; warn-severity Effect rules do not fail this gate. `@shadcn/lint` (pinned, web only) fails raw palette colors, undeclared tokens, off-scale arbitrary values, and Tailwind classes that generate no CSS. |
-| `pnpm typecheck` | Workspace TS |
+| `pnpm typecheck` | Workspace TS, source and tests: each package runs its `tsconfig.json` and `tsconfig.test.json`, then root runs `scripts/tsconfig.test.json`, `e2e/tsconfig.test.json` and the test coverage guard. Pre-push and the CI gates job run it |
+| `pnpm check:test-coverage-guard` | Every test file `vitest list` discovers, plus every Playwright spec `playwright test --list` reports (from `playwright.config.ts`), is included by some `tsconfig.test.json` (`scripts/check-test-coverage-guard.mjs`). Runs as part of `pnpm typecheck`; also callable alone |
 | `pnpm check:agents:strict` | AGENTS.md hygiene: presence in every `apps/*` / `packages/*`, size budget, Scope + Commands sections, relative links, banned terms, CLAUDE.md `@AGENTS.md` bridge. Docs-tree links and length are `check:docs` only |
 | `pnpm check:docs:strict` | Docs links, index, leaf length budget |
 | `pnpm check:docs-affected:strict` | Changed code must touch mapped docs |
@@ -59,7 +60,7 @@ Every hook either blocks (exits non-zero, or for the Cursor `stop` hook reports 
 | `pnpm check:effect-edges:strict` | pre-commit, CI | `--strict` | none |
 | `pnpm check:size` / `check:vendor` / `check:design-tokens` | pre-commit (+ CI for size, vendor) | always blocks | none |
 | `pnpm validate:agents` | pre-commit (`--staged`), CI (`--range`), Cursor stop | fails on errors; staleness is a warning | none |
-| `pnpm typecheck` / `pnpm ds:check` | pre-push, CI | always blocks | none |
+| `pnpm typecheck` / `pnpm ds:check` | pre-push, CI | always blocks (`typecheck` includes tests and the coverage guard) | none |
 
 Local, per-clone skipping goes through `lefthook-local.yml`; `--no-verify` is not an escape hatch. The Cursor `afterFileEdit` hook was deleted: Cursor never read its output.
 
@@ -69,7 +70,7 @@ Vitest project `gate` (`pnpm test:gate`, also in `pnpm test`): `scripts/__tests_
 
 The fixture strips `CI`, `GITHUB_*`, `DOCS_AFFECT_*` and `GIT_*` from the environment a gate sees, so a suite running under GitHub Actions cannot flip a gate into CI mode. A test that wants CI mode passes those variables through the `env` option.
 
-**Meta-test.** `scripts/__tests__/gate-coverage.gate.test.ts` reads `lefthook.yml` (pre-commit, commit-msg, pre-push) and the CI `gates` job, resolves every `pnpm` command through `package.json` (including `pnpm --filter <pkg> <script>` and package-level scripts), and collects the gate scripts under `scripts/`, `packages/db/scripts/` and `apps/web/scripts/`. Each needs a `*.gate.test.ts` with at least one test named like `fails` / `must fail` / `rejects`. Third-party tools (ultracite, tsc, astro, vitest, knip, tsx) are allow-listed by name in that file; any other command wired into a hook or the gates job fails the meta-test, so a new gate cannot land untested.
+**Meta-test.** `scripts/__tests__/gate-coverage.gate.test.ts` reads `lefthook.yml` (pre-commit, commit-msg, pre-push) and the CI `gates` job, resolves every `pnpm` command through `package.json` (including `pnpm --filter <pkg> <script>` and package-level scripts), and collects the gate scripts under `scripts/`, `packages/db/scripts/` and `apps/web/scripts/`. Each needs a `*.gate.test.ts` with at least one test named like `fails` / `must fail` / `rejects`. Third-party tools (ultracite, tsc, astro, vitest, knip, tsx) are allow-listed by name in that file; any other command wired into a hook or one of those jobs fails the meta-test, so a new gate cannot land untested.
 
 **Shared git helpers.** `scripts/lib/git-range.mjs` is the one place gates talk to git for diffs: `git` throws with git's stderr instead of returning an empty result, `resolvePushRange` handles `before..after` (an all-zero `before` falls back to the merge base with `origin/main`, then `main`; anything unresolvable throws), and `hasSubstantiveChange` returns true only on `git diff --quiet -w --ignore-blank-lines` exit 1 and throws on any other failure. A broken diff therefore fails `check-docs-affected` and `validate-agents` rather than counting as a doc touch or "no changes". The Cursor stop hook uses the same helper but keeps its documented fail-open contract (a hook never blocks the agent because it broke): its top-level catch answers `{}` and says so on stderr, while real gate failures still surface as `followup_message`.
 
@@ -94,7 +95,7 @@ CI fails if regen output drifts from committed files.
 
 Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show docs-only; push to `main` runs full CI.
 
-Parallel after File detection: **Gates** (Ultracite, AGENTS/docs/effect/skills, typecheck, knip, web DS, `pnpm --filter @watchdog/site build` when `apps/site/**` changes, cap/client drift, db repos) ‖ **Unit** (`pnpm test:coverage` for unit/property/component; Codecov + Test Analytics upload is non-blocking; OIDC, optional `CODECOV_TOKEN`) ‖ **Integration + e2e** (Postgres + S3 storage). Advisory (React Doctor / Desloppify) runs separately and does not block — Desloppify CI uses `pnpm desloppify:scan:ci` (bootstrap excludes `repos`/`data`/generated trees first). Aggregator job **Check** stays the required status (treats skipped siblings as OK).
+Parallel after File detection: **Gates** (Ultracite, AGENTS/docs/effect/skills, typecheck (source, tests and the test coverage guard), knip, web DS, `pnpm --filter @watchdog/site build` when `apps/site/**` changes, cap/client drift, db repos) ‖ **Unit** (`pnpm test:coverage` for unit/property/component; Codecov + Test Analytics upload is non-blocking; OIDC, optional `CODECOV_TOKEN`) ‖ **Integration + e2e** (Postgres + S3 storage). Advisory (React Doctor / Desloppify) runs separately and does not block — Desloppify CI uses `pnpm desloppify:scan:ci` (bootstrap excludes `repos`/`data`/generated trees first). Aggregator job **Check** stays the required status (treats skipped siblings as OK).
 
 Dependabot version updates: [`.github/dependabot.yml`](../../.github/dependabot.yml) (npm/pnpm root lockfile, GitHub Actions, docker-compose, Nix flakes) — weekly Mondays, grouped minor/patch.
 

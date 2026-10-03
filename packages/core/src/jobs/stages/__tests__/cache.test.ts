@@ -98,10 +98,7 @@ describe("storeCacheStage", () => {
   it("skips store when interpret cap artifacts lack report.json", async () => {
     storeCapCacheEffect.mockClear();
     const state = makeState();
-    state.cap = {
-      id: "network.dns.lookup",
-      interpret: true,
-    } as PreflightState["cap"];
+    state.cap = { ...state.cap, interpret: vi.fn() };
     await Effect.runPromise(
       storeCacheStageEffect({
         state,

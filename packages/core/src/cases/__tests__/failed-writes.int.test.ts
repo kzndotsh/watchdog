@@ -32,7 +32,7 @@ describe("failed Case writes", () => {
   });
 
   it("raises InternalError when an insert returns no row", async () => {
-    spy = vi.spyOn(casesRepo, "create").mockResolvedValueOnce(undefined);
+    spy = vi.spyOn(casesRepo, "create").mockResolvedValueOnce(null);
 
     const failure = await Effect.runPromise(
       Effect.flip(
@@ -48,7 +48,7 @@ describe("failed Case writes", () => {
 
   it("raises NotFoundError when a delete matches no row", async () => {
     const seeded = await seedCase(db, { name: "Alpha" });
-    spy = vi.spyOn(casesRepo, "delete").mockResolvedValueOnce(false);
+    spy = vi.spyOn(casesRepo, "delete").mockResolvedValueOnce(null);
 
     const failure = await Effect.runPromise(
       Effect.flip(

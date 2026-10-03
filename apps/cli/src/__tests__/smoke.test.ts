@@ -41,7 +41,9 @@ function firstJson(stdout: string): unknown {
     .trim()
     .split("\n")
     .find((l) => l.startsWith("{"));
-  expect(line, `expected JSON line in: ${stdout}`).toBeTruthy();
+  if (line === undefined) {
+    expect.fail(`expected JSON line in: ${stdout}`);
+  }
   return JSON.parse(line);
 }
 

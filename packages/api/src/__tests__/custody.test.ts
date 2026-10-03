@@ -13,7 +13,7 @@ describe("custody", () => {
       requireUserOverride(false);
     }).toThrow(ORPCError);
     expect(() => {
-      requireUserOverride();
+      requireUserOverride(undefined);
     }).toThrow(ORPCError);
   });
 
@@ -37,7 +37,7 @@ describe("custody", () => {
       refuseConfirmed("possible");
     }).not.toThrow();
     expect(() => {
-      refuseConfirmed();
+      refuseConfirmed(undefined);
     }).not.toThrow();
   });
 

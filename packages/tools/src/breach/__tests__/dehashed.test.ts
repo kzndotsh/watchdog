@@ -41,7 +41,7 @@ describe("dehashed", () => {
       expect(Result.isFailure(outcome)).toBe(true);
       if (Result.isFailure(outcome)) {
         expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure.slot).toBe("DEHASHED_API_KEY");
+        expect(outcome.failure).toMatchObject({ slot: "DEHASHED_API_KEY" });
       }
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );

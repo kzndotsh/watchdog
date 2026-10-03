@@ -17,7 +17,7 @@ describe("emailrep", () => {
       ).pipe(Effect.flip);
 
       expect(result).toBeInstanceOf(MissingCredentialError);
-      expect(result.slot).toBe("EMAILREP_API_KEY");
+      expect(result).toMatchObject({ slot: "EMAILREP_API_KEY" });
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 

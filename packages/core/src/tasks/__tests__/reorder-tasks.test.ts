@@ -32,7 +32,7 @@ describe("reorderTasksEffect", () => {
         reorderTasksEffect({
           caseId: testId(1),
           organizationId: testId(2),
-          status: "todo",
+          status: "backlog",
           orderedIds: [testId(3), "not-a-uuid"],
         })
       )

@@ -505,8 +505,7 @@ describe("listProposalsForCase", () => {
   it("normalizes padded evidence ids on proposal wire records", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(60) });
-    const evidenceId = testId(61);
-    await seedEvidence(db, cased.id, { id: evidenceId });
+    const { id: evidenceId } = await seedEvidence(db, cased.id);
     const op = buildClaimCreateOp(entity.id, "observed", {
       id: testId(62),
       evidenceIds: [`  ${evidenceId}  `],

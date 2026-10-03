@@ -20,6 +20,8 @@ pnpm test:e2e:journey     # @journey only (core loop)
 pnpm exec vitest run --project e2e-parser  # pure harness unit tests under e2e/
 pnpm test:coverage        # v8 report under coverage/ (not a %). CI uploads coverage/lcov.info to Codecov.
 pnpm test:watch
+pnpm typecheck            # source AND test files (blocking; pre-push + CI) plus the coverage guard
+pnpm check:test-coverage-guard  # every vitest-discovered test file is in a tsconfig.test.json (also run by typecheck)
 pnpm --filter @watchdog/web ds:check
 pnpm --filter @watchdog/db check:repos
 ```

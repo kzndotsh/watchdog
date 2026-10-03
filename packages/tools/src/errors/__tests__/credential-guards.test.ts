@@ -205,7 +205,7 @@ describe("credential guards", () => {
       Effect.gen(function* missingKeyGen() {
         const result = yield* run();
         expect(result).toBeInstanceOf(MissingCredentialError);
-        expect(result.slot).toBe(slot);
+        expect(result).toMatchObject({ slot });
       }).pipe(Effect.provide(toolsHttpClientLayer))
     );
   }

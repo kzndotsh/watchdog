@@ -9,7 +9,7 @@
     "./invitation-url": "./src/invitation-url.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "dependencies": {
     "@better-auth/api-key": "1.7.5",

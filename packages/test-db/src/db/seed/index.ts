@@ -5,6 +5,6 @@ export { seedEvidence } from "./evidence.ts";
 export { seedFindingSuppression } from "./suppression.ts";
 export { seedGraphWrite } from "./graph-write.ts";
 export { seedIdentifier } from "./identifier.ts";
-export { seedJob } from "./job.ts";
+export { backdateJob, seedJob } from "./job.ts";
 export { seedPlaybookRun } from "./playbook-run.ts";
 export { seedProposal } from "./proposal.ts";

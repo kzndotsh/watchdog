@@ -10,7 +10,7 @@
     "./worker": "./src/worker-entry.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1133.0",

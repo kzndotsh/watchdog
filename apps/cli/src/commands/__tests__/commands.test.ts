@@ -1,3 +1,4 @@
+import type { CommandContext, CommandDef } from "citty";
 import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
@@ -315,9 +316,28 @@ import { jobsCmd } from "../jobs";
 import { proposalsCmd } from "../proposals";
 import { questionsCmd } from "../questions";
 
+function ctx(
+  args: Record<string, string | boolean>
+): CommandContext<Record<never, never>> {
+  return { rawArgs: [], args: { _: [], ...args }, cmd: {} };
+}
+
+async function subCommand(
+  parent: CommandDef,
+  name: string
+): Promise<CommandDef> {
+  const def = parent.subCommands;
+  const subs = typeof def === "function" ? await def() : await def;
+  const entry = subs?.[name];
+  if (entry === undefined) {
+    expect.fail(`missing subcommand ${name}`);
+  }
+  return typeof entry === "function" ? entry() : entry;
+}
+
 describe("CLI noun commands", () => {
   it("capsCmd lists capabilities", async () => {
-    await capsCmd.run?.({ args: {} } as never);
+    await capsCmd.run?.(ctx({}));
     expect(mocks.client.capabilities.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
@@ -333,8 +353,8 @@ describe("CLI noun commands", () => {
         requires: { credentials: [], egress: "none", flags: [] },
       },
     ]);
-    const playbooks = capsCmd.subCommands?.playbooks;
-    await playbooks?.run?.({ args: { table: false, full: false } } as never);
+    const playbooks = await subCommand(capsCmd, "playbooks");
+    await playbooks.run?.(ctx({ table: false, full: false }));
     expect(mocks.client.capabilities.listPlaybooks).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -350,7 +370,7 @@ describe("CLI noun commands", () => {
   });
 
   it("casesCmd lists cases", async () => {
-    await casesCmd.run?.({ args: {} } as never);
+    await casesCmd.run?.(ctx({}));
     expect(mocks.client.cases.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -368,11 +388,9 @@ describe("CLI noun commands", () => {
   });
 
   it("casesCmd create normalizes explicit slug before API call", async () => {
-    const create = casesCmd.subCommands?.create;
+    const create = await subCommand(casesCmd, "create");
     mocks.client.cases.create.mockClear();
-    await create?.run?.({
-      args: { name: "Beta Case", slug: "  Beta Case  " },
-    } as never);
+    await create.run?.(ctx({ name: "Beta Case", slug: "  Beta Case  " }));
     expect(mocks.client.cases.create).toHaveBeenCalledWith({
       name: "Beta Case",
       slug: "beta-case",
@@ -380,33 +398,27 @@ describe("CLI noun commands", () => {
   });
 
   it("claimsCmd requires case and entity then lists claims", async () => {
-    await claimsCmd.run?.({
-      args: { case: mocks.CASE_UUID, entity: "jane" },
-    } as never);
+    await claimsCmd.run?.(ctx({ case: mocks.CASE_UUID, entity: "jane" }));
     expect(mocks.client.claims.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
   it("credentialsCmd lists vault credentials", async () => {
-    await credentialsCmd.run?.({ args: {} } as never);
+    await credentialsCmd.run?.(ctx({}));
     expect(mocks.client.credentials.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
   it("credentialsCmd put rejects lowercase credential names", async () => {
-    const put = credentialsCmd.subCommands?.put;
+    const put = await subCommand(credentialsCmd, "put");
     await expect(
-      put?.run?.({
-        args: { name: "shodan", stdin: true },
-      })
+      put.run?.(ctx({ name: "shodan", stdin: true }))
     ).rejects.toThrow(/USAGE: Credential name must be SCREAMING_SNAKE/);
     expect(mocks.client.credentials.put).not.toHaveBeenCalled();
   });
 
   it("edgesCmd lists edges for a case entity", async () => {
-    await edgesCmd.run?.({
-      args: { case: mocks.CASE_UUID, entity: "jane" },
-    } as never);
+    await edgesCmd.run?.(ctx({ case: mocks.CASE_UUID, entity: "jane" }));
     expect(mocks.client.edges.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -427,15 +439,15 @@ describe("CLI noun commands", () => {
   });
 
   it("edgesCmd update clears notes with an empty --notes value", async () => {
-    const update = edgesCmd.subCommands?.update;
-    await update?.run?.({
-      args: {
+    const update = await subCommand(edgesCmd, "update");
+    await update.run?.(
+      ctx({
         case: mocks.CASE_UUID,
         edge: "00000000-0000-4000-8000-000000000099",
         notes: "",
         "user-override": true,
-      },
-    } as never);
+      })
+    );
     expect(mocks.client.edges.update).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       edgeId: "00000000-0000-4000-8000-000000000099",
@@ -446,93 +458,93 @@ describe("CLI noun commands", () => {
   });
 
   it("edgesCmd update rejects --entity without another mutable field", async () => {
-    const update = edgesCmd.subCommands?.update;
+    const update = await subCommand(edgesCmd, "update");
     mocks.client.edges.update.mockClear();
     await expect(
-      update?.run?.({
-        args: {
+      update.run?.(
+        ctx({
           case: mocks.CASE_UUID,
           edge: "00000000-0000-4000-8000-000000000099",
           entity: "jane",
           "user-override": true,
-        },
-      } as never)
+        })
+      )
     ).rejects.toThrow(/graph view/i);
     expect(mocks.client.edges.update).not.toHaveBeenCalled();
   });
 
   it("edgesCmd create rejects related_to without notes", async () => {
-    const create = edgesCmd.subCommands?.create;
+    const create = await subCommand(edgesCmd, "create");
     mocks.client.edges.create.mockClear();
     await expect(
-      create?.run?.({
-        args: {
+      create.run?.(
+        ctx({
           case: mocks.CASE_UUID,
           from: "jane",
           to: "acme",
           predicate: "related_to",
           confidence: "unverified",
           "user-override": true,
-        },
-      } as never)
+        })
+      )
     ).rejects.toThrow(/related_to requires notes/i);
     expect(mocks.client.edges.create).not.toHaveBeenCalled();
   });
 
   it("edgesCmd create rejects self-linked endpoints", async () => {
-    const create = edgesCmd.subCommands?.create;
+    const create = await subCommand(edgesCmd, "create");
     mocks.client.edges.create.mockClear();
     await expect(
-      create?.run?.({
-        args: {
+      create.run?.(
+        ctx({
           case: mocks.CASE_UUID,
           from: "jane",
           to: "jane",
           predicate: "same_as",
           confidence: "unverified",
           "user-override": true,
-        },
-      } as never)
+        })
+      )
     ).rejects.toThrow(/must differ/i);
     expect(mocks.client.edges.create).not.toHaveBeenCalled();
   });
 
   it("edgesCmd update rejects self-linked endpoints", async () => {
-    const update = edgesCmd.subCommands?.update;
+    const update = await subCommand(edgesCmd, "update");
     mocks.client.edges.update.mockClear();
     await expect(
-      update?.run?.({
-        args: {
+      update.run?.(
+        ctx({
           case: mocks.CASE_UUID,
           edge: "00000000-0000-4000-8000-000000000099",
           from: "jane",
           to: "jane",
           "user-override": true,
-        },
-      } as never)
+        })
+      )
     ).rejects.toThrow(/must differ/i);
     expect(mocks.client.edges.update).not.toHaveBeenCalled();
   });
 
   it("edgesCmd update rejects related_to with empty notes", async () => {
-    const update = edgesCmd.subCommands?.update;
+    const update = await subCommand(edgesCmd, "update");
     mocks.client.edges.update.mockClear();
     await expect(
-      update?.run?.({
-        args: {
+      update.run?.(
+        ctx({
           case: mocks.CASE_UUID,
           edge: "00000000-0000-4000-8000-000000000099",
           predicate: "related_to",
           notes: "   ",
           "user-override": true,
-        },
-      } as never)
+        })
+      )
     ).rejects.toThrow(/related_to requires notes/i);
     expect(mocks.client.edges.update).not.toHaveBeenCalled();
   });
 
   it("edgesCmd update allows predicate-only related_to (server merges notes)", async () => {
-    const update = edgesCmd.subCommands?.update;
+    const update = await subCommand(edgesCmd, "update");
     mocks.client.edges.update.mockClear();
     mocks.client.edges.update.mockResolvedValueOnce({
       id: "00000000-0000-4000-8000-000000000099",
@@ -548,14 +560,14 @@ describe("CLI noun commands", () => {
       peerKind: "org",
       direction: "out",
     });
-    await update?.run?.({
-      args: {
+    await update.run?.(
+      ctx({
         case: mocks.CASE_UUID,
         edge: "00000000-0000-4000-8000-000000000099",
         predicate: "related_to",
         "user-override": true,
-      },
-    } as never);
+      })
+    );
     expect(mocks.client.edges.update).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       edgeId: "00000000-0000-4000-8000-000000000099",
@@ -565,14 +577,14 @@ describe("CLI noun commands", () => {
   });
 
   it("identifiersCmd delete removes an identifier", async () => {
-    const del = identifiersCmd.subCommands?.delete;
-    await del?.run?.({
-      args: {
+    const del = await subCommand(identifiersCmd, "delete");
+    await del.run?.(
+      ctx({
         case: mocks.CASE_UUID,
         identifier: "00000000-0000-4000-8000-000000000088",
         "user-override": true,
-      },
-    } as never);
+      })
+    );
     expect(mocks.client.identifiers.delete).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       identifierId: "00000000-0000-4000-8000-000000000088",
@@ -585,17 +597,15 @@ describe("CLI noun commands", () => {
   });
 
   it("entitiesCmd lists entities for a case", async () => {
-    await entitiesCmd.run?.({ args: { case: mocks.CASE_UUID } } as never);
+    await entitiesCmd.run?.(ctx({ case: mocks.CASE_UUID }));
     expect(mocks.client.entities.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
   it("entitiesCmd get normalizes padded slug before API call", async () => {
-    const get = entitiesCmd.subCommands?.get;
+    const get = await subCommand(entitiesCmd, "get");
     mocks.client.entities.get.mockClear();
-    await get?.run?.({
-      args: { case: mocks.CASE_UUID, slug: "  Alpha Corp  " },
-    } as never);
+    await get.run?.(ctx({ case: mocks.CASE_UUID, slug: "  Alpha Corp  " }));
     expect(mocks.client.entities.get).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       slug: "alpha-corp",
@@ -603,15 +613,13 @@ describe("CLI noun commands", () => {
   });
 
   it("eventsCmd lists timeline events for a case entity", async () => {
-    await eventsCmd.run?.({
-      args: { case: mocks.CASE_UUID, entity: "jane" },
-    } as never);
+    await eventsCmd.run?.(ctx({ case: mocks.CASE_UUID, entity: "jane" }));
     expect(mocks.client.events.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
   it("evidenceCmd lists evidence for a case", async () => {
-    await evidenceCmd.run?.({ args: { case: mocks.CASE_UUID } } as never);
+    await evidenceCmd.run?.(ctx({ case: mocks.CASE_UUID }));
     expect(mocks.client.evidence.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
@@ -619,26 +627,26 @@ describe("CLI noun commands", () => {
   it("evidenceCmd list rejects hidden with active-queue filters", async () => {
     mocks.client.evidence.list.mockClear();
     await expect(
-      evidenceCmd.run?.({
-        args: { case: mocks.CASE_UUID, hidden: true, unprocessed: true },
-      } as never)
+      evidenceCmd.run?.(
+        ctx({ case: mocks.CASE_UUID, hidden: true, unprocessed: true })
+      )
     ).rejects.toThrow(/USAGE: .*mutually exclusive/i);
     expect(mocks.client.evidence.list).not.toHaveBeenCalled();
   });
 
   it("evidenceCmd url rejects a blank source URL", async () => {
-    const url = evidenceCmd.subCommands?.url;
+    const url = await subCommand(evidenceCmd, "url");
     await expect(
-      url?.run?.({ args: { case: mocks.CASE_UUID, source: "   " } })
+      url.run?.(ctx({ case: mocks.CASE_UUID, source: "   " }))
     ).rejects.toThrow(/USAGE: URL must be http or https/);
     expect(mocks.client.evidence.createUrl).not.toHaveBeenCalled();
   });
 
   it("evidenceCmd url trims the source URL", async () => {
-    const url = evidenceCmd.subCommands?.url;
-    await url?.run?.({
-      args: { case: mocks.CASE_UUID, source: "  https://example.com  " },
-    });
+    const url = await subCommand(evidenceCmd, "url");
+    await url.run?.(
+      ctx({ case: mocks.CASE_UUID, source: "  https://example.com  " })
+    );
     expect(mocks.client.evidence.createUrl).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       sourceUrl: "https://example.com",
@@ -647,9 +655,9 @@ describe("CLI noun commands", () => {
   });
 
   it("evidenceCmd paste rejects a blank body", async () => {
-    const paste = evidenceCmd.subCommands?.paste;
+    const paste = await subCommand(evidenceCmd, "paste");
     await expect(
-      paste?.run?.({ args: { case: mocks.CASE_UUID, body: "   " } })
+      paste.run?.(ctx({ case: mocks.CASE_UUID, body: "   " }))
     ).rejects.toThrow(
       /USAGE: Provide --body or --stdin \(body must not be blank\)/
     );
@@ -657,10 +665,8 @@ describe("CLI noun commands", () => {
   });
 
   it("evidenceCmd paste trims the body", async () => {
-    const paste = evidenceCmd.subCommands?.paste;
-    await paste?.run?.({
-      args: { case: mocks.CASE_UUID, body: "  paste text  " },
-    });
+    const paste = await subCommand(evidenceCmd, "paste");
+    await paste.run?.(ctx({ case: mocks.CASE_UUID, body: "  paste text  " }));
     expect(mocks.client.evidence.createPaste).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       body: "paste text",
@@ -669,22 +675,20 @@ describe("CLI noun commands", () => {
   });
 
   it("identifiersCmd lists identifiers for a case entity", async () => {
-    await identifiersCmd.run?.({
-      args: { case: mocks.CASE_UUID, entity: "jane" },
-    } as never);
+    await identifiersCmd.run?.(ctx({ case: mocks.CASE_UUID, entity: "jane" }));
     expect(mocks.client.identifiers.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
   it("exportCmd zip downloads the case export archive", async () => {
-    const zip = exportCmd.subCommands?.zip;
-    await zip?.run?.({ args: { case: mocks.CASE_UUID } });
+    const zip = await subCommand(exportCmd, "zip");
+    await zip.run?.(ctx({ case: mocks.CASE_UUID }));
     expect(mocks.emitOk).toHaveBeenCalledWith({ path: "/tmp/export.zip" });
   });
 
   it("graphCmd write sends a patch with userOverride", async () => {
-    const write = graphCmd.subCommands?.write;
-    await write?.run?.({ args: { case: mocks.CASE_UUID, patch: "[]" } });
+    const write = await subCommand(graphCmd, "write");
+    await write.run?.(ctx({ case: mocks.CASE_UUID, patch: "[]" }));
     expect(mocks.client.graph.write).toHaveBeenCalled();
     expect(mocks.emit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -696,16 +700,16 @@ describe("CLI noun commands", () => {
   });
 
   it("jobsCmd lists jobs for a case", async () => {
-    await jobsCmd.run?.({ args: { case: mocks.CASE_UUID } } as never);
+    await jobsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
     expect(mocks.client.jobs.listForCase).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
   it("jobsCmd get enriches cap label and subject", async () => {
-    const get = jobsCmd.subCommands?.get;
-    await get?.run?.({
-      args: { case: mocks.CASE_UUID, job: mocks.JOB_UUID, full: false },
-    });
+    const get = await subCommand(jobsCmd, "get");
+    await get.run?.(
+      ctx({ case: mocks.CASE_UUID, job: mocks.JOB_UUID, full: false })
+    );
     expect(mocks.client.jobs.get).toHaveBeenCalled();
     expect(mocks.emit).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -718,14 +722,14 @@ describe("CLI noun commands", () => {
   it("jobsCmd start trims padded graph ids in --input JSON", async () => {
     const entityId = "00000000-0000-4000-8000-000000000050";
     const evidenceId = "00000000-0000-4000-8000-000000000099";
-    const start = jobsCmd.subCommands?.start;
-    await start?.run?.({
-      args: {
+    const start = await subCommand(jobsCmd, "start");
+    await start.run?.(
+      ctx({
         case: mocks.CASE_UUID,
         cap: "network.dns.lookup",
         input: `{"entityId":"  ${entityId}  ","evidenceId":"  ${evidenceId}  ","host":"example.com"}`,
-      },
-    });
+      })
+    );
     expect(mocks.client.jobs.start).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       capabilityId: "network.dns.lookup",
@@ -735,14 +739,14 @@ describe("CLI noun commands", () => {
   });
 
   it("jobsCmd start trims padded --input JSON before parsing", async () => {
-    const start = jobsCmd.subCommands?.start;
-    await start?.run?.({
-      args: {
+    const start = await subCommand(jobsCmd, "start");
+    await start.run?.(
+      ctx({
         case: mocks.CASE_UUID,
         cap: "network.dns.lookup",
         input: `  {"host":"example.com"}  `,
-      },
-    });
+      })
+    );
     expect(mocks.client.jobs.start).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       capabilityId: "network.dns.lookup",
@@ -752,11 +756,9 @@ describe("CLI noun commands", () => {
   });
 
   it("jobsCmd playbook rejects an empty seed", async () => {
-    const playbook = jobsCmd.subCommands?.playbook;
+    const playbook = await subCommand(jobsCmd, "playbook");
     await expect(
-      playbook?.run?.({
-        args: { case: mocks.CASE_UUID, id: "host-footprint" },
-      })
+      playbook.run?.(ctx({ case: mocks.CASE_UUID, id: "host-footprint" }))
     ).rejects.toThrow(/USAGE: At least one playbook seed is required/);
     expect(mocks.fail).toHaveBeenCalledWith(
       "USAGE",
@@ -767,14 +769,14 @@ describe("CLI noun commands", () => {
   });
 
   it("jobsCmd playbook starts with a host seed", async () => {
-    const playbook = jobsCmd.subCommands?.playbook;
-    await playbook?.run?.({
-      args: {
+    const playbook = await subCommand(jobsCmd, "playbook");
+    await playbook.run?.(
+      ctx({
         case: mocks.CASE_UUID,
         id: "host-footprint",
         host: "example.com",
-      },
-    });
+      })
+    );
     expect(mocks.client.jobs.startPlaybook).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       playbookId: "host-footprint",
@@ -784,30 +786,30 @@ describe("CLI noun commands", () => {
   });
 
   it("jobsCmd playbook rejects non-http seed URLs", async () => {
-    const playbook = jobsCmd.subCommands?.playbook;
+    const playbook = await subCommand(jobsCmd, "playbook");
     const callsBefore = mocks.client.jobs.startPlaybook.mock.calls.length;
     await expect(
-      playbook?.run?.({
-        args: {
+      playbook.run?.(
+        ctx({
           case: mocks.CASE_UUID,
           id: "host-footprint",
           url: "ftp://example.com",
-        },
-      })
+        })
+      )
     ).rejects.toThrow(/USAGE: Invalid playbook seed/);
     expect(mocks.client.jobs.startPlaybook.mock.calls.length).toBe(callsBefore);
   });
 
   it("proposalsCmd lists pending proposals for a case", async () => {
-    await proposalsCmd.run?.({ args: { case: mocks.CASE_UUID } } as never);
+    await proposalsCmd.run?.(ctx({ case: mocks.CASE_UUID }));
     expect(mocks.client.proposals.listForCase).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });
 
   it("proposalsCmd case-folds padded --status values", async () => {
-    await proposalsCmd.run?.({
-      args: { case: mocks.CASE_UUID, status: "  REJECTED  " },
-    } as never);
+    await proposalsCmd.run?.(
+      ctx({ case: mocks.CASE_UUID, status: "  REJECTED  " })
+    );
     expect(mocks.client.proposals.listForCase).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
       status: "rejected",
@@ -815,18 +817,18 @@ describe("CLI noun commands", () => {
   });
 
   it("proposalsCmd accept forwards shared evidence and attestation", async () => {
-    const accept = proposalsCmd.subCommands?.accept;
+    const accept = await subCommand(proposalsCmd, "accept");
     const proposalId = "00000000-0000-4000-8000-000000000099";
     const evidenceId = "00000000-0000-4000-8000-000000000088";
-    await accept?.run?.({
-      args: {
+    await accept.run?.(
+      ctx({
         case: mocks.CASE_UUID,
         proposal: proposalId,
         confidence: "possible",
         sharedEvidence: evidenceId,
         attestation: "Reviewed source export",
-      },
-    } as never);
+      })
+    );
 
     expect(mocks.client.proposals.accept).toHaveBeenCalledWith({
       caseId: mocks.CASE_UUID,
@@ -839,9 +841,7 @@ describe("CLI noun commands", () => {
   });
 
   it("questionsCmd lists questions for a case entity", async () => {
-    await questionsCmd.run?.({
-      args: { case: mocks.CASE_UUID, entity: "jane" },
-    } as never);
+    await questionsCmd.run?.(ctx({ case: mocks.CASE_UUID, entity: "jane" }));
     expect(mocks.client.questions.list).toHaveBeenCalled();
     expect(mocks.emitList).toHaveBeenCalled();
   });

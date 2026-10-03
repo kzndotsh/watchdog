@@ -20,12 +20,14 @@ describe("buildHttpProbeSnapshot", () => {
         status: 200,
         bytes: new TextEncoder().encode(body),
         contentType: "text/plain",
+        finalUrl: "https://mailhost.test/.well-known/security.txt",
       },
       favicon: {
         ok: false,
         status: 404,
         bytes: new Uint8Array(),
         contentType: null,
+        finalUrl: "https://mailhost.test/favicon.ico",
       },
     });
     expect(snap.securityTxt.present).toBe(true);

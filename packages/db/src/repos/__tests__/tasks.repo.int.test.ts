@@ -145,15 +145,25 @@ describe("tasksRepo", () => {
   });
 
   it("searchForCase matches task status and priority display labels", async () => {
+    // No TASK_PRIORITY_LABELS entry differs from its raw value beyond case (and the raw
+    // `ilike` already matches case-insensitively), so only the status label ("In
+    // Progress" vs raw `in_progress`) can prove the display-label path. Priority is
+    // asserted for inclusion plus exclusion of tasks with other priorities.
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
-      const created = await tasksRepo.create(tx, {
+      const target = await tasksRepo.create(tx, {
         caseId: cased.id,
         title: "Review filings",
         status: "in_progress",
-        priority: "urgent",
+        priority: "medium",
       });
-      if (!created) throw new Error("task");
+      const other = await tasksRepo.create(tx, {
+        caseId: cased.id,
+        title: "Archive notes",
+        status: "done",
+        priority: "high",
+      });
+      if (!target || !other) throw new Error("task");
 
       const byStatus = await tasksRepo.searchForCase(
         tx,
@@ -161,15 +171,15 @@ describe("tasksRepo", () => {
         "In Progress",
         10
       );
-      expect(byStatus.some((row) => row.id === created.id)).toBe(true);
+      expect(byStatus.map((row) => row.id)).toEqual([target.id]);
 
       const byPriority = await tasksRepo.searchForCase(
         tx,
         cased.id,
-        "Urgent",
+        "Medium",
         10
       );
-      expect(byPriority.some((row) => row.id === created.id)).toBe(true);
+      expect(byPriority.map((row) => row.id)).toEqual([target.id]);
     });
   });
 

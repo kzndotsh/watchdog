@@ -1,4 +1,7 @@
+import { eq } from "drizzle-orm";
+
 import {
+  jobs,
   jobsRepo,
   type DbExec,
   type JobPatch,
@@ -41,4 +44,17 @@ export async function seedJob(
     throw new Error("seedJob resultSummary update failed");
   }
   return updated;
+}
+
+/**
+ * Backdate `updated_at` (and optionally `started_at`) on a seeded Job so stale
+ * reclaim tests can age it. Production code cannot set `updated_at`, so
+ * `jobsRepo.update` does not accept it; this writes the column directly.
+ */
+export async function backdateJob(
+  exec: DbExec,
+  jobId: string,
+  times: { updatedAt: Date; startedAt?: Date }
+): Promise<void> {
+  await exec.update(jobs).set(times).where(eq(jobs.id, jobId));
 }
