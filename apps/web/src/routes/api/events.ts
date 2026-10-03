@@ -24,7 +24,15 @@ import {
   listenForEvents,
   listVisibleCaseIdsEffect,
 } from "@watchdog/core";
+import { createLogger } from "@watchdog/log";
 import { parseSseCaseIdParam } from "@watchdog/schemas";
+
+/** Process log for a dropped live event; carries the error only, never Case or Evidence data. */
+function logVisibilityRefreshFailure(error: unknown): void {
+  const log = createLogger({ scope: "sse.visibility_refresh" });
+  log.error(error instanceof Error ? error : new Error(String(error)));
+  void log.emit();
+}
 
 export const Route = createFileRoute("/api/events")({
   server: {
@@ -136,8 +144,11 @@ export const Route = createFileRoute("/api/events")({
                         send(parsed.type, rawPayload);
                       }
                     })
-                    .catch(() => {
-                      // fail closed: without a visibility read the event is dropped
+                    .catch((error: unknown) => {
+                      // Fail closed: without a visibility read the event is dropped.
+                      // Log the failure (error only: no Case id, no payload) so a
+                      // dropped live update is observable.
+                      logVisibilityRefreshFailure(error);
                     });
                 } catch {
                   // malformed — skip

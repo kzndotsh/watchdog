@@ -17,6 +17,12 @@ const applyWatchdogCorsMock = vi.hoisted(() =>
 const listenForEventsMock = vi.hoisted(() => vi.fn());
 const assertCaseInOrgEffectMock = vi.hoisted(() => vi.fn());
 const listVisibleCaseIdsEffectMock = vi.hoisted(() => vi.fn());
+const logErrorMock = vi.hoisted(() => vi.fn());
+const logSetMock = vi.hoisted(() => vi.fn());
+const logEmitMock = vi.hoisted(() => vi.fn());
+const createLoggerMock = vi.hoisted(() =>
+  vi.fn(() => ({ error: logErrorMock, set: logSetMock, emit: logEmitMock }))
+);
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
@@ -46,6 +52,8 @@ vi.mock("@watchdog/core", () => ({
   isWatchdogEvent: () => true,
   listenForEvents: listenForEventsMock,
 }));
+
+vi.mock("@watchdog/log", () => ({ createLogger: createLoggerMock }));
 
 import { Route } from "@/routes/api/events";
 
@@ -326,6 +334,59 @@ describe("api events route", () => {
       setTimeout(resolve, 0);
     });
 
+    const reader = response.body?.getReader();
+    const first = await reader?.read();
+    const text = new TextDecoder().decode(first?.value);
+    expect(text).toContain("connected");
+    expect(text).not.toContain("entity_changed");
+    await reader?.cancel();
+  });
+
+  it("drops the event and logs when the visibility read fails", async () => {
+    const caseId = testId(13);
+    createApiContextMock.mockResolvedValue({
+      actor: {
+        userId: "u1",
+        email: null,
+        name: null,
+        organizationId: "org-1",
+      },
+    });
+    listVisibleCaseIdsEffectMock
+      .mockReturnValueOnce(Effect.succeed([]))
+      .mockReturnValueOnce(Effect.die(new Error("pool exhausted")));
+    let onMessage: ((raw: string) => void) | undefined;
+    listenForEventsMock.mockImplementation(
+      (cb: (raw: string) => void, onReady?: () => void) => {
+        onMessage = cb;
+        onReady?.();
+        return { end: vi.fn() };
+      }
+    );
+    const handlers = (
+      Route.options as {
+        server: {
+          handlers: Record<
+            string,
+            (ctx: { request: Request }) => Promise<Response>
+          >;
+        };
+      }
+    ).server.handlers;
+
+    const response = await handlers.GET({
+      request: new Request(testHttpOrigin("localhost", "/api/events")),
+    });
+    onMessage?.(JSON.stringify({ type: "entity_changed", caseId }));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+
+    expect(logErrorMock).toHaveBeenCalledTimes(1);
+    expect(logErrorMock.mock.calls[0]?.[0]).toBeInstanceOf(Error);
+    expect(logEmitMock).toHaveBeenCalled();
+    // no Case id (or payload) goes into the log context
+    expect(JSON.stringify(createLoggerMock.mock.calls)).not.toContain(caseId);
     const reader = response.body?.getReader();
     const first = await reader?.read();
     const text = new TextDecoder().decode(first?.value);
