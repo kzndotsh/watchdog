@@ -12,6 +12,7 @@
 | Build | `pnpm --filter @watchdog/cli build` (esbuild single ESM → `dist/main.js`; workspace packages inlined) |
 | Pack proof | `pnpm --filter @watchdog/cli pack:smoke` · `--live` with `WD_API_*` |
 | Typecheck | `pnpm --filter @watchdog/cli typecheck` (workspace TypeScript **7.0.2**; exact pin in `package.json`) |
+| Typecheck tests | `pnpm --filter @watchdog/cli typecheck:tests` (`tsconfig.test.json`; reported by root `pnpm typecheck:tests`, see [`testing/standards.md`](../../docs/contributing/testing/standards.md#tests-are-typechecked)) |
 | Unit tests | `pnpm test:unit` |
 
 ### Surface (agent ingress)

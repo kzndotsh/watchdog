@@ -89,6 +89,16 @@ Each Playwright test runs after an automatic `_resetDb` fixture that calls `rese
 
 Add when the behavior crosses pages, real browser timing, or auth/session chrome that unit/integration/component tests cannot structurally cover. Put the spec in the matching `e2e/specs/<area>/` folder, reuse fixtures and page objects, and assert on persisted/API-visible outcomes: not mock internals.
 
+## Tests are typechecked
+
+Vitest strips types, and every package's main `tsconfig.json` excludes its tests, so a test can drift from the types it exercises and stay green. Tests are therefore typechecked through a separate config per package or app.
+
+- **One config per package or app with tests:** `tsconfig.test.json` extends the package's `tsconfig.json`, includes source plus tests (and `scripts/` where tests live there), and turns on `allowImportingTsExtensions` with `noEmit`. Compiler options come from the source config; never copy them. The main config keeps excluding tests so build output and declarations are unaffected.
+- **Run it:** `pnpm --filter <pkg> typecheck:tests` for one package; `pnpm typecheck:tests` for all of them (per-package error table). `scripts/` and `e2e/` have a standalone `tsconfig.test.json` run by the same command.
+- **Ratchet:** the rollout is non-blocking except for packages listed in `scripts/test-typecheck-clean.json`. A package joins that list in the same change that brings it to zero errors, and from then on a test type error in it fails CI. The main `pnpm typecheck` and pre-push do not include tests yet; they will once every package is on the list.
+- **Coverage guard:** `pnpm check:test-coverage-guard` fails when a test file vitest discovers is not included by any `tsconfig.test.json`. Adding a test directory or a vitest project means adding its path to the owning config's `include`.
+- **Fix drift in the test, not the type system.** When a test fails the typecheck, change its input to the current type. Never cast (`as`, `as unknown as`) or add `@ts-expect-error` / `@ts-ignore` to silence it. A test that asserts a removed value (a dropped enum member, a deleted field) is rewritten against a valid value, or deleted if the behavior no longer exists. If a fix needs a cast, say so in the change description so a maintainer can decide whether the test or the type is wrong.
+
 ## Test speed: shared workers
 
 Every Vitest project (unit, web-unit, property, component, integration) runs with `isolate: false` plus `vitest.reset-modules.ts`. A fresh worker per file re-evaluated `effect`, `drizzle`, and `postgres` for each file, and that import work was about 75% of the run (unit 41s, component 34s, integration 79s; now about 16s, 14s, 22s). Without isolation those load once per worker, and the setup file clears the module registry before every file, so `vi.mock` still applies to our own modules.

@@ -7,6 +7,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
     "export-contract": "tsx scripts/export-contract.ts"
   },
   "dependencies": {

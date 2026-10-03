@@ -14,6 +14,7 @@
     "dev": "tsx src/main.ts",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
     "prepare": "node ./scripts/build.mjs",
     "prepack": "node ./scripts/build.mjs",
     "pack:smoke": "node ./scripts/pack-smoke.mjs"

@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit",
     "ds:ban": "node ./scripts/ds-ban-check.mjs",
     "ds:check": "pnpm typecheck && pnpm ds:ban"
   },

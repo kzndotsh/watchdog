@@ -9,6 +9,7 @@ Cap implementations, registry, and Playbooks. Caps never write the Graph — `in
 | Task | Command |
 | --- | --- |
 | Typecheck | `pnpm --filter @watchdog/caps typecheck` (workspace TypeScript **7.0.2**; keep the exact pin in `package.json`, do not float `^6`) |
+| Typecheck tests | `pnpm --filter @watchdog/caps typecheck:tests` (`tsconfig.test.json`; reported by root `pnpm typecheck:tests`, see [`testing/standards.md`](../../docs/contributing/testing/standards.md#tests-are-typechecked)) |
 | Regen catalog | `pnpm generate:caps` |
 | Cap unit tests | `pnpm test:unit` |
 
