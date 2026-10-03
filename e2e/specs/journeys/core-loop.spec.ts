@@ -34,11 +34,7 @@ test.describe("Core loop journey", () => {
       await api.attachEvidence(caseId, dumped.id, entity.id);
       await collectPage.harvest();
 
-      await expect
-        .poll(async () => api.countPendingProposals(caseId), {
-          timeout: 120_000,
-        })
-        .toBeGreaterThan(0);
+      await api.waitForPendingProposal(caseId, 120_000);
 
       await triagePage.clickAccept();
       await expect(page.getByRole("button", { name: /^accept$/i })).toBeHidden({

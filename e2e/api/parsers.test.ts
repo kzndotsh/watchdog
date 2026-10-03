@@ -5,6 +5,7 @@ import {
   parseCaseList,
   parseEntity,
   parseEvidenceList,
+  parseJobList,
   parseProposalList,
 } from "./parsers";
 
@@ -46,9 +47,35 @@ describe("e2e api parsers", () => {
     );
   });
 
+  it("parseJobList keeps id, capability, status and both error fields", () => {
+    expect(
+      parseJobList([
+        {
+          id: "j1",
+          capabilityId: "evidence.harvest",
+          status: "failed",
+          error: "pg-boss failed",
+          interpretError: null,
+        },
+      ])
+    ).toEqual([
+      {
+        id: "j1",
+        capabilityId: "evidence.harvest",
+        status: "failed",
+        error: "pg-boss failed",
+        interpretError: null,
+      },
+    ]);
+    expect(() => parseJobList([{ id: "j1", status: "queued" }])).toThrow(
+      "jobs[0] missing id/capabilityId/status"
+    );
+  });
+
   it("e2eApiParsers exposes all parsers", () => {
     expect(e2eApiParsers.caseList).toBe(parseCaseList);
     expect(e2eApiParsers.evidenceList).toBe(parseEvidenceList);
     expect(e2eApiParsers.proposalList).toBe(parseProposalList);
+    expect(e2eApiParsers.jobList).toBe(parseJobList);
   });
 });

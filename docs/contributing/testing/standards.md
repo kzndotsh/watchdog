@@ -81,6 +81,8 @@ Playwright specs live under `e2e/specs/` grouped by product area (`auth/`, `case
 | Fixtures | `e2e/fixtures/` | `test.extend`: auto `_resetDb`, `api`, `authenticatedCase`, page fixtures |
 | Pages | `e2e/pages/` | role-based page objects (actions only; assert in specs) |
 
+Page objects click the first control after a `goto` through `BasePage.clickHydrated`: `html[data-hydrated]` only says the root providers mounted, so route content can still be server markup with no React props, and a click on it is dropped (no request, no Job). Await the outcome through the API (`waitForPendingProposal` names the case's Jobs on timeout) rather than a bare count poll.
+
 One behavior per spec file. Prefer `expect.poll` over sleeps. Seed graph state through the API client when UI setup is not the behavior under test. Custody gates belong in `custody/` or `triage/`, not mixed into journey specs.
 
 Parser unit tests for the harness stay in `e2e/**/*.test.ts` (Vitest `e2e-parser` project).

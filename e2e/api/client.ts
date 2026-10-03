@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 import { e2eApiParsers } from "./parsers";
 
@@ -73,6 +73,52 @@ export class E2eApi {
       `/cases/${caseId}/proposals`,
       undefined,
       e2eApiParsers.proposalList
+    );
+  }
+
+  async listJobs(caseId: string) {
+    return this.fetch(
+      "GET",
+      `/cases/${caseId}/jobs`,
+      undefined,
+      e2eApiParsers.jobList
+    );
+  }
+
+  /**
+   * Waits for a pending Proposal. On timeout the error names the case's Jobs, so a
+   * Harvest that never started (no Jobs) reads differently from one that failed.
+   */
+  async waitForPendingProposal(caseId: string, timeoutMs: number) {
+    try {
+      await expect
+        .poll(async () => this.countPendingProposals(caseId), {
+          timeout: timeoutMs,
+        })
+        .toBeGreaterThan(0);
+    } catch (error) {
+      await this.failWithJobs(caseId, timeoutMs, error);
+    }
+  }
+
+  private async failWithJobs(
+    caseId: string,
+    timeoutMs: number,
+    cause: unknown
+  ): Promise<never> {
+    const jobs = await this.listJobs(caseId);
+    const summary =
+      jobs.length === 0
+        ? "no Jobs exist for the case (the Harvest request never created one)"
+        : jobs
+            .map(
+              (job) =>
+                `${job.capabilityId} ${job.status} error=${job.error ?? "-"} interpretError=${job.interpretError ?? "-"}`
+            )
+            .join("; ");
+    throw new Error(
+      `No pending Proposal for case ${caseId} after ${timeoutMs}ms: ${summary}`,
+      { cause }
     );
   }
 

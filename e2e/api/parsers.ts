@@ -69,10 +69,46 @@ export function parseProposalList(
   });
 }
 
+export interface E2eJob {
+  id: string;
+  capabilityId: string;
+  status: string;
+  error: string | null;
+  interpretError: string | null;
+}
+
+function nullableString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+export function parseJobList(json: unknown): E2eJob[] {
+  if (!Array.isArray(json)) {
+    throw new TypeError("jobs response was not an array");
+  }
+  return json.map((row, index) => {
+    if (
+      !isRecord(row) ||
+      typeof row.id !== "string" ||
+      typeof row.capabilityId !== "string" ||
+      typeof row.status !== "string"
+    ) {
+      throw new Error(`jobs[${index}] missing id/capabilityId/status`);
+    }
+    return {
+      id: row.id,
+      capabilityId: row.capabilityId,
+      status: row.status,
+      error: nullableString(row.error),
+      interpretError: nullableString(row.interpretError),
+    };
+  });
+}
+
 export const e2eApiParsers = {
   caseList: parseCaseList,
   entity: parseEntity,
   entityId: parseEntityId,
   evidenceList: parseEvidenceList,
+  jobList: parseJobList,
   proposalList: parseProposalList,
 };
