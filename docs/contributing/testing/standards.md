@@ -2,7 +2,9 @@
 
 How to write tests in this repo so they catch regressions instead of existing to pass.
 
-Tiers, commands, and file layout: [`TESTING.md`](index.md).
+Tiers, runner facts and file layout: [`index.md`](index.md).
+
+**Enforcement:** unless a section says otherwise, this page is guidance enforced by review. Mechanically enforced: typechecked tests (`pnpm typecheck`, `check:test-coverage-guard`, `typecheck-contract.gate.test.ts`), the gate meta-test, the `describe`/`it`/`test` naming rules in `oxlint.config.ts`, and the shared-worker restore rule only through order-dependent failures.
 
 ## AAA, one behavior
 
@@ -66,7 +68,7 @@ No flaky-test tolerance: no `sleep()` or retry-until-green. Poll real completion
 
 ## Coverage
 
-`pnpm test:coverage` is a reviewer signal, not a percentage gate to game. CI uploads `coverage/lcov.info` to Codecov (informational project/patch status only). `kzndotsh` does not require an upload token; the Unit job uses GitHub OIDC and optional `CODECOV_TOKEN` for Test Analytics.
+`pnpm test:coverage` is a reviewer signal, not a percentage gate to game. CI uploads `coverage/lcov.info` to Codecov (informational status only).
 
 ## E2E layout
 
@@ -83,7 +85,7 @@ One behavior per spec file. Prefer `expect.poll` over sleeps. Seed graph state t
 
 Parser unit tests for the harness stay in `e2e/**/*.test.ts` (Vitest `e2e-parser` project).
 
-Each Playwright test runs after an automatic `_resetDb` fixture that calls `resetE2eDb()` (public + `auth` on `watchdog_e2e`) and clears cookies — so every signup is a first-user bootstrap. Tag specs with `@smoke`, `@custody`, or `@journey`. Import `test` and `expect` from `e2e/fixtures/test.ts`. Run `pnpm test:e2e:smoke` for the fast gate; `pnpm exec vitest run --project e2e-parser` for harness-only unit tests.
+Each Playwright test runs after the automatic `_resetDb` fixture (`resetE2eDb()`, cookies cleared), so every signup is a first-user bootstrap. Tag specs with `@smoke`, `@custody`, or `@journey`; import `test` and `expect` from `e2e/fixtures/test.ts`.
 
 ## Adding an e2e spec
 
@@ -100,7 +102,7 @@ Vitest strips types, and every package's main `tsconfig.json` excludes its tests
 
 ## Test speed: shared workers
 
-Every Vitest project (unit, web-unit, property, component, integration) runs with `isolate: false` plus `vitest.reset-modules.ts`. A fresh worker per file re-evaluated `effect`, `drizzle`, and `postgres` for each file, and that import work was about 75% of the run (unit 41s, component 34s, integration 79s; now about 16s, 14s, 22s). Without isolation those load once per worker, and the setup file clears the module registry before every file, so `vi.mock` still applies to our own modules.
+Every Vitest project (unit, web-unit, property, component, integration) runs with `isolate: false` plus `vitest.reset-modules.ts`. A fresh worker per file re-evaluated `effect`, `drizzle`, and `postgres` for each file, and that import work dominated the run. Without isolation those load once per worker, and the setup file clears the module registry before every file, so `vi.mock` still applies to our own modules.
 
 What this means when writing tests:
 
