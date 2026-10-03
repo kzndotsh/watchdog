@@ -151,7 +151,7 @@ describe("tasksRepo", () => {
         caseId: cased.id,
         title: "Review filings",
         status: "in_progress",
-        priority: "urgent",
+        priority: "medium",
       });
       if (!created) throw new Error("task");
 
@@ -166,7 +166,7 @@ describe("tasksRepo", () => {
       const byPriority = await tasksRepo.searchForCase(
         tx,
         cased.id,
-        "Urgent",
+        "Medium",
         10
       );
       expect(byPriority.some((row) => row.id === created.id)).toBe(true);

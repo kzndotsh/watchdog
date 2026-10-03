@@ -38,6 +38,7 @@ describe("eventsRepo", () => {
       });
       if (!created) throw new Error("event");
       const updated = await eventsRepo.updateInCase(tx, caseA.id, created.id, {
+        when: "2020-01-01",
         what: "cross-case",
       });
       expect(updated).toBeNull();
