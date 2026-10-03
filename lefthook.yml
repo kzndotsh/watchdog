@@ -48,7 +48,7 @@ pre-commit:
         - "scripts/check-docs.mjs"
         - "scripts/doc-map.mjs"
         - "scripts/check-docs-affected.mjs"
-      run: pnpm check:docs
+      run: pnpm check:docs:strict
     design-tokens:
       glob:
         - "DESIGN.md"
@@ -96,7 +96,7 @@ pre-commit:
         - "**/.agents/skills/**"
         - "scripts/validate-agents.mjs"
         - ".cursor/README.md"
-      run: pnpm validate:agents
+      run: pnpm validate:agents --staged
 
 commit-msg:
   commands:
