@@ -1,4 +1,6 @@
 [
+  "apps/cli",
+  "apps/worker",
   "packages/ai",
   "packages/api",
   "packages/client",
