@@ -175,6 +175,51 @@ describe("check-docs gate", () => {
       expect(repo.run("check-docs.mjs", ["--strict"]).code).toBe(1);
     });
 
+    it("fails a second table whose header is mistyped instead of skipping its rows", () => {
+      const repo = convRepo(
+        [
+          conventions(GOOD_ROW),
+          "## Web",
+          "",
+          "| Rule | Scope | Stated in | Enforcer | Status |",
+          "| --- | --- | --- | --- | --- |",
+          "| Hidden bad row | web | `ui/rules.md` | guidance | enforced |",
+          "",
+        ].join("\n")
+      );
+      const res = repo.run("check-docs.mjs", ["--strict"]);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("header must be exactly");
+      expect(res.output).toContain("Enforcer");
+    });
+
+    it("fails a table whose columns are in the wrong order", () => {
+      const repo = convRepo(
+        [
+          "# Conventions",
+          "",
+          "| Rule | Scope | Stated in | Status | Enforced by |",
+          "| --- | --- | --- | --- | --- |",
+          "| Swapped | web | `ui/rules.md` | enforced | `check:size` |",
+          "",
+        ].join("\n")
+      );
+      const res = repo.run("check-docs.mjs", ["--strict"]);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("header must be exactly");
+    });
+
+    it("fails a row with an extra column and says escaped pipes are unsupported", () => {
+      const row =
+        "| Extra cell | web | `ui/rules.md` | `check:size` \\| `check:repos` | enforced |";
+      const repo = convRepo(conventions(GOOD_ROW, row));
+      const res = repo.run("check-docs.mjs", ["--strict"]);
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("expected 5 cells");
+      expect(res.output).toContain("escaped pipes");
+      expect(res.output).toContain("Extra cell");
+    });
+
     it("fails when the page has no conventions table", () => {
       const repo = convRepo("# Conventions\n\nProse only.\n");
       const res = repo.run("check-docs.mjs", ["--strict"]);

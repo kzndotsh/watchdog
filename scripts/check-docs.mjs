@@ -252,6 +252,13 @@ async function checkReadmeIndex() {
 }
 
 const CONVENTIONS_PATH = "docs/reference/platform/conventions.md";
+const CONVENTION_HEADER = [
+  "Rule",
+  "Scope",
+  "Stated in",
+  "Enforced by",
+  "Status",
+];
 const STATUSES = new Set(["enforced", "baselined", "guidance"]);
 /** Backticked enforced-by tokens shaped like a package script (`check:size`, `ds:check`). */
 const SCRIPT_TOKEN = /^(?:check|validate|test|ds):[\w:-]+$/;
@@ -321,7 +328,7 @@ function tableCells(line) {
 function conventionRowProblems(cells, scripts) {
   if (cells.length !== 5) {
     return [
-      `expected 5 cells (rule, scope, stated in, enforced by, status), got ${cells.length}`,
+      `expected 5 cells (${CONVENTION_HEADER.join(", ").toLowerCase()}), got ${cells.length}; escaped pipes (\\|) are not supported inside a cell`,
     ];
   }
   const rule = cells[0] ?? "";
@@ -361,7 +368,8 @@ function conventionRowProblems(cells, scripts) {
 }
 
 /**
- * Conventions table gate: every rule row names what enforces it and its status.
+ * Conventions table gate: every table has the exact header, and every rule row names
+ * what enforces it and its status.
  * A row claiming `enforced` or `baselined` cannot say `guidance`; named scripts
  * and test files must exist.
  */
@@ -378,19 +386,28 @@ async function checkConventions() {
   const text = await readFile(abs, "utf-8");
   let tables = 0;
   let inTable = false;
+  let headerOk = false;
   for (const line of text.split("\n")) {
     if (!line.trim().startsWith("|")) {
       inTable = false;
       continue;
     }
     const cells = tableCells(line);
-    const lower = new Set(cells.map((c) => c.toLowerCase()));
-    if (lower.has("enforced by") && lower.has("status")) {
+    if (!inTable) {
+      // First pipe line after prose is a table header: every table on the page must match.
       inTable = true;
       tables += 1;
+      headerOk = CONVENTION_HEADER.every((h, i) => cells[i] === h);
+      if (!headerOk || cells.length !== CONVENTION_HEADER.length) {
+        headerOk = false;
+        note(
+          "fail",
+          `${CONVENTIONS_PATH}: table header must be exactly | ${CONVENTION_HEADER.join(" | ")} | in that order → ${line.trim()}`
+        );
+      }
       continue;
     }
-    if (!inTable || cells.every((c) => /^:?-{3,}:?$/.test(c))) continue;
+    if (!headerOk || cells.every((c) => /^:?-{3,}:?$/.test(c))) continue;
     for (const why of conventionRowProblems(cells, scripts)) {
       note("fail", `${CONVENTIONS_PATH}: ${why} → ${line.trim()}`);
     }
@@ -398,7 +415,7 @@ async function checkConventions() {
   if (tables === 0) {
     note(
       "fail",
-      `${CONVENTIONS_PATH}: no conventions table (header needs "Enforced by" and "Status")`
+      `${CONVENTIONS_PATH}: no conventions table (header must be | ${CONVENTION_HEADER.join(" | ")} |)`
     );
   }
 }

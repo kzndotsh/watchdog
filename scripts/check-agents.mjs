@@ -89,8 +89,10 @@ function collectInScopeAgents(dirs) {
 
 /**
  * Banned phrases from the glossary's `_Banned_: a, b` lines. Matching is exact-case,
- * whitespace-flexible and whole-word. Returns null (after recording a finding) when
- * the glossary is missing or lists nothing, so the gate cannot go silently inert.
+ * whitespace-flexible and whole-word (no word character on either side, so a term
+ * ending in punctuation such as `C++` still matches). Lines inside fenced code
+ * blocks are skipped. Returns null (after recording a finding) when the glossary
+ * is missing or lists nothing, so the gate cannot go silently inert.
  * @returns {Promise<{ re: RegExp, label: string }[] | null>}
  */
 async function loadBanned() {
@@ -100,9 +102,17 @@ async function loadBanned() {
     return null;
   }
   const text = await readFile(glossary, "utf-8");
+  let inFence = false;
   const terms = text
     .split("\n")
-    .flatMap((line) => BANNED_LINE.exec(line)?.[1]?.split(",") ?? [])
+    .flatMap((line) => {
+      // A fenced block shows the format; its `_Banned_` lines are examples, not terms.
+      if (/^\s*(```|~~~)/.test(line)) {
+        inFence = !inFence;
+        return [];
+      }
+      return inFence ? [] : (BANNED_LINE.exec(line)?.[1]?.split(",") ?? []);
+    })
     .map((term) => term.replaceAll("`", "").trim())
     .filter(Boolean);
   if (terms.length === 0) {
@@ -114,10 +124,10 @@ async function loadBanned() {
   return terms.map((label) => ({
     label,
     re: new RegExp(
-      String.raw`\b${label
+      String.raw`(?<![\w])${label
         .split(/\s+/)
         .map(escapeRegExp)
-        .join(String.raw`\s+`)}\b`
+        .join(String.raw`\s+`)}(?![\w])`
     ),
   }));
 }

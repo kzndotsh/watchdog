@@ -77,6 +77,60 @@ describe("check-agents gate", () => {
     expect(res.output).toContain('mid-build term "Doorway Z"');
   });
 
+  it("matches multi-word terms across any whitespace run", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "packages/core/AGENTS.md",
+      `${PKG_AGENTS}\nThe Doorway   Z path.\n`
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain('mid-build term "Doorway Z"');
+  });
+
+  it("matches a term with regex metacharacters literally", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "GLOSSARY.md",
+      `${GLOSSARY}\n**C++ theater**:\nRetired.\n_Banned_: C++ theater, C++\n`
+    );
+    repo.write(
+      "packages/core/AGENTS.md",
+      `${PKG_AGENTS}\nNo C++ theater here.\nA C++ pun.\n`
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain('mid-build term "C++ theater"');
+    expect(res.output).toContain('mid-build term "C++"');
+  });
+
+  it("ignores a term whose metacharacters would only match as a regex", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "GLOSSARY.md",
+      `${GLOSSARY}\n**C++ theater**:\nRetired.\n_Banned_: C++ theater\n`
+    );
+    repo.write("packages/core/AGENTS.md", `${PKG_AGENTS}\nCC theater.\n`);
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.output).toContain("0 finding(s)");
+    expect(res.code).toBe(0);
+  });
+
+  it("ignores a _Banned_ line inside a code fence in the glossary", () => {
+    const repo = cleanRepo();
+    repo.write(
+      "GLOSSARY.md",
+      `${GLOSSARY}\nExample of the format:\n\n\`\`\`md\n_Banned_: Sample Phrase\n\`\`\`\n`
+    );
+    repo.write(
+      "packages/core/AGENTS.md",
+      `${PKG_AGENTS}\nA Sample Phrase appears.\n`
+    );
+    const res = repo.run("check-agents.mjs", strict);
+    expect(res.output).toContain("0 finding(s)");
+    expect(res.code).toBe(0);
+  });
+
   it("does not ban a term the glossary does not list", () => {
     const repo = cleanRepo();
     repo.write("packages/core/AGENTS.md", `${PKG_AGENTS}\nA Scratch pad.\n`);
