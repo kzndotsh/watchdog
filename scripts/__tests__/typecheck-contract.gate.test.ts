@@ -21,8 +21,21 @@ import { parse } from "yaml";
  */
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const read = (rel: string) => readFileSync(path.join(repoRoot, rel), "utf-8");
-const scriptsOf = (rel: string): Record<string, string> =>
-  (JSON.parse(read(rel)) as { scripts?: Record<string, string> }).scripts ?? {};
+const scriptsOf = (rel: string): Record<string, string> => {
+  const parsed: unknown = JSON.parse(read(rel));
+  const scripts =
+    typeof parsed === "object" && parsed !== null && "scripts" in parsed
+      ? parsed.scripts
+      : undefined;
+  if (typeof scripts !== "object" || scripts === null) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(scripts).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string"
+    )
+  );
+};
 
 /**
  * Packages whose main tsconfig already includes the tests they cover, so their
