@@ -1,55 +1,42 @@
 # Architecture: `@watchdog/web`
 
-This document covers the TanStack Start layout, Vite, chrome, and the web ServerFn boundary. For the package import graph, Caps, and Collect/Triage/Export, see [`docs/reference/platform/README.md`](../../../docs/reference/platform/README.md).
+The server boundary, auth layering, and oRPC wiring of the TanStack Start app. Versions and plugins are in `apps/web/package.json` and `vite.config.ts`; the package import graph, Caps, and Collect/Triage/Export are in [`../platform/README.md`](../platform/README.md). Start and Router docs: <https://tanstack.com/llms.txt>.
 
-## Stack
+## Shape
 
-| Choice | Value |
+- Stack: TanStack Start (React) with file-based TanStack Router (`src/routes`), Vite, Tailwind v4, and TanStack Query wired into the router through `@tanstack/react-router-ssr-query` (QueryClient in router context; see [`data.md`](data.md)).
+- Import alias: hand-written files use `@/*` for `./src/*`. Prefer `@/domains/...` over relative hops. `guidance`: nothing enforces it and relative imports exist today.
+- Chrome: `shared/layout/app-shell.tsx` wraps the shadcn `SidebarProvider` + `SidebarInset`; nav is `shared/layout/app-sidebar.tsx`; page chrome sits beside `page.tsx`. Search chrome lives in `domains/search` (`SearchChrome` mounted from `AppShell`).
+- Active Case id is an httpOnly cookie (`watchdog.active-case-id`); Case rows are Postgres.
+- Domain layout and the folder-shape contract: [`domains.md`](domains.md).
+
+## Auth layers
+
+Server core is [`@watchdog/auth`](../../../packages/auth/AGENTS.md) (`createAuth`: Better Auth + Drizzle adapter, invite signup, instance admin); web appends `tanstackStartCookies()` in `src/auth/server.ts`. The client and Better Auth UI views are in `src/auth/`. API keys use `@better-auth/api-key`, sent as `Authorization: Bearer <key>` or `x-api-key`. Solo signup is gated by `BETTER_AUTH_ALLOW_SIGNUP`.
+
+| Layer | Job |
 | --- | --- |
-| Framework | TanStack Start (React): blank / default CLI preset |
-| Router | TanStack Router file-based (`src/routes`) |
-| Bundler | Vite 8 + `@vitejs/plugin-react` |
-| CSS | Tailwind CSS v4 (`@tailwindcss/vite`) + `@tailwindcss/typography` |
-| Package manager | pnpm (workspace: repo root) |
-| Devtools | `@tanstack/react-devtools` + router panel + React Query Devtools; `@tanstack/devtools-vite` first in Vite plugins |
-| Server state | TanStack Query via `@tanstack/react-router-ssr-query` (QueryClient in router context) |
+| `_protected` routes / Better Auth UI | UX redirect only |
+| Start `requireAuth` (global `functionMiddleware`) | ServerFn data gate; throws `UnauthorizedError` |
+| `/api/auth/$` | Cookies and sessions |
+| `createCsrfMiddleware({ filter: serverFn })` | CSRF, after evlog in `src/start.ts` `requestMiddleware` |
 
-For Start and Router documentation, use [https://tanstack.com/llms.txt](https://tanstack.com/llms.txt).
+## Server boundary
 
-## Layout decisions
+- `*.functions.ts` is the RPC surface (`createServerFn`, safe to import from UI). Auth is global: `functionMiddleware: [evlogFunctionMiddleware, requireAuth]` in `src/start.ts`. Don't add per-function `.middleware([requireAuth])`; public endpoints go in `routes/api/*`.
+- Handlers are thin: `orpcFromContext(context)` (in `src/lib/orpc.server.ts`, wraps `orpcForActor(actorFromSession(...))`) to `@watchdog/api` to `@watchdog/core` to `@watchdog/db` repos. No Drizzle in `apps/web`; the only exceptions are the Better Auth adapter and the SSE route `/api/events`, which checks Case access through `@watchdog/core`. The no-db rule is enforced by oxlint ([`rules.md`](ui/rules.md)); the handler pattern is `guidance`.
+- Use `createServerFn` for server-only work; never use `*.client.ts` for server functions. DTOs and Zod are in `types.ts` ([`../platform/types.md`](../platform/types.md)).
+- Process logs use the request and function middleware in `src/start.ts` (`@watchdog/log`): [`jobs-orpc.md`](../platform/jobs-orpc.md#process-logging-evlog).
 
-1. **Official CLI output is SoT for Start layout**: `src/routes`, `src/router.tsx`, `vite.config.ts` with `devtools()` first, then Tailwind, `tanstackStart()`, `viteReact()`. Theme toggle lives in `shared/layout/` (chrome).
-2. **Import alias**: hand-written files use `@/*` → `./src/*`. No relative `./` / `../` in hand-written files: use `@/domains/...` full paths. (`#/*` still works; `@/*` is canonical.)
-3. **Monorepo / packages**: see [`docs/reference/platform/README.md`](../../../docs/reference/platform/README.md) (import direction, Caps, Jobs, oRPC).
-4. **Product chrome**: `shared/layout/app-shell.tsx` wraps shadcn `SidebarProvider` + `SidebarInset`; nav in `shared/layout/app-sidebar.tsx`. Page chrome beside `page.tsx`: `page-toolbar`, `page-filter-menu`, `route-pending`, `route-error`. Active Case id = httpOnly cookie (`watchdog.active-case-id`); Case rows = Postgres.
-5. **Auth**: server core in [`@watchdog/auth`](../../../packages/auth/AGENTS.md) (`createAuth`: Better Auth + Drizzle adapter, invite signup, instance admin; web appends `tanstackStartCookies()` in `src/auth/server.ts`); client + BA UI views in `src/auth/`; tables in `auth` schema; `/api/auth/$`; solo signup via `BETTER_AUTH_ALLOW_SIGNUP`. API keys via `@better-auth/api-key`; Settings → API Keys. Pass `Authorization: Bearer <key>` or `x-api-key`. Layers: BA UI / `_protected` = UX redirect; Start `requireAuth` (global `functionMiddleware`) = ServerFn data gate (throw `UnauthorizedError`); `/api/auth` = cookies. CSRF: `createCsrfMiddleware({ filter: serverFn })` after evlog in `src/start.ts` `requestMiddleware`.
-6. **Server boundary (Start)**: `.functions.ts` is the RPC surface (`createServerFn`, safe to import from UI). Auth is global via `functionMiddleware: [evlogFunctionMiddleware, requireAuth]`. Do not re-add per-function `.middleware([requireAuth])`, and use `routes/api/*` for public endpoints. Prefer **thin ServerFns → `orpcForActor` → `@watchdog/api` → `@watchdog/core` → `@watchdog/db` repos**. Do not put Drizzle in `apps/web` (allowlist: Better Auth adapter; the SSE route `/api/events` checks Case access and lists visible Case ids through `@watchdog/core`). Shared DTOs + Zod are in `types.ts`. The full contract is in [`DOMAINS.md`](domains.md) and [`docs/reference/platform/types.md`](../../../docs/reference/platform/types.md). Process logs use the `src/start.ts` request and function middleware (`@watchdog/log`); see platform [`docs/reference/platform/jobs-orpc.md`](../../../docs/reference/platform/jobs-orpc.md#process-logging-evlog).
-7. **Isomorphic by default**: use `createServerFn` for server-only work. Do not use `*.client.ts` for server functions.
-8. **Domain layout**: see [`DOMAINS.md`](domains.md). `domains/{noun}/` = product surfaces; graph children in `entities/{child}/`; dossier chrome in `dossier/components/`. Domain `hooks/` own workspace state (e.g. `use-jobs-workspace`, `use-triage-workspace`, `use-intake-actions`, `use-dump-evidence`, `use-entity-table`, `use-dossier-shell`, `use-triage-detail-forms`, `use-search-ui`); pure helpers stay in `lib/`: see [`DOMAINS.md`](domains.md) § hooks/lib + Map. Shell-mounted search lives in `domains/search` (`SearchChrome` from `AppShell`).
+## oRPC wiring
 
-## Realtime / Case data
-
-Query cache + loaders + Active Case cookie + SSE: see [`data.md`](data.md).
-
-- Router: `createAppQueryClient()` + `setupRouterSsrQueryIntegration` in `src/router.tsx`.
-- Hook: `shared/hooks/use-live-events` → named invalidation contracts in `shared/lib/query-invalidation.ts`.
-- Active Case cookie helpers: `domains/cases/lib/active-case*`.
-- No manual Refresh buttons for live paths; no loader→`useState` fork for server lists.
-
-## Web oRPC wiring
-
-- **Web UI:** ServerFns → in-process `createRouterClient` (`src/lib/orpc.server.ts` / `orpcForActor`). No browser HTTP oRPC mount.
-- **OpenAPI:** `src/routes/api/v1.ts` + `v1.$.ts` → `OpenAPIHandler` prefix `/api/v1` (Bearer + `x-api-key` + session). Spec `/api/v1/spec.json`.
-- Auth context: Better Auth session → `ApiActor` (`@watchdog/auth` `createApiContext`, bound to the app's `auth` in `src/auth/api-context.server.ts`); identify fields for logs live there (one `getSession`).
-- ServerFns: `src/lib/orpc.server.ts` in-process client (`orpcForActor`): preferred path for domain I/O; injects ALS `log` from Start middleware. Case Export zip/md = authenticated file routes (API key OK): not oRPC.
-- `src/lib/` holds app RPC/OpenAPI wiring + `utils` only: not domain cookie/SSE helpers.
-- Platform oRPC / client contract: [`docs/reference/platform/README.md`](../../../docs/reference/platform/README.md).
-
-## Scaffold note
-
-CLI create command + Intent install recorded in `.cta.json`. Historical scaffold steps live in git history of `AGENTS.md` if needed.
+- Web UI: ServerFns call an in-process `createRouterClient`; there is no browser HTTP oRPC mount. The client injects the ALS `log` from Start middleware.
+- OpenAPI: `src/routes/api/v1.ts` + `v1.$.ts` mount an `OpenAPIHandler` at `/api/v1` (Bearer, `x-api-key`, or session); spec at `/api/v1/spec.json`.
+- Auth context: Better Auth session to `ApiActor` (`@watchdog/auth` `createApiContext`, bound to the app's `auth` in `src/auth/api-context.server.ts`).
+- Case Export zip/md are authenticated file routes (API key OK), not oRPC.
+- `src/lib/` holds this wiring plus `utils` only, not domain cookie or SSE helpers.
 
 ## Gotchas
 
-- **TanStack Router loaders**: child route `loader({ context })` receives `beforeLoad` context (e.g. `{ session, user }` + `queryClient`), **not** parent loader return data. Each page loader must `ensureQueryData` what it needs. Sibling routes share data via **Query keys**, not parent loader inheritance.
-- **ServerFn imports**: statically import `*.server` from `*.functions` handlers (TanStack pattern). Avoid `await import("./x.server")` unless a cycle forces it; never dynamically import the `.functions` module itself.
+- **Router loaders:** a child `loader({ context })` receives `beforeLoad` context (`{ session, user }` + `queryClient`), not parent loader return data. Each page loader must `ensureQueryData` what it needs; siblings share data via Query keys.
+- **ServerFn imports:** statically import `*.server` from `*.functions` handlers (the TanStack pattern). Avoid `await import("./x.server")` unless a cycle forces it; never dynamically import the `.functions` module itself.

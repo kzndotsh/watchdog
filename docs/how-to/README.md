@@ -30,5 +30,4 @@
 
 ## See also
 
-- Documentation charter: [`../explanation/documentation.md`](../explanation/documentation.md)
 - Full index: [`../README.md`](../README.md)

@@ -56,5 +56,5 @@ Playwright suite under `e2e/specs/` (**10 files**): `@journey` core loop; `@cust
 | --- | --- |
 | Methodology / anti-cheat | [`TESTING_STANDARDS.md`](standards.md) |
 | Web gates + remaining manual smoke | [`docs/contributing/testing/web.md`](../../../docs/contributing/testing/web.md) |
-| Day-0 journeys | [`SCENARIOS.md`](../../explanation/scenarios.md) |
+| Day-0 journeys | [`first-investigation.md`](../../tutorials/first-investigation.md) |
 | test-kit | [`packages/test-kit/AGENTS.md`](../../../packages/test-kit/AGENTS.md) · [`packages/test-db/AGENTS.md`](../../../packages/test-db/AGENTS.md) |

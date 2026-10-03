@@ -24,75 +24,11 @@ colors:
   light-signal: "oklch(0.72 0.14 75)"
   light-success: "oklch(0.55 0.13 155)"
   light-destructive: "oklch(0.55 0.2 25)"
-typography:
-  body:
-    fontFamily: Geist Variable
-    fontSize: 0.875rem
-    fontWeight: 400
-    lineHeight: 1.5
-  label:
-    fontFamily: Geist Variable
-    fontSize: 0.875rem
-    fontWeight: 400
-    lineHeight: 1.25
-  section-heading:
-    fontFamily: Geist Variable
-    fontSize: 1rem
-    fontWeight: 500
-    lineHeight: 1.375
-  meta:
-    fontFamily: Geist Variable
-    fontSize: 0.8125rem
-    fontWeight: 400
-    lineHeight: 1.25
-  chip:
-    fontFamily: Geist Variable
-    fontSize: 0.75rem
-    fontWeight: 400
-    letterSpacing: 0.05em
-  mono:
-    fontFamily: Geist Mono Variable
-    fontSize: 0.875rem
-    fontWeight: 400
-    lineHeight: 1.25
-rounded:
-  sm: 3px
-  md: 6px
-  lg: 9px
-  full: 9999px
-spacing:
-  base: 4px
-  row-height: 35px
-  page-header: 45px
-components:
-  button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.label}"
-    rounded: "{rounded.md}"
-  input:
-    backgroundColor: "{colors.background}"
-    textColor: "{colors.foreground}"
-    typography: "{typography.body}"
-    rounded: "{rounded.md}"
-  card:
-    backgroundColor: "{colors.background}"
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.lg}"
-  popover:
-    backgroundColor: "{colors.surface-raised}"
-    textColor: "{colors.foreground}"
-    rounded: "{rounded.lg}"
-  chip:
-    backgroundColor: "{colors.muted}"
-    textColor: "{colors.muted-foreground}"
-    typography: "{typography.chip}"
-    rounded: "{rounded.full}"
 ---
 
 # Watchdog
 
-The single home for Watchdog's design direction and taste rules for `apps/web`. Edit a rule here first; the docs under [`docs/reference/web/ui/`](docs/reference/web/ui/README.md) cover mechanics (token plumbing, component APIs, loading, vendoring) and [`rules.md`](docs/reference/web/ui/rules.md) lists what enforces each rule. **The CSS in `apps/web/src/styles/` is the source of truth for values**; if this file and the CSS disagree, the CSS wins and this file is stale. Fix it.
+The single home for Watchdog's design direction and taste rules for `apps/web`. Edit a rule here first. [`rules.md`](docs/reference/web/ui/rules.md) lists what enforces each rule; the other docs under [`docs/reference/web/ui/`](docs/reference/web/ui/README.md) cover mechanics (loading, atoms, vendoring). **The CSS in `apps/web/src/styles/` is the source of truth for values**; if this file and the CSS disagree, the CSS wins and this file is stale. Only the `colors` front matter is checked (`pnpm check:design-tokens` syncs it to `wd-tokens.css` and `wd-dark.css`); everything below is prose and is not checked.
 
 ## Overview
 
@@ -108,19 +44,32 @@ Anti-references: generic SaaS dashboards, decorative AI gradients and glow, term
 - **Status is never color-only.** Every status has its own glyph shape; color reinforces it.
 - Hover on `--accent` is muted, not cyan. Cyan means primary or state, nothing else.
 - Contrast fixes change OKLCH **L only**; keep hue and chroma stable.
+- Bind to semantic tokens (`background`, `card`, `popover`, `primary`, `accent`, `muted`, `destructive`, `border`/`input`, `sidebar-*`), not the `--wd-*` ramps. Modal dialog panels use `card`; menus and popovers use `popover`; Triage selection uses `signal`.
 
 ## Typography
 
-- Geist Variable for UI, Geist Mono Variable for ids, hashes, paths, timestamps, and counts. Mono carries data, never decoration. Opaque ids render through `IdChip` / `formatOpaqueId` and are never sliced.
+- Geist Variable for UI, Geist Mono Variable for ids, hashes, paths, timestamps, and counts. Mono carries data, never decoration. Opaque ids render through `IdChip` / `formatOpaqueId` and are never sliced. Self-hosted via Fontsource, not Vercel `geist` or `next/font`.
+- Vanilla Tailwind scale (`text-xs`, `text-sm`, `text-base`, plus the theme's `text-2xs` = 0.8125rem). No `text-[Npx]`, no custom type-role classes. Counts use tabular numerals. Inputs stay `text-sm` (iOS zoom floor).
 - Weights: 400 by default for names, labels, chips, metadata, and table text. 500 for `SectionLabel` headings, column headers, the active nav row, and the brand wordmark; 600 for page, dossier, and settings card headings; dates are 300.
-- Vanilla Tailwind scale (`text-xs`, `text-sm`, `text-base`, plus the theme's `text-2xs`). No `text-[Npx]`, no custom type-role classes. Counts use tabular numerals. Inputs stay `text-sm` (iOS zoom floor).
-- Self-hosted via Fontsource, not Vercel `geist` or `next/font`.
+
+Recipes the app repeats (the `/ui` specimen page lists them):
+
+| Use | Classes |
+| --- | --- |
+| Dossier heading | `text-2xl font-semibold leading-tight tracking-tight` |
+| Page heading | `text-xl font-semibold leading-tight tracking-tight` |
+| Section heading | `text-base font-medium leading-snug` |
+| Body / secondary body | `text-base leading-normal` / `text-sm leading-normal` |
+| Label | `text-sm leading-tight` |
+| Meta label / compact meta label | `text-2xs` / `text-xs leading-tight` |
+| Mono value / compact mono | `font-mono text-sm leading-tight` / `font-mono text-2xs` |
+| Chip | `text-2xs font-normal leading-none` (`CHIP_SIZE_CLASS`) |
 
 ## Layout
 
-- Panel-first: Queue + Detail splits, tables, stacks. Homogeneous work lists are `divide-y` Queue rows, not Card-per-row. No nested cards, no floating section cards.
-- Stable dimensions: nav rows ~35px, page header 45px (44 + border). Headers, rows, and controls do not change size when labels, counts, or loading states change.
-- Everything scales from `--wd-display-scale` (rem-based); never hard-code px for type or spacing.
+- Panel-first: Queue + Detail splits, tables, stacks. Homogeneous work lists are `divide-y` Queue rows, not Card-per-row. No nested cards, no floating section cards. Cases are a small set of containers, so a card grid is fine there.
+- Stable dimensions: headers, rows, and controls do not change size when labels, counts, or loading states change. (At the default display scale of 1.1 the page header is 45px and nav rows ~35px; those are outputs of the scale, not constants.)
+- Everything scales from `--wd-display-scale` (rem-based, presets 1.1 / 1.2 / 1.35 in Settings → Appearance); never hard-code px for type or spacing.
 - Below 768px a split shows one column at a time (Queue, then Detail with a back control). Coarse pointers get larger targets; desktop density does not change for them.
 
 ## Elevation & Depth
@@ -129,22 +78,23 @@ Flat. Cards match the page (`--card` = `--background`); separation comes from bo
 
 ## Shapes
 
-A three-step radius ladder: `rounded-sm` (3px, checkbox/tiny inset), `rounded-md` (6px, controls, chips' containers, dialogs, sidebar nav), `rounded-lg` (9px, cards, menus). Nothing is pill-shaped except chips and dots. Banned: `rounded-xl` and up, arbitrary `rounded-[…]`.
+A three-step radius ladder: `rounded-sm` (3px, checkbox/tiny inset), `rounded-md` (6px, controls, dialogs, sidebar nav, chips), `rounded-lg` (9px, cards, menus). Dots and avatars may be `rounded-full`; nothing else is pill-shaped. `--radius-xl..4xl` are capped to `--radius-lg` in `wd-theme.css`, so `rounded-xl` and up cannot render larger; arbitrary `rounded-[...]` is banned.
 
 ## Components
 
-- Primitives are shadcn `base-mira` (Base UI) in `packages/ui`, generated and locked. **Never hand-edit `packages/ui/src/components`**; Watchdog behavior goes in a same-name wrapper under `apps/web/src/shared/ui/primitives/` (only Button, Dialog, AlertDialog, and Combobox have wrappers: import those from the wrapper, everything else from `@watchdog/ui/components/<name>`) or in tokens.
+- Primitives are shadcn `base-mira` (Base UI) in `packages/ui`, generated and locked ([`vendor.md`](docs/reference/web/ui/vendor.md)). Watchdog behavior goes in a same-name wrapper under `apps/web/src/shared/ui/primitives/` or in tokens; never restyle a primitive at the call site.
 - Hand-owned atoms live in `apps/web/src/shared/ui/` and never fetch, mutate, or route. Domains own I/O.
 - Chrome is **Queue + Detail**. Do not introduce Console, Workbench, or Tape surfaces, and never name a screen `*Panel`. Never name a component `Entity` (that word means the graph subject).
 - Keyboard first on work surfaces: `j`/`k` move through a Queue, single-key actions (`a` Accept, `r` Reject) sit on the buttons that own them and show their key, Enter confirms dialogs, Mod+K reaches every page and command.
 - Writing fields (input, textarea, combobox, rich text) tint the border on focus and add no outer ring; select triggers add a soft 2px ring. Focus chrome lives in `styles/wd-overrides.css`; do not add `focus-visible:ring-*` to primitives.
-- Copy says `Couldn't`, `Can't`, `Failed to`. Never `Unable to` or `Oops`.
+- Scrollbars are owned by `wd-overrides.css` (6px rail, faint thumb); do not set scrollbar widths or colors per component.
+- **Dialog vs AlertDialog:** Dialog for forms and anything the user may dismiss by backdrop or close; AlertDialog when the flow must stay focused until an explicit action. Enter confirms the default action in both (`shared/lib/dialog-default-action.ts`, wired into the `primitives` wrappers): it clicks `[data-dialog-default-action]`, else the AlertDialog action, else the single enabled primary or destructive footer button. Native Enter wins inside forms, on buttons, comboboxes, menus, and textareas (Mod+Enter confirms from a textarea); opt out with `enterConfirms={false}`.
 
 ## Motion
 
 Short and functional, tokens `--duration-fast` (100ms) and `--duration-panel` (180ms).
 
-- High-frequency paths (Queue select, Detail swap) are instant or ≤100ms and color-only. Dialogs and sheets are ≤180ms; menus and popovers keep the vendor ~75-100ms fade.
+- High-frequency paths (Queue select, Detail swap) are instant or at most 100ms and color-only. Dialogs and sheets are at most 180ms; menus and popovers keep the vendor ~75-100ms fade.
 - No page-mount fades, staggered or blur entrances, or AnimatePresence on Queue/Detail. Button press is the vendor 1px `translate-y`; no scale, bounce, or elastic easing.
 - The only continuous motion is the skeleton pulse and the running-status spin. Reduced motion stops both and loses no meaning.
 
@@ -162,6 +112,6 @@ Short and functional, tokens `--duration-fast` (100ms) and `--duration-panel` (1
 - Use raw palette colors, gradients, glows, or decorative blur.
 - Rely on color alone to carry status.
 - Use nested cards, glow or halo, gradient text, icon-tile feature grids, decorative colored side borders, decorative glass, mono as decoration, or cream/violet brand defaults.
-- Nest buttons (`WithTooltip wrapSpan` around a `Button`), or wrap cards in cards.
+- Nest buttons (`WithTooltip wrapSpan` around a `Button`).
 - Add a skeleton in a domain or route; one pending surface per region ([`loading.md`](docs/reference/web/ui/loading.md)).
 - Restyle a vendored primitive in place.

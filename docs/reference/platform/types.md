@@ -2,7 +2,7 @@
 
 Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs in `domains/*/types.ts`, package wire (oRPC / Caps / patch) at the edge.
 
-**Not this doc:** UI props styling ([`docs/reference/web/UI.md`](../../../docs/reference/web/UI.md)), domain folder map ([`docs/reference/web/domains.md`](../../../docs/reference/web/domains.md)).
+**Not this doc:** UI props styling ([`docs/reference/web/ui/README.md`](../../../docs/reference/web/ui/README.md)), domain folder map ([`docs/reference/web/domains.md`](../../../docs/reference/web/domains.md)).
 
 ---
 

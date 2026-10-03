@@ -1,12 +1,7 @@
----
-document_created: 2026-07-27T23:28
-document_updated: 2026-09-05T13:40
----
-
 # PRODUCT: intent and doctrine
 
 **What this is:** why Watchdog exists, who it serves, what we refuse, and how we decide. Shared by web, CLI, Caps, and agents.  
-**What this is not:** phase checkboxes ([`ROADMAP.md`](../../ROADMAP.md)) or route chrome ([`UX.md`](ux.md)).
+**What this is not:** phase checkboxes ([`ROADMAP.md`](../../ROADMAP.md)) or UI conventions ([`ux.md`](ux.md)).
 
 ---
 
@@ -20,7 +15,7 @@ Small-team OSINT: keep one **Case Graph** of Claims + Evidence you can defend, w
 - Postgres is SoT; markdown Export is a projection.
 - If you need Scratch / Candidate / Mutation R-tiers to explain Day-0, the design failed.
 
-**Organization** maps to a Better Auth **organization**: a workspace that owns Cases, members, and API keys. A user can belong to several and switches in the sidebar; on installs with open signup anyone can create one (onboarding after sign-up), on invitation-only installs only the instance admin can. Settings → **Organization** holds the profile, invitations, and membership (`owner` / `admin` / `member`). **Users** (instance admin only) is account disable/enable — not org membership. API and CLI calls resolve the active org from the session, or from the org the API key was created in (`metadata.organizationId`, re-checked against the owner's membership on every call; keys from before multi-org use the owner's oldest org); missing org context is **403**, not cross-org bleed. Case-child APIs that accept `caseId` treat a foreign-org Case as **`not_found`** (same as missing) — never return another org’s Graph.
+**Organization** maps to a Better Auth organization: a workspace that owns Cases, members, and API keys. A user can belong to several and switches in the sidebar; with open signup anyone can create one in onboarding, on invitation-only installs only the instance admin can. API and CLI calls resolve the active org from the session or from the org the API key was created in. Isolation rules (foreign-org Case is `not_found`, missing org context is 403): [`contracts/README.md`](../reference/contracts/README.md).
 
 ---
 
@@ -112,15 +107,3 @@ The `_legacy-*` trees that record this history are untracked and live outside th
 6. **Experience = core loop**: say no; ship less; no lying Caps; serve builder + non-tech + agent.
 7. **Idempotent Jobs / Export / Accept**: converge on retry; content-address Evidence.
 8. **Outcome over smooth middles**: phases verify end state; no legacy/Signal comfort shims.
-
----
-
-## See also
-
-| Doc | Owns |
-| --- | --- |
-| [`ROADMAP.md`](../../ROADMAP.md) | Phases, backlog, maturity |
-| **This file** | Nouns, hard bets |
-| [`UX.md`](ux.md) | IA, flows, experience debt |
-| [`docs/reference/web/UI.md`](../../docs/reference/web/UI.md) | Design system / chrome |
-| [`README.md`](../README.md) | Platform docs index |

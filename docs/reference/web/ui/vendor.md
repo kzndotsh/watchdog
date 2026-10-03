@@ -1,6 +1,6 @@
 # UI: vendored primitives
 
-This page defines how shadcn primitives are vendored, locked, updated, and wrapped. The hub is [`../UI.md`](../UI.md).
+This page defines how shadcn primitives are vendored, locked, updated, and wrapped.
 
 ## Layers
 
@@ -18,6 +18,16 @@ Domain code imports vanilla primitives from `@watchdog/ui/components/<name>` and
 1. **Look, scale, radius, color** → a CSS token (`wd-theme.css`, `wd-tokens.css`). Example: `--radius-xl` is capped at `--radius-lg`, so upstream `rounded-xl` lands on our ladder.
 2. **A behavior that must apply everywhere** (a prop the whole app relies on) → a same-name wrapper in `primitives/` that composes the untouched upstream component. **A distinct pattern** → a new component with its own name in `shared/ui`. **Just a different look** → neither; use the stock component (see [`atoms.md`](atoms.md#variants-not-overrides)).
 3. **A better upstream** → bump with `pnpm ui:sync`, or open an upstream issue. Never patch `packages/ui`.
+
+### Wrappers
+
+| Wrapper | Adds |
+| --- | --- |
+| `button` | `loading` spinner and disable; `data-variant` / `data-size` / `data-loading` hooks (dialog Enter-to-confirm and coarse-pointer sizing key on them) |
+| `dialog`, `alert-dialog` | Enter confirms the default action (`enterConfirms`); `AlertDialogAction` runs on our Button so it can show `loading` |
+| `combobox` | `ComboboxInput tone="warning"` (data leaves the machine) |
+
+A new wrapper must also be listed in `primitives/__tests__/wrapper-lint-coverage.test.ts`, which fails if the linter stops checking it. Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`), so don't add `text-xs` / `h-*` patches to match an older scale.
 
 ## Lock
 
