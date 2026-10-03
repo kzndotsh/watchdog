@@ -11,7 +11,13 @@ import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
 
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
-import { ConflictError, InvalidError, NotFoundError, type DomainTag, InternalError } from "../infra/tagged-errors";
+import {
+  ConflictError,
+  InternalError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
 import { assertCaseInOrgEffect, assertEntityInCaseEffect, requireTrimmedGraphId } from "./patch/guards";
 
 export interface QuestionRecord {
@@ -85,7 +91,9 @@ export function seedDefaultQuestionsEffect(
       { concurrency: "unbounded" }
     );
     if (seeded.some((question) => question === null)) {
-      return yield* new InternalError({ reason: `Failed to seed ${row.kind} Questions` });
+      return yield* new InternalError({
+        reason: `Failed to seed ${row.kind} Questions`,
+      });
     }
   });
 }

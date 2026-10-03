@@ -13,10 +13,10 @@ import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas";
 
 import { tryDb } from "./postgres-effect";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-  InternalError,
 } from "./tagged-errors";
 
 const NONCE_LEN = 12;

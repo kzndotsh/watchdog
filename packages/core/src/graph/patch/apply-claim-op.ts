@@ -10,9 +10,9 @@ import {
 
 import { tryDb } from "../../infra/postgres-effect";
 import {
+  InternalError,
   InvalidError,
   type DomainTag,
-  InternalError,
 } from "../../infra/tagged-errors";
 import {
   requireDomainEnumEffect,

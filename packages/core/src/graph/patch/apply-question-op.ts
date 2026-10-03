@@ -5,9 +5,9 @@ import type { PatchOp } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
 import {
+  InternalError,
   InvalidError,
   type DomainTag,
-  InternalError,
 } from "../../infra/tagged-errors";
 import { requireDomainStringEffect, requireDomainUuidEffect } from "./apply-patch-helpers";
 import { assertEntityInCaseEffect } from "./guards";

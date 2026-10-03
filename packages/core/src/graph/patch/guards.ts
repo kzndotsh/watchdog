@@ -12,10 +12,10 @@ import { parseTrimmedCaseId } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-  InternalError,
 } from "../../infra/tagged-errors";
 
 function requireTrimmedId(

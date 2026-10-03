@@ -20,10 +20,10 @@ import { tryDb } from "../infra/postgres-effect";
 import { logProcess, logSwallowed } from "../infra/process-log";
 import {
   ConflictError,
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-  InternalError,
 } from "../infra/tagged-errors";
 
 const SLUG_UNIQUE_INDEX = "cases_organization_id_slug_uidx";

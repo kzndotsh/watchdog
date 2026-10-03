@@ -37,10 +37,10 @@ import {
 import { notifyEvidenceChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-  InternalError,
 } from "../infra/tagged-errors";
 
 export interface EvidenceRecord {

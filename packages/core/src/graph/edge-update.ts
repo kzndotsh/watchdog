@@ -16,7 +16,11 @@ import {
 } from "@watchdog/schemas";
 
 import { tryDb } from "../infra/postgres-effect";
-import { InvalidError, NotFoundError, type DomainTag } from "../infra/tagged-errors";
+import {
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
 import type { UpdateEdgeInput } from "./edges";
 import {
   assertConfidenceEvidenceEffect,
@@ -239,7 +243,9 @@ export function applyValidatedEdgeUpdateEffect(
         edgesRepo.updateInCase(tx, input.caseId, input.edgeId, patch)
       );
       if (!updated) {
-        return yield* new NotFoundError({ resource: "Edge not found in this Case" });
+        return yield* new NotFoundError({
+          resource: "Edge not found in this Case",
+        });
       }
     }
 

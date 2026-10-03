@@ -24,7 +24,7 @@ import {
 import { notifyJobUpdateEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
-import { type DomainTag, InternalError } from "../../infra/tagged-errors";
+import { InternalError, type DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { parseValidatedCapInputEffect } from "../cap-input";
 

@@ -40,10 +40,10 @@ import { tryDb } from "../infra/postgres-effect";
 import { logProcess } from "../infra/process-log";
 import {
   ConflictError,
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-  InternalError,
 } from "../infra/tagged-errors";
 import { enqueueCapJobEffect } from "./boss";
 import { assertCapAvailabilityEffect } from "./cap-availability";

@@ -25,10 +25,10 @@ import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-  InternalError,
 } from "../infra/tagged-errors";
 import { suppressAndProposeStageEffect } from "../jobs/stages/propose";
 import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";

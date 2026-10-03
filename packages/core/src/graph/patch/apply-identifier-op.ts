@@ -16,10 +16,10 @@ import {
 
 import { tryDb } from "../../infra/postgres-effect";
 import {
-  InvalidError,
-  type DomainTag,
   InternalError,
+  InvalidError,
   NotFoundError,
+  type DomainTag,
 } from "../../infra/tagged-errors";
 import {
   requireDomainEnumEffect,
@@ -110,7 +110,9 @@ export function applyIdentifierOpEffect(
       })
     );
     if (!created) {
-      return yield* new InternalError({ reason: "Failed to create Identifier" });
+      return yield* new InternalError({
+        reason: "Failed to create Identifier",
+      });
     }
     const linked = yield* tryDb(() =>
       evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)

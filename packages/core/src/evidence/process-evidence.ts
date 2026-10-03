@@ -35,10 +35,10 @@ import {
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-  InternalError,
 } from "../infra/tagged-errors";
 import { assertCapAvailabilityEffect } from "../jobs/cap-availability";
 import { parseValidatedCapInputEffect } from "../jobs/cap-input";

@@ -22,7 +22,12 @@ import {
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import { InvalidError, NotFoundError, type DomainTag, InternalError } from "../infra/tagged-errors";
+import {
+  InternalError,
+  InvalidError,
+  NotFoundError,
+  type DomainTag,
+} from "../infra/tagged-errors";
 import {
   applyValidatedEdgeUpdateEffect,
   assertEdgeKindsAllowedEffect,
@@ -259,7 +264,9 @@ export function createEdgeEffect(
             })
           );
           if (!row) {
-            return yield* new InternalError({ reason: "Failed to create Edge" });
+            return yield* new InternalError({
+              reason: "Failed to create Edge",
+            });
           }
           const linked = yield* tryDb(() =>
             evidenceLinksRepo.linkEdge(tx, row.id, evidenceIds)
@@ -379,7 +386,9 @@ export function deleteEdgeEffect(
       edgesRepo.deleteInCase(db, scopedCaseId, normalizedEdgeId)
     );
     if (!deleted) {
-      return yield* new NotFoundError({ resource: "Edge not found in this Case" });
+      return yield* new NotFoundError({
+        resource: "Edge not found in this Case",
+      });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);

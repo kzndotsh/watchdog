@@ -34,10 +34,10 @@ import { logProcess } from "../infra/process-log";
 import {
   ConflictError,
   ForbiddenError,
+  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
-  InternalError,
 } from "../infra/tagged-errors";
 import { hasCredentialEffect } from "../infra/vault";
 import { parseValidatedCapInputEffect } from "./cap-input";
