@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PatchOp } from "@watchdog/schemas";
+import { testId } from "@watchdog/test-kit";
 
 const { suppressKnownFindingsEffect } = vi.hoisted(() => ({
   suppressKnownFindingsEffect: vi.fn(),
@@ -28,6 +29,7 @@ describe("suppressStage", () => {
       {
         op: "create",
         resource: "identifier",
+        id: testId(50),
         data: { type: "email", value: "a@b.com" },
       },
     ];

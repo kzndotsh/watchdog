@@ -16,7 +16,7 @@ describe("validateEdgeUpdateEffect", () => {
     caseId,
     fromId,
     toId,
-    predicate: "associated_with" as const,
+    predicate: "associate_of" as const,
     confidence: "unverified" as const,
     notes: null,
   };

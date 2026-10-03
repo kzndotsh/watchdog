@@ -51,7 +51,8 @@ vi.mock("../../actors/resolve-actor-labels", () => ({
 }));
 
 vi.mock("../../infra/postgres-effect", () => ({
-  tryDb: (fn: () => Promise<unknown>) => Effect.tryPromise({ try: fn }),
+  tryDb: (fn: () => Promise<unknown>) =>
+    Effect.tryPromise({ try: fn, catch: (error) => error }),
 }));
 
 vi.mock("../../infra/postgres-tx", () => ({

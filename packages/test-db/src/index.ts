@@ -1,6 +1,7 @@
 export { db as testDb } from "@watchdog/db";
 export { resetE2eDb, resetTestDb, withTestTx } from "./db/with-test-tx.ts";
 export {
+  backdateJob,
   seedAuthUser,
   seedCase,
   seedEntity,

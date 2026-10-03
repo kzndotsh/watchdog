@@ -5,6 +5,7 @@ import { requireCapability } from "@watchdog/caps";
 import { capCacheRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
 import {
+  backdateJob,
   resetTestDb,
   seedCase,
   seedJob,
@@ -88,7 +89,7 @@ describe("reconcileStaleJobs", () => {
       capabilityId: "network.dns.lookup",
       status: "running",
     });
-    await jobsRepo.update(db, job.id, {
+    await backdateJob(db, job.id, {
       updatedAt: new Date(Date.now() - 48 * 3600 * 1000),
     });
 
@@ -105,7 +106,7 @@ describe("reconcileStaleJobs", () => {
       capabilityId: "network.dns.lookup",
       status: "running",
     });
-    await jobsRepo.update(db, job.id, { updatedAt: new Date() });
+    await backdateJob(db, job.id, { updatedAt: new Date() });
 
     const failedCount = await runDomain(reconcileStaleJobsEffect());
     expect(failedCount).toBe(0);
@@ -119,7 +120,7 @@ describe("reconcileStaleJobs", () => {
       capabilityId: "network.dns.lookup",
       status: "running",
     });
-    await jobsRepo.update(db, job.id, {
+    await backdateJob(db, job.id, {
       startedAt: new Date(Date.now() - 48 * 3600 * 1000),
       updatedAt: new Date(),
     });
@@ -140,11 +141,11 @@ describe("reconcileOrphanedQueuedJobs", () => {
   it("listQueuedStale returns only queued jobs past the grace window", async () => {
     const cased = await seedCase(db);
     const stale = await seedJob(db, cased.id, { status: "queued" });
-    await jobsRepo.update(db, stale.id, {
+    await backdateJob(db, stale.id, {
       updatedAt: new Date(Date.now() - 3 * 60 * 1000),
     });
     const fresh = await seedJob(db, cased.id, { status: "queued" });
-    await jobsRepo.update(db, fresh.id, { updatedAt: new Date() });
+    await backdateJob(db, fresh.id, { updatedAt: new Date() });
 
     const rows = await jobsRepo.listQueuedStale(
       db,
@@ -164,11 +165,11 @@ describe("reconcileOrphanedQueuedJobs", () => {
       status: "queued",
       playbookRunId: run.id,
     });
-    await jobsRepo.update(db, orphan.id, {
+    await backdateJob(db, orphan.id, {
       updatedAt: new Date(Date.now() - 3 * 60 * 1000),
     });
     const standalone = await seedJob(db, cased.id, { status: "queued" });
-    await jobsRepo.update(db, standalone.id, {
+    await backdateJob(db, standalone.id, {
       updatedAt: new Date(Date.now() - 3 * 60 * 1000),
     });
 

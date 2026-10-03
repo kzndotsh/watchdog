@@ -777,7 +777,7 @@ describe("searchCase", () => {
           id: testId(38),
         }),
       ],
-      { summary: null, jobId: null, capabilityId: "network.shodan.lookup" }
+      { summary: null, jobId: null }
     );
 
     const result = await runDomain(
