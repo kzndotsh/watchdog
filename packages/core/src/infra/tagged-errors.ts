@@ -18,11 +18,22 @@ export class ForbiddenError extends Data.TaggedError("ForbiddenError")<{
   readonly reason: string;
 }> {}
 
+/**
+ * A server-side failure the caller cannot fix (failed write, queue driver
+ * outage). `reason` and `cause` are for logs only; the API maps this to a
+ * generic 500 and never forwards either to the client.
+ */
+export class InternalError extends Data.TaggedError("InternalError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
 export type DomainTag =
   | NotFoundError
   | ConflictError
   | InvalidError
-  | ForbiddenError;
+  | ForbiddenError
+  | InternalError;
 
 export function fromDomainError(error: DomainError): DomainTag {
   switch (error.code) {
@@ -38,6 +49,12 @@ export function fromDomainError(error: DomainError): DomainTag {
     case "forbidden": {
       return new ForbiddenError({ reason: error.message });
     }
+    case "internal": {
+      return new InternalError({
+        reason: error.message,
+        cause: error.cause,
+      });
+    }
     default: {
       const _exhaustive: never = error.code;
       return _exhaustive;
@@ -50,7 +67,8 @@ export function isDomainTag(error: unknown): error is DomainTag {
     error instanceof NotFoundError ||
     error instanceof ConflictError ||
     error instanceof InvalidError ||
-    error instanceof ForbiddenError
+    error instanceof ForbiddenError ||
+    error instanceof InternalError
   );
 }
 
@@ -78,6 +96,9 @@ export function domainCodeOf(error: DomainTag): DomainErrorCode {
     case "ForbiddenError": {
       return "forbidden";
     }
+    case "InternalError": {
+      return "internal";
+    }
     default: {
       const _exhaustive: never = error;
       return _exhaustive;
@@ -92,7 +113,8 @@ export function domainMessageOf(error: DomainTag): string {
     }
     case "ConflictError":
     case "InvalidError":
-    case "ForbiddenError": {
+    case "ForbiddenError":
+    case "InternalError": {
       return error.reason;
     }
     default: {
@@ -103,5 +125,9 @@ export function domainMessageOf(error: DomainTag): string {
 }
 
 export function toDomainError(error: DomainTag): DomainError {
-  return new DomainError(domainCodeOf(error), domainMessageOf(error));
+  return new DomainError(
+    domainCodeOf(error),
+    domainMessageOf(error),
+    error._tag === "InternalError" ? error.cause : undefined
+  );
 }

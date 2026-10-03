@@ -28,6 +28,7 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  InternalError,
 } from "../infra/tagged-errors";
 import { suppressAndProposeStageEffect } from "../jobs/stages/propose";
 import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
@@ -130,7 +131,7 @@ export function createAgentProposalEffect(input: {
     }
 
     if (proposed.proposalId === null || proposed.proposalId === "") {
-      return yield* new InvalidError({ reason: "Failed to create Proposal" });
+      return yield* new InternalError({ reason: "Failed to create Proposal" });
     }
 
     const proposalId = proposed.proposalId;
@@ -234,7 +235,7 @@ export function writeGraphFromAgentEffect(input: {
           );
 
           if (!write) {
-            return yield* new InvalidError({
+            return yield* new InternalError({
               reason: "Failed to record graph write",
             });
           }
@@ -261,12 +262,12 @@ export function writeGraphFromAgentEffect(input: {
         replayed: false,
         actorLabel,
       })),
-      Effect.catchTag("ConflictError", () =>
+      Effect.catchTag("ConflictError", (conflict) =>
         Effect.gen(function* replayGraphWriteGen() {
+          // Not a replay: surface the caller-visible conflict (e.g. an id or
+          // slug already in use) instead of masking it as a failed write.
           if (idempotencyKey === null) {
-            return yield* new InvalidError({
-              reason: "Failed to record graph write",
-            });
+            return yield* conflict;
           }
           const existingId = yield* tryDb(() =>
             findGraphWriteByIdempotency({
@@ -284,9 +285,7 @@ export function writeGraphFromAgentEffect(input: {
               actorLabel,
             };
           }
-          return yield* new InvalidError({
-            reason: "Failed to record graph write",
-          });
+          return yield* conflict;
         })
       )
     );

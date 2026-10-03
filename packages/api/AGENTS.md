@@ -33,7 +33,7 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Controllers call `@watchdog/co
 - Credentials procedures expose vault **slots** only (never plaintext); Cap secrets stay in core vault.
 - Case Export zip/md are authenticated **file routes** on web (not oRPC) — CLI uses raw `fetch` + `x-api-key`.
 - Activity: `GET`-style recent feed procedure is read-only (core `listRecentActivity`); no SSE type for it.
-- Unknown errors must be 500, not 400.
+- Unknown errors must be 500, not 400. `InternalError` (failed write, queue driver) maps to `INTERNAL_SERVER_ERROR` with the fixed message `"Internal server error"`; its `reason` and `cause` go only to the request log (`peekRequestLogger`). `InvalidError` stays 400 for caller-fixable input only.
 - `toOrpcError` maps `DomainTag` via `Match.tagsExhaustive` (ORPCError). Application Effects run via `runApp` (`Effect.mapError(toOrpcError)` then `appRuntime.runPromise`). `AppLive` is `Layer.empty` (no unused identity Layers). Graph child CRUD, Evidence, Proposals, Graph write, Case, Task, Search, Activity, Job (including playbook run/cancel), Credentials, and Capabilities/Playbooks list are Effect-only.
 - Optional `ApiContext.log` — Start ALS via `peekRequestLogger` on HTTP + ServerFn. `evlog()` sets `operation`; shared middleware lifts ids from input — do not stamp `context.log?.set` per handler. Never `withEvlog` on handlers.
 - Integration tests call **core services** (not HTTP) with `@watchdog/test-db`. Do not import `@watchdog/db` from this package's tests.

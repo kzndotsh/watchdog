@@ -19,6 +19,7 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  InternalError,
 } from "../../infra/tagged-errors";
 import {
   requireDomainEnumEffect,
@@ -117,7 +118,7 @@ export function applyEdgeOpEffect(
       })
     );
     if (!created) {
-      return yield* new InvalidError({ reason: "Failed to create Edge" });
+      return yield* new InternalError({ reason: "Failed to create Edge" });
     }
     const linked = yield* tryDb(() =>
       evidenceLinksRepo.linkEdge(tx, created.id, evidenceIds)

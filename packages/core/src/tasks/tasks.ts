@@ -30,6 +30,7 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  InternalError,
 } from "../infra/tagged-errors";
 
 export interface TaskRecord {
@@ -249,7 +250,7 @@ export function createTaskEffect(
           })
         );
         if (!row) {
-          return yield* new InvalidError({ reason: "Failed to create Task" });
+          return yield* new InternalError({ reason: "Failed to create Task" });
         }
         yield* tryDb(() =>
           activityEventsRepo.create(tx, {
@@ -330,7 +331,7 @@ export function updateTaskEffect(
           )
         );
         if (!row) {
-          return yield* new InvalidError({ reason: "Failed to update Task" });
+          return yield* new NotFoundError({ resource: "Task not found" });
         }
 
         if (statusChanged) {
@@ -386,9 +387,7 @@ export function deleteTaskEffect(
           tasksRepo.removeInCase(tx, scopedCaseId, normalizedTaskId)
         );
         if (!ok) {
-          return yield* new InvalidError({
-            reason: "Failed to delete Task",
-          });
+          return yield* new NotFoundError({ resource: "Task not found" });
         }
         yield* tryDb(() =>
           activityEventsRepo.create(tx, {

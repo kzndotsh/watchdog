@@ -5,7 +5,11 @@ import type { PatchOp } from "@watchdog/schemas";
 import { trimmedOrNull } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
+import {
+  InvalidError,
+  type DomainTag,
+  InternalError,
+} from "../../infra/tagged-errors";
 import { requireDomainStringEffect, requireDomainUuidEffect } from "./apply-patch-helpers";
 import { assertEntityInCaseEffect } from "./guards";
 
@@ -36,7 +40,7 @@ export function applyEventOpEffect(
       })
     );
     if (!created) {
-      return yield* new InvalidError({ reason: "Failed to create Event" });
+      return yield* new InternalError({ reason: "Failed to create Event" });
     }
   });
 }

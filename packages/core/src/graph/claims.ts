@@ -16,12 +16,7 @@ import {
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import {
-  ConflictError,
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
+import { ConflictError, InvalidError, NotFoundError, type DomainTag, InternalError } from "../infra/tagged-errors";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -151,9 +146,7 @@ export function createClaimEffect(
           })
         );
         if (!created) {
-          return yield* new InvalidError({
-            reason: "Failed to create Claim",
-          });
+          return yield* new InternalError({ reason: "Failed to create Claim" });
         }
         const linked = yield* tryDb(() =>
           evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)
@@ -206,7 +199,7 @@ export function retractClaimEffect(
       })
     );
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to retract Claim" });
+      return yield* new NotFoundError({ resource: "Claim not found" });
     }
 
     const byClaim = yield* tryDb(() =>
@@ -293,9 +286,7 @@ export function updateClaimEffect(
           })
         );
         if (!updated) {
-          return yield* new InvalidError({
-            reason: "Failed to update Claim",
-          });
+          return yield* new NotFoundError({ resource: "Claim not found" });
         }
         return { row: updated, evidenceIds: nextIds };
       })

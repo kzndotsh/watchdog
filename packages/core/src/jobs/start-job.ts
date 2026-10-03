@@ -43,6 +43,7 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  InternalError,
 } from "../infra/tagged-errors";
 import { enqueueCapJobEffect } from "./boss";
 import { assertCapAvailabilityEffect } from "./cap-availability";
@@ -144,13 +145,10 @@ export function enqueueCreatedJobEffect(
   capabilityId: string
 ): Effect.Effect<void, DomainTag> {
   return enqueueCapJobEffect(job.id, capabilityId).pipe(
-    Effect.catch((error: InvalidError) =>
-      failJobEffect(
-        job.id,
-        errorMessage(error),
-        { caseId },
-        job.logs ?? []
-      ).pipe(Effect.flatMap(() => Effect.fail(error)))
+    Effect.catch((error: InternalError | InvalidError) =>
+      failJobEffect(job.id, error.reason, { caseId }, job.logs ?? []).pipe(
+        Effect.flatMap(() => Effect.fail(error))
+      )
     )
   );
 }
@@ -216,7 +214,7 @@ export function startJobEffect(
     );
 
     if (!row) {
-      return yield* new InvalidError({ reason: "Failed to create Job" });
+      return yield* new InternalError({ reason: "Failed to create Job" });
     }
 
     yield* enqueueCreatedJobEffect(scopedCaseId, row, capabilityId);
@@ -306,7 +304,7 @@ export function cancelJobEffect(
       jobsRepo.getInCase(db, scopedCaseId, normalizedJobId)
     );
     if (!refreshed) {
-      return yield* new InvalidError({ reason: "Cancel failed" });
+      return yield* new NotFoundError({ resource: "Job not found" });
     }
     const logActorId = optionalActorId(opts?.actorId);
     if (logActorId) {

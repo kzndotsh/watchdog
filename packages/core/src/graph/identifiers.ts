@@ -19,11 +19,7 @@ import { assertEvidenceIdsInCaseEffect, parseGraphEvidenceIdsEffect } from "../e
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import {
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
+import { InvalidError, NotFoundError, type DomainTag, InternalError } from "../infra/tagged-errors";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -198,9 +194,7 @@ export function createIdentifierEffect(
             })
           );
           if (!created) {
-            return yield* new InvalidError({
-              reason: "Failed to create Identifier",
-            });
+            return yield* new InternalError({ reason: "Failed to create Identifier" });
           }
           const linked = yield* tryDb(() =>
             evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
@@ -328,9 +322,7 @@ export function updateIdentifierEffect(
             )
           );
           if (!updated) {
-            return yield* new InvalidError({
-              reason: "Failed to update Identifier",
-            });
+            return yield* new NotFoundError({ resource: "Identifier not found in this Case" });
           }
           return { row: updated, evidenceIds: nextIds };
         }),
@@ -366,7 +358,7 @@ export function deleteIdentifierEffect(
       identifiersRepo.deleteInCase(db, scopedCaseId, normalizedIdentifierId)
     );
     if (!deleted) {
-      return yield* new InvalidError({ reason: "Failed to delete Identifier" });
+      return yield* new NotFoundError({ resource: "Identifier not found in this Case" });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);

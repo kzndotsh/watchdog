@@ -15,6 +15,7 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  InternalError,
 } from "../../infra/tagged-errors";
 
 function requireTrimmedId(
@@ -137,7 +138,7 @@ export function assertEvidenceLinkedEffect(
   linked: boolean
 ): Effect.Effect<void, DomainTag> {
   if (!linked) {
-    return new InvalidError({ reason: "Failed to link evidence" });
+    return new InternalError({ reason: "Failed to link evidence" });
   }
   return Effect.void;
 }
