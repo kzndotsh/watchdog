@@ -15,7 +15,7 @@ describe("c99", () => {
       expect(Result.isFailure(outcome)).toBe(true);
       if (Result.isFailure(outcome)) {
         expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure.slot).toBe("C99_API_KEY");
+        expect(outcome.failure).toMatchObject({ slot: "C99_API_KEY" });
       }
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );

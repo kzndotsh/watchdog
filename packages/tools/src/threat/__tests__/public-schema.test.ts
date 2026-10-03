@@ -58,8 +58,8 @@ describe("greedybear parse", () => {
     const values = parseGreedybearIocValues(
       loadFixture("greedybear-feed.json")
     );
-    expect(values.has("1.2.3.4")).toBe(true);
-    expect(values.has("evil.example")).toBe(true);
+    expect(values?.has("1.2.3.4")).toBe(true);
+    expect(values?.has("evil.example")).toBe(true);
   });
 
   it("canonicalizes equivalent IPv6 spellings", () => {

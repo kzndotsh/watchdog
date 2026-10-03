@@ -101,8 +101,26 @@ describe("structuredExtract error mapping", () => {
       new NoObjectGeneratedError({
         message: "No object generated",
         text: '{"partial":true}',
-        response: {},
-        usage: {},
+        finishReason: "stop",
+        response: {
+          id: "resp-1",
+          timestamp: new Date(0),
+          modelId: "test-model",
+        },
+        usage: {
+          inputTokens: undefined,
+          inputTokenDetails: {
+            noCacheTokens: undefined,
+            cacheReadTokens: undefined,
+            cacheWriteTokens: undefined,
+          },
+          outputTokens: undefined,
+          outputTokenDetails: {
+            textTokens: undefined,
+            reasoningTokens: undefined,
+          },
+          totalTokens: undefined,
+        },
         cause: new Error("schema mismatch"),
       })
     );

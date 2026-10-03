@@ -4,7 +4,7 @@ import { createWatchdogClient } from "../index.ts";
 
 describe("createWatchdogClient", () => {
   it("strips a trailing slash and sends x-api-key", async () => {
-    const fetchMock = vi.fn(async () => Response.json([]));
+    const fetchMock = vi.fn<typeof fetch>(async () => Response.json([]));
     vi.stubGlobal("fetch", fetchMock);
 
     const client = createWatchdogClient({

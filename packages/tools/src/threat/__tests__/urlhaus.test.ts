@@ -22,7 +22,7 @@ describe("urlhaus", () => {
       ).pipe(Effect.flip);
 
       expect(result).toBeInstanceOf(MissingCredentialError);
-      expect(result.slot).toBe("THREATFOX_API_KEY");
+      expect(result).toMatchObject({ slot: "THREATFOX_API_KEY" });
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 

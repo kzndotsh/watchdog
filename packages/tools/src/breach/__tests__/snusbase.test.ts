@@ -22,7 +22,7 @@ describe("snusbase", () => {
       expect(Result.isFailure(outcome)).toBe(true);
       if (Result.isFailure(outcome)) {
         expect(outcome.failure).toBeInstanceOf(MissingCredentialError);
-        expect(outcome.failure.slot).toBe("SNUSBASE_API_KEY");
+        expect(outcome.failure).toMatchObject({ slot: "SNUSBASE_API_KEY" });
       }
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );

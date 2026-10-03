@@ -20,7 +20,7 @@ describe("honeydb", () => {
       ).pipe(Effect.flip);
 
       expect(result).toBeInstanceOf(MissingCredentialError);
-      expect(result.slot).toBe("HONEYDB_API_ID");
+      expect(result).toMatchObject({ slot: "HONEYDB_API_ID" });
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
@@ -34,7 +34,7 @@ describe("honeydb", () => {
       ).pipe(Effect.flip);
 
       expect(result).toBeInstanceOf(MissingCredentialError);
-      expect(result.slot).toBe("HONEYDB_API_KEY");
+      expect(result).toMatchObject({ slot: "HONEYDB_API_KEY" });
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 

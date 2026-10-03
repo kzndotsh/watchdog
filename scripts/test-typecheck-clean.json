@@ -1,1 +1,6 @@
-[]
+[
+  "packages/ai",
+  "packages/client",
+  "packages/schemas",
+  "packages/tools"
+]
