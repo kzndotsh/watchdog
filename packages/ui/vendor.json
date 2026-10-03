@@ -1,5 +1,6 @@
 {
   "style": "base-mira",
+  "shadcn": "4.21.0",
   "components": [
     "alert",
     "alert-dialog",

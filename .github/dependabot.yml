@@ -27,6 +27,8 @@ updates:
         patterns:
           - "@types/*"
 
+  # Actions are pinned as `uses: owner/repo@<sha> # vX.Y.Z` (scripts/check-action-pins.mjs);
+  # Dependabot bumps the SHA and rewrites the version comment together.
   - package-ecosystem: github-actions
     directory: /
     schedule:

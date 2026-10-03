@@ -9,7 +9,7 @@ Installed via `lefthook install` (auto in `nix develop`). Override with `lefthoo
 
 | Hook | Commands (glob-scoped; see `lefthook.yml`) |
 | --- | --- |
-| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS.md) · `pnpm check:docs:strict` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm check:design-tokens` (DESIGN.md colors vs CSS; pre-commit only) · `pnpm check:vendor` (locked `packages/ui`) · `pnpm validate:agents` (skills) |
+| **pre-commit** | `ultracite fix` on staged files only (`.mjs` → read-only repo-wide `pnpm check`) · `pnpm check:agents:strict` (AGENTS.md) · `pnpm check:docs:strict` (docs) · `pnpm check:docs-affected:strict` (mapped code paths) · `pnpm check:effect-edges:strict` (Effect run* allowlist) · `pnpm check:size` (file-size ratchet) · `pnpm check:design-tokens` (DESIGN.md colors vs CSS; pre-commit only) · `pnpm check:vendor` (locked `packages/ui`) · `pnpm validate:agents` (skills) · `pnpm check:action-pins` (workflow action pins) |
 | **pre-push** | `pnpm typecheck` · `pnpm ds:check` from `apps/web/` |
 
 Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference):
@@ -26,7 +26,8 @@ Run gates manually anytime (root [`AGENTS.md`](../../AGENTS.md) quick reference)
 | `pnpm validate:agents` | Agent Skills: vendored skills match their `skills-lock.json` pin; owned skills follow house rules (see [Skills gate](#skills-gate)) |
 | `pnpm test:gate` | Gate tests: each gate script run as a CLI against a temporary git repo (part of `pnpm test`; pre-push when `scripts/**` changes) |
 | `pnpm check:design-tokens` | DESIGN.md front-matter colors match `wd-tokens.css` / `wd-dark.css` (pre-commit only) |
-| `pnpm check:vendor` | `packages/ui` generated primitives match `vendor.json` (never hand-edit) |
+| `pnpm check:vendor` | `packages/ui` generated primitives match `vendor.json` (never hand-edit), and the shadcn CLI version recorded there equals the one `scripts/ui-vendor.mjs` pins |
+| `pnpm check:action-pins` | Every third-party action in `.github/workflows/*.{yml,yaml}` is pinned to a 40-char commit SHA with a version comment (see [Pinning](#pinning-and-ci-permissions)) |
 | `pnpm --filter @watchdog/web ds:check` | Web design-system bans (inventory + reasons: [`ui/rules.md`](../reference/web/ui/rules.md)) |
 | `pnpm test` / `pnpm test:e2e:smoke` | Tests (see [`testing/index.md`](testing/index.md)) |
 
@@ -64,6 +65,13 @@ Local, per-clone skipping goes through `lefthook-local.yml`; `--no-verify` is no
 ## Gate tests
 
 Vitest project `gate` (`pnpm test:gate`, also in `pnpm test`): `scripts/__tests__/*.gate.test.ts`. Each test builds a temporary git repo, copies the gate script in (`scripts/__tests__/helpers/gate-repo.ts`), runs `node scripts/<gate>.mjs` as lefthook or CI would, and asserts on the exit code and key output phrases. Tests never import gate internals. Every gate needs a must-fail and a must-pass fixture; changing a gate script means changing its test.
+
+## Pinning and CI permissions
+
+- **Actions:** `uses: owner/repo@<40-char sha> # vX.Y.Z`. Tags move; SHAs do not. Resolve with `gh api repos/<owner>/<repo>/git/ref/tags/<tag>` (an annotated tag, `object.type` of `tag`, needs one more hop to the commit). Local `./` and `docker://` references are exempt. Dependabot's `github-actions` entry bumps the SHA and the comment together. `pnpm check:action-pins` fails on tags, branches, short SHAs, or a missing version comment.
+- **shadcn CLI:** `scripts/ui-vendor.mjs` runs `shadcn@<exact version>` (never `latest`) and records it as `shadcn` in `packages/ui/vendor.json`; `pnpm check:vendor` fails if the two differ. To bump: edit the constant, run `pnpm ui:sync`, review the `packages/ui` diff.
+- **desloppify:** installed as `desloppify[full]==<version>` in the Advisory job (also named in `scripts/desloppify-bootstrap.sh`'s install hint). Bump both together.
+- **Permissions:** the workflow default is `contents: read`. A job that needs more declares it itself: Unit (`id-token: write` for Codecov OIDC, `pull-requests: write`), File detection (`pull-requests: read` for paths-filter), Advisory (`pull-requests: write`, `issues: write` for React Doctor comments); Check has none. Add a job-level grant, never a workflow-level one.
 
 ## Regen (commit artifacts)
 

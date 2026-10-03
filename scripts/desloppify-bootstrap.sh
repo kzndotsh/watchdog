@@ -3,7 +3,7 @@
 set -euo pipefail
 
 if ! command -v desloppify >/dev/null 2>&1; then
-  echo "desloppify not found — install with: uv pip install 'desloppify[full]'" >&2
+  echo "desloppify not found — install with: uv pip install 'desloppify[full]==1.0' (keep in sync with .github/workflows/ci.yml)" >&2
   exit 1
 fi
 
