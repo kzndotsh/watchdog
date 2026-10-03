@@ -15,6 +15,8 @@
     "doctor:react": "react-doctor apps/web --verbose -y --blocking none",
     "doctor:react:diff": "react-doctor apps/web --verbose --scope changed --base main -y --blocking none",
     "typecheck": "pnpm -r typecheck",
+    "typecheck:tests": "node ./scripts/typecheck-tests.mjs",
+    "check:test-coverage-guard": "node ./scripts/check-test-coverage-guard.mjs",
     "test": "pnpm test:unit && pnpm test:property && pnpm test:gate",
     "test:gate": "vitest run --project gate",
     "test:unit": "vitest run --project unit --project web-unit",
