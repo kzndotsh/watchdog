@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
+vi.mock("@/auth/server", () => ({
+  auth: {},
+}));
+
 const useParamsMock = vi.hoisted(() => vi.fn(() => ({ caseSlug: "missing" })));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -37,8 +41,11 @@ vi.mock("@/domains/cases/components/case-overview", () => ({
   ),
 }));
 
+const healActiveCaseFn = vi.hoisted(() =>
+  vi.fn(async (_input?: unknown) => ({ changed: false }))
+);
 vi.mock("@/domains/cases/cases.functions", () => ({
-  setActiveCaseIdFn: vi.fn(),
+  healActiveCaseFn,
 }));
 
 vi.mock("@/domains/cases/lib/prefetch-case-overview", () => ({
@@ -132,10 +139,7 @@ describe("case slug route", () => {
       description: null,
       allowThirdPartyEgress: false,
     };
-    const query = vi
-      .fn()
-      .mockResolvedValueOnce(caseRow)
-      .mockResolvedValueOnce({ active: caseRow, cases: [caseRow] });
+    const query = vi.fn().mockResolvedValueOnce(caseRow);
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
@@ -145,6 +149,7 @@ describe("case slug route", () => {
           queryClient: {
             query,
             invalidateQueries: vi.fn(),
+            refetchQueries: vi.fn(),
             setQueryData: vi.fn(),
           },
         },
@@ -157,5 +162,66 @@ describe("case slug route", () => {
         replace: true,
       })
     );
+  });
+
+  describe("loader healing", () => {
+    const caseRow = {
+      id: CASE_ID,
+      slug: "alpha",
+      name: "Alpha",
+      description: null,
+      allowThirdPartyEgress: false,
+    };
+
+    function runLoader(extra: Record<string, unknown> = {}) {
+      const query = vi.fn().mockResolvedValueOnce(caseRow);
+      const queryClient = {
+        query,
+        invalidateQueries: vi.fn().mockResolvedValue(undefined),
+        refetchQueries: vi.fn().mockResolvedValue(undefined),
+        setQueryData: vi.fn(),
+      };
+      const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+      return {
+        queryClient,
+        result: loader({
+          context: { queryClient },
+          params: { caseSlug: "alpha" },
+          deps: {},
+          preload: false,
+          ...extra,
+        } as never),
+      };
+    }
+
+    it("asks the server to heal the Active Case to the route's Case", async () => {
+      healActiveCaseFn.mockResolvedValueOnce({ changed: true });
+      const { result, queryClient } = runLoader();
+
+      await expect(result).resolves.toEqual(caseRow);
+
+      expect(healActiveCaseFn).toHaveBeenCalledWith({
+        data: { caseId: CASE_ID },
+      });
+      expect(queryClient.invalidateQueries).toHaveBeenCalled();
+    });
+
+    it("leaves the caches alone when the route's Case was already Active", async () => {
+      healActiveCaseFn.mockResolvedValueOnce({ changed: false });
+      const { result, queryClient } = runLoader();
+
+      await result;
+
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it("does not heal on an intent preload", async () => {
+      healActiveCaseFn.mockClear();
+      const { result } = runLoader({ preload: true });
+
+      await expect(result).resolves.toEqual(caseRow);
+
+      expect(healActiveCaseFn).not.toHaveBeenCalled();
+    });
   });
 });

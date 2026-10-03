@@ -65,6 +65,22 @@ export const setActiveCaseIdFn = createServerFn({ method: "POST" })
     return data.caseId;
   });
 
+/**
+ * The Case route's heal: the Active Case cookie follows `/cases/$slug`. Compare-and-set
+ * on the server so the loader needs no client-side read of the cookie or the URL.
+ */
+export const healActiveCaseFn = createServerFn({ method: "POST" })
+  .validator(getCaseByIdInputSchema)
+  .handler(async ({ data, context }): Promise<{ changed: boolean }> => {
+    if (readActiveCaseId() === data.caseId) return { changed: false };
+    const row = await orpcNullIfNotFound(
+      orpcFromContext(context).cases.get({ caseId: data.caseId })
+    );
+    if (!row) throw new Error("Case not found");
+    writeActiveCaseId(data.caseId);
+    return { changed: true };
+  });
+
 export const createCaseFn = createServerFn({ method: "POST" })
   .validator(createCaseInputSchema)
   .handler(async ({ data, context }): Promise<CaseRecord> => {
