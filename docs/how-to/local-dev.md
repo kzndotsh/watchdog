@@ -25,7 +25,7 @@ Everything binds to loopback.
 
 ## Read-only database role
 
-`watchdog_readonly` is a **local-only** login role for tools that inspect the dev database (the Postgres MCP server below). It is not the app role and never exists in a deployment: real deployments never run `docker/postgres/init.sql`, and `scripts/ensure-readonly-role.sh` is a local-dev script. Never point it, or `WATCHDOG_MCP_DATABASE_URL`, at a real deployment or investigation data.
+`watchdog_readonly` is a **local-only** login role for tools that inspect the dev database (the Postgres MCP server below). It is not the app role and never exists in a deployment: real deployments never run `docker/postgres/init.sql`, and `scripts/ensure-readonly-role.sh` is a local-dev script that exits with an error when `DATABASE_URL_MIGRATE` points at any host other than `localhost`, `127.0.0.1` or `::1`. Never point it, or `WATCHDOG_MCP_DATABASE_URL`, at a real deployment or investigation data.
 
 |  |  |
 | --- | --- |

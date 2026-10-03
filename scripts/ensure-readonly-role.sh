@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Create + grant the LOCAL-ONLY read-only role `watchdog_readonly` (idempotent).
 #
-# Used by the dev MCP Postgres server (.mcp.json). Never run this against a
-# real deployment: the password below is a fixed local-dev value, like
-# `watchdog_app`'s in docker/postgres/init.sql.
+# Used by the dev MCP Postgres server (.mcp.json). The password below is a fixed
+# local-dev value, like `watchdog_app`'s in docker/postgres/init.sql, so the script
+# refuses any DATABASE_URL_MIGRATE host that is not loopback (localhost, 127.0.0.1, ::1).
 #
 # Usage: scripts/ensure-readonly-role.sh [database ...]   (default: watchdog)
 # Connects with DATABASE_URL_MIGRATE (a superuser/owner URL; any db name in it
@@ -31,6 +31,26 @@ fi
 
 MIGRATE_URL="${DATABASE_URL_MIGRATE:-postgresql://postgres:postgres@127.0.0.1:5432/watchdog}"
 BASE="${MIGRATE_URL%/*}"
+
+# LOCAL-ONLY guard: the role has a fixed, publicly known password, so refuse any
+# host that is not loopback. The host is parsed after dropping the scheme, the
+# path/query and the userinfo, so `postgresql://127.0.0.1@evil.example/db` is
+# judged by `evil.example`.
+host_part="${MIGRATE_URL#*://}"
+host_part="${host_part%%/*}"
+host_part="${host_part%%\?*}"
+host_part="${host_part##*@}"
+case "$host_part" in
+  \[*\]*) host="${host_part%%]*}]" ;;
+  *) host="${host_part%%:*}" ;;
+esac
+case "$host" in
+  localhost | 127.0.0.1 | "[::1]") ;;
+  *)
+    echo "ensure-readonly-role.sh is LOCAL-ONLY (fixed password): refusing host '${host}'. Use a loopback DATABASE_URL_MIGRATE." >&2
+    exit 1
+    ;;
+esac
 
 # Credential / bearer-secret tables the read-only role must not read.
 EXCLUDED_TABLES=(
