@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 
-import { waitForHydrated } from "../support/hydration";
+import { waitForPageHydrated } from "../support/hydration";
 
 export abstract class BasePage {
   protected readonly page: Page;
@@ -11,6 +11,6 @@ export abstract class BasePage {
 
   async goto(path: string): Promise<void> {
     await this.page.goto(path);
-    await waitForHydrated(this.page);
+    await waitForPageHydrated(this.page);
   }
 }

@@ -1,5 +1,5 @@
 import { expect, test } from "../../fixtures/test";
-import { waitForHydrated } from "../../support/hydration";
+import { waitForPageHydrated } from "../../support/hydration";
 
 test.describe("Auth users (instance admin)", () => {
   test(
@@ -10,7 +10,7 @@ test.describe("Auth users (instance admin)", () => {
       await authPage.signUp(stamp);
 
       await page.goto("/settings?tab=users");
-      await waitForHydrated(page);
+      await waitForPageHydrated(page);
       // The tab title and subtitle come from the settings shell; the panel is the account list.
       await expect(page.getByRole("heading", { name: "Users" })).toBeVisible({
         timeout: 30_000,

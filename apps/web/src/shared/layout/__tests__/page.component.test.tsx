@@ -26,4 +26,17 @@ describe("Page layout", () => {
     );
     expect(container.firstChild).toHaveClass("overflow-hidden");
   });
+
+  it("marks the page hydrated once committed and clears the mark on unmount", () => {
+    const root = document.documentElement;
+    expect(root.dataset.pageHydrated).toBeUndefined();
+    const { unmount } = render(
+      <Page>
+        <p>Body copy</p>
+      </Page>
+    );
+    expect(root.dataset.pageHydrated).toBe("true");
+    unmount();
+    expect(root.dataset.pageHydrated).toBeUndefined();
+  });
 });

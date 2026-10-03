@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
@@ -12,6 +12,15 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 import { evidenceListQuery } from "@/domains/intake/queries";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
+
+// Warm helpers fetch in the browser only; this node project stands in for it.
+beforeEach(() => {
+  vi.stubGlobal("window", {});
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("warmCaseOverviewQueries", () => {
   it("warms the overview dashboard queries for a case", async () => {

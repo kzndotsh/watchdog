@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
@@ -11,6 +11,15 @@ import {
 } from "@/domains/cases/lib/prefetch-graph";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import { entitiesListQuery } from "@/domains/entities/queries";
+
+// Warm helpers fetch in the browser only; this node project stands in for it.
+beforeEach(() => {
+  vi.stubGlobal("window", {});
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("ensureGraphQueries", () => {
   it("loads entities and edges for the active case", async () => {

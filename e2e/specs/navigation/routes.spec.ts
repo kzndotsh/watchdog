@@ -1,5 +1,5 @@
 import { expect, test } from "../../fixtures/test";
-import { waitForHydrated } from "../../support/hydration";
+import { waitForPageHydrated } from "../../support/hydration";
 import { primaryRoutes } from "../../support/navigation-routes";
 
 test.describe("Navigation", () => {
@@ -9,7 +9,7 @@ test.describe("Navigation", () => {
       { tag: "@smoke" },
       async ({ authenticatedCase: _authenticatedCase, page }) => {
         await page.goto(route.path);
-        await waitForHydrated(page);
+        await waitForPageHydrated(page);
         await route.ready(page);
       }
     );
@@ -26,7 +26,7 @@ test.describe("Navigation", () => {
       });
 
       await page.goto(`/entities/${entity.slug}`);
-      await waitForHydrated(page);
+      await waitForPageHydrated(page);
       await expect(
         page.getByRole("textbox", { name: "Entity name" })
       ).toHaveValue(entity.name, { timeout: 30_000 });

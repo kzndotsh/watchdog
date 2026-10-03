@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import { cn } from "@/lib/utils";
 import { AppBreadcrumbs } from "@/shared/layout/app-breadcrumbs";
@@ -21,6 +21,16 @@ export function Page({
   className?: string;
   density?: PageDensity;
 }) {
+  // Route content is interactive once the page frame has committed: the root
+  // `html[data-hydrated]` only says the providers mounted, before the lazy route.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.pageHydrated = "true";
+    return () => {
+      delete root.dataset.pageHydrated;
+    };
+  }, []);
+
   return (
     <div
       className={cn(

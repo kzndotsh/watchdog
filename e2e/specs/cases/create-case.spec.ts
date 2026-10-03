@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures/test";
+import { waitForPageHydrated } from "../../support/hydration";
 
 test.describe("Cases", () => {
   test(
@@ -6,6 +7,7 @@ test.describe("Cases", () => {
     { tag: "@smoke" },
     async ({ authenticatedCase, casesPage, page }) => {
       await page.goto("/cases");
+      await waitForPageHydrated(page);
       await expect(
         page.getByText(authenticatedCase.caseName).first()
       ).toBeVisible({ timeout: 15_000 });

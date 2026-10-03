@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   warmEnsureQueryData,
@@ -7,6 +7,29 @@ import {
 } from "@/shared/lib/warm-query";
 
 describe("warm-query", () => {
+  // This project runs in node: a `window` marks the browser runtime.
+  beforeEach(() => {
+    vi.stubGlobal("window", {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("does not fetch on the server, so SSR and the first client render agree", () => {
+    const client = { query: vi.fn() } as unknown as QueryClient;
+    vi.stubGlobal("window", undefined);
+
+    warmEnsureQueryData(client, { queryKey: ["test"] });
+    warmEnsureQueryData(client, {
+      queryKey: ["test"],
+      revalidateIfStale: true,
+    });
+    warmPrefetchQuery(client, { queryKey: ["test"] });
+
+    expect(client.query).not.toHaveBeenCalled();
+  });
+
   it("swallows CancelledError from ensureAppQueryData", async () => {
     const client = {
       query: vi
