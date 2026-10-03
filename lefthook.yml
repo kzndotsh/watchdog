@@ -91,6 +91,11 @@ pre-commit:
         - "scripts/check-size-budget.mjs"
         - "scripts/size-budget-baseline.json"
       run: pnpm check:size
+    action-pins:
+      glob:
+        - ".github/workflows/**"
+        - "scripts/check-action-pins.mjs"
+      run: pnpm check:action-pins
     agent-skills:
       glob:
         - "**/.agents/skills/**"

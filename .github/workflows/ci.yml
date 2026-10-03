@@ -12,10 +12,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Read-only by default; a job that needs more declares it under its own `permissions`.
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
 
 env:
   BETTER_AUTH_SECRET: test-secret-must-be-at-least-32-chars
@@ -36,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: read # paths-filter lists PR files through the API
     outputs:
       typescript: ${{ steps.filter.outputs.typescript }}
       config: ${{ steps.filter.outputs.config }}
@@ -49,11 +49,11 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       code: ${{ steps.filter.outputs.code }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v4
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
           filters: |
@@ -126,15 +126,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           version: 11.9.0
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: pnpm
@@ -173,6 +173,10 @@ jobs:
       - name: Agent Skills validation
         if: github.event_name != 'pull_request' || needs.changes.outputs.agents == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm validate:agents
+
+      - name: Action SHA pins
+        if: github.event_name != 'pull_request' || needs.changes.outputs.config == 'true'
+        run: pnpm check:action-pins
 
       - name: Typecheck
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
@@ -223,15 +227,15 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           version: 11.9.0
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: pnpm
@@ -246,7 +250,7 @@ jobs:
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}
         continue-on-error: true
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6.0.2
         with:
           files: coverage/lcov.info
           name: watchdog
@@ -258,7 +262,7 @@ jobs:
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         continue-on-error: true
-        uses: codecov/test-results-action@v1
+        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
         with:
           file: junit.xml
           fail_ci_if_error: false
@@ -290,13 +294,13 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U postgres -d watchdog" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           version: 11.9.0
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: pnpm
@@ -346,7 +350,7 @@ jobs:
       - name: Cache Playwright browsers
         if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
         id: playwright-cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
@@ -373,7 +377,7 @@ jobs:
 
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report
           path: |
@@ -394,19 +398,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write # React Doctor PR summary + inline review comments
+      issues: write # React Doctor sticky comment goes through the issues API
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: React Doctor (advisory)
         if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true'
-        uses: millionco/react-doctor@v2
+        uses: millionco/react-doctor@013f7373f91a3b9e68bd1dc7d4d354f4b041b117 # v2.2.9
         with:
           blocking: none
           directory: apps/web
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           python-version: "3.11"
@@ -414,14 +422,14 @@ jobs:
       - name: Desloppify scan (advisory, main only)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          pip install --quiet --upgrade "desloppify[full]"
+          pip install --quiet "desloppify[full]==1.0"
           bash scripts/desloppify-bootstrap.sh
           desloppify --lang typescript scan --path . --profile ci --no-badge
           desloppify status --json | tee desloppify-status.json
 
       - name: Upload Desloppify status
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: desloppify-status
           path: desloppify-status.json
@@ -433,6 +441,7 @@ jobs:
     needs: [changes, gates, unit, integration]
     if: always() && needs.changes.result == 'success'
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Aggregate parallel jobs
         run: |
