@@ -21,3 +21,4 @@ skills/
 node_modules/
 pnpm-lock.yaml
 dist/
+GLOSSARY.md

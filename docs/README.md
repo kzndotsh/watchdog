@@ -18,7 +18,8 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 ## Tutorials and explanation
 
 - [`tutorials/first-investigation.md`](tutorials/first-investigation.md): first Case, dump → Process → Triage Accept → Dossier.
-- [`explanation/product.md`](explanation/product.md): nouns, intent, personas, refuse list (wins on product nouns).
+- [`../GLOSSARY.md`](../GLOSSARY.md): product nouns, custody tiers and retired vocabulary (wins on product nouns; the agents gate reads its banned terms).
+- [`explanation/product.md`](explanation/product.md): intent, doctrine, personas, refuse list.
 - [`explanation/ux.md`](explanation/ux.md): how investigators experience the product.
 
 ## Reference: contracts

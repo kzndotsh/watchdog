@@ -1,6 +1,7 @@
 # PRODUCT: intent and doctrine
 
 **What this is:** why Watchdog exists, who it serves, what we refuse, and how we decide. Shared by web, CLI, Caps, and agents.  
+**Terms:** every product noun (Case, Evidence, Proposal, Triage, Accept, custody tiers, retired v2 words) is defined once in [`GLOSSARY.md`](../../GLOSSARY.md); this page links to it and does not redefine them.  
 **What this is not:** phase checkboxes ([`ROADMAP.md`](../../ROADMAP.md)) or UI conventions ([`ux.md`](ux.md)).
 
 ---
@@ -11,11 +12,11 @@ Small-team OSINT: keep one **Case Graph** of Claims + Evidence you can defend, w
 
 **Collect → Decide (Triage) → Graph under human custody → Export Case package.**
 
-- Caps never write Graph (Proposal → Triage Accept). Agents default to Proposal; escape hatch is explicit `graph write` @ `unverified` with `graph_writes` audit. Humans may also write via Dossier.
+- Caps never write Graph ([Proposal](../../GLOSSARY.md#collection-and-decision) → Triage [Accept](../../GLOSSARY.md#collection-and-decision)). Agents default to Proposal; the escape hatch is an explicit [graph write](../../GLOSSARY.md#collection-and-decision) at `unverified` with a `graph_writes` audit. Humans may also write via the Dossier.
 - Postgres is SoT; markdown Export is a projection.
 - If you need Scratch / Candidate / Mutation R-tiers to explain Day-0, the design failed.
 
-**Organization** maps to a Better Auth organization: a workspace that owns Cases, members, and API keys. A user can belong to several and switches in the sidebar; with open signup anyone can create one in onboarding, on invitation-only installs only the instance admin can. API and CLI calls resolve the active org from the session or from the org the API key was created in. Isolation rules (foreign-org Case is `not_found`, missing org context is 403): [`contracts/README.md`](../reference/contracts/README.md).
+Every Case belongs to an [Organization](../../GLOSSARY.md#workspace); a session works in one [Active Case](../../GLOSSARY.md#workspace) at a time. Isolation rules: [`contracts/README.md`](../reference/contracts/README.md).
 
 ---
 

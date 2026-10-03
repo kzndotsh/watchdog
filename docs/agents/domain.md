@@ -1,6 +1,6 @@
 # Domain Docs
 
-> **Layout: single-context.** Root `GLOSSARY.md` + `docs/adr/` (both created lazily). **Until `GLOSSARY.md` exists, [`docs/explanation/product.md`](../explanation/product.md) is the authoritative glossary for product nouns** (see root `AGENTS.md`).
+> **Layout: single-context.** Root [`GLOSSARY.md`](../../GLOSSARY.md) is the authority for product nouns; `docs/adr/` is created lazily when the first ADR is recorded (see root `AGENTS.md`).
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
