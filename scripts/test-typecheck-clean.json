@@ -4,6 +4,7 @@
   "packages/ai",
   "packages/api",
   "packages/client",
+  "packages/core",
   "packages/db",
   "packages/schemas",
   "packages/tools"

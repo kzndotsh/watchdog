@@ -1,6 +1,8 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
+import { requireCapability } from "@watchdog/caps";
+import type { JobRow } from "@watchdog/db";
 import { testId } from "@watchdog/test-kit";
 
 const { loadCapReportEffect } = vi.hoisted(() => ({
@@ -19,6 +21,68 @@ import type { CollectRuntime } from "../collect";
 import { createJobLog } from "../helpers";
 import { interpretStageEffect, logInterpretFailure } from "../interpret";
 import type { PreflightState } from "../preflight";
+
+function makeJobRow(): JobRow {
+  const now = new Date("2026-01-03T00:00:00.000Z");
+  return {
+    id: testId(1),
+    caseId: testId(2),
+    capabilityId: "network.dns.lookup",
+    input: {},
+    output: null,
+    status: "running",
+    error: null,
+    interpretError: null,
+    proposalId: null,
+    evidenceIds: null,
+    resultSummary: null,
+    fromCache: false,
+    suppressedCount: 0,
+    actorId: "actor",
+    actorLabel: null,
+    logs: [],
+    playbookRunId: null,
+    playbookStep: null,
+    playbookFanIndex: 0,
+    handoff: null,
+    createdAt: now,
+    updatedAt: now,
+    startedAt: now,
+    finishedAt: null,
+  };
+}
+
+function makeState(
+  interpret: PreflightState["cap"]["interpret"]
+): PreflightState {
+  return {
+    jobId: testId(1),
+    job: makeJobRow(),
+    cap: {
+      ...requireCapability("network.dns.lookup"),
+      interpret,
+      handoff: undefined,
+    },
+    policy: {},
+    input: {},
+    allowThirdPartyEgress: false,
+    reclaimArtifacts: null,
+    reclaimEvidenceIds: [],
+  };
+}
+
+function makeRuntime(overrides: Partial<CollectRuntime> = {}): CollectRuntime {
+  return {
+    scratchDir: "/tmp",
+    signal: new AbortController().signal,
+    jobLog: createJobLog(),
+    evidenceSnapshot: undefined,
+    linkedSource: undefined,
+    cacheTtlMs: null,
+    inputHash: null,
+    ...overrides,
+  };
+}
 
 describe("interpret stage", () => {
   it("logInterpretFailure appends log line and fallback summary", () => {
@@ -53,11 +117,8 @@ describe("interpret stage", () => {
 
   it("captures interpret errors when report.json is missing", async () => {
     loadCapReportEffect.mockReturnValueOnce(Effect.succeed(null));
-    const runtime = { evidenceSnapshot: undefined } as CollectRuntime;
-    const state = {
-      cap: { interpret: vi.fn() },
-      input: {},
-    } as PreflightState;
+    const runtime = makeRuntime();
+    const state = makeState(vi.fn());
 
     const result = await Effect.runPromise(
       interpretStageEffect(state, [], runtime, {
@@ -74,27 +135,24 @@ describe("interpret stage", () => {
       Effect.succeed({ report: { ok: true } })
     );
     const entityId = testId(20);
-    const runtime = { evidenceSnapshot: undefined } as CollectRuntime;
-    const state = {
-      cap: {
-        interpret: vi.fn().mockReturnValue({
-          summary: "  dns ok  ",
-          patch: [
-            {
-              op: "create",
-              resource: "claim",
-              id: testId(21),
-              data: {
-                entityId,
-                text: "observed",
-                class: "observation",
-              },
+    const runtime = makeRuntime();
+    const state = makeState(
+      vi.fn().mockReturnValue({
+        summary: "  dns ok  ",
+        patch: [
+          {
+            op: "create",
+            resource: "claim",
+            id: testId(21),
+            data: {
+              entityId,
+              text: "observed",
+              class: "observation",
             },
-          ],
-        }),
-      },
-      input: {},
-    } as PreflightState;
+          },
+        ],
+      })
+    );
 
     const result = await Effect.runPromise(
       interpretStageEffect(state, [], runtime, {
@@ -116,13 +174,17 @@ describe("interpret stage", () => {
     loadCapReportEffect.mockReturnValueOnce(
       Effect.succeed({ report: { ok: true } })
     );
-    const runtime = {
-      evidenceSnapshot: { text: "   \n  ", entityId: null },
-    } as CollectRuntime;
-    const state = {
-      cap: { interpret },
-      input: {},
-    } as PreflightState;
+    const runtime = makeRuntime({
+      evidenceSnapshot: {
+        evidenceId: testId(30),
+        caseId: testId(2),
+        kind: "other",
+        text: "   \n  ",
+        packedAt: "2026-01-03T00:00:00.000Z",
+        packerVersion: 1,
+      },
+    });
+    const state = makeState(interpret);
 
     await Effect.runPromise(
       interpretStageEffect(state, [], runtime, {

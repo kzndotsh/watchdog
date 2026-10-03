@@ -41,6 +41,7 @@ describe("proposeStage", () => {
       {
         op: "create",
         resource: "claim",
+        id: testId(50),
         data: { text: "observation", class: "observation" },
       },
     ];
@@ -74,6 +75,7 @@ describe("proposeStage", () => {
       {
         op: "create",
         resource: "claim",
+        id: testId(50),
         data: { text: "observation", class: "observation" },
       },
     ];
@@ -102,6 +104,7 @@ describe("proposeStage", () => {
       {
         op: "create",
         resource: "claim",
+        id: testId(50),
         data: { text: "observation", class: "observation" },
       },
     ];
@@ -131,6 +134,7 @@ describe("proposeStage", () => {
       {
         op: "create",
         resource: "claim",
+        id: testId(50),
         data: { text: "observation", class: "observation" },
       },
     ];
@@ -160,6 +164,7 @@ describe("proposeStage", () => {
       {
         op: "create",
         resource: "claim",
+        id: testId(50),
         data: { text: "observation", class: "observation" },
       },
     ];
@@ -183,6 +188,7 @@ describe("proposeStage", () => {
       {
         op: "create",
         resource: "claim",
+        id: testId(50),
         data: { text: "observation", class: "observation" },
       },
     ];

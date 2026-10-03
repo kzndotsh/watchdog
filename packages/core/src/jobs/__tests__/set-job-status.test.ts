@@ -49,21 +49,21 @@ describe("setJobStatus", () => {
     updateInCase.mockResolvedValueOnce({
       id: jobId,
       caseId,
-      status: "completed",
+      status: "succeeded",
     });
     const result = await Effect.runPromise(
       setJobStatusEffect(
         jobId,
-        { status: "completed" },
+        { status: "succeeded" },
         { notify: true, caseId }
       )
     );
-    expect(result?.status).toBe("completed");
+    expect(result?.status).toBe("succeeded");
     expect(updateInCase).toHaveBeenCalledWith(
       {},
       caseId,
       jobId,
-      { status: "completed" },
+      { status: "succeeded" },
       { unlessCancelled: undefined, onlyStatuses: undefined }
     );
     expect(update).not.toHaveBeenCalled();
@@ -72,7 +72,7 @@ describe("setJobStatus", () => {
         type: "job_update",
         caseId,
         jobId,
-        status: "completed",
+        status: "succeeded",
       });
     });
   });

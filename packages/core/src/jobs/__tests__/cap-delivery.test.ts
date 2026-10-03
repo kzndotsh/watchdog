@@ -11,7 +11,7 @@ const jobId = "00000000-0000-4000-8000-000000000001";
 
 const { get, failJobEffect } = vi.hoisted(() => ({
   get: vi.fn(),
-  failJobEffect: vi.fn(() => Effect.void),
+  failJobEffect: vi.fn((..._args: unknown[]) => Effect.void),
 }));
 
 vi.mock("@watchdog/db", () => ({

@@ -19,7 +19,7 @@ describe("mapPostgresCatch", () => {
       conflictReason: 'Slug "alpha" already exists',
     });
     expect(mapped).toBeInstanceOf(ConflictError);
-    expect(mapped.reason).toBe('Slug "alpha" already exists');
+    expect(mapped).toMatchObject({ reason: 'Slug "alpha" already exists' });
   });
 
   it("maps DomainError via mapDomainCatch", () => {
