@@ -1,11 +1,20 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
 }));
 
 import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
+
+// Warm helpers fetch in the browser only; this node project stands in for it.
+beforeEach(() => {
+  vi.stubGlobal("window", {});
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("warmDossierQueries", () => {
   it("prefetches shared dossier lists and entities for connections tab", () => {

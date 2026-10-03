@@ -23,6 +23,17 @@ type AppWarmEnsureOptions<
   revalidateIfStale?: boolean;
 };
 
+/**
+ * Loader warms are a client head start. On the server they would race the
+ * render: a list that settles after the HTML is written is streamed to the
+ * client, whose first hydration render then sees data where the server HTML
+ * has a skeleton (a hydration mismatch that regenerates the tree and drops
+ * early clicks). The server renders pending; the client fetches after mount.
+ */
+function isServerRuntime(): boolean {
+  return typeof window === "undefined";
+}
+
 function isCancelledError(error: unknown): boolean {
   return (
     error instanceof Error &&
@@ -60,6 +71,7 @@ async function runWarmEnsureQueryData<
     TPageParam
   >
 ): Promise<void> {
+  if (isServerRuntime()) return;
   const { revalidateIfStale, ...queryOptions } = options;
 
   if (!revalidateIfStale) {
@@ -150,5 +162,6 @@ export function warmPrefetchQuery<
     TPageParam
   >
 ): void {
+  if (isServerRuntime()) return;
   void swallowCancelled(queryClient.query(options));
 }

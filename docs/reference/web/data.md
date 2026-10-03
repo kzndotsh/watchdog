@@ -34,7 +34,7 @@ Mutations and SSE call the named contracts in `shared/lib/query-invalidation.ts`
 
 ### Loaders, warm helpers, pending
 
-Loaders `ensureQueryData` identity only and call a `warm*Queries` helper with `void prefetchQuery` (the per-layout table is in [`domains.md`](domains.md#page-ownership); helpers live in each domain's `lib/prefetch-*.ts`). Collect is the exception: its loader awaits `ensureCollectQueueQueries` (plus the job detail when `?id=` is a job).
+Loaders `ensureQueryData` identity only and call a `warm*Queries` helper with `void prefetchQuery` (the per-layout table is in [`domains.md`](domains.md#page-ownership); helpers live in each domain's `lib/prefetch-*.ts`). Collect is the exception: its loader awaits `ensureCollectQueueQueries` (plus the job detail when `?id=` is a job). Warm helpers run in the browser only (server no-op), so SSR HTML and the first client render agree ([`ui/loading.md`](ui/loading.md#doctrine)).
 
 **Warm-helper parity:** every `warm*Queries` helper should prefetch the queries the page reads on first paint; otherwise that region shows its skeleton on a cache miss. When touching a page, compare its query keys with its helper. The dossier shell hook (`use-dossier-shell-queries`) is the implicit warm layer for tab counts.
 

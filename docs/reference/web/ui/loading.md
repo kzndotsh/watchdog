@@ -4,7 +4,7 @@ How a page loads without flashing, blanking, or lying. Which route uses which lo
 
 ## Doctrine
 
-Thin loader, warm helper, in-page pending region. A loader awaits identity only; lists are warmed with `void queryClient.prefetchQuery(...)` in a `warm*Queries` helper; the data slot shows its own pending state. `useQuery` returns pending on the server and fetches after hydration, so a thin loader trades a fully populated first paint for responsive client navigation. That trade is deliberate.
+Thin loader, warm helper, in-page pending region. A loader awaits identity only; lists are warmed with `void queryClient.prefetchQuery(...)` in a `warm*Queries` helper; the data slot shows its own pending state. `useQuery` returns pending on the server and fetches after hydration, so a thin loader trades a fully populated first paint for responsive client navigation. That trade is deliberate. `warmEnsureQueryData` / `warmPrefetchQuery` therefore do nothing on the server: a warm that settled after the HTML was written would be streamed to the client, whose first render would see rows where the server HTML has a skeleton (a hydration mismatch). Only awaited loader queries (`ensureAppQueryData`, Collect's queue) render data on the server.
 
 Router: `defaultPendingMs` 400, `defaultPendingMinMs` 500, `defaultPendingComponent` (minimal shell floor), `defaultErrorComponent: RouteError` (retry via `router.invalidate()`).
 
@@ -22,7 +22,7 @@ Skeletons are the fallback of last resort; reach for less first.
 6. **No confident wrong values:** a `0` meaning "unknown" is worse than a bone; no fabricated placeholder objects in live chrome.
 7. **One loading event, three channels:** `LoadingRegion` puts `aria-busy` on the region, `aria-hidden` on the skeleton subtree, and a sibling sr-only `role="status"` label outside the hidden subtree.
 8. **Reduced motion stops animation:** in-place pulse only (`animate-pulse` on `[data-slot=skeleton]`); no travelling shimmer.
-9. **Hydration-safe skeletons:** no `window`, `localStorage`, `Date.now()`, or random values in skeleton output.
+9. **Hydration-safe skeletons:** no `window`, `localStorage`, `Date.now()`, or random values in skeleton output. The first client render must equal the server HTML: any query read on first paint is either awaited by the loader or warmed (a no-op on the server).
 10. **Fetch only what is visible:** no query in collapsed panels or inside `.map()`; gate artifact content on `open`.
 11. **One SSE connection per case:** `useLiveEvents` ref-counts a shared `EventSource`; nested workspaces pass `live: false`.
 12. **Skeleton is last resort:** if a lesser but true rendering exists, show it and upgrade in place. `code-block.tsx` renders raw code in the same `<pre>` while shiki tokenizes.
