@@ -111,6 +111,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Never set `updatedAt` by hand; migrations keep `drizzle/meta` in sync with `_journal.json` | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
 | Case lookup defaults to `getById(exec, id, organizationId)`; `getByIdUnchecked` only for worker and export | db, core | `packages/db/AGENTS.md` Gotchas | guidance | guidance |
 | Normalize display fields (trim, slugify, `InvalidError`) in services before repo writes | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
+| The local-only `watchdog_readonly` role has SELECT on `public` and `auth` and nothing else; credential tables (`auth.account`, `auth.apikey`, `auth.session`, `auth.verification`, `auth.invitation`, `public.credentials`) are revoked | db | `docs/how-to/local-dev.md` Read-only database role | `packages/db/src/__tests__/readonly-role.int.test.ts` | enforced |
 
 ## Caps
 
@@ -168,6 +169,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | --- | --- | --- | --- | --- |
 | Docs links and anchors resolve; leaf files stay at most 600 lines | docs | `docs/contributing/ci-gates.md` Gates | `check:docs:strict` | enforced |
 | Every convention row names an enforcer and a valid status (this table) | docs | `docs/reference/platform/conventions.md` | `check:docs:strict` | enforced |
+| Dev MCP config (`.mcp.json`): Postgres connects as the read-only role, MCP packages are pinned to exact versions, no literal credentials | repo | `docs/how-to/local-dev.md` Agent MCP servers | `scripts/__tests__/mcp-config.gate.test.ts` | enforced |
 | Every doc leaf is listed in `docs/README.md` (warning only) | docs | `docs/contributing/ci-gates.md` Gates | `check:docs` | baselined |
 | `AGENTS.md` hygiene: present in every app and package, size budget, Scope + Commands sections, links, `CLAUDE.md` bridge | agents | `docs/contributing/ci-gates.md` Gates | `check:agents:strict` | enforced |
 | Agent skills have valid frontmatter; vendored skills match the lock hash | agents | `docs/contributing/ci-gates.md` Skills gate | `validate:agents` | enforced |
