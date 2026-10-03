@@ -53,6 +53,20 @@ Watchdog runtime conventions (run* edges, JobFibers, Cap `run`, browser policy) 
 
 Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per-package (e.g. [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/)) — readable by Cursor, Claude Code, and Codex. Load explicitly by name (`/audit-contract`, `/check-gates`, `/finalize`, `/create-cap`, `/effect`); do not rely on auto-selection. `.claude/skills` is a symlink to `.agents/skills` so Claude Code registers the root skills; it needs a symlink-capable checkout (on Windows enable Developer Mode and `git config core.symlinks true`, otherwise it checks out as a plain file). `pnpm validate:agents` gates their structure and frontmatter in CI. See [`.cursor/README.md`](.cursor/README.md) for the full catalog and the retirement criterion.
 
+Vendored engineering skills (`to-spec`, `to-tickets`, `triage`, `implement-spec`, `tdd`, …) are pinned in `skills-lock.json` and read the config below.
+
+### Issue tracker
+
+GitHub Issues on `kzndotsh/watchdog` (public, so no investigation content). See [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
+
+### Triage labels
+
+Default five roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See [`docs/agents/triage-labels.md`](docs/agents/triage-labels.md).
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` + `docs/adr/` (`product.md` stays authoritative until `GLOSSARY.md` lands). See [`docs/agents/domain.md`](docs/agents/domain.md).
+
 ## Where to Look
 
 | Task | Primary path |

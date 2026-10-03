@@ -77,6 +77,9 @@ Index: [`how-to/README.md`](how-to/README.md).
 | [`contributing/testing/index.md`](contributing/testing/index.md) | Monorepo test index | Web DS gates |
 | [`contributing/testing/standards.md`](contributing/testing/standards.md) | How to write tests | Command cheat-sheet |
 | [`contributing/testing/web.md`](contributing/testing/web.md) | Web DS gates + smoke | Platform pyramid |
+| [`agents/issue-tracker.md`](agents/issue-tracker.md) | Where agent skills file issues (GitHub) | Triage policy |
+| [`agents/triage-labels.md`](agents/triage-labels.md) | Triage role → label mapping | Issue content |
+| [`agents/domain.md`](agents/domain.md) | How skills read glossary + ADRs | The glossary itself |
 
 ## Reference: web
 
