@@ -43,6 +43,7 @@ export function useCaseList() {
   const filtered = useMemo(() => filterCases(cases, search), [cases, search]);
 
   const actions = useCaseListActions(
+    cases,
     activeId,
     setSubmitError,
     setCreateOpen,

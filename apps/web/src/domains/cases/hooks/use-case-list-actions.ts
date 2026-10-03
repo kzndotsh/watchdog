@@ -1,34 +1,13 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 
-import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
+import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
-import {
-  setActiveCaseIdInputSchema,
-  type CaseRecord,
-} from "@/domains/cases/types";
+import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
-
-function selectActiveCase(caseId: string) {
-  return setActiveCaseIdFn({
-    data: setActiveCaseIdInputSchema.parse({ caseId }),
-  });
-}
-
-async function onCaseSelected(queryClient: ReturnType<typeof useQueryClient>) {
-  await invalidateAfterCaseSwitch(queryClient);
-  notifyCasesChanged();
-}
-
-function onCaseSelectError(
-  setSubmitError: Dispatch<SetStateAction<string | null>>,
-  err: unknown
-): void {
-  setSubmitError(errMessage(err, "Failed to switch case"));
-}
 
 async function navigateToCase(
   navigate: ReturnType<typeof useNavigate>,
@@ -70,13 +49,18 @@ function buildCaseListActionHandlers(
     },
     openCase: async (caseRow: CaseRecord) => {
       setSubmitError(null);
+      if (caseRow.id !== activeId) {
+        // The switch hook already reported its failure; do not navigate past it.
+        const switched = await selectMutation
+          .mutateAsync(caseRow.id)
+          .then(() => true)
+          .catch(() => false);
+        if (!switched) return;
+      }
       try {
-        if (caseRow.id !== activeId) {
-          await selectMutation.mutateAsync(caseRow.id);
-        }
         await navigateToCase(navigate, caseRow);
       } catch (error) {
-        setSubmitError(errMessage(error, "Failed to open case"));
+        setSubmitError(errMessage(error, "Couldn't open Case."));
       }
     },
     openCreate: () => {
@@ -106,6 +90,7 @@ function buildCaseListActionHandlers(
 }
 
 export function useCaseListActions(
+  cases: CaseRecord[],
   activeId: string,
   setSubmitError: Dispatch<SetStateAction<string | null>>,
   setCreateOpen: Dispatch<SetStateAction<boolean>>,
@@ -115,13 +100,7 @@ export function useCaseListActions(
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const selectMutation = useMutation({
-    mutationFn: selectActiveCase,
-    onSuccess: async () => onCaseSelected(queryClient),
-    onError: (err) => {
-      onCaseSelectError(setSubmitError, err);
-    },
-  });
+  const selectMutation = useSelectActiveCase({ cases });
 
   return {
     selecting: selectMutation.isPending,

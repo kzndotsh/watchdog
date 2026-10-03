@@ -22,8 +22,16 @@ type NavigateFn = (opts: {
   replace?: boolean;
 }) => Promise<void> | void;
 
-/** Optimistic Active Case switch shared by sidebar switcher and command palette. */
+/** The one failure copy for switching the Active Case (house style: errMessage adds "Try again." on a 500). */
+export const ACTIVE_CASE_SWITCH_ERROR = "Couldn't switch Case.";
+
+/**
+ * The one way to switch the Active Case: server write, optimistic cache update,
+ * rollback + one error toast on failure, Case invalidation on success. The sidebar
+ * switcher, command palette, Case list and Case overview all call it.
+ */
 export function useSelectActiveCase(input: {
+  /** Cases the target id is resolved against (the optimistic update needs the row). */
   cases: CaseRecord[];
   pathname?: string;
   entityId?: string;
@@ -44,7 +52,7 @@ export function useSelectActiveCase(input: {
       optimisticActiveCaseSwitch(queryClient, input.cases, caseId),
     onError: (err, _caseId, ctx) => {
       rollbackActiveCaseSwitch(queryClient, ctx?.prev);
-      toast.error(errMessage(err, "Couldn't switch case"));
+      toast.error(errMessage(err, ACTIVE_CASE_SWITCH_ERROR));
     },
     onSuccess: async (caseId, _vars, ctx) => {
       const scopedCaseId = parseOptionalTrimmedUuid(caseId);
