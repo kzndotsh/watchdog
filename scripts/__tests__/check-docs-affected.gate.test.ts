@@ -251,4 +251,42 @@ describe("docs-affect gate: CI pull request", () => {
     );
     expect(res.output).not.toContain("check:docs-affected: no changes");
   });
+
+  /** Run the gate as the pull_request workflow does: payload via GITHUB_EVENT_PATH. */
+  function prRun(repo: GateRepo, body: string) {
+    const payload = path.join(repo.dir, ".git", "pr-event.json");
+    writeFileSync(payload, JSON.stringify({ pull_request: { body } }));
+    return repo.run("check-docs-affected.mjs", ["--strict", "--strict-only"], {
+      GITHUB_ACTIONS: "true",
+      GITHUB_BASE_REF: "main",
+      GITHUB_EVENT_NAME: "pull_request",
+      GITHUB_EVENT_PATH: payload,
+    });
+  }
+
+  it("fails a pull request whose range has unpaired code and no marker", () => {
+    const repo = baseRepo();
+    repo.git("checkout", "--quiet", "-b", "feature");
+    repo.write(CODE, "export const v = 2;\n");
+    repo.commitAll("feat: code only");
+    const res = prRun(repo, "");
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("[cli]");
+  });
+
+  it("honours the marker in a commit message inside the pull request range", () => {
+    const repo = baseRepo();
+    repo.git("checkout", "--quiet", "-b", "feature");
+    repo.write(CODE, "export const v = 2;\n");
+    repo.commitAll(`feat: code\n\n${MARKER} — generated output`);
+    expect(prRun(repo, "").code).toBe(0);
+  });
+
+  it("honours the marker in the pull request body", () => {
+    const repo = baseRepo();
+    repo.git("checkout", "--quiet", "-b", "feature");
+    repo.write(CODE, "export const v = 2;\n");
+    repo.commitAll("feat: code only");
+    expect(prRun(repo, `${MARKER} — generated output`).code).toBe(0);
+  });
 });
