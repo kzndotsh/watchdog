@@ -7,6 +7,7 @@ import {
   evidenceRepo,
   type DbExec,
 } from "@watchdog/db";
+import { confirmedEvidenceViolation } from "@watchdog/policy";
 import type { ConfidenceTier } from "@watchdog/schemas";
 import { parseTrimmedCaseId } from "@watchdog/schemas";
 
@@ -126,11 +127,11 @@ export function assertConfidenceEvidenceEffect(
   confidence: ConfidenceTier,
   evidenceIds: string[]
 ): Effect.Effect<void, DomainTag> {
-  if (confidence === "confirmed" && evidenceIds.length === 0) {
-    return new InvalidError({
-      reason: "confirmed requires at least one Evidence attachment",
-    });
-  }
+  const reason = confirmedEvidenceViolation({
+    confidence,
+    evidenceCount: evidenceIds.length,
+  });
+  if (reason !== null) return new InvalidError({ reason });
   return Effect.void;
 }
 

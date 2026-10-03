@@ -17,7 +17,6 @@ import {
 } from "@/domains/triage/lib/decide-header-view";
 import { proposalPatch } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@/domains/triage/triage.functions";
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@/shared/lib/confirmed-evidence";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
@@ -28,6 +27,7 @@ import {
 } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/timestamp";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import type { ConfidenceTier } from "@watchdog/schemas";
 import { FieldError } from "@watchdog/ui/components/field";
