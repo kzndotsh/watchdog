@@ -2,7 +2,7 @@
 
 > Scope: `packages/auth` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-The server side of identity: the Better Auth instance, invite-only signup, instance admin, API keys, and "who is calling" (`createApiContext`). No React, no UI, no framework: apps add their own cookie plugin and their own views. The client, `auth/ui` views and TanStack wiring stay in `apps/web/src/auth/`.
+The server side of identity: the Better Auth instance, invite-only signup, instance admin, API keys, and "who is calling" (`createApiContext`). No React, UI, or framework code: apps add their own cookie plugin and views (client, `auth/ui`, TanStack wiring live in `apps/web/src/auth/`). Dependency boundaries (no `@tanstack/*`, api, core, caps, apps) are held by `package.json`.
 
 ## Commands
 
@@ -16,21 +16,13 @@ The server side of identity: the Better Auth instance, invite-only signup, insta
 | Import | Use |
 | --- | --- |
 | `@watchdog/auth/server` | `createAuth`, `createApiContext`, `actorFromSession`, `resolveActorOrganizationId`. Touches db + env: server only. |
-| `@watchdog/auth/instance-admin` · `org-roles` · `invitation-url` | Pure helpers and access-control roles; safe in the browser bundle (the auth client and the team/users views use them). |
+| `@watchdog/auth/instance-admin` · `org-roles` · `invitation-url` | Pure helpers and access-control roles; safe in the browser bundle. |
 
-## Do / Don't
+## Rules
 
-| Do | Don't |
-| --- | --- |
-| Pass framework plugins (`tanstackStartCookies()`) through `createAuth({ trailingPlugins })`: they must be last | Import `@tanstack/*` or `better-auth/tanstack-start` here |
-| Gate org creation on `BETTER_AUTH_ALLOW_SIGNUP` or instance admin; keep signup/org-create/role-change `rateLimit.customRules` (production only) | Open org creation or signup without a rate limit |
-| Read env inside `createAuth()`, not at import time in pure modules | Import `@watchdog/env/server` from the pure entry points (they ship to the browser) |
-| Get `ApiActor` / `ApiCaller` from `@watchdog/schemas`; `createApiContext` returns `ApiCaller & { log? }`, the same shape as the API's `ApiContext` | Depend on api, core, caps, or apps |
+- Pass framework plugins (`tanstackStartCookies()`) through `createAuth({ trailingPlugins })`; they must be last.
+- Gate org creation on `BETTER_AUTH_ALLOW_SIGNUP` or instance admin, and keep the signup / org-create / role-change `rateLimit.customRules` (production only). Guidance.
+- Read env inside `createAuth()`, never at import time in the pure entry points (they ship to the browser). Guidance.
+- `ApiActor` / `ApiCaller` come from `@watchdog/schemas`; `createApiContext` returns `ApiCaller & { log? }`, the same shape as the API's `ApiContext`.
 
-## See also
-
-| Need | File |
-| --- | --- |
-| Web wiring (client, views, routes) | [`apps/web/AGENTS.md`](../../apps/web/AGENTS.md) |
-| Package import matrix | [`docs/reference/platform/packages.md`](../../docs/reference/platform/packages.md) |
-| Agent ingress / API keys | [`docs/reference/contracts/agent-ingress.md`](../../docs/reference/contracts/agent-ingress.md) |
+See also: [`apps/web/AGENTS.md`](../../apps/web/AGENTS.md) · [`agent-ingress`](../../docs/reference/contracts/agent-ingress.md) (API keys) · [`packages.md`](../../docs/reference/platform/packages.md).

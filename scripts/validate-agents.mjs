@@ -402,11 +402,6 @@ async function checkReferences(skillDir, rel) {
   const refDir = path.join(skillDir, "references");
   if (!existsSync(refDir)) return;
 
-  const template = path.join(refDir, "_template.md");
-  if (!existsSync(template)) {
-    note("warn", `${rel}/references: has no _template.md scaffold`);
-  }
-
   const entries = await readdir(refDir, { withFileTypes: true });
   const refFiles = entries.filter(
     (e) => e.isFile() && e.name !== "_template.md" && !e.name.startsWith("_")

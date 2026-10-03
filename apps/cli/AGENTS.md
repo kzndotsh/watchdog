@@ -2,7 +2,7 @@
 
 > Scope: `apps/cli` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-`wd` CLI — talks to the API via `@watchdog/client` only (no direct DB). Binary export uses authenticated `fetch` (not on the oRPC contract). After `pnpm install` + `pnpm --filter @watchdog/cli build`, `wd` is on PATH via the root workspace link.
+`wd`: the agent-facing CLI. It reaches the API only through `@watchdog/client` (imports of core/db/api/env/log are banned in `oxlint.config.ts`); the binary export routes use authenticated `fetch` because they are not on the oRPC contract. Command surface, flags and output shapes: `wd --help`, `src/commands/`, [`agent-cli`](../../docs/how-to/agent-cli.md).
 
 ## Commands
 
@@ -11,68 +11,19 @@
 | Run (dev) | `pnpm exec wd -- <args>` · `pnpm --filter @watchdog/cli dev -- <args>` |
 | Build | `pnpm --filter @watchdog/cli build` (esbuild single ESM → `dist/main.js`; workspace packages inlined) |
 | Pack proof | `pnpm --filter @watchdog/cli pack:smoke` · `--live` with `WD_API_*` |
-| Typecheck | `pnpm --filter @watchdog/cli typecheck` (workspace TypeScript **7.0.2**; exact pin in `package.json`) |
-| Typecheck tests | included in `pnpm --filter @watchdog/cli typecheck` (`tsconfig.test.json`; see [`testing/standards.md`](../../docs/contributing/testing/standards.md#tests-are-typechecked)) |
+| Typecheck (src + tests) | `pnpm --filter @watchdog/cli typecheck` |
 | Unit tests | `pnpm test:unit` |
 
-### Surface (agent ingress)
+## Contract
 
-| Noun | Notes |
-| --- | --- |
-| `cases` / `entities` | CRUD-ish; `cases update --name` regenerates slug; `cases delete` cascades Graph/Jobs/Evidence; `entities update` is summary/notes only (name/slug stay) |
-| `claims` / `identifiers` / `edges` / `events` / `questions` | `list` free; writes need `--user-override` (`edges update` partial patch like `events update`; `events delete` / `questions delete` support `--dry-run`) |
-| `evidence` | list/paste/url/file + `hide` / `restore` / `download` + `process` / `enrich` |
-| `export zip` / `export md` | binary GETs via `x-api-key` |
-| `jobs` | list/start/cancel + `get` / `playbook` / `cancel-playbook`. `wd jobs playbook` seeds: `--host --url --evidence --ip --email --hash --handle` plus `--entity`. Start queues step 0 only. |
-| `caps list` / `caps playbooks` | Cap catalog + playbook list |
-| `credentials` | `list` / `put` (`--stdin` / `--secret-env`) / `delete` |
-| `proposals` / `graph write` | Default agent path vs escape hatch (`graph write` always sends `userOverride: true`; no `--user-override` flag) |
-
-Noun with no subcommand = content-first list (or USAGE fail needing `-c`).
-
-### Output contract (agent-first)
-
-- **Default:** compact JSON on stdout. Lists: `{ "count", "items", "help?" }`. Mutations: object or `{ "ok": true, … }`. Errors: `{ "ok": false, "error": { "code", "message" }, "help?" }` (stdout), exit 1; unknown flags exit 2; server-side failures (`INTERNAL_SERVER_ERROR` / HTTP 5xx / tagged `InternalError`, including binary export downloads) exit 3. ORPC errors and tagged `_tag` domain errors (`NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError`) map into that envelope in `handleCliError`. The CLI still talks HTTP via `@watchdog/client` (same application programs as the API, not in-process core Effects).
-- **`--table`:** human ASCII tables for lists.
-- **`--full`:** restore untruncated / full fields (list projections are minimal by default).
-- **`--raw`:** bare path/URL for `export` / `evidence download` (shell `$(…)`).
-- **`--json`:** no-op (JSON is default).
-- **`help[]`:** ≤3 next-step templates on lists/empty/errors; disable with `WD_CLI_HELP=0`. Built via `list-help.ts` (`caseListHelp` / `entityListHelp`); `readStdin` lives in `load-patch.ts`. `display.ts` re-exports only symbols other commands import (`capEgressLabel`, `capabilityIdLabel`, `evidenceTitleMapFromRows`).
-- **`WD_CLI_DEBUG=1`:** print stacks on stderr.
-
-### Env
-
-- `WD_API_URL` (default `http://localhost:3000/api/v1`) + `WD_API_KEY` via `loadCliEnv()` in `src/env.ts` — validated on first API use, not on `--help`. A key acts in one organization (`metadata.organizationId`); a key whose owner left it is rejected, and legacy keys act in the owner's oldest organization. A foreign-org `caseId` is `not_found`; no organization context is 403.
-- Dotenv loads from **cwd** (then parent walk). Never hardcodes the monorepo path. From repo root, the existing `.env` still applies.
-
-## Boundaries
-
-| Do | Don’t |
-| --- | --- |
-| Use `createWatchdogClient` + `loadCliEnv()` | Import `@watchdog/core` / `@watchdog/db` / `@watchdog/api` / `@watchdog/env` / `@watchdog/log` |
-| Default: proposals (`wd proposals create`) | Silent Graph writes |
-| Child Graph writes: `--user-override` + refuse `confirmed` | Set `confirmed` on claims/identifiers/edges from CLI |
-| Inbox Accept may set `confirmed` (`wd proposals accept --confidence`) | Treat Accept and child-write custody as the same rule |
-| Vault via `wd credentials` / `PUT /credentials` | Put secrets on argv or in Cap `Job.input` |
+- Output is compact JSON on stdout by default. Errors are `{ "ok": false, "error": { "code", "message" } }` on stdout. Exit codes: 1 error, 2 unknown flag, 3 server-side failure (HTTP 5xx / `InternalError`, including binary downloads).
+- `WD_API_URL` (default `http://localhost:3000/api/v1`) + `WD_API_KEY` load via `loadCliEnv()` in `src/env.ts`, validated on first API use, not on `--help`. A key acts in one organization (`metadata.organizationId`; legacy keys act in the owner's oldest organization); a foreign-org `caseId` is `not_found`, no organization is 403. Dotenv loads from the cwd, then parent directories.
+- Custody (guidance plus tests in `custody.test.ts`): default to `wd proposals create`. Child Graph writes need `--user-override` and refuse `confirmed`; `wd graph write` always sends `userOverride: true`. Only `wd proposals accept --confidence` may set `confirmed`. Secrets go through `wd credentials`, never argv or `Job.input`.
 
 ## Gotchas
 
-- Evidence upload helpers live here; hashes/immutability still follow Intake rules. File uploads PUT to the presigned URL with exactly the `headers` the server returns (including the signed `x-amz-meta-sha256`).
-- `wd evidence process|enrich` is the Intake path (dedupe active Jobs; Enrich asserts http(s)). `wd jobs start --cap evidence.harvest` still works but skips that glue.
-- `wd jobs start -i` must be a JSON **object** (not an array or bare string); parse errors vs shape errors return distinct USAGE messages.
-- `events update` accepts a partial patch — provide at least one of `--when`, `--what`, or `--where`.
-- `wd questions delete -c <caseId> <questionId> --user-override` hard-deletes one question (same custody as `events delete`).
-- `edges update` accepts a partial patch — provide at least one of `--from`/`--to`, `--predicate`, `--confidence`, `--notes`, `--evidence`, or `--entity` (`--from` and `--to` together).
-- Child-write **updates** (`identifiers` / `claims` / `edges`): `--notes ""` and `--evidence ""` clear those fields; omit the flag for no change. Creates still omit blank `--evidence`.
-- Destructive verbs support `--dry-run` (prints planned JSON only — does **not** validate against the API).
-- Paste body: `--body`, `-b -`, `--stdin`, or non-TTY stdin (`readStdin` in `load-patch.ts`).
-- Breaking: `wd caps` → `wd caps list` (also content-first `wd caps`).
-- Command unit tests resolve subcommands and build run contexts through the typed `subCommand` / `ctx` helpers in `commands/__tests__/commands.test.ts` (no `as never`); tests are typechecked and `apps/cli` is on the clean list.
-- Tests: `--help` / output contract, `CUSTODY` JSON when child writes omit `--user-override`, `loadPatch` reject paths. Live API is e2e / integration, not CLI unit.
-
-## See also / External References
-
-| Need        | File                                                           |
-| ----------- | -------------------------------------------------------------- |
-| HTTP client | [`packages/client/AGENTS.md`](../../packages/client/AGENTS.md) |
-| CLI env     | `src/env.ts`                                                   |
+- `wd jobs start -i` must be a JSON object, not an array or bare string.
+- `--dry-run` on destructive verbs prints the planned JSON only; it does not validate against the API.
+- `wd evidence process|enrich` is the Intake path (dedupes active Jobs, asserts http(s)); `wd jobs start --cap evidence.harvest` works but skips that glue.
+- File uploads PUT to the presigned URL with exactly the `headers` the server returns, including the signed `x-amz-meta-sha256`.
+- Update verbs take partial patches (at least one field). For `identifiers` / `claims` / `edges`, `--notes ""` and `--evidence ""` clear the field; omitting the flag leaves it.

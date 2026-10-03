@@ -2,7 +2,7 @@
 
 > Scope: `packages/policy` (inherits root AGENTS.md)
 
-Pure Graph write custody (`assertPatchGates` / Accept rules). No DB, Caps, or I/O.
+Pure Graph write custody (`assertPatchGates` / Accept rules). No DB, Caps, or I/O: it depends on `@watchdog/schemas` (plus `effect` for the error channel) only, which `package.json` holds. Callers in `core` own persistence.
 
 ## Commands
 
@@ -11,10 +11,7 @@ Pure Graph write custody (`assertPatchGates` / Accept rules). No DB, Caps, or I/
 | Typecheck  | `pnpm --filter @watchdog/policy typecheck` |
 | Unit tests | `pnpm test:unit`                           |
 
-## Rules
+## Gotchas
 
-- Depend on `@watchdog/schemas` only (plus `effect` for the error channel).
-- `assertPatchGates` / `assertPatchShape` return `Effect<void, CustodyViolation>`. Shape helpers `requireString` / `requireEnum` throw `CustodyViolation`; `runGate` rethrows that tagged error (no plain `Error`). Tests use `it.effect` from `@effect/vitest`.
-- Browser UI: import `@watchdog/policy/patch-needs-confidence` — not the package root (Effect-tagged gates).
-- Never import `db`, `core`, `caps`, `api`, or `apps/*`.
-- Pure functions; callers in `core` own persistence.
+- `assertPatchGates` / `assertPatchShape` return `Effect<void, CustodyViolation>`. The shape helpers `requireString` / `requireEnum` throw `CustodyViolation` and `runGate` rethrows that tagged error (never a plain `Error`). Tests use `it.effect` from `@effect/vitest`.
+- Browser UI imports `@watchdog/policy/patch-needs-confidence`, never the package root (Effect-tagged gates). Guidance; no lint rule.

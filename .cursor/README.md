@@ -1,45 +1,9 @@
 # `.cursor/`
 
-`.cursor/` is an **allowlist, not a blanket ignore** ([`.gitignore`](../.gitignore)). Only what's listed below is tracked; everything else under `.cursor/` (`rules/`, `skills/`, `agents/`, `plans/`, `settings.json`) is local-only — third-party tool installs, personal settings, or historical planning docs, none of it portable or meant for a public repo.
+An **allowlist, not a blanket ignore** ([`.gitignore`](../.gitignore)). Tracked here: [`hooks.json`](hooks.json) (Cursor hook registration), [`hooks/stop-gate.mjs`](hooks/stop-gate.mjs), [`hooks/run-node.sh`](hooks/run-node.sh), and this file. Everything else under `.cursor/` (`rules/`, `skills/`, `agents/`, `plans/`, `settings.json`) is local-only. Portable agent content lives in `AGENTS.md` and [`.agents/skills/`](../.agents/skills/).
 
-## Tracked here
+The `stop` hook runs the validators for dirty paths (`pnpm check:docs:strict`, `pnpm check:agents:strict`, `pnpm validate:agents`, `ds:ban`, scoped oxlint) and reports findings at most twice per turn (`loop_limit: 2`). It is not fail-closed and always prints valid JSON, so a hook bug never blocks the agent. Local git hooks and CI gates: [`docs/contributing/ci-gates.md`](../docs/contributing/ci-gates.md).
 
-| Path | What | Why it's here and not `.agents/` |
-| --- | --- | --- |
-| [`hooks/`](hooks/) | `stop-gate.mjs`, `run-node.sh` | Cursor-specific hook runtime; no portable hook spec exists |
-| [`hooks.json`](hooks.json) | Hook registration (events, timeouts, `failClosed`) | Same — Cursor-only config format |
-| `README.md` | This file | — |
+**Cursor spawns hooks without the project's nix devshell**, so `node`/`pnpm` are missing from `PATH`. `run-node.sh` tries a global `node` first (e.g. `nix profile install nixpkgs#nodejs`), then falls back to `direnv exec` for the flake devshell's `node`.
 
-Portable agent-facing content lives outside `.cursor/`: `AGENTS.md` (root + nested) and [`.agents/skills/`](../.agents/skills/) (`SKILL.md`, spec: [agentskills.io](https://agentskills.io)). Those are read by Cursor, Claude Code, and Codex alike. `.cursor/` holds only what genuinely cannot be portable — hook execution.
-
-## Hooks
-
-| Event | Script | Fails closed? | Does |
-| --- | --- | --- | --- |
-| `stop` | [`stop-gate.mjs`](hooks/stop-gate.mjs) via [`run-node.sh`](hooks/run-node.sh) | No | Scoped to dirty working-tree paths: lints them (`oxlint`, filtered from a repo-wide run — type-aware mode needs the whole project graph), runs `ds:ban` if web UI paths are dirty, runs agent-skills / `AGENTS.md` / **docs** validators (`check:docs:strict`, `check:agents:strict`, `validate:agents`) when those paths are dirty. Does **not** follow up on `check:docs-affected` (lefthook pre-commit / CI own that; WARN + `docs:allow-affect` cannot be fixed mid-turn). `loop_limit: 2` — surfaces a finding at most twice per turn, then lets the agent stop rather than looping forever on something it can't fix. |
-
-Local git hooks ([`lefthook.yml`](../lefthook.yml)): pre-commit runs `check:docs:strict`; commit-msg runs `check:docs-affected:strict` against the real message file (staged diff only), where `docs:allow-affect — <reason>` in that commit's own message is the escape hatch. Every hook either blocks or is deleted: see [`docs/contributing/ci-gates.md`](../docs/contributing/ci-gates.md).
-The non-`failClosed` `stop` hook always prints valid JSON and exits `0`, even on its own internal error — a hook must never block the agent because *it* broke. It still reports gate failures as a `followup_message`.
-
-**Cursor spawns hooks with its own extension-host environment, not the project's nix devshell** — `node`/`pnpm` are absent from that `PATH` (verified live by probing the real hook environment). [`run-node.sh`](hooks/run-node.sh) tries `node` directly first — install it globally (e.g. `nix profile install nixpkgs#nodejs`) and this path is instant — then falls back to `direnv exec` to pick up the flake devshell's `node`. The flake's shellHook banner lands on stderr, so stdout stays clean JSON either way.
-
-## Common pitfalls (`validate-agents.mjs` error strings → fix)
-
-| Error | Fix |
-| --- | --- |
-| `name must match folder` | Rename the `SKILL.md` frontmatter `name` (or the folder) so they're identical |
-| `description missing a trigger clause` | Add "Use when …" / "Triggers on …" / "Use for …" somewhere in `description` — not a workflow summary |
-| `metadata.owner must be "watchdog"` | Every committed skill must declare `metadata.owner: watchdog` — this is what stops a vendored/third-party skill from slipping into a public repo |
-| `metadata.sources path does not exist` | Fix the path, or drop the stale source |
-| `orphan metadata key` | Remove any frontmatter key the validator doesn't read — no field without a consumer |
-| `SKILL.md exceeds N lines` | Move detail into `references/`, one level deep, each with an explicit "load this when X" |
-| `unsafe path` | `metadata.sources` / referenced paths must be repo-relative, no `..`, no absolute paths |
-| Staleness warning | A declared source changed more recently than the skill — re-read it and confirm the skill still matches; warn-only, not a merge gate |
-
-## Skill retirement
-
-**Skills are deletable.** A skill that persists forever means the underlying platform gap never got fixed. If a skill exists only to work around a Cursor/Claude Code/Codex limitation, and that limitation goes away, delete the skill — that's the system working as intended, not something to mourn. Don't keep a skill "just in case"; `git log` is the archive.
-
-## See also
-
-[`AGENTS.md`](../AGENTS.md#agent-skills) · [`.agents/skills/`](../.agents/skills/) · [`scripts/validate-agents.mjs`](../scripts/validate-agents.mjs)
+Skills are deletable: if one only works around a platform limitation that has since gone away, delete it (`git log` is the archive). Skill frontmatter rules are enforced by [`scripts/validate-agents.mjs`](../scripts/validate-agents.mjs).

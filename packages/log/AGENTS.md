@@ -2,7 +2,7 @@
 
 > Scope: `packages/log` (inherits root AGENTS.md)
 
-Process logging via evlog (NDJSON + stdout). Contract SoT: [`docs/reference/contracts/evlog.md`](../../docs/reference/contracts/evlog.md).
+Process logging via evlog (NDJSON + stdout). Contract, error-field rules, and "evlog is not Graph audit": [`evlog`](../../docs/reference/contracts/evlog.md). Wiring: [`jobs-orpc`](../../docs/reference/platform/jobs-orpc.md). `apps/cli` and `packages/client` must not depend on it, since stdout is the agent contract (oxlint + `package.json`).
 
 ## Commands
 
@@ -11,24 +11,8 @@ Process logging via evlog (NDJSON + stdout). Contract SoT: [`docs/reference/cont
 | Typecheck  | `pnpm --filter @watchdog/log typecheck` |
 | Unit tests | `pnpm test:unit`                        |
 
-## Do / Don't (package API)
+## Gotchas
 
-| Do | Don't |
-| --- | --- |
-| Init once per process (`initWatchdogLogger`) | Depend from `apps/cli` or `packages/client` (stdout is the agent contract) |
-| Use ALS (`peekRequestLogger` / `runWithRequestLogger`) under Start middleware | Call `createFsDrain().flush()` (no flush API; awaits per event) |
-| Shape Cap Job events with `jobWideEventFields` from `JobRunOutcome` | — |
-| Bridge Effect.log via `evlogEffectLoggerLayer` | Treat Effect log lines as Graph audit |
-| Redact via `initWatchdogLogger` path presets (`builtins: false`) | Enable redact builtins (CC/email/IP maskers corrupt UUIDs) |
-| Keep FS drain compact NDJSON (`pretty: false`) | Tie FS `pretty` to console/`!isProd` |
-
-Error fields, auth/CSRF level, secrets, and “evlog ≠ Graph audit”: see [`evlog`](../../docs/reference/contracts/evlog.md).
-
-## See also
-
-| Need | File |
-| --- | --- |
-| Evlog contract | [`docs/reference/contracts/evlog.md`](../../docs/reference/contracts/evlog.md) |
-| Platform wiring | [`docs/reference/platform/jobs-orpc.md`](../../docs/reference/platform/jobs-orpc.md) |
-| Web Start middleware | [`apps/web/AGENTS.md`](../../apps/web/AGENTS.md) |
-| Worker Cap Job emit | [`apps/worker/AGENTS.md`](../../apps/worker/AGENTS.md) |
+- Init once per process with `initWatchdogLogger`; use ALS (`peekRequestLogger` / `runWithRequestLogger`) under Start middleware; shape Cap Job events with `jobWideEventFields`; bridge `Effect.log` via `evlogEffectLoggerLayer`.
+- Keep redact `builtins: false` (the CC/email/IP maskers corrupt UUIDs) and use the path presets in `initWatchdogLogger`.
+- The FS drain has no flush API (`createFsDrain().flush()` does not exist; it awaits per event) and stays compact NDJSON (`pretty: false`), independent of console pretty-printing.

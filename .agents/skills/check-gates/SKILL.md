@@ -11,7 +11,7 @@ description: >-
   pnpm typecheck") — just run it.
 metadata:
   owner: watchdog
-  sources: package.json, lefthook.yml, .github/workflows/ci.yml, codecov.yml, AGENTS.md, docs/contributing/ci-gates.md
+  sources: package.json, lefthook.yml, .github/workflows/ci.yml, AGENTS.md, docs/contributing/ci-gates.md
 ---
 
 # Check gates
@@ -31,15 +31,17 @@ May edit any file a failing gate points at, to make that gate pass. Does not cha
 ## Instructions
 
 1. Get the changed-file list: `git status --porcelain` for uncommitted work, or `git diff --name-only <base>...HEAD` for a branch.
-2. Load [gate-map.md](references/gate-map.md) and union the commands for those paths.
-3. Run fastest first — lint/typecheck before tests.
+2. Map paths to gates from the sources, never from memory: the globs in `lefthook.yml` (pre-commit, commit-msg, pre-push), the path filters and jobs in `.github/workflows/ci.yml` (CI wins on divergence), and the command list in [`docs/contributing/ci-gates.md`](../../../docs/contributing/ci-gates.md). Union the commands for all changed paths.
+3. Run fastest first: lint/typecheck before tests, integration and e2e last.
 4. On failure, read the actual error output before editing.
 5. Fix, then rerun only the gate that failed.
 6. Stop and report Blocked after a fix attempt does not resolve the same gate twice.
 
 ## Gotchas
 
-- `generate:caps` / `generate:client` fail on drift — run the generator; do not hand-edit generated output.
-- `check:docs-affected:strict` needs paired doc touches in the same commit (or `docs:allow-affect — reason` in that commit's own message when split). It runs at commit-msg on the staged diff, not the working tree. It also runs on mapped **code** paths, not only `docs/**`.
-- `pnpm --filter @watchdog/db check:repos` is mechanical only; passing is not the same as satisfying review-only repo rules in `packages/db/AGENTS.md`.
-- `pnpm doctor:react` is advisory. Desloppify is CI-on-main advisory only.
+- Pre-commit runs `pnpm fix` on staged files, not `pnpm check`; Knip, typecheck, tests, drift, and e2e are CI / pre-push.
+- `test:integration` needs Postgres (`just test-db`). If services are down, report **Blocked**; do not skip silently.
+- `generate:caps` / `generate:client` fail on drift: run the generator and commit the artifact; do not hand-edit generated output. `generate-routes` is not a CI drift job; run it when route files change.
+- `check:docs-affected:strict` needs paired doc touches in the same commit (or `docs:allow-affect — reason` in that commit's own message). It runs at commit-msg on the staged diff, and on mapped **code** paths, not only `docs/**`.
+- `pnpm --filter @watchdog/db check:repos` is mechanical only; passing does not satisfy the review-only repo rules in `packages/db/AGENTS.md`.
+- `pnpm doctor:react` and desloppify are advisory (CI Advisory job / main only), not merge gates.

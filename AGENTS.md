@@ -2,109 +2,55 @@
 
 Watchdog platform monorepo: Postgres + TypeScript under `apps/` · `packages/`. Investigation content (corpus, entity notes, vault vocabulary) lives in a separate private repo and never enters this one.
 
-`_legacy-v2/` may be present locally but is untracked and frozen — do not extend or cite it.
-
-On product nouns, **[`docs/explanation/product.md`](docs/explanation/product.md)** wins. On platform/UI contracts, **[`docs/`](docs/README.md)** + **[`docs/reference/web/`](docs/reference/web/README.md)** win.
+Authority: product nouns → [`docs/explanation/product.md`](docs/explanation/product.md) (stays authoritative until a root `GLOSSARY.md` lands; see [`docs/agents/domain.md`](docs/agents/domain.md)). Platform/UI contracts → [`docs/`](docs/README.md) and [`docs/reference/web/`](docs/reference/web/README.md). Design values → [`DESIGN.md`](DESIGN.md), where the CSS in `apps/web/src/styles/` wins. Hooks and CI gates: [`docs/contributing/ci-gates.md`](docs/contributing/ci-gates.md).
 
 ## Quick reference
 
 | Task | Command |
 | --- | --- |
-| Toolchain | `nix develop` |
+| Toolchain | `nix develop` (installs lefthook) |
 | Local infra (Postgres + S3 + migrate) | `just up` · `just docker-up` (containers only) |
-| Wipe case data | `just wipe` · `just wipe yes` (keeps auth including organizations + vault) |
+| Wipe case data | `just wipe` · `just wipe yes` (keeps auth incl. organizations, and vault) |
 | Screenshot seed | `just seed-demo` · `just seed-demo --force` |
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
 | Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
-| Git hooks | `lefthook install` (auto in `nix develop`) · `lefthook-local.yml` overrides · pre-commit: fix (staged files) + agents + docs + design-tokens + effect-edges + vendor-lock + size + agent-skills · pre-push: typecheck + web DS |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
+| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:vendor` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
-| Vendored shadcn | `pnpm check:vendor` · `pnpm ui:add <name>` · `pnpm ui:sync` (never hand-edit `packages/ui/src/components`) |
-| Caps / client regen | `pnpm generate:caps` · `pnpm generate:client` |
-| AGENTS gate | `pnpm check:agents:strict` |
-| Docs gate | `pnpm check:docs` · `pnpm check:design-tokens` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:size` |
-| Skills gate | `pnpm validate:agents` |
-| Desloppify (local hygiene) | `pnpm desloppify:bootstrap` · `pnpm desloppify:scan` · `pnpm desloppify:status` · `pnpm desloppify:next` (state under `.desloppify/` is gitignored; bootstrap excludes `repos`, `data`, generated trees — see `scripts/desloppify-bootstrap.sh`) |
+| Vendored shadcn | `pnpm ui:add <name>` · `pnpm ui:sync` |
+| Regenerate | `pnpm generate:caps` · `pnpm generate:client` |
+| Desloppify (local, advisory) | `pnpm desloppify:bootstrap` · `:scan` · `:status` · `:next` |
 
-Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0`. The first account is the instance admin; every account creates its own organization in onboarding, and the flag also gates self-serve organization creation. Vitest projects share workers (`isolate:false` + `vitest.reset-modules.ts`): tests must restore any `process.env`, `globalThis`, timers, or DOM they change. Package manager: **pnpm** only.
+Package manager: **pnpm** only. Solo signup: `BETTER_AUTH_ALLOW_SIGNUP=1` → `/auth/sign-up` → set `0` (first account is the instance admin; see [`auth-setup`](docs/how-to/auth-setup.md)). Vitest projects share workers: tests must restore any `process.env`, `globalThis`, timers, or DOM they change ([`standards.md`](docs/contributing/testing/standards.md)).
 
-## Learning more about Effect
+## Effect
 
-This repository uses the Effect Typescript library.
+Before writing Effect code, read `node_modules/effect/AGENTS.md` completely, then search `node_modules/effect/src` for APIs it skips. Watchdog runtime conventions (`run*` edges, `JobFibers`, Cap `run`, browser policy) live in the `/effect` skill. `repos/effect` is an optional gitignored clone: never import from it.
 
-Before writing any Effect code, first read `node_modules/effect/AGENTS.md` **completely**, and follow the links in the file when required.
+## Nested AGENTS.md
 
-If you need to learn more about particular Effect apis and concepts that the guide doesn't cover, search through the source code in `node_modules/effect/src`.
+Read the nested `AGENTS.md` before editing its tree, as an explicit step: auto-attachment of nested files is not reliable. One exists in each of `apps/{cli,site,web,worker}` and `packages/{ai,api,auth,caps,client,core,db,env,log,policy,schemas,test-db,test-kit,tools,ui}`.
 
-Watchdog runtime conventions (run* edges, JobFibers, Cap `run`, browser policy) are separate: load `/effect` or the nearest package `AGENTS.md`.
+## Agent skills
 
-## Vendored Repositories
+Workflows live in [`.agents/skills/`](.agents/skills/) (and per package, e.g. [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/)); `.claude/skills` symlinks to the root set. Load them by name: `/audit-contract`, `/check-gates`, `/finalize`, `/create-cap`, `/effect`. Vendored skills are pinned in `skills-lock.json` and read `docs/agents/` (issue tracker, triage labels, domain docs).
 
-| Path | Role |
-| --- | --- |
-| `repos/effect` | Optional local Effect clone (gitignored). Prefer `node_modules/effect/AGENTS.md` + `node_modules/effect/src` for API guidance. Do not import from `repos/effect`. |
+## Boundaries
 
-## Sub-AGENTS directory
+Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.md). Package import boundaries are enforced by `package.json` dependencies and `no-restricted-imports` in `oxlint.config.ts`, not restated here.
 
-**Read the relevant `AGENTS.md` before touching that tree — always, explicitly.** Nested `AGENTS.md` auto-attachment is version-sensitive and has an unresolved loading history; only this root file is verified always-loaded. Treat reading the nested file as a step in the task, not something the tool does for you: `apps/web`, `apps/worker`, `apps/cli`, `packages/{db,core,api,auth,caps,env,client,policy,schemas,ai,tools,log,test-kit,test-db,ui}`.
-
-## Agent Skills
-
-Portable workflows in [`.agents/skills/`](.agents/skills/) (root) and nested per-package (e.g. [`packages/caps/.agents/skills/`](packages/caps/.agents/skills/)) — readable by Cursor, Claude Code, and Codex. Load explicitly by name (`/audit-contract`, `/check-gates`, `/finalize`, `/create-cap`, `/effect`); do not rely on auto-selection. `.claude/skills` is a symlink to `.agents/skills` so Claude Code registers the root skills; it needs a symlink-capable checkout (on Windows enable Developer Mode and `git config core.symlinks true`, otherwise it checks out as a plain file). `pnpm validate:agents` gates their structure and frontmatter in CI. See [`.cursor/README.md`](.cursor/README.md) for the full catalog and the retirement criterion.
-
-Vendored engineering skills (`to-spec`, `to-tickets`, `triage`, `implement-spec`, `tdd`, …) are pinned in `skills-lock.json` and read the config below.
-
-### Issue tracker
-
-GitHub Issues on `kzndotsh/watchdog` (public, so no investigation content). See [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
-
-### Triage labels
-
-Default five roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See [`docs/agents/triage-labels.md`](docs/agents/triage-labels.md).
-
-### Domain docs
-
-Single-context: root `GLOSSARY.md` + `docs/adr/` (`product.md` stays authoritative until `GLOSSARY.md` lands). See [`docs/agents/domain.md`](docs/agents/domain.md).
-
-## Where to Look
-
-| Task | Primary path |
-| --- | --- |
-| Product / architecture / UX / types | `docs/` |
-| Design direction, taste rules, tokens / why a UI rule exists | [`DESIGN.md`](DESIGN.md) (CSS in `apps/web/src/styles/` wins on values) · [`docs/reference/web/ui/rules.md`](docs/reference/web/ui/rules.md) |
-| UI / DS / domains / Query | `docs/reference/web/` |
-| Product nouns / Cap loop | [`docs/explanation/product.md`](docs/explanation/product.md) |
-| Caps / playbooks | [`docs/reference/platform/caps-lexicon.md`](docs/reference/platform/caps-lexicon.md) · [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md) |
-| Run the app | `README.md` |
-
-## Boundaries (platform)
-
-Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.md).
-
-| Do | Don’t | Skill / contract |
+| Do | Don’t | Enforced by |
 | --- | --- | --- |
-| Postgres = Case Graph SoT; Export is a projection | Hand-edit Export as a second SoT | [`ingress`](docs/reference/contracts/ingress.md) · `audit-contract` |
-| Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | [`ingress`](docs/reference/contracts/ingress.md) · [`custody`](docs/reference/contracts/custody.md) |
-| Agents/CLI default: propose; graph write needs `userOverride` → Graph @ `unverified` + `graph_writes` | Silent machine Graph writes; mid-build verbs (<!-- check:agents allow-banned --> promote / Scratch / Door A / Candidate theater) | [`agent-ingress`](docs/reference/contracts/agent-ingress.md) |
-| Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | — |
-| Chrome: Queue + Detail | Console / Workbench / Tape surfaces; a screen named `*Panel` | [ui lexicon](docs/reference/web/ui/README.md#chrome-lexicon-ui-parts) |
-| Process logs via `@watchdog/log` (evlog NDJSON) | Secrets/Evidence body in logs; treat evlog as Graph audit | [`evlog`](docs/reference/contracts/evlog.md) |
-| Extend the tracked packages/apps | Extend `_legacy-*` | — |
+| Postgres = Case Graph SoT; Export is a projection | Hand-edit Export as a second SoT | guidance ([`ingress`](docs/reference/contracts/ingress.md)) |
+| Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | `@watchdog/policy` gates at runtime; caps has no db dep ([`custody`](docs/reference/contracts/custody.md)) |
+| Agents/CLI default to propose; a graph write needs `userOverride` and lands `unverified` + `graph_writes` | Silent machine Graph writes | policy gates + `apps/cli/src/custody.ts` ([`agent-ingress`](docs/reference/contracts/agent-ingress.md)) |
+| Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | guidance |
+| Chrome: Queue + Detail | Console / Workbench / Tape surfaces; a screen named `*Panel` | `ds:check` for the first three; `*Panel` is guidance ([ui lexicon](docs/reference/web/ui/README.md#chrome-lexicon-ui-parts)) |
+| Process logs via `@watchdog/log` | Secrets/Evidence bodies in logs; treating evlog as Graph audit | guidance ([`evlog`](docs/reference/contracts/evlog.md)) |
 
-**Ingress:** Collect→Evidence · Caps→artifacts+Proposal · Triage Accept→Graph · Dossier=human Graph edit. See [`ingress`](docs/reference/contracts/ingress.md).
+Ingress: Collect → Evidence · Caps → artifacts + Proposal · Triage Accept → Graph · Dossier = human Graph edit. Accept tiers and breach caveats: [`custody`](docs/reference/contracts/custody.md).
 
-## Investigation (compressed)
+## Where to look
 
-Never claim without evidence. Zero assumptions. Cite everything. Disclose uncertainty. Adversarial-test identity links.
-
-Accept tiers and breach caveats: [`custody`](docs/reference/contracts/custody.md).
-
-## External References
-
-| Need | File |
-| --- | --- |
-| Platform docs | [`docs/README.md`](docs/README.md) |
-| Web docs | [`docs/reference/web/README.md`](docs/reference/web/README.md) |
-| Roadmap | [`ROADMAP.md`](ROADMAP.md) |
-| Human README | [`README.md`](README.md) |
+[`docs/README.md`](docs/README.md) (platform) · [`docs/reference/web/README.md`](docs/reference/web/README.md) (UI, Query, domains) · [`caps-lexicon`](docs/reference/platform/caps-lexicon.md) (Caps, playbooks) · [`ROADMAP.md`](ROADMAP.md) · [`README.md`](README.md) (run the app).
