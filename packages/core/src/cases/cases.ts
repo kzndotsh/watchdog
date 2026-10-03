@@ -23,6 +23,7 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  InternalError,
 } from "../infra/tagged-errors";
 
 const SLUG_UNIQUE_INDEX = "cases_organization_id_slug_uidx";
@@ -136,7 +137,7 @@ export function createCaseEffect(
       { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
     );
     if (!created) {
-      return yield* new InvalidError({ reason: "Failed to create Case" });
+      return yield* new InternalError({ reason: "Failed to create Case" });
     }
     return toRecord(created);
   });
@@ -249,7 +250,7 @@ export function deleteCaseEffect(
       casesRepo.delete(db, caseId, opts.organizationId)
     );
     if (!deleted) {
-      return yield* new InvalidError({ reason: "Failed to delete Case" });
+      return yield* new NotFoundError({ resource: "Case not found" });
     }
     const logActorId = optionalActorId(opts?.actorId);
     if (logActorId) {

@@ -38,6 +38,7 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  InternalError,
 } from "../infra/tagged-errors";
 import { assertCapAvailabilityEffect } from "../jobs/cap-availability";
 import { parseValidatedCapInputEffect } from "../jobs/cap-input";
@@ -135,7 +136,7 @@ function startCapForEvidenceEffect(input: {
           })
         );
         if (!row) {
-          return yield* new InvalidError({ reason: "Failed to create Job" });
+          return yield* new InternalError({ reason: "Failed to create Job" });
         }
         return { kind: "created" as const, job: row };
       })

@@ -4,9 +4,8 @@ import { PgBoss } from "pg-boss";
 import { env } from "@watchdog/env/server";
 import { parseTrimmedCaseId } from "@watchdog/schemas";
 
-import { errorMessage } from "../infra/domain-error";
 import { logProcess, logSwallowed } from "../infra/process-log";
-import { InvalidError } from "../infra/tagged-errors";
+import { InternalError, InvalidError } from "../infra/tagged-errors";
 import { capExpireSeconds, queueExpireSeconds } from "./timeouts";
 
 /** pg-boss queue name for Cap Jobs. */
@@ -53,13 +52,14 @@ function attachBossListeners(boss: PgBoss, role: BossRole): void {
   });
 }
 
-function mapBossCatch(error: unknown): InvalidError {
-  return new InvalidError({
-    reason: errorMessage(error, "pg-boss failed"),
-  });
+/** Driver text stays in `cause` (log-only); the reason is a fixed safe string. */
+function mapBossCatch(error: unknown): InternalError {
+  return new InternalError({ reason: "pg-boss failed", cause: error });
 }
 
-function ensureCapQueueEffect(boss: PgBoss): Effect.Effect<void, InvalidError> {
+function ensureCapQueueEffect(
+  boss: PgBoss
+): Effect.Effect<void, InternalError> {
   const opts = queueOptions();
   return Effect.gen(function* ensureCapQueueGen() {
     const existing = yield* Effect.tryPromise({
@@ -81,14 +81,14 @@ function ensureCapQueueEffect(boss: PgBoss): Effect.Effect<void, InvalidError> {
 
 /**
  * One boss per process. Role is chosen at first start; a second role
- * fails with InvalidError. Producer (web/API): migrate, no supervise.
+ * fails with InternalError. Producer (web/API): migrate, no supervise.
  * Worker: supervise + migrate.
  */
-function startBossEffect(role: BossRole): Effect.Effect<PgBoss, InvalidError> {
+function startBossEffect(role: BossRole): Effect.Effect<PgBoss, InternalError> {
   return Effect.gen(function* startBossGen() {
     if (bossSingleton) {
       if (bossRole !== role) {
-        return yield* new InvalidError({
+        return yield* new InternalError({
           reason: `pg-boss already started as ${bossRole}; cannot start as ${role}`,
         });
       }
@@ -115,7 +115,7 @@ function startBossEffect(role: BossRole): Effect.Effect<PgBoss, InvalidError> {
   });
 }
 
-function bossForEnqueueEffect(): Effect.Effect<PgBoss, InvalidError> {
+function bossForEnqueueEffect(): Effect.Effect<PgBoss, InternalError> {
   if (bossSingleton) return Effect.succeed(bossSingleton);
   return startBossEffect("producer");
 }
@@ -124,7 +124,7 @@ function bossForEnqueueEffect(): Effect.Effect<PgBoss, InvalidError> {
 export function enqueueCapJobEffect(
   jobId: string,
   capabilityId: string
-): Effect.Effect<void, InvalidError> {
+): Effect.Effect<void, InternalError | InvalidError> {
   return Effect.gen(function* enqueueCapJobGen() {
     const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
     if (normalizedJobId === undefined) {
@@ -145,11 +145,11 @@ export function enqueueCapJobEffect(
 
 export function ensureBossProducerEffect(): Effect.Effect<
   PgBoss,
-  InvalidError
+  InternalError
 > {
   return startBossEffect("producer");
 }
 
-export function ensureBossWorkerEffect(): Effect.Effect<PgBoss, InvalidError> {
+export function ensureBossWorkerEffect(): Effect.Effect<PgBoss, InternalError> {
   return startBossEffect("worker");
 }

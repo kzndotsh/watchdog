@@ -12,6 +12,6 @@ Hub for package layout, jobs/oRPC/evlog, and Caps/Intake/Export. Split leaves be
 | [`graph-model.md`](graph-model.md) | Entity / evidence / patch model |
 | [`../contracts/`](../contracts/README.md) | Ingress, custody, agent writes, evlog contracts |
 
-Runtime failures on API/CLI/worker edges use tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` (same codes as `DomainError`). Ingress and custody contracts are unchanged.
+Runtime failures on API/CLI/worker edges use tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError` (same codes as `DomainError`). `InvalidError` is caller-fixable input (HTTP 400); `InternalError` is a server-side failure (failed write, queue driver) and maps to HTTP 500 with a generic message, its reason and cause going only to the request log. Ingress and custody contracts are unchanged.
 
 **Not:** TanStack Start chrome or Query/SSE. That lives under [`docs/reference/web/`](../web/README.md).

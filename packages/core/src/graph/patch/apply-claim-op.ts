@@ -9,7 +9,11 @@ import {
 } from "@watchdog/schemas";
 
 import { tryDb } from "../../infra/postgres-effect";
-import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
+import {
+  InvalidError,
+  type DomainTag,
+  InternalError,
+} from "../../infra/tagged-errors";
 import {
   requireDomainEnumEffect,
   requireDomainStringEffect,
@@ -56,7 +60,7 @@ export function applyClaimOpEffect(
       })
     );
     if (!created) {
-      return yield* new InvalidError({ reason: "Failed to create Claim" });
+      return yield* new InternalError({ reason: "Failed to create Claim" });
     }
     const linked = yield* tryDb(() =>
       evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)

@@ -235,6 +235,7 @@ export {
 export {
   NotFoundError,
   ConflictError,
+  InternalError,
   InvalidError,
   ForbiddenError,
   fromDomainError,

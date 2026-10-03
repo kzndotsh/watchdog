@@ -37,6 +37,7 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  InternalError,
 } from "../infra/tagged-errors";
 import { hasCredentialEffect } from "../infra/vault";
 import { parseValidatedCapInputEffect } from "./cap-input";
@@ -195,7 +196,7 @@ export function runPlaybookEffect(
           })
         );
         if (!run) {
-          return yield* new InvalidError({
+          return yield* new InternalError({
             reason: "Failed to create playbook run",
           });
         }
@@ -220,7 +221,7 @@ export function runPlaybookEffect(
           })
         );
         if (!row) {
-          return yield* new InvalidError({
+          return yield* new InternalError({
             reason: `Failed to create Job for step ${plan.step.playbookStep}`,
           });
         }

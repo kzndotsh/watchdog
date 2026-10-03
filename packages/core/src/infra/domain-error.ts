@@ -2,7 +2,8 @@ export type DomainErrorCode =
   | "not_found"
   | "conflict"
   | "invalid"
-  | "forbidden";
+  | "forbidden"
+  | "internal";
 
 const DOMAIN_ERROR_BRAND = Symbol.for("watchdog.DomainError");
 
@@ -14,8 +15,8 @@ export class DomainError extends Error {
 
   readonly code: DomainErrorCode;
 
-  constructor(code: DomainErrorCode, message: string) {
-    super(message);
+  constructor(code: DomainErrorCode, message: string, cause?: unknown) {
+    super(message, cause === undefined ? undefined : { cause });
     this.name = "DomainError";
     this.code = code;
   }

@@ -2,7 +2,7 @@ import { createRouterClient, ORPCError } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { NotFoundError } from "@watchdog/core";
+import { InternalError, InvalidError, NotFoundError } from "@watchdog/core";
 
 const {
   listCasesEffect,
@@ -45,6 +45,15 @@ const sampleCase = {
   allowThirdPartyEgress: false,
 };
 
+function createClient() {
+  return createRouterClient(
+    { create },
+    {
+      context: { headers: new Headers(), actor, authMethod: "session" },
+    }
+  );
+}
+
 describe("cases procedures", () => {
   it("lists cases for authenticated callers", async () => {
     listCasesEffect.mockReturnValueOnce(Effect.succeed([sampleCase]));
@@ -84,6 +93,45 @@ describe("cases procedures", () => {
     ).rejects.toSatisfy(
       (error: unknown) =>
         error instanceof ORPCError && error.code === "NOT_FOUND"
+    );
+  });
+
+  it("returns 500 with a generic message when a write fails server-side", async () => {
+    createCaseEffect.mockReturnValueOnce(
+      new InternalError({
+        reason: "Failed to create Case",
+        cause: new Error('insert into "cases" failed: connection refused'),
+      })
+    );
+
+    const failure = await createClient()
+      .create({ name: "Beta" })
+      .then(
+        () => undefined,
+        (error: unknown) => error
+      );
+
+    expect(failure).toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      status: 500,
+      message: "Internal server error",
+    });
+    expect(JSON.stringify(failure)).not.toMatch(
+      /Failed to create|insert into|connection refused|cases/
+    );
+  });
+
+  it("keeps caller-fixable failures at 400 with their reason", async () => {
+    createCaseEffect.mockReturnValueOnce(
+      new InvalidError({ reason: "Name must contain letters or numbers" })
+    );
+
+    await expect(createClient().create({ name: "Beta" })).rejects.toMatchObject(
+      {
+        code: "BAD_REQUEST",
+        status: 400,
+        message: "Name must contain letters or numbers",
+      }
     );
   });
 

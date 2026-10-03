@@ -7,12 +7,7 @@ import { slugifyName, trimmedOrNull, trimmedOrUndefined } from "@watchdog/schema
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
-import {
-  ConflictError,
-  InvalidError,
-  NotFoundError,
-  type DomainTag,
-} from "../infra/tagged-errors";
+import { ConflictError, InvalidError, NotFoundError, type DomainTag, InternalError } from "../infra/tagged-errors";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
@@ -131,9 +126,7 @@ export function createEntityEffect(
             })
           );
           if (!row) {
-            return yield* new InvalidError({
-              reason: "Failed to create Entity",
-            });
+            return yield* new InternalError({ reason: "Failed to create Entity" });
           }
           yield* seedDefaultQuestionsEffect(tx, row);
           return row;
@@ -193,7 +186,7 @@ export function updateEntityFieldsEffect(
       })
     );
     if (!updated) {
-      return yield* new InvalidError({ reason: "Failed to update Entity" });
+      return yield* new NotFoundError({ resource: "Entity not found" });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);
@@ -223,7 +216,7 @@ export function deleteEntityEffect(
       entitiesRepo.deleteInCase(db, scopedCaseId, normalizedEntityId)
     );
     if (!deleted) {
-      return yield* new InvalidError({ reason: "Failed to delete Entity" });
+      return yield* new NotFoundError({ resource: "Entity not found" });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);
