@@ -217,7 +217,7 @@ describe("message literal scanner", () => {
       const files = listSourceFiles(root, () => {
         throw new Error("not a git checkout");
       });
-      expect(files.toSorted()).toEqual([
+      expect([...files].sort()).toEqual([
         "apps/web/a.ts",
         "packages/core/b.mjs",
       ]);
