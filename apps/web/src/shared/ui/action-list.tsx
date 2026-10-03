@@ -1,12 +1,12 @@
 import { Fragment } from "react";
 
 import { cn } from "@/lib/utils";
+import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
 import {
   filterActionsForSurface,
   shouldSeparateActions,
   type AppAction,
 } from "@/shared/lib/app-action";
-import { modKeyLabel } from "@/shared/lib/hotkeys";
 import {
   ContextMenuItem,
   ContextMenuSeparator,
@@ -32,11 +32,12 @@ export function ActionShortcutChord({
   className?: string;
   kbdClassName?: string;
 }) {
+  const modKeyLabel = useModKeyLabel();
   if (chord.startsWith("Mod+")) {
     const rest = chord.slice("Mod+".length);
     return (
       <KbdGroup className={className}>
-        <Kbd className={kbdClassName}>{modKeyLabel()}</Kbd>
+        <Kbd className={kbdClassName}>{modKeyLabel}</Kbd>
         <Kbd className={kbdClassName}>{rest}</Kbd>
       </KbdGroup>
     );
