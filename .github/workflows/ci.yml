@@ -42,6 +42,9 @@ jobs:
     outputs:
       typescript: ${{ steps.filter.outputs.typescript }}
       config: ${{ steps.filter.outputs.config }}
+      config_core: ${{ steps.filter.outputs.config_core }}
+      integration_scripts: ${{ steps.filter.outputs.integration_scripts }}
+      typescript_app: ${{ steps.app.outputs.typescript_app }}
       caps: ${{ steps.filter.outputs.caps }}
       api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
@@ -74,7 +77,10 @@ jobs:
               - '**/*.ts'
               - '**/*.tsx'
               - '**/tsconfig*.json'
-            config:
+            # Tooling files shared by every job. `config` adds scripts/** (Gates and
+            # Unit run the gate scripts and their tests); `config_core` does not, so a
+            # scripts-only change does not start Integration + e2e.
+            config_core: &config_core
               - 'packages/ui/vendor.json'
               - 'package.json'
               - 'pnpm-lock.yaml'
@@ -88,7 +94,14 @@ jobs:
               - 'codecov.yml'
               - '.github/**'
               - 'docker-compose.yml'
+            config:
+              - *config_core
               - 'scripts/**'
+            # Scripts the Integration + e2e job runs (pnpm test-db, S3 bootstrap).
+            integration_scripts:
+              - 'scripts/ensure-test-db.sh'
+              - 'scripts/ensure-readonly-role.sh'
+              - 'scripts/s3-init.sh'
             caps:
               - 'packages/caps/**'
             api:
@@ -117,6 +130,19 @@ jobs:
               - 'scripts/check-docs.mjs'
               - 'scripts/doc-map.mjs'
               - 'scripts/check-docs-affected.mjs'
+
+      # `some-with-excludes` lets a filter carry a `!` pattern: the default `some`
+      # quantifier ignores negations. Same patterns as `typescript`, minus scripts/**.
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: app
+        with:
+          predicate-quantifier: some-with-excludes
+          filters: |
+            typescript_app:
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/tsconfig*.json'
+              - '!scripts/**'
 
   gates:
     name: Gates
@@ -298,8 +324,8 @@ jobs:
       needs.changes.outputs.caps == 'true' ||
       needs.changes.outputs.web == 'true' ||
       needs.changes.outputs.e2e == 'true' ||
-      needs.changes.outputs.typescript == 'true' ||
-      needs.changes.outputs.config == 'true'
+      needs.changes.outputs.typescript_app == 'true' ||
+      needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:
@@ -360,15 +386,15 @@ jobs:
           needs.changes.outputs.db == 'true' ||
           needs.changes.outputs.api == 'true' ||
           needs.changes.outputs.caps == 'true' ||
-          needs.changes.outputs.typescript == 'true' ||
-          needs.changes.outputs.config == 'true'
+          needs.changes.outputs.typescript_app == 'true' ||
+          needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_test
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_test
         run: pnpm test:integration
 
       - name: Cache Playwright browsers
-        if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
+        if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
         id: playwright-cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -377,18 +403,18 @@ jobs:
 
       - name: Install Playwright Chromium
         if: |
-          (github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true') &&
+          (github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true') &&
           steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Install Playwright system deps
         if: |
-          (github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true') &&
+          (github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true') &&
           steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
 
       - name: Playwright e2e
-        if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
+        if: github.event_name != 'pull_request' || needs.changes.outputs.e2e == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config_core == 'true' || needs.changes.outputs.integration_scripts == 'true'
         env:
           DATABASE_URL: postgresql://watchdog_app:watchdog@127.0.0.1:5432/watchdog_e2e
           DATABASE_URL_MIGRATE: postgresql://postgres:postgres@127.0.0.1:5432/watchdog_e2e

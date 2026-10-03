@@ -70,6 +70,10 @@ The fixture strips `CI`, `GITHUB_*`, `DOCS_AFFECT_*` and `GIT_*` from the enviro
 
 Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show docs-only; push to `main` runs full CI. After File detection, three run in parallel: **Gates** (the table above, plus knip, the site build when `apps/site/**` changes, cap/client drift and db repos), **Unit** (`pnpm test:coverage`; Codecov upload is non-blocking) and **Integration + e2e** (Postgres + S3). Advisory (React Doctor / Desloppify via `pnpm desloppify:scan:ci`) runs separately and does not block. The aggregator job **Check** is the required status (it treats skipped siblings as OK). Dependabot ([`.github/dependabot.yml`](../../.github/dependabot.yml)) updates npm/pnpm, GitHub Actions, docker-compose and Nix weekly on Mondays, grouped minor/patch.
 
+### Which jobs run
+
+A pull request that touches only `scripts/**` (and docs) runs Gates and Unit (the gate scripts run in Gates; their `*.gate.test.ts` run in Unit as the `gate` project) and skips Integration + e2e. The scripts that job runs still start it: `scripts/ensure-test-db.sh` (`pnpm test-db`), `scripts/ensure-readonly-role.sh` (called by it) and `scripts/s3-init.sh`. Everything else is unchanged: any other code or tooling change runs the same jobs as before, and a push to `main` runs all of them. The filters are the `changes` job in `ci.yml` (`config_core`, `integration_scripts`, `typescript_app`); add a script to `integration_scripts` when Integration + e2e starts calling it.
+
 ## Repo meta
 
 Files GitHub reads from the repository, kept under `.github/` unless noted:
