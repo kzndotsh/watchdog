@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a capability or change, in the spec structure the agent workflow uses.
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!WARNING]
+        > **This tracker is public.** Do not include Case content, Evidence, credentials or investigation material. Use synthetic examples.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: The problem from the user's perspective.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution
+      description: The solution from the user's perspective.
+    validations:
+      required: true
+  - type: textarea
+    id: user-stories
+    attributes:
+      label: User Stories
+      description: A numbered list, "As a <actor>, I want <feature>, so that <benefit>".
+      placeholder: "1. As a ..., I want ..., so that ..."
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Decisions
+      description: Modules, interfaces, schema and contract decisions. No file paths or code snippets that go stale.
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing Decisions
+      description: What a good test looks like here, and which seams are tested.
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of Scope
+  - type: textarea
+    id: notes
+    attributes:
+      label: Further Notes

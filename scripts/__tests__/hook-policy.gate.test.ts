@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -32,5 +32,49 @@ describe("hook policy", () => {
     };
     expect(JSON.stringify(hooks)).not.toContain("validate-on-edit");
     expect(hooks.hooks.afterFileEdit).toBeUndefined();
+  });
+
+  describe("Claude Code project settings", () => {
+    const settings = JSON.parse(read(".claude/settings.json")) as {
+      attribution?: { commit?: string; pr?: string };
+      hooks?: Record<
+        string,
+        { hooks: { type: string; command: string; timeout: number }[] }[]
+      >;
+      [key: string]: unknown;
+    };
+
+    it("keeps commit and PR attribution off", () => {
+      expect(settings.attribution?.commit).toBe("");
+      expect(settings.attribution?.pr).toBe("");
+    });
+
+    it("registers only the Stop hook, through the node runner and the shared gate", () => {
+      expect(Object.keys(settings).sort()).toEqual(["attribution", "hooks"]);
+      expect(Object.keys(settings.hooks ?? {})).toEqual(["Stop"]);
+      const handlers = settings.hooks?.Stop?.flatMap((g) => g.hooks) ?? [];
+      expect(handlers).toHaveLength(1);
+      const [handler] = handlers;
+      expect(handler?.type).toBe("command");
+      const cursorHandler = (
+        JSON.parse(read(".cursor/hooks.json")) as {
+          hooks: { stop: { timeout: number }[] };
+        }
+      ).hooks.stop[0];
+      expect(handler?.timeout).toBe(cursorHandler?.timeout);
+      const paths = (handler?.command ?? "")
+        .replaceAll('"', "")
+        .split(" ")
+        .filter((part) => part.startsWith("$CLAUDE_PROJECT_DIR/"))
+        .map((part) => part.replace("$CLAUDE_PROJECT_DIR/", ""));
+      expect(paths).toEqual([
+        ".cursor/hooks/run-node.sh",
+        ".cursor/hooks/stop-gate.mjs",
+      ]);
+      for (const rel of paths) {
+        expect(existsSync(path.join(repoRoot, rel))).toBe(true);
+      }
+      expect(handler?.command).toContain("--client=claude");
+    });
   });
 });

@@ -11,7 +11,7 @@ Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthoo
 | --- | --- | --- | --- |
 | `pnpm check` (`ultracite fix` on staged files at pre-commit) | Oxlint + Oxfmt. `@shadcn/lint` (pinned, web only) fails raw palette colors, undeclared tokens, off-scale arbitrary values and Tailwind classes that generate no CSS. Warn-severity Effect rules do not fail it | pre-commit, CI | none |
 | `pnpm typecheck` | Source **and** tests: each package runs `tsconfig.json` and `tsconfig.test.json`; root adds `scripts/tsconfig.test.json`, `e2e/tsconfig.test.json` and `check:test-coverage-guard` (every vitest-discovered test and Playwright spec is in some `tsconfig.test.json`). See [`testing/standards.md`](testing/standards.md#tests-are-typechecked) | pre-push, CI | none |
-| `pnpm check:agents:strict` | AGENTS.md hygiene: present in every `apps/*` / `packages/*`, size budget, Scope + Commands sections, relative links, banned mid-build terms (only in `AGENTS.md` files; the list is the `_Banned_:` lines of root `GLOSSARY.md` outside code fences, matched literally; the gate requires it), CLAUDE.md `@AGENTS.md` bridge | pre-commit, CI, Cursor stop | none |
+| `pnpm check:agents:strict` | AGENTS.md hygiene: present in every `apps/*` / `packages/*`, size budget, Scope + Commands sections, relative links, banned mid-build terms (only in `AGENTS.md` files; the list is the `_Banned_:` lines of root `GLOSSARY.md` outside code fences, matched literally; the gate requires it), CLAUDE.md `@AGENTS.md` bridge, and the optional `## Canonical helpers` table (columns concern, module path in backticks, export in backticks): each module must exist and export the name by declaration, `export { X }` or `export { X } from` (`export *` does not count); no section, no check | pre-commit, CI, Cursor stop | none |
 | `pnpm check:docs:strict` | Docs links and anchors resolve (docs/, root markdown, AGENTS.md files), leaf length budget (fail above 600 lines), and the conventions table ([`conventions.md`](../reference/platform/conventions.md)): every table has the exact header `Rule | Scope | Stated in | Enforced by | Status`(a mistyped table fails instead of being skipped), every row has five cells (escaped pipes are unsupported) and a non-empty`enforced by`cell and a status of`enforced`, `baselined`or`guidance`, an `enforced`/`baselined`row never says`guidance`, and every named `check:_`/`validate:_`/`test:_`/`ds:_`script and test file exists. Index coverage in`docs/README.md` is a warning only | pre-commit, CI, Cursor stop | none |
 | `pnpm check:docs-affected:strict` | Changed code that matches a rule in `scripts/doc-map.mjs` must touch that rule's docs (non-whitespace change) | commit-msg, CI | `docs:allow-affect — <reason>` (see below) |
 | `pnpm check:effect-edges:strict` | `Effect.runPromise` / `runSync` only on allowlisted edges; `tryPromise`/`try` must use `{ try, catch }`; no production `throw new DomainError` | pre-commit, CI | none |
@@ -19,6 +19,7 @@ Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthoo
 | `pnpm check:vendor` | `packages/ui` generated primitives match `vendor.json` (never hand-edit), and the shadcn CLI version recorded there equals the one `scripts/ui-vendor.mjs` pins | pre-commit, CI | none |
 | `pnpm check:design-tokens` | `DESIGN.md` front-matter colors match `wd-tokens.css` / `wd-dark.css` | pre-commit | none |
 | `pnpm check:action-pins` | Every third-party action in `.github/workflows/*.{yml,yaml}` is pinned to a 40-char SHA with a version comment ([Pinning](#pinning-and-ci-permissions)) | pre-commit, CI | none |
+| `pnpm check:codeowners` | Every `.github/CODEOWNERS` pattern matches a tracked file, every rule has an owner, and owners are `@user`, `@org/team` or an email. Runs in CI on every change because renaming or deleting a file can orphan a pattern | pre-commit (when CODEOWNERS or the gate changes), CI | none |
 | `pnpm validate:agents` | Agent Skills ([Skills gate](#skills-gate)) | pre-commit (`--staged`), CI (`--range`), Cursor stop | none; staleness is a warning |
 | `pnpm --filter @watchdog/web ds:check` | Web design-system bans (inventory: [`ui/rules.md`](../reference/web/ui/rules.md)) | pre-push, CI | none |
 | `pnpm test:gate` | The gate tests below | part of `pnpm test`; pre-push when `scripts/**` changes | none |
@@ -69,9 +70,22 @@ The fixture strips `CI`, `GITHUB_*`, `DOCS_AFFECT_*` and `GIT_*` from the enviro
 
 Workflow: `.github/workflows/ci.yml`. PRs skip heavy jobs when path filters show docs-only; push to `main` runs full CI. After File detection, three run in parallel: **Gates** (the table above, plus knip, the site build when `apps/site/**` changes, cap/client drift and db repos), **Unit** (`pnpm test:coverage`; Codecov upload is non-blocking) and **Integration + e2e** (Postgres + S3). Advisory (React Doctor / Desloppify via `pnpm desloppify:scan:ci`) runs separately and does not block. The aggregator job **Check** is the required status (it treats skipped siblings as OK). Dependabot ([`.github/dependabot.yml`](../../.github/dependabot.yml)) updates npm/pnpm, GitHub Actions, docker-compose and Nix weekly on Mondays, grouped minor/patch.
 
-## Cursor stop hook
+## Repo meta
 
-`.cursor/hooks/stop-gate.mjs` lint-checks changed files, runs `ds:ban` when web UI paths are dirty, `check-agents.mjs --strict` when `AGENTS.md` is dirty, `check-docs.mjs --strict --fail-length` when `docs/**` is dirty, and `validate-agents.mjs` when `.agents/skills/**` or `.cursor/README.md` are dirty. Fix violations before ending the turn.
+Files GitHub reads from the repository, kept under `.github/` unless noted:
+
+- `.github/CODEOWNERS`: default owner plus agent configuration, CI, gate scripts and workspace config; kept honest by `check:codeowners`.
+- `.github/ISSUE_TEMPLATE/`: bug report and feature request forms (the feature form uses the spec headings agents write) and `config.yml`, which disables blank issues and links the security policy. Not gated: a form schema error hides a template silently, so parse new forms with the `yaml` package.
+- `.github/PULL_REQUEST_TEMPLATE.md`: linked issue, gates run, docs affected and the custody checklist.
+- [`SECURITY.md`](../../SECURITY.md) (repo root): supported versions and private vulnerability reporting.
+
+## Stop hook (Cursor and Claude Code)
+
+One script, `.cursor/hooks/stop-gate.mjs`, serves both harnesses through a small adapter: Cursor registers it in `.cursor/hooks.json` with `--client=cursor` (payload `status`, `loop_count`; answers `followup_message`; `loop_limit: 2`), and Claude Code registers it in `.claude/settings.json` (`hooks.Stop`) with `--client=claude` (payload `stop_hook_active`; answers `{"decision":"block","reason":...}`; a second pass with `stop_hook_active: true` is allowed to stop). Both run through `.cursor/hooks/run-node.sh` with a 60 s timeout, and without the flag the script sniffs the payload. `.claude/settings.json` also keeps commit and PR attribution off (`attribution.commit` and `attribution.pr` set to empty strings). A structural test in `hook-policy.gate.test.ts` pins both facts.
+
+In a Claude Code session started in a worktree, `$CLAUDE_PROJECT_DIR` stays at the directory the session started in, so the hook runs that checkout's gate against that checkout's changes.
+
+The gate lint-checks changed files, runs `ds:ban` when web UI paths are dirty, `check-agents.mjs --strict` when `AGENTS.md` is dirty, `check-docs.mjs --strict --fail-length` when `docs/**` is dirty, and `validate-agents.mjs` when `.agents/skills/**` or `.cursor/README.md` are dirty. Fix violations before ending the turn.
 
 ## Gotchas
 

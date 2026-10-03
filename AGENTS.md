@@ -53,6 +53,48 @@ Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.
 
 Ingress: Collect → Evidence · Caps → artifacts + Proposal · Triage Accept → Graph · Dossier = human Graph edit. Accept tiers and breach caveats: [`custody`](docs/reference/contracts/custody.md).
 
+## House rules
+
+The rules agents break most. The full set, with enforcers, is the [conventions table](docs/reference/platform/conventions.md); the graph-write, nested-`AGENTS.md` and test-isolation rules are above.
+
+- Reuse before you write: check [Canonical helpers](#canonical-helpers) for an existing util, constant or predicate. A second copy is the most common AI-authored defect. Guidance; the table's entries are verified by `check:agents:strict`.
+- A server-side failure is `InternalError` (500, fixed message), never `InvalidError`, which is only for caller input. The mapping is tested in `packages/api/src/__tests__/map-domain-error.test.ts`; choosing the right error is guidance.
+- Never silence a test type error with a cast or `@ts-expect-error`; fix the types. Guidance (`pnpm typecheck` covers tests).
+- Tracked `src` files stay at most 600 lines: `check:size`.
+- Code mapped in `scripts/doc-map.mjs` changes with its doc: `check:docs-affected:strict`.
+
+## Gotchas
+
+- `pnpm test` runs unit, property and gate projects; the gate tests (`scripts/__tests__/*.gate.test.ts`) spawn real scripts in throwaway git repos. `pnpm typecheck` also typechecks tests, `scripts/` and `e2e/`, then runs the test-coverage guard: a new test file missing from its `tsconfig.test.json` fails.
+- `docs-affect` runs at **commit-msg**, not pre-commit. When no mapped doc applies, put `docs:allow-affect — <reason>` in that commit's own message.
+- The formatter ignores `GLOSSARY.md`, `.agents/`, `.cursor/` and `.claude/`: `ultracite` run on only those files exits 2 (the pre-commit hook excludes them). Lint `.mjs` and `e2e/` with `pnpm check`: `ultracite <path>` on them loses type context and reports false `no-unsafe-*` errors.
+- `pnpm knip` loads the Drizzle config, so it needs `DATABASE_URL` set (any value). It ignores `.claude/worktrees/`.
+
+## Canonical helpers
+
+Verified by `check:agents:strict`: each module exists and exports the name. Add a row when a helper lands.
+
+| Concern | Module | Export |
+| --- | --- | --- |
+| DB call into the domain error channel | `packages/core/src/infra/postgres-effect.ts` | `tryDb` |
+| Cap HTTP user agent (never hard-code one) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |
+| Web failure copy | `apps/web/src/lib/utils.ts` | `errMessage`, `serverFailureMessage`, `isServerFailure` |
+| Class merging | `apps/web/src/lib/utils.ts` | `cn` |
+| Slugs | `apps/web/src/lib/utils.ts` | `slugifyName`, `nextAutoSlug` |
+| Opaque id text | `apps/web/src/shared/ui/format-opaque-id.ts` | `formatOpaqueId` |
+| Opaque id chip | `apps/web/src/shared/ui/id-chip.tsx` | `IdChip` |
+| Query invalidation after mutation or SSE | `apps/web/src/shared/lib/query-invalidation.ts` | `invalidateAfterEntityChanged`, `bindCasesChangedInvalidation` |
+| Hotkey registry and mod-key label | `apps/web/src/shared/lib/hotkeys.ts` | `HOTKEYS`, `modKeyLabel` |
+| Mod-key label in components | `apps/web/src/shared/hooks/use-mod-key-label.ts` | `useModKeyLabel` |
+| Search minimum query length | `packages/schemas/src/search.ts` | `SEARCH_MIN_QUERY_LENGTH` |
+| Accept gate | `apps/web/src/domains/triage/lib/accept-gate.ts` | `acceptGate` |
+| Confirmed requires evidence | `apps/web/src/shared/lib/confirmed-evidence.ts` | `isConfirmedBlocked` |
+| Active-Case switch | `apps/web/src/shared/lib/use-select-active-case.ts` | `useSelectActiveCase` |
+| Case in caller's org (guard) | `packages/core/src/graph/patch/guards.ts` | `assertCaseInOrgEffect` |
+| Case ids visible to an org | `packages/core/src/cases/cases.ts` | `listVisibleCaseIdsEffect` |
+| Age a seeded Job in tests | `packages/test-db/src/db/seed/job.ts` | `backdateJob` |
+| Gate-script test repo | `scripts/__tests__/helpers/gate-repo.ts` | `gateRepoFactory` |
+
 ## Where to look
 
 [`docs/README.md`](docs/README.md) (platform) · [`docs/reference/web/README.md`](docs/reference/web/README.md) (UI, Query, domains) · [`caps-lexicon`](docs/reference/platform/caps-lexicon.md) (Caps, playbooks) · [`ROADMAP.md`](ROADMAP.md) · [`README.md`](README.md) (run the app).

@@ -111,6 +111,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Never set `updatedAt` by hand; migrations keep `drizzle/meta` in sync with `_journal.json` | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
 | Case lookup defaults to `getById(exec, id, organizationId)`; `getByIdUnchecked` only for worker and export | db, core | `packages/db/AGENTS.md` Gotchas | guidance | guidance |
 | Normalize display fields (trim, slugify, `InvalidError`) in services before repo writes | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
+| The local-only `watchdog_readonly` role has SELECT on `public` and `auth` and nothing else; credential tables (`auth.account`, `auth.apikey`, `auth.session`, `auth.verification`, `auth.invitation`, `public.credentials`) are revoked | db | `docs/how-to/local-dev.md` Read-only database role | `packages/db/src/__tests__/readonly-role.int.test.ts` | enforced |
 
 ## Caps
 
@@ -152,7 +153,9 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Every gate wired into a hook or CI has a `*.gate.test.ts` with a must-fail case | scripts | `docs/contributing/ci-gates.md` Gate tests | `scripts/__tests__/gate-coverage.gate.test.ts` | enforced |
 | Every hook blocks or is deleted; none runs a gate in a mode that always exits 0 | repo | `docs/contributing/ci-gates.md` Hook policy | `scripts/__tests__/hook-policy.gate.test.ts` | enforced |
 | Third-party actions are pinned to a 40-char SHA with a version comment | repo | `docs/contributing/ci-gates.md` Pinning | `check:action-pins` | enforced |
+| CODEOWNERS paths resolve and every owned path has an owner | repo | `.github/CODEOWNERS` | `check:codeowners` | enforced |
 | Code mapped in `scripts/doc-map.mjs` changes with its doc (or `docs:allow-affect - reason`) | repo | `docs/contributing/ci-gates.md` Doc-affect escape hatch | `check:docs-affected:strict` | enforced |
+| Claude Code project settings keep commit and PR attribution off and register only the shared Stop hook | repo | `docs/contributing/ci-gates.md` Stop hook | `scripts/__tests__/hook-policy.gate.test.ts` | enforced |
 | Local skipping goes through `lefthook-local.yml`; `--no-verify` is not an escape hatch | repo | `docs/contributing/ci-gates.md` Gates | guidance | guidance |
 | Vitest projects share workers (`isolate:false`): tests restore `process.env`, `globalThis`, timers and DOM | repo | `docs/contributing/testing/standards.md` Test speed | guidance | guidance |
 | Test naming and shape: `describe(subject)` + `it("rejects X when Y")`, AAA, one behavior, no bare `test()`, no `sleep` | repo | `docs/contributing/testing/standards.md` AAA, one behavior | guidance | guidance |
@@ -168,7 +171,9 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | --- | --- | --- | --- | --- |
 | Docs links and anchors resolve; leaf files stay at most 600 lines | docs | `docs/contributing/ci-gates.md` Gates | `check:docs:strict` | enforced |
 | Every convention row names an enforcer and a valid status (this table) | docs | `docs/reference/platform/conventions.md` | `check:docs:strict` | enforced |
+| Dev MCP config (`.mcp.json`): Postgres connects as the read-only role, MCP packages are pinned to exact versions, no literal credentials | repo | `docs/how-to/local-dev.md` Agent MCP servers | `scripts/__tests__/mcp-config.gate.test.ts` | enforced |
 | Every doc leaf is listed in `docs/README.md` (warning only) | docs | `docs/contributing/ci-gates.md` Gates | `check:docs` | baselined |
 | `AGENTS.md` hygiene: present in every app and package, size budget, Scope + Commands sections, links, `CLAUDE.md` bridge | agents | `docs/contributing/ci-gates.md` Gates | `check:agents:strict` | enforced |
+| Every row of an `AGENTS.md` `Canonical helpers` table still resolves: the module exists and exports the helper (an `export *` does not count) | agents | `AGENTS.md` Canonical helpers | `check:agents:strict` (`scripts/__tests__/check-agents.gate.test.ts`) | enforced |
 | Agent skills have valid frontmatter; vendored skills match the lock hash | agents | `docs/contributing/ci-gates.md` Skills gate | `validate:agents` | enforced |
 | Read the nested `AGENTS.md` before editing its tree | agents | `AGENTS.md` Nested AGENTS.md | guidance | guidance |

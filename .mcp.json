@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@yawlabs/postgres-mcp@0.13.7"],
+      "env": {
+        "DATABASE_URL": "${WATCHDOG_MCP_DATABASE_URL:-postgresql://watchdog_readonly:watchdog_readonly@127.0.0.1:5432/watchdog}",
+        "npm_config_ignore_scripts": "true"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.83",
+        "--headless",
+        "--isolated",
+        "--browser=chromium",
+        "--allowed-origins=http://127.0.0.1:3000;http://localhost:3000"
+      ],
+      "env": {
+        "npm_config_ignore_scripts": "true"
+      }
+    }
+  }
+}

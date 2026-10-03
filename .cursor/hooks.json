@@ -3,7 +3,7 @@
   "hooks": {
     "stop": [
       {
-        "command": ".cursor/hooks/run-node.sh .cursor/hooks/stop-gate.mjs",
+        "command": ".cursor/hooks/run-node.sh .cursor/hooks/stop-gate.mjs --client=cursor",
         "timeout": 60,
         "loop_limit": 2
       }

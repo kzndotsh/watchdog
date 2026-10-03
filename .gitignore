@@ -14,6 +14,10 @@
 !.cursor/hooks/**
 !.cursor/hooks.json
 !.cursor/README.md
+# .claude/ keeps the shared settings.json and the skills symlink tracked;
+# per-user overrides and agent worktrees stay local.
+.claude/settings.local.json
+.claude/worktrees/
 _legacy-v2/
 .desloppify/
 node_modules/

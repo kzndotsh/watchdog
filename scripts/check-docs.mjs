@@ -429,7 +429,13 @@ async function main() {
     )
   );
 
-  const rootMd = ["README.md", "ROADMAP.md", "CLAUDE.md", "GLOSSARY.md"]
+  const rootMd = [
+    "README.md",
+    "ROADMAP.md",
+    "CLAUDE.md",
+    "GLOSSARY.md",
+    "SECURITY.md",
+  ]
     .map((n) => path.join(root, n))
     .filter((p) => existsSync(p));
   await Promise.all(

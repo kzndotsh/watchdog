@@ -5,6 +5,14 @@
  * just touched, via local binaries (no `pnpm` shell resolution), so the
  * fix -> rerun loop stays sub-second. Replaces the retired ds-ban-stop.mjs,
  * which duplicated pre-push's full `tsc` run.
+ *
+ * One gate, two harnesses. A thin adapter layer normalizes each tool's stop
+ * payload into one internal shape and renders the findings in the tool's own
+ * response shape:
+ *   - Cursor (`status`, `loop_count`)    -> `{ followup_message }`
+ *   - Claude Code (`stop_hook_active`)   -> `{ decision: "block", reason }`
+ * The harness is chosen by `--client=cursor|claude` (set in each tool's hook
+ * config) and falls back to sniffing the payload.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -23,6 +31,56 @@ const oxlintBin = path.join(root, "node_modules/.bin/oxlint");
 function respond(obj) {
   process.stdout.write(JSON.stringify(obj));
   process.exit(0);
+}
+
+/** Cursor re-prompts at most this many times (`loop_limit` in hooks.json). */
+const CURSOR_LOOP_LIMIT = 2;
+
+/**
+ * @param {Record<string, unknown>} input
+ * @returns {"cursor" | "claude"}
+ */
+function detectClient(input) {
+  const flag = process.argv.find((a) => a.startsWith("--client="));
+  const named = flag?.slice("--client=".length);
+  if (named === "cursor" || named === "claude") return named;
+  return "stop_hook_active" in input || input.hook_event_name === "Stop"
+    ? "claude"
+    : "cursor";
+}
+
+/**
+ * Input adapter: either tool's stop payload -> one internal shape. Read
+ * defensively: unknown or missing fields mean "run the gate".
+ * @param {Record<string, unknown>} input
+ * @param {"cursor" | "claude"} client
+ * @returns {{ allowStop: boolean }}
+ */
+function normalizeInput(input, client) {
+  if (client === "claude") {
+    // `stop_hook_active` means Claude Code is already continuing because of a
+    // stop hook: allow the stop on that second pass (Cursor's loop limit is 2).
+    return { allowStop: input.stop_hook_active === true };
+  }
+  const loops = typeof input.loop_count === "number" ? input.loop_count : 0;
+  return {
+    allowStop:
+      input.status === "aborted" ||
+      input.status === "error" ||
+      loops >= CURSOR_LOOP_LIMIT,
+  };
+}
+
+/**
+ * Output adapter: findings text -> the tool's response object.
+ * @param {"cursor" | "claude"} client
+ * @param {string} message empty when the gate found nothing
+ */
+function render(client, message) {
+  if (!message) return {};
+  return client === "claude"
+    ? { decision: "block", reason: message }
+    : { followup_message: message };
 }
 
 function readInput() {
@@ -62,8 +120,8 @@ function changedFiles() {
 
 function main() {
   const input = readInput();
-  if (input.status === "aborted" || input.status === "error") respond({});
-  if ((input.loop_count ?? 0) >= 2) respond({});
+  const client = detectClient(input);
+  if (normalizeInput(input, client).allowStop) respond({});
 
   const files = changedFiles();
   if (files.length === 0) respond({});
@@ -80,10 +138,17 @@ function main() {
     // breaks tsconfig resolution and floods output with bogus "error typed
     // value" findings. Run repo-wide (oxlint alone is sub-10s here even
     // cold), then keep only the lines that touch files this turn changed.
-    const lint = spawnSync(oxlintBin, ["-c", "oxlint.config.ts", "."], {
-      cwd: root,
-      encoding: "utf8",
-    });
+    // Explicit `unix` format (one `file:line:col: message` per line): oxlint only
+    // switches to it by itself when it detects an AI agent in the environment,
+    // so without the flag the filter below sees nothing in a plain shell or CI.
+    const lint = spawnSync(
+      oxlintBin,
+      ["--format=unix", "-c", "oxlint.config.ts", "."],
+      {
+        cwd: root,
+        encoding: "utf8",
+      }
+    );
     const relevant = (lint.stdout ?? "")
       .split("\n")
       .filter((line) => lintable.has(line.split(":")[0] ?? ""));
@@ -192,15 +257,14 @@ function main() {
   // dirty, and the usual fix (`docs:allow-affect` in the commit message) is
   // not something the agent can apply mid-turn.
 
-  if (parts.length === 0) respond({});
-  respond({ followup_message: parts.join("\n") });
+  respond(render(client, parts.join("\n")));
 }
 
 /**
  * Fail-open is deliberate and documented (docs/contributing/ci-gates.md): a hook
  * must never block the agent because the hook itself broke (git unreadable, bad
  * input). Real gate failures are not swallowed here: each gate's non-zero exit is
- * reported through `followup_message` inside main(). Only an internal error lands
+ * reported through the client's block response inside main(). Only an internal error lands
  * in this catch, and it is announced on stderr instead of vanishing.
  */
 try {
