@@ -68,6 +68,7 @@ vi.mock("@/shared/layout/page", () => ({
   ),
 }));
 
+import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { Route } from "@/routes/_protected/cases/$caseSlug";
 
 const CASE_ID = testId(10);
@@ -139,7 +140,9 @@ describe("case slug route", () => {
       description: null,
       allowThirdPartyEgress: false,
     };
-    const query = vi.fn().mockResolvedValueOnce(caseRow);
+    const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
+      options.queryKey[1] === "context" ? { cases: [], active: null } : caseRow
+    );
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
@@ -173,8 +176,18 @@ describe("case slug route", () => {
       allowThirdPartyEgress: false,
     };
 
-    function runLoader(extra: Record<string, unknown> = {}) {
-      const query = vi.fn().mockResolvedValueOnce(caseRow);
+    const OTHER_ID = testId(11);
+
+    /** `activeId` is the Active Case the cases-context cache holds (what the loader observes). */
+    function runLoader(
+      extra: Record<string, unknown> = {},
+      activeId: string | null = OTHER_ID
+    ) {
+      const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
+        options.queryKey[1] === "context"
+          ? { cases: [], active: activeId ? { id: activeId } : null }
+          : caseRow
+      );
       const queryClient = {
         query,
         invalidateQueries: vi.fn().mockResolvedValue(undefined),
@@ -194,24 +207,82 @@ describe("case slug route", () => {
       };
     }
 
-    it("asks the server to heal the Active Case to the route's Case", async () => {
+    it("asks the server to heal, carrying the Active Case the loader observed", async () => {
+      healActiveCaseFn.mockClear();
       healActiveCaseFn.mockResolvedValueOnce({ changed: true });
       const { result, queryClient } = runLoader();
 
       await expect(result).resolves.toEqual(caseRow);
 
       expect(healActiveCaseFn).toHaveBeenCalledWith({
-        data: { caseId: CASE_ID },
+        data: { caseId: CASE_ID, expectedActiveCaseId: OTHER_ID },
       });
       expect(queryClient.invalidateQueries).toHaveBeenCalled();
     });
 
-    it("leaves the caches alone when the route's Case was already Active", async () => {
+    it("sends null as the expected Active Case when none was observed", async () => {
+      healActiveCaseFn.mockClear();
+      healActiveCaseFn.mockResolvedValueOnce({ changed: true });
+      const { result } = runLoader({}, null);
+
+      await result;
+
+      expect(healActiveCaseFn).toHaveBeenCalledWith({
+        data: { caseId: CASE_ID, expectedActiveCaseId: null },
+      });
+    });
+
+    it("skips the server call when the route's Case is already the observed Active Case", async () => {
+      healActiveCaseFn.mockClear();
+      const { result, queryClient } = runLoader({}, CASE_ID);
+
+      await result;
+
+      expect(healActiveCaseFn).not.toHaveBeenCalled();
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it("leaves the caches alone when the server did not change the cookie", async () => {
       healActiveCaseFn.mockResolvedValueOnce({ changed: false });
       const { result, queryClient } = runLoader();
 
       await result;
 
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it("does not finalize or invalidate when a newer switch bumped the epoch during the heal", async () => {
+      let release: (value: { changed: boolean }) => void = () => {};
+      healActiveCaseFn.mockImplementationOnce(
+        () =>
+          new Promise<{ changed: boolean }>((resolve) => {
+            release = resolve;
+          })
+      );
+      const { result, queryClient } = runLoader();
+      await vi.waitFor(() => {
+        expect(healActiveCaseFn).toHaveBeenCalled();
+      });
+
+      // The user switched Case via useSelectActiveCase.
+      bumpActiveCaseHealEpoch();
+      release({ changed: true });
+      await result;
+
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+      expect(queryClient.setQueryData).not.toHaveBeenCalledWith(
+        ["cases", "context"],
+        expect.anything()
+      );
+    });
+
+    it("does not call the server when a switch already bumped the epoch before the heal", async () => {
+      healActiveCaseFn.mockClear();
+      const { result, queryClient } = runLoader();
+      bumpActiveCaseHealEpoch();
+      await result;
+
+      expect(healActiveCaseFn).not.toHaveBeenCalled();
       expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     });
 
