@@ -2,6 +2,8 @@
 
 Agents: start at root [`AGENTS.md`](../AGENTS.md), then open the leaf that matches the question. One tree under `docs/`; platform, web and contracts are namespaces under `reference/`. Design direction and taste rules live in [`DESIGN.md`](../DESIGN.md) at the repo root. `.cursor/plans/` are historical: durable contracts live here, not in plans.
 
+Policy: every stated convention is enforced by a lint rule or gate, labeled guidance, or deleted; the one table is [`reference/platform/conventions.md`](reference/platform/conventions.md).
+
 Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced by `pnpm check:docs-affected:strict` ([`contributing/ci-gates.md`](contributing/ci-gates.md)).
 
 ## Start by role
@@ -41,6 +43,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`reference/platform/caps-boundary.md`](reference/platform/caps-boundary.md) | Cap SPI, credentials, Intake, Export |
 | [`reference/platform/caps-lexicon.md`](reference/platform/caps-lexicon.md) | Cap ids, D1-D5, ship gates, playbooks |
 | [`reference/platform/types.md`](reference/platform/types.md) | Schema / vocab ownership, Zod rules |
+| [`reference/platform/conventions.md`](reference/platform/conventions.md) | Every convention, what enforces it, or `guidance` |
 
 ## Reference: web
 
