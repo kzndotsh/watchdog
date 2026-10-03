@@ -84,4 +84,33 @@ describe("check-repo-rules gate (packages/db)", () => {
     expect(res.code).toBe(1);
     expect(res.output).toContain("lookup-only");
   });
+
+  it("fails a repo that declares a local job status set literal", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    return inArray(jobs.status, ["queued", "running"]);',
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+    expect(res.output).toContain("@watchdog/schemas");
+    expect(res.output).toContain("thing.repo.ts:3");
+  });
+
+  it("passes a repo that uses one status literal or the vocabulary sets", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    exec.update(jobs).set({ status: "cancelled" });',
+      "    return inArray(jobs.status, [...OPEN_JOB_STATUSES]);",
+      "  },",
+      '  async other(exec: DbExec) { return ["queued", "unrelated"]; },',
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(0);
+  });
 });

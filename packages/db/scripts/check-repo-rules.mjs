@@ -45,6 +45,11 @@ const TRIM_ALLOWLIST = new Set([
 
 const TRIM_RE = /\btrimmedOr(?:Null|Undefined)\s*\(/;
 
+/** Job statuses (mirrors JOB_STATUSES in @watchdog/schemas vocab). */
+const JOB_STATUS_LITERAL =
+  /["'](queued|running|blocked|succeeded|failed|cancelled)["']/g;
+const ARRAY_LITERAL = /\[[^[\]]*\]/g;
+
 /** Every repo takes the pool-or-transaction handle as its first parameter. */
 const METHOD = /^ {2}async (\w+)\((.*)$/;
 const FIRST_PARAM = /^\s*(\w+)\s*:/;
@@ -117,6 +122,28 @@ for (const [fileIndex, file] of files.entries()) {
         line
       );
     }
+  }
+}
+
+// A repo defines no job status set: array literals of two or more job
+// statuses belong in the vocabulary (OPEN_/CANCELLABLE_/LIVE_/TERMINAL_JOB_STATUSES).
+for (const [fileIndex, file] of files.entries()) {
+  const text = fileTexts[fileIndex]
+    .split("\n")
+    .map((l) => (/^\s*(\/\/|\*|\/\*)/.test(l) ? "" : l))
+    .join("\n");
+  for (const m of text.matchAll(ARRAY_LITERAL)) {
+    const found = new Set(
+      [...m[0].matchAll(JOB_STATUS_LITERAL)].map((x) => x[1])
+    );
+    if (found.size < 2) continue;
+    const lineNo = text.slice(0, m.index).split("\n").length;
+    fail(
+      file,
+      lineNo,
+      "job status set literal: repos define no status sets — use the named sets and predicates from @watchdog/schemas vocab (OPEN_JOB_STATUSES, CANCELLABLE_JOB_STATUSES, LIVE_JOB_STATUSES, TERMINAL_JOB_STATUSES)",
+      m[0].split("\n")[0]
+    );
   }
 }
 
