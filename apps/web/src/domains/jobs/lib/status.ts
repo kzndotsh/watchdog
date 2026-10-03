@@ -1,9 +1,11 @@
 import type { JobListRecord } from "@/domains/jobs/types";
 import { capabilityLabel, playbookLabel, statusLabel } from "@/shared/ui/vocab";
 import {
-  JOB_STATUSES,
+  CANCELLABLE_JOB_STATUSES,
+  LIVE_JOB_STATUSES,
   PLAYBOOK_AGGREGATE_STATUS_PRIORITY,
   catalogIdMatchesSearch,
+  isLiveJobStatus,
   isOpenJobStatus,
   summarizeJobInput,
   type JobStatus,
@@ -41,18 +43,10 @@ export const EMPTY_JOB_FILTERS: JobQueueFilters = {
 
 // ─── status meta ─────────────────────────────────────────────────────────────
 
-export const CANCELABLE = new Set<JobStatus>(
-  JOB_STATUSES.filter(
-    (s) => s === "queued" || s === "running" || s === "blocked"
-  )
-);
-export const LIVE_STATUSES = new Set<JobStatus>(
-  JOB_STATUSES.filter((s) => s === "queued" || s === "running")
-);
+export const CANCELABLE = new Set<JobStatus>(CANCELLABLE_JOB_STATUSES);
+export const LIVE_STATUSES = new Set<JobStatus>(LIVE_JOB_STATUSES);
 
-export function isLive(status: JobStatus): boolean {
-  return LIVE_STATUSES.has(status);
-}
+export const isLive = isLiveJobStatus;
 
 // ─── display helpers ─────────────────────────────────────────────────────────
 

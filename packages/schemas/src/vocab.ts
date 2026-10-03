@@ -400,8 +400,11 @@ export type TerminalJobStatus = (typeof TERMINAL_JOB_STATUSES)[number];
  * finished job cannot be cancelled, an in-flight or waiting one can). Kept as
  * its own name so a future split (e.g. a non-cancellable running state) edits
  * one place; do not fork a local list.
+ *
+ * @alias
  */
-export const CANCELLABLE_JOB_STATUSES = OPEN_JOB_STATUSES;
+export const CANCELLABLE_JOB_STATUSES: readonly OpenJobStatus[] =
+  OPEN_JOB_STATUSES;
 
 /**
  * Open jobs that are not waiting: a worker may claim or resume them

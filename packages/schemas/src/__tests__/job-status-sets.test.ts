@@ -12,7 +12,7 @@ import {
   isTerminalJobStatus,
 } from "../vocab.ts";
 
-const sorted = (xs: readonly string[]) => [...xs].toSorted();
+const sorted = (xs: readonly string[]) => [...xs].sort();
 
 describe("job status sets", () => {
   it("names the exact members", () => {
