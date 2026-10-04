@@ -1,6 +1,6 @@
 # ADR-0002: Infrastructure moves to Effect services and Layers, in phases
 
-**Status:** accepted (2026-10-04) · closes [#46](https://github.com/kzndotsh/watchdog/issues/46) **What this is:** how core and the apps obtain the database, blob store, job queue and vault; why plain module functions are being replaced; the order of the migration; and what stays as it is. **What this is not:** the migration itself (tickets) or the error taxonomy ([#57](https://github.com/kzndotsh/watchdog/issues/57)).
+**Status:** accepted (2026-10-04); phase 2 started (`Db` service, #126) · closes [#46](https://github.com/kzndotsh/watchdog/issues/46) **What this is:** how core and the apps obtain the database, blob store, job queue and vault; why plain module functions are being replaced; the order of the migration; and what stays as it is. **What this is not:** the migration itself (tickets) or the error taxonomy ([#57](https://github.com/kzndotsh/watchdog/issues/57)).
 
 ## Context
 

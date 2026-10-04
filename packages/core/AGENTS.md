@@ -14,7 +14,7 @@ Domain services for Case Graph, Jobs, Evidence, Tasks (case work items, not Grap
 
 ## Import paths
 
-Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (tagged errors), `events` (notify + SSE listen), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`tryDb`, `transact`, `runDomain`), `jobs`, `proposals`, `search`, `tasks`, `vault`. Also `blob`, `job-display`, `proposal-display` and `worker`. Each domain is `src/<domain>/index.ts`; there is no root import or `src/index.ts`. New domain: add the folder index and the `exports` entry in one change. `pnpm check:boundaries` fails an import path missing from `exports`.
+Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (tagged errors), `events` (notify + SSE listen), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`Db`, `tryDb`, `tryDbWith`, `transact`, `runDomain`, `runDomainWith`), `jobs`, `proposals`, `search`, `tasks`, `vault`. Also `blob`, `job-display`, `proposal-display` and `worker`. Each domain is `src/<domain>/index.ts`; there is no root import or `src/index.ts`. New domain: add the folder index and the `exports` entry in one change. `pnpm check:boundaries` fails an import path missing from `exports`.
 
 ## Rules
 
@@ -31,6 +31,22 @@ Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` wher
 | `InvalidError` is caller-fixable input (400). A write that returns no row is `InternalError`; an update/delete of a caller-supplied id matching nothing is `NotFoundError({ entity, id })`; its message is derived from `entity` in the class, never hand-written | `map-domain-error.test.ts`; no lint |
 | Case children are org-scoped: API/actor Effects take `organizationId` and gate with `assertCaseInOrgEffect` (foreign or missing Case is `not_found`). Worker/export paths that already trust a Case id use `assertCaseExistsUncheckedEffect` / `casesRepo.getByIdUnchecked`: never widen that to HTTP handlers | `org-isolation.int.test.ts` (hand-enumerated) |
 | Inside a TX, pass `tx` into the `assert*InCase` helpers; never assert on the global pool while writing on `tx` | guidance |
+
+## `Db` service pattern (ADR-0002 phase 2)
+
+`Db` (`infra/db-service.ts`) is a `Context.Service` whose value is a `DbExec`; `Db.layer` is the live Layer over `@watchdog/db`'s `db`. New and touched code reads the client from it; unmigrated code keeps the module `db` until its ticket. Reference: `listCasesEffect` (`cases/cases.ts`, test `cases-db-layer.int.test.ts`).
+
+```ts
+// before: R = never, module-global db
+tryDb(() => casesRepo.list(db, organizationId));
+// after: R = Db; same error mapping (unique violations, tagged passthrough)
+tryDbWith((exec) => casesRepo.list(exec, organizationId));
+```
+
+- Add `Db` to the function's declared return type (`Effect.Effect<A, DomainTag, Db>`, `import type { Db } from "../infra/db-service"`) and drop the `db` import once no site uses it. Callers that are themselves migrated propagate `Db`; `runDomain` / `runApp` accept `R = Db` and provide `Db.layer`.
+- Inside `transact((tx) => ...)` keep the explicit handle: `tryDb(() => repo.x(tx, ...))`. `transact` still uses the global `db.transaction` (it does not read the service yet).
+- Tests: `runDomainWith(TestDbLayer)(effect)` (`@watchdog/test-db`; `testDbLayerOf(exec)` for a `tx` or a spying `Proxy`), or `runDomainWith(Layer.succeed(Db, stub))`. Unit tests that `vi.mock("@watchdog/db")` keep working for unmigrated code; migrated code is tested through the Layer instead. `runDomain(effect)` still works for integration tests.
+- Worker: `main.ts` provides `Db.layer` next to `JobFibers.layer` (`Db` is exported from `@watchdog/core/worker`).
 
 ## Gotchas
 
