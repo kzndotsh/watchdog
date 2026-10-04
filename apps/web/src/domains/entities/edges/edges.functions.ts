@@ -1,15 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import type {
+  CaseEdgeRecord,
+  EdgeRecord,
+} from "@/domains/entities/edges/types";
+import { orpcFromContext } from "@/lib/orpc.server";
 import {
   caseScopeInputSchema,
   createEdgeInputSchema,
   edgeScopeInputSchema,
   entityScopeInputSchema,
   updateEdgeInputSchema,
-  type CaseEdgeRecord,
-  type EdgeRecord,
-} from "@/domains/entities/edges/types";
-import { orpcFromContext } from "@/lib/orpc.server";
+} from "@watchdog/schemas";
 
 export type {
   CaseEdgeRecord,

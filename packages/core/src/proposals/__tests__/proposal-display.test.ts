@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { proposalEntityId, proposalEntityName } from "@watchdog/schemas";
+
 import {
   proposalActivityLabel,
-  proposalEntityId,
-  proposalEntityName,
   proposalSourceLabel,
 } from "../proposal-display";
 

@@ -10,7 +10,6 @@ import {
   failInvalidCapDeliveryEffect,
   gracefulStopTimeoutMs,
   isCapJobPayload,
-  isWatchdogEvent,
   listenForEventsStream,
   JobFibers,
   type JobFibersApi,
@@ -26,7 +25,7 @@ import {
   initWatchdogLogger,
   jobWideEventFields,
 } from "@watchdog/log";
-import { trimmedUuidSchema } from "@watchdog/schemas";
+import { isWatchdogEvent, trimmedUuidSchema } from "@watchdog/schemas";
 
 import { cancelPollLoopEffect } from "./cancel-poll";
 import {

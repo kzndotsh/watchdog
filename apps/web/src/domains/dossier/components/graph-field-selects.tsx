@@ -3,11 +3,11 @@ import {
   CONTROL_TRIGGER,
   resolveSelectValue,
 } from "@/shared/ui/control-chrome";
-import { CLAIM_CLASS_LABELS } from "@/shared/ui/vocab";
 import {
   CLAIM_CLASSES,
   trimmedClaimClassSchema,
   type ClaimClass,
+  CLAIM_CLASS_LABELS,
 } from "@watchdog/schemas";
 import {
   Select,

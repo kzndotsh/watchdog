@@ -1,11 +1,10 @@
 import { Effect } from "effect";
 
-import { fetchOtxLookupEffect } from "@watchdog/tools";
+import { fetchOtxLookupEffect, otxLookupSnapshotSchema } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { otxLookupInput } from "./input";
 import { interpretOtxLookupReport } from "./interpret";
-import { otxLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.otx.lookup; OSINT)";
 

@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 import {
-  cancelJobInputSchema,
-  cancelPlaybookInputSchema,
-  getJobInputSchema,
-  listJobsInputSchema,
+  type cancelJobInputSchema,
+  type cancelPlaybookInputSchema,
+  type getJobInputSchema,
+  type listJobsInputSchema,
+  type startJobInputSchema,
+  type startPlaybookInputSchema,
   sha256HexSchema,
-  startJobInputSchema,
-  startPlaybookInputSchema,
   trimmedUuidSchema,
   type JsonObject,
   type JsonValue,
@@ -59,16 +59,12 @@ export function inputFormProperties(
   return props;
 }
 
-export { listJobsInputSchema };
 export type ListJobsInput = z.output<typeof listJobsInputSchema>;
 
-export { getJobInputSchema };
 export type GetJobInput = z.output<typeof getJobInputSchema>;
 
-export { startJobInputSchema };
 export type StartJobInput = z.output<typeof startJobInputSchema>;
 
-export { cancelJobInputSchema };
 export type CancelJobInput = z.output<typeof cancelJobInputSchema>;
 
 /** PlaybookDescriptor wire shape from capabilities.listPlaybooks. */
@@ -85,10 +81,8 @@ export interface PlaybookListItem {
   };
 }
 
-export { startPlaybookInputSchema };
 export type StartPlaybookInput = z.output<typeof startPlaybookInputSchema>;
 
-export { cancelPlaybookInputSchema };
 export type CancelPlaybookInput = z.output<typeof cancelPlaybookInputSchema>;
 
 const artifactMimeSchema = z
@@ -115,5 +109,3 @@ export const getArtifactContentInputSchema = z.discriminatedUnion("source", [
 export type GetArtifactContentInput = z.output<
   typeof getArtifactContentInputSchema
 >;
-
-export type { JobListRecord, JobRecord } from "@watchdog/core";

@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { GravatarLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   EMAIL_IDENTIFIER_BATCH_LIMIT,
@@ -12,7 +14,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { gravatarLookupInput } from "./input";
-import type { GravatarLookupSnapshot } from "./report-schema";
 
 type GravatarInput = z.infer<typeof gravatarLookupInput>;
 

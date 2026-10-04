@@ -22,7 +22,6 @@ import {
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { jobsListQuery } from "@/domains/jobs/queries";
-import type { JobListRecord } from "@/domains/jobs/types";
 import { tasksListQuery } from "@/domains/tasks/queries";
 import type { TaskRecord } from "@/domains/tasks/types";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
@@ -48,7 +47,7 @@ import {
   DashboardActivityPanelSkeleton,
   DashboardOverviewSkeleton,
 } from "@/shared/ui/skeletons";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord, JobListRecord } from "@watchdog/core";
 import { isProposalQueueLiveEvent } from "@watchdog/schemas";
 import {
   ResizableHandle,

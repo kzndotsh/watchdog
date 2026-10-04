@@ -40,15 +40,9 @@ export {
   user,
   verification,
 } from "./schema/index";
-export type { JobArtifact, JobHandoff } from "./schema/index";
+export type { JobArtifact } from "./schema/index";
 export * from "./repos/index";
-export {
-  isWatchdogEvent,
-  notifyEvent,
-  listenForEvents,
-  WATCHDOG_CHANNEL,
-  type WatchdogEvent,
-} from "./events";
+export { notifyEvent, listenForEvents, WATCHDOG_CHANNEL } from "./events";
 export {
   listenForEventsStream,
   type ListenForEventsStreamOpts,

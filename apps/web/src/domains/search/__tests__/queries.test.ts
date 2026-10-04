@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { SEARCH_MIN_QUERY_LENGTH } from "@/domains/search/types";
+import {
+  SEARCH_MIN_QUERY_LENGTH,
+  type SearchCaseResult,
+} from "@watchdog/schemas";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/search/search.functions", () => ({
@@ -8,7 +11,6 @@ vi.mock("@/domains/search/search.functions", () => ({
 }));
 
 import { searchCaseQuery, searchKeys } from "@/domains/search/queries";
-import type { SearchCaseResult } from "@/domains/search/types";
 
 describe("search queries", () => {
   const caseId = testId(1);

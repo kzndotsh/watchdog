@@ -1,10 +1,7 @@
 import { Effect } from "effect";
 
-import {
-  scheduleCaseExportEffect,
-  type WatchdogEvent,
-} from "@watchdog/core/worker";
-import { parseTrimmedCaseId } from "@watchdog/schemas";
+import { scheduleCaseExportEffect } from "@watchdog/core/worker";
+import { parseTrimmedCaseId, type WatchdogEvent } from "@watchdog/schemas";
 
 /** Trim and validate a case id for export scheduling; null when not schedulable. */
 export function normalizeSchedulableCaseId(caseId: string): string | null {

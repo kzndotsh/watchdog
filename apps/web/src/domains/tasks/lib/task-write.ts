@@ -1,12 +1,12 @@
 import { dueDateToIso } from "@/domains/tasks/lib/due-date";
 import type { TaskFormValues } from "@/domains/tasks/lib/task-form";
 import {
-  createTaskInputSchema,
-  updateTaskInputSchema,
+  taskCreateInputSchema as createTaskInputSchema,
+  taskUpdateInputSchema as updateTaskInputSchema,
   type CreateTaskInput,
   type UpdateTaskInput,
-} from "@/domains/tasks/types";
-import type { TaskStatus } from "@watchdog/schemas";
+  type TaskStatus,
+} from "@watchdog/schemas";
 
 function taskPriorityFromForm(
   priority: TaskFormValues["priority"]

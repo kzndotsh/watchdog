@@ -20,12 +20,11 @@ import {
 import { runApp } from "@watchdog/api";
 import {
   assertCaseInOrgEffect,
-  isWatchdogEvent,
   listenForEvents,
   listVisibleCaseIdsEffect,
 } from "@watchdog/core";
 import { createLogger } from "@watchdog/log";
-import { parseSseCaseIdParam } from "@watchdog/schemas";
+import { isWatchdogEvent, parseSseCaseIdParam } from "@watchdog/schemas";
 
 /** Process log for a dropped live event; carries the error only, never Case or Evidence data. */
 function logVisibilityRefreshFailure(error: unknown): void {

@@ -4,12 +4,12 @@ import {
   closestWaybackTimestampEffect,
   fetchWaybackSnapshotEffect,
   ValidationVendorError,
+  waybackFetchSnapshotSchema,
 } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { waybackFetchInput } from "./input";
 import { interpretWaybackFetchReport } from "./interpret";
-import { waybackFetchSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+archive.wayback.fetch; OSINT)";
 

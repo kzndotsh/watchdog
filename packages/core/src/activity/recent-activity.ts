@@ -9,7 +9,7 @@ import {
   type RecentActivityEventRow,
   type RecentJobActivityRow,
 } from "@watchdog/db";
-import type { ActivityItem, ActivityKind, JobStatus } from "@watchdog/schemas";
+import type { ActivityItem, JobStatus } from "@watchdog/schemas";
 import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
@@ -30,8 +30,6 @@ import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 import { jobActivityLabel } from "../jobs/job-display";
 import { proposalActivityLabel } from "../proposals/proposal-display";
-
-export type { ActivityItem, ActivityKind };
 
 export interface ListRecentActivityOpts {
   organizationId: string;

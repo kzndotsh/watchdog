@@ -6,7 +6,7 @@ import { CollectDetail } from "@/domains/collect/components/collect-detail";
 import type { CollectRow } from "@/domains/collect/types";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord, JobRecord } from "@/domains/jobs/types";
+import type { JobListRecord, JobRecord } from "@watchdog/core";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({

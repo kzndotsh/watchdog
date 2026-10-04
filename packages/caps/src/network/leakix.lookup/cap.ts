@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchLeakixLookupEffect } from "@watchdog/tools";
+import {
+  fetchLeakixLookupEffect,
+  leakixLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { leakixLookupInput } from "./input";
 import { interpretLeakixLookupReport } from "./interpret";
-import { leakixLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.leakix.lookup; OSINT)";
 

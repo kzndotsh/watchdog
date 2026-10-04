@@ -6,12 +6,6 @@ import {
   proposalEntityName,
 } from "@watchdog/schemas";
 
-export {
-  proposalEntityId,
-  proposalEntityName,
-  proposalEntitySlug,
-} from "@watchdog/schemas";
-
 /** Playbook or capability label for a proposal (no summary / entity). */
 export function proposalSourceLabel(opts: {
   capabilityId: string | null;

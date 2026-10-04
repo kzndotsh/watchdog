@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { GithubUserSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   URL_IDENTIFIER_BATCH_LIMIT,
@@ -7,7 +9,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { githubLookupInput } from "./input";
-import type { GithubUserSnapshot } from "./report-schema";
 
 type GithubInput = z.infer<typeof githubLookupInput>;
 

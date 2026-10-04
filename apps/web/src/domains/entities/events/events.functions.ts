@@ -1,13 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import type { EventRecord } from "@/domains/entities/events/types";
+import { orpcFromContext } from "@/lib/orpc.server";
 import {
   createEventInputSchema,
   entityScopeInputSchema,
   eventScopeInputSchema,
   updateEventInputSchema,
-  type EventRecord,
-} from "@/domains/entities/events/types";
-import { orpcFromContext } from "@/lib/orpc.server";
+} from "@watchdog/schemas";
 
 export type { EventRecord } from "@/domains/entities/events/types";
 

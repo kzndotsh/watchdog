@@ -4,12 +4,12 @@ import type { ReactNode } from "react";
 import { isTaskDueOverdue } from "@/domains/tasks/lib/due-date";
 import type { TaskRecord } from "@/domains/tasks/types";
 import { proposalTitle } from "@/domains/triage/lib/filters";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { cn } from "@/lib/utils";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Button } from "@/shared/ui/primitives/button";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
+import type { ProposalRecord } from "@watchdog/core";
 
 function DashedEmpty({ children }: { children: ReactNode }) {
   return (

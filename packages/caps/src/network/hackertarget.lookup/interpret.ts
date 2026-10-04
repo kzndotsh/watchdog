@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { HackertargetLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   DOMAIN_IDENTIFIER_BATCH_LIMIT,
@@ -10,7 +12,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { hackertargetLookupInput } from "./input";
-import type { HackertargetLookupSnapshot } from "./report-schema";
 
 type HtInput = z.infer<typeof hackertargetLookupInput>;
 

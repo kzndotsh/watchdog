@@ -2,12 +2,12 @@ import {
   confirmFileUploadFn,
   presignUploadFn,
 } from "@/domains/intake/intake.functions";
+import type { EvidenceRecord } from "@/domains/intake/types";
 import {
+  MAX_UPLOAD_BYTES,
   confirmFileUploadInputSchema,
   presignUploadInputSchema,
-  type EvidenceRecord,
-} from "@/domains/intake/types";
-import { MAX_UPLOAD_BYTES } from "@watchdog/schemas";
+} from "@watchdog/schemas";
 
 function sha256HexFile(file: File): Promise<string> {
   return file

@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchHibpBreachedAccountEffect } from "@watchdog/tools";
+import {
+  fetchHibpBreachedAccountEffect,
+  hibpLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hibpLookupInput } from "./input";
 import { interpretHibpLookupReport } from "./interpret";
-import { hibpLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+breach.hibp.lookup; OSINT)";
 

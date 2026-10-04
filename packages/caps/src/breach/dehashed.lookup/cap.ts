@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchDehashedLookupEffect } from "@watchdog/tools";
+import {
+  fetchDehashedLookupEffect,
+  dehashedLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dehashedLookupInput } from "./input";
 import { interpretDehashedLookupReport } from "./interpret";
-import { dehashedLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+breach.dehashed.lookup; OSINT)";
 

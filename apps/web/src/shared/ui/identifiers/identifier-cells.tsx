@@ -46,10 +46,7 @@ import {
   type IdentifierType,
 } from "@watchdog/schemas";
 
-export {
-  HANDLE_REQUIRES_PLATFORM,
-  isHandleWithoutPlatform,
-} from "@/domains/entities/lib/commit-identifier-field";
+export { isHandleWithoutPlatform } from "@/domains/entities/lib/commit-identifier-field";
 
 export function IdentifierValueCopyControl({ value }: { value: string }) {
   return (

@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { MnemonicLookupSnapshot } from "@watchdog/tools";
+
 import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
@@ -13,7 +15,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { mnemonicLookupInput } from "./input";
-import type { MnemonicLookupSnapshot } from "./report-schema";
 
 type MnemonicInput = z.infer<typeof mnemonicLookupInput>;
 

@@ -24,12 +24,6 @@ import {
   updateQuestionFn,
   type QuestionRecord,
 } from "@/domains/entities/questions/questions.functions";
-import {
-  createQuestionInputSchema,
-  questionScopeInputSchema,
-  resolveQuestionInputSchema,
-  updateQuestionInputSchema,
-} from "@/domains/entities/questions/types";
 import { cn, errMessage } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -41,6 +35,12 @@ import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import { toast } from "@/shared/ui/toast";
+import {
+  createQuestionInputSchema,
+  questionScopeInputSchema,
+  resolveQuestionInputSchema,
+  updateQuestionInputSchema,
+} from "@watchdog/schemas";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
 

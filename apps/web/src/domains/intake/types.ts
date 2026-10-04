@@ -1,8 +1,10 @@
 import type { z } from "zod";
 
-import type { JobListRecord } from "@/domains/jobs/types";
-import type { EvidenceRecord as CoreEvidenceRecord } from "@watchdog/core";
-import {
+import type {
+  EvidenceRecord as CoreEvidenceRecord,
+  JobListRecord,
+} from "@watchdog/core";
+import type {
   attachEvidenceEntityInputSchema,
   confirmFileUploadInputSchema,
   dumpPasteInputSchema,
@@ -61,30 +63,22 @@ export interface PresignedUpload {
   headers: Record<string, string>;
 }
 
-export { listEvidenceInputSchema };
 export type ListEvidenceInput = z.output<typeof listEvidenceInputSchema>;
 
-export { evidenceScopeInputSchema };
 export type EvidenceScopeInput = z.output<typeof evidenceScopeInputSchema>;
 
-export { attachEvidenceEntityInputSchema };
 export type AttachEvidenceEntityInput = z.output<
   typeof attachEvidenceEntityInputSchema
 >;
 
-export { dumpPasteInputSchema };
 export type DumpPasteInput = z.output<typeof dumpPasteInputSchema>;
 
-export { dumpUrlInputSchema };
 export type DumpUrlInput = z.output<typeof dumpUrlInputSchema>;
 
-export { processEvidenceInputSchema };
 export type ProcessEvidenceInput = z.output<typeof processEvidenceInputSchema>;
 
-export { presignUploadInputSchema };
 export type PresignUploadInput = z.output<typeof presignUploadInputSchema>;
 
-export { confirmFileUploadInputSchema };
 export type ConfirmFileUploadInput = z.output<
   typeof confirmFileUploadInputSchema
 >;

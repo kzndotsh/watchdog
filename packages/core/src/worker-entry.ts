@@ -25,7 +25,7 @@ export {
 } from "./jobs/run-job";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
 export { findCancelledJobIdsEffect } from "./jobs/start-job";
-export { isWatchdogEvent, listenForEvents } from "./infra/events";
+
+export { listenForEvents } from "./infra/events";
 export { listenForEventsStream } from "./infra/listen-events-stream";
 export { scheduleCaseExportEffect } from "./infra/export-sync";
-export type { WatchdogEvent } from "./infra/events";

@@ -1,8 +1,4 @@
 export {
-  evidenceSnapshotSchema,
-  type EvidenceSnapshot,
-} from "./evidence-snapshot";
-export {
   processExtractDraftSchema,
   type ProcessExtractDraft,
   isEmptyDraft,

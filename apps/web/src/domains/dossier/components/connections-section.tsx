@@ -17,7 +17,6 @@ import {
   type EdgeRecord,
 } from "@/domains/entities/edges/edges.functions";
 import { edgesListQuery } from "@/domains/entities/edges/queries";
-import { edgeScopeInputSchema } from "@/domains/entities/edges/types";
 import { sortEdgesByPeerLabel } from "@/domains/entities/lib/connection-peers";
 import {
   buildCreateEdgeData,
@@ -42,6 +41,7 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { DossierConnectionsSkeletonLayout } from "@/shared/ui/skeletons";
 import { toast } from "@/shared/ui/toast";
+import { edgeScopeInputSchema } from "@watchdog/schemas";
 import { FieldError } from "@watchdog/ui/components/field";
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {

@@ -4,10 +4,11 @@ import { useState } from "react";
 
 import { deleteCaseFn } from "@/domains/cases/cases.functions";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
-import { deleteCaseInputSchema, type CaseRecord } from "@/domains/cases/types";
+import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
+import { deleteCaseInputSchema } from "@watchdog/schemas";
 
 export function DeleteCaseDialog({
   caseRow,

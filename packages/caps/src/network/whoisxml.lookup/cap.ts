@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchWhoisXmlEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchWhoisXmlEffect,
+  normalizeHost,
+  whoisSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoisXmlLookupInput } from "./input";
 import { interpretWhoisXmlReport } from "./interpret";
-import { whoisSnapshotSchema } from "./report-schema";
 
 export const whoisXmlLookup = defineCollectCap({
   id: "network.whoisxml.lookup",

@@ -15,7 +15,7 @@ Contract layer for Watchdog: shared atoms in `@watchdog/schemas`, domain inputs 
 @watchdog/tools     fetch/parse helpers + producer Zod (dns/whois/oembed reports)
 @watchdog/ai        LLM provider + structuredExtract + ProcessExtractDraft Zod
       ↓
-@watchdog/db        Drizzle columns .$type<>() from schemas; may re-export the PatchOp type
+@watchdog/db        Drizzle columns .$type<>() from schemas; imports `PatchOp` and `JobHandoff` from schemas for its column types; it does not re-export them
 @watchdog/caps      Cap implementations + registry; Zod inputs; capabilities.gen.json
 @watchdog/core      parsePatch / tryParsePatch; EvidenceSnapshot packing; run-job; apply-patch
 @watchdog/api       oRPC procedure I/O (composes schemas atoms)
@@ -34,7 +34,7 @@ Where to find things:
 | Accept gates | `@watchdog/policy` (`assertPatchGates`, `assertPatchShape`) |
 | Patch application | `packages/core/src/graph/patch/apply-*-op.ts`, `parse-agent-patch.ts` |
 | Edge update validation | `packages/core/src/graph/edge-update.ts` |
-| Producer report shapes | `@watchdog/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap's `report-schema.ts` re-exports them |
+| Producer report shapes | `@watchdog/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap imports them from `@watchdog/tools` directly (no Cap-local re-export) |
 
 ## Platform vocab is the only vocab here
 
@@ -82,7 +82,7 @@ Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from `@w
 ## Anti-patterns
 
 - Importing product enums from `@watchdog/db`
-- Treating `PatchOp` / `EvidenceSnapshot` as owned by `db` or `ai` (schemas is SoT; others re-export)
+- Treating `PatchOp` / `EvidenceSnapshot` as owned by `db` or `ai` (schemas is SoT; importers use `@watchdog/schemas` directly)
 - Hand-rolled `z.enum(["queued", …])` that drifts from `JOB_STATUSES`
 - `parse*` / `assertConfidence` in `*.functions.ts` instead of Zod
 - Freestyle confidence/predicate strings in dossier pickers

@@ -12,11 +12,7 @@ import {
   acceptProposalFn,
   rejectProposalFn,
 } from "@/domains/triage/triage.functions";
-import {
-  acceptProposalInputSchema,
-  rejectProposalInputSchema,
-  type AcceptFormValues,
-} from "@/domains/triage/types";
+import type { AcceptFormValues } from "@/domains/triage/types";
 import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
@@ -36,6 +32,8 @@ import {
   isProposalQueueLiveEvent,
   trimmedOrNull,
   type ProposalStatus,
+  acceptProposalInputSchema,
+  rejectProposalInputSchema,
 } from "@watchdog/schemas";
 
 const EMPTY_PROPOSALS: ProposalRecord[] = [];

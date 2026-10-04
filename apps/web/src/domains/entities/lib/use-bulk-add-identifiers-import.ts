@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { createIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
-import { createIdentifierInputSchema } from "@/domains/entities/identifiers/types";
 import {
   identifierPasteRowKey,
   isIdentifierPasteRowImportable,
@@ -11,6 +10,7 @@ import {
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
+import { createIdentifierInputSchema } from "@watchdog/schemas";
 
 export function useBulkAddIdentifiersImport(options: {
   caseId: string;

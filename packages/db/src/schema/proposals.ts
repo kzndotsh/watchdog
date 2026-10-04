@@ -14,9 +14,6 @@ import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";
 import { jobs } from "./jobs";
 
-/** Re-export for existing `@watchdog/db` importers. SoT: `@watchdog/schemas`. */
-export type { PatchOp } from "@watchdog/schemas";
-
 export const proposals = pgTable(
   "proposals",
   {

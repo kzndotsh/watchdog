@@ -1,11 +1,10 @@
 import { Effect } from "effect";
 
-import { fetchPgpLookupEffect } from "@watchdog/tools";
+import { fetchPgpLookupEffect, pgpLookupSnapshotSchema } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { pgpLookupInput } from "./input";
 import { interpretPgpLookupReport } from "./interpret";
-import { pgpLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+identity.pgp.lookup; OSINT)";
 

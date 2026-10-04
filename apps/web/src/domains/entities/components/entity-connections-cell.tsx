@@ -16,12 +16,12 @@ import { cn } from "@/lib/utils";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
+import { predicateLabel } from "@/shared/ui/vocab/edge-predicate";
 import {
+  entityDisplayLabel,
   edgePhraseValue,
   parseEdgePhraseValue,
-  predicateLabel,
-} from "@/shared/ui/vocab/edge-predicate";
-import { entityDisplayLabel } from "@watchdog/schemas";
+} from "@watchdog/schemas";
 import type { EdgeOrientation } from "@watchdog/schemas";
 import { FieldError } from "@watchdog/ui/components/field";
 import {

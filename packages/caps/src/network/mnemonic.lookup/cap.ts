@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchMnemonicPdnsEffect } from "@watchdog/tools";
+import {
+  fetchMnemonicPdnsEffect,
+  mnemonicLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mnemonicLookupInput } from "./input";
 import { interpretMnemonicLookupReport } from "./interpret";
-import { mnemonicLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.mnemonic.lookup; OSINT)";
 

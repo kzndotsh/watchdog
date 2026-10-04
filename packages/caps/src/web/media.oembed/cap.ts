@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchOembedEffect, ValidationVendorError } from "@watchdog/tools";
+import {
+  fetchOembedEffect,
+  ValidationVendorError,
+  oembedSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mediaOembedInput } from "./input";
 import { interpretOembedReport } from "./interpret";
-import { oembedSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+web.media.oembed; OSINT)";
 

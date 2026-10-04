@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  evidenceDisplayLabel,
-  evidenceKindLabel,
-} from "../evidence-display.ts";
+import { evidenceDisplayLabel } from "@watchdog/schemas";
+
+import { evidenceKindLabel } from "../evidence-display.ts";
 
 describe("evidenceKindLabel", () => {
   it("maps known evidence kinds", () => {

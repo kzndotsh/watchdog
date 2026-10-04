@@ -28,8 +28,12 @@ import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
-import { ENTITY_KIND_LABELS, ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
-import { trimmedEntityKindSchema, ENTITY_KINDS } from "@watchdog/schemas";
+import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
+import {
+  trimmedEntityKindSchema,
+  ENTITY_KINDS,
+  ENTITY_KIND_LABELS,
+} from "@watchdog/schemas";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,

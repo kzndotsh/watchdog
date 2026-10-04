@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { FireholLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { fireholLookupInput } from "./input";
-import type { FireholLookupSnapshot } from "./report-schema";
 
 type FireholInput = z.infer<typeof fireholLookupInput>;
 

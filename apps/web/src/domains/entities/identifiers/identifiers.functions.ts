@@ -1,15 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import type {
+  CaseIdentifierRecord,
+  IdentifierRecord,
+} from "@/domains/entities/identifiers/types";
+import { orpcFromContext } from "@/lib/orpc.server";
 import {
   caseScopeInputSchema,
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
   entityScopeInputSchema,
   updateIdentifierInputSchema,
-  type CaseIdentifierRecord,
-  type IdentifierRecord,
-} from "@/domains/entities/identifiers/types";
-import { orpcFromContext } from "@/lib/orpc.server";
+} from "@watchdog/schemas";
 
 export type {
   CaseIdentifierRecord,

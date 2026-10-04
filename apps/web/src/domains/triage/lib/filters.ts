@@ -1,4 +1,3 @@
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import {
   PROPOSAL_STATUS_OPTIONS,
   capabilityLabel,
@@ -7,6 +6,7 @@ import {
   proposalHeadlineLabel,
   statusLabel,
 } from "@/shared/ui/vocab";
+import type { ProposalRecord } from "@watchdog/core";
 import {
   catalogIdMatchesSearch,
   patchOpHeadline,

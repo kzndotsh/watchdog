@@ -1,7 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { listRecentActivityFn } from "@/domains/activity/activity.functions";
-import type { ListRecentActivityInput } from "@/domains/activity/types";
 import {
   parseListRecentActivityInput,
   scopeRecentActivityFilters,
@@ -9,6 +8,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
+import type { ListRecentActivityInput } from "@watchdog/schemas";
 
 export type RecentActivityFilters = Partial<ListRecentActivityInput>;
 

@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { FeodoLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { feodoLookupInput } from "./input";
-import type { FeodoLookupSnapshot } from "./report-schema";
 
 type FeodoInput = z.infer<typeof feodoLookupInput>;
 

@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchUrlhausLookupEffect } from "@watchdog/tools";
+import {
+  fetchUrlhausLookupEffect,
+  urlhausLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlhausLookupInput } from "./input";
 import { interpretUrlhausLookupReport } from "./interpret";
-import { urlhausLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.urlhaus.lookup; OSINT)";
 

@@ -1,5 +1,4 @@
-import { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined, capEgressLabel } from "@watchdog/schemas";
 
 import type { PlaybookListItem } from "../types";
 import {

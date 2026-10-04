@@ -17,8 +17,6 @@ import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas";
 import { errorMessage } from "./domain-error";
 import { InvalidError, type DomainTag } from "./tagged-errors";
 
-export { MAX_UPLOAD_BYTES } from "@watchdog/schemas";
-
 const PRESIGN_EXPIRES_IN = 900;
 
 function s3Config() {

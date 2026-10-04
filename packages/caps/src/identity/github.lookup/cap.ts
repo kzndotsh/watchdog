@@ -1,12 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchGithubUserEffect } from "@watchdog/tools";
+import {
+  fetchGithubUserEffect,
+  githubUserSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { optionalCapCredential } from "../../sdk";
 import { githubLookupInput } from "./input";
 import { interpretGithubLookupReport } from "./interpret";
-import { githubUserSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+identity.github.lookup; OSINT)";
 

@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchHttpProbeEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchHttpProbeEffect,
+  normalizeHost,
+  httpProbeSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { httpProbeInput } from "./input";
 import { interpretHttpProbeReport } from "./interpret";
-import { httpProbeSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.host.http_probe; OSINT)";
 

@@ -12,14 +12,13 @@ import { evidenceListQuery } from "@/domains/intake/queries";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { sortJobQueue } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
-import type { JobListRecord } from "@/domains/jobs/types";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { listPending } from "@/shared/lib/list-pending";
 import {
   combinedQueryLoadError,
   queryLoadError,
 } from "@/shared/lib/query-load-error";
-import type { CredentialSlot } from "@watchdog/core";
+import type { CredentialSlot, JobListRecord } from "@watchdog/core";
 
 const EMPTY_EVIDENCE_ROWS: EvidenceRecord[] = [];
 const EMPTY_JOB_ROWS: JobListRecord[] = [];

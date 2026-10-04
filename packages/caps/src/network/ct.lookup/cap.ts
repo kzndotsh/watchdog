@@ -1,13 +1,16 @@
 import { Effect } from "effect";
 
-import { fetchCrtShLookupEffect, normalizeHost } from "@watchdog/tools";
+import type { JobHandoff } from "@watchdog/schemas";
+import {
+  fetchCrtShLookupEffect,
+  normalizeHost,
+  ctLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { eligibleHandoffHosts } from "../../lib/collect/query-seed-batches";
-import type { JobHandoff } from "../../sdk";
 import { ctLookupInput } from "./input";
 import { interpretCtReport } from "./interpret";
-import { ctLookupSnapshotSchema } from "./report-schema";
 
 export const ctLookup = defineCollectCap({
   id: "network.ct.lookup",

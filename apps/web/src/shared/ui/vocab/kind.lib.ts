@@ -2,9 +2,8 @@ import { Building2Icon, ServerIcon, UserIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
 import type { ChipTone } from "@/shared/ui/chip";
-import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
+import { optionsFromLabels } from "@/shared/ui/vocab/title-case";
 import {
-  CLAIM_CLASS_LABELS,
   ENTITY_KINDS,
   ENTITY_KIND_LABELS,
   EVIDENCE_KIND_LABELS,
@@ -16,12 +15,11 @@ import {
   type EntityKind,
   type EvidenceKind,
   type IdentifierType,
+  titleCase,
 } from "@watchdog/schemas";
 
 /** Entity / evidence / identifier kinds — not claim classes. */
 export type KindValue = EntityKind | EvidenceKind | IdentifierType;
-
-export { CLAIM_CLASS_LABELS, ENTITY_KIND_LABELS, IDENTIFIER_TYPE_LABELS };
 
 export const ENTITY_KIND_ICONS = {
   person: UserIcon,

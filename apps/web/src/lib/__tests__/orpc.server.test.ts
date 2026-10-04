@@ -27,13 +27,9 @@ vi.mock("@tanstack/react-start/server-only", () => ({}));
 vi.mock("@orpc/server", () => ({ createRouterClient }));
 vi.mock("@watchdog/api", () => ({ router: {} }));
 vi.mock("@watchdog/log", () => ({ peekRequestLogger }));
-vi.mock("@/auth/api-context.server", () => ({ actorFromSession }));
+vi.mock("@watchdog/auth/server", () => ({ actorFromSession }));
 
-import {
-  actorFromSession as exportedActorFromSession,
-  orpcForActor,
-  orpcFromContext,
-} from "@/lib/orpc.server";
+import { orpcForActor, orpcFromContext } from "@/lib/orpc.server";
 
 describe("orpc.server", () => {
   it("creates an in-process router client for an actor", () => {
@@ -66,10 +62,5 @@ describe("orpc.server", () => {
     orpcFromContext({ session, organizationId: "org-1" });
 
     expect(actorFromSession).toHaveBeenCalledWith(session, "org-1");
-  });
-
-  it("re-exports actorFromSession", () => {
-    expect(exportedActorFromSession).toBe(actorFromSession);
-    expect(createRouterClient).toBeDefined();
   });
 });

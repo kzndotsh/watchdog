@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchShodanHostEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchShodanHostEffect,
+  normalizeIp,
+  shodanLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { shodanLookupInput } from "./input";
 import { interpretShodanLookupReport } from "./interpret";
-import { shodanLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.shodan.lookup; OSINT)";
 

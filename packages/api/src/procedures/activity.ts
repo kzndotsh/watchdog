@@ -1,11 +1,13 @@
 import { z } from "zod";
 
 import { listRecentActivityEffect } from "@watchdog/core";
-import { listRecentActivityInputSchema } from "@watchdog/schemas";
+import {
+  listRecentActivityInputSchema,
+  activityItemSchema,
+} from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { activityItemSchema } from "../schemas";
 
 export const listRecent = authed
   .route({

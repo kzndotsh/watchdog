@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ProcessRunCard } from "@/domains/intake/components/process-run-card";
-import type { JobListRecord } from "@/domains/jobs/types";
+import type { JobListRecord } from "@watchdog/core";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({

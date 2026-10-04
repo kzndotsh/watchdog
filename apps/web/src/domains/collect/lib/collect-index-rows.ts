@@ -5,7 +5,7 @@ import {
   rowTitle,
 } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/types";
+import type { JobListRecord } from "@watchdog/core";
 import { parseTrimmedCaseId } from "@watchdog/schemas";
 
 export {

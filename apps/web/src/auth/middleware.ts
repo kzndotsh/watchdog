@@ -1,6 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
 
-import { resolveActorOrganizationId } from "@/auth/server";
+import { resolveActorOrganizationId } from "@watchdog/auth/server";
 
 /** Server-fn middleware — enforces a session before the handler runs. */
 export const requireAuth = createMiddleware({ type: "function" }).server(

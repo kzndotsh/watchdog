@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { GreedybearLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { greedybearLookupInput } from "./input";
-import type { GreedybearLookupSnapshot } from "./report-schema";
 
 type GreedybearInput = z.infer<typeof greedybearLookupInput>;
 

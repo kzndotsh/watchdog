@@ -1,5 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
+import { orpcFromContext } from "@/lib/orpc.server";
+import type { JobListRecord, JobRecord } from "@watchdog/core";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
@@ -7,14 +10,9 @@ import {
   listJobsInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-  type CapListItem,
-  type PlaybookListItem,
-} from "@/domains/jobs/types";
-import { orpcFromContext } from "@/lib/orpc.server";
-import type { JobListRecord, JobRecord } from "@watchdog/core";
+} from "@watchdog/schemas";
 
 export type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
-export type { JobListRecord, JobRecord } from "@/domains/jobs/types";
 
 export const listCapabilitiesFn = createServerFn({ method: "GET" }).handler(
   async ({ context }): Promise<CapListItem[]> =>

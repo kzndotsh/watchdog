@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { deleteIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
-import { deleteIdentifierInputSchema } from "@/domains/entities/identifiers/types";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
@@ -18,6 +17,7 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { toast } from "@/shared/ui/toast";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { deleteIdentifierInputSchema } from "@watchdog/schemas";
 
 export interface DeleteIdentifierTarget {
   id: string;

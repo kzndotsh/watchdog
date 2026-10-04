@@ -2,14 +2,14 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { searchCaseFn } from "@/domains/search/search.functions";
 import {
-  SEARCH_MIN_QUERY_LENGTH,
-  type SearchCaseResult,
-} from "@/domains/search/types";
-import {
   parseSearchCaseInput,
   scopeSearchCaseInput,
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForScope } from "@/shared/lib/query-placeholder";
+import {
+  SEARCH_MIN_QUERY_LENGTH,
+  type SearchCaseResult,
+} from "@watchdog/schemas";
 
 export const searchKeys = {
   all: ["search"] as const,

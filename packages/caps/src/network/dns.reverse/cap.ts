@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchDnsReverseEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchDnsReverseEffect,
+  normalizeIp,
+  dnsReverseSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dnsReverseInput } from "./input";
 import { interpretDnsReverseReport } from "./interpret";
-import { dnsReverseSnapshotSchema } from "./report-schema";
 
 export const dnsReverse = defineCollectCap({
   id: "network.dns.reverse",

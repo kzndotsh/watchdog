@@ -1,18 +1,22 @@
 import { Data, Effect } from "effect";
 
-import { notifyEvent } from "@watchdog/db";
-import type { WatchdogEvent } from "@watchdog/db";
-import { watchdogEventSchema } from "@watchdog/schemas";
+import {
+  listenForEvents as dbListenForEvents,
+  notifyEvent,
+} from "@watchdog/db";
+import { watchdogEventSchema, type WatchdogEvent } from "@watchdog/schemas";
 
 import { logSwallowed } from "./process-log";
 
-export {
-  isWatchdogEvent,
-  notifyEvent,
-  listenForEvents,
-  WATCHDOG_CHANNEL,
-  type WatchdogEvent,
-} from "@watchdog/db";
+/**
+ * Callback LISTEN for the SSE route. Core owns this entry so apps/web, which must not
+ * import `@watchdog/db`, reaches Postgres LISTEN through core.
+ */
+export function listenForEvents(
+  ...args: Parameters<typeof dbListenForEvents>
+): ReturnType<typeof dbListenForEvents> {
+  return dbListenForEvents(...args);
+}
 
 class NotifyFailed extends Data.TaggedError("NotifyFailed")<{
   readonly cause: unknown;

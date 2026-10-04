@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchGravatarLookupEffect } from "@watchdog/tools";
+import {
+  fetchGravatarLookupEffect,
+  gravatarLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { gravatarLookupInput } from "./input";
 import { interpretGravatarLookupReport } from "./interpret";
-import { gravatarLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+identity.gravatar.lookup; OSINT)";
 

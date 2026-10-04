@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchWaybackLookupEffect } from "@watchdog/tools";
+import {
+  fetchWaybackLookupEffect,
+  waybackLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { waybackLookupInput } from "./input";
 import { interpretWaybackLookupReport } from "./interpret";
-import { waybackLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+archive.wayback.lookup; OSINT)";
 

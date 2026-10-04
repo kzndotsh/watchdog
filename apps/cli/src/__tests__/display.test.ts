@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   capEgressLabel,
+  evidenceDisplayLabel,
+  evidenceTitleMapFromRows,
+} from "@watchdog/schemas";
+
+import {
   caseEgressLabel,
   collapseJobListRows,
   enrichCaseDisplay,
@@ -27,8 +32,6 @@ import {
   proposalListSummary,
   edgeDirectionLabel,
   edgePeerLabel,
-  evidenceDisplayLabel,
-  evidenceTitleMapFromRows,
 } from "../display";
 
 describe("display helpers", () => {

@@ -1,8 +1,8 @@
-import "@tanstack/react-start/server-only";
 import { createRouterClient, type RouterClient } from "@orpc/server";
+import "@tanstack/react-start/server-only";
 
-import { actorFromSession } from "@/auth/api-context.server";
 import { router, type AppRouter } from "@watchdog/api";
+import { actorFromSession } from "@watchdog/auth/server";
 import { peekRequestLogger } from "@watchdog/log";
 import type { ApiActor } from "@watchdog/schemas";
 
@@ -30,5 +30,3 @@ export function orpcFromContext(context: {
     actorFromSession(context.session, context.organizationId)
   );
 }
-
-export { actorFromSession };

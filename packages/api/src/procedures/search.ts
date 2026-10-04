@@ -1,9 +1,11 @@
 import { searchCaseEffect } from "@watchdog/core";
-import { searchCaseInputSchema } from "@watchdog/schemas";
+import {
+  searchCaseInputSchema,
+  searchCaseResultSchema,
+} from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { searchCaseResultSchema } from "../schemas";
 
 export const searchCaseProc = authed
   .route({

@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { orpcFromContext } from "@/lib/orpc.server";
 import {
   listRecentActivityInputSchema,
   type ActivityItem,
-} from "@/domains/activity/types";
-import { orpcFromContext } from "@/lib/orpc.server";
+} from "@watchdog/schemas";
 
 export const listRecentActivityFn = createServerFn({ method: "GET" })
   .validator(listRecentActivityInputSchema)

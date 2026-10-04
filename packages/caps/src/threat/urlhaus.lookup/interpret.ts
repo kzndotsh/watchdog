@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { UrlhausLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import type { IdentifierBatch } from "../../lib/collect/interpret-identifier-batches";
 import {
@@ -8,7 +10,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { urlhausLookupInput } from "./input";
-import type { UrlhausLookupSnapshot } from "./report-schema";
 
 type UrlhausInput = z.infer<typeof urlhausLookupInput>;
 

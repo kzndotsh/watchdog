@@ -1,9 +1,13 @@
 import { defineCommand } from "citty";
 
-import { titleCase } from "@watchdog/schemas";
+import {
+  titleCase,
+  capEgressLabel,
+  capabilityIdLabel,
+} from "@watchdog/schemas";
 
 import { api, emitList } from "../client";
-import { capEgressLabel, capKindLabel, capabilityIdLabel } from "../display";
+import { capKindLabel } from "../display";
 import { asBoolean, defineNounCommand } from "../noun";
 
 const LIST_COLUMNS = [

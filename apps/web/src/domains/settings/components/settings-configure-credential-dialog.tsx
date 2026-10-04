@@ -3,7 +3,6 @@ import { Eye, EyeOff, KeyRoundIcon } from "lucide-react";
 import { useState, type SyntheticEvent } from "react";
 
 import { putCredentialFn } from "@/domains/settings/settings.functions";
-import { putCredentialInputSchema } from "@/domains/settings/types";
 import { errMessage } from "@/lib/utils";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
@@ -20,6 +19,7 @@ import {
 import { Button } from "@/shared/ui/primitives/button";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { CredentialSlot } from "@watchdog/core";
+import { putCredentialInputSchema } from "@watchdog/schemas";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import {
   InputGroup,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { waybackArchiveUrl } from "../wayback.ts";
+import { waybackArchiveUrl } from "@watchdog/tools";
 
 describe("waybackArchiveUrl", () => {
   it("builds an id_ archive URL", () => {
