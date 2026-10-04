@@ -75,14 +75,14 @@ Enforced: one Zod version via the `zod` entry in the pnpm catalog and `overrides
 | `domains/{noun}/*.functions.ts` | `createServerFn` + `.validator(schema)`: no hand `parse*`, no vocab re-exports |
 | `domains/{noun}/*.server.ts` | DB / secrets; business rules |
 
-Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from `@watchdog/schemas` directly.
+Import DTOs/schemas from `@/domains/{noun}/types`; import product vocab from a `@watchdog/schemas/<domain>` subpath (for example `@watchdog/schemas/shared`).
 
 ---
 
 ## Anti-patterns
 
 - Importing product enums from `@watchdog/db`
-- Treating `PatchOp` / `EvidenceSnapshot` as owned by `db` or `ai` (schemas is SoT; importers use `@watchdog/schemas` directly)
+- Treating `PatchOp` / `EvidenceSnapshot` as owned by `db` or `ai` (schemas is SoT; importers use a `@watchdog/schemas/<domain>` subpath)
 - Hand-rolled `z.enum(["queued", …])` that drifts from `JOB_STATUSES`
 - `parse*` / `assertConfidence` in `*.functions.ts` instead of Zod
 - Freestyle confidence/predicate strings in dossier pickers

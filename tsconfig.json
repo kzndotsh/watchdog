@@ -25,7 +25,6 @@
       "@watchdog/client": ["./packages/client/src/index.ts"],
       "@watchdog/client/*": ["./packages/client/src/*"],
 
-      "@watchdog/core": ["./packages/core/src/index.ts"],
       "@watchdog/core/blob": ["./packages/core/src/infra/blob.ts"],
       "@watchdog/core/job-display": ["./packages/core/src/jobs/job-display.ts"],
       "@watchdog/core/proposal-display": [
@@ -45,7 +44,6 @@
       "@watchdog/policy": ["./packages/policy/src/index.ts"],
       "@watchdog/policy/*": ["./packages/policy/src/*"],
 
-      "@watchdog/schemas": ["./packages/schemas/src/index.ts"],
       "@watchdog/schemas/*": ["./packages/schemas/src/*"],
 
       "@watchdog/test-db": ["./packages/test-db/src/index.ts"],
@@ -56,7 +54,6 @@
       ],
       "@watchdog/test-kit/*": ["./packages/test-kit/src/*"],
 
-      "@watchdog/tools": ["./packages/tools/src/index.ts"],
       "@watchdog/tools/*": ["./packages/tools/src/*"],
 
       "@watchdog/ui/*": ["./packages/ui/src/*"]
