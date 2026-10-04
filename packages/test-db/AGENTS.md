@@ -21,4 +21,6 @@ Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog
 | `resetE2eDb()` from Playwright only (`e2e/support/db-reset`); it wipes `public` + `auth` | Call `resetE2eDb` from `*.int.test.ts` |
 | Import test-db from integration tests and the e2e reset support | Import it from unit/property tests (it loads Postgres) |
 
+`TestDbLayer` / `testDbLayerOf(exec)` provide core's `Db` service over the test connection (or a `tx`, or a spy): pair with `runDomainWith(layer)(effect)` / `runAppWith`. test-db depends on `@watchdog/core/infra` for the tag, a dev-only cycle like `db`.
+
 All guidance; nothing lints these. Ids come from `@watchdog/test-kit/fixtures` (`testId`, `TEST_ACTOR_ID`, `TEST_ORGANIZATION_ID`). `db` and `test-db` are a deliberate dev-dependency cycle (db's integration tests use the harness): keep `db` from importing it outside tests. Methodology: [`standards.md`](../../docs/contributing/testing/standards.md).

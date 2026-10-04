@@ -10,13 +10,14 @@ import {
 import { optionalActorId } from "../actors/require-actor-id";
 import { requireTrimmedGraphId } from "../graph/patch/guards";
 import { deleteCaseArtifactsEffect } from "../infra/blob";
+import type { Db } from "../infra/db-service";
 import { notifyEntityChangedEffect } from "../infra/events";
 import {
   removeCaseExportDirEffect,
   renameCaseExportDirEffect,
   scheduleCaseExportEffect,
 } from "../infra/export-sync";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { logProcess, logSwallowed } from "../infra/process-log";
 import {
   ConflictError,
@@ -58,10 +59,11 @@ function toRecord(row: CaseRow): CaseRecord {
   };
 }
 
+/** Reference for the `Db` service pattern (ADR-0002 phase 2): R = `Db`, client from `tryDbWith`. */
 export function listCasesEffect(
   organizationId: string
-): Effect.Effect<CaseRecord[], DomainTag> {
-  return tryDb(() => casesRepo.list(db, organizationId)).pipe(
+): Effect.Effect<CaseRecord[], DomainTag, Db> {
+  return tryDbWith((exec) => casesRepo.list(exec, organizationId)).pipe(
     Effect.map((rows) => rows.map(toRecord))
   );
 }
