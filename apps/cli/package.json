@@ -23,14 +23,14 @@
     "@watchdog/policy": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "citty": "^0.2.2",
-    "dotenv": "^17.4.2",
-    "zod": "^4.6.5"
+    "dotenv": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "catalog:",
     "esbuild": "^0.28.2",
-    "tsx": "^4.23.13",
-    "typescript": "7.0.2"
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   },
   "engines": {
     "node": ">=22"

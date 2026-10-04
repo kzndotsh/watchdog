@@ -12,11 +12,11 @@
     "@watchdog/db": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
-    "drizzle-orm": "^0.45.2",
-    "vitest": "^5.0.1"
+    "drizzle-orm": "catalog:",
+    "vitest": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "typescript": "7.0.2"
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   }
 }

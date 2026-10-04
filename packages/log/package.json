@@ -9,11 +9,11 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "dependencies": {
-    "effect": "4.0.0-rc.115",
-    "evlog": "2.29.0"
+    "effect": "catalog:",
+    "evlog": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "typescript": "7.0.2"
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   }
 }

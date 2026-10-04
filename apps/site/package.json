@@ -9,15 +9,15 @@
     "typecheck": "astro sync && tsc --noEmit"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "^5.3.0",
-    "@fontsource-variable/geist-mono": "^5.3.0",
+    "@fontsource-variable/geist": "catalog:",
+    "@fontsource-variable/geist-mono": "catalog:",
     "astro": "^7.3.3",
-    "cn": "0.3.2"
+    "cn": "catalog:"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "tailwindcss": "^4.3.3",
-    "typescript": "6.9.3"
+    "@tailwindcss/vite": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
   },
   "engines": {
     "node": ">=22.12.0"

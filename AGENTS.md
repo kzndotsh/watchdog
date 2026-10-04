@@ -16,7 +16,7 @@ Authority: product nouns → [`GLOSSARY.md`](GLOSSARY.md) (doctrine and narrativ
 | Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
-| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:vendor` |
+| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:vendor` · `pnpm check:workspace` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
 | Vendored shadcn | `pnpm ui:add <name>` · `pnpm ui:sync` |
 | Regenerate | `pnpm generate:caps` · `pnpm generate:client` |
@@ -68,6 +68,7 @@ The rules agents break most. The full set, with enforcers, is the [conventions t
 - `pnpm test` runs unit, property and gate projects; the gate tests (`scripts/__tests__/*.gate.test.ts`) spawn real scripts in throwaway git repos. `pnpm typecheck` also typechecks tests, `scripts/` and `e2e/`, then runs the test-coverage guard: a new test file missing from its `tsconfig.test.json` fails.
 - `docs-affect` runs at **commit-msg**, not pre-commit. When no mapped doc applies, put `docs:allow-affect — <reason>` in that commit's own message.
 - The formatter ignores `GLOSSARY.md`, `.agents/`, `.cursor/` and `.claude/`: `ultracite` run on only those files exits 2 (the pre-commit hook excludes them). Lint `.mjs` and `e2e/` with `pnpm check`: `ultracite <path>` on them loses type context and reports false `no-unsafe-*` errors.
+- A dependency declared by two or more packages (root included) takes its version from the default `catalog:` in `pnpm-workspace.yaml` (`"effect": "catalog:"`); a literal range there fails `pnpm check:workspace`. Peer ranges stay literal. Every `overrides` entry carries a reason and a revisit condition.
 - `pnpm knip` loads the Drizzle config, so it needs `DATABASE_URL` set (any value). It ignores `.claude/worktrees/`.
 
 ## Canonical helpers

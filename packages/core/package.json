@@ -22,14 +22,14 @@
     "@watchdog/policy": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "@watchdog/tools": "workspace:*",
-    "effect": "4.0.0-rc.115",
+    "effect": "catalog:",
     "pg-boss": "^12.32.0",
-    "zod": "^4.6.5"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "catalog:",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
-    "typescript": "7.0.2"
+    "typescript": "catalog:"
   }
 }

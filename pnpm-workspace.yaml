@@ -2,17 +2,65 @@ packages:
   - "apps/*"
   - "packages/*"
 
-overrides:
-  typescript: "7.0.2"
-  "react-doctor>typescript": "5.9.3"
-  effect: "4.0.0-rc.115"
-  oxlint: "1.81.0"
-  oxlint-tsgolint: "7.0.2001"
-  zod: "^4.4.3"
+# Default catalog: every dependency declared by two or more workspace packages.
+# Packages reference it as `"name": "catalog:"`; change a version here, once.
+# A dependency used by a single package keeps its literal range in that package.
+# Peer ranges stay literal (a catalog would force the exact range on consumers).
+# `pnpm check:workspace` (sherif + scripts/check-catalog.mjs) fails on drift.
+catalog:
+  "@better-auth/api-key": "1.7.5"
+  "@fontsource-variable/geist": "^5.3.0"
+  "@fontsource-variable/geist-mono": "^5.3.0"
+  "@orpc/contract": "^1.15.1"
+  "@orpc/openapi": "^1.15.1"
+  "@orpc/server": "^1.15.1"
+  "@orpc/zod": "^1.15.1"
+  "@tailwindcss/vite": "^4.3.3"
+  "@types/node": "^26.5.1"
+  "@types/react": "^19.3.0"
+  "@types/react-dom": "^19.3.0"
+  "@vitejs/plugin-react": "^6.1.1"
   better-auth: "1.7.5"
-  "@better-auth/core": "1.7.5"
-  # GHSA-x5fp-wj9c-mxmx / GHSA-4mjr-xmp4-gh2g (express → body-parser transitive)
-  qs: "6.16.0"
+  cn: "0.3.2"
+  date-fns: "^4.4.0"
+  dotenv: "^17.4.2"
+  drizzle-orm: "^0.45.2"
+  effect: "4.0.0-rc.115"
+  evlog: "2.29.0"
+  lucide-react: "^1.46.0"
+  oxlint: "1.82.0"
+  react: "^19.3.0"
+  react-dom: "^19.3.0"
+  tailwindcss: "^4.3.3"
+  tsx: "^4.23.13"
+  typescript: "7.0.2"
+  vitest: "^5.0.1"
+  zod: "^4.6.5"
+
+# Every override below forces ONE version across the whole dependency graph,
+# including third-party dependencies we do not declare. Each states why and
+# when to revisit it. Single-sourced versions use `catalog:` so the override
+# and the direct declarations cannot drift apart again.
+overrides:
+  # Run one oxlint binary. react-doctor depends on its own oxlint (1.79.0 at
+  # 0.9.13), and `effect-tsgo patch --oxlint` (the root `prepare` script)
+  # patches the oxlint that ultracite and `pnpm check` run; a second copy would
+  # lint differently (and unpatched) from the root one. History: pinned to
+  # 1.81.0 on 2026-09-04 together with typescript/effect/oxlint-tsgolint and
+  # left behind when Dependabot moved the root to 1.82.0; now both read the
+  # catalog. Revisit when react-doctor drops its oxlint dependency.
+  oxlint: "catalog:"
+  # shadcn -> @modelcontextprotocol/sdk depends on `zod ^3.25 || ^4`; without
+  # this pnpm adds a zod 3.25.76 copy next to zod 4. Keeps a single zod 4 in
+  # the graph (zod 3 and 4 schemas do not mix in @orpc/zod or Better Auth).
+  # Revisit when shadcn / the MCP SDK drop their zod 3 resolution.
+  zod: "catalog:"
+  # GHSA-x5fp-wj9c-mxmx (qs <= 6.15.3, array-limit bypass) and GHSA-4mjr-xmp4-gh2g
+  # (qs < 6.16.0, DoS via isBuffer): express and body-parser (shadcn ->
+  # @modelcontextprotocol/sdk, evlog) only require ^6.14.0 / ^6.15.2, so an old
+  # lockfile could keep a vulnerable qs. A floor, not a pin. Revisit (remove)
+  # when express and body-parser require qs ^6.16.0.
+  qs: ">=6.16.0"
 
 allowBuilds:
   esbuild: true
