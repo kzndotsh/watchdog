@@ -2,9 +2,9 @@ import { connect, type TLSSocket } from "node:tls";
 
 import { Effect } from "effect";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
+import { validationVendorError } from "../errors/vendor-errors";
 import { isBlockedEgressHost } from "../http/unshorten-guards";
 import { snapshotFromTlsSocket } from "./audit-cert";
 import { tlsAuditSnapshotSchema, type TlsAuditSnapshot } from "./audit-schema";
@@ -89,7 +89,7 @@ export function fetchTlsAuditEffect(
     yield* Effect.try({
       try: () => {
         if (isBlockedEgressHost(host)) {
-          throw validationToolsError(
+          throw validationVendorError(
             `Blocked host (private/loopback): ${host}`
           );
         }

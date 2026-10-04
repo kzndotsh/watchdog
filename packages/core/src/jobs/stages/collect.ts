@@ -28,6 +28,7 @@ import {
   type DomainTag,
 } from "../../infra/tagged-errors";
 import { getCredentialEffect, hasCredentialEffect } from "../../infra/vault";
+import { toDomainTag } from "../../infra/vendor-errors";
 import { hashCapInput, lookupCapCacheEffect } from "../cap-cache";
 import { artifactsHaveCapReport } from "../load-cap-report";
 import {
@@ -260,7 +261,7 @@ function lookupCacheHitEffect(
 function runCapCollectEffect(
   state: PreflightState,
   runtime: CollectRuntime
-): Effect.Effect<CollectResult, ToolsTag> {
+): Effect.Effect<CollectResult, DomainTag> {
   return Effect.gen(function* runCapCollectGen() {
     const ctx = buildCapContext(state, runtime);
     const runResult = yield* state.cap.run(ctx);
@@ -271,7 +272,7 @@ function runCapCollectEffect(
       reclaim: false,
       runtime,
     } satisfies CollectResult;
-  }).pipe(Effect.provide(toolsHttpClientLayer));
+  }).pipe(Effect.mapError(toDomainTag), Effect.provide(toolsHttpClientLayer));
 }
 
 /**
@@ -283,7 +284,7 @@ export function collectEffect(
   state: PreflightState,
   jobLog: JobLog,
   jobSignal: AbortSignal
-): Effect.Effect<CollectResult, DomainTag | ToolsTag> {
+): Effect.Effect<CollectResult, DomainTag> {
   return Effect.gen(function* collectSetup() {
     const evidenceSnapshot = yield* packSnapshotIfNeededEffect(state, jobLog);
     const linkedSource = linkedEvidenceId(

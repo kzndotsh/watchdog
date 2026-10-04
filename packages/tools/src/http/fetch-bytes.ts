@@ -1,7 +1,7 @@
 import { Cause, Effect, Exit } from "effect";
 import { HttpClient } from "effect/http";
 
-import { errorMessage } from "../errors/tools-error";
+import { errorMessage } from "../errors/vendor-errors";
 import { abortWhen } from "./abort-when";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import { isBlockedUnshortenUrl } from "./unshorten-guards";

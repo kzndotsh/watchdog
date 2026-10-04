@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { parseVendorError } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asStringEmpty as asString, isRecord } from "../parse/coerce";
@@ -31,7 +31,7 @@ export function parseCrtShJson(text: string): unknown[] {
       const parsed: unknown = JSON.parse(wrapped);
       return Array.isArray(parsed) ? parsed : [];
     } catch {
-      throw parseToolsError("crt.sh", "response", "crt.sh returned non-JSON");
+      throw parseVendorError("crt.sh", "response", "crt.sh returned non-JSON");
     }
   }
 }

@@ -16,7 +16,7 @@ Cap implementations, the registry, Playbooks, and the Cap SPI (`@watchdog/caps/s
 
 | Rule | Enforced by |
 | --- | --- |
-| `run` returns an Effect (`CapRun`: `Effect<CapRunResult, ToolsTag, CapServices>`); `interpret(report, opts)` is pure/sync and returns Proposal ops. Cap I/O on `CapContext` (`uploadArtifact`, `getCredential`, `readArtifact`, …) is Effect | types (`src/sdk/define.ts`) |
+| `run` returns an Effect (`CapRun`: `Effect<CapRunResult, ToolsTag, CapServices>`; `ToolsTag` is the only vendor error family, and `runCap` rethrows the tag itself); `interpret(report, opts)` is pure/sync and returns Proposal ops. Cap I/O on `CapContext` (`uploadArtifact`, `getCredential`, `readArtifact`, …) is Effect | types (`src/sdk/define.ts`) |
 | Secrets via `ctx.getCredential`; never in `Job.input` or logs. Caps have no `@watchdog/db` dependency | `package.json` + knip for the dependency; the rest is guidance |
 | Set `timeoutMs` on the Cap; it drives abort/expire/stale reclaim, so do not hardcode those timeouts in worker/core | guidance |
 | Never hand-edit `capabilities.gen.json`; run `pnpm generate:caps` | CI drift job (`ci.yml`) |

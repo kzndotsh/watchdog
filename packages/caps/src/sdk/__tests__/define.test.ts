@@ -135,7 +135,7 @@ describe("runCap", () => {
     expect(result.artifacts).toEqual([]);
   });
 
-  it("maps ValidationVendorError to a ToolsError message", async () => {
+  it("rethrows a ValidationVendorError with its message", async () => {
     await expect(
       runCap(Effect.fail(new ValidationVendorError({ message: "no bytes" })))
     ).rejects.toThrow(/no bytes/);

@@ -2,8 +2,8 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
+import { isToolsTag } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { isToolsError } from "../errors/tools-error";
 import { extractTitle } from "../html/to-text";
 import { nowIsoStringEffect } from "../infra/clock";
 import { fetchBytesEffect } from "./fetch-bytes";
@@ -118,7 +118,7 @@ export function fetchPageEnrichEffect(
       assertHttpUrlScheme(url);
       target = normalizeHttpUrl(url);
     } catch (error) {
-      const message = isToolsError(error) ? error.message : "Invalid URL";
+      const message = isToolsTag(error) ? error.message : "Invalid URL";
       return pageEnrichValidationError(url, message);
     }
 

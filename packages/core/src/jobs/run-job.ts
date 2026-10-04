@@ -15,8 +15,6 @@ import {
 import { capTimeoutMs } from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobRow } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
-import { isToolsTag, taggedToToolsError } from "@watchdog/tools/errors";
-import type { ToolsTag } from "@watchdog/tools/errors";
 
 import { nowMillisEffect } from "../infra/clock";
 import { tryDb } from "../infra/postgres-effect";
@@ -46,17 +44,6 @@ import {
 import { suppressAndProposeStageEffect } from "./stages/propose";
 
 export { JobFibers, type JobAbortReason };
-
-type JobPipelineError = DomainTag | ToolsTag;
-
-function pipelineErrorMessage(error: JobPipelineError): string {
-  if (isDomainTag(error)) return error.message;
-  return taggedToToolsError(error).message;
-}
-
-function isJobPipelineError(error: unknown): error is JobPipelineError {
-  return isDomainTag(error) || isToolsTag(error);
-}
 
 export type JobRunOutcomeName =
   | "succeeded"
@@ -182,7 +169,7 @@ function handlePreflightFailureEffect(
     if (row) {
       yield* runFailedPathEffect({
         jobId,
-        error: pipelineErrorMessage(error),
+        error: error.message,
         jobLog,
         playbookRunId: row.playbookRunId ?? null,
         caseId: row.caseId,
@@ -316,7 +303,7 @@ function runAfterCollectEffect(
   jobLog: JobLog,
   started: number,
   fibers: JobFibersApi
-): Effect.Effect<JobRunOutcome, DomainTag | ToolsTag> {
+): Effect.Effect<JobRunOutcome, DomainTag> {
   return Effect.gen(function* runAfterCollectGen() {
     const fromCache = collected.fromCache;
     const reclaim = collected.reclaim;
@@ -473,7 +460,7 @@ function runReadyJobEffect(
         const failed = Cause.findFail(cause);
         if (Result.isSuccess(failed)) {
           const error = failed.success.error;
-          if (isJobPipelineError(error)) {
+          if (isDomainTag(error)) {
             return Ref.get(collectedRef).pipe(
               Effect.flatMap((collectedResult) =>
                 failOutcome(
@@ -482,7 +469,7 @@ function runReadyJobEffect(
                   collectedResult,
                   jobLog,
                   started,
-                  pipelineErrorMessage(error),
+                  error.message,
                   fibers
                 )
               )

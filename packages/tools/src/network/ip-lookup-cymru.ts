@@ -1,6 +1,6 @@
 import { isIP } from "node:net";
 
-import { validationToolsError } from "../errors/tools-error";
+import { validationVendorError } from "../errors/vendor-errors";
 
 export function stripTxtQuotes(s: string): string {
   return s.replaceAll(/^"|"$/g, "").trim();
@@ -8,7 +8,7 @@ export function stripTxtQuotes(s: string): string {
 
 export function expandIpv6(ip: string): string {
   const parts = ip.split("::");
-  if (parts.length > 2) throw validationToolsError(`Invalid IPv6: ${ip}`);
+  if (parts.length > 2) throw validationVendorError(`Invalid IPv6: ${ip}`);
   const head =
     parts[0] !== undefined && parts[0] !== "" ? parts[0].split(":") : [];
   const tail =
@@ -19,7 +19,7 @@ export function expandIpv6(ip: string): string {
     ...Array.from({ length: Math.max(missing, 0) }, () => "0"),
     ...tail,
   ];
-  if (full.length !== 8) throw validationToolsError(`Invalid IPv6: ${ip}`);
+  if (full.length !== 8) throw validationVendorError(`Invalid IPv6: ${ip}`);
   return full.map((h) => h.padStart(4, "0")).join(":");
 }
 
@@ -64,7 +64,7 @@ export function canonicalIpLiteral(raw: string): string {
   const ver = isIP(trimmed);
   if (ver === 4) return trimmed;
   if (ver === 6) return compressIpv6(trimmed);
-  throw validationToolsError(`Invalid IP address: ${raw}`);
+  throw validationVendorError(`Invalid IP address: ${raw}`);
 }
 
 export function originLookupName(ip: string): string {
@@ -82,7 +82,7 @@ export function originLookupName(ip: string): string {
     const nibbles = nibbleChars.reverse().join(".");
     return `${nibbles}.origin6.asn.cymru.com`;
   }
-  throw validationToolsError(`Invalid IP address: ${ip}`);
+  throw validationVendorError(`Invalid IP address: ${ip}`);
 }
 
 export interface CymruOriginFields {

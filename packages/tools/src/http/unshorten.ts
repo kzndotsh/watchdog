@@ -2,9 +2,9 @@ import { Effect, Result } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { errorMessage } from "../errors/tools-error";
+import { errorMessage } from "../errors/vendor-errors";
 import { nowIsoStringEffect } from "../infra/clock";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import {

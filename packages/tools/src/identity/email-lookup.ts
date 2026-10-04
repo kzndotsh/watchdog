@@ -2,9 +2,9 @@ import { Effect } from "effect";
 import { z } from "zod";
 
 import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
+import { validationVendorError } from "../errors/vendor-errors";
 import { nowIsoStringEffect } from "../infra/clock";
 
 export const emailLookupSnapshotSchema = z.object({
@@ -61,11 +61,11 @@ export function normalizeEmail(raw: string): { email: string; domain: string } {
   const trimmed = raw.trim().toLowerCase();
   const at = trimmed.lastIndexOf("@");
   if (at <= 0 || at === trimmed.length - 1) {
-    throw validationToolsError(`Invalid email: ${raw}`);
+    throw validationVendorError(`Invalid email: ${raw}`);
   }
   const domain = trimmed.slice(at + 1);
   if (!domain.includes(".") || domain.includes(" ")) {
-    throw validationToolsError(`Invalid email domain: ${raw}`);
+    throw validationVendorError(`Invalid email domain: ${raw}`);
   }
   return { email: trimmed, domain };
 }

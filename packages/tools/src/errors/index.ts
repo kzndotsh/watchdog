@@ -1,10 +1,6 @@
+export { httpVendorError, abortedError } from "./vendor-errors";
 export {
-  ToolsError,
-  httpToolsError,
-  isToolsError,
-  abortedToolsError,
-} from "./tools-error";
-export {
+  AbortedError,
   RateLimitedError,
   HttpVendorError,
   ParseVendorError,
@@ -12,4 +8,4 @@ export {
   ValidationVendorError,
   type ToolsTag,
 } from "./tagged-errors";
-export { isToolsTag, mapToolsCatch, taggedToToolsError } from "./map-tools-tag";
+export { isToolsTag, mapToolsCatch } from "./map-tools-catch";

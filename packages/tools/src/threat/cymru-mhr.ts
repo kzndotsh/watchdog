@@ -3,9 +3,9 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { dnsOrEmpty, runAbortableResolver } from "../dns/abortable-resolver";
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
+import { validationVendorError } from "../errors/vendor-errors";
 import { nowIsoStringEffect } from "../infra/clock";
 
 export const cymruMhrLookupSnapshotSchema = z.object({
@@ -25,7 +25,7 @@ export type CymruMhrLookupSnapshot = z.infer<
 export function normalizeCymruMhrHash(raw: string): string {
   const hash = raw.trim().toLowerCase();
   if (!/^[a-f0-9]+$/.test(hash)) {
-    throw validationToolsError(`Invalid hex hash: ${raw}`);
+    throw validationVendorError(`Invalid hex hash: ${raw}`);
   }
   return hash;
 }
@@ -41,7 +41,7 @@ function labelsForHash(hash: string): string {
       return `${hash.slice(0, 32)}.${hash.slice(32)}`;
     }
     default: {
-      throw validationToolsError(
+      throw validationVendorError(
         `Unsupported hash length ${hash.length} for Team Cymru MHR (expected MD5/SHA1/SHA256)`
       );
     }

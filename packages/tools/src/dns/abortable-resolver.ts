@@ -2,9 +2,9 @@ import { Resolver } from "node:dns/promises";
 
 import { Data, Effect } from "effect";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { abortedToolsError } from "../errors/tools-error";
+import { abortedError } from "../errors/vendor-errors";
 
 class BenignDnsError extends Data.TaggedError("BenignDnsError")<{
   readonly cause: unknown;
@@ -27,7 +27,7 @@ export function assertNotAborted(
   signal: AbortSignal,
   abortMessage: string
 ): void {
-  if (signal.aborted) throw abortedToolsError(abortMessage);
+  if (signal.aborted) throw abortedError(abortMessage);
 }
 
 export function withAbortableResolver(
@@ -44,7 +44,7 @@ export function withAbortableResolver(
   };
   if (signal.aborted) {
     onAbort();
-    throw abortedToolsError(abortMessage);
+    throw abortedError(abortMessage);
   }
   signal.addEventListener("abort", onAbort, { once: true });
   return {

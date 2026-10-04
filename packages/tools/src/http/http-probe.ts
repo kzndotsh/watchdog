@@ -1,9 +1,9 @@
 import { Effect, Result } from "effect";
 import type { HttpClient } from "effect/http";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { errorMessage } from "../errors/tools-error";
+import { errorMessage } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "./fetch-bytes";
 import {
   httpProbeSnapshotSchema,

@@ -6,8 +6,8 @@ import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { httpToolsError, parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { httpVendorError, parseVendorError } from "../errors/vendor-errors";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
@@ -74,12 +74,12 @@ export function parseMnemonicPdnsBody(
   body: unknown
 ): MnemonicLookupSnapshot {
   if (!isRecord(body)) {
-    throw parseToolsError("Mnemonic PDNS", query);
+    throw parseVendorError("Mnemonic PDNS", query);
   }
 
   const responseCode = body.responseCode;
   if (responseCode === 402) {
-    throw httpToolsError(
+    throw httpVendorError(
       "Mnemonic PDNS",
       402,
       `Mnemonic PDNS resource limit exceeded for ${query}`
@@ -90,7 +90,7 @@ export function parseMnemonicPdnsBody(
       typeof responseCode === "number" || typeof responseCode === "string"
         ? String(responseCode)
         : JSON.stringify(responseCode);
-    throw httpToolsError(
+    throw httpVendorError(
       "Mnemonic PDNS",
       typeof responseCode === "number" ? responseCode : 400,
       `Mnemonic PDNS responseCode=${label} for ${query}`

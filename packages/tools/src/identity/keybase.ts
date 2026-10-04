@@ -4,10 +4,13 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { parseToolsError, validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import {
+  parseVendorError,
+  validationVendorError,
+} from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asString, isRecord } from "../parse/coerce";
@@ -54,7 +57,7 @@ function classifyQuery(raw: string): {
   }
   const username = trimmed.toLowerCase();
   if (!/^[a-z0-9][a-z0-9_]{0,15}$/i.test(username)) {
-    throw validationToolsError(`Invalid Keybase query: ${raw}`);
+    throw validationVendorError(`Invalid Keybase query: ${raw}`);
   }
   return { kind: "username", value: username, param: "usernames" };
 }
@@ -183,12 +186,12 @@ export function parseKeybaseBody(
   body: unknown
 ): KeybaseLookupSnapshot {
   if (!isRecord(body)) {
-    throw parseToolsError("Keybase", query);
+    throw parseVendorError("Keybase", query);
   }
   const status = isRecord(body.status) ? body.status : null;
   const code = status?.code;
   if (code !== 0 && code !== "0") {
-    throw validationToolsError(
+    throw validationVendorError(
       `Keybase status ${String(code)} (${asString(status?.name) ?? "?"}) for ${query}`
     );
   }

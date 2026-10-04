@@ -3,9 +3,9 @@ import { isIP } from "node:net";
 import { Effect } from "effect";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
+import { validationVendorError } from "../errors/vendor-errors";
 import { canonicalIpLiteral, expandIpv6 } from "../network/ip-lookup-cymru";
 import {
   assertNotAborted,
@@ -25,7 +25,7 @@ export type DnsReverseSnapshot = z.infer<typeof dnsReverseSnapshotSchema>;
 export function normalizeIp(raw: string): string {
   const trimmed = raw.trim();
   if (!isIP(trimmed)) {
-    throw validationToolsError(`Invalid IP address: ${raw}`);
+    throw validationVendorError(`Invalid IP address: ${raw}`);
   }
   if (isIP(trimmed) === 6) {
     return canonicalIpLiteral(trimmed);
