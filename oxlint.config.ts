@@ -68,7 +68,7 @@ const wrappedImportBans: string[] = readdirSync(
 /* oxlint-enable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return */
 
 const watchdogIgnores = [
-  "_legacy-v1/**",
+  // Local frozen tree, untracked: never format/lint it.
   "_legacy-v2/**",
   ".direnv/**",
   "graph/**",
@@ -110,6 +110,12 @@ const webImportRestrictions = (
       group: wrappedImportBans,
       message:
         "This primitive has a Watchdog wrapper: import it from @/shared/ui/primitives/<name> (loading, Enter-to-confirm, mono, ...).",
+    },
+    {
+      // Wrapper kept in shared/ui (no className surface, so not under primitives/).
+      group: ["@watchdog/ui/components/toast"],
+      message:
+        "Import toast and Toaster from @/shared/ui/toast: the Watchdog wrapper adds toast.success/error/warning/info/loading.",
     },
     ...extra,
   ],

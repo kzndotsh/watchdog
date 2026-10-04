@@ -3,12 +3,12 @@ import { useState, type MouseEvent, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@watchdog/ui/components/resizable";
+import { useIsMobile } from "@watchdog/ui/hooks/use-mobile";
 
 export interface SplitViewProps {
   /** Queue column. */

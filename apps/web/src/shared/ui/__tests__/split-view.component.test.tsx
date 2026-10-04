@@ -6,7 +6,7 @@ vi.mock("@/shared/hooks/use-hydrated", () => ({
 }));
 
 const narrow = vi.hoisted(() => ({ value: false }));
-vi.mock("@/shared/hooks/use-mobile", () => ({
+vi.mock("@watchdog/ui/hooks/use-mobile", () => ({
   useIsMobile: () => narrow.value,
 }));
 
