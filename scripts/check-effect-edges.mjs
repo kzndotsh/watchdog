@@ -16,13 +16,15 @@ const strict =
   process.env.CHECK_EFFECT_EDGES_STRICT === "1";
 
 const CALL =
-  /\bEffect\.run(?:PromiseExit|Promise|Sync|Fork|Callback)\s*\(|\bappRuntime\.runPromise\s*\(/;
+  /\bEffect\.run(?:PromiseExit|Promise|Sync|Fork|Callback)(?:With)?\s*\(|\bappRuntime\.runPromise\s*\(/;
 
 /** Paths relative to repo root. Tests (`__tests__`, `*.test.ts`) are skipped. */
 const ALLOW = new Set([
   "packages/api/src/runtime.ts",
   "apps/worker/src/boot-worker.ts",
   "packages/core/src/infra/run-domain.ts",
+  // `transact`: the driver's transaction API is promise-based, so the body runs
+  // through `runPromiseExitWith` (caller services, abort signal) at this one edge.
   "packages/core/src/infra/postgres-tx.ts",
   "packages/core/src/infra/export-sync.ts",
   "packages/caps/src/sdk/run.ts",
