@@ -197,6 +197,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.6.1
+      '@watchdog/test-kit':
+        specifier: workspace:*
+        version: link:../../packages/test-kit
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2

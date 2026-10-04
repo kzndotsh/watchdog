@@ -30,7 +30,8 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
-| A `@watchdog/*` import must be a declared dependency (pnpm strict `node_modules`: an undeclared import does not resolve) | packages, apps | `docs/reference/platform/packages.md` Enforcement | `pnpm typecheck` | enforced |
+| A `@watchdog/*` import must be a declared dependency (pnpm strict `node_modules`: an undeclared import does not resolve) | packages, apps | `docs/reference/platform/packages.md` Enforcement | `pnpm typecheck`, `check:boundaries` | enforced |
+| A `@watchdog/*` import goes through a path in the target's `package.json` `exports` (never an internal or relative path into another package), and apps are never imported by packages or other apps | packages, apps | `docs/reference/platform/packages.md` Enforcement | `check:boundaries` (`scripts/check-boundaries.mjs`) | enforced |
 | Import direction follows the matrix in `packages.md` (nothing fails when a package declares a forbidden dependency) | packages, apps | `docs/reference/platform/packages.md` Forbidden imports | guidance | guidance |
 | Web never imports `@watchdog/db` | web | `docs/reference/platform/packages.md` Forbidden imports | oxlint `eslint/no-restricted-imports` | enforced |
 | A component with a Watchdog wrapper imports from `@/shared/ui/primitives/*`, not `@watchdog/ui/components/*` | web | `docs/reference/web/ui/vendor.md` Layers | oxlint `eslint/no-restricted-imports`, `apps/web/src/shared/ui/primitives/__tests__/wrapper-lint-coverage.test.ts` | enforced |

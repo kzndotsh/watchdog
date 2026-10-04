@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@watchdog/test-kit": "workspace:*",
     "esbuild": "^0.28.2",
     "tsx": "catalog:",
     "typescript": "catalog:"
