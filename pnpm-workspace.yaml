@@ -6,6 +6,7 @@ packages:
 # Packages reference it as `"name": "catalog:"`; change a version here, once.
 # A dependency used by a single package keeps its literal range in that package.
 # Peer ranges stay literal (a catalog would force the exact range on consumers).
+# `pnpm check:workspace` (sherif + scripts/check-catalog.mjs) fails on drift.
 catalog:
   "@better-auth/api-key": "1.7.5"
   "@fontsource-variable/geist": "^5.3.0"

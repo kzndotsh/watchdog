@@ -50,7 +50,8 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Services are `*Effect` programs that keep `DomainTag` in `E`; tests bridge with `runDomain` | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
 | Enqueue only through `enqueueCapJobEffect` and the boss helpers; one pg-boss boss per process | core, worker | `docs/reference/platform/jobs-orpc.md` Jobs path | guidance | guidance |
 | Tools vendor clients export `*Effect` only, never call raw `fetch`; `toolsHttpClientLayer` is provided once at the root | tools | `packages/tools/AGENTS.md` Rules | guidance | guidance |
-| One Zod version workspace-wide | repo | `docs/reference/platform/types.md` Foundations | pnpm `overrides` in `pnpm-workspace.yaml` | enforced |
+| One Zod version workspace-wide | repo | `docs/reference/platform/types.md` Foundations | `zod` in the `pnpm-workspace.yaml` catalog and `overrides`; `check:workspace` | enforced |
+| A dependency declared by two or more workspace packages takes its version from the pnpm catalog (`"name": "catalog:"`); versions agree across packages and `@types/*` stay in devDependencies | repo | `AGENTS.md` Gotchas | `check:workspace` | enforced |
 | Schema is the SoT (`z.infer`, no twin interfaces); `z.enum(CONST)`, not copied literals; no `z.any()` | schemas, web, api | `docs/reference/platform/types.md` Foundations | guidance | guidance |
 | Web, API and CLI share one input schema per create/update/delete shape; never fork it per surface | schemas | `packages/schemas/AGENTS.md` Gotchas | guidance | guidance |
 | Wire objects are named in `schemas.ts` (no anonymous inline Zod); no DB rows or drizzle types on the wire | api | `packages/api/AGENTS.md` Rules | guidance | guidance |

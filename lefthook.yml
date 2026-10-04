@@ -93,6 +93,13 @@ pre-commit:
         - ".github/workflows/**"
         - "scripts/check-action-pins.mjs"
       run: pnpm check:action-pins
+    workspace:
+      # sherif (mismatched versions, misplaced dependency types) + catalog use.
+      glob:
+        - "**/package.json"
+        - "pnpm-workspace.yaml"
+        - "scripts/check-catalog.mjs"
+      run: pnpm check:workspace
     codeowners:
       # Also depends on which files exist (a rename can orphan a pattern), so CI reruns it on every change.
       glob:

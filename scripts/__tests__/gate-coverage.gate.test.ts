@@ -27,7 +27,9 @@ const MUST_FAIL = /fails|must fail|rejects/i;
  * Tools that are not scripts of ours: nothing to fixture-test here.
  * ultracite: pnpm check / fix. tsc: typecheck. astro: typecheck and the site build.
  * vitest: pnpm test:gate. knip: unused code. tsx: the generate:* regen steps (CI
- * checks their drift with git diff).
+ * checks their drift with git diff). sherif: workspace consistency (mismatched
+ * versions, dependency types) inside `pnpm check:workspace`; the catalog rule it cannot
+ * express is our scripts/check-catalog.mjs, which has its own gate test.
  */
 const THIRD_PARTY = new Set([
   "ultracite",
@@ -36,6 +38,7 @@ const THIRD_PARTY = new Set([
   "vitest",
   "knip",
   "tsx",
+  "sherif",
 ]);
 
 /** pnpm subcommands that run no gate. */

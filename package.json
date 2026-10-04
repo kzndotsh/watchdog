@@ -53,14 +53,11 @@
     "desloppify:next": "desloppify next",
     "prepare": "effect-tsgo patch --oxlint",
     "check:action-pins": "node ./scripts/check-action-pins.mjs",
+    "check:workspace": "sherif --fail-on-warnings && node ./scripts/check-catalog.mjs",
     "check:codeowners": "node ./scripts/check-codeowners.mjs",
     "check:vendor": "node ./scripts/ui-vendor.mjs check",
     "ui:sync": "node ./scripts/ui-vendor.mjs sync",
     "ui:add": "node ./scripts/ui-vendor.mjs add"
-  },
-  "dependencies": {
-    "@watchdog/cli": "workspace:*",
-    "effect": "catalog:"
   },
   "devDependencies": {
     "@effect/tsgo": "0.45.0",
@@ -70,9 +67,11 @@
     "@types/node": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "^5.0.1",
+    "@watchdog/cli": "workspace:*",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
     "cn": "catalog:",
+    "effect": "catalog:",
     "happy-dom": "^20.14.3",
     "jsdom": "^30.0.1",
     "knip": "^6.35.1",
@@ -81,6 +80,7 @@
     "oxlint-plugin-react-doctor": "^0.9.13",
     "oxlint-tsgolint": "7.0.2001",
     "react-doctor": "^0.9.13",
+    "sherif": "1.13.0",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "ultracite": "7.12.0",

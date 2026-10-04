@@ -221,6 +221,10 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.config == 'true'
         run: pnpm check:action-pins
 
+      - name: Workspace consistency
+        if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:workspace
+
       - name: CODEOWNERS paths
         run: pnpm check:codeowners
 
