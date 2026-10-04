@@ -48,4 +48,14 @@ describe("check-migrations", () => {
     expect(res.code).toBe(1);
     expect(res.output).toContain("generate failed");
   });
+
+  it("explains a generate that needed an interactive rename answer", () => {
+    const { repo, env } = repoWithGenerator(
+      "echo 'Is x column in a table created or renamed from another column?' >&2; exit 1"
+    );
+    const res = repo.run("check-migrations.mjs", [], env);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("generate needs a rename decision");
+    expect(res.output).toContain("pnpm db:generate --name=");
+  });
 });

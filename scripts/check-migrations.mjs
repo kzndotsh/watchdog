@@ -88,7 +88,20 @@ for (const [rel, content] of before) {
 }
 
 if (res.status !== 0) {
-  process.stderr.write(`${res.stdout}${res.stderr}`);
+  const output = `${res.stdout}${res.stderr}`;
+  process.stderr.write(output);
+  // drizzle-kit asks "created or renamed?" for an ambiguous column or table change
+  // and cannot answer without a TTY.
+  if (
+    /interactive|\bTTY\b|created or renamed|rename (?:column|table)|\bisTTY\b/i.test(
+      output
+    )
+  ) {
+    console.error(
+      "check:migrations: generate needs a rename decision (drizzle-kit asked an interactive question); run `pnpm db:generate --name=<what_changed>` locally and commit the migration"
+    );
+    process.exit(1);
+  }
   console.error(
     `check:migrations: generate failed (exit ${res.status ?? "signal"})`
   );
