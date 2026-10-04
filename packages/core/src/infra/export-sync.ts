@@ -18,7 +18,7 @@ import { evidenceDisplayLabel, parseTrimmedCaseId } from "@watchdog/schemas";
 
 import { readArtifactBytesEffect } from "./blob";
 import { errorMessage } from "./domain-error";
-import { renderCaseExportEffect, renderEntityMarkdownEffect } from "./export";
+import { renderCaseExportEffect } from "./export";
 import { logProcess, logSwallowed } from "./process-log";
 import { domainMessageOf } from "./tagged-errors";
 
@@ -189,26 +189,6 @@ function writeCaseEvidenceFilesEffect(
       else if (outcome === "skipped") counts.skipped += 1;
     }
     return counts;
-  });
-}
-
-export function writeEntityExportEffect(
-  entityId: string
-): Effect.Effect<void, ExportIOError> {
-  return Effect.gen(function* writeEntityExportGen() {
-    const exported = yield* renderEntityMarkdownEffect(entityId).pipe(
-      Effect.mapError(
-        (error) => new ExportIOError({ reason: domainMessageOf(error) })
-      )
-    );
-    if (!exported) return;
-    const kindDir = `${exported.kind}s`;
-    const dir = exportDirFor(exported.organizationId, exported.caseSlug);
-    if (dir === null) return;
-    yield* writeEffect(
-      nodePath.join(dir, kindDir, `${exported.entitySlug}.md`),
-      exported.markdown
-    );
   });
 }
 

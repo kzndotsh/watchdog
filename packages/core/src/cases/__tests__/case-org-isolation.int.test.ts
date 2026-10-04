@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { listRecentActivityEffect } from "@watchdog/core/activity";
 import {
-  DomainError,
   createCaseEffect,
   getCaseByIdEffect,
   listCasesEffect,
-  listEntitiesForCaseEffect,
-  listEvidenceForCaseEffect,
-  listJobsForCaseEffect,
-  listRecentActivityEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/cases";
+import { DomainError } from "@watchdog/core/errors";
+import { listEvidenceForCaseEffect } from "@watchdog/core/evidence";
+import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
+import { listJobsForCaseEffect } from "@watchdog/core/jobs";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 

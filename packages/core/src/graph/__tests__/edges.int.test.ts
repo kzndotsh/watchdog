@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  DomainError,
-  createEdgeEffect,
-  updateEdgeEffect,
-  runDomain,
-} from "@watchdog/core";
+import { DomainError } from "@watchdog/core/errors";
+import { createEdgeEffect, updateEdgeEffect } from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
 import { db, evidenceLinksRepo } from "@watchdog/db";
 import {
   resetTestDb,

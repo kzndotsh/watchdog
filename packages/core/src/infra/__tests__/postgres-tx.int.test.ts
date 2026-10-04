@@ -5,9 +5,9 @@ import {
   ConflictError,
   InternalError,
   InvalidError,
-  transact,
   type DomainTag,
-} from "@watchdog/core";
+} from "@watchdog/core/errors";
+import { transact } from "@watchdog/core/infra";
 
 /** The tagged failure `transact` surfaces after its DomainError round trip. */
 function failWith(error: DomainTag): Promise<DomainTag> {

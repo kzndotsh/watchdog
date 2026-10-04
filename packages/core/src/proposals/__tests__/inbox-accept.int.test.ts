@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DomainError } from "@watchdog/core/errors";
+import { runDomain } from "@watchdog/core/infra";
 import {
-  DomainError,
   acceptProposalEffect,
   createAgentProposalEffect,
   listProposalsForCaseEffect,
   rejectProposalEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/proposals";
 import {
   claimsRepo,
   db,

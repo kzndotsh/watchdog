@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DomainError } from "@watchdog/core/errors";
+import { dumpUrlEffect } from "@watchdog/core/evidence";
+import { runDomain } from "@watchdog/core/infra";
 import {
-  DomainError,
   cancelJobEffect,
-  dumpUrlEffect,
   getJobForCaseEffect,
   startJobEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/jobs";
 import { db, evidenceRepo } from "@watchdog/db";
 import {
   resetTestDb,

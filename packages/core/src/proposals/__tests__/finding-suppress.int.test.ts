@@ -4,9 +4,9 @@ import {
   createClaimEffect,
   createEventEffect,
   createIdentifierEffect,
-  runDomain,
-  suppressKnownFindingsEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
+import { suppressKnownFindingsEffect } from "@watchdog/core/proposals";
 import { db } from "@watchdog/db";
 import { fingerprintPatchOp } from "@watchdog/schemas";
 import {
