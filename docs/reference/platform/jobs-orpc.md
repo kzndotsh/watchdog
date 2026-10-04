@@ -7,7 +7,7 @@
 
 Enqueue: `enqueueCapJobEffect` → pg-boss queue `watchdog.cap-jobs` → `apps/worker` runs the Cap → Evidence + Proposal → Triage Accept/Reject (one TX). Collect lists jobs via `JobListRecord` (no `logs`); run detail loads the full `JobRecord` via `getJobForCase`.
 
-- **One pg-boss per process.** Web/API enqueue via `enqueueCapJobEffect` / `ensureBossProducerEffect` (`supervise: false`); the worker uses `ensureBossWorkerEffect` (`supervise: true`) and the playbook chain reuses that live boss.
+- **One pg-boss per process, as a scoped service.** Enqueue is `enqueueCapJobEffect` with `R = JobQueue`. Web/API compose `jobQueueProducerLayer` (`supervise: false`, starts lazily on the first send); the worker composes `jobQueueWorkerLayer` (`supervise: true`) and the playbook chain reuses that queue. Each Layer releases pg-boss when its scope closes; the worker release is a graceful `boss.stop` bounded by `gracefulStopTimeoutMs()`.
 - **Timing derives from Cap `timeoutMs`:** abort, per-job expire, graceful stop, stale-Job reclaim (see [`caps-boundary.md`](caps-boundary.md)).
 - **Orphan reconcile.** Worker boot re-enqueues `queued` Jobs left without a pg-boss delivery (`reconcileOrphanedQueuedJobsEffect`, 2-minute `updatedAt` grace; `singletonKey` on send makes repeat enqueue safe).
 - **Export shadow sync:** the worker listens for graph events and calls `scheduleCaseExportEffect` (coalesced in `@watchdog/core`).
