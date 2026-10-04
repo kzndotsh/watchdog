@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 
 import {
-  createCaseFieldsSchema,
+  createCaseInputSchema,
   deleteCaseInputSchema,
   updateCaseInputSchema,
 } from "@watchdog/schemas";
@@ -73,7 +73,7 @@ export const casesCmd = defineNounCommand({
         },
       },
       run: async ({ args }) => {
-        const fields = createCaseFieldsSchema.parse({
+        const fields = createCaseInputSchema.parse({
           name: args.name,
           ...pickDefined({
             slug: args.slug,
