@@ -35,6 +35,7 @@ Every other tagged error is internal-only: it is mapped to one of the five tags 
 | `ScratchIOError` | `scratch_io` | `core` | internal-only |
 | `ScratchCleanupError` | `scratch_cleanup` | `core` | internal-only |
 | `WorkerBossError` | `worker_boss` | `worker` | internal-only |
+| `WorkerListenError` | `worker_listen` | `worker` | internal-only |
 | `RateLimitedError` | `rate_limited` | `tools` | `InternalError` |
 | `HttpVendorError` | `vendor_http` | `tools` | `InternalError` |
 | `ParseVendorError` | `vendor_parse` | `tools` | `InternalError` |
