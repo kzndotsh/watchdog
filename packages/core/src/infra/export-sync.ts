@@ -24,7 +24,9 @@ import { logProcess, logSwallowed } from "./process-log";
 
 export class ExportIOError extends Data.TaggedError("ExportIOError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "export_io" as const;
+}
 
 function mapExportCatch(error: unknown): ExportIOError {
   if (error instanceof ExportIOError) return error;

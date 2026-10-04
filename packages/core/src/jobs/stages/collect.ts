@@ -167,7 +167,9 @@ function buildCapContext(
 
 class ScratchIOError extends Data.TaggedError("ScratchIOError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "scratch_io" as const;
+}
 
 function acquireScratchEffect(): Effect.Effect<string> {
   return Effect.tryPromise({

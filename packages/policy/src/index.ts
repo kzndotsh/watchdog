@@ -12,7 +12,7 @@ export {
   requireEntitySlug,
   requireString,
   requireUuid,
-  CustodyViolation,
+  CustodyViolationError,
   type PatchGateOpts,
 } from "./patch-gates";
 export * from "./custody-child-write";

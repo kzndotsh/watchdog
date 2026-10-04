@@ -40,7 +40,7 @@ May edit Effect programs under `packages/*` / `apps/*` and `scripts/check-effect
 
 ## Gotchas
 
-- Error channels: `DomainTag` (core services → `runApp` / `runDomain` / job `catchCause`), `ToolsTag` (CapContext I/O, tools HTTP → Cap fail path / `mapToolsCatch`), `CustodyViolation` (`@watchdog/policy` gates → Accept / apply-patch). API maps `DomainTag` via `toOrpcError` / `Match.tagsExhaustive`; prefer `runApp`.
+- Error channels: `DomainTag` (core services → `runApp` / `runDomain` / job `catchCause`), `ToolsTag` (CapContext I/O, tools HTTP → Cap fail path / `mapToolsCatch`), `CustodyViolationError` (`@watchdog/policy` gates → Accept / apply-patch). API maps `DomainTag` via `toOrpcError` / `Match.tagsExhaustive`; prefer `runApp`.
 - The promise bridge inside `transact` (`runPromiseExitWith`: caller services, abort signal) and the export-coalesce `runSync` are intentional: do not "fix" them away.
 - `AppLive` is `Layer.empty`. Call `tryDb` / module Effects; do not revive Postgres/Vault/JobQueue/repo identity Layers.
 - Do not copy Effect-guide patterns that Watchdog rejects: Effect `Schema` as domain SoT (wire stays Zod in `@watchdog/schemas`), `@effect/sql` / Model.Class (Postgres is Drizzle), `HttpApi` servers (HTTP is oRPC), `@effect/ai*` (`@watchdog/ai` uses the Vercel AI SDK). Library examples are not license to add `run*` sites.

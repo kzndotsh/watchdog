@@ -28,7 +28,9 @@ const MASTER_NORMALIZE_INFO = Buffer.from("watchdog-master-v1");
 
 export class VaultError extends Data.TaggedError("VaultError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "vault" as const;
+}
 
 export interface CredentialMeta {
   id: string;

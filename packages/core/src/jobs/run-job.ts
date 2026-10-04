@@ -199,9 +199,11 @@ function handlePreflightFailureEffect(
   });
 }
 
-class ScratchCleanupFailed extends Data.TaggedError("ScratchCleanupFailed")<{
+class ScratchCleanupError extends Data.TaggedError("ScratchCleanupError")<{
   readonly cause: unknown;
-}> {}
+}> {
+  readonly code = "scratch_cleanup" as const;
+}
 
 function cleanupCollectedRunEffect(
   jobId: string,
@@ -214,7 +216,7 @@ function cleanupCollectedRunEffect(
         recursive: true,
         force: true,
       }),
-    catch: (cause) => new ScratchCleanupFailed({ cause }),
+    catch: (cause) => new ScratchCleanupError({ cause }),
   }).pipe(
     Effect.tapError((error) =>
       Effect.sync(() => {
