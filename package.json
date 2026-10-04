@@ -41,6 +41,7 @@
     "check:agents:strict": "node ./scripts/check-agents.mjs --strict",
     "check:docs": "node ./scripts/check-docs.mjs",
     "check:design-tokens": "node ./scripts/check-design-tokens.mjs",
+    "changed": "node ./scripts/changed-packages.mjs",
     "check:size": "node ./scripts/check-size-budget.mjs",
     "check:docs:strict": "node ./scripts/check-docs.mjs --strict --fail-length",
     "check:docs-affected": "node ./scripts/check-docs-affected.mjs",
