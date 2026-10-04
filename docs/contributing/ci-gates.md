@@ -79,7 +79,7 @@ A pull request that touches only `scripts/**` (and docs) runs Gates and Unit (th
 
 Files GitHub reads from the repository, kept under `.github/` unless noted:
 
-- `.github/CODEOWNERS`: default owner plus agent configuration, CI, gate scripts and workspace config; kept honest by `check:codeowners`.
+- `.github/CODEOWNERS`: one global owner while the repo is solo; kept honest by `check:codeowners`.
 - `.github/ISSUE_TEMPLATE/`: bug report and feature request forms (the feature form uses the spec headings agents write) and `config.yml`, which disables blank issues and links the security policy. Not gated: a form schema error hides a template silently, so parse new forms with the `yaml` package.
 - `.github/PULL_REQUEST_TEMPLATE.md`: linked issue, gates run, docs affected and the custody checklist.
 - [`SECURITY.md`](../../SECURITY.md) (repo root): supported versions and private vulnerability reporting.
