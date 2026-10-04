@@ -232,4 +232,60 @@ describe("check-boundaries gate", () => {
     repo.write("packages/user/src/new.ts", 'import "@watchdog/lib";\n');
     expect(repo.run(GATE).code).toBe(1);
   });
+
+  describe("specifier forms", () => {
+    const BAD = "@watchdog/lib/src/secret";
+    const forms: Record<string, string> = {
+      "dynamic import on its own line": `const m = await import(\n  "${BAD}"\n);\n`,
+      "vi.mock on its own line": `vi.mock(\n  "${BAD}",\n  () => ({})\n);\n`,
+      "multi-line named import": `import {\n  a,\n  b\n} from "${BAD}";\n`,
+      "import type": `import type { A } from "${BAD}";\n`,
+      "multi-line import type": `import type {\n  A\n} from "${BAD}";\n`,
+      "export star": `export * from "${BAD}";\n`,
+      "require on its own line": `const r = require(\n  "${BAD}"\n);\n`,
+      "side-effect import": `import "${BAD}";\n`,
+    };
+
+    it.each(Object.entries(forms))(
+      "fails an internal path in %s",
+      (_n, src) => {
+        const res = workspace(
+          { lib, user: { deps: ["lib"], files: { "src/a.ts": src } } },
+          {}
+        ).run(GATE);
+        expect(res.code).toBe(1);
+        expect(res.output).toContain(BAD);
+      }
+    );
+
+    it("reports the line where a multi-line import starts", () => {
+      const res = workspace(
+        {
+          lib,
+          user: {
+            deps: ["lib"],
+            files: { "src/a.ts": `const x = 1;\nimport(\n  "${BAD}"\n);\n` },
+          },
+        },
+        {}
+      ).run(GATE);
+      expect(res.output).toContain("packages/user/src/a.ts:2");
+    });
+
+    it("passes the same multi-line forms through public entries and ignores comments", () => {
+      const src = [
+        'const m = await import(\n  "@watchdog/lib/cases"\n);',
+        'vi.mock(\n  "@watchdog/lib",\n  () => ({})\n);',
+        'import {\n  a\n} from "@watchdog/lib/ui/button";',
+        `// import { z } from "${BAD}";`,
+        `/*\n * import { z } from "${BAD}";\n */`,
+        "",
+      ].join("\n");
+      const res = workspace(
+        { lib, user: { deps: ["lib"], files: { "src/a.ts": src } } },
+        {}
+      ).run(GATE);
+      expect(res.code).toBe(0);
+    });
+  });
 });

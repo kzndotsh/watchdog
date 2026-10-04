@@ -136,12 +136,18 @@ const RELATIVE_ALLOWED = new Set([
   "packages/client/src/generated/app-router.ts",
 ]);
 
-const IMPORT_PATTERNS = [
-  // `import x from "m"`, `export * from "m"`, and the `} from "m"` tail of a multi-line clause.
-  /^\s*(?:\}|import\b|export\b)[^'"`]*\bfrom\s*["'](?<spec>[^"']+)["']/,
-  /^\s*import\s*["'](?<spec>[^"']+)["']/,
-  /\b(?:import|require)\(\s*["'](?<spec>[^"']+)["']/,
-  /\bvi\.(?:mock|doMock|importActual|importMock)\(\s*["'](?<spec>[^"']+)["']/,
+/**
+ * Specifier string literals, matched over the whole file text so a specifier on its
+ * own line (`import(\n "m"\n)`, `vi.mock(\n "m",`, `} from "m"` closing a multi-line
+ * clause) is found like a one-line import.
+ */
+const SPECIFIER_PATTERNS = [
+  // `import x from "m"`, `export * from "m"`, `import type { a } from "m"`, `} from "m"`.
+  /\bfrom\s*["'](?<spec>[^"'\n]+)["']/g,
+  // Side-effect `import "m"`.
+  /\bimport\s*["'](?<spec>[^"'\n]+)["']/g,
+  /\b(?:import|require)\s*\(\s*["'](?<spec>[^"'\n]+)["']/g,
+  /\bvi\.(?:mock|doMock|importActual|importMock)\s*\(\s*["'](?<spec>[^"'\n]+)["']/g,
 ];
 
 /**
@@ -149,19 +155,20 @@ const IMPORT_PATTERNS = [
  * @returns {{ line: number, spec: string }[]}
  */
 function importsOf(source) {
-  /** @type {{ line: number, spec: string }[]} */
-  const found = [];
-  for (const [i, text] of source.split("\n").entries()) {
-    if (/^\s*(?:\/\/|\*|\/\*)/.test(text)) continue;
-    for (const re of IMPORT_PATTERNS) {
-      const spec = re.exec(text)?.groups?.spec;
-      if (spec) {
-        found.push({ line: i + 1, spec });
-        break;
-      }
+  const lines = source.split("\n");
+  /** @type {Map<number, { line: number, spec: string }>} keyed by match offset */
+  const found = new Map();
+  for (const re of SPECIFIER_PATTERNS) {
+    for (const m of source.matchAll(re)) {
+      const spec = m.groups?.spec;
+      if (!spec) continue;
+      const line = source.slice(0, m.index).split("\n").length;
+      // Skip matches that sit on a comment line.
+      if (/^\s*(?:\/\/|\*|\/\*)/.test(lines[line - 1] ?? "")) continue;
+      found.set(m.index + m[0].indexOf(spec), { line, spec });
     }
   }
-  return found;
+  return [...found.values()].sort((x, y) => x.line - y.line);
 }
 
 const listed = execFileSync(
