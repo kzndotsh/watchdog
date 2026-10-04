@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import { toCaseEdgeRecord, toCaseIdentifierRecord } from "../../index.ts";
+import { toCaseEdgeRecord } from "../../graph/edges.ts";
+import { toCaseIdentifierRecord } from "../../graph/identifiers.ts";
 
 describe("case-list-mappers", () => {
   it("toCaseEdgeRecord keeps absolute endpoints (no peer/direction)", () => {

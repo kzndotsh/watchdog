@@ -14,7 +14,7 @@ Domain services for Case Graph, Jobs, Evidence, Tasks (case work items, not Grap
 
 ## Import paths
 
-Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (`DomainError`, tagged errors), `events` (notify + SSE listen), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`tryDb`, `transact`, `runDomain`), `jobs`, `proposals`, `search`, `tasks`, `vault`. Also `blob`, `job-display`, `proposal-display` and `worker`. Each domain is `src/<domain>/index.ts`; the root `src/index.ts` is only `export *` lines over them. New domain: add the folder index, the `exports` entry and the root line in one change. `pnpm check:boundaries` fails an import path missing from `exports`.
+Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (`DomainError`, tagged errors), `events` (notify + SSE listen), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`tryDb`, `transact`, `runDomain`), `jobs`, `proposals`, `search`, `tasks`, `vault`. Also `blob`, `job-display`, `proposal-display` and `worker`. Each domain is `src/<domain>/index.ts`; there is no root import or `src/index.ts`. New domain: add the folder index and the `exports` entry in one change. `pnpm check:boundaries` fails an import path missing from `exports`.
 
 ## Rules
 
