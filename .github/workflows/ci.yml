@@ -262,6 +262,10 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm --filter @watchdog/db check:repos
 
+      - name: Migration drift
+        if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:migrations
+
   unit:
     name: Unit
     needs: changes
