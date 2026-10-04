@@ -77,7 +77,7 @@
     "jsdom": "^30.0.1",
     "knip": "^6.35.1",
     "oxfmt": "^0.67.0",
-    "oxlint": "1.82.0",
+    "oxlint": "catalog:",
     "oxlint-plugin-react-doctor": "^0.9.13",
     "oxlint-tsgolint": "7.0.2001",
     "react-doctor": "^0.9.13",
