@@ -3,7 +3,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
     "./archive": "./src/archive/index.ts",
     "./breach": "./src/breach/index.ts",
     "./cache": "./src/cache/index.ts",

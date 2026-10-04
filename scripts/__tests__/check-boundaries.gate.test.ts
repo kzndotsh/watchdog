@@ -92,6 +92,28 @@ describe("check-boundaries gate", () => {
     expect(res.output).toContain('"@watchdog/lib"');
   });
 
+  it("fails a bare import of a package with no root export and lists its subpaths", () => {
+    const res = workspace(
+      {
+        sub: {
+          exports: {
+            "./cases": "./src/cases/index.ts",
+            "./jobs": "./src/jobs/index.ts",
+          },
+        },
+        user: {
+          deps: ["sub"],
+          files: { "src/a.ts": 'import { z } from "@watchdog/sub";\n' },
+        },
+      },
+      {}
+    ).run(GATE);
+    expect(res.code).toBe(1);
+    expect(res.output).toContain('"@watchdog/sub" is not a public entry');
+    expect(res.output).toContain('"@watchdog/sub/cases"');
+    expect(res.output).toContain('"@watchdog/sub/jobs"');
+  });
+
   it("fails a relative import that reaches into another package", () => {
     const res = workspace(
       {

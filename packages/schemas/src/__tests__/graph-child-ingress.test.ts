@@ -12,7 +12,7 @@ import {
   updateEventInputSchema,
   updateIdentifierInputSchema,
   updateQuestionInputSchema,
-} from "../index";
+} from "../graph";
 
 const CASE_ID = testId(0);
 const ENTITY_ID = testId(1);

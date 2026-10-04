@@ -2,7 +2,7 @@
 
 > Scope: `packages/schemas` (inherits root AGENTS.md)
 
-Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normalize + validate, and the input schemas that web, API, and CLI share. Zod + TypeScript only; a leaf dependency (no DB, Caps, or app imports, held by `package.json`). Import through a domain subpath, never the bare package: `@watchdog/schemas/{shared,cases,graph,evidence,jobs,caps,feed}` (each `src/<domain>.ts`, declared in `package.json` `exports`; `check:boundaries` rejects undeclared subpaths). `src/index.ts` is only `export * from` those domains. `feed` (`src/feed.ts`) groups the `activity`, `tasks` and `watchdog-events` modules. A new module joins the domain it belongs to; a name lives in exactly one domain. Find a schema by name with `grep`. Types contract: [`types.md`](../../docs/reference/platform/types.md).
+Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normalize + validate, and the input schemas that web, API, and CLI share. Zod + TypeScript only; a leaf dependency (no DB, Caps, or app imports, held by `package.json`). Import through a domain subpath, never the bare package: `@watchdog/schemas/{shared,cases,graph,evidence,jobs,caps,feed}` (each `src/<domain>.ts`, declared in `package.json` `exports`; `check:boundaries` rejects undeclared subpaths). There is no root import or `src/index.ts`. `feed` (`src/feed.ts`) groups the `activity`, `tasks` and `watchdog-events` modules. A new module joins the domain it belongs to; a name lives in exactly one domain. Find a schema by name with `grep`. Types contract: [`types.md`](../../docs/reference/platform/types.md).
 
 ## Commands
 
