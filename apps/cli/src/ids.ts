@@ -90,7 +90,7 @@ async function resolveEntityRef(
     );
     const row = rows.find((entity) => entity.id === asUuid);
     if (!row) {
-      fail("NOT_FOUND", `Entity not found: ${trimmed}`, {
+      fail("not_found", `Entity not found: ${trimmed}`, {
         help: ["wd entities list -c <caseId>"],
       });
     }

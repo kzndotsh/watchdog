@@ -17,4 +17,5 @@ export {
   isDomainTag,
   toDomainError,
   type DomainTag,
+  type DomainTagCode,
 } from "../infra/tagged-errors";
