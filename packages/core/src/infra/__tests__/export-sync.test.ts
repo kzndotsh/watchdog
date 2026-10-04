@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Deferred, Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
@@ -64,4 +64,48 @@ describe("scheduleCaseExportEffect", () => {
     await Promise.all([first, second]);
     expect(calls).toBe(2);
   });
+
+  it.each([2, 5])(
+    "runs %i simultaneous schedules as one in-flight write plus at most one follow-up",
+    async (n) => {
+      let started = 0;
+      let active = 0;
+      let maxActive = 0;
+
+      const program = Effect.gen(function* programGen() {
+        const gate = yield* Deferred.make<undefined>();
+        const writeExport = () =>
+          Effect.gen(function* writeExportGen() {
+            started += 1;
+            active += 1;
+            maxActive = Math.max(maxActive, active);
+            // Only the first write blocks; the follow-up (if any) runs straight through.
+            if (started === 1) yield* Deferred.await(gate);
+            active -= 1;
+          });
+        const caseId = testId(98);
+        const schedule = scheduleCaseExportEffect(caseId, writeExport);
+        // The releaser is queued after every schedule fiber, so all of them have
+        // interpreted (marked dirty, started or joined) before the first write may
+        // finish: no sleeps, ordering comes from the fiber run queue.
+        const release = Effect.gen(function* releaseGen() {
+          for (let i = 0; i < 10; i += 1) yield* Effect.yieldNow;
+          expect(started).toBe(1);
+          yield* Deferred.succeed(gate, undefined);
+        });
+        yield* Effect.all(
+          [...Array.from({ length: n }, () => schedule), release],
+          { concurrency: "unbounded" }
+        );
+      });
+
+      await runDomain(program);
+
+      expect(maxActive).toBe(1);
+      // Schedules that mark dirty before the write fiber claims it collapse into
+      // that one write; later ones yield exactly one follow-up. Never more.
+      expect(started).toBeGreaterThanOrEqual(1);
+      expect(started).toBeLessThanOrEqual(2);
+    }
+  );
 });
