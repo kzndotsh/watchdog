@@ -59,7 +59,7 @@ test.describe("Custody accept gates", () => {
       await triagePage.selectProposalSummary("custody probe confirmed claim");
       await triagePage.setConfidence("Confirmed");
       await expect(
-        page.getByText("confirmed requires at least 1 evidence item")
+        page.getByText("confirmed requires at least one Evidence attachment")
       ).toBeVisible();
       await expect(
         page.getByRole("button", { name: /^accept$/i })

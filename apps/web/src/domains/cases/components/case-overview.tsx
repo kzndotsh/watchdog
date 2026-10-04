@@ -1,32 +1,21 @@
-import {
-  useMutation,
-  useQueries,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, DownloadIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { setActiveCaseIdFn } from "@/domains/cases/cases.functions";
 import { CaseOverviewPending } from "@/domains/cases/components/case-overview-pending";
 import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
+import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { useUpdateCase } from "@/domains/cases/hooks/use-update-case";
-import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import { caseByIdQuery, casesContextQuery } from "@/domains/cases/queries";
-import { setActiveCaseIdInputSchema } from "@/domains/cases/types";
 import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
-import { errMessage } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
-import {
-  bindCasesChangedInvalidation,
-  invalidateAfterCaseSwitch,
-} from "@/shared/lib/query-invalidation";
+import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { Chip } from "@/shared/ui/chip";
 import { EditableTextCell } from "@/shared/ui/data-table";
@@ -81,20 +70,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
   const renameMutation = useUpdateCase(caseId, caseRow?.slug);
   /** Bumped when a rename fails so the editor drops its unsaved draft. */
   const [nameEditorKey, setNameEditorKey] = useState(0);
-  const selectMutation = useMutation({
-    mutationFn: async () =>
-      setActiveCaseIdFn({
-        data: setActiveCaseIdInputSchema.parse({ caseId }),
-      }),
-    onSuccess: async () => {
-      await invalidateAfterCaseSwitch(queryClient);
-      notifyCasesChanged();
-      toast.success("Active Case set");
-    },
-    onError: (err) => {
-      toast.error(errMessage(err, "Couldn't set Active Case"));
-    },
-  });
+  const selectMutation = useSelectActiveCase({ cases: casesCtx?.cases ?? [] });
 
   if (headerLoadError) {
     return (
@@ -182,7 +158,11 @@ export function CaseOverview({ caseId }: { caseId: string }) {
                 variant="outline"
                 disabled={selectMutation.isPending}
                 onClick={() => {
-                  selectMutation.mutate();
+                  selectMutation.mutate(caseId, {
+                    onSuccess: () => {
+                      toast.success("Active Case set");
+                    },
+                  });
                 }}
               >
                 Set Active

@@ -4,7 +4,7 @@ How data reaches the UI and when it refreshes. oRPC internals are in [`architect
 
 ## Case scope
 
-Active Case id is the httpOnly cookie `watchdog.active-case-id`, not part of the URL: tabs share one Active Case and deep links do not encode it. Almost every list and detail query takes `caseId` (keys include it); never assume "global" graph data. After a Case switch call `notifyCasesChanged()` + `invalidateAfterCaseSwitch(queryClient)` (`shared/lib/query-invalidation.ts`).
+Active Case id is the httpOnly cookie `watchdog.active-case-id`, not part of the URL: tabs share one Active Case and deep links do not encode it. Almost every list and detail query takes `caseId` (keys include it); never assume "global" graph data. The Active-Case hook `useSelectActiveCase` (`domains/cases/hooks/use-select-active-case.ts`) owns a Case switch and its invalidation (`invalidateAfterCaseSwitch`, `shared/lib/query-invalidation.ts`): do not call those by hand after a switch. The Case route heals the cookie to `/cases/$slug` through the server function `healActiveCaseFn`, a compare-and-set: it writes only while the cookie still holds the Active Case the loader observed (`expectedActiveCaseId`), and the loader drops a heal that a newer switch (epoch bump) outran.
 
 ## TanStack Query (cache SoT)
 

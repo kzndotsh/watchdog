@@ -9,6 +9,7 @@ import {
   deleteCaseInputSchema,
   getCaseByIdInputSchema,
   getCaseBySlugInputSchema,
+  healActiveCaseInputSchema,
   setActiveCaseIdInputSchema,
   updateCaseInputSchema,
   type CaseRecord,
@@ -51,18 +52,43 @@ export const getCaseBySlugFn = createServerFn({ method: "GET" })
     return cases.find((row) => row.slug === data.caseSlug) ?? null;
   });
 
+/** The one org-checked step: the Case must be visible to the caller before it becomes Active. */
+async function activateCase(
+  context: Parameters<typeof orpcFromContext>[0],
+  caseId: string
+): Promise<void> {
+  const row = await orpcNullIfNotFound(
+    orpcFromContext(context).cases.get({ caseId })
+  );
+  if (!row) throw new Error("Case not found");
+  writeActiveCaseId(caseId);
+}
+
 export const setActiveCaseIdFn = createServerFn({ method: "POST" })
   .validator(setActiveCaseIdInputSchema)
   .handler(async ({ data, context }): Promise<string | null> => {
     if (data.caseId) {
-      const row = await orpcNullIfNotFound(
-        orpcFromContext(context).cases.get({ caseId: data.caseId })
-      );
-      if (!row) throw new Error("Case not found");
+      await activateCase(context, data.caseId);
+    } else {
+      writeActiveCaseId(null);
     }
-
-    writeActiveCaseId(data.caseId);
     return data.caseId;
+  });
+
+/**
+ * The Case route's heal: the Active Case cookie follows `/cases/$slug`. Compare-and-set:
+ * writes only while the cookie still holds `expectedActiveCaseId` (what the loader
+ * observed), so a switch that landed in between is never overwritten by a stale heal.
+ */
+export const healActiveCaseFn = createServerFn({ method: "POST" })
+  .validator(healActiveCaseInputSchema)
+  .handler(async ({ data, context }): Promise<{ changed: boolean }> => {
+    const current = readActiveCaseId();
+    if (current === data.caseId || current !== data.expectedActiveCaseId) {
+      return { changed: false };
+    }
+    await activateCase(context, data.caseId);
+    return { changed: true };
   });
 
 export const createCaseFn = createServerFn({ method: "POST" })

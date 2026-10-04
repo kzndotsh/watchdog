@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
+vi.mock("@/auth/server", () => ({
+  auth: {},
+}));
+
 const useParamsMock = vi.hoisted(() => vi.fn(() => ({ caseSlug: "missing" })));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
@@ -37,8 +41,11 @@ vi.mock("@/domains/cases/components/case-overview", () => ({
   ),
 }));
 
+const healActiveCaseFn = vi.hoisted(() =>
+  vi.fn(async (_input?: unknown) => ({ changed: false }))
+);
 vi.mock("@/domains/cases/cases.functions", () => ({
-  setActiveCaseIdFn: vi.fn(),
+  healActiveCaseFn,
 }));
 
 vi.mock("@/domains/cases/lib/prefetch-case-overview", () => ({
@@ -61,6 +68,7 @@ vi.mock("@/shared/layout/page", () => ({
   ),
 }));
 
+import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { Route } from "@/routes/_protected/cases/$caseSlug";
 
 const CASE_ID = testId(10);
@@ -132,10 +140,9 @@ describe("case slug route", () => {
       description: null,
       allowThirdPartyEgress: false,
     };
-    const query = vi
-      .fn()
-      .mockResolvedValueOnce(caseRow)
-      .mockResolvedValueOnce({ active: caseRow, cases: [caseRow] });
+    const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
+      options.queryKey[1] === "context" ? { cases: [], active: null } : caseRow
+    );
 
     const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
 
@@ -145,6 +152,7 @@ describe("case slug route", () => {
           queryClient: {
             query,
             invalidateQueries: vi.fn(),
+            refetchQueries: vi.fn(),
             setQueryData: vi.fn(),
           },
         },
@@ -157,5 +165,134 @@ describe("case slug route", () => {
         replace: true,
       })
     );
+  });
+
+  describe("loader healing", () => {
+    const caseRow = {
+      id: CASE_ID,
+      slug: "alpha",
+      name: "Alpha",
+      description: null,
+      allowThirdPartyEgress: false,
+    };
+
+    const OTHER_ID = testId(11);
+
+    /** `activeId` is the Active Case the cases-context cache holds (what the loader observes). */
+    function runLoader(
+      extra: Record<string, unknown> = {},
+      activeId: string | null = OTHER_ID
+    ) {
+      const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
+        options.queryKey[1] === "context"
+          ? { cases: [], active: activeId ? { id: activeId } : null }
+          : caseRow
+      );
+      const queryClient = {
+        query,
+        invalidateQueries: vi.fn().mockResolvedValue(undefined),
+        refetchQueries: vi.fn().mockResolvedValue(undefined),
+        setQueryData: vi.fn(),
+      };
+      const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+      return {
+        queryClient,
+        result: loader({
+          context: { queryClient },
+          params: { caseSlug: "alpha" },
+          deps: {},
+          preload: false,
+          ...extra,
+        } as never),
+      };
+    }
+
+    it("asks the server to heal, carrying the Active Case the loader observed", async () => {
+      healActiveCaseFn.mockClear();
+      healActiveCaseFn.mockResolvedValueOnce({ changed: true });
+      const { result, queryClient } = runLoader();
+
+      await expect(result).resolves.toEqual(caseRow);
+
+      expect(healActiveCaseFn).toHaveBeenCalledWith({
+        data: { caseId: CASE_ID, expectedActiveCaseId: OTHER_ID },
+      });
+      expect(queryClient.invalidateQueries).toHaveBeenCalled();
+    });
+
+    it("sends null as the expected Active Case when none was observed", async () => {
+      healActiveCaseFn.mockClear();
+      healActiveCaseFn.mockResolvedValueOnce({ changed: true });
+      const { result } = runLoader({}, null);
+
+      await result;
+
+      expect(healActiveCaseFn).toHaveBeenCalledWith({
+        data: { caseId: CASE_ID, expectedActiveCaseId: null },
+      });
+    });
+
+    it("skips the server call when the route's Case is already the observed Active Case", async () => {
+      healActiveCaseFn.mockClear();
+      const { result, queryClient } = runLoader({}, CASE_ID);
+
+      await result;
+
+      expect(healActiveCaseFn).not.toHaveBeenCalled();
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it("leaves the caches alone when the server did not change the cookie", async () => {
+      healActiveCaseFn.mockResolvedValueOnce({ changed: false });
+      const { result, queryClient } = runLoader();
+
+      await result;
+
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it("does not finalize or invalidate when a newer switch bumped the epoch during the heal", async () => {
+      let release: (value: { changed: boolean }) => void = () => {};
+      healActiveCaseFn.mockImplementationOnce(
+        () =>
+          new Promise<{ changed: boolean }>((resolve) => {
+            release = resolve;
+          })
+      );
+      const { result, queryClient } = runLoader();
+      await vi.waitFor(() => {
+        expect(healActiveCaseFn).toHaveBeenCalled();
+      });
+
+      // The user switched Case via useSelectActiveCase.
+      bumpActiveCaseHealEpoch();
+      release({ changed: true });
+      await result;
+
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+      expect(queryClient.setQueryData).not.toHaveBeenCalledWith(
+        ["cases", "context"],
+        expect.anything()
+      );
+    });
+
+    it("does not call the server when a switch already bumped the epoch before the heal", async () => {
+      healActiveCaseFn.mockClear();
+      const { result, queryClient } = runLoader();
+      bumpActiveCaseHealEpoch();
+      await result;
+
+      expect(healActiveCaseFn).not.toHaveBeenCalled();
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it("does not heal on an intent preload", async () => {
+      healActiveCaseFn.mockClear();
+      const { result } = runLoader({ preload: true });
+
+      await expect(result).resolves.toEqual(caseRow);
+
+      expect(healActiveCaseFn).not.toHaveBeenCalled();
+    });
   });
 });

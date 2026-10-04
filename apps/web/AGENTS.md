@@ -29,5 +29,5 @@ TanStack Start UI. UI contracts live in **[`docs/reference/web/`](../../docs/ref
 ## Gotchas
 
 - Keep server code off the client import graph: Job Detail reads artifacts through `getArtifactContentFn` in `jobs-artifact.functions.ts` (not `@watchdog/api`/`core` directly); zip/md export routes use `runApp`.
-- Client UI must not import the `@watchdog/policy` barrel (pulls Effect into the browser): use `@watchdog/policy/patch-needs-confidence`. For job/playbook labels use `@watchdog/core/job-display`, not `@watchdog/core`. Import `JobListRecord` / `JobRecord` from `@/domains/jobs/types`, not `jobs.functions`. Guidance only: no lint rule covers these.
+- Client UI must not import the `@watchdog/policy` barrel (pulls Effect into the browser): use the subpaths `@watchdog/policy/patch-needs-confidence` / `@watchdog/policy/confirmed-evidence`. For job/playbook labels use `@watchdog/core/job-display`, not `@watchdog/core`. Import `JobListRecord` / `JobRecord` from `@/domains/jobs/types`, not `jobs.functions`. Guidance only: no lint rule covers these.
 - Process logging goes through `@watchdog/log` and the `src/start.ts` middleware.

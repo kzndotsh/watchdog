@@ -34,6 +34,7 @@ import {
   deleteCaseFn,
   getCaseBySlugFn,
   getCasesContextFn,
+  healActiveCaseFn,
   setActiveCaseIdFn,
 } from "@/domains/cases/cases.functions";
 import {
@@ -126,6 +127,98 @@ describe("cases.functions", () => {
         context: {},
       })
     ).rejects.toThrow("Case not found");
+  });
+
+  const heal = healActiveCaseFn as unknown as (
+    input: ServerDataContext<{
+      caseId: string;
+      expectedActiveCaseId: string | null;
+    }>
+  ) => Promise<{ changed: boolean }>;
+
+  it("heals the cookie to the route's Case when it still holds the expected value", async () => {
+    vi.mocked(readActiveCaseId).mockReturnValue(CASE_B.id);
+    vi.mocked(writeActiveCaseId).mockClear();
+    casesApi.get.mockResolvedValue(CASE_A);
+
+    const result = await heal({
+      data: { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
+      context: {},
+    });
+
+    expect(result).toEqual({ changed: true });
+    expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_A.id);
+  });
+
+  it("heals an unset cookie when the client observed none", async () => {
+    vi.mocked(readActiveCaseId).mockReturnValue(null);
+    vi.mocked(writeActiveCaseId).mockClear();
+    casesApi.get.mockResolvedValue(CASE_A);
+
+    const result = await heal({
+      data: { caseId: CASE_A.id, expectedActiveCaseId: null },
+      context: {},
+    });
+
+    expect(result).toEqual({ changed: true });
+    expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_A.id);
+  });
+
+  it("does not overwrite a cookie a newer switch changed after the loader read it", async () => {
+    // The loader observed B; the user switched to C before heal(A) reached the server.
+    const CASE_C = "770e8400-e29b-41d4-a716-446655440002";
+    vi.mocked(readActiveCaseId).mockReturnValue(CASE_C);
+    vi.mocked(writeActiveCaseId).mockClear();
+    casesApi.get.mockResolvedValue(CASE_A);
+
+    const result = await heal({
+      data: { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
+      context: {},
+    });
+
+    expect(result).toEqual({ changed: false });
+    expect(writeActiveCaseId).not.toHaveBeenCalled();
+  });
+
+  it("leaves the cookie alone when the route's Case is already Active", async () => {
+    vi.mocked(readActiveCaseId).mockReturnValue(CASE_A.id);
+    vi.mocked(writeActiveCaseId).mockClear();
+
+    const result = await heal({
+      data: { caseId: CASE_A.id, expectedActiveCaseId: CASE_A.id },
+      context: {},
+    });
+
+    expect(result).toEqual({ changed: false });
+    expect(writeActiveCaseId).not.toHaveBeenCalled();
+  });
+
+  it("refuses to heal to a Case outside the caller's org and writes no cookie", async () => {
+    vi.mocked(readActiveCaseId).mockReturnValue(CASE_B.id);
+    vi.mocked(writeActiveCaseId).mockClear();
+    casesApi.get.mockResolvedValue(null);
+
+    await expect(
+      heal({
+        data: { caseId: CASE_A.id, expectedActiveCaseId: CASE_B.id },
+        context: {},
+      })
+    ).rejects.toThrow("Case not found");
+    expect(writeActiveCaseId).not.toHaveBeenCalled();
+  });
+
+  it("does not write the cookie when setting a Case that is not found", async () => {
+    vi.mocked(writeActiveCaseId).mockClear();
+    casesApi.get.mockResolvedValue(null);
+
+    await expect(
+      (
+        setActiveCaseIdFn as unknown as (
+          input: ServerDataContext<{ caseId: string }>
+        ) => Promise<string | null>
+      )({ data: { caseId: CASE_A.id }, context: {} })
+    ).rejects.toThrow("Case not found");
+    expect(writeActiveCaseId).not.toHaveBeenCalled();
   });
 
   it("clears or advances the active case cookie after delete", async () => {

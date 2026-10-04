@@ -1,26 +1,27 @@
 import { ORPCError } from "@orpc/server";
 
+import { childWriteViolation } from "@watchdog/policy";
 import type { ApiAuthMethod } from "@watchdog/schemas";
-
-const CHILD_WRITE_OVERRIDE_MSG =
-  "Child Graph writes require userOverride: true. Prefer proposals create or graph write.";
-const CHILD_WRITE_CONFIRMED_MSG =
-  "API refuses confidence=confirmed on child Graph writes. Accept via Inbox or edit in Dossier.";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
 export function requireUserOverride(userOverride: unknown): void {
-  if (userOverride !== true) {
-    throw new ORPCError("FORBIDDEN", { message: CHILD_WRITE_OVERRIDE_MSG });
+  const violation = childWriteViolation({
+    userOverride,
+    confidence: undefined,
+  });
+  if (violation) {
+    throw new ORPCError("FORBIDDEN", { message: violation.message });
   }
 }
 
 /** Agent ingress refuses confirmed outright — Inbox Accept / Dossier may set confirmed. */
 export function refuseConfirmed(confidence: unknown): void {
-  if (confidence === "confirmed") {
-    throw new ORPCError("FORBIDDEN", { message: CHILD_WRITE_CONFIRMED_MSG });
+  const violation = childWriteViolation({ userOverride: true, confidence });
+  if (violation) {
+    throw new ORPCError("FORBIDDEN", { message: violation.message });
   }
 }
 

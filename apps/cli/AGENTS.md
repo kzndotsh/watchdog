@@ -18,7 +18,7 @@
 
 - Output is compact JSON on stdout by default. Errors are `{ "ok": false, "error": { "code", "message" } }` on stdout. Exit codes: 1 error, 2 unknown flag, 3 server-side failure (HTTP 5xx / `InternalError`, including binary downloads).
 - `WD_API_URL` (default `http://localhost:3000/api/v1`) + `WD_API_KEY` load via `loadCliEnv()` in `src/env.ts`, validated on first API use, not on `--help`. A key acts in one organization (`metadata.organizationId`; legacy keys act in the owner's oldest organization); a foreign-org `caseId` is `not_found`, no organization is 403. Dotenv loads from the cwd, then parent directories.
-- Custody (guidance plus tests in `custody.test.ts`): default to `wd proposals create`. Child Graph writes need `--user-override` and refuse `confirmed`; `wd graph write` always sends `userOverride: true`. Only `wd proposals accept --confidence` may set `confirmed`. Secrets go through `wd credentials`, never argv or `Job.input`.
+- Custody (guidance plus tests in `custody.test.ts`): default to `wd proposals create`. Child Graph writes need `--user-override` and refuse `confirmed` (the rule is `childWriteViolation` in `@watchdog/policy`, shared with the API; `custody.ts` only maps it to a `CUSTODY` envelope); `wd graph write` always sends `userOverride: true`. Only `wd proposals accept --confidence` may set `confirmed`. Secrets go through `wd credentials`, never argv or `Job.input`.
 
 ## Gotchas
 

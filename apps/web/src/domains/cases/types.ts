@@ -32,6 +32,16 @@ export const setActiveCaseIdInputSchema = z.object({
 });
 export type SetActiveCaseIdInput = z.output<typeof setActiveCaseIdInputSchema>;
 
+/**
+ * The route heal is a compare-and-set: `expectedActiveCaseId` is the Active Case the
+ * client observed (null = none); the server writes only while the cookie still holds it.
+ */
+export const healActiveCaseInputSchema = z.object({
+  caseId: trimmedUuidSchema,
+  expectedActiveCaseId: trimmedUuidSchema.nullable(),
+});
+export type HealActiveCaseInput = z.output<typeof healActiveCaseInputSchema>;
+
 export const createCaseInputSchema = createCaseFieldsSchema;
 export type CreateCaseInput = z.input<typeof createCaseInputSchema>;
 

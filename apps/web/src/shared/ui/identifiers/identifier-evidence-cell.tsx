@@ -2,10 +2,7 @@ import { LinkIcon, PencilIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import {
-  CONFIRMED_REQUIRES_EVIDENCE,
-  isConfirmedBlocked,
-} from "@/shared/lib/confirmed-evidence";
+import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { Chip } from "@/shared/ui/chip";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { formatOpaqueId } from "@/shared/ui/format-opaque-id";
@@ -15,6 +12,7 @@ import {
 } from "@/shared/ui/intake/evidence-option";
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import type { ConfidenceTier } from "@watchdog/schemas";
 import {
   Popover,

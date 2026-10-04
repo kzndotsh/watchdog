@@ -8,7 +8,11 @@ import type {
   JsonObject,
 } from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
-import { parseTrimmedCaseId } from "@watchdog/schemas";
+import {
+  LIVE_JOB_STATUSES,
+  isLiveJobStatus,
+  parseTrimmedCaseId,
+} from "@watchdog/schemas";
 
 import { nowDateEffect } from "../../infra/clock";
 import { errorMessage } from "../../infra/domain-error";
@@ -59,7 +63,7 @@ type CapInputResult =
 
 function preflightEarlyStop(job: JobRow): PreflightStopReason | null {
   if (job.status === "cancelled") return "cancelled";
-  if (job.status !== "queued" && job.status !== "running") {
+  if (!isLiveJobStatus(job.status)) {
     return "already_terminal";
   }
   return null;
@@ -191,7 +195,7 @@ function preparePreflightReadyEffect(
       },
       {
         unlessCancelled: true,
-        onlyStatuses: ["queued", "running"],
+        onlyStatuses: [...LIVE_JOB_STATUSES],
         notify: true,
         caseId: job.caseId,
       }

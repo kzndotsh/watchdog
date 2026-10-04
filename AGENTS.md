@@ -88,8 +88,9 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Mod-key label in components | `apps/web/src/shared/hooks/use-mod-key-label.ts` | `useModKeyLabel` |
 | Search minimum query length | `packages/schemas/src/search.ts` | `SEARCH_MIN_QUERY_LENGTH` |
 | Accept gate | `apps/web/src/domains/triage/lib/accept-gate.ts` | `acceptGate` |
-| Confirmed requires evidence | `apps/web/src/shared/lib/confirmed-evidence.ts` | `isConfirmedBlocked` |
-| Active-Case switch | `apps/web/src/shared/lib/use-select-active-case.ts` | `useSelectActiveCase` |
+| Confirmed requires evidence (rule and message) | `packages/policy/src/confirmed-evidence.ts` | `confirmedNeedsEvidence`, `confirmedEvidenceViolation`, `CONFIRMED_REQUIRES_EVIDENCE` |
+| Confirmed-blocked check over a web form's evidence ids | `apps/web/src/shared/lib/confirmed-evidence.ts` | `isConfirmedBlocked` |
+| Active-Case switch | `apps/web/src/domains/cases/hooks/use-select-active-case.ts` | `useSelectActiveCase` |
 | Case in caller's org (guard) | `packages/core/src/graph/patch/guards.ts` | `assertCaseInOrgEffect` |
 | Case ids visible to an org | `packages/core/src/cases/cases.ts` | `listVisibleCaseIdsEffect` |
 | Age a seeded Job in tests | `packages/test-db/src/db/seed/job.ts` | `backdateJob` |

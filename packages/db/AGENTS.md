@@ -34,6 +34,7 @@ Services (`@watchdog/core`) call repos; controllers (`@watchdog/api`) call servi
 | 4 | Never open a transaction; only services call `transact` | `check:repos` |
 | 5 | Plain values only: no `SQL` / `eq(...)` in public signatures | `check:repos` |
 | 6 | Soft delete is the repo's job: only `evidence` has `deletedAt`; exclude deleted by default, require `includeDeleted`, and name methods that include them (`getUriInCaseIncludingDeleted`) | review only |
+| - | No local job status set: use `OPEN_` / `CANCELLABLE_` / `LIVE_` / `TERMINAL_JOB_STATUSES` from `@watchdog/schemas` | `check:repos` |
 | - | Leading `exec: DbExec` parameter; no `trimmedOrNull` in repos; `trimmedOrUndefined` only in lookup-only methods | `check:repos` |
 
 Repos do **not** re-validate display strings (name/title/text, slugify, blank→null): Zod and core `*Effect` own that. Repos do keep lookup scoping (`trimCaseId` / `trimResourceId` / `trimActorId` on WHERE; an invalid UUID returns `[]` / `null`), slug WHERE keys (`slugForLookup`; case slugs are unique per organization, so case-by-slug lookups take `organizationId`), fail-closed graph ids, and actor integrity on proposals. `create`/`update` return `null` for a scoped-id miss, actor reject, or zero-row update/delete, not for empty display text. Padded-UUID lookup behavior is tested once in `src/repos/__tests__/scoped-ids.test.ts`.

@@ -84,4 +84,133 @@ describe("check-repo-rules gate (packages/db)", () => {
     expect(res.code).toBe(1);
     expect(res.output).toContain("lookup-only");
   });
+
+  it("fails a repo that declares a local job status set literal", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    return inArray(jobs.status, ["queued", "running"]);',
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+    expect(res.output).toContain("@watchdog/schemas");
+    expect(res.output).toContain("thing.repo.ts:3");
+  });
+
+  it("passes a repo that uses one status literal or the vocabulary sets", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    exec.update(jobs).set({ status: "cancelled" });',
+      "    return inArray(jobs.status, [...OPEN_JOB_STATUSES]);",
+      "  },",
+      '  async other(exec: DbExec) { return ["queued", "unrelated"]; },',
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(0);
+  });
+
+  it("passes a status-looking comment trailing a code line", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    return exec.select(); // was inArray(status, ["queued", "running"])',
+      "  },",
+    ]);
+
+    expect(repo.runFile(GATE).code).toBe(0);
+  });
+
+  it("passes a status set inside block and JSDoc comments", () => {
+    const repo = repoWith([
+      '  /** open = ["queued", "running"] */',
+      "  async open(exec: DbExec) {",
+      '    /* ["queued", "running"] */',
+      "    return exec.select();",
+      "  },",
+    ]);
+
+    expect(repo.runFile(GATE).code).toBe(0);
+  });
+
+  it("does not mistake // inside a string for a comment", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    return inArray(jobs.url, ["http://a", "queued", "running"]);',
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+  });
+
+  it("fails a status set whose array holds a nested bracket", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec, x: string[]) {",
+      '    return inArray(jobs.status, [x[0], "queued", "running"]);',
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+    expect(res.output).toContain("thing.repo.ts:3");
+  });
+
+  it("fails a status set written with backtick quotes", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      "    return inArray(jobs.status, [`queued`, `running`]);",
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+  });
+
+  it("fails a status set that follows a string holding a bracket", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    const prefix = "[";',
+      '    return inArray(jobs.status, ["queued", "running"]) && prefix;',
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+    expect(res.output).toContain("thing.repo.ts:4");
+  });
+
+  it("fails a status set passed to new Set", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    return new Set(["queued", "running"]);',
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+  });
+
+  it("does not require flagging a status comparison chain", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec, status: string) {",
+      '    return status === "queued" || status === "running";',
+      "  },",
+    ]);
+
+    expect(repo.runFile(GATE).code).toBe(0);
+  });
 });

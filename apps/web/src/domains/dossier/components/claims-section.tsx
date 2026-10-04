@@ -33,11 +33,7 @@ import {
   updateClaimInputSchema,
 } from "@/domains/entities/claims/types";
 import { cn, errMessage } from "@/lib/utils";
-import {
-  CONFIRMED_REQUIRES_EVIDENCE,
-  CONFIRMED_REQUIRES_EVIDENCE_HINT,
-  isConfirmedBlocked,
-} from "@/shared/lib/confirmed-evidence";
+import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
@@ -50,6 +46,7 @@ import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { toast } from "@/shared/ui/toast";
 import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import type { RetractKind } from "@watchdog/schemas";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
@@ -234,7 +231,7 @@ function ClaimComposer({
             submitLabel={submitLabel}
             submitDisabled={isSubmitting || !text.trim() || confirmedBlocked}
             submitTitle={
-              confirmedBlocked ? CONFIRMED_REQUIRES_EVIDENCE_HINT : undefined
+              confirmedBlocked ? CONFIRMED_REQUIRES_EVIDENCE : undefined
             }
             className={layout.actionsClass}
             onCancel={onCancel}

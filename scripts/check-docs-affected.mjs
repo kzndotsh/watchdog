@@ -15,7 +15,7 @@
  *
  * Escape hatch: `docs:allow-affect — <reason>` in the commit message being
  * written (reason required). In CI, a pull request body or any commit message in
- * the pushed range may carry it. There are no other fallbacks.
+ * the pull request or pushed range may carry it. There are no other fallbacks.
  */
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -118,10 +118,13 @@ function resolveChange() {
       die(
         `cannot resolve merge base with ${baseRef}; refusing to report "no changes"`
       );
+    // The marker may sit in the PR body or in any commit message of the PR's own
+    // range (the commit-msg hook accepts it there, so CI must too).
+    const log = git(["log", "--format=%B%x00", `${mb}..HEAD`], root);
     return {
       label: `pull request (${mb.slice(0, 8)}...HEAD)`,
       diffArgs: [`${mb}...HEAD`],
-      messages: [event.prBody],
+      messages: [event.prBody, ...log.split("\0")],
     };
   }
 

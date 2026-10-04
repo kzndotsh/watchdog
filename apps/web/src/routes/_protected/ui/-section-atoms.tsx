@@ -39,6 +39,7 @@ import {
   StatusBadge,
   StatusInk,
 } from "@/shared/ui/vocab";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -297,7 +298,7 @@ const ATOM_CATALOG: AtomEntry[] = [
     name: "FormInlineWarning",
     blurb: "Soft confirm / evidence hints.",
     render: () => (
-      <FormInlineWarning>confirmed requires evidence</FormInlineWarning>
+      <FormInlineWarning>{CONFIRMED_REQUIRES_EVIDENCE}</FormInlineWarning>
     ),
   },
   {

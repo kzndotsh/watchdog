@@ -1,5 +1,5 @@
-import { CONFIRMED_REQUIRES_EVIDENCE } from "@/shared/lib/confirmed-evidence";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 
 export function AcceptGateMessage({
   confirmedWithoutBundle,

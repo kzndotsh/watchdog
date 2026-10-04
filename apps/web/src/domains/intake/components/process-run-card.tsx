@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
+import { isLiveJobStatus } from "@watchdog/schemas";
 import {
   Collapsible,
   CollapsibleContent,
@@ -20,7 +21,7 @@ import {
 import { FieldError } from "@watchdog/ui/components/field";
 
 function processRunIsLive(job: JobListRecord): boolean {
-  return job.status === "queued" || job.status === "running";
+  return isLiveJobStatus(job.status);
 }
 
 function processRunEmptyArtifactsMessage(

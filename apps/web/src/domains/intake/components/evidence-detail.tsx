@@ -52,7 +52,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { isOpenJobStatus } from "@watchdog/schemas";
+import { isLiveJobStatus, isOpenJobStatus } from "@watchdog/schemas";
 import { Spinner } from "@watchdog/ui/components/spinner";
 import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 
@@ -360,8 +360,7 @@ export function EvidenceDetail({
     [enrichJobs]
   );
   const enrichRunning = useMemo(
-    () =>
-      enrichJobs.some((j) => j.status === "queued" || j.status === "running"),
+    () => enrichJobs.some((j) => isLiveJobStatus(j.status)),
     [enrichJobs]
   );
   const enrichBlocked = useMemo(

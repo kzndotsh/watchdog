@@ -44,7 +44,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | Domains with RPC inputs keep Zod in `types.ts`; DTO and form-value types never live in `components/` | `guidance` |
 | Domains with server lists keep `queries.ts` and invalidate through `shared/lib/query-invalidation.ts` | `guidance` |
 | Predicate, confidence, and kind options come from `@watchdog/schemas` (labels from `shared/ui/vocab/`); don't re-export them through domain `types.ts` | `typecheck` for the unions; otherwise `guidance` |
-| Client code imports `@watchdog/policy/patch-needs-confidence`, never the `@watchdog/policy` barrel (Effect stays off the client) | `guidance` |
+| Client code imports the `@watchdog/policy` subpaths (`@watchdog/policy/patch-needs-confidence`, `@watchdog/policy/confirmed-evidence`), never the `@watchdog/policy` barrel (Effect stays off the client) | `guidance` |
 | One noun is one product concern (no Cap run chrome under Triage); prefer `@/domains/{noun}/...` imports | `guidance` |
 
 ## Map

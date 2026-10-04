@@ -16,6 +16,7 @@ import {
   EVIDENCE_KINDS,
   JOB_STATUS_LABELS,
   JOB_STATUSES,
+  CANCELLABLE_JOB_STATUSES,
   OPEN_JOB_STATUSES,
   normalizeUuidList,
   normalizeJobInput,
@@ -124,9 +125,8 @@ export type JobPatch = Partial<
   >
 >;
 
-/** Queued, running, or blocked — still in-flight for per-evidence cap dedup. */
-const OPEN_CAP_DEDUP_STATUSES: JobStatus[] = [...OPEN_JOB_STATUSES];
-const CANCELLABLE_STATUSES: JobStatus[] = ["queued", "blocked", "running"];
+/** The vocabulary set as a mutable list for `inArray`; the repo defines no status set of its own. */
+const CANCELLABLE_STATUSES: JobStatus[] = [...CANCELLABLE_JOB_STATUSES];
 
 function withNormalizedEvidenceIds<T extends { evidenceIds?: string[] | null }>(
   values: T
@@ -425,7 +425,7 @@ export const jobsRepo = {
         and(
           eq(jobs.caseId, scopedCaseId),
           eq(jobs.capabilityId, scopedCapabilityId),
-          inArray(jobs.status, OPEN_CAP_DEDUP_STATUSES)
+          inArray(jobs.status, [...OPEN_JOB_STATUSES])
         )
       )
       .orderBy(desc(jobs.createdAt))

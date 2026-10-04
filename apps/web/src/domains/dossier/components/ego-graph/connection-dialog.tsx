@@ -5,10 +5,7 @@ import { useEffect, useMemo, type SubmitEvent } from "react";
 import type { EvidenceOption } from "@/domains/dossier/types";
 import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
 import { entityDisplayLabel } from "@/domains/entities/lib/connection-peers";
-import {
-  CONFIRMED_REQUIRES_EVIDENCE,
-  isConfirmedBlocked,
-} from "@/shared/lib/confirmed-evidence";
+import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
@@ -32,6 +29,7 @@ import {
   peerKindAllowedForPhrase,
   predicateLabel,
 } from "@/shared/ui/vocab/edge-predicate";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
   parseOptionalTrimmedUuid,
   trimmedConfidenceTierSchema,

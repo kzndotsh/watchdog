@@ -37,7 +37,7 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navigateMock,
 }));
 
-vi.mock("@/shared/lib/use-select-active-case", () => ({
+vi.mock("@/domains/cases/hooks/use-select-active-case", () => ({
   useSelectActiveCase: () => ({ mutate: switchCaseMutateMock }),
 }));
 

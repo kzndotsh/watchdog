@@ -15,6 +15,7 @@ import {
   type PatchOp,
 } from "@watchdog/schemas";
 
+import { confirmedEvidenceViolation } from "./confirmed-evidence";
 import { patchNeedsConfidence } from "./patch-needs-confidence";
 
 export class CustodyViolation extends Data.TaggedError("CustodyViolation")<{
@@ -372,10 +373,12 @@ export function assertPatchGates(
           });
         }
         const shared = (sharedParsed ?? []).length > 0;
-        if (!anyEvidence && !shared) {
-          throw new CustodyViolation({
-            reason: "confirmed requires at least one Evidence attachment",
-          });
+        const violation = confirmedEvidenceViolation({
+          confidence: opts.confidence,
+          evidenceCount: anyEvidence || shared ? 1 : 0,
+        });
+        if (violation !== null) {
+          throw new CustodyViolation({ reason: violation });
         }
       }
     });

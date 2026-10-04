@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  CONFIRMED_REQUIRES_EVIDENCE,
-  isConfirmedBlocked,
-} from "@/shared/lib/confirmed-evidence";
+import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 
 import { claimEvidenceIdsValidator } from "../claim-form.ts";
 

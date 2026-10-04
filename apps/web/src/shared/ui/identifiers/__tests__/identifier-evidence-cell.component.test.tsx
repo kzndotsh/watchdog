@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
+import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import { testId } from "@watchdog/test-kit";
 
 const EVIDENCE_A = {
@@ -88,9 +89,7 @@ describe("IdentifierEvidenceCell", () => {
       screen.getByRole("button", { name: "Edit evidence links" })
     );
     await user.click(screen.getByRole("checkbox"));
-    expect(
-      screen.getByText(/confirmed requires at least 1 evidence/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(CONFIRMED_REQUIRES_EVIDENCE)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(saveEvidence).not.toHaveBeenCalled();
   });

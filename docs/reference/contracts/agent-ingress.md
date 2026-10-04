@@ -19,7 +19,7 @@
 ## Child writes
 
 - `wd claims|identifiers|edges|events|questions …` require **`--user-override`**.
-- CLI **refuses `confidence=confirmed`** (Triage Accept / Dossier may set `confirmed`).
+- CLI **refuses `confidence=confirmed`** (Triage Accept / Dossier may set `confirmed`). The API refuses it for API keys too. Both apply the single rule `childWriteViolation` in `@watchdog/policy` (override first, then confirmed) and only map the violation to `FORBIDDEN` (API) or a `CUSTODY` envelope (CLI).
 - `caseId` must belong to the actor’s organization; foreign-org Case → **`not_found`**.
 
 ## Pure prep

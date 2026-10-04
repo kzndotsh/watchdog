@@ -47,7 +47,7 @@ Hash scheme (same as the `skills` CLI): sha256 over every file in the skill fold
 
 ## Doc-affect escape hatch
 
-`docs:allow-affect — <reason>` (reason required) must be in the commit's own message; it excuses only that commit. The gate runs at commit-msg on the staged diff only. In CI it diffs the pull-request range or the pushed `before..after` range (an all-zero `before` falls back to the merge base with `main`; an unresolvable range fails), and the PR body or any commit message in the pushed range may carry the marker. Use it only when no mapped doc applies. Rules live in `scripts/doc-map.mjs`.
+`docs:allow-affect — <reason>` (reason required) must be in the commit's own message; it excuses only that commit. The gate runs at commit-msg on the staged diff only. In CI it diffs the pull-request range or the pushed `before..after` range (an all-zero `before` falls back to the merge base with `main`; an unresolvable range fails), and the PR body or any commit message in the pull-request or pushed range may carry the marker. Use it only when no mapped doc applies. Rules live in `scripts/doc-map.mjs`.
 
 ## Gate tests
 
