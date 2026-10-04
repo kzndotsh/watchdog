@@ -163,6 +163,34 @@ describe("check-repo-rules gate (packages/db)", () => {
     expect(res.output).toContain("thing.repo.ts:3");
   });
 
+  it("fails a status set written with backtick quotes", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      "    return inArray(jobs.status, [`queued`, `running`]);",
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+  });
+
+  it("fails a status set that follows a string holding a bracket", () => {
+    const repo = repoWith([
+      "  async open(exec: DbExec) {",
+      '    const prefix = "[";',
+      '    return inArray(jobs.status, ["queued", "running"]) && prefix;',
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("job status set literal");
+    expect(res.output).toContain("thing.repo.ts:4");
+  });
+
   it("fails a status set passed to new Set", () => {
     const repo = repoWith([
       "  async open(exec: DbExec) {",

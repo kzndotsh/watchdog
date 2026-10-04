@@ -47,7 +47,7 @@ const TRIM_RE = /\btrimmedOr(?:Null|Undefined)\s*\(/;
 
 /** Job statuses (mirrors JOB_STATUSES in @watchdog/schemas vocab). */
 const JOB_STATUS_LITERAL =
-  /["'](queued|running|blocked|succeeded|failed|cancelled)["']/g;
+  /["'`](queued|running|blocked|succeeded|failed|cancelled)["'`]/g;
 
 /**
  * Blank `//` and block comments, keeping newlines (line numbers stay true) and leaving
@@ -94,11 +94,19 @@ function outerArrays(text) {
   const spans = [];
   let depth = 0;
   let start = -1;
+  /** Open string quote (`"`, `'` or a backtick), so brackets inside strings are ignored. */
+  let quote = "";
   for (let i = 0; i < text.length; i += 1) {
-    if (text[i] === "[") {
+    const ch = text[i];
+    if (quote !== "") {
+      if (ch === "\\") i += 1;
+      else if (ch === quote) quote = "";
+    } else if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+    } else if (ch === "[") {
       if (depth === 0) start = i;
       depth += 1;
-    } else if (text[i] === "]" && depth > 0) {
+    } else if (ch === "]" && depth > 0) {
       depth -= 1;
       if (depth === 0) spans.push({ start, text: text.slice(start, i + 1) });
     }
