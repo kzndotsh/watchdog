@@ -20,10 +20,6 @@ import {
   updateTaskFn,
 } from "@/domains/tasks/tasks.functions";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
-import {
-  deleteTaskInputSchema,
-  reorderTasksInputSchema,
-} from "@/domains/tasks/types";
 import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
@@ -40,6 +36,10 @@ import {
 } from "@/shared/lib/toast-copy";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { toast } from "@/shared/ui/toast";
+import {
+  taskDeleteInputSchema as deleteTaskInputSchema,
+  taskReorderInputSchema as reorderTasksInputSchema,
+} from "@watchdog/schemas";
 import type { TaskStatus } from "@watchdog/schemas";
 
 const EMPTY_TASKS: TaskRecord[] = [];

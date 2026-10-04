@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { TorExitLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { torExitLookupInput } from "./input";
-import type { TorExitLookupSnapshot } from "./report-schema";
 
 type TorExitInput = z.infer<typeof torExitLookupInput>;
 

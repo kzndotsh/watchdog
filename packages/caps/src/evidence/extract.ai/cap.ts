@@ -4,12 +4,12 @@ import {
   createWatchdogModel,
   processExtractDraftSchema,
   structuredExtractEffect,
-  type EvidenceSnapshot,
 } from "@watchdog/ai";
 import {
   EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   IDENTIFIER_PLATFORM_SLUGS,
   trimmedOrUndefined,
+  type EvidenceSnapshot,
 } from "@watchdog/schemas";
 import { ValidationVendorError } from "@watchdog/tools";
 

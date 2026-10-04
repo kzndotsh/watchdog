@@ -114,6 +114,8 @@ jobs:
               - 'apps/site/**'
             db:
               - 'packages/db/**'
+              # db schema files import from @watchdog/schemas.
+              - 'packages/schemas/**'
             e2e:
               - 'e2e/**'
               - 'playwright.config.ts'
@@ -194,6 +196,10 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:effect-edges:strict
 
+      - name: Workspace re-exports
+        if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:workspace-reexports
+
       - name: Vendored UI lock
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:vendor
@@ -224,6 +230,10 @@ jobs:
       - name: Workspace consistency
         if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:workspace
+
+      - name: Package boundaries
+        if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:boundaries
 
       - name: CODEOWNERS paths
         run: pnpm check:codeowners
@@ -261,6 +271,10 @@ jobs:
       - name: Repo layer contract
         if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm --filter @watchdog/db check:repos
+
+      - name: Migration drift
+        if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:migrations
 
   unit:
     name: Unit

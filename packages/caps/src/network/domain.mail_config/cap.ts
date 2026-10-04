@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchMailConfigEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchMailConfigEffect,
+  normalizeHost,
+  mailConfigSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mailConfigInput } from "./input";
 import { interpretMailConfigReport } from "./interpret";
-import { mailConfigSnapshotSchema } from "./report-schema";
 
 export const mailConfig = defineCollectCap({
   id: "network.domain.mail_config",

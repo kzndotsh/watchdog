@@ -12,11 +12,6 @@ import type {
 } from "@watchdog/schemas";
 import type { ToolsTag } from "@watchdog/tools";
 
-export {
-  type JsonObject,
-  type PatchOp,
-  type JobHandoff,
-} from "@watchdog/schemas";
 export interface CapArtifact {
   name: string;
   mime: string;

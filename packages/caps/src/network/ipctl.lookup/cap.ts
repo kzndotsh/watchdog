@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchIpctlLookupEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchIpctlLookupEffect,
+  normalizeIp,
+  ipctlLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipctlLookupInput } from "./input";
 import { interpretIpctlLookupReport } from "./interpret";
-import { ipctlLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.ipctl.lookup; OSINT)";
 

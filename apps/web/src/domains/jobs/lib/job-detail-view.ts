@@ -5,11 +5,14 @@ import {
   jobActivityAt,
   normalizedPlaybookRunId,
   playbookWaitingOnNextStep,
-  summarizeJobInput,
 } from "@/domains/jobs/lib/status";
-import type { JobListRecord, JobRecord } from "@/domains/jobs/types";
 import { capabilityLabel } from "@/shared/ui/vocab";
-import { trimmedOrNull, type PlaybookRunStatus } from "@watchdog/schemas";
+import type { JobListRecord, JobRecord } from "@watchdog/core";
+import {
+  trimmedOrNull,
+  type PlaybookRunStatus,
+  summarizeJobInput,
+} from "@watchdog/schemas";
 
 export type JobDetailTab = "log" | "input" | "output";
 

@@ -10,11 +10,12 @@ import {
 import {
   createCaseInputSchema,
   deleteCaseInputSchema,
+  updateCaseInputSchema,
 } from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { caseSchema, updateCaseInputSchema } from "../schemas";
+import { caseSchema } from "../schemas";
 
 export const list = authed
   .route({

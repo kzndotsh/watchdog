@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { orpcFromContext } from "@/lib/orpc.server";
 import {
   searchCaseInputSchema,
   type SearchCaseResult,
-} from "@/domains/search/types";
-import { orpcFromContext } from "@/lib/orpc.server";
+} from "@watchdog/schemas";
 
 export const searchCaseFn = createServerFn({ method: "GET" })
   .validator(searchCaseInputSchema)

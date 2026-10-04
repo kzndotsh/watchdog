@@ -1,13 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { listClaimsFn } from "@/domains/entities/claims/claims.functions";
-import { listClaimsInputSchema } from "@/domains/entities/claims/types";
 import {
   scopeEntityScope,
   scopeEntityScopeEnabled,
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
+import { listClaimsInputSchema } from "@watchdog/schemas";
 
 export const claimsKeys = {
   prefix: (caseId: string) => ["claims", caseId] as const,

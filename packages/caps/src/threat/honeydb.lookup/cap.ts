@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchHoneydbLookupEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchHoneydbLookupEffect,
+  normalizeIp,
+  honeydbLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { honeydbLookupInput } from "./input";
 import { interpretHoneydbLookupReport } from "./interpret";
-import { honeydbLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.honeydb.lookup; OSINT)";
 

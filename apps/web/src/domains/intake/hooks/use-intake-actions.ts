@@ -9,16 +9,16 @@ import {
   restoreEvidenceFn,
   softDeleteEvidenceFn,
 } from "@/domains/intake/intake.functions";
-import {
-  attachEvidenceEntityInputSchema,
-  evidenceScopeInputSchema,
-  processEvidenceInputSchema,
-} from "@/domains/intake/types";
 import { errMessage } from "@/lib/utils";
 import {
   invalidateAfterEvidenceMutation,
   invalidateAfterJobMutation,
 } from "@/shared/lib/query-invalidation";
+import {
+  attachEvidenceEntityInputSchema,
+  evidenceScopeInputSchema,
+  processEvidenceInputSchema,
+} from "@watchdog/schemas";
 
 type IntakePending = null | {
   kind: "harvest" | "extract" | "enrich";

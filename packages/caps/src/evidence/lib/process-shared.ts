@@ -2,7 +2,6 @@ import { Effect } from "effect";
 
 import {
   processExtractDraftSchema,
-  type EvidenceSnapshot,
   type ProcessExtractDraft,
 } from "@watchdog/ai";
 import {
@@ -11,6 +10,7 @@ import {
   REPORT_JSON_ARTIFACT,
   parseTrimmedCaseId,
   trimmedOrUndefined,
+  type EvidenceSnapshot,
 } from "@watchdog/schemas";
 import type { ToolsTag } from "@watchdog/tools";
 

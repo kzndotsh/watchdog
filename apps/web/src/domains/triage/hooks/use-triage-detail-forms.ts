@@ -2,8 +2,8 @@ import { useForm } from "@tanstack/react-form";
 import { useMemo, useState } from "react";
 
 import { collectProposalEvidenceIds } from "@/domains/triage/lib/evidence";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import type { AcceptFormValues } from "@/domains/triage/types";
+import type { ProposalRecord } from "@watchdog/core";
 import type { ConfidenceTier } from "@watchdog/schemas";
 
 const DEFAULT_CONFIDENCE: ConfidenceTier = "unverified";

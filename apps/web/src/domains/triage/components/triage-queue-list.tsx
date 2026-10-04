@@ -3,7 +3,6 @@ import {
   proposalPatch,
   proposalTitle,
 } from "@/domains/triage/lib/filters";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
 import {
@@ -12,6 +11,7 @@ import {
   QueueRowTitle,
 } from "@/shared/ui/queue-row";
 import { StatusDot } from "@/shared/ui/status-dot";
+import type { ProposalRecord } from "@watchdog/core";
 
 interface TriageQueueListProps {
   proposals: ProposalRecord[];

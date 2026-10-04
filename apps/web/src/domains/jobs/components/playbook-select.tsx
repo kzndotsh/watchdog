@@ -19,9 +19,8 @@ import {
   ComboboxList,
   ComboboxSeparator,
 } from "@/shared/ui/primitives/combobox";
-import { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
 import { capabilityLabel } from "@/shared/ui/vocab/capability";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined, capEgressLabel } from "@watchdog/schemas";
 
 interface PlaybookSelectProps {
   playbooks: readonly PlaybookListItem[];

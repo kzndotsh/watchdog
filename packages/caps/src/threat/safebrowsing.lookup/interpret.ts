@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { SafebrowsingLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { urlSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { safebrowsingLookupInput } from "./input";
-import type { SafebrowsingLookupSnapshot } from "./report-schema";
 
 type SafebrowsingInput = z.infer<typeof safebrowsingLookupInput>;
 

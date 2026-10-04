@@ -1,5 +1,5 @@
-import type { JobListRecord } from "@/domains/jobs/types";
 import { capabilityLabel, playbookLabel, statusLabel } from "@/shared/ui/vocab";
+import type { JobListRecord } from "@watchdog/core";
 import {
   CANCELLABLE_JOB_STATUSES,
   LIVE_JOB_STATUSES,
@@ -13,7 +13,6 @@ import {
 } from "@watchdog/schemas";
 
 export { JOB_STATUS_OPTIONS as STATUS_FACET_OPTIONS } from "@/shared/ui/vocab";
-export { summarizeJobInput };
 
 /** Trim playbook run id; blank / whitespace → null. */
 export function normalizedPlaybookRunId(

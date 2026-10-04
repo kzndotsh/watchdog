@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { IpLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { ipLookupInput } from "./input";
-import type { IpLookupSnapshot } from "./report-schema";
 
 type IpLookupCapInput = z.infer<typeof ipLookupInput>;
 

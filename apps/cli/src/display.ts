@@ -3,7 +3,6 @@ import {
   type PatchOp,
   CLAIM_CLASS_LABELS,
   CONFIDENCE_TIER_LABELS,
-  capEgressLabel,
   capabilityIdLabel,
   ENTITY_KIND_LABELS,
   EVIDENCE_KIND_LABELS,
@@ -14,8 +13,6 @@ import {
   QUESTION_STATUS_LABELS,
   RETRACT_KIND_LABELS,
   entityDisplayLabel,
-  evidenceDisplayLabel,
-  evidenceTitleMapFromRows,
   jobStatusSchema,
   pickPlaybookAggregateStatus,
   parseTrimmedCaseId,
@@ -26,8 +23,6 @@ import {
   summarizeJobInput,
   titleCase,
 } from "@watchdog/schemas";
-
-export { capEgressLabel, capabilityIdLabel, evidenceTitleMapFromRows };
 
 function labelFromMap(value: string, labels: Record<string, string>): string {
   return labels[value] ?? titleCase(value);
@@ -80,7 +75,6 @@ export function capKindLabel(kind: string | null | undefined): string {
 }
 
 /** Short label for evidence rows — shared with core/web via schemas. */
-export { evidenceDisplayLabel };
 
 /** Short human subject for a Job input. */
 export const jobInputSubject = summarizeJobInput;

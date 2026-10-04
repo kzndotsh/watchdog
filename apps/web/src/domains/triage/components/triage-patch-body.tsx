@@ -7,12 +7,12 @@ import type {
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
 import { proposalPatch } from "@/domains/triage/lib/filters";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { cn } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
+import type { ProposalRecord } from "@watchdog/core";
 import {
   listInvalidIdentifierOps,
   normalizeUuidList,

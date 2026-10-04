@@ -15,7 +15,6 @@ import {
 } from "@/domains/entities/identifiers/identifiers.functions";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/identifiers.functions";
 import { identifiersListQuery } from "@/domains/entities/identifiers/queries";
-import { createIdentifierInputSchema } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
 import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
@@ -36,7 +35,6 @@ import {
   useDataTable,
 } from "@/shared/ui/data-table";
 import {
-  HANDLE_REQUIRES_PLATFORM,
   isHandleWithoutPlatform,
   dossierIdentifierColumns,
   type IdentifierFieldUpdate,
@@ -55,6 +53,8 @@ import {
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
+  createIdentifierInputSchema,
+  HANDLE_REQUIRES_PLATFORM,
 } from "@watchdog/schemas";
 import { FieldError } from "@watchdog/ui/components/field";
 

@@ -12,13 +12,13 @@ import {
   type CollectState,
 } from "@/domains/collect/types";
 import { capabilityFacetOptions } from "@/domains/jobs/lib/status";
-import type { JobListRecord } from "@/domains/jobs/types";
 import {
   PageFilterMenu,
   type PageFilterChip,
 } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { QueueFilterBar } from "@/shared/ui/queue-filter-bar";
+import type { JobListRecord } from "@watchdog/core";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,

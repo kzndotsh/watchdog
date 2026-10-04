@@ -1,17 +1,9 @@
 import type { JsonObject } from "@watchdog/schemas";
 import {
   capabilityIdLabel,
-  evidenceIdsFromJobInputs,
   playbookIdLabel,
   summarizeJobInput,
 } from "@watchdog/schemas";
-
-export {
-  capabilityIdLabel,
-  evidenceIdsFromJobInputs,
-  playbookIdLabel,
-  summarizeJobInput,
-};
 
 export function jobActivityLabel(opts: {
   capabilityId: string;

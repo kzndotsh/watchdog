@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { CtLookupSnapshot } from "@watchdog/tools";
+
 import { withSeedHost } from "../../lib/collect/eligible-domain-hosts";
 import { interpretTypedIdentifiers } from "../../lib/collect/interpret-typed-identifiers";
 import {
@@ -9,7 +11,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { ctLookupInput } from "./input";
-import type { CtLookupSnapshot } from "./report-schema";
 
 type CtInput = z.infer<typeof ctLookupInput>;
 

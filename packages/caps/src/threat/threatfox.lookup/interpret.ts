@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { ThreatfoxLookupSnapshot } from "@watchdog/tools";
+
 import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
@@ -12,7 +14,6 @@ import {
 import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { threatfoxLookupInput } from "./input";
-import type { ThreatfoxLookupSnapshot } from "./report-schema";
 
 type ThreatfoxInput = z.infer<typeof threatfoxLookupInput>;
 

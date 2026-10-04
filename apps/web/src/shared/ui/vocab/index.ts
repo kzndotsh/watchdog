@@ -23,9 +23,6 @@ export {
   EntityKindGlyph,
 } from "@/shared/ui/vocab/kind";
 export {
-  IDENTIFIER_TYPE_LABELS,
-  CLAIM_CLASS_LABELS,
-  ENTITY_KIND_LABELS,
   ENTITY_KIND_OPTIONS,
   IDENTIFIER_TYPE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,
@@ -33,11 +30,8 @@ export {
 } from "@/shared/ui/vocab/kind.lib";
 
 export {
-  EDGE_PREDICATE_META,
   clampEdgePhrase,
   edgePhraseOptions,
-  edgePhraseValue,
-  parseEdgePhraseValue,
   predicateLabel,
 } from "@/shared/ui/vocab/edge-predicate";
 
@@ -45,8 +39,6 @@ export { PatchOpBadge } from "@/shared/ui/vocab/patch-op";
 export { PATCH_RESOURCE_META } from "@/shared/ui/vocab/patch-op.lib";
 
 export { capabilityLabel } from "@/shared/ui/vocab/capability";
-
-export { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
 
 export { jobHeadlineLabel } from "@/shared/ui/vocab/job";
 

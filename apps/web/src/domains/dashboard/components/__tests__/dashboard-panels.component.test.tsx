@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
+import type { ProposalRecord } from "@watchdog/core";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({

@@ -6,8 +6,6 @@ import type {
 } from "@watchdog/schemas";
 import { entityDisplayLabel } from "@watchdog/schemas";
 
-export { entityDisplayLabel };
-
 export interface EntityConnectionPeer {
   edgeId: string;
   peerId: string;

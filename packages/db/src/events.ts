@@ -3,11 +3,9 @@ import { setTimeout as sleep } from "node:timers/promises";
 import postgres from "postgres";
 
 import { env } from "@watchdog/env/server";
-import { isWatchdogEvent, type WatchdogEvent } from "@watchdog/schemas";
+import type { WatchdogEvent } from "@watchdog/schemas";
 
 import { client } from "./client";
-
-export { isWatchdogEvent, type WatchdogEvent };
 
 export const WATCHDOG_CHANNEL = "watchdog_events";
 

@@ -8,16 +8,16 @@ import type {
 } from "@/domains/intake/types";
 import {
   jobActivityAt,
-  summarizeJobInput,
   normalizedPlaybookRunId,
 } from "@/domains/jobs/lib/status";
-import type { JobListRecord } from "@/domains/jobs/types";
 import { capabilityLabel, jobHeadlineLabel } from "@/shared/ui/vocab";
+import type { JobListRecord } from "@watchdog/core";
 import {
   evidenceIdsFromJobInputs,
   isProcessCapability,
   normalizeUuidList,
   URL_ENRICH_CAPABILITY_ID,
+  summarizeJobInput,
 } from "@watchdog/schemas";
 
 export function classifyRun(job: JobListRecord): CollectRunRole {

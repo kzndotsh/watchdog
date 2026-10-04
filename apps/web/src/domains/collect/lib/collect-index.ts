@@ -2,7 +2,7 @@ import type { CollectIndex, CollectRow } from "@/domains/collect/types";
 import { evidenceTitle } from "@/domains/intake/lib/evidence";
 import { assignJobsToEvidence } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/types";
+import type { JobListRecord } from "@watchdog/core";
 
 import {
   appendUnassignedJobRows,

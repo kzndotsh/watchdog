@@ -6,7 +6,6 @@ import {
   type DecideHeaderView,
 } from "@/domains/triage/lib/decide-header-view";
 import { proposalTitle } from "@/domains/triage/lib/filters";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { cn } from "@/lib/utils";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { ActorMention } from "@/shared/ui/actor-mention";
@@ -19,6 +18,7 @@ import { EntityMention } from "@/shared/ui/entity-mention";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Button } from "@/shared/ui/primitives/button";
 import { StatusInk } from "@/shared/ui/vocab";
+import type { ProposalRecord } from "@watchdog/core";
 
 function ProducingCapLink({
   jobId,

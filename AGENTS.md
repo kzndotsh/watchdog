@@ -15,8 +15,9 @@ Authority: product nouns → [`GLOSSARY.md`](GLOSSARY.md) (doctrine and narrativ
 | Install / migrate | `pnpm install` · `pnpm db:migrate` |
 | Dev | `just dev` (infra + web :3000 + site :3001 + worker) · `pnpm dev:web` · `pnpm dev:site` · `pnpm dev:worker` · `pnpm exec wd` (after `pnpm build:cli`) |
 | Lint / fix | `pnpm check` · `pnpm fix` |
+| Affected packages | `pnpm changed` (list, with dependents) · `pnpm changed --run` (typecheck + unit tests for them only) |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
-| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:vendor` · `pnpm check:workspace` |
+| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
 | Vendored shadcn | `pnpm ui:add <name>` · `pnpm ui:sync` |
 | Regenerate | `pnpm generate:caps` · `pnpm generate:client` |
@@ -40,7 +41,7 @@ Workflows live in [`.agents/skills/`](.agents/skills/) (and per package, e.g. [`
 
 Every convention is enforced by a lint rule or gate, labeled guidance, or deleted: [`docs/reference/platform/conventions.md`](docs/reference/platform/conventions.md) is the table (add a rule's row in the same change as the rule).
 
-Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.md). Package import boundaries are enforced by `package.json` dependencies and `no-restricted-imports` in `oxlint.config.ts`, not restated here.
+Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.md). Package import boundaries (declared dependency, public `exports` entry, no app imports) are enforced by `pnpm check:boundaries`, plus `no-restricted-imports` in `oxlint.config.ts` for named bans; the matrix is not restated here.
 
 | Do | Don’t | Enforced by |
 | --- | --- | --- |

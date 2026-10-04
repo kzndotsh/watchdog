@@ -43,7 +43,7 @@ export { identifiers } from "./identifiers";
 
 export { jobs } from "./jobs";
 
-export type { JobArtifact, JobHandoff } from "./jobs";
+export type { JobArtifact } from "./jobs";
 
 export { playbookRuns } from "./playbook-runs";
 

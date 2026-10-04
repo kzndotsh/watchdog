@@ -1,6 +1,6 @@
 import { isTaskDueOverdue, isTaskDueSoon } from "@/domains/tasks/lib/due-date";
 import type { TaskRecord } from "@/domains/tasks/types";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
+import type { ProposalRecord } from "@watchdog/core";
 
 export { countLiveJobs } from "@/domains/jobs/lib/status";
 

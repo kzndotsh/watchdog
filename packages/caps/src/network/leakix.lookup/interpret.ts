@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { LeakixLookupSnapshot } from "@watchdog/tools";
+
 import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
@@ -11,7 +13,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { leakixLookupInput } from "./input";
-import type { LeakixLookupSnapshot } from "./report-schema";
 
 type LeakixInput = z.infer<typeof leakixLookupInput>;
 

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/types";
+import type { JobListRecord } from "@watchdog/core";
+import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas";
 import { testId } from "@watchdog/test-kit";
 
 import {
@@ -19,7 +20,6 @@ import {
   evidenceTitle,
   evidenceTitleMapFromRecords,
   latestEnrichOutput,
-  ENRICHED_MD_ARTIFACT,
 } from "../evidence.ts";
 
 const ENRICHABLE_SOURCE = ["https", "://mailhost.test/"].join("");

@@ -13,17 +13,8 @@ import {
   type EdgeOrientation,
   type EdgePredicate,
   type EntityKind,
+  titleCase,
 } from "@watchdog/schemas";
-
-import { titleCase } from "./title-case";
-
-export {
-  EDGE_PREDICATE_META,
-  edgePhraseValue,
-  parseEdgePhraseValue,
-  type EdgeDirection,
-  type EdgeOrientation,
-};
 
 /** Direction-aware display; unknown strings title-cased. */
 export function predicateLabel(

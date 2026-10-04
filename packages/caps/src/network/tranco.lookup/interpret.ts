@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { TrancoLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { trancoLookupInput } from "./input";
-import type { TrancoLookupSnapshot } from "./report-schema";
 
 type TrancoInput = z.infer<typeof trancoLookupInput>;
 

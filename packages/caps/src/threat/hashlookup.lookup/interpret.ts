@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { HashlookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { hashSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { hashlookupLookupInput } from "./input";
-import type { HashlookupSnapshot } from "./report-schema";
 
 type HashlookupInput = z.infer<typeof hashlookupLookupInput>;
 

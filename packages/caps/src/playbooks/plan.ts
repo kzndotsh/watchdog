@@ -23,7 +23,7 @@ import {
   type SeedValues,
 } from "./seed";
 
-export type { JobHandoff, PlaybookSeedKind, SeedValues };
+export type { SeedValues };
 export {
   hostFromUrl,
   seedValuesToCandidateInput,

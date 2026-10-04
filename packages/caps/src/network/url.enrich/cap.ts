@@ -8,13 +8,14 @@ import {
   formatLinksMarkdownSection,
   mergeUnique,
   ValidationVendorError,
+  waybackArchiveUrl,
 } from "@watchdog/tools";
 
 import { defineCapability } from "../../sdk";
 import { ingestRemotePageEffect } from "./ingest-page";
 import { networkUrlEnrichInput } from "./input";
 import type { EnrichSummary, IngestResult } from "./types";
-import { closestWaybackTimestampEffect, waybackArchiveUrl } from "./wayback";
+import { closestWaybackTimestampEffect } from "./wayback";
 
 export const urlEnrich = defineCapability({
   id: URL_ENRICH_CAPABILITY_ID,

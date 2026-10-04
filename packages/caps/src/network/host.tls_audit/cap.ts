@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchTlsAuditEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchTlsAuditEffect,
+  normalizeHost,
+  tlsAuditSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { tlsAuditInput } from "./input";
 import { interpretTlsAuditReport } from "./interpret";
-import { tlsAuditSnapshotSchema } from "./report-schema";
 
 export const tlsAudit = defineCollectCap({
   id: "network.host.tls_audit",

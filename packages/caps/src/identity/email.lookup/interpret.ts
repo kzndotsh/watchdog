@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { EmailLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { emailLookupInput } from "./input";
-import type { EmailLookupSnapshot } from "./report-schema";
 
 type EmailInput = z.infer<typeof emailLookupInput>;
 

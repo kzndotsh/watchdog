@@ -1,12 +1,15 @@
 import { Effect } from "effect";
 
-import { fetchFeodoLookupEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchFeodoLookupEffect,
+  normalizeIp,
+  feodoLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { optionalCapCredential } from "../../sdk";
 import { feodoLookupInput } from "./input";
 import { interpretFeodoLookupReport } from "./interpret";
-import { feodoLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.feodo.lookup; OSINT)";
 

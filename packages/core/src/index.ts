@@ -6,7 +6,6 @@ export {
   artifactUri,
   createPresignedGetEffect,
   deleteCaseArtifactsEffect,
-  MAX_UPLOAD_BYTES,
 } from "./infra/blob";
 export type { UploadedArtifact, PresignedPut } from "./infra/blob";
 export {
@@ -56,12 +55,7 @@ export {
   type AgentGraphWriteResult,
 } from "./proposals/agent-ingress";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
-export {
-  capabilityIdLabel,
-  jobActivityLabel,
-  playbookIdLabel,
-  summarizeJobInput,
-} from "./jobs/job-display";
+export { jobActivityLabel } from "./jobs/job-display";
 export {
   executeJobOnMap,
   type JobRunOutcome,
@@ -222,11 +216,7 @@ export {
   type ConfirmFileUploadInput,
   type CreateAttestationInput,
 } from "./evidence/evidence";
-export {
-  evidenceDisplayLabel,
-  evidenceKindLabel,
-} from "./evidence/evidence-display";
-export type { DbTx, DbExec } from "@watchdog/db";
+export { evidenceKindLabel } from "./evidence/evidence-display";
 export {
   DomainError,
   errorMessage,
@@ -251,7 +241,6 @@ export { tryDb, mapPostgresCatch } from "./infra/postgres-effect";
 export { transact } from "./infra/postgres-tx";
 export { runDomain } from "./infra/run-domain";
 export {
-  notifyEvent,
   notifyEntityChangedEffect,
   notifyEvidenceChangedEffect,
   notifyTaskChangedEffect,
@@ -259,12 +248,8 @@ export {
   notifyProposalQueueChangedEffect,
   notifyJobUpdateEffect,
   listenForEvents,
-  isWatchdogEvent,
-  WATCHDOG_CHANNEL,
-  type WatchdogEvent,
 } from "./infra/events";
 export { listenForEventsStream } from "./infra/listen-events-stream";
-
 export {
   renderEntityMarkdownEffect,
   renderCaseExportEffect,
@@ -296,8 +281,6 @@ export {
   mergeActivityItems,
   taskEventAction,
   jobActivityAction,
-  type ActivityItem,
-  type ActivityKind,
   type ListRecentActivityOpts,
 } from "./activity/recent-activity";
 export {

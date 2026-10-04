@@ -1,7 +1,7 @@
 import { Effect, Result } from "effect";
 
-import type { JobArtifact, JobHandoff } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas";
+import type { JobArtifact } from "@watchdog/db";
+import type { PatchOp, JobHandoff } from "@watchdog/schemas";
 import { trimmedOrUndefined } from "@watchdog/schemas";
 
 import { tryParsePatch } from "../../graph/patch/patch";

@@ -7,11 +7,11 @@ import {
   orderJobArtifacts,
 } from "@/domains/jobs/lib/artifacts";
 import { jobActivityAt } from "@/domains/jobs/lib/status";
-import type { JobListRecord } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
+import type { JobListRecord } from "@watchdog/core";
 import { isLiveJobStatus } from "@watchdog/schemas";
 import {
   Collapsible,

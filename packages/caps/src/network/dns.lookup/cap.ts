@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { normalizeHost, resolveDnsRecordsEffect } from "@watchdog/tools";
+import {
+  normalizeHost,
+  resolveDnsRecordsEffect,
+  dnsRecordsSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dnsLookupInput } from "./input";
 import { interpretDnsReport } from "./interpret";
-import { dnsRecordsSchema } from "./report-schema";
 
 export const dnsLookup = defineCollectCap({
   id: "network.dns.lookup",

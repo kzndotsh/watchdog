@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import type { ChipTone } from "@/shared/ui/chip";
-import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
+import { optionsFromLabels } from "@/shared/ui/vocab/title-case";
 import {
   IDENTIFIER_STATUSES,
   IDENTIFIER_STATUS_LABELS,
@@ -29,6 +29,7 @@ import {
   type JobStatus,
   type ProposalStatus,
   type RetractKind,
+  titleCase,
 } from "@watchdog/schemas";
 
 /** All statuses that bind to `--status-*` tokens (canonical unions only). */

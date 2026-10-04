@@ -1,7 +1,7 @@
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/types";
 import { evidencePrimaryLabel } from "@/shared/ui/intake/evidence-option";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
+import type { JobListRecord } from "@watchdog/core";
 import {
   ENRICHED_MD_ARTIFACT,
   evidenceTitleMapForJobInputs,
@@ -9,8 +9,6 @@ import {
   isOpenJobStatus,
   type JobInputRecord,
 } from "@watchdog/schemas";
-
-export { ENRICHED_MD_ARTIFACT };
 
 const TEXT_MIME_PATTERN =
   /^(text\/|.*json.*|.*xml.*|.*html.*|.*yaml.*|.*javascript.*)/;

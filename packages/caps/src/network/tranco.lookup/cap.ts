@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchTrancoLookupEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchTrancoLookupEffect,
+  normalizeHost,
+  trancoLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { trancoLookupInput } from "./input";
 import { interpretTrancoLookupReport } from "./interpret";
-import { trancoLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.tranco.lookup; OSINT)";
 

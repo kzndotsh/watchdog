@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchEmailLookupEffect } from "@watchdog/tools";
+import {
+  fetchEmailLookupEffect,
+  emailLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { emailLookupInput } from "./input";
 import { interpretEmailLookupReport } from "./interpret";
-import { emailLookupSnapshotSchema } from "./report-schema";
 
 export const emailLookup = defineCollectCap({
   id: "identity.email.lookup",

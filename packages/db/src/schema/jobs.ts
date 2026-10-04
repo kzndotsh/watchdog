@@ -16,8 +16,6 @@ import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";
 import { playbookRuns } from "./playbook-runs";
 
-export type { JobHandoff } from "@watchdog/schemas";
-
 export interface JobArtifact {
   name: string;
   mime: string;

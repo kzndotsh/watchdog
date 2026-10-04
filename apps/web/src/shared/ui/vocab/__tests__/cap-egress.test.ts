@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
+import { capEgressLabel } from "@watchdog/schemas";
 
 describe("capEgressLabel", () => {
   it("labels third-party egress", () => {

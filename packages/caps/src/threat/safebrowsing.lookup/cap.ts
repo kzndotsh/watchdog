@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchSafebrowsingLookupEffect } from "@watchdog/tools";
+import {
+  fetchSafebrowsingLookupEffect,
+  safebrowsingLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { safebrowsingLookupInput } from "./input";
 import { interpretSafebrowsingLookupReport } from "./interpret";
-import { safebrowsingLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.safebrowsing.lookup; OSINT)";
 

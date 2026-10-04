@@ -9,16 +9,16 @@ import { buildCreateIdentifierData } from "@/domains/entities/lib/identifier-wri
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { tableComposerKeyDown } from "@/shared/ui/data-table";
-import {
-  HANDLE_REQUIRES_PLATFORM,
-  isHandleWithoutPlatform,
-} from "@/shared/ui/identifiers/identifier-cells";
+import { isHandleWithoutPlatform } from "@/shared/ui/identifiers/identifier-cells";
 import {
   identifierCreateCanSubmit,
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
 import { toast } from "@/shared/ui/toast";
-import { normalizeIdentifierPlatform } from "@watchdog/schemas";
+import {
+  normalizeIdentifierPlatform,
+  HANDLE_REQUIRES_PLATFORM,
+} from "@watchdog/schemas";
 
 type IdentifierCreateValues = Parameters<
   Parameters<typeof useIdentifierCreateForm>[0]

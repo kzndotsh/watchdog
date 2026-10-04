@@ -1,14 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { orpcFromContext } from "@/lib/orpc.server";
+import type { ProposalRecord } from "@watchdog/core";
 import {
   acceptProposalInputSchema,
   listProposalsInputSchema,
   rejectProposalInputSchema,
-} from "@/domains/triage/types";
-import { orpcFromContext } from "@/lib/orpc.server";
-import type { ProposalRecord } from "@watchdog/core";
-
-export { type ProposalRecord } from "@watchdog/core";
+} from "@watchdog/schemas";
 
 export const listProposalsFn = createServerFn({ method: "GET" })
   .validator(listProposalsInputSchema)

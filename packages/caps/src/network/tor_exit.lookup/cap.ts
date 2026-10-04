@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchTorExitLookupEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchTorExitLookupEffect,
+  normalizeIp,
+  torExitLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { torExitLookupInput } from "./input";
 import { interpretTorExitLookupReport } from "./interpret";
-import { torExitLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.tor_exit.lookup; OSINT)";
 

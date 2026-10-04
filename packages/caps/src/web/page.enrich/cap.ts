@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchPageEnrichEffect, ValidationVendorError } from "@watchdog/tools";
+import {
+  fetchPageEnrichEffect,
+  ValidationVendorError,
+  pageEnrichSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { pageEnrichInput } from "./input";
 import { interpretPageEnrichReport } from "./interpret";
-import { pageEnrichSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+web.page.enrich; OSINT)";
 

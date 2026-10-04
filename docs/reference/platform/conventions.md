@@ -30,7 +30,8 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
-| A `@watchdog/*` import must be a declared dependency (pnpm strict `node_modules`: an undeclared import does not resolve) | packages, apps | `docs/reference/platform/packages.md` Enforcement | `pnpm typecheck` | enforced |
+| A `@watchdog/*` import must be a declared dependency (pnpm strict `node_modules`: an undeclared import does not resolve) | packages, apps | `docs/reference/platform/packages.md` Enforcement | `pnpm typecheck`, `check:boundaries` | enforced |
+| A `@watchdog/*` import goes through a path in the target's `package.json` `exports` (never an internal or relative path into another package), and apps are never imported by packages or other apps | packages, apps | `docs/reference/platform/packages.md` Enforcement | `check:boundaries` (`scripts/check-boundaries.mjs`) | enforced |
 | Import direction follows the matrix in `packages.md` (nothing fails when a package declares a forbidden dependency) | packages, apps | `docs/reference/platform/packages.md` Forbidden imports | guidance | guidance |
 | Web never imports `@watchdog/db` | web | `docs/reference/platform/packages.md` Forbidden imports | oxlint `eslint/no-restricted-imports` | enforced |
 | A component with a Watchdog wrapper imports from `@/shared/ui/primitives/*`, not `@watchdog/ui/components/*` | web | `docs/reference/web/ui/vendor.md` Layers | oxlint `eslint/no-restricted-imports`, `apps/web/src/shared/ui/primitives/__tests__/wrapper-lint-coverage.test.ts` | enforced |
@@ -44,8 +45,11 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Product vocab comes from `@watchdog/schemas`; domains never re-export it through `types.ts` or `*.functions.ts` | web, api | `docs/reference/platform/types.md` File map | guidance | guidance |
 | `packages/ui/src/components` is never hand-edited; the pinned shadcn CLI version matches the lock | ui | `docs/reference/web/ui/vendor.md` Lock | `check:vendor` | enforced |
 | Generated `capabilities.gen.json` and `packages/client/src/generated/` are never hand-edited | caps, client | `docs/reference/platform/caps-boundary.md` Caps | `packages/caps/src/__tests__/capabilities-gen.test.ts`, CI jobs "CapDescriptor drift" and "OpenAPI client contract drift" | enforced |
+| The schema never changes without a generated migration | db | `packages/db/AGENTS.md` Schema conventions | `check:migrations` (`scripts/check-migrations.mjs`) | enforced |
+| Migrations are generated with an explicit `--name`, and a released migration is never edited or renamed | db | `packages/db/AGENTS.md` Schema conventions | review | guidance |
 | Tracked `src` files stay at most 600 lines (baselined files may only shrink) | repo | `docs/contributing/ci-gates.md` Gates | `check:size` | baselined |
 | Effect `run*` only at allowlisted edges; `tryPromise` uses `{ try, catch }`; no production `throw new DomainError` | repo | `docs/contributing/ci-gates.md` Gates | `check:effect-edges:strict` | enforced |
+| A workspace package never re-exports another workspace package (`export ... from "@watchdog/x"`, `export *`, import-then-export); callers import from the owner. Exempt: `@watchdog/ui/components/*` specifiers in the web `shared/ui/primitives/` and `shared/ui/toast.tsx` wrappers | repo | `docs/contributing/ci-gates.md` Gates | `check:workspace-reexports` (`scripts/check-workspace-reexports.mjs`) | enforced |
 | Effect language-service rules (unknown in catch, async function, try/catch in `Effect.gen`) | core, tools | `.agents/skills/effect/SKILL.md` | oxlint `effecttsgo/*` at warn level | baselined |
 | Services are `*Effect` programs that keep `DomainTag` in `E`; tests bridge with `runDomain` | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
 | Enqueue only through `enqueueCapJobEffect` and the boss helpers; one pg-boss boss per process | core, worker | `docs/reference/platform/jobs-orpc.md` Jobs path | guidance | guidance |
@@ -131,7 +135,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Method vocabulary, categories, D1-D5 pre-code decisions, one Cap per source contract | caps | `docs/reference/platform/caps-lexicon.md` Pre-code decisions | guidance | guidance |
 | Banned mid-build terms: the `_Banned_` lines of `GLOSSARY.md`, in `AGENTS.md` files | repo | `GLOSSARY.md` header | `check:agents:strict` | enforced |
 | Other refuse words (module, analyzer, neuron, enricher, transform, connector) in UI, docs and Cap titles, and the `_Avoid_` lines of `GLOSSARY.md` | repo | `docs/reference/platform/caps-lexicon.md` What is enforced | guidance | guidance |
-| Tools own producer Zod; Caps re-export it from a Cap-local `report-schema.ts` | caps, tools | `packages/caps/AGENTS.md` Rules | guidance | guidance |
+| Tools own producer Zod; Caps import it from `@watchdog/tools` | caps, tools | `packages/caps/AGENTS.md` Rules | guidance | guidance |
 | Inside `playbooks/`, import Caps from `../registry`, not the `@watchdog/caps` barrel | caps | `packages/caps/AGENTS.md` Rules | guidance | guidance |
 | Do not proxy investigation URLs through `markdown.new` (OPSEC) | caps | `docs/reference/platform/caps-boundary.md` Intake | guidance | guidance |
 | Playbooks are user-initiated: a Playbook run never auto-fires | caps, core | `docs/reference/platform/caps-boundary.md` Caps (boundary) | guidance | guidance |

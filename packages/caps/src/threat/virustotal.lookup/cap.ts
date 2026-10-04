@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchVirusTotalLookupEffect } from "@watchdog/tools";
+import {
+  fetchVirusTotalLookupEffect,
+  virusTotalLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { virusTotalLookupInput } from "./input";
 import { interpretVirusTotalLookupReport } from "./interpret";
-import { virusTotalLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.virustotal.lookup; OSINT)";
 

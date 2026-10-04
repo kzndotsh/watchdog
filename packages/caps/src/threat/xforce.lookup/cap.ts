@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchXforceLookupEffect } from "@watchdog/tools";
+import {
+  fetchXforceLookupEffect,
+  xforceLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { xforceLookupInput } from "./input";
 import { interpretXforceLookupReport } from "./interpret";
-import { xforceLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.xforce.lookup; OSINT)";
 

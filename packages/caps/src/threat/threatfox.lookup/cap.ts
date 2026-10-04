@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchThreatfoxLookupEffect } from "@watchdog/tools";
+import {
+  fetchThreatfoxLookupEffect,
+  threatfoxLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { threatfoxLookupInput } from "./input";
 import { interpretThreatfoxLookupReport } from "./interpret";
-import { threatfoxLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.threatfox.lookup; OSINT)";
 

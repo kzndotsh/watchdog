@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { AbuseIpdbLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   domainValuesBatch,
@@ -7,7 +9,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { abuseIpdbLookupInput } from "./input";
-import type { AbuseIpdbLookupSnapshot } from "./report-schema";
 
 type AbuseIpdbInput = z.infer<typeof abuseIpdbLookupInput>;
 

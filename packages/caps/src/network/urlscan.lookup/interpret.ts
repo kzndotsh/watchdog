@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { UrlscanLookupSnapshot } from "@watchdog/tools";
+
 import { withSeedHost } from "../../lib/collect/eligible-domain-hosts";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
@@ -13,7 +15,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { urlscanLookupInput } from "./input";
-import type { UrlscanLookupSnapshot } from "./report-schema";
 
 type UrlscanInput = z.infer<typeof urlscanLookupInput>;
 

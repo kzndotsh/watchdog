@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchSnusbaseLookupEffect } from "@watchdog/tools";
+import {
+  fetchSnusbaseLookupEffect,
+  snusbaseLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { snusbaseLookupInput } from "./input";
 import { interpretSnusbaseLookupReport } from "./interpret";
-import { snusbaseLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+breach.snusbase.lookup; OSINT)";
 

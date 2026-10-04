@@ -9,7 +9,6 @@ import { ProcessRunCard } from "@/domains/intake/components/process-run-card";
 import { useEvidenceBlob } from "@/domains/intake/hooks/use-evidence-blob";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import {
-  ENRICHED_MD_ARTIFACT,
   evidenceHasEnrichableUrl,
   evidenceTitle,
   latestEnrichOutput,
@@ -24,7 +23,6 @@ import {
 import { processRunCardDomId } from "@/domains/intake/lib/process-run-card-dom";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { ArtifactContent } from "@/domains/jobs/components/artifact-content";
-import type { JobListRecord } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
@@ -52,7 +50,12 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import { isLiveJobStatus, isOpenJobStatus } from "@watchdog/schemas";
+import type { JobListRecord } from "@watchdog/core";
+import {
+  isLiveJobStatus,
+  isOpenJobStatus,
+  ENRICHED_MD_ARTIFACT,
+} from "@watchdog/schemas";
 import { Spinner } from "@watchdog/ui/components/spinner";
 import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 

@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchC99SubdomainsEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchC99SubdomainsEffect,
+  normalizeHost,
+  c99LookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { c99LookupInput } from "./input";
 import { interpretC99LookupReport } from "./interpret";
-import { c99LookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.c99.lookup; OSINT)";
 

@@ -8,6 +8,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 ## Enforcement
 
 - **Declared `dependencies`** are the matrix: pnpm's strict `node_modules` means an undeclared `@watchdog/*` import does not resolve (`pnpm typecheck` fails). Declaring a forbidden dependency fails nothing, so the rows below are guidance unless another bullet names a gate.
+- **`pnpm check:boundaries`** (`scripts/check-boundaries.mjs`, pre-commit and CI): an import of `@watchdog/*` must name a workspace package the importer declares, through a path its `exports` map lists; the failure names the public entry points. Packages and apps never import an app.
 - **oxlint `no-restricted-imports`** (`oxlint.config.ts`): `apps/web` may not import `@watchdog/db` or unwrapped primitives; `apps/cli` may not import `core`, `db`, `api`, `log` or `env`; `packages/ui` wrappers may not import `db`.
 - **`import/no-cycle: error`** across the workspace.
 - **`packages/db/scripts/check-repo-rules.mjs`** (CI "Repo layer contract") enforces the repos rules: no `SQL`-typed parameters, no transaction, no throw, no notify, `exec` first, and no `.toISOString()` (its only DTO check).

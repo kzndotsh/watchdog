@@ -1,22 +1,8 @@
-import {
-  getCaseByIdInputSchema,
-  getCaseBySlugInputSchema,
-} from "@/domains/cases/types";
-import {
-  caseScopeInputSchema,
-  entityScopeInputSchema,
-} from "@/domains/entities/lib/scope-schemas";
+import { getCaseByIdInputSchema } from "@/domains/cases/types";
 import {
   caseIdInputSchema,
   caseSlugInputSchema,
 } from "@/domains/entities/types";
-import {
-  evidenceScopeInputSchema,
-  listEvidenceInputSchema,
-} from "@/domains/intake/types";
-import { getJobInputSchema, listJobsInputSchema } from "@/domains/jobs/types";
-import { searchCaseInputSchema } from "@/domains/search/types";
-import { listProposalsInputSchema } from "@/domains/triage/types";
 import {
   entitySlugSchema,
   listRecentActivityInputSchema,
@@ -26,6 +12,15 @@ import {
   type ListRecentActivityInput,
   type ProposalStatus,
   type TaskFiltersInput,
+  getCaseBySlugInputSchema,
+  caseScopeInputSchema,
+  entityScopeInputSchema,
+  evidenceScopeInputSchema,
+  listEvidenceInputSchema,
+  getJobInputSchema,
+  listJobsInputSchema,
+  searchCaseInputSchema,
+  listProposalsInputSchema,
 } from "@watchdog/schemas";
 
 type TaskListFilters = Omit<TaskFiltersInput, "caseId">;

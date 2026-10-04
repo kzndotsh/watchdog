@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchAbuseIpdbCheckEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchAbuseIpdbCheckEffect,
+  normalizeIp,
+  abuseIpdbLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { abuseIpdbLookupInput } from "./input";
 import { interpretAbuseIpdbLookupReport } from "./interpret";
-import { abuseIpdbLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.abuseipdb.lookup; OSINT)";
 

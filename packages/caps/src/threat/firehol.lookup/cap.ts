@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchFireholLookupEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchFireholLookupEffect,
+  normalizeIp,
+  fireholLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { fireholLookupInput } from "./input";
 import { interpretFireholLookupReport } from "./interpret";
-import { fireholLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.firehol.lookup; OSINT)";
 

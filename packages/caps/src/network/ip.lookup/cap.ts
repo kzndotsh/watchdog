@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchIpLookupEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchIpLookupEffect,
+  normalizeIp,
+  ipLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipLookupInput } from "./input";
 import { interpretIpLookupReport } from "./interpret";
-import { ipLookupSnapshotSchema } from "./report-schema";
 
 export const ipLookup = defineCollectCap({
   id: "network.ip.lookup",

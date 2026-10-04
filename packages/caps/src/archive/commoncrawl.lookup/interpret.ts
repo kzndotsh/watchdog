@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { CommoncrawlLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   identifierTruncationNote,
@@ -9,7 +11,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { commoncrawlLookupInput } from "./input";
-import type { CommoncrawlLookupSnapshot } from "./report-schema";
 
 type CcInput = z.infer<typeof commoncrawlLookupInput>;
 

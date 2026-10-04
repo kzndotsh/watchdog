@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchUrlscanSearchEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchUrlscanSearchEffect,
+  normalizeHost,
+  urlscanLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlscanLookupInput } from "./input";
 import { interpretUrlscanLookupReport } from "./interpret";
-import { urlscanLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.urlscan.lookup; OSINT)";
 

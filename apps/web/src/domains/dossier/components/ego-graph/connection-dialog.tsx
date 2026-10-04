@@ -4,7 +4,6 @@ import { useEffect, useMemo, type SubmitEvent } from "react";
 
 import type { EvidenceOption } from "@/domains/dossier/types";
 import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
-import { entityDisplayLabel } from "@/domains/entities/lib/connection-peers";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";
@@ -21,11 +20,8 @@ import {
 } from "@/shared/ui/primitives/dialog";
 import { CONFIDENCE_OPTIONS } from "@/shared/ui/vocab";
 import {
-  EDGE_PREDICATE_META,
   clampEdgePhrase,
   edgePhraseOptionsForPeers,
-  edgePhraseValue,
-  parseEdgePhraseValue,
   peerKindAllowedForPhrase,
   predicateLabel,
 } from "@/shared/ui/vocab/edge-predicate";
@@ -37,6 +33,10 @@ import {
   type EdgeOrientation,
   type EdgePredicate,
   type EntityKind,
+  entityDisplayLabel,
+  EDGE_PREDICATE_META,
+  edgePhraseValue,
+  parseEdgePhraseValue,
 } from "@watchdog/schemas";
 import {
   Field,

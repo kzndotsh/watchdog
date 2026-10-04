@@ -4,18 +4,17 @@ import { cn } from "@/lib/utils";
 import { Chip } from "@/shared/ui/chip";
 import { WithTooltip } from "@/shared/ui/timestamp";
 import {
-  CLAIM_CLASS_LABELS,
   CLAIM_CLASS_TONES,
   ENTITY_KIND_ICON_CLASS,
   ENTITY_KIND_ICON_SIZE,
   ENTITY_KIND_ICONS,
-  ENTITY_KIND_LABELS,
   type EntityKindIconSize,
   isEntityKind,
   kindBadgeLabel,
   kindBadgeTone,
   type KindValue,
 } from "@/shared/ui/vocab/kind.lib";
+import { CLAIM_CLASS_LABELS, ENTITY_KIND_LABELS } from "@watchdog/schemas";
 import type { ClaimClass, EntityKind } from "@watchdog/schemas";
 
 /** Kind glyph for person / org / infra. */

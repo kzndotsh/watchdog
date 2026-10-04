@@ -1,13 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import type { ClaimRecord } from "@/domains/entities/claims/types";
+import { orpcFromContext } from "@/lib/orpc.server";
 import {
   createClaimInputSchema,
   listClaimsInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
-  type ClaimRecord,
-} from "@/domains/entities/claims/types";
-import { orpcFromContext } from "@/lib/orpc.server";
+} from "@watchdog/schemas";
 
 export type { ClaimRecord } from "@/domains/entities/claims/types";
 

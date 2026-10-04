@@ -13,7 +13,7 @@ Dumb HTTP / DNS / WHOIS / CT / breach / threat helpers: raw fetch/parse output o
 
 ## Rules
 
-- **Producer Zod + inferred types live here**, next to the fetch/parse (`dns/schema.ts`, `whois/schema.ts`, `http/oembed.ts`, per-vendor snapshots). Caps import them for `safeParse` and re-export from Cap-local `report-schema.ts`; do not duplicate shapes as TS interfaces in Caps. Guidance.
+- **Producer Zod + inferred types live here**, next to the fetch/parse (`dns/schema.ts`, `whois/schema.ts`, `http/oembed.ts`, per-vendor snapshots). Caps import them from `@watchdog/tools` for `safeParse` (no Cap-local re-export); do not duplicate shapes as TS interfaces in Caps. Guidance.
 - Vendor clients export `*Effect` only and never call raw `fetch` (exceptions: `http-probe` / `unshorten` need `redirect: "manual"` / HEAD→GET, wrapped in `Effect.tryPromise`). HTTP helpers (`fetchJson*Effect`, `fetchBytesEffect`) require `HttpClient` in `R`: provide `toolsHttpClientLayer` once at the Cap `run` / collect / test root, not per request.
 - Tagged vendor failures live in `src/errors/tagged-errors.ts`; map to `ToolsError` via `taggedToToolsError` / `mapToolsCatch`.
 - Shared parse helpers stay Cap-agnostic: Caps choose how to map results into PatchOps.

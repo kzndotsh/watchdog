@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchCymruMhrLookupEffect } from "@watchdog/tools";
+import {
+  fetchCymruMhrLookupEffect,
+  cymruMhrLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { cymruMhrLookupInput } from "./input";
 import { interpretCymruMhrLookupReport } from "./interpret";
-import { cymruMhrLookupSnapshotSchema } from "./report-schema";
 
 export const cymruMhrLookup = defineCollectCap({
   id: "threat.cymru_mhr.lookup",
