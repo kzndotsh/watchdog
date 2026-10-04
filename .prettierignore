@@ -1,5 +1,5 @@
 # Oxfmt also reads this file. Keep frozen / vault / generated trees out of format.
-_legacy-v1/
+# Local frozen tree, untracked.
 _legacy-v2/
 .direnv/
 graph/
@@ -11,7 +11,6 @@ templates/
 packages/client/src/generated/
 packages/caps/capabilities.gen.json
 packages/db/drizzle/
-apps/web/src/shared/ui/shadcn/
 apps/web/src/routeTree.gen.ts
 .cursor/
 .agents/

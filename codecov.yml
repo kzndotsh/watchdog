@@ -46,7 +46,6 @@ github_checks:
 ignore:
   - "**/__tests__/**"
   - e2e/
-  - "_legacy-*/**"
   - "**/*.gen.ts"
   - "**/generated/**"
   - "**/drizzle/**"

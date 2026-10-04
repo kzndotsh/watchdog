@@ -2,7 +2,7 @@ import { defineConfig } from "oxfmt";
 import ultracite from "ultracite/oxfmt";
 
 const watchdogIgnores = [
-  "_legacy-v1/**",
+  // Local frozen tree, untracked: never format/lint it.
   "_legacy-v2/**",
   ".direnv/**",
   "graph/**",
