@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  applyPatchEffect,
-  DomainError,
-  runDomain
-} from "@watchdog/core";
+import { applyPatchEffect, DomainError, runDomain } from "@watchdog/core";
 import {
   claimsRepo,
   db,
@@ -15,14 +11,21 @@ import {
   identifiersRepo,
   questionsRepo,
 } from "@watchdog/db";
-import { testId } from "@watchdog/test-kit";
-import { buildClaimCreateOp, buildEdgeCreateOp, buildEntityCreateOp, buildEventCreateOp, buildIdentifierCreateOp, buildQuestionCreateOp } from "@watchdog/schemas/testing";
+import {
+  buildClaimCreateOp,
+  buildEdgeCreateOp,
+  buildEntityCreateOp,
+  buildEventCreateOp,
+  buildIdentifierCreateOp,
+  buildQuestionCreateOp,
+} from "@watchdog/schemas/testing";
 import {
   seedCase,
   seedEntity,
   seedEvidence,
   withTestTx,
 } from "@watchdog/test-db";
+import { testId } from "@watchdog/test-kit";
 
 describe("applyPatch", () => {
   it("persists create ops for every patch resource", async () => {
@@ -51,9 +54,14 @@ describe("applyPatch", () => {
       const eventOp = buildEventCreateOp(entity.id, "1815-12-10", "Born", {
         id: testId(33),
       });
-      const entityOp = buildEntityCreateOp("New Person", "new-person", "person", {
-        id: testId(34),
-      });
+      const entityOp = buildEntityCreateOp(
+        "New Person",
+        "new-person",
+        "person",
+        {
+          id: testId(34),
+        }
+      );
       const peer = await seedEntity(tx, cased.id, {
         id: testId(35),
         name: "Peer",
@@ -63,12 +71,14 @@ describe("applyPatch", () => {
         id: testId(36),
       });
 
-      await runDomain(applyPatchEffect({
-        tx,
-        caseId: cased.id,
-        confidence: "unverified",
-        patch: [claimOp, identifierOp, questionOp, eventOp, entityOp, edgeOp],
-      }));
+      await runDomain(
+        applyPatchEffect({
+          tx,
+          caseId: cased.id,
+          confidence: "unverified",
+          patch: [claimOp, identifierOp, questionOp, eventOp, entityOp, edgeOp],
+        })
+      );
 
       const claims = await claimsRepo.listForEntity(tx, entity.id);
       expect(claims.some((row) => row.text === "Ada observed a host")).toBe(
@@ -105,9 +115,14 @@ describe("applyPatch", () => {
   it("normalizes entity create slugs from patch ops", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
-      const entityOp = buildEntityCreateOp("Alpha Corp", "  Alpha Corp  ", "org", {
-        id: testId(37),
-      });
+      const entityOp = buildEntityCreateOp(
+        "Alpha Corp",
+        "  Alpha Corp  ",
+        "org",
+        {
+          id: testId(37),
+        }
+      );
 
       await runDomain(
         applyPatchEffect({
@@ -171,25 +186,29 @@ describe("applyPatch", () => {
         "ada@example.com",
         { id: testId(41), data: { platform: "", notes: "first" } }
       );
-      await runDomain(applyPatchEffect({
-        tx,
-        caseId: cased.id,
-        confidence: "unverified",
-        patch: [createOp],
-      }));
-      await runDomain(applyPatchEffect({
-        tx,
-        caseId: cased.id,
-        confidence: "possible",
-        patch: [
-          {
-            ...createOp,
-            op: "upsert",
-            id: testId(42),
-            data: { ...createOp.data, notes: "updated" },
-          },
-        ],
-      }));
+      await runDomain(
+        applyPatchEffect({
+          tx,
+          caseId: cased.id,
+          confidence: "unverified",
+          patch: [createOp],
+        })
+      );
+      await runDomain(
+        applyPatchEffect({
+          tx,
+          caseId: cased.id,
+          confidence: "possible",
+          patch: [
+            {
+              ...createOp,
+              op: "upsert",
+              id: testId(42),
+              data: { ...createOp.data, notes: "updated" },
+            },
+          ],
+        })
+      );
       const identifiers = await identifiersRepo.listForEntity(tx, entity.id);
       const matches = identifiers.filter(
         (row) => row.type === "email" && row.value === "ada@example.com"
@@ -234,15 +253,10 @@ describe("applyPatch", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(46) });
       const evidence = await seedEvidence(tx, cased.id, { label: "proof" });
       const createOp = {
-        ...buildIdentifierCreateOp(
-          entity.id,
-          "email",
-          "ada@example.com",
-          {
-            id: testId(47),
-            data: { platform: "", notes: "first" },
-          }
-        ),
+        ...buildIdentifierCreateOp(entity.id, "email", "ada@example.com", {
+          id: testId(47),
+          data: { platform: "", notes: "first" },
+        }),
         evidenceIds: [evidence.id],
       };
       await runDomain(
@@ -341,17 +355,19 @@ describe("applyPatch", () => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(43) });
       await expect(
-        runDomain(applyPatchEffect({
-          tx,
-          caseId: cased.id,
-          confidence: "unverified",
-          patch: [
-            buildIdentifierCreateOp(entity.id, "handle", "ada", {
-              id: testId(44),
-              data: { platform: "" },
-            }),
-          ],
-        }))
+        runDomain(
+          applyPatchEffect({
+            tx,
+            caseId: cased.id,
+            confidence: "unverified",
+            patch: [
+              buildIdentifierCreateOp(entity.id, "handle", "ada", {
+                id: testId(44),
+                data: { platform: "" },
+              }),
+            ],
+          })
+        )
       ).rejects.toThrow(/platform/i);
     });
   });
@@ -371,16 +387,18 @@ describe("applyPatch", () => {
         slug: "peer",
       });
       await expect(
-        runDomain(applyPatchEffect({
-          tx,
-          caseId: cased.id,
-          confidence: "unverified",
-          patch: [
-            buildEdgeCreateOp(person.id, other.id, "primary_domain", {
-              id: testId(47),
-            }),
-          ],
-        }))
+        runDomain(
+          applyPatchEffect({
+            tx,
+            caseId: cased.id,
+            confidence: "unverified",
+            patch: [
+              buildEdgeCreateOp(person.id, other.id, "primary_domain", {
+                id: testId(47),
+              }),
+            ],
+          })
+        )
       ).rejects.toThrow(/not allowed/i);
     });
   });
@@ -415,15 +433,17 @@ describe("applyPatch", () => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(48) });
       await expect(
-        runDomain(applyPatchEffect({
-          tx,
-          caseId: cased.id,
-          patch: [
-            buildClaimCreateOp(entity.id, "Needs confidence", {
-              id: testId(49),
-            }),
-          ],
-        }))
+        runDomain(
+          applyPatchEffect({
+            tx,
+            caseId: cased.id,
+            patch: [
+              buildClaimCreateOp(entity.id, "Needs confidence", {
+                id: testId(49),
+              }),
+            ],
+          })
+        )
       ).rejects.toThrow(/confidence/i);
     });
   });
@@ -433,16 +453,18 @@ describe("applyPatch", () => {
       const cased = await seedCase(tx);
       const entity = await seedEntity(tx, cased.id, { id: testId(55) });
       await expect(
-        runDomain(applyPatchEffect({
-          tx,
-          caseId: cased.id,
-          confidence: "confirmed",
-          patch: [
-            buildClaimCreateOp(entity.id, "Needs evidence", {
-              id: testId(56),
-            }),
-          ],
-        }))
+        runDomain(
+          applyPatchEffect({
+            tx,
+            caseId: cased.id,
+            confidence: "confirmed",
+            patch: [
+              buildClaimCreateOp(entity.id, "Needs evidence", {
+                id: testId(56),
+              }),
+            ],
+          })
+        )
       ).rejects.toThrow(/confirmed requires/i);
     });
   });
@@ -451,17 +473,21 @@ describe("applyPatch", () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(50) });
     await expect(
-      runDomain(applyPatchEffect({
-        caseId: cased.id,
-        confidence: "unverified",
-        patch: [
-          buildClaimCreateOp(entity.id, "Should roll back", { id: testId(51) }),
-          buildIdentifierCreateOp(entity.id, "handle", "ada", {
-            id: testId(52),
-            data: { platform: "" },
-          }),
-        ],
-      }))
+      runDomain(
+        applyPatchEffect({
+          caseId: cased.id,
+          confidence: "unverified",
+          patch: [
+            buildClaimCreateOp(entity.id, "Should roll back", {
+              id: testId(51),
+            }),
+            buildIdentifierCreateOp(entity.id, "handle", "ada", {
+              id: testId(52),
+              data: { platform: "" },
+            }),
+          ],
+        })
+      )
     ).rejects.toThrow(/platform/i);
 
     const claims = await claimsRepo.listForEntity(db, entity.id);
@@ -471,10 +497,21 @@ describe("applyPatch", () => {
   it("stores null entity summary and notes when create patch sends blanks", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
-      const entityOp = buildEntityCreateOp("Blank Fields", "blank-fields", "org", {
-        id: testId(55),
-        data: { name: "Blank Fields", slug: "blank-fields", kind: "org", summary: "   ", notes: "" },
-      });
+      const entityOp = buildEntityCreateOp(
+        "Blank Fields",
+        "blank-fields",
+        "org",
+        {
+          id: testId(55),
+          data: {
+            name: "Blank Fields",
+            slug: "blank-fields",
+            kind: "org",
+            summary: "   ",
+            notes: "",
+          },
+        }
+      );
       await runDomain(
         applyPatchEffect({
           tx,
@@ -552,13 +589,15 @@ describe("applyPatch", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(53) });
       const evidence = await seedEvidence(tx, cased.id);
       const claimId = testId(54);
-      await runDomain(applyPatchEffect({
-        tx,
-        caseId: cased.id,
-        confidence: "unverified",
-        sharedEvidenceIds: [evidence.id],
-        patch: [buildClaimCreateOp(entity.id, "Cited", { id: claimId })],
-      }));
+      await runDomain(
+        applyPatchEffect({
+          tx,
+          caseId: cased.id,
+          confidence: "unverified",
+          sharedEvidenceIds: [evidence.id],
+          patch: [buildClaimCreateOp(entity.id, "Cited", { id: claimId })],
+        })
+      );
       const links = await evidenceLinksRepo.listForClaims(tx, [claimId]);
       expect(links.get(claimId)).toEqual([evidence.id]);
     });
@@ -570,18 +609,20 @@ describe("applyPatch", () => {
       const entity = await seedEntity(tx, cased.id, { id: testId(56) });
       const evidence = await seedEvidence(tx, cased.id);
       const claimId = testId(57);
-      await runDomain(applyPatchEffect({
-        tx,
-        caseId: cased.id,
-        confidence: "unverified",
-        sharedEvidenceIds: [`  ${evidence.id}  `],
-        patch: [
-          buildClaimCreateOp(entity.id, "Cited", {
-            id: claimId,
-            evidenceIds: [`  ${evidence.id}  `],
-          }),
-        ],
-      }));
+      await runDomain(
+        applyPatchEffect({
+          tx,
+          caseId: cased.id,
+          confidence: "unverified",
+          sharedEvidenceIds: [`  ${evidence.id}  `],
+          patch: [
+            buildClaimCreateOp(entity.id, "Cited", {
+              id: claimId,
+              evidenceIds: [`  ${evidence.id}  `],
+            }),
+          ],
+        })
+      );
       const links = await evidenceLinksRepo.listForClaims(tx, [claimId]);
       expect(links.get(claimId)).toEqual([evidence.id]);
     });
@@ -651,16 +692,18 @@ describe("applyPatch", () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
       const personId = testId(55);
-      await runDomain(applyPatchEffect({
-        tx,
-        caseId: cased.id,
-        confidence: "unverified",
-        patch: [
-          buildEntityCreateOp("Patch Person", "patch-person", "person", {
-            id: personId,
-          }),
-        ],
-      }));
+      await runDomain(
+        applyPatchEffect({
+          tx,
+          caseId: cased.id,
+          confidence: "unverified",
+          patch: [
+            buildEntityCreateOp("Patch Person", "patch-person", "person", {
+              id: personId,
+            }),
+          ],
+        })
+      );
       const questions = await questionsRepo.listForEntity(tx, personId);
       expect(questions.length).toBeGreaterThan(0);
     });

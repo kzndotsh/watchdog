@@ -136,7 +136,9 @@ export function listEdgesForEntityEffect(
         rows.map((r) => r.id)
       )
     );
-    return rows.map((row) => toRecord(row, normalizedEntityId, byEdge.get(row.id) ?? []));
+    return rows.map((row) =>
+      toRecord(row, normalizedEntityId, byEdge.get(row.id) ?? [])
+    );
   });
 }
 
@@ -237,7 +239,9 @@ export function createEdgeEffect(
       return yield* new InvalidError({ reason: "related_to requires notes" });
     }
 
-    const evidenceIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds ?? []);
+    const evidenceIds = yield* parseGraphEvidenceIdsEffect(
+      input.evidenceIds ?? []
+    );
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
     const created = yield* transact(
@@ -324,8 +328,14 @@ export function updateEdgeEffect(
         Effect.gen(function* updateEdgeTx() {
           let nextIds = evidenceIds;
           if (scopedInput.evidenceIds !== undefined) {
-            nextIds = yield* parseGraphEvidenceIdsEffect(scopedInput.evidenceIds);
-            yield* assertEvidenceIdsInCaseEffect(scopedInput.caseId, nextIds, tx);
+            nextIds = yield* parseGraphEvidenceIdsEffect(
+              scopedInput.evidenceIds
+            );
+            yield* assertEvidenceIdsInCaseEffect(
+              scopedInput.caseId,
+              nextIds,
+              tx
+            );
             const replaced = yield* tryDb(() =>
               evidenceLinksRepo.replaceEdge(tx, existing.id, nextIds)
             );

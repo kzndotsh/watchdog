@@ -5,7 +5,9 @@ export type AttachEvidenceResult =
   | { ok: true; patch: PatchOp[] }
   | { ok: false; error: string };
 
-function hasNonEmptyEvidenceId(ids: Iterable<string | null | undefined>): boolean {
+function hasNonEmptyEvidenceId(
+  ids: Iterable<string | null | undefined>
+): boolean {
   for (const id of ids) {
     if (typeof id === "string" && id.trim() !== "") return true;
   }

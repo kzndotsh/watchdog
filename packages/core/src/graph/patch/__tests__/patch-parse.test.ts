@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
+
 import { tryParsePatch } from "../patch.ts";
 
 describe("patch-parse", () => {
-
   const entityId = "11111111-1111-4111-8111-111111111111";
   const opId = "33333333-3333-4333-8333-333333333333";
 
@@ -57,6 +57,4 @@ describe("patch-parse", () => {
     ]);
     expect(result.ok).toBe(true);
   });
-
 });
-

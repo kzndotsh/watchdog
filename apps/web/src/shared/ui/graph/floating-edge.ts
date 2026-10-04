@@ -1,5 +1,5 @@
-import type { GraphNode } from "@/shared/ui/graph/types";
 import { graphNodeSize } from "@/shared/ui/graph/graph-layout";
+import type { GraphNode } from "@/shared/ui/graph/types";
 
 export interface GraphNodeRect {
   x: number;

@@ -1,11 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  db,
-  questionsRepo,
-  type DbExec,
-  type QuestionRow,
-} from "@watchdog/db";
+import { db, questionsRepo, type DbExec, type QuestionRow } from "@watchdog/db";
 import type { EntityKind, QuestionStatus } from "@watchdog/schemas";
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
 
@@ -18,7 +13,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertCaseInOrgEffect, assertEntityInCaseEffect, requireTrimmedGraphId } from "./patch/guards";
+import {
+  assertCaseInOrgEffect,
+  assertEntityInCaseEffect,
+  requireTrimmedGraphId,
+} from "./patch/guards";
 
 export interface QuestionRecord {
   id: string;

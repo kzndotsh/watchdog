@@ -2,7 +2,11 @@ import { Effect } from "effect";
 
 import { db, entitiesRepo, type EntityRow } from "@watchdog/db";
 import type { EntityKind } from "@watchdog/schemas";
-import { slugifyName, trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
+import {
+  slugifyName,
+  trimmedOrNull,
+  trimmedOrUndefined,
+} from "@watchdog/schemas";
 
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
@@ -14,9 +18,9 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { assertEntityKindChangeAllowedEffect } from "./edge-update";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
-import { assertEntityKindChangeAllowedEffect } from "./edge-update";
 
 const SLUG_UNIQUE_INDEX = "entities_case_slug_uidx";
 

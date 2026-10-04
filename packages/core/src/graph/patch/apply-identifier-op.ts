@@ -1,10 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  evidenceLinksRepo,
-  identifiersRepo,
-  type DbTx,
-} from "@watchdog/db";
+import { evidenceLinksRepo, identifiersRepo, type DbTx } from "@watchdog/db";
 import {
   IDENTIFIER_STATUSES,
   validateIdentifierWrite,

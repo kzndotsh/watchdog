@@ -12,9 +12,9 @@ describe("GraphCanvasSkeleton", () => {
     expect(
       container.querySelector("[data-slot='graph-canvas-skeleton']")
     ).toBeInTheDocument();
-    expect(container.querySelectorAll("[data-graph-node-skeleton]")).toHaveLength(
-      3
-    );
+    expect(
+      container.querySelectorAll("[data-graph-node-skeleton]")
+    ).toHaveLength(3);
     expect(container.querySelectorAll("line")).toHaveLength(3);
     expect(container.querySelectorAll(".animate-pulse")).toHaveLength(6);
   });

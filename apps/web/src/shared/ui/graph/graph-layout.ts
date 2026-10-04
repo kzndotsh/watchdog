@@ -26,7 +26,10 @@ export interface GraphTransform {
   k: number;
 }
 
-export function graphNodeSize(node: GraphNode): { width: number; height: number } {
+export function graphNodeSize(node: GraphNode): {
+  width: number;
+  height: number;
+} {
   return {
     width: node.width ?? GRAPH_NODE_WIDTH,
     height: node.height ?? GRAPH_NODE_HEIGHT,

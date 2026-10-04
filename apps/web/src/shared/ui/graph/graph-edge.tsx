@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 
 import {
-  graphBezierPath,
-  graphIdUnit,
-} from "@/shared/ui/graph/graph-bezier";
-import { getFloatingEdgeParams, graphNodeRect } from "@/shared/ui/graph/floating-edge";
+  getFloatingEdgeParams,
+  graphNodeRect,
+} from "@/shared/ui/graph/floating-edge";
+import { graphBezierPath, graphIdUnit } from "@/shared/ui/graph/graph-bezier";
 import { confidenceStroke } from "@/shared/ui/graph/graph-styles";
 import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
 import { predicateLabel } from "@/shared/ui/vocab";
@@ -102,7 +102,7 @@ export function GraphEdgePath({
         >
           <div className="flex h-full w-full items-center justify-center">
             <div
-              className="bg-background text-muted-foreground text-xs tracking-wider uppercase max-w-[9rem] truncate rounded px-1.5 py-0.5 whitespace-nowrap"
+              className="bg-background text-muted-foreground max-w-[9rem] truncate rounded px-1.5 py-0.5 text-xs tracking-wider whitespace-nowrap uppercase"
               title={label}
             >
               {label}

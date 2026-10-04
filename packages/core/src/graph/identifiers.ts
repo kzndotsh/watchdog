@@ -13,9 +13,16 @@ import type {
   IdentifierStatus,
   IdentifierType,
 } from "@watchdog/schemas";
-import { normalizeUuidList, trimmedOrNull, validateIdentifierWrite } from "@watchdog/schemas";
+import {
+  normalizeUuidList,
+  trimmedOrNull,
+  validateIdentifierWrite,
+} from "@watchdog/schemas";
 
-import { assertEvidenceIdsInCaseEffect, parseGraphEvidenceIdsEffect } from "../evidence/evidence";
+import {
+  assertEvidenceIdsInCaseEffect,
+  parseGraphEvidenceIdsEffect,
+} from "../evidence/evidence";
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
@@ -142,7 +149,9 @@ export function listIdentifiersForCaseEffect(
 ): Effect.Effect<CaseIdentifierRecord[], DomainTag> {
   return Effect.gen(function* listIdentifiersForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() => identifiersRepo.listForCase(db, scopedCaseId));
+    const rows = yield* tryDb(() =>
+      identifiersRepo.listForCase(db, scopedCaseId)
+    );
     const byId = yield* tryDb(() =>
       evidenceLinksRepo.listForIdentifiers(
         db,
@@ -173,7 +182,9 @@ export function createIdentifierEffect(
     }
     const { type, value, platform } = written;
 
-    const evidenceIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds ?? []);
+    const evidenceIds = yield* parseGraphEvidenceIdsEffect(
+      input.evidenceIds ?? []
+    );
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
     const entityId = yield* requireTrimmedGraphId(
@@ -283,7 +294,7 @@ export function updateIdentifierEffect(
             const nextPlatform =
               input.platform === undefined
                 ? existing.platform
-                : trimmedOrNull(input.platform) ?? "";
+                : (trimmedOrNull(input.platform) ?? "");
             const written = validateIdentifierWrite({
               type: input.type ?? existing.type,
               value: input.value ?? existing.value,
@@ -317,12 +328,7 @@ export function updateIdentifierEffect(
           }
 
           const updated = yield* tryDb(() =>
-            identifiersRepo.updateInCase(
-              tx,
-              scopedCaseId,
-              identifierId,
-              patch
-            )
+            identifiersRepo.updateInCase(tx, scopedCaseId, identifierId, patch)
           );
           if (!updated) {
             return yield* new NotFoundError({

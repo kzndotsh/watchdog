@@ -11,7 +11,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { assertCaseInOrgEffect, assertEntityInCaseEffect, requireTrimmedGraphId } from "./patch/guards";
+import {
+  assertCaseInOrgEffect,
+  assertEntityInCaseEffect,
+  requireTrimmedGraphId,
+} from "./patch/guards";
 
 export interface EventRecord {
   id: string;

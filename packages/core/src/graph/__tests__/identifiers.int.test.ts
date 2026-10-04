@@ -9,13 +9,13 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { db, evidenceLinksRepo } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 import {
   resetTestDb,
   seedCase,
   seedEntity,
   seedEvidence,
 } from "@watchdog/test-db";
+import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 
 describe("createIdentifier", () => {
   beforeEach(async () => {
