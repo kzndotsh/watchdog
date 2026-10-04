@@ -23,7 +23,6 @@ import { errorMessage } from "../../infra/error-utils";
 import { tryDb } from "../../infra/postgres-effect";
 import { logSwallowed } from "../../infra/process-log";
 import {
-  domainMessageOf,
   InvalidError,
   NotFoundError,
   type DomainTag,
@@ -104,7 +103,7 @@ function vaultToTools(name: string) {
     if (error instanceof NotFoundError) {
       return new MissingCredentialError({ slot: name });
     }
-    return new ValidationVendorError({ message: domainMessageOf(error) });
+    return new ValidationVendorError({ message: error.message });
   };
 }
 

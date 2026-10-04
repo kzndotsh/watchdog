@@ -82,7 +82,8 @@ export function applyIdentifierOpEffect(
         );
         if (!updated) {
           return yield* new NotFoundError({
-            resource: "Identifier not found in this Case",
+            entity: "Identifier",
+            id: existing.id,
           });
         }
         const linked = yield* tryDb(() =>

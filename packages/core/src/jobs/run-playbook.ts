@@ -26,7 +26,6 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
-import { errorMessage } from "../infra/error-utils";
 import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
@@ -65,7 +64,7 @@ export interface PlaybookRunResult {
 function loadPlaybookEffect(playbookId: string) {
   return Effect.try({
     try: () => requirePlaybook(playbookId),
-    catch: (error) => new NotFoundError({ resource: errorMessage(error) }),
+    catch: () => new NotFoundError({ entity: "Playbook", id: playbookId }),
   });
 }
 
@@ -270,7 +269,7 @@ export function cancelPlaybookRunEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedPlaybookRunId = yield* requireTrimmedGraphId(
       playbookRunId,
-      "Playbook run not found"
+      "Playbook run"
     );
     const now = yield* nowDateEffect;
     const result = yield* transact((tx) =>
@@ -280,7 +279,8 @@ export function cancelPlaybookRunEffect(
         );
         if (!run || run.caseId !== scopedCaseId) {
           return yield* new NotFoundError({
-            resource: "Playbook run not found",
+            entity: "Playbook run",
+            id: normalizedPlaybookRunId,
           });
         }
         if (run.status !== "running") {

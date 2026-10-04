@@ -5,13 +5,37 @@ import { Data } from "effect";
  * contract (API body `data.code`, CLI envelope): never rename one once
  * released. See docs/reference/contracts/README.md#error-taxonomy.
  */
+/** Domain nouns a `NotFoundError` can name (GLOSSARY.md capitalisation). */
+export type NotFoundEntity =
+  | "Capability"
+  | "Case"
+  | "Claim"
+  | "Credential"
+  | "Edge"
+  | "Entity"
+  | "Event"
+  | "Evidence"
+  | "Identifier"
+  | "Job"
+  | "Playbook"
+  | "Playbook run"
+  | "Proposal"
+  | "Question"
+  | "Task";
+
+/**
+ * A record the caller named does not exist (or is not visible to them: a
+ * foreign-organization Case is indistinguishable from a missing one). `id` is
+ * the value the caller supplied. The safe message is derived here, once.
+ */
 export class NotFoundError extends Data.TaggedError("NotFoundError")<{
-  readonly resource: string;
+  readonly entity: NotFoundEntity;
+  readonly id: string;
 }> {
   readonly code = "not_found" as const;
 
   override get message(): string {
-    return this.resource;
+    return `${this.entity} not found`;
   }
 }
 
@@ -88,9 +112,4 @@ export function isDomainTag(error: unknown): error is DomainTag {
 export function mapDomainCatch(error: unknown): DomainTag {
   if (isDomainTag(error)) return error;
   throw error;
-}
-
-/** Safe user-facing text for a tag (`InternalError`: log-only reason). */
-export function domainMessageOf(error: DomainTag): string {
-  return error.message;
 }

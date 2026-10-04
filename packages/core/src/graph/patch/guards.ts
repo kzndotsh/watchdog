@@ -17,25 +17,19 @@ import {
   InvalidError,
   NotFoundError,
   type DomainTag,
+  type NotFoundEntity,
 } from "../../infra/tagged-errors";
-
-function requireTrimmedId(
-  value: string,
-  notFoundResource: string
-): Effect.Effect<string, DomainTag> {
-  const trimmed = parseTrimmedCaseId(value);
-  if (trimmed === null) {
-    return new NotFoundError({ resource: notFoundResource });
-  }
-  return Effect.succeed(trimmed);
-}
 
 /** Trim a graph id or fail not_found — use before repo queries that key on the id. */
 export function requireTrimmedGraphId(
   value: string,
-  notFoundResource: string
+  entity: NotFoundEntity
 ): Effect.Effect<string, DomainTag> {
-  return requireTrimmedId(value, notFoundResource);
+  const trimmed = parseTrimmedCaseId(value);
+  if (trimmed === null) {
+    return new NotFoundError({ entity, id: value });
+  }
+  return Effect.succeed(trimmed);
 }
 
 /**
@@ -48,12 +42,12 @@ export function assertCaseExistsUncheckedEffect(
   exec: DbExec = db
 ): Effect.Effect<string, DomainTag> {
   return Effect.gen(function* assertCaseExistsUncheckedGen() {
-    const trimmedCaseId = yield* requireTrimmedId(caseId, "Case not found");
+    const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
     const row = yield* tryDb(() =>
       casesRepo.getByIdUnchecked(exec, trimmedCaseId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: trimmedCaseId });
     }
     return trimmedCaseId;
   });
@@ -66,12 +60,12 @@ export function assertCaseInOrgEffect(
   exec: DbExec = db
 ): Effect.Effect<string, DomainTag> {
   return Effect.gen(function* assertCaseInOrgGen() {
-    const trimmedCaseId = yield* requireTrimmedId(caseId, "Case not found");
+    const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
     const row = yield* tryDb(() =>
       casesRepo.getById(exec, trimmedCaseId, organizationId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: trimmedCaseId });
     }
     return trimmedCaseId;
   });
@@ -83,17 +77,15 @@ export function assertEntityInCaseEffect(
   exec: DbExec = db
 ): Effect.Effect<string, DomainTag> {
   return Effect.gen(function* assertEntityInCaseGen() {
-    const trimmedCaseId = yield* requireTrimmedId(caseId, "Case not found");
-    const trimmedEntityId = yield* requireTrimmedId(
-      entityId,
-      "Entity not found in this Case"
-    );
+    const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
+    const trimmedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     const row = yield* tryDb(() =>
       entitiesRepo.getInCase(exec, trimmedCaseId, trimmedEntityId)
     );
     if (!row) {
       return yield* new NotFoundError({
-        resource: "Entity not found in this Case",
+        entity: "Entity",
+        id: trimmedEntityId,
       });
     }
     return trimmedEntityId;
@@ -106,17 +98,18 @@ export function assertEvidenceInCaseEffect(
   exec: DbExec = db
 ): Effect.Effect<string, DomainTag> {
   return Effect.gen(function* assertEvidenceInCaseGen() {
-    const trimmedCaseId = yield* requireTrimmedId(caseId, "Case not found");
-    const trimmedEvidenceId = yield* requireTrimmedId(
+    const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
+    const trimmedEvidenceId = yield* requireTrimmedGraphId(
       evidenceId,
-      "Evidence not found in this Case"
+      "Evidence"
     );
     const row = yield* tryDb(() =>
       evidenceRepo.getActiveInCase(exec, trimmedCaseId, trimmedEvidenceId)
     );
     if (!row) {
       return yield* new NotFoundError({
-        resource: "Evidence not found in this Case",
+        entity: "Evidence",
+        id: trimmedEvidenceId,
       });
     }
     return trimmedEvidenceId;

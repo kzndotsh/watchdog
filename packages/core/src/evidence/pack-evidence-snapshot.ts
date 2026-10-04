@@ -111,7 +111,8 @@ export function packEvidenceSnapshotEffect(input: {
     );
     if (!row) {
       return yield* new NotFoundError({
-        resource: `Evidence not found: ${input.evidenceId}`,
+        entity: "Evidence",
+        id: input.evidenceId,
       });
     }
     const initialText = yield* loadTextFromEvidence(row);

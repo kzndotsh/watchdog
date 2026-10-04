@@ -18,13 +18,13 @@ Failures on the API, CLI and worker edges are tagged errors. Each tag carries a 
 
 | Tag | `code` | HTTP | Message to the client |
 | --- | --- | --- | --- |
-| `NotFoundError` | `not_found` | 404 | the not-found text |
+| `NotFoundError` | `not_found` | 404 | `<Entity> not found`, derived from its `{ entity, id }` fields |
 | `ConflictError` | `conflict` | 409 | the reason |
 | `InvalidError` | `invalid` | 400 | the reason (caller-fixable input only) |
 | `ForbiddenError` | `forbidden` | 403 | the reason |
 | `InternalError` | `internal` | 500 | fixed `Internal server error`; reason and cause go only to the request log |
 
-The API (`toOrpcError`) returns the code in the oRPC error `data` (`{ "code": "not_found" }`) next to the safe `message`; the transport `code` (`NOT_FOUND`, ...) is unchanged. The CLI prints the stable code as `error.code` with the message; `WD_CLI_DEBUG=1` also prints the stack and, when present, the cause to stderr (local only).
+The API (`toOrpcError`) returns the code in the oRPC error `data` (`{ "code": "conflict" }`) next to the safe `message`; `not_found` data also carries `entity` (a domain noun such as `Case` or `Claim`) and `id` (the value the caller sent, never another organization's record); the transport `code` (`NOT_FOUND`, ...) is unchanged. The CLI prints the stable code as `error.code` with the message; `WD_CLI_DEBUG=1` also prints the stack and, when present, the cause to stderr (local only).
 
 ## Org isolation
 

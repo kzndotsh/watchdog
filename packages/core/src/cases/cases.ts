@@ -82,12 +82,12 @@ export function getCaseByIdEffect(
   organizationId: string
 ): Effect.Effect<CaseRecord, DomainTag> {
   return Effect.gen(function* getCaseByIdGen() {
-    const caseId = yield* requireTrimmedGraphId(id, "Case not found");
+    const caseId = yield* requireTrimmedGraphId(id, "Case");
     const row = yield* tryDb(() =>
       casesRepo.getById(db, caseId, organizationId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
     return toRecord(row);
   });
@@ -100,13 +100,13 @@ export function getCaseBySlugEffect(
   return Effect.gen(function* getCaseBySlugGen() {
     const normalizedSlug = slugifyName(slug);
     if (normalizedSlug === "") {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: slug });
     }
     const row = yield* tryDb(() =>
       casesRepo.getBySlug(db, normalizedSlug, organizationId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: slug });
     }
     return toRecord(row);
   });
@@ -162,12 +162,12 @@ export function updateCaseEffect(input: {
   allowThirdPartyEgress?: boolean;
 }): Effect.Effect<CaseRecord, DomainTag> {
   return Effect.gen(function* updateCaseGen() {
-    const caseId = yield* requireTrimmedGraphId(input.id, "Case not found");
+    const caseId = yield* requireTrimmedGraphId(input.id, "Case");
     const existing = yield* tryDb(() =>
       casesRepo.getById(db, caseId, input.organizationId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
 
     let nextSlug: string | undefined;
@@ -217,7 +217,7 @@ export function updateCaseEffect(input: {
     );
 
     if (!updated) {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
 
     if (nextSlug !== undefined) {
@@ -249,19 +249,19 @@ export function deleteCaseEffect(
   opts: { actorId?: string; organizationId: string }
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteCaseGen() {
-    const caseId = yield* requireTrimmedGraphId(id, "Case not found");
+    const caseId = yield* requireTrimmedGraphId(id, "Case");
     const existing = yield* tryDb(() =>
       casesRepo.getById(db, caseId, opts.organizationId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
 
     const deleted = yield* tryDb(() =>
       casesRepo.delete(db, caseId, opts.organizationId)
     );
     if (!deleted) {
-      return yield* new NotFoundError({ resource: "Case not found" });
+      return yield* new NotFoundError({ entity: "Case", id: caseId });
     }
     const logActorId = optionalActorId(opts?.actorId);
     if (logActorId) {

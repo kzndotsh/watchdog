@@ -6,8 +6,8 @@ export {
   InvalidError,
   ForbiddenError,
   mapDomainCatch,
-  domainMessageOf,
   isDomainTag,
   type DomainTag,
+  type NotFoundEntity,
   type DomainTagCode,
 } from "../infra/tagged-errors";

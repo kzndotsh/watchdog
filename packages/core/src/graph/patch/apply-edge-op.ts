@@ -58,7 +58,8 @@ export function applyEdgeOpEffect(
     );
     if (!fromEntity || !toEntity) {
       return yield* new NotFoundError({
-        resource: "Entity not found in this Case",
+        entity: "Entity",
+        id: fromEntity ? toId : fromId,
       });
     }
     if (!edgePredicateAllowsKinds(predicate, fromEntity.kind, toEntity.kind)) {
@@ -96,9 +97,7 @@ export function applyEdgeOpEffect(
           })
         );
         if (!updated) {
-          return yield* new NotFoundError({
-            resource: "Edge not found in this Case",
-          });
+          return yield* new NotFoundError({ entity: "Edge", id: existing.id });
         }
         const linked = yield* tryDb(() =>
           evidenceLinksRepo.linkEdge(tx, existing.id, evidenceIds)

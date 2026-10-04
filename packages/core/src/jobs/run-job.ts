@@ -21,11 +21,7 @@ import type { ToolsTag } from "@watchdog/tools/errors";
 import { nowMillisEffect } from "../infra/clock";
 import { tryDb } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
-import {
-  domainMessageOf,
-  isDomainTag,
-  type DomainTag,
-} from "../infra/tagged-errors";
+import { isDomainTag, type DomainTag } from "../infra/tagged-errors";
 import {
   JobFibers,
   type JobAbortReason,
@@ -54,7 +50,7 @@ export { JobFibers, type JobAbortReason };
 type JobPipelineError = DomainTag | ToolsTag;
 
 function pipelineErrorMessage(error: JobPipelineError): string {
-  if (isDomainTag(error)) return domainMessageOf(error);
+  if (isDomainTag(error)) return error.message;
   return taggedToToolsError(error).message;
 }
 

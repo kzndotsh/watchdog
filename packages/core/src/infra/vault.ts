@@ -145,9 +145,7 @@ export function getCredentialEffect(
       credentialsRepo.getCiphertext(db, userId, n)
     );
     if (!ciphertext) {
-      return yield* new NotFoundError({
-        resource: `Credential ${n} is not configured`,
-      });
+      return yield* new NotFoundError({ entity: "Credential", id: n });
     }
     return yield* Effect.try({
       try: () => open(userKey(userId), Buffer.from(ciphertext)),
@@ -221,7 +219,7 @@ export function deleteCredentialEffect(
       credentialsRepo.deleteByName(db, userId, n)
     );
     if (!deleted) {
-      return yield* new NotFoundError({ resource: "Credential not found" });
+      return yield* new NotFoundError({ entity: "Credential", id: n });
     }
   });
 }

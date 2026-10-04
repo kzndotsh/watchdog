@@ -196,15 +196,12 @@ export function getTaskInCaseEffect(
 ): Effect.Effect<TaskRecord, DomainTag> {
   return Effect.gen(function* getTaskInCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedTaskId = yield* requireTrimmedGraphId(
-      taskId,
-      "Task not found"
-    );
+    const normalizedTaskId = yield* requireTrimmedGraphId(taskId, "Task");
     const row = yield* tryDb(() =>
       tasksRepo.getInCase(db, scopedCaseId, normalizedTaskId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Task not found" });
+      return yield* new NotFoundError({ entity: "Task", id: normalizedTaskId });
     }
     return toRecord(row);
   });
@@ -236,7 +233,7 @@ export function createTaskEffect(
       Effect.gen(function* createTaskTx() {
         const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
         if (!locked) {
-          return yield* new NotFoundError({ resource: "Case not found" });
+          return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
         const row = yield* tryDb(() =>
           tasksRepo.create(tx, {
@@ -280,12 +277,12 @@ export function updateTaskEffect(
       input.caseId,
       input.organizationId
     );
-    const taskId = yield* requireTrimmedGraphId(input.taskId, "Task not found");
+    const taskId = yield* requireTrimmedGraphId(input.taskId, "Task");
     const existing = yield* tryDb(() =>
       tasksRepo.getInCase(db, scopedCaseId, taskId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Task not found" });
+      return yield* new NotFoundError({ entity: "Task", id: taskId });
     }
 
     const entityId = taskEntityIdForPatch(input.entityId);
@@ -312,7 +309,10 @@ export function updateTaskEffect(
             casesRepo.lockById(tx, scopedCaseId)
           );
           if (!locked) {
-            return yield* new NotFoundError({ resource: "Case not found" });
+            return yield* new NotFoundError({
+              entity: "Case",
+              id: scopedCaseId,
+            });
           }
         }
         const destStatus = input.status;
@@ -331,7 +331,7 @@ export function updateTaskEffect(
           )
         );
         if (!row) {
-          return yield* new NotFoundError({ resource: "Task not found" });
+          return yield* new NotFoundError({ entity: "Task", id: taskId });
         }
 
         if (statusChanged) {
@@ -369,15 +369,12 @@ export function deleteTaskEffect(
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedTaskId = yield* requireTrimmedGraphId(
-      taskId,
-      "Task not found"
-    );
+    const normalizedTaskId = yield* requireTrimmedGraphId(taskId, "Task");
     const existing = yield* tryDb(() =>
       tasksRepo.getInCase(db, scopedCaseId, normalizedTaskId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Task not found" });
+      return yield* new NotFoundError({ entity: "Task", id: normalizedTaskId });
     }
 
     const activityActor = optionalActorId(actorId);
@@ -387,7 +384,10 @@ export function deleteTaskEffect(
           tasksRepo.removeInCase(tx, scopedCaseId, normalizedTaskId)
         );
         if (!ok) {
-          return yield* new NotFoundError({ resource: "Task not found" });
+          return yield* new NotFoundError({
+            entity: "Task",
+            id: normalizedTaskId,
+          });
         }
         yield* tryDb(() =>
           activityEventsRepo.create(tx, {
@@ -436,7 +436,7 @@ export function reorderTasksEffect(
       Effect.gen(function* reorderTasksTx() {
         const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
         if (!locked) {
-          return yield* new NotFoundError({ resource: "Case not found" });
+          return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
         const rows = yield* tryDb(() =>
           tasksRepo.listForCase(tx, scopedCaseId, {

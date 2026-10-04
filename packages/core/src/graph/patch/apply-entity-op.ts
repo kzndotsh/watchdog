@@ -74,7 +74,10 @@ export function applyEntityOpEffect(
             })
           );
           if (!updated) {
-            return yield* new NotFoundError({ resource: "Entity not found" });
+            return yield* new NotFoundError({
+              entity: "Entity",
+              id: existing.id,
+            });
           }
           return;
         }
@@ -142,9 +145,7 @@ export function applyEntityOpEffect(
         entitiesRepo.updateInCase(tx, caseId, entityId, patch)
       );
       if (!updated) {
-        return yield* new NotFoundError({
-          resource: "Entity not found in this Case",
-        });
+        return yield* new NotFoundError({ entity: "Entity", id: entityId });
       }
       return;
     }

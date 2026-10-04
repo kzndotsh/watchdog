@@ -60,10 +60,7 @@ export function listEventsForEntityEffect(
 ): Effect.Effect<EventRecord[], DomainTag> {
   return Effect.gen(function* listEventsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(
-      entityId,
-      "Entity not found in this Case"
-    );
+    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
     const rows = yield* tryDb(() =>
       eventsRepo.listForEntity(db, normalizedEntityId)
@@ -80,10 +77,7 @@ export function createEventEffect(
       input.caseId,
       input.organizationId
     );
-    const entityId = yield* requireTrimmedGraphId(
-      input.entityId,
-      "Entity not found in this Case"
-    );
+    const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, entityId, db);
     const when = trimmedOrUndefined(input.when);
     if (when === undefined) {
@@ -117,17 +111,12 @@ export function updateEventEffect(
       input.caseId,
       input.organizationId
     );
-    const eventId = yield* requireTrimmedGraphId(
-      input.eventId,
-      "Event not found in this Case"
-    );
+    const eventId = yield* requireTrimmedGraphId(input.eventId, "Event");
     const existing = yield* tryDb(() =>
       eventsRepo.getInCase(db, scopedCaseId, eventId)
     );
     if (!existing) {
-      return yield* new NotFoundError({
-        resource: "Event not found in this Case",
-      });
+      return yield* new NotFoundError({ entity: "Event", id: eventId });
     }
 
     let nextWhen = existing.when;
@@ -158,9 +147,7 @@ export function updateEventEffect(
       })
     );
     if (!row) {
-      return yield* new NotFoundError({
-        resource: "Event not found in this Case",
-      });
+      return yield* new NotFoundError({ entity: "Event", id: eventId });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -174,16 +161,14 @@ export function deleteEventEffect(
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteEventGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEventId = yield* requireTrimmedGraphId(
-      eventId,
-      "Event not found in this Case"
-    );
+    const normalizedEventId = yield* requireTrimmedGraphId(eventId, "Event");
     const existing = yield* tryDb(() =>
       eventsRepo.getInCase(db, scopedCaseId, normalizedEventId)
     );
     if (!existing) {
       return yield* new NotFoundError({
-        resource: "Event not found in this Case",
+        entity: "Event",
+        id: normalizedEventId,
       });
     }
 
@@ -192,7 +177,8 @@ export function deleteEventEffect(
     );
     if (!deleted) {
       return yield* new NotFoundError({
-        resource: "Event not found in this Case",
+        entity: "Event",
+        id: normalizedEventId,
       });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);

@@ -122,10 +122,7 @@ export function listEdgesForEntityEffect(
 ): Effect.Effect<EdgeRecord[], DomainTag> {
   return Effect.gen(function* listEdgesForEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(
-      entityId,
-      "Entity not found in this Case"
-    );
+    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
     const rows = yield* tryDb(() =>
       edgesRepo.listForEntity(db, scopedCaseId, normalizedEntityId)
@@ -304,17 +301,12 @@ export function updateEdgeEffect(
       input.caseId,
       input.organizationId
     );
-    const edgeId = yield* requireTrimmedGraphId(
-      input.edgeId,
-      "Edge not found in this Case"
-    );
+    const edgeId = yield* requireTrimmedGraphId(input.edgeId, "Edge");
     const existing = yield* tryDb(() =>
       edgesRepo.getInCase(db, scopedCaseId, edgeId)
     );
     if (!existing) {
-      return yield* new NotFoundError({
-        resource: "Edge not found in this Case",
-      });
+      return yield* new NotFoundError({ entity: "Edge", id: edgeId });
     }
 
     const byEdge = yield* tryDb(() =>
@@ -379,26 +371,19 @@ export function deleteEdgeEffect(
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteEdgeGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEdgeId = yield* requireTrimmedGraphId(
-      edgeId,
-      "Edge not found in this Case"
-    );
+    const normalizedEdgeId = yield* requireTrimmedGraphId(edgeId, "Edge");
     const existing = yield* tryDb(() =>
       edgesRepo.getInCase(db, scopedCaseId, normalizedEdgeId)
     );
     if (!existing) {
-      return yield* new NotFoundError({
-        resource: "Edge not found in this Case",
-      });
+      return yield* new NotFoundError({ entity: "Edge", id: normalizedEdgeId });
     }
 
     const deleted = yield* tryDb(() =>
       edgesRepo.deleteInCase(db, scopedCaseId, normalizedEdgeId)
     );
     if (!deleted) {
-      return yield* new NotFoundError({
-        resource: "Edge not found in this Case",
-      });
+      return yield* new NotFoundError({ entity: "Edge", id: normalizedEdgeId });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);

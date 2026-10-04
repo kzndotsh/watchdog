@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { Match } from "effect";
 
-import type { DomainTag } from "@watchdog/core/errors";
+import type { DomainTag, NotFoundEntity } from "@watchdog/core/errors";
 import { peekRequestLogger } from "@watchdog/log";
 
 /** Message sent to clients for every `InternalError`; the real cause is log-only. */
@@ -61,6 +61,13 @@ export interface ApiErrorData {
   readonly code: DomainTag["code"];
 }
 
+/** `not_found` also names what was missing: the entity and the caller-supplied id. */
+export interface NotFoundErrorData extends ApiErrorData {
+  readonly code: "not_found";
+  readonly entity: NotFoundEntity;
+  readonly id: string;
+}
+
 /** Convert a tagged domain failure to an oRPC HTTP error value. */
 export function toOrpcError(error: DomainTag) {
   peekRequestLogger()?.set({ error: logFieldsFor(error) });
@@ -68,8 +75,12 @@ export function toOrpcError(error: DomainTag) {
     Match.tagsExhaustive({
       NotFoundError: (tagged) =>
         new ORPCError("NOT_FOUND", {
-          message: tagged.resource,
-          data: { code: tagged.code } satisfies ApiErrorData,
+          message: tagged.message,
+          data: {
+            code: tagged.code,
+            entity: tagged.entity,
+            id: tagged.id,
+          } satisfies NotFoundErrorData,
         }),
       ConflictError: (tagged) =>
         new ORPCError("CONFLICT", {

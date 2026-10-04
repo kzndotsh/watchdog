@@ -114,10 +114,7 @@ export function listQuestionsForEntityEffect(
 ): Effect.Effect<QuestionRecord[], DomainTag> {
   return Effect.gen(function* listQuestionsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(
-      entityId,
-      "Entity not found in this Case"
-    );
+    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
     const rows = yield* tryDb(() =>
       questionsRepo.listForEntity(db, normalizedEntityId)
@@ -134,10 +131,7 @@ export function createQuestionEffect(
       input.caseId,
       input.organizationId
     );
-    const entityId = yield* requireTrimmedGraphId(
-      input.entityId,
-      "Entity not found in this Case"
-    );
+    const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, entityId, db);
     const text = trimmedOrUndefined(input.text);
     if (text === undefined) {
@@ -168,13 +162,13 @@ export function resolveQuestionEffect(
     );
     const questionId = yield* requireTrimmedGraphId(
       input.questionId,
-      "Question not found"
+      "Question"
     );
     const existing = yield* tryDb(() =>
       questionsRepo.getInCase(db, scopedCaseId, questionId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Question not found" });
+      return yield* new NotFoundError({ entity: "Question", id: questionId });
     }
     if (existing.status === "resolved") {
       return yield* new ConflictError({ reason: "Question already resolved" });
@@ -186,7 +180,7 @@ export function resolveQuestionEffect(
       })
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Question not found" });
+      return yield* new NotFoundError({ entity: "Question", id: questionId });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -203,13 +197,13 @@ export function updateQuestionEffect(
     );
     const questionId = yield* requireTrimmedGraphId(
       input.questionId,
-      "Question not found"
+      "Question"
     );
     const existing = yield* tryDb(() =>
       questionsRepo.getInCase(db, scopedCaseId, questionId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Question not found" });
+      return yield* new NotFoundError({ entity: "Question", id: questionId });
     }
 
     if (input.text === undefined && input.resolvedNote === undefined) {
@@ -236,7 +230,7 @@ export function updateQuestionEffect(
       })
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Question not found" });
+      return yield* new NotFoundError({ entity: "Question", id: questionId });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -253,13 +247,13 @@ export function reopenQuestionEffect(
     );
     const questionId = yield* requireTrimmedGraphId(
       input.questionId,
-      "Question not found"
+      "Question"
     );
     const existing = yield* tryDb(() =>
       questionsRepo.getInCase(db, scopedCaseId, questionId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Question not found" });
+      return yield* new NotFoundError({ entity: "Question", id: questionId });
     }
     if (existing.status === "open") {
       return yield* new ConflictError({ reason: "Question is already open" });
@@ -272,7 +266,7 @@ export function reopenQuestionEffect(
       })
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Question not found" });
+      return yield* new NotFoundError({ entity: "Question", id: questionId });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
@@ -288,20 +282,26 @@ export function deleteQuestionEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedQuestionId = yield* requireTrimmedGraphId(
       questionId,
-      "Question not found"
+      "Question"
     );
     const existing = yield* tryDb(() =>
       questionsRepo.getInCase(db, scopedCaseId, normalizedQuestionId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Question not found" });
+      return yield* new NotFoundError({
+        entity: "Question",
+        id: normalizedQuestionId,
+      });
     }
 
     const deleted = yield* tryDb(() =>
       questionsRepo.deleteInCase(db, scopedCaseId, normalizedQuestionId)
     );
     if (!deleted) {
-      return yield* new NotFoundError({ resource: "Question not found" });
+      return yield* new NotFoundError({
+        entity: "Question",
+        id: normalizedQuestionId,
+      });
     }
     yield* notifyEntityChangedEffect(scopedCaseId);
   });

@@ -27,7 +27,7 @@ Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` wher
 | Service programs are `*Effect` and keep `DomainTag` in `E`; tests bridge with `runDomain` | `pnpm check:effect-edges:strict` for `run*` sites; the rest is guidance |
 | `transact` body runs with the caller's services; interrupting the caller aborts it and rolls back; tagged errors and defects pass through unchanged; the only `run*` edge is its `runPromiseExitWith` bridge | `postgres-tx.int.test.ts`; `check:effect-edges:strict` |
 | Inbox Accept/Reject is one `transact`: attestation + patch + status, with `proposalsRepo.lockInCase` (`FOR UPDATE`) then a re-check of `status = 'pending'` | integration tests |
-| `InvalidError` is caller-fixable input (400). A write that returns no row is `InternalError`; an update/delete of a caller-supplied id matching nothing is `NotFoundError` | `map-domain-error.test.ts`; no lint |
+| `InvalidError` is caller-fixable input (400). A write that returns no row is `InternalError`; an update/delete of a caller-supplied id matching nothing is `NotFoundError({ entity, id })`; its message is derived from `entity` in the class, never hand-written | `map-domain-error.test.ts`; no lint |
 | Case children are org-scoped: API/actor Effects take `organizationId` and gate with `assertCaseInOrgEffect` (foreign or missing Case is `not_found`). Worker/export paths that already trust a Case id use `assertCaseExistsUncheckedEffect` / `casesRepo.getByIdUnchecked`: never widen that to HTTP handlers | `org-isolation.int.test.ts` (hand-enumerated) |
 | Inside a TX, pass `tx` into the `assert*InCase` helpers; never assert on the global pool while writing on `tx` | guidance |
 

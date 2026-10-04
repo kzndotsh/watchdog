@@ -21,7 +21,6 @@ import { readArtifactBytesEffect } from "./blob";
 import { errorMessage } from "./error-utils";
 import { renderCaseExportEffect } from "./export";
 import { logProcess, logSwallowed } from "./process-log";
-import { domainMessageOf } from "./tagged-errors";
 
 export class ExportIOError extends Data.TaggedError("ExportIOError")<{
   readonly reason: string;
@@ -202,9 +201,7 @@ export function writeCaseExportEffect(
       evidenceRows,
       location,
     } = yield* renderCaseExportEffect(caseId).pipe(
-      Effect.mapError(
-        (error) => new ExportIOError({ reason: domainMessageOf(error) })
-      )
+      Effect.mapError((error) => new ExportIOError({ reason: error.message }))
     );
     if (mdFiles.size === 0) return;
 
