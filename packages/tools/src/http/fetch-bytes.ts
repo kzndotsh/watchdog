@@ -1,5 +1,5 @@
 import { Cause, Effect, Exit } from "effect";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 
 import { errorMessage } from "../errors/tools-error";
 import { abortWhen } from "./abort-when";

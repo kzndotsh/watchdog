@@ -65,7 +65,7 @@
   },
   "devDependencies": {
     "@effect/tsgo": "0.45.0",
-    "@effect/vitest": "4.0.0-rc.115",
+    "@effect/vitest": "4.0.0",
     "@playwright/test": "^1.63.0",
     "@shadcn/lint": "0.2.0",
     "@types/node": "catalog:",

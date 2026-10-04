@@ -1,5 +1,5 @@
 import { Layer } from "effect";
-import { FetchHttpClient, type HttpClient } from "effect/unstable/http";
+import { FetchHttpClient, type HttpClient } from "effect/http";
 
 /**
  * One Fetch-backed HttpClient for tools JSON/bytes Effects.

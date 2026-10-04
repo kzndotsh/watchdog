@@ -25,7 +25,7 @@ catalog:
   date-fns: "^4.4.0"
   dotenv: "^17.4.2"
   drizzle-orm: "^0.45.2"
-  effect: "4.0.0-rc.115"
+  effect: "4.0.0"
   evlog: "2.29.0"
   lucide-react: "^1.46.0"
   oxlint: "1.82.0"
@@ -61,6 +61,11 @@ overrides:
   # lockfile could keep a vulnerable qs. A floor, not a pin. Revisit (remove)
   # when express and body-parser require qs ^6.16.0.
   qs: ">=6.16.0"
+  # @effect/platform-node-shared 4.0.0 pins ws 8.22.0 while happy-dom pins
+  # 8.21.3; two ws copies split every @orpc/server peer variant (crossws/ws) and
+  # break the web handler plugin types. Keeps a single ws. Revisit when
+  # happy-dom moves to ws 8.22.0 or later.
+  ws: "8.22.0"
 
 allowBuilds:
   esbuild: true

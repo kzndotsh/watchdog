@@ -1,7 +1,7 @@
 import { isIPv4, isIPv6 } from "node:net";
 
 import { Effect } from "effect";
-import type { HttpClient } from "effect/unstable/http";
+import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { createTtlCache } from "../cache/ttl-memory";
