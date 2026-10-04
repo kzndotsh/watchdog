@@ -21,6 +21,7 @@ import {
   type JsonObject,
 } from "@watchdog/schemas/shared";
 
+import type { Db } from "../../infra/db-service";
 import { notifyJobUpdateEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
@@ -156,7 +157,7 @@ function enqueueStepJobsEffect(opts: {
 export function advancePlaybookRunEffect(input: {
   playbookRunId: string;
   caseId?: string;
-}): Effect.Effect<void, DomainTag> {
+}): Effect.Effect<void, DomainTag, Db> {
   const playbookRunId = parseTrimmedCaseId(input.playbookRunId) ?? undefined;
   if (playbookRunId === undefined) return Effect.void;
   return Effect.gen(function* advancePlaybookRunGen() {

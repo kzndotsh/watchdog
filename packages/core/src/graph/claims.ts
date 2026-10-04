@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { claimsRepo, db, evidenceLinksRepo, type ClaimRow } from "@watchdog/db";
+import { claimsRepo, evidenceLinksRepo, type ClaimRow } from "@watchdog/db";
 import type {
   ClaimClass,
   ConfidenceTier,
@@ -16,8 +16,9 @@ import {
   assertEvidenceIdsInCaseEffect,
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
+import type { Db } from "../infra/db-service";
 import { notifyEntityChangedEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
@@ -101,17 +102,17 @@ export function listClaimsForEntityEffect(
   organizationId: string,
   entityId: string,
   opts?: EntityListOpts
-): Effect.Effect<ClaimRecord[], DomainTag> {
+): Effect.Effect<ClaimRecord[], DomainTag, Db> {
   return Effect.gen(function* listClaimsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
-    const rows = yield* tryDb(() =>
-      claimsRepo.listForEntity(db, normalizedEntityId, opts)
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
+    const rows = yield* tryDbWith((exec) =>
+      claimsRepo.listForEntity(exec, normalizedEntityId, opts)
     );
-    const byClaim = yield* tryDb(() =>
+    const byClaim = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForClaims(
-        db,
+        exec,
         rows.map((r) => r.id)
       )
     );
@@ -121,7 +122,7 @@ export function listClaimsForEntityEffect(
 
 export function createClaimEffect(
   input: CreateClaimInput
-): Effect.Effect<ClaimRecord, DomainTag> {
+): Effect.Effect<ClaimRecord, DomainTag, Db> {
   return Effect.gen(function* createClaimGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -169,7 +170,7 @@ export function createClaimEffect(
 export function retractClaimEffect(
   input: RetractClaimInput,
   actorId: string
-): Effect.Effect<ClaimRecord, DomainTag> {
+): Effect.Effect<ClaimRecord, DomainTag, Db> {
   return Effect.gen(function* retractClaimGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -182,8 +183,8 @@ export function retractClaimEffect(
         reason: "Retraction reason is required",
       });
     }
-    const existing = yield* tryDb(() =>
-      claimsRepo.getInCase(db, scopedCaseId, claimId)
+    const existing = yield* tryDbWith((exec) =>
+      claimsRepo.getInCase(exec, scopedCaseId, claimId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Claim", id: claimId });
@@ -193,8 +194,8 @@ export function retractClaimEffect(
     }
 
     const scopedActorId = yield* requireActorIdEffect(actorId);
-    const row = yield* tryDb(() =>
-      claimsRepo.retractInCase(db, scopedCaseId, claimId, {
+    const row = yield* tryDbWith((exec) =>
+      claimsRepo.retractInCase(exec, scopedCaseId, claimId, {
         retractKind: input.kind,
         retractedReason: reason,
         retractedBy: scopedActorId,
@@ -204,8 +205,8 @@ export function retractClaimEffect(
       return yield* new NotFoundError({ entity: "Claim", id: claimId });
     }
 
-    const byClaim = yield* tryDb(() =>
-      evidenceLinksRepo.listForClaims(db, [row.id])
+    const byClaim = yield* tryDbWith((exec) =>
+      evidenceLinksRepo.listForClaims(exec, [row.id])
     );
     yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, byClaim.get(row.id) ?? []);
@@ -214,15 +215,15 @@ export function retractClaimEffect(
 
 export function updateClaimEffect(
   input: UpdateClaimInput
-): Effect.Effect<ClaimRecord, DomainTag> {
+): Effect.Effect<ClaimRecord, DomainTag, Db> {
   return Effect.gen(function* updateClaimGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
     );
     const claimId = yield* requireTrimmedGraphId(input.claimId, "Claim");
-    const existing = yield* tryDb(() =>
-      claimsRepo.getInCase(db, scopedCaseId, claimId)
+    const existing = yield* tryDbWith((exec) =>
+      claimsRepo.getInCase(exec, scopedCaseId, claimId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Claim", id: claimId });

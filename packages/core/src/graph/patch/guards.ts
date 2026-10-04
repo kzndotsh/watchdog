@@ -2,7 +2,6 @@ import { Effect } from "effect";
 
 import {
   casesRepo,
-  db,
   entitiesRepo,
   evidenceRepo,
   type DbExec,
@@ -11,7 +10,8 @@ import { confirmedEvidenceViolation } from "@watchdog/policy";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
-import { tryDb } from "../../infra/postgres-effect";
+import type { Db } from "../../infra/db-service";
+import { tryDbOn } from "../../infra/postgres-effect";
 import {
   InternalError,
   InvalidError,
@@ -39,12 +39,12 @@ export function requireTrimmedGraphId(
  */
 export function assertCaseExistsUncheckedEffect(
   caseId: string,
-  exec: DbExec = db
-): Effect.Effect<string, DomainTag> {
+  exec?: DbExec
+): Effect.Effect<string, DomainTag, Db> {
   return Effect.gen(function* assertCaseExistsUncheckedGen() {
     const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
-    const row = yield* tryDb(() =>
-      casesRepo.getByIdUnchecked(exec, trimmedCaseId)
+    const row = yield* tryDbOn(exec, (handle) =>
+      casesRepo.getByIdUnchecked(handle, trimmedCaseId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Case", id: trimmedCaseId });
@@ -57,12 +57,12 @@ export function assertCaseExistsUncheckedEffect(
 export function assertCaseInOrgEffect(
   caseId: string,
   organizationId: string,
-  exec: DbExec = db
-): Effect.Effect<string, DomainTag> {
+  exec?: DbExec
+): Effect.Effect<string, DomainTag, Db> {
   return Effect.gen(function* assertCaseInOrgGen() {
     const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
-    const row = yield* tryDb(() =>
-      casesRepo.getById(exec, trimmedCaseId, organizationId)
+    const row = yield* tryDbOn(exec, (handle) =>
+      casesRepo.getById(handle, trimmedCaseId, organizationId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Case", id: trimmedCaseId });
@@ -74,13 +74,13 @@ export function assertCaseInOrgEffect(
 export function assertEntityInCaseEffect(
   caseId: string,
   entityId: string,
-  exec: DbExec = db
-): Effect.Effect<string, DomainTag> {
+  exec?: DbExec
+): Effect.Effect<string, DomainTag, Db> {
   return Effect.gen(function* assertEntityInCaseGen() {
     const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
     const trimmedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    const row = yield* tryDb(() =>
-      entitiesRepo.getInCase(exec, trimmedCaseId, trimmedEntityId)
+    const row = yield* tryDbOn(exec, (handle) =>
+      entitiesRepo.getInCase(handle, trimmedCaseId, trimmedEntityId)
     );
     if (!row) {
       return yield* new NotFoundError({
@@ -95,16 +95,16 @@ export function assertEntityInCaseEffect(
 export function assertEvidenceInCaseEffect(
   caseId: string,
   evidenceId: string,
-  exec: DbExec = db
-): Effect.Effect<string, DomainTag> {
+  exec?: DbExec
+): Effect.Effect<string, DomainTag, Db> {
   return Effect.gen(function* assertEvidenceInCaseGen() {
     const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
     const trimmedEvidenceId = yield* requireTrimmedGraphId(
       evidenceId,
       "Evidence"
     );
-    const row = yield* tryDb(() =>
-      evidenceRepo.getActiveInCase(exec, trimmedCaseId, trimmedEvidenceId)
+    const row = yield* tryDbOn(exec, (handle) =>
+      evidenceRepo.getActiveInCase(handle, trimmedCaseId, trimmedEvidenceId)
     );
     if (!row) {
       return yield* new NotFoundError({

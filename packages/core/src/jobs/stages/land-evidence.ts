@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { evidenceRepo, jobsRepo } from "@watchdog/db";
 import { isJobInternalArtifact } from "@watchdog/schemas/jobs";
 
+import type { Db } from "../../infra/db-service";
 import { notifyEvidenceChangedEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
@@ -19,7 +20,7 @@ import type { PreflightState } from "./preflight";
 export function landEvidenceEffect(
   state: PreflightState,
   collected: CollectResult
-): Effect.Effect<string[], DomainTag> {
+): Effect.Effect<string[], DomainTag, Db> {
   if (collected.reclaim) {
     return Effect.succeed(collected.evidenceIds);
   }

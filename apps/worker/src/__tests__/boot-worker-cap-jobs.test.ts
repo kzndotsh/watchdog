@@ -13,7 +13,7 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   };
 });
 
-import { JobFibers } from "@watchdog/core/worker";
+import { Db, JobFibers } from "@watchdog/core/worker";
 
 import { processCapJobBatchEffect, processCapJobEffect } from "../boot-worker";
 
@@ -31,7 +31,8 @@ describe("processCapJobEffect", () => {
     await expect(
       Effect.runPromise(
         processCapJobEffect({ id: "boss-1", data: null }, runJob).pipe(
-          Effect.provide(JobFibers.layer)
+          Effect.provide(JobFibers.layer),
+          Effect.provide(Db.layer)
         )
       )
     ).rejects.toThrow(/unrecoverable cap payload/);
@@ -48,7 +49,8 @@ describe("processCapJobEffect", () => {
     await expect(
       Effect.runPromise(
         processCapJobBatchEffect([], runJob).pipe(
-          Effect.provide(JobFibers.layer)
+          Effect.provide(JobFibers.layer),
+          Effect.provide(Db.layer)
         )
       )
     ).rejects.toThrow(/empty pg-boss batch/);
@@ -80,7 +82,7 @@ describe("processCapJobEffect", () => {
           },
         ],
         runJob
-      ).pipe(Effect.provide(JobFibers.layer))
+      ).pipe(Effect.provide(JobFibers.layer), Effect.provide(Db.layer))
     );
 
     expect(runJob).toHaveBeenCalledTimes(2);
@@ -116,7 +118,7 @@ describe("processCapJobEffect", () => {
           },
         ],
         runJob
-      ).pipe(Effect.provide(JobFibers.layer))
+      ).pipe(Effect.provide(JobFibers.layer), Effect.provide(Db.layer))
     );
 
     expect(runJob).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000001");

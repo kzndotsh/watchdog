@@ -12,6 +12,7 @@ import {
   isCapJobPayload,
   listenForEventsStream,
   JobFibers,
+  Db,
   type JobFibersApi,
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
@@ -59,7 +60,7 @@ function logWorkerError(scope: string, message: string, error: unknown): void {
   void log.emit();
 }
 
-function reconcileWorkerStartupEffect(): Effect.Effect<void> {
+function reconcileWorkerStartupEffect(): Effect.Effect<void, never, Db> {
   return Effect.gen(function* reconcileWorkerStartupGen() {
     const stale = yield* reconcileStaleJobsEffect().pipe(
       Effect.catchCause((cause) =>
@@ -120,13 +121,15 @@ function reconcileWorkerStartupEffect(): Effect.Effect<void> {
   });
 }
 
-type RunJob = (jobId: string) => Effect.Effect<JobRunOutcome, never, JobFibers>;
+type RunJob = (
+  jobId: string
+) => Effect.Effect<JobRunOutcome, never, Db | JobFibers>;
 
 function executeCapJobPayloadEffect(
   data: CapJobPayload,
   log: ReturnType<typeof createLogger>,
   runJob: RunJob
-): Effect.Effect<void, never, JobFibers> {
+): Effect.Effect<void, never, Db | JobFibers> {
   const jobId = trimmedUuidSchema.parse(data.jobId);
   return runJob(jobId).pipe(
     Effect.tap((outcome) =>
@@ -169,7 +172,7 @@ function executeCapJobPayloadEffect(
 function processCapJobEffect(
   job: { id: string; data: unknown },
   runJob: RunJob
-): Effect.Effect<void, Error, JobFibers> {
+): Effect.Effect<void, Error, Db | JobFibers> {
   const log = createLogger({
     scope: "cap.job",
     bossJobId: job.id,
@@ -221,7 +224,7 @@ function parseWatchdogEventPayload(rawPayload: string): unknown {
 
 function handleExportEventPayloadEffect(
   rawPayload: string
-): Effect.Effect<void> {
+): Effect.Effect<void, never, Db> {
   return Effect.gen(function* handleExportEventPayloadGen() {
     const parsed = parseWatchdogEventPayload(rawPayload);
     if (parsed === undefined) {
@@ -382,7 +385,7 @@ function bindWorkerShutdown(
 function processCapJobBatchEffect(
   jobs: { id: string; data: unknown }[],
   runJob: RunJob
-): Effect.Effect<void, Error, JobFibers> {
+): Effect.Effect<void, Error, Db | JobFibers> {
   if (jobs.length === 0) {
     return Effect.sync(() => {
       logWorkerError(
@@ -419,8 +422,9 @@ function initWorkerLogger(): void {
 function startWorkerResourcesEffect(
   fibers: JobFibersApi,
   runJob: RunJob
-): Effect.Effect<WorkerResources> {
+): Effect.Effect<WorkerResources, never, Db> {
   return Effect.gen(function* startWorkerResourcesGen() {
+    const dbExec = yield* Db;
     const boss = yield* ensureBossWorkerEffect().pipe(Effect.orDie);
     emitOnce("worker.boot", { message: `listening on ${CAP_JOB_QUEUE}` });
     yield* reconcileWorkerStartupEffect();
@@ -435,7 +439,8 @@ function startWorkerResourcesEffect(
               try {
                 await Effect.runPromise(
                   processCapJobBatchEffect(jobs, runJob).pipe(
-                    Effect.provideService(JobFibers, fibers)
+                    Effect.provideService(JobFibers, fibers),
+                    Effect.provideService(Db, dbExec)
                   )
                 );
               } catch (error: unknown) {

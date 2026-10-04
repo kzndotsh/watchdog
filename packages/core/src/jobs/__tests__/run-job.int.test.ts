@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
@@ -237,7 +236,7 @@ describe("runFailedPath", () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "queued" });
 
-    await Effect.runPromise(
+    await runDomain(
       runFailedPathEffect({
         jobId: job.id,
         error: new Error("boom"),
@@ -273,7 +272,7 @@ describe("runFailedPath", () => {
       playbookStep: 1,
     });
 
-    await Effect.runPromise(
+    await runDomain(
       runFailedPathEffect({
         jobId: failed.id,
         error: new Error("enrich failed"),
@@ -301,7 +300,7 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog);
 
-    await Effect.runPromise(
+    await runDomain(
       runSucceededPathEffect({
         jobId: job.id,
         state: await dnsState(job.id),
@@ -337,7 +336,7 @@ describe("runSucceededPath", () => {
       ],
     });
 
-    await Effect.runPromise(
+    await runDomain(
       runSucceededPathEffect({
         jobId: job.id,
         state: await dnsState(job.id),
@@ -364,7 +363,7 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog);
 
-    await Effect.runPromise(
+    await runDomain(
       runSucceededPathEffect({
         jobId: job.id,
         state: await dnsState(job.id),
@@ -391,7 +390,7 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog, { fromCache: true });
 
-    await Effect.runPromise(
+    await runDomain(
       runSucceededPathEffect({
         jobId: job.id,
         state: await dnsState(job.id),
@@ -418,7 +417,7 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog, { reclaim: true });
 
-    await Effect.runPromise(
+    await runDomain(
       runSucceededPathEffect({
         jobId: job.id,
         state: await dnsState(job.id),
@@ -464,7 +463,7 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog);
 
-    await Effect.runPromise(
+    await runDomain(
       runSucceededPathEffect({
         jobId: first.id,
         state: await dnsState(first.id),
@@ -495,7 +494,7 @@ describe("runSucceededPath", () => {
     const jobLog = createJobLog();
     const collected = fakeCollected(jobLog);
 
-    await Effect.runPromise(
+    await runDomain(
       runSucceededPathEffect({
         jobId: first.id,
         state: await dnsState(first.id),

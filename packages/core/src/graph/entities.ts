@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { db, entitiesRepo, type EntityRow } from "@watchdog/db";
+import { entitiesRepo, type EntityRow } from "@watchdog/db";
 import type { EntityKind } from "@watchdog/schemas/shared";
 import {
   slugifyName,
@@ -8,8 +8,9 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
+import type { Db } from "../infra/db-service";
 import { notifyEntityChangedEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
@@ -71,10 +72,12 @@ function toRecord(row: EntityRow): EntityRecord {
 export function listEntitiesForCaseEffect(
   caseId: string,
   organizationId: string
-): Effect.Effect<EntityRecord[], DomainTag> {
+): Effect.Effect<EntityRecord[], DomainTag, Db> {
   return Effect.gen(function* listEntitiesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() => entitiesRepo.listForCase(db, scopedCaseId));
+    const rows = yield* tryDbWith((exec) =>
+      entitiesRepo.listForCase(exec, scopedCaseId)
+    );
     return rows.map(toRecord);
   });
 }
@@ -83,15 +86,15 @@ export function getEntityByCaseSlugEffect(
   caseId: string,
   organizationId: string,
   slug: string
-): Effect.Effect<EntityRecord, DomainTag> {
+): Effect.Effect<EntityRecord, DomainTag, Db> {
   return Effect.gen(function* getEntityByCaseSlugGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedSlug = slugifyName(slug);
     if (normalizedSlug === "") {
       return yield* new NotFoundError({ entity: "Entity", id: slug });
     }
-    const row = yield* tryDb(() =>
-      entitiesRepo.getByCaseSlug(db, scopedCaseId, normalizedSlug)
+    const row = yield* tryDbWith((exec) =>
+      entitiesRepo.getByCaseSlug(exec, scopedCaseId, normalizedSlug)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Entity", id: slug });
@@ -102,7 +105,7 @@ export function getEntityByCaseSlugEffect(
 
 export function createEntityEffect(
   input: CreateEntityInput
-): Effect.Effect<EntityRecord, DomainTag> {
+): Effect.Effect<EntityRecord, DomainTag, Db> {
   return Effect.gen(function* createEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -117,8 +120,8 @@ export function createEntityEffect(
       return yield* new InvalidError({ reason: "Entity slug is required" });
     }
     const conflictReason = `Slug "${slug}" already exists in this Case`;
-    const existing = yield* tryDb(() =>
-      entitiesRepo.getByCaseSlug(db, scopedCaseId, slug)
+    const existing = yield* tryDbWith((exec) =>
+      entitiesRepo.getByCaseSlug(exec, scopedCaseId, slug)
     );
     if (existing) {
       return yield* new ConflictError({ reason: conflictReason });
@@ -153,15 +156,15 @@ export function createEntityEffect(
 
 export function updateEntityFieldsEffect(
   input: UpdateEntityFieldsInput
-): Effect.Effect<EntityRecord, DomainTag> {
+): Effect.Effect<EntityRecord, DomainTag, Db> {
   return Effect.gen(function* updateEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
     );
     const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
-    const existing = yield* tryDb(() =>
-      entitiesRepo.getInCase(db, scopedCaseId, entityId)
+    const existing = yield* tryDbWith((exec) =>
+      entitiesRepo.getInCase(exec, scopedCaseId, entityId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Entity", id: entityId });
@@ -177,13 +180,12 @@ export function updateEntityFieldsEffect(
       yield* assertEntityKindChangeAllowedEffect(
         scopedCaseId,
         entityId,
-        input.kind,
-        db
+        input.kind
       );
     }
 
-    const updated = yield* tryDb(() =>
-      entitiesRepo.updateInCase(db, scopedCaseId, entityId, {
+    const updated = yield* tryDbWith((exec) =>
+      entitiesRepo.updateInCase(exec, scopedCaseId, entityId, {
         ...(input.kind === undefined ? {} : { kind: input.kind }),
         ...(nextName === undefined ? {} : { name: nextName }),
         ...(input.summary === undefined
@@ -207,12 +209,12 @@ export function deleteEntityEffect(
   caseId: string,
   organizationId: string,
   entityId: string
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    const existing = yield* tryDb(() =>
-      entitiesRepo.getInCase(db, scopedCaseId, normalizedEntityId)
+    const existing = yield* tryDbWith((exec) =>
+      entitiesRepo.getInCase(exec, scopedCaseId, normalizedEntityId)
     );
     if (!existing) {
       return yield* new NotFoundError({
@@ -221,8 +223,8 @@ export function deleteEntityEffect(
       });
     }
 
-    const deleted = yield* tryDb(() =>
-      entitiesRepo.deleteInCase(db, scopedCaseId, normalizedEntityId)
+    const deleted = yield* tryDbWith((exec) =>
+      entitiesRepo.deleteInCase(exec, scopedCaseId, normalizedEntityId)
     );
     if (!deleted) {
       return yield* new NotFoundError({

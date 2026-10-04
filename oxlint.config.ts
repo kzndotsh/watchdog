@@ -134,6 +134,8 @@ export default defineConfig({
     // Tailwind v4-aware class checks (theme tokens, unknown classes, arbitrary values).
     // Web only — enabled in the apps/web override below. Pin exact: pre-1.0.
     "@shadcn/lint",
+    // Local rules oxlint has no built-in for (scripts/oxlint-plugin-watchdog.mjs).
+    "./scripts/oxlint-plugin-watchdog.mjs",
   ],
   rules: {
     // --- Permanent off: low signal / huge churn (lint debt burn-down P7) ---
@@ -512,6 +514,42 @@ export default defineConfig({
         "packages/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
       ],
       rules: effecttsgoOff,
+    },
+    {
+      // ADR-0002 phase 2: core reaches the database through the `Db` service
+      // (`tryDbWith`, `transact`), never the module-global client. Type imports
+      // (`DbExec`, `DbTx`) and repo imports stay allowed.
+      files: ["packages/core/src/**/*.{ts,tsx}"],
+      rules: {
+        "eslint/no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "@watchdog/db",
+                importNames: ["db"],
+                message:
+                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global db client.",
+              },
+            ],
+          },
+        ],
+        // `no-restricted-imports` does not see `import("@watchdog/db")`.
+        "watchdog/no-core-db-dynamic-import": "error",
+      },
+    },
+    {
+      // Exempt: the Db live Layer is the one place that wraps the global client;
+      // tests seed and assert on the real connection.
+      files: [
+        "packages/core/src/infra/db-service.ts",
+        "packages/core/src/**/__tests__/**/*.{ts,tsx}",
+        "packages/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
+      ],
+      rules: {
+        "eslint/no-restricted-imports": "off",
+        "watchdog/no-core-db-dynamic-import": "off",
+      },
     },
     {
       // Job pipeline + evidence: promise chains avoid desloppify async_no_await churn.

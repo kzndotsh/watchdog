@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { updateCaseEffect } from "@watchdog/core/cases";
@@ -21,21 +20,21 @@ describe("preflight", () => {
   });
 
   it("stops when the job is missing", async () => {
-    const result = await Effect.runPromise(preflightEffect(testId(99)));
+    const result = await runDomain(preflightEffect(testId(99)));
     expect(result).toEqual({ kind: "stop", reason: "not_found" });
   });
 
   it("stops when the job is cancelled", async () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "cancelled" });
-    const result = await Effect.runPromise(preflightEffect(job.id));
+    const result = await runDomain(preflightEffect(job.id));
     expect(result).toEqual({ kind: "stop", reason: "cancelled" });
   });
 
   it("stops when the job is already terminal", async () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "succeeded" });
-    const result = await Effect.runPromise(preflightEffect(job.id));
+    const result = await runDomain(preflightEffect(job.id));
     expect(result).toEqual({ kind: "stop", reason: "already_terminal" });
   });
 
@@ -49,7 +48,7 @@ describe("preflight", () => {
       capabilityId: "network.dns.lookup",
     });
     await jobsRepo.update(db, job.id, { proposalId });
-    const result = await Effect.runPromise(preflightEffect(job.id));
+    const result = await runDomain(preflightEffect(job.id));
     expect(result).toEqual({ kind: "stop", reason: "reclaim_converged" });
   });
 
@@ -59,7 +58,7 @@ describe("preflight", () => {
       status: "queued",
       capabilityId: "not.a.real.cap",
     });
-    const result = await Effect.runPromise(preflightEffect(job.id));
+    const result = await runDomain(preflightEffect(job.id));
     expect(result).toEqual({ kind: "stop", reason: "unknown_capability" });
   });
 
@@ -70,7 +69,7 @@ describe("preflight", () => {
       capabilityId: "network.dns.lookup",
       input: { nope: true },
     });
-    const result = await Effect.runPromise(preflightEffect(job.id));
+    const result = await runDomain(preflightEffect(job.id));
     expect(result).toEqual({ kind: "stop", reason: "invalid_input" });
   });
 
@@ -81,7 +80,7 @@ describe("preflight", () => {
       capabilityId: "evidence.extract.ai",
       input: { evidenceId: testId(40) },
     });
-    const result = await Effect.runPromise(preflightEffect(job.id));
+    const result = await runDomain(preflightEffect(job.id));
     expect(result.kind).toBe("stop");
     if (result.kind !== "stop") return;
     expect(result.reason).toBe("egress_denied");
@@ -101,7 +100,7 @@ describe("preflight", () => {
       capabilityId: "evidence.extract.ai",
       input: { evidenceId: testId(41) },
     });
-    const result = await Effect.runPromise(preflightEffect(job.id));
+    const result = await runDomain(preflightEffect(job.id));
     expect(result.kind).toBe("stop");
     if (result.kind !== "stop") return;
     expect(result.reason).toBe("missing_credential");

@@ -1,6 +1,6 @@
 # ADR-0002: Infrastructure moves to Effect services and Layers, in phases
 
-**Status:** accepted (2026-10-04) · closes [#46](https://github.com/kzndotsh/watchdog/issues/46) **What this is:** how core and the apps obtain the database, blob store, job queue and vault; why plain module functions are being replaced; the order of the migration; and what stays as it is. **What this is not:** the migration itself (tickets) or the error taxonomy ([#57](https://github.com/kzndotsh/watchdog/issues/57)).
+**Status:** accepted (2026-10-04); phase 2 done (`Db` service, #126-#130) · closes [#46](https://github.com/kzndotsh/watchdog/issues/46) **What this is:** how core and the apps obtain the database, blob store, job queue and vault; why plain module functions are being replaced; the order of the migration; and what stays as it is. **What this is not:** the migration itself (tickets) or the error taxonomy ([#57](https://github.com/kzndotsh/watchdog/issues/57)).
 
 ## Context
 
@@ -32,7 +32,7 @@ The transaction handle stays an **explicit parameter**: repos and services keep 
 
 ## Consequences
 
-- The "no Layers" lines in `.agents/skills/effect/SKILL.md`, `packages/api/AGENTS.md` and `packages/api/src/runtime.ts` now describe the interim state: until a phase lands, call `tryDb` and module Effects as before, and do not add ad-hoc Layers outside the phases.
+- The "no Layers" lines in `.agents/skills/effect/SKILL.md`, `packages/api/AGENTS.md` and `packages/api/src/runtime.ts` describe the phase state: the `Db` Layer is live; do not add ad-hoc Layers outside the phases (blob, queue, vault next).
 - Phase 2 changes how tests obtain the database; `@watchdog/test-db` provides the Layer.
 - The ~635 `exec` call sites do not change, which is the main reason the handle stays explicit.
 

@@ -11,7 +11,6 @@ import { Effect } from "effect";
 import {
   casesRepo,
   claimsRepo,
-  db,
   edgesRepo,
   entitiesRepo,
   eventsRepo,
@@ -27,6 +26,7 @@ import {
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
 
+import type { Db } from "./db-service";
 import {
   appendClaimsSection,
   appendConnectionsSection,
@@ -40,7 +40,7 @@ import {
   buildEntityFrontmatter,
   isAttestationExportRow,
 } from "./export-sections";
-import { tryDb } from "./postgres-effect";
+import { tryDbWith } from "./postgres-effect";
 import type { DomainTag } from "./tagged-errors";
 
 export interface EntityExport {
@@ -58,13 +58,13 @@ export interface EntityExport {
 export function renderEntityMarkdownEffect(
   entityId: string,
   peerMap?: Map<string, EntityPeerRow>
-): Effect.Effect<EntityExport | null, DomainTag> {
+): Effect.Effect<EntityExport | null, DomainTag, Db> {
   return Effect.gen(function* renderEntityMarkdownGen() {
     const normalizedEntityId = parseTrimmedCaseId(entityId) ?? undefined;
     if (normalizedEntityId === undefined) return null;
 
-    const row = yield* tryDb(() =>
-      entitiesRepo.getWithCase(db, normalizedEntityId)
+    const row = yield* tryDbWith((exec) =>
+      entitiesRepo.getWithCase(exec, normalizedEntityId)
     );
     if (!row) return null;
 
@@ -78,19 +78,25 @@ export function renderEntityMarkdownEffect(
       peers,
     ] = yield* Effect.all(
       [
-        tryDb(() => claimsRepo.listForEntity(db, normalizedEntityId)),
-        tryDb(() => identifiersRepo.listForEntity(db, normalizedEntityId)),
-        tryDb(() =>
-          edgesRepo.listOutboundForEntity(db, row.caseId, normalizedEntityId)
+        tryDbWith((exec) => claimsRepo.listForEntity(exec, normalizedEntityId)),
+        tryDbWith((exec) =>
+          identifiersRepo.listForEntity(exec, normalizedEntityId)
         ),
-        tryDb(() => eventsRepo.listForEntity(db, normalizedEntityId)),
-        tryDb(() => questionsRepo.listForEntity(db, normalizedEntityId)),
-        tryDb(() =>
-          evidenceRepo.listForEntity(db, row.caseId, normalizedEntityId)
+        tryDbWith((exec) =>
+          edgesRepo.listOutboundForEntity(exec, row.caseId, normalizedEntityId)
+        ),
+        tryDbWith((exec) => eventsRepo.listForEntity(exec, normalizedEntityId)),
+        tryDbWith((exec) =>
+          questionsRepo.listForEntity(exec, normalizedEntityId)
+        ),
+        tryDbWith((exec) =>
+          evidenceRepo.listForEntity(exec, row.caseId, normalizedEntityId)
         ),
         peerMap
           ? Effect.succeed([] as EntityPeerRow[])
-          : tryDb(() => entitiesRepo.listPeersForCase(db, row.caseId)),
+          : tryDbWith((exec) =>
+              entitiesRepo.listPeersForCase(exec, row.caseId)
+            ),
       ],
       { concurrency: "unbounded" }
     );
@@ -141,7 +147,7 @@ interface CaseExportResult {
  */
 export function renderCaseExportEffect(
   caseId: string
-): Effect.Effect<CaseExportResult, DomainTag> {
+): Effect.Effect<CaseExportResult, DomainTag, Db> {
   return Effect.gen(function* renderCaseExportGen() {
     const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
     if (normalizedCaseId === undefined) {
@@ -152,8 +158,8 @@ export function renderCaseExportEffect(
       };
     }
 
-    const entityRows = yield* tryDb(() =>
-      entitiesRepo.listPeersForCase(db, normalizedCaseId)
+    const entityRows = yield* tryDbWith((exec) =>
+      entitiesRepo.listPeersForCase(exec, normalizedCaseId)
     );
     const peerMap = new Map(entityRows.map((e) => [e.id, e]));
     const mdFiles = new Map<string, string>();
@@ -172,11 +178,11 @@ export function renderCaseExportEffect(
       }
     }
 
-    const evidenceRows = yield* tryDb(() =>
-      evidenceRepo.listActiveForCaseAsc(db, normalizedCaseId)
+    const evidenceRows = yield* tryDbWith((exec) =>
+      evidenceRepo.listActiveForCaseAsc(exec, normalizedCaseId)
     );
-    const caseRow = yield* tryDb(() =>
-      casesRepo.getByIdUnchecked(db, normalizedCaseId)
+    const caseRow = yield* tryDbWith((exec) =>
+      casesRepo.getByIdUnchecked(exec, normalizedCaseId)
     );
 
     if (caseRow) {

@@ -3,7 +3,7 @@ import type { z } from "zod";
 
 import { requireCapability } from "@watchdog/caps";
 import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
-import { db, jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
+import { jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
 import {
   LIVE_JOB_STATUSES,
   isLiveJobStatus,
@@ -12,8 +12,9 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
+import type { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
-import { tryDb } from "../../infra/postgres-effect";
+import { tryDbWith } from "../../infra/postgres-effect";
 import { logProcess } from "../../infra/process-log";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { InvalidError } from "../../infra/tagged-errors";
@@ -69,7 +70,7 @@ function preflightEarlyStop(job: JobRow): PreflightStopReason | null {
 function convergeReclaimStopEffect(
   jobId: string,
   job: JobRow
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return setJobStatusEffect(
     jobId,
     {
@@ -84,7 +85,7 @@ function loadCapOrStopEffect(
   jobId: string,
   capabilityId: string,
   caseId: string
-): Effect.Effect<CapLoadResult, DomainTag> {
+): Effect.Effect<CapLoadResult, DomainTag, Db> {
   return Effect.gen(function* loadCapOrStopGen() {
     const cap = yield* Effect.result(
       Effect.try({
@@ -105,7 +106,7 @@ function parseCapInputOrStopEffect(
   cap: CapabilityDef<z.ZodType>,
   rawInput: unknown,
   caseId: string
-): Effect.Effect<CapInputResult, DomainTag> {
+): Effect.Effect<CapInputResult, DomainTag, Db> {
   return parseValidatedCapInputEffect(cap, rawInput).pipe(
     Effect.map((input) => ({ kind: "ready" as const, input })),
     Effect.catchTag("InvalidError", (error) =>
@@ -123,7 +124,8 @@ function enforceCapAvailabilityOrStopEffect(
 ): Effect.Effect<
   | { kind: "stop"; reason: PreflightStopReason }
   | { kind: "ready"; allowThirdPartyEgress: boolean },
-  DomainTag
+  DomainTag,
+  Db
 > {
   return Effect.gen(function* enforceCapAvailabilityOrStopGen() {
     const { allowThirdPartyEgress, result } =
@@ -151,7 +153,7 @@ function enforceCapAvailabilityOrStopEffect(
 function preparePreflightReadyEffect(
   jobId: string,
   job: JobRow
-): Effect.Effect<PreflightResult, DomainTag> {
+): Effect.Effect<PreflightResult, DomainTag, Db> {
   return Effect.gen(function* preparePreflightReadyGen() {
     const capOrStop = yield* loadCapOrStopEffect(
       jobId,
@@ -225,14 +227,14 @@ function preparePreflightReadyEffect(
  */
 export function preflightEffect(
   jobId: string
-): Effect.Effect<PreflightResult, DomainTag> {
+): Effect.Effect<PreflightResult, DomainTag, Db> {
   return Effect.gen(function* preflightGen() {
     const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
     if (normalizedJobId === undefined) {
       return { kind: "stop" as const, reason: "not_found" as const };
     }
 
-    const job = yield* tryDb(() => jobsRepo.get(db, normalizedJobId));
+    const job = yield* tryDbWith((exec) => jobsRepo.get(exec, normalizedJobId));
     if (!job) {
       yield* Effect.sync(() => {
         logProcess("preflight", `Job not found: ${normalizedJobId}`, {

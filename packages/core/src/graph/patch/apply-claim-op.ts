@@ -8,6 +8,7 @@ import {
   type ConfidenceTier,
 } from "@watchdog/schemas/shared";
 
+import type { Db } from "../../infra/db-service";
 import { tryDb } from "../../infra/postgres-effect";
 import {
   InternalError,
@@ -27,7 +28,7 @@ export function applyClaimOpEffect(
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyClaimOpGen() {
     if (op.op !== "create") {
       return yield* new InvalidError({

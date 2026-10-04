@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
+import { runDomain } from "../../infra/run-domain";
 import { reorderTasksEffect } from "../tasks";
 
 vi.mock("@watchdog/db", () => ({
@@ -28,7 +29,7 @@ vi.mock("../../infra/postgres-tx", () => ({
 describe("reorderTasksEffect", () => {
   it("rejects invalid task ids before reordering", async () => {
     await expect(
-      Effect.runPromise(
+      runDomain(
         reorderTasksEffect({
           caseId: testId(1),
           organizationId: testId(2),

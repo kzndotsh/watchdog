@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
@@ -13,6 +12,7 @@ vi.mock("@watchdog/db", () => ({
   proposalsRepo: { create },
 }));
 
+import { runDomain } from "../../../infra/run-domain";
 import { proposeStageEffect } from "../propose";
 
 describe("proposeStage", () => {
@@ -21,7 +21,7 @@ describe("proposeStage", () => {
   const evidenceId = testId(3);
 
   it("returns null proposalId when patch is empty", async () => {
-    const result = await Effect.runPromise(
+    const result = await runDomain(
       proposeStageEffect({
         caseId,
         kept: [],
@@ -46,7 +46,7 @@ describe("proposeStage", () => {
       },
     ];
 
-    const result = await Effect.runPromise(
+    const result = await runDomain(
       proposeStageEffect({
         caseId,
         kept,
@@ -80,7 +80,7 @@ describe("proposeStage", () => {
       },
     ];
 
-    await Effect.runPromise(
+    await runDomain(
       proposeStageEffect({
         caseId,
         kept,
@@ -109,7 +109,7 @@ describe("proposeStage", () => {
       },
     ];
 
-    await Effect.runPromise(
+    await runDomain(
       proposeStageEffect({
         caseId,
         kept,
@@ -139,7 +139,7 @@ describe("proposeStage", () => {
       },
     ];
 
-    await Effect.runPromise(
+    await runDomain(
       proposeStageEffect({
         caseId,
         kept,
@@ -169,7 +169,7 @@ describe("proposeStage", () => {
       },
     ];
 
-    const result = await Effect.runPromise(
+    const result = await runDomain(
       proposeStageEffect({
         caseId,
         kept,
@@ -194,7 +194,7 @@ describe("proposeStage", () => {
     ];
 
     await expect(
-      Effect.runPromise(
+      runDomain(
         proposeStageEffect({
           caseId,
           kept,

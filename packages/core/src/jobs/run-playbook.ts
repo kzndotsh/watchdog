@@ -11,7 +11,7 @@ import {
   toPlaybookDescriptor,
   type SeedValues,
 } from "@watchdog/caps";
-import { casesRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { casesRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -26,8 +26,9 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
+import type { Db } from "../infra/db-service";
 import { notifyJobUpdateEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
 import {
@@ -71,7 +72,7 @@ function loadPlaybookEffect(playbookId: string) {
 function assertSeedAnchorsInCaseEffect(
   caseId: string,
   seed: SeedValues
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* assertSeedAnchorsInCaseGen() {
     if (seed.entityId !== undefined) {
       yield* assertEntityInCaseEffect(caseId, seed.entityId);
@@ -96,7 +97,7 @@ function credentialNamesFromDescriptor(
 function presentCredentialNamesEffect(
   actorId: string,
   credNames: Iterable<string>
-): Effect.Effect<Set<string>, DomainTag> {
+): Effect.Effect<Set<string>, DomainTag, Db> {
   const present = new Set<string>();
   return Effect.forEach(
     [...credNames],
@@ -143,7 +144,7 @@ function ensurePlaybookRunnable(
 /** Plan → insert run + step-0 Job → enqueue. */
 export function runPlaybookEffect(
   input: RunPlaybookInput
-): Effect.Effect<PlaybookRunResult, DomainTag> {
+): Effect.Effect<PlaybookRunResult, DomainTag, Db> {
   return Effect.gen(function* runPlaybookGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -170,8 +171,8 @@ export function runPlaybookEffect(
       credentialNamesFromDescriptor(descriptor)
     );
 
-    const caseRow = yield* tryDb(() =>
-      casesRepo.getById(db, scopedCaseId, input.organizationId)
+    const caseRow = yield* tryDbWith((exec) =>
+      casesRepo.getById(exec, scopedCaseId, input.organizationId)
     );
     yield* ensurePlaybookRunnable(
       descriptor,
@@ -264,7 +265,7 @@ export function cancelPlaybookRunEffect(
   organizationId: string,
   playbookRunId: string,
   opts?: CancelPlaybookRunOpts
-): Effect.Effect<CancelPlaybookRunResult, DomainTag> {
+): Effect.Effect<CancelPlaybookRunResult, DomainTag, Db> {
   return Effect.gen(function* cancelPlaybookRunGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedPlaybookRunId = yield* requireTrimmedGraphId(

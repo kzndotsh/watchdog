@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { runDomain } from "../../infra/run-domain";
 import { InvalidError } from "../../infra/tagged-errors";
 import { reconcileOrphanedQueuedJobsEffect } from "../reconcile-stale-jobs";
 
@@ -30,7 +31,7 @@ describe("reconcileOrphanedQueuedJobsEffect", () => {
     ]);
     enqueueCapJobEffect.mockReturnValue(Effect.void);
 
-    const count = await Effect.runPromise(reconcileOrphanedQueuedJobsEffect());
+    const count = await runDomain(reconcileOrphanedQueuedJobsEffect());
 
     expect(count).toBe(2);
     expect(enqueueCapJobEffect).toHaveBeenNthCalledWith(
@@ -56,7 +57,7 @@ describe("reconcileOrphanedQueuedJobsEffect", () => {
         Effect.fail(new InvalidError({ reason: "boss unavailable" }))
       );
 
-    const count = await Effect.runPromise(reconcileOrphanedQueuedJobsEffect());
+    const count = await runDomain(reconcileOrphanedQueuedJobsEffect());
 
     expect(count).toBe(1);
   });

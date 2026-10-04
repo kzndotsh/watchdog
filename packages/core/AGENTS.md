@@ -14,7 +14,7 @@ Domain services for Case Graph, Jobs, Evidence, Tasks (case work items, not Grap
 
 ## Import paths
 
-Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (tagged errors), `events` (notify + SSE listen), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`tryDb`, `transact`, `runDomain`), `jobs`, `proposals`, `search`, `tasks`, `vault`. Also `blob`, `job-display`, `proposal-display` and `worker`. Each domain is `src/<domain>/index.ts`; there is no root import or `src/index.ts`. New domain: add the folder index and the `exports` entry in one change. `pnpm check:boundaries` fails an import path missing from `exports`.
+Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (tagged errors), `events` (notify + SSE listen), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`Db`, `tryDb`, `tryDbWith`, `transact`, `runDomain`, `runDomainWith`), `jobs`, `proposals`, `search`, `tasks`, `vault`. Also `blob`, `job-display`, `proposal-display` and `worker`. Each domain is `src/<domain>/index.ts`; there is no root import or `src/index.ts`. New domain: add the folder index and the `exports` entry in one change. `pnpm check:boundaries` fails an import path missing from `exports`.
 
 ## Rules
 
@@ -32,6 +32,22 @@ Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` wher
 | Case children are org-scoped: API/actor Effects take `organizationId` and gate with `assertCaseInOrgEffect` (foreign or missing Case is `not_found`). Worker/export paths that already trust a Case id use `assertCaseExistsUncheckedEffect` / `casesRepo.getByIdUnchecked`: never widen that to HTTP handlers | `org-isolation.int.test.ts` (hand-enumerated) |
 | Inside a TX, pass `tx` into the `assert*InCase` helpers; never assert on the global pool while writing on `tx` | guidance |
 
+## `Db` service pattern (ADR-0002 phase 2)
+
+`Db` (`infra/db-service.ts`) is a `Context.Service` whose value is a `DbExec`; `Db.layer` is the live Layer over `@watchdog/db`'s `db`. All core code reads the client from it: importing `db` from `@watchdog/db` in core source fails lint (`no-restricted-imports`, plus `watchdog/no-core-db-dynamic-import` for `import()`; exempt: `infra/db-service.ts` and tests). Reference: `listCasesEffect` (`cases/cases.ts`, test `cases-db-layer.int.test.ts`).
+
+```ts
+// before: R = never, module-global db
+tryDb(() => casesRepo.list(db, organizationId));
+// after: R = Db; same error mapping (unique violations, tagged passthrough)
+tryDbWith((exec) => casesRepo.list(exec, organizationId));
+```
+
+- Add `Db` to the function's declared return type (`Effect.Effect<A, DomainTag, Db>`, `import type { Db } from "../infra/db-service"`) and drop the `db` import once no site uses it. Callers that are themselves migrated propagate `Db`; `runDomain` / `runApp` accept `R = Db` and provide `Db.layer`.
+- Inside `transact((tx) => ...)` keep the explicit handle: `tryDb(() => repo.x(tx, ...))`. `transact` opens its transaction on the `Db` service's client (R gains `Db`; if the service value is itself a `tx`, drizzle opens a savepoint). Helpers that accept an optional `exec` (`assert*InCase`, `suppressKnownFindingsEffect`) use `tryDbOn(exec, ...)`: a caller's `tx` wins, otherwise the service supplies the client.
+- Tests: `runDomainWith(TestDbLayer)(effect)` (`@watchdog/test-db`; `testDbLayerOf(exec)` for a `tx` or a spying `Proxy`), or `runDomainWith(Layer.succeed(Db, stub))`. Unit tests may still `vi.mock("@watchdog/db")` (the live Layer wraps the mocked `db`); prefer the Layer. `runDomain(effect)` works for integration tests.
+- Worker: `main.ts` provides `Db.layer` next to `JobFibers.layer` (`Db` is exported from `@watchdog/core/worker`).
+
 ## Gotchas
 
 - Job pipeline, `JobFibers`, cancel/abort, Effect 4 sticky interrupt, boss roles, `blocked` leftovers: [`effect/references/jobs.md`](../../.agents/skills/effect/references/jobs.md) is the single home.
@@ -41,7 +57,7 @@ Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` wher
 - Entity create seeds default Questions through `seedDefaultQuestionsEffect` (`graph/questions.ts`, keyed by entity kind): do not inline kind `if`s in `createEntity`.
 - Vault slots are listed/written through the `*Effect` credential helpers and never return plaintext.
 - Organization delete: `deleteOrganizationCasesEffect(organizationId, { actorId })` removes every Case (artifacts and export dir included) before the org row goes, because `cases.organization_id` is a soft ref and nothing cascades. The app wires it through `createAuth({ beforeDeleteOrganization })`.
-- Export: `scheduleCaseExportEffect` coalesces through a `SynchronizedRef` and marks dirty synchronously (`runSync`), so fire-and-forget calls still coalesce. The export dir is `<export>/<organization-id>/<case-slug>/`; case rename regenerates the slug (unique within the organization), then reschedules export.
+- Export: `scheduleCaseExportEffect` coalesces through a `SynchronizedRef`: it marks dirty and starts-or-joins the write fiber when the returned Effect is interpreted, and the write fiber keeps the `Db` of the interpreting caller. The export dir is `<export>/<organization-id>/<case-slug>/`; case rename regenerates the slug (unique within the organization), then reschedules export.
 - After-commit SSE notifies (`notify*Effect`) fire only when not inside a parent `transact`; accept/reject notify after their own commit.
 - Client-safe label helpers live in `@watchdog/core/job-display`; worker code imports `@watchdog/core/worker`, not a domain subpath.
 - Logging: `@watchdog/log` (`logSwallowed`, `logProcess`). evlog is not `Job.logs` / `graph_writes` custody.

@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
@@ -18,6 +17,7 @@ vi.mock("@watchdog/db", () => ({
   notifyEvent: (...args: unknown[]) => notifyEvent(...args),
 }));
 
+import { runDomain } from "../../infra/run-domain";
 import { setJobStatusEffect } from "../set-job-status";
 
 describe("setJobStatus", () => {
@@ -26,7 +26,7 @@ describe("setJobStatus", () => {
 
   it("returns null when update matches no row", async () => {
     updateInCase.mockResolvedValueOnce(null);
-    const result = await Effect.runPromise(
+    const result = await runDomain(
       setJobStatusEffect(jobId, { status: "running" }, { caseId })
     );
     expect(result).toBeNull();
@@ -36,7 +36,7 @@ describe("setJobStatus", () => {
 
   it("returns null for invalid scoped ids without calling the repo", async () => {
     updateInCase.mockClear();
-    const result = await Effect.runPromise(
+    const result = await runDomain(
       setJobStatusEffect("job-1", { status: "running" }, { caseId: "case-1" })
     );
     expect(result).toBeNull();
@@ -51,7 +51,7 @@ describe("setJobStatus", () => {
       caseId,
       status: "succeeded",
     });
-    const result = await Effect.runPromise(
+    const result = await runDomain(
       setJobStatusEffect(
         jobId,
         { status: "succeeded" },

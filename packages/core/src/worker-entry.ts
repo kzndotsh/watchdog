@@ -24,6 +24,7 @@ export {
   type JobRunOutcomeName,
 } from "./jobs/run-job";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
+export { Db } from "./infra/db-service";
 export { findCancelledJobIdsEffect } from "./jobs/start-job";
 
 export { listenForEvents } from "./infra/events";

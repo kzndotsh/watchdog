@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 
 import {
-  db,
   evidenceLinksRepo,
   identifiersRepo,
   type IdentifierListRow,
@@ -20,8 +19,9 @@ import {
   assertEvidenceIdsInCaseEffect,
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
+import type { Db } from "../infra/db-service";
 import { notifyEntityChangedEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   InternalError,
@@ -96,17 +96,17 @@ export function listIdentifiersForEntityEffect(
   caseId: string,
   organizationId: string,
   entityId: string
-): Effect.Effect<IdentifierRecord[], DomainTag> {
+): Effect.Effect<IdentifierRecord[], DomainTag, Db> {
   return Effect.gen(function* listIdentifiersForEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
-    const rows = yield* tryDb(() =>
-      identifiersRepo.listForEntity(db, normalizedEntityId)
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
+    const rows = yield* tryDbWith((exec) =>
+      identifiersRepo.listForEntity(exec, normalizedEntityId)
     );
-    const byId = yield* tryDb(() =>
+    const byId = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForIdentifiers(
-        db,
+        exec,
         rows.map((r) => r.id)
       )
     );
@@ -140,15 +140,15 @@ export function toCaseIdentifierRecord(
 export function listIdentifiersForCaseEffect(
   caseId: string,
   organizationId: string
-): Effect.Effect<CaseIdentifierRecord[], DomainTag> {
+): Effect.Effect<CaseIdentifierRecord[], DomainTag, Db> {
   return Effect.gen(function* listIdentifiersForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() =>
-      identifiersRepo.listForCase(db, scopedCaseId)
+    const rows = yield* tryDbWith((exec) =>
+      identifiersRepo.listForCase(exec, scopedCaseId)
     );
-    const byId = yield* tryDb(() =>
+    const byId = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForIdentifiers(
-        db,
+        exec,
         rows.map((r) => r.id)
       )
     );
@@ -160,7 +160,7 @@ export function listIdentifiersForCaseEffect(
 
 export function createIdentifierEffect(
   input: CreateIdentifierInput
-): Effect.Effect<IdentifierRecord, DomainTag> {
+): Effect.Effect<IdentifierRecord, DomainTag, Db> {
   return Effect.gen(function* createIdentifierGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -221,7 +221,7 @@ export function createIdentifierEffect(
 
 export function updateIdentifierEffect(
   input: UpdateIdentifierInput
-): Effect.Effect<IdentifierRecord, DomainTag> {
+): Effect.Effect<IdentifierRecord, DomainTag, Db> {
   return Effect.gen(function* updateIdentifierGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -231,8 +231,8 @@ export function updateIdentifierEffect(
       input.identifierId,
       "Identifier"
     );
-    const existing = yield* tryDb(() =>
-      identifiersRepo.getInCase(db, scopedCaseId, identifierId)
+    const existing = yield* tryDbWith((exec) =>
+      identifiersRepo.getInCase(exec, scopedCaseId, identifierId)
     );
     if (!existing) {
       return yield* new NotFoundError({
@@ -344,15 +344,15 @@ export function deleteIdentifierEffect(
   caseId: string,
   organizationId: string,
   identifierId: string
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteIdentifierGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedIdentifierId = yield* requireTrimmedGraphId(
       identifierId,
       "Identifier"
     );
-    const existing = yield* tryDb(() =>
-      identifiersRepo.getInCase(db, scopedCaseId, normalizedIdentifierId)
+    const existing = yield* tryDbWith((exec) =>
+      identifiersRepo.getInCase(exec, scopedCaseId, normalizedIdentifierId)
     );
     if (!existing) {
       return yield* new NotFoundError({
@@ -361,8 +361,8 @@ export function deleteIdentifierEffect(
       });
     }
 
-    const deleted = yield* tryDb(() =>
-      identifiersRepo.deleteInCase(db, scopedCaseId, normalizedIdentifierId)
+    const deleted = yield* tryDbWith((exec) =>
+      identifiersRepo.deleteInCase(exec, scopedCaseId, normalizedIdentifierId)
     );
     if (!deleted) {
       return yield* new NotFoundError({

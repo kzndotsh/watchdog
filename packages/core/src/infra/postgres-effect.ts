@@ -1,5 +1,8 @@
 import { Effect } from "effect";
 
+import type { DbExec } from "@watchdog/db";
+
+import { Db } from "./db-service";
 import { isUniqueViolation } from "./error-utils";
 import { ConflictError, mapDomainCatch, type DomainTag } from "./tagged-errors";
 
@@ -35,4 +38,33 @@ export function tryDb<A>(
     try: tryFn,
     catch: (error) => mapPostgresCatch(error, opts),
   });
+}
+
+/**
+ * `tryDb` with the client taken from the `Db` service (R = `Db`) instead of the
+ * module-global `db`. Same error mapping as `tryDb`. A transaction body keeps
+ * using its explicit `tx` and plain `tryDb(() => repo.x(tx, ...))`.
+ */
+export function tryDbWith<A>(
+  tryFn: (exec: DbExec) => Promise<A>,
+  opts?: MapPostgresCatchOpts
+): Effect.Effect<A, DomainTag, Db> {
+  return Effect.flatMap(Effect.service(Db), (exec) =>
+    tryDb(() => tryFn(exec), opts)
+  );
+}
+
+/**
+ * `tryDbWith` for helpers that take an optional explicit handle: a caller
+ * inside a transaction passes its `tx`, anyone else omits it and the `Db`
+ * service supplies the client.
+ */
+export function tryDbOn<A>(
+  exec: DbExec | undefined,
+  tryFn: (exec: DbExec) => Promise<A>,
+  opts?: MapPostgresCatchOpts
+): Effect.Effect<A, DomainTag, Db> {
+  return exec === undefined
+    ? tryDbWith(tryFn, opts)
+    : tryDb(() => tryFn(exec), opts);
 }

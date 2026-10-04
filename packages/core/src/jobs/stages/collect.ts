@@ -5,7 +5,7 @@ import path from "node:path";
 import { Data, Effect } from "effect";
 
 import type { CapContext } from "@watchdog/caps/sdk";
-import { db, jobsRepo, type JobArtifact } from "@watchdog/db";
+import { jobsRepo, type DbExec, type JobArtifact } from "@watchdog/db";
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import {
   MissingCredentialError,
@@ -19,8 +19,9 @@ import {
   readArtifactBytesEffect,
   uploadArtifactEffect,
 } from "../../infra/blob";
+import { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
-import { tryDb } from "../../infra/postgres-effect";
+import { tryDbWith } from "../../infra/postgres-effect";
 import { logSwallowed } from "../../infra/process-log";
 import {
   InvalidError,
@@ -64,7 +65,7 @@ export interface CollectResult {
 function packSnapshotIfNeededEffect(
   state: PreflightState,
   jobLog: JobLog
-): Effect.Effect<EvidenceSnapshot | undefined, DomainTag> {
+): Effect.Effect<EvidenceSnapshot | undefined, DomainTag, Db> {
   if (state.policy.needsEvidenceSnapshot !== true) {
     const none: EvidenceSnapshot | undefined = undefined;
     return Effect.succeed(none);
@@ -108,9 +109,11 @@ function vaultToTools(name: string) {
   };
 }
 
+/** `dbExec` is provided to the vault reads: Cap contexts carry R = never. */
 function buildCapContext(
   state: PreflightState,
-  runtime: CollectRuntime
+  runtime: CollectRuntime,
+  dbExec: DbExec
 ): CapContext<unknown> {
   const { job, input, allowThirdPartyEgress } = state;
   return {
@@ -126,11 +129,13 @@ function buildCapContext(
       : {}),
     getCredential(name: string) {
       return getCredentialEffect(job.actorId, name).pipe(
+        Effect.provideService(Db, dbExec),
         Effect.mapError(vaultToTools(name))
       );
     },
     hasCredential(name: string) {
       return hasCredentialEffect(job.actorId, name).pipe(
+        Effect.provideService(Db, dbExec),
         Effect.mapError(vaultToTools(name))
       );
     },
@@ -211,7 +216,7 @@ function lookupCacheHitEffect(
   state: PreflightState,
   runtime: CollectRuntime,
   jobLog: JobLog
-): Effect.Effect<CollectResult | null, DomainTag> {
+): Effect.Effect<CollectResult | null, DomainTag, Db> {
   const { cacheTtlMs, inputHash } = runtime;
   if (cacheTtlMs === null || inputHash === null) {
     return Effect.succeed(null);
@@ -241,8 +246,8 @@ function lookupCacheHitEffect(
         hit.jobId === null ? "" : ` ${hit.jobId}`
       }`
     );
-    yield* tryDb(() =>
-      jobsRepo.updateInCase(db, state.job.caseId, state.jobId, {
+    yield* tryDbWith((exec) =>
+      jobsRepo.updateInCase(exec, state.job.caseId, state.jobId, {
         output: artifacts,
         evidenceIds,
         logs: jobLog.lines,
@@ -261,9 +266,10 @@ function lookupCacheHitEffect(
 function runCapCollectEffect(
   state: PreflightState,
   runtime: CollectRuntime
-): Effect.Effect<CollectResult, DomainTag> {
+): Effect.Effect<CollectResult, DomainTag, Db> {
   return Effect.gen(function* runCapCollectGen() {
-    const ctx = buildCapContext(state, runtime);
+    const dbExec = yield* Db;
+    const ctx = buildCapContext(state, runtime, dbExec);
     const runResult = yield* state.cap.run(ctx);
     return {
       artifacts: runResult.artifacts,
@@ -284,7 +290,7 @@ export function collectEffect(
   state: PreflightState,
   jobLog: JobLog,
   jobSignal: AbortSignal
-): Effect.Effect<CollectResult, DomainTag> {
+): Effect.Effect<CollectResult, DomainTag, Db> {
   return Effect.gen(function* collectSetup() {
     const evidenceSnapshot = yield* packSnapshotIfNeededEffect(state, jobLog);
     const linkedSource = linkedEvidenceId(

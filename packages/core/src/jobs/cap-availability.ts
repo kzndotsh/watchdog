@@ -8,9 +8,10 @@ import {
   type AvailabilityResult,
 } from "@watchdog/caps";
 import type { CapabilityDef } from "@watchdog/caps/sdk";
-import { casesRepo, db } from "@watchdog/db";
+import { casesRepo } from "@watchdog/db";
 
-import { tryDb } from "../infra/postgres-effect";
+import type { Db } from "../infra/db-service";
+import { tryDbWith } from "../infra/postgres-effect";
 import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
 import { hasCredentialEffect } from "../infra/vault";
 
@@ -59,7 +60,8 @@ export function evaluateCapAvailabilityEffect(input: {
     allowThirdPartyEgress: boolean;
     result: AvailabilityResult;
   },
-  DomainTag
+  DomainTag,
+  Db
 > {
   const desc = toCapDescriptor(input.cap);
   const specs = desc.credentials ?? [];
@@ -82,7 +84,9 @@ export function evaluateCapAvailabilityEffect(input: {
 
     const caseRow =
       input.allowThirdPartyEgress === undefined
-        ? yield* tryDb(() => casesRepo.getByIdUnchecked(db, input.caseId))
+        ? yield* tryDbWith((exec) =>
+            casesRepo.getByIdUnchecked(exec, input.caseId)
+          )
         : null;
     const allowThirdPartyEgress =
       input.allowThirdPartyEgress ?? caseRow?.allowThirdPartyEgress ?? false;
@@ -110,7 +114,7 @@ export function assertCapAvailabilityEffect(input: {
   caseId: string;
   cap: CapabilityDef<z.ZodType>;
   allowThirdPartyEgress?: boolean;
-}): Effect.Effect<void, DomainTag> {
+}): Effect.Effect<void, DomainTag, Db> {
   return evaluateCapAvailabilityEffect(input).pipe(
     Effect.flatMap(({ result }) => {
       if (result.ok) return Effect.void;

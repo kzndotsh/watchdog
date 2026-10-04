@@ -15,7 +15,8 @@ import {
   type EntityKind,
 } from "@watchdog/schemas/shared";
 
-import { tryDb } from "../infra/postgres-effect";
+import type { Db } from "../infra/db-service";
+import { tryDb, tryDbOn } from "../infra/postgres-effect";
 import {
   InvalidError,
   NotFoundError,
@@ -171,11 +172,11 @@ export function assertEntityKindChangeAllowedEffect(
   caseId: string,
   entityId: string,
   nextKind: EntityKind,
-  exec: DbExec
-): Effect.Effect<void, DomainTag> {
+  exec?: DbExec
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* assertEntityKindChangeAllowedGen() {
-    const edges = yield* tryDb(() =>
-      edgesRepo.listForEntity(exec, caseId, entityId)
+    const edges = yield* tryDbOn(exec, (handle) =>
+      edgesRepo.listForEntity(handle, caseId, entityId)
     );
     for (const edge of edges) {
       const fromKind = edge.fromId === entityId ? nextKind : edge.fromKind;
@@ -212,7 +213,7 @@ export function applyValidatedEdgeUpdateEffect(
   tx: DbExec,
   input: UpdateEdgeInput,
   validated: ValidatedEdgeUpdate
-): Effect.Effect<EdgeListRow, DomainTag> {
+): Effect.Effect<EdgeListRow, DomainTag, Db> {
   return Effect.gen(function* applyValidatedEdgeUpdateGen() {
     const { existing, next, endpointsChanged, predicateChanged } = validated;
 

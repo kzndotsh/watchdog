@@ -1,11 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  db,
-  entitiesRepo,
-  proposalsRepo,
-  type ProposalRow,
-} from "@watchdog/db";
+import { entitiesRepo, proposalsRepo, type ProposalRow } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import { patchOpRelatedEntityIds } from "@watchdog/schemas/graph";
 import type { ConfidenceTier, ProposalStatus } from "@watchdog/schemas/shared";
@@ -36,12 +31,13 @@ import {
   assertCaseInOrgEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
+import type { Db } from "../infra/db-service";
 import {
   notifyEntityChangedEffect,
   notifyEvidenceChangedEffect,
   notifyProposalQueueChangedEffect,
 } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
@@ -109,7 +105,8 @@ function loadEntityDisplayMapsEffect(
     entitySummaries: Record<string, string>;
     entityNotes: Record<string, string>;
   },
-  DomainTag
+  DomainTag,
+  Db
 > {
   const ids = [...entityIds];
   if (ids.length === 0) {
@@ -120,9 +117,9 @@ function loadEntityDisplayMapsEffect(
       entityNotes: {},
     });
   }
-  return tryDb(() => entitiesRepo.listNamesByIdsInCase(db, caseId, ids)).pipe(
-    Effect.map((ents) => buildEntityDisplayMaps(ents))
-  );
+  return tryDbWith((exec) =>
+    entitiesRepo.listNamesByIdsInCase(exec, caseId, ids)
+  ).pipe(Effect.map((ents) => buildEntityDisplayMaps(ents)));
 }
 
 function normalizePatchForWire(patch: PatchOp[]): PatchOp[] {
@@ -181,7 +178,7 @@ function enrichProposalRecordEffect(
     capabilityId: string | null;
     playbookId: string | null;
   }
-): Effect.Effect<ProposalRecord, DomainTag> {
+): Effect.Effect<ProposalRecord, DomainTag, Db> {
   return Effect.gen(function* enrichProposalRecordGen() {
     let capabilityId: string | null = null;
     let playbookId: string | null = null;
@@ -189,8 +186,8 @@ function enrichProposalRecordEffect(
       capabilityId = linked.capabilityId;
       playbookId = linked.playbookId;
     } else {
-      const joined = yield* tryDb(() =>
-        proposalsRepo.getInCase(db, proposal.caseId, proposal.id)
+      const joined = yield* tryDbWith((exec) =>
+        proposalsRepo.getInCase(exec, proposal.caseId, proposal.id)
       );
       capabilityId = joined?.capabilityId ?? null;
       playbookId = joined?.playbookId ?? null;
@@ -226,11 +223,11 @@ export function listProposalsForCaseEffect(
   caseId: string,
   organizationId: string,
   opts?: { status?: ProposalStatus }
-): Effect.Effect<ProposalRecord[], DomainTag> {
+): Effect.Effect<ProposalRecord[], DomainTag, Db> {
   return Effect.gen(function* listProposalsForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() =>
-      proposalsRepo.listForCase(db, scopedCaseId, opts)
+    const rows = yield* tryDbWith((exec) =>
+      proposalsRepo.listForCase(exec, scopedCaseId, opts)
     );
 
     const entityIds = new Set<string>();
@@ -270,15 +267,15 @@ export function listProposalsForCaseEffect(
 export function getProposalForCaseEffect(
   caseId: string,
   proposalId: string
-): Effect.Effect<ProposalRecord | null, DomainTag> {
+): Effect.Effect<ProposalRecord | null, DomainTag, Db> {
   return Effect.gen(function* getProposalForCaseGen() {
     const scopedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
     const normalizedProposalId = yield* requireTrimmedGraphId(
       proposalId,
       "Proposal"
     );
-    const row = yield* tryDb(() =>
-      proposalsRepo.getInCase(db, scopedCaseId, normalizedProposalId)
+    const row = yield* tryDbWith((exec) =>
+      proposalsRepo.getInCase(exec, scopedCaseId, normalizedProposalId)
     );
     if (!row) return null;
     return yield* enrichProposalRecordEffect(row.proposal, {
@@ -296,7 +293,7 @@ export function acceptProposalEffect(input: {
   confidence?: ConfidenceTier;
   sharedEvidenceIds?: string[];
   attestationText?: string;
-}): Effect.Effect<ProposalRecord, DomainTag> {
+}): Effect.Effect<ProposalRecord, DomainTag, Db> {
   return Effect.gen(function* acceptProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
     const scopedCaseId = yield* assertCaseInOrgEffect(
@@ -409,7 +406,7 @@ export function rejectProposalEffect(input: {
   proposalId: string;
   actorId: string;
   reason?: string;
-}): Effect.Effect<ProposalRecord, DomainTag> {
+}): Effect.Effect<ProposalRecord, DomainTag, Db> {
   return Effect.gen(function* rejectProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
     const scopedCaseId = yield* assertCaseInOrgEffect(

@@ -1,11 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  db,
-  edgesRepo,
-  evidenceLinksRepo,
-  type EdgeListRow,
-} from "@watchdog/db";
+import { edgesRepo, evidenceLinksRepo, type EdgeListRow } from "@watchdog/db";
 import {
   normalizeUuidList,
   parseOptionalTrimmedUuid,
@@ -19,8 +14,9 @@ import {
   assertEvidenceIdsInCaseEffect,
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
+import type { Db } from "../infra/db-service";
 import { notifyEntityChangedEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   InternalError,
@@ -119,17 +115,17 @@ export function listEdgesForEntityEffect(
   caseId: string,
   organizationId: string,
   entityId: string
-): Effect.Effect<EdgeRecord[], DomainTag> {
+): Effect.Effect<EdgeRecord[], DomainTag, Db> {
   return Effect.gen(function* listEdgesForEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
-    const rows = yield* tryDb(() =>
-      edgesRepo.listForEntity(db, scopedCaseId, normalizedEntityId)
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
+    const rows = yield* tryDbWith((exec) =>
+      edgesRepo.listForEntity(exec, scopedCaseId, normalizedEntityId)
     );
-    const byEdge = yield* tryDb(() =>
+    const byEdge = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForEdges(
-        db,
+        exec,
         rows.map((r) => r.id)
       )
     );
@@ -180,13 +176,15 @@ export function toCaseEdgeRecord(
 export function listEdgesForCaseEffect(
   caseId: string,
   organizationId: string
-): Effect.Effect<CaseEdgeRecord[], DomainTag> {
+): Effect.Effect<CaseEdgeRecord[], DomainTag, Db> {
   return Effect.gen(function* listEdgesForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() => edgesRepo.listForCase(db, scopedCaseId));
-    const byEdge = yield* tryDb(() =>
+    const rows = yield* tryDbWith((exec) =>
+      edgesRepo.listForCase(exec, scopedCaseId)
+    );
+    const byEdge = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForEdges(
-        db,
+        exec,
         rows.map((r) => r.id)
       )
     );
@@ -196,7 +194,7 @@ export function listEdgesForCaseEffect(
 
 export function createEdgeEffect(
   input: CreateEdgeInput
-): Effect.Effect<EdgeRecord, DomainTag> {
+): Effect.Effect<EdgeRecord, DomainTag, Db> {
   return Effect.gen(function* createEdgeGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -281,8 +279,8 @@ export function createEdgeEffect(
       }
     );
 
-    const listed = yield* tryDb(() =>
-      edgesRepo.getListedInCase(db, scopedCaseId, created.id)
+    const listed = yield* tryDbWith((exec) =>
+      edgesRepo.getListedInCase(exec, scopedCaseId, created.id)
     );
     if (!listed) {
       return yield* new InvalidError({ reason: "Edge created but not found" });
@@ -295,22 +293,22 @@ export function createEdgeEffect(
 
 export function updateEdgeEffect(
   input: UpdateEdgeInput
-): Effect.Effect<EdgeRecord, DomainTag> {
+): Effect.Effect<EdgeRecord, DomainTag, Db> {
   return Effect.gen(function* updateEdgeGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
     );
     const edgeId = yield* requireTrimmedGraphId(input.edgeId, "Edge");
-    const existing = yield* tryDb(() =>
-      edgesRepo.getInCase(db, scopedCaseId, edgeId)
+    const existing = yield* tryDbWith((exec) =>
+      edgesRepo.getInCase(exec, scopedCaseId, edgeId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Edge", id: edgeId });
     }
 
-    const byEdge = yield* tryDb(() =>
-      evidenceLinksRepo.listForEdges(db, [existing.id])
+    const byEdge = yield* tryDbWith((exec) =>
+      evidenceLinksRepo.listForEdges(exec, [existing.id])
     );
     const evidenceIds = byEdge.get(existing.id) ?? [];
     const scopedInput = { ...input, caseId: scopedCaseId, edgeId };
@@ -368,19 +366,19 @@ export function deleteEdgeEffect(
   caseId: string,
   organizationId: string,
   edgeId: string
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEdgeGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEdgeId = yield* requireTrimmedGraphId(edgeId, "Edge");
-    const existing = yield* tryDb(() =>
-      edgesRepo.getInCase(db, scopedCaseId, normalizedEdgeId)
+    const existing = yield* tryDbWith((exec) =>
+      edgesRepo.getInCase(exec, scopedCaseId, normalizedEdgeId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Edge", id: normalizedEdgeId });
     }
 
-    const deleted = yield* tryDb(() =>
-      edgesRepo.deleteInCase(db, scopedCaseId, normalizedEdgeId)
+    const deleted = yield* tryDbWith((exec) =>
+      edgesRepo.deleteInCase(exec, scopedCaseId, normalizedEdgeId)
     );
     if (!deleted) {
       return yield* new NotFoundError({ entity: "Edge", id: normalizedEdgeId });

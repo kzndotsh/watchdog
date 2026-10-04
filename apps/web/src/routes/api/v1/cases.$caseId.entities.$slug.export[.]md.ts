@@ -13,6 +13,7 @@ import { getCaseByIdEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
 import { renderEntityMarkdownEffect } from "@watchdog/core/export";
 import { getEntityByCaseSlugEffect } from "@watchdog/core/graph";
+import type { Db } from "@watchdog/core/infra";
 
 type EntityExportMdResult =
   | { kind: "missing" }
@@ -22,7 +23,7 @@ function entityExportMdEffect(
   caseId: string,
   slug: string,
   organizationId: string
-): Effect.Effect<EntityExportMdResult, DomainTag> {
+): Effect.Effect<EntityExportMdResult, DomainTag, Db> {
   return Effect.gen(function* entityExportMdGen() {
     const scopedCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
       Effect.catchTag("NotFoundError", () => Effect.succeed(null))

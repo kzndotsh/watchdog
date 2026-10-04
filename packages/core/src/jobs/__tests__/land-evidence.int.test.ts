@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
@@ -6,6 +5,7 @@ import * as dbModule from "@watchdog/db";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
 
+import { runDomain } from "../../infra/run-domain";
 import type { CollectResult } from "../stages/collect.ts";
 import { createJobLog } from "../stages/helpers.ts";
 import { landEvidenceEffect } from "../stages/land-evidence.ts";
@@ -74,7 +74,7 @@ describe("landEvidence", () => {
     const job = await seedJob(db, cased.id, { status: "running" });
     const result = collected();
 
-    const ids = await Effect.runPromise(
+    const ids = await runDomain(
       landEvidenceEffect(await stateFor(job.id), result)
     );
 
@@ -96,7 +96,7 @@ describe("landEvidence", () => {
       evidenceIds: existing,
     });
 
-    const ids = await Effect.runPromise(
+    const ids = await runDomain(
       landEvidenceEffect(await stateFor(job.id), result)
     );
     expect(ids).toEqual(existing);
@@ -113,7 +113,7 @@ describe("landEvidence", () => {
       evidenceIds: [],
     });
 
-    const ids = await Effect.runPromise(
+    const ids = await runDomain(
       landEvidenceEffect(await stateFor(job.id), result)
     );
 
@@ -134,7 +134,7 @@ describe("landEvidence", () => {
       evidenceIds: existing,
     });
 
-    const ids = await Effect.runPromise(
+    const ids = await runDomain(
       landEvidenceEffect(await stateFor(job.id), result)
     );
     expect(ids).toEqual(existing);
@@ -150,9 +150,7 @@ describe("landEvidence", () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
 
-    await Effect.runPromise(
-      landEvidenceEffect(await stateFor(job.id), collected())
-    );
+    await runDomain(landEvidenceEffect(await stateFor(job.id), collected()));
 
     await vi.waitFor(() => {
       expect(notifySpy).toHaveBeenCalledWith({
@@ -171,7 +169,7 @@ describe("landEvidence", () => {
     const job = await seedJob(db, cased.id, { status: "running" });
     const sourceId = "11111111-1111-4111-8111-000000000077";
 
-    await Effect.runPromise(
+    await runDomain(
       landEvidenceEffect(
         await stateFor(job.id),
         collected({
@@ -202,7 +200,7 @@ describe("landEvidence", () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
 
-    await Effect.runPromise(
+    await runDomain(
       landEvidenceEffect(
         await stateFor(job.id),
         collected({

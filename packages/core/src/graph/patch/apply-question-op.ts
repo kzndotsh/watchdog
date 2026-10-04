@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import { questionsRepo, type DbTx } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 
+import type { Db } from "../../infra/db-service";
 import { tryDb } from "../../infra/postgres-effect";
 import {
   InternalError,
@@ -19,7 +20,7 @@ export function applyQuestionOpEffect(
   tx: DbTx,
   caseId: string,
   op: PatchOp
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyQuestionOpGen() {
     if (op.op !== "create") {
       return yield* new InvalidError({

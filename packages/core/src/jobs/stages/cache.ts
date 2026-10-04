@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import type { JobArtifact } from "@watchdog/db";
 
+import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { storeCapCacheEffect } from "../cap-cache";
 import { artifactsHaveCapReport } from "../load-cap-report";
@@ -20,7 +21,7 @@ interface StoreCacheStageInput {
 
 export function storeCacheStageEffect(
   input: StoreCacheStageInput
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   const { runtime, state } = input;
   const cacheTtlMs = runtime.cacheTtlMs;
   const inputHash = runtime.inputHash;

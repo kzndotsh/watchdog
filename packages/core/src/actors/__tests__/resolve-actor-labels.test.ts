@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
@@ -12,13 +11,14 @@ vi.mock("@watchdog/db", () => ({
   usersRepo: { getByIds },
 }));
 
+import { runDomain } from "../../infra/run-domain";
 import { labelForActor, loadActorUsersEffect } from "../resolve-actor-labels";
 
 describe("loadActorUsersEffect", () => {
   it("filters blank, api-key, and invalid actor ids before querying users", async () => {
     const userId = testId(1);
     getByIds.mockClear();
-    await Effect.runPromise(
+    await runDomain(
       loadActorUsersEffect([
         undefined as unknown as string,
         "",
@@ -33,7 +33,7 @@ describe("loadActorUsersEffect", () => {
 
   it("skips the users query when no actor ids are valid UUIDs", async () => {
     getByIds.mockClear();
-    const users = await Effect.runPromise(
+    const users = await runDomain(
       loadActorUsersEffect(["api-key:cli", "user-1", ""])
     );
     expect(getByIds).not.toHaveBeenCalled();

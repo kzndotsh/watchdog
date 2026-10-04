@@ -15,6 +15,8 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   };
 });
 
+import { Db } from "@watchdog/core/worker";
+
 import {
   handleExportEventEffect,
   hasSchedulableCaseId,
@@ -110,14 +112,20 @@ describe("handleExportEventEffect", () => {
 
     await expect(
       Effect.runPromise(
-        handleExportEventEffect({ type: "entity_changed", caseId })
+        Effect.provide(
+          handleExportEventEffect({ type: "entity_changed", caseId }),
+          Db.layer
+        )
       )
     ).rejects.toThrow(/disk full/);
   });
 
   it("skips export for non-triggering events", async () => {
     await Effect.runPromise(
-      handleExportEventEffect({ type: "task_changed", caseId })
+      Effect.provide(
+        handleExportEventEffect({ type: "task_changed", caseId }),
+        Db.layer
+      )
     );
 
     expect(scheduleCaseExportEffect).not.toHaveBeenCalled();
@@ -127,7 +135,13 @@ describe("handleExportEventEffect", () => {
     const paddedCaseId = `  ${caseId}  `;
 
     await Effect.runPromise(
-      handleExportEventEffect({ type: "entity_changed", caseId: paddedCaseId })
+      Effect.provide(
+        handleExportEventEffect({
+          type: "entity_changed",
+          caseId: paddedCaseId,
+        }),
+        Db.layer
+      )
     );
 
     expect(scheduleCaseExportEffect).toHaveBeenCalledWith(caseId);
@@ -135,7 +149,13 @@ describe("handleExportEventEffect", () => {
 
   it("skips export when case id is not schedulable", async () => {
     await Effect.runPromise(
-      handleExportEventEffect({ type: "entity_changed", caseId: "not-a-uuid" })
+      Effect.provide(
+        handleExportEventEffect({
+          type: "entity_changed",
+          caseId: "not-a-uuid",
+        }),
+        Db.layer
+      )
     );
 
     expect(scheduleCaseExportEffect).not.toHaveBeenCalled();

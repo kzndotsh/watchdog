@@ -1,7 +1,8 @@
 import { Cause, Effect } from "effect";
 
-import { db, jobsRepo, type JobRow } from "@watchdog/db";
+import { jobsRepo, type JobRow } from "@watchdog/db";
 
+import { Db } from "../infra/db-service";
 import { errorMessage } from "../infra/error-utils";
 import { logSwallowed } from "../infra/process-log";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
@@ -19,17 +20,18 @@ function logPlaybookAdvanceFailureEffect(
     playbookRunId: string | null;
     jobLog: ReturnType<typeof createJobLog>;
   }
-): Effect.Effect<void> {
+): Effect.Effect<void, never, Db> {
   const { jobId, caseId, playbookRunId, jobLog } = opts;
   const msg =
     advanceError instanceof Error ? advanceError.message : String(advanceError);
   return Effect.gen(function* logPlaybookAdvanceFailureGen() {
+    const exec = yield* Db;
     yield* Effect.sync(() => {
       jobLog.log(`playbook advance failed: ${msg}`);
     });
     yield* Effect.tryPromise({
       try: () =>
-        jobsRepo.updateInCase(db, caseId, jobId, { logs: jobLog.lines }),
+        jobsRepo.updateInCase(exec, caseId, jobId, { logs: jobLog.lines }),
       catch: (error: unknown) =>
         new InvalidError({ reason: errorMessage(error) }),
     }).pipe(
@@ -57,7 +59,7 @@ export function runSucceededPathEffect(opts: {
   resultSummary: string | null;
   interpretError: string | null;
   jobLog: ReturnType<typeof createJobLog>;
-}): Effect.Effect<void> {
+}): Effect.Effect<void, never, Db> {
   const { jobId, state, collected, resultSummary, interpretError, jobLog } =
     opts;
   return Effect.gen(function* runSucceededPathGen() {
@@ -100,7 +102,7 @@ export function runFailedPathEffect(opts: {
   jobLog: ReturnType<typeof createJobLog>;
   playbookRunId: JobRow["playbookRunId"];
   caseId: string;
-}): Effect.Effect<void> {
+}): Effect.Effect<void, never, Db> {
   const { jobId, error, jobLog, playbookRunId, caseId } = opts;
   const msg = errorMessage(error);
   return Effect.gen(function* runFailedPathGen() {

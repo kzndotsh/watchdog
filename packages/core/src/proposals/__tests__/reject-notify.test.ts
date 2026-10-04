@@ -50,15 +50,11 @@ vi.mock("../../actors/resolve-actor-labels", () => ({
   labelForActor: (id: string) => id,
 }));
 
-vi.mock("../../infra/postgres-effect", () => ({
-  tryDb: (fn: () => Promise<unknown>) =>
-    Effect.tryPromise({ try: fn, catch: (error) => error }),
-}));
-
 vi.mock("../../infra/postgres-tx", () => ({
   transact: (fn: (tx: unknown) => Effect.Effect<unknown>) => fn({}),
 }));
 
+import { runDomain } from "../../infra/run-domain";
 import { rejectProposalEffect } from "../proposals";
 
 describe("rejectProposalEffect", () => {
@@ -95,7 +91,7 @@ describe("rejectProposalEffect", () => {
     });
     recordRejectedFingerprintsEffect.mockReturnValueOnce(Effect.void);
 
-    await Effect.runPromise(
+    await runDomain(
       rejectProposalEffect({
         caseId,
         organizationId: "org-1",

@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import { listKnownCredentials } from "@watchdog/caps";
 
+import type { Db } from "./db-service";
 import type { DomainTag } from "./tagged-errors";
 import {
   listCredentialMetaEffect,
@@ -54,7 +55,7 @@ function slotsFromStored(stored: CredentialMeta[]): CredentialSlot[] {
 
 export function listCredentialSlotsEffect(
   userId: string
-): Effect.Effect<CredentialSlot[], DomainTag> {
+): Effect.Effect<CredentialSlot[], DomainTag, Db> {
   return listCredentialMetaEffect(userId).pipe(
     Effect.map((stored) => slotsFromStored(stored))
   );
@@ -69,7 +70,7 @@ interface PutCredentialSlotInput {
 
 export function putCredentialSlotEffect(
   input: PutCredentialSlotInput
-): Effect.Effect<CredentialSlot, DomainTag> {
+): Effect.Effect<CredentialSlot, DomainTag, Db> {
   return putCredentialEffect(input).pipe(
     Effect.map((meta) => slotFromMeta(meta))
   );

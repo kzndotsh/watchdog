@@ -7,11 +7,12 @@ import {
 
 import { Data, Effect } from "effect";
 
-import { credentialsRepo, db } from "@watchdog/db";
+import { credentialsRepo } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas/shared";
 
-import { tryDb } from "./postgres-effect";
+import type { Db } from "./db-service";
+import { tryDbWith } from "./postgres-effect";
 import {
   InternalError,
   InvalidError,
@@ -120,8 +121,8 @@ function requireCredentialName(name: string): Effect.Effect<string, DomainTag> {
 /** Metadata only — never returns plaintext. */
 export function listCredentialMetaEffect(
   userId: string
-): Effect.Effect<CredentialMeta[], DomainTag> {
-  return tryDb(() => credentialsRepo.listMeta(db, userId)).pipe(
+): Effect.Effect<CredentialMeta[], DomainTag, Db> {
+  return tryDbWith((exec) => credentialsRepo.listMeta(exec, userId)).pipe(
     Effect.map((rows) => rows.map(toMeta))
   );
 }
@@ -129,10 +130,12 @@ export function listCredentialMetaEffect(
 export function hasCredentialEffect(
   userId: string,
   name: string
-): Effect.Effect<boolean, DomainTag> {
+): Effect.Effect<boolean, DomainTag, Db> {
   return Effect.gen(function* hasCredentialGen() {
     const n = yield* requireCredentialName(name);
-    const id = yield* tryDb(() => credentialsRepo.getIdByName(db, userId, n));
+    const id = yield* tryDbWith((exec) =>
+      credentialsRepo.getIdByName(exec, userId, n)
+    );
     return id !== null;
   });
 }
@@ -140,11 +143,11 @@ export function hasCredentialEffect(
 export function getCredentialEffect(
   userId: string,
   name: string
-): Effect.Effect<string, DomainTag> {
+): Effect.Effect<string, DomainTag, Db> {
   return Effect.gen(function* getCredentialGen() {
     const n = yield* requireCredentialName(name);
-    const ciphertext = yield* tryDb(() =>
-      credentialsRepo.getCiphertext(db, userId, n)
+    const ciphertext = yield* tryDbWith((exec) =>
+      credentialsRepo.getCiphertext(exec, userId, n)
     );
     if (!ciphertext) {
       return yield* new NotFoundError({ entity: "Credential", id: n });
@@ -168,7 +171,7 @@ interface PutCredentialInput {
 
 export function putCredentialEffect(
   input: PutCredentialInput
-): Effect.Effect<CredentialMeta, DomainTag> {
+): Effect.Effect<CredentialMeta, DomainTag, Db> {
   return Effect.gen(function* putCredentialGen() {
     const name = yield* requireCredentialName(input.name);
     const secret = input.secret.trim();
@@ -177,12 +180,12 @@ export function putCredentialEffect(
     }
     const blob = seal(userKey(input.userId), secret);
     const label = trimmedOrNull(input.label);
-    const existingId = yield* tryDb(() =>
-      credentialsRepo.getIdByName(db, input.userId, name)
+    const existingId = yield* tryDbWith((exec) =>
+      credentialsRepo.getIdByName(exec, input.userId, name)
     );
     if (existingId !== null) {
-      const updated = yield* tryDb(() =>
-        credentialsRepo.update(db, existingId, {
+      const updated = yield* tryDbWith((exec) =>
+        credentialsRepo.update(exec, existingId, {
           ciphertext: blob,
           label,
         })
@@ -194,8 +197,8 @@ export function putCredentialEffect(
       }
       return toMeta(updated);
     }
-    const created = yield* tryDb(() =>
-      credentialsRepo.create(db, {
+    const created = yield* tryDbWith((exec) =>
+      credentialsRepo.create(exec, {
         userId: input.userId,
         name,
         label,
@@ -214,11 +217,11 @@ export function putCredentialEffect(
 export function deleteCredentialEffect(
   userId: string,
   name: string
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteCredentialGen() {
     const n = yield* requireCredentialName(name);
-    const deleted = yield* tryDb(() =>
-      credentialsRepo.deleteByName(db, userId, n)
+    const deleted = yield* tryDbWith((exec) =>
+      credentialsRepo.deleteByName(exec, userId, n)
     );
     if (!deleted) {
       return yield* new NotFoundError({ entity: "Credential", id: n });

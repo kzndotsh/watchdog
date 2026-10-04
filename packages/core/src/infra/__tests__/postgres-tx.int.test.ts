@@ -7,10 +7,12 @@ import {
   InvalidError,
   type DomainTag,
 } from "@watchdog/core/errors";
-import { transact, tryDb } from "@watchdog/core/infra";
+import { Db, transact, tryDb } from "@watchdog/core/infra";
 import { casesRepo, db } from "@watchdog/db";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+
+import { runDomain } from "../run-domain";
 
 class Greeter extends Context.Service<Greeter, { readonly hi: string }>()(
   "test/Greeter"
@@ -22,7 +24,7 @@ function caseExists(id: string): Promise<boolean> {
 
 /** The tagged failure `transact` surfaces, unchanged. */
 function failWith(error: DomainTag): Promise<DomainTag> {
-  return Effect.runPromise(Effect.flip(transact(() => Effect.fail(error))));
+  return runDomain(Effect.flip(transact(() => Effect.fail(error))));
 }
 
 describe("transact", () => {
@@ -54,7 +56,7 @@ describe("transact", () => {
   });
 
   it("returns the body's value and commits", async () => {
-    const id = await Effect.runPromise(
+    const id = await runDomain(
       transact((tx) =>
         tryDb(() => seedCase(tx, { name: "Committed" })).pipe(
           Effect.map((row) => row.id)
@@ -65,7 +67,7 @@ describe("transact", () => {
   });
 
   it("runs the body with the caller's services", async () => {
-    const greeting = await Effect.runPromise(
+    const greeting = await runDomain(
       transact(() =>
         Effect.gen(function* greeting() {
           return (yield* Greeter).hi;
@@ -78,7 +80,7 @@ describe("transact", () => {
   it("passes the same tagged error instance through and rolls back", async () => {
     const error = new ConflictError({ reason: "taken" });
     let id = "";
-    const failure = await Effect.runPromise(
+    const failure = await runDomain(
       Effect.flip(
         transact((tx) =>
           Effect.gen(function* failure() {
@@ -96,7 +98,12 @@ describe("transact", () => {
 
   it("keeps a body defect a defect and rolls back", async () => {
     const boom = new Error("boom");
-    const exit = await Effect.runPromiseExit(transact(() => Effect.die(boom)));
+    const exit = await Effect.runPromiseExit(
+      Effect.provide(
+        transact(() => Effect.die(boom)),
+        Db.layer
+      )
+    );
     expect(Exit.isFailure(exit)).toBe(true);
     expect(Exit.hasDies(exit)).toBe(true);
   });
@@ -115,7 +122,7 @@ describe("transact", () => {
         }
       )) as typeof db.transaction);
     const error = new ConflictError({ reason: "taken" });
-    const failure = await Effect.runPromise(
+    const failure = await runDomain(
       Effect.flip(transact(() => Effect.fail(error)))
     );
     expect(failure).toBe(error);
@@ -128,13 +135,16 @@ describe("transact", () => {
       inserted = resolve;
     });
     const fiber = Effect.runFork(
-      transact((tx) =>
-        Effect.gen(function* fiber() {
-          const row = yield* tryDb(() => seedCase(tx));
-          id = row.id;
-          inserted();
-          return yield* Effect.never;
-        })
+      Effect.provide(
+        transact((tx) =>
+          Effect.gen(function* fiber() {
+            const row = yield* tryDb(() => seedCase(tx));
+            id = row.id;
+            inserted();
+            return yield* Effect.never;
+          })
+        ),
+        Db.layer
       )
     );
     await insertedSignal;
@@ -145,32 +155,35 @@ describe("transact", () => {
   it("maps a driver constraint error to ConflictError inside the body and rolls back", async () => {
     let firstId = "";
     const failure = await Effect.runPromise(
-      Effect.flip(
-        transact((tx) =>
-          Effect.gen(function* failure() {
-            const slugTaken = {
-              uniqueIndex: "cases_organization_id_slug_uidx",
-              conflictReason: "slug taken",
-            };
-            const first = yield* tryDb(
-              () =>
-                seedCase(tx, {
-                  slug: "dup",
-                  organizationId: TEST_ORGANIZATION_ID,
-                }),
-              slugTaken
-            );
-            firstId = first.id;
-            yield* tryDb(
-              () =>
-                seedCase(tx, {
-                  slug: "dup",
-                  organizationId: TEST_ORGANIZATION_ID,
-                }),
-              slugTaken
-            );
-          })
-        )
+      Effect.provide(
+        Effect.flip(
+          transact((tx) =>
+            Effect.gen(function* failure() {
+              const slugTaken = {
+                uniqueIndex: "cases_organization_id_slug_uidx",
+                conflictReason: "slug taken",
+              };
+              const first = yield* tryDb(
+                () =>
+                  seedCase(tx, {
+                    slug: "dup",
+                    organizationId: TEST_ORGANIZATION_ID,
+                  }),
+                slugTaken
+              );
+              firstId = first.id;
+              yield* tryDb(
+                () =>
+                  seedCase(tx, {
+                    slug: "dup",
+                    organizationId: TEST_ORGANIZATION_ID,
+                  }),
+                slugTaken
+              );
+            })
+          )
+        ),
+        Db.layer
       )
     );
     expect(failure).toBeInstanceOf(ConflictError);

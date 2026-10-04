@@ -2,7 +2,6 @@ import { Effect } from "effect";
 
 import {
   casesRepo,
-  db,
   entitiesRepo,
   evidenceRepo,
   identifiersRepo,
@@ -43,7 +42,8 @@ import {
   entityNameForId,
   loadEntityDisplayMapsForIdsEffect,
 } from "../entities/entity-display";
-import { tryDb } from "../infra/postgres-effect";
+import type { Db } from "../infra/db-service";
+import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
 const DEFAULT_PER_GROUP = 8;
@@ -238,7 +238,7 @@ function entityIdsForSearchHits(
 /** Active-Case graph search + Cases switch hits (ilike). */
 export function searchCaseEffect(
   opts: SearchCaseOpts
-): Effect.Effect<SearchCaseResult, DomainTag> {
+): Effect.Effect<SearchCaseResult, DomainTag, Db> {
   return Effect.gen(function* searchCaseGen() {
     const q = opts.q.trim();
     if (q.length < SEARCH_MIN_QUERY_LENGTH) {
@@ -263,17 +263,27 @@ export function searchCaseEffect(
       caseRows,
     ] = yield* Effect.all(
       [
-        tryDb(() => entitiesRepo.searchForCase(db, scopedCaseId, q, perGroup)),
-        tryDb(() =>
-          identifiersRepo.searchForCase(db, scopedCaseId, q, perGroup)
+        tryDbWith((exec) =>
+          entitiesRepo.searchForCase(exec, scopedCaseId, q, perGroup)
         ),
-        tryDb(() => evidenceRepo.searchForCase(db, scopedCaseId, q, perGroup)),
-        tryDb(() => tasksRepo.searchForCase(db, scopedCaseId, q, perGroup)),
-        tryDb(() => jobsRepo.searchForCase(db, scopedCaseId, q, perGroup)),
-        tryDb(() =>
-          proposalsRepo.searchPendingForCase(db, scopedCaseId, q, perGroup)
+        tryDbWith((exec) =>
+          identifiersRepo.searchForCase(exec, scopedCaseId, q, perGroup)
         ),
-        tryDb(() => casesRepo.search(db, opts.organizationId, q, perGroup)),
+        tryDbWith((exec) =>
+          evidenceRepo.searchForCase(exec, scopedCaseId, q, perGroup)
+        ),
+        tryDbWith((exec) =>
+          tasksRepo.searchForCase(exec, scopedCaseId, q, perGroup)
+        ),
+        tryDbWith((exec) =>
+          jobsRepo.searchForCase(exec, scopedCaseId, q, perGroup)
+        ),
+        tryDbWith((exec) =>
+          proposalsRepo.searchPendingForCase(exec, scopedCaseId, q, perGroup)
+        ),
+        tryDbWith((exec) =>
+          casesRepo.search(exec, opts.organizationId, q, perGroup)
+        ),
       ],
       { concurrency: "unbounded" }
     );
@@ -286,8 +296,8 @@ export function searchCaseEffect(
 
     const jobInputs = jobRows.map((row) => row.job.input);
     const evidenceIds = evidenceIdsFromJobInputs(jobInputs);
-    const evidenceLabelRows = yield* tryDb(() =>
-      evidenceRepo.listActivityLabelsInCase(db, scopedCaseId, evidenceIds)
+    const evidenceLabelRows = yield* tryDbWith((exec) =>
+      evidenceRepo.listActivityLabelsInCase(exec, scopedCaseId, evidenceIds)
     );
     const evidenceLabels = Object.fromEntries(
       evidenceTitleMapForJobInputs(evidenceLabelRows, jobInputs)

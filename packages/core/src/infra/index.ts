@@ -1,3 +1,4 @@
-export { tryDb, mapPostgresCatch } from "./postgres-effect";
+export { Db } from "./db-service";
+export { tryDb, tryDbWith, mapPostgresCatch } from "./postgres-effect";
 export { transact } from "./postgres-tx";
-export { runDomain } from "./run-domain";
+export { runDomain, runDomainWith } from "./run-domain";

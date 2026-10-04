@@ -1,7 +1,8 @@
-import { Cause, Effect } from "effect";
+import { Cause, Context, Effect } from "effect";
 
-import { db, type DbTx } from "@watchdog/db";
+import type { DbTx } from "@watchdog/db";
 
+import { Db } from "./db-service";
 import { mapPostgresCatch, type MapPostgresCatchOpts } from "./postgres-effect";
 import type { DomainTag } from "./tagged-errors";
 
@@ -28,7 +29,8 @@ function mapDriverFailure(
 }
 
 /**
- * Run `body` in one transaction. The body sees the caller's services; failures
+ * Run `body` in one transaction on the `Db` service's client (a pool opens a
+ * transaction, a `tx` value opens a savepoint). The body sees the caller's services; failures
  * (tagged errors, defects) reach the caller unchanged and roll back; driver
  * errors map as in `tryDb`. Interrupting the caller aborts the body, rolls the
  * transaction back, and only then completes the interruption.
@@ -44,12 +46,13 @@ function mapDriverFailure(
 export function transact<A, E extends DomainTag = DomainTag, R = never>(
   body: (tx: DbTx) => Effect.Effect<A, E, R>,
   opts?: MapPostgresCatchOpts
-): Effect.Effect<A, E | DomainTag, R> {
-  return Effect.flatMap(Effect.context<R>(), (services) => {
+): Effect.Effect<A, E | DomainTag, R | Db> {
+  return Effect.flatMap(Effect.context<R | Db>(), (services) => {
+    const client = Context.get(services, Db);
     let bodyCause: Cause.Cause<E> | undefined;
     return Effect.callback<A, E | DomainTag>((resume, signal) => {
       const run = Effect.runPromiseExitWith(services);
-      const settled = db
+      const settled = client
         .transaction(async (tx) => {
           const exit = await run(body(tx), { signal });
           if (exit._tag === "Failure") {

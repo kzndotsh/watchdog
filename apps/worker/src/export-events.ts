@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { scheduleCaseExportEffect } from "@watchdog/core/worker";
+import { scheduleCaseExportEffect, type Db } from "@watchdog/core/worker";
 import type { WatchdogEvent } from "@watchdog/schemas/feed";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
@@ -41,7 +41,7 @@ export function shouldTriggerCaseExport(event: WatchdogEvent): boolean {
 
 export function handleExportEventEffect(
   event: WatchdogEvent
-): Effect.Effect<void> {
+): Effect.Effect<void, never, Db> {
   if (!shouldTriggerCaseExport(event)) {
     return Effect.void;
   }

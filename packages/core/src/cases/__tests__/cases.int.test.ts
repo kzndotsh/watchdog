@@ -161,7 +161,7 @@ describe("deleteCase", () => {
     await runDomain(
       deleteCaseEffect(cased.id, { organizationId: TEST_ORGANIZATION_ID })
     );
-    const missing = await Effect.runPromise(
+    const missing = await runDomain(
       Effect.result(getCaseByIdEffect(cased.id, TEST_ORGANIZATION_ID))
     );
     expect(Result.isFailure(missing)).toBe(true);
