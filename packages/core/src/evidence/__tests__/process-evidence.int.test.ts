@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { updateCaseEffect } from "@watchdog/core/cases";
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import {
   confirmFileUploadEffect,
   enrichUrlEvidenceEffect,
@@ -108,7 +108,7 @@ describe("processEvidence", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
   });
 
@@ -154,7 +154,7 @@ describe("processEvidence", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -311,7 +311,7 @@ describe("processEvidence", () => {
         )
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -332,7 +332,7 @@ describe("processEvidence", () => {
         )
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 });

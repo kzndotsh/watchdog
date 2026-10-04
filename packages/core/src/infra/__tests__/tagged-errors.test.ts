@@ -1,24 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 
-import { DomainError } from "../domain-error";
-import {
-  fromDomainError,
-  InvalidError,
-  isDomainTag,
-  mapDomainCatch,
-  NotFoundError,
-} from "../tagged-errors";
+import { InvalidError, isDomainTag, mapDomainCatch } from "../tagged-errors";
 
 describe("tagged domain errors", () => {
-  it("maps DomainError codes 1:1", () => {
-    const mapped = fromDomainError(
-      new DomainError("not_found", "Credential WHOIS_API_KEY is not configured")
-    );
-    expect(mapped).toBeInstanceOf(NotFoundError);
-    expect(mapped._tag).toBe("NotFoundError");
-  });
-
   it.effect("yields as a typed failure inside Effect.gen", () =>
     Effect.gen(function* taggedYield() {
       const program = Effect.gen(function* taggedFail() {

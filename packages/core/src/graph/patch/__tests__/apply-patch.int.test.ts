@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import {
@@ -168,7 +168,7 @@ describe("applyPatch", () => {
           })
         )
       ).rejects.toSatisfy(
-        (error: unknown) => DomainError.is(error) && error.code === "conflict"
+        (error: unknown) => isDomainTag(error) && error.code === "conflict"
       );
       const rows = await entitiesRepo.listForCase(tx, cased.id);
       expect(rows.filter((row) => row.slug === "shared-slug")).toHaveLength(1);
@@ -655,7 +655,7 @@ describe("applyPatch", () => {
         )
       ).rejects.toSatisfy(
         (error: unknown) =>
-          DomainError.is(error) &&
+          isDomainTag(error) &&
           error.code === "invalid" &&
           /not in this Case/i.test(error.message)
       );
@@ -683,7 +683,7 @@ describe("applyPatch", () => {
         )
       ).rejects.toSatisfy(
         (error: unknown) =>
-          DomainError.is(error) &&
+          isDomainTag(error) &&
           error.code === "invalid" &&
           error.message === "One or more Evidence ids are invalid"
       );

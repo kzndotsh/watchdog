@@ -19,7 +19,7 @@ import {
   readArtifactBytesEffect,
   uploadArtifactEffect,
 } from "../../infra/blob";
-import { errorMessage } from "../../infra/domain-error";
+import { errorMessage } from "../../infra/error-utils";
 import { tryDb } from "../../infra/postgres-effect";
 import { logSwallowed } from "../../infra/process-log";
 import {

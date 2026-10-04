@@ -175,12 +175,12 @@ function handlePreflightStopEffect(
   });
 }
 
-function handlePreflightDomainErrorEffect(
+function handlePreflightFailureEffect(
   jobId: string,
   error: DomainTag,
   started: number
 ): Effect.Effect<JobRunOutcome> {
-  return Effect.gen(function* handlePreflightDomainErrorGen() {
+  return Effect.gen(function* handlePreflightFailureGen() {
     const row = yield* tryDb(() => jobsRepo.get(db, jobId)).pipe(Effect.orDie);
     const jobLog = createJobLog(row?.logs ?? []);
     if (row) {
@@ -540,7 +540,7 @@ export function executeJobEffect(
         )
       );
       if (Result.isFailure(preflight)) {
-        return yield* handlePreflightDomainErrorEffect(
+        return yield* handlePreflightFailureEffect(
           jobId,
           preflight.failure,
           started

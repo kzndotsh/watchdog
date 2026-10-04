@@ -11,7 +11,7 @@ export const appRuntime = ManagedRuntime.make(AppLive);
 
 /**
  * Run an application Effect. Maps `DomainTag` in `E` to oRPC errors before
- * `runPromise`, so handlers never see thrown `DomainError`.
+ * `runPromise`, so handlers only see transport errors.
  */
 export async function runApp<A>(
   effect: Effect.Effect<A, DomainTag>

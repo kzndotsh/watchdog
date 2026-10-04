@@ -57,7 +57,7 @@ function logFieldsFor(error: DomainTag) {
  * Body shape every mapped error carries in the oRPC `data` field: the stable
  * `code` (never renamed once released) next to the safe message.
  */
-export interface DomainErrorData {
+export interface ApiErrorData {
   readonly code: DomainTag["code"];
 }
 
@@ -69,27 +69,27 @@ export function toOrpcError(error: DomainTag) {
       NotFoundError: (tagged) =>
         new ORPCError("NOT_FOUND", {
           message: tagged.resource,
-          data: { code: tagged.code } satisfies DomainErrorData,
+          data: { code: tagged.code } satisfies ApiErrorData,
         }),
       ConflictError: (tagged) =>
         new ORPCError("CONFLICT", {
           message: tagged.reason,
-          data: { code: tagged.code } satisfies DomainErrorData,
+          data: { code: tagged.code } satisfies ApiErrorData,
         }),
       InvalidError: (tagged) =>
         new ORPCError("BAD_REQUEST", {
           message: tagged.reason,
-          data: { code: tagged.code } satisfies DomainErrorData,
+          data: { code: tagged.code } satisfies ApiErrorData,
         }),
       ForbiddenError: (tagged) =>
         new ORPCError("FORBIDDEN", {
           message: tagged.reason,
-          data: { code: tagged.code } satisfies DomainErrorData,
+          data: { code: tagged.code } satisfies ApiErrorData,
         }),
       InternalError: (tagged) =>
         new ORPCError("INTERNAL_SERVER_ERROR", {
           message: INTERNAL_ERROR_MESSAGE,
-          data: { code: tagged.code } satisfies DomainErrorData,
+          data: { code: tagged.code } satisfies ApiErrorData,
         }),
     })
   );

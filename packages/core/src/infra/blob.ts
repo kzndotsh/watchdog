@@ -14,7 +14,7 @@ import { Effect } from "effect";
 import { env } from "@watchdog/env/server";
 import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas/shared";
 
-import { errorMessage } from "./domain-error";
+import { errorMessage } from "./error-utils";
 import { InvalidError, type DomainTag } from "./tagged-errors";
 
 const PRESIGN_EXPIRES_IN = 900;

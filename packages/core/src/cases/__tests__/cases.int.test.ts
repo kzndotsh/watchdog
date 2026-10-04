@@ -9,7 +9,7 @@ import {
   getCaseBySlugEffect,
   updateCaseEffect,
 } from "@watchdog/core/cases";
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import { db, entitiesRepo } from "@watchdog/db";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
@@ -62,7 +62,7 @@ describe("createCase", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "conflict"
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
     );
   });
 
@@ -76,7 +76,7 @@ describe("createCase", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -90,7 +90,7 @@ describe("createCase", () => {
       )
     ).rejects.toSatisfy(
       (error: unknown) =>
-        DomainError.is(error) &&
+        isDomainTag(error) &&
         error.code === "invalid" &&
         error.message === "Name must contain letters or numbers"
     );
@@ -128,7 +128,7 @@ describe("updateCase", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "conflict"
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
     );
   });
 });
@@ -206,7 +206,7 @@ describe("deleteOrganizationCases", () => {
     await expect(
       runDomain(getCaseBySlugEffect("one", TEST_ORGANIZATION_ID))
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
     const kept = await runDomain(
       getCaseByIdEffect(survivor.id, otherOrganizationId)

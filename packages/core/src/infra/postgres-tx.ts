@@ -8,7 +8,7 @@ import type { DomainTag } from "./tagged-errors";
 /**
  * Rejection thrown from the driver's promise-based `db.transaction` callback
  * so the transaction rolls back. The typed `Cause` travels separately in a
- * closure variable, so the failure is never flattened to `Error`/`DomainError`
+ * closure variable, so the failure is never flattened to `Error`
  * and stays distinguishable from genuine driver errors.
  */
 class TxBodyFailureError extends Error {

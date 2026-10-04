@@ -20,7 +20,7 @@ function caseExists(id: string): Promise<boolean> {
   return casesRepo.getByIdUnchecked(db, id).then((row) => row !== null);
 }
 
-/** The tagged failure `transact` surfaces after its DomainError round trip. */
+/** The tagged failure `transact` surfaces, unchanged. */
 function failWith(error: DomainTag): Promise<DomainTag> {
   return Effect.runPromise(Effect.flip(transact(() => Effect.fail(error))));
 }

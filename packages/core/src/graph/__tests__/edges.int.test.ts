@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { createEdgeEffect, updateEdgeEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { db, evidenceLinksRepo } from "@watchdog/db";
@@ -36,7 +36,7 @@ describe("createEdge", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -63,7 +63,7 @@ describe("createEdge", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -227,7 +227,7 @@ describe("updateEdge", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -262,7 +262,7 @@ describe("updateEdge", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -333,7 +333,7 @@ describe("updateEdge", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 });

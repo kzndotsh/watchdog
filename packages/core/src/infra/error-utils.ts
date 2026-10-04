@@ -1,34 +1,3 @@
-export type DomainErrorCode =
-  | "not_found"
-  | "conflict"
-  | "invalid"
-  | "forbidden"
-  | "internal";
-
-const DOMAIN_ERROR_BRAND = Symbol.for("watchdog.DomainError");
-
-// Legacy throw-based bridge for tryDb / postgres drivers — not Effect TaggedError.
-// oxlint-disable-next-line effecttsgo/extends-native-error -- DomainError brand survives duplicate module instances
-export class DomainError extends Error {
-  /** Brand survives duplicate module instances, unlike `instanceof`. */
-  readonly [DOMAIN_ERROR_BRAND] = true;
-
-  readonly code: DomainErrorCode;
-
-  constructor(code: DomainErrorCode, message: string, cause?: unknown) {
-    super(message, cause === undefined ? undefined : { cause });
-    this.name = "DomainError";
-    this.code = code;
-  }
-
-  static is(error: unknown): error is DomainError {
-    return (
-      error instanceof Error &&
-      (error as Partial<DomainError>)[DOMAIN_ERROR_BRAND] === true
-    );
-  }
-}
-
 /** Extract a human-readable message from an unknown catch value. */
 export function errorMessage(error: unknown, fallback?: string): string {
   if (error instanceof Error) return error.message;

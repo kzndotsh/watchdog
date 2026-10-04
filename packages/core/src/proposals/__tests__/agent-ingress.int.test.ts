@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import { writeGraphFromAgentEffect } from "@watchdog/core/proposals";
 import { claimsRepo, db, evidenceRepo, graphWritesRepo } from "@watchdog/db";
@@ -98,7 +98,7 @@ describe("writeGraphFromAgent", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
 
     const rows = await graphWritesRepo.listForCase(db, cased.id);
@@ -126,7 +126,7 @@ describe("writeGraphFromAgent", () => {
       )
     ).rejects.toSatisfy(
       (error: unknown) =>
-        DomainError.is(error) &&
+        isDomainTag(error) &&
         error.code === "conflict" &&
         error.message.includes("already in use")
     );
@@ -154,7 +154,7 @@ describe("writeGraphFromAgent", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "conflict"
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
     );
   });
 

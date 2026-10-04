@@ -18,7 +18,7 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "./blob";
-import { errorMessage } from "./domain-error";
+import { errorMessage } from "./error-utils";
 import { renderCaseExportEffect } from "./export";
 import { logProcess, logSwallowed } from "./process-log";
 import { domainMessageOf } from "./tagged-errors";

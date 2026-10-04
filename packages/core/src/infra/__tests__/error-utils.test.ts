@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isUniqueViolation } from "../domain-error.ts";
+import { isUniqueViolation } from "../error-utils.ts";
 
 describe("isUniqueViolation", () => {
   it("matches a nested postgres unique violation by index name", () => {

@@ -7,7 +7,7 @@ import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { tryParsePatch } from "../../graph/patch/patch";
 import { readArtifactBytesEffect } from "../../infra/blob";
-import { errorMessage } from "../../infra/domain-error";
+import { errorMessage } from "../../infra/error-utils";
 import {
   domainMessageOf,
   InvalidError,

@@ -29,7 +29,7 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
-import { errorMessage } from "../infra/domain-error";
+import { errorMessage } from "../infra/error-utils";
 import {
   notifyEvidenceChangedEffect,
   notifyJobUpdateEffect,

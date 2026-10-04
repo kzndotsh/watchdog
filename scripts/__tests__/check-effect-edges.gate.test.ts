@@ -60,18 +60,6 @@ describe("check-effect-edges gate", () => {
     expect(res.output).toContain("must use { try, catch }");
   });
 
-  it("fails when production code throws DomainError", () => {
-    const repo = repoWith({
-      "packages/policy/src/bad.ts":
-        "export const f = () => { throw new DomainError('x'); };\n",
-    });
-
-    const res = repo.run(GATE, STRICT);
-
-    expect(res.code).toBe(1);
-    expect(res.output).toContain("throw DomainError");
-  });
-
   it("ignores tests and comment lines", () => {
     const repo = repoWith({
       "packages/core/src/__tests__/x.ts":

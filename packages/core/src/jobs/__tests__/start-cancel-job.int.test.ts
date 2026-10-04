@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { dumpUrlEffect } from "@watchdog/core/evidence";
 import { runDomain } from "@watchdog/core/infra";
 import {
@@ -85,7 +85,7 @@ describe("startJob", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -136,7 +136,7 @@ describe("startJob", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
   });
 });
@@ -158,7 +158,7 @@ describe("cancelJob", () => {
     await expect(
       runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, done.id))
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "conflict"
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
     );
   });
 });

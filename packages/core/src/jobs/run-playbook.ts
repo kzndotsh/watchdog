@@ -26,7 +26,7 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
-import { errorMessage } from "../infra/domain-error";
+import { errorMessage } from "../infra/error-utils";
 import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";

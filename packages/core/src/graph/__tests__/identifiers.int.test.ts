@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import {
   createIdentifierEffect,
   deleteIdentifierEffect,
@@ -38,7 +38,7 @@ describe("createIdentifier", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -111,7 +111,7 @@ describe("createIdentifier", () => {
     };
     await runDomain(createIdentifierEffect(input));
     await expect(runDomain(createIdentifierEffect(input))).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "conflict"
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
     );
   });
 });

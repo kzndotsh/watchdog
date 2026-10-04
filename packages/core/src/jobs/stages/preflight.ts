@@ -12,7 +12,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
-import { errorMessage } from "../../infra/domain-error";
+import { errorMessage } from "../../infra/error-utils";
 import { tryDb } from "../../infra/postgres-effect";
 import { logProcess } from "../../infra/process-log";
 import type { DomainTag } from "../../infra/tagged-errors";
