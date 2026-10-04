@@ -23,6 +23,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 - [`../GLOSSARY.md`](../GLOSSARY.md): product nouns, custody tiers and retired vocabulary (wins on product nouns; the agents gate reads its banned terms).
 - [`explanation/product.md`](explanation/product.md): intent, doctrine, personas, refuse list.
 - [`explanation/ux.md`](explanation/ux.md): how investigators experience the product.
+- [`adr/`](adr/0001-zod-at-the-boundary.md): decision records. ADR-0001: Zod is the boundary schema library.
 
 ## Reference: contracts
 
