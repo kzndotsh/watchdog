@@ -13,13 +13,13 @@
   },
   "dependencies": {
     "@better-auth/api-key": "catalog:",
-    "@better-auth/drizzle-adapter": "1.7.5",
+    "@better-auth/drizzle-adapter": "1.7.7",
     "@watchdog/db": "workspace:*",
     "@watchdog/env": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "better-auth": "catalog:",
-    "nodemailer": "^10.0.10",
+    "nodemailer": "^10.0.13",
     "zod": "catalog:"
   },
   "devDependencies": {
