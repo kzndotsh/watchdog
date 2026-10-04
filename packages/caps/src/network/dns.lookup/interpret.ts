@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { DnsRecords } from "@watchdog/tools";
+import type { DnsRecords } from "@watchdog/tools/dns";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

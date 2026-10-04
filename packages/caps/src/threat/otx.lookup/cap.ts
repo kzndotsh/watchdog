@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
-import { fetchOtxLookupEffect, otxLookupSnapshotSchema } from "@watchdog/tools";
+import {
+  fetchOtxLookupEffect,
+  otxLookupSnapshotSchema,
+} from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { otxLookupInput } from "./input";

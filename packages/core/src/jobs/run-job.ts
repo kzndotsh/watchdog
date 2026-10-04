@@ -15,7 +15,8 @@ import {
 import { capTimeoutMs } from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobRow } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas";
-import { isToolsTag, taggedToToolsError, type ToolsTag } from "@watchdog/tools";
+import { isToolsTag, taggedToToolsError } from "@watchdog/tools/errors";
+import type { ToolsTag } from "@watchdog/tools/errors";
 
 import { nowMillisEffect } from "../infra/clock";
 import { tryDb } from "../infra/postgres-effect";

@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { UrlscanLookupSnapshot } from "@watchdog/tools";
+import type { UrlscanLookupSnapshot } from "@watchdog/tools/network";
 
 import { withSeedHost } from "../../lib/collect/eligible-domain-hosts";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";

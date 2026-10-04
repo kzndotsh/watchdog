@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { GreynoiseLookupSnapshot } from "@watchdog/tools";
+import type { GreynoiseLookupSnapshot } from "@watchdog/tools/threat";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { ipSeedBatch } from "../../lib/collect/query-seed-batches";

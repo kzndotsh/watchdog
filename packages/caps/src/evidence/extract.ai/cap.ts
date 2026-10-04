@@ -11,7 +11,7 @@ import {
   trimmedOrUndefined,
   type EvidenceSnapshot,
 } from "@watchdog/schemas";
-import { ValidationVendorError } from "@watchdog/tools";
+import { ValidationVendorError } from "@watchdog/tools/errors";
 
 import { defineCapability, type CapContext } from "../../sdk";
 import {

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { EVIDENCE_HARVEST_CAPABILITY_ID } from "@watchdog/schemas";
-import { ValidationVendorError } from "@watchdog/tools";
+import { ValidationVendorError } from "@watchdog/tools/errors";
 
 import { defineCapability } from "../../sdk";
 import {

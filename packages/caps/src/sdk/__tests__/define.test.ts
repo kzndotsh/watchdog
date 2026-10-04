@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { hostSeedSchema } from "@watchdog/schemas";
-import { ValidationVendorError } from "@watchdog/tools";
+import { ValidationVendorError } from "@watchdog/tools/errors";
 
 import {
   DEFAULT_CAP_TIMEOUT_MS,

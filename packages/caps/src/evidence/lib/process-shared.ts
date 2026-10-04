@@ -12,7 +12,7 @@ import {
   trimmedOrUndefined,
   type EvidenceSnapshot,
 } from "@watchdog/schemas";
-import type { ToolsTag } from "@watchdog/tools";
+import type { ToolsTag } from "@watchdog/tools/errors";
 
 import type {
   CapArtifact,

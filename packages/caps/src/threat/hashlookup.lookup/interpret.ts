@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { HashlookupSnapshot } from "@watchdog/tools";
+import type { HashlookupSnapshot } from "@watchdog/tools/threat";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { hashSeedBatch } from "../../lib/collect/query-seed-batches";

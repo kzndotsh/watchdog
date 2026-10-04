@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { UrlscanSubmitSnapshot } from "@watchdog/tools";
+import type { UrlscanSubmitSnapshot } from "@watchdog/tools/network";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { urlSeedBatch } from "../../lib/collect/query-seed-batches";

@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchWaybackLookupEffect,
   waybackLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/wayback";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { waybackLookupInput } from "./input";

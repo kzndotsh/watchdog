@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { SafebrowsingLookupSnapshot } from "@watchdog/tools";
+import type { SafebrowsingLookupSnapshot } from "@watchdog/tools/threat";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { urlSeedBatch } from "../../lib/collect/query-seed-batches";

@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
+import { ValidationVendorError } from "@watchdog/tools/errors";
 import {
   fetchPageEnrichEffect,
-  ValidationVendorError,
   pageEnrichSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { pageEnrichInput } from "./input";

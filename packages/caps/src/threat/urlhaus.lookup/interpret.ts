@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { UrlhausLookupSnapshot } from "@watchdog/tools";
+import type { UrlhausLookupSnapshot } from "@watchdog/tools/threat";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import type { IdentifierBatch } from "../../lib/collect/interpret-identifier-batches";

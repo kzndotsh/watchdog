@@ -10,9 +10,9 @@ import type { EvidenceSnapshot } from "@watchdog/schemas";
 import {
   MissingCredentialError,
   ValidationVendorError,
-  toolsHttpClientLayer,
   type ToolsTag,
-} from "@watchdog/tools";
+} from "@watchdog/tools/errors";
+import { toolsHttpClientLayer } from "@watchdog/tools/http";
 
 import { packEvidenceSnapshotEffect } from "../../evidence/pack-evidence-snapshot";
 import {

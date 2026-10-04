@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { MailConfigSnapshot } from "@watchdog/tools";
+import type { MailConfigSnapshot } from "@watchdog/tools/dns";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";

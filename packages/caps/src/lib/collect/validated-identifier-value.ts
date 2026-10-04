@@ -2,7 +2,7 @@ import {
   validateIdentifierValue,
   type IdentifierType,
 } from "@watchdog/schemas";
-import { canonicalIpLiteral } from "@watchdog/tools";
+import { canonicalIpLiteral } from "@watchdog/tools/network";
 
 import { eligibleCtDomains } from "./eligible-domain-hosts";
 

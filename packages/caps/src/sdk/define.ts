@@ -10,7 +10,7 @@ import type {
   JsonValue,
   PatchOp,
 } from "@watchdog/schemas";
-import type { ToolsTag } from "@watchdog/tools";
+import type { ToolsTag } from "@watchdog/tools/errors";
 
 export interface CapArtifact {
   name: string;

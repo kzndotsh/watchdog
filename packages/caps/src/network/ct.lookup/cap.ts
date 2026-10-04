@@ -3,9 +3,9 @@ import { Effect } from "effect";
 import type { JobHandoff } from "@watchdog/schemas";
 import {
   fetchCrtShLookupEffect,
-  normalizeHost,
   ctLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/ct";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { eligibleHandoffHosts } from "../../lib/collect/query-seed-batches";

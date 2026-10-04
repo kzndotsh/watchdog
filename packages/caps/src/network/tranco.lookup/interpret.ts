@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { TrancoLookupSnapshot } from "@watchdog/tools";
+import type { TrancoLookupSnapshot } from "@watchdog/tools/network";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";

@@ -1,5 +1,5 @@
 import type { ProcessExtractDraft } from "@watchdog/ai";
-import type { FileAnalyzeSnapshot } from "@watchdog/tools";
+import type { FileAnalyzeSnapshot } from "@watchdog/tools/file";
 
 import { describeFilenameForensics } from "../lib/filename-forensics";
 

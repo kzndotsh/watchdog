@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
-import { analyzeEmlText, ValidationVendorError } from "@watchdog/tools";
+import { ValidationVendorError } from "@watchdog/tools/errors";
+import { analyzeEmlText } from "@watchdog/tools/file";
 
 import { defineCapability } from "../../sdk";
 import {

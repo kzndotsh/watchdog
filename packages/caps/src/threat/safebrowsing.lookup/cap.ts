@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchSafebrowsingLookupEffect,
   safebrowsingLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { safebrowsingLookupInput } from "./input";
