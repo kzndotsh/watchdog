@@ -48,6 +48,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | The schema never changes without a generated migration | db | `packages/db/AGENTS.md` Schema conventions | `check:migrations` (`scripts/check-migrations.mjs`) | enforced |
 | Migrations are generated with an explicit `--name`, and a released migration is never edited or renamed | db | `packages/db/AGENTS.md` Schema conventions | review | guidance |
 | Tracked `src` files stay at most 600 lines (baselined files may only shrink) | repo | `docs/contributing/ci-gates.md` Gates | `check:size` | baselined |
+| Every tagged error class ends in `Error`, declares a unique literal `code`, and is the only taxonomy for failures | repo | `docs/contributing/ci-gates.md` Gates | `check:tagged-errors:strict` | enforced |
 | Effect `run*` only at allowlisted edges; `tryPromise` uses `{ try, catch }` | repo | `docs/contributing/ci-gates.md` Gates | `check:effect-edges:strict` | enforced |
 | A workspace package never re-exports another workspace package (`export ... from "@watchdog/x"`, `export *`, import-then-export); callers import from the owner. Exempt: `@watchdog/ui/components/*` specifiers in the web `shared/ui/primitives/` and `shared/ui/toast.tsx` wrappers | repo | `docs/contributing/ci-gates.md` Gates | `check:workspace-reexports` (`scripts/check-workspace-reexports.mjs`) | enforced |
 | Effect language-service rules (unknown in catch, async function, try/catch in `Effect.gen`) | core, tools | `.agents/skills/effect/SKILL.md` | oxlint `effecttsgo/*` at warn level | baselined |

@@ -196,6 +196,10 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:effect-edges:strict
 
+      - name: Tagged error names and codes
+        if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:tagged-errors:strict
+
       - name: Workspace re-exports
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:workspace-reexports
