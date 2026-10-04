@@ -11,7 +11,7 @@
   "dependencies": {
     "@fontsource-variable/geist": "catalog:",
     "@fontsource-variable/geist-mono": "catalog:",
-    "astro": "^7.3.3",
+    "astro": "^7.3.5",
     "cn": "catalog:"
   },
   "devDependencies": {
