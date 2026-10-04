@@ -4,7 +4,7 @@ import {
   createCaseInputSchema,
   deleteCaseInputSchema,
   updateCaseInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 
 import { api, emit, emitList, emitOk, fail } from "../client";
 import { enrichCaseDisplay } from "../display";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 
 import { patchNeedsConfidence } from "../patch-needs-confidence.ts";
 

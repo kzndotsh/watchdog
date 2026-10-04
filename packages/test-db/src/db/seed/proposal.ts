@@ -1,5 +1,5 @@
 import { proposalsRepo, type DbExec, type NewProposal } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 
 export async function seedProposal(
   exec: DbExec,

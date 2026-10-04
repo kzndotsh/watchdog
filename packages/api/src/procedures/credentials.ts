@@ -8,7 +8,7 @@ import {
 import {
   deleteCredentialInputSchema,
   putCredentialInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/caps";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

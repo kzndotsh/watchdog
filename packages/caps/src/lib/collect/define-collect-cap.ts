@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import type { z } from "zod";
 
-import type { JsonValue } from "@watchdog/schemas";
+import type { JsonValue } from "@watchdog/schemas/shared";
 import type { ToolsTag } from "@watchdog/tools/errors";
 
 import {

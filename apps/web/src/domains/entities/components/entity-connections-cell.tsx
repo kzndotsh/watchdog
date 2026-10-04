@@ -21,8 +21,8 @@ import {
   entityDisplayLabel,
   edgePhraseValue,
   parseEdgePhraseValue,
-} from "@watchdog/schemas";
-import type { EdgeOrientation } from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
+import type { EdgeOrientation } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Popover,

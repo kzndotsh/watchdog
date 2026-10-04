@@ -1,11 +1,11 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 
+import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
   JobStatus,
   JsonObject,
-  PatchOp,
   EvidenceKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";

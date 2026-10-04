@@ -46,8 +46,8 @@ import {
   createClaimInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
-} from "@watchdog/schemas";
-import type { RetractKind } from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
+import type { RetractKind } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
 

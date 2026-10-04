@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { questionsRepo, type DbTx } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 
 import { tryDb } from "../../infra/postgres-effect";
 import {

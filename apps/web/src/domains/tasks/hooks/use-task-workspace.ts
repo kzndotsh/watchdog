@@ -39,8 +39,8 @@ import { toast } from "@/shared/ui/toast";
 import {
   taskDeleteInputSchema as deleteTaskInputSchema,
   taskReorderInputSchema as reorderTasksInputSchema,
-} from "@watchdog/schemas";
-import type { TaskStatus } from "@watchdog/schemas";
+} from "@watchdog/schemas/feed";
+import type { TaskStatus } from "@watchdog/schemas/shared";
 
 const EMPTY_TASKS: TaskRecord[] = [];
 const EMPTY_ENTITIES: EntityRecord[] = [];

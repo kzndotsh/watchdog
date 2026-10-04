@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { ipOrHostSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { ipOrHostSeedSchema } from "@watchdog/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const virusTotalLookupInput = z.object({
   query: ipOrHostSeedSchema.describe("IP or domain"),

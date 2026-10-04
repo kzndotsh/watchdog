@@ -1,6 +1,6 @@
 import { and, asc, eq, ilike, inArray, or } from "drizzle-orm";
 
-import type { IdentifierType } from "@watchdog/schemas";
+import type { IdentifierType } from "@watchdog/schemas/shared";
 import {
   CONFIDENCE_TIER_LABELS,
   CONFIDENCE_TIERS,
@@ -10,7 +10,7 @@ import {
   IDENTIFIER_TYPES,
   identifierPlatformSlugsMatchingSearch,
   normalizeUuidList,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

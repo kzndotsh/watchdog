@@ -6,7 +6,7 @@ import {
   acceptProposalInputSchema,
   listProposalsInputSchema,
   rejectProposalInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 export const listProposalsFn = createServerFn({ method: "GET" })
   .validator(listProposalsInputSchema)

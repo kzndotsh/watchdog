@@ -25,7 +25,7 @@ import { QueueHeader } from "@/shared/ui/queue-header";
 import { QueueShell } from "@/shared/ui/queue-shell";
 import { SplitView } from "@/shared/ui/split-view";
 import { TriageSplitPendingFallback } from "@/shared/ui/triage-split-pending-fallback";
-import type { ProposalStatus } from "@watchdog/schemas";
+import type { ProposalStatus } from "@watchdog/schemas/shared";
 
 function TriageQueueEmptyState({
   hasAnyProposals,

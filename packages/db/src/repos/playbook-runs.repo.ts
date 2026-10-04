@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 
-import type { PlaybookRunStatus } from "@watchdog/schemas";
+import type { PlaybookRunStatus } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { playbookRuns } from "../schema/playbook-runs";

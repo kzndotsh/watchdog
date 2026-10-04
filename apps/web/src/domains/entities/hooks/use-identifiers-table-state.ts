@@ -24,12 +24,12 @@ import { useDataTable } from "@/shared/ui/data-table";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { toast } from "@/shared/ui/toast";
 import { confidenceLabel, statusLabel } from "@/shared/ui/vocab";
-import { IDENTIFIER_TYPE_LABELS } from "@watchdog/schemas";
+import { IDENTIFIER_TYPE_LABELS } from "@watchdog/schemas/shared";
 import type {
   ConfidenceTier,
   IdentifierStatus,
   IdentifierType,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { useIdentifiersTableMutations } from "./use-identifiers-table-mutations";
 

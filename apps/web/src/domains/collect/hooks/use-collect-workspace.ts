@@ -36,11 +36,9 @@ import {
   invalidateAfterJobMutation,
 } from "@/shared/lib/query-invalidation";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import {
-  entitySearchHaystackMapFromRows,
-  entityTitleMapForJobInputs,
-  trimmedOrNull,
-} from "@watchdog/schemas";
+import { entitySearchHaystackMapFromRows } from "@watchdog/schemas/graph";
+import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
+import { trimmedOrNull } from "@watchdog/schemas/shared";
 
 import { useCollectQueueData } from "./use-collect-queue-data";
 

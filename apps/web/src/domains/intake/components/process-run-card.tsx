@@ -12,7 +12,7 @@ import { IdChip } from "@/shared/ui/id-chip";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { StatusInk, jobHeadlineLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { isLiveJobStatus } from "@watchdog/schemas";
+import { isLiveJobStatus } from "@watchdog/schemas/shared";
 import {
   Collapsible,
   CollapsibleContent,

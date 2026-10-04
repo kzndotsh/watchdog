@@ -28,8 +28,8 @@ import { toast } from "@/shared/ui/toast";
 import {
   edgeScopeInputSchema,
   createEntityInputSchema,
-} from "@watchdog/schemas";
-import type { EntityKind } from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
+import type { EntityKind } from "@watchdog/schemas/shared";
 
 interface UpdateEntityVars {
   entityId: string;

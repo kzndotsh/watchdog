@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas";
+import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas/jobs";
 import { testId } from "@watchdog/test-kit";
 import { http, HttpResponse, mockServer } from "@watchdog/test-kit/http";
 

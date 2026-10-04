@@ -16,7 +16,7 @@ import {
   taskReorderInputSchema,
   taskUpdateInputSchema,
   taskSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/feed";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { titleCase } from "@watchdog/schemas";
+import { titleCase } from "@watchdog/schemas/shared";
 
 import { artifactBodyFromContent } from "../artifact-body-from-content.ts";
 import { formatOpaqueId } from "../format-opaque-id.ts";

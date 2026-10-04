@@ -1,6 +1,6 @@
 import { jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import type { JsonObject, PlaybookRunStatus } from "@watchdog/schemas";
+import type { JsonObject, PlaybookRunStatus } from "@watchdog/schemas/shared";
 
 import { createdAt, timestamptz } from "./_helpers";
 import { cases } from "./cases";

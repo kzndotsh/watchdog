@@ -2,7 +2,7 @@ import type { ProcessExtractDraft } from "@watchdog/ai";
 import {
   normalizeIdentifierPlatform,
   type IdentifierType,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 import * as P from "./harvest-patterns";

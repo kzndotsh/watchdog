@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
-import type { TaskStatus } from "@watchdog/schemas";
+import type { TaskStatus } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 
 interface BaseProps {

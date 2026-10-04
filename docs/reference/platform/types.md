@@ -105,7 +105,7 @@ import {
   nonEmptyTrimmed,
   uuidListSchema,
   uuidSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export const createClaimInputSchema = z.object({
   caseId: uuidSchema,

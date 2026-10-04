@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { edgePhraseValue } from "@watchdog/schemas";
+import { edgePhraseValue } from "@watchdog/schemas/shared";
 
 import {
   clampEdgePhrase,

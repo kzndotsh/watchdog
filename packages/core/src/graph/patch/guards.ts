@@ -8,8 +8,8 @@ import {
   type DbExec,
 } from "@watchdog/db";
 import { confirmedEvidenceViolation } from "@watchdog/policy";
-import type { ConfidenceTier } from "@watchdog/schemas";
-import { parseTrimmedCaseId } from "@watchdog/schemas";
+import type { ConfidenceTier } from "@watchdog/schemas/shared";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { tryDb } from "../../infra/postgres-effect";
 import {

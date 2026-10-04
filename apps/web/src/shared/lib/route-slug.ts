@@ -1,4 +1,4 @@
-import { entitySlugSchema, nonEmptyTrimmed } from "@watchdog/schemas";
+import { entitySlugSchema, nonEmptyTrimmed } from "@watchdog/schemas/shared";
 
 /** Trim a route path segment; undefined when blank after trim. */
 export function normalizeRouteSegment(raw: string): string | undefined {

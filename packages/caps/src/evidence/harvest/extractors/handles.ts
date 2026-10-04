@@ -1,7 +1,7 @@
 import {
   normalizeIdentifierPlatform,
   resolveIdentifierPlatform,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { pushId } from "../harvest-helpers";
 import * as P from "../harvest-patterns";

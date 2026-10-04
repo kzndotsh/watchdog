@@ -2,7 +2,7 @@ import {
   isOpenJobStatus,
   type JobStatus,
   type JsonObject,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import {
   isPlanError,

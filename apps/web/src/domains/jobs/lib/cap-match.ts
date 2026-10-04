@@ -1,5 +1,5 @@
 import type { CapListItem } from "@/domains/jobs/types";
-import { isUuidString } from "@watchdog/schemas";
+import { isUuidString } from "@watchdog/schemas/shared";
 
 /** Jobs category label from Cap id first segment (`docs/reference/platform/caps-lexicon.md`). */
 const CAP_CATEGORY_LABELS: Record<string, string> = {

@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import { PgBoss } from "pg-boss";
 
 import { env } from "@watchdog/env/server";
-import { parseTrimmedCaseId } from "@watchdog/schemas";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { logProcess, logSwallowed } from "../infra/process-log";
 import { InternalError, InvalidError } from "../infra/tagged-errors";

@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { credentials } from "../schema/credentials";

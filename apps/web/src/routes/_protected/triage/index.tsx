@@ -10,7 +10,7 @@ import {
   optionalUuidSchema,
   optionalProposalStatusSchema,
   type ProposalStatus,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/triage/");
 

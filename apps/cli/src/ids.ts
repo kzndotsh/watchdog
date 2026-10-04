@@ -1,9 +1,8 @@
 import {
   caseScopeInputSchema,
-  entitySlugSchema,
   entitySlugScopeInputSchema,
-  parseTrimmedCaseId,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
+import { entitySlugSchema, parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { fail } from "./io";

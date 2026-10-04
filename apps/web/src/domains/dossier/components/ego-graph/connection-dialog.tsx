@@ -37,7 +37,7 @@ import {
   EDGE_PREDICATE_META,
   edgePhraseValue,
   parseEdgePhraseValue,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import {
   Field,
   FieldError,

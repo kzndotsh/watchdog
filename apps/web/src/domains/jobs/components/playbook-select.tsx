@@ -20,7 +20,8 @@ import {
   ComboboxSeparator,
 } from "@/shared/ui/primitives/combobox";
 import { capabilityLabel } from "@/shared/ui/vocab/capability";
-import { trimmedOrUndefined, capEgressLabel } from "@watchdog/schemas";
+import { capEgressLabel } from "@watchdog/schemas/caps";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 interface PlaybookSelectProps {
   playbooks: readonly PlaybookListItem[];

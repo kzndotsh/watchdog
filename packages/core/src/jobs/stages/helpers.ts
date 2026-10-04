@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
-import { parseGraphUuidList, parseTrimmedCaseId } from "@watchdog/schemas";
+import {
+  parseGraphUuidList,
+  parseTrimmedCaseId,
+} from "@watchdog/schemas/shared";
 
 import type { DomainTag } from "../../infra/tagged-errors";
 import { setJobStatusEffect } from "../set-job-status";

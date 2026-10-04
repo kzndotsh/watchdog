@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobHandoff } from "@watchdog/schemas";
+import type { JobHandoff } from "@watchdog/schemas/shared";
 import { ValidationVendorError } from "@watchdog/tools/errors";
 import { analyzeFileBytes } from "@watchdog/tools/file";
 

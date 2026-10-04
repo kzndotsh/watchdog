@@ -2,7 +2,7 @@ import { searchCaseEffect } from "@watchdog/core/search";
 import {
   searchCaseInputSchema,
   searchCaseResultSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

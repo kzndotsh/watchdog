@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import { nullableTrimmedPatchSchema } from "@watchdog/schemas";
+import { nullableTrimmedPatchSchema } from "@watchdog/schemas/shared";
 
 import { fail } from "./io";
 

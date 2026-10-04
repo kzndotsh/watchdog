@@ -13,7 +13,7 @@ import {
   patchOpVerbLabel,
   patchResourceLabel,
   type PatchOp,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 type Op = PatchOp["op"];
 type Resource = PatchOp["resource"];

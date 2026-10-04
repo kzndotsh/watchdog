@@ -1,5 +1,5 @@
 import type { CollectRow, CollectRun } from "@/domains/collect/types";
-import { PLAYBOOK_AGGREGATE_STATUS_PRIORITY } from "@watchdog/schemas";
+import { PLAYBOOK_AGGREGATE_STATUS_PRIORITY } from "@watchdog/schemas/shared";
 
 const OPEN_STEP_STATUS_PRIORITY = PLAYBOOK_AGGREGATE_STATUS_PRIORITY.slice(
   0,

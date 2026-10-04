@@ -2,7 +2,7 @@ import type {
   ConfidenceTier,
   EdgePredicate,
   EntityKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export interface EntityNodeData {
   label: string;

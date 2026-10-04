@@ -14,20 +14,22 @@ import {
 } from "@watchdog/db";
 import { isOneOf } from "@watchdog/policy";
 import {
-  IDENTIFIER_TYPES,
   edgePatchFingerprintKey,
   fingerprintPatchOp,
-  normalizeUuidList,
-  normalizeIdentifierPlatform,
   normalizeIdentifierTypeInput,
   normalizeIdentifierValue,
   patchOpEntityId,
   patchOpRelatedEntityIds,
+  type PatchOp,
+} from "@watchdog/schemas/graph";
+import {
+  IDENTIFIER_TYPES,
+  normalizeUuidList,
+  normalizeIdentifierPlatform,
   parseTrimmedCaseId,
   slugifyName,
   trimmedOrUndefined,
-  type PatchOp,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";

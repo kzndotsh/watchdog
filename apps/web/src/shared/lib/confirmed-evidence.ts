@@ -2,7 +2,7 @@ import {
   confirmedNeedsEvidence,
   type ConfirmedEvidenceInput,
 } from "@watchdog/policy/confirmed-evidence";
-import type { ConfidenceTier } from "@watchdog/schemas";
+import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 /**
  * Web adapter over the shared rule: counts a form's evidence ids (or takes a

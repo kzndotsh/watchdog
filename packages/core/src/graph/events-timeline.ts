@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { db, eventsRepo, type EventRow } from "@watchdog/db";
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";

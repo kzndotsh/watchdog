@@ -1,5 +1,5 @@
-import type { PlaybookSeedKind } from "@watchdog/schemas";
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
+import type { PlaybookSeedKind } from "@watchdog/schemas/shared";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 
 import type { PlaybookListItem } from "../types";
 

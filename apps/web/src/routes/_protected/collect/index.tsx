@@ -11,7 +11,7 @@ import {
   warmCollectCatalogQueries,
 } from "@/domains/collect/lib/prefetch-collect";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { optionalUuidSchema } from "@watchdog/schemas";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/collect/");
 

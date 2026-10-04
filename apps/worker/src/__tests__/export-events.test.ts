@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { WatchdogEvent } from "@watchdog/schemas";
+import type { WatchdogEvent } from "@watchdog/schemas/feed";
 
 const { scheduleCaseExportEffect } = vi.hoisted(() => ({
   scheduleCaseExportEffect: vi.fn(() => Effect.void),

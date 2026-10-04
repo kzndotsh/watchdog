@@ -1,6 +1,6 @@
 import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
-import type { ConfidenceTier, EdgePredicate } from "@watchdog/schemas";
+import type { ConfidenceTier, EdgePredicate } from "@watchdog/schemas/shared";
 
 import { timestamps } from "./_helpers";
 import { entities } from "./entities";

@@ -4,8 +4,8 @@ import {
   type GraphEdge,
   type GraphNode,
 } from "@/shared/ui/graph";
-import type { EntityKind } from "@watchdog/schemas";
-import { entityDisplayLabel } from "@watchdog/schemas";
+import type { EntityKind } from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 export type { GraphEdge, GraphNode } from "@/shared/ui/graph";
 

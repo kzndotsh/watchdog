@@ -3,12 +3,14 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
 import {
-  MAX_UPLOAD_BYTES,
   confirmFileUploadInputSchema,
-  mimeInputSchema,
   presignUploadInputSchema,
+} from "@watchdog/schemas/evidence";
+import {
+  MAX_UPLOAD_BYTES,
+  mimeInputSchema,
   sha256HexSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { fail } from "./io";

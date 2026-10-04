@@ -11,7 +11,7 @@ import {
   listClaimsInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";

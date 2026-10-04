@@ -1,6 +1,6 @@
 import { index, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import type { TaskPriority, TaskStatus } from "@watchdog/schemas";
+import type { TaskPriority, TaskStatus } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";

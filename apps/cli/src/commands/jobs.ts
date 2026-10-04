@@ -1,17 +1,16 @@
 import { defineCommand } from "citty";
 
+import { playbookSeedInputSchema } from "@watchdog/schemas/caps";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
   getJobInputSchema,
-  isJsonObject,
   jobInputObjectSchema,
   listJobsInputSchema,
-  playbookSeedInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-  trimmedOrUndefined,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
+import { isJsonObject, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, fail, truncText } from "../client";
 import {

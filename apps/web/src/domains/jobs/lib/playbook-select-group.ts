@@ -2,7 +2,7 @@ import type { PlaybookListItem } from "@/domains/jobs/types";
 import {
   PLAYBOOK_SEED_KIND_LABELS,
   isPlaybookSeedKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 function playbookSeedGroupLabelForKey(seed: string): string {
   return isPlaybookSeedKind(seed) ? PLAYBOOK_SEED_KIND_LABELS[seed] : seed;

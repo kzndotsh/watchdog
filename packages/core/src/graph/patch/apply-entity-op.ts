@@ -1,12 +1,12 @@
 import { Effect } from "effect";
 
 import { entitiesRepo, type DbTx } from "@watchdog/db";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   ENTITY_KINDS,
   trimmedOrNull,
   trimmedOrUndefined,
-  type PatchOp,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { tryDb } from "../../infra/postgres-effect";
 import {

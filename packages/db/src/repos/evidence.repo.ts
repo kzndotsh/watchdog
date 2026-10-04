@@ -10,14 +10,14 @@ import {
   or,
 } from "drizzle-orm";
 
-import type { EvidenceKind } from "@watchdog/schemas";
+import type { EvidenceKind } from "@watchdog/schemas/shared";
 import {
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   EVIDENCE_KIND_LABELS,
   EVIDENCE_KINDS,
   normalizeUuidList,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

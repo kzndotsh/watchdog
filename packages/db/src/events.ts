@@ -3,7 +3,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import postgres from "postgres";
 
 import { env } from "@watchdog/env/server";
-import type { WatchdogEvent } from "@watchdog/schemas";
+import type { WatchdogEvent } from "@watchdog/schemas/feed";
 
 import { client } from "./client";
 

@@ -8,14 +8,14 @@ import {
   type JobListRow,
   type JobRow,
 } from "@watchdog/db";
+import { evidenceIdsFromJobInputs } from "@watchdog/schemas/jobs";
 import {
-  evidenceIdsFromJobInputs,
   normalizeUuidList,
   trimmedOrUndefined,
   type JobStatus,
   type JsonObject,
   type PlaybookRunStatus,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import {

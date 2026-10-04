@@ -4,7 +4,7 @@ import {
   httpUrlSchema,
   optionalTrimmedSchema,
   optionalUuidSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export const waybackFetchInput = z.object({
   url: httpUrlSchema.describe("URL"),

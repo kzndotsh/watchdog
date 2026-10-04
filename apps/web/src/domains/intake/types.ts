@@ -7,11 +7,11 @@ import type {
   confirmFileUploadInputSchema,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-  evidenceScopeInputSchema,
   listEvidenceInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/evidence";
+import type { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 
 export type EvidenceRecord = CoreEvidenceRecord;
 

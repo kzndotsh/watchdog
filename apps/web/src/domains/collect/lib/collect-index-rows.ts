@@ -6,7 +6,7 @@ import {
 } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { parseTrimmedCaseId } from "@watchdog/schemas";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 export {
   buildEvidenceRow,

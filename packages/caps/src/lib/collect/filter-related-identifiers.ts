@@ -1,4 +1,4 @@
-import type { IdentifierType } from "@watchdog/schemas";
+import type { IdentifierType } from "@watchdog/schemas/shared";
 
 import { validatedIdentifierValue } from "./validated-identifier-value";
 

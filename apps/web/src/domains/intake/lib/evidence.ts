@@ -2,13 +2,13 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidencePrimaryLabel } from "@/shared/ui/intake/evidence-option";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
+import { evidenceTitleMapFromRows } from "@watchdog/schemas/evidence";
 import {
   ENRICHED_MD_ARTIFACT,
   evidenceTitleMapForJobInputs,
-  evidenceTitleMapFromRows,
-  isOpenJobStatus,
   type JobInputRecord,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
+import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
 const TEXT_MIME_PATTERN =
   /^(text\/|.*json.*|.*xml.*|.*html.*|.*yaml.*|.*javascript.*)/;

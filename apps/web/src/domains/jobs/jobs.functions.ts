@@ -10,7 +10,7 @@ import {
   listJobsInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 export type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 

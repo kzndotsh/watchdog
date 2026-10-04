@@ -9,7 +9,7 @@ import { searchJobHitLabel } from "@/domains/search/lib/hit-labels";
 import { proposalTitle } from "@/domains/triage/lib/filters";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import { entityTitleMapForJobInputs } from "@watchdog/schemas";
+import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
 
 export type ActivityKind = "evidence" | "job" | "proposal";
 

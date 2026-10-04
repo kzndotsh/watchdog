@@ -14,7 +14,7 @@ import {
   type EdgePredicate,
   type EntityKind,
   titleCase,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 /** Direction-aware display; unknown strings title-cased. */
 export function predicateLabel(

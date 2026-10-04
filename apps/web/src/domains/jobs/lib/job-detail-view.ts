@@ -8,11 +8,11 @@ import {
 } from "@/domains/jobs/lib/status";
 import { capabilityLabel } from "@/shared/ui/vocab";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import { summarizeJobInput } from "@watchdog/schemas/jobs";
 import {
   trimmedOrNull,
   type PlaybookRunStatus,
-  summarizeJobInput,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export type JobDetailTab = "log" | "input" | "output";
 

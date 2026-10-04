@@ -23,7 +23,7 @@ import {
   taskPriorityShortLabel,
 } from "@/shared/ui/vocab";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
-import { entityDisplayLabel } from "@watchdog/schemas";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 interface Props {
   task: TaskRecord;

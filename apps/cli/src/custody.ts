@@ -4,7 +4,7 @@ import { childWriteViolation } from "@watchdog/policy";
 import {
   trimmedConfidenceTierSchema,
   type ConfidenceTier,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { fail } from "./io";
 import { parseOptionalCliEnum } from "./parse-cli";

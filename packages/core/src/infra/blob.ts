@@ -12,7 +12,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Effect } from "effect";
 
 import { env } from "@watchdog/env/server";
-import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas";
+import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas/shared";
 
 import { errorMessage } from "./domain-error";
 import { InvalidError, type DomainTag } from "./tagged-errors";

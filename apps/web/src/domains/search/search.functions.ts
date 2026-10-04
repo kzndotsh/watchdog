@@ -4,7 +4,7 @@ import { orpcFromContext } from "@/lib/orpc.server";
 import {
   searchCaseInputSchema,
   type SearchCaseResult,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 
 export const searchCaseFn = createServerFn({ method: "GET" })
   .validator(searchCaseInputSchema)

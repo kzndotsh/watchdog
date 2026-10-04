@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { urlhausQuerySeedSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { urlhausQuerySeedSchema } from "@watchdog/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const urlhausLookupInput = z.object({
   query: urlhausQuerySeedSchema.describe(

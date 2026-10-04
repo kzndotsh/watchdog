@@ -5,9 +5,11 @@ import {
   createProposalInputSchema,
   listProposalsInputSchema,
   rejectProposalInputSchema,
+} from "@watchdog/schemas/jobs";
+import {
   trimmedConfidenceTierSchema,
   trimmedProposalStatusSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, emitOk, truncText } from "../client";
 import {

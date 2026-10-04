@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import type { EntityRecord } from "@/domains/entities/types";
 import { scopeCaseId } from "@/shared/lib/query-ingress";
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 
 /** Resolve entity-scoped invalidation opts for dossier detail + section lists. */
 export function entityChangedOpts(

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { breachQuerySeedSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { breachQuerySeedSchema } from "@watchdog/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const hudsonrockLookupInput = z.object({
   query: breachQuerySeedSchema.describe("Email, IP, or domain"),

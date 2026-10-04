@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 
 import type { DomainTag } from "../../infra/tagged-errors";
 import { suppressKnownFindingsEffect } from "../../proposals/finding-suppress";

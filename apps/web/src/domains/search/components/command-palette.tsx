@@ -25,10 +25,10 @@ import {
 } from "@/shared/ui/vocab";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import {
-  entityDisplayLabel,
   SEARCH_MIN_QUERY_LENGTH,
   type SearchCaseResult,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 import {
   Command,
   CommandDialog,

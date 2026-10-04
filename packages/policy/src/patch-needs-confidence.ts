@@ -1,4 +1,7 @@
-import { CONFIDENCE_GATED_RESOURCES, type PatchOp } from "@watchdog/schemas";
+import {
+  CONFIDENCE_GATED_RESOURCES,
+  type PatchOp,
+} from "@watchdog/schemas/graph";
 
 /** Resources where Inbox Accept must choose confidence. */
 export function patchNeedsConfidence(

@@ -4,7 +4,7 @@ import {
   TASK_STATUSES,
   TASK_STATUS_LABELS,
   type TaskStatus,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 /** Map task statuses onto existing `--status-*` token tones. */
 export const TASK_STATUS_TONE_MAP: Record<TaskStatus, DisplayStatus> = {

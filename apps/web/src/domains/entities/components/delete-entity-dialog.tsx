@@ -8,7 +8,8 @@ import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 import { toast } from "@/shared/ui/toast";
-import { entityDisplayLabel, deleteEntityInputSchema } from "@watchdog/schemas";
+import { deleteEntityInputSchema } from "@watchdog/schemas/graph";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 export function DeleteEntityDialog({
   caseId,

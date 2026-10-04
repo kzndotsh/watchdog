@@ -7,13 +7,13 @@ import {
   type DbTx,
   type EvidenceRow,
 } from "@watchdog/db";
-import type { EvidenceKind } from "@watchdog/schemas";
+import type { EvidenceKind } from "@watchdog/schemas/shared";
 import {
   parseGraphUuidList,
   parseTrimmedCaseId,
   trimmedOrNull,
   trimmedOrUndefined,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";

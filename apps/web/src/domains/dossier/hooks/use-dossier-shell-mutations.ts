@@ -20,7 +20,7 @@ import { toast } from "@/shared/ui/toast";
 import {
   isProposalQueueLiveEvent,
   type WatchdogEvent,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/feed";
 
 function handleDossierLiveEvent(
   queryClient: QueryClient,

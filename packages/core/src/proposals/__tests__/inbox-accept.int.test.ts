@@ -18,7 +18,8 @@ import {
   proposals,
   proposalsRepo,
 } from "@watchdog/db";
-import { fingerprintPatchOp, entityDisplayLabel } from "@watchdog/schemas";
+import { fingerprintPatchOp } from "@watchdog/schemas/graph";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
   buildIdentifierCreateOp,

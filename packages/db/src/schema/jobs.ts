@@ -10,7 +10,11 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { JobHandoff, JobStatus, JsonObject } from "@watchdog/schemas";
+import type {
+  JobHandoff,
+  JobStatus,
+  JsonObject,
+} from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";

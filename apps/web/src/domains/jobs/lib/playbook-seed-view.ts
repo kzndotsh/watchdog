@@ -1,4 +1,5 @@
-import { trimmedOrUndefined, capEgressLabel } from "@watchdog/schemas";
+import { capEgressLabel } from "@watchdog/schemas/caps";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { PlaybookListItem } from "../types";
 import {

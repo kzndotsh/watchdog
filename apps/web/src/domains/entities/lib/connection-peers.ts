@@ -3,8 +3,8 @@ import type {
   EdgeDirection,
   EdgePredicate,
   EntityKind,
-} from "@watchdog/schemas";
-import { entityDisplayLabel } from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 export interface EntityConnectionPeer {
   edgeId: string;

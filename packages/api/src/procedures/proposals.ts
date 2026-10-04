@@ -11,7 +11,7 @@ import {
   createProposalInputSchema,
   listProposalsInputSchema,
   rejectProposalInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

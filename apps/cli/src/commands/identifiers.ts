@@ -4,13 +4,15 @@ import {
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,
   entityScopeInputSchema,
+  updateIdentifierInputSchema,
+} from "@watchdog/schemas/graph";
+import {
   optionalIdentifierStatusSchema,
   optionalIdentifierTypeSchema,
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
-  updateIdentifierInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail } from "../client";
 import {

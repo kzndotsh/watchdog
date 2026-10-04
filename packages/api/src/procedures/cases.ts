@@ -11,7 +11,7 @@ import {
   createCaseInputSchema,
   deleteCaseInputSchema,
   updateCaseInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

@@ -1,4 +1,4 @@
-import { entityDisplayLabel } from "@watchdog/schemas";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 import type { PageTrailInput, TrailItem, TrailTo } from "./page-trail.types";
 

@@ -16,9 +16,9 @@ import {
 } from "@/shared/lib/query-invalidation";
 import {
   attachEvidenceEntityInputSchema,
-  evidenceScopeInputSchema,
   processEvidenceInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/evidence";
+import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 
 type IntakePending = null | {
   kind: "harvest" | "extract" | "enrich";

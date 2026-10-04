@@ -7,17 +7,14 @@ import {
   type IdentifierListRow,
   type IdentifierRow,
 } from "@watchdog/db";
+import { validateIdentifierWrite } from "@watchdog/schemas/graph";
 import type {
   ConfidenceTier,
   EntityKind,
   IdentifierStatus,
   IdentifierType,
-} from "@watchdog/schemas";
-import {
-  normalizeUuidList,
-  trimmedOrNull,
-  validateIdentifierWrite,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
+import { normalizeUuidList, trimmedOrNull } from "@watchdog/schemas/shared";
 
 import {
   assertEvidenceIdsInCaseEffect,

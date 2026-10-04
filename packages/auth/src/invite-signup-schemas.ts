@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { nonEmptyTrimmed, trimmedUuidSchema } from "@watchdog/schemas";
+import { nonEmptyTrimmed, trimmedUuidSchema } from "@watchdog/schemas/shared";
 
 export const invitationPreviewSchema = z.object({
   id: trimmedUuidSchema,

@@ -3,11 +3,11 @@ import { defineCommand } from "citty";
 import {
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-  evidenceScopeInputSchema,
   listEvidenceInputSchema,
-  nonEmptyTrimmed,
   processEvidenceInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/evidence";
+import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
+import { nonEmptyTrimmed } from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import {

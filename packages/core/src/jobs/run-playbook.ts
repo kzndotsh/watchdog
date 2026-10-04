@@ -12,7 +12,7 @@ import {
   type SeedValues,
 } from "@watchdog/caps";
 import { casesRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import {

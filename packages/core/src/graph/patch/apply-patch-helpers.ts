@@ -6,7 +6,7 @@ import {
   requireString as requireStringPolicy,
   requireUuid as requireUuidPolicy,
 } from "@watchdog/policy";
-import type { JsonValue } from "@watchdog/schemas";
+import type { JsonValue } from "@watchdog/schemas/shared";
 
 import { errorMessage } from "../../infra/domain-error";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";

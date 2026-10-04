@@ -1,6 +1,9 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { normalizeUuidList, parseGraphUuidList } from "@watchdog/schemas";
+import {
+  normalizeUuidList,
+  parseGraphUuidList,
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import {

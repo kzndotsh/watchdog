@@ -1,7 +1,7 @@
 import { Cause, Clock, Effect, Result } from "effect";
 
 import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
-import { isOpenJobStatus } from "@watchdog/schemas";
+import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
 import { errorMessage } from "../infra/domain-error";
 import { tryDb } from "../infra/postgres-effect";

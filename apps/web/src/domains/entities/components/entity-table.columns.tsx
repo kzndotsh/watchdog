@@ -31,7 +31,7 @@ import {
   entityDisplayLabel,
   trimmedEntityKindSchema,
   type EntityKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRecord> = (
   row,

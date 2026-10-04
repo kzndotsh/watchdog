@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { patchSchema } from "@watchdog/schemas";
+import { patchSchema } from "@watchdog/schemas/graph";
 
 import { fail } from "./io";
 import { hasCliText } from "./noun";

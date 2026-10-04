@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CONFIDENCE_TIERS } from "@watchdog/schemas";
+import { CONFIDENCE_TIERS } from "@watchdog/schemas/shared";
 
 import {
   CONFIRMED_REQUIRES_EVIDENCE,

@@ -1,4 +1,4 @@
-import { slugifyName as schemaSlugifyName } from "@watchdog/schemas";
+import { slugifyName as schemaSlugifyName } from "@watchdog/schemas/shared";
 
 export { cn } from "cn";
 

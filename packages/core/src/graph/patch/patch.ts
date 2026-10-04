@@ -1,4 +1,4 @@
-import { patchSchema, type PatchOp } from "@watchdog/schemas";
+import { patchSchema, type PatchOp } from "@watchdog/schemas/graph";
 
 export function parsePatch(raw: unknown): PatchOp[] {
   return patchSchema.parse(raw);

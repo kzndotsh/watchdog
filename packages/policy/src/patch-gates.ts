@@ -1,5 +1,6 @@
 import { Data, Effect } from "effect";
 
+import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
 import {
   CLAIM_CLASSES,
   EDGE_PREDICATES,
@@ -9,11 +10,9 @@ import {
   parseGraphUuidList,
   entitySlugSchema,
   trimmedUuidSchema,
-  validateIdentifierWrite,
   type ConfidenceTier,
   type JsonValue,
-  type PatchOp,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { confirmedEvidenceViolation } from "./confirmed-evidence";
 import { patchNeedsConfidence } from "./patch-needs-confidence";

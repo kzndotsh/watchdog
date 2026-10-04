@@ -8,7 +8,7 @@ import {
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type { QuestionRecord } from "@/domains/entities/questions/types";
 

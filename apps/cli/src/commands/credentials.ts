@@ -3,10 +3,10 @@ import { readFileSync } from "node:fs";
 import { defineCommand } from "citty";
 
 import {
-  credentialNameSchema,
   deleteCredentialInputSchema,
   putCredentialInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/caps";
+import { credentialNameSchema } from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail } from "../client";
 import { withExamples } from "../examples";

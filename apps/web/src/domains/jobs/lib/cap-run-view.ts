@@ -1,7 +1,7 @@
 import {
   parseOptionalTrimmedUuid,
   trimmedOrUndefined,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { CapListItem } from "../types";
 import { capPrimaryField, type CapPrimaryField } from "./cap-run-input";

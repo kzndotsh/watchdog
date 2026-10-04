@@ -14,7 +14,8 @@ import { Data, Effect, Fiber, SynchronizedRef } from "effect";
 
 import type { EvidenceRow } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
-import { evidenceDisplayLabel, parseTrimmedCaseId } from "@watchdog/schemas";
+import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "./blob";
 import { errorMessage } from "./domain-error";

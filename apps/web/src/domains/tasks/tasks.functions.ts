@@ -8,7 +8,7 @@ import {
   taskReorderInputSchema as reorderTasksInputSchema,
   taskFiltersSchema,
   taskUpdateInputSchema as updateTaskInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/feed";
 
 export const listTasksFn = createServerFn({ method: "GET" })
   .validator(taskFiltersSchema)

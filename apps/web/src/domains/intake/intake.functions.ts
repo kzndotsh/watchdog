@@ -7,11 +7,11 @@ import {
   confirmFileUploadInputSchema,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-  evidenceScopeInputSchema,
   listEvidenceInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/evidence";
+import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 
 export const getEvidenceDownloadUrlFn = createServerFn({ method: "GET" })
   .validator(evidenceScopeInputSchema)

@@ -49,13 +49,15 @@ import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { toast } from "@/shared/ui/toast";
 import {
+  createIdentifierInputSchema,
+  HANDLE_REQUIRES_PLATFORM,
+} from "@watchdog/schemas/graph";
+import {
   normalizeIdentifierPlatform,
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
-  createIdentifierInputSchema,
-  HANDLE_REQUIRES_PLATFORM,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 
 export type IdentifiersSectionProps = DossierSectionWithEvidenceProps & {

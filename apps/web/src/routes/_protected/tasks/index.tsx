@@ -6,7 +6,7 @@ import { casesContextQuery } from "@/domains/cases/queries";
 import { TasksPage } from "@/domains/tasks/components/tasks-page";
 import { warmTasksQueries } from "@/domains/tasks/lib/prefetch-tasks";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { optionalUuidSchema } from "@watchdog/schemas";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/tasks/");
 

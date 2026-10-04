@@ -5,12 +5,12 @@ import type {
 import {
   createIdentifierInputSchema,
   updateIdentifierInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 import type {
   ConfidenceTier,
   IdentifierStatus,
   IdentifierType,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export interface CreateIdentifierPatch {
   entityId: string;

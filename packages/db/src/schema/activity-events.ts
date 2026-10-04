@@ -1,6 +1,6 @@
 import { index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import type { ActivityKind } from "@watchdog/schemas";
+import type { ActivityKind } from "@watchdog/schemas/feed";
 
 import { createdAt } from "./_helpers";
 import { cases } from "./cases";

@@ -15,7 +15,7 @@ import {
   trimmedOrUndefined,
   type TaskPriority,
   type TaskStatus,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
 import {

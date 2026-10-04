@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { db, graphWritesRepo, type GraphWriteRow } from "@watchdog/db";
-import { trimmedOrNull } from "@watchdog/schemas";
+import { trimmedOrNull } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";

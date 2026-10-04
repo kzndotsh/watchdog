@@ -10,7 +10,7 @@ import {
   type TaskFormValues,
 } from "@/domains/tasks/lib/task-form";
 import type { TaskRecord } from "@/domains/tasks/types";
-import type { TaskStatus } from "@watchdog/schemas";
+import type { TaskStatus } from "@watchdog/schemas/shared";
 
 interface TaskFormDialogCoreProps {
   open: boolean;

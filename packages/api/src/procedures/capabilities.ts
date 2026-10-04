@@ -4,7 +4,10 @@ import {
   listCapabilitiesEffect,
   listPlaybookDescriptorsEffect,
 } from "@watchdog/core/caps";
-import { jsonObjectSchema, PLAYBOOK_SEED_KINDS } from "@watchdog/schemas";
+import {
+  jsonObjectSchema,
+  PLAYBOOK_SEED_KINDS,
+} from "@watchdog/schemas/shared";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

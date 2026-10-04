@@ -19,7 +19,7 @@ import {
 import { Button } from "@/shared/ui/primitives/button";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { CredentialSlot } from "@watchdog/core/vault";
-import { putCredentialInputSchema } from "@watchdog/schemas";
+import { putCredentialInputSchema } from "@watchdog/schemas/caps";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import {
   InputGroup,

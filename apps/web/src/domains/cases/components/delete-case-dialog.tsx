@@ -8,7 +8,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
-import { deleteCaseInputSchema } from "@watchdog/schemas";
+import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
 
 export function DeleteCaseDialog({
   caseRow,

@@ -1,6 +1,7 @@
 import { proposalPatch } from "@/domains/triage/lib/filters";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import { normalizeUuidList, type PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 export { evidenceLabel } from "@/shared/ui/intake/evidence-option";
 

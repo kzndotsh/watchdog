@@ -14,7 +14,7 @@ import {
   type IdentifierPasteTarget,
 } from "@/domains/entities/lib/parse-identifier-paste";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import { normalizeIdentifierPlatform } from "@watchdog/schemas";
+import { normalizeIdentifierPlatform } from "@watchdog/schemas/shared";
 
 export type BulkAddIdentifiersStage = "paste" | "map";
 

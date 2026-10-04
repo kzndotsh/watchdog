@@ -13,6 +13,14 @@ import {
   type JobWithPlaybook,
   type ProposalWithCapability,
 } from "@watchdog/db";
+import { SEARCH_MIN_QUERY_LENGTH } from "@watchdog/schemas/cases";
+import {
+  entityIdsFromJobInputs,
+  entityTitleMapForJobInputs,
+  evidenceIdsFromJobInputs,
+  evidenceTitleMapForJobInputs,
+  proposalEntityName,
+} from "@watchdog/schemas/jobs";
 import type {
   EntityKind,
   EvidenceKind,
@@ -21,18 +29,12 @@ import type {
   JsonObject,
   TaskPriority,
   TaskStatus,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import {
   entityDisplayLabel,
-  entityIdsFromJobInputs,
-  entityTitleMapForJobInputs,
-  evidenceIdsFromJobInputs,
-  evidenceTitleMapForJobInputs,
   pickPlaybookAggregateStatus,
   parseTrimmedCaseId,
-  proposalEntityName,
-  SEARCH_MIN_QUERY_LENGTH,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { getCaseByIdEffect } from "../cases/cases";
 import {

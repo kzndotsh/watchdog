@@ -8,7 +8,7 @@ import {
   trimmedClaimClassSchema,
   type ClaimClass,
   CLAIM_CLASS_LABELS,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import {
   Select,
   SelectContent,

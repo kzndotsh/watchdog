@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { httpUrlSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { httpUrlSchema, optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const urlUnshortenInput = z.object({
   url: httpUrlSchema.describe("URL"),

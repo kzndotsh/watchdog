@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import { testId } from "@watchdog/test-kit";
 
 const { suppressKnownFindingsEffect } = vi.hoisted(() => ({

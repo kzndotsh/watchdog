@@ -4,14 +4,16 @@ import {
   processExtractDraftSchema,
   type ProcessExtractDraft,
 } from "@watchdog/ai";
+import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import {
   DERIVED_JSON_ARTIFACT,
   EVIDENCE_SNAPSHOT_ARTIFACT,
   REPORT_JSON_ARTIFACT,
+} from "@watchdog/schemas/jobs";
+import {
   parseTrimmedCaseId,
   trimmedOrUndefined,
-  type EvidenceSnapshot,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import type { ToolsTag } from "@watchdog/tools/errors";
 
 import type {

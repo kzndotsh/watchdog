@@ -13,7 +13,7 @@ import {
   deleteEntityInputSchema,
   entitySlugScopeInputSchema,
   updateEntityInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

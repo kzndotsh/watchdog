@@ -17,7 +17,7 @@ import {
   ComboboxList,
   ComboboxSeparator,
 } from "@/shared/ui/primitives/combobox";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 interface CapCapabilitySelectProps {
   caps: readonly CapListItem[];

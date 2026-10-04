@@ -1,4 +1,4 @@
-import type { ConfidenceTier, EntityKind } from "@watchdog/schemas";
+import type { ConfidenceTier, EntityKind } from "@watchdog/schemas/shared";
 
 /** Stroke color for canvas edges — greenfield tiers only (no probable). */
 export function confidenceStroke(confidence: ConfidenceTier): string {

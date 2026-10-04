@@ -4,7 +4,7 @@ import { orpcFromContext } from "@/lib/orpc.server";
 import {
   listRecentActivityInputSchema,
   type ActivityItem,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/feed";
 
 export const listRecentActivityFn = createServerFn({ method: "GET" })
   .validator(listRecentActivityInputSchema)

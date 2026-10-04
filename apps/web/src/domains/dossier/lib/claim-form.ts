@@ -3,7 +3,7 @@ import { formOptions } from "@tanstack/react-form";
 import type { ClaimRecord } from "@/domains/entities/claims/claims.functions";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
-import type { ClaimClass, ConfidenceTier } from "@watchdog/schemas";
+import type { ClaimClass, ConfidenceTier } from "@watchdog/schemas/shared";
 
 export interface ClaimFormValues {
   text: string;

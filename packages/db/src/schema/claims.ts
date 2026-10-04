@@ -4,7 +4,7 @@ import type {
   ClaimClass,
   ConfidenceTier,
   RetractKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { entities } from "./entities";

@@ -25,7 +25,8 @@ import {
   initWatchdogLogger,
   jobWideEventFields,
 } from "@watchdog/log";
-import { isWatchdogEvent, trimmedUuidSchema } from "@watchdog/schemas";
+import { isWatchdogEvent } from "@watchdog/schemas/feed";
+import { trimmedUuidSchema } from "@watchdog/schemas/shared";
 
 import { cancelPollLoopEffect } from "./cancel-poll";
 import {

@@ -4,7 +4,7 @@ import {
   ENTITY_KIND_LABELS,
   entityDisplayLabel,
   slugifyName,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 /** Map case entities to combobox options — always pass slug for display fallbacks. */
 export function entityOptionsFromRecords(

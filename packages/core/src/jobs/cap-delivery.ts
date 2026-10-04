@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { db, jobsRepo } from "@watchdog/db";
-import { isOpenJobStatus, parseTrimmedCaseId } from "@watchdog/schemas";
+import { isOpenJobStatus, parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";

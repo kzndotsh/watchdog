@@ -8,7 +8,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_REALTIME, STALE_REALTIME } from "@/shared/lib/query-stale";
-import type { ProposalStatus } from "@watchdog/schemas";
+import type { ProposalStatus } from "@watchdog/schemas/shared";
 
 export const proposalsKeys = {
   all: (caseId: string) => ["proposals", caseId] as const,

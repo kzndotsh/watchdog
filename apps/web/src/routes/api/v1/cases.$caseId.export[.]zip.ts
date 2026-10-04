@@ -14,8 +14,8 @@ import { renderCaseExportEffect } from "@watchdog/core/export";
  * Downloads a zip of all entity markdown files + evidence for the Case.
  * Auth: session cookie or API key.
  */
-import { evidenceDisplayLabel } from "@watchdog/schemas";
-import type { EvidenceKind } from "@watchdog/schemas";
+import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
+import type { EvidenceKind } from "@watchdog/schemas/shared";
 
 function safeFilename(label: string): string {
   return (

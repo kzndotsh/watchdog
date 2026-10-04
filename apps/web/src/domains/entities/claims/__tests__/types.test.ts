@@ -5,7 +5,7 @@ import {
   listClaimsInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
 const ENTITY_ID = "660e8400-e29b-41d4-a716-446655440001";

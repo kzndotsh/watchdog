@@ -13,7 +13,7 @@ import {
   type ConfidenceTier,
   type EdgePredicate,
   type EntityKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { tryDb } from "../infra/postgres-effect";
 import {

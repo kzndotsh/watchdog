@@ -49,7 +49,7 @@ import {
   identifierPlatformSearchHaystack,
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export const identifiersGlobalFilterFn: FilterFn<
   DataTableFeatures,

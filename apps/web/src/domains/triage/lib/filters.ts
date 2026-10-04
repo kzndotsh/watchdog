@@ -7,16 +7,17 @@ import {
   statusLabel,
 } from "@/shared/ui/vocab";
 import type { ProposalRecord } from "@watchdog/core/proposals";
+import { catalogIdMatchesSearch } from "@watchdog/schemas/cases";
 import {
-  catalogIdMatchesSearch,
   patchOpHeadline,
   patchOpSearchText,
+  type PatchOp,
+} from "@watchdog/schemas/graph";
+import {
   proposalEntityName as coreProposalEntityName,
   proposalEntitySlug as coreProposalEntitySlug,
-  slugifyName,
-  type PatchOp,
-  type ProposalStatus,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
+import { slugifyName, type ProposalStatus } from "@watchdog/schemas/shared";
 
 export interface TriageQueueFilters {
   q: string;

@@ -32,7 +32,7 @@ import {
 } from "@/domains/tasks/lib/task-board-dnd";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
 import { taskStatusLabel } from "@/shared/ui/vocab";
-import { TASK_STATUSES, type TaskStatus } from "@watchdog/schemas";
+import { TASK_STATUSES, type TaskStatus } from "@watchdog/schemas/shared";
 
 const boardCollisionDetection: CollisionDetection = (args) => {
   const pointerHits = pointerWithin(args);

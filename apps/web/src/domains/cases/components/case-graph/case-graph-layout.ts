@@ -2,8 +2,8 @@ import type {
   ConfidenceTier,
   EdgePredicate,
   EntityKind,
-} from "@watchdog/schemas";
-import { entityDisplayLabel } from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 import {
   GRAPH_NODE_HEIGHT,

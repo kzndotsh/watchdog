@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createEventInputSchema,
   updateEventInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 import { testId } from "@watchdog/test-kit";
 
 describe("events types schemas", () => {

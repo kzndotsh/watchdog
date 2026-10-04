@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
 import { capCacheRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import {
   backdateJob,
   resetTestDb,

@@ -33,7 +33,7 @@ import {
   trimmedEntityKindSchema,
   ENTITY_KINDS,
   ENTITY_KIND_LABELS,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,

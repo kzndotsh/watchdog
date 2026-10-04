@@ -1,8 +1,8 @@
+import { listEvidenceInputSchema } from "@watchdog/schemas/evidence";
 import {
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
-  listEvidenceInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 import { api } from "./client";
 import { entityTitlesForJobs } from "./job-entity-titles";

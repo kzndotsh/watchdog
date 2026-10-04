@@ -31,7 +31,7 @@ import {
   createEventInputSchema,
   eventScopeInputSchema,
   updateEventInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 import { Calendar } from "@watchdog/ui/components/calendar";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";

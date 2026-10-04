@@ -2,7 +2,7 @@ import {
   actorLabelForPersist,
   storedApiKeyActorLabel,
 } from "@watchdog/core/actors";
-import type { ApiActor } from "@watchdog/schemas";
+import type { ApiActor } from "@watchdog/schemas/shared";
 
 export function actorLabelFromActor(actor: ApiActor): string | undefined {
   const label = storedApiKeyActorLabel(actor.name);

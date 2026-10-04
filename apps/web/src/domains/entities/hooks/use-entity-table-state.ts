@@ -28,8 +28,8 @@ import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { useDataTable } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { toast } from "@/shared/ui/toast";
-import { ENTITY_KIND_LABELS } from "@watchdog/schemas";
-import type { EntityKind } from "@watchdog/schemas";
+import { ENTITY_KIND_LABELS } from "@watchdog/schemas/shared";
+import type { EntityKind } from "@watchdog/schemas/shared";
 
 import type { useEntityTableMutations } from "./use-entity-table-mutations";
 

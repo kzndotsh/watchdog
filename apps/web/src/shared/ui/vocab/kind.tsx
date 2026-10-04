@@ -14,8 +14,11 @@ import {
   kindBadgeTone,
   type KindValue,
 } from "@/shared/ui/vocab/kind.lib";
-import { CLAIM_CLASS_LABELS, ENTITY_KIND_LABELS } from "@watchdog/schemas";
-import type { ClaimClass, EntityKind } from "@watchdog/schemas";
+import {
+  CLAIM_CLASS_LABELS,
+  ENTITY_KIND_LABELS,
+} from "@watchdog/schemas/shared";
+import type { ClaimClass, EntityKind } from "@watchdog/schemas/shared";
 
 /** Kind glyph for person / org / infra. */
 export function EntityKindIcon({

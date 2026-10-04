@@ -4,10 +4,10 @@ import {
 } from "@/domains/intake/intake.functions";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import {
-  MAX_UPLOAD_BYTES,
   confirmFileUploadInputSchema,
   presignUploadInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/evidence";
+import { MAX_UPLOAD_BYTES } from "@watchdog/schemas/shared";
 
 function sha256HexFile(file: File): Promise<string> {
   return file

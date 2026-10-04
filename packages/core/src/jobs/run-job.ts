@@ -14,7 +14,7 @@ import {
 
 import { capTimeoutMs } from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobRow } from "@watchdog/db";
-import { isOpenJobStatus } from "@watchdog/schemas";
+import { isOpenJobStatus } from "@watchdog/schemas/shared";
 import { isToolsTag, taggedToToolsError } from "@watchdog/tools/errors";
 import type { ToolsTag } from "@watchdog/tools/errors";
 

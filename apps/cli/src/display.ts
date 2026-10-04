@@ -1,9 +1,10 @@
+import { capabilityIdLabel, playbookIdLabel } from "@watchdog/schemas/caps";
+import { type PatchOp, patchOpHeadline } from "@watchdog/schemas/graph";
+import { proposalEntityName, summarizeJobInput } from "@watchdog/schemas/jobs";
 import {
   type JobStatus,
-  type PatchOp,
   CLAIM_CLASS_LABELS,
   CONFIDENCE_TIER_LABELS,
-  capabilityIdLabel,
   ENTITY_KIND_LABELS,
   EVIDENCE_KIND_LABELS,
   IDENTIFIER_STATUS_LABELS,
@@ -16,13 +17,9 @@ import {
   jobStatusSchema,
   pickPlaybookAggregateStatus,
   parseTrimmedCaseId,
-  patchOpHeadline,
-  playbookIdLabel,
   predicateLabel,
-  proposalEntityName,
-  summarizeJobInput,
   titleCase,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 function labelFromMap(value: string, labels: Record<string, string>): string {
   return labels[value] ?? titleCase(value);

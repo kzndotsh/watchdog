@@ -7,6 +7,7 @@ import type {
   IdentifierRow,
   QuestionRow,
 } from "@watchdog/db";
+import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import {
   CONFIDENCE_TIER_LABELS,
   ENTITY_KIND_LABELS,
@@ -14,10 +15,9 @@ import {
   IDENTIFIER_STATUS_LABELS,
   IDENTIFIER_TYPE_LABELS,
   entityDisplayLabel,
-  evidenceDisplayLabel,
   predicateLabel,
   titleCase,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 function exportLabel(value: string, labels: Record<string, string>): string {
   return labels[value] ?? titleCase(value);

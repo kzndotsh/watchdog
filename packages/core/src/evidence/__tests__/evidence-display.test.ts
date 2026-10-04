@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { evidenceDisplayLabel } from "@watchdog/schemas";
+import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 
 import { evidenceKindLabel } from "../evidence-display.ts";
 

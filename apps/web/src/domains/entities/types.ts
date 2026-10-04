@@ -8,7 +8,7 @@ import {
   type CaseScopeInput,
   type EntitySlugScopeInput,
   type UpdateEntityInput,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type EntityRecord = CoreEntityRecord;
 

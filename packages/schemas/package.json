@@ -4,6 +4,13 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./feed": "./src/feed.ts",
+    "./caps": "./src/caps.ts",
+    "./cases": "./src/cases.ts",
+    "./evidence": "./src/evidence.ts",
+    "./graph": "./src/graph.ts",
+    "./jobs": "./src/jobs.ts",
+    "./shared": "./src/shared.ts",
     "./testing": "./src/testing/index.ts"
   },
   "scripts": {

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 
 import { uploadJsonReportPair } from "../upload-json-report-pair";
 

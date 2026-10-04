@@ -1,4 +1,4 @@
-import { trimmedOrNull } from "@watchdog/schemas";
+import { trimmedOrNull } from "@watchdog/schemas/shared";
 
 /** Normalize `actor_label` column before insert (api-key display snapshots). */
 export function actorLabelForPersist(

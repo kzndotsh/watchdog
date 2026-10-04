@@ -6,7 +6,7 @@ import { getAllowSignup } from "@/auth/get-allow-signup";
 import { AUTH_VIEW_PATHS, Auth } from "@/auth/ui/auth";
 import { AuthProductMark } from "@/shared/layout/auth-product-mark";
 import { normalizeRouteSegment } from "@/shared/lib/route-slug";
-import { optionalTrimmedSchema } from "@watchdog/schemas";
+import { optionalTrimmedSchema } from "@watchdog/schemas/shared";
 
 const authSearchSchema = z.object({
   redirectTo: optionalTrimmedSchema,

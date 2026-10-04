@@ -5,7 +5,7 @@ import {
   slugifyName,
   trimmedOrNull,
   trimmedOrUndefined,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
 import { requireTrimmedGraphId } from "../graph/patch/guards";

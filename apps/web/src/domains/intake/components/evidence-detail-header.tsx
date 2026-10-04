@@ -22,7 +22,7 @@ import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   entityDisplayLabel,
   parseOptionalTrimmedUuid,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import { TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 
 function attachedEntityLabel(opts: {

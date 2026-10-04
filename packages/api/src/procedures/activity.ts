@@ -4,7 +4,7 @@ import { listRecentActivityEffect } from "@watchdog/core/activity";
 import {
   listRecentActivityInputSchema,
   activityItemSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/feed";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

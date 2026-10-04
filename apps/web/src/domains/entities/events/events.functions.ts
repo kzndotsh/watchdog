@@ -7,7 +7,7 @@ import {
   entityScopeInputSchema,
   eventScopeInputSchema,
   updateEventInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type { EventRecord } from "@/domains/entities/events/types";
 

@@ -4,7 +4,7 @@ import {
   type DbExec,
   type NewCase,
 } from "@watchdog/db";
-import { slugifyName } from "@watchdog/schemas";
+import { slugifyName } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit/fixtures";
 
 export async function seedCase(

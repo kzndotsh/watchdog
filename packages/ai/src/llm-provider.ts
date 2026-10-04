@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { httpUrlSchema, nonEmptyTrimmed } from "@watchdog/schemas";
+import { httpUrlSchema, nonEmptyTrimmed } from "@watchdog/schemas/shared";
 
 /** Vault-shaped provider config — never env soup in Cap bodies. */
 export const llmProviderConfigSchema = z.discriminatedUnion("kind", [

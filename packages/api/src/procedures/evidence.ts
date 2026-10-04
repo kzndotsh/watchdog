@@ -18,11 +18,11 @@ import {
   confirmFileUploadInputSchema,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-  evidenceScopeInputSchema,
   listEvidenceInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/evidence";
+import { evidenceScopeInputSchema } from "@watchdog/schemas/graph";
 
 import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";

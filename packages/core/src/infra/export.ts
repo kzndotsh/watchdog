@@ -21,8 +21,11 @@ import {
   type EvidenceRow,
   type EntityPeerRow,
 } from "@watchdog/db";
-import type { EntityKind } from "@watchdog/schemas";
-import { entityDisplayLabel, parseTrimmedCaseId } from "@watchdog/schemas";
+import type { EntityKind } from "@watchdog/schemas/shared";
+import {
+  entityDisplayLabel,
+  parseTrimmedCaseId,
+} from "@watchdog/schemas/shared";
 
 import {
   appendClaimsSection,

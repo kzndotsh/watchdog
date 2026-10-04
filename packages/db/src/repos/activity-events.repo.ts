@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 
-import type { ActivityKind } from "@watchdog/schemas";
+import type { ActivityKind } from "@watchdog/schemas/feed";
 
 import type { DbExec } from "../exec";
 import { activityEvents } from "../schema/activity-events";

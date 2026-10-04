@@ -8,11 +8,11 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
   ConfidenceTier,
   GraphWriteChannel,
-  PatchOp,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { createdAt } from "./_helpers";
 import { cases } from "./cases";

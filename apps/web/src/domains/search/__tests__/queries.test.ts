@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   SEARCH_MIN_QUERY_LENGTH,
   type SearchCaseResult,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/search/search.functions", () => ({

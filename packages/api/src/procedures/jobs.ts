@@ -15,7 +15,7 @@ import {
   listJobsInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";

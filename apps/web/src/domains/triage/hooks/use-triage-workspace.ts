@@ -28,13 +28,12 @@ import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 import { toast } from "@/shared/ui/toast";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
+import { isProposalQueueLiveEvent } from "@watchdog/schemas/feed";
 import {
-  isProposalQueueLiveEvent,
-  trimmedOrNull,
-  type ProposalStatus,
   acceptProposalInputSchema,
   rejectProposalInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
+import { trimmedOrNull, type ProposalStatus } from "@watchdog/schemas/shared";
 
 const EMPTY_PROPOSALS: ProposalRecord[] = [];
 
