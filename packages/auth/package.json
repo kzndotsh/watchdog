@@ -12,14 +12,14 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "dependencies": {
-    "@better-auth/api-key": "1.7.5",
-    "@better-auth/drizzle-adapter": "1.7.5",
+    "@better-auth/api-key": "1.7.7",
+    "@better-auth/drizzle-adapter": "1.7.7",
     "@watchdog/db": "workspace:*",
     "@watchdog/env": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/schemas": "workspace:*",
-    "better-auth": "1.7.5",
-    "nodemailer": "^10.0.10",
+    "better-auth": "1.7.7",
+    "nodemailer": "^10.0.13",
     "zod": "^4.6.5"
   },
   "devDependencies": {

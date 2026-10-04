@@ -72,7 +72,7 @@
     "@vitest/coverage-v8": "^5.0.1",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
-    "cn": "0.3.2",
+    "cn": "0.4.0",
     "happy-dom": "^20.14.3",
     "jsdom": "^30.0.1",
     "knip": "^6.35.1",
@@ -84,7 +84,7 @@
     "tsx": "^4.23.13",
     "typescript": "7.0.2",
     "ultracite": "7.12.0",
-    "vitest": "^5.0.1",
+    "vitest": "^5.0.3",
     "yaml": "^2.9.0"
   },
   "engines": {
