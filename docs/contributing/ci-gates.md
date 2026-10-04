@@ -26,6 +26,8 @@ Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthoo
 | `pnpm test:gate` | The gate tests below | part of `pnpm test`; pre-push when `scripts/**` changes | none |
 | `pnpm generate:caps`, `generate:client`, `generate-routes` | Regenerate `packages/caps/capabilities.gen.json`, `packages/client/src/generated/`, the web route tree; CI fails if committed output drifts | CI | none |
 
+`pnpm changed` is not a gate: it lists the workspace packages a diff affects, dependents included (merge-base with main plus the working tree; `--base <ref>`, `--json`), and `--run` typechecks and unit-tests only those. A root config change (`tsconfig*.json`, `pnpm-workspace.yaml`, root `package.json`, lockfile, vitest or oxlint config) selects every package; a change outside any package selects none. It never replaces `pnpm typecheck` / `pnpm test`, which stay the full gates.
+
 Local skipping goes through `lefthook-local.yml`; `--no-verify` is not an escape hatch.
 
 ## Hook policy: block or delete
