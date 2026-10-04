@@ -74,6 +74,18 @@ pre-commit:
         - "**/*.test.ts"
         - "**/*.test.tsx"
       run: pnpm check:effect-edges:strict
+    workspace-reexports:
+      glob:
+        - "packages/**/*.ts"
+        - "packages/**/*.tsx"
+        - "apps/**/*.ts"
+        - "apps/**/*.tsx"
+        - "scripts/check-workspace-reexports.mjs"
+      exclude:
+        - "**/__tests__/**"
+        - "**/*.test.ts"
+        - "**/*.test.tsx"
+      run: pnpm check:workspace-reexports
     vendor-lock:
       glob:
         - "packages/ui/src/components/**"

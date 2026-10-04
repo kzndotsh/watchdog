@@ -7,7 +7,7 @@
  *   export * from "@watchdog/x"           export * as ns from "@watchdog/x"
  *   import { X } from "@watchdog/x"; export { X }   (also `export type { X }`)
  *
- * Exempt: tests, and the web primitive wrappers (apps/web/src/shared/ui/primitives),
+ * Exempt: tests, and the web wrappers over @watchdog/ui (shared/ui/primitives, shared/ui/toast.tsx),
  * which deliberately re-export a @watchdog/ui component module beside their override.
  *
  *   node scripts/check-workspace-reexports.mjs
@@ -18,7 +18,10 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 const ROOTS = ["apps", "packages"];
 const SKIP_DIRS = new Set(["node_modules", "dist", "__tests__"]);
-const EXEMPT_DIRS = ["apps/web/src/shared/ui/primitives/"];
+const EXEMPT_DIRS = [
+  "apps/web/src/shared/ui/primitives/",
+  "apps/web/src/shared/ui/toast.tsx",
+];
 
 /**
  * @param {string} dir
