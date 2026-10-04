@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchCensysHostEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchCensysHostEffect,
+  normalizeIp,
+  censysLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { censysLookupInput } from "./input";
 import { interpretCensysLookupReport } from "./interpret";
-import { censysLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.censys.lookup; OSINT)";
 

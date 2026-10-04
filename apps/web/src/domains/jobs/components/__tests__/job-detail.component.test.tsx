@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { JobDetail } from "@/domains/jobs/components/job-detail";
-import type { JobRecord } from "@/domains/jobs/types";
+import type { JobRecord } from "@watchdog/core";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({

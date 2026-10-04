@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_COLLECT_FILTERS } from "@/domains/collect/types";
 import { evidenceTitleMapFromRecords } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord, JobRecord } from "@/domains/jobs/types";
+import type { JobListRecord, JobRecord } from "@watchdog/core";
 import { testId } from "@watchdog/test-kit";
 
 const cancelJobFn = vi.hoisted(() => vi.fn());

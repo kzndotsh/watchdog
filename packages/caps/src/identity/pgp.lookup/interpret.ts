@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { PgpLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   identifierTruncationNote,
@@ -8,7 +10,6 @@ import {
 import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { pgpLookupInput } from "./input";
-import type { PgpLookupSnapshot } from "./report-schema";
 
 type PgpInput = z.infer<typeof pgpLookupInput>;
 

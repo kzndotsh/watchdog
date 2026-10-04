@@ -4,8 +4,8 @@ import {
   proposalPatch,
   proposalTitle,
 } from "@/domains/triage/lib/filters";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import { proposalSourceLabel } from "@/shared/ui/vocab";
+import type { ProposalRecord } from "@watchdog/core";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import type { ProposalStatus } from "@watchdog/schemas";
 

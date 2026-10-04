@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { setActiveCaseIdInputSchema } from "@/domains/cases/types";
 import {
   deleteCaseInputSchema,
-  setActiveCaseIdInputSchema,
   updateCaseInputSchema,
-} from "@/domains/cases/types";
+} from "@watchdog/schemas";
 
 const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
 

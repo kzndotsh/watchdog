@@ -1,12 +1,15 @@
 import { Effect } from "effect";
 
-import { fetchGreynoiseCommunityEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchGreynoiseCommunityEffect,
+  normalizeIp,
+  greynoiseLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { optionalCapCredential } from "../../sdk";
 import { greynoiseLookupInput } from "./input";
 import { interpretGreynoiseLookupReport } from "./interpret";
-import { greynoiseLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.greynoise.lookup; OSINT)";
 

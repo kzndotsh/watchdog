@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchEmailrepLookupEffect } from "@watchdog/tools";
+import {
+  fetchEmailrepLookupEffect,
+  emailrepLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { emailrepLookupInput } from "./input";
 import { interpretEmailrepLookupReport } from "./interpret";
-import { emailrepLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+identity.emailrep.lookup; OSINT)";
 

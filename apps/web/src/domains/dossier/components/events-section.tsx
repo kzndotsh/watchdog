@@ -18,11 +18,6 @@ import {
   updateEventFn,
 } from "@/domains/entities/events/events.functions";
 import { eventsListQuery } from "@/domains/entities/events/queries";
-import {
-  createEventInputSchema,
-  eventScopeInputSchema,
-  updateEventInputSchema,
-} from "@/domains/entities/events/types";
 import { cn, errMessage } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -32,6 +27,11 @@ import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import { toast } from "@/shared/ui/toast";
+import {
+  createEventInputSchema,
+  eventScopeInputSchema,
+  updateEventInputSchema,
+} from "@watchdog/schemas";
 import { Calendar } from "@watchdog/ui/components/calendar";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";

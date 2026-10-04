@@ -3,10 +3,8 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 import { Chip } from "@/shared/ui/chip";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
-import {
-  TASK_PRIORITY_LABELS,
-  TASK_PRIORITY_TONE_MAP,
-} from "@/shared/ui/vocab/task-priority.lib";
+import { TASK_PRIORITY_TONE_MAP } from "@/shared/ui/vocab/task-priority.lib";
+import { TASK_PRIORITY_LABELS } from "@watchdog/schemas";
 import type { TaskPriority } from "@watchdog/schemas";
 
 type TaskPriorityBadgeProps = Omit<

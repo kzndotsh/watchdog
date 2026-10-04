@@ -6,8 +6,6 @@ import {
 
 import type { CapIoKind } from "../sdk";
 
-export type { PlaybookSeedKind };
-
 export interface SeedValues {
   host?: string;
   url?: string;

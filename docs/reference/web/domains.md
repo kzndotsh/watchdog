@@ -21,7 +21,7 @@ domains/{noun}/
 | --- | --- | --- |
 | `*.functions.ts` | `createServerFn` + `.validator(schema)` + thin `orpcFromContext` handlers | Yes |
 | `*.server.ts` | Rare web-local secrets or cookies (`server-only`), never SQL | No |
-| `types.ts` | DTOs + Zod input schemas (record types often re-exported from `@watchdog/core`) | Yes |
+| `types.ts` | DTOs + Zod input schemas (record types are aliased from `@watchdog/core`, not re-exported) | Yes |
 | `queries.ts` | `queryOptions` + keys only | Yes |
 | `hooks/*` | Client hooks that call Fns, Query, or local UI state | Yes |
 | `lib/*` | Pure filters, status maps, `formOptions`, browser helpers | Yes |

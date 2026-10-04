@@ -1,14 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import {
-  createTaskInputSchema,
-  deleteTaskInputSchema,
-  reorderTasksInputSchema,
-  taskFiltersSchema,
-  updateTaskInputSchema,
-  type TaskRecord,
-} from "@/domains/tasks/types";
+import type { TaskRecord } from "@/domains/tasks/types";
 import { orpcFromContext } from "@/lib/orpc.server";
+import {
+  taskCreateInputSchema as createTaskInputSchema,
+  taskDeleteInputSchema as deleteTaskInputSchema,
+  taskReorderInputSchema as reorderTasksInputSchema,
+  taskFiltersSchema,
+  taskUpdateInputSchema as updateTaskInputSchema,
+} from "@watchdog/schemas";
 
 export const listTasksFn = createServerFn({ method: "GET" })
   .validator(taskFiltersSchema)

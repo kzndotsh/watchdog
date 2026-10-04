@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchHackertargetReverseIpEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchHackertargetReverseIpEffect,
+  normalizeIp,
+  hackertargetLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hackertargetLookupInput } from "./input";
 import { interpretHackertargetLookupReport } from "./interpret";
-import { hackertargetLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.hackertarget.lookup; OSINT)";
 

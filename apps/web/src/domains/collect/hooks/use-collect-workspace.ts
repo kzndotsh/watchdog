@@ -25,11 +25,7 @@ import { evidenceListQuery } from "@/domains/intake/queries";
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
 import { normalizedPlaybookRunId } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
-import type {
-  CapListItem,
-  JobListRecord,
-  PlaybookListItem,
-} from "@/domains/jobs/types";
+import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { credentialsKeys } from "@/domains/settings/queries";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
@@ -39,6 +35,7 @@ import {
   invalidateAfterEvidenceMutation,
   invalidateAfterJobMutation,
 } from "@/shared/lib/query-invalidation";
+import type { JobListRecord } from "@watchdog/core";
 import {
   entitySearchHaystackMapFromRows,
   entityTitleMapForJobInputs,

@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { HudsonrockLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { hudsonrockLookupInput } from "./input";
-import type { HudsonrockLookupSnapshot } from "./report-schema";
 
 type HudsonrockInput = z.infer<typeof hudsonrockLookupInput>;
 

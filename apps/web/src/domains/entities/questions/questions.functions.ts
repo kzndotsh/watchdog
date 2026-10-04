@@ -1,14 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import type { QuestionRecord } from "@/domains/entities/questions/types";
+import { orpcFromContext } from "@/lib/orpc.server";
 import {
   createQuestionInputSchema,
   entityScopeInputSchema,
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
-  type QuestionRecord,
-} from "@/domains/entities/questions/types";
-import { orpcFromContext } from "@/lib/orpc.server";
+} from "@watchdog/schemas";
 
 export type { QuestionRecord } from "@/domains/entities/questions/types";
 

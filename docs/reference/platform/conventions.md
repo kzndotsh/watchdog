@@ -48,6 +48,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | The schema never changes without a generated migration; migrations are generated with an explicit `--name`, and a released migration is never edited or renamed | db | `packages/db/AGENTS.md` Schema conventions | `check:migrations` (drift only; naming and never-edit are review) | enforced |
 | Tracked `src` files stay at most 600 lines (baselined files may only shrink) | repo | `docs/contributing/ci-gates.md` Gates | `check:size` | baselined |
 | Effect `run*` only at allowlisted edges; `tryPromise` uses `{ try, catch }`; no production `throw new DomainError` | repo | `docs/contributing/ci-gates.md` Gates | `check:effect-edges:strict` | enforced |
+| A workspace package never re-exports another workspace package (`export ... from "@watchdog/x"`, `export *`, import-then-export); callers import from the owner. The web wrappers over `@watchdog/ui` are exempt | repo | `docs/contributing/ci-gates.md` Gates | `check:workspace-reexports` (`scripts/check-workspace-reexports.mjs`) | enforced |
 | Effect language-service rules (unknown in catch, async function, try/catch in `Effect.gen`) | core, tools | `.agents/skills/effect/SKILL.md` | oxlint `effecttsgo/*` at warn level | baselined |
 | Services are `*Effect` programs that keep `DomainTag` in `E`; tests bridge with `runDomain` | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
 | Enqueue only through `enqueueCapJobEffect` and the boss helpers; one pg-boss boss per process | core, worker | `docs/reference/platform/jobs-orpc.md` Jobs path | guidance | guidance |
@@ -133,7 +134,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Method vocabulary, categories, D1-D5 pre-code decisions, one Cap per source contract | caps | `docs/reference/platform/caps-lexicon.md` Pre-code decisions | guidance | guidance |
 | Banned mid-build terms: the `_Banned_` lines of `GLOSSARY.md`, in `AGENTS.md` files | repo | `GLOSSARY.md` header | `check:agents:strict` | enforced |
 | Other refuse words (module, analyzer, neuron, enricher, transform, connector) in UI, docs and Cap titles, and the `_Avoid_` lines of `GLOSSARY.md` | repo | `docs/reference/platform/caps-lexicon.md` What is enforced | guidance | guidance |
-| Tools own producer Zod; Caps re-export it from a Cap-local `report-schema.ts` | caps, tools | `packages/caps/AGENTS.md` Rules | guidance | guidance |
+| Tools own producer Zod; Caps import it from `@watchdog/tools` | caps, tools | `packages/caps/AGENTS.md` Rules | guidance | guidance |
 | Inside `playbooks/`, import Caps from `../registry`, not the `@watchdog/caps` barrel | caps | `packages/caps/AGENTS.md` Rules | guidance | guidance |
 | Do not proxy investigation URLs through `markdown.new` (OPSEC) | caps | `docs/reference/platform/caps-boundary.md` Intake | guidance | guidance |
 | Playbooks are user-initiated: a Playbook run never auto-fires | caps, core | `docs/reference/platform/caps-boundary.md` Caps (boundary) | guidance | guidance |

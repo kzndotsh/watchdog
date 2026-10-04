@@ -1,19 +1,19 @@
+import type {
+  CreateEdgeInput,
+  UpdateEdgeInput,
+} from "@/domains/entities/edges/types";
 import {
   createEdgeInputSchema,
   updateEdgeInputSchema,
-  type CreateEdgeInput,
-  type UpdateEdgeInput,
-} from "@/domains/entities/edges/types";
-import type {
-  EdgeOrientation,
-  EdgePredicate,
-  ConfidenceTier,
-} from "@watchdog/schemas";
-import {
   parseTrimmedCaseId,
   resolveEdgeEndpoints,
   trimmedOrNull,
   trimmedOrUndefined,
+} from "@watchdog/schemas";
+import type {
+  EdgeOrientation,
+  EdgePredicate,
+  ConfidenceTier,
 } from "@watchdog/schemas";
 
 /** Shared create/update core (table + dossier). */

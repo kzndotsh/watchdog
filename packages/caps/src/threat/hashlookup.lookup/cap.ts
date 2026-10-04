@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchHashlookupEffect } from "@watchdog/tools";
+import {
+  fetchHashlookupEffect,
+  hashlookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hashlookupLookupInput } from "./input";
 import { interpretHashlookupLookupReport } from "./interpret";
-import { hashlookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.hashlookup.lookup; OSINT)";
 

@@ -7,12 +7,12 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import { TriageDecideHeader } from "@/domains/triage/components/triage-decide-header";
 import { TriagePatchBody } from "@/domains/triage/components/triage-patch-body";
 import { useTriageDetailForms } from "@/domains/triage/hooks/use-triage-detail-forms";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
 import type { AcceptFormValues } from "@/domains/triage/types";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
+import type { ProposalRecord } from "@watchdog/core";
 
 interface TriageDetailProps {
   proposal: ProposalRecord | null;

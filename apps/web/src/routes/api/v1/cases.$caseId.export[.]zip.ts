@@ -1,9 +1,3 @@
-/**
- * GET /api/v1/cases/:caseId/export.zip
- *
- * Downloads a zip of all entity markdown files + evidence for the Case.
- * Auth: session cookie or API key.
- */
 import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 import { zipSync, strToU8 } from "fflate";
@@ -12,11 +6,17 @@ import { createApiContext } from "@/auth/api-context.server";
 import { runApp } from "@watchdog/api";
 import {
   getCaseByIdEffect,
-  evidenceDisplayLabel,
   readArtifactBytesEffect,
   renderCaseExportEffect,
   type DomainTag,
 } from "@watchdog/core";
+/**
+ * GET /api/v1/cases/:caseId/export.zip
+ *
+ * Downloads a zip of all entity markdown files + evidence for the Case.
+ * Auth: session cookie or API key.
+ */
+import { evidenceDisplayLabel } from "@watchdog/schemas";
 import type { EvidenceKind } from "@watchdog/schemas";
 
 function safeFilename(label: string): string {

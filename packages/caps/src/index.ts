@@ -17,8 +17,6 @@ export {
   type CapKind,
   type CapRunResult,
   type CapabilityDef,
-  type JsonObject,
-  type PatchOp,
 } from "./sdk";
 export {
   CAPABILITIES,
@@ -42,7 +40,6 @@ export {
   type PlaybookPlan,
   type PlannedStep,
   type PlanError,
-  type PlaybookSeedKind,
   type SeedValues,
   type PlaybookRequires,
   type CapabilityRequires,
@@ -62,7 +59,6 @@ export {
   type PlaybookAdvance,
   type PlaybookJobView,
   type BindBag,
-  type JobHandoff,
   type PlaybookStepDef,
   type PredecessorJob,
 } from "./playbooks";

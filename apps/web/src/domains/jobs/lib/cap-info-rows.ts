@@ -1,5 +1,4 @@
-import { capEgressLabel } from "@/shared/ui/vocab/cap-egress.lib";
-import { titleCase } from "@/shared/ui/vocab/title-case";
+import { capEgressLabel, titleCase } from "@watchdog/schemas";
 
 import type { CapListItem } from "../types";
 import { formatCapCredentials, formatCapIo } from "./cap-run-input";

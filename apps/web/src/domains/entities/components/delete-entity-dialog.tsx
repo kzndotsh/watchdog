@@ -3,15 +3,12 @@ import { UserRoundIcon } from "lucide-react";
 import { useState } from "react";
 
 import { deleteEntityFn } from "@/domains/entities/entities.functions";
-import {
-  deleteEntityInputSchema,
-  type EntityRecord,
-} from "@/domains/entities/types";
+import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 import { toast } from "@/shared/ui/toast";
-import { entityDisplayLabel } from "@watchdog/schemas";
+import { entityDisplayLabel, deleteEntityInputSchema } from "@watchdog/schemas";
 
 export function DeleteEntityDialog({
   caseId,

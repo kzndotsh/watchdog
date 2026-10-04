@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchHudsonrockLookupEffect } from "@watchdog/tools";
+import {
+  fetchHudsonrockLookupEffect,
+  hudsonrockLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hudsonrockLookupInput } from "./input";
 import { interpretHudsonrockLookupReport } from "./interpret";
-import { hudsonrockLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+breach.hudsonrock.lookup; OSINT)";
 

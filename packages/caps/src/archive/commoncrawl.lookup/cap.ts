@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchCommoncrawlLookupEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchCommoncrawlLookupEffect,
+  normalizeHost,
+  commoncrawlLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { commoncrawlLookupInput } from "./input";
 import { interpretCommoncrawlLookupReport } from "./interpret";
-import { commoncrawlLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+archive.commoncrawl.lookup; OSINT)";
 

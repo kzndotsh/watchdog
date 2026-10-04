@@ -15,11 +15,11 @@ import {
   taskIdInputSchema,
   taskReorderInputSchema,
   taskUpdateInputSchema,
+  taskSchema,
 } from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import { taskSchema } from "../schemas";
 
 export const list = authed
   .route({

@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { OtxLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { otxLookupInput } from "./input";
-import type { OtxLookupSnapshot } from "./report-schema";
 
 type OtxInput = z.infer<typeof otxLookupInput>;
 

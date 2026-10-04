@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchKeybaseLookupEffect } from "@watchdog/tools";
+import {
+  fetchKeybaseLookupEffect,
+  keybaseLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { keybaseLookupInput } from "./input";
 import { interpretKeybaseLookupReport } from "./interpret";
-import { keybaseLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+identity.keybase.lookup; OSINT)";
 

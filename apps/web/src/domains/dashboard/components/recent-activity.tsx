@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import { recentActivityQuery } from "@/domains/activity/queries";
-import type { ActivityItem, ActivityKind } from "@/domains/activity/types";
 import type { CaseRecord } from "@/domains/cases/types";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
@@ -37,6 +36,8 @@ import {
   activityKindLabel,
   isProposalQueueLiveEvent,
   type TaskStatus,
+  type ActivityItem,
+  type ActivityKind,
 } from "@watchdog/schemas";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 import {

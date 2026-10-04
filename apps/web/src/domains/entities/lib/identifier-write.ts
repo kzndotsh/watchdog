@@ -1,9 +1,11 @@
+import type {
+  CreateIdentifierInput,
+  UpdateIdentifierInput,
+} from "@/domains/entities/identifiers/types";
 import {
   createIdentifierInputSchema,
   updateIdentifierInputSchema,
-  type CreateIdentifierInput,
-  type UpdateIdentifierInput,
-} from "@/domains/entities/identifiers/types";
+} from "@watchdog/schemas";
 import type {
   ConfidenceTier,
   IdentifierStatus,

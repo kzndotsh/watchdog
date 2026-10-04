@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { DnsReverseSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   DOMAIN_IDENTIFIER_BATCH_LIMIT,
@@ -9,7 +11,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { dnsReverseInput } from "./input";
-import type { DnsReverseSnapshot } from "./report-schema";
 
 type ReverseInput = z.infer<typeof dnsReverseInput>;
 

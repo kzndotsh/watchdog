@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchCertspotterLookupEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchCertspotterLookupEffect,
+  normalizeHost,
+  certspotterLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { certspotterLookupInput } from "./input";
 import { interpretCertspotterLookupReport } from "./interpret";
-import { certspotterLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.certspotter.lookup; OSINT)";
 

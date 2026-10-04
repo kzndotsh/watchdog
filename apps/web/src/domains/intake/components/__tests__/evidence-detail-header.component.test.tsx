@@ -8,8 +8,8 @@ import {
 } from "@/domains/intake/components/evidence-detail-header";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@/domains/jobs/types";
 import { capabilityLabel } from "@/shared/ui/vocab";
+import type { JobListRecord } from "@watchdog/core";
 import { testId } from "@watchdog/test-kit";
 import { Tabs } from "@watchdog/ui/components/tabs";
 

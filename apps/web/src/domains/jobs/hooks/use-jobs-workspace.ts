@@ -18,15 +18,7 @@ import {
   normalizedPlaybookRunId,
 } from "@/domains/jobs/lib/status";
 import { jobDetailQuery, jobsKeys } from "@/domains/jobs/queries";
-import {
-  cancelJobInputSchema,
-  cancelPlaybookInputSchema,
-  startJobInputSchema,
-  startPlaybookInputSchema,
-  type JobListRecord,
-  type JobRecord,
-  type CapListItem,
-} from "@/domains/jobs/types";
+import type { CapListItem } from "@/domains/jobs/types";
 import { errMessage } from "@/lib/utils";
 import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
@@ -35,11 +27,16 @@ import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { invalidateAfterJobMutation } from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
+import type { JobListRecord, JobRecord } from "@watchdog/core";
 import {
   isLiveJobStatus,
   playbookSeedInputSchema,
   trimmedOrNull,
   trimmedOrUndefined,
+  cancelJobInputSchema,
+  cancelPlaybookInputSchema,
+  startJobInputSchema,
+  startPlaybookInputSchema,
 } from "@watchdog/schemas";
 
 const STUCK_JOB_MS = 60_000;

@@ -1,4 +1,4 @@
-import { parseEdgePhraseValue } from "@/shared/ui/vocab/edge-predicate";
+import { parseEdgePhraseValue } from "@watchdog/schemas";
 
 export interface ConnectionComposerValues {
   peerId: string;

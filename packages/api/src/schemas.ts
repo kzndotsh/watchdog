@@ -15,7 +15,6 @@ import {
   proposalStatusSchema,
   questionStatusSchema,
   retractKindSchema,
-  updateCaseInputSchema,
 } from "@watchdog/schemas";
 
 /** Agent ingress escape hatch — required as `true` for API-key child Graph writes. */
@@ -24,12 +23,6 @@ export const userOverrideSchema = z
   .optional()
   .describe("Required as true when authenticating with an API key.");
 
-export {
-  activityItemSchema,
-  searchCaseResultSchema,
-  taskSchema,
-} from "@watchdog/schemas";
-
 export const caseSchema = z.object({
   id: z.uuid(),
   name: z.string(),
@@ -37,8 +30,6 @@ export const caseSchema = z.object({
   description: z.string().nullable(),
   allowThirdPartyEgress: z.boolean(),
 });
-
-export { updateCaseInputSchema };
 
 export const entitySchema = z.object({
   id: z.uuid(),

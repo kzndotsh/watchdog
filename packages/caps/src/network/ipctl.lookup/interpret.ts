@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { IpctlLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   domainValuesBatch,
@@ -7,7 +9,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { ipctlLookupInput } from "./input";
-import type { IpctlLookupSnapshot } from "./report-schema";
 
 type IpctlInput = z.infer<typeof ipctlLookupInput>;
 

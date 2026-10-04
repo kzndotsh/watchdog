@@ -4,14 +4,16 @@ import { FieldCombobox } from "@/shared/ui/field-combobox";
 import {
   clampEdgePhrase,
   edgePhraseOptionsForPeers,
-  edgePhraseValue,
   filterPeerOptionsForPhrase,
-  parseEdgePhraseValue,
   peerKindAllowedForPhrase,
   preferredEdgePhrase,
 } from "@/shared/ui/vocab/edge-predicate";
+import {
+  edgePhraseValue,
+  parseEdgePhraseValue,
+  parseOptionalTrimmedUuid,
+} from "@watchdog/schemas";
 import type { EntityKind } from "@watchdog/schemas";
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
 import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 

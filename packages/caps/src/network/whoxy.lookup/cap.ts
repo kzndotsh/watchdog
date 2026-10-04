@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchWhoxyWhoisEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchWhoxyWhoisEffect,
+  normalizeHost,
+  whoxyLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoxyLookupInput } from "./input";
 import { interpretWhoxyLookupReport } from "./interpret";
-import { whoxyLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.whoxy.lookup; OSINT)";
 

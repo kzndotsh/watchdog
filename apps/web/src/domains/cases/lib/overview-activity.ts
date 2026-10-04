@@ -5,10 +5,9 @@ import {
 import { jobActivityAt } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { groupJobsForQueue } from "@/domains/jobs/lib/status";
-import type { JobListRecord } from "@/domains/jobs/types";
 import { searchJobHitLabel } from "@/domains/search/lib/hit-labels";
 import { proposalTitle } from "@/domains/triage/lib/filters";
-import type { ProposalRecord } from "@/domains/triage/triage.functions";
+import type { JobListRecord, ProposalRecord } from "@watchdog/core";
 import { entityTitleMapForJobInputs } from "@watchdog/schemas";
 
 export type ActivityKind = "evidence" | "job" | "proposal";

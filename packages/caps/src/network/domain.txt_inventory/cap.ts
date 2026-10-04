@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchTxtInventoryEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchTxtInventoryEffect,
+  normalizeHost,
+  txtInventorySnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { txtInventoryInput } from "./input";
 import { interpretTxtInventoryReport } from "./interpret";
-import { txtInventorySnapshotSchema } from "./report-schema";
 
 export const txtInventory = defineCollectCap({
   id: "network.domain.txt_inventory",

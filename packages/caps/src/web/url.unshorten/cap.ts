@@ -1,12 +1,11 @@
 import { Effect } from "effect";
 
-import { fetchUnshortenEffect } from "@watchdog/tools";
+import type { JobHandoff } from "@watchdog/schemas";
+import { fetchUnshortenEffect, unshortenSnapshotSchema } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
-import type { JobHandoff } from "../../sdk";
 import { urlUnshortenInput } from "./input";
 import { interpretUnshortenReport } from "./interpret";
-import { unshortenSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+web.url.unshorten; OSINT)";
 

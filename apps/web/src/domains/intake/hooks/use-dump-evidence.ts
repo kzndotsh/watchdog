@@ -4,10 +4,6 @@ import { useCallback, useState } from "react";
 import { dumpPasteFn, dumpUrlFn } from "@/domains/intake/intake.functions";
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import {
-  dumpPasteInputSchema,
-  dumpUrlInputSchema,
-} from "@/domains/intake/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
 import {
@@ -15,7 +11,11 @@ import {
   TOAST_UPLOAD_LOADING,
 } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
+import {
+  parseOptionalTrimmedUuid,
+  dumpPasteInputSchema,
+  dumpUrlInputSchema,
+} from "@watchdog/schemas";
 
 export interface UseDumpEvidenceOptions {
   caseId: string;

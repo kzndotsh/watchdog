@@ -7,7 +7,7 @@ vi.mock("@/auth/session.server", () => ({
   requireSession,
 }));
 
-vi.mock("@/auth/server", () => ({
+vi.mock("@watchdog/auth/server", () => ({
   resolveActorOrganizationId,
 }));
 

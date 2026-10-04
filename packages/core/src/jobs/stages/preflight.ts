@@ -2,16 +2,13 @@ import { Effect, Result } from "effect";
 import type { z } from "zod";
 
 import { requireCapability } from "@watchdog/caps";
-import type {
-  CapabilityDef,
-  CapJobPolicy,
-  JsonObject,
-} from "@watchdog/caps/sdk";
+import type { CapabilityDef, CapJobPolicy } from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
 import {
   LIVE_JOB_STATUSES,
   isLiveJobStatus,
   parseTrimmedCaseId,
+  type JsonObject,
 } from "@watchdog/schemas";
 
 import { nowDateEffect } from "../../infra/clock";

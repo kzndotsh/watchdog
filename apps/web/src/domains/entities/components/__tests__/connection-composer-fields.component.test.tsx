@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ConnectionComposerFields } from "@/domains/entities/components/connection-composer-fields";
-import { edgePhraseValue } from "@/shared/ui/vocab/edge-predicate";
+import { edgePhraseValue } from "@watchdog/schemas";
 
 vi.mock("@/shared/ui/field-combobox", () => ({
   FieldCombobox: ({

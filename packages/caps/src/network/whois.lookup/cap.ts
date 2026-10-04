@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchRdapWhoisEffect, normalizeHost } from "@watchdog/tools";
+import {
+  fetchRdapWhoisEffect,
+  normalizeHost,
+  whoisSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoisLookupInput } from "./input";
 import { interpretWhoisReport } from "./interpret";
-import { whoisSnapshotSchema } from "./report-schema";
 
 export const whoisLookup = defineCollectCap({
   id: "network.whois.lookup",

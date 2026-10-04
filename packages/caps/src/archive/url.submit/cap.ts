@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { submitWaybackSaveEffect } from "@watchdog/tools";
+import {
+  submitWaybackSaveEffect,
+  archiveSubmitSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { archiveUrlSubmitInput } from "./input";
 import { interpretArchiveUrlSubmitReport } from "./interpret";
-import { archiveSubmitSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+archive.url.submit; OSINT)";
 

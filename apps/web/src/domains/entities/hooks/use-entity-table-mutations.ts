@@ -6,7 +6,6 @@ import {
   deleteEdgeFn,
   updateEdgeFn,
 } from "@/domains/entities/edges/edges.functions";
-import { edgeScopeInputSchema } from "@/domains/entities/edges/types";
 import {
   createEntityFn,
   updateEntityFieldsFn,
@@ -19,7 +18,6 @@ import {
 } from "@/domains/entities/lib/edge-write";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
-import { createEntityInputSchema } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import {
@@ -27,6 +25,10 @@ import {
   TOAST_ENTITY_UPDATED,
 } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
+import {
+  edgeScopeInputSchema,
+  createEntityInputSchema,
+} from "@watchdog/schemas";
 import type { EntityKind } from "@watchdog/schemas";
 
 interface UpdateEntityVars {

@@ -23,11 +23,8 @@ import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { useDataTable } from "@/shared/ui/data-table";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { toast } from "@/shared/ui/toast";
-import {
-  confidenceLabel,
-  IDENTIFIER_TYPE_LABELS,
-  statusLabel,
-} from "@/shared/ui/vocab";
+import { confidenceLabel, statusLabel } from "@/shared/ui/vocab";
+import { IDENTIFIER_TYPE_LABELS } from "@watchdog/schemas";
 import type {
   ConfidenceTier,
   IdentifierStatus,

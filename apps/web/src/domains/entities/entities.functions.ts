@@ -3,13 +3,15 @@ import { createServerFn } from "@tanstack/react-start";
 import {
   caseIdInputSchema,
   caseSlugInputSchema,
-  createEntityInputSchema,
-  deleteEntityInputSchema,
-  updateEntityFieldsInputSchema,
   type EntityRecord,
 } from "@/domains/entities/types";
 import { orpcFromContext, orpcNullIfNotFound } from "@/lib/orpc.server";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
+import {
+  createEntityInputSchema,
+  deleteEntityInputSchema,
+  updateEntityInputSchema as updateEntityFieldsInputSchema,
+} from "@watchdog/schemas";
 
 export const listEntitiesFn = createServerFn({ method: "GET" })
   .validator(caseIdInputSchema)

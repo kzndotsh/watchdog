@@ -1,7 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { listTasksFn } from "@/domains/tasks/tasks.functions";
-import type { TaskFiltersInput } from "@/domains/tasks/types";
 import {
   parseTaskFiltersInput,
   scopeTaskListEnabled,
@@ -9,6 +8,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
+import type { TaskFiltersInput } from "@watchdog/schemas";
 
 export type TaskListFilters = Omit<TaskFiltersInput, "caseId">;
 

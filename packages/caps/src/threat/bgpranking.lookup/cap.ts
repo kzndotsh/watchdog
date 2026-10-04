@@ -1,11 +1,14 @@
 import { Effect } from "effect";
 
-import { fetchBgprankingLookupEffect, normalizeIp } from "@watchdog/tools";
+import {
+  fetchBgprankingLookupEffect,
+  normalizeIp,
+  bgprankingLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { bgprankingLookupInput } from "./input";
 import { interpretBgprankingLookupReport } from "./interpret";
-import { bgprankingLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.bgpranking.lookup; OSINT)";
 

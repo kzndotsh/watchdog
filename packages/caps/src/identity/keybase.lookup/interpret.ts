@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { KeybaseLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {
   HANDLE_IDENTIFIER_BATCH_LIMIT,
@@ -10,7 +12,6 @@ import {
 } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { keybaseLookupInput } from "./input";
-import type { KeybaseLookupSnapshot } from "./report-schema";
 
 type KeybaseInput = z.infer<typeof keybaseLookupInput>;
 

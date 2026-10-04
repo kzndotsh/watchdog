@@ -1,13 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { orpcFromContext } from "@/lib/orpc.server";
+import type { CredentialSlot } from "@watchdog/core";
 import {
   deleteCredentialInputSchema,
   putCredentialInputSchema,
-  type CredentialSlot,
-} from "@/domains/settings/types";
-import { orpcFromContext } from "@/lib/orpc.server";
-
-export { type CredentialSlot } from "@/domains/settings/types";
+} from "@watchdog/schemas";
 
 export const listCredentialsFn = createServerFn({ method: "GET" }).handler(
   async ({ context }): Promise<CredentialSlot[]> =>

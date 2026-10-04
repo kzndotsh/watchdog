@@ -6,11 +6,8 @@ import {
   EntityKindGlyph,
   KindBadge,
 } from "@/shared/ui/vocab/kind";
-import {
-  ENTITY_KIND_LABELS,
-  isEntityKind,
-  kindLabel,
-} from "@/shared/ui/vocab/kind.lib";
+import { isEntityKind, kindLabel } from "@/shared/ui/vocab/kind.lib";
+import { ENTITY_KIND_LABELS } from "@watchdog/schemas";
 
 describe("kind vocab", () => {
   it("detects entity kinds and labels unknown values", () => {

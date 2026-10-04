@@ -1,8 +1,9 @@
 import { Effect } from "effect";
 
+import type { JobHandoff } from "@watchdog/schemas";
 import { analyzeFileBytes, ValidationVendorError } from "@watchdog/tools";
 
-import { defineCapability, type JobHandoff } from "../../sdk";
+import { defineCapability } from "../../sdk";
 import {
   interpretProcessDraft,
   uploadProcessArtifacts,

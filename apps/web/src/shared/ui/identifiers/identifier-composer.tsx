@@ -17,7 +17,6 @@ import {
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import {
-  HANDLE_REQUIRES_PLATFORM,
   isHandleWithoutPlatform,
   PLATFORM_OPTIONS,
   STATUS_OPTIONS,
@@ -44,6 +43,7 @@ import {
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
+  HANDLE_REQUIRES_PLATFORM,
 } from "@watchdog/schemas";
 import {
   Popover,

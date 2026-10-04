@@ -4,7 +4,7 @@ import {
   acceptProposalInputSchema,
   listProposalsInputSchema,
   rejectProposalInputSchema,
-} from "@/domains/triage/types";
+} from "@watchdog/schemas";
 
 const CASE_ID = "550e8400-e29b-41d4-a716-446655440000";
 const PROPOSAL_ID = "660e8400-e29b-41d4-a716-446655440001";

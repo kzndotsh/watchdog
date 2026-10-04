@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { HoneydbLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { ipSeedBatch } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { honeydbLookupInput } from "./input";
-import type { HoneydbLookupSnapshot } from "./report-schema";
 
 type HoneydbInput = z.infer<typeof honeydbLookupInput>;
 

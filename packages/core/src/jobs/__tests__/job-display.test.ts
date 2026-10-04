@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   capabilityIdLabel,
-  jobActivityLabel,
   playbookIdLabel,
   summarizeJobInput,
-} from "../job-display";
+} from "@watchdog/schemas";
+
+import { jobActivityLabel } from "../job-display";
 
 describe("capabilityIdLabel", () => {
   it("title-cases the id tail", () => {

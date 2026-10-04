@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { submitUrlscanEffect } from "@watchdog/tools";
+import {
+  submitUrlscanEffect,
+  urlscanSubmitSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlscanSubmitInput } from "./input";
 import { interpretUrlscanSubmitReport } from "./interpret";
-import { urlscanSubmitSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+network.urlscan.submit; OSINT)";
 

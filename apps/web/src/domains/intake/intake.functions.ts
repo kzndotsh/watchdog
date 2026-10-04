@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import type { EvidenceRecord, PresignedUpload } from "@/domains/intake/types";
+import { orpcFromContext } from "@/lib/orpc.server";
 import {
   attachEvidenceEntityInputSchema,
   confirmFileUploadInputSchema,
@@ -9,10 +11,7 @@ import {
   listEvidenceInputSchema,
   presignUploadInputSchema,
   processEvidenceInputSchema,
-  type EvidenceRecord,
-  type PresignedUpload,
-} from "@/domains/intake/types";
-import { orpcFromContext } from "@/lib/orpc.server";
+} from "@watchdog/schemas";
 
 export const getEvidenceDownloadUrlFn = createServerFn({ method: "GET" })
   .validator(evidenceScopeInputSchema)

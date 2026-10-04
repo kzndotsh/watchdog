@@ -1,10 +1,11 @@
 import type { z } from "zod";
 
+import type { VirusTotalLookupSnapshot } from "@watchdog/tools";
+
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";
 import type { virusTotalLookupInput } from "./input";
-import type { VirusTotalLookupSnapshot } from "./report-schema";
 
 type VirusTotalInput = z.infer<typeof virusTotalLookupInput>;
 

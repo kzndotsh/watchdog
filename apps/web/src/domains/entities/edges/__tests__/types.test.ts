@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { updateEdgeInputSchema } from "@/domains/entities/edges/types";
+import { updateEdgeInputSchema } from "@watchdog/schemas";
 import { testId } from "@watchdog/test-kit";
 
 describe("edge input schemas", () => {

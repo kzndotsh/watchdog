@@ -4,12 +4,12 @@ import {
   DSHIELD_USER_AGENT,
   fetchDshieldLookupEffect,
   normalizeIp,
+  dshieldLookupSnapshotSchema,
 } from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dshieldLookupInput } from "./input";
 import { interpretDshieldLookupReport } from "./interpret";
-import { dshieldLookupSnapshotSchema } from "./report-schema";
 
 export const dshieldLookup = defineCollectCap({
   id: "threat.dshield.lookup",

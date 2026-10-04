@@ -26,5 +26,3 @@ export function taskPriorityLabel(priority: TaskPriority): string {
 export function taskPriorityShortLabel(priority: TaskPriority): string {
   return priority === "medium" ? "Med" : TASK_PRIORITY_LABELS[priority];
 }
-
-export { TASK_PRIORITY_LABELS };

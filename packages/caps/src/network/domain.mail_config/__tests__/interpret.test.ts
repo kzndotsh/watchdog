@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
+import type { MailConfigSnapshot } from "@watchdog/tools";
 
 import { expectNoConfidenceOnPatch } from "../../../testing";
 import { interpretMailConfigReport } from "../interpret.ts";
-import type { MailConfigSnapshot } from "../report-schema.ts";
 
 describe("interpretMailConfigReport", () => {
   const snap: MailConfigSnapshot = {

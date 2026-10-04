@@ -194,6 +194,10 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:effect-edges:strict
 
+      - name: Workspace re-exports
+        if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:workspace-reexports
+
       - name: Vendored UI lock
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:vendor

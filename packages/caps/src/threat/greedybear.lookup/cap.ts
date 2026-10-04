@@ -1,11 +1,13 @@
 import { Effect } from "effect";
 
-import { fetchGreedybearLookupEffect } from "@watchdog/tools";
+import {
+  fetchGreedybearLookupEffect,
+  greedybearLookupSnapshotSchema,
+} from "@watchdog/tools";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { greedybearLookupInput } from "./input";
 import { interpretGreedybearLookupReport } from "./interpret";
-import { greedybearLookupSnapshotSchema } from "./report-schema";
 
 const UA = "Watchdog/1.0 (+threat.greedybear.lookup; OSINT)";
 

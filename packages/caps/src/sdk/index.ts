@@ -16,9 +16,6 @@ export {
   type CapFlag,
   type CapIoKind,
   type CapabilityDef,
-  type JsonObject,
-  type PatchOp,
-  type JobHandoff,
 } from "./define";
 export { runCap } from "./run";
 export { optionalCapCredential } from "./optional-credential";

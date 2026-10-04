@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { titleCase } from "@watchdog/schemas";
+
 import { artifactBodyFromContent } from "../artifact-body-from-content.ts";
 import { formatOpaqueId } from "../format-opaque-id.ts";
 import { groupItemsByDay } from "../group-by-day.ts";
-import { titleCase } from "../vocab/title-case.ts";
 
 describe("shared display helpers", () => {
   it("groups items by day", () => {

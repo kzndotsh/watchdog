@@ -1,9 +1,10 @@
 import type { ChipTone } from "@/shared/ui/chip";
-import { optionsFromLabels, titleCase } from "@/shared/ui/vocab/title-case";
+import { optionsFromLabels } from "@/shared/ui/vocab/title-case";
 import {
   CONFIDENCE_TIERS,
   CONFIDENCE_TIER_LABELS,
   type ConfidenceTier,
+  titleCase,
 } from "@watchdog/schemas";
 
 export const CONFIDENCE_LABELS = CONFIDENCE_TIER_LABELS;

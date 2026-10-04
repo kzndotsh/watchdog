@@ -12,7 +12,6 @@ import {
   type JobDetailTab,
   type JobDetailView,
 } from "@/domains/jobs/lib/job-detail-view";
-import type { JobListRecord, JobRecord } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
@@ -38,6 +37,7 @@ import {
   statusLabel,
 } from "@/shared/ui/vocab";
 import { STATUS_DOT } from "@/shared/ui/vocab/status.lib";
+import type { JobListRecord, JobRecord } from "@watchdog/core";
 import { FieldError } from "@watchdog/ui/components/field";
 import {
   Tabs,

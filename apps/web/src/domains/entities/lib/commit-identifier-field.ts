@@ -1,12 +1,9 @@
 import { toast } from "@/shared/ui/toast";
 import {
-  HANDLE_REQUIRES_PLATFORM,
   normalizeIdentifierPlatform,
   validateIdentifierWrite,
   type IdentifierType,
 } from "@watchdog/schemas";
-
-export { HANDLE_REQUIRES_PLATFORM };
 
 export function isHandleWithoutPlatform(
   type: IdentifierType,

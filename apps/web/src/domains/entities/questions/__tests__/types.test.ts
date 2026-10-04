@@ -4,7 +4,7 @@ import {
   createQuestionInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
-} from "@/domains/entities/questions/types";
+} from "@watchdog/schemas";
 import { testId } from "@watchdog/test-kit";
 
 describe("questions types schemas", () => {

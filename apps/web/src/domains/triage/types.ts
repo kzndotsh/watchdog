@@ -1,19 +1,4 @@
-import {
-  acceptProposalInputSchema,
-  listProposalsInputSchema,
-  rejectProposalInputSchema,
-  type AcceptProposalInput,
-  type ConfidenceTier,
-  type ListProposalsInput,
-  type RejectProposalInput,
-} from "@watchdog/schemas";
-
-export {
-  acceptProposalInputSchema,
-  listProposalsInputSchema,
-  rejectProposalInputSchema,
-};
-export type { AcceptProposalInput, ListProposalsInput, RejectProposalInput };
+import type { ConfidenceTier } from "@watchdog/schemas";
 
 /** Client Accept composer values (confidence + optional evidence / attestation). */
 export interface AcceptFormValues {

@@ -15,7 +15,6 @@ import {
 } from "@/domains/settings/components/settings-credentials-handlers";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { deleteCredentialFn } from "@/domains/settings/settings.functions";
-import { deleteCredentialInputSchema } from "@/domains/settings/types";
 import { cn } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -28,6 +27,7 @@ import { Button } from "@/shared/ui/primitives/button";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { CredentialSlot } from "@watchdog/core";
+import { deleteCredentialInputSchema } from "@watchdog/schemas";
 import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 import { Separator } from "@watchdog/ui/components/separator";
 

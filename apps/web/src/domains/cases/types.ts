@@ -2,12 +2,10 @@ import { z } from "zod";
 
 import type { CaseRecord as CoreCaseRecord } from "@watchdog/core";
 import {
+  type getCaseBySlugInputSchema,
   deleteCaseInputSchema,
-  getCaseBySlugInputSchema,
   trimmedUuidSchema,
-  updateCaseInputSchema,
   type DeleteCaseInput,
-  type UpdateCaseInput,
 } from "@watchdog/schemas";
 
 export type CaseRecord = CoreCaseRecord;
@@ -15,7 +13,6 @@ export type CaseRecord = CoreCaseRecord;
 export const getCaseByIdInputSchema = deleteCaseInputSchema;
 export type GetCaseByIdInput = DeleteCaseInput;
 
-export { getCaseBySlugInputSchema };
 export type GetCaseBySlugInput = z.output<typeof getCaseBySlugInputSchema>;
 
 /** Cases list + healed active Case (cookie). */
@@ -40,9 +37,3 @@ export const healActiveCaseInputSchema = z.object({
   expectedActiveCaseId: trimmedUuidSchema.nullable(),
 });
 export type HealActiveCaseInput = z.output<typeof healActiveCaseInputSchema>;
-
-export { updateCaseInputSchema };
-export type { UpdateCaseInput };
-
-export { deleteCaseInputSchema };
-export type { DeleteCaseInput };

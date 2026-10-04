@@ -1,7 +1,5 @@
 /** Shared display helpers for schema vocabulary — no I/O. */
 
-export { titleCase } from "@watchdog/schemas";
-
 /** Exhaustive options for selects / facets from a label map. */
 export function optionsFromLabels<T extends string>(
   values: readonly T[],

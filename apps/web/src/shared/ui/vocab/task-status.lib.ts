@@ -24,5 +24,3 @@ export const TASK_STATUS_OPTIONS = optionsFromLabels(
 export function taskStatusLabel(status: TaskStatus): string {
   return TASK_STATUS_LABELS[status];
 }
-
-export { TASK_STATUS_LABELS };

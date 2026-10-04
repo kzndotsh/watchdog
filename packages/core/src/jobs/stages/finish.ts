@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import type { JobHandoff } from "@watchdog/db";
+import type { JobHandoff } from "@watchdog/schemas";
 
 import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
 import { nowDateEffect } from "../../infra/clock";

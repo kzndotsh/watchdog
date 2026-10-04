@@ -12,10 +12,6 @@ import {
 } from "@/domains/search/lib/hit-labels";
 import { jumpNavItems } from "@/domains/search/lib/jump-nav";
 import { searchCaseQuery } from "@/domains/search/queries";
-import {
-  SEARCH_MIN_QUERY_LENGTH,
-  type SearchCaseResult,
-} from "@/domains/search/types";
 import type { AppAction } from "@/shared/lib/app-action";
 import { useRegisteredPaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -28,7 +24,11 @@ import {
   taskStatusLabel,
 } from "@/shared/ui/vocab";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import { entityDisplayLabel } from "@watchdog/schemas";
+import {
+  entityDisplayLabel,
+  SEARCH_MIN_QUERY_LENGTH,
+  type SearchCaseResult,
+} from "@watchdog/schemas";
 import {
   Command,
   CommandDialog,
