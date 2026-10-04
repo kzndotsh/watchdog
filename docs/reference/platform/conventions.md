@@ -90,7 +90,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | `PageHeader` is the sole inset top chrome; no identity titles or `description=`; Case id never in Work URLs | web | `docs/reference/web/ui/page-shell.md` Page shell | guidance | guidance |
 | Domain folder shape: `createServerFn` only in `*.functions.ts`; `*.server.ts` never reaches the client; DTOs in `types.ts` | web | `docs/reference/web/domains.md` Rules | guidance | guidance |
 | Types and DTOs are imported from a domain's `types.ts`, never from its `*.functions.ts` (violations exist; decision: fix and enforce with a lint rule, planned in spec #55 / #62) | web | `docs/reference/web/architecture.md` Shape | guidance | guidance |
-| Handlers call `orpcFromContext(context)`; no Drizzle in `apps/web` (its `package.json` still lists `drizzle-orm`) | web | `docs/reference/web/architecture.md` Server boundary | guidance | guidance |
+| Handlers call `orpcFromContext(context)`; no Drizzle in `apps/web`; `apps/web` no longer declares `drizzle-orm`, and nothing enforces keeping it out | web | `docs/reference/web/architecture.md` Server boundary | guidance | guidance |
 | Auth is the global `requireAuth` in `start.ts`; no per-function `.middleware([requireAuth])`; public endpoints go in `routes/api/*` | web | `docs/reference/web/architecture.md` Server boundary | guidance | guidance |
 | Hand-written files use the `@/*` alias, not relative hops (violations exist; decision: fix and enforce with a lint rule, planned in spec #55 / #62) | web | `docs/reference/web/architecture.md` Shape | guidance | guidance |
 | `lib/` holds pure helpers and hooks live in `hooks/` (four hooks sit elsewhere today) | web | `docs/reference/web/domains.md` Shape | guidance | guidance |

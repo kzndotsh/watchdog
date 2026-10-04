@@ -46,7 +46,6 @@
     "bowser": "^2.14.1",
     "cn": "catalog:",
     "date-fns": "catalog:",
-    "drizzle-orm": "catalog:",
     "evlog": "catalog:",
     "fflate": "^0.8.3",
     "lucide-react": "catalog:",
