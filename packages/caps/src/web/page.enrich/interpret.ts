@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { PageEnrichSnapshot } from "@watchdog/tools";
+import type { PageEnrichSnapshot } from "@watchdog/tools/http";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

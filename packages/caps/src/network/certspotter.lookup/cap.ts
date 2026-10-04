@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import {
   fetchCertspotterLookupEffect,
-  normalizeHost,
   certspotterLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/ct";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { certspotterLookupInput } from "./input";

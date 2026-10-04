@@ -1,6 +1,7 @@
 import type { z } from "zod";
 
-import type { WhoisSnapshot, WhoxyLookupSnapshot } from "@watchdog/tools";
+import type { WhoxyLookupSnapshot } from "@watchdog/tools/network";
+import type { WhoisSnapshot } from "@watchdog/tools/whois";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import { interpretWhoisSnapshot } from "../../lib/collect/interpret-whois-snapshot";

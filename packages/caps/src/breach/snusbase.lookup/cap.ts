@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchSnusbaseLookupEffect,
   snusbaseLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/breach";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { snusbaseLookupInput } from "./input";

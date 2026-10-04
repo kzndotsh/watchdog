@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
 import { normalizeIdentifierPlatform } from "@watchdog/schemas";
-import type { OembedSnapshot } from "@watchdog/tools";
+import type { OembedSnapshot } from "@watchdog/tools/http";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

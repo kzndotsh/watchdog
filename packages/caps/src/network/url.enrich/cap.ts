@@ -4,12 +4,9 @@ import {
   ENRICHED_MD_ARTIFACT,
   URL_ENRICH_CAPABILITY_ID,
 } from "@watchdog/schemas";
-import {
-  formatLinksMarkdownSection,
-  mergeUnique,
-  ValidationVendorError,
-  waybackArchiveUrl,
-} from "@watchdog/tools";
+import { ValidationVendorError } from "@watchdog/tools/errors";
+import { formatLinksMarkdownSection, mergeUnique } from "@watchdog/tools/html";
+import { waybackArchiveUrl } from "@watchdog/tools/wayback";
 
 import { defineCapability } from "../../sdk";
 import { ingestRemotePageEffect } from "./ingest-page";

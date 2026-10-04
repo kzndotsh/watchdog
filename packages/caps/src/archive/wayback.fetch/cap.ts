@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 
+import { ValidationVendorError } from "@watchdog/tools/errors";
 import {
   closestWaybackTimestampEffect,
   fetchWaybackSnapshotEffect,
-  ValidationVendorError,
   waybackFetchSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/wayback";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { waybackFetchInput } from "./input";

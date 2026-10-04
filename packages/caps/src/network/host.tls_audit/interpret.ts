@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { TlsAuditSnapshot } from "@watchdog/tools";
+import type { TlsAuditSnapshot } from "@watchdog/tools/tls";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";

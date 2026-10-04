@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { IpctlLookupSnapshot } from "@watchdog/tools";
+import type { IpctlLookupSnapshot } from "@watchdog/tools/network";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

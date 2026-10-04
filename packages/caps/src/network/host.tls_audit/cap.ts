@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import {
   fetchTlsAuditEffect,
-  normalizeHost,
   tlsAuditSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/tls";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { tlsAuditInput } from "./input";

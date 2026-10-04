@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
+import { normalizeIp } from "@watchdog/tools/dns";
 import {
   fetchShodanHostEffect,
-  normalizeIp,
   shodanLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { shodanLookupInput } from "./input";

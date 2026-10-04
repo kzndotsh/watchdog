@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { z } from "zod";
 
 import type { JsonValue } from "@watchdog/schemas";
-import type { ToolsTag } from "@watchdog/tools";
+import type { ToolsTag } from "@watchdog/tools/errors";
 
 import {
   defineCapability,

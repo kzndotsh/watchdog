@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { TxtInventorySnapshot } from "@watchdog/tools";
+import type { TxtInventorySnapshot } from "@watchdog/tools/dns";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";

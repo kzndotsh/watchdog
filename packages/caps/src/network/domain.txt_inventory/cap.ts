@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import {
   fetchTxtInventoryEffect,
-  normalizeHost,
   txtInventorySnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/dns";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { txtInventoryInput } from "./input";

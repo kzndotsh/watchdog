@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { LeakixLookupSnapshot } from "@watchdog/tools";
+import type { LeakixLookupSnapshot } from "@watchdog/tools/network";
 
 import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";

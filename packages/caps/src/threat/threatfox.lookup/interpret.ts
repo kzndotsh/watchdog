@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { ThreatfoxLookupSnapshot } from "@watchdog/tools";
+import type { ThreatfoxLookupSnapshot } from "@watchdog/tools/threat";
 
 import { filterRelatedIdentifiers } from "../../lib/collect/filter-related-identifiers";
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";

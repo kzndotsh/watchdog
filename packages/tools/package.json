@@ -3,7 +3,23 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./archive": "./src/archive/index.ts",
+    "./breach": "./src/breach/index.ts",
+    "./cache": "./src/cache/index.ts",
+    "./ct": "./src/ct/index.ts",
+    "./dns": "./src/dns/index.ts",
+    "./errors": "./src/errors/index.ts",
+    "./file": "./src/file/index.ts",
+    "./html": "./src/html/index.ts",
+    "./http": "./src/http/index.ts",
+    "./identity": "./src/identity/index.ts",
+    "./network": "./src/network/index.ts",
+    "./parse": "./src/parse/index.ts",
+    "./threat": "./src/threat/index.ts",
+    "./tls": "./src/tls/index.ts",
+    "./wayback": "./src/wayback/index.ts",
+    "./whois": "./src/whois/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"

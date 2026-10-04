@@ -1,10 +1,7 @@
 import { Effect } from "effect";
 
-import {
-  fetchOembedEffect,
-  ValidationVendorError,
-  oembedSnapshotSchema,
-} from "@watchdog/tools";
+import { ValidationVendorError } from "@watchdog/tools/errors";
+import { fetchOembedEffect, oembedSnapshotSchema } from "@watchdog/tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mediaOembedInput } from "./input";

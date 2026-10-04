@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { WhoisSnapshot } from "@watchdog/tools";
+import type { WhoisSnapshot } from "@watchdog/tools/whois";
 
 import type { CapInterpretResult } from "../../sdk";
 import {

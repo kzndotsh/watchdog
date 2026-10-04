@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { KeybaseLookupSnapshot } from "@watchdog/tools";
+import type { KeybaseLookupSnapshot } from "@watchdog/tools/identity";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import {

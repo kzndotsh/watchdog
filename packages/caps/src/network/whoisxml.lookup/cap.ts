@@ -4,7 +4,7 @@ import {
   fetchWhoisXmlEffect,
   normalizeHost,
   whoisSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { whoisXmlLookupInput } from "./input";

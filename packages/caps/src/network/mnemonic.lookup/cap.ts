@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchMnemonicPdnsEffect,
   mnemonicLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mnemonicLookupInput } from "./input";

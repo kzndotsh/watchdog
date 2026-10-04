@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchGravatarLookupEffect,
   gravatarLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { gravatarLookupInput } from "./input";

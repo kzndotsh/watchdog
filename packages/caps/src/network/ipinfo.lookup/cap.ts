@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
+import { normalizeIp } from "@watchdog/tools/dns";
 import {
   fetchIpinfoLookupEffect,
-  normalizeIp,
   ipinfoLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { ipinfoLookupInput } from "./input";

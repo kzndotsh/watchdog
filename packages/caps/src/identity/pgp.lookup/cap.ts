@@ -1,6 +1,9 @@
 import { Effect } from "effect";
 
-import { fetchPgpLookupEffect, pgpLookupSnapshotSchema } from "@watchdog/tools";
+import {
+  fetchPgpLookupEffect,
+  pgpLookupSnapshotSchema,
+} from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { pgpLookupInput } from "./input";

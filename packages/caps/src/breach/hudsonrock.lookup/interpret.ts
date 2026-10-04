@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { HudsonrockLookupSnapshot } from "@watchdog/tools";
+import type { HudsonrockLookupSnapshot } from "@watchdog/tools/breach";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";
