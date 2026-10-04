@@ -87,4 +87,56 @@ describe("check-workspace-reexports gate", () => {
 
     expect(res.code).toBe(0);
   });
+
+  it("fails on a real re-export that follows a glob string containing /*", () => {
+    const res = repoWith({
+      "packages/core/src/bad.ts": [
+        'export const include = "src/**/*.ts";',
+        'export * from "@watchdog/db";',
+        "",
+      ].join("\n"),
+    }).run(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("packages/core/src/bad.ts:2");
+  });
+
+  it("ignores export text inside strings, templates and comments", () => {
+    const res = repoWith({
+      "packages/core/src/ok.ts": [
+        '// export * from "@watchdog/db";',
+        '/* export { a } from "@watchdog/db"; */',
+        'export const a = "export * from \\"@watchdog/db\\"";',
+        'export const b = `export * from "@watchdog/db"`;',
+        "export const c = 'src/**/*.ts';",
+        "",
+      ].join("\n"),
+    }).run(GATE);
+
+    expect(res.code).toBe(0);
+  });
+
+  it("limits the web wrapper exemption to @watchdog/ui/components specifiers", () => {
+    const res = repoWith({
+      "apps/web/src/shared/ui/primitives/bad.tsx":
+        'export * from "@watchdog/schemas";\n',
+    }).run(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("primitives/bad.tsx");
+  });
+
+  it("allows toast.tsx exactly and not files that merely share its prefix", () => {
+    const ok = repoWith({
+      "apps/web/src/shared/ui/toast.tsx":
+        'export * from "@watchdog/ui/components/sonner";\n',
+    }).run(GATE);
+    expect(ok.code).toBe(0);
+
+    const bad = repoWith({
+      "apps/web/src/shared/ui/toast.tsx.extra.tsx":
+        'export * from "@watchdog/ui/components/sonner";\n',
+    }).run(GATE);
+    expect(bad.code).toBe(1);
+  });
 });

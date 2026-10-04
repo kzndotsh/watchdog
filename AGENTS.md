@@ -17,7 +17,7 @@ Authority: product nouns → [`GLOSSARY.md`](GLOSSARY.md) (doctrine and narrativ
 | Lint / fix | `pnpm check` · `pnpm fix` |
 | Affected packages | `pnpm changed` (list, with dependents) · `pnpm changed --run` (typecheck + unit tests for them only) |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
-| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` |
+| Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` |
 | Web DS | `pnpm --filter @watchdog/web ds:check` |
 | Vendored shadcn | `pnpm ui:add <name>` · `pnpm ui:sync` |
 | Regenerate | `pnpm generate:caps` · `pnpm generate:client` |

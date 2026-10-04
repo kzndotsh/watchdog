@@ -114,6 +114,8 @@ jobs:
               - 'apps/site/**'
             db:
               - 'packages/db/**'
+              # db schema files import from @watchdog/schemas.
+              - 'packages/schemas/**'
             e2e:
               - 'e2e/**'
               - 'playwright.config.ts'

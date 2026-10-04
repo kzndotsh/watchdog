@@ -7,8 +7,13 @@
  *   export * from "@watchdog/x"           export * as ns from "@watchdog/x"
  *   import { X } from "@watchdog/x"; export { X }   (also `export type { X }`)
  *
- * Exempt: tests, and the web wrappers over @watchdog/ui (shared/ui/primitives, shared/ui/toast.tsx),
- * which deliberately re-export a @watchdog/ui component module beside their override.
+ * Exempt: tests; and `@watchdog/ui/components/*` specifiers (only those) under
+ * apps/web/src/shared/ui/primitives/ and in exactly apps/web/src/shared/ui/toast.tsx, the web
+ * wrappers that re-export a ui component module beside their override.
+ *
+ * Sanctioned seam (not a re-export, so not flagged): packages/test-db/src/index.ts
+ * `export const testDb = db`. It exposes the db handle to api/caps tests so they never
+ * depend on @watchdog/db directly; test-db is the single package allowed to hold that edge.
  *
  *   node scripts/check-workspace-reexports.mjs
  */
@@ -18,10 +23,19 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 const ROOTS = ["apps", "packages"];
 const SKIP_DIRS = new Set(["node_modules", "dist", "__tests__"]);
-const EXEMPT_DIRS = [
-  "apps/web/src/shared/ui/primitives/",
-  "apps/web/src/shared/ui/toast.tsx",
-];
+const PRIMITIVES_DIR = "apps/web/src/shared/ui/primitives/";
+const TOAST_FILE = "apps/web/src/shared/ui/toast.tsx";
+const UI_COMPONENT = "@watchdog/ui/components/";
+
+/**
+ * The two web wrapper layers over @watchdog/ui may re-export a `@watchdog/ui/components/*`
+ * module (and nothing else) beside their override.
+ * @param {string} rel
+ * @param {string} spec
+ */
+const exemptSpec = (rel, spec) =>
+  (rel.startsWith(PRIMITIVES_DIR) || rel === TOAST_FILE) &&
+  spec.startsWith(UI_COMPONENT);
 
 /**
  * @param {string} dir
@@ -69,15 +83,55 @@ function sourceFiles() {
   return files;
 }
 
-/** Blank out comments, keeping offsets and newlines so line numbers stay true. */
+/** @param {string} s */
+const blank = (s) => s.replaceAll(/[^\n]/g, " ");
+
 /**
+ * Blank out comments and string contents, keeping offsets and newlines so line numbers
+ * stay true. Walks the text tracking string and template state, so a `/*` inside a
+ * string (a glob like "src/**\/*.ts") never opens a comment and export-like text inside a
+ * string or comment never matches. The one string kept verbatim is a module specifier
+ * (the literal right after `from`), which the patterns below need to read.
  * @param {string} text
  * @returns {string}
  */
-const stripComments = (text) =>
-  text.replaceAll(/\/\*[\s\S]*?\*\/|(?<![:"'`])\/\/[^\n]*/g, (m) =>
-    m.replaceAll(/[^\n]/g, " ")
-  );
+function stripComments(text) {
+  let out = "";
+  let i = 0;
+  while (i < text.length) {
+    const ch = text.charAt(i);
+    const next = text.charAt(i + 1);
+    if (ch === '"' || ch === "'" || ch === "`") {
+      let j = i + 1;
+      while (j < text.length && text.charAt(j) !== ch) {
+        if (ch !== "`" && text.charAt(j) === "\n") {
+          break;
+        }
+        j += text.charAt(j) === "\\" ? 2 : 1;
+      }
+      const literal = text.slice(i, j + 1);
+      out +=
+        ch !== "`" && /\bfrom\s*$/.test(out)
+          ? literal
+          : ch + blank(literal.slice(1, -1)) + (literal.length > 1 ? ch : "");
+      i = j + 1;
+    } else if (ch === "/" && next === "/") {
+      const end = text.indexOf("\n", i);
+      const stop = end === -1 ? text.length : end;
+      out += blank(text.slice(i, stop));
+      i = stop;
+    } else if (ch === "/" && next === "*") {
+      const end = text.indexOf("*/", i + 2);
+      const stop = end === -1 ? text.length : end + 2;
+      out += blank(text.slice(i, stop));
+      i = stop;
+    } else {
+      out += ch;
+      i += 1;
+    }
+  }
+  return out;
+}
 
 const IMPORT =
   /\bimport\s+(?:type\s+)?(?<clause>[^;"']*?)\s*from\s*["'](?<spec>@watchdog\/[^"']+)["']/g;
@@ -117,9 +171,6 @@ function localNames(clause) {
  */
 function inspect(file) {
   const rel = path.relative(root, file).split(path.sep).join("/");
-  if (EXEMPT_DIRS.some((dir) => rel.startsWith(dir))) {
-    return [];
-  }
   const text = stripComments(readFileSync(file, "utf-8"));
   /** @type {Map<string, string>} local name -> workspace module it came from */
   const imported = new Map();
@@ -140,6 +191,9 @@ function inspect(file) {
     }
   }
   for (const m of text.matchAll(EXPORT_FROM)) {
+    if (exemptSpec(rel, m.groups?.spec ?? "")) {
+      continue;
+    }
     report(m.index, `re-exports from ${m.groups?.spec}`);
   }
   for (const m of text.matchAll(EXPORT_LOCAL)) {
@@ -149,14 +203,14 @@ function inspect(file) {
     for (const item of (m.groups?.names ?? "").split(",")) {
       const local = /^\s*(?:type\s+)?([\w$]+)/.exec(item)?.[1];
       const from = local && imported.get(local);
-      if (from) {
+      if (from && !exemptSpec(rel, from)) {
         report(m.index, `re-exports ${local} imported from ${from}`);
       }
     }
   }
   for (const m of text.matchAll(EXPORT_DEFAULT)) {
     const from = imported.get(m.groups?.name ?? "");
-    if (from) {
+    if (from && !exemptSpec(rel, from)) {
       report(m.index, `re-exports ${m.groups?.name} imported from ${from}`);
     }
   }

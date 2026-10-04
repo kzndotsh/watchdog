@@ -116,6 +116,7 @@ pre-commit:
       # Schema edits must ship their migration; generate must be a no-op.
       glob:
         - "packages/db/src/schema/**"
+        - "packages/schemas/**"
         - "packages/db/drizzle/**"
         - "packages/db/drizzle.config.ts"
         - "scripts/check-migrations.mjs"
