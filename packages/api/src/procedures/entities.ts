@@ -6,14 +6,14 @@ import {
   getEntityByCaseSlugEffect,
   listEntitiesForCaseEffect,
   updateEntityFieldsEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import {
   caseScopeInputSchema,
   createEntityInputSchema,
   deleteEntityInputSchema,
   entitySlugScopeInputSchema,
   updateEntityInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

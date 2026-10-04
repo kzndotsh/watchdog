@@ -1,7 +1,7 @@
 import { inArray, sql, type SQL } from "drizzle-orm";
 import type { AnyColumn } from "drizzle-orm/column";
 
-import { enumValuesMatchingDisplayLabel } from "@watchdog/schemas";
+import { enumValuesMatchingDisplayLabel } from "@watchdog/schemas/shared";
 
 export function inArrayForDisplayLabelMatch<T extends string>(
   column: AnyColumn,

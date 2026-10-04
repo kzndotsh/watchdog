@@ -11,7 +11,7 @@ import {
   edgeScopeInputSchema,
   entityScopeInputSchema,
   updateEdgeInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type {
   CaseEdgeRecord,

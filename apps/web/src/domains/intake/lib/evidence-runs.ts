@@ -11,14 +11,14 @@ import {
   normalizedPlaybookRunId,
 } from "@/domains/jobs/lib/status";
 import { capabilityLabel, jobHeadlineLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   evidenceIdsFromJobInputs,
   isProcessCapability,
-  normalizeUuidList,
   URL_ENRICH_CAPABILITY_ID,
   summarizeJobInput,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
+import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 export function classifyRun(job: JobListRecord): CollectRunRole {
   if (job.playbookStep !== null && job.playbookStep !== undefined) {

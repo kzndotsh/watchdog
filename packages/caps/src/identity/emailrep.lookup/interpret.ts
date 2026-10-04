@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { EmailrepLookupSnapshot } from "@watchdog/tools";
+import type { EmailrepLookupSnapshot } from "@watchdog/tools/identity";
 
 import { interpretIdentifierBatches } from "../../lib/collect/interpret-identifier-batches";
 import { querySeedBatches } from "../../lib/collect/query-seed-batches";

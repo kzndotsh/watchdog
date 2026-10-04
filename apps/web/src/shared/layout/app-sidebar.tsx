@@ -9,7 +9,7 @@ import { SearchButton } from "@/domains/search/components/search-button";
 import { CaseSwitcher } from "@/shared/layout/case-switcher";
 import { modeLabel, useThemeMode } from "@/shared/layout/theme-toggle";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 import {
   Avatar,
   AvatarFallback,

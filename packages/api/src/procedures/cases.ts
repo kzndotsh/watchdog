@@ -6,12 +6,12 @@ import {
   getCaseByIdEffect,
   listCasesEffect,
   updateCaseEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/cases";
 import {
   createCaseInputSchema,
   deleteCaseInputSchema,
   updateCaseInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

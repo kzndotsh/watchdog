@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { hostSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { hostSeedSchema } from "@watchdog/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const c99LookupInput = z.object({
   host: hostSeedSchema.describe("Domain"),

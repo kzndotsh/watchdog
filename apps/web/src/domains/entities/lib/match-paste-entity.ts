@@ -3,7 +3,7 @@ import {
   parseOptionalTrimmedUuid,
   slugifyName,
   type IdentifierType,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type {
   IdentifierPasteEntity,

@@ -1,4 +1,4 @@
-import type { ConfidenceTier } from "@watchdog/schemas";
+import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 /**
  * The one "confirmed needs Evidence" rule. Pure and free of Effect and node

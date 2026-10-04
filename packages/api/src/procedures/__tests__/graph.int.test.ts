@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  listClaimsForEntityEffect,
-  writeGraphFromAgentEffect,
-  runDomain,
-} from "@watchdog/core";
+import { listClaimsForEntityEffect } from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
+import { writeGraphFromAgentEffect } from "@watchdog/core/proposals";
 import { buildClaimCreateOp } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
 import {

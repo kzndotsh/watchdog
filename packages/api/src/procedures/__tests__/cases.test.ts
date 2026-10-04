@@ -2,7 +2,11 @@ import { createRouterClient, ORPCError } from "@orpc/server";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { InternalError, InvalidError, NotFoundError } from "@watchdog/core";
+import {
+  InternalError,
+  InvalidError,
+  NotFoundError,
+} from "@watchdog/core/errors";
 
 const {
   listCasesEffect,
@@ -16,8 +20,8 @@ const {
   updateCaseEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/cases", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/cases")>();
   return {
     ...actual,
     listCasesEffect,

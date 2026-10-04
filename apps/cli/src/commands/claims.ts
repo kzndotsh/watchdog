@@ -3,13 +3,15 @@ import { defineCommand } from "citty";
 import {
   createClaimInputSchema,
   listClaimsInputSchema,
-  optionalClaimClassSchema,
   retractClaimInputSchema,
+  updateClaimInputSchema,
+} from "@watchdog/schemas/graph";
+import {
+  optionalClaimClassSchema,
   trimmedClaimClassSchema,
   trimmedConfidenceTierSchema,
   trimmedRetractKindSchema,
-  updateClaimInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail, truncText } from "../client";
 import {

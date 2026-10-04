@@ -3,14 +3,16 @@ import { defineCommand } from "citty";
 import {
   createEdgeInputSchema,
   deleteEdgeInputSchema,
-  edgeRelatedToHasNotes,
   entityScopeInputSchema,
+  updateEdgeInputSchema,
+} from "@watchdog/schemas/graph";
+import {
+  edgeRelatedToHasNotes,
   optionalEdgePredicateSchema,
   predicateLabel,
   trimmedConfidenceTierSchema,
   trimmedEdgePredicateSchema,
-  updateEdgeInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { api, emit, emitList, emitOk, fail } from "../client";
 import {

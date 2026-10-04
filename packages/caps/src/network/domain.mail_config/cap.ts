@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import {
   fetchMailConfigEffect,
-  normalizeHost,
   mailConfigSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/dns";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { mailConfigInput } from "./input";

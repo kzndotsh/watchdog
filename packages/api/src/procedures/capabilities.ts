@@ -3,8 +3,11 @@ import { z } from "zod";
 import {
   listCapabilitiesEffect,
   listPlaybookDescriptorsEffect,
-} from "@watchdog/core";
-import { jsonObjectSchema, PLAYBOOK_SEED_KINDS } from "@watchdog/schemas";
+} from "@watchdog/core/caps";
+import {
+  jsonObjectSchema,
+  PLAYBOOK_SEED_KINDS,
+} from "@watchdog/schemas/shared";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

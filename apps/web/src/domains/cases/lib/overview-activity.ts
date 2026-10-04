@@ -7,8 +7,9 @@ import type { EvidenceRecord } from "@/domains/intake/types";
 import { groupJobsForQueue } from "@/domains/jobs/lib/status";
 import { searchJobHitLabel } from "@/domains/search/lib/hit-labels";
 import { proposalTitle } from "@/domains/triage/lib/filters";
-import type { JobListRecord, ProposalRecord } from "@watchdog/core";
-import { entityTitleMapForJobInputs } from "@watchdog/schemas";
+import type { JobListRecord } from "@watchdog/core/jobs";
+import type { ProposalRecord } from "@watchdog/core/proposals";
+import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
 
 export type ActivityKind = "evidence" | "job" | "proposal";
 

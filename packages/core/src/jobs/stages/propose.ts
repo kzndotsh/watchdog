@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 
 import { casesRepo, db, proposalsRepo } from "@watchdog/db";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   parseGraphUuidList,
   trimmedOrUndefined,
-  type PatchOp,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { attachEvidenceIds } from "../../graph/attach-evidence";
 import { tryDb } from "../../infra/postgres-effect";

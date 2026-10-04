@@ -2,7 +2,10 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { entityDisplayLabel, trimmedOrUndefined } from "@watchdog/schemas";
+import {
+  entityDisplayLabel,
+  trimmedOrUndefined,
+} from "@watchdog/schemas/shared";
 
 type NameSize = "sm" | "md";
 

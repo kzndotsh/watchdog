@@ -2,9 +2,10 @@ import {
   isConfirmedWithoutBundle,
   totalEvidenceCount,
 } from "@/domains/triage/lib/accept-validation";
-import type { ProposalRecord } from "@watchdog/core";
-import type { ConfidenceTier, PatchOp } from "@watchdog/schemas";
-import { listInvalidIdentifierOps } from "@watchdog/schemas";
+import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import { listInvalidIdentifierOps } from "@watchdog/schemas/graph";
+import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 export type AcceptGateStatus = "ready" | "needs" | "blocked";
 

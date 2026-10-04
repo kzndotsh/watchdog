@@ -13,7 +13,7 @@ import {
   rollbackActiveCaseSwitch,
 } from "@/shared/lib/active-case-switch";
 import { toast } from "@/shared/ui/toast";
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 
 type NavigateFn = (opts: {
   to: string;

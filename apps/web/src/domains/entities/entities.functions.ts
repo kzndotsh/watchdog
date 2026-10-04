@@ -11,7 +11,7 @@ import {
   createEntityInputSchema,
   deleteEntityInputSchema,
   updateEntityInputSchema as updateEntityFieldsInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export const listEntitiesFn = createServerFn({ method: "GET" })
   .validator(caseIdInputSchema)

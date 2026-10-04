@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 
-import { normalizeUuidList } from "@watchdog/schemas";
+import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { claims } from "../schema/claims";

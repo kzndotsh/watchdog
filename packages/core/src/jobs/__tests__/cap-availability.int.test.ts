@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import {
-  putCredentialEffect,
-  runDomain,
-  updateCaseEffect,
-} from "@watchdog/core";
+import { updateCaseEffect } from "@watchdog/core/cases";
+import { runDomain } from "@watchdog/core/infra";
+import { putCredentialEffect } from "@watchdog/core/vault";
 import { db } from "@watchdog/db";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";

@@ -1,11 +1,11 @@
+import { parseCapJobInput } from "@watchdog/schemas/jobs";
 import {
-  parseCapJobInput,
   parseGraphUuidList,
   type HandoffBag,
   type JobHandoff,
   type JsonObject,
   type PlaybookSeedKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { CAPABILITIES, requireCapability } from "../registry";
 import type {

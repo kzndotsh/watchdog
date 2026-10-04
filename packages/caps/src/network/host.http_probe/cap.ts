@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import {
   fetchHttpProbeEffect,
-  normalizeHost,
   httpProbeSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/http";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { httpProbeInput } from "./input";

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { TriageQueueList } from "@/domains/triage/components/triage-queue-list";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testId } from "@watchdog/test-kit";
 
 const PROPOSAL: ProposalRecord = {

@@ -1,12 +1,12 @@
 import { Effect } from "effect";
 
 import { db, entitiesRepo, type EntityRow } from "@watchdog/db";
-import type { EntityKind } from "@watchdog/schemas";
+import type { EntityKind } from "@watchdog/schemas/shared";
 import {
   slugifyName,
   trimmedOrNull,
   trimmedOrUndefined,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";

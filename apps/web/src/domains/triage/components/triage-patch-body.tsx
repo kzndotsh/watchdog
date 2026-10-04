@@ -12,12 +12,9 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import type { ProposalRecord } from "@watchdog/core";
-import {
-  listInvalidIdentifierOps,
-  normalizeUuidList,
-  patchOpText,
-} from "@watchdog/schemas";
+import type { ProposalRecord } from "@watchdog/core/proposals";
+import { listInvalidIdentifierOps, patchOpText } from "@watchdog/schemas/graph";
+import { normalizeUuidList } from "@watchdog/schemas/shared";
 import {
   Alert,
   AlertDescription,

@@ -18,13 +18,11 @@ import {
   corsPreflightResponse,
 } from "@/lib/api-cors.server";
 import { runApp } from "@watchdog/api";
-import {
-  assertCaseInOrgEffect,
-  listenForEvents,
-  listVisibleCaseIdsEffect,
-} from "@watchdog/core";
+import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
+import { listenForEvents } from "@watchdog/core/events";
+import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { createLogger } from "@watchdog/log";
-import { isWatchdogEvent, parseSseCaseIdParam } from "@watchdog/schemas";
+import { isWatchdogEvent, parseSseCaseIdParam } from "@watchdog/schemas/feed";
 
 /** Process log for a dropped live event; carries the error only, never Case or Evidence data. */
 function logVisibilityRefreshFailure(error: unknown): void {

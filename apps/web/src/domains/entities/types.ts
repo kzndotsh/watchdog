@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { EntityRecord as CoreEntityRecord } from "@watchdog/core";
+import type { EntityRecord as CoreEntityRecord } from "@watchdog/core/graph";
 import {
   type createEntityInputSchema,
   caseScopeInputSchema,
@@ -8,7 +8,7 @@ import {
   type CaseScopeInput,
   type EntitySlugScopeInput,
   type UpdateEntityInput,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type EntityRecord = CoreEntityRecord;
 

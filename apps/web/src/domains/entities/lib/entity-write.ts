@@ -1,6 +1,6 @@
 import type { UpdateEntityFieldsInput } from "@/domains/entities/types";
-import { updateEntityInputSchema as updateEntityFieldsInputSchema } from "@watchdog/schemas";
-import type { EntityKind } from "@watchdog/schemas";
+import { updateEntityInputSchema as updateEntityFieldsInputSchema } from "@watchdog/schemas/graph";
+import type { EntityKind } from "@watchdog/schemas/shared";
 
 export interface UpdateEntityFieldsPatch {
   entityId: string;

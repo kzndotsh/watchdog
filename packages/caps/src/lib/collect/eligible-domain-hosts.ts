@@ -1,4 +1,4 @@
-import { normalizeHost } from "@watchdog/tools";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 /** Hostnames safe for handoff bags and domain Identifier proposals (CT, SAN, subdomains). */
 export function eligibleCtDomains(domains: readonly string[]): string[] {

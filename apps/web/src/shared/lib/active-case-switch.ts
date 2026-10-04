@@ -3,7 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { bumpActiveCaseHealEpoch } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
-import { parseOptionalTrimmedUuid } from "@watchdog/schemas";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 
 import { isCaseOverviewPath } from "./case-path";
 import { invalidateAfterCaseSwitch } from "./query-invalidation";

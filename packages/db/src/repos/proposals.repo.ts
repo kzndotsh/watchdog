@@ -1,11 +1,12 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 
-import type { PatchOp, ProposalStatus } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import type { ProposalStatus } from "@watchdog/schemas/shared";
 import {
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   parseGraphUuidList,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

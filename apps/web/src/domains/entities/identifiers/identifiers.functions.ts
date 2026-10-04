@@ -11,7 +11,7 @@ import {
   deleteIdentifierInputSchema,
   entityScopeInputSchema,
   updateIdentifierInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type {
   CaseIdentifierRecord,

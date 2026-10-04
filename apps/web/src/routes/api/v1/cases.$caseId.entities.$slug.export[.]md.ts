@@ -9,12 +9,10 @@ import { Effect } from "effect";
 
 import { createApiContext } from "@/auth/api-context.server";
 import { runApp } from "@watchdog/api";
-import {
-  getCaseByIdEffect,
-  getEntityByCaseSlugEffect,
-  renderEntityMarkdownEffect,
-  type DomainTag,
-} from "@watchdog/core";
+import { getCaseByIdEffect } from "@watchdog/core/cases";
+import type { DomainTag } from "@watchdog/core/errors";
+import { renderEntityMarkdownEffect } from "@watchdog/core/export";
+import { getEntityByCaseSlugEffect } from "@watchdog/core/graph";
 
 type EntityExportMdResult =
   | { kind: "missing" }

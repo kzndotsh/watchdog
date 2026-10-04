@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { slugifyName } from "@watchdog/schemas";
+import { slugifyName } from "@watchdog/schemas/shared";
 
 import { useCaseListActions } from "./use-case-list-actions";
 import { useCasesContext } from "./use-cases-context";

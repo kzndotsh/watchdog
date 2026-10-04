@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  createTaskEffect,
-  listRecentActivityEffect,
-  updateTaskEffect,
-  runDomain,
-} from "@watchdog/core";
+import { listRecentActivityEffect } from "@watchdog/core/activity";
+import { runDomain } from "@watchdog/core/infra";
+import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
 import { db, evidenceRepo } from "@watchdog/db";
 import { buildClaimCreateOp } from "@watchdog/schemas/testing";
 import {

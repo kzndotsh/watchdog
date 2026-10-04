@@ -4,20 +4,18 @@ import { zipSync, strToU8 } from "fflate";
 
 import { createApiContext } from "@/auth/api-context.server";
 import { runApp } from "@watchdog/api";
-import {
-  getCaseByIdEffect,
-  readArtifactBytesEffect,
-  renderCaseExportEffect,
-  type DomainTag,
-} from "@watchdog/core";
+import { readArtifactBytesEffect } from "@watchdog/core/blob";
+import { getCaseByIdEffect } from "@watchdog/core/cases";
+import type { DomainTag } from "@watchdog/core/errors";
+import { renderCaseExportEffect } from "@watchdog/core/export";
 /**
  * GET /api/v1/cases/:caseId/export.zip
  *
  * Downloads a zip of all entity markdown files + evidence for the Case.
  * Auth: session cookie or API key.
  */
-import { evidenceDisplayLabel } from "@watchdog/schemas";
-import type { EvidenceKind } from "@watchdog/schemas";
+import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
+import type { EvidenceKind } from "@watchdog/schemas/shared";
 
 function safeFilename(label: string): string {
   return (

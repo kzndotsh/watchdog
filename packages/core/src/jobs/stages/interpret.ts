@@ -1,8 +1,9 @@
 import { Effect, Result } from "effect";
 
 import type { JobArtifact } from "@watchdog/db";
-import type { PatchOp, JobHandoff } from "@watchdog/schemas";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import type { JobHandoff } from "@watchdog/schemas/shared";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { tryParsePatch } from "../../graph/patch/patch";
 import { readArtifactBytesEffect } from "../../infra/blob";

@@ -6,13 +6,13 @@ import { Data, Effect } from "effect";
 
 import type { CapContext } from "@watchdog/caps/sdk";
 import { db, jobsRepo, type JobArtifact } from "@watchdog/db";
-import type { EvidenceSnapshot } from "@watchdog/schemas";
+import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import {
   MissingCredentialError,
   ValidationVendorError,
-  toolsHttpClientLayer,
   type ToolsTag,
-} from "@watchdog/tools";
+} from "@watchdog/tools/errors";
+import { toolsHttpClientLayer } from "@watchdog/tools/http";
 
 import { packEvidenceSnapshotEffect } from "../../evidence/pack-evidence-snapshot";
 import {

@@ -19,7 +19,7 @@ import {
   isOpenJobStatus,
   parseTrimmedCaseId,
   type JsonObject,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { notifyJobUpdateEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";

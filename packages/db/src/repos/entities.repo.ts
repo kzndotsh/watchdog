@@ -4,7 +4,7 @@ import {
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   normalizeUuidList,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";

@@ -12,8 +12,11 @@ import {
   ComboboxList,
 } from "@/shared/ui/primitives/combobox";
 import { EntityKindIcon } from "@/shared/ui/vocab";
-import type { EntityKind } from "@watchdog/schemas";
-import { entityDisplayLabel, trimmedOrUndefined } from "@watchdog/schemas";
+import type { EntityKind } from "@watchdog/schemas/shared";
+import {
+  entityDisplayLabel,
+  trimmedOrUndefined,
+} from "@watchdog/schemas/shared";
 
 export interface EntityOption {
   id: string;

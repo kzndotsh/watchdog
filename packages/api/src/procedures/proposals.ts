@@ -5,13 +5,13 @@ import {
   createAgentProposalEffect,
   listProposalsForCaseEffect,
   rejectProposalEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/proposals";
 import {
   acceptProposalInputSchema,
   createProposalInputSchema,
   listProposalsInputSchema,
   rejectProposalInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

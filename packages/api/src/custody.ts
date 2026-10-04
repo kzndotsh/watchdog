@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 
 import { childWriteViolation } from "@watchdog/policy";
-import type { ApiAuthMethod } from "@watchdog/schemas";
+import type { ApiAuthMethod } from "@watchdog/schemas/shared";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;

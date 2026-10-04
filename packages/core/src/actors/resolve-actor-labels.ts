@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { db, usersRepo, type UserDisplayRow } from "@watchdog/db";
-import { normalizeUuidList } from "@watchdog/schemas";
+import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";

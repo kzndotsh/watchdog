@@ -4,11 +4,11 @@ import {
   deleteCredentialEffect,
   listCredentialSlotsEffect,
   putCredentialSlotEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/vault";
 import {
   deleteCredentialInputSchema,
   putCredentialInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/caps";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";

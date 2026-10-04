@@ -5,7 +5,7 @@ import {
   PLAYBOOK_SEED_KINDS,
   isPlaybookSeedKind,
   type PlaybookSeedKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export const PLAYBOOK_SEED_FILTERS = [
   { value: "", label: "All seeds" },

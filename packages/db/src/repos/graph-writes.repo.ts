@@ -1,11 +1,11 @@
 import { and, eq } from "drizzle-orm";
 
+import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
   ConfidenceTier,
   GraphWriteChannel,
-  PatchOp,
-} from "@watchdog/schemas";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { graphWrites } from "../schema/graph-writes";

@@ -36,7 +36,7 @@ blob-report/
 playwright/.cache/
 
 # Regenerable platform output
-export/
+/export/
 .wd-runtime/
 scorecard.png
 

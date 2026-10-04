@@ -1,6 +1,7 @@
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
-import type { JsonObject, PatchOp } from "@watchdog/schemas";
-import { predicateLabel } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import type { JsonObject } from "@watchdog/schemas/shared";
+import { predicateLabel } from "@watchdog/schemas/shared";
 
 type Resource = PatchOp["resource"];
 

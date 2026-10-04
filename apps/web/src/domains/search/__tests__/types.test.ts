@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   SEARCH_MIN_QUERY_LENGTH,
   searchCaseInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 
 describe("search types", () => {
   it("re-exports the shared search minimum query length", () => {

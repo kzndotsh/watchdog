@@ -9,16 +9,19 @@ import {
   type RecentActivityEventRow,
   type RecentJobActivityRow,
 } from "@watchdog/db";
-import type { ActivityItem, JobStatus } from "@watchdog/schemas";
+import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
+import type { ActivityItem } from "@watchdog/schemas/feed";
 import {
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
-  evidenceDisplayLabel,
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
+} from "@watchdog/schemas/jobs";
+import type { JobStatus } from "@watchdog/schemas/shared";
+import {
   pickPlaybookAggregateStatus,
   parseTrimmedCaseId,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import {
   labelForActor,

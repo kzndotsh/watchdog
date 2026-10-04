@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchEmailrepLookupEffect,
   emailrepLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/identity";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { emailrepLookupInput } from "./input";

@@ -1,4 +1,7 @@
-import { IDENTIFIER_PLATFORMS, type IdentifierType } from "@watchdog/schemas";
+import {
+  IDENTIFIER_PLATFORMS,
+  type IdentifierType,
+} from "@watchdog/schemas/shared";
 
 export function cleanPasteCell(raw: string): string {
   let s = raw.trim().replaceAll("\u00A0", " ").trim();

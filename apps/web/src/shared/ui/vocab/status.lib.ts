@@ -30,7 +30,7 @@ import {
   type ProposalStatus,
   type RetractKind,
   titleCase,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 /** All statuses that bind to `--status-*` tokens (canonical unions only). */
 export type DisplayStatus =

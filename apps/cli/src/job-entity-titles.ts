@@ -1,8 +1,8 @@
+import { caseScopeInputSchema } from "@watchdog/schemas/graph";
 import {
-  caseScopeInputSchema,
   entityIdsFromJobInputs,
   entityTitleMapForJobInputs,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 import { api } from "./client";
 

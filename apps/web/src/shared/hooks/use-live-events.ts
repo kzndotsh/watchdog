@@ -5,7 +5,7 @@ import {
   normalizeSseCaseId,
   WATCHDOG_EVENT_TYPES,
   type WatchdogEvent,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/feed";
 
 type EventHandler = (event: WatchdogEvent) => void;
 

@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
 import { db, jobsRepo, type JobPatch, type JobRow } from "@watchdog/db";
-import type { JobStatus } from "@watchdog/schemas";
-import { parseTrimmedCaseId } from "@watchdog/schemas";
+import type { JobStatus } from "@watchdog/schemas/shared";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";

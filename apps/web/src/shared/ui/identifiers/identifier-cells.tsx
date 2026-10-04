@@ -44,7 +44,7 @@ import {
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export { isHandleWithoutPlatform } from "@/domains/entities/lib/commit-identifier-field";
 

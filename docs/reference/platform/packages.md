@@ -25,7 +25,7 @@ The package list is `packages/*/package.json` and `apps/*/package.json`; each pa
 | `@watchdog/tools` | db, caps, core, ai, api, apps (prefer zero workspace deps) |
 | `@watchdog/caps` (incl. SPI `@watchdog/caps/sdk`) | **db**, core, api, apps |
 | `@watchdog/auth` | api, core, caps, apps, `@tanstack/*`. Depends on db (Better Auth adapter), env, log, schemas |
-| `@watchdog/core` | api, apps. Uses db **repos only** (no `drizzle-orm`); worker imports `@watchdog/core/worker` |
+| `@watchdog/core` | api, apps. Uses db **repos only** (no `drizzle-orm`); callers import per-domain subpaths (`@watchdog/core/cases`, `/graph`, `/jobs`, ...); worker imports `@watchdog/core/worker` |
 | `@watchdog/api` | apps, **db**, drizzle-orm (goes through core) |
 | `@watchdog/client` | api, apps, db, caps, core, log (generated JSON in `src/generated`; the `app-router` type entry aliases the live `AppRouter` in-monorepo only) |
 | `@watchdog/test-kit`, `@watchdog/test-db` | dev only: never imported from production code |

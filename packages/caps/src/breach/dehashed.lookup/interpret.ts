@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { DehashedLookupSnapshot } from "@watchdog/tools";
+import type { DehashedLookupSnapshot } from "@watchdog/tools/breach";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";

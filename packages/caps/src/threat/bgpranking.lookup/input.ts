@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { ipSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { ipSeedSchema } from "@watchdog/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const bgprankingLookupInput = z.object({
   ip: ipSeedSchema.describe("IPv4 or IPv6"),

@@ -1,6 +1,6 @@
 import { expect } from "vitest";
 
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 
 import type { CapInterpretResult } from "../sdk";
 

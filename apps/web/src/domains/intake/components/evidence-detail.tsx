@@ -50,12 +50,9 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
-import type { JobListRecord } from "@watchdog/core";
-import {
-  isLiveJobStatus,
-  isOpenJobStatus,
-  ENRICHED_MD_ARTIFACT,
-} from "@watchdog/schemas";
+import type { JobListRecord } from "@watchdog/core/jobs";
+import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas/jobs";
+import { isLiveJobStatus, isOpenJobStatus } from "@watchdog/schemas/shared";
 import { Spinner } from "@watchdog/ui/components/spinner";
 import { Tabs, TabsContent } from "@watchdog/ui/components/tabs";
 

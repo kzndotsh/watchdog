@@ -3,12 +3,12 @@ import type { z } from "zod";
 import type {
   CaseEdgeRecord as CoreCaseEdgeRecord,
   EdgeRecord as CoreEdgeRecord,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import type {
   createEdgeInputSchema,
   edgeScopeInputSchema,
   updateEdgeInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type EdgeRecord = CoreEdgeRecord;
 export type CaseEdgeRecord = CoreCaseEdgeRecord;

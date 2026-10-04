@@ -12,10 +12,10 @@ import {
 } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 import {
-  parseOptionalTrimmedUuid,
   dumpPasteInputSchema,
   dumpUrlInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/evidence";
+import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 
 export interface UseDumpEvidenceOptions {
   caseId: string;

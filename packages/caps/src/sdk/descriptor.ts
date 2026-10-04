@@ -4,7 +4,7 @@ import {
   isJsonObject,
   type JsonObject,
   type JsonValue,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type {
   CapCredentialSpec,

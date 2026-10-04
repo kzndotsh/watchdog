@@ -4,7 +4,7 @@ import {
   TASK_PRIORITIES,
   TASK_PRIORITY_LABELS,
   type TaskPriority,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 /** Map priorities onto existing `--status-*` token tones. */
 export const TASK_PRIORITY_TONE_MAP: Record<TaskPriority, DisplayStatus> = {

@@ -13,7 +13,10 @@ import {
 } from "@/shared/ui/primitives/dialog";
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { ENTITY_KIND_OPTIONS } from "@/shared/ui/vocab";
-import { trimmedEntityKindSchema, type EntityKind } from "@watchdog/schemas";
+import {
+  trimmedEntityKindSchema,
+  type EntityKind,
+} from "@watchdog/schemas/shared";
 import {
   Field,
   FieldError,

@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DomainError } from "@watchdog/core/errors";
+import { runDomain } from "@watchdog/core/infra";
 import {
-  DomainError,
   acceptProposalEffect,
   createAgentProposalEffect,
   listProposalsForCaseEffect,
   rejectProposalEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/proposals";
 import {
   claimsRepo,
   db,
@@ -18,7 +18,8 @@ import {
   proposals,
   proposalsRepo,
 } from "@watchdog/db";
-import { fingerprintPatchOp, entityDisplayLabel } from "@watchdog/schemas";
+import { fingerprintPatchOp } from "@watchdog/schemas/graph";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
   buildIdentifierCreateOp,

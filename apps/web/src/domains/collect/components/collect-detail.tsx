@@ -4,7 +4,7 @@ import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-ac
 import { JobDetail } from "@/domains/jobs/components/job-detail";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
-import type { JobListRecord, JobRecord } from "@watchdog/core";
+import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 
 export interface CollectDetailProps {
   row: CollectRow | null;

@@ -5,13 +5,13 @@ import {
   processExtractDraftSchema,
   structuredExtractEffect,
 } from "@watchdog/ai";
+import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
+import { EVIDENCE_EXTRACT_AI_CAPABILITY_ID } from "@watchdog/schemas/jobs";
 import {
-  EVIDENCE_EXTRACT_AI_CAPABILITY_ID,
   IDENTIFIER_PLATFORM_SLUGS,
   trimmedOrUndefined,
-  type EvidenceSnapshot,
-} from "@watchdog/schemas";
-import { ValidationVendorError } from "@watchdog/tools";
+} from "@watchdog/schemas/shared";
+import { ValidationVendorError } from "@watchdog/tools/errors";
 
 import { defineCapability, type CapContext } from "../../sdk";
 import {

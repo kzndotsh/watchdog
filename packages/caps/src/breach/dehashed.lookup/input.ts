@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { dehashedQuerySeedSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { dehashedQuerySeedSchema } from "@watchdog/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const dehashedLookupInput = z.object({
   query: dehashedQuerySeedSchema.describe(

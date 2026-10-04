@@ -8,7 +8,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-import type { ListRecentActivityInput } from "@watchdog/schemas";
+import type { ListRecentActivityInput } from "@watchdog/schemas/feed";
 
 export type RecentActivityFilters = Partial<ListRecentActivityInput>;
 

@@ -10,7 +10,7 @@ import {
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
-import { createIdentifierInputSchema } from "@watchdog/schemas";
+import { createIdentifierInputSchema } from "@watchdog/schemas/graph";
 
 export function useBulkAddIdentifiersImport(options: {
   caseId: string;

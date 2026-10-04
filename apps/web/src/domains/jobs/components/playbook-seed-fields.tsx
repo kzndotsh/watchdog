@@ -4,7 +4,10 @@ import type { PlaybookSeedView } from "@/domains/jobs/lib/playbook-seed-view";
 import { cn } from "@/lib/utils";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { trimmedOrUndefined, type PlaybookSeedKind } from "@watchdog/schemas";
+import {
+  trimmedOrUndefined,
+  type PlaybookSeedKind,
+} from "@watchdog/schemas/shared";
 import { Input } from "@watchdog/ui/components/input";
 
 export interface UrlDumpOption {

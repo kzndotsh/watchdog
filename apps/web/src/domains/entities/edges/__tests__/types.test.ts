@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { updateEdgeInputSchema } from "@watchdog/schemas";
+import { updateEdgeInputSchema } from "@watchdog/schemas/graph";
 import { testId } from "@watchdog/test-kit";
 
 describe("edge input schemas", () => {

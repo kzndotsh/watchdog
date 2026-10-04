@@ -7,7 +7,7 @@ import {
   listJobsForCaseEffect,
   runPlaybookEffect,
   startJobEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/jobs";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
@@ -15,7 +15,7 @@ import {
   listJobsInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 import { actorLabelFromActor } from "../actor-label";
 import { authed } from "../os";

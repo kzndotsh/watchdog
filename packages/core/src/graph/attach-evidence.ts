@@ -1,5 +1,5 @@
-import type { PatchOp } from "@watchdog/schemas";
-import { parseGraphUuidList } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
 export type AttachEvidenceResult =
   | { ok: true; patch: PatchOp[] }

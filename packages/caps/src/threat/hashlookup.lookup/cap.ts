@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchHashlookupEffect,
   hashlookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { hashlookupLookupInput } from "./input";

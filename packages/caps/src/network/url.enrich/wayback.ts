@@ -1,4 +1,4 @@
-import { closestWaybackTimestampEffect as closestWaybackTimestampToolEffect } from "@watchdog/tools";
+import { closestWaybackTimestampEffect as closestWaybackTimestampToolEffect } from "@watchdog/tools/wayback";
 
 import { URL_ENRICH_UA } from "./types";
 

@@ -12,6 +12,10 @@ import {
 } from "drizzle-orm";
 
 import {
+  normalizeJobInput,
+  jobInputGraphIdFieldIssues,
+} from "@watchdog/schemas/jobs";
+import {
   EVIDENCE_KIND_LABELS,
   EVIDENCE_KINDS,
   JOB_STATUS_LABELS,
@@ -19,14 +23,12 @@ import {
   CANCELLABLE_JOB_STATUSES,
   OPEN_JOB_STATUSES,
   normalizeUuidList,
-  normalizeJobInput,
-  jobInputGraphIdFieldIssues,
   parseGraphUuidList,
   trimmedOrUndefined,
   type JobStatus,
   type PlaybookRunStatus,
   type JsonObject,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

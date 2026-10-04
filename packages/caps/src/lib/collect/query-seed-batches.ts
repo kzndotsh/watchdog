@@ -1,4 +1,4 @@
-import type { IdentifierType } from "@watchdog/schemas";
+import type { IdentifierType } from "@watchdog/schemas/shared";
 
 import { withSeedHost } from "./eligible-domain-hosts";
 import type { IdentifierBatch } from "./interpret-identifier-batches";

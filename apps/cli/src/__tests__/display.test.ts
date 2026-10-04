@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { capEgressLabel } from "@watchdog/schemas/caps";
 import {
-  capEgressLabel,
   evidenceDisplayLabel,
   evidenceTitleMapFromRows,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/evidence";
 
 import {
   caseEgressLabel,

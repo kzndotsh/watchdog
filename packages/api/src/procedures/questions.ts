@@ -7,14 +7,14 @@ import {
   reopenQuestionEffect,
   resolveQuestionEffect,
   updateQuestionEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import {
   createQuestionInputSchema,
   entityScopeInputSchema,
   questionScopeInputSchema,
   resolveQuestionInputSchema,
   updateQuestionInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";

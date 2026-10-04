@@ -9,7 +9,7 @@ import {
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { capabilityLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import { testId } from "@watchdog/test-kit";
 import { Tabs } from "@watchdog/ui/components/tabs";
 

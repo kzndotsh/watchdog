@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { CtLookupSnapshot } from "@watchdog/tools";
+import type { CtLookupSnapshot } from "@watchdog/tools/ct";
 
 import { withSeedHost } from "../../lib/collect/eligible-domain-hosts";
 import { interpretTypedIdentifiers } from "../../lib/collect/interpret-typed-identifiers";

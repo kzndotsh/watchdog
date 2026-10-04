@@ -11,7 +11,7 @@ import {
 } from "@/shared/lib/query-invalidation";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { toast } from "@/shared/ui/toast";
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 import { SidebarGroupLabel, useSidebar } from "@watchdog/ui/components/sidebar";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 

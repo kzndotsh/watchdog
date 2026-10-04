@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord, ProposalRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testId } from "@watchdog/test-kit";
 
 import {

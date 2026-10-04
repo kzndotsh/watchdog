@@ -1,10 +1,7 @@
-import type { PatchOp } from "@watchdog/schemas";
-import {
-  capabilityIdLabel,
-  patchOpHeadline,
-  playbookIdLabel,
-  proposalEntityName,
-} from "@watchdog/schemas";
+import { capabilityIdLabel, playbookIdLabel } from "@watchdog/schemas/caps";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import { patchOpHeadline } from "@watchdog/schemas/graph";
+import { proposalEntityName } from "@watchdog/schemas/jobs";
 
 /** Playbook or capability label for a proposal (no summary / entity). */
 export function proposalSourceLabel(opts: {

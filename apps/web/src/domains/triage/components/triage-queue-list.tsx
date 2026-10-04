@@ -11,7 +11,7 @@ import {
   QueueRowTitle,
 } from "@/shared/ui/queue-row";
 import { StatusDot } from "@/shared/ui/status-dot";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 
 interface TriageQueueListProps {
   proposals: ProposalRecord[];

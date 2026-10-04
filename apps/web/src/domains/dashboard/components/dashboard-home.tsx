@@ -47,8 +47,9 @@ import {
   DashboardActivityPanelSkeleton,
   DashboardOverviewSkeleton,
 } from "@/shared/ui/skeletons";
-import type { ProposalRecord, JobListRecord } from "@watchdog/core";
-import { isProposalQueueLiveEvent } from "@watchdog/schemas";
+import type { JobListRecord } from "@watchdog/core/jobs";
+import type { ProposalRecord } from "@watchdog/core/proposals";
+import { isProposalQueueLiveEvent } from "@watchdog/schemas/feed";
 import {
   ResizableHandle,
   ResizablePanel,

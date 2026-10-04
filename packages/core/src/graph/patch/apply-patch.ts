@@ -2,8 +2,9 @@ import { Effect } from "effect";
 
 import type { DbTx } from "@watchdog/db";
 import { type CustodyViolation, assertPatchGates } from "@watchdog/policy";
-import type { ConfidenceTier, PatchOp } from "@watchdog/schemas";
-import { parseGraphUuidList } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import type { ConfidenceTier } from "@watchdog/schemas/shared";
+import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
 import { assertEvidenceIdsInCaseEffect } from "../../evidence/evidence";
 import { transact } from "../../infra/postgres-tx";

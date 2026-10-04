@@ -1,4 +1,4 @@
-import { parseActorId, parseTrimmedCaseId } from "@watchdog/schemas";
+import { parseActorId, parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 /** Trim a non-empty actor id (user id, api-key label, test fixture); not a graph UUID. */
 export function trimActorId(actorId: string): string | undefined {

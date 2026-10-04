@@ -6,8 +6,8 @@ import {
   playbookRunStatus,
   type JobQueueEntry,
 } from "@/domains/jobs/lib/status";
-import type { JobListRecord } from "@watchdog/core";
-import { isOpenJobStatus } from "@watchdog/schemas";
+import type { JobListRecord } from "@watchdog/core/jobs";
+import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
 import {
   classifyRun,

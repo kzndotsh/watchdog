@@ -8,7 +8,7 @@ import {
   InternalError,
   InvalidError,
   NotFoundError,
-} from "@watchdog/core";
+} from "@watchdog/core/errors";
 import { runWithRequestLogger } from "@watchdog/log";
 
 import { toOrpcError } from "../map-domain-error";

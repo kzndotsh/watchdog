@@ -6,18 +6,15 @@ import {
   proposalsRepo,
   type ProposalRow,
 } from "@watchdog/db";
-import type {
-  ConfidenceTier,
-  PatchOp,
-  ProposalStatus,
-} from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import { patchOpRelatedEntityIds } from "@watchdog/schemas/graph";
+import type { ConfidenceTier, ProposalStatus } from "@watchdog/schemas/shared";
 import {
   normalizeUuidList,
   parseGraphUuidList,
-  patchOpRelatedEntityIds,
   trimmedOrNull,
   trimmedOrUndefined,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import {

@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 
+import type { ToolsTag } from "@watchdog/tools/errors";
 import {
   decodeHtml,
   extractOutboundFromHtml,
@@ -10,9 +11,8 @@ import {
   htmlToText,
   isHtml,
   isMarkdown,
-  type FetchBytesResult,
-  type ToolsTag,
-} from "@watchdog/tools";
+} from "@watchdog/tools/html";
+import type { FetchBytesResult } from "@watchdog/tools/http";
 
 import type { CapArtifact } from "../../sdk";
 import { fetchBytesEffect } from "./fetch-bytes";

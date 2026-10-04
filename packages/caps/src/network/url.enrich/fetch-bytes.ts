@@ -1,4 +1,4 @@
-import { fetchBytesEffect as fetchBytesToolEffect } from "@watchdog/tools";
+import { fetchBytesEffect as fetchBytesToolEffect } from "@watchdog/tools/http";
 
 import {
   ACCEPT_MARKDOWN_FIRST,

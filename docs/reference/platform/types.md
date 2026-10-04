@@ -34,7 +34,7 @@ Where to find things:
 | Accept gates | `@watchdog/policy` (`assertPatchGates`, `assertPatchShape`) |
 | Patch application | `packages/core/src/graph/patch/apply-*-op.ts`, `parse-agent-patch.ts` |
 | Edge update validation | `packages/core/src/graph/edge-update.ts` |
-| Producer report shapes | `@watchdog/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap imports them from `@watchdog/tools` directly (no Cap-local re-export) |
+| Producer report shapes | `@watchdog/tools` (`dnsRecordsSchema`, `whoisSnapshotSchema`, `oembedSnapshotSchema`); a Cap imports them from a `@watchdog/tools/<domain>` subpath directly (no Cap-local re-export) |
 
 ## Platform vocab is the only vocab here
 
@@ -105,7 +105,7 @@ import {
   nonEmptyTrimmed,
   uuidListSchema,
   uuidSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export const createClaimInputSchema = z.object({
   caseId: uuidSchema,

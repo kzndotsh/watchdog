@@ -1,14 +1,13 @@
 import { Effect } from "effect";
 
 import { evidenceLinksRepo, identifiersRepo, type DbTx } from "@watchdog/db";
+import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
 import {
   IDENTIFIER_STATUSES,
-  validateIdentifierWrite,
   type ConfidenceTier,
   type IdentifierStatus,
-  type PatchOp,
   trimmedOrNull,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { tryDb } from "../../infra/postgres-effect";
 import {

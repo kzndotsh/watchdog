@@ -1,6 +1,6 @@
 import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
-import type { EntityKind } from "@watchdog/schemas";
+import type { EntityKind } from "@watchdog/schemas/shared";
 
 import { timestamps } from "./_helpers";
 import { cases } from "./cases";

@@ -9,8 +9,8 @@ const { listCapabilitiesEffect, listPlaybookDescriptorsEffect } = vi.hoisted(
   })
 );
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/caps", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/caps")>();
   return {
     ...actual,
     listCapabilitiesEffect,

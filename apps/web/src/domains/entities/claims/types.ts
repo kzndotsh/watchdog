@@ -1,12 +1,12 @@
 import type { z } from "zod";
 
-import type { ClaimRecord as CoreClaimRecord } from "@watchdog/core";
+import type { ClaimRecord as CoreClaimRecord } from "@watchdog/core/graph";
 import type {
   createClaimInputSchema,
   listClaimsInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type ClaimRecord = CoreClaimRecord;
 

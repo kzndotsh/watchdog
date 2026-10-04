@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 
-import { graphWriteInputSchema } from "@watchdog/schemas";
+import { graphWriteInputSchema } from "@watchdog/schemas/graph";
 
 import { api, emit, fail } from "../client";
 import { enrichGraphWriteDisplay } from "../display";

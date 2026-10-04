@@ -7,7 +7,7 @@ import {
   optionalIdentifierStatusSchema,
   optionalTrimmedSchema,
   trimmedIdentifierTypeSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 const PLATFORM_HINT = IDENTIFIER_PLATFORM_SLUGS.join(", ");
 

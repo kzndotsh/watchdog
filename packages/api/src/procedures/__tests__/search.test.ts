@@ -6,8 +6,8 @@ const { searchCaseEffect } = vi.hoisted(() => ({
   searchCaseEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/search", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/search")>();
   return {
     ...actual,
     searchCaseEffect,

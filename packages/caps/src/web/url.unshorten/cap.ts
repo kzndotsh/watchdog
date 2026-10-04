@@ -1,7 +1,10 @@
 import { Effect } from "effect";
 
-import type { JobHandoff } from "@watchdog/schemas";
-import { fetchUnshortenEffect, unshortenSnapshotSchema } from "@watchdog/tools";
+import type { JobHandoff } from "@watchdog/schemas/shared";
+import {
+  fetchUnshortenEffect,
+  unshortenSnapshotSchema,
+} from "@watchdog/tools/http";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlUnshortenInput } from "./input";

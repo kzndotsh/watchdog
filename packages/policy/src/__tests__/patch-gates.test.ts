@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Result } from "effect";
 
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 
 import { assertPatchGates, assertPatchShape } from "../patch-gates.ts";
 

@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
-import { createCaseInputSchema } from "@watchdog/schemas";
+import { createCaseInputSchema } from "@watchdog/schemas/cases";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 import { Spinner } from "@watchdog/ui/components/spinner";

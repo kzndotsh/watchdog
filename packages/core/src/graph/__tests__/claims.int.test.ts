@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DomainError } from "@watchdog/core/errors";
 import {
   createClaimEffect,
-  DomainError,
   retractClaimEffect,
-  runDomain,
   updateClaimEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
 import { db, evidenceRepo } from "@watchdog/db";
 import {
   resetTestDb,

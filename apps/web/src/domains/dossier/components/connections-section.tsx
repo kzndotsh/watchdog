@@ -41,7 +41,7 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { DossierConnectionsSkeletonLayout } from "@/shared/ui/skeletons";
 import { toast } from "@/shared/ui/toast";
-import { edgeScopeInputSchema } from "@watchdog/schemas";
+import { edgeScopeInputSchema } from "@watchdog/schemas/graph";
 import { FieldError } from "@watchdog/ui/components/field";
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {

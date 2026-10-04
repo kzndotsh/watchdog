@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-import type { CaseRecord as CoreCaseRecord } from "@watchdog/core";
+import type { CaseRecord as CoreCaseRecord } from "@watchdog/core/cases";
 import {
   type getCaseBySlugInputSchema,
   deleteCaseInputSchema,
-  trimmedUuidSchema,
   type DeleteCaseInput,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
+import { trimmedUuidSchema } from "@watchdog/schemas/shared";
 
 export type CaseRecord = CoreCaseRecord;
 

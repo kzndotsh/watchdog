@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { HttpProbeSnapshot } from "@watchdog/tools";
+import type { HttpProbeSnapshot } from "@watchdog/tools/http";
 
 import { interpretObservationClaim } from "../../lib/collect/interpret-observation-claim";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";

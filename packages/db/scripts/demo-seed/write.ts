@@ -34,25 +34,24 @@ import {
   type DbExec,
   type NewProposal,
 } from "@watchdog/db";
-import {
-  fingerprintPatchOp,
-  type ActivityKind,
-  type ClaimClass,
-  type ConfidenceTier,
-  type EdgePredicate,
-  type EntityKind,
-  type EvidenceKind,
-  type IdentifierStatus,
-  type IdentifierType,
-  type JobHandoff,
-  type JobStatus,
-  type JsonObject,
-  type PatchOp,
-  type PlaybookRunStatus,
-  type QuestionStatus,
-  type TaskPriority,
-  type TaskStatus,
-} from "@watchdog/schemas";
+import type { ActivityKind } from "@watchdog/schemas/feed";
+import { fingerprintPatchOp, type PatchOp } from "@watchdog/schemas/graph";
+import type {
+  ClaimClass,
+  ConfidenceTier,
+  EdgePredicate,
+  EntityKind,
+  EvidenceKind,
+  IdentifierStatus,
+  IdentifierType,
+  JobHandoff,
+  JobStatus,
+  JsonObject,
+  PlaybookRunStatus,
+  QuestionStatus,
+  TaskPriority,
+  TaskStatus,
+} from "@watchdog/schemas/shared";
 
 export interface SeedTally {
   cases: number;

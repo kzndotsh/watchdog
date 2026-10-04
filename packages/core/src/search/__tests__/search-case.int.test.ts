@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { searchCaseEffect, runDomain } from "@watchdog/core";
+import { runDomain } from "@watchdog/core/infra";
+import { searchCaseEffect } from "@watchdog/core/search";
 import { db, edgesRepo, evidenceRepo, jobsRepo, tasksRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,

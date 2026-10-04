@@ -4,7 +4,7 @@ import {
   fetchDnsReverseEffect,
   normalizeIp,
   dnsReverseSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/dns";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { dnsReverseInput } from "./input";

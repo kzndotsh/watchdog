@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchLeakixLookupEffect,
   leakixLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { leakixLookupInput } from "./input";

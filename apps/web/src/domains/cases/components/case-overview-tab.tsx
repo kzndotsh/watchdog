@@ -41,9 +41,10 @@ import { FormSection } from "@/shared/ui/form-section";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { TabCount } from "@/shared/ui/tab-count";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
-import type { ProposalRecord, JobListRecord } from "@watchdog/core";
-import type { ActivityKind } from "@watchdog/schemas";
-import { isProposalQueueLiveEvent } from "@watchdog/schemas";
+import type { JobListRecord } from "@watchdog/core/jobs";
+import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ActivityKind } from "@watchdog/schemas/feed";
+import { isProposalQueueLiveEvent } from "@watchdog/schemas/feed";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 function inboxMetricTone(

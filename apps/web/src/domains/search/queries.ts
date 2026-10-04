@@ -9,7 +9,7 @@ import { placeholderDataForScope } from "@/shared/lib/query-placeholder";
 import {
   SEARCH_MIN_QUERY_LENGTH,
   type SearchCaseResult,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 
 export const searchKeys = {
   all: ["search"] as const,

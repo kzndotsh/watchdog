@@ -1,11 +1,11 @@
 import type { z } from "zod";
 
-import type { EventRecord as CoreEventRecord } from "@watchdog/core";
+import type { EventRecord as CoreEventRecord } from "@watchdog/core/graph";
 import type {
   createEventInputSchema,
   eventScopeInputSchema,
   updateEventInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type EventRecord = CoreEventRecord;
 

@@ -1,10 +1,7 @@
 import { Cause, Effect, Exit, Result } from "effect";
 
-import {
-  abortedToolsError,
-  taggedToToolsError,
-  toolsHttpClientLayer,
-} from "@watchdog/tools";
+import { abortedToolsError, taggedToToolsError } from "@watchdog/tools/errors";
+import { toolsHttpClientLayer } from "@watchdog/tools/http";
 
 import type { CapRun, CapRunResult } from "./define";
 

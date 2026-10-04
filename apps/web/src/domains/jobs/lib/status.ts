@@ -1,16 +1,16 @@
 import { capabilityLabel, playbookLabel, statusLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
+import { catalogIdMatchesSearch } from "@watchdog/schemas/cases";
+import { summarizeJobInput } from "@watchdog/schemas/jobs";
 import {
   CANCELLABLE_JOB_STATUSES,
   LIVE_JOB_STATUSES,
   PLAYBOOK_AGGREGATE_STATUS_PRIORITY,
-  catalogIdMatchesSearch,
   isLiveJobStatus,
   isOpenJobStatus,
-  summarizeJobInput,
   type JobStatus,
   type PlaybookRunStatus,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export { JOB_STATUS_OPTIONS as STATUS_FACET_OPTIONS } from "@/shared/ui/vocab";
 

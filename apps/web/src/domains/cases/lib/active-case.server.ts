@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-start/server";
 
 import { ACTIVE_CASE_COOKIE } from "@/domains/cases/lib/active-case";
-import { parseTrimmedCaseId, trimmedOrNull } from "@watchdog/schemas";
+import { parseTrimmedCaseId, trimmedOrNull } from "@watchdog/schemas/shared";
 
 const COOKIE_OPTS = {
   path: "/",

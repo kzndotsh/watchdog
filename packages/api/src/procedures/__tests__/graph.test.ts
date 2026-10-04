@@ -6,8 +6,9 @@ const { writeGraphFromAgentEffect } = vi.hoisted(() => ({
   writeGraphFromAgentEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/proposals", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/core/proposals")>();
   return {
     ...actual,
     writeGraphFromAgentEffect,

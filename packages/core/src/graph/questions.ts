@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
 import { db, questionsRepo, type DbExec, type QuestionRow } from "@watchdog/db";
-import type { EntityKind, QuestionStatus } from "@watchdog/schemas";
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas";
+import type { EntityKind, QuestionStatus } from "@watchdog/schemas/shared";
+import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";

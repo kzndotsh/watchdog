@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { C99LookupSnapshot } from "@watchdog/tools";
+import type { C99LookupSnapshot } from "@watchdog/tools/network";
 
 import { withSeedHost } from "../../lib/collect/eligible-domain-hosts";
 import { interpretTypedIdentifiers } from "../../lib/collect/interpret-typed-identifiers";

@@ -8,7 +8,7 @@ import { IdChip } from "@/shared/ui/id-chip";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 import { PATCH_RESOURCE_META, PatchOpBadge } from "@/shared/ui/vocab";
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 
 const EMPTY_IDS: string[] = [];
 

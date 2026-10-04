@@ -13,7 +13,7 @@ import {
 import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
-import type { ConfidenceTier } from "@watchdog/schemas";
+import type { ConfidenceTier } from "@watchdog/schemas/shared";
 import {
   Popover,
   PopoverContent,

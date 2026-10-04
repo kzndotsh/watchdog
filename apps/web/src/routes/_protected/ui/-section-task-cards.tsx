@@ -8,7 +8,7 @@ import {
   TASK_PRIORITY_TONE_MAP,
   taskPriorityShortLabel,
 } from "@/shared/ui/vocab/task-priority.lib";
-import type { TaskPriority } from "@watchdog/schemas";
+import type { TaskPriority } from "@watchdog/schemas/shared";
 
 /* Static mockups for choosing the task card layout. Plain elements on purpose: they are
  * pictures of the same four tasks in six layouts, not wired cards. Every layout is shown at

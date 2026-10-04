@@ -5,7 +5,7 @@ import {
   type EntityRow,
   type NewEntity,
 } from "@watchdog/db";
-import { slugifyName } from "@watchdog/schemas";
+import { slugifyName } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit/fixtures";
 
 export async function seedEntity(

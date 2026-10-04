@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import {
   fetchCommoncrawlLookupEffect,
-  normalizeHost,
   commoncrawlLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/archive";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { commoncrawlLookupInput } from "./input";

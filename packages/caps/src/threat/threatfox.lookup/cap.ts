@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchThreatfoxLookupEffect,
   threatfoxLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { threatfoxLookupInput } from "./input";

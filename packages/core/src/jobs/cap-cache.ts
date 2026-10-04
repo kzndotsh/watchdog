@@ -3,11 +3,8 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 
 import { capCacheRepo, db, type JobArtifact } from "@watchdog/db";
-import {
-  isJsonObject,
-  normalizeJobInput,
-  trimmedOrNull,
-} from "@watchdog/schemas";
+import { normalizeJobInput } from "@watchdog/schemas/jobs";
+import { isJsonObject, trimmedOrNull } from "@watchdog/schemas/shared";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";

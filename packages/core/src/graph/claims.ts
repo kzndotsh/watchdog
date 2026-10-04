@@ -5,8 +5,11 @@ import type {
   ClaimClass,
   ConfidenceTier,
   RetractKind,
-} from "@watchdog/schemas";
-import { normalizeUuidList, trimmedOrUndefined } from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
+import {
+  normalizeUuidList,
+  trimmedOrUndefined,
+} from "@watchdog/schemas/shared";
 
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import {

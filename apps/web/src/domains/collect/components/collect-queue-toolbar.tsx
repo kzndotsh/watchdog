@@ -18,7 +18,7 @@ import {
 } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { QueueFilterBar } from "@/shared/ui/queue-filter-bar";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import {
   Field,

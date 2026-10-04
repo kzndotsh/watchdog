@@ -2,15 +2,15 @@ import type { Effect } from "effect";
 import type { HttpClient } from "effect/unstable/http";
 import type { z } from "zod";
 
+import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
   EvidenceKind,
-  EvidenceSnapshot,
   IdentifierType,
   JobHandoff,
   JsonValue,
-  PatchOp,
-} from "@watchdog/schemas";
-import type { ToolsTag } from "@watchdog/tools";
+} from "@watchdog/schemas/shared";
+import type { ToolsTag } from "@watchdog/tools/errors";
 
 export interface CapArtifact {
   name: string;

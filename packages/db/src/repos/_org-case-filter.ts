@@ -1,6 +1,6 @@
 import { type AnyColumn, and, eq, sql } from "drizzle-orm";
 
-import { parseTrimmedCaseId } from "@watchdog/schemas";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { cases } from "../schema/cases";
 

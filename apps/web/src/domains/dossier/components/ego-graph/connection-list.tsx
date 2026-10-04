@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { ConfidenceBadge, predicateLabel } from "@/shared/ui/vocab";
-import { entityDisplayLabel } from "@watchdog/schemas";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 function ConnectionRow({
   edge,

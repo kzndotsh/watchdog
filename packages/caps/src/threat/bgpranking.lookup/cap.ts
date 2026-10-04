@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
+import { normalizeIp } from "@watchdog/tools/dns";
 import {
   fetchBgprankingLookupEffect,
-  normalizeIp,
   bgprankingLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { bgprankingLookupInput } from "./input";

@@ -1,13 +1,13 @@
 import { and, asc, eq, ilike, isNull, max, or } from "drizzle-orm";
 
-import type { TaskStatus } from "@watchdog/schemas";
+import type { TaskStatus } from "@watchdog/schemas/shared";
 import {
   parseGraphUuidList,
   TASK_PRIORITY_LABELS,
   TASK_PRIORITIES,
   TASK_STATUS_LABELS,
   TASK_STATUSES,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";

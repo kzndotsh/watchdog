@@ -27,17 +27,19 @@ import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { invalidateAfterJobMutation } from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
-import type { JobListRecord, JobRecord } from "@watchdog/core";
+import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import { playbookSeedInputSchema } from "@watchdog/schemas/caps";
 import {
-  isLiveJobStatus,
-  playbookSeedInputSchema,
-  trimmedOrNull,
-  trimmedOrUndefined,
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
+import {
+  isLiveJobStatus,
+  trimmedOrNull,
+  trimmedOrUndefined,
+} from "@watchdog/schemas/shared";
 
 const STUCK_JOB_MS = 60_000;
 

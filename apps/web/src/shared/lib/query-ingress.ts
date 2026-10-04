@@ -4,24 +4,32 @@ import {
   caseSlugInputSchema,
 } from "@/domains/entities/types";
 import {
-  entitySlugSchema,
+  getCaseBySlugInputSchema,
+  searchCaseInputSchema,
+} from "@watchdog/schemas/cases";
+import { listEvidenceInputSchema } from "@watchdog/schemas/evidence";
+import {
   listRecentActivityInputSchema,
-  parseOptionalTrimmedUuid,
-  parseTrimmedCaseId,
   taskFiltersSchema,
   type ListRecentActivityInput,
-  type ProposalStatus,
   type TaskFiltersInput,
-  getCaseBySlugInputSchema,
+} from "@watchdog/schemas/feed";
+import {
   caseScopeInputSchema,
   entityScopeInputSchema,
   evidenceScopeInputSchema,
-  listEvidenceInputSchema,
+} from "@watchdog/schemas/graph";
+import {
   getJobInputSchema,
   listJobsInputSchema,
-  searchCaseInputSchema,
   listProposalsInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
+import {
+  entitySlugSchema,
+  parseOptionalTrimmedUuid,
+  parseTrimmedCaseId,
+  type ProposalStatus,
+} from "@watchdog/schemas/shared";
 
 type TaskListFilters = Omit<TaskFiltersInput, "caseId">;
 type RecentActivityFilters = Partial<ListRecentActivityInput>;

@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { WhoisSnapshot } from "@watchdog/tools";
+import type { WhoisSnapshot } from "@watchdog/tools/whois";
 
 import { interpretWhoisSnapshot } from "../../lib/collect/interpret-whois-snapshot";
 import type { CapInterpretOpts, CapInterpretResult } from "../../sdk";

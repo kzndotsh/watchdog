@@ -1,6 +1,6 @@
 import { and, eq, gt } from "drizzle-orm";
 
-import { trimmedOrUndefined } from "@watchdog/schemas";
+import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { capCache } from "../schema/cap-cache";

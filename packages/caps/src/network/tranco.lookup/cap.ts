@@ -2,9 +2,9 @@ import { Effect } from "effect";
 
 import {
   fetchTrancoLookupEffect,
-  normalizeHost,
   trancoLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/network";
+import { normalizeHost } from "@watchdog/tools/whois";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { trancoLookupInput } from "./input";

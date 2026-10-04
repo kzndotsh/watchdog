@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({

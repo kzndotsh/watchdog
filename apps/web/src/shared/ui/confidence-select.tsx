@@ -8,7 +8,7 @@ import {
   CONFIDENCE_TIERS,
   trimmedConfidenceTierSchema,
   type ConfidenceTier,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import {
   Select,
   SelectContent,

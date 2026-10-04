@@ -1,6 +1,6 @@
 import { pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import type { QuestionStatus } from "@watchdog/schemas";
+import type { QuestionStatus } from "@watchdog/schemas/shared";
 
 import { timestamps } from "./_helpers";
 import { entities } from "./entities";

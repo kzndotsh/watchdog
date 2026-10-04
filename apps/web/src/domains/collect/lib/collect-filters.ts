@@ -5,13 +5,15 @@ import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 import { evidenceFilterHaystack } from "@/shared/ui/intake/evidence-option";
 import { capabilityLabel, playbookLabel, statusLabel } from "@/shared/ui/vocab";
+import { catalogIdMatchesSearch } from "@watchdog/schemas/cases";
 import {
-  catalogIdMatchesSearch,
   evidenceIdsFromJobInputs,
+  summarizeJobInput,
+} from "@watchdog/schemas/jobs";
+import {
   parseOptionalTrimmedUuid,
   slugifyName,
-  summarizeJobInput,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 /** Align queue facets with API evidence list mutual-exclusion rules. */
 export function applyCollectFilterToggle(

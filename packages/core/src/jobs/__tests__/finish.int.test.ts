@@ -2,7 +2,8 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import { cancelJobEffect, runDomain } from "@watchdog/core";
+import { runDomain } from "@watchdog/core/infra";
+import { cancelJobEffect } from "@watchdog/core/jobs";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
   resetTestDb,

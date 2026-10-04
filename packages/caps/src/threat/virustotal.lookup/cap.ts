@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   fetchVirusTotalLookupEffect,
   virusTotalLookupSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/threat";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { virusTotalLookupInput } from "./input";

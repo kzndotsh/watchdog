@@ -1,6 +1,6 @@
 import { identifyUser, peekRequestLogger } from "@watchdog/log";
 import type { AuditableLogger } from "@watchdog/log";
-import type { ApiActor, ApiCaller } from "@watchdog/schemas";
+import type { ApiActor, ApiCaller } from "@watchdog/schemas/shared";
 
 import { resolveActorOrganizationId } from "./actor";
 import type { createAuth } from "./create-auth";

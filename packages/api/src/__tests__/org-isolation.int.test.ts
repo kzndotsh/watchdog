@@ -1,12 +1,10 @@
 import { ORPCError, createRouterClient } from "@orpc/server";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import {
-  assertCaseInOrgEffect,
-  DomainError,
-  listVisibleCaseIdsEffect,
-  runDomain,
-} from "@watchdog/core";
+import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
+import { DomainError } from "@watchdog/core/errors";
+import { assertCaseInOrgEffect } from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
 import {
   resetTestDb,
   seedCase,

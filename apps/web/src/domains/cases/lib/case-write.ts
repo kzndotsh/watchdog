@@ -1,4 +1,7 @@
-import { updateCaseInputSchema, type UpdateCaseInput } from "@watchdog/schemas";
+import {
+  updateCaseInputSchema,
+  type UpdateCaseInput,
+} from "@watchdog/schemas/cases";
 
 export interface UpdateCasePatch {
   name?: string;

@@ -7,7 +7,7 @@ import {
   listClaimsInputSchema,
   retractClaimInputSchema,
   updateClaimInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 export type { ClaimRecord } from "@/domains/entities/claims/types";
 

@@ -35,7 +35,7 @@ import {
   TASK_BOARD_COLUMN_SHELL_CLASS,
   TASK_CARD_SHELL_CLASS,
 } from "@/shared/ui/task-board-shell";
-import { TASK_STATUSES } from "@watchdog/schemas";
+import { TASK_STATUSES } from "@watchdog/schemas/shared";
 import {
   Field,
   FieldContent,

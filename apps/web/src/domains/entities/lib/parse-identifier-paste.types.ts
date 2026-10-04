@@ -8,7 +8,7 @@ import {
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 export const PASTE_ROW_CAP = 200;
 

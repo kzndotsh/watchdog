@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { testId } from "@watchdog/test-kit";
 
 import { createCapRunHarness, runCap } from "../../../testing";

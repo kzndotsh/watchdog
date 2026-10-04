@@ -1,5 +1,5 @@
-import type { TaskRecord as CoreTaskRecord } from "@watchdog/core";
-import type { EntityKind } from "@watchdog/schemas";
+import type { TaskRecord as CoreTaskRecord } from "@watchdog/core/tasks";
+import type { EntityKind } from "@watchdog/schemas/shared";
 
 export type TaskRecord = CoreTaskRecord;
 

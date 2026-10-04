@@ -1,5 +1,5 @@
 import { graphWritesRepo, type DbExec, type NewGraphWrite } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 export async function seedGraphWrite(

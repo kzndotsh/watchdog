@@ -2,8 +2,9 @@ import { ORPCError, createRouterClient } from "@orpc/server";
 import type { RouterClient } from "@orpc/server";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { putCredentialSlotEffect, runDomain } from "@watchdog/core";
-import type { ApiActor } from "@watchdog/schemas";
+import { runDomain } from "@watchdog/core/infra";
+import { putCredentialSlotEffect } from "@watchdog/core/vault";
+import type { ApiActor } from "@watchdog/schemas/shared";
 import { buildEntityCreateOp } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
 import {

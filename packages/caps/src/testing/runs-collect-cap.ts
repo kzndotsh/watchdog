@@ -1,11 +1,8 @@
 import { Effect } from "effect";
 import { expect, it } from "vitest";
 
-import {
-  parseJsonValue,
-  REPORT_JSON_ARTIFACT,
-  type JsonValue,
-} from "@watchdog/schemas";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit/fixtures";
 
 import type {

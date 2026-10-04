@@ -8,7 +8,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { PatchOp, ProposalStatus } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import type { ProposalStatus } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";

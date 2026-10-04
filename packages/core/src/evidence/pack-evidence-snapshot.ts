@@ -2,14 +2,18 @@ import { Effect } from "effect";
 
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
+  evidenceSnapshotSchema,
+  type EvidenceSnapshot,
+} from "@watchdog/schemas/evidence";
+import {
   ENRICHED_MD_ARTIFACT,
   evidenceIdsFromJobInputs,
-  evidenceSnapshotSchema,
+  URL_ENRICH_CAPABILITY_ID,
+} from "@watchdog/schemas/jobs";
+import {
   parseTrimmedCaseId,
   trimmedOrUndefined,
-  URL_ENRICH_CAPABILITY_ID,
-  type EvidenceSnapshot,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "../infra/blob";
 import { nowIsoStringEffect } from "../infra/clock";

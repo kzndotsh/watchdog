@@ -1,7 +1,7 @@
 import {
   resolveIdentifierPlatform,
   type IdentifierType,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { cleanPasteCell, inferPasteIdentity } from "./infer-paste-identity";
 import {

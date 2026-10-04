@@ -1,4 +1,4 @@
-import { parseEdgePhraseValue } from "@watchdog/schemas";
+import { parseEdgePhraseValue } from "@watchdog/schemas/shared";
 
 export interface ConnectionComposerValues {
   peerId: string;

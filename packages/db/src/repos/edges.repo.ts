@@ -1,8 +1,8 @@
 import { and, asc, eq, inArray, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
-import type { EdgePredicate } from "@watchdog/schemas";
-import { normalizeUuidList } from "@watchdog/schemas";
+import type { EdgePredicate } from "@watchdog/schemas/shared";
+import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { edges } from "../schema/edges";

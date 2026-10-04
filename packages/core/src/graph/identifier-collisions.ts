@@ -3,15 +3,17 @@ import { Effect } from "effect";
 import { db, identifiersRepo, type IdentifierListRow } from "@watchdog/db";
 import { isOneOf } from "@watchdog/policy";
 import {
-  IDENTIFIER_TYPES,
-  entityDisplayLabel,
   normalizeIdentifierTypeInput,
   normalizeIdentifierValue,
   patchOpEntityId,
+  type PatchOp,
+} from "@watchdog/schemas/graph";
+import {
+  IDENTIFIER_TYPES,
+  entityDisplayLabel,
   parseTrimmedCaseId,
   type IdentifierType,
-  type PatchOp,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";

@@ -17,7 +17,7 @@ import {
   deleteCaseInputSchema,
   getCaseBySlugInputSchema,
   updateCaseInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/cases";
 
 /** Cases + active Case from cookie; heals invalid/missing selection. */
 export const getCasesContextFn = createServerFn({ method: "GET" }).handler(

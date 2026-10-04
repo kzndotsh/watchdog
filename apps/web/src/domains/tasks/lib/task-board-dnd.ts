@@ -1,7 +1,7 @@
 import type { SortingStrategy } from "@dnd-kit/sortable";
 
 import type { TaskRecord } from "@/domains/tasks/types";
-import { TASK_STATUSES, type TaskStatus } from "@watchdog/schemas";
+import { TASK_STATUSES, type TaskStatus } from "@watchdog/schemas/shared";
 
 /** Keep list items still while DragOverlay is the only moving card. */
 export const frozenSortingStrategy: SortingStrategy = () => null;

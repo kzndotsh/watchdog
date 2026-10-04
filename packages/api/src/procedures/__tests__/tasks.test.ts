@@ -6,8 +6,8 @@ const { listTasksForCaseEffect } = vi.hoisted(() => ({
   listTasksForCaseEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/tasks", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/tasks")>();
   return {
     ...actual,
     listTasksForCaseEffect,

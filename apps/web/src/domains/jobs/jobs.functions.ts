@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { orpcFromContext } from "@/lib/orpc.server";
-import type { JobListRecord, JobRecord } from "@watchdog/core";
+import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,
@@ -10,7 +10,7 @@ import {
   listJobsInputSchema,
   startJobInputSchema,
   startPlaybookInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/jobs";
 
 export type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 

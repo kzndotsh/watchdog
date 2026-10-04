@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   createIdentifierInputSchema,
   updateIdentifierInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 import { testId } from "@watchdog/test-kit";
 
 describe("identifiers types schemas", () => {

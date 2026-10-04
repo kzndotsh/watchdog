@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { evidenceRepo, jobsRepo } from "@watchdog/db";
-import { isJobInternalArtifact } from "@watchdog/schemas";
+import { isJobInternalArtifact } from "@watchdog/schemas/jobs";
 
 import { notifyEvidenceChangedEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";

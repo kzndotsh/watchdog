@@ -1,15 +1,15 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import type { FetchBytesResult } from "@watchdog/tools";
-import { toolsHttpClientLayer } from "@watchdog/tools";
+import type { FetchBytesResult } from "@watchdog/tools/http";
+import { toolsHttpClientLayer } from "@watchdog/tools/http";
 
 const { fetchBytesToolEffect } = vi.hoisted(() => ({
   fetchBytesToolEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/tools", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/tools")>();
+vi.mock("@watchdog/tools/http", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/tools/http")>();
   return {
     ...actual,
     fetchBytesEffect: fetchBytesToolEffect,

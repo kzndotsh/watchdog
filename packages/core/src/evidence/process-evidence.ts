@@ -14,10 +14,12 @@ import {
   EVIDENCE_HARVEST_CAPABILITY_ID,
   URL_ENRICH_CAPABILITY_ID,
   evidenceIdsFromJobInputs,
+} from "@watchdog/schemas/jobs";
+import {
   parseTrimmedCaseId,
   trimmedOrUndefined,
   type JsonObject,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";

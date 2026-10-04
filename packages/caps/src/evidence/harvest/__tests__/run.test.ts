@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { parseJsonValue, REPORT_JSON_ARTIFACT } from "@watchdog/schemas";
+import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import { parseJsonValue } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit";
 
 import { createCapRunHarness, runCap } from "../../../testing";

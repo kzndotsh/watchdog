@@ -1,4 +1,4 @@
-import { slugifyName } from "@watchdog/schemas";
+import { slugifyName } from "@watchdog/schemas/shared";
 
 /** Build an ILIKE contains pattern; strip user wildcards so %/_ stay literal. */
 export function containsPattern(term: string): string | null {

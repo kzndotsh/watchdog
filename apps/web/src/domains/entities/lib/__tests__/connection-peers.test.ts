@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { entityDisplayLabel } from "@watchdog/schemas";
+import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 import type { CaseEdgeRecord } from "../../edges/types.ts";
 import {

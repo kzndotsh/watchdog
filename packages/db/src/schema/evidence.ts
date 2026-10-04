@@ -1,6 +1,6 @@
 import { index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import type { EvidenceKind } from "@watchdog/schemas";
+import type { EvidenceKind } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";

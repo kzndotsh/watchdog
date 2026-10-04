@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
 import { eventsRepo, type DbTx } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas";
-import { trimmedOrNull } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
+import { trimmedOrNull } from "@watchdog/schemas/shared";
 
 import { tryDb } from "../../infra/postgres-effect";
 import {

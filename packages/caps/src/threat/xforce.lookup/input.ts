@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { iocIndicatorSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { iocIndicatorSeedSchema } from "@watchdog/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const xforceLookupInput = z.object({
   query: iocIndicatorSeedSchema.describe("IP, domain, URL, or file hash"),

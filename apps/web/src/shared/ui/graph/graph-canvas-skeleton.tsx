@@ -6,7 +6,7 @@ import {
 } from "@/shared/ui/graph/graph-canvas-background";
 import { confidenceStroke } from "@/shared/ui/graph/graph-styles";
 import { LoadingRegion } from "@/shared/ui/loading-region";
-import type { EntityKind } from "@watchdog/schemas";
+import type { EntityKind } from "@watchdog/schemas/shared";
 
 /** Full-page case graph shell — fills the page column under the header. */
 export const GRAPH_CANVAS_PAGE_SHELL_CLASS =

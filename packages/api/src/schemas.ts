@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { patchOpSchema } from "@watchdog/schemas/graph";
 import {
   claimClassSchema,
   confidenceTierSchema,
@@ -10,12 +11,11 @@ import {
   identifierTypeSchema,
   jobStatusSchema,
   jsonObjectSchema,
-  patchOpSchema,
   playbookRunStatusSchema,
   proposalStatusSchema,
   questionStatusSchema,
   retractKindSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 
 /** Agent ingress escape hatch — required as `true` for API-key child Graph writes. */
 export const userOverrideSchema = z

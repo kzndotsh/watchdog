@@ -27,10 +27,19 @@ vi.mock("@watchdog/api", () => ({
   runApp: (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
 }));
 
-vi.mock("@watchdog/core", () => ({
+vi.mock("@watchdog/core/cases", () => ({
   getCaseByIdEffect: getCaseByIdEffectMock,
+}));
+
+vi.mock("@watchdog/core/blob", () => ({
   readArtifactBytesEffect: vi.fn(),
+}));
+
+vi.mock("@watchdog/core/export", () => ({
   renderCaseExportEffect: renderCaseExportEffectMock,
+}));
+
+vi.mock("@watchdog/core/errors", () => ({
   toDomainError: (error: unknown) => error,
 }));
 

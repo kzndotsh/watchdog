@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DomainError } from "@watchdog/core/errors";
 import {
-  DomainError,
   attachEvidenceEntityEffect,
   createAttestationEffect,
   dumpPasteEffect,
@@ -9,8 +9,8 @@ import {
   listEvidenceForCaseEffect,
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/evidence";
+import { runDomain } from "@watchdog/core/infra";
 import { db } from "@watchdog/db";
 import {
   resetTestDb,

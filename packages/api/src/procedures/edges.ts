@@ -6,14 +6,14 @@ import {
   listEdgesForCaseEffect,
   listEdgesForEntityEffect,
   updateEdgeEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import {
   caseScopeInputSchema,
   createEdgeInputSchema,
   deleteEdgeInputSchema,
   entityScopeInputSchema,
   updateEdgeInputSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
 
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";

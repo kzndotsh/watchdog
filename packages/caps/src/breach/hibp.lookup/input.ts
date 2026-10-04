@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { emailSeedSchema, optionalUuidSchema } from "@watchdog/schemas";
+import { emailSeedSchema } from "@watchdog/schemas/caps";
+import { optionalUuidSchema } from "@watchdog/schemas/shared";
 
 export const hibpLookupInput = z.object({
   email: emailSeedSchema.describe("Email"),

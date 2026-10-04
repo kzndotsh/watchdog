@@ -1,13 +1,13 @@
 import { Effect } from "effect";
 
 import { db, entitiesRepo } from "@watchdog/db";
-import type { PatchOp } from "@watchdog/schemas";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   entityTitleMapFromRows,
-  parseTrimmedCaseId,
   patchOpRelatedEntityIds,
-  proposalEntityName,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/graph";
+import { proposalEntityName } from "@watchdog/schemas/jobs";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { tryDb } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";

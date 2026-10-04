@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   submitUrlscanEffect,
   urlscanSubmitSnapshotSchema,
-} from "@watchdog/tools";
+} from "@watchdog/tools/network";
 
 import { defineCollectCap } from "../../lib/collect/define-collect-cap";
 import { urlscanSubmitInput } from "./input";

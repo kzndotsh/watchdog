@@ -4,7 +4,10 @@ import {
   listenForEvents as dbListenForEvents,
   notifyEvent,
 } from "@watchdog/db";
-import { watchdogEventSchema, type WatchdogEvent } from "@watchdog/schemas";
+import {
+  watchdogEventSchema,
+  type WatchdogEvent,
+} from "@watchdog/schemas/feed";
 
 import { logSwallowed } from "./process-log";
 

@@ -30,15 +30,17 @@ import {
   type DisplayStatus,
 } from "@/shared/ui/vocab";
 import {
+  activityKindLabel,
+  isProposalQueueLiveEvent,
+  type ActivityItem,
+  type ActivityKind,
+} from "@watchdog/schemas/feed";
+import {
   JOB_STATUSES,
   PROPOSAL_STATUSES,
   TASK_STATUSES,
-  activityKindLabel,
-  isProposalQueueLiveEvent,
   type TaskStatus,
-  type ActivityItem,
-  type ActivityKind,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 import {
   Select,

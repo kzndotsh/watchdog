@@ -5,7 +5,7 @@ import { TASK_PRIORITY_OPTIONS, TASK_STATUS_OPTIONS } from "@/shared/ui/vocab";
 import {
   trimmedTaskPrioritySchema,
   trimmedTaskStatusSchema,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 import { Textarea } from "@watchdog/ui/components/textarea";

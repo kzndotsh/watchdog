@@ -23,7 +23,7 @@ Cap implementations, the registry, Playbooks, and the Cap SPI (`@watchdog/caps/s
 | Playbook ids are kebab-case and the first token equals `seedKinds[0]`; Cap ids keep dots | `src/playbooks/__tests__/naming.test.ts` (ids), nothing for Cap ids |
 | Inside `playbooks/`, import Caps from `../registry`, not the `@watchdog/caps` barrel | guidance |
 | Every Collect Cap has `__tests__/interpret.test.ts`; mock HTTP with `@watchdog/test-kit/http`, never `msw` | guidance |
-| Tools (`@watchdog/tools`) own producer Zod and fetch/parse; Caps import those schemas from `@watchdog/tools` (never re-export them), own artifact upload and `interpret` | guidance |
+| Tools (`@watchdog/tools`) own producer Zod and fetch/parse; Caps import those schemas from `@watchdog/tools/<domain>` subpaths (never re-export them), own artifact upload and `interpret` | guidance |
 
 ## Gotchas
 

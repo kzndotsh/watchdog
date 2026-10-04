@@ -7,7 +7,7 @@ import {
 } from "@/shared/lib/query-ingress";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
-import { listClaimsInputSchema } from "@watchdog/schemas";
+import { listClaimsInputSchema } from "@watchdog/schemas/graph";
 
 export const claimsKeys = {
   prefix: (caseId: string) => ["claims", caseId] as const,

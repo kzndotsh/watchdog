@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { TASK_STATUSES } from "@watchdog/schemas";
+import { TASK_STATUSES } from "@watchdog/schemas/shared";
 
 import type { TaskRecord } from "../../types.ts";
 import {

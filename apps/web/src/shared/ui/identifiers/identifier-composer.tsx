@@ -34,17 +34,19 @@ import {
 } from "@/shared/ui/vocab";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
+  validateIdentifierWrite,
+  HANDLE_REQUIRES_PLATFORM,
+} from "@watchdog/schemas/graph";
+import {
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
   parseOptionalTrimmedUuid,
-  validateIdentifierWrite,
   type ConfidenceTier,
   type IdentifierStatus,
   type IdentifierType,
-  HANDLE_REQUIRES_PLATFORM,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import {
   Popover,
   PopoverContent,

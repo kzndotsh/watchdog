@@ -31,7 +31,7 @@ import {
   trimmedIdentifierStatusSchema,
   trimmedIdentifierTypeSchema,
   normalizeIdentifierPlatform,
-} from "@watchdog/schemas";
+} from "@watchdog/schemas/shared";
 import {
   Table,
   TableBody,

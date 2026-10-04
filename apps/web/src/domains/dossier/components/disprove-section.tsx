@@ -7,7 +7,7 @@ import type { DossierSectionProps } from "@/domains/dossier/types";
 import { claimsListQuery } from "@/domains/entities/claims/queries";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ClaimClassBadge, StatusBadge } from "@/shared/ui/vocab";
-import type { RetractKind } from "@watchdog/schemas";
+import type { RetractKind } from "@watchdog/schemas/shared";
 
 export function DisproveSection({
   caseId,

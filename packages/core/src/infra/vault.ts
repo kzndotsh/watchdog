@@ -9,7 +9,7 @@ import { Data, Effect } from "effect";
 
 import { credentialsRepo, db } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
-import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas";
+import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas/shared";
 
 import { tryDb } from "./postgres-effect";
 import {

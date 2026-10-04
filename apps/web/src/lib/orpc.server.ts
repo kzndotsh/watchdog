@@ -4,7 +4,7 @@ import "@tanstack/react-start/server-only";
 import { router, type AppRouter } from "@watchdog/api";
 import { actorFromSession } from "@watchdog/auth/server";
 import { peekRequestLogger } from "@watchdog/log";
-import type { ApiActor } from "@watchdog/schemas";
+import type { ApiActor } from "@watchdog/schemas/shared";
 
 export { orpcNullIfNotFound } from "@/lib/orpc-null-if-not-found";
 

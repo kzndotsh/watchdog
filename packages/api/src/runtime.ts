@@ -1,6 +1,6 @@
 import { Effect, Layer, ManagedRuntime } from "effect";
 
-import type { DomainTag } from "@watchdog/core";
+import type { DomainTag } from "@watchdog/core/errors";
 
 import { toOrpcError } from "./map-domain-error";
 
