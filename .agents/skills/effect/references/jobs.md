@@ -6,20 +6,36 @@ package AGENTS.md files link here.
 
 ## Boot
 
-- Process entry: `NodeRuntime.runMain(bootWorkerEffect)`; `runMain` provides
-  `JobFibers.layer` once (a scoped `Context.Service` owning the FiberMap
-  **and** the abort-reason map).
+- Process entry: `NodeRuntime.runMain(provideWorkerLayers(bootWorkerEffect, jobQueueWorkerLayer))`;
+  it provides `JobFibers.layer` once (a scoped `Context.Service` owning the
+  FiberMap **and** the abort-reason map), `Db.layer`, and the worker queue
+  Layer.
+- Shutdown = scope release. First SIGTERM/SIGINT: `runMain` interrupts the main
+  fiber (exit 130 for SIGTERM and SIGINT alike, same as before phase 3); the boot scope closes (cancel poll, LISTEN stream); the
+  queue Layer releases with `boss.stop({ graceful: true, timeout:
+  gracefulStopTimeoutMs() })` so in-flight Cap Jobs finish; then `JobFibers`
+  interrupts leftovers; then `Db`. The queue Layer must stay innermost in
+  `provideWorkerLayers`; the `WorkerShutdown` Layer (signal listeners) is
+  outermost, so a repeated signal also works during boot and the drain and
+  force-exits (143 SIGTERM, 130
+  SIGINT, 1 for a LISTEN failure); a LISTEN failure otherwise ends the boot
+  normally (exit 0) so the same release runs.
 - Export LISTEN: `listenForEventsStream` + `Stream.runForEach` only.
 - The pg-boss work handler runs `processCapJobBatchEffect` with `JobFibers`
   provided; it yields `executeJobOnMap(jobId)`.
 
 ## Boss roles
 
-One pg-boss boss per process. Web/API: `ensureBossProducerEffect` /
-`enqueueCapJobEffect` (`supervise: false`). Worker: `ensureBossWorkerEffect`
-(`supervise: true`). The playbook chain reuses the live worker boss. A
-second role in one process fails as `InternalError`; a blank job id is
-`InvalidError`.
+The queue is the `JobQueue` service (`jobs/job-queue.ts`, `R` of
+`enqueueCapJobEffect`); no module-level boss. Two role Layers, one per
+process: `jobQueueProducerLayer` (web/API via `AppLive`, `supervise: false`,
+pg-boss starts lazily on the first send) and `jobQueueWorkerLayer` (worker,
+`supervise: true`, also provides `JobQueueWorker` for `work`). Each acquires
+pg-boss in its scope and releases it on scope close; the producer Layer does
+not provide `JobQueueWorker`, so worker-only code cannot type-check against
+it. The playbook chain enqueues through the worker's own `JobQueue`. After
+release a send fails as `InternalError`; a blank job id is `InvalidError`.
+Tests: `recordingJobQueue()`, `makeJobQueueLayers(() => fakeDriver)`.
 
 ## Dual cancel SoT
 

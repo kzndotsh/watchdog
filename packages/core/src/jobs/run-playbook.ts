@@ -41,6 +41,7 @@ import {
 } from "../infra/tagged-errors";
 import { hasCredentialEffect } from "../infra/vault";
 import { parseValidatedCapInputEffect } from "./cap-input";
+import type { JobQueue } from "./job-queue";
 import {
   enqueueCreatedJobEffect,
   toJobRecord,
@@ -144,7 +145,7 @@ function ensurePlaybookRunnable(
 /** Plan → insert run + step-0 Job → enqueue. */
 export function runPlaybookEffect(
   input: RunPlaybookInput
-): Effect.Effect<PlaybookRunResult, DomainTag, Db> {
+): Effect.Effect<PlaybookRunResult, DomainTag, Db | JobQueue> {
   return Effect.gen(function* runPlaybookGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,

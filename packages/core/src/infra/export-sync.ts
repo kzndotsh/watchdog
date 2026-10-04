@@ -320,6 +320,27 @@ function claimExportJoin(
 }
 
 /**
+ * First stage of `scheduleCaseExportEffect`: marks the case dirty and
+ * starts-or-joins the write fiber, then returns the Effect that waits for the
+ * write. Split out so a caller can run the mark in its own fiber and fork only
+ * the wait: a shutdown that interrupts the forked wait cannot lose the mark.
+ * The write fiber outlives the caller, so it runs with the `Db` service
+ * captured from the interpreting caller.
+ */
+export function claimCaseExportEffect(
+  caseId: string,
+  writeExport: ExportWriter = writeCaseExportEffect
+): Effect.Effect<Effect.Effect<void>, never, Db> {
+  const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
+  if (normalizedCaseId === undefined) return Effect.succeed(Effect.void);
+  return Effect.contextWith((services: Context.Context<Db>) =>
+    claimExportJoin(normalizedCaseId, (id) =>
+      Effect.provideContext(writeExport(id), services)
+    )
+  );
+}
+
+/**
  * Schedule a Case export write. Concurrent calls for the same case coalesce
  * into one in-flight write, then at most one follow-up if more events arrived.
  * `writeExport` is injectable so unit tests can assert coalesce without object storage.
@@ -332,15 +353,7 @@ export function scheduleCaseExportEffect(
   caseId: string,
   writeExport: ExportWriter = writeCaseExportEffect
 ): Effect.Effect<void, never, Db> {
-  const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
-  if (normalizedCaseId === undefined) return Effect.void;
-  return Effect.flatten(
-    Effect.contextWith((services: Context.Context<Db>) =>
-      claimExportJoin(normalizedCaseId, (id) =>
-        Effect.provideContext(writeExport(id), services)
-      )
-    )
-  );
+  return Effect.flatten(claimCaseExportEffect(caseId, writeExport));
 }
 
 /** Best-effort: drop the live Export shadow dir for a deleted Case. */

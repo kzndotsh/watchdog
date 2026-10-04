@@ -1,15 +1,20 @@
-import { Effect, type Layer, ManagedRuntime } from "effect";
+import { Effect, Layer, ManagedRuntime } from "effect";
 
 import type { DomainTag } from "@watchdog/core/errors";
 import { Db } from "@watchdog/core/infra";
+import type { JobQueue } from "@watchdog/core/jobs";
+import { jobQueueProducerLayer } from "@watchdog/core/jobs";
 
 import { toOrpcError } from "./map-domain-error";
 
 /**
- * Composition root (ADR-0002 phase 2): the live `Db` Layer. Later phases merge
- * the blob, queue and vault Layers here.
+ * Composition root (ADR-0002 phases 2-3): the live `Db` Layer and the
+ * producer-role `JobQueue` Layer (the web/API process only enqueues; the
+ * worker composes the worker role instead). The producer starts pg-boss lazily
+ * on the first enqueue, so building `AppLive` never touches the database.
+ * Later phases merge the blob and vault Layers here.
  */
-export const AppLive = Db.layer;
+export const AppLive = Layer.mergeAll(Db.layer, jobQueueProducerLayer);
 
 export const appRuntime = ManagedRuntime.make(AppLive);
 
@@ -19,7 +24,7 @@ export const appRuntime = ManagedRuntime.make(AppLive);
  * `AppLive`.
  */
 export async function runApp<A>(
-  effect: Effect.Effect<A, DomainTag, Db>
+  effect: Effect.Effect<A, DomainTag, Db | JobQueue>
 ): Promise<A> {
   return appRuntime.runPromise(effect.pipe(Effect.mapError(toOrpcError)));
 }

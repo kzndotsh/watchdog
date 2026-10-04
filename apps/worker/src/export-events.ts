@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { scheduleCaseExportEffect, type Db } from "@watchdog/core/worker";
+import { claimCaseExportEffect, type Db } from "@watchdog/core/worker";
 import type { WatchdogEvent } from "@watchdog/schemas/feed";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
@@ -39,15 +39,21 @@ export function shouldTriggerCaseExport(event: WatchdogEvent): boolean {
   }
 }
 
-export function handleExportEventEffect(
+/**
+ * First stage of an export event: marks the case dirty and starts-or-joins the
+ * write fiber, returning the Effect that waits for the write. The listener
+ * runs this in its own fiber and forks only the wait, so a shutdown cannot
+ * drop the mark (see `handleExportEventPayloadEffect`).
+ */
+export function claimExportEventEffect(
   event: WatchdogEvent
-): Effect.Effect<void, never, Db> {
+): Effect.Effect<Effect.Effect<void>, never, Db> {
   if (!shouldTriggerCaseExport(event)) {
-    return Effect.void;
+    return Effect.succeed(Effect.void);
   }
   const caseId = normalizeSchedulableCaseId(event.caseId);
   if (caseId === null) {
-    return Effect.void;
+    return Effect.succeed(Effect.void);
   }
-  return scheduleCaseExportEffect(caseId);
+  return claimCaseExportEffect(caseId);
 }

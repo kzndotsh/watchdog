@@ -3,22 +3,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WatchdogEvent } from "@watchdog/schemas/feed";
 
-const { scheduleCaseExportEffect } = vi.hoisted(() => ({
-  scheduleCaseExportEffect: vi.fn(() => Effect.void),
+const { claimCaseExportEffect } = vi.hoisted(() => ({
+  claimCaseExportEffect: vi.fn(() => Effect.succeed(Effect.void)),
 }));
 
 vi.mock("@watchdog/core/worker", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/worker")>();
   return {
     ...actual,
-    scheduleCaseExportEffect,
+    claimCaseExportEffect,
   };
 });
 
 import { Db } from "@watchdog/core/worker";
 
 import {
-  handleExportEventEffect,
+  claimExportEventEffect,
   hasSchedulableCaseId,
   shouldTriggerCaseExport,
 } from "../export-events";
@@ -97,23 +97,23 @@ describe("hasSchedulableCaseId", () => {
   });
 });
 
-describe("handleExportEventEffect", () => {
+describe("claimExportEventEffect", () => {
   const caseId = "11111111-1111-4111-8111-000000000001";
 
   beforeEach(() => {
-    scheduleCaseExportEffect.mockReset();
-    scheduleCaseExportEffect.mockReturnValue(Effect.void);
+    claimCaseExportEffect.mockReset();
+    claimCaseExportEffect.mockReturnValue(Effect.succeed(Effect.void));
   });
 
-  it("propagates export scheduling defects", async () => {
-    scheduleCaseExportEffect.mockReturnValueOnce(
+  it("propagates export scheduling defects from the claim", async () => {
+    claimCaseExportEffect.mockReturnValueOnce(
       Effect.die(new Error("disk full"))
     );
 
     await expect(
       Effect.runPromise(
         Effect.provide(
-          handleExportEventEffect({ type: "entity_changed", caseId }),
+          claimExportEventEffect({ type: "entity_changed", caseId }),
           Db.layer
         )
       )
@@ -122,42 +122,48 @@ describe("handleExportEventEffect", () => {
 
   it("skips export for non-triggering events", async () => {
     await Effect.runPromise(
-      Effect.provide(
-        handleExportEventEffect({ type: "task_changed", caseId }),
-        Db.layer
+      Effect.flatten(
+        Effect.provide(
+          claimExportEventEffect({ type: "task_changed", caseId }),
+          Db.layer
+        )
       )
     );
 
-    expect(scheduleCaseExportEffect).not.toHaveBeenCalled();
+    expect(claimCaseExportEffect).not.toHaveBeenCalled();
   });
 
-  it("schedules export with a trimmed case id", async () => {
+  it("claims export with a trimmed case id", async () => {
     const paddedCaseId = `  ${caseId}  `;
 
     await Effect.runPromise(
-      Effect.provide(
-        handleExportEventEffect({
-          type: "entity_changed",
-          caseId: paddedCaseId,
-        }),
-        Db.layer
+      Effect.flatten(
+        Effect.provide(
+          claimExportEventEffect({
+            type: "entity_changed",
+            caseId: paddedCaseId,
+          }),
+          Db.layer
+        )
       )
     );
 
-    expect(scheduleCaseExportEffect).toHaveBeenCalledWith(caseId);
+    expect(claimCaseExportEffect).toHaveBeenCalledWith(caseId);
   });
 
   it("skips export when case id is not schedulable", async () => {
     await Effect.runPromise(
-      Effect.provide(
-        handleExportEventEffect({
-          type: "entity_changed",
-          caseId: "not-a-uuid",
-        }),
-        Db.layer
+      Effect.flatten(
+        Effect.provide(
+          claimExportEventEffect({
+            type: "entity_changed",
+            caseId: "not-a-uuid",
+          }),
+          Db.layer
+        )
       )
     );
 
-    expect(scheduleCaseExportEffect).not.toHaveBeenCalled();
+    expect(claimCaseExportEffect).not.toHaveBeenCalled();
   });
 });

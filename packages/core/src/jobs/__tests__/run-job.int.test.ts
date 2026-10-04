@@ -1,3 +1,4 @@
+import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
@@ -11,7 +12,9 @@ import {
   seedPlaybookRun,
 } from "@watchdog/test-db";
 
-import { runDomain } from "../../infra/run-domain.ts";
+import { Db } from "../../infra/db-service.ts";
+import { runDomainWith } from "../../infra/run-domain.ts";
+import { recordingJobQueue } from "../job-queue.ts";
 import {
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
@@ -21,6 +24,10 @@ import { advancePlaybookRunEffect } from "../stages/chain.ts";
 import type { CollectResult } from "../stages/collect.ts";
 import { createJobLog } from "../stages/helpers.ts";
 import type { PreflightState } from "../stages/preflight.ts";
+
+// Enqueues land in a recording queue instead of a real pg-boss.
+const queue = recordingJobQueue();
+const runDomain = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
 
 function sha(): string {
   return "ab".repeat(32);

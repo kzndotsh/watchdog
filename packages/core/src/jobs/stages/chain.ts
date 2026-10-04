@@ -28,6 +28,7 @@ import { transact } from "../../infra/postgres-tx";
 import { InternalError, type DomainTag } from "../../infra/tagged-errors";
 import { enqueueCapJobEffect } from "../boss";
 import { parseValidatedCapInputEffect } from "../cap-input";
+import type { JobQueue } from "../job-queue";
 
 interface ReleasedJob {
   id: string;
@@ -61,7 +62,7 @@ function enqueueReleasedEffect(
   caseId: string,
   _playbookRunId: string,
   released: ReleasedJob[]
-): Effect.Effect<void> {
+): Effect.Effect<void, never, JobQueue> {
   if (released.length === 0) return Effect.void;
   return Effect.gen(function* enqueueReleasedGen() {
     yield* Effect.forEach(
@@ -157,7 +158,7 @@ function enqueueStepJobsEffect(opts: {
 export function advancePlaybookRunEffect(input: {
   playbookRunId: string;
   caseId?: string;
-}): Effect.Effect<void, DomainTag, Db> {
+}): Effect.Effect<void, DomainTag, Db | JobQueue> {
   const playbookRunId = parseTrimmedCaseId(input.playbookRunId) ?? undefined;
   if (playbookRunId === undefined) return Effect.void;
   return Effect.gen(function* advancePlaybookRunGen() {

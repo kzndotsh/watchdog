@@ -9,6 +9,7 @@ import { tryDbWith } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
 import type { DomainTag } from "../infra/tagged-errors";
 import { enqueueCapJobEffect } from "./boss";
+import type { JobQueue } from "./job-queue";
 import { advancePlaybookRunEffect } from "./stages/chain";
 import { failJobEffect } from "./stages/helpers";
 import { capExpireSeconds } from "./timeouts";
@@ -36,7 +37,7 @@ function abandonPlaybook(
   jobId: string,
   playbookRunId: string | null,
   caseId: string
-): Effect.Effect<void, never, Db> {
+): Effect.Effect<void, never, Db | JobQueue> {
   if (playbookRunId === null) return Effect.void;
   return advancePlaybookRunEffect({ playbookRunId, caseId }).pipe(
     Effect.catchCause((cause) =>
@@ -50,7 +51,7 @@ function abandonPlaybook(
 function reconcileStaleJobEffect(
   row: StaleJobRow,
   now: number
-): Effect.Effect<boolean, DomainTag, Db> {
+): Effect.Effect<boolean, DomainTag, Db | JobQueue> {
   return Effect.gen(function* reconcileStaleJobGen() {
     const cap = capExpireOrUnknown(row.capabilityId);
     if (!cap.ok) {
@@ -78,7 +79,7 @@ function reconcileStaleJobEffect(
 export function reconcileStaleJobsEffect(): Effect.Effect<
   number,
   DomainTag,
-  Db
+  Db | JobQueue
 > {
   return Effect.gen(function* reconcileStaleJobsGen() {
     const running = yield* tryDbWith((exec) => jobsRepo.listRunning(exec));
@@ -99,7 +100,7 @@ export function reconcileStaleJobsEffect(): Effect.Effect<
 export function reconcileOrphanedQueuedJobsEffect(): Effect.Effect<
   number,
   DomainTag,
-  Db
+  Db | JobQueue
 > {
   return Effect.gen(function* reconcileOrphanedQueuedJobsGen() {
     const now = yield* Clock.currentTimeMillis;
@@ -132,7 +133,7 @@ export function reconcileOrphanedQueuedJobsEffect(): Effect.Effect<
 export function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
   number,
   DomainTag,
-  Db
+  Db | JobQueue
 > {
   return Effect.gen(function* reconcileStuckPlaybookRunsGen() {
     const running = yield* tryDbWith((exec) =>

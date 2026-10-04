@@ -6,6 +6,7 @@ import { Db } from "../infra/db-service";
 import { errorMessage } from "../infra/error-utils";
 import { logSwallowed } from "../infra/process-log";
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
+import type { JobQueue } from "./job-queue";
 import { storeCacheStageEffect } from "./stages/cache";
 import { advancePlaybookRunEffect } from "./stages/chain";
 import type { CollectResult } from "./stages/collect";
@@ -59,7 +60,7 @@ export function runSucceededPathEffect(opts: {
   resultSummary: string | null;
   interpretError: string | null;
   jobLog: ReturnType<typeof createJobLog>;
-}): Effect.Effect<void, never, Db> {
+}): Effect.Effect<void, never, Db | JobQueue> {
   const { jobId, state, collected, resultSummary, interpretError, jobLog } =
     opts;
   return Effect.gen(function* runSucceededPathGen() {
@@ -102,7 +103,7 @@ export function runFailedPathEffect(opts: {
   jobLog: ReturnType<typeof createJobLog>;
   playbookRunId: JobRow["playbookRunId"];
   caseId: string;
-}): Effect.Effect<void, never, Db> {
+}): Effect.Effect<void, never, Db | JobQueue> {
   const { jobId, error, jobLog, playbookRunId, caseId } = opts;
   const msg = errorMessage(error);
   return Effect.gen(function* runFailedPathGen() {

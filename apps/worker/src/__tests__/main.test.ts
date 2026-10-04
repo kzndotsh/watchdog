@@ -1,26 +1,16 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Fiber, Stream } from "effect";
+import { Effect, Fiber, FiberMap, Stream } from "effect";
 import { vi } from "vitest";
 
-const workerMocks = vi.hoisted(() => {
-  const work = vi.fn(async () => {});
-  const stop = vi.fn(async () => {});
-  const ensureBossWorkerEffect = vi.fn();
-
-  return {
-    work,
-    stop,
-    ensureBossWorkerEffect,
-    reconcileStaleJobsEffect: vi.fn(),
-    reconcileStuckPlaybookRunsEffect: vi.fn(),
-    reconcileOrphanedQueuedJobsEffect: vi.fn(),
-    listenForEventsStream: vi.fn(),
-    listActiveJobIds: vi.fn(() => [] as string[]),
-    findCancelledJobIdsEffect: vi.fn(),
-    handleExportEventEffect: vi.fn(),
-    executeJobOnMap: vi.fn(),
-  };
-});
+const workerMocks = vi.hoisted(() => ({
+  reconcileStaleJobsEffect: vi.fn(),
+  reconcileStuckPlaybookRunsEffect: vi.fn(),
+  reconcileOrphanedQueuedJobsEffect: vi.fn(),
+  listenForEventsStream: vi.fn(),
+  listActiveJobIds: vi.fn(() => [] as string[]),
+  findCancelledJobIdsEffect: vi.fn(),
+  executeJobOnMap: vi.fn(),
+}));
 
 vi.mock("@watchdog/core/worker", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@watchdog/core/worker")>();
@@ -28,7 +18,6 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
     ...actual,
     executeJobOnMap: workerMocks.executeJobOnMap,
     findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
-    ensureBossWorkerEffect: workerMocks.ensureBossWorkerEffect,
     listenForEventsStream: workerMocks.listenForEventsStream,
     listActiveJobIds: workerMocks.listActiveJobIds,
     reconcileStaleJobsEffect: workerMocks.reconcileStaleJobsEffect,
@@ -44,22 +33,50 @@ vi.mock("@watchdog/env/server", async (importOriginal) => {
   return { ...actual };
 });
 
-vi.mock("../export-events", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../export-events")>();
-  return {
-    ...actual,
-    handleExportEventEffect: workerMocks.handleExportEventEffect,
-  };
-});
-
-import { Db, JobFibers } from "@watchdog/core/worker";
+import {
+  JobFibers,
+  makeJobQueueLayers,
+  type BossDriver,
+} from "@watchdog/core/worker";
 
 import { bootWorkerEffect } from "../boot-worker";
+import { provideWorkerLayers } from "../layers";
 
-workerMocks.ensureBossWorkerEffect.mockReturnValue(
-  Effect.succeed({ work: workerMocks.work, stop: workerMocks.stop })
-);
-workerMocks.handleExportEventEffect.mockReturnValue(Effect.void);
+const CAP_JOB_ID = "11111111-1111-4111-8111-000000000001";
+
+interface FakeDriver {
+  readonly driver: BossDriver;
+  readonly events: string[];
+  readonly start: ReturnType<typeof vi.fn>;
+  readonly ensureQueue: ReturnType<typeof vi.fn>;
+  readonly stop: ReturnType<typeof vi.fn>;
+  readonly work: ReturnType<typeof vi.fn>;
+}
+
+function fakeDriver(): FakeDriver {
+  const events: string[] = [];
+  const start = vi.fn(async () => {});
+  const ensureQueue = vi.fn(async () => {});
+  const stop = vi.fn(async () => {
+    events.push("boss.stop");
+  });
+  const work = vi.fn(async () => {});
+  const send = vi.fn(async () => {});
+  return {
+    driver: { start, stop, ensureQueue, work, send },
+    events,
+    start,
+    ensureQueue,
+    stop,
+    work,
+  };
+}
+
+function bootWith(fake: FakeDriver) {
+  const { workerLayer } = makeJobQueueLayers(() => fake.driver);
+  return provideWorkerLayers(bootWorkerEffect, workerLayer);
+}
+
 workerMocks.reconcileStaleJobsEffect.mockReturnValue(Effect.succeed(0));
 workerMocks.reconcileStuckPlaybookRunsEffect.mockReturnValue(Effect.succeed(0));
 workerMocks.reconcileOrphanedQueuedJobsEffect.mockReturnValue(
@@ -68,69 +85,182 @@ workerMocks.reconcileOrphanedQueuedJobsEffect.mockReturnValue(
 workerMocks.findCancelledJobIdsEffect.mockReturnValue(
   Effect.succeed([] as string[])
 );
-workerMocks.listenForEventsStream.mockReturnValue(Stream.empty);
+workerMocks.listenForEventsStream.mockReturnValue(Stream.never);
 
 describe("bootWorkerEffect", () => {
-  it.effect("stops pg-boss worker and export event stream", () =>
-    Effect.gen(function* bootWorkerEffectTestGen() {
-      const fiber = yield* bootWorkerEffect.pipe(
-        Effect.provide(JobFibers.layer),
-        Effect.provide(Db.layer),
-        Effect.forkChild
-      );
-      yield* Effect.yieldNow;
-      yield* Effect.yieldNow;
-      expect(workerMocks.ensureBossWorkerEffect).toHaveBeenCalledTimes(1);
-      expect(workerMocks.reconcileStaleJobsEffect).toHaveBeenCalledTimes(1);
-      expect(
-        workerMocks.reconcileStuckPlaybookRunsEffect
-      ).toHaveBeenCalledTimes(1);
-      expect(
-        workerMocks.reconcileOrphanedQueuedJobsEffect
-      ).toHaveBeenCalledTimes(1);
-      expect(workerMocks.work).toHaveBeenCalledTimes(1);
-      expect(workerMocks.listenForEventsStream).toHaveBeenCalledTimes(1);
-      yield* Fiber.interrupt(fiber);
-    })
-  );
-
-  it.effect("unwinds scoped resources when SIGTERM is received", () =>
-    Effect.gen(function* bootWorkerSigtermTestGen() {
-      workerMocks.stop.mockClear();
-      const fiber = yield* bootWorkerEffect.pipe(
-        Effect.provide(JobFibers.layer),
-        Effect.provide(Db.layer),
-        Effect.forkChild
-      );
-      yield* Effect.yieldNow;
-      yield* Effect.yieldNow;
-      process.emit("SIGTERM");
-      yield* Fiber.await(fiber);
-      expect(workerMocks.stop).toHaveBeenCalledTimes(1);
-    })
+  it.effect(
+    "starts the queue, reconciles, registers the handler and listens",
+    () =>
+      Effect.gen(function* bootWorkerEffectTestGen() {
+        const fake = fakeDriver();
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        yield* Effect.yieldNow;
+        yield* Effect.yieldNow;
+        expect(fake.start).toHaveBeenCalledTimes(1);
+        expect(fake.ensureQueue).toHaveBeenCalledTimes(1);
+        expect(workerMocks.reconcileStaleJobsEffect).toHaveBeenCalled();
+        expect(workerMocks.reconcileStuckPlaybookRunsEffect).toHaveBeenCalled();
+        expect(
+          workerMocks.reconcileOrphanedQueuedJobsEffect
+        ).toHaveBeenCalled();
+        expect(fake.work).toHaveBeenCalledTimes(1);
+        expect(fake.work).toHaveBeenCalledWith(
+          { localConcurrency: 1, pollingIntervalSeconds: 2 },
+          expect.any(Function)
+        );
+        expect(workerMocks.listenForEventsStream).toHaveBeenCalled();
+        yield* Fiber.interrupt(fiber);
+      })
   );
 
   it.effect(
-    "force-exits when a second shutdown signal arrives during shutdown",
+    "drains pg-boss once when the main fiber is interrupted (SIGTERM path)",
+    () =>
+      Effect.gen(function* bootWorkerInterruptTestGen() {
+        const fake = fakeDriver();
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        yield* Effect.yieldNow;
+        yield* Effect.yieldNow;
+        // NodeRuntime.runMain interrupts the main fiber on the first signal.
+        yield* Fiber.interrupt(fiber);
+        expect(fake.stop).toHaveBeenCalledTimes(1);
+        expect(fake.stop).toHaveBeenCalledWith({
+          graceful: true,
+          timeout: expect.any(Number),
+        });
+      })
+  );
+
+  it.effect(
+    "stops the queue before JobFibers interrupts in-flight Cap Jobs",
+    () =>
+      Effect.gen(function* bootWorkerOrderTestGen() {
+        const fake = fakeDriver();
+        workerMocks.executeJobOnMap.mockImplementation(() =>
+          Effect.gen(function* runInFlightJobGen() {
+            const fibers = yield* JobFibers;
+            yield* FiberMap.run(
+              fibers.map,
+              CAP_JOB_ID,
+              Effect.never.pipe(
+                Effect.onInterrupt(() =>
+                  Effect.sync(() => {
+                    fake.events.push("job.interrupted");
+                  })
+                )
+              )
+            );
+            return { outcome: "succeeded" as const, durationMs: 1 };
+          })
+        );
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        yield* Effect.yieldNow;
+        yield* Effect.yieldNow;
+        const handler = fake.work.mock.calls[0]?.[1] as (
+          jobs: { id: string; data: unknown }[]
+        ) => Promise<void>;
+        yield* Effect.promise(() =>
+          handler([{ id: "boss-1", data: { jobId: CAP_JOB_ID } }])
+        );
+        yield* Fiber.interrupt(fiber);
+        expect(fake.events).toEqual(["boss.stop", "job.interrupted"]);
+      })
+  );
+
+  it.effect(
+    "force-exits on a repeated shutdown signal, with the signal's exit code",
     () =>
       Effect.gen(function* bootWorkerRepeatSigtermTestGen() {
         const exit = vi
           .spyOn(process, "exit")
           .mockImplementation((() => undefined) as typeof process.exit);
-        workerMocks.stop.mockClear();
-        const fiber = yield* bootWorkerEffect.pipe(
-          Effect.provide(JobFibers.layer),
-          Effect.provide(Db.layer),
-          Effect.forkChild
-        );
-        yield* Effect.yieldNow;
-        yield* Effect.yieldNow;
-        process.emit("SIGTERM");
-        yield* Effect.yieldNow;
-        process.emit("SIGINT");
-        expect(exit).toHaveBeenCalledWith(130);
-        exit.mockRestore();
+        const fake = fakeDriver();
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        try {
+          yield* Effect.yieldNow;
+          yield* Effect.yieldNow;
+          process.emit("SIGTERM");
+          expect(exit).not.toHaveBeenCalled();
+          process.emit("SIGINT");
+          expect(exit).toHaveBeenLastCalledWith(130);
+          process.emit("SIGTERM");
+          expect(exit).toHaveBeenLastCalledWith(143);
+        } finally {
+          exit.mockRestore();
+        }
         yield* Fiber.interrupt(fiber);
       })
+  );
+
+  it.effect(
+    "force-exits on a repeated signal while boss.stop is still draining",
+    () =>
+      Effect.gen(function* bootWorkerDrainSignalTestGen() {
+        const exit = vi
+          .spyOn(process, "exit")
+          .mockImplementation((() => undefined) as typeof process.exit);
+        const fake = fakeDriver();
+        let finishStop: () => void = () => {};
+        const pendingStop = new Promise<void>((resolve) => {
+          finishStop = resolve;
+        });
+        fake.stop.mockReturnValueOnce(pendingStop);
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        try {
+          yield* Effect.yieldNow;
+          yield* Effect.yieldNow;
+          // First signal: runMain interrupts; the drain (stop) is now pending.
+          process.emit("SIGTERM");
+          const interrupting = yield* Effect.forkChild(Fiber.interrupt(fiber));
+          yield* Effect.yieldNow;
+          yield* Effect.yieldNow;
+          expect(fake.stop).toHaveBeenCalledTimes(1);
+          expect(exit).not.toHaveBeenCalled();
+          process.emit("SIGTERM");
+          expect(exit).toHaveBeenCalledWith(143);
+          finishStop();
+          yield* Fiber.await(interrupting);
+        } finally {
+          finishStop();
+          exit.mockRestore();
+        }
+      })
+  );
+
+  it.effect(
+    "force-exits on a repeated signal as soon as the Layers are built",
+    () =>
+      Effect.gen(function* bootWorkerEarlySignalTestGen() {
+        const exit = vi
+          .spyOn(process, "exit")
+          .mockImplementation((() => undefined) as typeof process.exit);
+        const fake = fakeDriver();
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        try {
+          yield* Effect.yieldNow;
+          process.emit("SIGINT");
+          process.emit("SIGINT");
+          expect(exit).toHaveBeenCalledWith(130);
+        } finally {
+          exit.mockRestore();
+        }
+        yield* Fiber.interrupt(fiber);
+      })
+  );
+
+  it.effect("ends the boot normally and drains when LISTEN fails", () =>
+    Effect.gen(function* bootWorkerListenFailureTestGen() {
+      const fake = fakeDriver();
+      const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+      yield* Effect.yieldNow;
+      yield* Effect.yieldNow;
+      const args = workerMocks.listenForEventsStream.mock.calls.at(-1)?.[0] as {
+        onError: (error: unknown) => void;
+      };
+      args.onError(new Error("connection lost"));
+      const exit = yield* Fiber.await(fiber);
+      expect(exit._tag).toBe("Success");
+      expect(fake.stop).toHaveBeenCalledTimes(1);
+    })
   );
 });

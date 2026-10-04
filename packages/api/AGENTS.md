@@ -25,7 +25,7 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Procedures call `@watchdog/cor
 
 ## Gotchas
 
-- `toOrpcError` maps `DomainTag` via `Match.tagsExhaustive`; run Effects through `runApp`. `AppLive` is the live `Db` Layer ([ADR-0002](../../docs/adr/0002-effect-services-and-layers.md) phase 2): `runApp` accepts `R = Db`, and tests override with `runAppWith(layer)(effect)` (e.g. `TestDbLayer` from `@watchdog/test-db`). Core reaches the database only through the `Db` service.
+- `toOrpcError` maps `DomainTag` via `Match.tagsExhaustive`; run Effects through `runApp`. `AppLive` is the live `Db` Layer plus the producer `JobQueue` Layer ([ADR-0002](../../docs/adr/0002-effect-services-and-layers.md) phases 2-3): `runApp` accepts `R = Db | JobQueue` (pg-boss starts lazily on the first enqueue), and tests override with `runAppWith(layer)(effect)` (e.g. `TestDbLayer` from `@watchdog/test-db`, `recordingJobQueue().layer` from `@watchdog/core/jobs`). Core reaches the database only through the `Db` service and the queue only through `JobQueue`.
 - Logging: shared middleware stamps ids from input, so do not call `context.log?.set` per handler. `ApiContext.log` comes from `peekRequestLogger`.
 - Prefer the evidence verbs (`POST …/process`, `…/enrich`) over `jobs.start` for Harvest/Extract/URL Enrich so dedupe and URL-assert stay in one place.
 - Case Export zip/md are authenticated file routes on web, not oRPC; the CLI uses raw `fetch` + `x-api-key`. OpenAPI security accepts Bearer, `x-api-key`, or the session cookie.
