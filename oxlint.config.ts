@@ -592,6 +592,17 @@ export default defineConfig({
         "eslint/no-restricted-imports": [
           "error",
           {
+            // `paths` matches the bare package name only; subpath exports need `patterns`.
+            patterns: [
+              {
+                group: [
+                  "@watchdog/core/*",
+                  "@watchdog/db/*",
+                  "@watchdog/api/*",
+                ],
+                message: "CLI talks HTTP via @watchdog/client only.",
+              },
+            ],
             paths: [
               {
                 name: "@watchdog/core",
