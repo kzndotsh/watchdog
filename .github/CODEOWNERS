@@ -39,7 +39,7 @@
 /tsconfig.json @kzndotsh
 /playwright.config.ts @kzndotsh
 /codecov.yml @kzndotsh
-/.prettierignore @kzndotsh
+/tsconfig.base.json @kzndotsh
 /.envrc @kzndotsh
 /.gitattributes @kzndotsh
 /vitest.reset-modules.ts @kzndotsh
