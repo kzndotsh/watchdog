@@ -121,9 +121,9 @@ describe("fetchJsonObjectEffect", () => {
     }).pipe(Effect.provide(toolsHttpClientLayer))
   );
 
-  it.effect("rejects OPTIONS and TRACE methods", () =>
+  it.effect("rejects OPTIONS, TRACE and QUERY methods", () =>
     Effect.gen(function* fetchJsonUnsupportedMethodGen() {
-      for (const method of ["OPTIONS", "TRACE"] as const) {
+      for (const method of ["OPTIONS", "TRACE", "QUERY"] as const) {
         const outcome = yield* Effect.result(
           fetchJsonObjectEffect({
             url: "https://example.com/api",

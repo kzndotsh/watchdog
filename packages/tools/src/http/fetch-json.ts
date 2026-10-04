@@ -146,7 +146,8 @@ function isHttpMethod(value: string): value is HttpMethod {
     case "PATCH":
     case "HEAD":
     case "OPTIONS":
-    case "TRACE": {
+    case "TRACE":
+    case "QUERY": {
       return true;
     }
     default: {
