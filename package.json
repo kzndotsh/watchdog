@@ -54,6 +54,7 @@
     "prepare": "effect-tsgo patch --oxlint",
     "check:action-pins": "node ./scripts/check-action-pins.mjs",
     "check:workspace": "sherif --fail-on-warnings && node ./scripts/check-catalog.mjs",
+    "check:boundaries": "node ./scripts/check-boundaries.mjs",
     "check:codeowners": "node ./scripts/check-codeowners.mjs",
     "check:vendor": "node ./scripts/ui-vendor.mjs check",
     "ui:sync": "node ./scripts/ui-vendor.mjs sync",

@@ -225,6 +225,10 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:workspace
 
+      - name: Package boundaries
+        if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true' || needs.changes.outputs.config == 'true'
+        run: pnpm check:boundaries
+
       - name: CODEOWNERS paths
         run: pnpm check:codeowners
 

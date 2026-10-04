@@ -100,6 +100,15 @@ pre-commit:
         - "pnpm-workspace.yaml"
         - "scripts/check-catalog.mjs"
       run: pnpm check:workspace
+    boundaries:
+      # Source imports, manifests and the exports maps they are checked against.
+      glob:
+        - "apps/**/*.{ts,tsx,js,mjs}"
+        - "packages/**/*.{ts,tsx,js,mjs}"
+        - "**/package.json"
+        - "pnpm-workspace.yaml"
+        - "scripts/check-boundaries.mjs"
+      run: pnpm check:boundaries
     codeowners:
       # Also depends on which files exist (a rename can orphan a pattern), so CI reruns it on every change.
       glob:
