@@ -112,16 +112,17 @@ for (const [name, uses] of [...declared].sort(([a], [b]) =>
       );
     }
   }
-  if (uses.length < 2) continue;
+  const pkgs = new Set(uses.map((u) => u.pkg));
+  if (pkgs.size < 2) continue;
   shared += 1;
   for (const use of uses) {
     if (CATALOG_REF.test(use.spec)) continue;
     const others = uses
-      .filter((u) => u !== use)
+      .filter((u) => u.pkg !== use.pkg)
       .map((u) => u.pkg)
       .join(", ");
     problems.push(
-      `${use.pkg}: ${name} is declared by ${uses.length} packages (also ${others}) but uses the literal range "${use.spec}" in ${use.field}; use "${name}": "catalog:" and put the version in pnpm-workspace.yaml`
+      `${use.pkg}: ${name} is declared by ${pkgs.size} packages (also ${others}) but uses the literal range "${use.spec}" in ${use.field}; use "${name}": "catalog:" and put the version in pnpm-workspace.yaml`
     );
   }
 }

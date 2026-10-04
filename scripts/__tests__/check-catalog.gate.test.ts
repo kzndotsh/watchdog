@@ -87,6 +87,18 @@ describe("check-catalog", () => {
     expect(res.output).toContain("(root)");
   });
 
+  it("does not count one package listing a dependency twice as sharing", () => {
+    const res = workspaceRepo({
+      packages: {
+        "packages/a": {
+          dependencies: { lodash: "^4.17.21" },
+          devDependencies: { lodash: "^4.17.21" },
+        },
+      },
+    }).run("check-catalog.mjs");
+    expect(res.code).toBe(0);
+  });
+
   it("fails when catalog: names an entry the catalog does not define", () => {
     const res = workspaceRepo({
       catalog: {},

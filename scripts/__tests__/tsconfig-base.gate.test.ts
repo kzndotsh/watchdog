@@ -36,12 +36,14 @@ const stripJsonc = (text: string): string => {
     } else if (ch === "/" && next === "*") {
       const end = text.indexOf("*/", i + 2);
       i = end === -1 ? text.length : end + 2;
+    } else if (ch === "," && /^,\s*[}\]]/.test(text.slice(i, i + 64))) {
+      i += 1;
     } else {
       out += ch;
       i += 1;
     }
   }
-  return out.replaceAll(/,(\s*[}\]])/g, "$1");
+  return out;
 };
 
 const parseTsconfig = (text: string): unknown => JSON.parse(stripJsonc(text));
@@ -110,7 +112,7 @@ const checkTsconfigs = (configs: Configs): string[] => {
     }
     const dir = path.posix.dirname(file);
     for (const parent of localParents(file, config)) {
-      if (parent.startsWith("apps/web/") && !dir.startsWith("apps/web")) {
+      if (parent.startsWith("apps/web/") && dir !== "apps/web") {
         problems.push(
           `${file} extends ${parent}: no package borrows the web app's config`
         );
@@ -206,10 +208,10 @@ describe("tsconfig base contract", () => {
 
   it("parses JSONC comments and trailing commas without touching strings", () => {
     const parsed = parseTsconfig(
-      '{\n // line\n "extends": "./a//b.json", /* block */ "x": [1,],\n}'
+      '{\n // line\n "extends": "./a//b.json", /* block */ "x": [1,], "g": "a,}"\n}'
     );
 
-    expect(parsed).toEqual({ extends: "./a//b.json", x: [1] });
+    expect(parsed).toEqual({ extends: "./a//b.json", x: [1], g: "a,}" });
   });
 
   it("holds for every tracked tsconfig in the repository", () => {
