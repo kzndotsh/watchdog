@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "catalog:",
     "@watchdog/test-kit": "workspace:*",
-    "typescript": "7.0.2",
-    "zod": "^4.6.5"
+    "typescript": "catalog:",
+    "zod": "catalog:"
   },
   "peerDependencies": {
     "zod": "^4.4.3"

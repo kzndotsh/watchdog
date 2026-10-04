@@ -17,16 +17,16 @@
   "dependencies": {
     "@watchdog/env": "workspace:*",
     "@watchdog/schemas": "workspace:*",
-    "drizzle-orm": "^0.45.2",
-    "effect": "4.0.0-rc.115",
+    "drizzle-orm": "catalog:",
+    "effect": "catalog:",
     "postgres": "^3.4.9"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
+    "@types/node": "catalog:",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
-    "dotenv": "^17.4.2",
+    "dotenv": "catalog:",
     "drizzle-kit": "^0.31.10",
-    "typescript": "7.0.2"
+    "typescript": "catalog:"
   }
 }

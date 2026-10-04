@@ -60,19 +60,19 @@
   },
   "dependencies": {
     "@watchdog/cli": "workspace:*",
-    "effect": "4.0.0-rc.115"
+    "effect": "catalog:"
   },
   "devDependencies": {
     "@effect/tsgo": "0.45.0",
     "@effect/vitest": "4.0.0-rc.115",
     "@playwright/test": "^1.63.0",
     "@shadcn/lint": "0.2.0",
-    "@types/node": "^26.4.1",
-    "@vitejs/plugin-react": "^6.1.1",
+    "@types/node": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "^5.0.1",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
-    "cn": "0.3.2",
+    "cn": "catalog:",
     "happy-dom": "^20.14.3",
     "jsdom": "^30.0.1",
     "knip": "^6.35.1",
@@ -81,10 +81,10 @@
     "oxlint-plugin-react-doctor": "^0.9.13",
     "oxlint-tsgolint": "7.0.2001",
     "react-doctor": "^0.9.13",
-    "tsx": "^4.23.13",
-    "typescript": "7.0.2",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
     "ultracite": "7.12.0",
-    "vitest": "^5.0.1",
+    "vitest": "catalog:",
     "yaml": "^2.9.0"
   },
   "engines": {
