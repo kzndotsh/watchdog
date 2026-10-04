@@ -36,3 +36,23 @@ describe("normalizeIdentifierValue", () => {
     );
   });
 });
+
+describe("normalizeIdentifierValue ip idempotence regressions", () => {
+  it.each([
+    ["; ]", ";"],
+    ["[[::1]]", "::1"],
+    ["[ [1.2.3.4] ]", "1.2.3.4"],
+    ["  [ ::1 ]  ", "::1"],
+  ])("normalizes %j to a fixed point", (input, expected) => {
+    const once = normalizeIdentifierValue("ip", input);
+    expect(once).toBe(expected);
+    expect(normalizeIdentifierValue("ip", once)).toBe(once);
+  });
+});
+
+describe("normalizeIdentifierValue other idempotence regressions", () => {
+  it("domain '! .' reaches a fixed point", () => {
+    const once = normalizeIdentifierValue("domain", "! .");
+    expect(normalizeIdentifierValue("domain", once)).toBe(once);
+  });
+});
