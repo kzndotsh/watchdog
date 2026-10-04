@@ -268,6 +268,23 @@ function isOrpcError(
   return name === "ORPCError" || typeof status === "number";
 }
 
+/** Stable codes by tag, for tagged values that arrive without a `code` field. */
+const CODE_BY_TAG: Record<string, string> = {
+  NotFoundError: "not_found",
+  ConflictError: "conflict",
+  InvalidError: "invalid",
+  ForbiddenError: "forbidden",
+  InternalError: "internal",
+};
+
+const INTERNAL_MESSAGE = "Internal server error";
+
+function stableCodeOf(error: object, tag: string): string | null {
+  const code = readProp(error, "code");
+  if (typeof code === "string") return code;
+  return CODE_BY_TAG[tag] ?? null;
+}
+
 function taggedErrorEnvelope(error: unknown): {
   code: string;
   message: string;
@@ -275,6 +292,10 @@ function taggedErrorEnvelope(error: unknown): {
   if (typeof error !== "object" || error === null) return null;
   const tag = readProp(error, "_tag");
   if (typeof tag !== "string") return null;
+  const code = stableCodeOf(error, tag);
+  if (code === null) return null;
+  // `reason` is log-only for InternalError; never echo it.
+  if (code === "internal") return { code, message: INTERNAL_MESSAGE };
   const reason = readProp(error, "reason");
   const resource = readProp(error, "resource");
   const fallback = readProp(error, "message");
@@ -286,30 +307,15 @@ function taggedErrorEnvelope(error: unknown): {
   } else if (typeof fallback === "string") {
     message = fallback;
   }
-  switch (tag) {
-    case "NotFoundError": {
-      return { code: "NOT_FOUND", message };
-    }
-    case "ConflictError": {
-      return { code: "CONFLICT", message };
-    }
-    case "InvalidError": {
-      return { code: "BAD_REQUEST", message };
-    }
-    case "ForbiddenError": {
-      return { code: "FORBIDDEN", message };
-    }
-    case "InternalError": {
-      // `reason` is log-only on the server; never echo it.
-      return {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Internal server error",
-      };
-    }
-    default: {
-      return null;
-    }
-  }
+  return { code, message };
+}
+
+/** Stable `data.code` the API puts in the oRPC error body, when present. */
+function stableCodeFromData(error: { data?: unknown }): string | null {
+  const { data } = error;
+  if (typeof data !== "object" || data === null) return null;
+  const code = readProp(data, "code");
+  return typeof code === "string" ? code : null;
 }
 
 /** Exit status for server-side failures; invalid input and other errors exit 1. */
@@ -317,8 +323,25 @@ export const SERVER_ERROR_EXIT_CODE = 3;
 
 function isServerError(code: string, status?: number): boolean {
   return (
-    code === "INTERNAL_SERVER_ERROR" || (status !== undefined && status >= 500)
+    code === "internal" ||
+    code === "INTERNAL_SERVER_ERROR" ||
+    (status !== undefined && status >= 500)
   );
+}
+
+function causeOf(error: unknown): unknown {
+  if (typeof error !== "object" || error === null) return undefined;
+  return readProp(error, "cause");
+}
+
+function describeCause(cause: unknown): string {
+  if (cause instanceof Error) return cause.stack ?? cause.message;
+  if (typeof cause === "string") return cause;
+  try {
+    return JSON.stringify(cause) ?? String(cause);
+  } catch {
+    return String(cause);
+  }
 }
 
 const CONFIG_HELP = ["export WD_API_KEY=<key>", "wd --help"];
@@ -336,6 +359,10 @@ export function handleCliError(error: unknown): never {
     process.stderr.write(
       `${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`
     );
+    const cause = causeOf(error);
+    if (cause !== undefined) {
+      process.stderr.write(`cause: ${describeCause(cause)}\n`);
+    }
   }
   const tagged = taggedErrorEnvelope(error);
   if (tagged !== null) {
@@ -347,10 +374,10 @@ export function handleCliError(error: unknown): never {
     });
   }
   if (isOrpcError(error)) {
-    fail(error.code, error.message, {
+    fail(stableCodeFromData(error) ?? error.code, error.message, {
       status: error.status,
       help: ["wd --help"],
-      ...(isServerError(error.code, error.status)
+      ...(isServerError(stableCodeFromData(error) ?? error.code, error.status)
         ? { exitCode: SERVER_ERROR_EXIT_CODE }
         : {}),
     });

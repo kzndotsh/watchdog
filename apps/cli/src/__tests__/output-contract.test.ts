@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { CliExitError } from "../io";
 import {
@@ -156,7 +156,7 @@ describe("CLI output contract", () => {
     const body = JSON.parse(lines[0] ?? "{}");
     expect(body).toMatchObject({
       ok: false,
-      error: { code: "CONFLICT", message: "duplicate slug" },
+      error: { code: "conflict", message: "duplicate slug" },
     });
   });
 
@@ -187,9 +187,56 @@ describe("CLI output contract", () => {
       expect(thrown).toBeInstanceOf(CliExitError);
       expect((thrown as CliExitError).exitCode).toBe(3);
       expect(body.error).toEqual({
-        code: "INTERNAL_SERVER_ERROR",
+        code: "internal",
         message: "Internal server error",
       });
+    });
+
+    it("prints the stable data.code (not the transport code) for API errors", async () => {
+      const { thrown, body } = await runHandle({
+        name: "ORPCError",
+        code: "NOT_FOUND",
+        message: "Case not found",
+        status: 404,
+        data: { code: "not_found" },
+      });
+      expect((thrown as CliExitError).exitCode).toBe(1);
+      expect(body.error).toEqual({
+        code: "not_found",
+        message: "Case not found",
+        status: 404,
+      });
+    });
+
+    it("prefers a tagged error's own code and prints the cause only in debug mode", async () => {
+      const prev = process.env.WD_CLI_DEBUG;
+      const writes: string[] = [];
+      const spy = vi
+        .spyOn(process.stderr, "write")
+        .mockImplementation((chunk: unknown) => {
+          writes.push(String(chunk));
+          return true;
+        });
+      const error = {
+        _tag: "InternalError",
+        code: "internal",
+        reason: "Failed to create Case",
+        cause: "pg down",
+      };
+      try {
+        delete process.env.WD_CLI_DEBUG;
+        const quiet = await runHandle(error);
+        expect(quiet.body.error.code).toBe("internal");
+        expect(writes.join("")).not.toContain("pg down");
+        process.env.WD_CLI_DEBUG = "1";
+        const verbose = await runHandle(error);
+        expect(verbose.body.error.message).toBe("Internal server error");
+        expect(writes.join("")).toContain("cause: pg down");
+      } finally {
+        spy.mockRestore();
+        if (prev === undefined) delete process.env.WD_CLI_DEBUG;
+        else process.env.WD_CLI_DEBUG = prev;
+      }
     });
 
     it("exits 3 for a server-side API error and 1 for invalid input", async () => {
