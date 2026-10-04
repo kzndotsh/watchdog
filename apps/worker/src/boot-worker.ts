@@ -3,23 +3,21 @@ import path from "node:path";
 import { Cause, Data, Deferred, Effect, Stream } from "effect";
 
 import {
+  type JobFibers,
+  type JobQueue,
+  type Db,
   CAP_JOB_QUEUE,
   executeJobOnMap,
-  ensureBossWorkerEffect,
   extractDomainJobIdFromPayload,
   failInvalidCapDeliveryEffect,
-  gracefulStopTimeoutMs,
   isCapJobPayload,
   listenForEventsStream,
-  JobFibers,
-  Db,
-  type JobFibersApi,
+  JobQueueWorker,
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
   reconcileOrphanedQueuedJobsEffect,
   type CapJobPayload,
   type JobRunOutcome,
-  type BossHandle,
 } from "@watchdog/core/worker";
 import {
   createLogger,
@@ -31,36 +29,17 @@ import { trimmedUuidSchema } from "@watchdog/schemas/shared";
 
 import { cancelPollLoopEffect } from "./cancel-poll";
 import {
-  handleExportEventEffect,
+  claimExportEventEffect,
   shouldTriggerCaseExport,
 } from "./export-events";
+import { bindWorkerShutdown, type WorkerShutdown } from "./shutdown";
+import { emitOnce, logWorkerError } from "./worker-log";
 
-type BossWorker = BossHandle;
-
-interface WorkerResources {
-  boss: BossWorker;
-}
-
-interface WorkerShutdownContext extends WorkerResources {
-  shuttingDown: boolean;
-  shutdownSignal: string;
-  bossStopError?: string;
-}
-
-function emitOnce(scope: string, fields: Record<string, unknown>): void {
-  const log = createLogger({ scope });
-  log.set(fields);
-  void log.emit();
-}
-
-function logWorkerError(scope: string, message: string, error: unknown): void {
-  const log = createLogger({ scope });
-  log.set({ message });
-  log.error(error instanceof Error ? error : new Error(String(error)));
-  void log.emit();
-}
-
-function reconcileWorkerStartupEffect(): Effect.Effect<void, never, Db> {
+function reconcileWorkerStartupEffect(): Effect.Effect<
+  void,
+  never,
+  Db | JobQueue
+> {
   return Effect.gen(function* reconcileWorkerStartupGen() {
     const stale = yield* reconcileStaleJobsEffect().pipe(
       Effect.catchCause((cause) =>
@@ -121,15 +100,17 @@ function reconcileWorkerStartupEffect(): Effect.Effect<void, never, Db> {
   });
 }
 
+type WorkerServices = Db | JobFibers | JobQueue;
+
 type RunJob = (
   jobId: string
-) => Effect.Effect<JobRunOutcome, never, Db | JobFibers>;
+) => Effect.Effect<JobRunOutcome, never, WorkerServices>;
 
 function executeCapJobPayloadEffect(
   data: CapJobPayload,
   log: ReturnType<typeof createLogger>,
   runJob: RunJob
-): Effect.Effect<void, never, Db | JobFibers> {
+): Effect.Effect<void, never, WorkerServices> {
   const jobId = trimmedUuidSchema.parse(data.jobId);
   return runJob(jobId).pipe(
     Effect.tap((outcome) =>
@@ -172,7 +153,7 @@ function executeCapJobPayloadEffect(
 function processCapJobEffect(
   job: { id: string; data: unknown },
   runJob: RunJob
-): Effect.Effect<void, Error, Db | JobFibers> {
+): Effect.Effect<void, Error, WorkerServices> {
   const log = createLogger({
     scope: "cap.job",
     bossJobId: job.id,
@@ -246,8 +227,12 @@ function handleExportEventPayloadEffect(
     if (!shouldTriggerCaseExport(parsed)) {
       return;
     }
+    // Mark the case dirty (and start-or-join the write) in this fiber, then fork
+    // only the wait. A shutdown that interrupts the forked child before its
+    // first step can no longer lose the mark.
+    const awaitWrite = yield* claimExportEventEffect(parsed);
     yield* Effect.forkChild(
-      handleExportEventEffect(parsed).pipe(
+      awaitWrite.pipe(
         Effect.catchCause((cause) =>
           Effect.sync(() => {
             logWorkerError(
@@ -268,124 +253,30 @@ function onExportEventListening(): void {
   emitOnce("export-sync", { message: "listening for graph events" });
 }
 
-function repeatShutdownExitCode(signal: string): number {
-  if (signal === "SIGINT") return 130;
-  if (signal === "SIGTERM") return 143;
-  return 1;
-}
-
-function requestWorkerShutdown(
-  signal: string,
-  ctx: WorkerShutdownContext,
-  shutdownGate: Deferred.Deferred<true>
-): void {
-  if (ctx.shuttingDown) {
-    process.exit(repeatShutdownExitCode(signal));
-    return;
-  }
-  ctx.shuttingDown = true;
-  ctx.shutdownSignal = signal;
-  void (async () => {
-    try {
-      await Effect.runPromise(Deferred.succeed(shutdownGate, true));
-    } catch (error: unknown) {
-      logWorkerError(
-        "worker.shutdown",
-        "shutdown request failed",
-        error instanceof Error ? error : new Error(String(error))
-      );
-      process.exit(1);
-    }
-  })();
-}
-
-function onExportEventListenError(
-  error: unknown,
-  ctx: WorkerShutdownContext,
-  shutdownGate: Deferred.Deferred<true>
-): void {
-  logWorkerError("export-sync.listen", "LISTEN connection failed", error);
-  requestWorkerShutdown("LISTEN", ctx, shutdownGate);
-}
-
-function exportEventsEffect(
-  ctx: WorkerShutdownContext,
-  shutdownGate: Deferred.Deferred<true>
-) {
+function exportEventsEffect(shutdown: WorkerShutdown) {
   return Effect.race(
     Stream.runForEach(
       listenForEventsStream({
         onReady: onExportEventListening,
-        onError: (error) => {
-          onExportEventListenError(error, ctx, shutdownGate);
-        },
+        onError: shutdown.onListenError,
       }),
       (payload) => handleExportEventPayloadEffect(payload)
     ),
-    Deferred.await(shutdownGate)
+    Deferred.await(shutdown.listenFailed)
   );
 }
 
 class WorkerBossError extends Data.TaggedError("WorkerBossError")<{
-  readonly operation: "shutdown" | "start";
+  readonly operation: "start";
   readonly cause: unknown;
 }> {
   readonly code = "worker_boss" as const;
 }
 
-function shutdownErrorMessage(cause: unknown): string {
-  return cause instanceof Error ? cause.message : String(cause);
-}
-
-function shutdownWorkerResourcesEffect(
-  signal: string,
-  resources: WorkerResources,
-  ctx?: WorkerShutdownContext
-): Effect.Effect<void> {
-  return Effect.gen(function* shutdownWorkerResourcesGen() {
-    const fields: Record<string, unknown> = {
-      message: `shutting down (${signal})`,
-    };
-    yield* Effect.tryPromise({
-      try: () =>
-        resources.boss.stop({
-          graceful: true,
-          timeout: gracefulStopTimeoutMs(),
-        }),
-      catch: (cause) => new WorkerBossError({ operation: "shutdown", cause }),
-    }).pipe(
-      Effect.catchTag("WorkerBossError", (error) =>
-        Effect.sync(() => {
-          const message = shutdownErrorMessage(error.cause);
-          fields.bossStopError = message;
-          if (ctx !== undefined) {
-            ctx.bossStopError = message;
-          }
-        })
-      )
-    );
-    yield* Effect.sync(() => {
-      emitOnce("worker.shutdown", fields);
-    });
-  });
-}
-
-function bindWorkerShutdown(
-  ctx: WorkerShutdownContext,
-  shutdownGate: Deferred.Deferred<true>
-): void {
-  process.on("SIGTERM", () => {
-    requestWorkerShutdown("SIGTERM", ctx, shutdownGate);
-  });
-  process.on("SIGINT", () => {
-    requestWorkerShutdown("SIGINT", ctx, shutdownGate);
-  });
-}
-
 function processCapJobBatchEffect(
-  jobs: { id: string; data: unknown }[],
+  jobs: readonly { id: string; data: unknown }[],
   runJob: RunJob
-): Effect.Effect<void, Error, Db | JobFibers> {
+): Effect.Effect<void, Error, WorkerServices> {
   if (jobs.length === 0) {
     return Effect.sync(() => {
       logWorkerError(
@@ -419,76 +310,60 @@ function initWorkerLogger(): void {
   });
 }
 
-function startWorkerResourcesEffect(
-  fibers: JobFibersApi,
+/**
+ * Register the Cap Job handler on the worker queue. The handler is the one
+ * promise bridge (pg-boss calls it with a Promise contract): it runs with the
+ * services captured at boot, and the queue Layer's release (`boss.stop`)
+ * waits for it to settle.
+ */
+function registerCapJobHandlerEffect(
   runJob: RunJob
-): Effect.Effect<WorkerResources, never, Db> {
-  return Effect.gen(function* startWorkerResourcesGen() {
-    const dbExec = yield* Db;
-    const boss = yield* ensureBossWorkerEffect().pipe(Effect.orDie);
-    emitOnce("worker.boot", { message: `listening on ${CAP_JOB_QUEUE}` });
-    yield* reconcileWorkerStartupEffect();
-
-    yield* Effect.tryPromise({
-      try: () =>
-        Promise.resolve(
-          boss.work(
-            CAP_JOB_QUEUE,
-            { localConcurrency: 1, pollingIntervalSeconds: 2 },
-            async (jobs) => {
-              try {
-                await Effect.runPromise(
-                  processCapJobBatchEffect(jobs, runJob).pipe(
-                    Effect.provideService(JobFibers, fibers),
-                    Effect.provideService(Db, dbExec)
-                  )
-                );
-              } catch (error: unknown) {
-                logWorkerError(
-                  "cap.job.batch",
-                  "unhandled cap job batch failure",
-                  error instanceof Error ? error : new Error(String(error))
-                );
-                throw error;
-              }
-            }
-          )
+): Effect.Effect<void, never, WorkerServices | JobQueueWorker> {
+  return Effect.gen(function* registerCapJobHandlerGen() {
+    const worker = yield* JobQueueWorker;
+    const services = yield* Effect.context<WorkerServices>();
+    const runBatch = Effect.runPromiseWith(services);
+    yield* worker
+      .work(
+        { localConcurrency: 1, pollingIntervalSeconds: 2 },
+        async (jobs) => {
+          try {
+            await runBatch(processCapJobBatchEffect(jobs, runJob));
+          } catch (error: unknown) {
+            logWorkerError(
+              "cap.job.batch",
+              "unhandled cap job batch failure",
+              error instanceof Error ? error : new Error(String(error))
+            );
+            throw error;
+          }
+        }
+      )
+      .pipe(
+        Effect.mapError(
+          (cause) => new WorkerBossError({ operation: "start", cause })
         ),
-      catch: (cause) => new WorkerBossError({ operation: "start", cause }),
-    }).pipe(Effect.orDie);
-
-    return { boss };
+        Effect.orDie
+      );
   });
 }
 
+/**
+ * Worker boot. R carries the worker queue role (`JobQueueWorker`): composing
+ * the producer Layer instead is a type error, so a process is one role. The
+ * queue is acquired by its Layer (`main.ts`) and released, draining pg-boss,
+ * after this scope closes and before `JobFibers` does.
+ */
 export const bootWorkerEffect = Effect.scoped(
   Effect.gen(function* bootWorkerMain() {
     yield* Effect.sync(() => {
       initWorkerLogger();
     });
-    const fibers = yield* JobFibers;
-    const shutdownGate = yield* Deferred.make<true>();
-    const shutdownCtxHolder: { current?: WorkerShutdownContext } = {};
-    const resources = yield* Effect.acquireRelease(
-      startWorkerResourcesEffect(fibers, (jobId) => executeJobOnMap(jobId)),
-      (acquired) => {
-        const ctx = shutdownCtxHolder.current;
-        if (ctx === undefined) {
-          return shutdownWorkerResourcesEffect("interrupt", acquired);
-        }
-        return shutdownWorkerResourcesEffect(ctx.shutdownSignal, acquired, ctx);
-      }
-    );
-    const shutdownCtx: WorkerShutdownContext = {
-      boss: resources.boss,
-      shuttingDown: false,
-      shutdownSignal: "interrupt",
-    };
-    shutdownCtxHolder.current = shutdownCtx;
-    yield* Effect.sync(() => {
-      bindWorkerShutdown(shutdownCtx, shutdownGate);
-    });
+    emitOnce("worker.boot", { message: `listening on ${CAP_JOB_QUEUE}` });
+    yield* reconcileWorkerStartupEffect();
+    yield* registerCapJobHandlerEffect((jobId) => executeJobOnMap(jobId));
+    const shutdown = yield* bindWorkerShutdown;
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
-    return yield* exportEventsEffect(shutdownCtx, shutdownGate);
+    return yield* exportEventsEffect(shutdown);
   })
 );

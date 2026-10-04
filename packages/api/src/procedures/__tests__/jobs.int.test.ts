@@ -1,9 +1,18 @@
+import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { runDomain } from "@watchdog/core/infra";
-import { listJobsForCaseEffect, startJobEffect } from "@watchdog/core/jobs";
+import { Db, runDomainWith } from "@watchdog/core/infra";
+import {
+  recordingJobQueue,
+  listJobsForCaseEffect,
+  startJobEffect,
+} from "@watchdog/core/jobs";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+
+// Enqueues land in a recording queue instead of a real pg-boss.
+const queue = recordingJobQueue();
+const runDomain = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
 
 describe("jobs (core services)", () => {
   beforeEach(async () => {

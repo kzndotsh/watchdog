@@ -26,6 +26,7 @@ import {
   type JobAbortReason,
   type JobFibersApi,
 } from "./job-fibers";
+import type { JobQueue } from "./job-queue";
 import { runFailedPathEffect, runSucceededPathEffect } from "./run-paths";
 import { advancePlaybookRunEffect } from "./stages/chain";
 import { collectEffect, type CollectResult } from "./stages/collect";
@@ -131,7 +132,7 @@ function handlePreflightStopEffect(
   jobId: string,
   reason: PreflightStopReason,
   started: number
-): Effect.Effect<JobRunOutcome, never, Db> {
+): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
   return Effect.gen(function* handlePreflightStopGen() {
     const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
       Effect.orDie
@@ -165,7 +166,7 @@ function handlePreflightFailureEffect(
   jobId: string,
   error: DomainTag,
   started: number
-): Effect.Effect<JobRunOutcome, never, Db> {
+): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
   return Effect.gen(function* handlePreflightFailureGen() {
     const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
       Effect.orDie
@@ -308,7 +309,7 @@ function runAfterCollectEffect(
   jobLog: JobLog,
   started: number,
   fibers: JobFibersApi
-): Effect.Effect<JobRunOutcome, DomainTag, Db> {
+): Effect.Effect<JobRunOutcome, DomainTag, Db | JobQueue> {
   return Effect.gen(function* runAfterCollectGen() {
     const fromCache = collected.fromCache;
     const reclaim = collected.reclaim;
@@ -387,7 +388,7 @@ function failOutcome(
   started: number,
   error: unknown,
   fibers: JobFibersApi
-): Effect.Effect<JobRunOutcome, never, Db> {
+): Effect.Effect<JobRunOutcome, never, Db | JobQueue> {
   const classified = classifyRun({
     jobId,
     threw: true,
@@ -518,7 +519,7 @@ function runReadyJobEffect(
 /** Timeout sleeper is collect-scoped (interrupted when collect returns). */
 export function executeJobEffect(
   jobId: string
-): Effect.Effect<JobRunOutcome, never, Db | JobFibers> {
+): Effect.Effect<JobRunOutcome, never, Db | JobFibers | JobQueue> {
   return Effect.scoped(
     Effect.gen(function* executeJobGen() {
       const fibers = yield* JobFibers;
@@ -553,7 +554,7 @@ export function executeJobEffect(
 
 export function executeJobOnMap(
   jobId: string
-): Effect.Effect<JobRunOutcome, never, Db | JobFibers> {
+): Effect.Effect<JobRunOutcome, never, Db | JobFibers | JobQueue> {
   return Effect.gen(function* trackJobFiber() {
     const fibers = yield* JobFibers;
     const started = yield* nowMillisEffect;

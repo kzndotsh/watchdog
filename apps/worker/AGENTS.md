@@ -14,10 +14,11 @@ Thin Cap Job runner: pg-boss `work` → `executeJobOnMap`, a cancel poll, and ex
 
 ## Gotchas
 
-- Job execution, cancel/abort, `JobFibers`, and one-boss-per-process: single home is [`effect/references/jobs.md`](../../.agents/skills/effect/references/jobs.md). Use `ensureBossWorkerEffect` only; the playbook chain is core's `advancePlaybookRunEffect`.
+- Job execution, cancel/abort, `JobFibers`, and one-boss-per-process: single home is [`effect/references/jobs.md`](../../.agents/skills/effect/references/jobs.md). The queue is the `JobQueue` + `JobQueueWorker` services from `jobQueueWorkerLayer` (never construct a boss here); the playbook chain is core's `advancePlaybookRunEffect`.
 - Cap `timeoutMs` (from Caps) drives expire and graceful stop. Do not hardcode timeouts here.
 - Export: `handleExportEventEffect` → `scheduleCaseExportEffect`, which coalesces; never start parallel case writes. `listenForEventsStream` + `Stream.runForEach` is the only LISTEN path.
-- Boot: `initWatchdogLogger` first in `bootWorkerEffect`; `runMain` provides `JobFibers.layer`. Startup reconcile (`reconcileWorkerStartupEffect`) fails stale `running` rows and re-advances playbook runs with no open Jobs; it catches at the boot edge (log and continue).
+- Shutdown follows scope release (ADR-0002 phase 3): the first SIGTERM/SIGINT is `NodeRuntime.runMain`'s (interrupts the main fiber, exit 130); the boot scope closes (cancel poll and LISTEN stream stop), then `jobQueueWorkerLayer` releases with a graceful `boss.stop` bounded by `gracefulStopTimeoutMs()` (in-flight Cap Jobs finish), then `JobFibers`, `Db`. `main.ts` composes them through `provideWorkerLayers` (`layers.ts`): keep the queue Layer innermost. `shutdown.ts` keeps only a repeated signal during the drain (force exit 143 SIGTERM / 130 SIGINT) and the LISTEN-failure path (ends the boot normally, so the same release runs). Export events claim (mark dirty, start the write) in the listener fiber and fork only the wait.
+- Boot: `initWatchdogLogger` first in `bootWorkerEffect`; `main.ts` provides `Db.layer`, `JobFibers.layer` and the worker queue Layer. Startup reconcile (`reconcileWorkerStartupEffect`) fails stale `running` rows and re-advances playbook runs with no open Jobs; it catches at the boot edge (log and continue).
 - Log failures with `log.error(err)`, never `log.set({ error: err })` (an `Error` serializes to `{}`); evlog contract in [`evlog`](../../docs/reference/contracts/evlog.md). Process wide events: `jobWideEventFields(JobRunOutcome)`.
 
 See also: [`packages/core/AGENTS.md`](../../packages/core/AGENTS.md) · [`jobs-orpc`](../../docs/reference/platform/jobs-orpc.md).

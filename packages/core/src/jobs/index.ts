@@ -1,13 +1,21 @@
 export {
   CAP_JOB_QUEUE,
   enqueueCapJobEffect,
-  ensureBossProducerEffect,
-  ensureBossWorkerEffect,
   isCapJobPayload,
   type CapJobPayload,
-  type BossRole,
-  type BossHandle,
 } from "./boss";
+export {
+  JobQueue,
+  JobQueueWorker,
+  jobQueueProducerLayer,
+  jobQueueWorkerLayer,
+  makeJobQueueLayers,
+  recordingJobQueue,
+  type BossDriver,
+  type BossRole,
+  type QueuedJob,
+  type RecordedSend,
+} from "./job-queue";
 export {
   capExpireSeconds,
   gracefulStopTimeoutMs,

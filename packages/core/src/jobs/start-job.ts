@@ -47,6 +47,7 @@ import {
 import { enqueueCapJobEffect } from "./boss";
 import { assertCapAvailabilityEffect } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";
+import type { JobQueue } from "./job-queue";
 import { failJobEffect } from "./stages/helpers";
 
 export interface StartJobInput {
@@ -142,7 +143,7 @@ export function enqueueCreatedJobEffect(
   caseId: string,
   job: Pick<JobRow, "id" | "logs">,
   capabilityId: string
-): Effect.Effect<void, DomainTag, Db> {
+): Effect.Effect<void, DomainTag, Db | JobQueue> {
   return enqueueCapJobEffect(job.id, capabilityId).pipe(
     Effect.catch((error: InternalError | InvalidError) =>
       failJobEffect(job.id, error.reason, { caseId }, job.logs ?? []).pipe(
@@ -154,7 +155,7 @@ export function enqueueCreatedJobEffect(
 
 export function startJobEffect(
   input: StartJobInput
-): Effect.Effect<JobRecord, DomainTag, Db> {
+): Effect.Effect<JobRecord, DomainTag, Db | JobQueue> {
   return Effect.gen(function* startJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,

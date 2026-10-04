@@ -1,3 +1,4 @@
+import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { updateCaseEffect } from "@watchdog/core/cases";
@@ -8,7 +9,8 @@ import {
   markEvidenceProcessedEffect,
   processEvidenceEffect,
 } from "@watchdog/core/evidence";
-import { runDomain } from "@watchdog/core/infra";
+import { Db, runDomainWith } from "@watchdog/core/infra";
+import { recordingJobQueue } from "@watchdog/core/jobs";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
   resetTestDb,
@@ -21,6 +23,10 @@ import {
   TEST_ORGANIZATION_ID,
   testId,
 } from "@watchdog/test-kit";
+
+// Enqueues land in a recording queue instead of a real pg-boss.
+const queue = recordingJobQueue();
+const runDomain = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
 
 describe("processEvidence", () => {
   beforeEach(async () => {

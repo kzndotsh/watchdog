@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
@@ -26,10 +26,6 @@ vi.mock("@watchdog/caps", () => ({
   }),
 }));
 
-vi.mock("../boss", () => ({
-  enqueueCapJobEffect: () => Effect.void,
-}));
-
 vi.mock("../../evidence/evidence", () => ({
   assertEvidenceIdsInCaseEffect: () => Effect.void,
 }));
@@ -51,12 +47,18 @@ vi.mock("../../actors/resolve-actor-labels", () => ({
   labelForActor: (id: string) => id,
 }));
 
-import { runDomain } from "../../infra/run-domain";
+import { Db } from "../../infra/db-service";
+import { runDomainWith } from "../../infra/run-domain";
 import { InvalidError } from "../../infra/tagged-errors";
+import { recordingJobQueue } from "../job-queue";
 import { startJobEffect, toJobRecord } from "../start-job";
+
+const queue = recordingJobQueue();
+const runDomain = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
 
 describe("startJobEffect", () => {
   beforeEach(() => {
+    queue.sends.length = 0;
     create.mockClear();
     notifyEvent.mockClear();
   });
@@ -98,6 +100,7 @@ describe("startJobEffect", () => {
       })
     );
 
+    expect(queue.sends.map((s) => s.payload.jobId)).toEqual([JOB_ID]);
     expect(notifyEvent).toHaveBeenCalled();
     await vi.waitFor(() => {
       expect(notifyEvent).toHaveBeenCalledWith({

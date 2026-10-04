@@ -1,12 +1,18 @@
 /** Slim worker surface — avoids loading the full @watchdog/core graph barrel. */
 export {
   CAP_JOB_QUEUE,
-  ensureBossWorkerEffect,
   isCapJobPayload,
   type CapJobPayload,
-  type BossRole,
-  type BossHandle,
 } from "./jobs/boss";
+export {
+  JobQueue,
+  JobQueueWorker,
+  jobQueueWorkerLayer,
+  makeJobQueueLayers,
+  recordingJobQueue,
+  type BossDriver,
+  type QueuedJob,
+} from "./jobs/job-queue";
 export {
   extractDomainJobIdFromPayload,
   failInvalidCapDeliveryEffect,
@@ -29,4 +35,7 @@ export { findCancelledJobIdsEffect } from "./jobs/start-job";
 
 export { listenForEvents } from "./infra/events";
 export { listenForEventsStream } from "./infra/listen-events-stream";
-export { scheduleCaseExportEffect } from "./infra/export-sync";
+export {
+  claimCaseExportEffect,
+  scheduleCaseExportEffect,
+} from "./infra/export-sync";

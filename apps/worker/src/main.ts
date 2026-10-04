@@ -2,18 +2,17 @@ import "@watchdog/env/server";
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect } from "effect";
 
-import { Db, JobFibers } from "@watchdog/core/worker";
+import { jobQueueWorkerLayer } from "@watchdog/core/worker";
 import { evlogEffectLoggerLayer } from "@watchdog/log";
 
 import { bootWorkerEffect } from "./boot-worker";
+import { provideWorkerLayers } from "./layers";
 
 export { bootWorkerEffect };
 
 if (process.env.VITEST !== "true") {
   NodeRuntime.runMain(
-    bootWorkerEffect.pipe(
-      Effect.provide(JobFibers.layer),
-      Effect.provide(Db.layer),
+    provideWorkerLayers(bootWorkerEffect, jobQueueWorkerLayer).pipe(
       Effect.provide(evlogEffectLoggerLayer)
     ),
     { disableErrorReporting: true }
