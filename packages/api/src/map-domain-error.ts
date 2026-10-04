@@ -53,22 +53,43 @@ function logFieldsFor(error: DomainTag) {
   };
 }
 
+/**
+ * Body shape every mapped error carries in the oRPC `data` field: the stable
+ * `code` (never renamed once released) next to the safe message.
+ */
+export interface DomainErrorData {
+  readonly code: DomainTag["code"];
+}
+
 /** Convert a tagged domain failure to an oRPC HTTP error value. */
 export function toOrpcError(error: DomainTag) {
   peekRequestLogger()?.set({ error: logFieldsFor(error) });
   return Match.value(error).pipe(
     Match.tagsExhaustive({
       NotFoundError: (tagged) =>
-        new ORPCError("NOT_FOUND", { message: tagged.resource }),
+        new ORPCError("NOT_FOUND", {
+          message: tagged.resource,
+          data: { code: tagged.code } satisfies DomainErrorData,
+        }),
       ConflictError: (tagged) =>
-        new ORPCError("CONFLICT", { message: tagged.reason }),
+        new ORPCError("CONFLICT", {
+          message: tagged.reason,
+          data: { code: tagged.code } satisfies DomainErrorData,
+        }),
       InvalidError: (tagged) =>
-        new ORPCError("BAD_REQUEST", { message: tagged.reason }),
+        new ORPCError("BAD_REQUEST", {
+          message: tagged.reason,
+          data: { code: tagged.code } satisfies DomainErrorData,
+        }),
       ForbiddenError: (tagged) =>
-        new ORPCError("FORBIDDEN", { message: tagged.reason }),
-      InternalError: () =>
+        new ORPCError("FORBIDDEN", {
+          message: tagged.reason,
+          data: { code: tagged.code } satisfies DomainErrorData,
+        }),
+      InternalError: (tagged) =>
         new ORPCError("INTERNAL_SERVER_ERROR", {
           message: INTERNAL_ERROR_MESSAGE,
+          data: { code: tagged.code } satisfies DomainErrorData,
         }),
     })
   );
