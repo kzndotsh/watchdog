@@ -1,10 +1,11 @@
 import { Effect } from "effect";
 
-import { db, eventsRepo, type EventRow } from "@watchdog/db";
+import { eventsRepo, type EventRow } from "@watchdog/db";
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
+import type { Db } from "../infra/db-service";
 import { notifyEntityChangedEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDbWith } from "../infra/postgres-effect";
 import {
   InternalError,
   InvalidError,
@@ -57,13 +58,13 @@ export function listEventsForEntityEffect(
   caseId: string,
   organizationId: string,
   entityId: string
-): Effect.Effect<EventRecord[], DomainTag> {
+): Effect.Effect<EventRecord[], DomainTag, Db> {
   return Effect.gen(function* listEventsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
-    const rows = yield* tryDb(() =>
-      eventsRepo.listForEntity(db, normalizedEntityId)
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
+    const rows = yield* tryDbWith((exec) =>
+      eventsRepo.listForEntity(exec, normalizedEntityId)
     );
     return rows.map(toRecord);
   });
@@ -71,14 +72,14 @@ export function listEventsForEntityEffect(
 
 export function createEventEffect(
   input: CreateEventInput
-): Effect.Effect<EventRecord, DomainTag> {
+): Effect.Effect<EventRecord, DomainTag, Db> {
   return Effect.gen(function* createEventGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
     );
     const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, entityId, db);
+    yield* assertEntityInCaseEffect(scopedCaseId, entityId);
     const when = trimmedOrUndefined(input.when);
     if (when === undefined) {
       return yield* new InvalidError({ reason: "Event when is required" });
@@ -87,8 +88,8 @@ export function createEventEffect(
     if (what === undefined) {
       return yield* new InvalidError({ reason: "Event what is required" });
     }
-    const row = yield* tryDb(() =>
-      eventsRepo.create(db, {
+    const row = yield* tryDbWith((exec) =>
+      eventsRepo.create(exec, {
         entityId,
         when,
         what,
@@ -105,15 +106,15 @@ export function createEventEffect(
 
 export function updateEventEffect(
   input: UpdateEventInput
-): Effect.Effect<EventRecord, DomainTag> {
+): Effect.Effect<EventRecord, DomainTag, Db> {
   return Effect.gen(function* updateEventGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
     );
     const eventId = yield* requireTrimmedGraphId(input.eventId, "Event");
-    const existing = yield* tryDb(() =>
-      eventsRepo.getInCase(db, scopedCaseId, eventId)
+    const existing = yield* tryDbWith((exec) =>
+      eventsRepo.getInCase(exec, scopedCaseId, eventId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Event", id: eventId });
@@ -136,8 +137,8 @@ export function updateEventEffect(
       nextWhat = what;
     }
 
-    const row = yield* tryDb(() =>
-      eventsRepo.updateInCase(db, scopedCaseId, eventId, {
+    const row = yield* tryDbWith((exec) =>
+      eventsRepo.updateInCase(exec, scopedCaseId, eventId, {
         when: nextWhen,
         what: nextWhat,
         whereText:
@@ -158,12 +159,12 @@ export function deleteEventEffect(
   caseId: string,
   organizationId: string,
   eventId: string
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEventGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEventId = yield* requireTrimmedGraphId(eventId, "Event");
-    const existing = yield* tryDb(() =>
-      eventsRepo.getInCase(db, scopedCaseId, normalizedEventId)
+    const existing = yield* tryDbWith((exec) =>
+      eventsRepo.getInCase(exec, scopedCaseId, normalizedEventId)
     );
     if (!existing) {
       return yield* new NotFoundError({
@@ -172,8 +173,8 @@ export function deleteEventEffect(
       });
     }
 
-    const deleted = yield* tryDb(() =>
-      eventsRepo.deleteInCase(db, scopedCaseId, normalizedEventId)
+    const deleted = yield* tryDbWith((exec) =>
+      eventsRepo.deleteInCase(exec, scopedCaseId, normalizedEventId)
     );
     if (!deleted) {
       return yield* new NotFoundError({

@@ -3,7 +3,6 @@ import { Effect } from "effect";
 import { requireCapability } from "@watchdog/caps";
 import {
   casesRepo,
-  db,
   evidenceRepo,
   jobsRepo,
   type EvidenceCapSeed,
@@ -29,11 +28,12 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
+import type { Db } from "../infra/db-service";
 import {
   notifyEvidenceChangedEffect,
   notifyJobUpdateEffect,
 } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   InternalError,
@@ -59,7 +59,7 @@ function startCapForEvidenceEffect(input: {
   matchActive: (job: JobRow, seed: EvidenceCapSeed) => boolean;
   buildInput: (seed: EvidenceCapSeed) => JsonObject;
   assertSeed?: (seed: EvidenceCapSeed) => Effect.Effect<void, DomainTag>;
-}): Effect.Effect<JobRecord, DomainTag> {
+}): Effect.Effect<JobRecord, DomainTag, Db> {
   return Effect.gen(function* startCapForEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -170,7 +170,7 @@ export function processEvidenceEffect(input: {
   actorId: string;
   actorLabel?: string | null;
   ai?: boolean;
-}): Effect.Effect<JobRecord, DomainTag> {
+}): Effect.Effect<JobRecord, DomainTag, Db> {
   const capabilityId =
     input.ai === true
       ? EVIDENCE_EXTRACT_AI_CAPABILITY_ID
@@ -201,15 +201,15 @@ export function processEvidenceEffect(input: {
 export function markEvidenceProcessedEffect(input: {
   caseId: string;
   evidenceId: string;
-}): Effect.Effect<void, DomainTag> {
+}): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* markEvidenceProcessedGen() {
     const caseId = parseTrimmedCaseId(input.caseId) ?? undefined;
     const evidenceId = parseTrimmedCaseId(input.evidenceId) ?? undefined;
     if (caseId === undefined || evidenceId === undefined) {
       return;
     }
-    const marked = yield* tryDb(() =>
-      evidenceRepo.markProcessed(db, caseId, evidenceId)
+    const marked = yield* tryDbWith((exec) =>
+      evidenceRepo.markProcessed(exec, caseId, evidenceId)
     );
     if (marked) {
       yield* notifyEvidenceChangedEffect(caseId, evidenceId);
@@ -223,7 +223,7 @@ export function enrichUrlEvidenceEffect(input: {
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
-}): Effect.Effect<JobRecord, DomainTag> {
+}): Effect.Effect<JobRecord, DomainTag, Db> {
   return startCapForEvidenceEffect({
     caseId: input.caseId,
     organizationId: input.organizationId,

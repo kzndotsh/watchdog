@@ -8,6 +8,7 @@ import { readArtifactBytesEffect } from "@watchdog/core/blob";
 import { getCaseByIdEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
 import { renderCaseExportEffect } from "@watchdog/core/export";
+import type { Db } from "@watchdog/core/infra";
 /**
  * GET /api/v1/cases/:caseId/export.zip
  *
@@ -107,7 +108,7 @@ type CaseExportZipResult =
 function caseExportZipEffect(
   caseId: string,
   organizationId: string
-): Effect.Effect<CaseExportZipResult, DomainTag> {
+): Effect.Effect<CaseExportZipResult, DomainTag, Db> {
   return Effect.gen(function* caseExportZipGen() {
     const activeCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
       Effect.catchTag("NotFoundError", () => Effect.succeed(null))

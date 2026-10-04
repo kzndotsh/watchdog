@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { casesRepo, db, proposalsRepo } from "@watchdog/db";
+import { casesRepo, proposalsRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   parseGraphUuidList,
@@ -8,7 +8,8 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { attachEvidenceIds } from "../../graph/attach-evidence";
-import { tryDb } from "../../infra/postgres-effect";
+import type { Db } from "../../infra/db-service";
+import { tryDb, tryDbWith } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
 import {
   InvalidError,
@@ -61,7 +62,7 @@ function createdByForProposal(
 /** Lock the Case, suppress known findings, and insert a pending Proposal atomically. */
 export function suppressAndProposeStageEffect(
   input: SuppressAndProposeStageInput
-): Effect.Effect<SuppressAndProposeResult, DomainTag> {
+): Effect.Effect<SuppressAndProposeResult, DomainTag, Db> {
   if (input.patch.length === 0) {
     return Effect.succeed({
       proposalId: null,
@@ -136,7 +137,7 @@ export function suppressAndProposeStageEffect(
 /** Insert a pending Proposal with evidence attached to claim/identifier/edge ops. */
 export function proposeStageEffect(
   input: ProposeStageInput
-): Effect.Effect<ProposeResult, DomainTag> {
+): Effect.Effect<ProposeResult, DomainTag, Db> {
   if (input.kept.length === 0) {
     return Effect.succeed({
       proposalId: null,
@@ -158,8 +159,8 @@ export function proposeStageEffect(
   const withEvidence = attached.patch;
 
   return Effect.gen(function* proposeStageGen() {
-    const prop = yield* tryDb(() =>
-      proposalsRepo.create(db, {
+    const prop = yield* tryDbWith((exec) =>
+      proposalsRepo.create(exec, {
         caseId: input.caseId,
         jobId: input.jobId ?? null,
         status: "pending",

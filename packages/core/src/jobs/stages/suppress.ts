@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
 
+import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { suppressKnownFindingsEffect } from "../../proposals/finding-suppress";
 import type { JobLog } from "./helpers";
@@ -16,7 +17,7 @@ export function suppressStageEffect(
   caseId: string,
   patch: PatchOp[],
   jobLog: JobLog
-): Effect.Effect<SuppressResult, DomainTag> {
+): Effect.Effect<SuppressResult, DomainTag, Db> {
   if (patch.length === 0) {
     return Effect.succeed({ kept: [], suppressed: 0 });
   }

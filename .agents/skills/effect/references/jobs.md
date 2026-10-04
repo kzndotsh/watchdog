@@ -68,5 +68,6 @@ is unrelated.
 
 - Cap `interpret` sync throw → Job succeeded + `interpretError`, no Proposal.
 - Nested `runPromise` inside `transact` for Drizzle TX bodies.
-- Export coalesce marks dirty with `runSync` so fire-and-forget
-  `runPromise` still coalesces.
+- Export coalesce marks dirty and starts-or-joins the write fiber when the
+  `scheduleCaseExportEffect` Effect is interpreted, with the interpreting
+  caller's `Db` (the fiber outlives the caller).

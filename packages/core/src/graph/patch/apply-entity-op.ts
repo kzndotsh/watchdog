@@ -8,6 +8,7 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
+import type { Db } from "../../infra/db-service";
 import { tryDb } from "../../infra/postgres-effect";
 import {
   ConflictError,
@@ -29,7 +30,7 @@ export function applyEntityOpEffect(
   tx: DbTx,
   caseId: string,
   op: PatchOp
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEntityOpGen() {
     if (op.op === "create" || op.op === "upsert") {
       const kind = yield* requireDomainEnumEffect(

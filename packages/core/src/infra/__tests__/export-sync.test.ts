@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
@@ -9,6 +9,7 @@ import {
   safeFilename,
   scheduleCaseExportEffect,
 } from "../export-sync.ts";
+import { runDomain } from "../run-domain";
 
 describe("safeFilename", () => {
   it("strips path separators and control characters", () => {
@@ -47,14 +48,20 @@ describe("scheduleCaseExportEffect", () => {
       });
 
     const caseId = testId(99);
-    const run = Effect.runPromise(
-      scheduleCaseExportEffect(caseId, writeExport)
-    );
-    void Effect.runPromise(scheduleCaseExportEffect(caseId, writeExport));
+    const first = runDomain(scheduleCaseExportEffect(caseId, writeExport));
+    await vi.waitFor(() => {
+      expect(calls).toBe(1);
+    });
+    // Marking happens when the Effect is interpreted: let the second schedule
+    // mark the case dirty while the first write is still in flight.
+    const second = runDomain(scheduleCaseExportEffect(caseId, writeExport));
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 20);
+    });
     expect(calls).toBe(1);
 
     releaseFirst();
-    await run;
+    await Promise.all([first, second]);
     expect(calls).toBe(2);
   });
 });

@@ -1,11 +1,12 @@
 import { Effect } from "effect";
 
-import { db, questionsRepo, type DbExec, type QuestionRow } from "@watchdog/db";
+import { questionsRepo, type DbExec, type QuestionRow } from "@watchdog/db";
 import type { EntityKind, QuestionStatus } from "@watchdog/schemas/shared";
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
+import type { Db } from "../infra/db-service";
 import { notifyEntityChangedEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import {
   ConflictError,
   InternalError,
@@ -111,13 +112,13 @@ export function listQuestionsForEntityEffect(
   caseId: string,
   organizationId: string,
   entityId: string
-): Effect.Effect<QuestionRecord[], DomainTag> {
+): Effect.Effect<QuestionRecord[], DomainTag, Db> {
   return Effect.gen(function* listQuestionsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
-    const rows = yield* tryDb(() =>
-      questionsRepo.listForEntity(db, normalizedEntityId)
+    yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId);
+    const rows = yield* tryDbWith((exec) =>
+      questionsRepo.listForEntity(exec, normalizedEntityId)
     );
     return rows.map(toRecord);
   });
@@ -125,20 +126,20 @@ export function listQuestionsForEntityEffect(
 
 export function createQuestionEffect(
   input: CreateQuestionInput
-): Effect.Effect<QuestionRecord, DomainTag> {
+): Effect.Effect<QuestionRecord, DomainTag, Db> {
   return Effect.gen(function* createQuestionGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
     );
     const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
-    yield* assertEntityInCaseEffect(scopedCaseId, entityId, db);
+    yield* assertEntityInCaseEffect(scopedCaseId, entityId);
     const text = trimmedOrUndefined(input.text);
     if (text === undefined) {
       return yield* new InvalidError({ reason: "Question text is required" });
     }
-    const row = yield* tryDb(() =>
-      questionsRepo.create(db, {
+    const row = yield* tryDbWith((exec) =>
+      questionsRepo.create(exec, {
         entityId,
         text,
         status: "open",
@@ -154,7 +155,7 @@ export function createQuestionEffect(
 
 export function resolveQuestionEffect(
   input: ResolveQuestionInput
-): Effect.Effect<QuestionRecord, DomainTag> {
+): Effect.Effect<QuestionRecord, DomainTag, Db> {
   return Effect.gen(function* resolveQuestionGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -164,8 +165,8 @@ export function resolveQuestionEffect(
       input.questionId,
       "Question"
     );
-    const existing = yield* tryDb(() =>
-      questionsRepo.getInCase(db, scopedCaseId, questionId)
+    const existing = yield* tryDbWith((exec) =>
+      questionsRepo.getInCase(exec, scopedCaseId, questionId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Question", id: questionId });
@@ -174,8 +175,8 @@ export function resolveQuestionEffect(
       return yield* new ConflictError({ reason: "Question already resolved" });
     }
 
-    const row = yield* tryDb(() =>
-      questionsRepo.resolveInCase(db, scopedCaseId, questionId, {
+    const row = yield* tryDbWith((exec) =>
+      questionsRepo.resolveInCase(exec, scopedCaseId, questionId, {
         resolvedNote: trimmedOrNull(input.resolvedNote),
       })
     );
@@ -189,7 +190,7 @@ export function resolveQuestionEffect(
 
 export function updateQuestionEffect(
   input: UpdateQuestionInput
-): Effect.Effect<QuestionRecord, DomainTag> {
+): Effect.Effect<QuestionRecord, DomainTag, Db> {
   return Effect.gen(function* updateQuestionGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -199,8 +200,8 @@ export function updateQuestionEffect(
       input.questionId,
       "Question"
     );
-    const existing = yield* tryDb(() =>
-      questionsRepo.getInCase(db, scopedCaseId, questionId)
+    const existing = yield* tryDbWith((exec) =>
+      questionsRepo.getInCase(exec, scopedCaseId, questionId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Question", id: questionId });
@@ -221,8 +222,8 @@ export function updateQuestionEffect(
       return yield* new InvalidError({ reason: "Question text is required" });
     }
 
-    const row = yield* tryDb(() =>
-      questionsRepo.updateInCase(db, scopedCaseId, questionId, {
+    const row = yield* tryDbWith((exec) =>
+      questionsRepo.updateInCase(exec, scopedCaseId, questionId, {
         ...(nextText === undefined ? {} : { text: nextText }),
         ...(input.resolvedNote === undefined
           ? {}
@@ -239,7 +240,7 @@ export function updateQuestionEffect(
 
 export function reopenQuestionEffect(
   input: ReopenQuestionInput
-): Effect.Effect<QuestionRecord, DomainTag> {
+): Effect.Effect<QuestionRecord, DomainTag, Db> {
   return Effect.gen(function* reopenQuestionGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -249,8 +250,8 @@ export function reopenQuestionEffect(
       input.questionId,
       "Question"
     );
-    const existing = yield* tryDb(() =>
-      questionsRepo.getInCase(db, scopedCaseId, questionId)
+    const existing = yield* tryDbWith((exec) =>
+      questionsRepo.getInCase(exec, scopedCaseId, questionId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Question", id: questionId });
@@ -259,8 +260,8 @@ export function reopenQuestionEffect(
       return yield* new ConflictError({ reason: "Question is already open" });
     }
 
-    const row = yield* tryDb(() =>
-      questionsRepo.updateInCase(db, scopedCaseId, questionId, {
+    const row = yield* tryDbWith((exec) =>
+      questionsRepo.updateInCase(exec, scopedCaseId, questionId, {
         status: "open",
         resolvedNote: null,
       })
@@ -277,15 +278,15 @@ export function deleteQuestionEffect(
   caseId: string,
   organizationId: string,
   questionId: string
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteQuestionGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedQuestionId = yield* requireTrimmedGraphId(
       questionId,
       "Question"
     );
-    const existing = yield* tryDb(() =>
-      questionsRepo.getInCase(db, scopedCaseId, normalizedQuestionId)
+    const existing = yield* tryDbWith((exec) =>
+      questionsRepo.getInCase(exec, scopedCaseId, normalizedQuestionId)
     );
     if (!existing) {
       return yield* new NotFoundError({
@@ -294,8 +295,8 @@ export function deleteQuestionEffect(
       });
     }
 
-    const deleted = yield* tryDb(() =>
-      questionsRepo.deleteInCase(db, scopedCaseId, normalizedQuestionId)
+    const deleted = yield* tryDbWith((exec) =>
+      questionsRepo.deleteInCase(exec, scopedCaseId, normalizedQuestionId)
     );
     if (!deleted) {
       return yield* new NotFoundError({

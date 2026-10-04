@@ -9,6 +9,7 @@ vi.mock("../../cap-cache", () => ({
   storeCapCacheEffect,
 }));
 
+import { runDomain } from "../../../infra/run-domain";
 import { storeCacheStageEffect } from "../cache";
 import type { CollectRuntime } from "../collect";
 import type { PreflightState } from "../preflight";
@@ -36,7 +37,7 @@ function makeState(): PreflightState {
 
 describe("storeCacheStage", () => {
   it("skips when cache is disabled or result came from cache", async () => {
-    await Effect.runPromise(
+    await runDomain(
       storeCacheStageEffect({
         state: makeState(),
         runtime: makeRuntime({ cacheTtlMs: null }),
@@ -50,7 +51,7 @@ describe("storeCacheStage", () => {
     expect(storeCapCacheEffect).not.toHaveBeenCalled();
 
     storeCapCacheEffect.mockClear();
-    await Effect.runPromise(
+    await runDomain(
       storeCacheStageEffect({
         state: makeState(),
         runtime: makeRuntime(),
@@ -67,7 +68,7 @@ describe("storeCacheStage", () => {
   it("persists cache entry for fresh successful collect runs", async () => {
     storeCapCacheEffect.mockReturnValue(Effect.void);
     const runtime = makeRuntime();
-    await Effect.runPromise(
+    await runDomain(
       storeCacheStageEffect({
         state: makeState(),
         runtime,
@@ -99,7 +100,7 @@ describe("storeCacheStage", () => {
     storeCapCacheEffect.mockClear();
     const state = makeState();
     state.cap = { ...state.cap, interpret: vi.fn() };
-    await Effect.runPromise(
+    await runDomain(
       storeCacheStageEffect({
         state,
         runtime: makeRuntime(),

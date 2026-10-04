@@ -2,7 +2,6 @@ import { Effect } from "effect";
 
 import {
   claimsRepo,
-  db,
   edgesRepo,
   entitiesRepo,
   findingSuppressionsRepo,
@@ -31,15 +30,16 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
-import { tryDb } from "../infra/postgres-effect";
+import type { Db } from "../infra/db-service";
+import { tryDbOn } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
 function markExistingInGraphEffect(
-  exec: DbExec,
+  exec: DbExec | undefined,
   caseId: string,
   fps: { op: PatchOp; fp: string }[],
   known: Set<string>
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* markExistingInGraphGen() {
     const unchecked = fps.filter((x) => !known.has(x.fp));
     if (unchecked.length === 0) {
@@ -90,8 +90,8 @@ function markExistingInGraphEffect(
         })
       );
       if (entityIds.length > 0) {
-        const rows = yield* tryDb(() =>
-          identifiersRepo.listNaturalKeysInCase(exec, caseId, entityIds)
+        const rows = yield* tryDbOn(exec, (handle) =>
+          identifiersRepo.listNaturalKeysInCase(handle, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.type}\0${r.platform}\0${r.value}`)
@@ -136,8 +136,8 @@ function markExistingInGraphEffect(
         })
       );
       if (entityIds.length > 0) {
-        const rows = yield* tryDb(() =>
-          claimsRepo.listTextKeysInCase(exec, caseId, entityIds)
+        const rows = yield* tryDbOn(exec, (handle) =>
+          claimsRepo.listTextKeysInCase(handle, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
@@ -164,8 +164,8 @@ function markExistingInGraphEffect(
         edgeOps.flatMap((x) => patchOpRelatedEntityIds(x.op))
       );
       if (entityIds.length > 0) {
-        const rows = yield* tryDb(() =>
-          edgesRepo.listNaturalKeysInCase(exec, caseId, entityIds)
+        const rows = yield* tryDbOn(exec, (handle) =>
+          edgesRepo.listNaturalKeysInCase(handle, caseId, entityIds)
         );
         const keys = new Set(
           rows
@@ -208,8 +208,8 @@ function markExistingInGraphEffect(
         })
       );
       if (entityIds.length > 0) {
-        const rows = yield* tryDb(() =>
-          questionsRepo.listTextKeysInCase(exec, caseId, entityIds)
+        const rows = yield* tryDbOn(exec, (handle) =>
+          questionsRepo.listTextKeysInCase(handle, caseId, entityIds)
         );
         const keys = new Set(
           rows.map((r) => `${r.entityId}\0${r.text.toLowerCase()}`)
@@ -244,8 +244,8 @@ function markExistingInGraphEffect(
         ),
       ];
       if (slugs.length > 0) {
-        const rows = yield* tryDb(() =>
-          entitiesRepo.listSlugsInCase(exec, caseId, slugs)
+        const rows = yield* tryDbOn(exec, (handle) =>
+          entitiesRepo.listSlugsInCase(handle, caseId, slugs)
         );
         const keys = new Set(rows.map((r) => r.slug));
         for (const { op, fp } of entityOps) {
@@ -265,8 +265,8 @@ function markExistingInGraphEffect(
 export function suppressKnownFindingsEffect(
   caseId: string,
   patch: PatchOp[],
-  exec: DbExec = db
-): Effect.Effect<{ kept: PatchOp[]; suppressed: number }, DomainTag> {
+  exec?: DbExec
+): Effect.Effect<{ kept: PatchOp[]; suppressed: number }, DomainTag, Db> {
   if (patch.length === 0) {
     return Effect.succeed({ kept: [], suppressed: 0 });
   }
@@ -281,14 +281,14 @@ export function suppressKnownFindingsEffect(
 
     const fpList = fps.map((x) => x.fp).filter((x): x is string => Boolean(x));
     if (fpList.length > 0) {
-      const fingerprints = yield* tryDb(() =>
-        findingSuppressionsRepo.listFingerprints(exec, caseId, fpList)
+      const fingerprints = yield* tryDbOn(exec, (handle) =>
+        findingSuppressionsRepo.listFingerprints(handle, caseId, fpList)
       );
       for (const fp of fingerprints) known.add(fp);
     }
 
-    const pending = yield* tryDb(() =>
-      proposalsRepo.listPendingPatches(exec, caseId)
+    const pending = yield* tryDbOn(exec, (handle) =>
+      proposalsRepo.listPendingPatches(handle, caseId)
     );
     for (const row of pending) {
       for (const op of row.patch) {
@@ -322,7 +322,7 @@ export function recordRejectedFingerprintsEffect(input: {
   proposalId: string;
   patch: PatchOp[];
   tx?: DbTx;
-}): Effect.Effect<void, DomainTag> {
+}): Effect.Effect<void, DomainTag, Db> {
   const rows = input.patch
     .map((op) => fingerprintPatchOp(op))
     .filter((fp): fp is string => Boolean(fp))
@@ -333,8 +333,7 @@ export function recordRejectedFingerprintsEffect(input: {
       proposalId: input.proposalId,
     }));
   if (rows.length === 0) return Effect.void;
-  const exec = input.tx ?? db;
-  return tryDb(() => findingSuppressionsRepo.insertMany(exec, rows)).pipe(
-    Effect.asVoid
-  );
+  return tryDbOn(input.tx, (exec) =>
+    findingSuppressionsRepo.insertMany(exec, rows)
+  ).pipe(Effect.asVoid);
 }

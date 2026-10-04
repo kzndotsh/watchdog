@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { db, entitiesRepo } from "@watchdog/db";
+import { entitiesRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   entityTitleMapFromRows,
@@ -9,7 +9,8 @@ import {
 import { proposalEntityName } from "@watchdog/schemas/jobs";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
-import { tryDb } from "../infra/postgres-effect";
+import type { Db } from "../infra/db-service";
+import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
 /** entityId → display label, slug, and searchable text maps for proposal/triage chrome. */
@@ -57,7 +58,8 @@ export function loadEntityDisplayMapsForIdsEffect(
     entitySummaries: Record<string, string>;
     entityNotes: Record<string, string>;
   },
-  DomainTag
+  DomainTag,
+  Db
 > {
   if (entityIds.length === 0) {
     return Effect.succeed({
@@ -67,8 +69,8 @@ export function loadEntityDisplayMapsForIdsEffect(
       entityNotes: {},
     });
   }
-  return tryDb(() =>
-    entitiesRepo.listNamesByIdsInCase(db, caseId, [...entityIds])
+  return tryDbWith((exec) =>
+    entitiesRepo.listNamesByIdsInCase(exec, caseId, [...entityIds])
   ).pipe(Effect.map((rows) => buildEntityDisplayMaps(rows)));
 }
 
@@ -81,7 +83,8 @@ export function loadEntityDisplayMapsForProposalPatchesEffect(
     entitySummaries: Record<string, string>;
     entityNotes: Record<string, string>;
   },
-  DomainTag
+  DomainTag,
+  Db
 > {
   const idsByCase = new Map<string, Set<string>>();
   for (const row of rows) {
@@ -105,9 +108,9 @@ export function loadEntityDisplayMapsForProposalPatchesEffect(
   return Effect.forEach(
     entries,
     ([caseId, ids]) =>
-      tryDb(() => entitiesRepo.listNamesByIdsInCase(db, caseId, [...ids])).pipe(
-        Effect.map((caseRows) => ({ caseId, caseRows }))
-      ),
+      tryDbWith((exec) =>
+        entitiesRepo.listNamesByIdsInCase(exec, caseId, [...ids])
+      ).pipe(Effect.map((caseRows) => ({ caseId, caseRows }))),
     { concurrency: "unbounded" }
   ).pipe(
     Effect.map((batches) => {

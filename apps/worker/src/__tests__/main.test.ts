@@ -52,7 +52,7 @@ vi.mock("../export-events", async (importOriginal) => {
   };
 });
 
-import { JobFibers } from "@watchdog/core/worker";
+import { Db, JobFibers } from "@watchdog/core/worker";
 
 import { bootWorkerEffect } from "../boot-worker";
 
@@ -75,6 +75,7 @@ describe("bootWorkerEffect", () => {
     Effect.gen(function* bootWorkerEffectTestGen() {
       const fiber = yield* bootWorkerEffect.pipe(
         Effect.provide(JobFibers.layer),
+        Effect.provide(Db.layer),
         Effect.forkChild
       );
       yield* Effect.yieldNow;
@@ -98,6 +99,7 @@ describe("bootWorkerEffect", () => {
       workerMocks.stop.mockClear();
       const fiber = yield* bootWorkerEffect.pipe(
         Effect.provide(JobFibers.layer),
+        Effect.provide(Db.layer),
         Effect.forkChild
       );
       yield* Effect.yieldNow;
@@ -118,6 +120,7 @@ describe("bootWorkerEffect", () => {
         workerMocks.stop.mockClear();
         const fiber = yield* bootWorkerEffect.pipe(
           Effect.provide(JobFibers.layer),
+          Effect.provide(Db.layer),
           Effect.forkChild
         );
         yield* Effect.yieldNow;

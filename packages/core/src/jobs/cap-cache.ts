@@ -2,11 +2,12 @@ import { createHash } from "node:crypto";
 
 import { Effect } from "effect";
 
-import { capCacheRepo, db, type JobArtifact } from "@watchdog/db";
+import { capCacheRepo, type JobArtifact } from "@watchdog/db";
 import { normalizeJobInput } from "@watchdog/schemas/jobs";
 import { isJsonObject, trimmedOrNull } from "@watchdog/schemas/shared";
 
-import { tryDb } from "../infra/postgres-effect";
+import type { Db } from "../infra/db-service";
+import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 import { isPlainRecord } from "./stages/helpers";
 
@@ -41,11 +42,12 @@ export function lookupCapCacheEffect(input: {
     jobId: string | null;
     evidenceIds: string[];
   } | null,
-  DomainTag
+  DomainTag,
+  Db
 > {
-  return tryDb(() =>
+  return tryDbWith((exec) =>
     capCacheRepo.lookupActive(
-      db,
+      exec,
       input.caseId,
       input.capabilityId,
       input.inputHash,
@@ -66,11 +68,11 @@ interface StoreCapCacheInput {
 
 export function storeCapCacheEffect(
   input: StoreCapCacheInput
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + input.ttlMs);
-  return tryDb(() =>
-    capCacheRepo.upsert(db, {
+  return tryDbWith((exec) =>
+    capCacheRepo.upsert(exec, {
       caseId: input.caseId,
       capabilityId: input.capabilityId,
       inputHash: input.inputHash,

@@ -10,7 +10,7 @@
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import nodePath from "node:path";
 
-import { Data, Effect, Fiber, SynchronizedRef } from "effect";
+import { Data, Effect, Fiber, SynchronizedRef, type Context } from "effect";
 
 import type { EvidenceRow } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
@@ -18,6 +18,7 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "./blob";
+import type { Db } from "./db-service";
 import { errorMessage } from "./error-utils";
 import { renderCaseExportEffect } from "./export";
 import { logProcess, logSwallowed } from "./process-log";
@@ -196,7 +197,7 @@ function writeCaseEvidenceFilesEffect(
 
 export function writeCaseExportEffect(
   caseId: string
-): Effect.Effect<void, ExportIOError> {
+): Effect.Effect<void, ExportIOError, Db> {
   return Effect.gen(function* writeCaseExportGen() {
     const {
       files: mdFiles,
@@ -239,6 +240,9 @@ export function writeCaseExportEffect(
   });
 }
 
+type ExportWriter = (id: string) => Effect.Effect<void, ExportIOError, Db>;
+type ExportWrite = (id: string) => Effect.Effect<void, ExportIOError>;
+
 interface ExportCoalesceState {
   dirty: Set<string>;
   inFlight: Map<string, Fiber.Fiber<void>>;
@@ -258,7 +262,7 @@ function withDirty(
 
 function writeExportEffect(
   caseId: string,
-  writeExport: (id: string) => Effect.Effect<void, ExportIOError>
+  writeExport: ExportWrite
 ): Effect.Effect<void> {
   return writeExport(caseId).pipe(
     Effect.tapError((error) =>
@@ -272,7 +276,7 @@ function writeExportEffect(
 
 function exportLoop(
   caseId: string,
-  writeExport: (id: string) => Effect.Effect<void, ExportIOError>
+  writeExport: ExportWrite
 ): Effect.Effect<void> {
   return Effect.gen(function* exportLoopGen() {
     while (true) {
@@ -296,7 +300,7 @@ function exportLoop(
 
 function claimExportJoin(
   caseId: string,
-  writeExport: (id: string) => Effect.Effect<void, ExportIOError>
+  writeExport: ExportWrite
 ): Effect.Effect<Effect.Effect<void>> {
   return SynchronizedRef.modifyEffect(exportCoalesce, (state) => {
     const marked = withDirty(state, caseId);
@@ -320,20 +324,23 @@ function claimExportJoin(
  * into one in-flight write, then at most one follow-up if more events arrived.
  * `writeExport` is injectable so unit tests can assert coalesce without object storage.
  *
- * Marks dirty and starts-or-joins the write fiber when this function is
- * called, not when the returned Effect is interpreted. Fire-and-forget
- * (`void Effect.runPromise(scheduleCaseExportEffect(id))`) must coalesce
- * concurrent marks before the caller yields.
+ * Marks dirty and starts-or-joins the write fiber when the returned Effect is
+ * interpreted. The write fiber outlives the caller, so it runs with the `Db`
+ * service captured from the interpreting caller.
  */
 export function scheduleCaseExportEffect(
   caseId: string,
-  writeExport: (
-    id: string
-  ) => Effect.Effect<void, ExportIOError> = writeCaseExportEffect
-): Effect.Effect<void> {
+  writeExport: ExportWriter = writeCaseExportEffect
+): Effect.Effect<void, never, Db> {
   const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
   if (normalizedCaseId === undefined) return Effect.void;
-  return Effect.runSync(claimExportJoin(normalizedCaseId, writeExport));
+  return Effect.flatten(
+    Effect.contextWith((services: Context.Context<Db>) =>
+      claimExportJoin(normalizedCaseId, (id) =>
+        Effect.provideContext(writeExport(id), services)
+      )
+    )
+  );
 }
 
 /** Best-effort: drop the live Export shadow dir for a deleted Case. */

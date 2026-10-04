@@ -12,12 +12,13 @@ vi.mock("../../../proposals/finding-suppress", () => ({
   suppressKnownFindingsEffect,
 }));
 
+import { runDomain } from "../../../infra/run-domain";
 import { createJobLog } from "../helpers";
 import { suppressStageEffect } from "../suppress";
 
 describe("suppressStage", () => {
   it("returns empty result for empty patch", async () => {
-    const result = await Effect.runPromise(
+    const result = await runDomain(
       suppressStageEffect("case-1", [], createJobLog())
     );
     expect(result).toEqual({ kept: [], suppressed: 0 });
@@ -40,7 +41,7 @@ describe("suppressStage", () => {
       })
     );
     const jobLog = createJobLog();
-    const result = await Effect.runPromise(
+    const result = await runDomain(
       suppressStageEffect("case-1", patch, jobLog)
     );
     expect(result.suppressed).toBe(1);

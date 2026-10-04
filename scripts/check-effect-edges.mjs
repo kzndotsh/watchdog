@@ -25,7 +25,6 @@ const ALLOW = new Set([
   // `transact`: the driver's transaction API is promise-based, so the body runs
   // through `runPromiseExitWith` (caller services, abort signal) at this one edge.
   "packages/core/src/infra/postgres-tx.ts",
-  "packages/core/src/infra/export-sync.ts",
   "packages/caps/src/sdk/run.ts",
 ]);
 

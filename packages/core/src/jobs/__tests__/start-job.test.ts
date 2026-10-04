@@ -51,6 +51,7 @@ vi.mock("../../actors/resolve-actor-labels", () => ({
   labelForActor: (id: string) => id,
 }));
 
+import { runDomain } from "../../infra/run-domain";
 import { InvalidError } from "../../infra/tagged-errors";
 import { startJobEffect, toJobRecord } from "../start-job";
 
@@ -87,7 +88,7 @@ describe("startJobEffect", () => {
       finishedAt: null,
     });
 
-    await Effect.runPromise(
+    await runDomain(
       startJobEffect({
         caseId: CASE_ID,
         organizationId: "org-1",
@@ -110,7 +111,7 @@ describe("startJobEffect", () => {
 
   it("rejects whitespace-only capability ids", async () => {
     await expect(
-      Effect.runPromise(
+      runDomain(
         startJobEffect({
           caseId: CASE_ID,
           organizationId: "org-1",
@@ -124,7 +125,7 @@ describe("startJobEffect", () => {
 
   it("rejects blank actorId", async () => {
     await expect(
-      Effect.runPromise(
+      runDomain(
         startJobEffect({
           caseId: CASE_ID,
           organizationId: "org-1",
@@ -169,7 +170,7 @@ describe("startJobEffect", () => {
       finishedAt: null,
     });
 
-    await Effect.runPromise(
+    await runDomain(
       startJobEffect({
         caseId: CASE_ID,
         organizationId: "org-1",

@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import {
   afterEach,
   beforeEach,
@@ -15,6 +14,8 @@ import { casesRepo, db } from "@watchdog/db";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
+import { runDomain } from "../../infra/run-domain";
+
 let spy: MockInstance | undefined;
 
 describe("failed Case writes", () => {
@@ -30,28 +31,24 @@ describe("failed Case writes", () => {
   it("raises InternalError when an insert returns no row", async () => {
     spy = vi.spyOn(casesRepo, "create").mockResolvedValueOnce(null);
 
-    const failure = await Effect.runPromise(
-      Effect.flip(
+    await expect(
+      runDomain(
         createCaseEffect({
           name: "Alpha",
           organizationId: TEST_ORGANIZATION_ID,
         })
       )
-    );
-
-    expect(failure).toBeInstanceOf(InternalError);
+    ).rejects.toBeInstanceOf(InternalError);
   });
 
   it("raises NotFoundError when a delete matches no row", async () => {
     const seeded = await seedCase(db, { name: "Alpha" });
     spy = vi.spyOn(casesRepo, "delete").mockResolvedValueOnce(null);
 
-    const failure = await Effect.runPromise(
-      Effect.flip(
+    await expect(
+      runDomain(
         deleteCaseEffect(seeded.id, { organizationId: TEST_ORGANIZATION_ID })
       )
-    );
-
-    expect(failure).toBeInstanceOf(NotFoundError);
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 });

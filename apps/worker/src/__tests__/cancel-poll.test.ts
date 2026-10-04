@@ -25,7 +25,7 @@ vi.mock("@watchdog/log", () => ({
   })),
 }));
 
-import { JobFibers } from "@watchdog/core/worker";
+import { Db, JobFibers } from "@watchdog/core/worker";
 
 import { cancelPollLoopEffect } from "../cancel-poll";
 
@@ -53,6 +53,7 @@ describe("cancelPollLoopEffect", () => {
             clearReason: () => {},
           })
         ),
+        Effect.provide(Db.layer),
         Effect.forkChild
       );
       yield* Effect.yieldNow;

@@ -1,11 +1,12 @@
 import { Effect } from "effect";
 
-import { db, jobsRepo, type JobPatch, type JobRow } from "@watchdog/db";
+import { jobsRepo, type JobPatch, type JobRow } from "@watchdog/db";
 import type { JobStatus } from "@watchdog/schemas/shared";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
+import type { Db } from "../infra/db-service";
 import { notifyJobUpdateEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
 interface SetJobStatusOpts {
@@ -26,7 +27,7 @@ export function setJobStatusEffect(
   jobId: string,
   patch: JobStatusPatch,
   opts: SetJobStatusOpts
-): Effect.Effect<JobRow | null, DomainTag> {
+): Effect.Effect<JobRow | null, DomainTag, Db> {
   return Effect.gen(function* setJobStatusGen() {
     const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
     const scopedCaseId = parseTrimmedCaseId(opts.caseId) ?? undefined;
@@ -37,9 +38,9 @@ export function setJobStatusEffect(
       unlessCancelled: opts?.unlessCancelled,
       onlyStatuses: opts?.onlyStatuses,
     };
-    const updated = yield* tryDb(() =>
+    const updated = yield* tryDbWith((exec) =>
       jobsRepo.updateInCase(
-        db,
+        exec,
         scopedCaseId,
         normalizedJobId,
         { ...patch },

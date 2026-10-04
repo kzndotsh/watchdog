@@ -3,7 +3,6 @@ import { Effect } from "effect";
 import {
   activityEventsRepo,
   activityRepo,
-  db,
   entitiesRepo,
   evidenceRepo,
   type RecentActivityEventRow,
@@ -29,7 +28,8 @@ import {
 } from "../actors/resolve-actor-labels";
 import { loadEntityDisplayMapsForProposalPatchesEffect } from "../entities/entity-display";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
-import { tryDb } from "../infra/postgres-effect";
+import type { Db } from "../infra/db-service";
+import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 import { jobActivityLabel } from "../jobs/job-display";
 import { proposalActivityLabel } from "../proposals/proposal-display";
@@ -212,7 +212,7 @@ function entityIdsByCaseFromJobRows(
 
 function loadEntityTitleMapEffect(
   rows: readonly RecentJobActivityRow[]
-): Effect.Effect<ReadonlyMap<string, string>, DomainTag> {
+): Effect.Effect<ReadonlyMap<string, string>, DomainTag, Db> {
   const byCase = entityIdsByCaseFromJobRows(rows);
   if (byCase.size === 0) {
     return Effect.succeed(new Map<string, string>());
@@ -223,8 +223,8 @@ function loadEntityTitleMapEffect(
       const caseInputs = rows
         .filter((row) => row.caseId === caseId)
         .map((row) => row.input);
-      const entityRows = yield* tryDb(() =>
-        entitiesRepo.listNamesByIdsInCase(db, caseId, entityIds)
+      const entityRows = yield* tryDbWith((exec) =>
+        entitiesRepo.listNamesByIdsInCase(exec, caseId, entityIds)
       );
       for (const [id, label] of entityTitleMapForJobInputs(
         entityRows,
@@ -239,7 +239,7 @@ function loadEntityTitleMapEffect(
 
 function loadEvidenceTitleMapEffect(
   rows: readonly RecentJobActivityRow[]
-): Effect.Effect<ReadonlyMap<string, string>, DomainTag> {
+): Effect.Effect<ReadonlyMap<string, string>, DomainTag, Db> {
   const byCase = evidenceIdsByCaseFromJobRows(rows);
   if (byCase.size === 0) {
     return Effect.succeed(new Map<string, string>());
@@ -250,8 +250,8 @@ function loadEvidenceTitleMapEffect(
       const caseInputs = rows
         .filter((row) => row.caseId === caseId)
         .map((row) => row.input);
-      const evidenceRows = yield* tryDb(() =>
-        evidenceRepo.listActivityLabelsInCase(db, caseId, evidenceIds)
+      const evidenceRows = yield* tryDbWith((exec) =>
+        evidenceRepo.listActivityLabelsInCase(exec, caseId, evidenceIds)
       );
       for (const [id, title] of evidenceTitleMapForJobInputs(
         evidenceRows,
@@ -276,7 +276,7 @@ export function mergeActivityItems(
 
 export function listRecentActivityEffect(
   opts: ListRecentActivityOpts
-): Effect.Effect<ActivityItem[], DomainTag> {
+): Effect.Effect<ActivityItem[], DomainTag, Db> {
   const limit = clampActivityLimit(opts.limit);
   const fetchLimit = perSourceFetchLimit(limit);
   const scopedCaseFilter =
@@ -297,11 +297,13 @@ export function listRecentActivityEffect(
     };
     const [evidenceRows, jobRows, proposalRows, taskEvents] = yield* Effect.all(
       [
-        tryDb(() => activityRepo.recentEvidence(db, repoOpts)),
-        tryDb(() => activityRepo.recentJobs(db, repoOpts)),
-        tryDb(() => activityRepo.recentPendingProposals(db, repoOpts)),
-        tryDb(() =>
-          activityEventsRepo.recent(db, { ...repoOpts, kind: "task" })
+        tryDbWith((exec) => activityRepo.recentEvidence(exec, repoOpts)),
+        tryDbWith((exec) => activityRepo.recentJobs(exec, repoOpts)),
+        tryDbWith((exec) =>
+          activityRepo.recentPendingProposals(exec, repoOpts)
+        ),
+        tryDbWith((exec) =>
+          activityEventsRepo.recent(exec, { ...repoOpts, kind: "task" })
         ),
       ],
       { concurrency: "unbounded" }

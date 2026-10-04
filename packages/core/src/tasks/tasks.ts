@@ -3,7 +3,6 @@ import { Effect } from "effect";
 import {
   activityEventsRepo,
   casesRepo,
-  db,
   tasksRepo,
   type TaskRow,
 } from "@watchdog/db";
@@ -23,8 +22,9 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
+import type { Db } from "../infra/db-service";
 import { notifyTaskChangedEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   InternalError,
@@ -159,7 +159,7 @@ export function listTasksForCaseEffect(
   caseId: string,
   organizationId: string,
   opts?: ListTasksOpts
-): Effect.Effect<TaskRecord[], DomainTag> {
+): Effect.Effect<TaskRecord[], DomainTag, Db> {
   return Effect.gen(function* listTasksGen() {
     let entityId: string | undefined;
     if (opts?.entityId === undefined) {
@@ -179,8 +179,8 @@ export function listTasksForCaseEffect(
       });
     }
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() =>
-      tasksRepo.listForCase(db, scopedCaseId, {
+    const rows = yield* tryDbWith((exec) =>
+      tasksRepo.listForCase(exec, scopedCaseId, {
         ...opts,
         entityId,
       })
@@ -193,12 +193,12 @@ export function getTaskInCaseEffect(
   caseId: string,
   organizationId: string,
   taskId: string
-): Effect.Effect<TaskRecord, DomainTag> {
+): Effect.Effect<TaskRecord, DomainTag, Db> {
   return Effect.gen(function* getTaskInCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedTaskId = yield* requireTrimmedGraphId(taskId, "Task");
-    const row = yield* tryDb(() =>
-      tasksRepo.getInCase(db, scopedCaseId, normalizedTaskId)
+    const row = yield* tryDbWith((exec) =>
+      tasksRepo.getInCase(exec, scopedCaseId, normalizedTaskId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Task", id: normalizedTaskId });
@@ -209,7 +209,7 @@ export function getTaskInCaseEffect(
 
 export function createTaskEffect(
   input: CreateTaskInput
-): Effect.Effect<TaskRecord, DomainTag> {
+): Effect.Effect<TaskRecord, DomainTag, Db> {
   return Effect.gen(function* createTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -271,15 +271,15 @@ export function createTaskEffect(
 
 export function updateTaskEffect(
   input: UpdateTaskInput
-): Effect.Effect<TaskRecord, DomainTag> {
+): Effect.Effect<TaskRecord, DomainTag, Db> {
   return Effect.gen(function* updateTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
       input.organizationId
     );
     const taskId = yield* requireTrimmedGraphId(input.taskId, "Task");
-    const existing = yield* tryDb(() =>
-      tasksRepo.getInCase(db, scopedCaseId, taskId)
+    const existing = yield* tryDbWith((exec) =>
+      tasksRepo.getInCase(exec, scopedCaseId, taskId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Task", id: taskId });
@@ -366,12 +366,12 @@ export function deleteTaskEffect(
   organizationId: string,
   taskId: string,
   actorId?: string
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteTaskGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedTaskId = yield* requireTrimmedGraphId(taskId, "Task");
-    const existing = yield* tryDb(() =>
-      tasksRepo.getInCase(db, scopedCaseId, normalizedTaskId)
+    const existing = yield* tryDbWith((exec) =>
+      tasksRepo.getInCase(exec, scopedCaseId, normalizedTaskId)
     );
     if (!existing) {
       return yield* new NotFoundError({ entity: "Task", id: normalizedTaskId });
@@ -419,7 +419,7 @@ export interface ReorderTasksInput {
 
 export function reorderTasksEffect(
   input: ReorderTasksInput
-): Effect.Effect<TaskRecord[], DomainTag> {
+): Effect.Effect<TaskRecord[], DomainTag, Db> {
   return Effect.gen(function* reorderTasksGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,

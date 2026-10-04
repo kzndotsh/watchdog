@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { runDomain } from "../../infra/run-domain";
 import { isCapJobPayload } from "../boss";
 import {
   extractDomainJobIdFromPayload,
@@ -69,7 +70,7 @@ describe("failInvalidCapDeliveryEffect", () => {
       logs: [{ line: "queued" }],
     });
 
-    await Effect.runPromise(failInvalidCapDeliveryEffect(`  ${jobId}  `));
+    await runDomain(failInvalidCapDeliveryEffect(`  ${jobId}  `));
 
     expect(get).toHaveBeenCalledWith({}, jobId);
     expect(failJobEffect).toHaveBeenCalledWith(
@@ -81,7 +82,7 @@ describe("failInvalidCapDeliveryEffect", () => {
   });
 
   it("skips invalid job ids", async () => {
-    await Effect.runPromise(failInvalidCapDeliveryEffect("not-a-uuid"));
+    await runDomain(failInvalidCapDeliveryEffect("not-a-uuid"));
     expect(get).not.toHaveBeenCalled();
     expect(failJobEffect).not.toHaveBeenCalled();
   });
@@ -94,7 +95,7 @@ describe("failInvalidCapDeliveryEffect", () => {
       logs: [],
     });
 
-    await Effect.runPromise(failInvalidCapDeliveryEffect(jobId));
+    await runDomain(failInvalidCapDeliveryEffect(jobId));
 
     expect(failJobEffect).not.toHaveBeenCalled();
   });

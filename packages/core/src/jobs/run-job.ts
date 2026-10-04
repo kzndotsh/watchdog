@@ -13,11 +13,12 @@ import {
 } from "effect";
 
 import { capTimeoutMs } from "@watchdog/caps/sdk";
-import { db, jobsRepo, type JobRow } from "@watchdog/db";
+import { jobsRepo, type JobRow } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
 import { nowMillisEffect } from "../infra/clock";
-import { tryDb } from "../infra/postgres-effect";
+import type { Db } from "../infra/db-service";
+import { tryDbWith } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
 import { isDomainTag, type DomainTag } from "../infra/tagged-errors";
 import {
@@ -130,9 +131,11 @@ function handlePreflightStopEffect(
   jobId: string,
   reason: PreflightStopReason,
   started: number
-): Effect.Effect<JobRunOutcome> {
+): Effect.Effect<JobRunOutcome, never, Db> {
   return Effect.gen(function* handlePreflightStopGen() {
-    const row = yield* tryDb(() => jobsRepo.get(db, jobId)).pipe(Effect.orDie);
+    const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
+      Effect.orDie
+    );
     if (row?.status === "failed" && row.playbookRunId !== null) {
       const playbookRunId = row.playbookRunId;
       yield* advancePlaybookRunEffect({
@@ -162,9 +165,11 @@ function handlePreflightFailureEffect(
   jobId: string,
   error: DomainTag,
   started: number
-): Effect.Effect<JobRunOutcome> {
+): Effect.Effect<JobRunOutcome, never, Db> {
   return Effect.gen(function* handlePreflightFailureGen() {
-    const row = yield* tryDb(() => jobsRepo.get(db, jobId)).pipe(Effect.orDie);
+    const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
+      Effect.orDie
+    );
     const jobLog = createJobLog(row?.logs ?? []);
     if (row) {
       yield* runFailedPathEffect({
@@ -227,7 +232,7 @@ function proposeFromInterpretEffect(
   jobLog: JobLog,
   proposalId: string | null,
   suppressedCount: number
-): Effect.Effect<ProposePipelineResult, DomainTag> {
+): Effect.Effect<ProposePipelineResult, DomainTag, Db> {
   if (
     interpreted.interpretError !== null ||
     interpreted.patch.length === 0 ||
@@ -303,7 +308,7 @@ function runAfterCollectEffect(
   jobLog: JobLog,
   started: number,
   fibers: JobFibersApi
-): Effect.Effect<JobRunOutcome, DomainTag> {
+): Effect.Effect<JobRunOutcome, DomainTag, Db> {
   return Effect.gen(function* runAfterCollectGen() {
     const fromCache = collected.fromCache;
     const reclaim = collected.reclaim;
@@ -382,7 +387,7 @@ function failOutcome(
   started: number,
   error: unknown,
   fibers: JobFibersApi
-): Effect.Effect<JobRunOutcome> {
+): Effect.Effect<JobRunOutcome, never, Db> {
   const classified = classifyRun({
     jobId,
     threw: true,
@@ -513,7 +518,7 @@ function runReadyJobEffect(
 /** Timeout sleeper is collect-scoped (interrupted when collect returns). */
 export function executeJobEffect(
   jobId: string
-): Effect.Effect<JobRunOutcome, never, JobFibers> {
+): Effect.Effect<JobRunOutcome, never, Db | JobFibers> {
   return Effect.scoped(
     Effect.gen(function* executeJobGen() {
       const fibers = yield* JobFibers;
@@ -548,7 +553,7 @@ export function executeJobEffect(
 
 export function executeJobOnMap(
   jobId: string
-): Effect.Effect<JobRunOutcome, never, JobFibers> {
+): Effect.Effect<JobRunOutcome, never, Db | JobFibers> {
   return Effect.gen(function* trackJobFiber() {
     const fibers = yield* JobFibers;
     const started = yield* nowMillisEffect;
@@ -563,7 +568,7 @@ export function executeJobOnMap(
     }
     if (Cause.hasInterruptsOnly(exit.cause)) {
       const reason = fibers.peekReason(jobId) ?? "cancel";
-      const row = yield* tryDb(() => jobsRepo.get(db, jobId)).pipe(
+      const row = yield* tryDbWith((exec) => jobsRepo.get(exec, jobId)).pipe(
         Effect.orDie
       );
       if (row && isOpenJobStatus(row.status)) {

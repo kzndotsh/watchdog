@@ -1,4 +1,3 @@
-import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
@@ -43,7 +42,7 @@ describe("finish", () => {
     const job = await seedJob(db, cased.id, { status: "running" });
 
     await runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id));
-    const outcome = await Effect.runPromise(
+    const outcome = await runDomain(
       finishEffect({
         state: await harvestState(job.id),
         jobLog: createJobLog(),
@@ -69,7 +68,7 @@ describe("finish", () => {
       input: { evidenceId: evidence.id },
     });
 
-    const outcome = await Effect.runPromise(
+    const outcome = await runDomain(
       finishEffect({
         state: await harvestState(job.id),
         jobLog: createJobLog(),
@@ -104,7 +103,7 @@ describe("finish", () => {
     };
     state.input = { sourceEvidenceId: evidence.id };
 
-    const outcome = await Effect.runPromise(
+    const outcome = await runDomain(
       finishEffect({
         state,
         jobLog: createJobLog(),

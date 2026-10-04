@@ -7,6 +7,7 @@ import type { ConfidenceTier } from "@watchdog/schemas/shared";
 import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
 import { assertEvidenceIdsInCaseEffect } from "../../evidence/evidence";
+import type { Db } from "../../infra/db-service";
 import { transact } from "../../infra/postgres-tx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import { applyClaimOpEffect } from "./apply-claim-op";
@@ -48,7 +49,7 @@ function applyOpEffect(
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   sharedEvidenceIds: string[]
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyOpGen() {
     const evidenceIds = yield* evidenceIdsForOp(op, sharedEvidenceIds);
 
@@ -106,7 +107,7 @@ function collectPatchEvidenceIds(
 function applyOpsEffect(
   tx: DbTx,
   opts: ApplyPatchOpts
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyOpsGen() {
     for (const op of opts.patch) {
       yield* applyOpEffect(
@@ -126,7 +127,7 @@ function mapCustody(error: CustodyViolationError): InvalidError {
 
 export function applyPatchEffect(
   opts: ApplyPatchOpts
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyPatchGen() {
     yield* assertPatchGates(opts.patch, {
       confidence: opts.confidence,

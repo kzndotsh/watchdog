@@ -1,5 +1,6 @@
 import { Effect, Result, Schedule } from "effect";
 
+import type { Db } from "@watchdog/core/worker";
 import { findCancelledJobIdsEffect, JobFibers } from "@watchdog/core/worker";
 import { createLogger } from "@watchdog/log";
 
@@ -13,7 +14,7 @@ function logCancelPollError(error: unknown): void {
   void log.emit();
 }
 
-const pollCancelledJobsEffect: Effect.Effect<void, never, JobFibers> =
+const pollCancelledJobsEffect: Effect.Effect<void, never, Db | JobFibers> =
   Effect.gen(function* pollCancelledJobsGen() {
     const fibers = yield* JobFibers;
     const runningBefore = fibers.listIds();
@@ -48,7 +49,7 @@ const pollCancelledJobsEffect: Effect.Effect<void, never, JobFibers> =
     }
   });
 
-export const cancelPollLoopEffect: Effect.Effect<void, never, JobFibers> =
+export const cancelPollLoopEffect: Effect.Effect<void, never, Db | JobFibers> =
   pollCancelledJobsEffect.pipe(
     Effect.repeat(Schedule.spaced(CANCEL_POLL_SPACING)),
     Effect.asVoid

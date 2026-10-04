@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { db, graphWritesRepo, type GraphWriteRow } from "@watchdog/db";
+import { graphWritesRepo, type DbExec, type GraphWriteRow } from "@watchdog/db";
 import { trimmedOrNull } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -16,12 +16,13 @@ import {
 import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
+import type { Db } from "../infra/db-service";
 import {
   notifyEntityChangedEffect,
   notifyEvidenceChangedEffect,
   notifyProposalCreatedEffect,
 } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
@@ -48,11 +49,11 @@ export interface GraphWriteRecord {
 export function listGraphWritesForCaseEffect(
   caseId: string,
   organizationId: string
-): Effect.Effect<GraphWriteRecord[], DomainTag> {
+): Effect.Effect<GraphWriteRecord[], DomainTag, Db> {
   return Effect.gen(function* listGraphWritesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() =>
-      graphWritesRepo.listForCase(db, scopedCaseId)
+    const rows = yield* tryDbWith((exec) =>
+      graphWritesRepo.listForCase(exec, scopedCaseId)
     );
     const users = yield* loadActorUsersEffect(rows.map((row) => row.actorId));
     return rows.map((row) => ({
@@ -71,12 +72,15 @@ export function listGraphWritesForCaseEffect(
 
 const GRAPH_WRITE_IDEMPOTENCY_INDEX = "graph_writes_case_actor_idem_uidx";
 
-function findGraphWriteByIdempotency(input: {
-  caseId: string;
-  actorId: string;
-  idempotencyKey: string;
-}): Promise<string | null> {
-  return graphWritesRepo.findIdByIdempotency(db, input);
+function findGraphWriteByIdempotency(
+  exec: DbExec,
+  input: {
+    caseId: string;
+    actorId: string;
+    idempotencyKey: string;
+  }
+): Promise<string | null> {
+  return graphWritesRepo.findIdByIdempotency(exec, input);
 }
 
 export interface AgentGraphWriteResult {
@@ -94,7 +98,7 @@ export function createAgentProposalEffect(input: {
   patch: unknown;
   summary?: string;
   evidenceIds?: string[];
-}): Effect.Effect<{ proposal: ProposalRecord }, DomainTag> {
+}): Effect.Effect<{ proposal: ProposalRecord }, DomainTag, Db> {
   return Effect.gen(function* createAgentProposalGen() {
     const actorId = yield* requireActorIdEffect(input.actorId);
     const plan = yield* parseAgentPatchEffect({
@@ -155,7 +159,7 @@ export function writeGraphFromAgentEffect(input: {
   evidenceIds?: string[];
   userOverride: true;
   idempotencyKey?: string;
-}): Effect.Effect<AgentGraphWriteResult, DomainTag> {
+}): Effect.Effect<AgentGraphWriteResult, DomainTag, Db> {
   return Effect.gen(function* writeGraphFromAgentGen() {
     if (!input.userOverride) {
       return yield* new InvalidError({
@@ -184,8 +188,8 @@ export function writeGraphFromAgentEffect(input: {
 
     const idempotencyKey = trimmedOrNull(input.idempotencyKey);
     if (idempotencyKey !== null) {
-      const existingId = yield* tryDb(() =>
-        findGraphWriteByIdempotency({
+      const existingId = yield* tryDbWith((exec) =>
+        findGraphWriteByIdempotency(exec, {
           caseId: scopedCaseId,
           actorId,
           idempotencyKey,
@@ -267,8 +271,8 @@ export function writeGraphFromAgentEffect(input: {
           if (idempotencyKey === null) {
             return yield* conflict;
           }
-          const existingId = yield* tryDb(() =>
-            findGraphWriteByIdempotency({
+          const existingId = yield* tryDbWith((exec) =>
+            findGraphWriteByIdempotency(exec, {
               caseId: scopedCaseId,
               actorId,
               idempotencyKey,

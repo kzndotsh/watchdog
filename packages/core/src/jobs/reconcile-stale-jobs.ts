@@ -1,10 +1,11 @@
 import { Cause, Clock, Effect, Result } from "effect";
 
-import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
+import type { Db } from "../infra/db-service";
 import { errorMessage } from "../infra/error-utils";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDbWith } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
 import type { DomainTag } from "../infra/tagged-errors";
 import { enqueueCapJobEffect } from "./boss";
@@ -35,7 +36,7 @@ function abandonPlaybook(
   jobId: string,
   playbookRunId: string | null,
   caseId: string
-): Effect.Effect<void> {
+): Effect.Effect<void, never, Db> {
   if (playbookRunId === null) return Effect.void;
   return advancePlaybookRunEffect({ playbookRunId, caseId }).pipe(
     Effect.catchCause((cause) =>
@@ -49,7 +50,7 @@ function abandonPlaybook(
 function reconcileStaleJobEffect(
   row: StaleJobRow,
   now: number
-): Effect.Effect<boolean, DomainTag> {
+): Effect.Effect<boolean, DomainTag, Db> {
   return Effect.gen(function* reconcileStaleJobGen() {
     const cap = capExpireOrUnknown(row.capabilityId);
     if (!cap.ok) {
@@ -74,9 +75,13 @@ function reconcileStaleJobEffect(
  * Age threshold is per-Cap (derived expire window) so a hung dns.lookup is
  * reclaimed long before a hung url.enrich.
  */
-export function reconcileStaleJobsEffect(): Effect.Effect<number, DomainTag> {
+export function reconcileStaleJobsEffect(): Effect.Effect<
+  number,
+  DomainTag,
+  Db
+> {
   return Effect.gen(function* reconcileStaleJobsGen() {
-    const running = yield* tryDb(() => jobsRepo.listRunning(db));
+    const running = yield* tryDbWith((exec) => jobsRepo.listRunning(exec));
     const now = yield* Clock.currentTimeMillis;
     const results = yield* Effect.forEach(
       running,
@@ -93,15 +98,16 @@ export function reconcileStaleJobsEffect(): Effect.Effect<number, DomainTag> {
  */
 export function reconcileOrphanedQueuedJobsEffect(): Effect.Effect<
   number,
-  DomainTag
+  DomainTag,
+  Db
 > {
   return Effect.gen(function* reconcileOrphanedQueuedJobsGen() {
     const now = yield* Clock.currentTimeMillis;
     // Drizzle `listQueuedStale` expects a JS Date; Clock supplies the millis.
     // oxlint-disable-next-line effecttsgo/global-date-in-effect -- repo boundary Date interop
     const updatedBefore = new Date(now - ORPHAN_QUEUED_GRACE_MS);
-    const rows = yield* tryDb(() =>
-      jobsRepo.listQueuedStale(db, updatedBefore)
+    const rows = yield* tryDbWith((exec) =>
+      jobsRepo.listQueuedStale(exec, updatedBefore)
     );
     let enqueued = 0;
     for (const row of rows) {
@@ -125,16 +131,19 @@ export function reconcileOrphanedQueuedJobsEffect(): Effect.Effect<
 /** Re-advance playbook runs left `running` after a swallowed advance error. */
 export function reconcileStuckPlaybookRunsEffect(): Effect.Effect<
   number,
-  DomainTag
+  DomainTag,
+  Db
 > {
   return Effect.gen(function* reconcileStuckPlaybookRunsGen() {
-    const running = yield* tryDb(() => playbookRunsRepo.listRunning(db));
+    const running = yield* tryDbWith((exec) =>
+      playbookRunsRepo.listRunning(exec)
+    );
     const results = yield* Effect.forEach(
       running,
       (run) =>
         Effect.gen(function* reconcileOnePlaybookGen() {
-          const members = yield* tryDb(() =>
-            jobsRepo.listStatusesForPlaybookRun(db, run.id)
+          const members = yield* tryDbWith((exec) =>
+            jobsRepo.listStatusesForPlaybookRun(exec, run.id)
           );
           if (members.some((m) => isOpenJobStatus(m.status))) return false;
           return yield* advancePlaybookRunEffect({

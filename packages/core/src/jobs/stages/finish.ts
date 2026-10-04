@@ -4,6 +4,7 @@ import type { JobHandoff } from "@watchdog/schemas/shared";
 
 import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
 import { nowDateEffect } from "../../infra/clock";
+import type { Db } from "../../infra/db-service";
 import {
   notifyJobUpdateEffect,
   notifyProposalCreatedEffect,
@@ -31,7 +32,7 @@ interface FinishInput {
  */
 export function finishEffect(
   input: FinishInput
-): Effect.Effect<"succeeded" | "cancelled", DomainTag> {
+): Effect.Effect<"succeeded" | "cancelled", DomainTag, Db> {
   return Effect.gen(function* finishGen() {
     const { state, jobLog } = input;
     const finishedAt = yield* nowDateEffect;

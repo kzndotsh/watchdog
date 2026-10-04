@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
+import { runDomain } from "../../infra/run-domain";
 import {
   assertEvidenceIdsInCaseEffect,
   parseGraphEvidenceIdsEffect,
@@ -20,9 +21,7 @@ vi.mock("@watchdog/db", () => ({
 describe("assertEvidenceIdsInCaseEffect", () => {
   it("rejects invalid case ids before querying", async () => {
     await expect(
-      Effect.runPromise(
-        assertEvidenceIdsInCaseEffect("not-a-uuid", [testId(1)])
-      )
+      runDomain(assertEvidenceIdsInCaseEffect("not-a-uuid", [testId(1)]))
     ).rejects.toMatchObject({
       _tag: "InvalidError",
       reason: "Case not found",
@@ -36,7 +35,7 @@ describe("assertEvidenceIdsInCaseEffect", () => {
     const evidenceId = testId(2);
 
     await expect(
-      Effect.runPromise(
+      runDomain(
         assertEvidenceIdsInCaseEffect(caseId, [evidenceId, "not-a-uuid"])
       )
     ).rejects.toMatchObject({
@@ -53,7 +52,7 @@ describe("assertEvidenceIdsInCaseEffect", () => {
     listIdsInCase.mockResolvedValueOnce([]);
 
     await expect(
-      Effect.runPromise(assertEvidenceIdsInCaseEffect(caseId, [evidenceId]))
+      runDomain(assertEvidenceIdsInCaseEffect(caseId, [evidenceId]))
     ).rejects.toMatchObject({
       _tag: "InvalidError",
       reason: "One or more Evidence ids are missing or not in this Case",
@@ -65,7 +64,7 @@ describe("assertEvidenceIdsInCaseEffect", () => {
     const evidenceId = testId(4);
     listIdsInCase.mockResolvedValueOnce([{ id: evidenceId }]);
 
-    await Effect.runPromise(
+    await runDomain(
       assertEvidenceIdsInCaseEffect(caseId, [`  ${evidenceId}  `])
     );
 

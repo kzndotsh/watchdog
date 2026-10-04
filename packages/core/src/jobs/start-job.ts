@@ -2,7 +2,6 @@ import { Effect } from "effect";
 
 import { requireCapability } from "@watchdog/caps";
 import {
-  db,
   jobsRepo,
   type JobArtifact,
   type JobListRow,
@@ -34,8 +33,9 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
+import type { Db } from "../infra/db-service";
 import { notifyJobUpdateEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDbWith } from "../infra/postgres-effect";
 import { logProcess } from "../infra/process-log";
 import {
   ConflictError,
@@ -142,7 +142,7 @@ export function enqueueCreatedJobEffect(
   caseId: string,
   job: Pick<JobRow, "id" | "logs">,
   capabilityId: string
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return enqueueCapJobEffect(job.id, capabilityId).pipe(
     Effect.catch((error: InternalError | InvalidError) =>
       failJobEffect(job.id, error.reason, { caseId }, job.logs ?? []).pipe(
@@ -154,7 +154,7 @@ export function enqueueCreatedJobEffect(
 
 export function startJobEffect(
   input: StartJobInput
-): Effect.Effect<JobRecord, DomainTag> {
+): Effect.Effect<JobRecord, DomainTag, Db> {
   return Effect.gen(function* startJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -201,8 +201,8 @@ export function startJobEffect(
       cap,
     });
 
-    const row = yield* tryDb(() =>
-      jobsRepo.create(db, {
+    const row = yield* tryDbWith((exec) =>
+      jobsRepo.create(exec, {
         caseId: scopedCaseId,
         capabilityId,
         input: normalizedCapInput,
@@ -228,10 +228,12 @@ export function startJobEffect(
 export function listJobsForCaseEffect(
   caseId: string,
   organizationId: string
-): Effect.Effect<JobListRecord[], DomainTag> {
+): Effect.Effect<JobListRecord[], DomainTag, Db> {
   return Effect.gen(function* listJobsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const rows = yield* tryDb(() => jobsRepo.listForCase(db, scopedCaseId));
+    const rows = yield* tryDbWith((exec) =>
+      jobsRepo.listForCase(exec, scopedCaseId)
+    );
     const users = yield* loadActorUsersEffect(
       rows.map(({ job }) => job.actorId)
     );
@@ -245,12 +247,12 @@ export function getJobForCaseEffect(
   caseId: string,
   organizationId: string,
   jobId: string
-): Effect.Effect<JobRecord, DomainTag> {
+): Effect.Effect<JobRecord, DomainTag, Db> {
   return Effect.gen(function* getJobForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
-    const row = yield* tryDb(() =>
-      jobsRepo.getInCase(db, scopedCaseId, normalizedJobId)
+    const row = yield* tryDbWith((exec) =>
+      jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
@@ -269,20 +271,20 @@ export function cancelJobEffect(
   organizationId: string,
   jobId: string,
   opts?: CancelJobOpts
-): Effect.Effect<JobRecord, DomainTag> {
+): Effect.Effect<JobRecord, DomainTag, Db> {
   return Effect.gen(function* cancelJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
-    const row = yield* tryDb(() =>
-      jobsRepo.getInCase(db, scopedCaseId, normalizedJobId)
+    const row = yield* tryDbWith((exec) =>
+      jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
     }
     const finishedAt = yield* nowDateEffect;
-    const cancelledId = yield* tryDb(() =>
+    const cancelledId = yield* tryDbWith((exec) =>
       jobsRepo.cancelCancellableInCase(
-        db,
+        exec,
         scopedCaseId,
         normalizedJobId,
         finishedAt
@@ -294,8 +296,8 @@ export function cancelJobEffect(
       });
     }
     yield* notifyJobUpdateEffect(scopedCaseId, normalizedJobId, "cancelled");
-    const refreshed = yield* tryDb(() =>
-      jobsRepo.getInCase(db, scopedCaseId, normalizedJobId)
+    const refreshed = yield* tryDbWith((exec) =>
+      jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
     );
     if (!refreshed) {
       return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
@@ -322,8 +324,8 @@ export function cancelJobEffect(
 
 export function findCancelledJobIdsEffect(
   ids: string[]
-): Effect.Effect<string[], DomainTag> {
+): Effect.Effect<string[], DomainTag, Db> {
   const normalized = normalizeUuidList(ids);
   if (normalized.length === 0) return Effect.succeed([]);
-  return tryDb(() => jobsRepo.findCancelledJobIds(db, normalized));
+  return tryDbWith((exec) => jobsRepo.findCancelledJobIds(exec, normalized));
 }

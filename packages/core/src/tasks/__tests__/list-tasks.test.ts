@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
+import { runDomain } from "../../infra/run-domain";
 import { listTasksForCaseEffect } from "../tasks";
 
 vi.mock("@watchdog/db", () => ({
@@ -17,7 +18,7 @@ vi.mock("../../graph/patch/guards", () => ({
 describe("listTasksForCaseEffect", () => {
   it("rejects invalid entityId filters", async () => {
     await expect(
-      Effect.runPromise(
+      runDomain(
         listTasksForCaseEffect(testId(1), testId(2), {
           entityId: "not-a-uuid",
         })

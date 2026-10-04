@@ -79,7 +79,7 @@ Verified by `check:agents:strict`: each module exists and exports the name. Add 
 | Concern | Module | Export |
 | --- | --- | --- |
 | DB call into the domain error channel | `packages/core/src/infra/postgres-effect.ts` | `tryDb` |
-| DB client as an Effect service (new code; unmigrated code uses module `db`) | `packages/core/src/infra/postgres-effect.ts` | `tryDbWith` |
+| DB client as an Effect service (all of core; module `db` import is banned there) | `packages/core/src/infra/postgres-effect.ts` | `tryDbWith` |
 | Cap HTTP user agent (never hard-code one) | `packages/tools/src/errors/user-agent.ts` | `watchdogUserAgent` |
 | Web failure copy | `apps/web/src/lib/utils.ts` | `errMessage`, `serverFailureMessage`, `isServerFailure` |
 | Class merging | `apps/web/src/lib/utils.ts` | `cn` |

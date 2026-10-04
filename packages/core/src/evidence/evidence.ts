@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 
 import {
-  db,
   evidenceRepo,
   type DbExec,
   type DbTx,
@@ -34,8 +33,9 @@ import {
   uploadArtifactEffect,
   type PresignedPut,
 } from "../infra/blob";
+import type { Db } from "../infra/db-service";
 import { notifyEvidenceChangedEffect } from "../infra/events";
-import { tryDb } from "../infra/postgres-effect";
+import { tryDbWith, tryDbOn } from "../infra/postgres-effect";
 import {
   InternalError,
   InvalidError,
@@ -154,7 +154,7 @@ function toRecord(
 
 function labeledEvidence(
   row: EvidenceRow
-): Effect.Effect<EvidenceRecord, DomainTag> {
+): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return loadActorUsersEffect([row.actorId]).pipe(
     Effect.map((users) => toRecord(row, users))
   );
@@ -163,8 +163,8 @@ function labeledEvidence(
 function maybeAssertEntityEffect(
   caseId: string,
   entityId: string | null | undefined,
-  exec: DbExec = db
-): Effect.Effect<void, DomainTag> {
+  exec?: DbExec
+): Effect.Effect<void, DomainTag, Db> {
   if (entityId === undefined || entityId === null) {
     return Effect.void;
   }
@@ -186,7 +186,7 @@ export function listEvidenceForCaseEffect(
   caseId: string,
   organizationId: string,
   opts?: ListEvidenceOpts
-): Effect.Effect<EvidenceRecord[], DomainTag> {
+): Effect.Effect<EvidenceRecord[], DomainTag, Db> {
   return Effect.gen(function* listEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     if (
@@ -198,8 +198,8 @@ export function listEvidenceForCaseEffect(
           "hiddenOnly is mutually exclusive with unprocessedOnly and unattachedOnly",
       });
     }
-    const rows = yield* tryDb(() =>
-      evidenceRepo.listForCase(db, scopedCaseId, {
+    const rows = yield* tryDbWith((exec) =>
+      evidenceRepo.listForCase(exec, scopedCaseId, {
         deletedOnly: opts?.hiddenOnly,
         unprocessedOnly: opts?.unprocessedOnly,
         unattachedOnly: opts?.unattachedOnly,
@@ -212,7 +212,7 @@ export function listEvidenceForCaseEffect(
 
 export function dumpPasteEffect(
   input: DumpPasteInput
-): Effect.Effect<EvidenceRecord, DomainTag> {
+): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return Effect.gen(function* dumpPasteGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -232,8 +232,8 @@ export function dumpPasteEffect(
     });
     const entityId = entityIdForWrite(input.entityId);
     const actorId = yield* requireActorIdEffect(input.actorId);
-    const row = yield* tryDb(() =>
-      evidenceRepo.create(db, {
+    const row = yield* tryDbWith((exec) =>
+      evidenceRepo.create(exec, {
         caseId: scopedCaseId,
         entityId,
         kind: "file",
@@ -257,7 +257,7 @@ export function dumpPasteEffect(
 
 export function dumpUrlEffect(
   input: DumpUrlInput
-): Effect.Effect<EvidenceRecord, DomainTag> {
+): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return Effect.gen(function* dumpUrlGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -270,8 +270,8 @@ export function dumpUrlEffect(
     }
     const entityId = entityIdForWrite(input.entityId);
     const actorId = yield* requireActorIdEffect(input.actorId);
-    const row = yield* tryDb(() =>
-      evidenceRepo.create(db, {
+    const row = yield* tryDbWith((exec) =>
+      evidenceRepo.create(exec, {
         caseId: scopedCaseId,
         entityId,
         kind: "other",
@@ -294,7 +294,7 @@ export function dumpUrlEffect(
 
 export function softDeleteEvidenceEffect(
   input: SoftDeleteInput
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* softDeleteEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -304,8 +304,8 @@ export function softDeleteEvidenceEffect(
       input.evidenceId,
       "Evidence"
     );
-    const row = yield* tryDb(() =>
-      evidenceRepo.softDelete(db, scopedCaseId, evidenceId)
+    const row = yield* tryDbWith((exec) =>
+      evidenceRepo.softDelete(exec, scopedCaseId, evidenceId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
@@ -317,7 +317,7 @@ export function softDeleteEvidenceEffect(
 /** Clear soft-delete — returns the row to the active Intake queue. */
 export function restoreEvidenceEffect(
   input: SoftDeleteInput
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* restoreEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -327,8 +327,8 @@ export function restoreEvidenceEffect(
       input.evidenceId,
       "Evidence"
     );
-    const row = yield* tryDb(() =>
-      evidenceRepo.restore(db, scopedCaseId, evidenceId)
+    const row = yield* tryDbWith((exec) =>
+      evidenceRepo.restore(exec, scopedCaseId, evidenceId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
@@ -342,7 +342,7 @@ export function attachEvidenceEntityEffect(input: {
   organizationId: string;
   evidenceId: string;
   entityId: string | null;
-}): Effect.Effect<EvidenceRecord, DomainTag> {
+}): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return Effect.gen(function* attachEvidenceEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -354,8 +354,8 @@ export function attachEvidenceEntityEffect(input: {
     );
     yield* maybeAssertEntityEffect(scopedCaseId, input.entityId);
     const entityId = entityIdForWrite(input.entityId);
-    const row = yield* tryDb(() =>
-      evidenceRepo.setEntityInCase(db, scopedCaseId, evidenceId, entityId)
+    const row = yield* tryDbWith((exec) =>
+      evidenceRepo.setEntityInCase(exec, scopedCaseId, evidenceId, entityId)
     );
     if (!row) {
       return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
@@ -368,7 +368,7 @@ export function attachEvidenceEntityEffect(input: {
 
 export function presignUploadEffect(
   input: PresignUploadInput
-): Effect.Effect<PresignedPut, DomainTag> {
+): Effect.Effect<PresignedPut, DomainTag, Db> {
   return Effect.gen(function* presignUploadGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -388,7 +388,7 @@ export function confirmFileUploadEffect(
   input: ConfirmFileUploadInput,
   actorId: string,
   actorLabel?: string | null
-): Effect.Effect<EvidenceRecord, DomainTag> {
+): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return Effect.gen(function* confirmFileUploadGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -412,8 +412,8 @@ export function confirmFileUploadEffect(
     });
     const entityId = entityIdForWrite(input.entityId);
     const scopedActorId = yield* requireActorIdEffect(actorId);
-    const row = yield* tryDb(() =>
-      evidenceRepo.create(db, {
+    const row = yield* tryDbWith((exec) =>
+      evidenceRepo.create(exec, {
         caseId: scopedCaseId,
         entityId,
         kind: "file",
@@ -438,16 +438,16 @@ export function getEvidenceDownloadUrlEffect(
   caseId: string,
   organizationId: string,
   evidenceId: string
-): Effect.Effect<{ url: string | null }, DomainTag> {
+): Effect.Effect<{ url: string | null }, DomainTag, Db> {
   return Effect.gen(function* getEvidenceDownloadUrlGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEvidenceId = yield* requireTrimmedGraphId(
       evidenceId,
       "Evidence"
     );
-    const row = yield* tryDb(() =>
+    const row = yield* tryDbWith((exec) =>
       evidenceRepo.getUriInCaseIncludingDeleted(
-        db,
+        exec,
         scopedCaseId,
         normalizedEvidenceId
       )
@@ -468,14 +468,13 @@ export function getEvidenceDownloadUrlEffect(
  */
 export function createAttestationEffect(
   input: CreateAttestationInput
-): Effect.Effect<EvidenceRecord, DomainTag> {
+): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return Effect.gen(function* createAttestationGen() {
-    const exec = input.tx ?? db;
     const scopedCaseId = yield* assertCaseExistsUncheckedEffect(
       input.caseId,
-      exec
+      input.tx
     );
-    yield* maybeAssertEntityEffect(scopedCaseId, input.entityId, exec);
+    yield* maybeAssertEntityEffect(scopedCaseId, input.entityId, input.tx);
     const entityId = entityIdForWrite(input.entityId);
 
     const text = input.text.trim();
@@ -486,8 +485,8 @@ export function createAttestationEffect(
     }
 
     const actorId = yield* requireActorIdEffect(input.actorId);
-    const row = yield* tryDb(() =>
-      evidenceRepo.create(exec, {
+    const row = yield* tryDbOn(input.tx, (handle) =>
+      evidenceRepo.create(handle, {
         caseId: scopedCaseId,
         entityId,
         kind: "attestation",
@@ -531,8 +530,8 @@ export function parseGraphEvidenceIdsEffect(
 export function assertEvidenceIdsInCaseEffect(
   caseId: string,
   evidenceIds: string[],
-  exec: DbExec = db
-): Effect.Effect<void, DomainTag> {
+  exec?: DbExec
+): Effect.Effect<void, DomainTag, Db> {
   const scopedCaseId = parseTrimmedCaseId(caseId);
   if (scopedCaseId === null) {
     return new InvalidError({ reason: "Case not found" });
@@ -544,8 +543,8 @@ export function assertEvidenceIdsInCaseEffect(
     });
   }
   if (unique.length === 0) return Effect.void;
-  return tryDb(() =>
-    evidenceRepo.listIdsInCase(exec, scopedCaseId, unique)
+  return tryDbOn(exec, (handle) =>
+    evidenceRepo.listIdsInCase(handle, scopedCaseId, unique)
   ).pipe(
     Effect.flatMap((rows) =>
       rows.length === unique.length

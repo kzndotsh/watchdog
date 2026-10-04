@@ -5,6 +5,7 @@ import {
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
 
+import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { setJobStatusEffect } from "../set-job-status";
 
@@ -119,7 +120,7 @@ export function failJobEffect(
   error: string,
   opts: { caseId: string },
   logs: string[] = []
-): Effect.Effect<void, DomainTag> {
+): Effect.Effect<void, DomainTag, Db> {
   return setJobStatusEffect(
     jobId,
     {
