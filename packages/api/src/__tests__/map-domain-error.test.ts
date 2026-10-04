@@ -3,6 +3,7 @@ import { createRequestLogger } from "evlog";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  type DomainTag,
   ConflictError,
   ForbiddenError,
   InternalError,
@@ -126,6 +127,40 @@ describe("toOrpcError", () => {
         error: { domainTag: "InvalidError" },
       });
     });
+  });
+
+  it.each([
+    ["NotFoundError", new NotFoundError({ resource: "missing" }), "not_found"],
+    ["ConflictError", new ConflictError({ reason: "dup" }), "conflict"],
+    ["InvalidError", new InvalidError({ reason: "bad" }), "invalid"],
+    ["ForbiddenError", new ForbiddenError({ reason: "no" }), "forbidden"],
+    [
+      "InternalError",
+      new InternalError({ reason: "secret", cause: "pg down" }),
+      "internal",
+    ],
+  ] satisfies [string, DomainTag, string][])(
+    "puts stable code and safe message in the body for %s",
+    (_tag, error, code) => {
+      const json = toOrpcError(error).toJSON();
+      expect(json.data).toEqual({ code });
+      expect(error.code).toBe(code);
+      let expected = "Internal server error";
+      if (error._tag === "NotFoundError") expected = error.resource;
+      else if (error._tag !== "InternalError") expected = error.reason;
+      expect(json.message).toBe(expected);
+    }
+  );
+
+  it("gives every tag a distinct code", () => {
+    const codes = [
+      new NotFoundError({ resource: "x" }),
+      new ConflictError({ reason: "x" }),
+      new InvalidError({ reason: "x" }),
+      new ForbiddenError({ reason: "x" }),
+      new InternalError({ reason: "x" }),
+    ].map((e) => e.code);
+    expect(new Set(codes).size).toBe(codes.length);
   });
 
   it.each([

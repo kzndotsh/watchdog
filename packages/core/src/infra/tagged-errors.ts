@@ -2,21 +2,34 @@ import { Data } from "effect";
 
 import { DomainError, type DomainErrorCode } from "./domain-error";
 
+/*
+ * Every tag carries a stable, unique `code` literal. Codes are public API
+ * contract (API body `data.code`, CLI envelope): never rename one once
+ * released. See docs/reference/contracts/README.md#error-taxonomy.
+ */
 export class NotFoundError extends Data.TaggedError("NotFoundError")<{
   readonly resource: string;
-}> {}
+}> {
+  readonly code = "not_found" as const;
+}
 
 export class ConflictError extends Data.TaggedError("ConflictError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "conflict" as const;
+}
 
 export class InvalidError extends Data.TaggedError("InvalidError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "invalid" as const;
+}
 
 export class ForbiddenError extends Data.TaggedError("ForbiddenError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "forbidden" as const;
+}
 
 /**
  * A server-side failure the caller cannot fix (failed write, queue driver
@@ -26,7 +39,9 @@ export class ForbiddenError extends Data.TaggedError("ForbiddenError")<{
 export class InternalError extends Data.TaggedError("InternalError")<{
   readonly reason: string;
   readonly cause?: unknown;
-}> {}
+}> {
+  readonly code = "internal" as const;
+}
 
 export type DomainTag =
   | NotFoundError
@@ -34,6 +49,9 @@ export type DomainTag =
   | InvalidError
   | ForbiddenError
   | InternalError;
+
+/** Union of every stable error code; one distinct literal per tag. */
+export type DomainTagCode = DomainTag["code"];
 
 export function fromDomainError(error: DomainError): DomainTag {
   switch (error.code) {
@@ -83,27 +101,7 @@ export function mapDomainCatch(error: unknown): DomainTag {
 }
 
 export function domainCodeOf(error: DomainTag): DomainErrorCode {
-  switch (error._tag) {
-    case "NotFoundError": {
-      return "not_found";
-    }
-    case "ConflictError": {
-      return "conflict";
-    }
-    case "InvalidError": {
-      return "invalid";
-    }
-    case "ForbiddenError": {
-      return "forbidden";
-    }
-    case "InternalError": {
-      return "internal";
-    }
-    default: {
-      const _exhaustive: never = error;
-      return _exhaustive;
-    }
-  }
+  return error.code;
 }
 
 export function domainMessageOf(error: DomainTag): string {

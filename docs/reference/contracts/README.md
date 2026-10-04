@@ -14,7 +14,17 @@ Product nouns and the investigator loop: [`../../explanation/product.md`](../../
 
 ## Error taxonomy
 
-Failures on the API, CLI and worker edges are tagged `NotFoundError` / `ConflictError` / `InvalidError` / `ForbiddenError` / `InternalError` (same codes as `DomainError`). `InvalidError` is caller-fixable input (HTTP 400). `InternalError` is a server-side failure (failed write, queue driver): HTTP 500 with a generic message, its reason and cause going only to the request log.
+Failures on the API, CLI and worker edges are tagged errors. Each tag carries a stable `code` literal, unique per tag, typed on the class so `DomainTag["code"]` is a union of distinct literals. Codes are public contract: never rename one once released.
+
+| Tag | `code` | HTTP | Message to the client |
+| --- | --- | --- | --- |
+| `NotFoundError` | `not_found` | 404 | the not-found text |
+| `ConflictError` | `conflict` | 409 | the reason |
+| `InvalidError` | `invalid` | 400 | the reason (caller-fixable input only) |
+| `ForbiddenError` | `forbidden` | 403 | the reason |
+| `InternalError` | `internal` | 500 | fixed `Internal server error`; reason and cause go only to the request log |
+
+The API (`toOrpcError`) returns the code in the oRPC error `data` (`{ "code": "not_found" }`) next to the safe `message`; the transport `code` (`NOT_FOUND`, ...) is unchanged. The CLI prints the stable code as `error.code` with the message; `WD_CLI_DEBUG=1` also prints the stack and, when present, the cause to stderr (local only).
 
 ## Org isolation
 
