@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import {
   acceptProposalEffect,
@@ -169,7 +169,7 @@ describe("acceptProposal", () => {
       )
     ).rejects.toSatisfy(
       (error: unknown) =>
-        DomainError.is(error) &&
+        isDomainTag(error) &&
         error.code === "invalid" &&
         error.message === "actorId is required"
     );
@@ -185,7 +185,7 @@ describe("acceptProposal", () => {
       )
     ).rejects.toSatisfy(
       (error: unknown) =>
-        DomainError.is(error) &&
+        isDomainTag(error) &&
         error.code === "invalid" &&
         error.message === "actorId is required"
     );
@@ -232,7 +232,7 @@ describe("acceptProposal", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "conflict"
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
     );
 
     const listed = await proposalsRepo.listForCase(db, cased.id);
@@ -267,7 +267,7 @@ describe("acceptProposal", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "conflict"
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
     );
   });
 
@@ -377,8 +377,8 @@ describe("acceptProposal", () => {
       }
       // oxlint-disable-next-line typescript/no-unsafe-assignment -- PromiseRejectedResult.reason is any
       const reason: unknown = firstRejected.reason;
-      expect(DomainError.is(reason)).toBe(true);
-      if (!DomainError.is(reason)) return;
+      expect(isDomainTag(reason)).toBe(true);
+      if (!isDomainTag(reason)) return;
       expect(reason.code).toBe("conflict");
     });
 
@@ -453,7 +453,7 @@ describe("acceptProposal", () => {
       )
     ).rejects.toSatisfy(
       (error: unknown) =>
-        DomainError.is(error) &&
+        isDomainTag(error) &&
         error.code === "invalid" &&
         error.message === "Proposal evidenceIds contains an invalid UUID"
     );
@@ -491,7 +491,7 @@ describe("acceptProposal", () => {
       )
     ).rejects.toSatisfy(
       (error: unknown) =>
-        DomainError.is(error) &&
+        isDomainTag(error) &&
         error.code === "invalid" &&
         error.message === "Proposal patch contains an invalid evidence id"
     );

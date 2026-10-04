@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import {
   MissingCredentialError,
   ParseVendorError,

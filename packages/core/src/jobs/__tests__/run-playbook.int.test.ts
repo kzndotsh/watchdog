@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { updateCaseEffect } from "@watchdog/core/cases";
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { dumpUrlEffect } from "@watchdog/core/evidence";
 import { runDomain } from "@watchdog/core/infra";
 import {
@@ -79,7 +79,7 @@ describe("runPlaybook", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -99,7 +99,7 @@ describe("runPlaybook", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
 
     const jobs = await jobsRepo.listForCase(db, cased.id);
@@ -122,7 +122,7 @@ describe("runPlaybook", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
 
     const jobs = await jobsRepo.listForCase(db, cased.id);

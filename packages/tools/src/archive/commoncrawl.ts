@@ -2,10 +2,10 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import { HttpVendorError, type ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { validationVendorError } from "../errors/vendor-errors";
 import { fetchBytesEffect } from "../http/fetch-bytes";
 import { fetchJsonUnknownEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
@@ -99,13 +99,13 @@ export function assertCommonCrawlCdxApiUrl(cdxApi: string): string {
   try {
     url = new URL(cdxApi);
   } catch {
-    throw validationToolsError("Common Crawl: invalid CDX API URL");
+    throw validationVendorError("Common Crawl: invalid CDX API URL");
   }
   if (url.protocol !== "https:") {
-    throw validationToolsError("Common Crawl: CDX API must use HTTPS");
+    throw validationVendorError("Common Crawl: CDX API must use HTTPS");
   }
   if (url.hostname.toLowerCase() !== COMMONCRAWL_CDX_HOST) {
-    throw validationToolsError("Common Crawl: CDX API host not trusted");
+    throw validationVendorError("Common Crawl: CDX API host not trusted");
   }
   return cdxApi;
 }
@@ -115,7 +115,7 @@ function parseCollinfoIndexes(
   indexCount: number
 ): CollinfoIndex[] {
   if (!Array.isArray(coll) || coll.length === 0) {
-    throw validationToolsError("Common Crawl collinfo empty");
+    throw validationVendorError("Common Crawl collinfo empty");
   }
 
   const indexes: CollinfoIndex[] = [];
@@ -129,7 +129,7 @@ function parseCollinfoIndexes(
   }
 
   if (indexes.length === 0) {
-    throw validationToolsError("Common Crawl: no usable indexes");
+    throw validationVendorError("Common Crawl: no usable indexes");
   }
   return indexes;
 }

@@ -21,9 +21,11 @@ export function listenForEvents(
   return dbListenForEvents(...args);
 }
 
-class NotifyFailed extends Data.TaggedError("NotifyFailed")<{
+class NotifyError extends Data.TaggedError("NotifyError")<{
   readonly cause: unknown;
-}> {}
+}> {
+  readonly code = "notify_failed" as const;
+}
 
 function notifyWatchdogEventEffect(event: WatchdogEvent): Effect.Effect<void> {
   const parsed = watchdogEventSchema.safeParse(event);
@@ -33,7 +35,7 @@ function notifyWatchdogEventEffect(event: WatchdogEvent): Effect.Effect<void> {
   const validated = parsed.data;
   return Effect.tryPromise({
     try: () => notifyEvent(validated),
-    catch: (cause) => new NotifyFailed({ cause }),
+    catch: (cause) => new NotifyError({ cause }),
   }).pipe(
     Effect.tapError((error) =>
       Effect.sync(() => {

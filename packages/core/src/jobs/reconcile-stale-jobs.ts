@@ -3,7 +3,7 @@ import { Cause, Clock, Effect, Result } from "effect";
 import { db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { isOpenJobStatus } from "@watchdog/schemas/shared";
 
-import { errorMessage } from "../infra/domain-error";
+import { errorMessage } from "../infra/error-utils";
 import { tryDb } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
 import type { DomainTag } from "../infra/tagged-errors";

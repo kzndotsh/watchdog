@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import type { DbTx } from "@watchdog/db";
-import { type CustodyViolation, assertPatchGates } from "@watchdog/policy";
+import { type CustodyViolationError, assertPatchGates } from "@watchdog/policy";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
 import { parseGraphUuidList } from "@watchdog/schemas/shared";
@@ -120,7 +120,7 @@ function applyOpsEffect(
   });
 }
 
-function mapCustody(error: CustodyViolation): InvalidError {
+function mapCustody(error: CustodyViolationError): InvalidError {
   return new InvalidError({ reason: error.reason });
 }
 

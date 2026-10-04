@@ -2,13 +2,15 @@ import { Resolver } from "node:dns/promises";
 
 import { Data, Effect } from "effect";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { abortedToolsError } from "../errors/tools-error";
+import { abortedError } from "../errors/vendor-errors";
 
-class BenignDnsFailure extends Data.TaggedError("BenignDnsFailure")<{
+class BenignDnsError extends Data.TaggedError("BenignDnsError")<{
   readonly cause: unknown;
-}> {}
+}> {
+  readonly code = "dns_benign" as const;
+}
 
 const BENIGN_DNS_ERROR_CODES = new Set(["ENOTFOUND", "ENODATA", "ESERVFAIL"]);
 
@@ -25,7 +27,7 @@ export function assertNotAborted(
   signal: AbortSignal,
   abortMessage: string
 ): void {
-  if (signal.aborted) throw abortedToolsError(abortMessage);
+  if (signal.aborted) throw abortedError(abortMessage);
 }
 
 export function withAbortableResolver(
@@ -42,7 +44,7 @@ export function withAbortableResolver(
   };
   if (signal.aborted) {
     onAbort();
-    throw abortedToolsError(abortMessage);
+    throw abortedError(abortMessage);
   }
   signal.addEventListener("abort", onAbort, { once: true });
   return {
@@ -60,11 +62,11 @@ export function dnsOrEmpty<A>(
 ): Effect.Effect<A, ToolsTag> {
   return Effect.tryPromise({
     try: tryFn,
-    catch: (error: unknown): ToolsTag | BenignDnsFailure =>
+    catch: (error: unknown): ToolsTag | BenignDnsError =>
       isBenignDnsFailure(error)
-        ? new BenignDnsFailure({ cause: error })
+        ? new BenignDnsError({ cause: error })
         : mapToolsCatch(error),
-  }).pipe(Effect.catchTag("BenignDnsFailure", () => Effect.succeed(empty)));
+  }).pipe(Effect.catchTag("BenignDnsError", () => Effect.succeed(empty)));
 }
 
 export function runAbortableResolver<A>(

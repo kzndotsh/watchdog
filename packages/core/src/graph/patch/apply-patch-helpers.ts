@@ -8,7 +8,7 @@ import {
 } from "@watchdog/policy";
 import type { JsonValue } from "@watchdog/schemas/shared";
 
-import { errorMessage } from "../../infra/domain-error";
+import { errorMessage } from "../../infra/error-utils";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 
 export function requireDomainStringEffect(

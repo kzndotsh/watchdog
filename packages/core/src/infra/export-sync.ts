@@ -18,14 +18,15 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "./blob";
-import { errorMessage } from "./domain-error";
+import { errorMessage } from "./error-utils";
 import { renderCaseExportEffect } from "./export";
 import { logProcess, logSwallowed } from "./process-log";
-import { domainMessageOf } from "./tagged-errors";
 
 export class ExportIOError extends Data.TaggedError("ExportIOError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "export_io" as const;
+}
 
 function mapExportCatch(error: unknown): ExportIOError {
   if (error instanceof ExportIOError) return error;
@@ -202,9 +203,7 @@ export function writeCaseExportEffect(
       evidenceRows,
       location,
     } = yield* renderCaseExportEffect(caseId).pipe(
-      Effect.mapError(
-        (error) => new ExportIOError({ reason: domainMessageOf(error) })
-      )
+      Effect.mapError((error) => new ExportIOError({ reason: error.message }))
     );
     if (mdFiles.size === 0) return;
 

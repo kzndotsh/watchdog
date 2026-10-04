@@ -9,16 +9,14 @@ describe("graph patch guards", () => {
   it("requireTrimmedGraphId accepts padded UUIDs", async () => {
     const id = testId(10);
     const result = await Effect.runPromise(
-      requireTrimmedGraphId(`  ${id}  `, "Resource not found")
+      requireTrimmedGraphId(`  ${id}  `, "Entity")
     );
     expect(result).toBe(id);
   });
 
   it("requireTrimmedGraphId rejects non-uuid strings", async () => {
     await expect(
-      Effect.runPromise(
-        requireTrimmedGraphId("host-footprint", "Resource not found")
-      )
+      Effect.runPromise(requireTrimmedGraphId("host-footprint", "Entity"))
     ).rejects.toMatchObject({
       _tag: "NotFoundError",
     });

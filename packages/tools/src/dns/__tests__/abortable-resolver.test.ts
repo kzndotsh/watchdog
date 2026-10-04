@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { ToolsError } from "../../errors/tools-error";
+import { AbortedError } from "../../errors/tagged-errors";
 import {
   assertNotAborted,
   dnsOrEmpty,
@@ -15,7 +15,7 @@ describe("abortable-resolver", () => {
 
     expect(() => {
       assertNotAborted(controller.signal, "aborted");
-    }).toThrow(ToolsError);
+    }).toThrow(AbortedError);
   });
 
   it("withAbortableResolver throws when signal is already aborted", () => {
@@ -23,7 +23,7 @@ describe("abortable-resolver", () => {
     controller.abort();
 
     expect(() => withAbortableResolver(controller.signal, "aborted")).toThrow(
-      ToolsError
+      AbortedError
     );
   });
 

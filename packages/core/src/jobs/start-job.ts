@@ -34,7 +34,6 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
-import { errorMessage } from "../infra/domain-error";
 import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { logProcess } from "../infra/process-log";
@@ -167,7 +166,8 @@ export function startJobEffect(
     }
     const cap = yield* Effect.try({
       try: () => requireCapability(capabilityId),
-      catch: (error) => new NotFoundError({ resource: errorMessage(error) }),
+      catch: () =>
+        new NotFoundError({ entity: "Capability", id: capabilityId }),
     });
     const capInput = yield* parseValidatedCapInputEffect(cap, input.input);
 
@@ -248,15 +248,12 @@ export function getJobForCaseEffect(
 ): Effect.Effect<JobRecord, DomainTag> {
   return Effect.gen(function* getJobForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedJobId = yield* requireTrimmedGraphId(
-      jobId,
-      "Job not found"
-    );
+    const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
     const row = yield* tryDb(() =>
       jobsRepo.getInCase(db, scopedCaseId, normalizedJobId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Job not found" });
+      return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
     }
     const users = yield* loadActorUsersEffect([row.job.actorId]);
     return toJobRecord(row.job, row.playbookId, row.playbookRunStatus, users);
@@ -275,15 +272,12 @@ export function cancelJobEffect(
 ): Effect.Effect<JobRecord, DomainTag> {
   return Effect.gen(function* cancelJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedJobId = yield* requireTrimmedGraphId(
-      jobId,
-      "Job not found"
-    );
+    const normalizedJobId = yield* requireTrimmedGraphId(jobId, "Job");
     const row = yield* tryDb(() =>
       jobsRepo.getInCase(db, scopedCaseId, normalizedJobId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Job not found" });
+      return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
     }
     const finishedAt = yield* nowDateEffect;
     const cancelledId = yield* tryDb(() =>
@@ -304,7 +298,7 @@ export function cancelJobEffect(
       jobsRepo.getInCase(db, scopedCaseId, normalizedJobId)
     );
     if (!refreshed) {
-      return yield* new NotFoundError({ resource: "Job not found" });
+      return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
     }
     const logActorId = optionalActorId(opts?.actorId);
     if (logActorId) {

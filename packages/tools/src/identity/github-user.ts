@@ -2,10 +2,10 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { validationVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { asString } from "../parse/coerce";
 
@@ -32,7 +32,7 @@ export type GithubUserSnapshot = z.infer<typeof githubUserSnapshotSchema>;
 export function normalizeGithubHandle(raw: string): string {
   const h = raw.trim().replace(/^@/, "").toLowerCase();
   if (!/^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/i.test(h)) {
-    throw validationToolsError(`Invalid GitHub handle: ${raw}`);
+    throw validationVendorError(`Invalid GitHub handle: ${raw}`);
   }
   return h;
 }

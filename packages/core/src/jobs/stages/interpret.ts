@@ -7,12 +7,8 @@ import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { tryParsePatch } from "../../graph/patch/patch";
 import { readArtifactBytesEffect } from "../../infra/blob";
-import { errorMessage } from "../../infra/domain-error";
-import {
-  domainMessageOf,
-  InvalidError,
-  isDomainTag,
-} from "../../infra/tagged-errors";
+import { errorMessage } from "../../infra/error-utils";
+import { InvalidError, isDomainTag } from "../../infra/tagged-errors";
 import { loadCapReportEffect } from "../load-cap-report";
 import type { CollectRuntime } from "./collect";
 import type { JobLog } from "./helpers";
@@ -128,7 +124,7 @@ export function interpretStageEffect(
         resultSummary,
         markSourceProcessed,
         interpretError: isDomainTag(outcome.failure)
-          ? domainMessageOf(outcome.failure)
+          ? outcome.failure.message
           : errorMessage(outcome.failure),
         patch,
         handoff,

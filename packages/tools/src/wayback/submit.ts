@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchBytesEffect } from "../http/fetch-bytes";

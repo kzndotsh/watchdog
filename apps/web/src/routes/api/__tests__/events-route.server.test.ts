@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { testHttpOrigin, testId } from "@watchdog/test-kit";
 
 class NotFoundError extends Data.TaggedError("NotFoundError")<{
-  readonly resource: string;
+  readonly entity: string;
+  readonly id: string;
 }> {}
 
 const createApiContextMock = vi.hoisted(() =>
@@ -275,7 +276,7 @@ describe("api events route", () => {
       },
     });
     assertCaseInOrgEffectMock.mockReturnValue(
-      Effect.fail(new NotFoundError({ resource: "Case not found" }))
+      Effect.fail(new NotFoundError({ entity: "Case", id: "c1" }))
     );
     const handlers = (
       Route.options as {

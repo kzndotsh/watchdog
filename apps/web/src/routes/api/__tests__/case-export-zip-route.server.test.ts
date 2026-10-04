@@ -39,10 +39,6 @@ vi.mock("@watchdog/core/export", () => ({
   renderCaseExportEffect: renderCaseExportEffectMock,
 }));
 
-vi.mock("@watchdog/core/errors", () => ({
-  toDomainError: (error: unknown) => error,
-}));
-
 vi.mock("fflate", () => ({
   zipSync: zipSyncMock,
   strToU8: (value: string) => new TextEncoder().encode(value),

@@ -104,10 +104,7 @@ export function listClaimsForEntityEffect(
 ): Effect.Effect<ClaimRecord[], DomainTag> {
   return Effect.gen(function* listClaimsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(
-      entityId,
-      "Entity not found in this Case"
-    );
+    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
     const rows = yield* tryDb(() =>
       claimsRepo.listForEntity(db, normalizedEntityId, opts)
@@ -130,10 +127,7 @@ export function createClaimEffect(
       input.caseId,
       input.organizationId
     );
-    const entityId = yield* requireTrimmedGraphId(
-      input.entityId,
-      "Entity not found in this Case"
-    );
+    const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
     const text = trimmedOrUndefined(input.text);
     if (text === undefined) {
       return yield* new InvalidError({ reason: "Claim text is required" });
@@ -181,10 +175,7 @@ export function retractClaimEffect(
       input.caseId,
       input.organizationId
     );
-    const claimId = yield* requireTrimmedGraphId(
-      input.claimId,
-      "Claim not found"
-    );
+    const claimId = yield* requireTrimmedGraphId(input.claimId, "Claim");
     const reason = trimmedOrUndefined(input.reason);
     if (reason === undefined) {
       return yield* new InvalidError({
@@ -195,7 +186,7 @@ export function retractClaimEffect(
       claimsRepo.getInCase(db, scopedCaseId, claimId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Claim not found" });
+      return yield* new NotFoundError({ entity: "Claim", id: claimId });
     }
     if (existing.retracted) {
       return yield* new ConflictError({ reason: "Claim already retracted" });
@@ -210,7 +201,7 @@ export function retractClaimEffect(
       })
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Claim not found" });
+      return yield* new NotFoundError({ entity: "Claim", id: claimId });
     }
 
     const byClaim = yield* tryDb(() =>
@@ -229,15 +220,12 @@ export function updateClaimEffect(
       input.caseId,
       input.organizationId
     );
-    const claimId = yield* requireTrimmedGraphId(
-      input.claimId,
-      "Claim not found"
-    );
+    const claimId = yield* requireTrimmedGraphId(input.claimId, "Claim");
     const existing = yield* tryDb(() =>
       claimsRepo.getInCase(db, scopedCaseId, claimId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Claim not found" });
+      return yield* new NotFoundError({ entity: "Claim", id: claimId });
     }
     if (existing.retracted) {
       return yield* new ConflictError({ reason: "Claim already retracted" });
@@ -293,7 +281,7 @@ export function updateClaimEffect(
           })
         );
         if (!updated) {
-          return yield* new NotFoundError({ resource: "Claim not found" });
+          return yield* new NotFoundError({ entity: "Claim", id: claimId });
         }
         return { row: updated, evidenceIds: nextIds };
       })

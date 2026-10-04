@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError } from "@watchdog/core/errors";
+import { InvalidError, isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import {
   createTaskEffect,
@@ -53,7 +53,7 @@ describe("createTask", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -148,7 +148,7 @@ describe("createTask", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
   });
 
@@ -236,6 +236,6 @@ describe("createTask", () => {
           unattachedOnly: true,
         })
       )
-    ).rejects.toBeInstanceOf(DomainError);
+    ).rejects.toBeInstanceOf(InvalidError);
   });
 });

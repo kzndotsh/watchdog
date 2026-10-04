@@ -2,14 +2,14 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import {
   MissingCredentialError,
   ValidationVendorError,
   type ToolsTag,
 } from "../errors/tagged-errors";
-import { parseToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { parseVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asBool, asNumber, asString, isRecord } from "../parse/coerce";
@@ -45,7 +45,7 @@ export function parseEmailrepBody(
   body: unknown
 ): EmailrepLookupSnapshot {
   if (!isRecord(body)) {
-    throw parseToolsError("EmailRep", email);
+    throw parseVendorError("EmailRep", email);
   }
   const details = isRecord(body.details) ? body.details : {};
   const references = asNumber(body.references);

@@ -119,7 +119,7 @@ describe("entity export markdown route", () => {
       Effect.succeed({ id: CASE_ID, slug: "alpha" })
     );
     getEntityByCaseSlugEffectMock.mockReturnValueOnce(
-      new NotFoundError({ resource: "Entity not found" })
+      new NotFoundError({ entity: "Entity", id: "e1" })
     );
 
     const response = await handlers.GET({

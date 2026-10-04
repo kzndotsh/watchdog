@@ -75,7 +75,7 @@ export function suppressAndProposeStageEffect(
     Effect.gen(function* suppressAndProposeGen() {
       const locked = yield* tryDb(() => casesRepo.lockById(tx, input.caseId));
       if (!locked) {
-        return yield* new NotFoundError({ resource: "Case not found" });
+        return yield* new NotFoundError({ entity: "Case", id: input.caseId });
       }
 
       const { kept, suppressed } = yield* suppressKnownFindingsEffect(

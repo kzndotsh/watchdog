@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import {
   attachEvidenceEntityEffect,
   createAttestationEffect,
@@ -61,7 +61,7 @@ describe("dumpUrl", () => {
       )
     ).rejects.toSatisfy(
       (error: unknown) =>
-        DomainError.is(error) &&
+        isDomainTag(error) &&
         error.code === "invalid" &&
         error.message === "Paste body is required"
     );
@@ -193,7 +193,7 @@ describe("dumpUrl", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
   });
 
@@ -219,7 +219,7 @@ describe("dumpUrl", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -233,7 +233,7 @@ describe("dumpUrl", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -249,7 +249,7 @@ describe("dumpUrl", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 
@@ -279,7 +279,7 @@ describe("dumpUrl", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "invalid"
+      (error: unknown) => isDomainTag(error) && error.code === "invalid"
     );
   });
 });

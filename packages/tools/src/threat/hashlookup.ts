@@ -2,10 +2,10 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { validationVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { nowIsoStringEffect } from "../infra/clock";
 import { asString, recordRows } from "../parse/coerce";
@@ -35,7 +35,7 @@ export type HashlookupSnapshot = z.infer<typeof hashlookupSnapshotSchema>;
 export function normalizeHashlookupHash(raw: string): string {
   const hash = raw.trim().toLowerCase();
   if (!/^[a-f0-9]+$/.test(hash)) {
-    throw validationToolsError(`Invalid hex hash: ${raw}`);
+    throw validationVendorError(`Invalid hex hash: ${raw}`);
   }
   return hash;
 }
@@ -55,7 +55,7 @@ function algoForHash(hash: string): HashlookupAlgo {
       return "sha512";
     }
     default: {
-      throw validationToolsError(
+      throw validationVendorError(
         `Unsupported hash length ${hash.length} for CIRCL hashlookup (expected MD5/SHA1/SHA256/SHA512)`
       );
     }

@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { isUniqueViolation } from "./domain-error";
+import { isUniqueViolation } from "./error-utils";
 import { ConflictError, mapDomainCatch, type DomainTag } from "./tagged-errors";
 
 export interface MapPostgresCatchOpts {
@@ -9,7 +9,7 @@ export interface MapPostgresCatchOpts {
 }
 
 /**
- * Unique violations become `ConflictError`; other DomainErrors map 1:1;
+ * Unique violations become `ConflictError`; tagged errors pass through;
  * anything else is rethrown so it stays a defect.
  */
 export function mapPostgresCatch(

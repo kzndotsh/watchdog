@@ -1,20 +1,13 @@
-export {
-  DomainError,
-  errorMessage,
-  isUniqueViolation,
-  type DomainErrorCode,
-} from "../infra/domain-error";
+export { errorMessage, isUniqueViolation } from "../infra/error-utils";
 export {
   NotFoundError,
   ConflictError,
   InternalError,
   InvalidError,
   ForbiddenError,
-  fromDomainError,
   mapDomainCatch,
-  domainCodeOf,
-  domainMessageOf,
   isDomainTag,
-  toDomainError,
   type DomainTag,
+  type NotFoundEntity,
+  type DomainTagCode,
 } from "../infra/tagged-errors";

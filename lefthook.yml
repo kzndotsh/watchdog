@@ -74,6 +74,17 @@ pre-commit:
         - "**/*.test.ts"
         - "**/*.test.tsx"
       run: pnpm check:effect-edges:strict
+    tagged-errors:
+      glob:
+        - "packages/**/*.ts"
+        - "apps/**/*.ts"
+        - "apps/**/*.tsx"
+        - "scripts/check-tagged-errors.mjs"
+      exclude:
+        - "**/__tests__/**"
+        - "**/*.test.ts"
+        - "**/*.test.tsx"
+      run: pnpm check:tagged-errors:strict
     workspace-reexports:
       glob:
         - "packages/**/*.ts"

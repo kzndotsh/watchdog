@@ -272,10 +272,10 @@ export function getProposalForCaseEffect(
   proposalId: string
 ): Effect.Effect<ProposalRecord | null, DomainTag> {
   return Effect.gen(function* getProposalForCaseGen() {
-    const scopedCaseId = yield* requireTrimmedGraphId(caseId, "Case not found");
+    const scopedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
     const normalizedProposalId = yield* requireTrimmedGraphId(
       proposalId,
-      "Proposal not found"
+      "Proposal"
     );
     const row = yield* tryDb(() =>
       proposalsRepo.getInCase(db, scopedCaseId, normalizedProposalId)
@@ -305,7 +305,7 @@ export function acceptProposalEffect(input: {
     );
     const proposalId = yield* requireTrimmedGraphId(
       input.proposalId,
-      "Proposal not found"
+      "Proposal"
     );
     const shared = yield* parseGraphEvidenceIdsEffect(
       input.sharedEvidenceIds ?? []
@@ -317,7 +317,10 @@ export function acceptProposalEffect(input: {
           proposalsRepo.lockInCase(tx, scopedCaseId, proposalId)
         );
         if (!pending) {
-          return yield* new NotFoundError({ resource: "Proposal not found" });
+          return yield* new NotFoundError({
+            entity: "Proposal",
+            id: proposalId,
+          });
         }
         if (pending.status !== "pending") {
           return yield* new ConflictError({
@@ -415,7 +418,7 @@ export function rejectProposalEffect(input: {
     );
     const proposalId = yield* requireTrimmedGraphId(
       input.proposalId,
-      "Proposal not found"
+      "Proposal"
     );
     const rejected = yield* transact((tx) =>
       Effect.gen(function* rejectProposalTx() {
@@ -423,7 +426,10 @@ export function rejectProposalEffect(input: {
           proposalsRepo.lockInCase(tx, scopedCaseId, proposalId)
         );
         if (!existing) {
-          return yield* new NotFoundError({ resource: "Proposal not found" });
+          return yield* new NotFoundError({
+            entity: "Proposal",
+            id: proposalId,
+          });
         }
 
         const row = yield* tryDb(() =>

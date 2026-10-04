@@ -48,7 +48,7 @@ Cap-specific vendor fixtures stay inline in that Cap's test. Cross-cutting ids/U
 
 Import `fc` from `@watchdog/test-kit/fc` (and `testId` from `@watchdog/test-kit/fixtures`) in unit/property tests so they do not load Postgres. Integration: `@watchdog/test-db` (`testDb`, seeds). Do not import `@watchdog/db` from `@watchdog/api` tests (api has no db dependency). Do not import `msw` from tools/caps tests.
 
-Do not add tests for generated client JSON, `packages/ui` (generated primitives), ServerFn wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, `DomainError` codes, CLI JSON): not mocks of internals.
+Do not add tests for generated client JSON, `packages/ui` (generated primitives), ServerFn wrappers, live vendor HTTP, or a 4th-58th Collect `run()` copy. Assert behavior (rows, error codes, CLI JSON): not mocks of internals.
 
 ## Anti-cheat
 

@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
 
-import { errorMessage } from "../infra/domain-error";
+import { errorMessage } from "../infra/error-utils";
 import { InvalidError } from "../infra/tagged-errors";
 
 interface ArtifactRef {

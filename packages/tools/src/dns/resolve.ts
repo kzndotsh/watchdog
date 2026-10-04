@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import type { ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
+import { validationVendorError } from "../errors/vendor-errors";
 import { classifyIpOrHost } from "../parse/classify-ip-or-host";
 import { dnsOrEmpty, runAbortableResolver } from "./abortable-resolver";
 import { dedupeResolvedIps } from "./reverse";
@@ -13,7 +13,7 @@ export type { DnsRecords };
 function normalizeDnsLookupHost(raw: string): string {
   const classified = classifyIpOrHost(raw);
   if (classified.kind === "ip") {
-    throw validationToolsError(
+    throw validationVendorError(
       `DNS forward lookup requires a hostname: ${raw}`
     );
   }

@@ -2,7 +2,7 @@ import { ORPCError, createRouterClient } from "@orpc/server";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import {
@@ -932,7 +932,7 @@ describe("organization isolation matrix", () => {
     await expect(
       runDomain(assertCaseInOrgEffect(ids.caseA, ORG_B))
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
     await expect(
       runDomain(assertCaseInOrgEffect(ids.caseA, ORG_A))

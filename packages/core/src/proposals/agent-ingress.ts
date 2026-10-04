@@ -139,9 +139,7 @@ export function createAgentProposalEffect(input: {
 
     const proposal = yield* getProposalForCaseEffect(scopedCaseId, proposalId);
     if (!proposal) {
-      return yield* new NotFoundError({
-        resource: "Proposal created but not readable",
-      });
+      return yield* new NotFoundError({ entity: "Proposal", id: proposalId });
     }
     return { proposal };
   });

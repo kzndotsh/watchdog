@@ -19,16 +19,16 @@ import {
   readArtifactBytesEffect,
   uploadArtifactEffect,
 } from "../../infra/blob";
-import { errorMessage } from "../../infra/domain-error";
+import { errorMessage } from "../../infra/error-utils";
 import { tryDb } from "../../infra/postgres-effect";
 import { logSwallowed } from "../../infra/process-log";
 import {
-  domainMessageOf,
   InvalidError,
   NotFoundError,
   type DomainTag,
 } from "../../infra/tagged-errors";
 import { getCredentialEffect, hasCredentialEffect } from "../../infra/vault";
+import { toDomainTag } from "../../infra/vendor-errors";
 import { hashCapInput, lookupCapCacheEffect } from "../cap-cache";
 import { artifactsHaveCapReport } from "../load-cap-report";
 import {
@@ -104,7 +104,7 @@ function vaultToTools(name: string) {
     if (error instanceof NotFoundError) {
       return new MissingCredentialError({ slot: name });
     }
-    return new ValidationVendorError({ message: domainMessageOf(error) });
+    return new ValidationVendorError({ message: error.message });
   };
 }
 
@@ -168,7 +168,9 @@ function buildCapContext(
 
 class ScratchIOError extends Data.TaggedError("ScratchIOError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "scratch_io" as const;
+}
 
 function acquireScratchEffect(): Effect.Effect<string> {
   return Effect.tryPromise({
@@ -259,7 +261,7 @@ function lookupCacheHitEffect(
 function runCapCollectEffect(
   state: PreflightState,
   runtime: CollectRuntime
-): Effect.Effect<CollectResult, ToolsTag> {
+): Effect.Effect<CollectResult, DomainTag> {
   return Effect.gen(function* runCapCollectGen() {
     const ctx = buildCapContext(state, runtime);
     const runResult = yield* state.cap.run(ctx);
@@ -270,7 +272,7 @@ function runCapCollectEffect(
       reclaim: false,
       runtime,
     } satisfies CollectResult;
-  }).pipe(Effect.provide(toolsHttpClientLayer));
+  }).pipe(Effect.mapError(toDomainTag), Effect.provide(toolsHttpClientLayer));
 }
 
 /**
@@ -282,7 +284,7 @@ export function collectEffect(
   state: PreflightState,
   jobLog: JobLog,
   jobSignal: AbortSignal
-): Effect.Effect<CollectResult, DomainTag | ToolsTag> {
+): Effect.Effect<CollectResult, DomainTag> {
   return Effect.gen(function* collectSetup() {
     const evidenceSnapshot = yield* packSnapshotIfNeededEffect(state, jobLog);
     const linkedSource = linkedEvidenceId(

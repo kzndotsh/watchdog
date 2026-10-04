@@ -88,13 +88,13 @@ export function getEntityByCaseSlugEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedSlug = slugifyName(slug);
     if (normalizedSlug === "") {
-      return yield* new NotFoundError({ resource: "Entity not found" });
+      return yield* new NotFoundError({ entity: "Entity", id: slug });
     }
     const row = yield* tryDb(() =>
       entitiesRepo.getByCaseSlug(db, scopedCaseId, normalizedSlug)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Entity not found" });
+      return yield* new NotFoundError({ entity: "Entity", id: slug });
     }
     return toRecord(row);
   });
@@ -159,15 +159,12 @@ export function updateEntityFieldsEffect(
       input.caseId,
       input.organizationId
     );
-    const entityId = yield* requireTrimmedGraphId(
-      input.entityId,
-      "Entity not found"
-    );
+    const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
     const existing = yield* tryDb(() =>
       entitiesRepo.getInCase(db, scopedCaseId, entityId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Entity not found" });
+      return yield* new NotFoundError({ entity: "Entity", id: entityId });
     }
 
     const nextName =
@@ -198,7 +195,7 @@ export function updateEntityFieldsEffect(
       })
     );
     if (!updated) {
-      return yield* new NotFoundError({ resource: "Entity not found" });
+      return yield* new NotFoundError({ entity: "Entity", id: entityId });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);
@@ -213,22 +210,25 @@ export function deleteEntityEffect(
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* deleteEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(
-      entityId,
-      "Entity not found"
-    );
+    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     const existing = yield* tryDb(() =>
       entitiesRepo.getInCase(db, scopedCaseId, normalizedEntityId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Entity not found" });
+      return yield* new NotFoundError({
+        entity: "Entity",
+        id: normalizedEntityId,
+      });
     }
 
     const deleted = yield* tryDb(() =>
       entitiesRepo.deleteInCase(db, scopedCaseId, normalizedEntityId)
     );
     if (!deleted) {
-      return yield* new NotFoundError({ resource: "Entity not found" });
+      return yield* new NotFoundError({
+        entity: "Entity",
+        id: normalizedEntityId,
+      });
     }
 
     yield* notifyEntityChangedEffect(scopedCaseId);

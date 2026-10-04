@@ -12,11 +12,11 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
-import { errorMessage } from "../../infra/domain-error";
+import { errorMessage } from "../../infra/error-utils";
 import { tryDb } from "../../infra/postgres-effect";
 import { logProcess } from "../../infra/process-log";
 import type { DomainTag } from "../../infra/tagged-errors";
-import { InvalidError, domainMessageOf } from "../../infra/tagged-errors";
+import { InvalidError } from "../../infra/tagged-errors";
 import {
   evaluateCapAvailabilityEffect,
   formatCapAvailabilityError,
@@ -93,7 +93,7 @@ function loadCapOrStopEffect(
       })
     );
     if (Result.isFailure(cap)) {
-      yield* failJobEffect(jobId, domainMessageOf(cap.failure), { caseId });
+      yield* failJobEffect(jobId, cap.failure.message, { caseId });
       return { kind: "stop" as const, reason: "unknown_capability" as const };
     }
     return { kind: "ready" as const, cap: cap.success };

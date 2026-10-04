@@ -29,7 +29,6 @@ import {
   assertEntityInCaseEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
-import { errorMessage } from "../infra/domain-error";
 import {
   notifyEvidenceChangedEffect,
   notifyJobUpdateEffect,
@@ -68,26 +67,30 @@ function startCapForEvidenceEffect(input: {
     );
     const evidenceId = yield* requireTrimmedGraphId(
       input.evidenceId,
-      "Evidence not found"
+      "Evidence"
     );
     const actorId = yield* requireActorIdEffect(input.actorId);
     const cap = yield* Effect.try({
       try: () => requireCapability(input.capabilityId),
-      catch: (error) => new NotFoundError({ resource: errorMessage(error) }),
+      catch: () =>
+        new NotFoundError({ entity: "Capability", id: input.capabilityId }),
     });
 
     const outcome = yield* transact((tx) =>
       Effect.gen(function* startCapForEvidenceTx() {
         const locked = yield* tryDb(() => casesRepo.lockById(tx, scopedCaseId));
         if (!locked) {
-          return yield* new NotFoundError({ resource: "Case not found" });
+          return yield* new NotFoundError({ entity: "Case", id: scopedCaseId });
         }
 
         const seed = yield* tryDb(() =>
           evidenceRepo.getCapSeedInCase(tx, scopedCaseId, evidenceId)
         );
         if (!seed) {
-          return yield* new NotFoundError({ resource: "Evidence not found" });
+          return yield* new NotFoundError({
+            entity: "Evidence",
+            id: evidenceId,
+          });
         }
         if (input.assertSeed) {
           yield* input.assertSeed(seed);

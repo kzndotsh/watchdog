@@ -2,8 +2,7 @@
 /**
  * Fail when Effect.runPromise / runPromiseExit / runSync / runFork /
  * runCallback appear outside documented process/HTTP/test-compat edges,
- * when tryPromise lacks `{ catch }`, or when production code still throws
- * `DomainError`.
+ * or when tryPromise lacks `{ catch }`.
  *
  * --strict (or CHECK_EFFECT_EDGES_STRICT=1): exit 1 on any hit.
  */
@@ -16,13 +15,15 @@ const strict =
   process.env.CHECK_EFFECT_EDGES_STRICT === "1";
 
 const CALL =
-  /\bEffect\.run(?:PromiseExit|Promise|Sync|Fork|Callback)\s*\(|\bappRuntime\.runPromise\s*\(/;
+  /\bEffect\.run(?:PromiseExit|Promise|Sync|Fork|Callback)(?:With)?\s*\(|\bappRuntime\.runPromise\s*\(/;
 
 /** Paths relative to repo root. Tests (`__tests__`, `*.test.ts`) are skipped. */
 const ALLOW = new Set([
   "packages/api/src/runtime.ts",
   "apps/worker/src/boot-worker.ts",
   "packages/core/src/infra/run-domain.ts",
+  // `transact`: the driver's transaction API is promise-based, so the body runs
+  // through `runPromiseExitWith` (caller services, abort signal) at this one edge.
   "packages/core/src/infra/postgres-tx.ts",
   "packages/core/src/infra/export-sync.ts",
   "packages/caps/src/sdk/run.ts",
@@ -95,9 +96,6 @@ async function hitsInFile(abs) {
   const msgs = [];
   for (const [index, line] of text.split("\n").entries()) {
     if (line === undefined || isCommentLine(line)) continue;
-    if (/\bthrow new DomainError\b/.test(line)) {
-      msgs.push(`${rel}:${index + 1}: throw DomainError; yield tagged errors`);
-    }
     if (ALLOW.has(rel)) continue;
     if (!CALL.test(line)) continue;
     msgs.push(`${rel}:${index + 1}: Effect run* outside allowlisted edge`);

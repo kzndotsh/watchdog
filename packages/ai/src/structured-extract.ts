@@ -13,11 +13,15 @@ export class RateLimitedOutputError extends Data.TaggedError(
   "RateLimitedOutputError"
 )<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "rate_limited_output" as const;
+}
 
 export class InvalidOutputError extends Data.TaggedError("InvalidOutputError")<{
   readonly reason: string;
-}> {}
+}> {
+  readonly code = "invalid_output" as const;
+}
 
 export type StructuredExtractTag = RateLimitedOutputError | InvalidOutputError;
 

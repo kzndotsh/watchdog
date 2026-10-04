@@ -38,6 +38,8 @@
     "seed:demo": "pnpm --filter @watchdog/db seed:demo",
     "check:effect-edges": "node ./scripts/check-effect-edges.mjs",
     "check:effect-edges:strict": "node ./scripts/check-effect-edges.mjs --strict",
+    "check:tagged-errors": "node ./scripts/check-tagged-errors.mjs",
+    "check:tagged-errors:strict": "node ./scripts/check-tagged-errors.mjs --strict",
     "check:workspace-reexports": "node ./scripts/check-workspace-reexports.mjs",
     "check:agents:strict": "node ./scripts/check-agents.mjs --strict",
     "check:docs": "node ./scripts/check-docs.mjs",

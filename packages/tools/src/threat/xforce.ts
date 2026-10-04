@@ -5,7 +5,7 @@ import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { normalizeIp } from "../dns/reverse";
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
 import { watchdogUserAgent } from "../errors/user-agent";
 import { fetchJsonObjectEffect } from "../http/fetch-json";

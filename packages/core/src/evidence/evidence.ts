@@ -302,13 +302,13 @@ export function softDeleteEvidenceEffect(
     );
     const evidenceId = yield* requireTrimmedGraphId(
       input.evidenceId,
-      "Evidence not found"
+      "Evidence"
     );
     const row = yield* tryDb(() =>
       evidenceRepo.softDelete(db, scopedCaseId, evidenceId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Evidence not found" });
+      return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
     }
     yield* notifyEvidenceChangedEffect(scopedCaseId, evidenceId);
   });
@@ -325,15 +325,13 @@ export function restoreEvidenceEffect(
     );
     const evidenceId = yield* requireTrimmedGraphId(
       input.evidenceId,
-      "Hidden Evidence not found"
+      "Evidence"
     );
     const row = yield* tryDb(() =>
       evidenceRepo.restore(db, scopedCaseId, evidenceId)
     );
     if (!row) {
-      return yield* new NotFoundError({
-        resource: "Hidden Evidence not found",
-      });
+      return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
     }
     yield* notifyEvidenceChangedEffect(scopedCaseId, evidenceId);
   });
@@ -352,7 +350,7 @@ export function attachEvidenceEntityEffect(input: {
     );
     const evidenceId = yield* requireTrimmedGraphId(
       input.evidenceId,
-      "Evidence not found"
+      "Evidence"
     );
     yield* maybeAssertEntityEffect(scopedCaseId, input.entityId);
     const entityId = entityIdForWrite(input.entityId);
@@ -360,7 +358,7 @@ export function attachEvidenceEntityEffect(input: {
       evidenceRepo.setEntityInCase(db, scopedCaseId, evidenceId, entityId)
     );
     if (!row) {
-      return yield* new NotFoundError({ resource: "Evidence not found" });
+      return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
     }
     const record = yield* labeledEvidence(row);
     yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
@@ -445,7 +443,7 @@ export function getEvidenceDownloadUrlEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEvidenceId = yield* requireTrimmedGraphId(
       evidenceId,
-      "Evidence not found"
+      "Evidence"
     );
     const row = yield* tryDb(() =>
       evidenceRepo.getUriInCaseIncludingDeleted(

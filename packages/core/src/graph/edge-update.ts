@@ -155,7 +155,8 @@ export function assertEdgeKindsAllowedEffect(
     const to = yield* tryDb(() => entitiesRepo.getInCase(exec, caseId, toId));
     if (!from || !to) {
       return yield* new NotFoundError({
-        resource: "Entity not found in this Case",
+        entity: "Entity",
+        id: from ? toId : fromId,
       });
     }
     if (!edgePredicateAllowsKinds(predicate, from.kind, to.kind)) {
@@ -245,9 +246,7 @@ export function applyValidatedEdgeUpdateEffect(
         edgesRepo.updateInCase(tx, input.caseId, input.edgeId, patch)
       );
       if (!updated) {
-        return yield* new NotFoundError({
-          resource: "Edge not found in this Case",
-        });
+        return yield* new NotFoundError({ entity: "Edge", id: input.edgeId });
       }
     }
 

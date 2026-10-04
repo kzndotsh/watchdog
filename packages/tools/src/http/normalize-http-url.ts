@@ -1,4 +1,4 @@
-import { validationToolsError } from "../errors/tools-error";
+import { validationVendorError } from "../errors/vendor-errors";
 
 /** Normalize and restrict outbound HTTP targets to http(s) URLs. */
 export function normalizeHttpUrl(raw: string): string {
@@ -10,10 +10,10 @@ export function normalizeHttpUrl(raw: string): string {
   try {
     parsed = new URL(withScheme);
   } catch {
-    throw validationToolsError(`Invalid URL: ${raw}`);
+    throw validationVendorError(`Invalid URL: ${raw}`);
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw validationToolsError(`URL must use http or https: ${raw}`);
+    throw validationVendorError(`URL must use http or https: ${raw}`);
   }
   return parsed.href;
 }
@@ -25,6 +25,6 @@ export function assertHttpUrlScheme(raw: string): void {
   if (!schemeMatch) return;
   const scheme = schemeMatch[1].toLowerCase();
   if (scheme !== "http" && scheme !== "https") {
-    throw validationToolsError(`URL must use http or https: ${raw}`);
+    throw validationVendorError(`URL must use http or https: ${raw}`);
   }
 }

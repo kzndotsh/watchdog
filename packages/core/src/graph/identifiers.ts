@@ -99,10 +99,7 @@ export function listIdentifiersForEntityEffect(
 ): Effect.Effect<IdentifierRecord[], DomainTag> {
   return Effect.gen(function* listIdentifiersForEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
-    const normalizedEntityId = yield* requireTrimmedGraphId(
-      entityId,
-      "Entity not found in this Case"
-    );
+    const normalizedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     yield* assertEntityInCaseEffect(scopedCaseId, normalizedEntityId, db);
     const rows = yield* tryDb(() =>
       identifiersRepo.listForEntity(db, normalizedEntityId)
@@ -184,10 +181,7 @@ export function createIdentifierEffect(
     );
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
-    const entityId = yield* requireTrimmedGraphId(
-      input.entityId,
-      "Entity not found in this Case"
-    );
+    const entityId = yield* requireTrimmedGraphId(input.entityId, "Entity");
 
     const row = yield* transact(
       (tx) =>
@@ -235,13 +229,16 @@ export function updateIdentifierEffect(
     );
     const identifierId = yield* requireTrimmedGraphId(
       input.identifierId,
-      "Identifier not found"
+      "Identifier"
     );
     const existing = yield* tryDb(() =>
       identifiersRepo.getInCase(db, scopedCaseId, identifierId)
     );
     if (!existing) {
-      return yield* new NotFoundError({ resource: "Identifier not found" });
+      return yield* new NotFoundError({
+        entity: "Identifier",
+        id: identifierId,
+      });
     }
 
     if (
@@ -329,7 +326,8 @@ export function updateIdentifierEffect(
           );
           if (!updated) {
             return yield* new NotFoundError({
-              resource: "Identifier not found in this Case",
+              entity: "Identifier",
+              id: identifierId,
             });
           }
           return { row: updated, evidenceIds: nextIds };
@@ -351,14 +349,15 @@ export function deleteIdentifierEffect(
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedIdentifierId = yield* requireTrimmedGraphId(
       identifierId,
-      "Identifier not found"
+      "Identifier"
     );
     const existing = yield* tryDb(() =>
       identifiersRepo.getInCase(db, scopedCaseId, normalizedIdentifierId)
     );
     if (!existing) {
       return yield* new NotFoundError({
-        resource: "Identifier not found in this Case",
+        entity: "Identifier",
+        id: normalizedIdentifierId,
       });
     }
 
@@ -367,7 +366,8 @@ export function deleteIdentifierEffect(
     );
     if (!deleted) {
       return yield* new NotFoundError({
-        resource: "Identifier not found in this Case",
+        entity: "Identifier",
+        id: normalizedIdentifierId,
       });
     }
 

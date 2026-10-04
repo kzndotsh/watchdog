@@ -78,7 +78,7 @@ describe("cases procedures", () => {
 
   it("maps missing cases to NOT_FOUND", async () => {
     getCaseByIdEffect.mockReturnValueOnce(
-      new NotFoundError({ resource: "Case not found" })
+      new NotFoundError({ entity: "Case", id: "c1" })
     );
 
     const client = createRouterClient(

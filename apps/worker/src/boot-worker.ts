@@ -323,10 +323,12 @@ function exportEventsEffect(
   );
 }
 
-class WorkerBossFailed extends Data.TaggedError("WorkerBossFailed")<{
+class WorkerBossError extends Data.TaggedError("WorkerBossError")<{
   readonly operation: "shutdown" | "start";
   readonly cause: unknown;
-}> {}
+}> {
+  readonly code = "worker_boss" as const;
+}
 
 function shutdownErrorMessage(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
@@ -347,9 +349,9 @@ function shutdownWorkerResourcesEffect(
           graceful: true,
           timeout: gracefulStopTimeoutMs(),
         }),
-      catch: (cause) => new WorkerBossFailed({ operation: "shutdown", cause }),
+      catch: (cause) => new WorkerBossError({ operation: "shutdown", cause }),
     }).pipe(
-      Effect.catchTag("WorkerBossFailed", (error) =>
+      Effect.catchTag("WorkerBossError", (error) =>
         Effect.sync(() => {
           const message = shutdownErrorMessage(error.cause);
           fields.bossStopError = message;
@@ -447,7 +449,7 @@ function startWorkerResourcesEffect(
             }
           )
         ),
-      catch: (cause) => new WorkerBossFailed({ operation: "start", cause }),
+      catch: (cause) => new WorkerBossError({ operation: "start", cause }),
     }).pipe(Effect.orDie);
 
     return { boss };

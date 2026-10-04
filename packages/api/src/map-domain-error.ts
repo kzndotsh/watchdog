@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { Match } from "effect";
 
-import type { DomainTag } from "@watchdog/core/errors";
+import type { DomainTag, NotFoundEntity } from "@watchdog/core/errors";
 import { peekRequestLogger } from "@watchdog/log";
 
 /** Message sent to clients for every `InternalError`; the real cause is log-only. */
@@ -53,22 +53,54 @@ function logFieldsFor(error: DomainTag) {
   };
 }
 
+/**
+ * Body shape every mapped error carries in the oRPC `data` field: the stable
+ * `code` (never renamed once released) next to the safe message.
+ */
+export interface ApiErrorData {
+  readonly code: DomainTag["code"];
+}
+
+/** `not_found` also names what was missing: the entity and the caller-supplied id. */
+export interface NotFoundErrorData extends ApiErrorData {
+  readonly code: "not_found";
+  readonly entity: NotFoundEntity;
+  readonly id: string;
+}
+
 /** Convert a tagged domain failure to an oRPC HTTP error value. */
 export function toOrpcError(error: DomainTag) {
   peekRequestLogger()?.set({ error: logFieldsFor(error) });
   return Match.value(error).pipe(
     Match.tagsExhaustive({
       NotFoundError: (tagged) =>
-        new ORPCError("NOT_FOUND", { message: tagged.resource }),
+        new ORPCError("NOT_FOUND", {
+          message: tagged.message,
+          data: {
+            code: tagged.code,
+            entity: tagged.entity,
+            id: tagged.id,
+          } satisfies NotFoundErrorData,
+        }),
       ConflictError: (tagged) =>
-        new ORPCError("CONFLICT", { message: tagged.reason }),
+        new ORPCError("CONFLICT", {
+          message: tagged.reason,
+          data: { code: tagged.code } satisfies ApiErrorData,
+        }),
       InvalidError: (tagged) =>
-        new ORPCError("BAD_REQUEST", { message: tagged.reason }),
+        new ORPCError("BAD_REQUEST", {
+          message: tagged.reason,
+          data: { code: tagged.code } satisfies ApiErrorData,
+        }),
       ForbiddenError: (tagged) =>
-        new ORPCError("FORBIDDEN", { message: tagged.reason }),
-      InternalError: () =>
+        new ORPCError("FORBIDDEN", {
+          message: tagged.reason,
+          data: { code: tagged.code } satisfies ApiErrorData,
+        }),
+      InternalError: (tagged) =>
         new ORPCError("INTERNAL_SERVER_ERROR", {
           message: INTERNAL_ERROR_MESSAGE,
+          data: { code: tagged.code } satisfies ApiErrorData,
         }),
     })
   );

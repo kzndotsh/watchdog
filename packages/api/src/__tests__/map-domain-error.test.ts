@@ -3,6 +3,7 @@ import { createRequestLogger } from "evlog";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  type DomainTag,
   ConflictError,
   ForbiddenError,
   InternalError,
@@ -15,15 +16,13 @@ import { toOrpcError } from "../map-domain-error";
 
 describe("toOrpcError", () => {
   it("maps NotFoundError to NOT_FOUND", () => {
-    expect(
-      toOrpcError(new NotFoundError({ resource: "missing case" }))
-    ).toMatchObject({
+    const error = toOrpcError(new NotFoundError({ entity: "Case", id: "c1" }));
+    expect(error).toBeInstanceOf(ORPCError);
+    expect(error).toMatchObject({
       code: "NOT_FOUND",
-      message: "missing case",
+      message: "Case not found",
+      data: { code: "not_found", entity: "Case", id: "c1" },
     });
-    expect(toOrpcError(new NotFoundError({ resource: "x" }))).toBeInstanceOf(
-      ORPCError
-    );
   });
 
   it("maps ConflictError to CONFLICT", () => {
@@ -129,7 +128,45 @@ describe("toOrpcError", () => {
   });
 
   it.each([
-    ["NotFoundError", new NotFoundError({ resource: "x" }), 404],
+    [
+      "NotFoundError",
+      new NotFoundError({ entity: "Claim", id: "missing" }),
+      "not_found",
+    ],
+    ["ConflictError", new ConflictError({ reason: "dup" }), "conflict"],
+    ["InvalidError", new InvalidError({ reason: "bad" }), "invalid"],
+    ["ForbiddenError", new ForbiddenError({ reason: "no" }), "forbidden"],
+    [
+      "InternalError",
+      new InternalError({ reason: "secret", cause: "pg down" }),
+      "internal",
+    ],
+  ] satisfies [string, DomainTag, string][])(
+    "puts stable code and safe message in the body for %s",
+    (_tag, error, code) => {
+      const json = toOrpcError(error).toJSON();
+      expect(json.data).toMatchObject({ code });
+      expect(error.code).toBe(code);
+      let expected = "Internal server error";
+      if (error._tag === "NotFoundError") expected = "Claim not found";
+      else if (error._tag !== "InternalError") expected = error.reason;
+      expect(json.message).toBe(expected);
+    }
+  );
+
+  it("gives every tag a distinct code", () => {
+    const codes = [
+      new NotFoundError({ entity: "Case", id: "x" }),
+      new ConflictError({ reason: "x" }),
+      new InvalidError({ reason: "x" }),
+      new ForbiddenError({ reason: "x" }),
+      new InternalError({ reason: "x" }),
+    ].map((e) => e.code);
+    expect(new Set(codes).size).toBe(codes.length);
+  });
+
+  it.each([
+    ["NotFoundError", new NotFoundError({ entity: "Case", id: "x" }), 404],
     ["ConflictError", new ConflictError({ reason: "x" }), 409],
     ["InvalidError", new InvalidError({ reason: "x" }), 400],
     ["ForbiddenError", new ForbiddenError({ reason: "x" }), 403],

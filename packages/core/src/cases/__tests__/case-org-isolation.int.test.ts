@@ -6,7 +6,7 @@ import {
   getCaseByIdEffect,
   listCasesEffect,
 } from "@watchdog/core/cases";
-import { DomainError } from "@watchdog/core/errors";
+import { isDomainTag } from "@watchdog/core/errors";
 import { listEvidenceForCaseEffect } from "@watchdog/core/evidence";
 import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
@@ -44,7 +44,7 @@ describe("case organization isolation", () => {
     await expect(
       runDomain(getCaseByIdEffect(theirs.id, TEST_ORGANIZATION_ID))
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
 
     await runDomain(
@@ -68,19 +68,19 @@ describe("case organization isolation", () => {
     await expect(
       runDomain(listJobsForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
 
     await expect(
       runDomain(listEntitiesForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
 
     await expect(
       runDomain(listEvidenceForCaseEffect(theirs.id, TEST_ORGANIZATION_ID))
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
 
     await expect(
@@ -91,7 +91,7 @@ describe("case organization isolation", () => {
         })
       )
     ).rejects.toSatisfy(
-      (error: unknown) => DomainError.is(error) && error.code === "not_found"
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
   });
 });

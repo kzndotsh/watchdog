@@ -1,9 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 
-import { DomainError } from "../domain-error";
 import {
-  fromDomainError,
   InvalidError,
   isDomainTag,
   mapDomainCatch,
@@ -11,14 +9,6 @@ import {
 } from "../tagged-errors";
 
 describe("tagged domain errors", () => {
-  it("maps DomainError codes 1:1", () => {
-    const mapped = fromDomainError(
-      new DomainError("not_found", "Credential WHOIS_API_KEY is not configured")
-    );
-    expect(mapped).toBeInstanceOf(NotFoundError);
-    expect(mapped._tag).toBe("NotFoundError");
-  });
-
   it.effect("yields as a typed failure inside Effect.gen", () =>
     Effect.gen(function* taggedYield() {
       const program = Effect.gen(function* taggedFail() {
@@ -39,5 +29,15 @@ describe("tagged domain errors", () => {
   it("isDomainTag recognizes tagged failures", () => {
     expect(isDomainTag(new InvalidError({ reason: "bad" }))).toBe(true);
     expect(isDomainTag(new Error("nope"))).toBe(false);
+  });
+
+  it("derives the NotFoundError message from its entity, in one place", () => {
+    const error = new NotFoundError({ entity: "Claim", id: "c-1" });
+    expect(error.message).toBe("Claim not found");
+    expect(error.entity).toBe("Claim");
+    expect(error.id).toBe("c-1");
+    expect(new NotFoundError({ entity: "Playbook run", id: "p" }).message).toBe(
+      "Playbook run not found"
+    );
   });
 });

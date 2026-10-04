@@ -1,7 +1,7 @@
 import { isIP } from "node:net";
 
 import { normalizeIp } from "../dns/reverse";
-import { validationToolsError } from "../errors/tools-error";
+import { validationVendorError } from "../errors/vendor-errors";
 import { normalizeHost } from "../whois/normalize";
 
 const HOSTNAME_RE =
@@ -29,7 +29,7 @@ export function classifyIpOrHost(raw: string): {
   }
   const value = normalizeHost(trimmed);
   if (value === "" || !HOSTNAME_RE.test(value)) {
-    throw validationToolsError(`Invalid hostname: ${raw}`);
+    throw validationVendorError(`Invalid hostname: ${raw}`);
   }
   return { kind: "domain", value };
 }

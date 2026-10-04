@@ -2,10 +2,10 @@ import { Effect } from "effect";
 import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
-import { mapToolsCatch } from "../errors/map-tools-tag";
+import { mapToolsCatch } from "../errors/map-tools-catch";
 import { MissingCredentialError, type ToolsTag } from "../errors/tagged-errors";
-import { validationToolsError } from "../errors/tools-error";
 import { watchdogUserAgent } from "../errors/user-agent";
+import { validationVendorError } from "../errors/vendor-errors";
 import { fetchJsonObjectEffect } from "../http/fetch-json";
 import { normalizeHttpUrl } from "../http/normalize-http-url";
 import { isBlockedUnshortenUrl } from "../http/unshorten-guards";
@@ -56,7 +56,7 @@ export function submitUrlscanEffect(
       try: () => {
         const normalized = normalizeHttpUrl(url);
         if (isBlockedUnshortenUrl(normalized)) {
-          throw validationToolsError(`Blocked URL (private/loopback): ${url}`);
+          throw validationVendorError(`Blocked URL (private/loopback): ${url}`);
         }
         return normalized;
       },

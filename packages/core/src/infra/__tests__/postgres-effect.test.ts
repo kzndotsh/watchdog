@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { DomainError } from "../domain-error";
 import { mapPostgresCatch, tryDb } from "../postgres-effect";
 import { ConflictError, InvalidError } from "../tagged-errors";
 
@@ -22,11 +21,13 @@ describe("mapPostgresCatch", () => {
     expect(mapped).toMatchObject({ reason: 'Slug "alpha" already exists' });
   });
 
-  it("maps DomainError via mapDomainCatch", () => {
-    const mapped = mapPostgresCatch(
-      new DomainError("invalid", "Failed to create Case")
-    );
-    expect(mapped).toBeInstanceOf(InvalidError);
+  it("passes tagged errors through", () => {
+    const tagged = new InvalidError({ reason: "bad" });
+    expect(mapPostgresCatch(tagged)).toBe(tagged);
+  });
+
+  it("rethrows unrecognized errors so they stay defects", () => {
+    expect(() => mapPostgresCatch(new Error("driver"))).toThrow("driver");
   });
 });
 
