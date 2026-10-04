@@ -12,8 +12,8 @@ import {
   updateEntityFieldsEffect,
 } from "@watchdog/core";
 import { db } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 describe("createEntity", () => {
   beforeEach(async () => {
@@ -22,13 +22,15 @@ describe("createEntity", () => {
 
   it("seeds default questions for a person in the same transaction", async () => {
     const cased = await seedCase(db);
-    const person = await runDomain(createEntityEffect({
-      caseId: cased.id,
-      organizationId: TEST_ORGANIZATION_ID,
-      kind: "person",
-      name: "Ada Lovelace",
-      slug: "ada-lovelace",
-    }));
+    const person = await runDomain(
+      createEntityEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        kind: "person",
+        name: "Ada Lovelace",
+        slug: "ada-lovelace",
+      })
+    );
     const questions = await runDomain(
       listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, person.id)
     );
@@ -38,13 +40,15 @@ describe("createEntity", () => {
 
   it("does not seed questions for an org", async () => {
     const cased = await seedCase(db);
-    const org = await runDomain(createEntityEffect({
-      caseId: cased.id,
-      organizationId: TEST_ORGANIZATION_ID,
-      kind: "org",
-      name: "Analytic Engine",
-      slug: "analytic-engine",
-    }));
+    const org = await runDomain(
+      createEntityEffect({
+        caseId: cased.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        kind: "org",
+        name: "Analytic Engine",
+        slug: "analytic-engine",
+      })
+    );
     const questions = await runDomain(
       listQuestionsForEntityEffect(cased.id, TEST_ORGANIZATION_ID, org.id)
     );

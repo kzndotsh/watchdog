@@ -23,8 +23,6 @@ const webDomTestGlobs = [
 const unitExclude = [
   "**/node_modules/**",
   "**/dist/**",
-  "_legacy-v1/**",
-  "_legacy-v2/**",
   "**/*.int.test.ts",
   "**/*.property.test.ts",
   "**/*.component.test.tsx",
@@ -73,7 +71,6 @@ export default defineConfig({
       exclude: [
         "**/__tests__/**",
         "e2e/**",
-        "_legacy-*/**",
         "**/*.gen.ts",
         "**/generated/**",
         "**/drizzle/**",
@@ -118,12 +115,7 @@ export default defineConfig({
         test: {
           name: "web-unit",
           include: ["apps/web/src/**/__tests__/**/*.test.ts"],
-          exclude: [
-            "**/node_modules/**",
-            "_legacy-v1/**",
-            "_legacy-v2/**",
-            ...webDomTestGlobs,
-          ],
+          exclude: ["**/node_modules/**", ...webDomTestGlobs],
           environment: "node",
           isolate: false,
           setupFiles: ["vitest.reset-modules.ts"],
@@ -137,7 +129,7 @@ export default defineConfig({
             "packages/*/src/**/__tests__/**/*.property.test.ts",
             "apps/*/src/**/__tests__/**/*.property.test.ts",
           ],
-          exclude: ["**/node_modules/**", "_legacy-v1/**", "_legacy-v2/**"],
+          exclude: ["**/node_modules/**"],
           environment: "node",
           isolate: false,
           setupFiles: ["vitest.reset-modules.ts"],
@@ -189,7 +181,7 @@ export default defineConfig({
             "packages/*/src/**/__tests__/**/*.int.test.ts",
             "apps/*/src/**/__tests__/**/*.int.test.ts",
           ],
-          exclude: ["**/node_modules/**", "_legacy-v1/**", "_legacy-v2/**"],
+          exclude: ["**/node_modules/**"],
           environment: "node",
           fileParallelism: false,
           maxWorkers: 1,

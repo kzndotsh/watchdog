@@ -19,6 +19,7 @@ Hooks are installed by `lefthook install` (automatic in `nix develop`); `lefthoo
 | `pnpm check:vendor` | `packages/ui` generated primitives match `vendor.json` (never hand-edit), and the shadcn CLI version recorded there equals the one `scripts/ui-vendor.mjs` pins | pre-commit, CI | none |
 | `pnpm check:design-tokens` | `DESIGN.md` front-matter colors match `wd-tokens.css` / `wd-dark.css` | pre-commit | none |
 | `pnpm check:action-pins` | Every third-party action in `.github/workflows/*.{yml,yaml}` is pinned to a 40-char SHA with a version comment ([Pinning](#pinning-and-ci-permissions)) | pre-commit, CI | none |
+| `pnpm check:workspace` | Workspace consistency: `sherif --fail-on-warnings` (one version per dependency across packages, `@types/*` in devDependencies, a private root with devDependencies only, sorted dependency lists, similar dependencies on one version) then `scripts/check-catalog.mjs` (a dependency declared by two or more packages, root included, must be `"name": "catalog:"`, and every `catalog:` reference must exist in `pnpm-workspace.yaml`; peer ranges and `workspace:` links are exempt). Runs on `package.json`, `pnpm-workspace.yaml` or gate-script changes | pre-commit, CI | none |
 | `pnpm check:codeowners` | Every `.github/CODEOWNERS` pattern matches a tracked file, every rule has an owner, and owners are `@user`, `@org/team` or an email. Runs in CI on every change because renaming or deleting a file can orphan a pattern | pre-commit (when CODEOWNERS or the gate changes), CI | none |
 | `pnpm validate:agents` | Agent Skills ([Skills gate](#skills-gate)) | pre-commit (`--staged`), CI (`--range`), Cursor stop | none; staleness is a warning |
 | `pnpm --filter @watchdog/web ds:check` | Web design-system bans (inventory: [`ui/rules.md`](../reference/web/ui/rules.md)) | pre-push, CI | none |
@@ -78,7 +79,7 @@ A pull request that touches only `scripts/**` (and docs) runs Gates and Unit (th
 
 Files GitHub reads from the repository, kept under `.github/` unless noted:
 
-- `.github/CODEOWNERS`: default owner plus agent configuration, CI, gate scripts and workspace config; kept honest by `check:codeowners`.
+- `.github/CODEOWNERS`: one global owner while the repo is solo; kept honest by `check:codeowners`.
 - `.github/ISSUE_TEMPLATE/`: bug report and feature request forms (the feature form uses the spec headings agents write) and `config.yml`, which disables blank issues and links the security policy. Not gated: a form schema error hides a template silently, so parse new forms with the `yaml` package.
 - `.github/PULL_REQUEST_TEMPLATE.md`: linked issue, gates run, docs affected and the custody checklist.
 - [`SECURITY.md`](../../SECURITY.md) (repo root): supported versions and private vulnerability reporting.

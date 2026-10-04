@@ -91,7 +91,9 @@ export function applyEntityOpEffect(
       // An id that already exists (here or in another Case) must not reach the primary key.
       const idOwner = yield* tryDb(() => entitiesRepo.getById(tx, op.id));
       if (idOwner) {
-        return yield* new ConflictError({ reason: "Entity id is already in use" });
+        return yield* new ConflictError({
+          reason: "Entity id is already in use",
+        });
       }
       // The check above can lose a race with a concurrent patch using the same id; the primary
       // key is the backstop and reports the same conflict.
@@ -125,8 +127,7 @@ export function applyEntityOpEffect(
       } = {};
       if ("summary" in op.data) {
         const value = op.data.summary;
-        patch.summary =
-          typeof value === "string" ? trimmedOrNull(value) : null;
+        patch.summary = typeof value === "string" ? trimmedOrNull(value) : null;
       }
       if ("notes" in op.data) {
         const value = op.data.notes;

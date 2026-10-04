@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
+import { EntityNodeSkeleton } from "@/shared/ui/graph/entity-node-skeleton";
 import {
   GRAPH_CANVAS_BG_CLASS,
   graphCanvasDotStyle,
 } from "@/shared/ui/graph/graph-canvas-background";
-import { EntityNodeSkeleton } from "@/shared/ui/graph/entity-node-skeleton";
 import { confidenceStroke } from "@/shared/ui/graph/graph-styles";
 import { LoadingRegion } from "@/shared/ui/loading-region";
 import type { EntityKind } from "@watchdog/schemas";
@@ -105,16 +105,16 @@ export function GraphCanvasPendingShell({
 }
 
 /** Static graph skeleton scatter — no graph runtime. */
-export function GraphCanvasSkeletonLayout({ className }: { className?: string }) {
-  return <GraphCanvasPendingShell className={className} />;
-}
-
-/** Graph canvas pending shell with optional dot grid. */
-export function GraphCanvasSkeleton({
+export function GraphCanvasSkeletonLayout({
   className,
 }: {
   className?: string;
 }) {
+  return <GraphCanvasPendingShell className={className} />;
+}
+
+/** Graph canvas pending shell with optional dot grid. */
+export function GraphCanvasSkeleton({ className }: { className?: string }) {
   return <GraphCanvasSkeletonLayout className={className} />;
 }
 
@@ -133,10 +133,7 @@ export function GraphCanvasLoadingRegion({
   return (
     <div className={cn(shellClassName, className)}>
       <LoadingRegion label={label} className="h-full w-full">
-        <GraphCanvasPendingShell
-          withDotGrid
-          className="h-full w-full"
-        />
+        <GraphCanvasPendingShell withDotGrid className="h-full w-full" />
       </LoadingRegion>
     </div>
   );

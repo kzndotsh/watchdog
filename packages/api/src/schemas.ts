@@ -3,7 +3,6 @@ import { z } from "zod";
 import {
   claimClassSchema,
   confidenceTierSchema,
-  createCaseFieldsSchema,
   edgePredicateSchema,
   entityKindSchema,
   evidenceKindSchema,
@@ -38,9 +37,6 @@ export const caseSchema = z.object({
   description: z.string().nullable(),
   allowThirdPartyEgress: z.boolean(),
 });
-
-/** POST /cases — slug defaults from name when omitted. */
-export const createCaseInputSchema = createCaseFieldsSchema;
 
 export { updateCaseInputSchema };
 

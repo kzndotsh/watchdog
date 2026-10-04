@@ -58,7 +58,7 @@ Where to find things:
 6. **No `z.any()`**; coerce only at form/query edges.
 7. **Outputs** (server-built rows): plain TS types are fine; Zod-parse responses only when data is untrusted.
 
-Enforced: one Zod version via the pnpm `overrides` in `pnpm-workspace.yaml`. Rules 1-7 and the naming/import rules below are **guidance** (review); oxlint's typescript rules catch some but no gate checks them.
+Enforced: one Zod version via the `zod` entry in the pnpm catalog and `overrides` in `pnpm-workspace.yaml`. Rules 1-7 and the naming/import rules below are **guidance** (review); oxlint's typescript rules catch some but no gate checks them.
 
 ### Zod package rules
 

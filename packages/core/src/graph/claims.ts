@@ -135,7 +135,9 @@ export function createClaimEffect(
     if (text === undefined) {
       return yield* new InvalidError({ reason: "Claim text is required" });
     }
-    const evidenceIds = yield* parseGraphEvidenceIdsEffect(input.evidenceIds ?? []);
+    const evidenceIds = yield* parseGraphEvidenceIdsEffect(
+      input.evidenceIds ?? []
+    );
     yield* assertConfidenceEvidenceEffect(input.confidence, evidenceIds);
 
     const row = yield* transact((tx) =>

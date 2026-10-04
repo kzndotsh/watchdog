@@ -2,33 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   claimSchema,
-  createCaseInputSchema,
   credentialSlotSchema,
   graphWriteResultSchema,
 } from "../schemas";
 
 describe("api schemas", () => {
-  it("derives case slug from name when omitted", () => {
-    expect(createCaseInputSchema.parse({ name: "Alpha Case" })).toMatchObject({
-      name: "Alpha Case",
-      slug: "alpha-case",
-    });
-  });
-
-  it("normalizes an explicit case slug", () => {
-    expect(
-      createCaseInputSchema.parse({ name: "Alpha Case", slug: "Alpha Corp" })
-    ).toMatchObject({
-      slug: "alpha-corp",
-    });
-  });
-
-  it("rejects invalid explicit case slugs", () => {
-    expect(() =>
-      createCaseInputSchema.parse({ name: "Alpha Case", slug: "!!!" })
-    ).toThrow();
-  });
-
   it("accepts wire shapes for claims and graph writes", () => {
     expect(
       claimSchema.parse({

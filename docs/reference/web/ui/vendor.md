@@ -6,9 +6,9 @@ This page defines how shadcn primitives are vendored, locked, updated, and wrapp
 
 | Layer | Path | Owns | Edit? |
 | --- | --- | --- | --- |
-| Primitives | `packages/ui` (`@watchdog/ui`) | shadcn `base-mira` components + `use-mobile`, exactly as the CLI writes them | **Never by hand** |
+| Primitives | `packages/ui` (`@watchdog/ui`) | shadcn `base-mira` components + `use-mobile` (the one `useIsMobile`; import it from `@watchdog/ui/hooks/use-mobile`, there is no app copy), exactly as the CLI writes them | **Never by hand** |
 | Wrappers | `apps/web/src/shared/ui/primitives/` | Same-name wrappers where a behavior must apply everywhere (Button, Dialog, AlertDialog, Combobox) | Yes |
-| Atoms | `apps/web/src/shared/ui/` | `QueueRow`, `SplitView`, status glyphs, data-table kit, `toast`, … (own names) | Yes |
+| Atoms | `apps/web/src/shared/ui/` | `QueueRow`, `SplitView`, status glyphs, data-table kit, … (own names); `toast` is a wrapper (see below) | Yes |
 | Tokens / CSS | `apps/web/src/styles*` | Color, radius ladder, type scale, focus chrome (`data-slot` overrides) | Yes |
 
 Domain code imports vanilla primitives from `@watchdog/ui/components/<name>` and wrapped ones from `@/shared/ui/primitives/<name>`. oxlint bans the vanilla path for exactly the components that have a wrapper.
@@ -26,6 +26,8 @@ Domain code imports vanilla primitives from `@watchdog/ui/components/<name>` and
 | `button` | `loading` spinner and disable; `data-variant` / `data-size` / `data-loading` hooks (dialog Enter-to-confirm and coarse-pointer sizing key on them) |
 | `dialog`, `alert-dialog` | Enter confirms the default action (`enterConfirms`); `AlertDialogAction` runs on our Button so it can show `loading` |
 | `combobox` | `ComboboxInput tone="warning"` (data leaves the machine) |
+
+`shared/ui/toast.tsx` is also a wrapper, kept outside `primitives/` because it has no `className` surface for the restyle linter to trace. It re-exports upstream's `toast` manager and `Toaster` and adds `toast.success/error/warning/info/loading`. App code imports it from `@/shared/ui/toast`; oxlint bans `@watchdog/ui/components/toast` everywhere else.
 
 A new wrapper must also be listed in `primitives/__tests__/wrapper-lint-coverage.test.ts`, which fails if the linter stops checking it. Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`), so don't add `text-xs` / `h-*` patches to match an older scale.
 

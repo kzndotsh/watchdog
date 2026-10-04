@@ -13,13 +13,13 @@
     "@ai-sdk/openai-compatible": "^3.0.49",
     "@watchdog/schemas": "workspace:*",
     "ai": "^7.0.102",
-    "effect": "4.0.0-rc.115"
+    "effect": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "catalog:",
     "@watchdog/test-kit": "workspace:*",
-    "typescript": "7.0.2",
-    "zod": "^4.6.5"
+    "typescript": "catalog:",
+    "zod": "catalog:"
   },
   "peerDependencies": {
     "zod": "^4.4.3"

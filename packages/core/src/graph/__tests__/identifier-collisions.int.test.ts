@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  listProposalsForCaseEffect,
-  runDomain
-} from "@watchdog/core";
+import { listProposalsForCaseEffect, runDomain } from "@watchdog/core";
 import { db } from "@watchdog/db";
-import { testId, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 import { buildIdentifierCreateOp } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -15,6 +11,7 @@ import {
   seedIdentifier,
   seedProposal,
 } from "@watchdog/test-db";
+import { testId, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 describe("loadIdentifierCollisions", () => {
   beforeEach(async () => {
@@ -45,7 +42,11 @@ describe("loadIdentifierCollisions", () => {
       }),
     ]);
 
-    const listed = await runDomain(listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, { status: "pending" }));
+    const listed = await runDomain(
+      listProposalsForCaseEffect(cased.id, TEST_ORGANIZATION_ID, {
+        status: "pending",
+      })
+    );
     expect(listed[0]?.identifierCollisions?.length).toBeGreaterThan(0);
     expect(listed[0]?.identifierCollisions?.[0]?.entityName).toBe("Entity A");
   });
@@ -101,10 +102,15 @@ describe("loadIdentifierCollisions", () => {
       value: "ada@mailhost.test",
       platform: "",
     });
-    const op = buildIdentifierCreateOp(entityB.id, "email", "ada@mailhost.test", {
-      id: testId(32),
-      data: { platform: "" },
-    });
+    const op = buildIdentifierCreateOp(
+      entityB.id,
+      "email",
+      "ada@mailhost.test",
+      {
+        id: testId(32),
+        data: { platform: "" },
+      }
+    );
     await seedProposal(db, cased.id, [
       {
         ...op,

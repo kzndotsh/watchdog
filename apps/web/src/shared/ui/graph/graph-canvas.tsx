@@ -14,18 +14,18 @@ import {
   type RefObject,
 } from "react";
 
-import type { AppAction } from "@/shared/lib/app-action";
-import { filterActionsForSurface } from "@/shared/lib/app-action";
 import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
+import type { AppAction } from "@/shared/lib/app-action";
+import { filterActionsForSurface } from "@/shared/lib/app-action";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
+import { EntityNode } from "@/shared/ui/graph/entity-node";
 import {
   GRAPH_CANVAS_BG_CLASS,
   graphCanvasDotStyle,
 } from "@/shared/ui/graph/graph-canvas-background";
-import { EntityNode } from "@/shared/ui/graph/entity-node";
-import { GraphEdgePath } from "@/shared/ui/graph/graph-edge";
 import { GraphCanvasPendingShell } from "@/shared/ui/graph/graph-canvas-skeleton";
+import { GraphEdgePath } from "@/shared/ui/graph/graph-edge";
 import {
   computeGraphBounds,
   computeGraphFitTransform,
@@ -66,7 +66,7 @@ function GraphNodeHitTarget({
     "aria-label": node.data.label,
     className: cn(
       "absolute",
-      nodesDraggable && "cursor-grab active:cursor-grabbing select-none"
+      nodesDraggable && "cursor-grab select-none active:cursor-grabbing"
     ),
     style: {
       left: node.position.x,
@@ -97,10 +97,7 @@ function GraphNodeHitTarget({
 
   if (actions.length > 0) {
     return (
-      <ActionsContextMenu
-        actions={actions}
-        trigger={<div {...shellProps} />}
-      >
+      <ActionsContextMenu actions={actions} trigger={<div {...shellProps} />}>
         <EntityNode
           data={node.data}
           selected={node.selected}
@@ -459,13 +456,16 @@ export function GraphCanvas({
     [applyTransform]
   );
 
-  const onPointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (nodeDragRef.current) return;
-    const pan = panRef.current;
-    if (!pan || pan.pointerId !== event.pointerId) return;
-    panRef.current = null;
-    event.currentTarget.releasePointerCapture(event.pointerId);
-  }, []);
+  const onPointerUp = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (nodeDragRef.current) return;
+      const pan = panRef.current;
+      if (!pan || pan.pointerId !== event.pointerId) return;
+      panRef.current = null;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    },
+    []
+  );
 
   const handlePaneClick = useCallback(
     (event: ReactMouseEvent<HTMLDivElement>) => {
@@ -502,7 +502,7 @@ export function GraphCanvas({
     <div
       ref={containerRef}
       className={cn(
-        "relative h-full w-full touch-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "focus-visible:ring-ring relative h-full w-full touch-none overflow-hidden outline-none focus-visible:ring-2",
         GRAPH_CANVAS_BG_CLASS,
         className
       )}
@@ -553,10 +553,7 @@ export function GraphCanvas({
                       onEdgeClick
                         ? (selected, clickEvent) => {
                             setSelectedEdgeId(selected.id);
-                            onEdgeClick(
-                              clickEvent,
-                              selected
-                            );
+                            onEdgeClick(clickEvent, selected);
                           }
                         : undefined
                     }

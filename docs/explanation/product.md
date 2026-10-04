@@ -92,7 +92,7 @@ The `_legacy-*` trees that record this history are untracked and live outside th
 - Cap catalog theater (stubs presented as ready)
 - Scratch / Candidate / promote / Door A/B
 - Second hand-edited markdown SoT alongside Postgres
-- Extending `_legacy-v1/` or `_legacy-v2/`
+- Extending the `_legacy-*` trees
 - Visual Playbook canvas / iPaaS
 - Fourth platform rewrite to dodge Phase 0 honesty
 

@@ -8,8 +8,8 @@ import {
   trimmedOrUndefined,
 } from "./primitives";
 
-/** Shared fields for case POST (web forms + API + CLI). */
-export const createCaseFieldsSchema = z
+/** Case-create input: the one definition (web form + server fn, API, CLI). */
+export const createCaseInputSchema = z
   .object({
     name: nonEmptyTrimmed,
     slug: z.string().optional(),
@@ -30,5 +30,5 @@ export const createCaseFieldsSchema = z
     path: ["slug"],
   });
 
-export type CreateCaseFieldsInput = z.input<typeof createCaseFieldsSchema>;
-export type CreateCaseFields = z.output<typeof createCaseFieldsSchema>;
+export type CreateCaseInput = z.input<typeof createCaseInputSchema>;
+export type CreateCaseFields = z.output<typeof createCaseInputSchema>;

@@ -1,6 +1,9 @@
 {
-  "extends": "astro/tsconfigs/strict",
+  // Astro's preset comes last so its Astro-specific options (ESNext target, jsx preserve,
+  // allowJs) win over the shared base; the base supplies the rest.
+  "extends": ["../../tsconfig.base.json", "astro/tsconfigs/strict"],
   "compilerOptions": {
+    "types": [],
     "paths": {
       "@/*": ["./src/*"]
     }

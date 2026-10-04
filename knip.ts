@@ -7,7 +7,8 @@ const config: KnipConfig = {
     function: true,
   },
   ignoreBinaries: ["check", "desloppify"],
-  ignore: ["_legacy-v1/**", "_legacy-v2/**", ".claude/worktrees/**"],
+  // _legacy-v2: local frozen tree, untracked (AGENTS.md); keep knip out of it when present.
+  ignore: ["_legacy-v2/**", ".claude/worktrees/**"],
   ignoreIssues: {
     // Vendored shadcn output: unused *files* still surface; unused exports are upstream's.
     "packages/ui/src/**": ["exports", "types"],

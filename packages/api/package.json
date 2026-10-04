@@ -10,23 +10,23 @@
     "export-contract": "tsx scripts/export-contract.ts"
   },
   "dependencies": {
-    "@orpc/contract": "^1.15.1",
-    "@orpc/openapi": "^1.15.1",
-    "@orpc/server": "^1.15.1",
-    "@orpc/zod": "^1.15.1",
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
     "@watchdog/core": "workspace:*",
     "@watchdog/log": "workspace:*",
     "@watchdog/policy": "workspace:*",
     "@watchdog/schemas": "workspace:*",
-    "effect": "4.0.0-rc.115",
-    "evlog": "2.29.0",
-    "zod": "^4.6.5"
+    "effect": "catalog:",
+    "evlog": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "catalog:",
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
-    "tsx": "^4.23.13",
-    "typescript": "7.0.2"
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

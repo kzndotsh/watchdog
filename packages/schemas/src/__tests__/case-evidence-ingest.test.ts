@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { testId } from "@watchdog/test-kit";
 
-import { createCaseFieldsSchema } from "../case-create";
+import { createCaseInputSchema } from "../case-create";
 import { updateCaseFieldsSchema } from "../case-update";
 import { dumpPasteFieldsSchema, dumpUrlFieldsSchema } from "../evidence-ingest";
 import { confirmFileUploadInputSchema } from "../evidence-upload";
 
-describe("createCaseFieldsSchema", () => {
+describe("createCaseInputSchema", () => {
   it("slugifies name when slug is omitted", () => {
-    expect(createCaseFieldsSchema.parse({ name: "Alpha Case" })).toEqual({
+    expect(createCaseInputSchema.parse({ name: "Alpha Case" })).toEqual({
       name: "Alpha Case",
       slug: "alpha-case",
       description: undefined,
@@ -18,7 +18,7 @@ describe("createCaseFieldsSchema", () => {
 
   it("trims name and slugifies an explicit slug", () => {
     expect(
-      createCaseFieldsSchema.parse({
+      createCaseInputSchema.parse({
         name: "  Alpha Case  ",
         slug: "  Alpha Corp  ",
       })
@@ -27,6 +27,12 @@ describe("createCaseFieldsSchema", () => {
       slug: "alpha-corp",
       description: undefined,
     });
+  });
+
+  it("rejects an explicit slug that normalizes to nothing", () => {
+    expect(() =>
+      createCaseInputSchema.parse({ name: "Alpha Case", slug: "!!!" })
+    ).toThrow();
   });
 });
 

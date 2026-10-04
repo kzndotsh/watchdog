@@ -7,15 +7,14 @@ import {
   listCasesEffect,
   updateCaseEffect,
 } from "@watchdog/core";
-import { deleteCaseInputSchema } from "@watchdog/schemas";
+import {
+  createCaseInputSchema,
+  deleteCaseInputSchema,
+} from "@watchdog/schemas";
 
 import { authed } from "../os";
 import { runApp } from "../runtime";
-import {
-  caseSchema,
-  createCaseInputSchema,
-  updateCaseInputSchema,
-} from "../schemas";
+import { caseSchema, updateCaseInputSchema } from "../schemas";
 
 export const list = authed
   .route({

@@ -50,7 +50,9 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Services are `*Effect` programs that keep `DomainTag` in `E`; tests bridge with `runDomain` | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
 | Enqueue only through `enqueueCapJobEffect` and the boss helpers; one pg-boss boss per process | core, worker | `docs/reference/platform/jobs-orpc.md` Jobs path | guidance | guidance |
 | Tools vendor clients export `*Effect` only, never call raw `fetch`; `toolsHttpClientLayer` is provided once at the root | tools | `packages/tools/AGENTS.md` Rules | guidance | guidance |
-| One Zod version workspace-wide | repo | `docs/reference/platform/types.md` Foundations | pnpm `overrides` in `pnpm-workspace.yaml` | enforced |
+| One Zod version workspace-wide | repo | `docs/reference/platform/types.md` Foundations | `zod` in the `pnpm-workspace.yaml` catalog and `overrides`; `check:workspace` | enforced |
+| A dependency declared by two or more workspace packages takes its version from the pnpm catalog (`"name": "catalog:"`) | repo | `AGENTS.md` Gotchas | `check:workspace` (`scripts/check-catalog.mjs`) | enforced |
+| Dependency versions agree across packages; `@types/*` and root tooling stay in devDependencies | repo | `AGENTS.md` Gotchas | `check:workspace` (sherif) | enforced |
 | Schema is the SoT (`z.infer`, no twin interfaces); `z.enum(CONST)`, not copied literals; no `z.any()` | schemas, web, api | `docs/reference/platform/types.md` Foundations | guidance | guidance |
 | Web, API and CLI share one input schema per create/update/delete shape; never fork it per surface | schemas | `packages/schemas/AGENTS.md` Gotchas | guidance | guidance |
 | Wire objects are named in `schemas.ts` (no anonymous inline Zod); no DB rows or drizzle types on the wire | api | `packages/api/AGENTS.md` Rules | guidance | guidance |
@@ -90,7 +92,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | `PageHeader` is the sole inset top chrome; no identity titles or `description=`; Case id never in Work URLs | web | `docs/reference/web/ui/page-shell.md` Page shell | guidance | guidance |
 | Domain folder shape: `createServerFn` only in `*.functions.ts`; `*.server.ts` never reaches the client; DTOs in `types.ts` | web | `docs/reference/web/domains.md` Rules | guidance | guidance |
 | Types and DTOs are imported from a domain's `types.ts`, never from its `*.functions.ts` (violations exist; decision: fix and enforce with a lint rule, planned in spec #55 / #62) | web | `docs/reference/web/architecture.md` Shape | guidance | guidance |
-| Handlers call `orpcFromContext(context)`; no Drizzle in `apps/web` (its `package.json` still lists `drizzle-orm`) | web | `docs/reference/web/architecture.md` Server boundary | guidance | guidance |
+| Handlers call `orpcFromContext(context)`; no Drizzle in `apps/web`; `apps/web` no longer declares `drizzle-orm`, and nothing enforces keeping it out | web | `docs/reference/web/architecture.md` Server boundary | guidance | guidance |
 | Auth is the global `requireAuth` in `start.ts`; no per-function `.middleware([requireAuth])`; public endpoints go in `routes/api/*` | web | `docs/reference/web/architecture.md` Server boundary | guidance | guidance |
 | Hand-written files use the `@/*` alias, not relative hops (violations exist; decision: fix and enforce with a lint rule, planned in spec #55 / #62) | web | `docs/reference/web/architecture.md` Shape | guidance | guidance |
 | `lib/` holds pure helpers and hooks live in `hooks/` (four hooks sit elsewhere today) | web | `docs/reference/web/domains.md` Shape | guidance | guidance |
@@ -152,6 +154,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
 | Tests are typechecked: each package has `tsconfig.test.json` and every discovered test is included | repo | `docs/contributing/testing/standards.md` Tests are typechecked | `pnpm typecheck`, `check:test-coverage-guard`, `scripts/__tests__/typecheck-contract.gate.test.ts` | enforced |
+| Every package and app `tsconfig.json` extends the root `tsconfig.base.json` (shared strictness, module, target and plugin options; the package keeps only jsx, lib, paths, rootDir, include and exclude), `tsconfig.test.json` extends its package config, and no package extends `apps/web`'s | repo | `docs/contributing/testing/standards.md` Tests are typechecked | `scripts/__tests__/tsconfig-base.gate.test.ts` | enforced |
 | Never silence a test type error with a cast or `@ts-expect-error` | repo | `docs/contributing/testing/standards.md` Tests are typechecked | guidance | guidance |
 | Every gate wired into a hook or CI has a `*.gate.test.ts` with a must-fail case | scripts | `docs/contributing/ci-gates.md` Gate tests | `scripts/__tests__/gate-coverage.gate.test.ts` | enforced |
 | Every hook blocks or is deleted; none runs a gate in a mode that always exits 0 | repo | `docs/contributing/ci-gates.md` Hook policy | `scripts/__tests__/hook-policy.gate.test.ts` | enforced |

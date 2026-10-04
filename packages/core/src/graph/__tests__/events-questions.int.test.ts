@@ -10,8 +10,8 @@ import {
   runDomain,
 } from "@watchdog/core";
 import { db, questionsRepo } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
+import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 
 describe("createEvent", () => {
   beforeEach(async () => {
@@ -100,11 +100,7 @@ describe("questions", () => {
       })
     );
     await runDomain(
-      deleteQuestionEffect(
-        cased.id,
-        TEST_ORGANIZATION_ID,
-        created.id
-      )
+      deleteQuestionEffect(cased.id, TEST_ORGANIZATION_ID, created.id)
     );
     const rows = await questionsRepo.listForEntity(db, entity.id);
     expect(rows.some((row) => row.id === created.id)).toBe(false);

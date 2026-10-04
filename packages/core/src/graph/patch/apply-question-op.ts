@@ -9,7 +9,10 @@ import {
   InvalidError,
   type DomainTag,
 } from "../../infra/tagged-errors";
-import { requireDomainStringEffect, requireDomainUuidEffect } from "./apply-patch-helpers";
+import {
+  requireDomainStringEffect,
+  requireDomainUuidEffect,
+} from "./apply-patch-helpers";
 import { assertEntityInCaseEffect } from "./guards";
 
 export function applyQuestionOpEffect(

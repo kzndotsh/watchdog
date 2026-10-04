@@ -255,9 +255,9 @@ export {
 
 export { normalizeIdentifierValue } from "./normalize-identifier";
 
-export type { CreateCaseFieldsInput } from "./case-create";
+export type { CreateCaseInput } from "./case-create";
 export type { CreateCaseFields } from "./case-create";
-export { createCaseFieldsSchema } from "./case-create";
+export { createCaseInputSchema } from "./case-create";
 export type { UpdateCaseFields } from "./case-update";
 export type { UpdateCaseInput } from "./case-update";
 export type { DeleteCaseInput } from "./case-update";

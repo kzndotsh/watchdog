@@ -92,9 +92,11 @@ export function graphBezierPointAt(
   };
 }
 
-export function graphBezierPath(
-  params: GraphBezierParams
-): { path: string; midX: number; midY: number } {
+export function graphBezierPath(params: GraphBezierParams): {
+  path: string;
+  midX: number;
+  midY: number;
+} {
   const { sx, sy, tx, ty } = params;
   const { c1x, c1y, c2x, c2y } = resolveGraphBezierControls(params);
   const mid = graphBezierPointAt(0.5, params);

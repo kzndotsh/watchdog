@@ -1,6 +1,11 @@
 import { Effect, Result } from "effect";
+
 import { assertPatchShape } from "@watchdog/policy";
-import { parseGraphUuidList, trimmedOrNull, type PatchOp } from "@watchdog/schemas";
+import {
+  parseGraphUuidList,
+  trimmedOrNull,
+  type PatchOp,
+} from "@watchdog/schemas";
 
 import { tryParsePatch } from "./patch";
 

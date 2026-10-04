@@ -1,11 +1,9 @@
 import { cn } from "@/lib/utils";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
-import {
-  ENTITY_NODE_SHELL_CLASS,
-} from "@/shared/ui/graph/entity-node-chrome";
+import { ENTITY_NODE_SHELL_CLASS } from "@/shared/ui/graph/entity-node-chrome";
 import { kindBorder } from "@/shared/ui/graph/graph-styles";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 import type { EntityKind } from "@watchdog/schemas";
+import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 /** Shape-matched skeleton for {@link EntityNode} — same chrome, pulsing placeholders. */
 export function EntityNodeSkeleton({

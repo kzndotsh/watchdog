@@ -5,12 +5,9 @@ import { type CustodyViolation, assertPatchGates } from "@watchdog/policy";
 import type { ConfidenceTier, PatchOp } from "@watchdog/schemas";
 import { parseGraphUuidList } from "@watchdog/schemas";
 
-import { transact } from "../../infra/postgres-tx";
 import { assertEvidenceIdsInCaseEffect } from "../../evidence/evidence";
-import {
-  InvalidError,
-  type DomainTag,
-} from "../../infra/tagged-errors";
+import { transact } from "../../infra/postgres-tx";
+import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
 import { applyClaimOpEffect } from "./apply-claim-op";
 import { applyEdgeOpEffect } from "./apply-edge-op";
 import { applyEntityOpEffect } from "./apply-entity-op";

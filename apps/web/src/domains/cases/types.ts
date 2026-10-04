@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import type { CaseRecord as CoreCaseRecord } from "@watchdog/core";
 import {
-  createCaseFieldsSchema,
   deleteCaseInputSchema,
   getCaseBySlugInputSchema,
   trimmedUuidSchema,
@@ -41,9 +40,6 @@ export const healActiveCaseInputSchema = z.object({
   expectedActiveCaseId: trimmedUuidSchema.nullable(),
 });
 export type HealActiveCaseInput = z.output<typeof healActiveCaseInputSchema>;
-
-export const createCaseInputSchema = createCaseFieldsSchema;
-export type CreateCaseInput = z.input<typeof createCaseInputSchema>;
 
 export { updateCaseInputSchema };
 export type { UpdateCaseInput };

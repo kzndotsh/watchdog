@@ -115,7 +115,10 @@ export function validateEdgeUpdateEffect(
         reason: "Edge cannot link an Entity to itself",
       });
     }
-    if (resolvedViewEntityId !== next.fromId && resolvedViewEntityId !== next.toId) {
+    if (
+      resolvedViewEntityId !== next.fromId &&
+      resolvedViewEntityId !== next.toId
+    ) {
       return yield* new InvalidError({
         reason: "viewEntityId must remain an endpoint of this Edge",
       });
@@ -174,8 +177,7 @@ export function assertEntityKindChangeAllowedEffect(
       edgesRepo.listForEntity(exec, caseId, entityId)
     );
     for (const edge of edges) {
-      const fromKind =
-        edge.fromId === entityId ? nextKind : edge.fromKind;
+      const fromKind = edge.fromId === entityId ? nextKind : edge.fromKind;
       const toKind = edge.toId === entityId ? nextKind : edge.toKind;
       if (!edgePredicateAllowsKinds(edge.predicate, fromKind, toKind)) {
         return yield* new InvalidError({

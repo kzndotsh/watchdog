@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@orpc/client": "^1.15.1",
-    "@orpc/contract": "^1.15.1",
+    "@orpc/contract": "catalog:",
     "@orpc/openapi-client": "^1.15.1"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "typescript": "7.0.2"
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   }
 }

@@ -8,8 +8,7 @@ if ! command -v desloppify >/dev/null 2>&1; then
 fi
 
 patterns=(
-  _legacy-v1
-  _legacy-v2
+  _legacy-v2 # local frozen tree, untracked
   graph
   data
   repos

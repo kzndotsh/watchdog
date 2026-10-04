@@ -12,7 +12,7 @@ Format: .agents/skills/domain-modeling/GLOSSARY-FORMAT.md, which defines only th
   - Avoid line: soft synonyms and the preferred term. Guidance only. Keep each Avoid list to
     plain terms (no parentheticals) and put any nuance in the definition.
 
-Entries are line-oriented: this file is excluded from the formatter (.prettierignore) because
+Entries are line-oriented: this file is excluded from the formatter (`oxfmt.config.ts` ignore list) because
 the formatter reflows each entry onto one line, which moves the Banned line off the start of a
 line and silently empties the gate's term list.
 -->

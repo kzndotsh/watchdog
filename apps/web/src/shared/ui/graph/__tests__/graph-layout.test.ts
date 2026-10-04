@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { graphBezierPath } from "@/shared/ui/graph/graph-bezier";
+import {
+  graphCanvasDotMixPercent,
+  graphCanvasDotStyle,
+} from "@/shared/ui/graph/graph-canvas-background";
 import {
   computeGraphFitTransform,
   expandBoundsForFit,
@@ -7,8 +12,6 @@ import {
   GRAPH_CANVAS_MIN_FIT_BOUNDS_HEIGHT,
   GRAPH_CANVAS_MIN_FIT_BOUNDS_WIDTH,
 } from "@/shared/ui/graph/graph-layout";
-import { graphCanvasDotMixPercent, graphCanvasDotStyle } from "@/shared/ui/graph/graph-canvas-background";
-import { graphBezierPath } from "@/shared/ui/graph/graph-bezier";
 
 describe("expandBoundsForFit", () => {
   it("expands tiny clusters to the minimum fit frame", () => {
