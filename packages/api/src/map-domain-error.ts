@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { Match } from "effect";
 
-import type { DomainTag } from "@watchdog/core";
+import type { DomainTag } from "@watchdog/core/errors";
 import { peekRequestLogger } from "@watchdog/log";
 
 /** Message sent to clients for every `InternalError`; the real cause is log-only. */

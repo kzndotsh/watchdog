@@ -1,4 +1,4 @@
-import { searchCaseEffect } from "@watchdog/core";
+import { searchCaseEffect } from "@watchdog/core/search";
 import {
   searchCaseInputSchema,
   searchCaseResultSchema,

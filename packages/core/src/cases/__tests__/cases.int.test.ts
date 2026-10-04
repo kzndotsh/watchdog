@@ -2,15 +2,15 @@ import { Effect, Result } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
-  DomainError,
   createCaseEffect,
   deleteCaseEffect,
   deleteOrganizationCasesEffect,
   getCaseByIdEffect,
   getCaseBySlugEffect,
   updateCaseEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/cases";
+import { DomainError } from "@watchdog/core/errors";
+import { runDomain } from "@watchdog/core/infra";
 import { db, entitiesRepo } from "@watchdog/db";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";

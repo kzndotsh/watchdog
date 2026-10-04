@@ -7,7 +7,7 @@ import {
   reopenQuestionEffect,
   resolveQuestionEffect,
   updateQuestionEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import {
   createQuestionInputSchema,
   entityScopeInputSchema,

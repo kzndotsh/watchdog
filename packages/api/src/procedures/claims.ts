@@ -5,7 +5,7 @@ import {
   listClaimsForEntityEffect,
   retractClaimEffect,
   updateClaimEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import {
   createClaimInputSchema,
   listClaimsInputSchema,

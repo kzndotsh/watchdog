@@ -7,7 +7,7 @@ import {
   playbookWaitingOnNextStep,
 } from "@/domains/jobs/lib/status";
 import { capabilityLabel } from "@/shared/ui/vocab";
-import type { JobListRecord, JobRecord } from "@watchdog/core";
+import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import {
   trimmedOrNull,
   type PlaybookRunStatus,

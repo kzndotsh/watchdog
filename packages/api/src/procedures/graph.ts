@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   listGraphWritesForCaseEffect,
   writeGraphFromAgentEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/proposals";
 import { caseScopeInputSchema, graphWriteInputSchema } from "@watchdog/schemas";
 
 import { actorLabelFromActor } from "../actor-label";

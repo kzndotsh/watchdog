@@ -4,7 +4,7 @@ import {
   deleteCredentialEffect,
   listCredentialSlotsEffect,
   putCredentialSlotEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/vault";
 import {
   deleteCredentialInputSchema,
   putCredentialInputSchema,

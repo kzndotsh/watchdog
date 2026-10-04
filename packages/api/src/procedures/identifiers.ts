@@ -6,7 +6,7 @@ import {
   listIdentifiersForCaseEffect,
   listIdentifiersForEntityEffect,
   updateIdentifierEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import {
   caseScopeInputSchema,
   createIdentifierInputSchema,

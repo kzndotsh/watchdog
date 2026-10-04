@@ -7,7 +7,7 @@ import {
   listJobsForCaseEffect,
   runPlaybookEffect,
   startJobEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/jobs";
 import {
   cancelJobInputSchema,
   cancelPlaybookInputSchema,

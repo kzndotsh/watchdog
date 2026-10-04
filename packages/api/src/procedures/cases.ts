@@ -6,7 +6,7 @@ import {
   getCaseByIdEffect,
   listCasesEffect,
   updateCaseEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/cases";
 import {
   createCaseInputSchema,
   deleteCaseInputSchema,

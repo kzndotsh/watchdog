@@ -6,8 +6,8 @@ const { listEdgesForEntityEffect } = vi.hoisted(() => ({
   listEdgesForEntityEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/graph", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
   return {
     ...actual,
     listEdgesForEntityEffect,
@@ -153,7 +153,7 @@ describe("edges procedures", () => {
   });
 
   it("accepts predicate-only related_to update at ingress", async () => {
-    const { updateEdgeEffect } = await import("@watchdog/core");
+    const { updateEdgeEffect } = await import("@watchdog/core/graph");
     vi.mocked(updateEdgeEffect).mockReturnValueOnce(
       Effect.succeed({
         id: "00000000-0000-4000-8000-000000000020",

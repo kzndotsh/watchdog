@@ -12,7 +12,7 @@ import {
   processEvidenceEffect,
   restoreEvidenceEffect,
   softDeleteEvidenceEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/evidence";
 import {
   attachEvidenceEntityInputSchema,
   confirmFileUploadInputSchema,

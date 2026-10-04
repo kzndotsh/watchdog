@@ -3,7 +3,7 @@ import { act, renderHook } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({

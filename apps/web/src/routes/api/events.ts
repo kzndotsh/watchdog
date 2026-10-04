@@ -18,11 +18,9 @@ import {
   corsPreflightResponse,
 } from "@/lib/api-cors.server";
 import { runApp } from "@watchdog/api";
-import {
-  assertCaseInOrgEffect,
-  listenForEvents,
-  listVisibleCaseIdsEffect,
-} from "@watchdog/core";
+import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
+import { listenForEvents } from "@watchdog/core/events";
+import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { createLogger } from "@watchdog/log";
 import { isWatchdogEvent, parseSseCaseIdParam } from "@watchdog/schemas";
 

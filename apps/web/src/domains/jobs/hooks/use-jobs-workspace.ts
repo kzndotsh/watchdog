@@ -27,7 +27,7 @@ import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { invalidateAfterJobMutation } from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { resolveQueueSelection } from "@/shared/lib/queue-selection";
-import type { JobListRecord, JobRecord } from "@watchdog/core";
+import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import {
   isLiveJobStatus,
   playbookSeedInputSchema,

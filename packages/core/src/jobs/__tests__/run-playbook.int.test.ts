@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { updateCaseEffect } from "@watchdog/core/cases";
+import { DomainError } from "@watchdog/core/errors";
+import { dumpUrlEffect } from "@watchdog/core/evidence";
+import { runDomain } from "@watchdog/core/infra";
 import {
   cancelPlaybookRunEffect,
-  DomainError,
-  dumpUrlEffect,
   runPlaybookEffect,
-  runDomain,
-  updateCaseEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/jobs";
 import { db, evidenceRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import { testId } from "@watchdog/test-kit";
 
 import { countLiveJobs, selectDueTasks } from "../selectors.ts";

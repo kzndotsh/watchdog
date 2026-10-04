@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DomainError } from "@watchdog/core/errors";
 import {
   createEventEffect,
   createQuestionEffect,
   deleteQuestionEffect,
-  DomainError,
   reopenQuestionEffect,
   resolveQuestionEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
 import { db, questionsRepo } from "@watchdog/db";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";

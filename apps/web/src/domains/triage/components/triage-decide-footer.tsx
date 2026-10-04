@@ -26,7 +26,7 @@ import {
 } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/timestamp";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
 import type { ConfidenceTier } from "@watchdog/schemas";

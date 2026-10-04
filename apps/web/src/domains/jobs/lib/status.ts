@@ -1,5 +1,5 @@
 import { capabilityLabel, playbookLabel, statusLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   CANCELLABLE_JOB_STATUSES,
   LIVE_JOB_STATUSES,

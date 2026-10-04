@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import { testId } from "@watchdog/test-kit";
 
 import { artifactDefaultOpen, orderJobArtifacts } from "../artifacts.ts";

@@ -2,7 +2,7 @@ import {
   isConfirmedWithoutBundle,
   totalEvidenceCount,
 } from "@/domains/triage/lib/accept-validation";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import type { ConfidenceTier, PatchOp } from "@watchdog/schemas";
 import { listInvalidIdentifierOps } from "@watchdog/schemas";
 

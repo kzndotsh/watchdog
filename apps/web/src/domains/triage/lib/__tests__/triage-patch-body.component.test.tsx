@@ -7,7 +7,7 @@ import type {
   TriageAcceptForm,
   TriageRejectForm,
 } from "@/domains/triage/hooks/use-triage-detail-forms";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/dossier/components/evidence-preview-drawer", () => ({

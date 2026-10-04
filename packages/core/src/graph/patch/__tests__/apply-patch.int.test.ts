@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { applyPatchEffect, DomainError, runDomain } from "@watchdog/core";
+import { DomainError } from "@watchdog/core/errors";
+import { applyPatchEffect } from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
 import {
   claimsRepo,
   db,

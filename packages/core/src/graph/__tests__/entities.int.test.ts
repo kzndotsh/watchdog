@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DomainError } from "@watchdog/core/errors";
 import {
   createEntityEffect,
   createEdgeEffect,
   deleteEntityEffect,
-  DomainError,
   getEntityByCaseSlugEffect,
   listEntitiesForCaseEffect,
   listQuestionsForEntityEffect,
-  runDomain,
   updateEntityFieldsEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
+import { runDomain } from "@watchdog/core/infra";
 import { db } from "@watchdog/db";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";

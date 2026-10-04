@@ -1,7 +1,8 @@
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { runDomain, updateCaseEffect } from "@watchdog/core";
+import { updateCaseEffect } from "@watchdog/core/cases";
+import { runDomain } from "@watchdog/core/infra";
 import { db, jobsRepo } from "@watchdog/db";
 import { buildClaimCreateOp } from "@watchdog/schemas/testing";
 import {

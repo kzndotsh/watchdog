@@ -10,7 +10,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) · `ds:
 | --- | --- | --- |
 | Web never imports `@watchdog/db` (auth's db access lives in `@watchdog/auth`) | [`domains.md`](../domains.md) | `oxlint` `no-restricted-imports` |
 | No `RoutePending` and no raw `Skeleton` in `domains/` or `routes/` (one pending surface per region) | [`loading.md`](loading.md) | `oxlint` `no-restricted-imports` |
-| Client code must not import the `@watchdog/policy` barrel or `@watchdog/core` root at runtime (use `@watchdog/policy/patch-needs-confidence`, `@watchdog/core/job-display`) | [`domains.md`](../domains.md) | `guidance` (only type imports of `@watchdog/core` exist today) |
+| Client code must not import the `@watchdog/policy` barrel or `@watchdog/core` domain subpaths at runtime (use `@watchdog/policy/patch-needs-confidence`, `@watchdog/core/job-display`) | [`domains.md`](../domains.md) | `guidance` (only type imports of `@watchdog/core` subpaths exist today) |
 | Opaque ids render via `IdChip` / `formatOpaqueId`, never `.slice(0, N)` | [`atoms.md`](atoms.md) | `ds:ban` `opaque-id` (`domains/` only, narrow pattern) |
 | No fictional vocab (`probable`, `dormant`, `merged`); badges take schema unions | [`atoms.md`](atoms.md) | `typecheck` |
 | Status is never color-only (one glyph shape per status via `STATUS_GLYPH`) | [`DESIGN.md`](../../../../DESIGN.md#colors) | test `shared/ui/__tests__/status.component.test.tsx` |

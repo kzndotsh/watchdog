@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import { testId } from "@watchdog/test-kit";
 
 import { totalEvidenceCount } from "../accept-validation.ts";

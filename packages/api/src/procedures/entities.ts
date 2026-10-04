@@ -6,7 +6,7 @@ import {
   getEntityByCaseSlugEffect,
   listEntitiesForCaseEffect,
   updateEntityFieldsEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import {
   caseScopeInputSchema,
   createEntityInputSchema,

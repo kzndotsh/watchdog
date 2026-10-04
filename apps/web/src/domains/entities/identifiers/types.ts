@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type {
   CaseIdentifierRecord as CoreCaseIdentifierRecord,
   IdentifierRecord as CoreIdentifierRecord,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import type {
   createIdentifierInputSchema,
   deleteIdentifierInputSchema,

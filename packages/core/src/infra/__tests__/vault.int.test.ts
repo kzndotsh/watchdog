@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { DomainError } from "@watchdog/core/errors";
+import { runDomain } from "@watchdog/core/infra";
 import {
-  DomainError,
   deleteCredentialEffect,
   getCredentialEffect,
   hasCredentialEffect,
@@ -9,8 +10,7 @@ import {
   listCredentialSlotsEffect,
   putCredentialEffect,
   putCredentialSlotEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/vault";
 import { credentialsRepo, db } from "@watchdog/db";
 import { resetTestDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";

@@ -46,10 +46,15 @@ vi.mock("@watchdog/api", () => ({
   runApp: (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
 }));
 
-vi.mock("@watchdog/core", () => ({
+vi.mock("@watchdog/core/graph", () => ({
   assertCaseInOrgEffect: assertCaseInOrgEffectMock,
+}));
+
+vi.mock("@watchdog/core/cases", () => ({
   listVisibleCaseIdsEffect: listVisibleCaseIdsEffectMock,
-  isWatchdogEvent: () => true,
+}));
+
+vi.mock("@watchdog/core/events", () => ({
   listenForEvents: listenForEventsMock,
 }));
 

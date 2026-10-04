@@ -7,7 +7,7 @@ import {
 } from "@/domains/collect/lib/collect-filters";
 import type { CollectRow } from "@/domains/collect/types";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import { testId } from "@watchdog/test-kit";
 
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {

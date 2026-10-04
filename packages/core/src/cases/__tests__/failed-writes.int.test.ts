@@ -9,12 +9,8 @@ import {
   type MockInstance,
 } from "vitest";
 
-import {
-  InternalError,
-  NotFoundError,
-  createCaseEffect,
-  deleteCaseEffect,
-} from "@watchdog/core";
+import { createCaseEffect, deleteCaseEffect } from "@watchdog/core/cases";
+import { InternalError, NotFoundError } from "@watchdog/core/errors";
 import { casesRepo, db } from "@watchdog/db";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";

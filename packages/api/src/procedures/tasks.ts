@@ -7,7 +7,7 @@ import {
   listTasksForCaseEffect,
   reorderTasksEffect,
   updateTaskEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/tasks";
 import {
   taskCreateInputSchema,
   taskDeleteInputSchema,

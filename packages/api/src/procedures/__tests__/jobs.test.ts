@@ -7,8 +7,8 @@ const { listJobsForCaseEffect, startJobEffect } = vi.hoisted(() => ({
   startJobEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/jobs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/jobs")>();
   return {
     ...actual,
     listJobsForCaseEffect,

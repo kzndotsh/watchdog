@@ -35,7 +35,7 @@ import {
   invalidateAfterEvidenceMutation,
   invalidateAfterJobMutation,
 } from "@/shared/lib/query-invalidation";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   entitySearchHaystackMapFromRows,
   entityTitleMapForJobInputs,

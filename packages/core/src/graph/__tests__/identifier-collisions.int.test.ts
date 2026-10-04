@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { listProposalsForCaseEffect, runDomain } from "@watchdog/core";
+import { runDomain } from "@watchdog/core/infra";
+import { listProposalsForCaseEffect } from "@watchdog/core/proposals";
 import { db } from "@watchdog/db";
 import { buildIdentifierCreateOp } from "@watchdog/schemas/testing";
 import {
