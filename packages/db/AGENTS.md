@@ -46,6 +46,7 @@ Repos do **not** re-validate display strings (name/title/text, slugify, blank→
 - PKs: `uuid().defaultRandom()` for domain tables, `text` for Better Auth. Timestamps: `src/schema/_helpers.ts`; `updatedAt` uses `$onUpdateFn`, so never set it by hand in `.set()`.
 - Indexes in array callback form; list-by-case/entity FKs get non-unique indexes.
 - Migrations: the TypeScript schema is the source. `pnpm db:generate` then `pnpm db:migrate`; never hand-author a migration without its `drizzle/meta` snapshot (keep it in sync with `_journal.json`). `CREATE SCHEMA "auth"` migrations use `IF NOT EXISTS` when `init.sql` already created it.
+- Migration workflow: generate with an explicit name, `pnpm db:generate --name=<what_changed>` (snake_case, e.g. `add_task_due_date`); never accept a random drizzle name. A released migration (anything on `main`) is immutable: never edit or rename it, add a new one. Existing names stay as they are. `pnpm check:migrations` (pre-commit, CI) runs generate and fails when a schema edit has no migration.
 - `drizzle.config.ts` does not use `@watchdog/env/server`: it loads the repo-root `.env` with dotenv.
 - **Soft refs (no FK):** `jobs.proposal_id` (cycles with `proposals.job_id`) · `claims.superseded_by_claim_id` / `proposals.superseded_by_proposal_id` (self-ref) · `cap_cache.job_id` (cache may outlive the Job; `case_id` is a real FK) · `credentials.user_id` and `cases.organization_id` (Better Auth ids as text, no cross-schema FK).
 
