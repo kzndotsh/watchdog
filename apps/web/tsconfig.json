@@ -1,30 +1,19 @@
 {
+  "extends": "../../tsconfig.base.json",
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "dist"],
   "compilerOptions": {
-    "target": "ES2022",
     "jsx": "react-jsx",
-    "module": "ESNext",
     "paths": {
       "@/*": ["./src/*"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
-
-    /* Linting */
-    "skipLibCheck": true,
-    "strict": true,
-    /* Off: upstream primitives in @watchdog/ui (imported into this program) carry unused
-       React imports; oxlint no-unused-vars covers locals for our own code. */
-    "noUnusedLocals": false,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    /* web includes its tests in this config, so it needs the .ts import extension itself */
+    "allowImportingTsExtensions": true
+    /* noUnusedLocals stays off (the default): upstream primitives in @watchdog/ui, imported
+       into this program, carry unused React imports; oxlint no-unused-vars covers locals
+       for our own code. */
   }
 }

@@ -152,6 +152,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
 | Tests are typechecked: each package has `tsconfig.test.json` and every discovered test is included | repo | `docs/contributing/testing/standards.md` Tests are typechecked | `pnpm typecheck`, `check:test-coverage-guard`, `scripts/__tests__/typecheck-contract.gate.test.ts` | enforced |
+| Every package and app `tsconfig.json` extends the root `tsconfig.base.json` (shared strictness, module, target and plugin options; the package keeps only jsx, lib, paths, rootDir, include and exclude), `tsconfig.test.json` extends its package config, and no package extends `apps/web`'s | repo | `docs/contributing/testing/standards.md` Tests are typechecked | `scripts/__tests__/tsconfig-base.gate.test.ts` | enforced |
 | Never silence a test type error with a cast or `@ts-expect-error` | repo | `docs/contributing/testing/standards.md` Tests are typechecked | guidance | guidance |
 | Every gate wired into a hook or CI has a `*.gate.test.ts` with a must-fail case | scripts | `docs/contributing/ci-gates.md` Gate tests | `scripts/__tests__/gate-coverage.gate.test.ts` | enforced |
 | Every hook blocks or is deleted; none runs a gate in a mode that always exits 0 | repo | `docs/contributing/ci-gates.md` Hook policy | `scripts/__tests__/hook-policy.gate.test.ts` | enforced |
