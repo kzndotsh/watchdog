@@ -22,11 +22,14 @@ const watchdogIgnores = [
   "packages/ui/src/components/**",
   "packages/ui/src/hooks/**",
   ".cursor/**",
-  ".agents/**",
+  "**/.agents/**",
   ".claude/**",
   ".kiro/**",
   "skills/**",
   "repos/**",
+  // Entries are line-oriented: the formatter joins each entry into one line, moving its
+  // Banned line off the line start and emptying the check:agents banned-terms list.
+  "GLOSSARY.md",
 ];
 
 export default defineConfig({
