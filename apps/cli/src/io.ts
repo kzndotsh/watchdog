@@ -297,13 +297,10 @@ function taggedErrorEnvelope(error: unknown): {
   // `reason` is log-only for InternalError; never echo it.
   if (code === "internal") return { code, message: INTERNAL_MESSAGE };
   const reason = readProp(error, "reason");
-  const resource = readProp(error, "resource");
   const fallback = readProp(error, "message");
   let message = tag;
   if (typeof reason === "string") {
     message = reason;
-  } else if (typeof resource === "string") {
-    message = resource;
   } else if (typeof fallback === "string") {
     message = fallback;
   }

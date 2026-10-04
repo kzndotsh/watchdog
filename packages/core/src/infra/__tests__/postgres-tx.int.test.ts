@@ -1,5 +1,5 @@
 import { Context, Effect, Exit, Fiber } from "effect";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   ConflictError,
@@ -28,6 +28,10 @@ function failWith(error: DomainTag): Promise<DomainTag> {
 describe("transact", () => {
   beforeEach(async () => {
     await resetTestDb();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("preserves InternalError raised inside the transaction body", async () => {
@@ -95,6 +99,26 @@ describe("transact", () => {
     const exit = await Effect.runPromiseExit(transact(() => Effect.die(boom)));
     expect(Exit.isFailure(exit)).toBe(true);
     expect(Exit.hasDies(exit)).toBe(true);
+  });
+
+  it("keeps the typed failure when the rollback rejects with a driver error", async () => {
+    const transaction = db.transaction.bind(db) as (
+      ...args: unknown[]
+    ) => Promise<unknown>;
+    vi.spyOn(db, "transaction").mockImplementation(((...args: unknown[]) =>
+      // The real transaction rolls back, but the driver then rejects with its
+      // own error instead of the body's rejection.
+      transaction(...args).then(
+        (value) => value,
+        () => {
+          throw new Error("rollback failed: connection lost");
+        }
+      )) as typeof db.transaction);
+    const error = new ConflictError({ reason: "taken" });
+    const failure = await Effect.runPromise(
+      Effect.flip(transact(() => Effect.fail(error)))
+    );
+    expect(failure).toBe(error);
   });
 
   it("interrupting the caller aborts the body and rolls back", async () => {

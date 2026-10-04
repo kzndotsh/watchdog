@@ -33,6 +33,11 @@ function mapDriverFailure(
  * errors map as in `tryDb`. Interrupting the caller aborts the body, rolls the
  * transaction back, and only then completes the interruption.
  *
+ * Nesting: a `transact` called inside another `transact`'s body opens a
+ * SECOND connection and transaction. It does not join the outer one, commits
+ * independently of it, and can deadlock a small pool (the outer holds one
+ * connection while waiting for another). Pass the outer `tx` down instead.
+ *
  * This is the one promise boundary for transaction bodies: the driver's
  * transaction API is promise-based.
  */
@@ -63,10 +68,10 @@ export function transact<A, E extends DomainTag = DomainTag, R = never>(
             resume(Effect.succeed(value));
           },
           (error: unknown) => {
-            if (
-              error instanceof TxBodyFailureError &&
-              bodyCause !== undefined
-            ) {
+            // A typed body failure wins over whatever the rejection was: the
+            // rollback itself can fail (e.g. a dropped connection) and reject
+            // with a driver error instead of `TxBodyFailureError`.
+            if (bodyCause !== undefined) {
               resume(Effect.failCause(bodyCause));
               return;
             }
