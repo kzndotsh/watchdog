@@ -53,3 +53,18 @@ export function tryDbWith<A>(
     tryDb(() => tryFn(exec), opts)
   );
 }
+
+/**
+ * `tryDbWith` for helpers that take an optional explicit handle: a caller
+ * inside a transaction passes its `tx`, anyone else omits it and the `Db`
+ * service supplies the client.
+ */
+export function tryDbOn<A>(
+  exec: DbExec | undefined,
+  tryFn: (exec: DbExec) => Promise<A>,
+  opts?: MapPostgresCatchOpts
+): Effect.Effect<A, DomainTag, Db> {
+  return exec === undefined
+    ? tryDbWith(tryFn, opts)
+    : tryDb(() => tryFn(exec), opts);
+}
