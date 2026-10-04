@@ -27,10 +27,10 @@ describe("auth server", () => {
   it("deletes an organization's Cases before the organization goes", async () => {
     const deleteOrganizationCasesEffect = vi.fn((...args: unknown[]) => args);
     const runDomain = vi.fn(async () => 2);
-    vi.doMock("@watchdog/core", () => ({
+    vi.doMock("@watchdog/core/cases", () => ({
       deleteOrganizationCasesEffect,
-      runDomain,
     }));
+    vi.doMock("@watchdog/core/infra", () => ({ runDomain }));
 
     const options = createAuth.mock.calls[0]?.[0] as {
       beforeDeleteOrganization: (input: {

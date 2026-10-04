@@ -5,7 +5,7 @@ import {
   resolveCollectRecipeTotal,
 } from "@/domains/collect/lib/collect-job-detail";
 import type { CollectRow } from "@/domains/collect/types";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import { testId } from "@watchdog/test-kit";
 
 function job(overrides: Partial<JobListRecord> = {}): JobListRecord {

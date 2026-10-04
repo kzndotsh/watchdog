@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { orpcFromContext } from "@/lib/orpc.server";
-import type { CredentialSlot } from "@watchdog/core";
+import type { CredentialSlot } from "@watchdog/core/vault";
 import {
   deleteCredentialInputSchema,
   putCredentialInputSchema,

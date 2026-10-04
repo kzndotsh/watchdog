@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { QuestionRecord as CoreQuestionRecord } from "@watchdog/core";
+import type { QuestionRecord as CoreQuestionRecord } from "@watchdog/core/graph";
 import type {
   createQuestionInputSchema,
   questionScopeInputSchema,

@@ -16,8 +16,9 @@ const {
   attachEvidenceEntityEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/evidence", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/core/evidence")>();
   return {
     ...actual,
     listEvidenceForCaseEffect,

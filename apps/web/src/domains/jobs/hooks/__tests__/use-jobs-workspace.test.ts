@@ -4,7 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CapListItem } from "@/domains/jobs/types";
-import type { JobListRecord, JobRecord } from "@watchdog/core";
+import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/jobs/jobs.functions", () => ({

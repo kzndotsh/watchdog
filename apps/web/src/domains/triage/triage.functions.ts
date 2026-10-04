@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { orpcFromContext } from "@/lib/orpc.server";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import {
   acceptProposalInputSchema,
   listProposalsInputSchema,

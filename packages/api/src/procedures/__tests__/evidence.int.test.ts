@@ -4,8 +4,8 @@ import {
   dumpUrlEffect,
   listEvidenceForCaseEffect,
   softDeleteEvidenceEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/evidence";
+import { runDomain } from "@watchdog/core/infra";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 

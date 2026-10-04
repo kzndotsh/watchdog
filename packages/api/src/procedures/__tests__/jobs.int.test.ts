@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  listJobsForCaseEffect,
-  startJobEffect,
-  runDomain,
-} from "@watchdog/core";
+import { runDomain } from "@watchdog/core/infra";
+import { listJobsForCaseEffect, startJobEffect } from "@watchdog/core/jobs";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 

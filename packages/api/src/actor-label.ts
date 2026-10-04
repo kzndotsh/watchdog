@@ -1,4 +1,7 @@
-import { actorLabelForPersist, storedApiKeyActorLabel } from "@watchdog/core";
+import {
+  actorLabelForPersist,
+  storedApiKeyActorLabel,
+} from "@watchdog/core/actors";
 import type { ApiActor } from "@watchdog/schemas";
 
 export function actorLabelFromActor(actor: ApiActor): string | undefined {

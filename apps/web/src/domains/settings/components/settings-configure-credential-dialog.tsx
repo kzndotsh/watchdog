@@ -18,7 +18,7 @@ import {
 } from "@/shared/ui/primitives/alert-dialog";
 import { Button } from "@/shared/ui/primitives/button";
 import { StatusDot } from "@/shared/ui/status-dot";
-import type { CredentialSlot } from "@watchdog/core";
+import type { CredentialSlot } from "@watchdog/core/vault";
 import { putCredentialInputSchema } from "@watchdog/schemas";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import {

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { runDomain } from "@watchdog/core/infra";
 import {
   acceptProposalEffect,
   createAgentProposalEffect,
   listProposalsForCaseEffect,
-  runDomain,
-} from "@watchdog/core";
+} from "@watchdog/core/proposals";
 import { buildClaimCreateOp } from "@watchdog/schemas/testing";
 import {
   resetTestDb,

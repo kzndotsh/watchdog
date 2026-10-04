@@ -4,12 +4,10 @@ import { zipSync, strToU8 } from "fflate";
 
 import { createApiContext } from "@/auth/api-context.server";
 import { runApp } from "@watchdog/api";
-import {
-  getCaseByIdEffect,
-  readArtifactBytesEffect,
-  renderCaseExportEffect,
-  type DomainTag,
-} from "@watchdog/core";
+import { readArtifactBytesEffect } from "@watchdog/core/blob";
+import { getCaseByIdEffect } from "@watchdog/core/cases";
+import type { DomainTag } from "@watchdog/core/errors";
+import { renderCaseExportEffect } from "@watchdog/core/export";
 /**
  * GET /api/v1/cases/:caseId/export.zip
  *

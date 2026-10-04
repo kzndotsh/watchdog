@@ -12,6 +12,10 @@ Domain services for Case Graph, Jobs, Evidence, Tasks (case work items, not Grap
 | Unit tests        | `pnpm test:unit`                         |
 | Integration tests | `pnpm test:integration`                  |
 
+## Import paths
+
+Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` where `<domain>` is `activity`, `actors`, `caps`, `cases`, `errors` (`DomainError`, tagged errors), `events` (notify + SSE listen), `evidence`, `export`, `graph` (entities, claims, edges, identifiers, questions, timeline, patch, guards), `infra` (`tryDb`, `transact`, `runDomain`), `jobs`, `proposals`, `search`, `tasks`, `vault`. Also `blob`, `job-display`, `proposal-display` and `worker`. Each domain is `src/<domain>/index.ts`; the root `src/index.ts` is only `export *` lines over them. New domain: add the folder index, the `exports` entry and the root line in one change. `pnpm check:boundaries` fails an import path missing from `exports`.
+
 ## Rules
 
 | Rule | Enforced by |
@@ -37,7 +41,7 @@ Domain services for Case Graph, Jobs, Evidence, Tasks (case work items, not Grap
 - Organization delete: `deleteOrganizationCasesEffect(organizationId, { actorId })` removes every Case (artifacts and export dir included) before the org row goes, because `cases.organization_id` is a soft ref and nothing cascades. The app wires it through `createAuth({ beforeDeleteOrganization })`.
 - Export: `scheduleCaseExportEffect` coalesces through a `SynchronizedRef` and marks dirty synchronously (`runSync`), so fire-and-forget calls still coalesce. The export dir is `<export>/<organization-id>/<case-slug>/`; case rename regenerates the slug (unique within the organization), then reschedules export.
 - After-commit SSE notifies (`notify*Effect`) fire only when not inside a parent `transact`; accept/reject notify after their own commit.
-- Client-safe label helpers live in `@watchdog/core/job-display`; worker code imports `@watchdog/core/worker`, not the barrel.
+- Client-safe label helpers live in `@watchdog/core/job-display`; worker code imports `@watchdog/core/worker`, not a domain subpath.
 - Logging: `@watchdog/log` (`logSwallowed`, `logProcess`). evlog is not `Job.logs` / `graph_writes` custody.
 - Tests: generic padded-UUID trim belongs in unit owners (`graph/patch/__tests__/guards.test.ts`, `@watchdog/schemas` `primitives-trim.test.ts`, db `scoped-ids.test.ts`); core `*.int.test.ts` assert domain contracts only. Core tests must not import `drizzle-orm`.
 

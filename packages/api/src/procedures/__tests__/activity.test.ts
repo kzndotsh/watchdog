@@ -6,8 +6,9 @@ const { listRecentActivityEffect } = vi.hoisted(() => ({
   listRecentActivityEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/activity", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@watchdog/core/activity")>();
   return {
     ...actual,
     listRecentActivityEffect,

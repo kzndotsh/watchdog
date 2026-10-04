@@ -5,7 +5,7 @@ import {
   deleteEventEffect,
   listEventsForEntityEffect,
   updateEventEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/graph";
 import {
   createEventInputSchema,
   entityScopeInputSchema,

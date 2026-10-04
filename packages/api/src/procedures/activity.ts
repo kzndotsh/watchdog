@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { listRecentActivityEffect } from "@watchdog/core";
+import { listRecentActivityEffect } from "@watchdog/core/activity";
 import {
   listRecentActivityInputSchema,
   activityItemSchema,

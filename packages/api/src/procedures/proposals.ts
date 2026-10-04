@@ -5,7 +5,7 @@ import {
   createAgentProposalEffect,
   listProposalsForCaseEffect,
   rejectProposalEffect,
-} from "@watchdog/core";
+} from "@watchdog/core/proposals";
 import {
   acceptProposalInputSchema,
   createProposalInputSchema,

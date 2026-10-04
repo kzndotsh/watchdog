@@ -12,7 +12,7 @@ import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 
 interface TriageDetailProps {
   proposal: ProposalRecord | null;

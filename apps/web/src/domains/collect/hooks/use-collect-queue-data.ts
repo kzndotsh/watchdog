@@ -18,7 +18,8 @@ import {
   combinedQueryLoadError,
   queryLoadError,
 } from "@/shared/lib/query-load-error";
-import type { CredentialSlot, JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
+import type { CredentialSlot } from "@watchdog/core/vault";
 
 const EMPTY_EVIDENCE_ROWS: EvidenceRecord[] = [];
 const EMPTY_JOB_ROWS: JobListRecord[] = [];

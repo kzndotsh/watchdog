@@ -6,8 +6,8 @@ const { listCredentialSlotsEffect } = vi.hoisted(() => ({
   listCredentialSlotsEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/vault", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/vault")>();
   return {
     ...actual,
     listCredentialSlotsEffect,

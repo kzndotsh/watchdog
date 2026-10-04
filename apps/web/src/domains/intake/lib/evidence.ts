@@ -1,7 +1,7 @@
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { evidencePrimaryLabel } from "@/shared/ui/intake/evidence-option";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   ENRICHED_MD_ARTIFACT,
   evidenceTitleMapForJobInputs,

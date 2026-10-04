@@ -26,7 +26,7 @@ import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Button } from "@/shared/ui/primitives/button";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import { StatusDot } from "@/shared/ui/status-dot";
-import type { CredentialSlot } from "@watchdog/core";
+import type { CredentialSlot } from "@watchdog/core/vault";
 import { deleteCredentialInputSchema } from "@watchdog/schemas";
 import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 import { Separator } from "@watchdog/ui/components/separator";

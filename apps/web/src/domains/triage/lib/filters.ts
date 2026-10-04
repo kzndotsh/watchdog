@@ -6,7 +6,7 @@ import {
   proposalHeadlineLabel,
   statusLabel,
 } from "@/shared/ui/vocab";
-import type { ProposalRecord } from "@watchdog/core";
+import type { ProposalRecord } from "@watchdog/core/proposals";
 import {
   catalogIdMatchesSearch,
   patchOpHeadline,

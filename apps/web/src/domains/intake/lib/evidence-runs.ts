@@ -11,7 +11,7 @@ import {
   normalizedPlaybookRunId,
 } from "@/domains/jobs/lib/status";
 import { capabilityLabel, jobHeadlineLabel } from "@/shared/ui/vocab";
-import type { JobListRecord } from "@watchdog/core";
+import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   evidenceIdsFromJobInputs,
   isProcessCapability,

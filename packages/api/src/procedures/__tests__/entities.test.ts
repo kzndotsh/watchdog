@@ -14,8 +14,8 @@ const {
   updateEntityFieldsEffect: vi.fn(),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/graph", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
   return {
     ...actual,
     listEntitiesForCaseEffect,

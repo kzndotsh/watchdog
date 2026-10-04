@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { NotFoundError } from "@watchdog/core";
+import { NotFoundError } from "@watchdog/core/errors";
 import { testId, testHttpOrigin } from "@watchdog/test-kit";
 
 const createApiContextMock = vi.hoisted(() =>
@@ -30,12 +30,26 @@ vi.mock("@watchdog/api", () => ({
   runApp: (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
 }));
 
-vi.mock("@watchdog/core", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core")>();
+vi.mock("@watchdog/core/cases", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/cases")>();
   return {
     ...actual,
     getCaseByIdEffect: getCaseByIdEffectMock,
+  };
+});
+
+vi.mock("@watchdog/core/graph", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/graph")>();
+  return {
+    ...actual,
     getEntityByCaseSlugEffect: getEntityByCaseSlugEffectMock,
+  };
+});
+
+vi.mock("@watchdog/core/export", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/export")>();
+  return {
+    ...actual,
     renderEntityMarkdownEffect: renderEntityMarkdownEffectMock,
   };
 });
