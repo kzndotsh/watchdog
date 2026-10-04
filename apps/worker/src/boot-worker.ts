@@ -254,7 +254,7 @@ function onExportEventListening(): void {
 }
 
 function exportEventsEffect(shutdown: WorkerShutdownApi) {
-  return Effect.race(
+  return Effect.raceFirst(
     Stream.runForEach(
       listenForEventsStream({
         onReady: onExportEventListening,

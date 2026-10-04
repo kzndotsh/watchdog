@@ -1,5 +1,6 @@
 import { Context, Deferred, Effect, Exit, Layer } from "effect";
 
+import { WorkerListenError } from "./errors";
 import { logWorkerError } from "./worker-log";
 
 /**
@@ -9,7 +10,9 @@ import { logWorkerError } from "./worker-log";
  * fiber, the boot scope closes, and the worker queue Layer drains pg-boss on
  * release. This service keeps what runMain does not do: a repeated signal
  * force-exits (143 SIGTERM, 130 SIGINT, 1 otherwise), and a failed LISTEN
- * connection ends the boot normally so the same release runs. Its Layer is
+ * connection fails the boot with `WorkerListenError`: the same release runs
+ * (queue drain first), then the process exits 1 so a restart-on-failure
+ * supervisor brings Cap Job processing and export sync back. Its Layer is
  * provided outermost (`provideWorkerLayers`), so the listeners exist from
  * process start and outlive the queue drain.
  */
@@ -21,8 +24,8 @@ export function repeatShutdownExitCode(signal: string): number {
 }
 
 export interface WorkerShutdownApi {
-  /** Completes when the LISTEN connection fails; the boot races it against the event stream. */
-  readonly listenFailed: Deferred.Deferred<true>;
+  /** Fails with `WorkerListenError` when the LISTEN connection fails; the boot races it against the event stream. */
+  readonly listenFailed: Deferred.Deferred<never, WorkerListenError>;
   readonly onListenError: (error: unknown) => void;
 }
 
@@ -35,7 +38,7 @@ export class WorkerShutdown extends Context.Service<
 export const workerShutdownLayer: Layer.Layer<WorkerShutdown> = Layer.effect(
   WorkerShutdown,
   Effect.gen(function* workerShutdownGen() {
-    const listenFailed = yield* Deferred.make<true>();
+    const listenFailed = yield* Deferred.make<never, WorkerListenError>();
     const state = { shuttingDown: false };
 
     const onSignal = (signal: string) => () => {
@@ -69,7 +72,10 @@ export const workerShutdownLayer: Layer.Layer<WorkerShutdown> = Layer.effect(
           return;
         }
         state.shuttingDown = true;
-        Deferred.doneUnsafe(listenFailed, Exit.succeed(true));
+        Deferred.doneUnsafe(
+          listenFailed,
+          Exit.fail(new WorkerListenError({ cause: error }))
+        );
       },
     });
   })

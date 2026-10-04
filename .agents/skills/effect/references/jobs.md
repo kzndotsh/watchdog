@@ -18,8 +18,10 @@ package AGENTS.md files link here.
   `provideWorkerLayers`; the `WorkerShutdown` Layer (signal listeners) is
   outermost, so a repeated signal also works during boot and the drain and
   force-exits (143 SIGTERM, 130
-  SIGINT, 1 for a LISTEN failure); a LISTEN failure otherwise ends the boot
-  normally (exit 0) so the same release runs.
+  SIGINT, 1 for a LISTEN failure); a LISTEN failure otherwise fails the boot
+  with `WorkerListenError`, so the same release runs (queue drain first) and
+  the process exits non-zero (1). This is a behavior change from exit 0; a
+  restart-on-failure supervisor now restarts the worker.
 - Export LISTEN: `listenForEventsStream` + `Stream.runForEach` only.
 - The pg-boss work handler runs `processCapJobBatchEffect` with `JobFibers`
   provided; it yields `executeJobOnMap(jobId)`.

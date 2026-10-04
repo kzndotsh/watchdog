@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Effect, Fiber, FiberMap, Stream } from "effect";
+import { Cause, Effect, Exit, Fiber, FiberMap, Stream } from "effect";
 import { vi } from "vitest";
 
 const workerMocks = vi.hoisted(() => ({
@@ -40,6 +40,7 @@ import {
 } from "@watchdog/core/worker";
 
 import { bootWorkerEffect } from "../boot-worker";
+import { WorkerListenError } from "../errors";
 import { provideWorkerLayers } from "../layers";
 
 const CAP_JOB_ID = "11111111-1111-4111-8111-000000000001";
@@ -248,19 +249,60 @@ describe("bootWorkerEffect", () => {
       })
   );
 
-  it.effect("ends the boot normally and drains when LISTEN fails", () =>
-    Effect.gen(function* bootWorkerListenFailureTestGen() {
+  it.effect(
+    "fails the boot with WorkerListenError after draining when LISTEN fails",
+    () =>
+      Effect.gen(function* bootWorkerListenFailureTestGen() {
+        const fake = fakeDriver();
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        yield* Effect.yieldNow;
+        yield* Effect.yieldNow;
+        const args = workerMocks.listenForEventsStream.mock.calls.at(
+          -1
+        )?.[0] as {
+          onError: (error: unknown) => void;
+        };
+        const cause = new Error("connection lost");
+        args.onError(cause);
+        const exit = yield* Fiber.await(fiber);
+        expect(Exit.isFailure(exit)).toBe(true);
+        if (Exit.isFailure(exit)) {
+          const error = Cause.squash(exit.cause);
+          expect(error).toBeInstanceOf(WorkerListenError);
+          expect(error).toMatchObject({
+            _tag: "WorkerListenError",
+            code: "worker_listen",
+            cause,
+          });
+        }
+        // boss.stop ran (once, graceful) before the failure surfaced.
+        expect(fake.stop).toHaveBeenCalledTimes(1);
+        expect(fake.events).toEqual(["boss.stop"]);
+      })
+  );
+
+  it.effect("force-exits 1 when LISTEN fails during shutdown", () =>
+    Effect.gen(function* bootWorkerListenDuringShutdownTestGen() {
+      const exit = vi
+        .spyOn(process, "exit")
+        .mockImplementation((() => undefined) as typeof process.exit);
       const fake = fakeDriver();
       const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-      yield* Effect.yieldNow;
-      yield* Effect.yieldNow;
-      const args = workerMocks.listenForEventsStream.mock.calls.at(-1)?.[0] as {
-        onError: (error: unknown) => void;
-      };
-      args.onError(new Error("connection lost"));
-      const exit = yield* Fiber.await(fiber);
-      expect(exit._tag).toBe("Success");
-      expect(fake.stop).toHaveBeenCalledTimes(1);
+      try {
+        yield* Effect.yieldNow;
+        yield* Effect.yieldNow;
+        const args = workerMocks.listenForEventsStream.mock.calls.at(
+          -1
+        )?.[0] as {
+          onError: (error: unknown) => void;
+        };
+        process.emit("SIGTERM");
+        args.onError(new Error("connection lost"));
+        expect(exit).toHaveBeenCalledWith(1);
+      } finally {
+        exit.mockRestore();
+      }
+      yield* Fiber.interrupt(fiber);
     })
   );
 });
