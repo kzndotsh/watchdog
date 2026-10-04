@@ -1,4 +1,4 @@
-import { Deferred, Effect, Exit, type Scope } from "effect";
+import { Context, Deferred, Effect, Exit, Layer } from "effect";
 
 import { logWorkerError } from "./worker-log";
 
@@ -7,67 +7,70 @@ import { logWorkerError } from "./worker-log";
  *
  * The first SIGTERM/SIGINT is `NodeRuntime.runMain`'s: it interrupts the main
  * fiber, the boot scope closes, and the worker queue Layer drains pg-boss on
- * release. This module only keeps what runMain does not do: a repeated signal
- * during that drain force-exits (143 SIGTERM, 130 SIGINT, 1 otherwise), and a
- * failed LISTEN connection ends the boot normally so the same release runs.
+ * release. This service keeps what runMain does not do: a repeated signal
+ * force-exits (143 SIGTERM, 130 SIGINT, 1 otherwise), and a failed LISTEN
+ * connection ends the boot normally so the same release runs. Its Layer is
+ * provided outermost (`provideWorkerLayers`), so the listeners exist from
+ * process start and outlive the queue drain.
  */
 
-function repeatShutdownExitCode(signal: string): number {
+export function repeatShutdownExitCode(signal: string): number {
   if (signal === "SIGINT") return 130;
   if (signal === "SIGTERM") return 143;
   return 1;
 }
 
-export interface WorkerShutdown {
+export interface WorkerShutdownApi {
   /** Completes when the LISTEN connection fails; the boot races it against the event stream. */
   readonly listenFailed: Deferred.Deferred<true>;
   readonly onListenError: (error: unknown) => void;
 }
 
-/**
- * Install the repeated-signal handler for the lifetime of the surrounding
- * scope (listeners are removed on release).
- */
-export const bindWorkerShutdown: Effect.Effect<
+export class WorkerShutdown extends Context.Service<
   WorkerShutdown,
-  never,
-  Scope.Scope
-> = Effect.gen(function* bindWorkerShutdownGen() {
-  const listenFailed = yield* Deferred.make<true>();
-  const state = { shuttingDown: false };
+  WorkerShutdownApi
+>()("@watchdog/worker/WorkerShutdown") {}
 
-  const onSignal = (signal: string) => () => {
-    if (state.shuttingDown) {
-      process.exit(repeatShutdownExitCode(signal));
-      return;
-    }
-    state.shuttingDown = true;
-  };
-  const onSigterm = onSignal("SIGTERM");
-  const onSigint = onSignal("SIGINT");
+/** Listeners are removed when the Layer's scope closes (after the queue drain). */
+export const workerShutdownLayer: Layer.Layer<WorkerShutdown> = Layer.effect(
+  WorkerShutdown,
+  Effect.gen(function* workerShutdownGen() {
+    const listenFailed = yield* Deferred.make<true>();
+    const state = { shuttingDown: false };
 
-  yield* Effect.acquireRelease(
-    Effect.sync(() => {
-      process.on("SIGTERM", onSigterm);
-      process.on("SIGINT", onSigint);
-    }),
-    () =>
-      Effect.sync(() => {
-        process.removeListener("SIGTERM", onSigterm);
-        process.removeListener("SIGINT", onSigint);
-      })
-  );
-
-  return {
-    listenFailed,
-    onListenError: (error) => {
-      logWorkerError("export-sync.listen", "LISTEN connection failed", error);
+    const onSignal = (signal: string) => () => {
       if (state.shuttingDown) {
-        process.exit(repeatShutdownExitCode("LISTEN"));
+        process.exit(repeatShutdownExitCode(signal));
         return;
       }
       state.shuttingDown = true;
-      Deferred.doneUnsafe(listenFailed, Exit.succeed(true));
-    },
-  };
-});
+    };
+    const onSigterm = onSignal("SIGTERM");
+    const onSigint = onSignal("SIGINT");
+
+    yield* Effect.acquireRelease(
+      Effect.sync(() => {
+        process.on("SIGTERM", onSigterm);
+        process.on("SIGINT", onSigint);
+      }),
+      () =>
+        Effect.sync(() => {
+          process.removeListener("SIGTERM", onSigterm);
+          process.removeListener("SIGINT", onSigint);
+        })
+    );
+
+    return WorkerShutdown.of({
+      listenFailed,
+      onListenError: (error) => {
+        logWorkerError("export-sync.listen", "LISTEN connection failed", error);
+        if (state.shuttingDown) {
+          process.exit(repeatShutdownExitCode("LISTEN"));
+          return;
+        }
+        state.shuttingDown = true;
+        Deferred.doneUnsafe(listenFailed, Exit.succeed(true));
+      },
+    });
+  })
+);

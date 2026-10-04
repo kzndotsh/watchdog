@@ -176,15 +176,74 @@ describe("bootWorkerEffect", () => {
           .mockImplementation((() => undefined) as typeof process.exit);
         const fake = fakeDriver();
         const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-        yield* Effect.yieldNow;
-        yield* Effect.yieldNow;
-        process.emit("SIGTERM");
-        expect(exit).not.toHaveBeenCalled();
-        process.emit("SIGINT");
-        expect(exit).toHaveBeenLastCalledWith(130);
-        process.emit("SIGTERM");
-        expect(exit).toHaveBeenLastCalledWith(143);
-        exit.mockRestore();
+        try {
+          yield* Effect.yieldNow;
+          yield* Effect.yieldNow;
+          process.emit("SIGTERM");
+          expect(exit).not.toHaveBeenCalled();
+          process.emit("SIGINT");
+          expect(exit).toHaveBeenLastCalledWith(130);
+          process.emit("SIGTERM");
+          expect(exit).toHaveBeenLastCalledWith(143);
+        } finally {
+          exit.mockRestore();
+        }
+        yield* Fiber.interrupt(fiber);
+      })
+  );
+
+  it.effect(
+    "force-exits on a repeated signal while boss.stop is still draining",
+    () =>
+      Effect.gen(function* bootWorkerDrainSignalTestGen() {
+        const exit = vi
+          .spyOn(process, "exit")
+          .mockImplementation((() => undefined) as typeof process.exit);
+        const fake = fakeDriver();
+        let finishStop: () => void = () => {};
+        const pendingStop = new Promise<void>((resolve) => {
+          finishStop = resolve;
+        });
+        fake.stop.mockReturnValueOnce(pendingStop);
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        try {
+          yield* Effect.yieldNow;
+          yield* Effect.yieldNow;
+          // First signal: runMain interrupts; the drain (stop) is now pending.
+          process.emit("SIGTERM");
+          const interrupting = yield* Effect.forkChild(Fiber.interrupt(fiber));
+          yield* Effect.yieldNow;
+          yield* Effect.yieldNow;
+          expect(fake.stop).toHaveBeenCalledTimes(1);
+          expect(exit).not.toHaveBeenCalled();
+          process.emit("SIGTERM");
+          expect(exit).toHaveBeenCalledWith(143);
+          finishStop();
+          yield* Fiber.await(interrupting);
+        } finally {
+          finishStop();
+          exit.mockRestore();
+        }
+      })
+  );
+
+  it.effect(
+    "force-exits on a repeated signal as soon as the Layers are built",
+    () =>
+      Effect.gen(function* bootWorkerEarlySignalTestGen() {
+        const exit = vi
+          .spyOn(process, "exit")
+          .mockImplementation((() => undefined) as typeof process.exit);
+        const fake = fakeDriver();
+        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        try {
+          yield* Effect.yieldNow;
+          process.emit("SIGINT");
+          process.emit("SIGINT");
+          expect(exit).toHaveBeenCalledWith(130);
+        } finally {
+          exit.mockRestore();
+        }
         yield* Fiber.interrupt(fiber);
       })
   );

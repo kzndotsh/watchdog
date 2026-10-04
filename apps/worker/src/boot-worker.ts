@@ -32,7 +32,7 @@ import {
   claimExportEventEffect,
   shouldTriggerCaseExport,
 } from "./export-events";
-import { bindWorkerShutdown, type WorkerShutdown } from "./shutdown";
+import { WorkerShutdown, type WorkerShutdownApi } from "./shutdown";
 import { emitOnce, logWorkerError } from "./worker-log";
 
 function reconcileWorkerStartupEffect(): Effect.Effect<
@@ -253,7 +253,7 @@ function onExportEventListening(): void {
   emitOnce("export-sync", { message: "listening for graph events" });
 }
 
-function exportEventsEffect(shutdown: WorkerShutdown) {
+function exportEventsEffect(shutdown: WorkerShutdownApi) {
   return Effect.race(
     Stream.runForEach(
       listenForEventsStream({
@@ -362,7 +362,7 @@ export const bootWorkerEffect = Effect.scoped(
     emitOnce("worker.boot", { message: `listening on ${CAP_JOB_QUEUE}` });
     yield* reconcileWorkerStartupEffect();
     yield* registerCapJobHandlerEffect((jobId) => executeJobOnMap(jobId));
-    const shutdown = yield* bindWorkerShutdown;
+    const shutdown = yield* WorkerShutdown;
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
     return yield* exportEventsEffect(shutdown);
   })

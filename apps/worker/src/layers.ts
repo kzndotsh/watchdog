@@ -7,6 +7,8 @@ import {
   type JobQueueWorker,
 } from "@watchdog/core/worker";
 
+import { workerShutdownLayer, type WorkerShutdown } from "./shutdown";
+
 /**
  * Provide the worker's services. Layers close innermost first: after the boot
  * scope closes, the worker queue drains pg-boss (graceful `boss.stop`, so
@@ -16,12 +18,18 @@ import {
  * (`makeJobQueueLayers`).
  */
 export function provideWorkerLayers<A, E, LE>(
-  effect: Effect.Effect<A, E, Db | JobFibers | JobQueue | JobQueueWorker>,
+  effect: Effect.Effect<
+    A,
+    E,
+    Db | JobFibers | JobQueue | JobQueueWorker | WorkerShutdown
+  >,
   queueLayer: Layer.Layer<JobQueue | JobQueueWorker, LE>
 ): Effect.Effect<A, E | LE> {
   return effect.pipe(
     Effect.provide(queueLayer),
     Effect.provide(JobFibers.layer),
-    Effect.provide(Db.layer)
+    Effect.provide(Db.layer),
+    // Outermost: signal listeners exist from process start and outlive the drain.
+    Effect.provide(workerShutdownLayer)
   );
 }
