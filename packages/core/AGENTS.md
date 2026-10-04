@@ -34,7 +34,7 @@ Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` wher
 
 ## `Db` service pattern (ADR-0002 phase 2)
 
-`Db` (`infra/db-service.ts`) is a `Context.Service` whose value is a `DbExec`; `Db.layer` is the live Layer over `@watchdog/db`'s `db`. All core code reads the client from it: importing `db` from `@watchdog/db` in core source fails lint (`no-restricted-imports`; exempt: `infra/db-service.ts` and tests). Reference: `listCasesEffect` (`cases/cases.ts`, test `cases-db-layer.int.test.ts`).
+`Db` (`infra/db-service.ts`) is a `Context.Service` whose value is a `DbExec`; `Db.layer` is the live Layer over `@watchdog/db`'s `db`. All core code reads the client from it: importing `db` from `@watchdog/db` in core source fails lint (`no-restricted-imports`, plus `watchdog/no-core-db-dynamic-import` for `import()`; exempt: `infra/db-service.ts` and tests). Reference: `listCasesEffect` (`cases/cases.ts`, test `cases-db-layer.int.test.ts`).
 
 ```ts
 // before: R = never, module-global db
