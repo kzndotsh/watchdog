@@ -38,7 +38,7 @@ function workspaceRepo({ catalog = {}, packages }: Fixture) {
 describe("check-catalog", () => {
   it("passes when every shared dependency uses the catalog", () => {
     const res = workspaceRepo({
-      catalog: { effect: "4.0.0-rc.115", zod: "^4.6.5" },
+      catalog: { effect: "4.0.0", zod: "^4.6.5" },
       packages: {
         ".": { devDependencies: { effect: "catalog:" } },
         "packages/a": { dependencies: { effect: "catalog:", zod: "catalog:" } },

@@ -1,6 +1,6 @@
 import { Effect, Result } from "effect";
-import { HttpBody, HttpClient } from "effect/unstable/http";
-import type { HttpMethod } from "effect/unstable/http/HttpMethod";
+import { HttpBody, HttpClient } from "effect/http";
+import type { HttpMethod } from "effect/http/HttpMethod";
 
 import {
   HttpVendorError,
@@ -146,7 +146,8 @@ function isHttpMethod(value: string): value is HttpMethod {
     case "PATCH":
     case "HEAD":
     case "OPTIONS":
-    case "TRACE": {
+    case "TRACE":
+    case "QUERY": {
       return true;
     }
     default: {
@@ -176,7 +177,7 @@ export function fetchJsonUnknownEffect(
       });
     }
     const method = methodRaw;
-    if (method === "OPTIONS" || method === "TRACE") {
+    if (method === "OPTIONS" || method === "TRACE" || method === "QUERY") {
       return yield* new ValidationVendorError({
         message: `unsupported HTTP method: ${method}`,
       });

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { Effect } from "effect";
-import type { HttpClient } from "effect/unstable/http";
+import type { HttpClient } from "effect/http";
 import { z } from "zod";
 
 import { mapToolsCatch } from "../errors/map-tools-tag";

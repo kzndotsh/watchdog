@@ -1,5 +1,5 @@
 import type { Effect } from "effect";
-import type { HttpClient } from "effect/unstable/http";
+import type { HttpClient } from "effect/http";
 import type { z } from "zod";
 
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
