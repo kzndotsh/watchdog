@@ -109,4 +109,28 @@ describe("changed-packages", () => {
     expect(res.code).toBe(1);
     expect(res.output).toContain("changed:");
   });
+
+  it.each([[["--base"]], [["--base", "--json"]]])(
+    "errors clearly when --base has no ref (%j)",
+    (args) => {
+      const repo = fixture();
+
+      const res = repo.run(GATE, args);
+
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("--base needs a ref");
+    }
+  );
+
+  it("accepts --base <ref> together with --json", () => {
+    const repo = fixture();
+    repo.write("packages/tools/src/a.ts", "export {};\n");
+    repo.commitAll("tools");
+
+    const res = repo.run(GATE, ["--base", "main", "--json"]);
+
+    expect(JSON.parse(res.output)).toEqual([
+      { name: "@wd/tools", dir: "packages/tools" },
+    ]);
+  });
 });

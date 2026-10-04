@@ -15,6 +15,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { changedPaths, git, lines, mergeBaseWith } from "./lib/git-range.mjs";
 
@@ -94,7 +95,11 @@ export function affected(pkgs, files) {
 /** @param {string[]} argv */
 function main(argv) {
   const baseIdx = argv.indexOf("--base");
-  const base = baseIdx === -1 ? mergeBaseWith("main", root) : argv[baseIdx + 1];
+  const given = baseIdx === -1 ? undefined : argv[baseIdx + 1];
+  if (baseIdx !== -1 && (given === undefined || given.startsWith("--"))) {
+    throw new Error("--base needs a ref, e.g. --base origin/main");
+  }
+  const base = given ?? mergeBaseWith("main", root);
   if (!base) {
     throw new Error("no merge base with main; pass --base <ref>");
   }
@@ -142,7 +147,10 @@ function main(argv) {
   return 0;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   try {
     process.exit(main(process.argv.slice(2)));
   } catch (error) {
