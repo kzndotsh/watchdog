@@ -4,7 +4,7 @@ import type { DomainTag } from "@watchdog/core/errors";
 
 import { toOrpcError } from "./map-domain-error";
 
-/** Empty composition root — domain Effects use `tryDb` / module functions, not Layers. */
+/** Empty composition root until the ADR-0002 phases land: domain Effects use `tryDb` / module functions. */
 export const AppLive = Layer.empty;
 
 export const appRuntime = ManagedRuntime.make(AppLive);
