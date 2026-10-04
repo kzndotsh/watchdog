@@ -186,31 +186,51 @@ export function makeJobQueueLayers(createDriver: () => BossDriver) {
     Effect.gen(function* producerQueueGen() {
       const driver = createDriver();
       const gate = yield* Semaphore.make(1);
-      const state = { started: false, open: true };
-      yield* Effect.addFinalizer(() =>
-        Effect.gen(function* releaseProducerGen() {
-          if (!state.started) {
-            state.open = false;
-            return;
-          }
-          const error = yield* stopEffect(driver, {
-            graceful: true,
-            timeout: PRODUCER_STOP_TIMEOUT_MS,
-          });
-          state.open = false;
-          if (error !== undefined) {
-            yield* Effect.sync(() => {
-              logSwallowed("pg-boss:producer", new Error(error));
+      // `booted` (start() succeeded) and `queueReady` (queue ensured) are
+      // tracked apart: a retry after a failed ensure must not start() again,
+      // and release stops any booted boss.
+      const state = { booted: false, queueReady: false, open: true };
+      // One gate serves start and release. The start runs uninterruptibly
+      // inside it, so an interrupted send cannot abandon a half-done start,
+      // concurrent and later sends join the single start, and release waits
+      // for an in-flight start before it stops the boss.
+      yield* Effect.addFinalizer(() => {
+        state.open = false;
+        return gate.withPermits(1)(
+          Effect.gen(function* releaseProducerGen() {
+            if (!state.booted) return;
+            const error = yield* stopEffect(driver, {
+              graceful: true,
+              timeout: PRODUCER_STOP_TIMEOUT_MS,
             });
-          }
-        })
-      );
+            if (error !== undefined) {
+              yield* Effect.sync(() => {
+                logSwallowed("pg-boss:producer", new Error(error));
+              });
+            }
+          })
+        );
+      });
       const ensureStarted = gate.withPermits(1)(
-        Effect.gen(function* ensureStartedGen() {
-          if (state.started) return;
-          yield* startAndEnsure(driver);
-          state.started = true;
-        })
+        Effect.uninterruptible(
+          Effect.gen(function* ensureStartedGen() {
+            if (!state.open) return yield* closedError();
+            if (!state.booted) {
+              yield* Effect.tryPromise({
+                try: () => driver.start(),
+                catch: mapBossCatch,
+              });
+              state.booted = true;
+            }
+            if (!state.queueReady) {
+              yield* Effect.tryPromise({
+                try: () => driver.ensureQueue(),
+                catch: mapBossCatch,
+              });
+              state.queueReady = true;
+            }
+          })
+        )
       );
       return JobQueue.of({
         role: "producer",

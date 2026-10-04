@@ -11,11 +11,13 @@ package AGENTS.md files link here.
   FiberMap **and** the abort-reason map), `Db.layer`, and the worker queue
   Layer.
 - Shutdown = scope release. First SIGTERM/SIGINT: `runMain` interrupts the main
-  fiber (exit 130); the boot scope closes (cancel poll, LISTEN stream); the
+  fiber (exit 130 for SIGTERM and SIGINT alike, same as before phase 3); the boot scope closes (cancel poll, LISTEN stream); the
   queue Layer releases with `boss.stop({ graceful: true, timeout:
   gracefulStopTimeoutMs() })` so in-flight Cap Jobs finish; then `JobFibers`
   interrupts leftovers; then `Db`. The queue Layer must stay innermost in
-  `provideWorkerLayers`. A repeated signal force-exits (143 SIGTERM, 130
+  `provideWorkerLayers`; the `WorkerShutdown` Layer (signal listeners) is
+  outermost, so a repeated signal also works during boot and the drain and
+  force-exits (143 SIGTERM, 130
   SIGINT, 1 for a LISTEN failure); a LISTEN failure otherwise ends the boot
   normally (exit 0) so the same release runs.
 - Export LISTEN: `listenForEventsStream` + `Stream.runForEach` only.

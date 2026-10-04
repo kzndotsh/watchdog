@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Context, Effect, Exit, Layer, Option, Scope } from "effect";
+import { Context, Effect, Exit, Fiber, Layer, Option, Scope } from "effect";
 import { vi } from "vitest";
 
 import { InternalError } from "../../infra/tagged-errors";
@@ -142,6 +142,116 @@ describe("JobQueue producer Layer", () => {
         yield* producer.close;
         yield* worker.close;
       })
+  );
+});
+
+describe("JobQueue producer Layer start races", () => {
+  const options = { expireInSeconds: 90, singletonKey: JOB_ID };
+
+  it.effect(
+    "retries only ensureQueue after a failed ensure, and still stops the started boss",
+    () =>
+      Effect.gen(function* producerEnsureFailGen() {
+        const fake = fakeDriver();
+        fake.ensureQueue.mockRejectedValueOnce(new Error(DRIVER_TEXT));
+        const built = yield* build(
+          makeJobQueueLayers(() => fake.driver).producerLayer
+        );
+        const queue = Context.get(built.context, JobQueue);
+        const failure = yield* Effect.flip(
+          queue.send({ jobId: JOB_ID }, options)
+        );
+        expect(failure).toBeInstanceOf(InternalError);
+        yield* queue.send({ jobId: JOB_ID }, options);
+        expect(fake.start).toHaveBeenCalledTimes(1);
+        expect(fake.ensureQueue).toHaveBeenCalledTimes(2);
+        yield* built.close;
+        expect(fake.stop).toHaveBeenCalledTimes(1);
+      })
+  );
+
+  it.effect(
+    "stops a boss that was started but never ensured when the scope closes",
+    () =>
+      Effect.gen(function* producerStartedNotEnsuredGen() {
+        const fake = fakeDriver();
+        fake.ensureQueue.mockRejectedValueOnce(new Error(DRIVER_TEXT));
+        const built = yield* build(
+          makeJobQueueLayers(() => fake.driver).producerLayer
+        );
+        const queue = Context.get(built.context, JobQueue);
+        yield* Effect.flip(queue.send({ jobId: JOB_ID }, options));
+        yield* built.close;
+        expect(fake.stop).toHaveBeenCalledTimes(1);
+      })
+  );
+
+  it.effect(
+    "waits for an in-flight start on release, then stops the boss it started",
+    () =>
+      Effect.gen(function* producerReleaseDuringStartGen() {
+        const fake = fakeDriver();
+        const events: string[] = [];
+        let finishStart: () => void = () => {};
+        const pendingStart = new Promise<void>((resolve) => {
+          finishStart = () => {
+            events.push("start.done");
+            resolve();
+          };
+        });
+        fake.start.mockReturnValueOnce(pendingStart);
+        fake.stop.mockImplementation(async () => {
+          events.push("stop");
+        });
+        const built = yield* build(
+          makeJobQueueLayers(() => fake.driver).producerLayer
+        );
+        const queue = Context.get(built.context, JobQueue);
+        const sending = yield* Effect.forkChild(
+          Effect.result(queue.send({ jobId: JOB_ID }, options))
+        );
+        yield* Effect.yieldNow;
+        const closing = yield* Effect.forkChild(built.close);
+        yield* Effect.yieldNow;
+        expect(fake.stop).not.toHaveBeenCalled();
+        finishStart();
+        yield* Fiber.await(sending);
+        yield* Fiber.await(closing);
+        expect(events).toEqual(["start.done", "stop"]);
+        expect(fake.stop).toHaveBeenCalledTimes(1);
+      })
+  );
+
+  it.effect("shares one start across an interrupted send and later sends", () =>
+    Effect.gen(function* producerSharedStartGen() {
+      const fake = fakeDriver();
+      let finishStart: () => void = () => {};
+      fake.start.mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          finishStart = resolve;
+        })
+      );
+      const built = yield* build(
+        makeJobQueueLayers(() => fake.driver).producerLayer
+      );
+      const queue = Context.get(built.context, JobQueue);
+      const first = yield* Effect.forkChild(
+        queue.send({ jobId: JOB_ID }, options)
+      );
+      yield* Effect.yieldNow;
+      const interrupting = yield* Effect.forkChild(Fiber.interrupt(first));
+      const second = yield* Effect.forkChild(
+        queue.send({ jobId: JOB_ID }, options)
+      );
+      yield* Effect.yieldNow;
+      finishStart();
+      yield* Fiber.await(interrupting);
+      yield* Fiber.await(second);
+      expect(fake.start).toHaveBeenCalledTimes(1);
+      yield* queue.send({ jobId: JOB_ID }, options);
+      expect(fake.start).toHaveBeenCalledTimes(1);
+      yield* built.close;
+    })
   );
 });
 
