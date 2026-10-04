@@ -107,6 +107,78 @@ describe("check-tagged-errors gate", () => {
     expect(res.output).toContain("WireError must declare a stable code");
   });
 
+  it("detects a class header wrapped across lines", () => {
+    const wrapped = (code: string[]) =>
+      [
+        "export class VeryLongNamedFailureError",
+        '  extends Data.TaggedError("VeryLongNamedFailureError")<{',
+        "    readonly reason: string;",
+        "  }>",
+        "{",
+        ...code,
+        "}",
+        "",
+      ].join("\n");
+    const missing = repoWith({
+      "packages/core/src/w.ts": wrapped([]),
+    }).run(GATE, STRICT);
+    expect(missing.code).toBe(1);
+    expect(missing.output).toContain(
+      "VeryLongNamedFailureError must declare a stable code"
+    );
+
+    const present = repoWith({
+      "packages/core/src/w.ts": wrapped([
+        '  readonly code = "wrapped" as const;',
+      ]),
+    }).run(GATE, STRICT);
+    expect(present.code).toBe(0);
+  });
+
+  it("does not borrow a later class's code when a class never closes", () => {
+    const later = [
+      'export class LaterError extends Data.TaggedError("LaterError")<{}> {',
+      '  readonly code = "later" as const;',
+      "}",
+      "",
+    ];
+    const unclosed = repoWith({
+      "packages/core/src/u.ts": [
+        'export class OpenError extends Data.TaggedError("OpenError")<{',
+        "  readonly reason: string;",
+        // no closing line at this indent
+        ...later,
+      ].join("\n"),
+    }).run(GATE, STRICT);
+    expect(unclosed.code).toBe(1);
+    expect(unclosed.output).toContain("OpenError");
+    expect(unclosed.output).toContain("cannot find the end of the class body");
+
+    const closed = repoWith({
+      "packages/core/src/u.ts": [
+        'export class OpenError extends Data.TaggedError("OpenError")<{',
+        "  readonly reason: string;",
+        "}> {",
+        '  readonly code = "open" as const;',
+        "}",
+        ...later,
+      ].join("\n"),
+    }).run(GATE, STRICT);
+    expect(closed.code).toBe(0);
+  });
+
+  it("handles namespace-imported Schema.TaggedError", () => {
+    const res = repoWith({
+      "packages/schemas/src/n.ts": [
+        'export class NsError extends Schema.TaggedError<NsError>()("NsError", {}) {',
+        '  readonly code = "ns" as const;',
+        "}",
+        "",
+      ].join("\n"),
+    }).run(GATE, STRICT);
+    expect(res.code).toBe(0);
+  });
+
   it("ignores tests and __tests__ fixtures", () => {
     const repo = repoWith({
       "packages/core/src/__tests__/fixture.ts":

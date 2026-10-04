@@ -5,9 +5,11 @@
  * declares no stable `code`, or reuses another class's `code`.
  *
  * Text scan, like the sibling gates: a class region runs from its
- * declaration to the first line at the same indent that closes it (`}`, or
- * `}> {}` / `}) {}` for an empty body), which is how the formatter lays classes out. Tests and
- * `__tests__` fixtures are skipped.
+ * declaration (the header may wrap onto the next lines) to the first line at
+ * the same indent that closes it (`}`, or `}> {}` / `}) {}` for an empty
+ * body), which is how the formatter lays classes out. A region never runs past
+ * the next class declaration; an unclosed one is a finding (fail closed).
+ * Tests and `__tests__` fixtures are skipped.
  *
  * --strict (or CHECK_TAGGED_ERRORS_STRICT=1): exit 1 on any hit.
  */
@@ -19,8 +21,11 @@ const strict =
   process.argv.includes("--strict") ||
   process.env.CHECK_TAGGED_ERRORS_STRICT === "1";
 
-const CLASS_DECL =
-  /^(\s*)(?:export\s+)?(?:default\s+)?class\s+(\w+)\s+extends\s+(?:Data\.TaggedError|Schema\.TaggedError(?:Class)?)\b/;
+const CLASS_HEAD = /^(\s*)(?:export\s+)?(?:default\s+)?class\s+(\w+)\b/;
+const EXTENDS_TAGGED =
+  /^\s*(?:export\s+)?(?:default\s+)?class\s+\w+\s+extends\s+(?:Data\.TaggedError|Schema\.TaggedError(?:Class)?)\b/;
+/** The formatter may wrap `extends` onto the next line or two. */
+const HEADER_LINES = 3;
 const CODE_FIELD =
   /^\s*(?:(?:public|readonly|override)\s+)*code\s*(?::[^=]+)?=\s*["']([^"']+)["']/;
 const SKIP_DIRS = new Set(["__tests__", "node_modules", "dist"]);
@@ -71,15 +76,25 @@ async function sourceRoots() {
  * @param {string[]} lines
  * @param {number} start index of the declaration line
  * @param {string} indent
- * @returns {number} index of the last line of the class region
+ * @returns {number} index of the last line of the class region, or -1 when it
+ *   cannot be found before the next class declaration (fail closed)
  */
 function classEnd(lines, start, indent) {
   for (let i = start; i < lines.length; i += 1) {
     const line = lines[i] ?? "";
+    if (i > start && CLASS_HEAD.test(line)) return -1;
+    const header = lines.slice(start, i + 1).join("\n");
+    if (
+      i - start < HEADER_LINES &&
+      line.endsWith("{}") &&
+      EXTENDS_TAGGED.test(header)
+    ) {
+      return i;
+    }
     if (line === `${indent}}`) return i;
     if (line.startsWith(`${indent}}`) && line.endsWith("{}")) return i;
   }
-  return lines.length - 1;
+  return -1;
 }
 
 /**
@@ -95,14 +110,22 @@ async function scanFile(abs) {
   /** @type {{ code: string; where: string; name: string }[]} */
   const codes = [];
   for (const [index, line] of lines.entries()) {
-    const decl = CLASS_DECL.exec(line);
-    if (!decl) continue;
-    const [, indent = "", name = ""] = decl;
+    const head = CLASS_HEAD.exec(line);
+    if (!head) continue;
+    const header = lines.slice(index, index + HEADER_LINES).join("\n");
+    if (!EXTENDS_TAGGED.test(header)) continue;
+    const [, indent = "", name = ""] = head;
     const where = `${rel}:${index + 1}`;
     if (!name.endsWith("Error")) {
       msgs.push(`${where}: tagged error class ${name} must end in Error`);
     }
     const end = classEnd(lines, index, indent);
+    if (end === -1) {
+      msgs.push(
+        `${where}: tagged error class ${name}: cannot find the end of the class body, so its code cannot be verified`
+      );
+      continue;
+    }
     let code;
     for (const bodyLine of lines.slice(index, end + 1)) {
       code = CODE_FIELD.exec(bodyLine)?.[1];
