@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Deferred, Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { claimExportEventEffect } = vi.hoisted(() => ({
@@ -57,28 +57,41 @@ describe("handleExportEventPayloadEffect", () => {
   });
 
   it("marks the case before forking, so an interrupted child cannot lose the mark", async () => {
-    const steps: string[] = [];
+    // The claim must run in the caller's fiber (before the fork). A claim that
+    // ran inside the forked child would see a different fiber id.
+    const seen: { claimFiber?: number; joined: boolean } = { joined: false };
+    const gate = Deferred.makeUnsafe<undefined>();
     claimExportEventEffect.mockReturnValue(
-      Effect.sync(() => {
-        steps.push("claimed");
-        return Effect.sync(() => {
-          steps.push("joined");
-        });
+      Effect.gen(function* claimGen() {
+        seen.claimFiber = yield* Effect.fiberId;
+        return Deferred.await(gate).pipe(
+          Effect.tap(() =>
+            Effect.sync(() => {
+              seen.joined = true;
+            })
+          )
+        );
       })
     );
     const event = {
       type: "entity_changed",
       caseId: "11111111-1111-4111-8111-000000000001",
     };
-    await Effect.runPromise(
+    const callerFiber = await Effect.runPromise(
       Effect.provide(
-        handleExportEventPayloadEffect(JSON.stringify(event)),
+        Effect.gen(function* handleGen() {
+          const id = yield* Effect.fiberId;
+          yield* handleExportEventPayloadEffect(JSON.stringify(event));
+          return id;
+        }),
         Db.layer
       )
     );
-    // The effect returned without waiting for the forked wait: the mark is
-    // already made, whether or not the child ever got a step.
-    expect(steps[0]).toBe("claimed");
+    // Returned without waiting on the held wait: claimed in the caller's
+    // fiber, and the wait has not completed.
+    expect(seen.claimFiber).toBe(callerFiber);
+    expect(seen.joined).toBe(false);
+    await Effect.runPromise(Deferred.succeed(gate, undefined));
   });
 
   it("ignores watchdog events with empty or invalid caseId", async () => {
