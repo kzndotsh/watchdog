@@ -13,7 +13,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const coreSrc = path.join(repoRoot, "packages/core/src");
-const testKitSrc = path.join(repoRoot, "packages/schemas/src/testing");
+const schemasTestingSrc = path.join(repoRoot, "packages/schemas/src/testing");
 
 const TYPES =
   'import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";\n';
@@ -49,23 +49,26 @@ const PASS_CASES = {
 } as const;
 
 let coreProbeDir = "";
-let kitProbeDir = "";
+let exemptProbeDir = "";
 let output = "";
 
 beforeAll(() => {
   coreProbeDir = mkdtempSync(path.join(coreSrc, "__oxlint-probe-"));
-  kitProbeDir = mkdtempSync(path.join(testKitSrc, "__oxlint-probe-"));
+  exemptProbeDir = mkdtempSync(path.join(schemasTestingSrc, "__oxlint-probe-"));
   for (const [name, src] of Object.entries({ ...FAIL_CASES, ...PASS_CASES })) {
     writeFileSync(path.join(coreProbeDir, `${name}.ts`), src);
   }
-  writeFileSync(path.join(kitProbeDir, "exempt.ts"), FAIL_CASES["as-case-id"]);
+  writeFileSync(
+    path.join(exemptProbeDir, "exempt.ts"),
+    FAIL_CASES["as-case-id"]
+  );
   const res = spawnSync(
     path.join(repoRoot, "node_modules/.bin/oxlint"),
     [
       "-c",
       "oxlint.config.ts",
       path.relative(repoRoot, coreProbeDir),
-      path.relative(repoRoot, kitProbeDir),
+      path.relative(repoRoot, exemptProbeDir),
     ],
     { cwd: repoRoot, encoding: "utf-8" }
   );
@@ -74,7 +77,7 @@ beforeAll(() => {
 
 afterAll(() => {
   if (coreProbeDir) rmSync(coreProbeDir, { recursive: true, force: true });
-  if (kitProbeDir) rmSync(kitProbeDir, { recursive: true, force: true });
+  if (exemptProbeDir) rmSync(exemptProbeDir, { recursive: true, force: true });
 });
 
 const hitsFor = (dir: string, name: string) =>
@@ -91,6 +94,6 @@ describe("branded id cast ban (oxlint.config.ts)", () => {
     expect(hitsFor(coreProbeDir, name)).toHaveLength(0);
   });
   it("exempts packages/schemas/src/testing fixtures", () => {
-    expect(hitsFor(kitProbeDir, "exempt")).toHaveLength(0);
+    expect(hitsFor(exemptProbeDir, "exempt")).toHaveLength(0);
   });
 });

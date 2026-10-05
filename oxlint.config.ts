@@ -324,7 +324,6 @@ export default defineConfig({
       files: [
         "**/__tests__/**",
         "**/*.test.{ts,tsx}",
-        "packages/test-kit/src/**",
         "packages/caps/src/testing/**",
         "packages/schemas/src/testing/**",
         "packages/test-db/src/**",

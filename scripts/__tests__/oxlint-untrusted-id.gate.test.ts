@@ -12,7 +12,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const coreSrc = path.join(repoRoot, "packages/core/src");
-const testKitSrc = path.join(repoRoot, "packages/test-kit/src");
+const schemasTesting = path.join(repoRoot, "packages/schemas/src/testing");
 const capsTesting = path.join(repoRoot, "packages/caps/src/testing");
 
 const IMPORT =
@@ -34,7 +34,8 @@ beforeAll(() => {
   probeDir = mkdtempSync(path.join(coreSrc, "__oxlint-probe-"));
   testsDir = path.join(probeDir, "__tests__");
   mkdirSync(testsDir);
-  kitDir = mkdtempSync(path.join(testKitSrc, "__oxlint-probe-"));
+  mkdirSync(schemasTesting, { recursive: true });
+  kitDir = mkdtempSync(path.join(schemasTesting, "__oxlint-probe-"));
   mkdirSync(capsTesting, { recursive: true });
   capsDir = mkdtempSync(path.join(capsTesting, "__oxlint-probe-"));
   writeFileSync(path.join(probeDir, "prod-import.ts"), IMPORT);

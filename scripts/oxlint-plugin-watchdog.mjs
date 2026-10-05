@@ -156,7 +156,7 @@ const noBrandCast = {
       if (hit !== null) {
         context.report({
           node,
-          message: `Do not cast to a type containing ${hit}: mint it with asOrganizationId / asCaseId (or parse with the id schema) from @watchdog/schemas/shared. Only packages/test-kit fixtures are exempt (ADR-0003).`,
+          message: `Do not cast to a type containing ${hit}: mint it with asOrganizationId / asCaseId (or parse with the id schema) from @watchdog/schemas/shared. Only the branded test fixtures in packages/schemas/src/testing are exempt (ADR-0003).`,
         });
       }
     };
@@ -223,7 +223,7 @@ const noUntrustedIdImport = {
         if (name !== null && UNTRUSTED_ID_HELPERS.has(name)) {
           context.report({
             node: spec,
-            message: `${name} stamps an unvalidated brand and is for tests only: mint ids with asCaseId / asOrganizationId or a schema parse (ADR-0003). Allowed in __tests__, *.test.ts, packages/test-kit, testing/ and packages/test-db/src.`,
+            message: `${name} stamps an unvalidated brand and is for tests only: mint ids with asCaseId / asOrganizationId or a schema parse (ADR-0003). Allowed in __tests__, *.test.ts, testing/ helper dirs and packages/test-db/src.`,
           });
         }
       }
