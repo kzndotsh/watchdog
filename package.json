@@ -81,7 +81,7 @@
     "happy-dom": "^20.14.3",
     "jsdom": "^30.0.1",
     "knip": "^6.35.1",
-    "oxfmt": "^0.67.0",
+    "oxfmt": "^0.71.0",
     "oxlint": "catalog:",
     "oxlint-plugin-react-doctor": "^0.9.13",
     "oxlint-tsgolint": "7.0.2001",
@@ -89,7 +89,7 @@
     "sherif": "1.13.0",
     "tsx": "catalog:",
     "typescript": "catalog:",
-    "ultracite": "7.12.0",
+    "ultracite": "7.12.2",
     "vitest": "catalog:",
     "yaml": "^2.9.0"
   },
