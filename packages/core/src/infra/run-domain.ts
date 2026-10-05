@@ -18,7 +18,18 @@ export function runDomainWith<ROut>(layer: Layer.Layer<ROut>) {
 /**
  * The services `runDomain` provides: the live `Db`, `Vault` and `BlobStore`
  * Layers. Both extras are cheap per call (the vault Layer only captures `Db`,
- * the blob Layer only builds an `S3Client`, destroyed when the call ends).
+ * the blob Layer only builds an `S3Client`).
+ *
+ * Lifetime: they are built per call and the S3 client is destroyed when the
+ * call returns, so a fiber the effect forks that outlives the call (the export
+ * write forked by Case update via `forkDetach`) can lose its client mid-read.
+ * Safe today: the only production `runDomain` caller (org deletion in
+ * `apps/web/src/auth/server.ts`) forks no export, and `runApp` / the worker keep
+ * their services for the process lifetime. Tracked in issue #135.
+ *
+ * `vaultLayer` captures the `Db` it is built over, so under
+ * `runDomainWith(Db.layerOf(tx))` a live vault still uses the pool: tests compose
+ * `Layer.provideMerge(vaultLayer, Db.layerOf(tx))` or use `fakeVault`.
  * Stateful services (`JobQueue`) are not in here: pass them through
  * `runDomainWith`.
  */
