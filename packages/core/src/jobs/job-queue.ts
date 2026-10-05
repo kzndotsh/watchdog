@@ -1,4 +1,4 @@
-import { Context, Effect, Exit, Layer, Semaphore } from "effect";
+import { Context, Effect, Layer, Semaphore } from "effect";
 import { PgBoss } from "pg-boss";
 
 import { env } from "@watchdog/env/server";
@@ -123,11 +123,6 @@ export class JobQueue extends Context.Service<JobQueue, JobQueueApi>()(
   "@watchdog/core/jobs/JobQueue"
 ) {}
 
-function exitLabel(exit: Exit.Exit<unknown, unknown>): string {
-  if (Exit.isSuccess(exit)) return "exit";
-  return Exit.hasInterrupts(exit) ? "interrupt" : "failure";
-}
-
 function closedError(): InternalError {
   return new InternalError({ reason: "job queue is closed" });
 }
@@ -243,7 +238,7 @@ export function makeJobQueueLayers(createDriver: () => BossDriver) {
     Effect.gen(function* workerQueueGen() {
       const driver = createDriver();
       const state = { open: true };
-      yield* Effect.acquireRelease(startAndEnsure(driver), (_acquired, exit) =>
+      yield* Effect.acquireRelease(startAndEnsure(driver), () =>
         Effect.gen(function* releaseWorkerGen() {
           // Sends stay open while draining: an in-flight Cap Job may still
           // enqueue its playbook successor, as it could with the old boss.
@@ -252,14 +247,11 @@ export function makeJobQueueLayers(createDriver: () => BossDriver) {
             timeout: gracefulStopTimeoutMs(),
           });
           state.open = false;
-          const how = exitLabel(exit);
-          yield* Effect.sync(() => {
-            logProcess(
-              "worker.shutdown",
-              `shutting down (${how})`,
-              bossStopError === undefined ? {} : { bossStopError }
-            );
-          });
+          if (bossStopError !== undefined) {
+            yield* Effect.sync(() => {
+              logSwallowed("worker.shutdown", new Error(bossStopError));
+            });
+          }
         })
       );
       const queue = JobQueue.of({
