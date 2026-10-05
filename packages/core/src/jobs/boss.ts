@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import { parseTrimmedUuid } from "@watchdog/schemas/shared";
 
 import type { InternalError } from "../infra/tagged-errors";
 import { InvalidError } from "../infra/tagged-errors";
@@ -15,7 +15,7 @@ export function isCapJobPayload(value: unknown): value is CapJobPayload {
   }
   const jobId = value.jobId;
   if (typeof jobId !== "string") return false;
-  return parseTrimmedCaseId(jobId) !== null;
+  return parseTrimmedUuid(jobId) !== null;
 }
 
 /** Single enqueue path: Cap-derived expire; the queue comes from the `JobQueue` service. */
@@ -24,7 +24,7 @@ export function enqueueCapJobEffect(
   capabilityId: string
 ): Effect.Effect<void, InternalError | InvalidError, JobQueue> {
   return Effect.gen(function* enqueueCapJobGen() {
-    const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
+    const normalizedJobId = parseTrimmedUuid(jobId) ?? undefined;
     if (normalizedJobId === undefined) {
       return yield* new InvalidError({ reason: "Job id must not be blank" });
     }

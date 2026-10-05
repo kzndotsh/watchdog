@@ -28,6 +28,7 @@ import {
   entitySlugSchema,
   parseOptionalTrimmedUuid,
   parseTrimmedCaseId,
+  parseTrimmedUuid,
   type ProposalStatus,
 } from "@watchdog/schemas/shared";
 
@@ -55,7 +56,7 @@ export function scopeJobDetail(caseId: string, jobId: string) {
     ? parsed.data
     : {
         caseId: parseTrimmedCaseId(caseId) ?? caseId.trim(),
-        jobId: parseTrimmedCaseId(jobId) ?? jobId.trim(),
+        jobId: parseTrimmedUuid(jobId) ?? jobId.trim(),
       };
 }
 
@@ -75,14 +76,14 @@ export function scopeEntityScopeEnabled(
   entityId: string
 ): boolean {
   return (
-    parseTrimmedCaseId(caseId) !== null && parseTrimmedCaseId(entityId) !== null
+    parseTrimmedCaseId(caseId) !== null && parseTrimmedUuid(entityId) !== null
   );
 }
 
 /** True when both ids are valid graph UUIDs (job detail fetch may run). */
 export function scopeJobDetailEnabled(caseId: string, jobId: string): boolean {
   return (
-    parseTrimmedCaseId(caseId) !== null && parseTrimmedCaseId(jobId) !== null
+    parseTrimmedCaseId(caseId) !== null && parseTrimmedUuid(jobId) !== null
   );
 }
 
@@ -116,7 +117,7 @@ export function scopeEntityScope(caseId: string, entityId: string) {
     ? parsed.data
     : {
         caseId: parseTrimmedCaseId(caseId) ?? caseId.trim(),
-        entityId: parseTrimmedCaseId(entityId) ?? entityId.trim(),
+        entityId: parseTrimmedUuid(entityId) ?? entityId.trim(),
       };
 }
 
@@ -126,7 +127,7 @@ export function scopeEvidenceDownload(caseId: string, evidenceId: string) {
     return { scoped: parsed.data, enabled: true };
   }
   const scopedCaseId = parseTrimmedCaseId(caseId) ?? "";
-  const scopedEvidenceId = parseTrimmedCaseId(evidenceId) ?? "";
+  const scopedEvidenceId = parseTrimmedUuid(evidenceId) ?? "";
   return {
     scoped: { caseId: scopedCaseId, evidenceId: scopedEvidenceId },
     enabled: scopedCaseId !== "" && scopedEvidenceId !== "",

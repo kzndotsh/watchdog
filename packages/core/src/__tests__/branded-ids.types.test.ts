@@ -6,7 +6,12 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { asCaseId, asOrganizationId } from "@watchdog/schemas/shared";
+import {
+  asCaseId,
+  asOrganizationId,
+  parseTrimmedCaseId,
+  parseTrimmedUuid,
+} from "@watchdog/schemas/shared";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/test-kit";
 
@@ -36,6 +41,15 @@ describe("branded ids: a swapped (organizationId, caseId) call does not compile"
     // @ts-expect-error a plain string is not a CaseId
     const byId = () => getCaseByIdEffect("not-branded", TEST_ORGANIZATION_ID);
     expect([typeof org, typeof byId]).toEqual(["function", "function"]);
+  });
+
+  it("parseTrimmedUuid yields a plain string, parseTrimmedCaseId a CaseId", () => {
+    const uuid = parseTrimmedUuid(caseId) ?? "";
+    const parsedCase = parseTrimmedCaseId(caseId) ?? caseId;
+    const okCase = () => getCaseByIdEffect(parsedCase, TEST_ORGANIZATION_ID);
+    // @ts-expect-error a plain-string uuid (entity, job, evidence id) is not a CaseId
+    const notCase = () => getCaseByIdEffect(uuid, TEST_ORGANIZATION_ID);
+    expect([typeof okCase, typeof notCase]).toEqual(["function", "function"]);
   });
 
   it("a branded id is still a string", () => {

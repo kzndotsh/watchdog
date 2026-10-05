@@ -7,7 +7,7 @@ import {
   patchOpRelatedEntityIds,
 } from "@watchdog/schemas/graph";
 import { proposalEntityName } from "@watchdog/schemas/jobs";
-import { parseTrimmedCaseId, type CaseId } from "@watchdog/schemas/shared";
+import { parseTrimmedUuid, type CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
@@ -150,7 +150,7 @@ export function entityIdsFromNullable(
   for (const entityId of entityIds) {
     const trimmed =
       typeof entityId === "string"
-        ? (parseTrimmedCaseId(entityId) ?? undefined)
+        ? (parseTrimmedUuid(entityId) ?? undefined)
         : undefined;
     if (trimmed !== undefined) ids.add(trimmed);
   }
@@ -176,7 +176,7 @@ export function entityNameForId(
   const scopedId =
     entityId === undefined || entityId === null
       ? undefined
-      : (parseTrimmedCaseId(entityId) ?? undefined);
+      : (parseTrimmedUuid(entityId) ?? undefined);
   if (scopedId === undefined) return null;
   const name = entityNames[scopedId]?.trim();
   return name !== undefined && name !== "" ? name : null;

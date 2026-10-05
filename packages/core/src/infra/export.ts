@@ -28,6 +28,7 @@ import type {
 import {
   entityDisplayLabel,
   parseTrimmedCaseId,
+  parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
 import { nowIsoStringEffect } from "./clock";
@@ -65,7 +66,7 @@ export function renderEntityMarkdownEffect(
   peerMap?: Map<string, EntityPeerRow>
 ): Effect.Effect<EntityExport | null, DomainTag, Db> {
   return Effect.gen(function* renderEntityMarkdownGen() {
-    const normalizedEntityId = parseTrimmedCaseId(entityId) ?? undefined;
+    const normalizedEntityId = parseTrimmedUuid(entityId) ?? undefined;
     if (normalizedEntityId === undefined) return null;
 
     const row = yield* tryDbWith((exec) =>

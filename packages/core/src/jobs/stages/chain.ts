@@ -17,7 +17,7 @@ import {
 import {
   isJsonObject,
   isOpenJobStatus,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   type CaseId,
   type JsonObject,
 } from "@watchdog/schemas/shared";
@@ -162,7 +162,7 @@ export function advancePlaybookRunEffect(input: {
   playbookRunId: string;
   caseId?: CaseId;
 }): Effect.Effect<void, DomainTag, Db | JobQueue> {
-  const playbookRunId = parseTrimmedCaseId(input.playbookRunId) ?? undefined;
+  const playbookRunId = parseTrimmedUuid(input.playbookRunId) ?? undefined;
   if (playbookRunId === undefined) return Effect.void;
   return Effect.gen(function* advancePlaybookRunGen() {
     const outcome = yield* transact((tx) =>

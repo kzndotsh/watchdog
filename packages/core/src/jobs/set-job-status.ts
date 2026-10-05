@@ -2,7 +2,7 @@ import { Effect } from "effect";
 
 import { jobsRepo, type JobPatch, type JobRow } from "@watchdog/db";
 import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import { parseTrimmedCaseId, parseTrimmedUuid } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
 import { notifyJobUpdateEffect } from "../infra/events";
@@ -29,7 +29,7 @@ export function setJobStatusEffect(
   opts: SetJobStatusOpts
 ): Effect.Effect<JobRow | null, DomainTag, Db> {
   return Effect.gen(function* setJobStatusGen() {
-    const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
+    const normalizedJobId = parseTrimmedUuid(jobId) ?? undefined;
     const scopedCaseId = parseTrimmedCaseId(opts.caseId) ?? undefined;
     if (normalizedJobId === undefined || scopedCaseId === undefined) {
       return null;

@@ -9,13 +9,21 @@ export const uuidSchema = z.uuid();
 /** Required UUID — trims surrounding whitespace before validation. */
 export const trimmedUuidSchema = z.string().trim().pipe(uuidSchema);
 
-/** Trim + validate a graph UUID of any kind (entity, job, evidence, ...); invalid input → null. */
+/**
+ * Trim + validate a graph UUID of any NON-Case kind (entity, job, evidence,
+ * edge, playbook run, ...); invalid input → null. Returns a plain `string`:
+ * for a Case id use {@link parseTrimmedCaseId}.
+ */
 export function parseTrimmedUuid(raw: string): string | null {
   const parsed = trimmedUuidSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
 }
 
-/** Trim + validate a Case UUID; invalid input → null. */
+/**
+ * Trim + validate a CASE id only; invalid input → null. The result is branded
+ * `CaseId`: never use this for entity/job/evidence/edge/run ids (it would lie
+ * about the type); use {@link parseTrimmedUuid} for those.
+ */
 export function parseTrimmedCaseId(raw: string): CaseId | null {
   const parsed = trimmedCaseIdSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;

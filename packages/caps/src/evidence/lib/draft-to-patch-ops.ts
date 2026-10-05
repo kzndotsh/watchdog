@@ -4,7 +4,7 @@ import { isEmptyDraft, type ProcessExtractDraft } from "@watchdog/ai";
 import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
 import {
   normalizeIdentifierPlatform,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   trimmedOrUndefined,
   type IdentifierType,
 } from "@watchdog/schemas/shared";
@@ -32,7 +32,7 @@ type NormalizeDraftCtxResult =
   | { ok: false; issue: DraftCtxIssue };
 
 function normalizeDraftCtx(ctx: DraftToPatchOpsCtx): NormalizeDraftCtxResult {
-  const evidenceId = parseTrimmedCaseId(ctx.evidenceId);
+  const evidenceId = parseTrimmedUuid(ctx.evidenceId);
   if (evidenceId === null) {
     return { ok: false, issue: "invalid_evidence" };
   }

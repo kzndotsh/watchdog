@@ -9,7 +9,7 @@ import {
 import {
   dueDatePatchSchema,
   parseGraphUuidList,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   trimmedOrNull,
   trimmedOrUndefined,
   type CaseId,
@@ -115,7 +115,7 @@ function taskEntityIdForCreate(
   entityId: string | null | undefined
 ): string | null {
   if (entityId === undefined || entityId === null) return null;
-  return parseTrimmedCaseId(entityId) ?? null;
+  return parseTrimmedUuid(entityId) ?? null;
 }
 
 function taskEntityIdForPatch(
@@ -123,7 +123,7 @@ function taskEntityIdForPatch(
 ): string | null | undefined {
   if (entityId === undefined) return undefined;
   if (entityId === null) return null;
-  return parseTrimmedCaseId(entityId) ?? null;
+  return parseTrimmedUuid(entityId) ?? null;
 }
 
 function rejectInvalidTaskEntityId(
@@ -167,7 +167,7 @@ export function listTasksForCaseEffect(
     if (opts?.entityId === undefined) {
       entityId = undefined;
     } else {
-      const parsed = parseTrimmedCaseId(opts.entityId);
+      const parsed = parseTrimmedUuid(opts.entityId);
       if (parsed === null) {
         return yield* new InvalidError({
           reason: "entityId must be a valid UUID",

@@ -62,7 +62,7 @@ Enforced: one Zod version via the `zod` entry in the pnpm catalog and `overrides
 
 ### Branded ids
 
-`OrganizationId` and `CaseId` (ADR-0003) are Zod brands in `packages/schemas/src/ids.ts`, so passing an organization id where a Case id is expected fails to compile. Mint them only through `asOrganizationId` / `asCaseId`, a schema parse (`caseIdSchema` in API inputs) or a typed source (a drizzle column with `.$type<Brand>()`, the session actor); a bare `as` cast is a lint error outside `packages/test-kit`. Later phases brand the remaining id kinds.
+`OrganizationId` and `CaseId` (ADR-0003) are Zod brands in `packages/schemas/src/ids.ts`, so passing an organization id where a Case id is expected fails to compile. Mint them only through `asOrganizationId` / `asCaseId`, a schema parse (`caseIdSchema` in API inputs) or a typed source (a drizzle column with `.$type<Brand>()`, the session actor); a bare `as` cast is a lint error outside `packages/test-kit`. Edges parse a CASE id with `parseTrimmedCaseId` / `caseIdSchema` and every other uuid (entity, job, evidence, edge, run) with `parseTrimmedUuid` (plain string); never use the case parser for another kind. Later phases brand the remaining id kinds.
 
 ### Zod package rules
 

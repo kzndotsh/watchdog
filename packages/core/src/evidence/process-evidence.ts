@@ -16,6 +16,7 @@ import {
 } from "@watchdog/schemas/jobs";
 import {
   parseTrimmedCaseId,
+  parseTrimmedUuid,
   trimmedOrUndefined,
   type CaseId,
   type JsonObject,
@@ -193,7 +194,7 @@ export function processEvidenceEffect(input: {
       const entityId =
         seed.entityId === null || seed.entityId === undefined
           ? undefined
-          : (parseTrimmedCaseId(seed.entityId) ?? undefined);
+          : (parseTrimmedUuid(seed.entityId) ?? undefined);
       return {
         evidenceId: seed.id,
         ...(entityId === undefined ? {} : { entityId }),
@@ -208,7 +209,7 @@ export function markEvidenceProcessedEffect(input: {
 }): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* markEvidenceProcessedGen() {
     const caseId = parseTrimmedCaseId(input.caseId) ?? undefined;
-    const evidenceId = parseTrimmedCaseId(input.evidenceId) ?? undefined;
+    const evidenceId = parseTrimmedUuid(input.evidenceId) ?? undefined;
     if (caseId === undefined || evidenceId === undefined) {
       return;
     }
@@ -262,7 +263,7 @@ export function enrichUrlEvidenceEffect(input: {
       const entityId =
         seed.entityId === null || seed.entityId === undefined
           ? undefined
-          : (parseTrimmedCaseId(seed.entityId) ?? undefined);
+          : (parseTrimmedUuid(seed.entityId) ?? undefined);
       return {
         url,
         sourceEvidenceId: seed.id,

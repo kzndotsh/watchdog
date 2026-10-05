@@ -10,7 +10,7 @@ import type { JsonObject } from "./json";
 import { identifierPlatformSearchHaystack } from "./platforms";
 import {
   jsonObjectSchema,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   trimmedOrUndefined,
   trimmedUuidSchema,
   uuidListSchema,
@@ -66,12 +66,12 @@ export const patchSchema = z.array(patchOpSchema);
 export function patchOpEntityId(op: PatchOp): string | undefined {
   const value = op.data.entityId;
   if (typeof value !== "string") return undefined;
-  return parseTrimmedCaseId(value) ?? undefined;
+  return parseTrimmedUuid(value) ?? undefined;
 }
 
 function pushRelatedEntityId(ids: string[], raw: unknown): void {
   if (typeof raw !== "string") return;
-  const id = parseTrimmedCaseId(raw);
+  const id = parseTrimmedUuid(raw);
   if (id !== null) ids.push(id);
 }
 

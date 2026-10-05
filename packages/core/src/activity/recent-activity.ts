@@ -24,6 +24,7 @@ import type {
 import {
   pickPlaybookAggregateStatus,
   parseTrimmedCaseId,
+  parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
 import {
@@ -141,7 +142,7 @@ export function collapseRecentJobActivityRows(
 
   for (const row of rows) {
     const runId =
-      row.playbookRunId === null ? null : parseTrimmedCaseId(row.playbookRunId);
+      row.playbookRunId === null ? null : parseTrimmedUuid(row.playbookRunId);
     if (runId === null) {
       solo.push(row);
     } else {

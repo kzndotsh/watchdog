@@ -11,7 +11,7 @@ import {
   URL_ENRICH_CAPABILITY_ID,
 } from "@watchdog/schemas/jobs";
 import {
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   trimmedOrUndefined,
   type CaseId,
 } from "@watchdog/schemas/shared";
@@ -136,11 +136,11 @@ export function packEvidenceSnapshotEffect(input: {
         : initialText;
     let entityId: string | undefined;
     if (input.entityId !== null && input.entityId !== undefined) {
-      entityId = parseTrimmedCaseId(input.entityId) ?? undefined;
+      entityId = parseTrimmedUuid(input.entityId) ?? undefined;
     } else if (row.entityId === null || row.entityId === undefined) {
       entityId = undefined;
     } else {
-      entityId = parseTrimmedCaseId(row.entityId) ?? undefined;
+      entityId = parseTrimmedUuid(row.entityId) ?? undefined;
     }
     const label = trimmedOrUndefined(row.label ?? undefined);
     const mime = trimmedOrUndefined(row.mime ?? undefined);

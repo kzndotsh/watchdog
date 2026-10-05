@@ -7,7 +7,7 @@ import {
 } from "./evidence-display";
 import type { JsonObject } from "./json";
 import { isJsonObject } from "./json";
-import { jsonObjectSchema, parseTrimmedCaseId } from "./primitives";
+import { jsonObjectSchema, parseTrimmedUuid } from "./primitives";
 
 /** Loose job input bag — caps/CLI may hold values before JsonObject narrowing. */
 export type JobInputRecord = Readonly<Record<string, unknown>>;
@@ -52,7 +52,7 @@ export function entityIdsFromJobInputs(
     for (const key of JOB_INPUT_ENTITY_ID_KEYS) {
       const id = input[key];
       if (typeof id !== "string") continue;
-      const parsed = parseTrimmedCaseId(id);
+      const parsed = parseTrimmedUuid(id);
       if (parsed !== null) ids.add(parsed);
     }
   }
@@ -79,7 +79,7 @@ export function evidenceIdsFromJobInputs(
     for (const key of JOB_INPUT_EVIDENCE_ID_KEYS) {
       const id = input[key];
       if (typeof id !== "string") continue;
-      const parsed = parseTrimmedCaseId(id);
+      const parsed = parseTrimmedUuid(id);
       if (parsed !== null) ids.add(parsed);
     }
   }
@@ -109,7 +109,7 @@ export function jobInputGraphIdFieldIssues(input: JsonObject): string[] {
     if (typeof value !== "string") continue;
     const trimmed = value.trim();
     if (trimmed === "") continue;
-    if (parseTrimmedCaseId(trimmed) === null) invalid.push(key);
+    if (parseTrimmedUuid(trimmed) === null) invalid.push(key);
   }
   return invalid;
 }
@@ -128,7 +128,7 @@ export function normalizeJobInput(input: JsonObject): JsonObject {
         changed = true;
         continue;
       }
-      const parsed = parseTrimmedCaseId(trimmed);
+      const parsed = parseTrimmedUuid(trimmed);
       if (parsed === null) {
         out[key] = value;
       } else {
@@ -206,7 +206,7 @@ export function summarizeJobInput(
     if (typeof id !== "string") continue;
     const trimmed = id.trim();
     if (trimmed === "") continue;
-    const lookupId = parseTrimmedCaseId(trimmed) ?? trimmed;
+    const lookupId = parseTrimmedUuid(trimmed) ?? trimmed;
     const title = evidenceTitleById?.get(lookupId)?.trim();
     if (title !== undefined && title !== "") return title;
   }
@@ -216,7 +216,7 @@ export function summarizeJobInput(
     if (typeof id !== "string") continue;
     const trimmed = id.trim();
     if (trimmed === "") continue;
-    const lookupId = parseTrimmedCaseId(trimmed) ?? trimmed;
+    const lookupId = parseTrimmedUuid(trimmed) ?? trimmed;
     const title = entityTitleById?.get(lookupId)?.trim();
     if (title !== undefined && title !== "") return title;
   }

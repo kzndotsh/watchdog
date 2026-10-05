@@ -7,7 +7,7 @@ import { jobsRepo, type JobArtifact, type JobRow } from "@watchdog/db";
 import {
   LIVE_JOB_STATUSES,
   isLiveJobStatus,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   type CaseId,
   type JsonObject,
 } from "@watchdog/schemas/shared";
@@ -231,7 +231,7 @@ export function preflightEffect(
   jobId: string
 ): Effect.Effect<PreflightResult, DomainTag, Db | Vault> {
   return Effect.gen(function* preflightGen() {
-    const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
+    const normalizedJobId = parseTrimmedUuid(jobId) ?? undefined;
     if (normalizedJobId === undefined) {
       return { kind: "stop" as const, reason: "not_found" as const };
     }

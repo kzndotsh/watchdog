@@ -7,7 +7,7 @@ import {
   updateEdgeInputSchema,
 } from "@watchdog/schemas/graph";
 import {
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   resolveEdgeEndpoints,
   trimmedOrNull,
   trimmedOrUndefined,
@@ -27,7 +27,7 @@ export interface ConnectionWriteCore {
 }
 
 function scopedPeerId(peerId: string): string {
-  const scoped = parseTrimmedCaseId(peerId);
+  const scoped = parseTrimmedUuid(peerId);
   if (scoped === null) {
     throw new Error("peerId must be a valid UUID");
   }

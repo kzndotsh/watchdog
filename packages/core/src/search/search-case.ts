@@ -34,7 +34,7 @@ import type {
 import {
   entityDisplayLabel,
   pickPlaybookAggregateStatus,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
 import { getCaseByIdEffect } from "../cases/cases";
@@ -171,7 +171,7 @@ function pickSearchJobResultSummary(
 
 function collapsePlaybookRunId(runId: string | null): string | undefined {
   if (runId === null) return undefined;
-  return parseTrimmedCaseId(runId) ?? undefined;
+  return parseTrimmedUuid(runId) ?? undefined;
 }
 
 /** Collapse playbook step rows into one search hit per run. */

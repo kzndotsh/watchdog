@@ -2,14 +2,14 @@ import {
   caseScopeInputSchema,
   entitySlugScopeInputSchema,
 } from "@watchdog/schemas/graph";
-import { entitySlugSchema, parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import { entitySlugSchema, parseTrimmedUuid } from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { fail } from "./io";
 
 /** Trim and validate a positional UUID argument. */
 export function requireUuid(value: string, label: string): string {
-  const parsed = parseTrimmedCaseId(value);
+  const parsed = parseTrimmedUuid(value);
   if (parsed === null) {
     fail(
       "USAGE",
@@ -46,7 +46,7 @@ export function parseIdList(raw: string | undefined): string[] | undefined {
     .filter(Boolean);
   if (ids.length === 0) return undefined;
   return ids.map((id) => {
-    const parsed = parseTrimmedCaseId(id);
+    const parsed = parseTrimmedUuid(id);
     if (parsed === null) {
       fail("USAGE", `Invalid UUID in list: ${id}`, {
         help: ["Comma-separated UUIDs, e.g. --evidence <id1>,<id2>"],
@@ -83,7 +83,7 @@ async function resolveEntityRef(
       help: ["wd entities list -c <caseId>"],
     });
   }
-  const asUuid = parseTrimmedCaseId(trimmed);
+  const asUuid = parseTrimmedUuid(trimmed);
   if (asUuid !== null) {
     const rows = await api().entities.list(
       caseScopeInputSchema.parse({ caseId: trimmedCaseId })

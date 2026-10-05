@@ -14,6 +14,7 @@ import type {
 import {
   parseGraphUuidList,
   parseTrimmedCaseId,
+  parseTrimmedUuid,
   trimmedOrNull,
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
@@ -173,7 +174,7 @@ function maybeAssertEntityEffect(
   if (entityId === undefined || entityId === null) {
     return Effect.void;
   }
-  const trimmed = parseTrimmedCaseId(entityId);
+  const trimmed = parseTrimmedUuid(entityId);
   if (trimmed === null) {
     return new InvalidError({
       reason: "entityId must be a valid UUID",
@@ -184,7 +185,7 @@ function maybeAssertEntityEffect(
 
 function entityIdForWrite(entityId: string | null | undefined): string | null {
   if (entityId === undefined || entityId === null) return null;
-  return parseTrimmedCaseId(entityId) ?? null;
+  return parseTrimmedUuid(entityId) ?? null;
 }
 
 export function listEvidenceForCaseEffect(

@@ -25,7 +25,7 @@ import {
   IDENTIFIER_TYPES,
   normalizeIdentifierPlatform,
   normalizeUuidList,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   slugifyName,
   trimmedOrUndefined,
   type CaseId,
@@ -184,11 +184,11 @@ function markExistingInGraphEffect(
           const key = edgePatchFingerprintKey({
             fromId:
               typeof op.data.fromId === "string"
-                ? (parseTrimmedCaseId(op.data.fromId) ?? "")
+                ? (parseTrimmedUuid(op.data.fromId) ?? "")
                 : "",
             toId:
               typeof op.data.toId === "string"
-                ? (parseTrimmedCaseId(op.data.toId) ?? "")
+                ? (parseTrimmedUuid(op.data.toId) ?? "")
                 : "",
             predicate:
               typeof op.data.predicate === "string"
