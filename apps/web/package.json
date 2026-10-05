@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.20",
-    "@tanstack/router-cli": "^1.167.33",
+    "@tanstack/router-cli": "^1.167.40",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
@@ -72,6 +72,6 @@
     "@watchdog/test-kit": "workspace:*",
     "playwright": "^1.63.0",
     "typescript": "catalog:",
-    "vite": "^8.2.2"
+    "vite": "^8.3.2"
   }
 }
