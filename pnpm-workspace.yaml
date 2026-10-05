@@ -28,7 +28,7 @@ catalog:
   effect: "4.0.0"
   evlog: "2.29.0"
   lucide-react: "^1.46.0"
-  oxlint: "1.82.0"
+  oxlint: "1.86.0"
   react: "^19.3.0"
   react-dom: "^19.3.0"
   tailwindcss: "^4.3.3"
@@ -88,13 +88,5 @@ allowBuilds:
   sharp: false
 
 minimumReleaseAgeExclude:
-  - "@effect/tsgo-darwin-arm64@0.39.1"
-  - "@effect/tsgo-darwin-x64@0.39.1"
-  - "@effect/tsgo-linux-arm64@0.39.1"
-  - "@effect/tsgo-linux-arm@0.39.1"
-  - "@effect/tsgo-linux-x64@0.39.1"
-  - "@effect/tsgo-win32-arm64@0.39.1"
-  - "@effect/tsgo-win32-x64@0.39.1"
-  - "@effect/tsgo@0.39.1"
   - "@better-auth-ui/core@1.7.23"
   - "@better-auth-ui/react@1.7.23"

@@ -33,6 +33,10 @@ const effecttsgoOff = {
   "effecttsgo/try-catch-in-effect-gen": "off",
   "effecttsgo/unknown-in-effect-catch": "off",
   "effecttsgo/unnecessary-effect-gen": "off",
+  // `effect/http` (the HTTP client every tool and the Cap context use) is still
+  // flagged unstable upstream. Using it is deliberate; an Effect bump reviews
+  // its changelog.
+  "effecttsgo/unstable-api-usage": "off",
 } as const;
 
 /** Re-enabled in packages/tools — Clock-backed timestamps and abort signals. */

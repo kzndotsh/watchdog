@@ -145,10 +145,8 @@ export function enqueueCreatedJobEffect(
   capabilityId: string
 ): Effect.Effect<void, DomainTag, Db | JobQueue> {
   return enqueueCapJobEffect(job.id, capabilityId).pipe(
-    Effect.catch((error: InternalError | InvalidError) =>
-      failJobEffect(job.id, error.reason, { caseId }, job.logs ?? []).pipe(
-        Effect.flatMap(() => Effect.fail(error))
-      )
+    Effect.tapError((error: InternalError | InvalidError) =>
+      failJobEffect(job.id, error.reason, { caseId }, job.logs ?? [])
     )
   );
 }

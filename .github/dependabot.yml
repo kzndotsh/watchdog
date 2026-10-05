@@ -13,6 +13,18 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     groups:
+      # `@effect/tsgo` patches the exact oxlint binary it supports, so the lint
+      # toolchain must bump as one PR (a lone oxlint bump fails `pnpm install`).
+      # Listed first: Dependabot assigns a dependency to the first matching group.
+      lint-toolchain:
+        patterns:
+          - "oxlint"
+          - "oxlint-*"
+          - "@oxlint/*"
+          - "@effect/tsgo"
+          - "@effect/tsgo-*"
+          - "oxfmt"
+          - "ultracite"
       production:
         dependency-type: production
         update-types:

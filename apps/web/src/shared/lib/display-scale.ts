@@ -90,9 +90,5 @@ export function useDisplayScale() {
     applyDisplayScale(scale);
   }, [scale]);
 
-  function setScale(next: DisplayScale) {
-    persistDisplayScale(next);
-  }
-
-  return { scale, setScale };
+  return { scale, setScale: persistDisplayScale };
 }
