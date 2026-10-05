@@ -17,10 +17,10 @@ export async function resolveUserOrganizationId(
   userId: string,
   preferredOrganizationId?: OrganizationId | null
 ): Promise<OrganizationId | null> {
+  // An `OrganizationId` is never "" (`organizationIdSchema` is min(1), see ids.test.ts).
   if (
     preferredOrganizationId !== undefined &&
-    preferredOrganizationId !== null &&
-    preferredOrganizationId !== ""
+    preferredOrganizationId !== null
   ) {
     const [preferred] = await exec
       .select({ organizationId: member.organizationId })
