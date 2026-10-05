@@ -4,6 +4,7 @@ import {
   type EvidenceRow,
   type NewEvidence,
 } from "@watchdog/db";
+import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 const DEFAULT_EVIDENCE: Omit<NewEvidence, "caseId"> = {
@@ -21,7 +22,7 @@ const DEFAULT_EVIDENCE: Omit<NewEvidence, "caseId"> = {
 
 export async function seedEvidence(
   exec: DbExec,
-  caseId: string,
+  caseId: CaseId,
   overrides?: Partial<NewEvidence>
 ): Promise<EvidenceRow> {
   const created = await evidenceRepo.create(exec, {

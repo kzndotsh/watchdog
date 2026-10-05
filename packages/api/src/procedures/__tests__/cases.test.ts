@@ -32,14 +32,11 @@ vi.mock("@watchdog/core/cases", async (importOriginal) => {
   };
 });
 
+import { testActor } from "@watchdog/test-kit";
+
 import { create, get, list, update } from "../cases";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 const sampleCase = {
   id: "00000000-0000-4000-8000-000000000001",

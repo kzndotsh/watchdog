@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { asOrganizationId } from "@watchdog/schemas/shared";
 import { testHttpOrigin } from "@watchdog/test-kit";
 
 const resolveActorOrganizationId = vi.hoisted(() => vi.fn(async () => "org-1"));
@@ -27,7 +28,7 @@ describe("api-context", () => {
         {
           user: { id: "user-1", email: "a@example.com", name: "Analyst" },
         },
-        "org-1"
+        asOrganizationId("org-1")
       )
     ).toEqual({
       userId: "user-1",

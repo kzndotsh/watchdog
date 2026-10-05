@@ -18,14 +18,11 @@ vi.mock("@watchdog/core/graph", async (importOriginal) => {
   };
 });
 
+import { testActor } from "@watchdog/test-kit";
+
 import { list, create, update } from "../edges";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("edges procedures", () => {
   it("lists edges for an entity", async () => {

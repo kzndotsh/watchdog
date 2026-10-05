@@ -1,4 +1,11 @@
-import { parseActorId, parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import {
+  type CaseId,
+  type OrganizationId,
+  organizationIdSchema,
+  parseActorId,
+  parseTrimmedCaseId,
+  parseTrimmedUuid,
+} from "@watchdog/schemas/shared";
 
 /** Trim a non-empty actor id (user id, api-key label, test fixture); not a graph UUID. */
 export function trimActorId(actorId: string): string | undefined {
@@ -6,13 +13,21 @@ export function trimActorId(actorId: string): string | undefined {
 }
 
 /** Trim + validate a Case UUID; blank or invalid → undefined (repo miss). */
-export function trimCaseId(caseId: string): string | undefined {
+export function trimCaseId(caseId: string): CaseId | undefined {
   return parseTrimmedCaseId(caseId) ?? undefined;
+}
+
+/** Validate an organization id for a scoped lookup; blank → undefined (repo miss). */
+export function scopeOrganizationId(
+  organizationId: string
+): OrganizationId | undefined {
+  const parsed = organizationIdSchema.safeParse(organizationId);
+  return parsed.success ? parsed.data : undefined;
 }
 
 /** Trim + validate a graph resource UUID; blank or invalid → undefined (repo miss). */
 export function trimResourceId(resourceId: string): string | undefined {
-  return parseTrimmedCaseId(resourceId) ?? undefined;
+  return parseTrimmedUuid(resourceId) ?? undefined;
 }
 
 export type NullableGraphIdWrite =
@@ -36,7 +51,7 @@ export function resolveNullableGraphIdForWrite(
 export function trimScopedCaseIds(
   caseId: string,
   resourceId: string
-): { caseId: string; resourceId: string } | null {
+): { caseId: CaseId; resourceId: string } | null {
   const scopedCaseId = trimCaseId(caseId);
   const scopedResourceId = trimResourceId(resourceId);
   if (scopedCaseId === undefined || scopedResourceId === undefined) {

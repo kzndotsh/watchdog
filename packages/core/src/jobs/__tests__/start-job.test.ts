@@ -1,7 +1,7 @@
 import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testCaseId, testId } from "@watchdog/test-kit";
 
 const CASE_ID = testId(1);
 const JOB_ID = testId(2);
@@ -204,7 +204,7 @@ describe("toJobRecord", () => {
     const now = new Date();
     const record = toJobRecord({
       id: "job-1",
-      caseId: "case-1",
+      caseId: testCaseId(1),
       capabilityId: "network.dns.lookup",
       input: { host: "example.com" },
       output: null,

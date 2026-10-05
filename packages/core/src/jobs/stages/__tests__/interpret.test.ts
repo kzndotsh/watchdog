@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { recordingBlobStore, type BlobStore } from "@watchdog/core/blob";
 import type { JobRow } from "@watchdog/db";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId, testId } from "@watchdog/test-kit";
 
 const { loadCapReportEffect } = vi.hoisted(() => ({
   loadCapReportEffect: vi.fn(),
@@ -26,7 +26,7 @@ function makeJobRow(): JobRow {
   const now = new Date("2026-01-03T00:00:00.000Z");
   return {
     id: testId(1),
-    caseId: testId(2),
+    caseId: testCaseId(2),
     capabilityId: "network.dns.lookup",
     input: {},
     output: null,

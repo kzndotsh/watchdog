@@ -20,14 +20,11 @@ vi.mock("@watchdog/core/jobs", async (importOriginal) => {
   };
 });
 
+import { testActor } from "@watchdog/test-kit";
+
 import { listForCase, start, startPlaybook } from "../jobs";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("jobs procedures", () => {
   it("lists jobs for a case", async () => {

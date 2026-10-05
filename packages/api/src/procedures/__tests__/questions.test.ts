@@ -25,14 +25,11 @@ vi.mock("@watchdog/core/graph", async (importOriginal) => {
   };
 });
 
+import { testActor } from "@watchdog/test-kit";
+
 import { create, list, remove, update } from "../questions";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("questions procedures", () => {
   it("lists questions for an entity", async () => {

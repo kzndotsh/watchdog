@@ -1,6 +1,10 @@
 import { identifyUser, peekRequestLogger } from "@watchdog/log";
 import type { AuditableLogger } from "@watchdog/log";
-import type { ApiActor, ApiCaller } from "@watchdog/schemas/shared";
+import type {
+  ApiActor,
+  ApiCaller,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import { resolveActorOrganizationId } from "./actor";
 import type { createAuth } from "./create-auth";
@@ -18,7 +22,7 @@ export function actorFromSession(
   session: {
     user: { id: string; email?: string | null; name?: string | null };
   },
-  organizationId: string | null
+  organizationId: OrganizationId | null
 ): ApiActor {
   return {
     userId: session.user.id,

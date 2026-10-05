@@ -15,14 +15,11 @@ vi.mock("@watchdog/core/proposals", async (importOriginal) => {
   };
 });
 
+import { testActor } from "@watchdog/test-kit";
+
 import { write } from "../graph";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("graph procedures", () => {
   it("writes graph patches from authenticated callers", async () => {

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/test-kit";
+
 const { mockClient, createRouterClient, actorFromSession, peekRequestLogger } =
   vi.hoisted(() => {
     const mockClient = { cases: { list: vi.fn() } };
@@ -34,12 +36,7 @@ import { orpcForActor, orpcFromContext } from "@/lib/orpc.server";
 describe("orpc.server", () => {
   it("creates an in-process router client for an actor", () => {
     createRouterClient.mockClear();
-    const actor = {
-      userId: "u1",
-      email: "a@b.c",
-      name: "Alice",
-      organizationId: "org-1",
-    };
+    const actor = testActor({ email: "a@b.c", name: "Alice" });
 
     const client = orpcForActor(actor);
 
@@ -59,8 +56,11 @@ describe("orpc.server", () => {
     actorFromSession.mockClear();
     const session = { user: { id: "u1", email: "a@b.c", name: "Alice" } };
 
-    orpcFromContext({ session, organizationId: "org-1" });
+    orpcFromContext({ session, organizationId: TEST_ORGANIZATION_ID });
 
-    expect(actorFromSession).toHaveBeenCalledWith(session, "org-1");
+    expect(actorFromSession).toHaveBeenCalledWith(
+      session,
+      TEST_ORGANIZATION_ID
+    );
   });
 });

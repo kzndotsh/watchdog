@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import type { JobListRow, JobWithPlaybook } from "@watchdog/db";
-import { testId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testCaseId, testId } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain.ts";
 import { collapseSearchJobHits, searchCaseEffect } from "../search-case.ts";
@@ -12,7 +12,7 @@ function jobRow(
   const now = new Date("2026-01-03T00:00:00.000Z");
   return {
     job: {
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.dns.lookup",
       input: { host: "example.com" },
       output: null,
@@ -141,7 +141,7 @@ describe("searchCase", () => {
     const result = await runDomain(
       searchCaseEffect({
         caseId: "00000000-0000-4000-8000-000000000000",
-        organizationId: "org-test",
+        organizationId: TEST_ORGANIZATION_ID,
         q: "a",
       })
     );
@@ -159,7 +159,7 @@ describe("searchCase", () => {
     const result = await runDomain(
       searchCaseEffect({
         caseId: "00000000-0000-4000-8000-000000000000",
-        organizationId: "org-test",
+        organizationId: TEST_ORGANIZATION_ID,
         q: "  ",
       })
     );

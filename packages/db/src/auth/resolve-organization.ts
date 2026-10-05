@@ -1,5 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
+import type { OrganizationId } from "@watchdog/schemas/shared";
+
 import type { DbExec } from "../exec";
 import { member } from "../schema/auth";
 
@@ -13,8 +15,8 @@ import { member } from "../schema/auth";
 export async function resolveUserOrganizationId(
   exec: DbExec,
   userId: string,
-  preferredOrganizationId?: string | null
-): Promise<string | null> {
+  preferredOrganizationId?: OrganizationId | null
+): Promise<OrganizationId | null> {
   if (
     preferredOrganizationId !== undefined &&
     preferredOrganizationId !== null &&

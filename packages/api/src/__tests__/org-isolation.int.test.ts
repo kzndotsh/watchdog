@@ -5,6 +5,7 @@ import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
 import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
+import type { OrganizationId } from "@watchdog/schemas/shared";
 import {
   resetTestDb,
   seedCase,
@@ -19,6 +20,7 @@ import {
 import {
   TEST_ACTOR_ID,
   TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
   testId,
 } from "@watchdog/test-kit";
 
@@ -37,11 +39,11 @@ import { router } from "../router";
  * Afterwards A's data is compared with a snapshot taken before the attacks.
  */
 const ORG_A = TEST_ORGANIZATION_ID;
-const ORG_B = testId(91);
+const ORG_B = TEST_OTHER_ORGANIZATION_ID;
 const USER_A = TEST_ACTOR_ID;
 const USER_B = "test-actor-b";
 
-function clientFor(organizationId: string, userId: string) {
+function clientFor(organizationId: OrganizationId, userId: string) {
   const context: ApiContext = {
     headers: new Headers(),
     actor: { userId, email: null, name: userId, organizationId },

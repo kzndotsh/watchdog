@@ -8,7 +8,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
-import { requireTrimmedGraphId } from "../graph/patch/guards";
+import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
 import { deleteCaseArtifactsEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
@@ -85,7 +85,7 @@ export function getCaseByIdEffect(
   organizationId: string
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
   return Effect.gen(function* getCaseByIdGen() {
-    const caseId = yield* requireTrimmedGraphId(id, "Case");
+    const caseId = yield* requireTrimmedCaseIdEffect(id);
     const row = yield* tryDbWith((exec) =>
       casesRepo.getById(exec, caseId, organizationId)
     );
@@ -165,7 +165,7 @@ export function updateCaseEffect(input: {
   allowThirdPartyEgress?: boolean;
 }): Effect.Effect<CaseRecord, DomainTag, Db> {
   return Effect.gen(function* updateCaseGen() {
-    const caseId = yield* requireTrimmedGraphId(input.id, "Case");
+    const caseId = yield* requireTrimmedCaseIdEffect(input.id);
     const existing = yield* tryDbWith((exec) =>
       casesRepo.getById(exec, caseId, input.organizationId)
     );
@@ -252,7 +252,7 @@ export function deleteCaseEffect(
   opts: { actorId?: string; organizationId: string }
 ): Effect.Effect<void, DomainTag, Db | BlobStore> {
   return Effect.gen(function* deleteCaseGen() {
-    const caseId = yield* requireTrimmedGraphId(id, "Case");
+    const caseId = yield* requireTrimmedCaseIdEffect(id);
     const existing = yield* tryDbWith((exec) =>
       casesRepo.getById(exec, caseId, opts.organizationId)
     );

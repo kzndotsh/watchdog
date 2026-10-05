@@ -14,6 +14,7 @@ import type {
   JobHandoff,
   JobStatus,
   JsonObject,
+  CaseId,
 } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
@@ -32,6 +33,7 @@ export const jobs = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     caseId: uuid("case_id")
+      .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     capabilityId: text("capability_id").notNull(),

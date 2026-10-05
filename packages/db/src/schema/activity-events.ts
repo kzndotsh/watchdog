@@ -1,6 +1,7 @@
 import { index, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
 import type { ActivityKind } from "@watchdog/schemas/feed";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import { createdAt } from "./_helpers";
 import { cases } from "./cases";
@@ -15,6 +16,7 @@ export const activityEvents = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     caseId: uuid("case_id")
+      .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     /** Record kind — task today; evidence/job/proposal may join later. */

@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
+import { asOrganizationId } from "@watchdog/schemas/shared";
 import { withTestTx } from "@watchdog/test-db";
 
 import {
@@ -69,7 +70,7 @@ describe("onAuthSessionCreated", () => {
     await withTestTx(async (tx) => {
       const userId = crypto.randomUUID();
       const sessionId = crypto.randomUUID();
-      const organizationId = crypto.randomUUID();
+      const organizationId = asOrganizationId(crypto.randomUUID());
       await insertAuthUser(tx, userId, `${userId}@example.test`);
       await tx.insert(organization).values({
         id: organizationId,

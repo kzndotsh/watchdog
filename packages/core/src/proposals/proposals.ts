@@ -29,6 +29,7 @@ import {
 import { applyPatchEffect } from "../graph/patch/apply-patch";
 import {
   assertCaseInOrgEffect,
+  requireTrimmedCaseIdEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
@@ -270,7 +271,7 @@ export function getProposalForCaseEffect(
   proposalId: string
 ): Effect.Effect<ProposalRecord | null, DomainTag, Db> {
   return Effect.gen(function* getProposalForCaseGen() {
-    const scopedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
+    const scopedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
     const normalizedProposalId = yield* requireTrimmedGraphId(
       proposalId,
       "Proposal"

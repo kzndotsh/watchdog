@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
-import type { ProposalStatus } from "@watchdog/schemas/shared";
+import type { ProposalStatus, CaseId } from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";
@@ -20,6 +20,7 @@ export const proposals = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     caseId: uuid("case_id")
+      .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     jobId: uuid("job_id").references(() => jobs.id, { onDelete: "set null" }),

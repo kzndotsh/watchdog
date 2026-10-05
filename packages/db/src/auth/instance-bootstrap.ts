@@ -1,5 +1,7 @@
 import { count, eq } from "drizzle-orm";
 
+import type { OrganizationId } from "@watchdog/schemas/shared";
+
 import type { DbExec } from "../exec";
 import { session, user } from "../schema/auth";
 
@@ -25,7 +27,7 @@ export async function promoteFirstUserToInstanceAdmin(
 export async function setSessionActiveOrganization(
   exec: DbExec,
   sessionId: string,
-  organizationId: string
+  organizationId: OrganizationId
 ): Promise<void> {
   await exec
     .update(session)

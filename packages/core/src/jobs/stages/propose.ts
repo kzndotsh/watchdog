@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import { casesRepo, proposalsRepo } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
+import type { CaseId } from "@watchdog/schemas/shared";
 import {
   parseGraphUuidList,
   trimmedOrUndefined,
@@ -25,7 +26,7 @@ export interface ProposeResult {
 }
 
 export interface ProposeStageInput {
-  caseId: string;
+  caseId: CaseId;
   kept: PatchOp[];
   suppressed: number;
   /** Cap-owned prose only — all-known lives in `suppressedCount`, not the string. */
@@ -38,7 +39,7 @@ export interface ProposeStageInput {
 }
 
 export interface SuppressAndProposeStageInput {
-  caseId: string;
+  caseId: CaseId;
   patch: PatchOp[];
   resultSummary: string | null;
   attachEvidenceIds: string[];

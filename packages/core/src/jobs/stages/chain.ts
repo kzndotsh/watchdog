@@ -15,6 +15,7 @@ import {
   type JobRow,
 } from "@watchdog/db";
 import {
+  type CaseId,
   isJsonObject,
   isOpenJobStatus,
   parseTrimmedCaseId,
@@ -83,7 +84,7 @@ function enqueueReleasedEffect(
 function enqueueStepJobsEffect(opts: {
   tx: DbExec;
   run: {
-    caseId: string;
+    caseId: CaseId;
     actorId: string;
     actorLabel: string | null;
   };

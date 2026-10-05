@@ -19,14 +19,11 @@ vi.mock("../../runtime", async (importOriginal) => {
   return { ...actual, runApp: actual.runAppWith(fake.layer) };
 });
 
+import { testActor } from "@watchdog/test-kit";
+
 import { list, put, remove } from "../credentials";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 const context = {
   headers: new Headers(),

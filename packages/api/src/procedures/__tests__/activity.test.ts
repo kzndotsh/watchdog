@@ -15,14 +15,11 @@ vi.mock("@watchdog/core/activity", async (importOriginal) => {
   };
 });
 
+import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/test-kit";
+
 import { listRecent } from "../activity";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("activity procedures", () => {
   it("lists recent activity for the authenticated actor", async () => {
@@ -53,7 +50,7 @@ describe("activity procedures", () => {
 
     await expect(client.listRecent({ limit: 5 })).resolves.toHaveLength(1);
     expect(listRecentActivityEffect).toHaveBeenCalledWith({
-      organizationId: "org-test",
+      organizationId: TEST_ORGANIZATION_ID,
       caseId: undefined,
       limit: 5,
     });

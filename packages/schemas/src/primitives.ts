@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { trimmedCaseIdSchema } from "./ids";
+import type { CaseId } from "./ids";
 import type { JsonValue } from "./json";
 
 export const uuidSchema = z.uuid();
@@ -7,9 +9,15 @@ export const uuidSchema = z.uuid();
 /** Required UUID — trims surrounding whitespace before validation. */
 export const trimmedUuidSchema = z.string().trim().pipe(uuidSchema);
 
-/** Trim + validate a scoped case/graph UUID; invalid input → null. */
-export function parseTrimmedCaseId(raw: string): string | null {
+/** Trim + validate a graph UUID of any kind (entity, job, evidence, ...); invalid input → null. */
+export function parseTrimmedUuid(raw: string): string | null {
   const parsed = trimmedUuidSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
+/** Trim + validate a Case UUID; invalid input → null. */
+export function parseTrimmedCaseId(raw: string): CaseId | null {
+  const parsed = trimmedCaseIdSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
 }
 
@@ -18,12 +26,12 @@ export function parseOptionalTrimmedUuid(
   raw: string | null | undefined
 ): string | undefined {
   if (raw === null || raw === undefined) return undefined;
-  return parseTrimmedCaseId(raw) ?? undefined;
+  return parseTrimmedUuid(raw) ?? undefined;
 }
 
 /** True when `value` is a canonical UUID (not a catalog slug like `host-footprint`). */
 export function isUuidString(value: string): boolean {
-  return parseTrimmedCaseId(value) !== null;
+  return parseTrimmedUuid(value) !== null;
 }
 
 export const nonEmptyTrimmed = z.string().trim().min(1);
@@ -220,7 +228,7 @@ export function normalizeUuidList(
   const out: string[] = [];
   for (const id of ids) {
     if (typeof id !== "string") continue;
-    const parsed = parseTrimmedCaseId(id);
+    const parsed = parseTrimmedUuid(id);
     if (parsed !== null) out.push(parsed);
   }
   return [...new Set(out)];
