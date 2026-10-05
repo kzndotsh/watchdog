@@ -47,41 +47,138 @@ const noCoreS3DynamicImport = bansDynamicImport(
 /** Branded id types (ADR-0003) that may only be minted by validating constructors. */
 const BRANDED_ID_TYPES = new Set(["OrganizationId", "CaseId"]);
 
-/**
- * @typedef {{ type: string, typeName?: { type: string, name?: string } }} TypeNode
- * @typedef {{ typeAnnotation: TypeNode }} CastNode
- */
+/** Zod brand marker: `string & z.BRAND<"CaseId">` stamps the same brand without the alias. */
+const BRAND_MARKER = "BRAND";
+
+/** AST keys that point back up or carry positions, never walked. */
+const SKIP_KEYS = new Set(["parent", "loc", "range", "start", "end"]);
 
 /**
- * Bans `x as OrganizationId`, `x as unknown as CaseId` and `<CaseId>x`: a branded id is
- * minted by `asOrganizationId` / `asCaseId` (or a schema parse), never stamped on a string.
- * oxlint has no `no-restricted-syntax`, so this is a plugin rule on the two cast nodes.
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
+const isRecord = (value) => typeof value === "object" && value !== null;
+
+/**
+ * Last identifier of a type name (`CaseId`, or `BRAND` in `z.BRAND`).
+ * @param {unknown} name
+ * @returns {string | null}
+ */
+const typeNameOf = (name) => {
+  if (!isRecord(name)) return null;
+  if (name.type === "Identifier" && typeof name.name === "string") {
+    return name.name;
+  }
+  if (name.type === "TSQualifiedName") return typeNameOf(name.right);
+  return null;
+};
+
+/**
+ * The brand named by a `BRAND<"CaseId">` reference's type arguments, if any.
+ * @param {Record<string, unknown>} ref
+ * @returns {string | null}
+ */
+const brandFromMarker = (ref) => {
+  const args = ref.typeArguments ?? ref.typeParameters;
+  if (!isRecord(args) || !Array.isArray(args.params)) return null;
+  for (const arg of args.params) {
+    if (!isRecord(arg) || arg.type !== "TSLiteralType") continue;
+    const { literal } = arg;
+    if (
+      isRecord(literal) &&
+      typeof literal.value === "string" &&
+      BRANDED_ID_TYPES.has(literal.value)
+    ) {
+      return literal.value;
+    }
+  }
+  return null;
+};
+
+/**
+ * Finds the first branded-id mention anywhere inside an asserted type: a reference to
+ * `CaseId` / `OrganizationId` (or a local alias of them) at any depth (`CaseId | null`,
+ * `CaseId[]`, `Record<string, CaseId>`, `{ id: CaseId }`, tuples, `readonly CaseId[]`),
+ * or a `BRAND<"CaseId">` marker.
+ * @param {unknown} node
+ * @param {ReadonlySet<string>} names
+ * @returns {string | null}
+ */
+const findBrand = (node, names) => {
+  if (!isRecord(node)) return null;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const hit = findBrand(item, names);
+      if (hit !== null) return hit;
+    }
+    return null;
+  }
+  if (node.type === "TSTypeReference") {
+    const name = typeNameOf(node.typeName);
+    if (name !== null && names.has(name)) return name;
+    if (name === BRAND_MARKER) {
+      const hit = brandFromMarker(node);
+      if (hit !== null) return hit;
+    }
+  }
+  for (const [key, value] of Object.entries(node)) {
+    if (SKIP_KEYS.has(key)) continue;
+    const hit = findBrand(value, names);
+    if (hit !== null) return hit;
+  }
+  return null;
+};
+
+/**
+ * Bans any cast whose asserted type mentions a branded id: `x as OrganizationId`,
+ * `as CaseId | null`, `as CaseId[]`, `as Record<string, CaseId>`, `as { id: CaseId }`,
+ * `as string & z.BRAND<"CaseId">`, `x as unknown as <any of those>` and `<CaseId>x`. A
+ * branded id is minted by `asOrganizationId` / `asCaseId` (or a schema parse), never
+ * stamped on a string. oxlint has no `no-restricted-syntax`, so this is a plugin rule on
+ * the two cast nodes. An aliased import (`import { CaseId as C }`) is followed within its
+ * own file. Limitation: an alias declared elsewhere (`type Id = CaseId; x as Id`) is not
+ * resolved, and `satisfies` / annotations are not casts and stay legal.
  */
 const noBrandCast = {
   meta: {
     type: "problem",
     docs: {
       description:
-        "Ban bare `as OrganizationId` / `as CaseId` casts; mint through the validating constructors.",
+        "Ban casts whose asserted type mentions OrganizationId / CaseId; mint through the validating constructors.",
     },
   },
   /** @param {RuleContext} context */
   create(context) {
-    /** @param {CastNode & { type: string }} node */
+    const names = new Set(BRANDED_ID_TYPES);
+    /** @param {{ typeAnnotation: unknown }} node */
     const check = (node) => {
-      const target = node.typeAnnotation;
-      if (
-        target.type === "TSTypeReference" &&
-        target.typeName?.type === "Identifier" &&
-        BRANDED_ID_TYPES.has(target.typeName.name ?? "")
-      ) {
+      const hit = findBrand(node.typeAnnotation, names);
+      if (hit !== null) {
         context.report({
           node,
-          message: `Do not cast to ${target.typeName.name}: mint it with asOrganizationId / asCaseId (or parse with the id schema) from @watchdog/schemas/shared. Only packages/test-kit fixtures are exempt (ADR-0003).`,
+          message: `Do not cast to a type containing ${hit}: mint it with asOrganizationId / asCaseId (or parse with the id schema) from @watchdog/schemas/shared. Only packages/test-kit fixtures are exempt (ADR-0003).`,
         });
       }
     };
-    return { TSAsExpression: check, TSTypeAssertion: check };
+    return {
+      /** @param {{ specifiers: readonly unknown[] }} node */
+      ImportDeclaration(node) {
+        for (const spec of node.specifiers) {
+          if (!isRecord(spec) || spec.type !== "ImportSpecifier") continue;
+          const imported = typeNameOf(spec.imported);
+          const local = typeNameOf(spec.local);
+          if (
+            imported !== null &&
+            local !== null &&
+            BRANDED_ID_TYPES.has(imported)
+          ) {
+            names.add(local);
+          }
+        }
+      },
+      TSAsExpression: check,
+      TSTypeAssertion: check,
+    };
   },
 };
 
