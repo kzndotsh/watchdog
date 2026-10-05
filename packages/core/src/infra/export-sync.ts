@@ -15,7 +15,11 @@ import { Context, Data, Effect, Fiber, Layer, SynchronizedRef } from "effect";
 import type { EvidenceRow } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
 import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import {
+  parseTrimmedCaseId,
+  type CaseId,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "./blob";
 import {
@@ -48,7 +52,10 @@ function exportRoot(): string {
 }
 
 /** `<export>/<organizationId>/<caseSlug>`; null if either segment would escape the export root. */
-function exportDirFor(organizationId: string, slug: string): string | null {
+function exportDirFor(
+  organizationId: OrganizationId,
+  slug: string
+): string | null {
   const root = nodePath.resolve(exportRoot());
   const orgDir = nodePath.resolve(root, organizationId);
   const dir = nodePath.resolve(orgDir, slug);
@@ -115,7 +122,7 @@ interface EvidenceExportCounts {
 type EvidenceWriteOutcome = "included" | "skipped" | "none";
 
 function writeUriEvidenceFileEffect(
-  caseId: string,
+  caseId: CaseId,
   evidenceDir: string,
   ev: EvidenceRow
 ): Effect.Effect<EvidenceWriteOutcome, never, BlobStore> {
@@ -166,7 +173,7 @@ function writeInlineEvidenceFileEffect(
 }
 
 function writeOneEvidenceFileEffect(
-  caseId: string,
+  caseId: CaseId,
   evidenceDir: string,
   ev: EvidenceRow
 ): Effect.Effect<EvidenceWriteOutcome, ExportIOError, BlobStore> {
@@ -182,7 +189,7 @@ function writeOneEvidenceFileEffect(
 }
 
 function writeCaseEvidenceFilesEffect(
-  caseId: string,
+  caseId: CaseId,
   evidenceDir: string,
   evidenceRows: EvidenceRow[]
 ): Effect.Effect<EvidenceExportCounts, ExportIOError, BlobStore> {
@@ -202,7 +209,7 @@ function writeCaseEvidenceFilesEffect(
 }
 
 export function writeCaseExportEffect(
-  caseId: string
+  caseId: CaseId
 ): Effect.Effect<void, ExportIOError, Db | BlobStore> {
   return Effect.gen(function* writeCaseExportGen() {
     const {
@@ -247,9 +254,9 @@ export function writeCaseExportEffect(
 }
 
 type ExportWriter = (
-  id: string
+  id: CaseId
 ) => Effect.Effect<void, ExportIOError, Db | BlobStore>;
-type ExportWrite = (id: string) => Effect.Effect<void, ExportIOError>;
+type ExportWrite = (id: CaseId) => Effect.Effect<void, ExportIOError>;
 
 interface ExportCoalesceState {
   dirty: Set<string>;
@@ -263,13 +270,13 @@ const exportCoalesce = SynchronizedRef.makeUnsafe({
 
 function withDirty(
   state: ExportCoalesceState,
-  caseId: string
+  caseId: CaseId
 ): ExportCoalesceState {
   return { dirty: new Set([...state.dirty, caseId]), inFlight: state.inFlight };
 }
 
 function writeExportEffect(
-  caseId: string,
+  caseId: CaseId,
   writeExport: ExportWrite
 ): Effect.Effect<void> {
   return writeExport(caseId).pipe(
@@ -283,7 +290,7 @@ function writeExportEffect(
 }
 
 function exportLoop(
-  caseId: string,
+  caseId: CaseId,
   writeExport: ExportWrite
 ): Effect.Effect<void> {
   return Effect.gen(function* exportLoopGen() {
@@ -307,7 +314,7 @@ function exportLoop(
 }
 
 function claimExportJoin(
-  caseId: string,
+  caseId: CaseId,
   writeExport: ExportWrite
 ): Effect.Effect<Effect.Effect<void>> {
   return SynchronizedRef.modifyEffect(exportCoalesce, (state) => {
@@ -370,7 +377,7 @@ export function isolatedExportWriteServices(): Layer.Layer<Db | BlobStore> {
  * (the live pool and its own `BlobStore`), never the caller's `Db` / `BlobStore`.
  */
 export function claimCaseExportEffect(
-  caseId: string,
+  caseId: CaseId,
   writeExport: ExportWriter = writeCaseExportEffect
 ): Effect.Effect<Effect.Effect<void>> {
   const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
@@ -394,7 +401,7 @@ export function claimCaseExportEffect(
  * caller needs no services for it.
  */
 export function scheduleCaseExportEffect(
-  caseId: string,
+  caseId: CaseId,
   writeExport: ExportWriter = writeCaseExportEffect
 ): Effect.Effect<void> {
   return Effect.flatten(claimCaseExportEffect(caseId, writeExport));
@@ -402,7 +409,7 @@ export function scheduleCaseExportEffect(
 
 /** Best-effort: drop the live Export shadow dir for a deleted Case. */
 export function removeCaseExportDirEffect(
-  organizationId: string,
+  organizationId: OrganizationId,
   slug: string
 ): Effect.Effect<void, ExportIOError> {
   const dir = exportDirFor(organizationId, slug);
@@ -415,7 +422,7 @@ export function removeCaseExportDirEffect(
 
 /** Best-effort: move the Export shadow dir when a Case slug changes. */
 export function renameCaseExportDirEffect(
-  organizationId: string,
+  organizationId: OrganizationId,
   fromSlug: string,
   toSlug: string
 ): Effect.Effect<void, ExportIOError> {

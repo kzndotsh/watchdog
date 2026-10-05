@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 import { trimmedEntityKindSchema } from "./enums";
+import { trimmedCaseIdSchema } from "./ids";
 import {
   entitySlugSchema,
   nonEmptyTrimmed,
   slugifyName,
   trimmedOrUndefined,
-  trimmedUuidSchema,
 } from "./primitives";
 
 const createEntityFieldsBase = z.object({
@@ -35,7 +35,7 @@ export const createEntityFieldsSchema = createEntityFieldsBase
 /** Entity POST body including case scope. */
 export const createEntityInputSchema = z
   .object({
-    caseId: trimmedUuidSchema,
+    caseId: trimmedCaseIdSchema,
     kind: trimmedEntityKindSchema,
     name: nonEmptyTrimmed,
     slug: z.string().optional(),

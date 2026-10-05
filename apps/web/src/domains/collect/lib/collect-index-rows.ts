@@ -6,7 +6,7 @@ import {
 } from "@/domains/intake/lib/evidence-runs";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@watchdog/core/jobs";
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import { parseTrimmedUuid } from "@watchdog/schemas/shared";
 
 export {
   buildEvidenceRow,
@@ -53,5 +53,5 @@ export function entityIdFromJobInput(
   input: JobListRecord["input"]
 ): string | null {
   if (typeof input?.entityId !== "string") return null;
-  return parseTrimmedCaseId(input.entityId);
+  return parseTrimmedUuid(input.entityId);
 }

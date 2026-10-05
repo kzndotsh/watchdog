@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { RecentJobActivityRow } from "@watchdog/db";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import {
@@ -14,7 +15,7 @@ function jobRow(
   overrides: Partial<RecentJobActivityRow> & Pick<RecentJobActivityRow, "id">
 ): RecentJobActivityRow {
   return {
-    caseId: testId(10),
+    caseId: testCaseId(10),
     caseName: "Case",
     capabilityId: "network.dns.lookup",
     status: "running",
@@ -148,7 +149,7 @@ describe("mergeActivityItems", () => {
           id: testId(1),
           kind: "job",
           action: "Running",
-          caseId: testId(10),
+          caseId: testCaseId(10),
           caseName: "Case",
           label: "Job",
           at: "2026-01-01T00:00:00.000Z",
@@ -157,7 +158,7 @@ describe("mergeActivityItems", () => {
           id: testId(2),
           kind: "evidence",
           action: "Captured",
-          caseId: testId(10),
+          caseId: testCaseId(10),
           caseName: "Case",
           label: "Evidence",
           at: "2026-01-03T00:00:00.000Z",

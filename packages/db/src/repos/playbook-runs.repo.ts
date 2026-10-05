@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 
-import type { PlaybookRunStatus } from "@watchdog/schemas/shared";
+import type { CaseId, PlaybookRunStatus } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { playbookRuns } from "../schema/playbook-runs";
@@ -89,7 +89,7 @@ export const playbookRunsRepo = {
     return row ?? null;
   },
 
-  async listRunning(exec: DbExec): Promise<{ id: string; caseId: string }[]> {
+  async listRunning(exec: DbExec): Promise<{ id: string; caseId: CaseId }[]> {
     return exec
       .select({ id: playbookRuns.id, caseId: playbookRuns.caseId })
       .from(playbookRuns)

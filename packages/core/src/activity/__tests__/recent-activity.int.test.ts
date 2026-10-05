@@ -4,7 +4,10 @@ import { listRecentActivityEffect } from "@watchdog/core/activity";
 import { runDomain } from "@watchdog/core/infra";
 import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
 import { db, evidenceRepo } from "@watchdog/db";
-import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import {
+  buildClaimCreateOp,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
@@ -14,11 +17,7 @@ import {
   seedPlaybookRun,
   seedProposal,
 } from "@watchdog/test-db";
-import {
-  TEST_ACTOR_ID,
-  TEST_ORGANIZATION_ID,
-  testId,
-} from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("listRecentActivity", () => {
   beforeEach(async () => {

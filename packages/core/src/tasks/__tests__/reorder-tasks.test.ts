@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain";
@@ -31,8 +32,8 @@ describe("reorderTasksEffect", () => {
     await expect(
       runDomain(
         reorderTasksEffect({
-          caseId: testId(1),
-          organizationId: testId(2),
+          caseId: testCaseId(1),
+          organizationId: TEST_ORGANIZATION_ID,
           status: "backlog",
           orderedIds: [testId(3), "not-a-uuid"],
         })

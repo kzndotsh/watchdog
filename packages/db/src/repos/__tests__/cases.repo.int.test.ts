@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { seedCase, withTestTx } from "@watchdog/test-db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 import { casesRepo } from "../cases.repo.ts";
 

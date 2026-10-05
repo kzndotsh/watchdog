@@ -1,7 +1,4 @@
-import {
-  parseTrimmedCaseId,
-  trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+import { parseTrimmedUuid, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 export const INVALID_COLLECT_ENTITY_SUMMARY = "Entity id is not a valid UUID";
 
@@ -16,5 +13,5 @@ export function resolveCollectEntityId(
   if (entityId === undefined) return undefined;
   const trimmed = trimmedOrUndefined(entityId);
   if (trimmed === undefined) return undefined;
-  return parseTrimmedCaseId(trimmed) ?? null;
+  return parseTrimmedUuid(trimmed) ?? null;
 }

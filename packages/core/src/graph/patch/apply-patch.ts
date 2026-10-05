@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import type { DbTx } from "@watchdog/db";
 import { type CustodyViolationError, assertPatchGates } from "@watchdog/policy";
 import type { PatchOp } from "@watchdog/schemas/graph";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
+import type { CaseId, ConfidenceTier } from "@watchdog/schemas/shared";
 import { parseGraphUuidList } from "@watchdog/schemas/shared";
 
 import { assertEvidenceIdsInCaseEffect } from "../../evidence/evidence";
@@ -20,7 +20,7 @@ import { applyQuestionOpEffect } from "./apply-question-op";
 export type ApplyPatchTx = DbTx;
 
 export interface ApplyPatchOpts {
-  caseId: string;
+  caseId: CaseId;
   patch: PatchOp[];
   confidence?: ConfidenceTier;
   sharedEvidenceIds?: string[];
@@ -45,7 +45,7 @@ function evidenceIdsForOp(
 
 function applyOpEffect(
   tx: DbTx,
-  caseId: string,
+  caseId: CaseId,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   sharedEvidenceIds: string[]

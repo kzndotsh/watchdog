@@ -1,6 +1,7 @@
 import { Cause, Effect } from "effect";
 
 import { jobsRepo, type JobRow } from "@watchdog/db";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import { Db } from "../infra/db-service";
 import { errorMessage } from "../infra/error-utils";
@@ -17,7 +18,7 @@ function logPlaybookAdvanceFailureEffect(
   advanceError: unknown,
   opts: {
     jobId: string;
-    caseId: string;
+    caseId: CaseId;
     playbookRunId: string | null;
     jobLog: ReturnType<typeof createJobLog>;
   }
@@ -102,7 +103,7 @@ export function runFailedPathEffect(opts: {
   error: unknown;
   jobLog: ReturnType<typeof createJobLog>;
   playbookRunId: JobRow["playbookRunId"];
-  caseId: string;
+  caseId: CaseId;
 }): Effect.Effect<void, never, Db | JobQueue> {
   const { jobId, error, jobLog, playbookRunId, caseId } = opts;
   const msg = errorMessage(error);

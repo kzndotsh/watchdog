@@ -10,10 +10,7 @@ import {
   EVIDENCE_SNAPSHOT_ARTIFACT,
   REPORT_JSON_ARTIFACT,
 } from "@watchdog/schemas/jobs";
-import {
-  parseTrimmedCaseId,
-  trimmedOrUndefined,
-} from "@watchdog/schemas/shared";
+import { parseTrimmedUuid, trimmedOrUndefined } from "@watchdog/schemas/shared";
 import type { ToolsTag } from "@watchdog/tools/errors";
 
 import type {
@@ -79,7 +76,7 @@ export function interpretProcessDraft(
   }
   let entityId: string | undefined;
   if (opts.input.entityId !== null && opts.input.entityId !== undefined) {
-    entityId = parseTrimmedCaseId(opts.input.entityId) ?? undefined;
+    entityId = parseTrimmedUuid(opts.input.entityId) ?? undefined;
     if (entityId === undefined) {
       throw new Error("Process interpret requires a valid entityId");
     }
@@ -89,12 +86,12 @@ export function interpretProcessDraft(
   ) {
     entityId = undefined;
   } else {
-    entityId = parseTrimmedCaseId(opts.snapshotEntityId) ?? undefined;
+    entityId = parseTrimmedUuid(opts.snapshotEntityId) ?? undefined;
     if (entityId === undefined) {
       throw new Error("Process interpret requires a valid snapshotEntityId");
     }
   }
-  const evidenceId = parseTrimmedCaseId(opts.input.evidenceId) ?? undefined;
+  const evidenceId = parseTrimmedUuid(opts.input.evidenceId) ?? undefined;
   if (evidenceId === undefined) {
     throw new Error("Process interpret requires a valid evidenceId");
   }

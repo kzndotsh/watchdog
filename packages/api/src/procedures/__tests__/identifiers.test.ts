@@ -21,14 +21,11 @@ vi.mock("@watchdog/core/graph", async (importOriginal) => {
   };
 });
 
+import { testActor } from "@watchdog/schemas/testing";
+
 import { create, list, remove, update } from "../identifiers";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 const caseId = "00000000-0000-4000-8000-000000000001";
 const identifierId = "00000000-0000-4000-8000-000000000050";
 

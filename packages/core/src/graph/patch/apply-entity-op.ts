@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import { entitiesRepo, type DbTx } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
+import type { CaseId } from "@watchdog/schemas/shared";
 import {
   ENTITY_KINDS,
   trimmedOrNull,
@@ -28,7 +29,7 @@ import { assertEntityInCaseEffect } from "./guards";
 
 export function applyEntityOpEffect(
   tx: DbTx,
-  caseId: string,
+  caseId: CaseId,
   op: PatchOp
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEntityOpGen() {

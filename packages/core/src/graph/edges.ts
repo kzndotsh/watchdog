@@ -5,9 +5,11 @@ import {
   normalizeUuidList,
   parseOptionalTrimmedUuid,
   trimmedOrNull,
+  type CaseId,
   type ConfidenceTier,
   type EdgePredicate,
   type EntityKind,
+  type OrganizationId,
 } from "@watchdog/schemas/shared";
 
 import {
@@ -56,8 +58,8 @@ export interface EdgeRecord {
 }
 
 export interface CreateEdgeInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   fromId: string;
   toId: string;
   predicate: EdgePredicate;
@@ -72,8 +74,8 @@ export interface CreateEdgeInput {
 }
 
 export interface UpdateEdgeInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   edgeId: string;
   /**
    * Entity whose dossier orientation to use on the returned record.
@@ -112,8 +114,8 @@ function toRecord(
 }
 
 export function listEdgesForEntityEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   entityId: string
 ): Effect.Effect<EdgeRecord[], DomainTag, Db> {
   return Effect.gen(function* listEdgesForEntityGen() {
@@ -174,8 +176,8 @@ export function toCaseEdgeRecord(
 }
 
 export function listEdgesForCaseEffect(
-  caseId: string,
-  organizationId: string
+  caseId: CaseId,
+  organizationId: OrganizationId
 ): Effect.Effect<CaseEdgeRecord[], DomainTag, Db> {
   return Effect.gen(function* listEdgesForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -363,8 +365,8 @@ export function updateEdgeEffect(
 }
 
 export function deleteEdgeEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   edgeId: string
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEdgeGen() {

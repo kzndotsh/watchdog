@@ -1,12 +1,15 @@
 import { type AnyColumn, and, eq, sql } from "drizzle-orm";
 
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import {
+  type OrganizationId,
+  parseTrimmedCaseId,
+} from "@watchdog/schemas/shared";
 
 import { cases } from "../schema/cases";
 
 /** Scope activity queries to an org, optionally narrowed to one case. */
 export function orgCaseFilter(
-  organizationId: string,
+  organizationId: OrganizationId,
   caseId: string | undefined,
   caseIdColumn: AnyColumn
 ) {

@@ -1,12 +1,13 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { validateEdgeUpdateEffect } from "../edge-update";
 
 describe("validateEdgeUpdateEffect", () => {
-  const caseId = testId(1);
+  const caseId = testCaseId(1);
   const edgeId = testId(2);
   const fromId = testId(10);
   const toId = testId(20);
@@ -27,7 +28,7 @@ describe("validateEdgeUpdateEffect", () => {
         validateEdgeUpdateEffect(
           {
             caseId,
-            organizationId: testId(99),
+            organizationId: TEST_ORGANIZATION_ID,
             edgeId,
             fromId: "not-a-uuid",
             toId,
@@ -48,7 +49,7 @@ describe("validateEdgeUpdateEffect", () => {
         validateEdgeUpdateEffect(
           {
             caseId,
-            organizationId: testId(99),
+            organizationId: TEST_ORGANIZATION_ID,
             edgeId,
             fromId,
             toId: "not-a-uuid",
@@ -69,7 +70,7 @@ describe("validateEdgeUpdateEffect", () => {
         validateEdgeUpdateEffect(
           {
             caseId,
-            organizationId: testId(99),
+            organizationId: TEST_ORGANIZATION_ID,
             edgeId,
             viewEntityId: "not-a-uuid",
           },

@@ -20,10 +20,15 @@ import {
   type EvidenceRow,
   type EntityPeerRow,
 } from "@watchdog/db";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  EntityKind,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   entityDisplayLabel,
   parseTrimmedCaseId,
+  parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
 import { nowIsoStringEffect } from "./clock";
@@ -45,7 +50,7 @@ import { tryDbWith } from "./postgres-effect";
 import type { DomainTag } from "./tagged-errors";
 
 export interface EntityExport {
-  organizationId: string;
+  organizationId: OrganizationId;
   caseSlug: string;
   entitySlug: string;
   kind: EntityKind;
@@ -61,7 +66,7 @@ export function renderEntityMarkdownEffect(
   peerMap?: Map<string, EntityPeerRow>
 ): Effect.Effect<EntityExport | null, DomainTag, Db> {
   return Effect.gen(function* renderEntityMarkdownGen() {
-    const normalizedEntityId = parseTrimmedCaseId(entityId) ?? undefined;
+    const normalizedEntityId = parseTrimmedUuid(entityId) ?? undefined;
     if (normalizedEntityId === undefined) return null;
 
     const row = yield* tryDbWith((exec) =>
@@ -140,7 +145,7 @@ interface CaseExportResult {
   files: Map<string, string>;
   evidenceRows: EvidenceRow[];
   /** Where the shadow workspace lives: `<export>/<organizationId>/<caseSlug>`. Null when the Case is gone. */
-  location: { organizationId: string; caseSlug: string } | null;
+  location: { organizationId: OrganizationId; caseSlug: string } | null;
 }
 
 /**
@@ -149,7 +154,7 @@ interface CaseExportResult {
  * Also includes evidence file references in CASE.md.
  */
 export function renderCaseExportEffect(
-  caseId: string
+  caseId: CaseId
 ): Effect.Effect<CaseExportResult, DomainTag, Db> {
   return Effect.gen(function* renderCaseExportGen() {
     const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;

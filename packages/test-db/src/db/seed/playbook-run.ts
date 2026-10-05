@@ -4,11 +4,12 @@ import {
   type NewPlaybookRun,
   type PlaybookRunRow,
 } from "@watchdog/db";
+import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 export async function seedPlaybookRun(
   exec: DbExec,
-  caseId: string,
+  caseId: CaseId,
   overrides?: Partial<NewPlaybookRun>
 ): Promise<PlaybookRunRow> {
   const overridesResolved = overrides ?? {};

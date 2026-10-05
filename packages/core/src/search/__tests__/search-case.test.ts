@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 
 import type { JobListRow, JobWithPlaybook } from "@watchdog/db";
+import { asCaseId } from "@watchdog/schemas/shared";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain.ts";
@@ -12,7 +14,7 @@ function jobRow(
   const now = new Date("2026-01-03T00:00:00.000Z");
   return {
     job: {
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.dns.lookup",
       input: { host: "example.com" },
       output: null,
@@ -140,8 +142,8 @@ describe("searchCase", () => {
   it("returns empty buckets when query is shorter than 2 chars (no DB)", async () => {
     const result = await runDomain(
       searchCaseEffect({
-        caseId: "00000000-0000-4000-8000-000000000000",
-        organizationId: "org-test",
+        caseId: asCaseId("00000000-0000-4000-8000-000000000000"),
+        organizationId: TEST_ORGANIZATION_ID,
         q: "a",
       })
     );
@@ -158,8 +160,8 @@ describe("searchCase", () => {
   it("trims whitespace-only short queries", async () => {
     const result = await runDomain(
       searchCaseEffect({
-        caseId: "00000000-0000-4000-8000-000000000000",
-        organizationId: "org-test",
+        caseId: asCaseId("00000000-0000-4000-8000-000000000000"),
+        organizationId: TEST_ORGANIZATION_ID,
         q: "  ",
       })
     );

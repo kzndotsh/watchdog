@@ -17,7 +17,8 @@ import {
 import {
   isJsonObject,
   isOpenJobStatus,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
+  type CaseId,
   type JsonObject,
 } from "@watchdog/schemas/shared";
 
@@ -39,7 +40,7 @@ interface ReleasedJob {
 interface AdvanceOutcome {
   jobs: ReleasedJob[];
   abandonedJobIds: string[];
-  caseId: string | undefined;
+  caseId: CaseId | undefined;
 }
 
 function maybeFinishPlaybookRunEffect(
@@ -61,7 +62,7 @@ function maybeFinishPlaybookRunEffect(
 }
 
 function enqueueReleasedEffect(
-  caseId: string,
+  caseId: CaseId,
   _playbookRunId: string,
   released: ReleasedJob[]
 ): Effect.Effect<void, never, JobQueue> {
@@ -83,7 +84,7 @@ function enqueueReleasedEffect(
 function enqueueStepJobsEffect(opts: {
   tx: DbExec;
   run: {
-    caseId: string;
+    caseId: CaseId;
     actorId: string;
     actorLabel: string | null;
   };
@@ -159,9 +160,9 @@ function enqueueStepJobsEffect(opts: {
 
 export function advancePlaybookRunEffect(input: {
   playbookRunId: string;
-  caseId?: string;
+  caseId?: CaseId;
 }): Effect.Effect<void, DomainTag, Db | JobQueue> {
-  const playbookRunId = parseTrimmedCaseId(input.playbookRunId) ?? undefined;
+  const playbookRunId = parseTrimmedUuid(input.playbookRunId) ?? undefined;
   if (playbookRunId === undefined) return Effect.void;
   return Effect.gen(function* advancePlaybookRunGen() {
     const outcome = yield* transact((tx) =>

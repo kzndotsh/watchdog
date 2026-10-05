@@ -1,6 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 
 import type { ActivityKind } from "@watchdog/schemas/feed";
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { activityEvents } from "../schema/activity-events";
@@ -23,7 +24,7 @@ export type NewActivityEvent = Pick<
   >;
 
 export interface RecentActivityEventOpts {
-  organizationId: string;
+  organizationId: OrganizationId;
   caseId?: string;
   kind?: ActivityKind;
   limit: number;
@@ -31,7 +32,7 @@ export interface RecentActivityEventOpts {
 
 export interface RecentActivityEventRow {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   caseName: string;
   kind: ActivityKind;
   action: string;

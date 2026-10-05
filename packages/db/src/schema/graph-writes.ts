@@ -12,6 +12,7 @@ import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
   ConfidenceTier,
   GraphWriteChannel,
+  CaseId,
 } from "@watchdog/schemas/shared";
 
 import { createdAt } from "./_helpers";
@@ -26,6 +27,7 @@ export const graphWrites = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     caseId: uuid("case_id")
+      .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     actorId: text("actor_id").notNull(),

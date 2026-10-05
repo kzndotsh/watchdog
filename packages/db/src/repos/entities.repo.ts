@@ -5,6 +5,7 @@ import {
   ENTITY_KINDS,
   normalizeUuidList,
 } from "@watchdog/schemas/shared";
+import type { OrganizationId } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";
@@ -45,7 +46,7 @@ export interface EntityPeerRow {
 export type EntityWithCaseRow = EntityRow & {
   caseSlug: string;
   caseName: string;
-  caseOrganizationId: string;
+  caseOrganizationId: OrganizationId;
 };
 
 export type NewEntity = Pick<

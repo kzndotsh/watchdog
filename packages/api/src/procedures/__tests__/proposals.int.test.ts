@@ -6,7 +6,10 @@ import {
   createAgentProposalEffect,
   listProposalsForCaseEffect,
 } from "@watchdog/core/proposals";
-import { buildClaimCreateOp } from "@watchdog/schemas/testing";
+import {
+  buildClaimCreateOp,
+  TEST_ORGANIZATION_ID,
+} from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
@@ -14,11 +17,7 @@ import {
   seedProposal,
   testDb,
 } from "@watchdog/test-db";
-import {
-  TEST_ACTOR_ID,
-  testId,
-  TEST_ORGANIZATION_ID,
-} from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("proposals", () => {
   beforeEach(async () => {

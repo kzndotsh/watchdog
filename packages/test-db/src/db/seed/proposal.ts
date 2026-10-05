@@ -1,9 +1,10 @@
 import { proposalsRepo, type DbExec, type NewProposal } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 export async function seedProposal(
   exec: DbExec,
-  caseId: string,
+  caseId: CaseId,
   patch: PatchOp[],
   overrides?: Partial<NewProposal>
 ): Promise<{ id: string }> {

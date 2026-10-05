@@ -1,6 +1,8 @@
 import { Effect, Exit, Layer, Scope } from "effect";
 import { describe, expect, it } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
+
 import {
   assertUploadedObjectEffect,
   createPresignedGetEffect,
@@ -11,7 +13,7 @@ import {
 } from "../blob";
 import { BlobStore, recordingBlobStore } from "../blob-store";
 
-const CASE_ID = "11111111-1111-4111-8111-000000000001";
+const CASE_ID = testCaseId(1);
 
 function provide<A, E>(
   effect: Effect.Effect<A, E, BlobStore>,

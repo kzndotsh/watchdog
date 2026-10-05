@@ -3,7 +3,12 @@ import { Effect } from "effect";
 import { entitiesRepo, proposalsRepo, type ProposalRow } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import { patchOpRelatedEntityIds } from "@watchdog/schemas/graph";
-import type { ConfidenceTier, ProposalStatus } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  ConfidenceTier,
+  OrganizationId,
+  ProposalStatus,
+} from "@watchdog/schemas/shared";
 import {
   normalizeUuidList,
   parseGraphUuidList,
@@ -29,6 +34,7 @@ import {
 import { applyPatchEffect } from "../graph/patch/apply-patch";
 import {
   assertCaseInOrgEffect,
+  requireTrimmedCaseIdEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
@@ -97,7 +103,7 @@ function entityIdsFromPatch(patch: PatchOp[]): Set<string> {
 }
 
 function loadEntityDisplayMapsEffect(
-  caseId: string,
+  caseId: CaseId,
   entityIds: Iterable<string>
 ): Effect.Effect<
   {
@@ -221,8 +227,8 @@ function enrichProposalRecordEffect(
 }
 
 export function listProposalsForCaseEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   opts?: { status?: ProposalStatus }
 ): Effect.Effect<ProposalRecord[], DomainTag, Db> {
   return Effect.gen(function* listProposalsForCaseGen() {
@@ -266,11 +272,11 @@ export function listProposalsForCaseEffect(
 }
 
 export function getProposalForCaseEffect(
-  caseId: string,
+  caseId: CaseId,
   proposalId: string
 ): Effect.Effect<ProposalRecord | null, DomainTag, Db> {
   return Effect.gen(function* getProposalForCaseGen() {
-    const scopedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
+    const scopedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
     const normalizedProposalId = yield* requireTrimmedGraphId(
       proposalId,
       "Proposal"
@@ -287,8 +293,8 @@ export function getProposalForCaseEffect(
 }
 
 export function acceptProposalEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   proposalId: string;
   actorId: string;
   confidence?: ConfidenceTier;
@@ -403,8 +409,8 @@ export function acceptProposalEffect(input: {
 }
 
 export function rejectProposalEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   proposalId: string;
   actorId: string;
   reason?: string;

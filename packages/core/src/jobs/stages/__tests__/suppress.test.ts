@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const { suppressKnownFindingsEffect } = vi.hoisted(() => ({
@@ -19,7 +20,7 @@ import { suppressStageEffect } from "../suppress";
 describe("suppressStage", () => {
   it("returns empty result for empty patch", async () => {
     const result = await runDomain(
-      suppressStageEffect("case-1", [], createJobLog())
+      suppressStageEffect(testCaseId(1), [], createJobLog())
     );
     expect(result).toEqual({ kept: [], suppressed: 0 });
     expect(suppressKnownFindingsEffect).not.toHaveBeenCalled();
@@ -42,7 +43,7 @@ describe("suppressStage", () => {
     );
     const jobLog = createJobLog();
     const result = await runDomain(
-      suppressStageEffect("case-1", patch, jobLog)
+      suppressStageEffect(testCaseId(1), patch, jobLog)
     );
     expect(result.suppressed).toBe(1);
     expect(jobLog.lines.some((line) => line.includes("suppressed 1"))).toBe(

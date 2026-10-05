@@ -6,6 +6,7 @@ import { db, edgesRepo, evidenceRepo, jobsRepo, tasksRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
+  TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -18,7 +19,7 @@ import {
   seedPlaybookRun,
   seedProposal,
 } from "@watchdog/test-db";
-import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
 
 describe("searchCase", () => {
   beforeEach(async () => {

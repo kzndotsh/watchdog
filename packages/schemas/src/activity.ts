@@ -1,7 +1,8 @@
 import { z } from "zod";
 
+import type { CaseId } from "./ids";
 import {
-  optionalUuidSchema,
+  optionalCaseIdSchema,
   parseTrimmedCaseId,
   uuidSchema,
 } from "./primitives";
@@ -38,7 +39,7 @@ export const activityItemSchema = z.object({
 export type ActivityItem = z.output<typeof activityItemSchema>;
 
 export const listRecentActivityInputSchema = z.object({
-  caseId: optionalUuidSchema,
+  caseId: optionalCaseIdSchema,
   limit: z.number().int().min(1).max(50).optional(),
 });
 export type ListRecentActivityInput = z.output<
@@ -46,7 +47,7 @@ export type ListRecentActivityInput = z.output<
 >;
 
 export interface SseCaseIdFilter {
-  caseId: string | null;
+  caseId: CaseId | null;
 }
 
 export type ParseSseCaseIdParamResult =
@@ -54,7 +55,7 @@ export type ParseSseCaseIdParamResult =
   | { ok: false };
 
 /** Trim + validate case id for SSE clients (`useLiveEvents`, etc.). */
-export function normalizeSseCaseId(raw: string): string | undefined {
+export function normalizeSseCaseId(raw: string): CaseId | undefined {
   return parseTrimmedCaseId(raw) ?? undefined;
 }
 

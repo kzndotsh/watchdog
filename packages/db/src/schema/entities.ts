@@ -1,6 +1,6 @@
 import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type { EntityKind, CaseId } from "@watchdog/schemas/shared";
 
 import { timestamps } from "./_helpers";
 import { cases } from "./cases";
@@ -11,6 +11,7 @@ export const entities = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     caseId: uuid("case_id")
+      .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     kind: text("kind").$type<EntityKind>().notNull(),

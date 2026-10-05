@@ -9,6 +9,7 @@ import {
 } from "@watchdog/caps";
 import type { CapabilityDef } from "@watchdog/caps/sdk";
 import { casesRepo } from "@watchdog/db";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
@@ -51,7 +52,7 @@ export function formatCapAvailabilityError(
 
 export function evaluateCapAvailabilityEffect(input: {
   actorId: string;
-  caseId: string;
+  caseId: CaseId;
   cap: CapabilityDef<z.ZodType>;
   /** When set, skips a separate case read (use under case row lock). */
   allowThirdPartyEgress?: boolean;
@@ -111,7 +112,7 @@ export function evaluateCapAvailabilityEffect(input: {
 /** Fail closed before enqueue — same predicate as playbooks / worker preflight. */
 export function assertCapAvailabilityEffect(input: {
   actorId: string;
-  caseId: string;
+  caseId: CaseId;
   cap: CapabilityDef<z.ZodType>;
   allowThirdPartyEgress?: boolean;
 }): Effect.Effect<void, DomainTag, Db | Vault> {

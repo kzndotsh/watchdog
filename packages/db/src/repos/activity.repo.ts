@@ -2,9 +2,11 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
+  CaseId,
+  EvidenceKind,
   JobStatus,
   JsonObject,
-  EvidenceKind,
+  OrganizationId,
 } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
@@ -17,14 +19,14 @@ import { clampSearchLimit } from "./_limits";
 import { orgCaseFilter } from "./_org-case-filter";
 
 export interface RecentActivityOpts {
-  organizationId: string;
+  organizationId: OrganizationId;
   caseId?: string;
   limit: number;
 }
 
 export interface RecentEvidenceActivityRow {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   caseName: string;
   kind: EvidenceKind;
   label: string | null;
@@ -36,7 +38,7 @@ export interface RecentEvidenceActivityRow {
 
 export interface RecentJobActivityRow {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   caseName: string;
   capabilityId: string;
   status: JobStatus;
@@ -52,7 +54,7 @@ export interface RecentJobActivityRow {
 
 export interface RecentProposalActivityRow {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   caseName: string;
   summary: string | null;
   capabilityId: string | null;

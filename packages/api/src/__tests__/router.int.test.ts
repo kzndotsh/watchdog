@@ -5,13 +5,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { runDomain } from "@watchdog/core/infra";
 import { putCredentialSlotEffect } from "@watchdog/core/vault";
 import type { ApiActor } from "@watchdog/schemas/shared";
-import { buildEntityCreateOp } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
 import {
-  TEST_ACTOR_ID,
+  buildEntityCreateOp,
   TEST_ORGANIZATION_ID,
-  testId,
-} from "@watchdog/test-kit";
+} from "@watchdog/schemas/testing";
+import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import type { ApiContext } from "../context";
 import { router } from "../router";

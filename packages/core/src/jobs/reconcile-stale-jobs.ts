@@ -1,7 +1,7 @@
 import { Cause, Clock, Effect, Result } from "effect";
 
 import { jobsRepo, playbookRunsRepo } from "@watchdog/db";
-import { isOpenJobStatus } from "@watchdog/schemas/shared";
+import { isOpenJobStatus, type CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
 import { errorMessage } from "../infra/error-utils";
@@ -36,7 +36,7 @@ function capExpireOrUnknown(
 function abandonPlaybook(
   jobId: string,
   playbookRunId: string | null,
-  caseId: string
+  caseId: CaseId
 ): Effect.Effect<void, never, Db | JobQueue> {
   if (playbookRunId === null) return Effect.void;
   return advancePlaybookRunEffect({ playbookRunId, caseId }).pipe(

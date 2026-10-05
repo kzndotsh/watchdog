@@ -2,6 +2,8 @@ import { createRouterClient, ORPCError } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { testActor } from "@watchdog/schemas/testing";
+
 import { authed, graphChildWrite, resolveAuthMethod } from "../os";
 
 const probe = authed
@@ -44,12 +46,7 @@ describe("os middleware", () => {
     const caller = createRouterClient(probe, {
       context: {
         headers: new Headers(),
-        actor: {
-          userId: "u1",
-          email: null,
-          name: null,
-          organizationId: "org-test",
-        },
+        actor: testActor({ email: null, name: null }),
         authMethod: "session",
       },
     });
@@ -83,12 +80,7 @@ describe("graphChildWrite custody", () => {
     .output(z.object({ ok: z.literal(true) }))
     .handler(async () => ({ ok: true as const }));
 
-  const actor = {
-    userId: "u1",
-    email: null,
-    name: null,
-    organizationId: "org-test",
-  };
+  const actor = testActor({ email: null, name: null });
 
   it("enforces userOverride when api key header is present", async () => {
     const caller = createRouterClient(

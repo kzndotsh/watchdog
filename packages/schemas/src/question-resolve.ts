@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { trimmedCaseIdSchema } from "./ids";
 import { optionalTrimmedSchema, trimmedUuidSchema } from "./primitives";
 
 /** Shared fields for question resolve POST (web forms + API + CLI). */
@@ -9,7 +10,7 @@ export const resolveQuestionFieldsSchema = z.object({
 
 export const resolveQuestionInputSchema = z
   .object({
-    caseId: trimmedUuidSchema,
+    caseId: trimmedCaseIdSchema,
     questionId: trimmedUuidSchema,
   })
   .extend(resolveQuestionFieldsSchema.shape);

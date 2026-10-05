@@ -1,10 +1,10 @@
 import { z } from "zod";
 
+import { trimmedCaseIdSchema } from "./ids";
 import {
   entitySlugSchema,
   nullableTrimmedPatchSchema,
   optionalTrimmedSchema,
-  trimmedUuidSchema,
 } from "./primitives";
 
 /** Shared fields for case PATCH (web forms + API + CLI). */
@@ -17,7 +17,7 @@ export const updateCaseFieldsSchema = z.object({
 /** Case PATCH body including scope. */
 export const updateCaseInputSchema = z
   .object({
-    caseId: trimmedUuidSchema,
+    caseId: trimmedCaseIdSchema,
   })
   .extend(updateCaseFieldsSchema.shape)
   .refine(
@@ -29,7 +29,7 @@ export const updateCaseInputSchema = z
   );
 
 export const deleteCaseInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
 });
 
 /** Case lookup by slug (route param / server fn). */

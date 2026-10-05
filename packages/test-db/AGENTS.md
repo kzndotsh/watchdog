@@ -23,4 +23,4 @@ Dev-only Postgres harness and `seed*` fixtures for integration tests (`@watchdog
 
 For core's `Db` service use `Db.layer` (the same pool as `testDb`) or `Db.layerOf(exec)` (a `tx` or a spy) from `@watchdog/core/infra`, paired with `runDomainWith(layer)(effect)` / `runAppWith`. test-db does not depend on core: the helpers live on the service so the two packages stay acyclic.
 
-All guidance; nothing lints these. Ids come from `@watchdog/test-kit/fixtures` (`testId`, `TEST_ACTOR_ID`, `TEST_ORGANIZATION_ID`). `db` and `test-db` are a deliberate dev-dependency cycle (db's integration tests use the harness): keep `db` from importing it outside tests. Methodology: [`standards.md`](../../docs/contributing/testing/standards.md).
+All guidance; nothing lints these. Ids come from `@watchdog/test-kit/fixtures` (`testId`, `TEST_ACTOR_ID`) and `@watchdog/schemas/testing` (`TEST_ORGANIZATION_ID`, `testCaseId`). `db` and `test-db` are a deliberate dev-dependency cycle (db's integration tests use the harness): keep `db` from importing it outside tests. Methodology: [`standards.md`](../../docs/contributing/testing/standards.md).
