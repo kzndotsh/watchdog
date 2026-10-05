@@ -16,7 +16,7 @@ import { submitWaybackSaveEffect } from "../submit.ts";
 
 describe("submitWaybackSaveEffect", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
   afterEach(() => {
     mockServer.resetHandlers();

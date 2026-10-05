@@ -8,7 +8,7 @@ import { virusTotalLookup } from "../cap.ts";
 
 describe("threat.virustotal.lookup run", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
   afterEach(() => {
     mockServer.resetHandlers();
