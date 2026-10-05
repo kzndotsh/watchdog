@@ -18,7 +18,11 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "./blob";
-import { blobStoreLayer, type BlobStore } from "./blob-store";
+import {
+  blobStoreLayer,
+  recordingBlobStore,
+  type BlobStore,
+} from "./blob-store";
 import { Db } from "./db-service";
 import { errorMessage } from "./error-utils";
 import { renderCaseExportEffect } from "./export";
@@ -343,6 +347,19 @@ export const ExportWriteServices = Context.Reference<
 >("@watchdog/core/infra/ExportWriteServices", {
   defaultValue: () => Layer.mergeAll(Db.layer, blobStoreLayer),
 });
+
+/**
+ * `ExportWriteServices` for tests that trigger an export without wanting the
+ * live pipeline: the pool (`Db.layer`) plus a `recordingBlobStore()` that never
+ * leaves the process, so the detached write cannot reach real S3. (The write
+ * still renders from the database and writes files under `WD_EXPORT_DIR`.)
+ * Provide it with `Effect.provideService(ExportWriteServices, ...)` or
+ * `runDomainWith(...)`-adjacent wiring wherever a test reaches
+ * `updateCaseEffect` with a name or slug change.
+ */
+export function isolatedExportWriteServices(): Layer.Layer<Db | BlobStore> {
+  return Layer.mergeAll(Db.layer, recordingBlobStore().layer);
+}
 
 /**
  * First stage of `scheduleCaseExportEffect`: marks the case dirty and

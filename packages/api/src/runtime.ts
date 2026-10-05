@@ -48,7 +48,8 @@ interface ModuleMeta {
  * `vite dev`): it fires `vite:beforeFullReload` and then drops every evaluated
  * module (measured on Vite 8). `dispose` covers a module-level HMR update.
  * `ManagedRuntime.dispose` is idempotent, and a runtime that never ran builds
- * nothing.
+ * nothing. Dev only: an importer that Vite does not re-evaluate after a
+ * dispose keeps the disposed runtime until the dev server restarts.
  */
 export function makeAppRuntime<ROut, E>(
   layer: Layer.Layer<ROut, E>,

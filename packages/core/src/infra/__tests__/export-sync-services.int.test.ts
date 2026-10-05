@@ -5,11 +5,12 @@ import { casesRepo, db } from "@watchdog/db";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 
 import { readArtifactBytesEffect } from "../blob";
-import { recordingBlobStore } from "../blob-store";
+import { BlobStore, recordingBlobStore } from "../blob-store";
 import { Db } from "../db-service";
 import {
   claimCaseExportEffect,
   ExportWriteServices,
+  isolatedExportWriteServices,
   scheduleCaseExportEffect,
 } from "../export-sync";
 import { tryDbWith } from "../postgres-effect";
@@ -115,6 +116,21 @@ describe("detached export write services", () => {
     );
     await Effect.runPromise(waitForWrite);
     expect(wrote).toBe(true);
+  });
+
+  it("isolatedExportWriteServices keeps the write off real S3", async () => {
+    const endpoint = await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* endpointGen() {
+          const store = yield* BlobStore;
+          return yield* Effect.promise(async () => {
+            const resolved = await store.client.config.endpoint?.();
+            return resolved?.hostname ?? "";
+          });
+        }).pipe(Effect.provide(isolatedExportWriteServices()))
+      )
+    );
+    expect(endpoint).toBe("blob.test.invalid");
   });
 
   it("schedule needs no caller services", async () => {
