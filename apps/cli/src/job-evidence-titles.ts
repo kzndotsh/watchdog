@@ -3,11 +3,12 @@ import {
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
 } from "@watchdog/schemas/jobs";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { entityTitlesForJobs } from "./job-entity-titles";
 
-async function listEvidenceForTitles(caseId: string, hiddenOnly: boolean) {
+async function listEvidenceForTitles(caseId: CaseId, hiddenOnly: boolean) {
   return api().evidence.list(
     listEvidenceInputSchema.parse({
       caseId,
@@ -19,7 +20,7 @@ async function listEvidenceForTitles(caseId: string, hiddenOnly: boolean) {
 }
 
 export async function evidenceTitlesForJobs(
-  caseId: string,
+  caseId: CaseId,
   jobs: readonly { input: Record<string, unknown> | null | undefined }[]
 ): Promise<Map<string, string>> {
   const inputs = jobs.map((row) => row.input);
@@ -40,7 +41,7 @@ export async function evidenceTitlesForJobs(
 }
 
 export async function jobInputTitlesForJobs(
-  caseId: string,
+  caseId: CaseId,
   jobs: readonly { input: Record<string, unknown> | null | undefined }[]
 ): Promise<{
   evidenceTitles: Map<string, string>;

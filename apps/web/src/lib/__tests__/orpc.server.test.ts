@@ -66,8 +66,13 @@ describe("orpc.server", () => {
 
   it("takes an OrganizationId, never a plain string (ADR-0003)", () => {
     const session = { user: { id: "u1", email: "a@b.c", name: "Alice" } };
+    // Positive control: the same call with a minted id compiles, so the error below
+    // can only come from `organizationId`, not from the mock session shape.
+    const minted = () =>
+      orpcFromContext({ session, organizationId: TEST_ORGANIZATION_ID });
     // @ts-expect-error a plain-string organization id must be minted at the edge first
     const plain = () => orpcFromContext({ session, organizationId: "org-1" });
+    expect(typeof minted).toBe("function");
     expect(typeof plain).toBe("function");
   });
 });

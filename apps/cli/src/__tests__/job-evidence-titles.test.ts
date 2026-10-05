@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 const listEvidence = vi.fn();
 
@@ -15,7 +15,7 @@ vi.mock("../client", () => ({
 import { evidenceTitlesForJobs } from "../job-evidence-titles";
 
 describe("evidenceTitlesForJobs", () => {
-  const caseId = testId(1);
+  const caseId = testCaseId(1);
 
   beforeEach(() => {
     listEvidence.mockReset();
