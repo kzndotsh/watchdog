@@ -522,7 +522,8 @@ export default defineConfig({
     {
       // ADR-0002 phase 2: core reaches the database through the `Db` service
       // (`tryDbWith`, `transact`), never the module-global client. Type imports
-      // (`DbExec`, `DbTx`) and repo imports stay allowed.
+      // (`DbExec`, `DbTx`) and repo imports stay allowed. Phase 3: the S3 client
+      // comes from the `BlobStore` service, so `new S3Client` lives in one file.
       files: ["packages/core/src/**/*.{ts,tsx}"],
       rules: {
         "eslint/no-restricted-imports": [
@@ -535,11 +536,20 @@ export default defineConfig({
                 message:
                   "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global db client.",
               },
+              {
+                name: "@aws-sdk/client-s3",
+                importNames: ["S3Client", "S3"],
+                allowTypeImports: true,
+                message:
+                  "Core reads the S3 client from the BlobStore service (infra/blob-store.ts, see packages/core/AGENTS.md), not a module-level client.",
+              },
             ],
           },
         ],
         // `no-restricted-imports` does not see `import("@watchdog/db")`.
         "watchdog/no-core-db-dynamic-import": "error",
+        // Same gap for `import("@aws-sdk/client-s3")`.
+        "watchdog/no-core-s3-dynamic-import": "error",
       },
     },
     {
@@ -553,6 +563,28 @@ export default defineConfig({
       rules: {
         "eslint/no-restricted-imports": "off",
         "watchdog/no-core-db-dynamic-import": "off",
+        "watchdog/no-core-s3-dynamic-import": "off",
+      },
+    },
+    {
+      // Exempt: the BlobStore live Layer (and its recording test Layer) is the one
+      // place that constructs an `S3Client`; the global-db ban stays on.
+      files: ["packages/core/src/infra/blob-store.ts"],
+      rules: {
+        "watchdog/no-core-s3-dynamic-import": "off",
+        "eslint/no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "@watchdog/db",
+                importNames: ["db"],
+                message:
+                  "Core reads the database through the Db service (tryDbWith / transact, see packages/core/AGENTS.md), not the global db client.",
+              },
+            ],
+          },
+        ],
       },
     },
     {

@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
+import { recordingBlobStore, type BlobStore } from "@watchdog/core/blob";
 import type { JobRow } from "@watchdog/db";
 import { testId } from "@watchdog/test-kit";
 
@@ -13,9 +14,8 @@ vi.mock("../../load-cap-report", () => ({
   loadCapReportEffect,
 }));
 
-vi.mock("../../infra/blob", () => ({
-  readArtifactBytesEffect: vi.fn(),
-}));
+const runStage = <A>(effect: Effect.Effect<A, never, BlobStore>) =>
+  Effect.runPromise(effect.pipe(Effect.provide(recordingBlobStore().layer)));
 
 import type { CollectRuntime } from "../collect";
 import { createJobLog } from "../helpers";
@@ -103,7 +103,7 @@ describe("interpret stage", () => {
       input: {},
     } as PreflightState;
 
-    const result = await Effect.runPromise(
+    const result = await runStage(
       interpretStageEffect(state, [], runtime, {
         proposalId: null,
         resultSummary: "cached",
@@ -120,7 +120,7 @@ describe("interpret stage", () => {
     const runtime = makeRuntime();
     const state = makeState(vi.fn());
 
-    const result = await Effect.runPromise(
+    const result = await runStage(
       interpretStageEffect(state, [], runtime, {
         proposalId: null,
         resultSummary: null,
@@ -154,7 +154,7 @@ describe("interpret stage", () => {
       })
     );
 
-    const result = await Effect.runPromise(
+    const result = await runStage(
       interpretStageEffect(state, [], runtime, {
         proposalId: null,
         resultSummary: null,
@@ -186,7 +186,7 @@ describe("interpret stage", () => {
     });
     const state = makeState(interpret);
 
-    await Effect.runPromise(
+    await runStage(
       interpretStageEffect(state, [], runtime, {
         proposalId: null,
         resultSummary: null,

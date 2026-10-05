@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
+import type { BlobStore } from "@watchdog/core/blob";
 import { testId, testHttpOrigin } from "@watchdog/test-kit";
 
 const createApiContextMock = vi.hoisted(() =>
@@ -23,16 +24,17 @@ vi.mock("@/auth/api-context.server", () => ({
   createApiContext: createApiContextMock,
 }));
 
-vi.mock("@watchdog/api", () => ({
-  runApp: (effect: Effect.Effect<unknown>) => Effect.runPromise(effect),
-}));
+vi.mock("@watchdog/api", async () => {
+  const { recordingBlobStore } = await import("@watchdog/core/blob");
+  const layer = recordingBlobStore().layer;
+  return {
+    runApp: (effect: Effect.Effect<unknown, unknown, BlobStore>) =>
+      Effect.runPromise(Effect.provide(effect, layer)),
+  };
+});
 
 vi.mock("@watchdog/core/cases", () => ({
   getCaseByIdEffect: getCaseByIdEffectMock,
-}));
-
-vi.mock("@watchdog/core/blob", () => ({
-  readArtifactBytesEffect: vi.fn(),
 }));
 
 vi.mock("@watchdog/core/export", () => ({

@@ -21,6 +21,7 @@ import {
   type JsonObject,
 } from "@watchdog/schemas/shared";
 
+import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import { notifyJobUpdateEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";
@@ -50,8 +51,9 @@ function maybeFinishPlaybookRunEffect(
       jobsRepo.listStatusesForPlaybookRun(exec, playbookRunId)
     );
     if (members.some((m) => isOpenJobStatus(m.status))) return;
+    const finishedAt = yield* nowDateEffect;
     yield* tryDb(() =>
-      playbookRunsRepo.setStatus(exec, playbookRunId, "finished", new Date(), {
+      playbookRunsRepo.setStatus(exec, playbookRunId, "finished", finishedAt, {
         onlyStatuses: ["running"],
       })
     );

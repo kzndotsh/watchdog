@@ -5,7 +5,9 @@ import { Cause, Data, Deferred, Effect, Stream } from "effect";
 import {
   type JobFibers,
   type JobQueue,
+  type BlobStore,
   type Db,
+  type Vault,
   CAP_JOB_QUEUE,
   executeJobOnMap,
   extractDomainJobIdFromPayload,
@@ -100,7 +102,7 @@ function reconcileWorkerStartupEffect(): Effect.Effect<
   });
 }
 
-type WorkerServices = Db | JobFibers | JobQueue;
+type WorkerServices = Db | BlobStore | Vault | JobFibers | JobQueue;
 
 type RunJob = (
   jobId: string
@@ -205,7 +207,7 @@ function parseWatchdogEventPayload(rawPayload: string): unknown {
 
 function handleExportEventPayloadEffect(
   rawPayload: string
-): Effect.Effect<void, never, Db> {
+): Effect.Effect<void, never, Db | BlobStore> {
   return Effect.gen(function* handleExportEventPayloadGen() {
     const parsed = parseWatchdogEventPayload(rawPayload);
     if (parsed === undefined) {

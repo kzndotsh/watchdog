@@ -16,7 +16,9 @@ describe("export-sections labels", () => {
       kind: "person",
       caseSlug: "acme",
       entityId: testId(1),
+      exportedAt: "2026-01-02T03:04:05.000Z",
     });
+    expect(md).toContain("last_exported: 2026-01-02T03:04:05.000Z");
     expect(md).toContain("tags: [Person]");
   });
 

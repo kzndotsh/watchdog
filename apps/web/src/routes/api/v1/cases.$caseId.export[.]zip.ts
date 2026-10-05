@@ -4,7 +4,7 @@ import { zipSync, strToU8 } from "fflate";
 
 import { createApiContext } from "@/auth/api-context.server";
 import { runApp } from "@watchdog/api";
-import { readArtifactBytesEffect } from "@watchdog/core/blob";
+import { readArtifactBytesEffect, type BlobStore } from "@watchdog/core/blob";
 import { getCaseByIdEffect } from "@watchdog/core/cases";
 import type { DomainTag } from "@watchdog/core/errors";
 import { renderCaseExportEffect } from "@watchdog/core/export";
@@ -60,7 +60,7 @@ function evidenceZipPartEffect(
     text: string | null;
     kind: EvidenceKind;
   }
-): Effect.Effect<EvidenceZipPart> {
+): Effect.Effect<EvidenceZipPart, never, BlobStore> {
   const prefix = ev.id.slice(0, 8);
   const labelBase = safeFilename(
     evidenceDisplayLabel({
@@ -108,7 +108,7 @@ type CaseExportZipResult =
 function caseExportZipEffect(
   caseId: string,
   organizationId: string
-): Effect.Effect<CaseExportZipResult, DomainTag, Db> {
+): Effect.Effect<CaseExportZipResult, DomainTag, Db | BlobStore> {
   return Effect.gen(function* caseExportZipGen() {
     const activeCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
       Effect.catchTag("NotFoundError", () => Effect.succeed(null))

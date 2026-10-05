@@ -13,7 +13,7 @@ import { casesRepo } from "@watchdog/db";
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
 import { ForbiddenError, type DomainTag } from "../infra/tagged-errors";
-import { hasCredentialEffect } from "../infra/vault";
+import { hasCredentialEffect, type Vault } from "../infra/vault";
 
 function credentialNames(
   specs: NonNullable<ReturnType<typeof toCapDescriptor>["credentials"]>
@@ -61,7 +61,7 @@ export function evaluateCapAvailabilityEffect(input: {
     result: AvailabilityResult;
   },
   DomainTag,
-  Db
+  Db | Vault
 > {
   const desc = toCapDescriptor(input.cap);
   const specs = desc.credentials ?? [];
@@ -114,7 +114,7 @@ export function assertCapAvailabilityEffect(input: {
   caseId: string;
   cap: CapabilityDef<z.ZodType>;
   allowThirdPartyEgress?: boolean;
-}): Effect.Effect<void, DomainTag, Db> {
+}): Effect.Effect<void, DomainTag, Db | Vault> {
   return evaluateCapAvailabilityEffect(input).pipe(
     Effect.flatMap(({ result }) => {
       if (result.ok) return Effect.void;

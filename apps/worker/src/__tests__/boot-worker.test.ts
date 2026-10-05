@@ -1,4 +1,4 @@
-import { Deferred, Effect } from "effect";
+import { Deferred, Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { claimExportEventEffect } = vi.hoisted(() => ({
@@ -13,9 +13,15 @@ vi.mock("../export-events", async (importOriginal) => {
   };
 });
 
-import { Db } from "@watchdog/core/worker";
+import { Db, recordingBlobStore, fakeVault } from "@watchdog/core/worker";
 
 import { handleExportEventPayloadEffect } from "../boot-worker";
+
+const workerTestServices = Layer.mergeAll(
+  Db.layer,
+  recordingBlobStore().layer,
+  fakeVault().layer
+);
 
 describe("handleExportEventPayloadEffect", () => {
   beforeEach(() => {
@@ -25,7 +31,10 @@ describe("handleExportEventPayloadEffect", () => {
 
   it("ignores malformed JSON without scheduling export", async () => {
     await Effect.runPromise(
-      Effect.provide(handleExportEventPayloadEffect("{not json"), Db.layer)
+      Effect.provide(
+        handleExportEventPayloadEffect("{not json"),
+        workerTestServices
+      )
     );
     expect(claimExportEventEffect).not.toHaveBeenCalled();
   });
@@ -34,7 +43,7 @@ describe("handleExportEventPayloadEffect", () => {
     await Effect.runPromise(
       Effect.provide(
         handleExportEventPayloadEffect(JSON.stringify({ type: "unknown" })),
-        Db.layer
+        workerTestServices
       )
     );
     expect(claimExportEventEffect).not.toHaveBeenCalled();
@@ -48,7 +57,7 @@ describe("handleExportEventPayloadEffect", () => {
     await Effect.runPromise(
       Effect.provide(
         handleExportEventPayloadEffect(JSON.stringify(event)),
-        Db.layer
+        workerTestServices
       )
     );
     await vi.waitFor(() => {
@@ -85,7 +94,7 @@ describe("handleExportEventPayloadEffect", () => {
           yield* handleExportEventPayloadEffect(JSON.stringify(event));
           return id;
         }),
-        Db.layer
+        workerTestServices
       )
     );
     // Returned without waiting on the held wait: claimed in the caller's
@@ -101,7 +110,7 @@ describe("handleExportEventPayloadEffect", () => {
         handleExportEventPayloadEffect(
           JSON.stringify({ type: "entity_changed", caseId: "   " })
         ),
-        Db.layer
+        workerTestServices
       )
     );
     expect(claimExportEventEffect).not.toHaveBeenCalled();
@@ -116,7 +125,7 @@ describe("handleExportEventPayloadEffect", () => {
             caseId: "11111111-1111-4111-8111-000000000001",
           })
         ),
-        Db.layer
+        workerTestServices
       )
     );
     expect(claimExportEventEffect).not.toHaveBeenCalled();

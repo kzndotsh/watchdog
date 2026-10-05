@@ -1,17 +1,9 @@
-import {
-  createCipheriv,
-  createDecipheriv,
-  hkdfSync,
-  randomBytes,
-} from "node:crypto";
+import { Context, Effect, Layer } from "effect";
 
-import { Data, Effect } from "effect";
-
-import { credentialsRepo } from "@watchdog/db";
-import { env } from "@watchdog/env/server";
+import { credentialsRepo, type DbExec } from "@watchdog/db";
 import { trimmedOrNull, credentialNameSchema } from "@watchdog/schemas/shared";
 
-import type { Db } from "./db-service";
+import { Db } from "./db-service";
 import { tryDbWith } from "./postgres-effect";
 import {
   InternalError,
@@ -19,19 +11,9 @@ import {
   NotFoundError,
   type DomainTag,
 } from "./tagged-errors";
+import { VaultError, openSecret, sealSecret } from "./vault-crypto";
 
-const NONCE_LEN = 12;
-const TAG_LEN = 16;
-const KEY_LEN = 32;
-const HKDF_INFO = Buffer.from("watchdog-vault-v1");
-const MASTER_NORMALIZE_SALT = Buffer.from("watchdog-master-vault-normalize");
-const MASTER_NORMALIZE_INFO = Buffer.from("watchdog-master-v1");
-
-export class VaultError extends Data.TaggedError("VaultError")<{
-  readonly reason: string;
-}> {
-  readonly code = "vault" as const;
-}
+export { VaultError };
 
 export interface CredentialMeta {
   id: string;
@@ -40,61 +22,47 @@ export interface CredentialMeta {
   updatedAt: string;
 }
 
-function masterKeyBytes(): Buffer {
-  const raw = env.WD_MASTER_VAULT_KEY.trim();
-  const b64 = Buffer.from(raw, "base64");
-  if (b64.length === KEY_LEN) return b64;
-  if (/^[0-9a-fA-F]+$/.test(raw) && raw.length === KEY_LEN * 2) {
-    return Buffer.from(raw, "hex");
-  }
-  return Buffer.from(
-    hkdfSync(
-      "sha256",
-      Buffer.from(raw, "utf-8"),
-      MASTER_NORMALIZE_SALT,
-      MASTER_NORMALIZE_INFO,
-      KEY_LEN
-    )
-  );
+export interface PutCredentialInput {
+  userId: string;
+  name: string;
+  secret: string;
+  label?: string | null;
 }
 
-function userKey(userId: string): Buffer {
-  return Buffer.from(
-    hkdfSync(
-      "sha256",
-      masterKeyBytes(),
-      Buffer.from(userId, "utf-8"),
-      HKDF_INFO,
-      KEY_LEN
-    )
-  );
+/** Credential access: the vault reader/writer a process composes once. */
+export interface VaultApi {
+  /** Metadata only: never returns plaintext. */
+  readonly list: (userId: string) => Effect.Effect<CredentialMeta[], DomainTag>;
+  readonly has: (
+    userId: string,
+    name: string
+  ) => Effect.Effect<boolean, DomainTag>;
+  /** Decrypted secret; `NotFoundError` when the slot is empty. */
+  readonly get: (
+    userId: string,
+    name: string
+  ) => Effect.Effect<string, DomainTag>;
+  readonly put: (
+    input: PutCredentialInput
+  ) => Effect.Effect<CredentialMeta, DomainTag>;
+  readonly delete: (
+    userId: string,
+    name: string
+  ) => Effect.Effect<void, DomainTag>;
 }
 
-function seal(key: Buffer, plaintext: string): Buffer {
-  const nonce = randomBytes(NONCE_LEN);
-  const cipher = createCipheriv("aes-256-gcm", key, nonce);
-  const enc = Buffer.concat([
-    cipher.update(Buffer.from(plaintext, "utf-8")),
-    cipher.final(),
-  ]);
-  const tag = cipher.getAuthTag();
-  return Buffer.concat([nonce, tag, enc]);
-}
+/**
+ * The credential vault as an Effect service (ADR-0002 phase 3): every
+ * `*CredentialEffect` below is `R = Vault`, so Cap `getCredential`, availability
+ * checks and the credentials API read secrets through it and tests provide
+ * fake credentials (`fakeVault`) instead of patching modules. `vaultLayer` is
+ * the live reader over `Db` and the vault crypto.
+ */
+export class Vault extends Context.Service<Vault, VaultApi>()(
+  "@watchdog/core/infra/Vault"
+) {}
 
-function open(key: Buffer, blob: Buffer): string {
-  if (blob.length < NONCE_LEN + TAG_LEN + 1) {
-    throw new VaultError({ reason: "corrupt vault blob" });
-  }
-  const nonce = blob.subarray(0, NONCE_LEN);
-  const tag = blob.subarray(NONCE_LEN, NONCE_LEN + TAG_LEN);
-  const ct = blob.subarray(NONCE_LEN + TAG_LEN);
-  const decipher = createDecipheriv("aes-256-gcm", key, nonce);
-  decipher.setAuthTag(tag);
-  const plain = Buffer.concat([decipher.update(ct), decipher.final()]);
-  return plain.toString("utf-8");
-}
-
-function toMeta(row: {
+export function toMeta(row: {
   id: string;
   name: string;
   label: string | null;
@@ -108,7 +76,9 @@ function toMeta(row: {
   };
 }
 
-function requireCredentialName(name: string): Effect.Effect<string, DomainTag> {
+export function requireCredentialName(
+  name: string
+): Effect.Effect<string, DomainTag> {
   const parsed = credentialNameSchema.safeParse(name);
   if (!parsed.success) {
     return new InvalidError({
@@ -118,19 +88,13 @@ function requireCredentialName(name: string): Effect.Effect<string, DomainTag> {
   return Effect.succeed(parsed.data);
 }
 
-/** Metadata only — never returns plaintext. */
-export function listCredentialMetaEffect(
-  userId: string
-): Effect.Effect<CredentialMeta[], DomainTag, Db> {
+function listLive(userId: string) {
   return tryDbWith((exec) => credentialsRepo.listMeta(exec, userId)).pipe(
     Effect.map((rows) => rows.map(toMeta))
   );
 }
 
-export function hasCredentialEffect(
-  userId: string,
-  name: string
-): Effect.Effect<boolean, DomainTag, Db> {
+function hasLive(userId: string, name: string) {
   return Effect.gen(function* hasCredentialGen() {
     const n = yield* requireCredentialName(name);
     const id = yield* tryDbWith((exec) =>
@@ -140,10 +104,7 @@ export function hasCredentialEffect(
   });
 }
 
-export function getCredentialEffect(
-  userId: string,
-  name: string
-): Effect.Effect<string, DomainTag, Db> {
+function getLive(userId: string, name: string) {
   return Effect.gen(function* getCredentialGen() {
     const n = yield* requireCredentialName(name);
     const ciphertext = yield* tryDbWith((exec) =>
@@ -153,7 +114,7 @@ export function getCredentialEffect(
       return yield* new NotFoundError({ entity: "Credential", id: n });
     }
     return yield* Effect.try({
-      try: () => open(userKey(userId), Buffer.from(ciphertext)),
+      try: () => openSecret(userId, Buffer.from(ciphertext)),
       catch: (error) =>
         error instanceof VaultError
           ? new InvalidError({ reason: error.reason })
@@ -162,23 +123,14 @@ export function getCredentialEffect(
   });
 }
 
-interface PutCredentialInput {
-  userId: string;
-  name: string;
-  secret: string;
-  label?: string | null;
-}
-
-export function putCredentialEffect(
-  input: PutCredentialInput
-): Effect.Effect<CredentialMeta, DomainTag, Db> {
+function putLive(input: PutCredentialInput) {
   return Effect.gen(function* putCredentialGen() {
     const name = yield* requireCredentialName(input.name);
     const secret = input.secret.trim();
     if (!secret) {
       return yield* new InvalidError({ reason: "Secret must be non-empty" });
     }
-    const blob = seal(userKey(input.userId), secret);
+    const blob = sealSecret(input.userId, secret);
     const label = trimmedOrNull(input.label);
     const existingId = yield* tryDbWith((exec) =>
       credentialsRepo.getIdByName(exec, input.userId, name)
@@ -214,10 +166,7 @@ export function putCredentialEffect(
   });
 }
 
-export function deleteCredentialEffect(
-  userId: string,
-  name: string
-): Effect.Effect<void, DomainTag, Db> {
+function deleteLive(userId: string, name: string) {
   return Effect.gen(function* deleteCredentialGen() {
     const n = yield* requireCredentialName(name);
     const deleted = yield* tryDbWith((exec) =>
@@ -227,4 +176,72 @@ export function deleteCredentialEffect(
       return yield* new NotFoundError({ entity: "Credential", id: n });
     }
   });
+}
+
+/** The live vault over one `DbExec` (the process's `Db` service value). */
+function liveVault(exec: DbExec): VaultApi {
+  const onDb = <A>(effect: Effect.Effect<A, DomainTag, Db>) =>
+    Effect.provideService(effect, Db, exec);
+  return {
+    list: (userId) => onDb(listLive(userId)),
+    has: (userId, name) => onDb(hasLive(userId, name)),
+    get: (userId, name) => onDb(getLive(userId, name)),
+    put: (input) => onDb(putLive(input)),
+    delete: (userId, name) => onDb(deleteLive(userId, name)),
+  };
+}
+
+/**
+ * Live Layer: reads and writes the `credentials` table through the `Db`
+ * service captured at build time, sealing with the master vault key.
+ */
+export const vaultLayer: Layer.Layer<Vault, never, Db> = Layer.effect(
+  Vault,
+  Effect.gen(function* vaultLayerGen() {
+    const exec = yield* Db;
+    return Vault.of(liveVault(exec));
+  })
+);
+
+function viaVault<A>(
+  operation: (vault: VaultApi) => Effect.Effect<A, DomainTag>
+): Effect.Effect<A, DomainTag, Vault> {
+  return Effect.gen(function* viaVaultGen() {
+    const vault = yield* Vault;
+    return yield* operation(vault);
+  });
+}
+
+/** Metadata only: never returns plaintext. */
+export function listCredentialMetaEffect(
+  userId: string
+): Effect.Effect<CredentialMeta[], DomainTag, Vault> {
+  return viaVault((vault) => vault.list(userId));
+}
+
+export function hasCredentialEffect(
+  userId: string,
+  name: string
+): Effect.Effect<boolean, DomainTag, Vault> {
+  return viaVault((vault) => vault.has(userId, name));
+}
+
+export function getCredentialEffect(
+  userId: string,
+  name: string
+): Effect.Effect<string, DomainTag, Vault> {
+  return viaVault((vault) => vault.get(userId, name));
+}
+
+export function putCredentialEffect(
+  input: PutCredentialInput
+): Effect.Effect<CredentialMeta, DomainTag, Vault> {
+  return viaVault((vault) => vault.put(input));
+}
+
+export function deleteCredentialEffect(
+  userId: string,
+  name: string
+): Effect.Effect<void, DomainTag, Vault> {
+  return viaVault((vault) => vault.delete(userId, name));
 }

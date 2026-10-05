@@ -7,6 +7,7 @@ import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import { tryParsePatch } from "../../graph/patch/patch";
 import { readArtifactBytesEffect } from "../../infra/blob";
+import type { BlobStore } from "../../infra/blob-store";
 import { errorMessage } from "../../infra/error-utils";
 import { InvalidError, isDomainTag } from "../../infra/tagged-errors";
 import { loadCapReportEffect } from "../load-cap-report";
@@ -38,7 +39,7 @@ export function interpretStageEffect(
   artifacts: JobArtifact[],
   runtime: CollectRuntime,
   existing: InterpretExistingState
-): Effect.Effect<InterpretStageResult> {
+): Effect.Effect<InterpretStageResult, never, BlobStore> {
   return Effect.gen(function* interpretStageGen() {
     let resultSummary = existing.resultSummary;
     let markSourceProcessed: boolean | undefined;

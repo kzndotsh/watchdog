@@ -41,6 +41,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import type { Vault } from "../infra/vault";
 import { assertCapAvailabilityEffect } from "../jobs/cap-availability";
 import { parseValidatedCapInputEffect } from "../jobs/cap-input";
 import type { JobQueue } from "../jobs/job-queue";
@@ -60,7 +61,7 @@ function startCapForEvidenceEffect(input: {
   matchActive: (job: JobRow, seed: EvidenceCapSeed) => boolean;
   buildInput: (seed: EvidenceCapSeed) => JsonObject;
   assertSeed?: (seed: EvidenceCapSeed) => Effect.Effect<void, DomainTag>;
-}): Effect.Effect<JobRecord, DomainTag, Db | JobQueue> {
+}): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
   return Effect.gen(function* startCapForEvidenceGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -171,7 +172,7 @@ export function processEvidenceEffect(input: {
   actorId: string;
   actorLabel?: string | null;
   ai?: boolean;
-}): Effect.Effect<JobRecord, DomainTag, Db | JobQueue> {
+}): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
   const capabilityId =
     input.ai === true
       ? EVIDENCE_EXTRACT_AI_CAPABILITY_ID
@@ -224,7 +225,7 @@ export function enrichUrlEvidenceEffect(input: {
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
-}): Effect.Effect<JobRecord, DomainTag, Db | JobQueue> {
+}): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
   return startCapForEvidenceEffect({
     caseId: input.caseId,
     organizationId: input.organizationId,

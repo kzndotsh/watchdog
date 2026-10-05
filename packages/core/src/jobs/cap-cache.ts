@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 
-import { Effect } from "effect";
+import { DateTime, Effect } from "effect";
 
 import { capCacheRepo, type JobArtifact } from "@watchdog/db";
 import { normalizeJobInput } from "@watchdog/schemas/jobs";
 import { isJsonObject, trimmedOrNull } from "@watchdog/schemas/shared";
 
+import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
@@ -45,15 +46,18 @@ export function lookupCapCacheEffect(input: {
   DomainTag,
   Db
 > {
-  return tryDbWith((exec) =>
-    capCacheRepo.lookupActive(
-      exec,
-      input.caseId,
-      input.capabilityId,
-      input.inputHash,
-      new Date()
-    )
-  );
+  return Effect.gen(function* lookupCapCacheGen() {
+    const now = yield* nowDateEffect;
+    return yield* tryDbWith((exec) =>
+      capCacheRepo.lookupActive(
+        exec,
+        input.caseId,
+        input.capabilityId,
+        input.inputHash,
+        now
+      )
+    );
+  });
 }
 
 interface StoreCapCacheInput {
@@ -69,19 +73,24 @@ interface StoreCapCacheInput {
 export function storeCapCacheEffect(
   input: StoreCapCacheInput
 ): Effect.Effect<void, DomainTag, Db> {
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + input.ttlMs);
-  return tryDbWith((exec) =>
-    capCacheRepo.upsert(exec, {
-      caseId: input.caseId,
-      capabilityId: input.capabilityId,
-      inputHash: input.inputHash,
-      jobId: input.jobId,
-      artifacts: input.artifacts,
-      resultSummary: trimmedOrNull(input.resultSummary),
-      ttlMs: input.ttlMs,
-      createdAt: now,
-      expiresAt,
-    })
-  ).pipe(Effect.asVoid);
+  return Effect.gen(function* storeCapCacheGen() {
+    const nowUtc = yield* DateTime.now;
+    const now = DateTime.toDate(nowUtc);
+    const expiresAt = DateTime.toDate(
+      DateTime.add(nowUtc, { milliseconds: input.ttlMs })
+    );
+    yield* tryDbWith((exec) =>
+      capCacheRepo.upsert(exec, {
+        caseId: input.caseId,
+        capabilityId: input.capabilityId,
+        inputHash: input.inputHash,
+        jobId: input.jobId,
+        artifacts: input.artifacts,
+        resultSummary: trimmedOrNull(input.resultSummary),
+        ttlMs: input.ttlMs,
+        createdAt: now,
+        expiresAt,
+      })
+    );
+  });
 }

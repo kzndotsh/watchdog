@@ -18,6 +18,7 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "./blob";
+import type { BlobStore } from "./blob-store";
 import type { Db } from "./db-service";
 import { errorMessage } from "./error-utils";
 import { renderCaseExportEffect } from "./export";
@@ -112,7 +113,7 @@ function writeUriEvidenceFileEffect(
   caseId: string,
   evidenceDir: string,
   ev: EvidenceRow
-): Effect.Effect<EvidenceWriteOutcome> {
+): Effect.Effect<EvidenceWriteOutcome, never, BlobStore> {
   const prefix = ev.id.slice(0, 8);
   const labelBase = safeFilename(
     evidenceDisplayLabel({
@@ -163,7 +164,7 @@ function writeOneEvidenceFileEffect(
   caseId: string,
   evidenceDir: string,
   ev: EvidenceRow
-): Effect.Effect<EvidenceWriteOutcome, ExportIOError> {
+): Effect.Effect<EvidenceWriteOutcome, ExportIOError, BlobStore> {
   if (ev.uri !== null) {
     return writeUriEvidenceFileEffect(caseId, evidenceDir, ev);
   }
@@ -179,7 +180,7 @@ function writeCaseEvidenceFilesEffect(
   caseId: string,
   evidenceDir: string,
   evidenceRows: EvidenceRow[]
-): Effect.Effect<EvidenceExportCounts, ExportIOError> {
+): Effect.Effect<EvidenceExportCounts, ExportIOError, BlobStore> {
   return Effect.gen(function* writeCaseEvidenceFilesGen() {
     const outcomes = yield* Effect.forEach(
       evidenceRows,
@@ -197,7 +198,7 @@ function writeCaseEvidenceFilesEffect(
 
 export function writeCaseExportEffect(
   caseId: string
-): Effect.Effect<void, ExportIOError, Db> {
+): Effect.Effect<void, ExportIOError, Db | BlobStore> {
   return Effect.gen(function* writeCaseExportGen() {
     const {
       files: mdFiles,
@@ -240,7 +241,9 @@ export function writeCaseExportEffect(
   });
 }
 
-type ExportWriter = (id: string) => Effect.Effect<void, ExportIOError, Db>;
+type ExportWriter = (
+  id: string
+) => Effect.Effect<void, ExportIOError, Db | BlobStore>;
 type ExportWrite = (id: string) => Effect.Effect<void, ExportIOError>;
 
 interface ExportCoalesceState {
@@ -330,10 +333,10 @@ function claimExportJoin(
 export function claimCaseExportEffect(
   caseId: string,
   writeExport: ExportWriter = writeCaseExportEffect
-): Effect.Effect<Effect.Effect<void>, never, Db> {
+): Effect.Effect<Effect.Effect<void>, never, Db | BlobStore> {
   const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
   if (normalizedCaseId === undefined) return Effect.succeed(Effect.void);
-  return Effect.contextWith((services: Context.Context<Db>) =>
+  return Effect.contextWith((services: Context.Context<Db | BlobStore>) =>
     claimExportJoin(normalizedCaseId, (id) =>
       Effect.provideContext(writeExport(id), services)
     )
@@ -347,12 +350,12 @@ export function claimCaseExportEffect(
  *
  * Marks dirty and starts-or-joins the write fiber when the returned Effect is
  * interpreted. The write fiber outlives the caller, so it runs with the `Db`
- * service captured from the interpreting caller.
+ * and `BlobStore` services captured from the interpreting caller.
  */
 export function scheduleCaseExportEffect(
   caseId: string,
   writeExport: ExportWriter = writeCaseExportEffect
-): Effect.Effect<void, never, Db> {
+): Effect.Effect<void, never, Db | BlobStore> {
   return Effect.flatten(claimCaseExportEffect(caseId, writeExport));
 }
 
