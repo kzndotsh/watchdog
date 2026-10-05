@@ -207,7 +207,7 @@ function parseWatchdogEventPayload(rawPayload: string): unknown {
 
 function handleExportEventPayloadEffect(
   rawPayload: string
-): Effect.Effect<void, never, Db | BlobStore> {
+): Effect.Effect<void> {
   return Effect.gen(function* handleExportEventPayloadGen() {
     const parsed = parseWatchdogEventPayload(rawPayload);
     if (parsed === undefined) {

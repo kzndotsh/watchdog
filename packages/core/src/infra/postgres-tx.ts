@@ -17,6 +17,35 @@ class TxBodyFailureError extends Error {
   override readonly name = "TxBodyFailureError";
 }
 
+/**
+ * True while a `transact` body runs, for that body and every fiber it forks
+ * (the reference is inherited at fork time). `transact` sets it around the
+ * body and checks it before opening a transaction, so a nested `transact`
+ * fails fast instead of taking a second connection. A fiber that outlives the
+ * body resets it with `outsideTransaction`.
+ */
+const InsideTransaction = Context.Reference<boolean>(
+  "@watchdog/core/infra/InsideTransaction",
+  { defaultValue: () => false }
+);
+
+const NESTED_TRANSACT_MESSAGE =
+  "transact called inside another transact body: a nested transact opens a second connection and transaction (it can deadlock a small pool). Pass the outer `tx` down instead; see packages/core/AGENTS.md (transact rules).";
+
+/**
+ * Run `effect` as outside any `transact` body. Use it at the root of a
+ * DETACHED fiber (`forkDetach`) forked from inside a body: that fiber inherits
+ * the nesting flag but outlives the transaction and never touches the outer
+ * connection, so a `transact` of its own is the outermost one, not nesting.
+ * Do not use it to dodge the guard for a child the body awaits (see
+ * `transact`).
+ */
+export function outsideTransaction<A, E, R>(
+  effect: Effect.Effect<A, E, R>
+): Effect.Effect<A, E, R> {
+  return Effect.provideService(effect, InsideTransaction, false);
+}
+
 /** `mapPostgresCatch` rethrows what it cannot map; that stays a defect. */
 function mapDriverFailure(
   driverError: unknown,
@@ -31,15 +60,24 @@ function mapDriverFailure(
 
 /**
  * Run `body` in one transaction on the `Db` service's client (a pool opens a
- * transaction, a `tx` value opens a savepoint). The body sees the caller's services; failures
+ * transaction; a provided `Db.layerOf(tx)` opens a savepoint, but only
+ * OUTSIDE another `transact` body). The body sees the caller's services; failures
  * (tagged errors, defects) reach the caller unchanged and roll back; driver
  * errors map as in `tryDb`. Interrupting the caller aborts the body, rolls the
  * transaction back, and only then completes the interruption.
  *
- * Nesting: a `transact` called inside another `transact`'s body opens a
- * SECOND connection and transaction. It does not join the outer one, commits
- * independently of it, and can deadlock a small pool (the outer holds one
- * connection while waiting for another). Pass the outer `tx` down instead.
+ * Nesting is a programmer error: a `transact` called inside another
+ * `transact`'s body (or a fiber it forked) would open a SECOND connection and
+ * transaction, commit independently of the outer one and can deadlock a small
+ * pool (the outer holds one connection while waiting for another). It dies
+ * with a defect BEFORE opening anything; pass the outer `tx` down instead.
+ * This includes a forked child the body AWAITS (it holds a second connection
+ * while the parent waits) and `Effect.provide(transact(...), Db.layerOf(tx))`
+ * inside a body. Outside any body, a caller-provided `Db.layerOf(tx)` is not
+ * nesting: that `transact` is the outermost one and opens a savepoint. A
+ * DETACHED fiber (`forkDetach`) forked inside a body runs outside the
+ * transaction (it resets the flag with `outsideTransaction`) and may run its
+ * own `transact`.
  *
  * This is the one promise boundary for transaction bodies: the driver's
  * transaction API is promise-based.
@@ -49,6 +87,9 @@ export function transact<A, E extends DomainTag = DomainTag, R = never>(
   opts?: MapPostgresCatchOpts
 ): Effect.Effect<A, E | DomainTag, R | Db> {
   return Effect.flatMap(Effect.context<R | Db>(), (services) => {
+    if (Context.get(services, InsideTransaction)) {
+      return Effect.die(new Error(NESTED_TRANSACT_MESSAGE));
+    }
     const client = Context.get(services, Db);
     let bodyCause: Cause.Cause<E> | undefined;
     return Effect.callback<A, E | DomainTag>((resume, signal) => {
@@ -56,7 +97,12 @@ export function transact<A, E extends DomainTag = DomainTag, R = never>(
       const settled = client
         // oxlint-disable-next-line effecttsgo/async-function -- the driver's transaction API is promise-based; this is the one promise boundary for transaction bodies
         .transaction(async (tx) => {
-          const exit = await run(body(tx), { signal });
+          const exit = await run(
+            Effect.provideService(body(tx), InsideTransaction, true),
+            {
+              signal,
+            }
+          );
           if (exit._tag === "Failure") {
             if (!Cause.hasFails(exit.cause)) {
               // A defect (e.g. a raw driver error from an inner query) rolls

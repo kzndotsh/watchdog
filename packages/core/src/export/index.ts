@@ -5,6 +5,8 @@ export {
 } from "../infra/export";
 export {
   ExportIOError,
+  ExportWriteServices,
+  isolatedExportWriteServices,
   writeCaseExportEffect,
   scheduleCaseExportEffect,
   removeCaseExportDirEffect,

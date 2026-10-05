@@ -1,4 +1,4 @@
-import { Context, Effect, Exit, Fiber } from "effect";
+import { Cause, Context, Deferred, Effect, Exit, Fiber } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -7,7 +7,7 @@ import {
   InvalidError,
   type DomainTag,
 } from "@watchdog/core/errors";
-import { Db, transact, tryDb } from "@watchdog/core/infra";
+import { Db, outsideTransaction, transact, tryDb } from "@watchdog/core/infra";
 import { casesRepo, db } from "@watchdog/db";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
@@ -188,5 +188,129 @@ describe("transact", () => {
     );
     expect(failure).toBeInstanceOf(ConflictError);
     expect(await caseExists(firstId)).toBe(false);
+  });
+
+  it("dies on a nested transact before opening a second transaction", async () => {
+    const transaction = vi.spyOn(db, "transaction");
+    let id = "";
+    const exit = await Effect.runPromiseExit(
+      Effect.provide(
+        transact((tx) =>
+          Effect.gen(function* nested() {
+            id = (yield* tryDb(() => seedCase(tx))).id;
+            return yield* transact(() => Effect.void);
+          })
+        ),
+        Db.layer
+      )
+    );
+    expect(Exit.hasDies(exit)).toBe(true);
+    expect(Exit.isFailure(exit) && Cause.squash(exit.cause)).toMatchObject({
+      message: expect.stringContaining("inside another transact"),
+    });
+    // Only the outer transaction was opened, and it rolled back.
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(await caseExists(id)).toBe(false);
+  });
+
+  it("lets a detached fiber forked inside a body run its own transact", async () => {
+    const transaction = vi.spyOn(db, "transaction");
+    let outerId = "";
+    let innerId = "";
+    let detachedExit: Exit.Exit<unknown, unknown> | undefined;
+    const outcome = await Effect.runPromiseExit(
+      Effect.provide(
+        transact((tx) =>
+          Effect.gen(function* outer() {
+            outerId = (yield* tryDb(() => seedCase(tx, { name: "Outer" }))).id;
+            const done = yield* Deferred.make<undefined>();
+            yield* outsideTransaction(
+              transact((inner) =>
+                tryDb(() => seedCase(inner, { name: "Detached" })).pipe(
+                  Effect.tap((row) =>
+                    Effect.sync(() => {
+                      innerId = row.id;
+                    })
+                  ),
+                  Effect.asVoid
+                )
+              )
+            ).pipe(
+              Effect.exit,
+              Effect.flatMap((exit) =>
+                Effect.sync(() => {
+                  detachedExit = exit;
+                }).pipe(Effect.andThen(Deferred.succeed(done, undefined)))
+              ),
+              Effect.forkDetach({ startImmediately: true })
+            );
+            yield* Deferred.await(done);
+          })
+        ),
+        Db.layer
+      )
+    );
+    expect(Exit.isSuccess(outcome)).toBe(true);
+    // The guard did not fire: the detached fiber opened its own transaction.
+    expect(detachedExit && Exit.isSuccess(detachedExit)).toBe(true);
+    expect(transaction).toHaveBeenCalledTimes(2);
+    expect(await caseExists(outerId)).toBe(true);
+    expect(await caseExists(innerId)).toBe(true);
+  });
+
+  it("still dies for a forked child the body awaits", async () => {
+    const transaction = vi.spyOn(db, "transaction");
+    const exit = await Effect.runPromiseExit(
+      Effect.provide(
+        transact(() =>
+          Effect.gen(function* outer() {
+            const child = yield* Effect.forkChild(transact(() => Effect.void));
+            return yield* Fiber.join(child);
+          })
+        ),
+        Db.layer
+      )
+    );
+    expect(Exit.hasDies(exit)).toBe(true);
+    expect(Exit.isFailure(exit) && Cause.squash(exit.cause)).toMatchObject({
+      message: expect.stringContaining("inside another transact"),
+    });
+    expect(transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("dies on a Db.layerOf(tx) transact inside a body", async () => {
+    const exit = await Effect.runPromiseExit(
+      Effect.provide(
+        transact((tx) =>
+          Effect.provide(
+            transact(() => Effect.void),
+            Db.layerOf(tx)
+          )
+        ),
+        Db.layer
+      )
+    );
+    expect(Exit.hasDies(exit)).toBe(true);
+    expect(Exit.isFailure(exit) && Cause.squash(exit.cause)).toMatchObject({
+      message: expect.stringContaining("inside another transact"),
+    });
+  });
+
+  it("allows a transact after another has finished, and under a provided tx", async () => {
+    await runDomain(
+      transact(() => Effect.void).pipe(
+        Effect.andThen(transact(() => Effect.void))
+      )
+    );
+    // A caller-provided tx makes this transact the outermost one (a savepoint).
+    const value = await db.transaction((tx) =>
+      Effect.runPromise(
+        Effect.provide(
+          transact(() => Effect.succeed("inner")),
+          Db.layerOf(tx)
+        )
+      )
+    );
+    expect(value).toBe("inner");
   });
 });

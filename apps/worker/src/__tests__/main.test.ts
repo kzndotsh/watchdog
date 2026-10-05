@@ -1,6 +1,6 @@
-import { describe, expect, it } from "@effect/vitest";
+import { afterEach, beforeEach, describe, expect, it } from "@effect/vitest";
 import { Cause, Effect, Exit, Fiber, FiberMap, Stream } from "effect";
-import { vi } from "vitest";
+import { vi, type MockInstance } from "vitest";
 
 const workerMocks = vi.hoisted(() => ({
   reconcileStaleJobsEffect: vi.fn(),
@@ -26,6 +26,13 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
     reconcileOrphanedQueuedJobsEffect:
       workerMocks.reconcileOrphanedQueuedJobsEffect,
   };
+});
+
+const workerLog = vi.hoisted(() => ({ emitOnce: vi.fn() }));
+
+vi.mock("../worker-log", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../worker-log")>();
+  return { ...actual, emitOnce: workerLog.emitOnce };
 });
 
 vi.mock("@watchdog/env/server", async (importOriginal) => {
@@ -78,6 +85,40 @@ function bootWith(fake: FakeDriver) {
   return provideWorkerLayers(bootWorkerEffect, workerLayer);
 }
 
+/** Boot fibers started by the current test; `afterEach` always interrupts them. */
+const bootFibers: Fiber.Fiber<unknown, unknown>[] = [];
+let exit: MockInstance<typeof process.exit>;
+
+/**
+ * Fork the boot and wait until it is ready: the shutdown listeners are
+ * installed, the queue handler is registered and LISTEN has started. A failed
+ * assertion cannot leak the fiber (and its signal listeners): `afterEach`
+ * interrupts every fiber started here.
+ */
+function startBoot(fake: FakeDriver, { listening = true } = {}) {
+  return Effect.gen(function* startBootGen() {
+    // Baseline first: the test process may already hold signal listeners, so
+    // "any listener" would return before the worker installs its own.
+    const sigtermBaseline = process.listenerCount("SIGTERM");
+    const sigintBaseline = process.listenerCount("SIGINT");
+    const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+    bootFibers.push(fiber);
+    yield* Effect.promise(() =>
+      vi.waitFor(() => {
+        expect(process.listenerCount("SIGTERM")).toBeGreaterThan(
+          sigtermBaseline
+        );
+        expect(process.listenerCount("SIGINT")).toBeGreaterThan(sigintBaseline);
+        if (listening) {
+          expect(fake.work).toHaveBeenCalled();
+          expect(workerMocks.listenForEventsStream).toHaveBeenCalled();
+        }
+      })
+    );
+    return fiber;
+  });
+}
+
 workerMocks.reconcileStaleJobsEffect.mockReturnValue(Effect.succeed(0));
 workerMocks.reconcileStuckPlaybookRunsEffect.mockReturnValue(Effect.succeed(0));
 workerMocks.reconcileOrphanedQueuedJobsEffect.mockReturnValue(
@@ -88,15 +129,53 @@ workerMocks.findCancelledJobIdsEffect.mockReturnValue(
 );
 workerMocks.listenForEventsStream.mockReturnValue(Stream.never);
 
+/** The `message` of every `worker.shutdown` log so far. */
+function shutdownLogs(): string[] {
+  return workerLog.emitOnce.mock.calls
+    .filter(([scope]) => scope === "worker.shutdown")
+    .map(([, fields]) => (fields as { message: string }).message);
+}
+
 describe("bootWorkerEffect", () => {
+  const baseline = {
+    SIGTERM: process.listenerCount("SIGTERM"),
+    SIGINT: process.listenerCount("SIGINT"),
+  };
+
+  beforeEach(() => {
+    workerLog.emitOnce.mockClear();
+    workerMocks.listenForEventsStream.mockClear();
+    workerMocks.reconcileStaleJobsEffect.mockClear();
+    workerMocks.reconcileStuckPlaybookRunsEffect.mockClear();
+    workerMocks.reconcileOrphanedQueuedJobsEffect.mockClear();
+    // Every test may emit real signals: a stale handler must never reach the
+    // real process.exit and kill the vitest worker.
+    exit = vi
+      .spyOn(process, "exit")
+      .mockImplementation((() => undefined) as typeof process.exit);
+  });
+
+  afterEach(async () => {
+    const fibers = bootFibers.splice(0);
+    try {
+      await Effect.runPromise(
+        Effect.forEach(fibers, (fiber) => Fiber.interrupt(fiber), {
+          discard: true,
+        })
+      );
+    } finally {
+      exit.mockRestore();
+    }
+    expect(process.listenerCount("SIGTERM")).toBe(baseline.SIGTERM);
+    expect(process.listenerCount("SIGINT")).toBe(baseline.SIGINT);
+  });
+
   it.effect(
     "starts the queue, reconciles, registers the handler and listens",
     () =>
       Effect.gen(function* bootWorkerEffectTestGen() {
         const fake = fakeDriver();
-        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-        yield* Effect.yieldNow;
-        yield* Effect.yieldNow;
+        yield* startBoot(fake);
         expect(fake.start).toHaveBeenCalledTimes(1);
         expect(fake.ensureQueue).toHaveBeenCalledTimes(1);
         expect(workerMocks.reconcileStaleJobsEffect).toHaveBeenCalled();
@@ -110,7 +189,6 @@ describe("bootWorkerEffect", () => {
           expect.any(Function)
         );
         expect(workerMocks.listenForEventsStream).toHaveBeenCalled();
-        yield* Fiber.interrupt(fiber);
       })
   );
 
@@ -119,9 +197,7 @@ describe("bootWorkerEffect", () => {
     () =>
       Effect.gen(function* bootWorkerInterruptTestGen() {
         const fake = fakeDriver();
-        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-        yield* Effect.yieldNow;
-        yield* Effect.yieldNow;
+        const fiber = yield* startBoot(fake);
         // NodeRuntime.runMain interrupts the main fiber on the first signal.
         yield* Fiber.interrupt(fiber);
         expect(fake.stop).toHaveBeenCalledTimes(1);
@@ -154,9 +230,7 @@ describe("bootWorkerEffect", () => {
             return { outcome: "succeeded" as const, durationMs: 1 };
           })
         );
-        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-        yield* Effect.yieldNow;
-        yield* Effect.yieldNow;
+        const fiber = yield* startBoot(fake);
         const handler = fake.work.mock.calls[0]?.[1] as (
           jobs: { id: string; data: unknown }[]
         ) => Promise<void>;
@@ -172,24 +246,13 @@ describe("bootWorkerEffect", () => {
     "force-exits on a repeated shutdown signal, with the signal's exit code",
     () =>
       Effect.gen(function* bootWorkerRepeatSigtermTestGen() {
-        const exit = vi
-          .spyOn(process, "exit")
-          .mockImplementation((() => undefined) as typeof process.exit);
-        const fake = fakeDriver();
-        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-        try {
-          yield* Effect.yieldNow;
-          yield* Effect.yieldNow;
-          process.emit("SIGTERM");
-          expect(exit).not.toHaveBeenCalled();
-          process.emit("SIGINT");
-          expect(exit).toHaveBeenLastCalledWith(130);
-          process.emit("SIGTERM");
-          expect(exit).toHaveBeenLastCalledWith(143);
-        } finally {
-          exit.mockRestore();
-        }
-        yield* Fiber.interrupt(fiber);
+        yield* startBoot(fakeDriver());
+        process.emit("SIGTERM");
+        expect(exit).not.toHaveBeenCalled();
+        process.emit("SIGINT");
+        expect(exit).toHaveBeenLastCalledWith(130);
+        process.emit("SIGTERM");
+        expect(exit).toHaveBeenLastCalledWith(143);
       })
   );
 
@@ -197,25 +260,22 @@ describe("bootWorkerEffect", () => {
     "force-exits on a repeated signal while boss.stop is still draining",
     () =>
       Effect.gen(function* bootWorkerDrainSignalTestGen() {
-        const exit = vi
-          .spyOn(process, "exit")
-          .mockImplementation((() => undefined) as typeof process.exit);
         const fake = fakeDriver();
         let finishStop: () => void = () => {};
         const pendingStop = new Promise<void>((resolve) => {
           finishStop = resolve;
         });
         fake.stop.mockReturnValueOnce(pendingStop);
-        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
+        const fiber = yield* startBoot(fake);
         try {
-          yield* Effect.yieldNow;
-          yield* Effect.yieldNow;
           // First signal: runMain interrupts; the drain (stop) is now pending.
           process.emit("SIGTERM");
           const interrupting = yield* Effect.forkChild(Fiber.interrupt(fiber));
-          yield* Effect.yieldNow;
-          yield* Effect.yieldNow;
-          expect(fake.stop).toHaveBeenCalledTimes(1);
+          yield* Effect.promise(() =>
+            vi.waitFor(() => {
+              expect(fake.stop).toHaveBeenCalledTimes(1);
+            })
+          );
           expect(exit).not.toHaveBeenCalled();
           process.emit("SIGTERM");
           expect(exit).toHaveBeenCalledWith(143);
@@ -223,7 +283,6 @@ describe("bootWorkerEffect", () => {
           yield* Fiber.await(interrupting);
         } finally {
           finishStop();
-          exit.mockRestore();
         }
       })
   );
@@ -232,20 +291,10 @@ describe("bootWorkerEffect", () => {
     "force-exits on a repeated signal as soon as the Layers are built",
     () =>
       Effect.gen(function* bootWorkerEarlySignalTestGen() {
-        const exit = vi
-          .spyOn(process, "exit")
-          .mockImplementation((() => undefined) as typeof process.exit);
-        const fake = fakeDriver();
-        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-        try {
-          yield* Effect.yieldNow;
-          process.emit("SIGINT");
-          process.emit("SIGINT");
-          expect(exit).toHaveBeenCalledWith(130);
-        } finally {
-          exit.mockRestore();
-        }
-        yield* Fiber.interrupt(fiber);
+        yield* startBoot(fakeDriver(), { listening: false });
+        process.emit("SIGINT");
+        process.emit("SIGINT");
+        expect(exit).toHaveBeenCalledWith(130);
       })
   );
 
@@ -254,9 +303,7 @@ describe("bootWorkerEffect", () => {
     () =>
       Effect.gen(function* bootWorkerListenFailureTestGen() {
         const fake = fakeDriver();
-        const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-        yield* Effect.yieldNow;
-        yield* Effect.yieldNow;
+        const fiber = yield* startBoot(fake);
         const args = workerMocks.listenForEventsStream.mock.calls.at(
           -1
         )?.[0] as {
@@ -264,10 +311,10 @@ describe("bootWorkerEffect", () => {
         };
         const cause = new Error("connection lost");
         args.onError(cause);
-        const exit = yield* Fiber.await(fiber);
-        expect(Exit.isFailure(exit)).toBe(true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.squash(exit.cause);
+        const result = yield* Fiber.await(fiber);
+        expect(Exit.isFailure(result)).toBe(true);
+        if (Exit.isFailure(result)) {
+          const error = Cause.squash(result.cause);
           expect(error).toBeInstanceOf(WorkerListenError);
           expect(error).toMatchObject({
             _tag: "WorkerListenError",
@@ -283,26 +330,58 @@ describe("bootWorkerEffect", () => {
 
   it.effect("force-exits 1 when LISTEN fails during shutdown", () =>
     Effect.gen(function* bootWorkerListenDuringShutdownTestGen() {
-      const exit = vi
-        .spyOn(process, "exit")
-        .mockImplementation((() => undefined) as typeof process.exit);
-      const fake = fakeDriver();
-      const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
-      try {
-        yield* Effect.yieldNow;
-        yield* Effect.yieldNow;
-        const args = workerMocks.listenForEventsStream.mock.calls.at(
-          -1
-        )?.[0] as {
-          onError: (error: unknown) => void;
-        };
-        process.emit("SIGTERM");
-        args.onError(new Error("connection lost"));
-        expect(exit).toHaveBeenCalledWith(1);
-      } finally {
-        exit.mockRestore();
-      }
+      yield* startBoot(fakeDriver());
+      const args = workerMocks.listenForEventsStream.mock.calls.at(-1)?.[0] as {
+        onError: (error: unknown) => void;
+      };
+      process.emit("SIGTERM");
+      args.onError(new Error("connection lost"));
+      expect(exit).toHaveBeenCalledWith(1);
+    })
+  );
+
+  it.effect.each(["SIGTERM", "SIGINT"] as const)(
+    "names the %s signal in the shutdown log, after the queue drained",
+    (signal) =>
+      Effect.gen(function* bootWorkerSignalLogTestGen() {
+        const fake = fakeDriver();
+        const fiber = yield* startBoot(fake);
+        // The first signal: runMain interrupts the main fiber.
+        process.emit(signal);
+        yield* Fiber.interrupt(fiber);
+        expect(fake.stop).toHaveBeenCalledTimes(1);
+        expect(shutdownLogs()).toEqual([`shutting down (${signal})`]);
+      })
+  );
+
+  it.effect("keeps the first signal when a second one arrives", () =>
+    Effect.gen(function* bootWorkerFirstSignalTestGen() {
+      const fiber = yield* startBoot(fakeDriver());
+      process.emit("SIGTERM");
+      process.emit("SIGINT");
+      expect(exit).toHaveBeenLastCalledWith(130);
       yield* Fiber.interrupt(fiber);
+      expect(shutdownLogs()).toEqual(["shutting down (SIGTERM)"]);
+    })
+  );
+
+  it.effect("logs (interrupt) when interrupted without a signal", () =>
+    Effect.gen(function* bootWorkerInterruptLogTestGen() {
+      const fiber = yield* startBoot(fakeDriver());
+      yield* Fiber.interrupt(fiber);
+      expect(shutdownLogs()).toEqual(["shutting down (interrupt)"]);
+    })
+  );
+
+  it.effect("logs (failure) when LISTEN fails", () =>
+    Effect.gen(function* bootWorkerFailureLogTestGen() {
+      const fiber = yield* startBoot(fakeDriver());
+      const args = workerMocks.listenForEventsStream.mock.calls.at(-1)?.[0] as {
+        onError: (error: unknown) => void;
+      };
+      args.onError(new Error("connection lost"));
+      yield* Fiber.await(fiber);
+      expect(shutdownLogs()).toEqual(["shutting down (failure)"]);
     })
   );
 });

@@ -1,10 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  claimCaseExportEffect,
-  type BlobStore,
-  type Db,
-} from "@watchdog/core/worker";
+import { claimCaseExportEffect } from "@watchdog/core/worker";
 import type { WatchdogEvent } from "@watchdog/schemas/feed";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
@@ -51,7 +47,7 @@ export function shouldTriggerCaseExport(event: WatchdogEvent): boolean {
  */
 export function claimExportEventEffect(
   event: WatchdogEvent
-): Effect.Effect<Effect.Effect<void>, never, Db | BlobStore> {
+): Effect.Effect<Effect.Effect<void>> {
   if (!shouldTriggerCaseExport(event)) {
     return Effect.succeed(Effect.void);
   }

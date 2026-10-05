@@ -44,5 +44,6 @@ export { listenForEvents } from "./infra/events";
 export { listenForEventsStream } from "./infra/listen-events-stream";
 export {
   claimCaseExportEffect,
+  ExportWriteServices,
   scheduleCaseExportEffect,
 } from "./infra/export-sync";

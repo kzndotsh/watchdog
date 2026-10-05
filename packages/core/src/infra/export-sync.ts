@@ -10,7 +10,7 @@
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import nodePath from "node:path";
 
-import { Data, Effect, Fiber, SynchronizedRef, type Context } from "effect";
+import { Context, Data, Effect, Fiber, Layer, SynchronizedRef } from "effect";
 
 import type { EvidenceRow } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
@@ -18,10 +18,15 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "./blob";
-import type { BlobStore } from "./blob-store";
-import type { Db } from "./db-service";
+import {
+  blobStoreLayer,
+  recordingBlobStore,
+  type BlobStore,
+} from "./blob-store";
+import { Db } from "./db-service";
 import { errorMessage } from "./error-utils";
 import { renderCaseExportEffect } from "./export";
+import { outsideTransaction } from "./postgres-tx";
 import { logProcess, logSwallowed } from "./process-log";
 
 export class ExportIOError extends Data.TaggedError("ExportIOError")<{
@@ -313,9 +318,11 @@ function claimExportJoin(
     }
 
     return Effect.gen(function* startExportFiberGen() {
-      const fiber = yield* exportLoop(caseId, writeExport).pipe(
-        Effect.forkDetach({ startImmediately: true })
-      );
+      // Detached: it outlives a `transact` body that may be claiming it, so it
+      // runs outside that transaction and may open its own.
+      const fiber = yield* outsideTransaction(
+        exportLoop(caseId, writeExport)
+      ).pipe(Effect.forkDetach({ startImmediately: true }));
       const inFlight = new Map([...marked.inFlight, [caseId, fiber]]);
       return [Fiber.join(fiber), { dirty: marked.dirty, inFlight }] as const;
     });
@@ -323,24 +330,57 @@ function claimExportJoin(
 }
 
 /**
+ * The services the detached export write runs with, as a Layer the write fiber
+ * builds itself and releases when each write ends. The write fiber outlives
+ * the interpreting caller, so it must not reuse the caller's `Db` (a
+ * transaction handle that may roll back) or `BlobStore` (an `S3Client` the
+ * caller's scope may destroy): the default is the live pool plus a fresh
+ * `S3Client`, built and destroyed within the fiber.
+ *
+ * Tests that need a fake store provide this key (`Effect.provideService`) with
+ * a Layer, e.g. `Layer.mergeAll(Db.layer, recordingBlobStore().layer)`; it is
+ * read when the write is claimed. The Layer is built once per write, so a
+ * scoped resource in it lives only for that write.
+ */
+export const ExportWriteServices = Context.Reference<
+  Layer.Layer<Db | BlobStore>
+>("@watchdog/core/infra/ExportWriteServices", {
+  defaultValue: () => Layer.mergeAll(Db.layer, blobStoreLayer),
+});
+
+/**
+ * `ExportWriteServices` for tests that trigger an export without wanting the
+ * live pipeline: the pool (`Db.layer`) plus a `recordingBlobStore()` that never
+ * leaves the process, so the detached write cannot reach real S3. (The write
+ * still renders from the database and writes files under `WD_EXPORT_DIR`.)
+ * Provide it with `Effect.provideService(ExportWriteServices, ...)` or
+ * `runDomainWith(...)`-adjacent wiring wherever a test reaches
+ * `updateCaseEffect` with a name or slug change.
+ */
+export function isolatedExportWriteServices(): Layer.Layer<Db | BlobStore> {
+  return Layer.mergeAll(Db.layer, recordingBlobStore().layer);
+}
+
+/**
  * First stage of `scheduleCaseExportEffect`: marks the case dirty and
  * starts-or-joins the write fiber, then returns the Effect that waits for the
  * write. Split out so a caller can run the mark in its own fiber and fork only
  * the wait: a shutdown that interrupts the forked wait cannot lose the mark.
- * The write fiber outlives the caller, so it runs with the `Db` service
- * captured from the interpreting caller.
+ * The write fiber outlives the caller, so it runs with `ExportWriteServices`
+ * (the live pool and its own `BlobStore`), never the caller's `Db` / `BlobStore`.
  */
 export function claimCaseExportEffect(
   caseId: string,
   writeExport: ExportWriter = writeCaseExportEffect
-): Effect.Effect<Effect.Effect<void>, never, Db | BlobStore> {
+): Effect.Effect<Effect.Effect<void>> {
   const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;
   if (normalizedCaseId === undefined) return Effect.succeed(Effect.void);
-  return Effect.contextWith((services: Context.Context<Db | BlobStore>) =>
-    claimExportJoin(normalizedCaseId, (id) =>
-      Effect.provideContext(writeExport(id), services)
-    )
-  );
+  return Effect.gen(function* claimCaseExportGen() {
+    const services = yield* ExportWriteServices;
+    return yield* claimExportJoin(normalizedCaseId, (id) =>
+      Effect.provide(writeExport(id), services)
+    );
+  });
 }
 
 /**
@@ -349,13 +389,14 @@ export function claimCaseExportEffect(
  * `writeExport` is injectable so unit tests can assert coalesce without object storage.
  *
  * Marks dirty and starts-or-joins the write fiber when the returned Effect is
- * interpreted. The write fiber outlives the caller, so it runs with the `Db`
- * and `BlobStore` services captured from the interpreting caller.
+ * interpreted. The write fiber is independent of the caller's lifetimes: it
+ * provides its own `Db` / `BlobStore` (see `ExportWriteServices`), so the
+ * caller needs no services for it.
  */
 export function scheduleCaseExportEffect(
   caseId: string,
   writeExport: ExportWriter = writeCaseExportEffect
-): Effect.Effect<void, never, Db | BlobStore> {
+): Effect.Effect<void> {
   return Effect.flatten(claimCaseExportEffect(caseId, writeExport));
 }
 

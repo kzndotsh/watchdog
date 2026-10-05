@@ -163,7 +163,7 @@ export function updateCaseEffect(input: {
   name?: string;
   description?: string | null;
   allowThirdPartyEgress?: boolean;
-}): Effect.Effect<CaseRecord, DomainTag, Db | BlobStore> {
+}): Effect.Effect<CaseRecord, DomainTag, Db> {
   return Effect.gen(function* updateCaseGen() {
     const caseId = yield* requireTrimmedGraphId(input.id, "Case");
     const existing = yield* tryDbWith((exec) =>
