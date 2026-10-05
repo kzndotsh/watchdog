@@ -159,9 +159,7 @@ export function useThemeMode() {
     persistThemeMode(nextThemeMode(mode));
   }
 
-  function setMode(next: ThemeMode) {
-    persistThemeMode(next);
-  }
+  const setMode = persistThemeMode;
 
   const Icon = themeModeIcon(mode);
 
