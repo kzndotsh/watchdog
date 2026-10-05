@@ -8,7 +8,7 @@ import { ingestRemotePageEffect } from "../ingest-page.ts";
 
 describe("ingestRemotePageEffect", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
   afterEach(() => {
     mockServer.resetHandlers();

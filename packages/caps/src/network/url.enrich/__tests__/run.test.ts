@@ -9,7 +9,7 @@ import { urlEnrich } from "../cap.ts";
 
 describe("network.url.enrich run", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
   afterEach(() => {
     mockServer.resetHandlers();

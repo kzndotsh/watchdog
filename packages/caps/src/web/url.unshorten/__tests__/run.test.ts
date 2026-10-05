@@ -8,7 +8,7 @@ import { urlUnshorten } from "../cap.ts";
 
 describe("web.url.unshorten run", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
   afterEach(() => {
     mockServer.resetHandlers();

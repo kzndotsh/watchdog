@@ -17,7 +17,7 @@ import { fetchUnshortenEffect, isBlockedUnshortenUrl } from "../unshorten.ts";
 
 describe("fetchUnshortenEffect", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
   afterEach(() => {
     mockServer.resetHandlers();

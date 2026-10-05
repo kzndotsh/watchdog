@@ -14,7 +14,7 @@ const draftSchema = z.object({
 
 describe("structuredExtract", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "bypass" });
+    mockServer.listen({ onUnhandledFrame: "bypass" });
   });
 
   afterEach(() => {
