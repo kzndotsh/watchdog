@@ -22,6 +22,7 @@ import { blobStoreLayer, type BlobStore } from "./blob-store";
 import { Db } from "./db-service";
 import { errorMessage } from "./error-utils";
 import { renderCaseExportEffect } from "./export";
+import { outsideTransaction } from "./postgres-tx";
 import { logProcess, logSwallowed } from "./process-log";
 
 export class ExportIOError extends Data.TaggedError("ExportIOError")<{
@@ -313,9 +314,11 @@ function claimExportJoin(
     }
 
     return Effect.gen(function* startExportFiberGen() {
-      const fiber = yield* exportLoop(caseId, writeExport).pipe(
-        Effect.forkDetach({ startImmediately: true })
-      );
+      // Detached: it outlives a `transact` body that may be claiming it, so it
+      // runs outside that transaction and may open its own.
+      const fiber = yield* outsideTransaction(
+        exportLoop(caseId, writeExport)
+      ).pipe(Effect.forkDetach({ startImmediately: true }));
       const inFlight = new Map([...marked.inFlight, [caseId, fiber]]);
       return [Fiber.join(fiber), { dirty: marked.dirty, inFlight }] as const;
     });

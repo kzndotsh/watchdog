@@ -13,6 +13,7 @@ import {
   scheduleCaseExportEffect,
 } from "../export-sync";
 import { tryDbWith } from "../postgres-effect";
+import { transact } from "../postgres-tx";
 import { runDomainWith } from "../run-domain";
 
 const ROLLBACK = new Error("rollback");
@@ -95,6 +96,25 @@ describe("detached export write services", () => {
     expect(own.calls.map((call) => call.command)).toEqual(["GetObjectCommand"]);
     // The write fiber released its own store when the write ended.
     expect(own.destroyed()).toBe(true);
+  });
+
+  it("claimed inside a transact body, the write may open its own transact", async () => {
+    const row = await seedCase(db, { name: "Claimed" });
+    let wrote = false;
+    const writeExport = () =>
+      transact(() =>
+        Effect.sync(() => {
+          wrote = true;
+        })
+      ).pipe(Effect.orDie);
+    const waitForWrite = await Effect.runPromise(
+      Effect.provide(
+        transact(() => claimCaseExportEffect(row.id, writeExport)),
+        Db.layer
+      )
+    );
+    await Effect.runPromise(waitForWrite);
+    expect(wrote).toBe(true);
   });
 
   it("schedule needs no caller services", async () => {
