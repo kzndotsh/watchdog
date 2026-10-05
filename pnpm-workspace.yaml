@@ -23,7 +23,7 @@ catalog:
   better-auth: "1.7.7"
   cn: "0.4.0"
   date-fns: "^4.4.0"
-  dotenv: "^17.4.2"
+  dotenv: "^18.0.5"
   drizzle-orm: "^0.45.3"
   effect: "4.0.0"
   evlog: "2.29.0"
