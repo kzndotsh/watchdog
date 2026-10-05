@@ -15,7 +15,7 @@ import { fetchPageEnrichEffect } from "../page-enrich.ts";
 
 describe("fetchPageEnrichEffect", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
   afterEach(() => {
     mockServer.resetHandlers();

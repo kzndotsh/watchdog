@@ -15,7 +15,7 @@ import "../http/msw-setup.ts";
 describe("msw-setup", () => {
   it("registers MSW lifecycle hooks on the mock server", () => {
     expect(mockServer.listen).toHaveBeenCalledWith({
-      onUnhandledRequest: "bypass",
+      onUnhandledFrame: "bypass",
     });
   });
 });

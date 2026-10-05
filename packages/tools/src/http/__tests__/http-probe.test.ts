@@ -15,7 +15,7 @@ import { fetchHttpProbeEffect } from "../http-probe.ts";
 
 describe("fetchHttpProbeEffect", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "bypass" });
+    mockServer.listen({ onUnhandledFrame: "bypass" });
   });
   afterEach(() => {
     mockServer.resetHandlers();

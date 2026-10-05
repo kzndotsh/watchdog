@@ -19,7 +19,7 @@ import { fetchWaybackLookupEffect } from "../cdx.ts";
 
 describe("fetchWaybackLookupEffect", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
 
   afterEach(() => {

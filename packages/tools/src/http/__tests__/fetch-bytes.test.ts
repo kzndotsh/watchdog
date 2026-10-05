@@ -20,7 +20,7 @@ import { toolsHttpClientLayer } from "../http-client-layer";
 
 describe("fetchBytesEffect", () => {
   beforeAll(() => {
-    mockServer.listen({ onUnhandledRequest: "error" });
+    mockServer.listen({ onUnhandledFrame: "error" });
   });
 
   afterEach(() => {
