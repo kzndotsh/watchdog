@@ -66,6 +66,19 @@ overrides:
   # break the web handler plugin types. Keeps a single ws. Revisit when
   # happy-dom moves to ws 8.22.0 or later.
   ws: "8.22.0"
+  # devalue: GHSA-x5rw-q4pp-hg5g, GHSA-mcm9-63f2-9j32, GHSA-j22f-vq7h-c4qm and
+  # three more (fixed in 5.9.3). astro only asks for ^5.8.1, so an old lockfile
+  # keeps a vulnerable copy. Bounded to the current major, so a floor within it. Revisit (remove) when astro
+  # requires devalue ^5.9.3.
+  devalue: "^5.9.3"
+  # ip-address: GHSA-h3mg-xc3c-68pw, GHSA-j6r3-76f7-8jcv (fixed in 10.7.1);
+  # reached through shadcn -> @modelcontextprotocol/sdk -> express-rate-limit.
+  # Bounded to the current major. Revisit when those require ^10.7.1.
+  ip-address: "^10.7.1"
+  # brace-expansion: GHSA-q2hr-2g5m-vwhr (quadratic expansion; fixed in 5.0.12);
+  # reached through minimatch (eslint, ts-morph). Revisit when
+  # minimatch requires ^5.0.12. Bounded to the current major.
+  brace-expansion: "^5.0.12"
 
 allowBuilds:
   esbuild: true
