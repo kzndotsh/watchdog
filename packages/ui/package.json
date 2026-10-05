@@ -17,8 +17,8 @@
     "cn": "catalog:",
     "date-fns": "catalog:",
     "lucide-react": "catalog:",
-    "react-day-picker": "^10.0.1",
-    "react-resizable-panels": "^4.12.4"
+    "react-day-picker": "^10.0.2",
+    "react-resizable-panels": "^4.14.1"
   },
   "devDependencies": {
     "@types/react": "catalog:",
