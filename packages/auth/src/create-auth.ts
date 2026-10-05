@@ -17,6 +17,10 @@ import {
   verification,
 } from "@watchdog/db";
 import { env } from "@watchdog/env/server";
+import {
+  asOrganizationId,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import {
   DISABLED_ACCOUNT_MESSAGE,
@@ -70,10 +74,11 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
      * Remove everything an organization owns (Cases and their artifacts) before the
      * organization row goes. Organization deletion is only enabled when this is given,
      * because Cases reference organizations by soft id and would be orphaned otherwise.
-     * Throw to abort the deletion.
+     * Throw to abort the deletion. Better Auth's plain organization id is minted
+     * here, at the edge, so the hook receives a validated `OrganizationId`.
      */
     beforeDeleteOrganization?: (input: {
-      organizationId: string;
+      organizationId: OrganizationId;
       actorId: string;
     }) => Promise<void>;
   } = {}
@@ -178,7 +183,7 @@ export function createAuth<const T extends BetterAuthPlugin[] = []>(
             user: actor,
           }) => {
             await options.beforeDeleteOrganization?.({
-              organizationId: doomed.id,
+              organizationId: asOrganizationId(doomed.id),
               actorId: actor.id,
             });
           },
