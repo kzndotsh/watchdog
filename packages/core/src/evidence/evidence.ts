@@ -33,6 +33,7 @@ import {
   uploadArtifactEffect,
   type PresignedPut,
 } from "../infra/blob";
+import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
 import { notifyEvidenceChangedEffect } from "../infra/events";
 import { tryDbWith, tryDbOn } from "../infra/postgres-effect";
@@ -212,7 +213,7 @@ export function listEvidenceForCaseEffect(
 
 export function dumpPasteEffect(
   input: DumpPasteInput
-): Effect.Effect<EvidenceRecord, DomainTag, Db> {
+): Effect.Effect<EvidenceRecord, DomainTag, Db | BlobStore> {
   return Effect.gen(function* dumpPasteGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -368,7 +369,7 @@ export function attachEvidenceEntityEffect(input: {
 
 export function presignUploadEffect(
   input: PresignUploadInput
-): Effect.Effect<PresignedPut, DomainTag, Db> {
+): Effect.Effect<PresignedPut, DomainTag, Db | BlobStore> {
   return Effect.gen(function* presignUploadGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -388,7 +389,7 @@ export function confirmFileUploadEffect(
   input: ConfirmFileUploadInput,
   actorId: string,
   actorLabel?: string | null
-): Effect.Effect<EvidenceRecord, DomainTag, Db> {
+): Effect.Effect<EvidenceRecord, DomainTag, Db | BlobStore> {
   return Effect.gen(function* confirmFileUploadGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,
@@ -438,7 +439,7 @@ export function getEvidenceDownloadUrlEffect(
   caseId: string,
   organizationId: string,
   evidenceId: string
-): Effect.Effect<{ url: string | null }, DomainTag, Db> {
+): Effect.Effect<{ url: string | null }, DomainTag, Db | BlobStore> {
   return Effect.gen(function* getEvidenceDownloadUrlGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
     const normalizedEvidenceId = yield* requireTrimmedGraphId(

@@ -16,6 +16,7 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "../infra/blob";
+import type { BlobStore } from "../infra/blob-store";
 import { nowIsoStringEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
@@ -37,7 +38,7 @@ function loadTextFromEvidence(row: {
   uri: string | null;
   mime: string | null;
   kind: string;
-}): Effect.Effect<string> {
+}): Effect.Effect<string, never, BlobStore> {
   if (row.text !== null && row.text.trim() !== "") {
     return Effect.succeed(row.text);
   }
@@ -65,7 +66,7 @@ function loadTextFromEvidence(row: {
 function loadEnrichOutputText(input: {
   caseId: string;
   evidenceId: string;
-}): Effect.Effect<string | null, DomainTag, Db> {
+}): Effect.Effect<string | null, DomainTag, Db | BlobStore> {
   return Effect.gen(function* loadEnrichOutputTextGen() {
     const recent = yield* tryDbWith((exec) =>
       jobsRepo.listSucceededForCapability(
@@ -105,7 +106,7 @@ export function packEvidenceSnapshotEffect(input: {
   caseId: string;
   evidenceId: string;
   entityId?: string;
-}): Effect.Effect<EvidenceSnapshot, DomainTag, Db> {
+}): Effect.Effect<EvidenceSnapshot, DomainTag, Db | BlobStore> {
   return Effect.gen(function* packEvidenceSnapshotGen() {
     const row = yield* tryDbWith((exec) =>
       evidenceRepo.getActiveInCase(exec, input.caseId, input.evidenceId)

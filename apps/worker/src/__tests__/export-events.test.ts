@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WatchdogEvent } from "@watchdog/schemas/feed";
@@ -15,13 +15,15 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   };
 });
 
-import { Db } from "@watchdog/core/worker";
+import { Db, recordingBlobStore } from "@watchdog/core/worker";
 
 import {
   claimExportEventEffect,
   hasSchedulableCaseId,
   shouldTriggerCaseExport,
 } from "../export-events";
+
+const dbAndBlob = Layer.mergeAll(Db.layer, recordingBlobStore().layer);
 
 describe("shouldTriggerCaseExport", () => {
   const caseId = "11111111-1111-4111-8111-000000000001";
@@ -114,7 +116,7 @@ describe("claimExportEventEffect", () => {
       Effect.runPromise(
         Effect.provide(
           claimExportEventEffect({ type: "entity_changed", caseId }),
-          Db.layer
+          dbAndBlob
         )
       )
     ).rejects.toThrow(/disk full/);
@@ -125,7 +127,7 @@ describe("claimExportEventEffect", () => {
       Effect.flatten(
         Effect.provide(
           claimExportEventEffect({ type: "task_changed", caseId }),
-          Db.layer
+          dbAndBlob
         )
       )
     );
@@ -143,7 +145,7 @@ describe("claimExportEventEffect", () => {
             type: "entity_changed",
             caseId: paddedCaseId,
           }),
-          Db.layer
+          dbAndBlob
         )
       )
     );
@@ -159,7 +161,7 @@ describe("claimExportEventEffect", () => {
             type: "entity_changed",
             caseId: "not-a-uuid",
           }),
-          Db.layer
+          dbAndBlob
         )
       )
     );

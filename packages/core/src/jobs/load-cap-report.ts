@@ -25,10 +25,10 @@ interface CapReportLoadResult {
  * Load Cap report JSON for pure interpret.
  * Requires canonical `report.json`.
  */
-export function loadCapReportEffect(
+export function loadCapReportEffect<R = never>(
   artifacts: ArtifactRef[],
-  readArtifact: (uri: string) => Effect.Effect<Uint8Array, InvalidError>
-): Effect.Effect<CapReportLoadResult | null, InvalidError> {
+  readArtifact: (uri: string) => Effect.Effect<Uint8Array, InvalidError, R>
+): Effect.Effect<CapReportLoadResult | null, InvalidError, R> {
   return Effect.gen(function* loadCapReportGen() {
     const art = artifacts.find((a) => a.name === REPORT_JSON_ARTIFACT);
     if (!art) return null;

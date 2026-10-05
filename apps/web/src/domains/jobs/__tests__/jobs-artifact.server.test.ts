@@ -1,11 +1,13 @@
+import type { Effect } from "effect";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import type { GetArtifactContentInput } from "@/domains/jobs/types";
+import type { BlobStore } from "@watchdog/core/blob";
 import { testHttpUrl, testId } from "@watchdog/test-kit";
 
 const downloadUrlMock = vi.hoisted(() => vi.fn());
 const jobsGetMock = vi.hoisted(() => vi.fn());
-const readArtifactBytesMock = vi.hoisted(() => vi.fn());
+const blobObjects = vi.hoisted(() => new Map<string, Uint8Array>());
 const fetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/orpc.server", () => ({
@@ -15,13 +17,15 @@ vi.mock("@/lib/orpc.server", () => ({
   }),
 }));
 
-vi.mock("@watchdog/api", () => ({
-  runApp: (effect: unknown) => readArtifactBytesMock(effect),
-}));
-
-vi.mock("@watchdog/core/blob", () => ({
-  readArtifactBytesEffect: (uri: string) => uri,
-}));
+vi.mock("@watchdog/api", async () => {
+  const { Effect } = await import("effect");
+  const { recordingBlobStore } = await import("@watchdog/core/blob");
+  const layer = recordingBlobStore({ objects: blobObjects }).layer;
+  return {
+    runApp: (effect: Effect.Effect<unknown, unknown, BlobStore>) =>
+      Effect.runPromise(Effect.provide(effect, layer)),
+  };
+});
 
 import { fetchArtifactContent } from "@/domains/jobs/jobs-artifact.server";
 
@@ -78,9 +82,7 @@ describe("fetchArtifactContent", () => {
     jobsGetMock.mockResolvedValue({
       output: [{ sha256: "deadbeef", uri }],
     });
-    readArtifactBytesMock.mockResolvedValue(
-      new TextEncoder().encode("key: value")
-    );
+    blobObjects.set(uri, new TextEncoder().encode("key: value"));
 
     const result = await fetchArtifactContent(
       {
@@ -94,7 +96,6 @@ describe("fetchArtifactContent", () => {
     );
 
     expect(jobsGetMock).toHaveBeenCalledWith({ caseId, jobId });
-    expect(readArtifactBytesMock).toHaveBeenCalledWith(uri);
     expect(result).toEqual({ text: "key: value" });
   });
 });

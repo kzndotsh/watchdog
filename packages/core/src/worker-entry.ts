@@ -31,6 +31,11 @@ export {
 } from "./jobs/run-job";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
 export { Db } from "./infra/db-service";
+export {
+  BlobStore,
+  blobStoreLayer,
+  recordingBlobStore,
+} from "./infra/blob-store";
 export { findCancelledJobIdsEffect } from "./jobs/start-job";
 
 export { listenForEvents } from "./infra/events";

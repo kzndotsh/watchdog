@@ -1,6 +1,7 @@
 import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { recordingBlobStore } from "@watchdog/core/blob";
 import { updateCaseEffect } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
 import {
@@ -26,7 +27,9 @@ import {
 
 // Enqueues land in a recording queue instead of a real pg-boss.
 const queue = recordingJobQueue();
-const runDomain = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
+const runDomain = runDomainWith(
+  Layer.mergeAll(Db.layer, queue.layer, recordingBlobStore().layer)
+);
 
 describe("processEvidence", () => {
   beforeEach(async () => {

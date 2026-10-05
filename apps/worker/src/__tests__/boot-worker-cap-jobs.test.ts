@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { failInvalidCapDeliveryEffect } = vi.hoisted(() => ({
@@ -13,9 +13,16 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   };
 });
 
-import { Db, JobFibers, recordingJobQueue } from "@watchdog/core/worker";
+import {
+  Db,
+  JobFibers,
+  recordingJobQueue,
+  recordingBlobStore,
+} from "@watchdog/core/worker";
 
 import { processCapJobBatchEffect, processCapJobEffect } from "../boot-worker";
+
+const dbAndBlob = Layer.mergeAll(Db.layer, recordingBlobStore().layer);
 
 describe("processCapJobEffect", () => {
   beforeEach(() => {
@@ -32,7 +39,7 @@ describe("processCapJobEffect", () => {
       Effect.runPromise(
         processCapJobEffect({ id: "boss-1", data: null }, runJob).pipe(
           Effect.provide(JobFibers.layer),
-          Effect.provide(Db.layer),
+          Effect.provide(dbAndBlob),
           Effect.provide(recordingJobQueue().layer)
         )
       )
@@ -51,7 +58,7 @@ describe("processCapJobEffect", () => {
       Effect.runPromise(
         processCapJobBatchEffect([], runJob).pipe(
           Effect.provide(JobFibers.layer),
-          Effect.provide(Db.layer),
+          Effect.provide(dbAndBlob),
           Effect.provide(recordingJobQueue().layer)
         )
       )
@@ -86,7 +93,7 @@ describe("processCapJobEffect", () => {
         runJob
       ).pipe(
         Effect.provide(JobFibers.layer),
-        Effect.provide(Db.layer),
+        Effect.provide(dbAndBlob),
         Effect.provide(recordingJobQueue().layer)
       )
     );
@@ -126,7 +133,7 @@ describe("processCapJobEffect", () => {
         runJob
       ).pipe(
         Effect.provide(JobFibers.layer),
-        Effect.provide(Db.layer),
+        Effect.provide(dbAndBlob),
         Effect.provide(recordingJobQueue().layer)
       )
     );

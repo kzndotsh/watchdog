@@ -19,6 +19,7 @@ import {
   readArtifactBytesEffect,
   uploadArtifactEffect,
 } from "../../infra/blob";
+import { BlobStore, type BlobStoreApi } from "../../infra/blob-store";
 import { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
 import { tryDbWith } from "../../infra/postgres-effect";
@@ -65,7 +66,7 @@ export interface CollectResult {
 function packSnapshotIfNeededEffect(
   state: PreflightState,
   jobLog: JobLog
-): Effect.Effect<EvidenceSnapshot | undefined, DomainTag, Db> {
+): Effect.Effect<EvidenceSnapshot | undefined, DomainTag, Db | BlobStore> {
   if (state.policy.needsEvidenceSnapshot !== true) {
     const none: EvidenceSnapshot | undefined = undefined;
     return Effect.succeed(none);
@@ -109,11 +110,15 @@ function vaultToTools(name: string) {
   };
 }
 
-/** `dbExec` is provided to the vault reads: Cap contexts carry R = never. */
+/**
+ * Cap contexts carry R = never, so the services their vault and blob helpers
+ * need are captured here and provided to each helper.
+ */
 function buildCapContext(
   state: PreflightState,
   runtime: CollectRuntime,
-  dbExec: DbExec
+  dbExec: DbExec,
+  blob: BlobStoreApi
 ): CapContext<unknown> {
   const { job, input, allowThirdPartyEgress } = state;
   return {
@@ -150,6 +155,7 @@ function buildCapContext(
         mime: uploadInput.mime,
         name: uploadInput.name,
       }).pipe(
+        Effect.provideService(BlobStore, blob),
         Effect.mapError(
           (error) => new ValidationVendorError({ message: error.reason })
         ),
@@ -163,6 +169,7 @@ function buildCapContext(
     },
     readArtifact(uri: string) {
       return readArtifactBytesEffect(uri).pipe(
+        Effect.provideService(BlobStore, blob),
         Effect.mapError(
           (error) => new ValidationVendorError({ message: error.reason })
         )
@@ -266,10 +273,11 @@ function lookupCacheHitEffect(
 function runCapCollectEffect(
   state: PreflightState,
   runtime: CollectRuntime
-): Effect.Effect<CollectResult, DomainTag, Db> {
+): Effect.Effect<CollectResult, DomainTag, Db | BlobStore> {
   return Effect.gen(function* runCapCollectGen() {
     const dbExec = yield* Db;
-    const ctx = buildCapContext(state, runtime, dbExec);
+    const blob = yield* BlobStore;
+    const ctx = buildCapContext(state, runtime, dbExec, blob);
     const runResult = yield* state.cap.run(ctx);
     return {
       artifacts: runResult.artifacts,
@@ -290,7 +298,7 @@ export function collectEffect(
   state: PreflightState,
   jobLog: JobLog,
   jobSignal: AbortSignal
-): Effect.Effect<CollectResult, DomainTag, Db> {
+): Effect.Effect<CollectResult, DomainTag, Db | BlobStore> {
   return Effect.gen(function* collectSetup() {
     const evidenceSnapshot = yield* packSnapshotIfNeededEffect(state, jobLog);
     const linkedSource = linkedEvidenceId(
