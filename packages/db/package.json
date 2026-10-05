@@ -26,7 +26,7 @@
     "@watchdog/test-db": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
     "dotenv": "catalog:",
-    "drizzle-kit": "^0.31.10",
+    "drizzle-kit": "^0.31.11",
     "typescript": "catalog:"
   }
 }
