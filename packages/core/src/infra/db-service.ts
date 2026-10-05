@@ -15,4 +15,12 @@ export class Db extends Context.Service<Db, DbExec>()(
 ) {
   /** Live Layer over the process-global `@watchdog/db` client. */
   static readonly layer = Layer.succeed(Db, Db.of(db));
+
+  /**
+   * Provide any `DbExec` (a transaction, or a spying wrapper) instead of the
+   * pool. For tests: `runDomainWith(Db.layerOf(spy))(effect)`.
+   */
+  static layerOf(exec: DbExec): Layer.Layer<Db> {
+    return Layer.succeed(Db, Db.of(exec));
+  }
 }

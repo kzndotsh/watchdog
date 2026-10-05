@@ -9,12 +9,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@watchdog/core": "workspace:*",
     "@watchdog/db": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "@watchdog/test-kit": "workspace:*",
     "drizzle-orm": "catalog:",
-    "effect": "catalog:",
     "vitest": "catalog:"
   },
   "devDependencies": {

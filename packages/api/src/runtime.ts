@@ -31,7 +31,7 @@ export async function runApp<A>(
 
 /**
  * `runApp` with an override Layer for tests, e.g.
- * `runAppWith(TestDbLayer)(effect)`. The override wins over `AppLive`.
+ * `runAppWith(Db.layerOf(spy))(effect)`. The override wins over `AppLive`.
  */
 export function runAppWith<ROut>(layer: Layer.Layer<ROut>) {
   return async <A>(effect: Effect.Effect<A, DomainTag, ROut>): Promise<A> =>

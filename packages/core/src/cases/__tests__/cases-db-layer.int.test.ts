@@ -1,14 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { listCasesEffect } from "@watchdog/core/cases";
-import { runDomainWith } from "@watchdog/core/infra";
-import {
-  resetTestDb,
-  seedCase,
-  testDb,
-  TestDbLayer,
-  testDbLayerOf,
-} from "@watchdog/test-db";
+import { Db, runDomainWith } from "@watchdog/core/infra";
+import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 /** `listCasesEffect` is the reference migration to the `Db` service. */
@@ -17,13 +11,13 @@ describe("listCasesEffect through the Db Layer", () => {
     await resetTestDb();
   });
 
-  it("reads through the test Layer", async () => {
+  it("reads through the Db Layer", async () => {
     const ours = await seedCase(testDb, {
       name: "Layered",
       slug: "layered",
       organizationId: TEST_ORGANIZATION_ID,
     });
-    const listed = await runDomainWith(TestDbLayer)(
+    const listed = await runDomainWith(Db.layer)(
       listCasesEffect(TEST_ORGANIZATION_ID)
     );
     expect(listed.map((row) => row.id)).toEqual([ours.id]);
@@ -42,7 +36,7 @@ describe("listCasesEffect through the Db Layer", () => {
         return Reflect.get(target, prop, receiver) as unknown;
       },
     });
-    const listed = await runDomainWith(testDbLayerOf(spy))(
+    const listed = await runDomainWith(Db.layerOf(spy))(
       listCasesEffect(TEST_ORGANIZATION_ID)
     );
     expect(listed).toHaveLength(1);

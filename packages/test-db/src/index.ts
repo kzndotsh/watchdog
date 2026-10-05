@@ -1,5 +1,4 @@
 export { testDb } from "./test-db.ts";
-export { TestDbLayer, testDbLayerOf } from "./db/db-layer.ts";
 export { resetE2eDb, resetTestDb, withTestTx } from "./db/with-test-tx.ts";
 export {
   backdateJob,
