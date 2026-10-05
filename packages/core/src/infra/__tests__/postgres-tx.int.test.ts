@@ -1,4 +1,4 @@
-import { Context, Effect, Exit, Fiber } from "effect";
+import { Cause, Context, Effect, Exit, Fiber } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -188,5 +188,46 @@ describe("transact", () => {
     );
     expect(failure).toBeInstanceOf(ConflictError);
     expect(await caseExists(firstId)).toBe(false);
+  });
+
+  it("dies on a nested transact before opening a second transaction", async () => {
+    const transaction = vi.spyOn(db, "transaction");
+    let id = "";
+    const exit = await Effect.runPromiseExit(
+      Effect.provide(
+        transact((tx) =>
+          Effect.gen(function* nested() {
+            id = (yield* tryDb(() => seedCase(tx))).id;
+            return yield* transact(() => Effect.void);
+          })
+        ),
+        Db.layer
+      )
+    );
+    expect(Exit.hasDies(exit)).toBe(true);
+    expect(Exit.isFailure(exit) && Cause.squash(exit.cause)).toMatchObject({
+      message: expect.stringContaining("inside another transact"),
+    });
+    // Only the outer transaction was opened, and it rolled back.
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(await caseExists(id)).toBe(false);
+  });
+
+  it("allows a transact after another has finished, and under a provided tx", async () => {
+    await runDomain(
+      transact(() => Effect.void).pipe(
+        Effect.andThen(transact(() => Effect.void))
+      )
+    );
+    // A caller-provided tx makes this transact the outermost one (a savepoint).
+    const value = await db.transaction((tx) =>
+      Effect.runPromise(
+        Effect.provide(
+          transact(() => Effect.succeed("inner")),
+          Db.layerOf(tx)
+        )
+      )
+    );
+    expect(value).toBe("inner");
   });
 });
