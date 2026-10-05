@@ -184,6 +184,8 @@ export default defineConfig({
     // --- Burn-down backlog (tighten gradually; see lint debt plan) ---
     "eslint/complexity": "off",
     "eslint/eqeqeq": "error",
+    // ADR-0003: branded ids are minted by constructors, never cast (test-kit exempt below).
+    "watchdog/no-brand-cast": "error",
     "eslint/logical-assignment-operators": "error",
     "eslint/no-control-regex": "error",
     "eslint/no-empty-function": "error",
@@ -315,6 +317,11 @@ export default defineConfig({
     ],
   },
   overrides: [
+    {
+      // Test-kit fixtures are the one place allowed to stamp a brand (ADR-0003).
+      files: ["packages/test-kit/src/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-brand-cast": "off" },
+    },
     {
       // Astro components use PascalCase filenames (import paths match).
       files: ["apps/site/**/*.astro"],

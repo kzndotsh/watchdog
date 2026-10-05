@@ -60,6 +60,10 @@ Where to find things:
 
 Enforced: one Zod version via the `zod` entry in the pnpm catalog and `overrides` in `pnpm-workspace.yaml`. Rules 1-7 and the naming/import rules below are **guidance** (review); oxlint's typescript rules catch some but no gate checks them.
 
+### Branded ids
+
+`OrganizationId` and `CaseId` (ADR-0003) are Zod brands in `packages/schemas/src/ids.ts`, so passing an organization id where a Case id is expected fails to compile. Mint them only through `asOrganizationId` / `asCaseId`, a schema parse (`caseIdSchema` in API inputs) or a typed source (a drizzle column with `.$type<Brand>()`, the session actor); a bare `as` cast is a lint error outside `packages/test-kit`. Later phases brand the remaining id kinds.
+
 ### Zod package rules
 
 - `@watchdog/schemas` lists `zod` as a **peerDependency** (+ devDependency for typecheck); consumers depend on `zod` themselves.

@@ -44,10 +44,52 @@ const noCoreS3DynamicImport = bansDynamicImport(
   "Core reads the S3 client from the BlobStore service (infra/blob-store.ts, see packages/core/AGENTS.md); a dynamic import of @aws-sdk/client-s3 bypasses the S3Client ban."
 );
 
+/** Branded id types (ADR-0003) that may only be minted by validating constructors. */
+const BRANDED_ID_TYPES = new Set(["OrganizationId", "CaseId"]);
+
+/**
+ * @typedef {{ type: string, typeName?: { type: string, name?: string } }} TypeNode
+ * @typedef {{ typeAnnotation: TypeNode }} CastNode
+ */
+
+/**
+ * Bans `x as OrganizationId`, `x as unknown as CaseId` and `<CaseId>x`: a branded id is
+ * minted by `asOrganizationId` / `asCaseId` (or a schema parse), never stamped on a string.
+ * oxlint has no `no-restricted-syntax`, so this is a plugin rule on the two cast nodes.
+ */
+const noBrandCast = {
+  meta: {
+    type: "problem",
+    docs: {
+      description:
+        "Ban bare `as OrganizationId` / `as CaseId` casts; mint through the validating constructors.",
+    },
+  },
+  /** @param {RuleContext} context */
+  create(context) {
+    /** @param {CastNode & { type: string }} node */
+    const check = (node) => {
+      const target = node.typeAnnotation;
+      if (
+        target.type === "TSTypeReference" &&
+        target.typeName?.type === "Identifier" &&
+        BRANDED_ID_TYPES.has(target.typeName.name ?? "")
+      ) {
+        context.report({
+          node,
+          message: `Do not cast to ${target.typeName.name}: mint it with asOrganizationId / asCaseId (or parse with the id schema) from @watchdog/schemas/shared. Only packages/test-kit fixtures are exempt (ADR-0003).`,
+        });
+      }
+    };
+    return { TSAsExpression: check, TSTypeAssertion: check };
+  },
+};
+
 export default {
   meta: { name: "watchdog" },
   rules: {
     "no-core-db-dynamic-import": noCoreDbDynamicImport,
     "no-core-s3-dynamic-import": noCoreS3DynamicImport,
+    "no-brand-cast": noBrandCast,
   },
 };

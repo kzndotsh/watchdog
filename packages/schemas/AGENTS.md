@@ -12,6 +12,10 @@ Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normaliz
 | Unit tests     | `pnpm test:unit`                            |
 | Property tests | `pnpm test:property`                        |
 
+## Branded ids (ADR-0003)
+
+`OrganizationId` (opaque text, `organizationIdSchema`) and `CaseId` (uuid, `caseIdSchema`) live in `src/ids.ts` and are exported from `@watchdog/schemas/shared`; `ApiActor.organizationId` is `OrganizationId | null`. A branded value is assignable to `string`, never the other way round. Mint through `asOrganizationId(value)` / `asCaseId(value)` (they throw on invalid input), a schema parse (API inputs use `caseIdSchema`), `parseTrimmedCaseId` (`CaseId | null`, trims first) or a typed database column; never cast: `as OrganizationId` / `as CaseId` fail lint (`watchdog/no-brand-cast`, only `packages/test-kit` fixtures are exempt). `parseTrimmedCaseId` brands its result a Case id: use `parseTrimmedUuid` for any other graph id (entity, job, evidence).
+
 ## Gotchas
 
 - Enums and vocab live here; drizzle consumes them via `text().$type<T>()`. Extend existing primitives rather than adding parallel one-off types. Web/API/CLI create, update, and delete inputs share one schema each (for example `createIdentifierInputSchema`, `updateCaseInputSchema`): extend the shared one, do not fork it per surface.

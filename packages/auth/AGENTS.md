@@ -23,6 +23,7 @@ The server side of identity: the Better Auth instance, invite-only signup, insta
 - Pass framework plugins (`tanstackStartCookies()`) through `createAuth({ trailingPlugins })`; they must be last.
 - Gate org creation on `BETTER_AUTH_ALLOW_SIGNUP` or instance admin, and keep the signup / org-create / role-change `rateLimit.customRules` (production only). Guidance.
 - Read env inside `createAuth()`, never at import time in the pure entry points (they ship to the browser). Guidance.
+- `resolveActorOrganizationId` (`src/actor.ts`) is the one place an `OrganizationId` is minted for an actor: it parses the preferred (session or API-key) id and reads the resolved id from a typed db column. `actorFromSession` takes the branded value; do not cast one.
 - `ApiActor` / `ApiCaller` come from `@watchdog/schemas`; `createApiContext` returns `ApiCaller & { log? }`, the same shape as the API's `ApiContext`.
 
 See also: [`apps/web/AGENTS.md`](../../apps/web/AGENTS.md) · [`agent-ingress`](../../docs/reference/contracts/agent-ingress.md) (API keys) · [`packages.md`](../../docs/reference/platform/packages.md).
