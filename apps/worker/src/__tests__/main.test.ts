@@ -97,11 +97,18 @@ let exit: MockInstance<typeof process.exit>;
  */
 function startBoot(fake: FakeDriver, { listening = true } = {}) {
   return Effect.gen(function* startBootGen() {
+    // Baseline first: the test process may already hold signal listeners, so
+    // "any listener" would return before the worker installs its own.
+    const sigtermBaseline = process.listenerCount("SIGTERM");
+    const sigintBaseline = process.listenerCount("SIGINT");
     const fiber = yield* bootWith(fake).pipe(Effect.forkChild);
     bootFibers.push(fiber);
     yield* Effect.promise(() =>
       vi.waitFor(() => {
-        expect(process.listenerCount("SIGTERM")).toBeGreaterThan(0);
+        expect(process.listenerCount("SIGTERM")).toBeGreaterThan(
+          sigtermBaseline
+        );
+        expect(process.listenerCount("SIGINT")).toBeGreaterThan(sigintBaseline);
         if (listening) {
           expect(fake.work).toHaveBeenCalled();
           expect(workerMocks.listenForEventsStream).toHaveBeenCalled();
