@@ -2,28 +2,36 @@ import {
   caseScopeInputSchema,
   entitySlugScopeInputSchema,
 } from "@watchdog/schemas/graph";
-import { entitySlugSchema, parseTrimmedUuid } from "@watchdog/schemas/shared";
+import {
+  type CaseId,
+  entitySlugSchema,
+  parseTrimmedCaseId,
+  parseTrimmedUuid,
+} from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { fail } from "./io";
 
-/** Trim and validate a positional UUID argument. */
-export function requireUuid(value: string, label: string): string {
-  const parsed = parseTrimmedUuid(value);
-  if (parsed === null) {
-    fail(
-      "USAGE",
-      value.trim() === ""
-        ? `${label} must not be blank`
-        : `${label} must be a valid UUID`,
-      { help: ["wd --help"] }
-    );
-  }
-  return parsed;
+function failInvalidUuid(value: string, label: string): never {
+  return fail(
+    "USAGE",
+    value.trim() === ""
+      ? `${label} must not be blank`
+      : `${label} must be a valid UUID`,
+    { help: ["wd --help"] }
+  );
 }
 
-/** Trim and validate a case UUID from `-c` / `--case`. */
-export function requireCaseId(value: unknown): string {
+/** Trim and validate a positional UUID argument (any non-Case kind). */
+export function requireUuid(value: string, label: string): string {
+  return parseTrimmedUuid(value) ?? failInvalidUuid(value, label);
+}
+
+/**
+ * Trim and validate a case UUID from `-c` / `--case`; the result is a branded
+ * `CaseId`. Invalid input is a clean `USAGE` error, never a throw.
+ */
+export function requireCaseId(value: unknown): CaseId {
   if (value === undefined || value === "") {
     fail("USAGE", "Missing required --case", {
       help: ["wd <noun> list -c <caseId>"],
@@ -34,7 +42,7 @@ export function requireCaseId(value: unknown): string {
       help: ["wd <noun> list -c <caseId>"],
     });
   }
-  return requireUuid(value, "Case ID");
+  return parseTrimmedCaseId(value) ?? failInvalidUuid(value, "Case ID");
 }
 
 /** Comma-separated UUID list (shared by graph / proposals / child writes). */
@@ -73,10 +81,9 @@ export function parsePatchIdList(
  * Accept either and resolve.
  */
 async function resolveEntityRef(
-  caseId: string,
+  caseId: CaseId,
   slugOrUuid: string
 ): Promise<{ id: string; slug: string }> {
-  const { caseId: trimmedCaseId } = caseScopeInputSchema.parse({ caseId });
   const trimmed = slugOrUuid.trim();
   if (trimmed === "") {
     fail("USAGE", "--entity is required", {
@@ -86,7 +93,7 @@ async function resolveEntityRef(
   const asUuid = parseTrimmedUuid(trimmed);
   if (asUuid !== null) {
     const rows = await api().entities.list(
-      caseScopeInputSchema.parse({ caseId: trimmedCaseId })
+      caseScopeInputSchema.parse({ caseId })
     );
     const row = rows.find((entity) => entity.id === asUuid);
     if (!row) {
@@ -104,7 +111,7 @@ async function resolveEntityRef(
   }
   const row = await api().entities.get(
     entitySlugScopeInputSchema.parse({
-      caseId: trimmedCaseId,
+      caseId,
       slug: slugParsed.data,
     })
   );
@@ -112,7 +119,7 @@ async function resolveEntityRef(
 }
 
 export async function resolveEntityId(
-  caseId: string,
+  caseId: CaseId,
   slugOrUuid: string
 ): Promise<string> {
   const ref = await resolveEntityRef(caseId, slugOrUuid);
@@ -123,7 +130,7 @@ export async function resolveEntityId(
  * Export and other slug-based HTTP paths accept entity UUID or slug.
  */
 export async function resolveEntitySlug(
-  caseId: string,
+  caseId: CaseId,
   slugOrUuid: string
 ): Promise<string> {
   const ref = await resolveEntityRef(caseId, slugOrUuid);

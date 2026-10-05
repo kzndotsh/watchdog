@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { CaseId } from "@watchdog/schemas/shared";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import {
@@ -7,6 +9,7 @@ import {
   parsePatchIdList,
   requireCaseId,
   requireUuid,
+  resolveEntityId,
 } from "../ids";
 import { CliExitError } from "../io";
 
@@ -41,5 +44,19 @@ describe("ids helpers", () => {
     expect(parsePatchIdList("")).toEqual([]);
     expect(parsePatchIdList("   ")).toEqual([]);
     expect(parsePatchIdList(id)).toEqual([id]);
+  });
+
+  it("requireCaseId fails with a USAGE error on a non-UUID case id", () => {
+    expect(() => requireCaseId("not-a-uuid")).toThrow(CliExitError);
+    expect(() => requireCaseId("   ")).toThrow(CliExitError);
+  });
+
+  it("requireCaseId yields a CaseId; a plain string is not one (ADR-0003)", () => {
+    const parsed: CaseId = requireCaseId(testCaseId(1));
+    const plain = testId(1);
+    // @ts-expect-error a plain string is not a CaseId: parse it with requireCaseId first
+    const unparsed = () => resolveEntityId(plain, "alpha");
+    const ok = () => resolveEntityId(parsed, "alpha");
+    expect([typeof ok, typeof unparsed]).toEqual(["function", "function"]);
   });
 });

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const apiMocks = vi.hoisted(() => ({
@@ -16,7 +17,7 @@ vi.mock("../client", () => ({
   }),
 }));
 
-import { resolveEntityId, resolveEntitySlug } from "../ids";
+import { requireCaseId, resolveEntityId, resolveEntitySlug } from "../ids";
 
 describe("resolveEntityRef", () => {
   beforeEach(() => {
@@ -24,7 +25,7 @@ describe("resolveEntityRef", () => {
   });
 
   it("slugifies display names before entities.get", async () => {
-    const caseId = testId(1);
+    const caseId = testCaseId(1);
     const entityId = testId(2);
     apiMocks.getEntity.mockResolvedValue({
       id: entityId,
@@ -47,7 +48,7 @@ describe("resolveEntityRef", () => {
   });
 
   it("resolves entity UUID via list without entities.get", async () => {
-    const caseId = testId(3);
+    const caseId = testCaseId(3);
     const entityId = testId(4);
     apiMocks.listEntities.mockResolvedValue([
       {
@@ -68,7 +69,7 @@ describe("resolveEntityRef", () => {
   });
 
   it("normalizes padded case id before entities.list", async () => {
-    const caseId = testId(5);
+    const caseId = testCaseId(5);
     const entityId = testId(6);
     apiMocks.listEntities.mockResolvedValue([
       {
@@ -81,7 +82,7 @@ describe("resolveEntityRef", () => {
       },
     ]);
 
-    await resolveEntityId(`  ${caseId}  `, entityId);
+    await resolveEntityId(requireCaseId(`  ${caseId}  `), entityId);
 
     expect(apiMocks.listEntities).toHaveBeenCalledWith({ caseId });
   });
