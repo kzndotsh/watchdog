@@ -1,0 +1,130 @@
+# ADR-0005: One append-only activity log feeds Recent activity and the live-update signal
+
+**Status:** proposed (2026-10-05) · answers [#51](https://github.com/kzndotsh/watchdog/issues/51), supersedes the abandoned "changes" rename ([#168](https://github.com/kzndotsh/watchdog/issues/168), on hold) **What this is:** how the workspace Recent activity feed and the live-update signal (Postgres NOTIFY to SSE to Query invalidation, and the worker's export trigger) become one append-only log written in the same transaction as the domain change, how readers resume after a disconnect without missing a row, what is deleted, and the order of the migration. **What this is not:** the implementation (tickets below), a change to the Graph write audit (`graph_writes`, custody provenance, which stays as is) or a product decision about which Graph edits Recent activity should show.
+
+## Context
+
+Two mechanisms describe the same facts and share no code. Measured on `main` (2026-10-05, by reading and grepping; numbers are call sites and lines, not runtime profiles).
+
+**Recent activity is assembled at read time from four sources** (`listRecentActivityEffect`, `packages/core/src/activity/recent-activity.ts:282`):
+
+- Evidence (`activityRepo.recentEvidence`, `packages/db/src/repos/activity.repo.ts:67`): one "Captured" row per Evidence, at `captured_at`. Hide, restore, attach and process are not shown.
+- Jobs (`recentJobs`, `activity.repo.ts:96`): the Job's current status at `updated_at`. A Job is one row that mutates, so queued, running and succeeded are never three feed rows; playbook step Jobs are collapsed per run in memory (`collapseRecentJobActivityRows`, `recent-activity.ts:137`).
+- Proposals (`recentPendingProposals`, `activity.repo.ts:125`): only `status = 'pending'`. An accepted or rejected Proposal disappears from the feed.
+- Tasks: the only source backed by a log, `activity_events` (`packages/db/src/schema/activity-events.ts`), appended by 3 of the 4 Task paths inside their `transact` body (`tasks.ts:255` create, `:341` status change, `:395` delete). Updates that do not change status and reorders notify but append nothing.
+- Merge: 4 queries in parallel, each fetching `min(limit * 4, 100)` rows (60 at the default limit of 15), sorted by `at` and cut to `limit` (`mergeActivityItems`, `recent-activity.ts:273`), then further reads for actor names, Proposal Entity names and Job Evidence and Entity titles (one per Case for the last two). Org scoping is a join on `cases.organization_id` (`orgCaseFilter`, `packages/db/src/repos/_org-case-filter.ts`). Output is `ActivityItem` (`packages/schemas/src/activity.ts:25`, kinds `evidence | job | proposal | task`). One consumer: the dashboard widget (`recent-activity.tsx`, via `dashboard-home.tsx:411`), optionally filtered to one Case; the API procedure is `packages/api/src/procedures/activity.ts`. There is no per-Case feed and no retention: `activity_events` grows without bound.
+- Graph edits (Entity, Edge, Claim, Identifier, timeline Event, Open Question) never appear in the feed.
+
+**The live-update signal is a second system.** `notifyEvent` (`packages/db/src/events.ts:18`) sends a `WatchdogEvent` (6 types, `packages/schemas/src/watchdog-events.ts`) on channel `watchdog_events` through the shared pool, i.e. autocommit, not on the transaction handle. There are 51 `notify*Effect` call sites in core: 23 `entity_changed`, 11 `evidence_changed`, 9 `job_update`, 4 `task_changed`, 2 `proposal_created`, 2 `proposal_queue_changed`. Each is `forkDetach`ed with errors swallowed (`packages/core/src/infra/events.ts:31-110`). Properties that matter here:
+
+- **Notify runs after commit by convention only.** Every call site I read sits after its `transact` returns (rule: `packages/core/AGENTS.md` line 87; attestation guards with `if (input.tx === undefined)`, `evidence.ts:511`). Nothing enforces it, and because the NOTIFY uses the pool, a call inside a transaction body would fire before commit and survive a rollback. I found none; the ordering is untested by a gate.
+- **A crash between commit and notify loses the signal for good.** There is no replay: NOTIFY is not queued for absent listeners. The worker's export listener loses every event while it is down and during a reconnect (`RECONNECT_DELAY_MS = 1000` plus connect time, `packages/db/src/events.ts:12`); the SSE route has no `id:` field and no `Last-Event-ID` handling (`apps/web/src/routes/api/events.ts:134`, `send(parsed.type, rawPayload)`), so a browser that reconnects silently misses events.
+- **One Postgres connection per SSE request.** `listenForEvents` opens its own `postgres(..., { max: 1 })` (`packages/db/src/events.ts:53`). The web hook opens one `EventSource` per Case id (`use-live-events.ts:180`, one `subscribeLiveEvents` per Case id), and the dashboard subscribes to every Case, so a dashboard with N Cases holds N browser connections (HTTP/1.1 allows 6 per origin) and N server LISTEN connections, and parses every NOTIFY N times. 11 files call `useLiveEvents`.
+- **Payloads are small.** The largest event serializes to 137 bytes (`job_update` with two uuids), 1.7% of the 8000-byte NOTIFY limit. The limit is not a constraint for ids and verbs; it would be for labels.
+- **Case delete never reaches a browser.** `deleteCaseEffect` notifies after the Case is gone (`cases.ts:278`), and the SSE route drops events for Cases outside the organization's visible set (`apps/web/src/routes/api/events.ts:133-141`).
+- **Consumers.** The web hook maps 6 event types to Query invalidations (`shared/lib/query-invalidation.ts`, 8 `invalidateAfter*` functions, each also invalidating `activityKeys.all` and search). The worker exports a Case on `entity_changed`, `evidence_changed` and `job_update` with status `succeeded`, and ignores `task_changed`, `proposal_*` (`apps/worker/src/export-events.ts:16`), listening through `listenForEventsStream` (`boot-worker.ts:261`).
+
+**Mismatches between the two.** In the feed but never notified: none found. Notified but not in the feed: 20 Graph sites (Entity 3, Edge 3, Claim 3, Identifier 3, timeline Event 3, Open Question 5), Accept (`proposals.ts:402`) and agent graph write (`agent-ingress.ts:300`), Evidence hide, restore, attach and process, Task reorder, Task edits that keep the status, and Proposal accept and reject. Outside both: Case create and update (Case update schedules an export directly), credentials (client-side invalidation only; they stay out of any shared log).
+
+**`graph_writes` is a different thing** (`packages/db/src/schema/graph-writes.ts`). One row per agent graph write that bypassed Triage: actor, channel, `confidence`, the full `patch` JSON, an idempotency key with a unique index (`graph_writes_case_actor_idem_uidx`). It is written in the same transaction as the patch (`agent-ingress.ts:230`) and it is custody provenance ([`custody.md`](../reference/contracts/custody.md), [`agent-ingress.md`](../reference/contracts/agent-ingress.md)): it must be complete, un-pruned, idempotent and carry the patch. The feed is the opposite: lossy by design, prunable, label-sized.
+
+**Sizing (estimate).** The demo seed writes about 25 activity rows, 15 Jobs, 18 Evidence, 17 Proposals, 23 Tasks, 33 Entities, 35 Edges and 20 Claims across 3 Cases (counts of seed call sites in `packages/db/scripts/demo-seed/`); logged as the proposed entries that is about 210 rows, roughly 70 per Case. Assume a heavy investigator at 200 entries per Case per week: 10k rows per Case per year, 500k per year for 50 Cases, about 250 bytes per row with three indexes, so about 125 MB per year, and about 35 MB under a 90-day retention.
+
+## Decision
+
+1. **One table, `activity`, is the only source of both the feed and the live signal.** The unit is an _activity entry_: `kind` (the subject noun), `action` (a verb from a closed list per kind), `subject_id`, `case_id`, actor, an optional small display snapshot, and a transition (`from_value`, `to_value`). "Activity" is the concept; the NOTIFY channel (`watchdog_activity`) and SSE are delivery details and get no product noun. The timeline **Event** noun and `graph_writes` are untouched. The retired names are `activity_events` (collides with the Event noun), `WatchdogEvent` and `watchdog_events`.
+
+   Columns: `id bigint generated always as identity`, `xid xid8 not null default pg_current_xact_id()`, `case_id uuid not null references cases on delete cascade`, `kind text`, `action text`, `subject_id uuid`, `group_id uuid null` (the playbook run, so the feed can collapse step Jobs), `label text null` (at most 200 characters), `actor_id text null`, `actor_label text null`, `from_value`, `to_value`, `created_at`. Indexes: `(xid, id)` for the tailer, `(case_id, id desc)` for the per-Case feed. Kinds: `task | job | proposal | evidence | entity | edge | claim | identifier | event | question | case`.
+
+   Labels follow today's split: stored where the subject can vanish or the text is a snapshot (Task title, Evidence display label, Entity name, every `deleted` action); `null` for Jobs and Proposals, whose labels core still resolves on read from `subject_id` with the existing joins (`jobActivityLabel`, `proposalActivityLabel`). A row never carries Evidence bodies, patches or secrets.
+
+2. **An entry is appended in the same transaction as the domain write, by one function.** `appendActivityEffect(tx, entry)` in core (backed by `activityRepo.append`) is the only writer. A rolled-back write leaves no entry. Single-statement writes that have no `transact` today (Open Questions 5 sites, timeline Events 3, the Job paths 9, most Evidence verbs) gain a small `transact` around write plus append. No lint rule is proposed at first: a gate test lists the domain mutations and asserts each appends (see Risks).
+
+   Case delete is the one mutation that is not logged: the cascade would remove the row in the same transaction. Connected clients learn at their next reconnect (the visibility check returns 404); the worker's export removal stays on its direct path. Today that notify is dropped by the visibility filter anyway (Context).
+
+3. **NOTIFY is derived from the appended row by an `AFTER INSERT` trigger** that calls `pg_notify('watchdog_activity', '{"id":…,"caseId":…}')` (about 80 bytes). Postgres queues a NOTIFY issued in a transaction and delivers it at commit, in commit order, and drops it on rollback, so the "fire only after commit" convention becomes a property of the database. The payload is only a wake-up; readers fetch rows. The db repo rule "never `notifyEvent` in a repo" ([`packages/db/AGENTS.md`](../../packages/db/AGENTS.md)) becomes "only the `activity` trigger notifies".
+
+4. **Ordering and replay: a commit-safe cursor on `(xid, id)` (option b below).** Bare ids are not commit-ordered: a transaction that took id 41 can commit after one that took id 42, and a reader that has seen 42 and resumes at `id > 42` misses 41 for good. The reader therefore reads only rows whose transaction is older than every still-running transaction:
+
+   ```sql
+   SELECT * FROM activity
+   WHERE (xid, id) > ($cursor_xid, $cursor_id)
+     AND xid < pg_snapshot_xmin(pg_current_snapshot())
+   ORDER BY xid, id
+   LIMIT 500;
+   ```
+
+   Every transaction with an xid below the snapshot's xmin has already committed or aborted, so no row can later appear before the cursor. The cursor is the opaque pair `xid:id`. Delivery order is xid order (stable, total, gap-free), which can differ from commit order for concurrent transactions; consumers invalidate and refetch, so they do not depend on commit order.
+
+   - **Live path.** One tailer per process (web, worker) holds a single LISTEN connection. A wake-up, or a fallback poll every 5 s (covers a dropped LISTEN and the reconnect window), runs the drain query. If the drain returns fewer rows than the limit but an unbounded `EXISTS` finds rows past the cursor (a transaction is still open), it re-polls every 250 ms until they clear. Subscribers (SSE connections) are fed from the tailer in memory and filtered by organization and Case, with the existing membership re-check kept; the N-connections problem goes away.
+   - **Replay.** SSE sets `id:` to the cursor of each entry. `EventSource` resends it as `Last-Event-ID` on reconnect; a first connect may pass `?after=<cursor>`. The server replays up to 500 rows from the table. If the cursor is older than the retention floor, ahead of the database (a restore), or more than 500 rows behind, it sends one `event: resync` and the client invalidates every active query for the Case (the same thing Query's refetch-on-reconnect would do). Delivery is at-least-once; the client drops ids at or below its last cursor.
+   - **Worker.** A durable cursor row per consumer (`activity_cursors(consumer, xid, id)`) advanced after each export claim; at boot the worker drains from its cursor, so events while it was down are no longer lost. A first boot starts at the head. It exports on: `job succeeded`, any `evidence`, `entity | edge | claim | identifier | event | question`; not `task`, `proposal`, other Job actions (the same set as `shouldTriggerCaseExport` today).
+   - **Failure modes.** (1) Any open transaction in the cluster delays delivery, including an idle `BEGIN` in a SQL console; set `idle_in_transaction_session_timeout` (30 s) and warn when the tailer has been holding back for more than 5 s. Delay, not loss. (2) `xid8` values restored from `pg_dump` into a fresh cluster can exceed the new cluster's xmin and stay "in the future"; a boot check (`max(xid) > pg_current_xact_id()`) rewrites them to `0`, and restored rows are then readable. (3) Requires Postgres 13 or newer (`pg_snapshot_xmin`, `xid8`); the compose file pins 18. (4) The tailer re-reads at most 500 rows per drain; a mass backfill must not be tailed.
+
+5. **Recent activity becomes a read of the log.** `listRecentActivityEffect` reads `activity` (org scoped through `cases`, optionally one Case, filtered by an allowlist of kind and action pairs held in core, `FEED_ACTIONS`), collapses by `group_id`, resolves Job and Proposal labels and actor names with joins, and returns the same `ActivityItem` shape plus the entry `id`. The feed becomes history (a Job shows as queued, running and succeeded rows; Proposals show created and decided) rather than current state. The initial allowlist is today's four kinds, so the visible change is that history appears; widening to Graph kinds is a separate product decision. Pending counts for Triage stay a query on `proposals`.
+
+6. **Consumers.** The web hook opens one `EventSource` per organization (not per Case), listens for the single SSE event `activity`, and calls one `invalidateForActivity(kind, action, caseId)` that replaces the 6 type listeners and the per-event `invalidateAfter*` choices (those functions stay as the mutation-side helpers). The worker filters by kind as above. Both depend on the entry, not on a parallel schema: `watchdogEventSchema` is replaced by `activityEntrySchema`, the one Zod schema ([ADR-0001](0001-zod-at-the-boundary.md)).
+
+7. **`graph_writes` stays separate and gains nothing.** An agent graph write appends one activity entry (one entry per op kind and subject, or one summary entry; chosen in S4) in the same transaction as the `graph_writes` row and the patch, and the entry may carry the `graph_writes` id as `subject_id` for navigation. The log is not an audit: it is prunable, it does not hold the patch, and it has no idempotency key. Custody docs and the `graph_writes` retention (none) do not change.
+
+8. **Retention.** The worker prunes entries older than 90 days (`ACTIVITY_RETENTION_DAYS`) in batches of 5,000, daily, never below the newest 200 rows per Case. Case delete cascades (FK `on delete cascade`, as `activity_events` does; so a Case delete is never itself an entry); organization delete already removes its Cases first (`deleteOrganizationCasesEffect`). The prune floor is the replay floor: older cursors get `resync`.
+
+9. **Backfill is partial and optional.** Reconstructable from existing tables, for the last 90 days only, with `xid = '0'` (readable immediately, below every live cursor): Tasks (existing `activity_events` rows copy over; older Tasks give a `created` at `created_at`), Jobs (`queued` at `created_at`, `running` at `started_at`, terminal at `finished_at`), Evidence (`captured` at `captured_at`, `hidden` at `deleted_at`, `processed` at `processed_at`), Proposals (`created` at `created_at`, `accepted`/`rejected` at `decided_at`). Not reconstructable: Evidence restore and attach, Task non-status edits, Graph updates and hard deletes (the rows are gone), Entities and similar only as `created`. The backfill runs as a core one-off (labels need `jobActivityLabel`), not as migration SQL.
+
+## Migration plan
+
+Each phase ships alone and leaves the app working (expand, migrate readers, contract).
+
+1. **Expand.** Add `activity`, the trigger, `appendActivityEffect`, the tailer and `activity_cursors`. The SSE route listens to both channels; the tailer emits the legacy `WatchdogEvent` shape for entries (an adapter), so web and worker are unchanged. Domains move one slice at a time: the write path appends in its transaction and drops its `notify*Effect` call. Un-migrated domains still notify the old channel.
+2. **Migrate readers.** Recent activity reads the log (the derived queries stop being called); the web hook and worker switch to the `activity` SSE event and the durable cursor; replay goes live. Legacy adapter and old channel still present.
+3. **Contract.** Delete what nothing reads: `notifyEvent`, `listenForEvents`, `listenForEventsStream`, `WATCHDOG_CHANNEL`, the 6 `notify*Effect` functions and `events/index.ts`, `watchdogEventSchema` and its type constants, `activityEventsRepo`, the table `activity_events` (migrated into `activity`), and `activityRepo.recent*` plus the per-source merge (`mergeActivityItems`, `perSourceFetchLimit`). Update `packages/db/AGENTS.md` rule 2 and gotchas, `packages/core/AGENTS.md` line 87, the conventions table, and add the GLOSSARY entry for **Activity**.
+
+## Consequences
+
+- The live signal and the feed cannot drift: a change either appends (and so notifies and shows) or does not happen. Today 20+ Graph sites notify without a feed row.
+- A missed event becomes recoverable (replay) or detectable (`resync`); the worker catches up after downtime.
+- Roughly one extra insert (about 250 bytes) per mutation, and a `transact` around single-statement writes that had none; the notify sites that follow a single-statement write (the Question, timeline Event and Job paths at least) become a transaction of write plus append.
+- The log is a second thing to prune and to keep out of audit claims; `graph_writes` keeps the custody guarantees.
+- `Recent activity` semantics change (history, not current state); web copy and tests for the widget change.
+- Delivery stalls if a transaction stays open; this is observable and bounded by the idle timeout.
+
+## Considered
+
+- **(a) NOTIFY as wake-up, reader re-queries `id > cursor`.** Simplest, but a lower id committing late is skipped permanently; the window is the transaction length, which is milliseconds for most paths and unbounded for a large Accept. Rejected as the replay mechanism (kept as the wake-up shape).
+- **(b) Commit-safe `(xid, id)` cursor (chosen).** No write contention, one global order across Cases (an organization-wide stream needs one cursor), sound for any transaction mix. Costs: delayed delivery behind long transactions, the restore hazard, Postgres 13+.
+- **(c) Per-Case sequence assigned under a lock on the Case row.** Gap-free and commit-ordered per Case, because the row lock is held to commit. But the Case row is already locked `FOR UPDATE` by Task and Accept paths (`cases.repo.ts:118`), so appends would queue behind them, concurrent playbook fan-out Jobs in one Case would serialize at the append, and an organization-wide dashboard stream would need a vector cursor or the N-connection design it already suffers from. Rejected for a single-instance app that can use (b) without contention.
+- **(d) At-least-once with dedup by id and a `created_at` window (re-read the last N seconds each time).** Cheap and mostly right, but unsound by construction (`created_at` is the transaction start, `default now()`, not the commit time) and it hides the gap instead of closing it. Rejected as the primary mechanism; the 5 s fallback poll is the only residue.
+- **Carry the row in the NOTIFY payload.** Saves one query, but labels are unbounded text against an 8000-byte limit and delivery would again be commit-ordered rather than gap-free. Rejected.
+- **Merge `graph_writes` into the log.** One table, but the audit must not be prunable, must hold the patch and the idempotency key, and sits in the custody contract. Rejected for custody reasons (owner decision on #51).
+- **Rename the concept to "changes" (the earlier ADR-0005 draft).** Superseded: the log needs one noun for what happened, and "activity" is the existing UI and API word (`/activity/recent`, `ActivityItem`). Nothing is renamed to "changes".
+
+## Reopen when
+
+- the tailer's hold-back (an open transaction) exceeds 5 s in normal use, or
+- the app runs more than one web or worker instance against one database (the tailer fan-out and the durable cursor need a second look), or
+- the log passes about 5 million rows or the org-wide feed query (a backward scan joined to `cases`) exceeds 50 ms, which would justify denormalizing the organization id into the row.
+
+## Phasing and tickets
+
+Proposed vertical slices, each shippable and green on its own. "Blocked by" names the earlier slice; the rename ticket #168 is closed as superseded when S1 merges.
+
+| # | Slice | Blocked by | Acceptance |
+| --- | --- | --- | --- |
+| S1 | Log, trigger, `appendActivityEffect`, tailer with `Last-Event-ID` replay and `resync`, legacy-event adapter; Tasks (4 paths) move onto it and `activity_events` rows copy in | ADR accepted | A rolled-back Task write leaves no entry; killing and reconnecting an SSE client replays the missed entries once; a forced out-of-order commit (two transactions, higher id commits first) never skips a row; old web and worker still work |
+| S2 | Jobs and playbook runs: `setJobStatus`, start, cancel, chain advance, playbook start and cancel append in a transaction (9 notify sites) | S1 | Queued, running and the terminal state each give one entry; Recent activity shows Job history from the log, collapsed by `group_id`; `activityRepo.recentJobs` is no longer called |
+| S3 | Evidence and Proposals: dump, upload, attach, hide, restore, process, land, attestation; created, accepted, rejected, agent propose (13 notify sites) | S1 | Accept and reject produce one entry each in the Accept transaction; hide and restore show in the log; pending counts unchanged |
+| S4 | Graph and Case: Entity, Edge, Claim, Identifier, timeline Event, Open Question (20 sites), Case update, Accept patch and agent graph write append with their own `graph_writes` row untouched | S1 | Every Graph mutation appends exactly once (gate test over the mutation list); `graph_writes` rows and idempotency behave as before; Case delete is not logged (Decision 2) and a client on a deleted Case gets a 404 on reconnect |
+| S5 | Worker: durable cursor, catch-up at boot, kind filter replaces `shouldTriggerCaseExport` | S3, S4 | A change made while the worker is down triggers its export after restart; the cursor survives restart; Task and Proposal entries trigger nothing |
+| S6 | Web: one organization-wide `EventSource`, single `activity` listener, `invalidateForActivity`; Recent activity reads only the log | S2, S3 | Dashboard with N Cases holds 1 browser and 1 server LISTEN connection; Recent activity shows no derived-source query; widget tests updated |
+| S7 | Retention, partial backfill, contract: prune job, backfill one-off, delete the legacy code listed above, docs, GLOSSARY, boot check for restored `xid`s | S5, S6 | Pruning keeps the replay floor consistent; `check:docs:strict`, `check:agents:strict` and `pnpm check` pass with no references to `watchdog_events`; ADR set to accepted with an "as built" section |
+
+## Risks
+
+- **Stalled delivery.** One idle transaction holds back every consumer. Mitigation: `idle_in_transaction_session_timeout`, a warning when the tailer holds back, a fallback poll; the failure is delay, never loss.
+- **Restored database.** `xid8` from another cluster can sit in the future. Mitigation: boot check and rewrite to 0; documented in the restore how-to.
+- **Wider transactions.** Wrapping single-statement writes in `transact` adds a round trip and pool use on hot paths (Job status updates every few seconds per running Job). Measure in S2; fall back to a data-modifying CTE for the status update if needed.
+- **Missed append.** A new mutation that forgets to append silently has no feed row and no live update. Mitigation: the gate test over the mutation list, and appending inside the repo-facing helpers rather than at call sites.
+- **Feed semantics change.** History replaces current state, and Proposal and Job rows multiply. Mitigation: the `FEED_ACTIONS` allowlist and the 90-day retention; product to confirm the initial set.
+- **Label drift.** Snapshot labels go stale after a rename. Accepted for the feed; Job and Proposal labels are resolved at read.
+- **Trigger and Drizzle.** The trigger needs a custom migration with its journal snapshot ([`packages/db/AGENTS.md`](../../packages/db/AGENTS.md) migration rules); `check:migrations` must stay green.
+- **ADR numbering.** ADR-0004 is in an open PR (#167); this file takes 0005 as requested.
