@@ -23,7 +23,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 - [`../GLOSSARY.md`](../GLOSSARY.md): product nouns, custody tiers and retired vocabulary (wins on product nouns; the agents gate reads its banned terms).
 - [`explanation/product.md`](explanation/product.md): intent, doctrine, personas, refuse list.
 - [`explanation/ux.md`](explanation/ux.md): how investigators experience the product.
-- Decision records: [`adr/0001-zod-at-the-boundary.md`](adr/0001-zod-at-the-boundary.md) (Zod is the boundary schema library), [`adr/0002-effect-services-and-layers.md`](adr/0002-effect-services-and-layers.md) (infrastructure moves to Effect services and Layers, in phases), [`adr/0003-branded-ids.md`](adr/0003-branded-ids.md) (branded IDs, starting with OrganizationId and CaseId).
+- Decision records: [`adr/0001-zod-at-the-boundary.md`](adr/0001-zod-at-the-boundary.md) (Zod is the boundary schema library), [`adr/0002-effect-services-and-layers.md`](adr/0002-effect-services-and-layers.md) (infrastructure moves to Effect services and Layers, in phases), [`adr/0003-branded-ids.md`](adr/0003-branded-ids.md) (branded IDs, starting with OrganizationId and CaseId), [`adr/0004-pull-request-flow.md`](adr/0004-pull-request-flow.md) (pull requests for everything; tiny fixes may go straight to main), [`adr/0005-changes-channel.md`](adr/0005-changes-channel.md) (the live-update concept is "changes").
 
 ## Reference: contracts
 
