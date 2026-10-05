@@ -4,6 +4,7 @@ import { claimsRepo, evidenceLinksRepo, type DbTx } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   CLAIM_CLASSES,
+  type CaseId,
   type ClaimClass,
   type ConfidenceTier,
 } from "@watchdog/schemas/shared";
@@ -24,7 +25,7 @@ import { assertEntityInCaseEffect, assertEvidenceLinkedEffect } from "./guards";
 
 export function applyClaimOpEffect(
   tx: DbTx,
-  caseId: string,
+  caseId: CaseId,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]

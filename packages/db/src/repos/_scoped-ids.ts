@@ -1,7 +1,5 @@
 import {
   type CaseId,
-  type OrganizationId,
-  organizationIdSchema,
   parseActorId,
   parseTrimmedCaseId,
   parseTrimmedUuid,
@@ -15,14 +13,6 @@ export function trimActorId(actorId: string): string | undefined {
 /** Trim + validate a Case UUID; blank or invalid → undefined (repo miss). */
 export function trimCaseId(caseId: string): CaseId | undefined {
   return parseTrimmedCaseId(caseId) ?? undefined;
-}
-
-/** Validate an organization id for a scoped lookup; blank → undefined (repo miss). */
-export function scopeOrganizationId(
-  organizationId: string
-): OrganizationId | undefined {
-  const parsed = organizationIdSchema.safeParse(organizationId);
-  return parsed.success ? parsed.data : undefined;
 }
 
 /** Trim + validate a graph resource UUID; blank or invalid → undefined (repo miss). */

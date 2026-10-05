@@ -4,6 +4,7 @@ import {
   trimmedConfidenceTierSchema,
   trimmedEdgePredicateSchema,
 } from "./enums";
+import { trimmedCaseIdSchema } from "./ids";
 import {
   optionalTrimmedSchema,
   optionalUuidSchema,
@@ -42,7 +43,7 @@ export const createEdgeFieldsSchema =
 
 /** Edge POST body including case scope. */
 export const createEdgeInputSchema = withCreateEdgeFieldRefinements(
-  createEdgeFieldsBase.extend({ caseId: trimmedUuidSchema })
+  createEdgeFieldsBase.extend({ caseId: trimmedCaseIdSchema })
 );
 
 export type CreateEdgeFields = z.output<typeof createEdgeFieldsSchema>;

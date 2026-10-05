@@ -1,7 +1,12 @@
 import { Effect } from "effect";
 
 import { eventsRepo, type EventRow } from "@watchdog/db";
-import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
+import {
+  trimmedOrNull,
+  trimmedOrUndefined,
+  type CaseId,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
 import { notifyEntityChangedEffect } from "../infra/events";
@@ -27,8 +32,8 @@ export interface EventRecord {
 }
 
 export interface CreateEventInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   entityId: string;
   when: string;
   what: string;
@@ -36,8 +41,8 @@ export interface CreateEventInput {
 }
 
 export interface UpdateEventInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   eventId: string;
   when?: string;
   what?: string;
@@ -55,8 +60,8 @@ function toRecord(row: EventRow): EventRecord {
 }
 
 export function listEventsForEntityEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   entityId: string
 ): Effect.Effect<EventRecord[], DomainTag, Db> {
   return Effect.gen(function* listEventsGen() {
@@ -156,8 +161,8 @@ export function updateEventEffect(
 }
 
 export function deleteEventEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   eventId: string
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEventGen() {

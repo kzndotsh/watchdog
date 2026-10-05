@@ -1,18 +1,19 @@
 import { z } from "zod";
 
+import { trimmedCaseIdSchema } from "./ids";
 import { entitySlugSchema, trimmedUuidSchema } from "./primitives";
 
 export const caseScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
 });
 
 export const entityScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   entityId: trimmedUuidSchema,
 });
 
 export const entitySlugScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   slug: entitySlugSchema,
 });
 
@@ -21,32 +22,32 @@ export const listClaimsInputSchema = entityScopeInputSchema.extend({
 });
 
 export const claimScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   claimId: trimmedUuidSchema,
 });
 
 export const questionScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   questionId: trimmedUuidSchema,
 });
 
 export const eventScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   eventId: trimmedUuidSchema,
 });
 
 export const edgeScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   edgeId: trimmedUuidSchema,
 });
 
 export const evidenceScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   evidenceId: trimmedUuidSchema,
 });
 
 export const identifierScopeInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   identifierId: trimmedUuidSchema,
 });
 

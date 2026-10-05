@@ -8,10 +8,11 @@ import {
 } from "@watchdog/db";
 import { confirmedEvidenceViolation } from "@watchdog/policy";
 import {
-  type ConfidenceTier,
-  type CaseId,
   parseTrimmedCaseId,
   parseTrimmedUuid,
+  type CaseId,
+  type ConfidenceTier,
+  type OrganizationId,
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
@@ -53,7 +54,7 @@ export function requireTrimmedCaseIdEffect(
  * on API / actor-facing entrypoints.
  */
 export function assertCaseExistsUncheckedEffect(
-  caseId: string,
+  caseId: CaseId,
   exec?: DbExec
 ): Effect.Effect<CaseId, DomainTag, Db> {
   return Effect.gen(function* assertCaseExistsUncheckedGen() {
@@ -70,8 +71,8 @@ export function assertCaseExistsUncheckedEffect(
 
 /** Org-scoped case gate for API / actor-facing entrypoints. Returns trimmed case id. */
 export function assertCaseInOrgEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   exec?: DbExec
 ): Effect.Effect<CaseId, DomainTag, Db> {
   return Effect.gen(function* assertCaseInOrgGen() {
@@ -87,7 +88,7 @@ export function assertCaseInOrgEffect(
 }
 
 export function assertEntityInCaseEffect(
-  caseId: string,
+  caseId: CaseId,
   entityId: string,
   exec?: DbExec
 ): Effect.Effect<string, DomainTag, Db> {
@@ -108,7 +109,7 @@ export function assertEntityInCaseEffect(
 }
 
 export function assertEvidenceInCaseEffect(
-  caseId: string,
+  caseId: CaseId,
   evidenceId: string,
   exec?: DbExec
 ): Effect.Effect<string, DomainTag, Db> {

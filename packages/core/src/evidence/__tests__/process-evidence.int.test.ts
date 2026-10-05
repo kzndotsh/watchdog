@@ -23,7 +23,7 @@ import {
 import {
   TEST_ACTOR_ID,
   TEST_ORGANIZATION_ID,
-  testId,
+  TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/test-kit";
 
 // Enqueues land in a recording queue instead of a real pg-boss.
@@ -115,7 +115,7 @@ describe("processEvidence", () => {
       runDomain(
         processEvidenceEffect({
           caseId: cased.id,
-          organizationId: testId(91),
+          organizationId: TEST_OTHER_ORGANIZATION_ID,
           evidenceId: evidence.id,
           actorId: TEST_ACTOR_ID,
           actorLabel: TEST_ACTOR_ID,

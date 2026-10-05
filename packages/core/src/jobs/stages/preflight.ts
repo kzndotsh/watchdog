@@ -8,6 +8,7 @@ import {
   LIVE_JOB_STATUSES,
   isLiveJobStatus,
   parseTrimmedCaseId,
+  type CaseId,
   type JsonObject,
 } from "@watchdog/schemas/shared";
 
@@ -85,7 +86,7 @@ function convergeReclaimStopEffect(
 function loadCapOrStopEffect(
   jobId: string,
   capabilityId: string,
-  caseId: string
+  caseId: CaseId
 ): Effect.Effect<CapLoadResult, DomainTag, Db> {
   return Effect.gen(function* loadCapOrStopGen() {
     const cap = yield* Effect.result(
@@ -106,7 +107,7 @@ function parseCapInputOrStopEffect(
   jobId: string,
   cap: CapabilityDef<z.ZodType>,
   rawInput: unknown,
-  caseId: string
+  caseId: CaseId
 ): Effect.Effect<CapInputResult, DomainTag, Db> {
   return parseValidatedCapInputEffect(cap, rawInput).pipe(
     Effect.map((input) => ({ kind: "ready" as const, input })),

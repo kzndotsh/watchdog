@@ -7,7 +7,7 @@ import {
   patchOpRelatedEntityIds,
 } from "@watchdog/schemas/graph";
 import { proposalEntityName } from "@watchdog/schemas/jobs";
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import { parseTrimmedCaseId, type CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
@@ -49,7 +49,7 @@ export function buildEntityDisplayMaps(
 }
 
 export function loadEntityDisplayMapsForIdsEffect(
-  caseId: string,
+  caseId: CaseId,
   entityIds: readonly string[]
 ): Effect.Effect<
   {
@@ -75,7 +75,7 @@ export function loadEntityDisplayMapsForIdsEffect(
 }
 
 export function loadEntityDisplayMapsForProposalPatchesEffect(
-  rows: readonly { caseId: string; patch: readonly PatchOp[] }[]
+  rows: readonly { caseId: CaseId; patch: readonly PatchOp[] }[]
 ): Effect.Effect<
   {
     entityNames: Record<string, string>;

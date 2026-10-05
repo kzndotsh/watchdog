@@ -32,7 +32,11 @@ import {
 } from "@watchdog/schemas/shared";
 
 type TaskListFilters = Omit<TaskFiltersInput, "caseId">;
-type RecentActivityFilters = Partial<ListRecentActivityInput>;
+/** Filters carry plain strings; the Case id brand is minted when they are parsed. */
+export type RecentActivityFilters = Omit<
+  Partial<ListRecentActivityInput>,
+  "caseId"
+> & { caseId?: string };
 
 /** Normalize query keys; strict parse happens again in queryFn. */
 export function scopeCaseSlugSegment(caseSlug: string): string {
@@ -212,7 +216,7 @@ export function parseSearchCaseInput(caseId: string, q: string) {
 function taskListFilterPayload(
   caseId: string,
   filters?: TaskListFilters
-): TaskFiltersInput {
+): Omit<TaskFiltersInput, "caseId"> & { caseId: string } {
   return { caseId, ...filters };
 }
 

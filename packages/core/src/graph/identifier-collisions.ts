@@ -12,6 +12,7 @@ import {
   IDENTIFIER_TYPES,
   entityDisplayLabel,
   parseTrimmedCaseId,
+  type CaseId,
   type IdentifierType,
 } from "@watchdog/schemas/shared";
 
@@ -103,7 +104,7 @@ function collisionsAgainstHits(
 
 /** Case-wide identifier collisions for Inbox patches. */
 export function loadIdentifierCollisionsEffect(
-  caseId: string,
+  caseId: CaseId,
   patches: readonly PatchOp[][]
 ): Effect.Effect<IdentifierCollision[][], DomainTag, Db> {
   const scopedCaseId = parseTrimmedCaseId(caseId) ?? undefined;

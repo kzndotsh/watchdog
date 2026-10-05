@@ -13,6 +13,7 @@ import {
 import {
   parseTrimmedCaseId,
   trimmedOrUndefined,
+  type CaseId,
 } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "../infra/blob";
@@ -64,7 +65,7 @@ function loadTextFromEvidence(row: {
  * Output (enriched.md), not the bare URL string on the Evidence row.
  */
 function loadEnrichOutputText(input: {
-  caseId: string;
+  caseId: CaseId;
   evidenceId: string;
 }): Effect.Effect<string | null, DomainTag, Db | BlobStore> {
   return Effect.gen(function* loadEnrichOutputTextGen() {
@@ -103,7 +104,7 @@ function loadEnrichOutputText(input: {
 }
 
 export function packEvidenceSnapshotEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   evidenceId: string;
   entityId?: string;
 }): Effect.Effect<EvidenceSnapshot, DomainTag, Db | BlobStore> {

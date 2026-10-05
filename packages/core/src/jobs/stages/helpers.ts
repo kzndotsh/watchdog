@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import {
   parseGraphUuidList,
   parseTrimmedCaseId,
+  type CaseId,
 } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
@@ -119,7 +120,7 @@ export function createJobLog(initial: string[] = []): JobLog {
 export function failJobEffect(
   jobId: string,
   error: string,
-  opts: { caseId: string },
+  opts: { caseId: CaseId },
   logs: string[] = []
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* failJobGen() {

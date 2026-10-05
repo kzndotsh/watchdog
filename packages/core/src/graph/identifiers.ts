@@ -8,10 +8,12 @@ import {
 } from "@watchdog/db";
 import { validateIdentifierWrite } from "@watchdog/schemas/graph";
 import type {
+  CaseId,
   ConfidenceTier,
   EntityKind,
   IdentifierStatus,
   IdentifierType,
+  OrganizationId,
 } from "@watchdog/schemas/shared";
 import { normalizeUuidList, trimmedOrNull } from "@watchdog/schemas/shared";
 
@@ -53,8 +55,8 @@ export interface IdentifierRecord {
 }
 
 export interface CreateIdentifierInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   entityId: string;
   type: IdentifierType;
   value: string;
@@ -66,8 +68,8 @@ export interface CreateIdentifierInput {
 }
 
 export interface UpdateIdentifierInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   identifierId: string;
   value?: string;
   platform?: string | null;
@@ -93,8 +95,8 @@ function toRecord(row: IdentifierRow, evidenceIds: string[]): IdentifierRecord {
 }
 
 export function listIdentifiersForEntityEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   entityId: string
 ): Effect.Effect<IdentifierRecord[], DomainTag, Db> {
   return Effect.gen(function* listIdentifiersForEntityGen() {
@@ -138,8 +140,8 @@ export function toCaseIdentifierRecord(
 }
 
 export function listIdentifiersForCaseEffect(
-  caseId: string,
-  organizationId: string
+  caseId: CaseId,
+  organizationId: OrganizationId
 ): Effect.Effect<CaseIdentifierRecord[], DomainTag, Db> {
   return Effect.gen(function* listIdentifiersForCaseGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -341,8 +343,8 @@ export function updateIdentifierEffect(
 }
 
 export function deleteIdentifierEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   identifierId: string
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteIdentifierGen() {

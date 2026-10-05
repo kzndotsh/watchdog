@@ -12,6 +12,8 @@ import {
   parseTrimmedCaseId,
   trimmedOrNull,
   trimmedOrUndefined,
+  type CaseId,
+  type OrganizationId,
   type TaskPriority,
   type TaskStatus,
 } from "@watchdog/schemas/shared";
@@ -48,8 +50,8 @@ export interface TaskRecord {
 }
 
 export interface CreateTaskInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   title: string;
   description?: string;
   status?: TaskStatus;
@@ -60,8 +62,8 @@ export interface CreateTaskInput {
 }
 
 export interface UpdateTaskInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   taskId: string;
   title?: string;
   description?: string | null;
@@ -156,8 +158,8 @@ function buildTaskUpdateFields(
 }
 
 export function listTasksForCaseEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   opts?: ListTasksOpts
 ): Effect.Effect<TaskRecord[], DomainTag, Db> {
   return Effect.gen(function* listTasksGen() {
@@ -190,8 +192,8 @@ export function listTasksForCaseEffect(
 }
 
 export function getTaskInCaseEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   taskId: string
 ): Effect.Effect<TaskRecord, DomainTag, Db> {
   return Effect.gen(function* getTaskInCaseGen() {
@@ -362,8 +364,8 @@ export function updateTaskEffect(
 }
 
 export function deleteTaskEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   taskId: string,
   actorId?: string
 ): Effect.Effect<void, DomainTag, Db> {
@@ -411,8 +413,8 @@ export function deleteTaskEffect(
 }
 
 export interface ReorderTasksInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   status: TaskStatus;
   orderedIds: string[];
 }

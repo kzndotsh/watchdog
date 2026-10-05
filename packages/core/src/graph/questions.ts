@@ -1,7 +1,12 @@
 import { Effect } from "effect";
 
 import { questionsRepo, type DbExec, type QuestionRow } from "@watchdog/db";
-import type { EntityKind, QuestionStatus } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  EntityKind,
+  OrganizationId,
+  QuestionStatus,
+} from "@watchdog/schemas/shared";
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
@@ -29,30 +34,30 @@ export interface QuestionRecord {
 }
 
 export interface CreateQuestionInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   entityId: string;
   text: string;
 }
 
 export interface ResolveQuestionInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   questionId: string;
   resolvedNote?: string;
 }
 
 export interface UpdateQuestionInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   questionId: string;
   text?: string;
   resolvedNote?: string | null;
 }
 
 export interface ReopenQuestionInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   questionId: string;
 }
 
@@ -109,8 +114,8 @@ function toRecord(row: QuestionRow): QuestionRecord {
 }
 
 export function listQuestionsForEntityEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   entityId: string
 ): Effect.Effect<QuestionRecord[], DomainTag, Db> {
   return Effect.gen(function* listQuestionsGen() {
@@ -275,8 +280,8 @@ export function reopenQuestionEffect(
 }
 
 export function deleteQuestionEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   questionId: string
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteQuestionGen() {

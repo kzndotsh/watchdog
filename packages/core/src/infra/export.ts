@@ -20,7 +20,11 @@ import {
   type EvidenceRow,
   type EntityPeerRow,
 } from "@watchdog/db";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  EntityKind,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   entityDisplayLabel,
   parseTrimmedCaseId,
@@ -45,7 +49,7 @@ import { tryDbWith } from "./postgres-effect";
 import type { DomainTag } from "./tagged-errors";
 
 export interface EntityExport {
-  organizationId: string;
+  organizationId: OrganizationId;
   caseSlug: string;
   entitySlug: string;
   kind: EntityKind;
@@ -140,7 +144,7 @@ interface CaseExportResult {
   files: Map<string, string>;
   evidenceRows: EvidenceRow[];
   /** Where the shadow workspace lives: `<export>/<organizationId>/<caseSlug>`. Null when the Case is gone. */
-  location: { organizationId: string; caseSlug: string } | null;
+  location: { organizationId: OrganizationId; caseSlug: string } | null;
 }
 
 /**
@@ -149,7 +153,7 @@ interface CaseExportResult {
  * Also includes evidence file references in CASE.md.
  */
 export function renderCaseExportEffect(
-  caseId: string
+  caseId: CaseId
 ): Effect.Effect<CaseExportResult, DomainTag, Db> {
   return Effect.gen(function* renderCaseExportGen() {
     const normalizedCaseId = parseTrimmedCaseId(caseId) ?? undefined;

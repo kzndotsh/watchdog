@@ -5,5 +5,7 @@ export {
   testActor,
   testCaseId,
   testId,
+  untrustedCaseId,
+  untrustedOrganizationId,
 } from "./fixtures/ids";
 export { testHttpOrigin, testHttpUrl, testUrlBase } from "./fixtures/urls";

@@ -1,7 +1,11 @@
 import { Effect } from "effect";
 
 import { graphWritesRepo, type DbExec, type GraphWriteRow } from "@watchdog/db";
-import { trimmedOrNull } from "@watchdog/schemas/shared";
+import {
+  trimmedOrNull,
+  type CaseId,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { requireActorIdEffect } from "../actors/require-actor-id";
@@ -47,8 +51,8 @@ export interface GraphWriteRecord {
 }
 
 export function listGraphWritesForCaseEffect(
-  caseId: string,
-  organizationId: string
+  caseId: CaseId,
+  organizationId: OrganizationId
 ): Effect.Effect<GraphWriteRecord[], DomainTag, Db> {
   return Effect.gen(function* listGraphWritesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -75,7 +79,7 @@ const GRAPH_WRITE_IDEMPOTENCY_INDEX = "graph_writes_case_actor_idem_uidx";
 function findGraphWriteByIdempotency(
   exec: DbExec,
   input: {
-    caseId: string;
+    caseId: CaseId;
     actorId: string;
     idempotencyKey: string;
   }
@@ -92,8 +96,8 @@ export interface AgentGraphWriteResult {
 }
 
 export function createAgentProposalEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   actorId: string;
   patch: unknown;
   summary?: string;
@@ -150,8 +154,8 @@ export function createAgentProposalEffect(input: {
 }
 
 export function writeGraphFromAgentEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   actorId: string;
   actorLabel?: string | null;
   patch: unknown;

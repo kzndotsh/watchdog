@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { trimmedCaseIdSchema } from "./ids";
 import {
   MAX_UPLOAD_BYTES,
   mimeInputSchema,
@@ -7,7 +8,6 @@ import {
   optionalTrimmedSchema,
   optionalUuidSchema,
   sha256HexSchema,
-  trimmedUuidSchema,
 } from "./primitives";
 
 /** Shared upload metadata for presign + confirm (web + API + CLI). */
@@ -18,14 +18,14 @@ export const evidenceUploadFieldsSchema = z.object({
 });
 
 export const presignUploadInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   ...evidenceUploadFieldsSchema.shape,
   name: optionalTrimmedSchema,
 });
 
 export const confirmFileUploadInputSchema = z
   .object({
-    caseId: trimmedUuidSchema,
+    caseId: trimmedCaseIdSchema,
     uri: nonEmptyTrimmed,
     ...evidenceUploadFieldsSchema.shape,
     label: optionalTrimmedSchema,

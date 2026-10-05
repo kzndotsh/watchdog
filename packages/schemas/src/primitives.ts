@@ -80,6 +80,12 @@ export const optionalUuidSchema = z.preprocess((value) => {
   return trimmedOrUndefined(value);
 }, trimmedUuidSchema.optional());
 
+/** Optional Case id: absent/blank/whitespace → undefined; otherwise trim + validate. */
+export const optionalCaseIdSchema = z.preprocess((value) => {
+  if (value === undefined || typeof value !== "string") return value;
+  return trimmedOrUndefined(value);
+}, trimmedCaseIdSchema.optional());
+
 /** PATCH field: omit = no change; null or blank = clear; non-blank = set. */
 export const nullableTrimmedPatchSchema = z
   .union([z.null(), z.string()])

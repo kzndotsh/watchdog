@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
@@ -14,7 +15,7 @@ export interface SuppressResult {
 
 /** Drop ops already on Graph / pending Proposal / rejected FP memory. */
 export function suppressStageEffect(
-  caseId: string,
+  caseId: CaseId,
   patch: PatchOp[],
   jobLog: JobLog
 ): Effect.Effect<SuppressResult, DomainTag, Db> {

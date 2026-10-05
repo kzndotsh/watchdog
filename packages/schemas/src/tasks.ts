@@ -7,6 +7,7 @@ import {
   taskStatusSchema,
   trimmedTaskStatusSchema,
 } from "./enums";
+import { trimmedCaseIdSchema } from "./ids";
 import {
   nonEmptyTrimmed,
   nullableTrimmedPatchSchema,
@@ -35,7 +36,7 @@ export const taskSchema = z.object({
 
 export const taskFiltersSchema = z
   .object({
-    caseId: trimmedUuidSchema,
+    caseId: trimmedCaseIdSchema,
     entityId: optionalUuidSchema,
     status: optionalTaskStatusSchema,
     unattachedOnly: z.boolean().optional(),
@@ -47,7 +48,7 @@ export const taskFiltersSchema = z
 export type TaskFiltersInput = z.output<typeof taskFiltersSchema>;
 
 export const taskCreateInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   title: nonEmptyTrimmed,
   description: optionalTrimmedSchema,
   status: optionalTaskStatusSchema,
@@ -59,7 +60,7 @@ export type CreateTaskInput = z.output<typeof taskCreateInputSchema>;
 
 export const taskUpdateInputSchema = z
   .object({
-    caseId: trimmedUuidSchema,
+    caseId: trimmedCaseIdSchema,
     taskId: trimmedUuidSchema,
     title: nonEmptyTrimmed.optional(),
     description: nullableTrimmedPatchSchema,
@@ -81,18 +82,18 @@ export const taskUpdateInputSchema = z
 export type UpdateTaskInput = z.output<typeof taskUpdateInputSchema>;
 
 export const taskDeleteInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   taskId: trimmedUuidSchema,
 });
 export type DeleteTaskInput = z.output<typeof taskDeleteInputSchema>;
 
 export const taskIdInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   taskId: trimmedUuidSchema,
 });
 
 export const taskReorderInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   status: trimmedTaskStatusSchema,
   orderedIds: uuidListSchema.refine((ids) => ids.length > 0, {
     message: "orderedIds must not be empty",

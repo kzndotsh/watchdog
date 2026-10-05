@@ -21,6 +21,7 @@ import {
   TEST_ACTOR_ID,
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
+  testCaseId,
   testId,
 } from "@watchdog/test-kit";
 
@@ -68,8 +69,9 @@ async function codeOf(run: () => Promise<unknown>): Promise<string> {
 }
 
 const ids = {
-  caseA: "",
-  caseB: "",
+  // Placeholders: `beforeAll` seeds the real cases.
+  caseA: testCaseId(1),
+  caseB: testCaseId(2),
   entityA: testId(10),
   entityA2: testId(11),
   entityB: testId(20),

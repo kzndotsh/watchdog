@@ -12,7 +12,11 @@ import {
   type SeedValues,
 } from "@watchdog/caps";
 import { casesRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
+import {
+  trimmedOrUndefined,
+  type CaseId,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import {
@@ -49,8 +53,8 @@ import {
 } from "./start-job";
 
 export interface RunPlaybookInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   playbookId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -71,7 +75,7 @@ function loadPlaybookEffect(playbookId: string) {
 }
 
 function assertSeedAnchorsInCaseEffect(
-  caseId: string,
+  caseId: CaseId,
   seed: SeedValues
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* assertSeedAnchorsInCaseGen() {
@@ -262,8 +266,8 @@ interface CancelPlaybookRunResult {
 }
 
 export function cancelPlaybookRunEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   playbookRunId: string,
   opts?: CancelPlaybookRunOpts
 ): Effect.Effect<CancelPlaybookRunResult, DomainTag, Db> {

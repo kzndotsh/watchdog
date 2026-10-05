@@ -10,6 +10,7 @@ import {
   edgePredicateAllowsKinds,
   parseOptionalTrimmedUuid,
   trimmedOrNull,
+  type CaseId,
   type ConfidenceTier,
   type EdgePredicate,
   type EntityKind,
@@ -143,7 +144,7 @@ export function validateEdgeUpdateEffect(
 }
 
 export function assertEdgeKindsAllowedEffect(
-  caseId: string,
+  caseId: CaseId,
   fromId: string,
   toId: string,
   predicate: EdgePredicate,
@@ -169,7 +170,7 @@ export function assertEdgeKindsAllowedEffect(
 }
 
 export function assertEntityKindChangeAllowedEffect(
-  caseId: string,
+  caseId: CaseId,
   entityId: string,
   nextKind: EntityKind,
   exec?: DbExec

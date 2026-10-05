@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 
 import { jobsRepo, type JobPatch, type JobRow } from "@watchdog/db";
-import type { JobStatus } from "@watchdog/schemas/shared";
+import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
 import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
@@ -10,7 +10,7 @@ import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
 interface SetJobStatusOpts {
-  caseId: string;
+  caseId: CaseId;
   unlessCancelled?: boolean;
   onlyStatuses?: JobStatus[];
   notify?: boolean;

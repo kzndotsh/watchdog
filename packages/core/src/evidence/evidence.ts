@@ -6,7 +6,11 @@ import {
   type DbTx,
   type EvidenceRow,
 } from "@watchdog/db";
-import type { EvidenceKind } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  EvidenceKind,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   parseGraphUuidList,
   parseTrimmedCaseId,
@@ -71,8 +75,8 @@ export interface ListEvidenceOpts {
 }
 
 export interface DumpPasteInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   body: string;
   label?: string;
   sourceUrl?: string;
@@ -82,8 +86,8 @@ export interface DumpPasteInput {
 }
 
 export interface DumpUrlInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   sourceUrl: string;
   label?: string;
   notes?: string;
@@ -93,14 +97,14 @@ export interface DumpUrlInput {
 }
 
 export interface SoftDeleteInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   evidenceId: string;
 }
 
 export interface PresignUploadInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   sha256: string;
   mime: string;
   byteLength: number;
@@ -108,8 +112,8 @@ export interface PresignUploadInput {
 }
 
 export interface ConfirmFileUploadInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   uri: string;
   sha256: string;
   mime: string;
@@ -119,7 +123,7 @@ export interface ConfirmFileUploadInput {
 }
 
 export interface CreateAttestationInput {
-  caseId: string;
+  caseId: CaseId;
   text: string;
   label?: string;
   entityId?: string;
@@ -162,7 +166,7 @@ function labeledEvidence(
 }
 
 function maybeAssertEntityEffect(
-  caseId: string,
+  caseId: CaseId,
   entityId: string | null | undefined,
   exec?: DbExec
 ): Effect.Effect<void, DomainTag, Db> {
@@ -184,8 +188,8 @@ function entityIdForWrite(entityId: string | null | undefined): string | null {
 }
 
 export function listEvidenceForCaseEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   opts?: ListEvidenceOpts
 ): Effect.Effect<EvidenceRecord[], DomainTag, Db> {
   return Effect.gen(function* listEvidenceGen() {
@@ -339,8 +343,8 @@ export function restoreEvidenceEffect(
 }
 
 export function attachEvidenceEntityEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   evidenceId: string;
   entityId: string | null;
 }): Effect.Effect<EvidenceRecord, DomainTag, Db> {
@@ -436,8 +440,8 @@ export function confirmFileUploadEffect(
 }
 
 export function getEvidenceDownloadUrlEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   evidenceId: string
 ): Effect.Effect<{ url: string | null }, DomainTag, Db | BlobStore> {
   return Effect.gen(function* getEvidenceDownloadUrlGen() {
@@ -529,7 +533,7 @@ export function parseGraphEvidenceIdsEffect(
 
 /** Assert each id exists in Case Evidence (hidden rows allowed for graph citations). */
 export function assertEvidenceIdsInCaseEffect(
-  caseId: string,
+  caseId: CaseId,
   evidenceIds: string[],
   exec?: DbExec
 ): Effect.Effect<void, DomainTag, Db> {

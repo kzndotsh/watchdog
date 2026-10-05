@@ -1,7 +1,11 @@
 import { Effect } from "effect";
 
 import { entitiesRepo, type EntityRow } from "@watchdog/db";
-import type { EntityKind } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  EntityKind,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   slugifyName,
   trimmedOrNull,
@@ -38,16 +42,16 @@ export interface EntityRecord {
 }
 
 export interface CreateEntityInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   kind: EntityKind;
   name: string;
   slug: string;
 }
 
 export interface UpdateEntityFieldsInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   entityId: string;
   kind?: EntityKind;
   name?: string;
@@ -70,8 +74,8 @@ function toRecord(row: EntityRow): EntityRecord {
 }
 
 export function listEntitiesForCaseEffect(
-  caseId: string,
-  organizationId: string
+  caseId: CaseId,
+  organizationId: OrganizationId
 ): Effect.Effect<EntityRecord[], DomainTag, Db> {
   return Effect.gen(function* listEntitiesGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -83,8 +87,8 @@ export function listEntitiesForCaseEffect(
 }
 
 export function getEntityByCaseSlugEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   slug: string
 ): Effect.Effect<EntityRecord, DomainTag, Db> {
   return Effect.gen(function* getEntityByCaseSlugGen() {
@@ -206,8 +210,8 @@ export function updateEntityFieldsEffect(
 }
 
 export function deleteEntityEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   entityId: string
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEntityGen() {

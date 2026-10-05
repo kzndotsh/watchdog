@@ -162,6 +162,7 @@ export {
   optionalHttpUrlSchema,
   optionalDueDatePatchSchema,
   optionalTrimmedSchema,
+  optionalCaseIdSchema,
   optionalUuidSchema,
   nullableTrimmedPatchSchema,
   nullableUuidSchema,

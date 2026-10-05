@@ -16,7 +16,11 @@ import {
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
 } from "@watchdog/schemas/jobs";
-import type { JobStatus } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  JobStatus,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   pickPlaybookAggregateStatus,
   parseTrimmedCaseId,
@@ -35,8 +39,8 @@ import { jobActivityLabel } from "../jobs/job-display";
 import { proposalActivityLabel } from "../proposals/proposal-display";
 
 export interface ListRecentActivityOpts {
-  organizationId: string;
-  caseId?: string;
+  organizationId: OrganizationId;
+  caseId?: CaseId;
   limit?: number;
 }
 

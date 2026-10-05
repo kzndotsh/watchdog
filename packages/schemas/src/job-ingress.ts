@@ -1,37 +1,38 @@
 import { z } from "zod";
 
+import { trimmedCaseIdSchema } from "./ids";
 import { jobInputObjectSchema } from "./job-input-display";
 import { playbookSeedInputSchema } from "./playbook-seed";
 import { nonEmptyTrimmed, trimmedUuidSchema } from "./primitives";
 
 export const listJobsInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
 });
 
 export const getJobInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   jobId: trimmedUuidSchema,
 });
 
 export const startJobInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   capabilityId: nonEmptyTrimmed,
   input: jobInputObjectSchema,
 });
 
 export const cancelJobInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   jobId: trimmedUuidSchema,
 });
 
 export const startPlaybookInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   playbookId: nonEmptyTrimmed,
   seed: playbookSeedInputSchema,
 });
 
 export const cancelPlaybookInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   playbookRunId: trimmedUuidSchema,
 });
 

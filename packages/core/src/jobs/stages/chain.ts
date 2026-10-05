@@ -15,10 +15,10 @@ import {
   type JobRow,
 } from "@watchdog/db";
 import {
-  type CaseId,
   isJsonObject,
   isOpenJobStatus,
   parseTrimmedCaseId,
+  type CaseId,
   type JsonObject,
 } from "@watchdog/schemas/shared";
 
@@ -40,7 +40,7 @@ interface ReleasedJob {
 interface AdvanceOutcome {
   jobs: ReleasedJob[];
   abandonedJobIds: string[];
-  caseId: string | undefined;
+  caseId: CaseId | undefined;
 }
 
 function maybeFinishPlaybookRunEffect(
@@ -62,7 +62,7 @@ function maybeFinishPlaybookRunEffect(
 }
 
 function enqueueReleasedEffect(
-  caseId: string,
+  caseId: CaseId,
   _playbookRunId: string,
   released: ReleasedJob[]
 ): Effect.Effect<void, never, JobQueue> {
@@ -160,7 +160,7 @@ function enqueueStepJobsEffect(opts: {
 
 export function advancePlaybookRunEffect(input: {
   playbookRunId: string;
-  caseId?: string;
+  caseId?: CaseId;
 }): Effect.Effect<void, DomainTag, Db | JobQueue> {
   const playbookRunId = parseTrimmedCaseId(input.playbookRunId) ?? undefined;
   if (playbookRunId === undefined) return Effect.void;

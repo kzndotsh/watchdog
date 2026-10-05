@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testCaseId, testId, untrustedCaseId } from "@watchdog/test-kit";
 
 import {
   notifyEntityChangedEffect,
@@ -22,13 +22,17 @@ describe("notify* effects", () => {
   });
 
   it("skips invalid watchdog events", async () => {
-    await Effect.runPromise(notifyEntityChangedEffect("not-a-uuid"));
+    await Effect.runPromise(
+      notifyEntityChangedEffect(untrustedCaseId("not-a-uuid"))
+    );
     expect(notifyEvent).not.toHaveBeenCalled();
   });
 
   it("normalizes padded case ids on emit", async () => {
-    const caseId = testId(1);
-    await Effect.runPromise(notifyEntityChangedEffect(`  ${caseId}  `));
+    const caseId = testCaseId(1);
+    await Effect.runPromise(
+      notifyEntityChangedEffect(untrustedCaseId(`  ${caseId}  `))
+    );
     expect(notifyEvent).toHaveBeenCalledWith({
       type: "entity_changed",
       caseId,
@@ -36,16 +40,20 @@ describe("notify* effects", () => {
   });
 
   it("skips evidence_changed when evidenceId is invalid", async () => {
-    const caseId = testId(2);
+    const caseId = testCaseId(2);
     await Effect.runPromise(notifyEvidenceChangedEffect(caseId, "not-a-uuid"));
     expect(notifyEvent).not.toHaveBeenCalled();
   });
 
   it("emits job_update with trimmed ids", async () => {
-    const caseId = testId(3);
+    const caseId = testCaseId(3);
     const jobId = testId(4);
     await Effect.runPromise(
-      notifyJobUpdateEffect(` ${caseId} `, ` ${jobId} `, "queued")
+      notifyJobUpdateEffect(
+        untrustedCaseId(` ${caseId} `),
+        ` ${jobId} `,
+        "queued"
+      )
     );
     expect(notifyEvent).toHaveBeenCalledWith({
       type: "job_update",

@@ -23,11 +23,12 @@ import {
 } from "@watchdog/schemas/graph";
 import {
   IDENTIFIER_TYPES,
-  normalizeUuidList,
   normalizeIdentifierPlatform,
+  normalizeUuidList,
   parseTrimmedCaseId,
   slugifyName,
   trimmedOrUndefined,
+  type CaseId,
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
@@ -36,7 +37,7 @@ import type { DomainTag } from "../infra/tagged-errors";
 
 function markExistingInGraphEffect(
   exec: DbExec | undefined,
-  caseId: string,
+  caseId: CaseId,
   fps: { op: PatchOp; fp: string }[],
   known: Set<string>
 ): Effect.Effect<void, DomainTag, Db> {
@@ -263,7 +264,7 @@ function markExistingInGraphEffect(
  * or finding_suppressions (rejected FP memory).
  */
 export function suppressKnownFindingsEffect(
-  caseId: string,
+  caseId: CaseId,
   patch: PatchOp[],
   exec?: DbExec
 ): Effect.Effect<{ kept: PatchOp[]; suppressed: number }, DomainTag, Db> {
@@ -318,7 +319,7 @@ export function suppressKnownFindingsEffect(
 }
 
 export function recordRejectedFingerprintsEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   proposalId: string;
   patch: PatchOp[];
   tx?: DbTx;

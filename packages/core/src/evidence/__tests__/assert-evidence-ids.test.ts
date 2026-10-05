@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testCaseId, testId, untrustedCaseId } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain";
 import {
@@ -21,7 +21,11 @@ vi.mock("@watchdog/db", () => ({
 describe("assertEvidenceIdsInCaseEffect", () => {
   it("rejects invalid case ids before querying", async () => {
     await expect(
-      runDomain(assertEvidenceIdsInCaseEffect("not-a-uuid", [testId(1)]))
+      runDomain(
+        assertEvidenceIdsInCaseEffect(untrustedCaseId("not-a-uuid"), [
+          testId(1),
+        ])
+      )
     ).rejects.toMatchObject({
       _tag: "InvalidError",
       reason: "Case not found",
@@ -31,7 +35,7 @@ describe("assertEvidenceIdsInCaseEffect", () => {
   });
 
   it("rejects invalid evidence ids before querying", async () => {
-    const caseId = testId(1);
+    const caseId = testCaseId(1);
     const evidenceId = testId(2);
 
     await expect(
@@ -47,7 +51,7 @@ describe("assertEvidenceIdsInCaseEffect", () => {
   });
 
   it("rejects evidence ids missing from the case", async () => {
-    const caseId = testId(7);
+    const caseId = testCaseId(7);
     const evidenceId = testId(8);
     listIdsInCase.mockResolvedValueOnce([]);
 
@@ -60,7 +64,7 @@ describe("assertEvidenceIdsInCaseEffect", () => {
   });
 
   it("accepts padded canonical evidence ids", async () => {
-    const caseId = testId(3);
+    const caseId = testCaseId(3);
     const evidenceId = testId(4);
     listIdsInCase.mockResolvedValueOnce([{ id: evidenceId }]);
 

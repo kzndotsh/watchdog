@@ -1,10 +1,12 @@
-import { type SQL, and, asc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, or } from "drizzle-orm";
+
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";
 import { entitySlugIlikePatterns } from "./_ilike";
 import { clampSearchLimit } from "./_limits";
-import { scopeOrganizationId, trimCaseId } from "./_scoped-ids";
+import { trimCaseId } from "./_scoped-ids";
 import { slugForLookup } from "./_slug-lookup";
 
 export const caseColumns = {
@@ -23,8 +25,8 @@ export type CaseRow = {
 
 export type NewCase = Pick<
   typeof cases.$inferInsert,
-  "name" | "slug" | "description"
-> & { organizationId: string };
+  "name" | "slug" | "description" | "organizationId"
+>;
 
 export type CasePatch = Partial<
   Pick<
@@ -33,13 +35,12 @@ export type CasePatch = Partial<
   >
 >;
 
-function inOrg(organizationId: string): SQL {
-  const scoped = scopeOrganizationId(organizationId);
-  return scoped === undefined ? sql`false` : eq(cases.organizationId, scoped);
+function inOrg(organizationId: OrganizationId) {
+  return eq(cases.organizationId, organizationId);
 }
 
 export const casesRepo = {
-  async list(exec: DbExec, organizationId: string): Promise<CaseRow[]> {
+  async list(exec: DbExec, organizationId: OrganizationId): Promise<CaseRow[]> {
     return exec
       .select(caseColumns)
       .from(cases)
@@ -47,7 +48,10 @@ export const casesRepo = {
       .orderBy(asc(cases.name));
   },
 
-  async listIds(exec: DbExec, organizationId: string): Promise<string[]> {
+  async listIds(
+    exec: DbExec,
+    organizationId: OrganizationId
+  ): Promise<CaseId[]> {
     const rows = await exec
       .select({ id: cases.id })
       .from(cases)
@@ -57,7 +61,7 @@ export const casesRepo = {
 
   async search(
     exec: DbExec,
-    organizationId: string,
+    organizationId: OrganizationId,
     term: string,
     limit: number
   ): Promise<CaseRow[]> {
@@ -86,7 +90,7 @@ export const casesRepo = {
   async getById(
     exec: DbExec,
     id: string,
-    organizationId: string
+    organizationId: OrganizationId
   ): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
@@ -126,7 +130,7 @@ export const casesRepo = {
   async getBySlug(
     exec: DbExec,
     slug: string,
-    organizationId: string
+    organizationId: OrganizationId
   ): Promise<CaseRow | null> {
     const scopedSlug = slugForLookup(slug);
     if (scopedSlug === undefined) return null;
@@ -139,11 +143,9 @@ export const casesRepo = {
   },
 
   async create(exec: DbExec, values: NewCase): Promise<CaseRow | null> {
-    const organizationId = scopeOrganizationId(values.organizationId);
-    if (organizationId === undefined) return null;
     const [created] = await exec
       .insert(cases)
-      .values({ ...values, organizationId })
+      .values(values)
       .returning(caseColumns);
     return created ?? null;
   },
@@ -151,7 +153,7 @@ export const casesRepo = {
   async update(
     exec: DbExec,
     id: string,
-    organizationId: string,
+    organizationId: OrganizationId,
     patch: CasePatch
   ): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
@@ -167,7 +169,7 @@ export const casesRepo = {
   async delete(
     exec: DbExec,
     id: string,
-    organizationId: string
+    organizationId: OrganizationId
   ): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;

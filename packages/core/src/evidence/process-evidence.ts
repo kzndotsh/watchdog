@@ -17,7 +17,9 @@ import {
 import {
   parseTrimmedCaseId,
   trimmedOrUndefined,
+  type CaseId,
   type JsonObject,
+  type OrganizationId,
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -52,8 +54,8 @@ import {
 } from "../jobs/start-job";
 
 function startCapForEvidenceEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -166,8 +168,8 @@ function startCapForEvidenceEffect(input: {
 }
 
 export function processEvidenceEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -201,7 +203,7 @@ export function processEvidenceEffect(input: {
 }
 
 export function markEvidenceProcessedEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   evidenceId: string;
 }): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* markEvidenceProcessedGen() {
@@ -220,8 +222,8 @@ export function markEvidenceProcessedEffect(input: {
 }
 
 export function enrichUrlEvidenceEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain";
 import { listTasksForCaseEffect } from "../tasks";
@@ -19,7 +19,7 @@ describe("listTasksForCaseEffect", () => {
   it("rejects invalid entityId filters", async () => {
     await expect(
       runDomain(
-        listTasksForCaseEffect(testId(1), testId(2), {
+        listTasksForCaseEffect(testCaseId(1), TEST_ORGANIZATION_ID, {
           entityId: "not-a-uuid",
         })
       )

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import type { JobListRow, JobWithPlaybook } from "@watchdog/db";
+import { asCaseId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID, testCaseId, testId } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain.ts";
@@ -140,7 +141,7 @@ describe("searchCase", () => {
   it("returns empty buckets when query is shorter than 2 chars (no DB)", async () => {
     const result = await runDomain(
       searchCaseEffect({
-        caseId: "00000000-0000-4000-8000-000000000000",
+        caseId: asCaseId("00000000-0000-4000-8000-000000000000"),
         organizationId: TEST_ORGANIZATION_ID,
         q: "a",
       })
@@ -158,7 +159,7 @@ describe("searchCase", () => {
   it("trims whitespace-only short queries", async () => {
     const result = await runDomain(
       searchCaseEffect({
-        caseId: "00000000-0000-4000-8000-000000000000",
+        caseId: asCaseId("00000000-0000-4000-8000-000000000000"),
         organizationId: TEST_ORGANIZATION_ID,
         q: "  ",
       })

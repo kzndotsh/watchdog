@@ -5,6 +5,8 @@ import {
   slugifyName,
   trimmedOrNull,
   trimmedOrUndefined,
+  type CaseId,
+  type OrganizationId,
 } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
@@ -42,7 +44,7 @@ export interface CreateCaseInput {
   name: string;
   slug?: string;
   description?: string;
-  organizationId: string;
+  organizationId: OrganizationId;
 }
 
 /** Derive the Case URL slug from a display name. Empty if unsugifiable. */
@@ -62,7 +64,7 @@ function toRecord(row: CaseRow): CaseRecord {
 
 /** Reference for the `Db` service pattern (ADR-0002 phase 2): R = `Db`, client from `tryDbWith`. */
 export function listCasesEffect(
-  organizationId: string
+  organizationId: OrganizationId
 ): Effect.Effect<CaseRecord[], DomainTag, Db> {
   return tryDbWith((exec) => casesRepo.list(exec, organizationId)).pipe(
     Effect.map((rows) => rows.map(toRecord))
@@ -75,14 +77,14 @@ export function listCasesEffect(
  * same organization scope as every other Case read.
  */
 export function listVisibleCaseIdsEffect(
-  organizationId: string
+  organizationId: OrganizationId
 ): Effect.Effect<string[], DomainTag, Db> {
   return tryDbWith((exec) => casesRepo.listIds(exec, organizationId));
 }
 
 export function getCaseByIdEffect(
-  id: string,
-  organizationId: string
+  id: CaseId,
+  organizationId: OrganizationId
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
   return Effect.gen(function* getCaseByIdGen() {
     const caseId = yield* requireTrimmedCaseIdEffect(id);
@@ -98,7 +100,7 @@ export function getCaseByIdEffect(
 
 export function getCaseBySlugEffect(
   slug: string,
-  organizationId: string
+  organizationId: OrganizationId
 ): Effect.Effect<CaseRecord, DomainTag, Db> {
   return Effect.gen(function* getCaseBySlugGen() {
     const normalizedSlug = slugifyName(slug);
@@ -158,8 +160,8 @@ export function createCaseEffect(
 }
 
 export function updateCaseEffect(input: {
-  id: string;
-  organizationId: string;
+  id: CaseId;
+  organizationId: OrganizationId;
   name?: string;
   description?: string | null;
   allowThirdPartyEgress?: boolean;
@@ -248,8 +250,8 @@ export function updateCaseEffect(input: {
 }
 
 export function deleteCaseEffect(
-  id: string,
-  opts: { actorId?: string; organizationId: string }
+  id: CaseId,
+  opts: { actorId?: string; organizationId: OrganizationId }
 ): Effect.Effect<void, DomainTag, Db | BlobStore> {
   return Effect.gen(function* deleteCaseGen() {
     const caseId = yield* requireTrimmedCaseIdEffect(id);
@@ -298,7 +300,7 @@ export function deleteCaseEffect(
  * organization itself is deleted, so nothing is orphaned. Stops at the first failure.
  */
 export function deleteOrganizationCasesEffect(
-  organizationId: string,
+  organizationId: OrganizationId,
   opts?: { actorId?: string }
 ): Effect.Effect<number, DomainTag, Db | BlobStore> {
   return Effect.gen(function* deleteOrganizationCasesGen() {
