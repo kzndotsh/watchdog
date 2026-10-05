@@ -30,6 +30,16 @@ Measured on `main` (2026-10-05, by a throwaway prototype):
 - The `parseTrimmedCaseId` family returns `CaseId | null` instead of `string | null`.
 - `@watchdog/test-kit` needs the brand types (a type-only import from schemas, or a dependency on it).
 
+## Phase 1 as built (2026-10-05)
+
+Phase 1 shipped in one sweep (PR #164, 203 files). What differs from the plan above:
+
+- **Mint points.** Actors get their organization id in one place, `resolveActorOrganizationId` in `packages/auth/src/actor.ts` (a validating `safeParse`; a blank id is treated as absent, so a user with no active organization gets a clean forbidden, not a crash). The web organization-delete hook also mints with `asOrganizationId`, because Better Auth hands it a plain id.
+- **The case parser is for case ids only.** `parseTrimmedCaseId` returns `CaseId | null`; every other uuid kind (entity, job, evidence, edge, playbook run) uses `parseTrimmedUuid`, which returns a plain `string`. The first cut reused the case parser for other kinds (about 53 call sites), which typed an entity id as `CaseId` and let it pass where a case id is required; that was fixed in review and is pinned by a type test.
+- **Test fixtures live in `@watchdog/schemas/testing`**, not `test-kit`: `TEST_ORGANIZATION_ID`, `TEST_OTHER_ORGANIZATION_ID`, `testCaseId(n)`, `testActor()`. Putting them in `test-kit` created a `schemas <-> test-kit` workspace cycle. `untrustedCaseId` / `untrustedOrganizationId` (stamp an unvalidated brand, for tests that feed malformed ids to runtime guards) are in the same place and importable only from tests by lint.
+- **Two lint rules** in the local oxlint plugin enforce the invariant: `watchdog/no-brand-cast` bans casts to a brand anywhere inside an asserted type (unions, arrays, `Record`, generics, `as unknown as`, `BRAND<"...">`; a type alias declared in another file is not followed), and `watchdog/no-untrusted-id-import`.
+- **Deliberately still plain strings in phase 1:** database repo `caseId` parameters (about 90; the repos trim and validate them, and their tests pass padded ids), the result records (`CaseRecord`, `EvidenceRecord`, `EntityRecord`, `JobRecord`, `ProposalRecord`, `TaskRecord`, `GraphWriteRecord`, `JobRunOutcome`), the SSE event schema, and `z.infer` of the API output schemas. Branding the records broke about 120 web files, so that waits for the web, cli, worker and caps sweep. The guarantee today is that core and api function inputs take the brands; the layers below still accept strings, so a swapped repo call still compiles.
+
 ## Considered
 
 - **Only object parameters, no brands.** Fixes call-site readability but a function still accepts any string for any id, and nothing stops a caller passing the wrong value. Rejected as the primary fix.
