@@ -186,6 +186,8 @@ export default defineConfig({
     "eslint/eqeqeq": "error",
     // ADR-0003: branded ids are minted by constructors, never cast (test-kit exempt below).
     "watchdog/no-brand-cast": "error",
+    // ADR-0003: untrusted*Id test helpers are importable only from tests and test helpers (override below).
+    "watchdog/no-untrusted-id-import": "error",
     "eslint/logical-assignment-operators": "error",
     "eslint/no-control-regex": "error",
     "eslint/no-empty-function": "error",
@@ -317,6 +319,18 @@ export default defineConfig({
     ],
   },
   overrides: [
+    {
+      // Tests and test-helper trees may stamp unvalidated brands (ADR-0003).
+      files: [
+        "**/__tests__/**",
+        "**/*.test.{ts,tsx}",
+        "packages/test-kit/src/**",
+        "packages/caps/src/testing/**",
+        "packages/schemas/src/testing/**",
+        "packages/test-db/src/**",
+      ],
+      rules: { "watchdog/no-untrusted-id-import": "off" },
+    },
     {
       // Test-kit fixtures are the one place allowed to stamp a brand (ADR-0003).
       files: ["packages/test-kit/src/**/*.{ts,tsx}"],
