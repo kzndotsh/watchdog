@@ -132,4 +132,22 @@ describe("case export zip route", () => {
     expect(response.status).toBe(404);
     expect(await response.text()).toBe("No entities to export");
   });
+
+  it("returns 404 for a route param that is not a case id, without a lookup", async () => {
+    createApiContextMock.mockResolvedValueOnce({
+      actor: { userId: "actor-1", organizationId: "org-1" },
+      log: { set: vi.fn() },
+    });
+    getCaseByIdEffectMock.mockClear();
+
+    const response = await handlers.GET({
+      request: new Request(
+        testHttpOrigin("localhost", "/api/v1/cases/x/export.zip")
+      ),
+      params: { caseId: "not-a-uuid" },
+    });
+
+    expect(response.status).toBe(404);
+    expect(getCaseByIdEffectMock).not.toHaveBeenCalled();
+  });
 });

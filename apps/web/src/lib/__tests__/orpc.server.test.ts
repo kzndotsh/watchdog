@@ -63,4 +63,11 @@ describe("orpc.server", () => {
       TEST_ORGANIZATION_ID
     );
   });
+
+  it("takes an OrganizationId, never a plain string (ADR-0003)", () => {
+    const session = { user: { id: "u1", email: "a@b.c", name: "Alice" } };
+    // @ts-expect-error a plain-string organization id must be minted at the edge first
+    const plain = () => orpcFromContext({ session, organizationId: "org-1" });
+    expect(typeof plain).toBe("function");
+  });
 });

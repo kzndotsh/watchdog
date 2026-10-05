@@ -17,6 +17,7 @@ import type { Db } from "@watchdog/core/infra";
  */
 import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import {
+  type CaseId,
   type OrganizationId,
   parseTrimmedCaseId,
   type EvidenceKind,
@@ -110,24 +111,19 @@ type CaseExportZipResult =
     };
 
 function caseExportZipEffect(
-  caseId: string,
+  caseId: CaseId,
   organizationId: OrganizationId
 ): Effect.Effect<CaseExportZipResult, DomainTag, Db | BlobStore> {
   return Effect.gen(function* caseExportZipGen() {
-    const scopedCaseId = parseTrimmedCaseId(caseId);
-    if (scopedCaseId === null) {
-      return { kind: "missing_case" as const };
-    }
-    const activeCase = yield* getCaseByIdEffect(
-      scopedCaseId,
-      organizationId
-    ).pipe(Effect.catchTag("NotFoundError", () => Effect.succeed(null)));
+    const activeCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
+      Effect.catchTag("NotFoundError", () => Effect.succeed(null))
+    );
     if (activeCase === null) {
       return { kind: "missing_case" as const };
     }
     const caseSlug = activeCase.slug;
     const { files: mdFiles, evidenceRows } =
-      yield* renderCaseExportEffect(scopedCaseId);
+      yield* renderCaseExportEffect(caseId);
     if (mdFiles.size === 0) {
       return { kind: "empty" as const };
     }
@@ -192,7 +188,11 @@ export const Route = createFileRoute("/api/v1/cases/$caseId/export.zip")({
           return new Response("Forbidden", { status: 403 });
         }
 
-        const { caseId } = params;
+        // Route params are plain strings: brand at the edge, 404 when not a case id.
+        const caseId = parseTrimmedCaseId(params.caseId);
+        if (caseId === null) {
+          return new Response("Not Found", { status: 404 });
+        }
         const exported = await runApp(
           caseExportZipEffect(caseId, ctx.actor.organizationId)
         );

@@ -134,4 +134,21 @@ describe("entity export markdown route", () => {
 
     expect(response.status).toBe(404);
   });
+
+  it("returns 404 for a route param that is not a case id, without a lookup", async () => {
+    createApiContextMock.mockResolvedValueOnce({
+      actor: { userId: "actor-1", organizationId: "org-1" },
+    });
+    getCaseByIdEffectMock.mockClear();
+
+    const response = await handlers.GET({
+      request: new Request(
+        testHttpOrigin("localhost", "/api/v1/cases/x/entities/target/export.md")
+      ),
+      params: { caseId: "not-a-uuid", slug: "target" },
+    });
+
+    expect(response.status).toBe(404);
+    expect(getCaseByIdEffectMock).not.toHaveBeenCalled();
+  });
 });
