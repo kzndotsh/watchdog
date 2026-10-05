@@ -778,9 +778,6 @@ importers:
 
   packages/test-db:
     dependencies:
-      '@watchdog/core':
-        specifier: workspace:*
-        version: link:../core
       '@watchdog/db':
         specifier: workspace:*
         version: link:../db
@@ -793,9 +790,6 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@opentelemetry/api@1.9.1)(kysely@0.29.5)(pg@8.23.0)(postgres@3.4.9)
-      effect:
-        specifier: 'catalog:'
-        version: 4.0.0
       vitest:
         specifier: 'catalog:'
         version: 5.0.1(@opentelemetry/api@1.9.1)(@types/node@26.6.1)(@vitest/coverage-v8@5.0.1)(happy-dom@20.14.5)(jsdom@30.0.1(@noble/hashes@2.4.0))(msw@2.15.0(@types/node@26.6.1)(typescript@7.0.2))(vite@8.3.0(@types/node@26.6.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)(yaml@2.9.1))

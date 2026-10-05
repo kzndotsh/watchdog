@@ -4,8 +4,8 @@ import { Db } from "./db-service";
 import type { DomainTag } from "./tagged-errors";
 
 /**
- * `runDomain` with an override Layer, for tests: `runDomainWith(TestDbLayer)(e)`
- * (from `@watchdog/test-db`) or `runDomainWith(Layer.succeed(Db, stub))(e)`.
+ * `runDomain` with an override Layer, for tests: `runDomainWith(Db.layerOf(spy))(e)`
+ * or `runDomainWith(Layer.succeed(Db, stub))(e)`.
  * The Layer is built per call, so keep it cheap (no scoped resources).
  */
 export function runDomainWith<ROut>(layer: Layer.Layer<ROut>) {

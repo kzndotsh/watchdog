@@ -45,7 +45,7 @@ tryDbWith((exec) => casesRepo.list(exec, organizationId));
 
 - Add `Db` to the function's declared return type (`Effect.Effect<A, DomainTag, Db>`, `import type { Db } from "../infra/db-service"`) and drop the `db` import once no site uses it. Callers that are themselves migrated propagate `Db`; `runDomain` / `runApp` accept `R = Db` and provide `Db.layer`.
 - Inside `transact((tx) => ...)` keep the explicit handle: `tryDb(() => repo.x(tx, ...))`. `transact` opens its transaction on the `Db` service's client (R gains `Db`; if the service value is itself a `tx`, drizzle opens a savepoint). Helpers that accept an optional `exec` (`assert*InCase`, `suppressKnownFindingsEffect`) use `tryDbOn(exec, ...)`: a caller's `tx` wins, otherwise the service supplies the client.
-- Tests: `runDomainWith(TestDbLayer)(effect)` (`@watchdog/test-db`; `testDbLayerOf(exec)` for a `tx` or a spying `Proxy`), or `runDomainWith(Layer.succeed(Db, stub))`. Unit tests may still `vi.mock("@watchdog/db")` (the live Layer wraps the mocked `db`); prefer the Layer. `runDomain(effect)` works for integration tests.
+- Tests: `runDomainWith(Db.layer)(effect)` (the pool, same as `testDb`; `Db.layerOf(exec)` for a `tx` or a spying `Proxy`), or `runDomainWith(Layer.succeed(Db, stub))`. Unit tests may still `vi.mock("@watchdog/db")` (the live Layer wraps the mocked `db`); prefer the Layer. `runDomain(effect)` works for integration tests.
 - Worker: `main.ts` provides `Db.layer`, `JobFibers.layer` and the worker queue Layer (`Db`, `JobQueue` and `jobQueueWorkerLayer` are exported from `@watchdog/core/worker`).
 
 ## `JobQueue` service pattern (ADR-0002 phase 3)

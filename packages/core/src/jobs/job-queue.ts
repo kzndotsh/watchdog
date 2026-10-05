@@ -311,7 +311,7 @@ export interface RecordedSend {
 
 /**
  * Test Layer: a `JobQueue` that records sends instead of reaching pg-boss.
- * `runDomainWith(Layer.mergeAll(TestDbLayer, queue.layer))(effect)`.
+ * `runDomainWith(Layer.mergeAll(Db.layer, queue.layer))(effect)`.
  */
 export function recordingJobQueue(): {
   readonly layer: Layer.Layer<JobQueue>;
