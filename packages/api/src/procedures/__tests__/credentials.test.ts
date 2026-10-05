@@ -1,22 +1,25 @@
 import { createRouterClient } from "@orpc/server";
-import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-const { listCredentialSlotsEffect } = vi.hoisted(() => ({
-  listCredentialSlotsEffect: vi.fn(),
+const vault = vi.hoisted(() => ({
+  current: undefined as
+    | { secrets: Map<string, Map<string, string>> }
+    | undefined,
 }));
 
-vi.mock("@watchdog/core/vault", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@watchdog/core/vault")>();
-  return {
-    ...actual,
-    listCredentialSlotsEffect,
-    putCredentialSlotEffect: vi.fn(),
-    deleteCredentialEffect: vi.fn(),
-  };
+// Route `runApp` through a fake credential Layer: the procedures and the core
+// credential helpers run unpatched, only the vault service is swapped.
+vi.mock("../../runtime", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../runtime")>();
+  const { fakeVault } = await import("@watchdog/core/vault");
+  const fake = fakeVault({
+    u1: { AI_COMPAT_API_KEY: "sk-test" },
+  });
+  vault.current = fake;
+  return { ...actual, runApp: actual.runAppWith(fake.layer) };
 });
 
-import { list, put } from "../credentials";
+import { list, put, remove } from "../credentials";
 
 const actor = {
   userId: "u1",
@@ -25,49 +28,47 @@ const actor = {
   organizationId: "org-test",
 };
 
+const context = {
+  headers: new Headers(),
+  actor,
+  authMethod: "session" as const,
+};
+
 describe("credentials procedures", () => {
-  it("lists credential slots for the actor", async () => {
-    listCredentialSlotsEffect.mockReturnValueOnce(
-      Effect.succeed([
-        {
-          name: "AI_COMPAT_API_KEY",
-          label: "AI",
-          description: "Compat key",
-          configured: true,
-          updatedAt: null,
-        },
-      ])
-    );
+  it("lists credential slots for the actor from the vault service", async () => {
+    const slots = await createRouterClient({ list }, { context }).list();
 
-    const client = createRouterClient(
-      { list },
-      {
-        context: {
-          headers: new Headers(),
-          actor,
-          authMethod: "session",
-        },
-      }
-    );
+    expect(
+      slots.find((slot) => slot.name === "AI_COMPAT_API_KEY")
+    ).toMatchObject({ configured: true });
+  });
 
-    await expect(client.list()).resolves.toHaveLength(1);
-    expect(listCredentialSlotsEffect).toHaveBeenCalledWith("u1");
+  it("stores a secret through the vault service and never returns it", async () => {
+    const slot = await createRouterClient({ put }, { context }).put({
+      name: "SHODAN_API_KEY",
+      secret: "  s3cret  ",
+    });
+
+    expect(slot).toMatchObject({ name: "SHODAN_API_KEY", configured: true });
+    expect(JSON.stringify(slot)).not.toContain("s3cret");
+    expect(vault.current?.secrets.get("u1")?.get("SHODAN_API_KEY")).toBe(
+      "s3cret"
+    );
+  });
+
+  it("deletes a credential and reports a missing one as not found", async () => {
+    const client = createRouterClient({ remove }, { context });
+    await expect(client.remove({ name: "AI_COMPAT_API_KEY" })).resolves.toEqual(
+      { ok: true }
+    );
+    await expect(
+      client.remove({ name: "AI_COMPAT_API_KEY" })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
   it("rejects invalid credential names at ingress", async () => {
-    const client = createRouterClient(
-      { put },
-      {
-        context: {
-          headers: new Headers(),
-          actor,
-          authMethod: "session",
-        },
-      }
-    );
-
     await expect(
-      client.put({
+      createRouterClient({ put }, { context }).put({
         name: "shodan",
         secret: "secret",
       })

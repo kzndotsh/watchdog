@@ -7,6 +7,7 @@ import {
   type JobQueue,
   type BlobStore,
   type Db,
+  type Vault,
   CAP_JOB_QUEUE,
   executeJobOnMap,
   extractDomainJobIdFromPayload,
@@ -101,7 +102,7 @@ function reconcileWorkerStartupEffect(): Effect.Effect<
   });
 }
 
-type WorkerServices = Db | BlobStore | JobFibers | JobQueue;
+type WorkerServices = Db | BlobStore | Vault | JobFibers | JobQueue;
 
 type RunJob = (
   jobId: string

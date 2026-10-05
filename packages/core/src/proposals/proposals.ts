@@ -31,6 +31,7 @@ import {
   assertCaseInOrgEffect,
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
+import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
 import {
   notifyEntityChangedEffect,
@@ -376,10 +377,11 @@ export function acceptProposalEffect(input: {
           tx,
         });
 
+        const decidedAt = yield* nowDateEffect;
         const accepted = yield* tryDb(() =>
           proposalsRepo.accept(tx, scopedCaseId, proposalId, {
             decidedBy: actorId,
-            decidedAt: new Date(),
+            decidedAt,
           })
         );
 
@@ -429,11 +431,12 @@ export function rejectProposalEffect(input: {
           });
         }
 
+        const decidedAt = yield* nowDateEffect;
         const row = yield* tryDb(() =>
           proposalsRepo.reject(tx, scopedCaseId, proposalId, {
             rejectReason: trimmedOrNull(input.reason),
             decidedBy: actorId,
-            decidedAt: new Date(),
+            decidedAt,
           })
         );
 

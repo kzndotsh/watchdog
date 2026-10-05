@@ -11,6 +11,7 @@ import {
   cancelPlaybookRunEffect,
   runPlaybookEffect,
 } from "@watchdog/core/jobs";
+import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
@@ -20,7 +21,11 @@ import { advancePlaybookRunEffect } from "../stages/chain.ts";
 // Enqueues land in a recording queue instead of a real pg-boss.
 const queue = recordingJobQueue();
 const runDomain = runDomainWith(
-  Layer.mergeAll(Db.layer, queue.layer, recordingBlobStore().layer)
+  Layer.mergeAll(
+    Layer.provideMerge(vaultLayer, Db.layer),
+    queue.layer,
+    recordingBlobStore().layer
+  )
 );
 
 describe("runPlaybook", () => {

@@ -35,13 +35,15 @@ export function buildEntityFrontmatter(input: {
   kind: string;
   caseSlug: string;
   entityId: string;
+  /** ISO timestamp of the export (from the Effect clock). */
+  exportedAt: string;
 }): string {
   return [
     "---",
     yamlLine("tags", `[${exportLabel(input.kind, ENTITY_KIND_LABELS)}]`),
     yamlLine("case", input.caseSlug),
     yamlLine("entity_id", input.entityId),
-    yamlLine("last_exported", new Date().toISOString()),
+    yamlLine("last_exported", input.exportedAt),
     "---",
   ]
     .filter(Boolean)
@@ -186,7 +188,8 @@ export function buildCaseMarkdown(
     description: string | null;
   },
   mdFiles: Map<string, string>,
-  evidenceCount: number
+  evidenceCount: number,
+  exportedAt: string
 ): string {
   const caseLines = [
     "---",
@@ -195,7 +198,7 @@ export function buildCaseMarkdown(
     caseRow.description !== null && caseRow.description !== ""
       ? `description: ${caseRow.description}`
       : null,
-    `exported: ${new Date().toISOString()}`,
+    `exported: ${exportedAt}`,
     `entities: ${mdFiles.size}`,
     `evidence: ${evidenceCount}`,
     "---",
@@ -213,12 +216,13 @@ export function buildCaseMarkdown(
 
 export function buildAttestationsMarkdown(
   caseSlug: string,
-  attestations: EvidenceRow[]
+  attestations: EvidenceRow[],
+  exportedAt: string
 ): string {
   const attLines = [
     "---",
     `case: ${caseSlug}`,
-    `exported: ${new Date().toISOString()}`,
+    `exported: ${exportedAt}`,
     "---",
     "",
     "# Attestations",

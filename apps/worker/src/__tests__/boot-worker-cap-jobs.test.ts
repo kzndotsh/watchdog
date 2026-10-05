@@ -18,11 +18,16 @@ import {
   JobFibers,
   recordingJobQueue,
   recordingBlobStore,
+  fakeVault,
 } from "@watchdog/core/worker";
 
 import { processCapJobBatchEffect, processCapJobEffect } from "../boot-worker";
 
-const dbAndBlob = Layer.mergeAll(Db.layer, recordingBlobStore().layer);
+const workerTestServices = Layer.mergeAll(
+  Db.layer,
+  recordingBlobStore().layer,
+  fakeVault().layer
+);
 
 describe("processCapJobEffect", () => {
   beforeEach(() => {
@@ -39,7 +44,7 @@ describe("processCapJobEffect", () => {
       Effect.runPromise(
         processCapJobEffect({ id: "boss-1", data: null }, runJob).pipe(
           Effect.provide(JobFibers.layer),
-          Effect.provide(dbAndBlob),
+          Effect.provide(workerTestServices),
           Effect.provide(recordingJobQueue().layer)
         )
       )
@@ -58,7 +63,7 @@ describe("processCapJobEffect", () => {
       Effect.runPromise(
         processCapJobBatchEffect([], runJob).pipe(
           Effect.provide(JobFibers.layer),
-          Effect.provide(dbAndBlob),
+          Effect.provide(workerTestServices),
           Effect.provide(recordingJobQueue().layer)
         )
       )
@@ -93,7 +98,7 @@ describe("processCapJobEffect", () => {
         runJob
       ).pipe(
         Effect.provide(JobFibers.layer),
-        Effect.provide(dbAndBlob),
+        Effect.provide(workerTestServices),
         Effect.provide(recordingJobQueue().layer)
       )
     );
@@ -133,7 +138,7 @@ describe("processCapJobEffect", () => {
         runJob
       ).pipe(
         Effect.provide(JobFibers.layer),
-        Effect.provide(dbAndBlob),
+        Effect.provide(workerTestServices),
         Effect.provide(recordingJobQueue().layer)
       )
     );

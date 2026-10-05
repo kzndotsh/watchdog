@@ -39,7 +39,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { hasCredentialEffect } from "../infra/vault";
+import { hasCredentialEffect, type Vault } from "../infra/vault";
 import { parseValidatedCapInputEffect } from "./cap-input";
 import type { JobQueue } from "./job-queue";
 import {
@@ -98,7 +98,7 @@ function credentialNamesFromDescriptor(
 function presentCredentialNamesEffect(
   actorId: string,
   credNames: Iterable<string>
-): Effect.Effect<Set<string>, DomainTag, Db> {
+): Effect.Effect<Set<string>, DomainTag, Vault> {
   const present = new Set<string>();
   return Effect.forEach(
     [...credNames],
@@ -145,7 +145,7 @@ function ensurePlaybookRunnable(
 /** Plan → insert run + step-0 Job → enqueue. */
 export function runPlaybookEffect(
   input: RunPlaybookInput
-): Effect.Effect<PlaybookRunResult, DomainTag, Db | JobQueue> {
+): Effect.Effect<PlaybookRunResult, DomainTag, Db | JobQueue | Vault> {
   return Effect.gen(function* runPlaybookGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,

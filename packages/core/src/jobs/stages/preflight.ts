@@ -18,6 +18,7 @@ import { tryDbWith } from "../../infra/postgres-effect";
 import { logProcess } from "../../infra/process-log";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { InvalidError } from "../../infra/tagged-errors";
+import type { Vault } from "../../infra/vault";
 import {
   evaluateCapAvailabilityEffect,
   formatCapAvailabilityError,
@@ -71,14 +72,14 @@ function convergeReclaimStopEffect(
   jobId: string,
   job: JobRow
 ): Effect.Effect<void, DomainTag, Db> {
-  return setJobStatusEffect(
-    jobId,
-    {
-      status: "succeeded",
-      finishedAt: job.finishedAt ?? new Date(),
-    },
-    { unlessCancelled: true, notify: true, caseId: job.caseId }
-  ).pipe(Effect.asVoid);
+  return Effect.gen(function* convergeReclaimStopGen() {
+    const finishedAt = job.finishedAt ?? (yield* nowDateEffect);
+    yield* setJobStatusEffect(
+      jobId,
+      { status: "succeeded", finishedAt },
+      { unlessCancelled: true, notify: true, caseId: job.caseId }
+    );
+  });
 }
 
 function loadCapOrStopEffect(
@@ -125,7 +126,7 @@ function enforceCapAvailabilityOrStopEffect(
   | { kind: "stop"; reason: PreflightStopReason }
   | { kind: "ready"; allowThirdPartyEgress: boolean },
   DomainTag,
-  Db
+  Db | Vault
 > {
   return Effect.gen(function* enforceCapAvailabilityOrStopGen() {
     const { allowThirdPartyEgress, result } =
@@ -153,7 +154,7 @@ function enforceCapAvailabilityOrStopEffect(
 function preparePreflightReadyEffect(
   jobId: string,
   job: JobRow
-): Effect.Effect<PreflightResult, DomainTag, Db> {
+): Effect.Effect<PreflightResult, DomainTag, Db | Vault> {
   return Effect.gen(function* preparePreflightReadyGen() {
     const capOrStop = yield* loadCapOrStopEffect(
       jobId,
@@ -227,7 +228,7 @@ function preparePreflightReadyEffect(
  */
 export function preflightEffect(
   jobId: string
-): Effect.Effect<PreflightResult, DomainTag, Db> {
+): Effect.Effect<PreflightResult, DomainTag, Db | Vault> {
   return Effect.gen(function* preflightGen() {
     const normalizedJobId = parseTrimmedCaseId(jobId) ?? undefined;
     if (normalizedJobId === undefined) {

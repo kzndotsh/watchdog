@@ -12,6 +12,7 @@ import {
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import { recordingJobQueue } from "@watchdog/core/jobs";
+import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import {
   resetTestDb,
@@ -28,7 +29,11 @@ import {
 // Enqueues land in a recording queue instead of a real pg-boss.
 const queue = recordingJobQueue();
 const runDomain = runDomainWith(
-  Layer.mergeAll(Db.layer, queue.layer, recordingBlobStore().layer)
+  Layer.mergeAll(
+    Layer.provideMerge(vaultLayer, Db.layer),
+    queue.layer,
+    recordingBlobStore().layer
+  )
 );
 
 describe("processEvidence", () => {

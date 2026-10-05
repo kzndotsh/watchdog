@@ -31,6 +31,8 @@ export {
 } from "./jobs/run-job";
 export { JobFibers, type JobFibersApi } from "./jobs/job-fibers";
 export { Db } from "./infra/db-service";
+export { Vault, vaultLayer } from "./infra/vault";
+export { fakeVault } from "./infra/vault-fake";
 export {
   BlobStore,
   blobStoreLayer,

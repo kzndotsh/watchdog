@@ -15,7 +15,7 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
   };
 });
 
-import { Db, recordingBlobStore } from "@watchdog/core/worker";
+import { Db, recordingBlobStore, fakeVault } from "@watchdog/core/worker";
 
 import {
   claimExportEventEffect,
@@ -23,7 +23,11 @@ import {
   shouldTriggerCaseExport,
 } from "../export-events";
 
-const dbAndBlob = Layer.mergeAll(Db.layer, recordingBlobStore().layer);
+const workerTestServices = Layer.mergeAll(
+  Db.layer,
+  recordingBlobStore().layer,
+  fakeVault().layer
+);
 
 describe("shouldTriggerCaseExport", () => {
   const caseId = "11111111-1111-4111-8111-000000000001";
@@ -116,7 +120,7 @@ describe("claimExportEventEffect", () => {
       Effect.runPromise(
         Effect.provide(
           claimExportEventEffect({ type: "entity_changed", caseId }),
-          dbAndBlob
+          workerTestServices
         )
       )
     ).rejects.toThrow(/disk full/);
@@ -127,7 +131,7 @@ describe("claimExportEventEffect", () => {
       Effect.flatten(
         Effect.provide(
           claimExportEventEffect({ type: "task_changed", caseId }),
-          dbAndBlob
+          workerTestServices
         )
       )
     );
@@ -145,7 +149,7 @@ describe("claimExportEventEffect", () => {
             type: "entity_changed",
             caseId: paddedCaseId,
           }),
-          dbAndBlob
+          workerTestServices
         )
       )
     );
@@ -161,7 +165,7 @@ describe("claimExportEventEffect", () => {
             type: "entity_changed",
             caseId: "not-a-uuid",
           }),
-          dbAndBlob
+          workerTestServices
         )
       )
     );

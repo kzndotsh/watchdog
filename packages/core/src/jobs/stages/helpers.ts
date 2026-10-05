@@ -5,6 +5,7 @@ import {
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
 
+import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { setJobStatusEffect } from "../set-job-status";
@@ -121,14 +122,17 @@ export function failJobEffect(
   opts: { caseId: string },
   logs: string[] = []
 ): Effect.Effect<void, DomainTag, Db> {
-  return setJobStatusEffect(
-    jobId,
-    {
-      status: "failed",
-      error,
-      logs,
-      finishedAt: new Date(),
-    },
-    { unlessCancelled: true, notify: true, caseId: opts.caseId }
-  ).pipe(Effect.asVoid);
+  return Effect.gen(function* failJobGen() {
+    const finishedAt = yield* nowDateEffect;
+    yield* setJobStatusEffect(
+      jobId,
+      {
+        status: "failed",
+        error,
+        logs,
+        finishedAt,
+      },
+      { unlessCancelled: true, notify: true, caseId: opts.caseId }
+    );
+  });
 }

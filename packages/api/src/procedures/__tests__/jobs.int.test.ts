@@ -7,12 +7,15 @@ import {
   listJobsForCaseEffect,
   startJobEffect,
 } from "@watchdog/core/jobs";
+import { vaultLayer } from "@watchdog/core/vault";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 // Enqueues land in a recording queue instead of a real pg-boss.
 const queue = recordingJobQueue();
-const runDomain = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
+const runDomain = runDomainWith(
+  Layer.mergeAll(Layer.provideMerge(vaultLayer, Db.layer), queue.layer)
+);
 
 describe("jobs (core services)", () => {
   beforeEach(async () => {

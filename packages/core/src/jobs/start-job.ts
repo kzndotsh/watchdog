@@ -44,6 +44,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import type { Vault } from "../infra/vault";
 import { enqueueCapJobEffect } from "./boss";
 import { assertCapAvailabilityEffect } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";
@@ -153,7 +154,7 @@ export function enqueueCreatedJobEffect(
 
 export function startJobEffect(
   input: StartJobInput
-): Effect.Effect<JobRecord, DomainTag, Db | JobQueue> {
+): Effect.Effect<JobRecord, DomainTag, Db | JobQueue | Vault> {
   return Effect.gen(function* startJobGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
       input.caseId,

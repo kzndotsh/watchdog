@@ -26,6 +26,7 @@ import {
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
 
+import { nowIsoStringEffect } from "./clock";
 import type { Db } from "./db-service";
 import {
   appendClaimsSection,
@@ -103,12 +104,14 @@ export function renderEntityMarkdownEffect(
 
     const resolvedPeers =
       peerMap ?? new Map(peers.map((e) => [e.id, e] as const));
+    const exportedAt = yield* nowIsoStringEffect;
 
     const lines: string[] = [
       buildEntityFrontmatter({
         kind: row.kind,
         caseSlug: row.caseSlug,
         entityId: row.id,
+        exportedAt,
       }),
       `# ${entityDisplayLabel({ name: row.name, slug: row.slug })}`,
       "",
@@ -186,17 +189,18 @@ export function renderCaseExportEffect(
     );
 
     if (caseRow) {
+      const exportedAt = yield* nowIsoStringEffect;
       const attestations = evidenceRows.filter(isAttestationExportRow);
 
       mdFiles.set(
         "CASE.md",
-        buildCaseMarkdown(caseRow, mdFiles, evidenceRows.length)
+        buildCaseMarkdown(caseRow, mdFiles, evidenceRows.length, exportedAt)
       );
 
       if (attestations.length > 0) {
         mdFiles.set(
           "evidence/attestations.md",
-          buildAttestationsMarkdown(caseRow.slug, attestations)
+          buildAttestationsMarkdown(caseRow.slug, attestations, exportedAt)
         );
       }
     }

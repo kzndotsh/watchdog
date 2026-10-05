@@ -5,7 +5,7 @@ import path from "node:path";
 import { Data, Effect } from "effect";
 
 import type { CapContext } from "@watchdog/caps/sdk";
-import { jobsRepo, type DbExec, type JobArtifact } from "@watchdog/db";
+import { jobsRepo, type JobArtifact } from "@watchdog/db";
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import {
   MissingCredentialError,
@@ -20,7 +20,7 @@ import {
   uploadArtifactEffect,
 } from "../../infra/blob";
 import { BlobStore, type BlobStoreApi } from "../../infra/blob-store";
-import { Db } from "../../infra/db-service";
+import type { Db } from "../../infra/db-service";
 import { errorMessage } from "../../infra/error-utils";
 import { tryDbWith } from "../../infra/postgres-effect";
 import { logSwallowed } from "../../infra/process-log";
@@ -29,7 +29,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../../infra/tagged-errors";
-import { getCredentialEffect, hasCredentialEffect } from "../../infra/vault";
+import { Vault, type VaultApi } from "../../infra/vault";
 import { toDomainTag } from "../../infra/vendor-errors";
 import { hashCapInput, lookupCapCacheEffect } from "../cap-cache";
 import { artifactsHaveCapReport } from "../load-cap-report";
@@ -112,14 +112,14 @@ function vaultToTools(name: string) {
 
 /**
  * Cap contexts carry R = never, so the services their vault and blob helpers
- * need are captured here and provided to each helper.
+ * need are captured by the caller and passed in.
  */
 function buildCapContext(
   state: PreflightState,
   runtime: CollectRuntime,
-  dbExec: DbExec,
-  blob: BlobStoreApi
+  services: { vault: VaultApi; blob: BlobStoreApi }
 ): CapContext<unknown> {
+  const { vault, blob } = services;
   const { job, input, allowThirdPartyEgress } = state;
   return {
     input,
@@ -133,16 +133,14 @@ function buildCapContext(
       ? { evidenceSnapshot: runtime.evidenceSnapshot }
       : {}),
     getCredential(name: string) {
-      return getCredentialEffect(job.actorId, name).pipe(
-        Effect.provideService(Db, dbExec),
-        Effect.mapError(vaultToTools(name))
-      );
+      return vault
+        .get(job.actorId, name)
+        .pipe(Effect.mapError(vaultToTools(name)));
     },
     hasCredential(name: string) {
-      return hasCredentialEffect(job.actorId, name).pipe(
-        Effect.provideService(Db, dbExec),
-        Effect.mapError(vaultToTools(name))
-      );
+      return vault
+        .has(job.actorId, name)
+        .pipe(Effect.mapError(vaultToTools(name)));
     },
     uploadArtifact(uploadInput: {
       bytes: Uint8Array;
@@ -273,11 +271,11 @@ function lookupCacheHitEffect(
 function runCapCollectEffect(
   state: PreflightState,
   runtime: CollectRuntime
-): Effect.Effect<CollectResult, DomainTag, Db | BlobStore> {
+): Effect.Effect<CollectResult, DomainTag, BlobStore | Vault> {
   return Effect.gen(function* runCapCollectGen() {
-    const dbExec = yield* Db;
+    const vault = yield* Vault;
     const blob = yield* BlobStore;
-    const ctx = buildCapContext(state, runtime, dbExec, blob);
+    const ctx = buildCapContext(state, runtime, { vault, blob });
     const runResult = yield* state.cap.run(ctx);
     return {
       artifacts: runResult.artifacts,
@@ -298,7 +296,7 @@ export function collectEffect(
   state: PreflightState,
   jobLog: JobLog,
   jobSignal: AbortSignal
-): Effect.Effect<CollectResult, DomainTag, Db | BlobStore> {
+): Effect.Effect<CollectResult, DomainTag, Db | BlobStore | Vault> {
   return Effect.gen(function* collectSetup() {
     const evidenceSnapshot = yield* packSnapshotIfNeededEffect(state, jobLog);
     const linkedSource = linkedEvidenceId(

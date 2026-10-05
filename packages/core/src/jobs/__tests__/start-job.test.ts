@@ -50,11 +50,14 @@ vi.mock("../../actors/resolve-actor-labels", () => ({
 import { Db } from "../../infra/db-service";
 import { runDomainWith } from "../../infra/run-domain";
 import { InvalidError } from "../../infra/tagged-errors";
+import { fakeVault } from "../../infra/vault-fake";
 import { recordingJobQueue } from "../job-queue";
 import { startJobEffect, toJobRecord } from "../start-job";
 
 const queue = recordingJobQueue();
-const runDomain = runDomainWith(Layer.mergeAll(Db.layer, queue.layer));
+const runDomain = runDomainWith(
+  Layer.mergeAll(Db.layer, queue.layer, fakeVault().layer)
+);
 
 describe("startJobEffect", () => {
   beforeEach(() => {
