@@ -12,8 +12,13 @@ import {
 import { isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import { db, entitiesRepo } from "@watchdog/db";
+import { asCaseId } from "@watchdog/schemas/shared";
+import {
+  TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
+} from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
-import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
 
 describe("createCase", () => {
   beforeEach(async () => {
@@ -21,7 +26,7 @@ describe("createCase", () => {
   });
 
   it("allows the same slug in a different organization", async () => {
-    const otherOrganizationId = testId(91);
+    const otherOrganizationId = TEST_OTHER_ORGANIZATION_ID;
     const first = await runDomain(
       createCaseEffect({
         name: "Alpha",
@@ -175,7 +180,7 @@ describe("deleteOrganizationCases", () => {
   });
 
   it("removes every Case in the organization and leaves other organizations alone", async () => {
-    const otherOrganizationId = testId(91);
+    const otherOrganizationId = TEST_OTHER_ORGANIZATION_ID;
     await runDomain(
       createCaseEffect({
         name: "One",
@@ -209,7 +214,7 @@ describe("deleteOrganizationCases", () => {
       (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
     const kept = await runDomain(
-      getCaseByIdEffect(survivor.id, otherOrganizationId)
+      getCaseByIdEffect(asCaseId(survivor.id), otherOrganizationId)
     );
     expect(kept.slug).toBe("elsewhere");
   });

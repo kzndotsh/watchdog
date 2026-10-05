@@ -16,10 +16,15 @@ import {
   evidenceIdsFromJobInputs,
   evidenceTitleMapForJobInputs,
 } from "@watchdog/schemas/jobs";
-import type { JobStatus } from "@watchdog/schemas/shared";
+import type {
+  CaseId,
+  JobStatus,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 import {
   pickPlaybookAggregateStatus,
   parseTrimmedCaseId,
+  parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
 import {
@@ -35,8 +40,8 @@ import { jobActivityLabel } from "../jobs/job-display";
 import { proposalActivityLabel } from "../proposals/proposal-display";
 
 export interface ListRecentActivityOpts {
-  organizationId: string;
-  caseId?: string;
+  organizationId: OrganizationId;
+  caseId?: CaseId;
   limit?: number;
 }
 
@@ -137,7 +142,7 @@ export function collapseRecentJobActivityRows(
 
   for (const row of rows) {
     const runId =
-      row.playbookRunId === null ? null : parseTrimmedCaseId(row.playbookRunId);
+      row.playbookRunId === null ? null : parseTrimmedUuid(row.playbookRunId);
     if (runId === null) {
       solo.push(row);
     } else {

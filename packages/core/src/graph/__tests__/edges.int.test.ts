@@ -4,13 +4,14 @@ import { isDomainTag } from "@watchdog/core/errors";
 import { createEdgeEffect, updateEdgeEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { db, evidenceLinksRepo } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
   seedEntity,
   seedEvidence,
 } from "@watchdog/test-db";
-import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
 
 describe("createEdge", () => {
   beforeEach(async () => {

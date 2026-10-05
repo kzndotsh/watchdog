@@ -1,6 +1,10 @@
 import { index, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import type { TaskPriority, TaskStatus } from "@watchdog/schemas/shared";
+import type {
+  TaskPriority,
+  TaskStatus,
+  CaseId,
+} from "@watchdog/schemas/shared";
 
 import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";
@@ -15,6 +19,7 @@ export const tasks = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     caseId: uuid("case_id")
+      .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     entityId: uuid("entity_id").references(() => entities.id, {

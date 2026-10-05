@@ -8,8 +8,9 @@ import {
   startJobEffect,
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 // Enqueues land in a recording queue instead of a real pg-boss.
 const queue = recordingJobQueue();

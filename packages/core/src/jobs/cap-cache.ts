@@ -4,7 +4,11 @@ import { DateTime, Effect } from "effect";
 
 import { capCacheRepo, type JobArtifact } from "@watchdog/db";
 import { normalizeJobInput } from "@watchdog/schemas/jobs";
-import { isJsonObject, trimmedOrNull } from "@watchdog/schemas/shared";
+import {
+  isJsonObject,
+  trimmedOrNull,
+  type CaseId,
+} from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
@@ -33,7 +37,7 @@ export function hashCapInput(input: unknown): string {
 }
 
 export function lookupCapCacheEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   capabilityId: string;
   inputHash: string;
 }): Effect.Effect<
@@ -61,7 +65,7 @@ export function lookupCapCacheEffect(input: {
 }
 
 interface StoreCapCacheInput {
-  caseId: string;
+  caseId: CaseId;
   capabilityId: string;
   inputHash: string;
   jobId: string;

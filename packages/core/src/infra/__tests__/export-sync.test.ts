@@ -1,7 +1,7 @@
 import { Deferred, Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 
 import {
   removeCaseExportDirEffect,
@@ -21,11 +21,17 @@ describe("safeFilename", () => {
 describe("export path guards", () => {
   it("ignores path-traversal slugs for remove and rename", async () => {
     await expect(
-      Effect.runPromise(removeCaseExportDirEffect("org-1", "../outside"))
+      Effect.runPromise(
+        removeCaseExportDirEffect(TEST_ORGANIZATION_ID, "../outside")
+      )
     ).resolves.toBeUndefined();
     await expect(
       Effect.runPromise(
-        renameCaseExportDirEffect("org-1", "../outside", "safe-slug")
+        renameCaseExportDirEffect(
+          TEST_ORGANIZATION_ID,
+          "../outside",
+          "safe-slug"
+        )
       )
     ).resolves.toBeUndefined();
   });
@@ -47,7 +53,7 @@ describe("scheduleCaseExportEffect", () => {
         }
       });
 
-    const caseId = testId(99);
+    const caseId = testCaseId(99);
     const first = runDomain(scheduleCaseExportEffect(caseId, writeExport));
     await vi.waitFor(() => {
       expect(calls).toBe(1);
@@ -83,7 +89,7 @@ describe("scheduleCaseExportEffect", () => {
             if (started === 1) yield* Deferred.await(gate);
             active -= 1;
           });
-        const caseId = testId(98);
+        const caseId = testCaseId(98);
         const schedule = scheduleCaseExportEffect(caseId, writeExport);
         // The releaser is queued after every schedule fiber, so all of them have
         // interpreted (marked dirty, started or joined) before the first write may

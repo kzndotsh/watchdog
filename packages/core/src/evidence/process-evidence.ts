@@ -16,8 +16,11 @@ import {
 } from "@watchdog/schemas/jobs";
 import {
   parseTrimmedCaseId,
+  parseTrimmedUuid,
   trimmedOrUndefined,
+  type CaseId,
   type JsonObject,
+  type OrganizationId,
 } from "@watchdog/schemas/shared";
 
 import { actorLabelForPersist } from "../actors/actor-label-snapshot";
@@ -52,8 +55,8 @@ import {
 } from "../jobs/start-job";
 
 function startCapForEvidenceEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -166,8 +169,8 @@ function startCapForEvidenceEffect(input: {
 }
 
 export function processEvidenceEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -191,7 +194,7 @@ export function processEvidenceEffect(input: {
       const entityId =
         seed.entityId === null || seed.entityId === undefined
           ? undefined
-          : (parseTrimmedCaseId(seed.entityId) ?? undefined);
+          : (parseTrimmedUuid(seed.entityId) ?? undefined);
       return {
         evidenceId: seed.id,
         ...(entityId === undefined ? {} : { entityId }),
@@ -201,12 +204,12 @@ export function processEvidenceEffect(input: {
 }
 
 export function markEvidenceProcessedEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   evidenceId: string;
 }): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* markEvidenceProcessedGen() {
     const caseId = parseTrimmedCaseId(input.caseId) ?? undefined;
-    const evidenceId = parseTrimmedCaseId(input.evidenceId) ?? undefined;
+    const evidenceId = parseTrimmedUuid(input.evidenceId) ?? undefined;
     if (caseId === undefined || evidenceId === undefined) {
       return;
     }
@@ -220,8 +223,8 @@ export function markEvidenceProcessedEffect(input: {
 }
 
 export function enrichUrlEvidenceEffect(input: {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   evidenceId: string;
   actorId: string;
   actorLabel?: string | null;
@@ -260,7 +263,7 @@ export function enrichUrlEvidenceEffect(input: {
       const entityId =
         seed.entityId === null || seed.entityId === undefined
           ? undefined
-          : (parseTrimmedCaseId(seed.entityId) ?? undefined);
+          : (parseTrimmedUuid(seed.entityId) ?? undefined);
       return {
         url,
         sourceEvidenceId: seed.id,

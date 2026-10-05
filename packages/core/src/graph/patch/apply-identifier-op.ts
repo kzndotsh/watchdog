@@ -4,9 +4,10 @@ import { evidenceLinksRepo, identifiersRepo, type DbTx } from "@watchdog/db";
 import { validateIdentifierWrite, type PatchOp } from "@watchdog/schemas/graph";
 import {
   IDENTIFIER_STATUSES,
+  trimmedOrNull,
+  type CaseId,
   type ConfidenceTier,
   type IdentifierStatus,
-  trimmedOrNull,
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
@@ -26,7 +27,7 @@ import { assertEntityInCaseEffect, assertEvidenceLinkedEffect } from "./guards";
 
 export function applyIdentifierOpEffect(
   tx: DbTx,
-  caseId: string,
+  caseId: CaseId,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]

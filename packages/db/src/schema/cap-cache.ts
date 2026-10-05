@@ -7,6 +7,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import type { CaseId } from "@watchdog/schemas/shared";
+
 import { createdAt, timestamptz } from "./_helpers";
 import { cases } from "./cases";
 import type { JobArtifact } from "./jobs";
@@ -20,6 +22,7 @@ export const capCache = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     caseId: uuid("case_id")
+      .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     capabilityId: text("capability_id").notNull(),

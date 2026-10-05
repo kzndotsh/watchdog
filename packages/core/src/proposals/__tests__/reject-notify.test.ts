@@ -54,12 +54,15 @@ vi.mock("../../infra/postgres-tx", () => ({
   transact: (fn: (tx: unknown) => Effect.Effect<unknown>) => fn({}),
 }));
 
+import { asCaseId } from "@watchdog/schemas/shared";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+
 import { runDomain } from "../../infra/run-domain";
 import { rejectProposalEffect } from "../proposals";
 
 describe("rejectProposalEffect", () => {
   it("notifies proposal_queue_changed after reject commits", async () => {
-    const caseId = "00000000-0000-4000-8000-000000000001";
+    const caseId = asCaseId("00000000-0000-4000-8000-000000000001");
     const proposalId = "00000000-0000-4000-8000-000000000002";
     const row = {
       id: proposalId,
@@ -94,7 +97,7 @@ describe("rejectProposalEffect", () => {
     await runDomain(
       rejectProposalEffect({
         caseId,
-        organizationId: "org-1",
+        organizationId: TEST_ORGANIZATION_ID,
         proposalId,
         actorId: "actor-1",
       })

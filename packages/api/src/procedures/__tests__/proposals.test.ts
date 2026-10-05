@@ -18,14 +18,11 @@ vi.mock("@watchdog/core/proposals", async (importOriginal) => {
   };
 });
 
+import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/schemas/testing";
+
 import { listForCase } from "../proposals";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("proposals procedures", () => {
   it("lists proposals for a case", async () => {
@@ -73,7 +70,7 @@ describe("proposals procedures", () => {
     ).resolves.toHaveLength(1);
     expect(listProposalsForCaseEffect).toHaveBeenCalledWith(
       "00000000-0000-4000-8000-000000000001",
-      "org-test",
+      TEST_ORGANIZATION_ID,
       undefined
     );
   });
@@ -99,7 +96,7 @@ describe("proposals procedures", () => {
 
     expect(listProposalsForCaseEffect).toHaveBeenCalledWith(
       "00000000-0000-4000-8000-000000000001",
-      "org-test",
+      TEST_ORGANIZATION_ID,
       { status: "pending" }
     );
   });

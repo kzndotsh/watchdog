@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const { update, updateInCase, notifyEvent } = vi.hoisted(() => ({
@@ -21,7 +22,7 @@ import { runDomain } from "../../infra/run-domain";
 import { setJobStatusEffect } from "../set-job-status";
 
 describe("setJobStatus", () => {
-  const caseId = testId(10);
+  const caseId = testCaseId(10);
   const jobId = testId(20);
 
   it("returns null when update matches no row", async () => {
@@ -37,7 +38,11 @@ describe("setJobStatus", () => {
   it("returns null for invalid scoped ids without calling the repo", async () => {
     updateInCase.mockClear();
     const result = await runDomain(
-      setJobStatusEffect("job-1", { status: "running" }, { caseId: "case-1" })
+      setJobStatusEffect(
+        "job-1",
+        { status: "running" },
+        { caseId: untrustedCaseId("case-1") }
+      )
     );
     expect(result).toBeNull();
     expect(updateInCase).not.toHaveBeenCalled();

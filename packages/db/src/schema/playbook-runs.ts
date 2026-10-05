@@ -1,6 +1,10 @@
 import { jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-import type { JsonObject, PlaybookRunStatus } from "@watchdog/schemas/shared";
+import type {
+  JsonObject,
+  PlaybookRunStatus,
+  CaseId,
+} from "@watchdog/schemas/shared";
 
 import { createdAt, timestamptz } from "./_helpers";
 import { cases } from "./cases";
@@ -8,6 +12,7 @@ import { cases } from "./cases";
 export const playbookRuns = pgTable("playbook_runs", {
   id: uuid("id").primaryKey().defaultRandom(),
   caseId: uuid("case_id")
+    .$type<CaseId>()
     .notNull()
     .references(() => cases.id, { onDelete: "cascade" }),
   playbookId: text("playbook_id").notNull(),

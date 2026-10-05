@@ -7,13 +7,10 @@ import { claimsRepo, db, evidenceRepo, graphWritesRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
+  TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
-import {
-  TEST_ACTOR_ID,
-  testId,
-  TEST_ORGANIZATION_ID,
-} from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("writeGraphFromAgent", () => {
   beforeEach(async () => {

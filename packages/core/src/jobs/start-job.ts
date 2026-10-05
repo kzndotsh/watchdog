@@ -11,8 +11,10 @@ import { evidenceIdsFromJobInputs } from "@watchdog/schemas/jobs";
 import {
   normalizeUuidList,
   trimmedOrUndefined,
+  type CaseId,
   type JobStatus,
   type JsonObject,
+  type OrganizationId,
   type PlaybookRunStatus,
 } from "@watchdog/schemas/shared";
 
@@ -52,8 +54,8 @@ import type { JobQueue } from "./job-queue";
 import { failJobEffect } from "./stages/helpers";
 
 export interface StartJobInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   capabilityId: string;
   input: JsonObject;
   actorId: string;
@@ -141,7 +143,7 @@ export function toJobRecord(
 
 /** Enqueue a freshly created job row; mark it failed when pg-boss send fails. */
 export function enqueueCreatedJobEffect(
-  caseId: string,
+  caseId: CaseId,
   job: Pick<JobRow, "id" | "logs">,
   capabilityId: string
 ): Effect.Effect<void, DomainTag, Db | JobQueue> {
@@ -226,8 +228,8 @@ export function startJobEffect(
 }
 
 export function listJobsForCaseEffect(
-  caseId: string,
-  organizationId: string
+  caseId: CaseId,
+  organizationId: OrganizationId
 ): Effect.Effect<JobListRecord[], DomainTag, Db> {
   return Effect.gen(function* listJobsGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -244,8 +246,8 @@ export function listJobsForCaseEffect(
 }
 
 export function getJobForCaseEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   jobId: string
 ): Effect.Effect<JobRecord, DomainTag, Db> {
   return Effect.gen(function* getJobForCaseGen() {
@@ -267,8 +269,8 @@ interface CancelJobOpts {
 }
 
 export function cancelJobEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   jobId: string,
   opts?: CancelJobOpts
 ): Effect.Effect<JobRecord, DomainTag, Db> {

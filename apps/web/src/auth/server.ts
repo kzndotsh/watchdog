@@ -2,6 +2,7 @@ import "@tanstack/react-start/server-only";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 import { createAuth } from "@watchdog/auth/server";
+import { asOrganizationId } from "@watchdog/schemas/shared";
 
 // tanstackStartCookies() must stay last so later plugins' Set-Cookie isn't dropped.
 export const auth = createAuth({
@@ -12,7 +13,11 @@ export const auth = createAuth({
     const { deleteOrganizationCasesEffect } =
       await import("@watchdog/core/cases");
     const { runDomain } = await import("@watchdog/core/infra");
-    await runDomain(deleteOrganizationCasesEffect(organizationId, { actorId }));
+    await runDomain(
+      deleteOrganizationCasesEffect(asOrganizationId(organizationId), {
+        actorId,
+      })
+    );
   },
 });
 

@@ -1,9 +1,10 @@
 import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const CASE_ID = testId(1);
+const CASE_ID = testCaseId(1);
 const JOB_ID = testId(2);
 const ACTOR_ID = "actor-1";
 
@@ -96,7 +97,7 @@ describe("startJobEffect", () => {
     await runDomain(
       startJobEffect({
         caseId: CASE_ID,
-        organizationId: "org-1",
+        organizationId: TEST_ORGANIZATION_ID,
         capabilityId: "network.dns.lookup",
         input: { host: "example.com" },
         actorId: ACTOR_ID,
@@ -120,7 +121,7 @@ describe("startJobEffect", () => {
       runDomain(
         startJobEffect({
           caseId: CASE_ID,
-          organizationId: "org-1",
+          organizationId: TEST_ORGANIZATION_ID,
           capabilityId: "   ",
           input: { host: "example.com" },
           actorId: ACTOR_ID,
@@ -134,7 +135,7 @@ describe("startJobEffect", () => {
       runDomain(
         startJobEffect({
           caseId: CASE_ID,
-          organizationId: "org-1",
+          organizationId: TEST_ORGANIZATION_ID,
           capabilityId: "network.dns.lookup",
           input: { host: "example.com" },
           actorId: "   ",
@@ -179,7 +180,7 @@ describe("startJobEffect", () => {
     await runDomain(
       startJobEffect({
         caseId: CASE_ID,
-        organizationId: "org-1",
+        organizationId: TEST_ORGANIZATION_ID,
         capabilityId: "network.dns.lookup",
         input: {
           entityId: `  ${entityId}  `,
@@ -204,7 +205,7 @@ describe("toJobRecord", () => {
     const now = new Date();
     const record = toJobRecord({
       id: "job-1",
-      caseId: "case-1",
+      caseId: testCaseId(1),
       capabilityId: "network.dns.lookup",
       input: { host: "example.com" },
       output: null,

@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
+import { asCaseId } from "@watchdog/schemas/shared";
+
 import {
   assertUploadedObjectEffect,
   blobStoreLayer,
@@ -20,7 +22,7 @@ function runLive<A, E>(effect: Effect.Effect<A, E, BlobStore>): Promise<A> {
 
 describe("blobStoreLayer (local S3)", () => {
   it("uploads, verifies, reads, presigns and deletes a Case's artifacts", async () => {
-    const caseId = randomUUID();
+    const caseId = asCaseId(randomUUID());
     const bytes = new TextEncoder().encode(`blob int ${caseId}`);
 
     const uploaded = await runLive(

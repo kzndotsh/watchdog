@@ -10,12 +10,9 @@ import {
   updateTaskEffect,
 } from "@watchdog/core/tasks";
 import { activityEventsRepo, db } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
-import {
-  TEST_ACTOR_ID,
-  TEST_ORGANIZATION_ID,
-  testId,
-} from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("createTask", () => {
   beforeEach(async () => {

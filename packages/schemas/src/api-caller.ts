@@ -1,3 +1,5 @@
+import type { OrganizationId } from "./ids";
+
 export type ApiAuthMethod = "session" | "apiKey";
 
 export interface ApiActor {
@@ -5,7 +7,7 @@ export interface ApiActor {
   email: string | null;
   name: string | null;
   /** Active Better Auth organization; null if the user has no membership. */
-  organizationId: string | null;
+  organizationId: OrganizationId | null;
 }
 
 /** Who is calling and how they authenticated; the logger is added by `@watchdog/api`'s `ApiContext`. */

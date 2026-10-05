@@ -7,8 +7,13 @@ import {
   type DbExec,
 } from "@watchdog/db";
 import { confirmedEvidenceViolation } from "@watchdog/policy";
-import type { ConfidenceTier } from "@watchdog/schemas/shared";
-import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
+import {
+  parseTrimmedCaseId,
+  parseTrimmedUuid,
+  type CaseId,
+  type ConfidenceTier,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
 import { tryDbOn } from "../../infra/postgres-effect";
@@ -25,9 +30,20 @@ export function requireTrimmedGraphId(
   value: string,
   entity: NotFoundEntity
 ): Effect.Effect<string, DomainTag> {
-  const trimmed = parseTrimmedCaseId(value);
+  const trimmed = parseTrimmedUuid(value);
   if (trimmed === null) {
     return new NotFoundError({ entity, id: value });
+  }
+  return Effect.succeed(trimmed);
+}
+
+/** Trim a Case id or fail not_found. */
+export function requireTrimmedCaseIdEffect(
+  value: string
+): Effect.Effect<CaseId, DomainTag> {
+  const trimmed = parseTrimmedCaseId(value);
+  if (trimmed === null) {
+    return new NotFoundError({ entity: "Case", id: value });
   }
   return Effect.succeed(trimmed);
 }
@@ -38,11 +54,11 @@ export function requireTrimmedGraphId(
  * on API / actor-facing entrypoints.
  */
 export function assertCaseExistsUncheckedEffect(
-  caseId: string,
+  caseId: CaseId,
   exec?: DbExec
-): Effect.Effect<string, DomainTag, Db> {
+): Effect.Effect<CaseId, DomainTag, Db> {
   return Effect.gen(function* assertCaseExistsUncheckedGen() {
-    const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
+    const trimmedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
     const row = yield* tryDbOn(exec, (handle) =>
       casesRepo.getByIdUnchecked(handle, trimmedCaseId)
     );
@@ -55,12 +71,12 @@ export function assertCaseExistsUncheckedEffect(
 
 /** Org-scoped case gate for API / actor-facing entrypoints. Returns trimmed case id. */
 export function assertCaseInOrgEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   exec?: DbExec
-): Effect.Effect<string, DomainTag, Db> {
+): Effect.Effect<CaseId, DomainTag, Db> {
   return Effect.gen(function* assertCaseInOrgGen() {
-    const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
+    const trimmedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
     const row = yield* tryDbOn(exec, (handle) =>
       casesRepo.getById(handle, trimmedCaseId, organizationId)
     );
@@ -72,12 +88,12 @@ export function assertCaseInOrgEffect(
 }
 
 export function assertEntityInCaseEffect(
-  caseId: string,
+  caseId: CaseId,
   entityId: string,
   exec?: DbExec
 ): Effect.Effect<string, DomainTag, Db> {
   return Effect.gen(function* assertEntityInCaseGen() {
-    const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
+    const trimmedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
     const trimmedEntityId = yield* requireTrimmedGraphId(entityId, "Entity");
     const row = yield* tryDbOn(exec, (handle) =>
       entitiesRepo.getInCase(handle, trimmedCaseId, trimmedEntityId)
@@ -93,12 +109,12 @@ export function assertEntityInCaseEffect(
 }
 
 export function assertEvidenceInCaseEffect(
-  caseId: string,
+  caseId: CaseId,
   evidenceId: string,
   exec?: DbExec
 ): Effect.Effect<string, DomainTag, Db> {
   return Effect.gen(function* assertEvidenceInCaseGen() {
-    const trimmedCaseId = yield* requireTrimmedGraphId(caseId, "Case");
+    const trimmedCaseId = yield* requireTrimmedCaseIdEffect(caseId);
     const trimmedEvidenceId = yield* requireTrimmedGraphId(
       evidenceId,
       "Evidence"

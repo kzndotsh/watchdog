@@ -2,8 +2,10 @@ import { Effect } from "effect";
 
 import { claimsRepo, evidenceLinksRepo, type ClaimRow } from "@watchdog/db";
 import type {
+  CaseId,
   ClaimClass,
   ConfidenceTier,
+  OrganizationId,
   RetractKind,
 } from "@watchdog/schemas/shared";
 import {
@@ -50,8 +52,8 @@ export interface ClaimRecord {
 }
 
 export interface CreateClaimInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   entityId: string;
   text: string;
   confidence: ConfidenceTier;
@@ -60,8 +62,8 @@ export interface CreateClaimInput {
 }
 
 export interface UpdateClaimInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   claimId: string;
   text?: string;
   class?: ClaimClass;
@@ -70,8 +72,8 @@ export interface UpdateClaimInput {
 }
 
 export interface RetractClaimInput {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   claimId: string;
   kind: RetractKind;
   reason: string;
@@ -98,8 +100,8 @@ interface EntityListOpts {
 }
 
 export function listClaimsForEntityEffect(
-  caseId: string,
-  organizationId: string,
+  caseId: CaseId,
+  organizationId: OrganizationId,
   entityId: string,
   opts?: EntityListOpts
 ): Effect.Effect<ClaimRecord[], DomainTag, Db> {

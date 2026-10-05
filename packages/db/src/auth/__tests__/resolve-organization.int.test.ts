@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  type OrganizationId,
+  asOrganizationId,
+} from "@watchdog/schemas/shared";
 import { withTestTx } from "@watchdog/test-db";
 
 import { member, organization, user } from "../../schema/auth";
@@ -19,7 +23,7 @@ async function insertUser(
 
 async function insertOrg(
   tx: Parameters<typeof resolveUserOrganizationId>[0],
-  id: string,
+  id: OrganizationId,
   createdAt: Date
 ) {
   await tx.insert(organization).values({
@@ -34,8 +38,8 @@ describe("resolveUserOrganizationId", () => {
   it("returns preferred membership and does not fall back when preferred is foreign", async () => {
     await withTestTx(async (tx) => {
       const userId = crypto.randomUUID();
-      const firstOrg = crypto.randomUUID();
-      const secondOrg = crypto.randomUUID();
+      const firstOrg = asOrganizationId(crypto.randomUUID());
+      const secondOrg = asOrganizationId(crypto.randomUUID());
       const t0 = new Date("2026-01-01T00:00:00.000Z");
       const t1 = new Date("2026-01-02T00:00:00.000Z");
       await insertUser(tx, userId);
@@ -62,7 +66,11 @@ describe("resolveUserOrganizationId", () => {
         secondOrg
       );
       expect(
-        await resolveUserOrganizationId(tx, userId, crypto.randomUUID())
+        await resolveUserOrganizationId(
+          tx,
+          userId,
+          asOrganizationId(crypto.randomUUID())
+        )
       ).toBeNull();
       expect(await resolveUserOrganizationId(tx, userId)).toBe(firstOrg);
     });

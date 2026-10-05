@@ -1,4 +1,12 @@
 export type { ApiActor, ApiAuthMethod, ApiCaller } from "./api-caller";
+export type { CaseId, OrganizationId } from "./ids";
+export {
+  asCaseId,
+  asOrganizationId,
+  caseIdSchema,
+  organizationIdSchema,
+  trimmedCaseIdSchema,
+} from "./ids";
 export type {
   ClaimClass,
   ConfidenceTier,
@@ -154,11 +162,13 @@ export {
   optionalHttpUrlSchema,
   optionalDueDatePatchSchema,
   optionalTrimmedSchema,
+  optionalCaseIdSchema,
   optionalUuidSchema,
   nullableTrimmedPatchSchema,
   nullableUuidSchema,
   sha256HexSchema,
   parseTrimmedCaseId,
+  parseTrimmedUuid,
   parseOptionalTrimmedUuid,
   slugifyName,
   entitySlugSchema,

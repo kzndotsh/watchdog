@@ -5,12 +5,12 @@ import {
   type EntityRow,
   type NewEntity,
 } from "@watchdog/db";
-import { slugifyName } from "@watchdog/schemas/shared";
+import { slugifyName, type CaseId } from "@watchdog/schemas/shared";
 import { testId } from "@watchdog/test-kit/fixtures";
 
 export async function seedEntity(
   exec: DbExec,
-  caseId: string,
+  caseId: CaseId,
   overrides?: Partial<NewEntity>
 ): Promise<EntityRow> {
   const overridesResolved = overrides ?? {};
@@ -33,7 +33,7 @@ export async function seedEntity(
 /** Legacy rows with blank display names (repo create rejects these at ingress). */
 export async function seedEntityBlankDisplayName(
   exec: DbExec,
-  caseId: string,
+  caseId: CaseId,
   overrides: Partial<NewEntity> & { slug: string }
 ): Promise<EntityRow> {
   const [created] = await exec

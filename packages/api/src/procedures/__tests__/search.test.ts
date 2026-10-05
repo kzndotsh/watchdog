@@ -14,14 +14,11 @@ vi.mock("@watchdog/core/search", async (importOriginal) => {
   };
 });
 
+import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/schemas/testing";
+
 import { searchCaseProc } from "../search";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("search procedures", () => {
   it("searches within a case", async () => {
@@ -94,7 +91,7 @@ describe("search procedures", () => {
 
     expect(searchCaseEffect).toHaveBeenCalledWith({
       caseId: "00000000-0000-4000-8000-000000000001",
-      organizationId: "org-test",
+      organizationId: TEST_ORGANIZATION_ID,
       q: "alice",
       perGroup: 20,
     });

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 const { create } = vi.hoisted(() => ({
@@ -16,7 +17,7 @@ import { runDomain } from "../../../infra/run-domain";
 import { proposeStageEffect } from "../propose";
 
 describe("proposeStage", () => {
-  const caseId = testId(1);
+  const caseId = testCaseId(1);
   const jobId = testId(2);
   const evidenceId = testId(3);
 

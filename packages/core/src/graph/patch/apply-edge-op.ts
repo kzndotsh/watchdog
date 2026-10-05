@@ -10,8 +10,9 @@ import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   EDGE_PREDICATES,
   edgePredicateAllowsKinds,
-  type ConfidenceTier,
   trimmedOrNull,
+  type CaseId,
+  type ConfidenceTier,
 } from "@watchdog/schemas/shared";
 
 import { tryDb } from "../../infra/postgres-effect";
@@ -30,7 +31,7 @@ import { assertEvidenceLinkedEffect } from "./guards";
 
 export function applyEdgeOpEffect(
   tx: DbTx,
-  caseId: string,
+  caseId: CaseId,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
   evidenceIds: string[]

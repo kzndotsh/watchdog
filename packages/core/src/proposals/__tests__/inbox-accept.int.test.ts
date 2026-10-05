@@ -23,6 +23,7 @@ import { entityDisplayLabel } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
   buildIdentifierCreateOp,
+  TEST_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -32,11 +33,7 @@ import {
   seedIdentifier,
   seedProposal,
 } from "@watchdog/test-db";
-import {
-  TEST_ACTOR_ID,
-  testId,
-  TEST_ORGANIZATION_ID,
-} from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("acceptProposal", () => {
   beforeEach(async () => {

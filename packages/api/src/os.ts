@@ -1,7 +1,11 @@
 import { ORPCError, os } from "@orpc/server";
 import { evlog } from "evlog/orpc";
 
-import type { ApiActor, ApiAuthMethod } from "@watchdog/schemas/shared";
+import type {
+  ApiActor,
+  ApiAuthMethod,
+  OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import type { ApiContext } from "./context";
 import { assertAgentChildWriteCustody } from "./custody";
@@ -75,7 +79,7 @@ export const authed = base.use(({ context, next }) => {
       actor: {
         ...context.actor,
         organizationId,
-      } satisfies ApiActor & { organizationId: string },
+      } satisfies ApiActor & { organizationId: OrganizationId },
       authMethod,
     },
   });

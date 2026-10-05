@@ -23,11 +23,12 @@ import {
 } from "@watchdog/schemas/graph";
 import {
   IDENTIFIER_TYPES,
-  normalizeUuidList,
   normalizeIdentifierPlatform,
-  parseTrimmedCaseId,
+  normalizeUuidList,
+  parseTrimmedUuid,
   slugifyName,
   trimmedOrUndefined,
+  type CaseId,
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
@@ -36,7 +37,7 @@ import type { DomainTag } from "../infra/tagged-errors";
 
 function markExistingInGraphEffect(
   exec: DbExec | undefined,
-  caseId: string,
+  caseId: CaseId,
   fps: { op: PatchOp; fp: string }[],
   known: Set<string>
 ): Effect.Effect<void, DomainTag, Db> {
@@ -183,11 +184,11 @@ function markExistingInGraphEffect(
           const key = edgePatchFingerprintKey({
             fromId:
               typeof op.data.fromId === "string"
-                ? (parseTrimmedCaseId(op.data.fromId) ?? "")
+                ? (parseTrimmedUuid(op.data.fromId) ?? "")
                 : "",
             toId:
               typeof op.data.toId === "string"
-                ? (parseTrimmedCaseId(op.data.toId) ?? "")
+                ? (parseTrimmedUuid(op.data.toId) ?? "")
                 : "",
             predicate:
               typeof op.data.predicate === "string"
@@ -263,7 +264,7 @@ function markExistingInGraphEffect(
  * or finding_suppressions (rejected FP memory).
  */
 export function suppressKnownFindingsEffect(
-  caseId: string,
+  caseId: CaseId,
   patch: PatchOp[],
   exec?: DbExec
 ): Effect.Effect<{ kept: PatchOp[]; suppressed: number }, DomainTag, Db> {
@@ -318,7 +319,7 @@ export function suppressKnownFindingsEffect(
 }
 
 export function recordRejectedFingerprintsEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   proposalId: string;
   patch: PatchOp[];
   tx?: DbTx;

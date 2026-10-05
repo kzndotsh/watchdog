@@ -2,6 +2,7 @@ import { Deferred, Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { casesRepo, db } from "@watchdog/db";
+import { asCaseId } from "@watchdog/schemas/shared";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 
 import { readArtifactBytesEffect } from "../blob";
@@ -70,7 +71,7 @@ describe("detached export write services", () => {
           read.push(yield* readArtifactBytesEffect(uri));
         }).pipe(Effect.orDie);
       const waitForWrite = yield* claimCaseExportEffect(
-        "11111111-1111-4111-8111-000000000077",
+        asCaseId("11111111-1111-4111-8111-000000000077"),
         writeExport
       ).pipe(
         Effect.provide(caller.layer),
@@ -136,10 +137,12 @@ describe("detached export write services", () => {
   it("schedule needs no caller services", async () => {
     let ran = 0;
     await Effect.runPromise(
-      scheduleCaseExportEffect("11111111-1111-4111-8111-000000000078", () =>
-        Effect.sync(() => {
-          ran += 1;
-        })
+      scheduleCaseExportEffect(
+        asCaseId("11111111-1111-4111-8111-000000000078"),
+        () =>
+          Effect.sync(() => {
+            ran += 1;
+          })
       )
     );
     expect(ran).toBe(1);

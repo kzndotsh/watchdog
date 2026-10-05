@@ -11,10 +11,13 @@ import { listEvidenceForCaseEffect } from "@watchdog/core/evidence";
 import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { listJobsForCaseEffect } from "@watchdog/core/jobs";
+import {
+  TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
+} from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
-import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
 
-const OTHER_ORG_ID = testId(91);
+const OTHER_ORG_ID = TEST_OTHER_ORGANIZATION_ID;
 
 describe("case organization isolation", () => {
   beforeEach(async () => {

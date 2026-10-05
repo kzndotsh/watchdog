@@ -21,18 +21,20 @@ import {
   proposalEntityName,
 } from "@watchdog/schemas/jobs";
 import type {
+  CaseId,
   EntityKind,
   EvidenceKind,
   IdentifierType,
   JobStatus,
   JsonObject,
+  OrganizationId,
   TaskPriority,
   TaskStatus,
 } from "@watchdog/schemas/shared";
 import {
   entityDisplayLabel,
   pickPlaybookAggregateStatus,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 
 import { getCaseByIdEffect } from "../cases/cases";
@@ -49,8 +51,8 @@ import type { DomainTag } from "../infra/tagged-errors";
 const DEFAULT_PER_GROUP = 8;
 
 export interface SearchCaseOpts {
-  caseId: string;
-  organizationId: string;
+  caseId: CaseId;
+  organizationId: OrganizationId;
   q: string;
   limit?: number;
   perGroup?: number;
@@ -169,7 +171,7 @@ function pickSearchJobResultSummary(
 
 function collapsePlaybookRunId(runId: string | null): string | undefined {
   if (runId === null) return undefined;
-  return parseTrimmedCaseId(runId) ?? undefined;
+  return parseTrimmedUuid(runId) ?? undefined;
 }
 
 /** Collapse playbook step rows into one search hit per run. */
@@ -245,8 +247,8 @@ export function searchCaseEffect(
       return emptyResult(q);
     }
 
-    const caseRow = yield* getCaseByIdEffect(opts.caseId, opts.organizationId);
-    const scopedCaseId = caseRow.id;
+    yield* getCaseByIdEffect(opts.caseId, opts.organizationId);
+    const scopedCaseId = opts.caseId;
 
     const perGroup = Math.min(
       opts.perGroup ?? opts.limit ?? DEFAULT_PER_GROUP,

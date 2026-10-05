@@ -18,14 +18,11 @@ vi.mock("@watchdog/core/graph", async (importOriginal) => {
   };
 });
 
+import { testActor } from "@watchdog/schemas/testing";
+
 import { create, list, update } from "../events";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("events procedures", () => {
   it("lists events for an entity", async () => {

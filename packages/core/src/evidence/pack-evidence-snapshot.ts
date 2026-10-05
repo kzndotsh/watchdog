@@ -11,8 +11,9 @@ import {
   URL_ENRICH_CAPABILITY_ID,
 } from "@watchdog/schemas/jobs";
 import {
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   trimmedOrUndefined,
+  type CaseId,
 } from "@watchdog/schemas/shared";
 
 import { readArtifactBytesEffect } from "../infra/blob";
@@ -64,7 +65,7 @@ function loadTextFromEvidence(row: {
  * Output (enriched.md), not the bare URL string on the Evidence row.
  */
 function loadEnrichOutputText(input: {
-  caseId: string;
+  caseId: CaseId;
   evidenceId: string;
 }): Effect.Effect<string | null, DomainTag, Db | BlobStore> {
   return Effect.gen(function* loadEnrichOutputTextGen() {
@@ -103,7 +104,7 @@ function loadEnrichOutputText(input: {
 }
 
 export function packEvidenceSnapshotEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   evidenceId: string;
   entityId?: string;
 }): Effect.Effect<EvidenceSnapshot, DomainTag, Db | BlobStore> {
@@ -135,11 +136,11 @@ export function packEvidenceSnapshotEffect(input: {
         : initialText;
     let entityId: string | undefined;
     if (input.entityId !== null && input.entityId !== undefined) {
-      entityId = parseTrimmedCaseId(input.entityId) ?? undefined;
+      entityId = parseTrimmedUuid(input.entityId) ?? undefined;
     } else if (row.entityId === null || row.entityId === undefined) {
       entityId = undefined;
     } else {
-      entityId = parseTrimmedCaseId(row.entityId) ?? undefined;
+      entityId = parseTrimmedUuid(row.entityId) ?? undefined;
     }
     const label = trimmedOrUndefined(row.label ?? undefined);
     const mime = trimmedOrUndefined(row.mime ?? undefined);

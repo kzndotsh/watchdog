@@ -368,7 +368,7 @@ export const jobsRepo = {
   async listRunning(exec: DbExec): Promise<
     {
       id: string;
-      caseId: string;
+      caseId: typeof jobs.$inferSelect.caseId;
       capabilityId: string;
       playbookRunId: string | null;
       startedAt: Date | null;

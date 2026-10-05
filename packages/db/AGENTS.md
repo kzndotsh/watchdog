@@ -43,6 +43,7 @@ Repos do **not** re-validate display strings (name/title/text, slugify, blank→
 
 - Enums: `text().$type<T>()` from `@watchdog/schemas`, never `pgEnum`. JSONB: concrete `$type` interfaces, no bare `jsonb()`.
 - Builder API only (`select` / `insert` / `update` / `delete`); no `db.query` / `relations()`.
+- Branded ids: every `case_id` / `cases.id` column is `.$type<CaseId>()` and every organization id column (`cases.organization_id`, `auth.organization.id`, `member`, `invitation`, `session.active_organization_id`) is `.$type<OrganizationId>()`. That is a promise the database cannot check: raw `sql` results are not branded. Repo `organizationId` parameters are `OrganizationId`; `caseId` parameters stay `string` because repos trim and validate them (`trimCaseId` in `repos/_scoped-ids.ts` returns `CaseId | undefined`); never cast.
 - PKs: `uuid().defaultRandom()` for domain tables, `text` for Better Auth. Timestamps: `src/schema/_helpers.ts`; `updatedAt` uses `$onUpdateFn`, so never set it by hand in `.set()`.
 - Indexes in array callback form; list-by-case/entity FKs get non-unique indexes.
 - Migrations: the TypeScript schema is the source. `pnpm db:generate` then `pnpm db:migrate`; never hand-author a migration without its `drizzle/meta` snapshot (keep it in sync with `_journal.json`). `CREATE SCHEMA "auth"` migrations use `IF NOT EXISTS` when `init.sql` already created it.

@@ -4,7 +4,7 @@ import "@tanstack/react-start/server-only";
 import { router, type AppRouter } from "@watchdog/api";
 import { actorFromSession } from "@watchdog/auth/server";
 import { peekRequestLogger } from "@watchdog/log";
-import type { ApiActor } from "@watchdog/schemas/shared";
+import type { ApiActor, OrganizationId } from "@watchdog/schemas/shared";
 
 export { orpcNullIfNotFound } from "@/lib/orpc-null-if-not-found";
 
@@ -24,7 +24,7 @@ type SessionForActor = Parameters<typeof actorFromSession>[0];
 /** ServerFn handler context → in-process oRPC client for the authenticated actor. */
 export function orpcFromContext(context: {
   session: SessionForActor;
-  organizationId: string | null;
+  organizationId: OrganizationId | null;
 }): RouterClient<AppRouter> {
   return orpcForActor(
     actorFromSession(context.session, context.organizationId)

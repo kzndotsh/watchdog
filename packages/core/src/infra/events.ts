@@ -8,6 +8,7 @@ import {
   watchdogEventSchema,
   type WatchdogEvent,
 } from "@watchdog/schemas/feed";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import { logSwallowed } from "./process-log";
 
@@ -52,7 +53,7 @@ function notifyWatchdogEventEffect(event: WatchdogEvent): Effect.Effect<void> {
  * Fan-out after a Case graph mutation. Call only after commit — SSE clients
  * refetch on receipt and would otherwise read pre-commit state.
  */
-export function notifyEntityChangedEffect(caseId: string): Effect.Effect<void> {
+export function notifyEntityChangedEffect(caseId: CaseId): Effect.Effect<void> {
   return notifyWatchdogEventEffect({ type: "entity_changed", caseId }).pipe(
     Effect.forkDetach({ startImmediately: true }),
     Effect.asVoid
@@ -64,7 +65,7 @@ export function notifyEntityChangedEffect(caseId: string): Effect.Effect<void> {
  * intake consumers invalidate evidence queries on receipt.
  */
 export function notifyEvidenceChangedEffect(
-  caseId: string,
+  caseId: CaseId,
   evidenceId?: string
 ): Effect.Effect<void> {
   return notifyWatchdogEventEffect(
@@ -79,7 +80,7 @@ export function notifyEvidenceChangedEffect(
  * so dossier/board consumers can invalidate without graph refetch.
  */
 export function notifyTaskChangedEffect(
-  caseId: string,
+  caseId: CaseId,
   entityId?: string
 ): Effect.Effect<void> {
   return notifyWatchdogEventEffect(
@@ -90,7 +91,7 @@ export function notifyTaskChangedEffect(
 }
 
 export function notifyProposalCreatedEffect(
-  caseId: string,
+  caseId: CaseId,
   proposalId: string
 ): Effect.Effect<void> {
   return notifyWatchdogEventEffect({
@@ -102,7 +103,7 @@ export function notifyProposalCreatedEffect(
 
 /** Fan-out after accept/reject — Triage and overview pending counts. */
 export function notifyProposalQueueChangedEffect(
-  caseId: string
+  caseId: CaseId
 ): Effect.Effect<void> {
   return notifyWatchdogEventEffect({
     type: "proposal_queue_changed",
@@ -111,7 +112,7 @@ export function notifyProposalQueueChangedEffect(
 }
 
 export function notifyJobUpdateEffect(
-  caseId: string,
+  caseId: CaseId,
   jobId: string,
   status: string
 ): Effect.Effect<void> {

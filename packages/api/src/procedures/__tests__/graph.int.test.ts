@@ -3,13 +3,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { listClaimsForEntityEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { writeGraphFromAgentEffect } from "@watchdog/core/proposals";
-import { buildClaimCreateOp } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
 import {
-  TEST_ACTOR_ID,
-  testId,
+  buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
-} from "@watchdog/test-kit";
+} from "@watchdog/schemas/testing";
+import { resetTestDb, seedCase, seedEntity, testDb } from "@watchdog/test-db";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 describe("graph write (core service)", () => {
   beforeEach(async () => {

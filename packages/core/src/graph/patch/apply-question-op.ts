@@ -2,6 +2,7 @@ import { Effect } from "effect";
 
 import { questionsRepo, type DbTx } from "@watchdog/db";
 import type { PatchOp } from "@watchdog/schemas/graph";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../../infra/db-service";
 import { tryDb } from "../../infra/postgres-effect";
@@ -18,7 +19,7 @@ import { assertEntityInCaseEffect } from "./guards";
 
 export function applyQuestionOpEffect(
   tx: DbTx,
-  caseId: string,
+  caseId: CaseId,
   op: PatchOp
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyQuestionOpGen() {

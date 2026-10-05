@@ -19,17 +19,14 @@ vi.mock("@watchdog/core/tasks", async (importOriginal) => {
   };
 });
 
+import { testActor } from "@watchdog/schemas/testing";
+
 import { list, reorder, update } from "../tasks";
 
 const caseId = "00000000-0000-4000-8000-000000000001";
 const taskId = "00000000-0000-4000-8000-000000000060";
 
-const actor = {
-  userId: "u1",
-  email: "a@test.local",
-  name: "Agent",
-  organizationId: "org-test",
-};
+const actor = testActor();
 
 describe("tasks procedures", () => {
   it("lists tasks for a case", async () => {

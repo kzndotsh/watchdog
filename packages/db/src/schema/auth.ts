@@ -7,6 +7,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import type { OrganizationId } from "@watchdog/schemas/shared";
+
 import { timestamps, timestamptz } from "./_helpers";
 
 /** Better Auth tables live in the `auth` schema (locked). */
@@ -37,7 +39,9 @@ export const session = authSchema.table(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    activeOrganizationId: text("active_organization_id"),
+    activeOrganizationId: text(
+      "active_organization_id"
+    ).$type<OrganizationId>(),
     impersonatedBy: text("impersonated_by"),
   },
   (t) => [
@@ -113,7 +117,7 @@ export const apiKey = authSchema.table(
 );
 
 export const organization = authSchema.table("organization", {
-  id: text("id").primaryKey(),
+  id: text("id").$type<OrganizationId>().primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   logo: text("logo"),
@@ -126,6 +130,7 @@ export const member = authSchema.table(
   {
     id: text("id").primaryKey(),
     organizationId: text("organization_id")
+      .$type<OrganizationId>()
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     userId: text("user_id")
@@ -149,6 +154,7 @@ export const invitation = authSchema.table(
   {
     id: text("id").primaryKey(),
     organizationId: text("organization_id")
+      .$type<OrganizationId>()
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     email: text("email").notNull(),

@@ -16,7 +16,7 @@ import {
   entityDisplayLabel,
   jobStatusSchema,
   pickPlaybookAggregateStatus,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
   predicateLabel,
   titleCase,
 } from "@watchdog/schemas/shared";
@@ -102,7 +102,7 @@ function collapsePlaybookRunId(
   runId: string | null | undefined
 ): string | undefined {
   if (runId === null || runId === undefined) return undefined;
-  return parseTrimmedCaseId(runId) ?? undefined;
+  return parseTrimmedUuid(runId) ?? undefined;
 }
 
 function jobListRowAt(row: CollapsibleJobListRow): number {

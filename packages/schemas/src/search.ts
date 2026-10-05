@@ -8,12 +8,13 @@ import {
   taskPrioritySchema,
   taskStatusSchema,
 } from "./enums";
-import { jsonObjectSchema, trimmedUuidSchema, uuidSchema } from "./primitives";
+import { trimmedCaseIdSchema } from "./ids";
+import { jsonObjectSchema, uuidSchema } from "./primitives";
 
 export const SEARCH_MIN_QUERY_LENGTH = 2;
 
 export const searchCaseInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   q: z.string().trim().min(SEARCH_MIN_QUERY_LENGTH),
   limit: z.number().int().min(1).max(50).optional(),
 });

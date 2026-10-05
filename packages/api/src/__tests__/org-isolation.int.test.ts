@@ -5,6 +5,12 @@ import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
 import { isDomainTag } from "@watchdog/core/errors";
 import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
+import type { OrganizationId } from "@watchdog/schemas/shared";
+import {
+  TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/schemas/testing";
 import {
   resetTestDb,
   seedCase,
@@ -16,11 +22,7 @@ import {
   seedProposal,
   testDb,
 } from "@watchdog/test-db";
-import {
-  TEST_ACTOR_ID,
-  TEST_ORGANIZATION_ID,
-  testId,
-} from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import type { ApiContext } from "../context";
 import { router } from "../router";
@@ -37,11 +39,11 @@ import { router } from "../router";
  * Afterwards A's data is compared with a snapshot taken before the attacks.
  */
 const ORG_A = TEST_ORGANIZATION_ID;
-const ORG_B = testId(91);
+const ORG_B = TEST_OTHER_ORGANIZATION_ID;
 const USER_A = TEST_ACTOR_ID;
 const USER_B = "test-actor-b";
 
-function clientFor(organizationId: string, userId: string) {
+function clientFor(organizationId: OrganizationId, userId: string) {
   const context: ApiContext = {
     headers: new Headers(),
     actor: { userId, email: null, name: userId, organizationId },
@@ -66,8 +68,9 @@ async function codeOf(run: () => Promise<unknown>): Promise<string> {
 }
 
 const ids = {
-  caseA: "",
-  caseB: "",
+  // Placeholders: `beforeAll` seeds the real cases.
+  caseA: testCaseId(1),
+  caseB: testCaseId(2),
   entityA: testId(10),
   entityA2: testId(11),
   entityB: testId(20),

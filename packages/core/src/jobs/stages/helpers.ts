@@ -2,7 +2,8 @@ import { Effect } from "effect";
 
 import {
   parseGraphUuidList,
-  parseTrimmedCaseId,
+  parseTrimmedUuid,
+  type CaseId,
 } from "@watchdog/schemas/shared";
 
 import { nowDateEffect } from "../../infra/clock";
@@ -27,7 +28,7 @@ export function inputString(data: unknown, key: string): string | undefined {
 export function inputGraphUuid(data: unknown, key: string): string | undefined {
   const v = inputString(data, key);
   if (v === undefined) return undefined;
-  return parseTrimmedCaseId(v) ?? undefined;
+  return parseTrimmedUuid(v) ?? undefined;
 }
 
 /**
@@ -40,7 +41,7 @@ export function inputGraphUuidStrict(
 ): string | undefined | null {
   const raw = inputString(data, key);
   if (raw === undefined) return undefined;
-  return parseTrimmedCaseId(raw) ?? null;
+  return parseTrimmedUuid(raw) ?? null;
 }
 
 export function linkedEvidenceId(
@@ -51,7 +52,7 @@ export function linkedEvidenceId(
   for (const key of fields) {
     const v = inputString(data, key);
     if (v === undefined) continue;
-    const parsed = parseTrimmedCaseId(v);
+    const parsed = parseTrimmedUuid(v);
     if (parsed !== null) return parsed;
   }
   return undefined;
@@ -69,7 +70,7 @@ export function linkedEvidenceIdStrict(
   for (const key of fields) {
     const v = inputString(data, key);
     if (v === undefined) continue;
-    const parsed = parseTrimmedCaseId(v);
+    const parsed = parseTrimmedUuid(v);
     return parsed ?? null;
   }
   return undefined;
@@ -119,7 +120,7 @@ export function createJobLog(initial: string[] = []): JobLog {
 export function failJobEffect(
   jobId: string,
   error: string,
-  opts: { caseId: string },
+  opts: { caseId: CaseId },
   logs: string[] = []
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* failJobGen() {

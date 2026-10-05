@@ -1,5 +1,7 @@
 import { pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
+import type { CaseId } from "@watchdog/schemas/shared";
+
 import { createdAt } from "./_helpers";
 import { cases } from "./cases";
 import { proposals } from "./proposals";
@@ -13,6 +15,7 @@ export const findingSuppressions = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     caseId: uuid("case_id")
+      .$type<CaseId>()
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
     fingerprint: text("fingerprint").notNull(),

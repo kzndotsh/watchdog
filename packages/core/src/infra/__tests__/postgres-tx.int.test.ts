@@ -9,8 +9,8 @@ import {
 } from "@watchdog/core/errors";
 import { Db, outsideTransaction, transact, tryDb } from "@watchdog/core/infra";
 import { casesRepo, db } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 import { runDomain } from "../run-domain";
 

@@ -8,6 +8,7 @@ import {
   type JobRow,
   type NewJob,
 } from "@watchdog/db";
+import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 type SeedJobOverrides = Partial<NewJob> &
@@ -15,7 +16,7 @@ type SeedJobOverrides = Partial<NewJob> &
 
 export async function seedJob(
   exec: DbExec,
-  caseId: string,
+  caseId: CaseId,
   overrides?: SeedJobOverrides
 ): Promise<JobRow> {
   const { resultSummary, ...createOverrides } = overrides ?? {};

@@ -4,6 +4,7 @@ import {
   optionalConfidenceTierSchema,
   optionalProposalStatusSchema,
 } from "./enums";
+import { trimmedCaseIdSchema } from "./ids";
 import { patchOpSchema } from "./patch";
 import {
   optionalTrimmedSchema,
@@ -20,17 +21,17 @@ export const proposalPatchFieldsSchema = z.object({
 
 export const createProposalInputSchema = z
   .object({
-    caseId: trimmedUuidSchema,
+    caseId: trimmedCaseIdSchema,
   })
   .extend(proposalPatchFieldsSchema.shape);
 
 export const listProposalsInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   status: optionalProposalStatusSchema,
 });
 
 export const acceptProposalInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   proposalId: trimmedUuidSchema,
   confidence: optionalConfidenceTierSchema,
   sharedEvidenceIds: uuidListSchema.optional().default([]),
@@ -38,7 +39,7 @@ export const acceptProposalInputSchema = z.object({
 });
 
 export const rejectProposalInputSchema = z.object({
-  caseId: trimmedUuidSchema,
+  caseId: trimmedCaseIdSchema,
   proposalId: trimmedUuidSchema,
   reason: optionalTrimmedSchema,
 });

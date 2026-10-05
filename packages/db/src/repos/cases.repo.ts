@@ -1,10 +1,12 @@
 import { and, asc, eq, ilike, or } from "drizzle-orm";
 
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";
 import { entitySlugIlikePatterns } from "./_ilike";
 import { clampSearchLimit } from "./_limits";
-import { trimResourceId } from "./_scoped-ids";
+import { trimCaseId } from "./_scoped-ids";
 import { slugForLookup } from "./_slug-lookup";
 
 export const caseColumns = {
@@ -33,12 +35,12 @@ export type CasePatch = Partial<
   >
 >;
 
-function inOrg(organizationId: string) {
+function inOrg(organizationId: OrganizationId) {
   return eq(cases.organizationId, organizationId);
 }
 
 export const casesRepo = {
-  async list(exec: DbExec, organizationId: string): Promise<CaseRow[]> {
+  async list(exec: DbExec, organizationId: OrganizationId): Promise<CaseRow[]> {
     return exec
       .select(caseColumns)
       .from(cases)
@@ -46,7 +48,10 @@ export const casesRepo = {
       .orderBy(asc(cases.name));
   },
 
-  async listIds(exec: DbExec, organizationId: string): Promise<string[]> {
+  async listIds(
+    exec: DbExec,
+    organizationId: OrganizationId
+  ): Promise<CaseId[]> {
     const rows = await exec
       .select({ id: cases.id })
       .from(cases)
@@ -56,7 +61,7 @@ export const casesRepo = {
 
   async search(
     exec: DbExec,
-    organizationId: string,
+    organizationId: OrganizationId,
     term: string,
     limit: number
   ): Promise<CaseRow[]> {
@@ -85,9 +90,9 @@ export const casesRepo = {
   async getById(
     exec: DbExec,
     id: string,
-    organizationId: string
+    organizationId: OrganizationId
   ): Promise<CaseRow | null> {
-    const scopedId = trimResourceId(id);
+    const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [row] = await exec
       .select(caseColumns)
@@ -99,7 +104,7 @@ export const casesRepo = {
 
   /** Worker / export internals: case id already came from a trusted job or child row. */
   async getByIdUnchecked(exec: DbExec, id: string): Promise<CaseRow | null> {
-    const scopedId = trimResourceId(id);
+    const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [row] = await exec
       .select(caseColumns)
@@ -111,7 +116,7 @@ export const casesRepo = {
 
   /** Serialize proposal ingress for a Case (suppress + insert). */
   async lockById(exec: DbExec, id: string): Promise<CaseRow | null> {
-    const scopedId = trimResourceId(id);
+    const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [row] = await exec
       .select(caseColumns)
@@ -125,7 +130,7 @@ export const casesRepo = {
   async getBySlug(
     exec: DbExec,
     slug: string,
-    organizationId: string
+    organizationId: OrganizationId
   ): Promise<CaseRow | null> {
     const scopedSlug = slugForLookup(slug);
     if (scopedSlug === undefined) return null;
@@ -148,10 +153,10 @@ export const casesRepo = {
   async update(
     exec: DbExec,
     id: string,
-    organizationId: string,
+    organizationId: OrganizationId,
     patch: CasePatch
   ): Promise<CaseRow | null> {
-    const scopedId = trimResourceId(id);
+    const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [updated] = await exec
       .update(cases)
@@ -164,9 +169,9 @@ export const casesRepo = {
   async delete(
     exec: DbExec,
     id: string,
-    organizationId: string
+    organizationId: OrganizationId
   ): Promise<CaseRow | null> {
-    const scopedId = trimResourceId(id);
+    const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [deleted] = await exec
       .delete(cases)

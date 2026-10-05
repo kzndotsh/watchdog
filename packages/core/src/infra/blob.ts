@@ -10,7 +10,11 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Effect } from "effect";
 
-import { MAX_UPLOAD_BYTES, sha256HexSchema } from "@watchdog/schemas/shared";
+import {
+  MAX_UPLOAD_BYTES,
+  sha256HexSchema,
+  type CaseId,
+} from "@watchdog/schemas/shared";
 
 import { BlobStore, type BlobStoreApi } from "./blob-store";
 import { errorMessage } from "./error-utils";
@@ -27,7 +31,7 @@ export function assertSha256Hex(value: string): string {
 }
 
 export function artifactUri(
-  caseId: string,
+  caseId: CaseId,
   sha256: string,
   name?: string
 ): string {
@@ -64,7 +68,7 @@ export interface PresignedPut {
 }
 
 export function uploadArtifactEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   bytes: Uint8Array;
   mime: string;
   name?: string;
@@ -92,7 +96,7 @@ export function uploadArtifactEffect(input: {
 }
 
 export function createPresignedPutEffect(input: {
-  caseId: string;
+  caseId: CaseId;
   sha256: string;
   mime: string;
   byteLength: number;
@@ -250,7 +254,7 @@ function deleteCaseArtifactKeys(
 
 /** Best-effort: objects are keyed `{caseId}/…` (`artifactUri`). */
 export function deleteCaseArtifactsEffect(
-  caseId: string
+  caseId: CaseId
 ): Effect.Effect<void, InvalidError, BlobStore> {
   return Effect.gen(function* deleteCaseArtifactsGen() {
     const prefix = `${caseId}/`;
