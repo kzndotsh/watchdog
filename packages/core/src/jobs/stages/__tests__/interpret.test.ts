@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { requireCapability } from "@watchdog/caps";
 import { recordingBlobStore, type BlobStore } from "@watchdog/core/blob";
 import type { JobRow } from "@watchdog/db";
-import { testCaseId, testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 const { loadCapReportEffect } = vi.hoisted(() => ({
   loadCapReportEffect: vi.fn(),

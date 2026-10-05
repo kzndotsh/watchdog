@@ -18,7 +18,7 @@ vi.mock("@watchdog/core/caps", async (importOriginal) => {
   };
 });
 
-import { testActor } from "@watchdog/test-kit";
+import { testActor } from "@watchdog/schemas/testing";
 
 import { list, listPlaybooksProc } from "../capabilities";
 

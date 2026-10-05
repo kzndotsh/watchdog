@@ -1,7 +1,7 @@
 import { Deferred, Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 
 import {
   removeCaseExportDirEffect,

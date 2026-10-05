@@ -1,7 +1,7 @@
 /**
  * Proves the real `oxlint.config.ts` only lets tests and test-helper trees import the
  * unvalidated brand stampers `untrustedCaseId` / `untrustedOrganizationId` from
- * `@watchdog/test-kit` (ADR-0003). Probe files are written under covered paths and
+ * `@watchdog/schemas/testing` (ADR-0003). Probe files are written under covered paths and
  * removed after.
  */
 import { spawnSync } from "node:child_process";
@@ -16,13 +16,13 @@ const testKitSrc = path.join(repoRoot, "packages/test-kit/src");
 const capsTesting = path.join(repoRoot, "packages/caps/src/testing");
 
 const IMPORT =
-  'import { untrustedCaseId } from "@watchdog/test-kit";\n\nexport const a = untrustedCaseId("x");\n';
+  'import { untrustedCaseId } from "@watchdog/schemas/testing";\n\nexport const a = untrustedCaseId("x");\n';
 const IMPORT_FIXTURES =
-  'import { untrustedOrganizationId as o } from "@watchdog/test-kit/fixtures";\n\nexport const a = o("x");\n';
+  'import { untrustedOrganizationId as o } from "@watchdog/schemas/testing";\n\nexport const a = o("x");\n';
 const REEXPORT =
-  'export { untrustedOrganizationId } from "@watchdog/test-kit";\n';
+  'export { untrustedOrganizationId } from "@watchdog/schemas/testing";\n';
 const SAFE =
-  'import { testCaseId } from "@watchdog/test-kit";\n\nexport const a = testCaseId(1);\n';
+  'import { testCaseId } from "@watchdog/schemas/testing";\n\nexport const a = testCaseId(1);\n';
 
 let probeDir = "";
 let testsDir = "";

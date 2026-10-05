@@ -1,7 +1,7 @@
 import { Effect, Exit, Layer, Scope } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { testCaseId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 import {
   assertUploadedObjectEffect,

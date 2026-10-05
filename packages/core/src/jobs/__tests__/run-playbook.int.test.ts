@@ -13,8 +13,9 @@ import {
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
 import { db, evidenceRepo, jobsRepo, playbookRunsRepo } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
-import { TEST_ACTOR_ID, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { advancePlaybookRunEffect } from "../stages/chain.ts";
 

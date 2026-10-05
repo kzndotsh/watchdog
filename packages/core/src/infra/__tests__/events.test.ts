@@ -1,7 +1,8 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { testCaseId, testId, untrustedCaseId } from "@watchdog/test-kit";
+import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 import {
   notifyEntityChangedEffect,

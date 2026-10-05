@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/schemas/testing";
 
 const { mockClient, createRouterClient, actorFromSession, peekRequestLogger } =
   vi.hoisted(() => {

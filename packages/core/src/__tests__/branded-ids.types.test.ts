@@ -13,7 +13,7 @@ import {
   parseTrimmedUuid,
 } from "@watchdog/schemas/shared";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 
 import { getCaseByIdEffect, listCasesEffect } from "../cases";
 import { assertCaseInOrgEffect } from "../graph";

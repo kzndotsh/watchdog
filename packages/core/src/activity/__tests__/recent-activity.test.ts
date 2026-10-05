@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { RecentJobActivityRow } from "@watchdog/db";
-import { testCaseId, testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 import {
   clampActivityLimit,

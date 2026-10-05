@@ -12,7 +12,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@watchdog/schemas": "workspace:*",
     "fast-check": "^4.10.2",
     "msw": "^3.0.1",
     "vitest": "catalog:"

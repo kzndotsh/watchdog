@@ -210,7 +210,10 @@ const noUntrustedIdImport = {
       if (
         !isRecord(source) ||
         typeof source.value !== "string" ||
-        !source.value.startsWith("@watchdog/test-kit")
+        !(
+          source.value.startsWith("@watchdog/test-kit") ||
+          source.value === "@watchdog/schemas/testing"
+        )
       ) {
         return;
       }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { TEST_ORGANIZATION_ID, testId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 import { orgCaseFilter } from "../_org-case-filter";
 

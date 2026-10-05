@@ -332,8 +332,8 @@ export default defineConfig({
       rules: { "watchdog/no-untrusted-id-import": "off" },
     },
     {
-      // Test-kit fixtures are the one place allowed to stamp a brand (ADR-0003).
-      files: ["packages/test-kit/src/**/*.{ts,tsx}"],
+      // Schemas' branded test fixtures are the one place allowed to stamp a brand (ADR-0003).
+      files: ["packages/schemas/src/testing/**/*.{ts,tsx}"],
       rules: { "watchdog/no-brand-cast": "off" },
     },
     {

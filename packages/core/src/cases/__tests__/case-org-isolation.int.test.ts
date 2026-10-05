@@ -11,11 +11,11 @@ import { listEvidenceForCaseEffect } from "@watchdog/core/evidence";
 import { listEntitiesForCaseEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { listJobsForCaseEffect } from "@watchdog/core/jobs";
-import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-} from "@watchdog/test-kit";
+} from "@watchdog/schemas/testing";
+import { resetTestDb, seedCase, testDb } from "@watchdog/test-db";
 
 const OTHER_ORG_ID = TEST_OTHER_ORGANIZATION_ID;
 

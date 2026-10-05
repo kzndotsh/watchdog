@@ -18,7 +18,7 @@ vi.mock("@watchdog/core/proposals", async (importOriginal) => {
   };
 });
 
-import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testActor } from "@watchdog/schemas/testing";
 
 import { listForCase } from "../proposals";
 

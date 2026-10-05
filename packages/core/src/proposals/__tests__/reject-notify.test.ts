@@ -55,7 +55,7 @@ vi.mock("../../infra/postgres-tx", () => ({
 }));
 
 import { asCaseId } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 
 import { runDomain } from "../../infra/run-domain";
 import { rejectProposalEffect } from "../proposals";

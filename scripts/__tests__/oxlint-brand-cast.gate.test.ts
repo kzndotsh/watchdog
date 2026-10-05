@@ -1,7 +1,7 @@
 /**
  * Proves the real `oxlint.config.ts` bans bare casts to the branded id types
  * (`as OrganizationId`, `as CaseId`, `as unknown as CaseId`, `<CaseId>x`) outside
- * `packages/test-kit`, while constructors, other casts and the test-kit fixtures stay
+ * `packages/schemas/src/testing`, while constructors, other casts and the schemas testing fixtures stay
  * allowed. Probe files are written under covered paths (the config's `files` globs are
  * repo-relative) and removed after.
  */
@@ -13,7 +13,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const coreSrc = path.join(repoRoot, "packages/core/src");
-const testKitSrc = path.join(repoRoot, "packages/test-kit/src");
+const testKitSrc = path.join(repoRoot, "packages/schemas/src/testing");
 
 const TYPES =
   'import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";\n';
@@ -90,7 +90,7 @@ describe("branded id cast ban (oxlint.config.ts)", () => {
   it.each(Object.keys(PASS_CASES))("allows %s", (name) => {
     expect(hitsFor(coreProbeDir, name)).toHaveLength(0);
   });
-  it("exempts packages/test-kit fixtures", () => {
+  it("exempts packages/schemas/src/testing fixtures", () => {
     expect(hitsFor(kitProbeDir, "exempt")).toHaveLength(0);
   });
 });

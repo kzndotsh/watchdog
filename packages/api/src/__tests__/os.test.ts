@@ -2,7 +2,7 @@ import { createRouterClient, ORPCError } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { testActor } from "@watchdog/test-kit";
+import { testActor } from "@watchdog/schemas/testing";
 
 import { authed, graphChildWrite, resolveAuthMethod } from "../os";
 

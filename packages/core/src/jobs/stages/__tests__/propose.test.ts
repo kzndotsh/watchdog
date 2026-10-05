@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
-import { TEST_ACTOR_ID, testCaseId, testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 const { create } = vi.hoisted(() => ({
   create: vi.fn(),

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testCaseId, testId, untrustedCaseId } from "@watchdog/test-kit";
+import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 const { update, updateInCase, notifyEvent } = vi.hoisted(() => ({
   update: vi.fn(),

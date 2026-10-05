@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { testId } from "@watchdog/test-kit";
+
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
   testActor,
   testCaseId,
-  testId,
-} from "../fixtures/ids";
+} from "../testing";
 
 describe("branded id fixtures", () => {
   it("testCaseId is the branded testId", () => {

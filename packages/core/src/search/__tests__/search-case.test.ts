@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 
 import type { JobListRow, JobWithPlaybook } from "@watchdog/db";
 import { asCaseId } from "@watchdog/schemas/shared";
-import { TEST_ORGANIZATION_ID, testCaseId, testId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain.ts";
 import { collapseSearchJobHits, searchCaseEffect } from "../search-case.ts";

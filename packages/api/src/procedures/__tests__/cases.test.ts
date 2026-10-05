@@ -32,7 +32,7 @@ vi.mock("@watchdog/core/cases", async (importOriginal) => {
   };
 });
 
-import { testActor } from "@watchdog/test-kit";
+import { testActor } from "@watchdog/schemas/testing";
 
 import { create, get, list, update } from "../cases";
 

@@ -1,7 +1,8 @@
 import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TEST_ORGANIZATION_ID, testCaseId, testId } from "@watchdog/test-kit";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
+import { testId } from "@watchdog/test-kit";
 
 const CASE_ID = testCaseId(1);
 const JOB_ID = testId(2);

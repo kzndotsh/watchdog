@@ -13,12 +13,12 @@ import { isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import { db, entitiesRepo } from "@watchdog/db";
 import { asCaseId } from "@watchdog/schemas/shared";
-import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
-  testId,
-} from "@watchdog/test-kit";
+} from "@watchdog/schemas/testing";
+import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
+import { testId } from "@watchdog/test-kit";
 
 describe("createCase", () => {
   beforeEach(async () => {

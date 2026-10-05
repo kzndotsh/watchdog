@@ -12,8 +12,8 @@ import {
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { db } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 describe("createEntity", () => {
   beforeEach(async () => {

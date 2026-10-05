@@ -11,8 +11,8 @@ import {
 import { createCaseEffect, deleteCaseEffect } from "@watchdog/core/cases";
 import { InternalError, NotFoundError } from "@watchdog/core/errors";
 import { casesRepo, db } from "@watchdog/db";
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
 
 import { runDomain } from "../../infra/run-domain";
 

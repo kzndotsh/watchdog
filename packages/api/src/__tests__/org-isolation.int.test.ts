@@ -7,6 +7,11 @@ import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import type { OrganizationId } from "@watchdog/schemas/shared";
 import {
+  TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
+  testCaseId,
+} from "@watchdog/schemas/testing";
+import {
   resetTestDb,
   seedCase,
   seedEntity,
@@ -17,13 +22,7 @@ import {
   seedProposal,
   testDb,
 } from "@watchdog/test-db";
-import {
-  TEST_ACTOR_ID,
-  TEST_ORGANIZATION_ID,
-  TEST_OTHER_ORGANIZATION_ID,
-  testCaseId,
-  testId,
-} from "@watchdog/test-kit";
+import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import type { ApiContext } from "../context";
 import { router } from "../router";

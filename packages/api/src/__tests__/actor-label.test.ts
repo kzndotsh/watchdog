@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { testActor } from "@watchdog/test-kit";
+import { testActor } from "@watchdog/schemas/testing";
 
 import { actorLabelFromActor } from "../actor-label";
 

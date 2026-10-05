@@ -803,9 +803,6 @@ importers:
 
   packages/test-kit:
     dependencies:
-      '@watchdog/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2

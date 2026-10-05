@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { seedCase, withTestTx } from "@watchdog/test-db";
-import { testId, TEST_ORGANIZATION_ID } from "@watchdog/test-kit";
+import { testId } from "@watchdog/test-kit";
 
 import { activityEventsRepo } from "../activity-events.repo.ts";
 
