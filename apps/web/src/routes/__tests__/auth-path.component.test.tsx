@@ -22,6 +22,10 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
+vi.mock("@/auth/get-allow-signup", () => ({
+  getAllowSignup: vi.fn(async () => false),
+}));
+
 vi.mock("@/auth/ensure-session", () => ({
   ensureAppSession: vi.fn(),
 }));

@@ -12,6 +12,7 @@ import type { DomainTag } from "./tagged-errors";
  * closure variable, so the failure is never flattened to `Error`
  * and stays distinguishable from genuine driver errors.
  */
+// oxlint-disable-next-line effecttsgo/extends-native-error -- private rollback marker: the driver's promise-based transaction only rolls back when the callback rejects
 class TxBodyFailureError extends Error {
   override readonly name = "TxBodyFailureError";
 }
@@ -53,6 +54,7 @@ export function transact<A, E extends DomainTag = DomainTag, R = never>(
     return Effect.callback<A, E | DomainTag>((resume, signal) => {
       const run = Effect.runPromiseExitWith(services);
       const settled = client
+        // oxlint-disable-next-line effecttsgo/async-function -- the driver's transaction API is promise-based; this is the one promise boundary for transaction bodies
         .transaction(async (tx) => {
           const exit = await run(body(tx), { signal });
           if (exit._tag === "Failure") {

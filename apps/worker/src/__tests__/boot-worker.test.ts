@@ -64,6 +64,7 @@ describe("handleExportEventPayloadEffect", () => {
     claimExportEventEffect.mockReturnValue(
       Effect.gen(function* claimGen() {
         seen.claimFiber = yield* Effect.fiberId;
+        // oxlint-disable-next-line effecttsgo/return-effect-in-gen -- the claim's result IS an Effect (the wait to fork), so `Effect<Effect>` is the contract under test
         return Deferred.await(gate).pipe(
           Effect.tap(() =>
             Effect.sync(() => {
