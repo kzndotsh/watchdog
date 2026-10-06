@@ -1,3 +1,5 @@
+export { activity } from "./activity";
+
 export { activityEvents } from "./activity-events";
 
 export {

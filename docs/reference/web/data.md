@@ -50,7 +50,7 @@ Loaders `ensureQueryData` identity only and call a `warm*Queries` helper with `v
 | `proposal_created`, `proposal_queue_changed` | `invalidateAfterProposalQueueChange` (test with `isProposalQueueLiveEvent` from `@watchdog/schemas`) |
 | `entity_changed` | `invalidateAfterEntityChanged` |
 | `evidence_changed` | `invalidateAfterEvidenceMutation` |
-| `task_changed` | `invalidateAfterTaskMutation` |
+| `task_changed` | `invalidateAfterTaskMutation` (sent by the SSE route for every Task activity entry, with `id:` = the entry cursor; the route also sends one `activity` event per entry and one `resync` when a reconnect is too far behind, which this hook does not yet handle) |
 
 The cross-case Dashboard Activity feed (`recentActivityQuery`) has no SSE type of its own; the task, job, proposal, and evidence contracts soft-invalidate `activityKeys.all`. Don't invent a workspace-wide channel for it.
 

@@ -1,5 +1,7 @@
 import { Effect, Layer, ManagedRuntime } from "effect";
 
+import type { ActivityTailer } from "@watchdog/core/activity";
+import { activityTailerLayer } from "@watchdog/core/activity";
 import type { BlobStore } from "@watchdog/core/blob";
 import { blobStoreLayer } from "@watchdog/core/blob";
 import type { DomainTag } from "@watchdog/core/errors";
@@ -18,12 +20,15 @@ import { toOrpcError } from "./map-domain-error";
  * access over `Db` and the vault crypto) and the `BlobStore` Layer (one
  * `S3Client`, destroyed when the runtime is disposed). The producer starts
  * pg-boss lazily on the first enqueue, so building `AppLive` never touches the
- * database. The vault Layer is the live credential reader over `Db`.
+ * database. The vault Layer is the live credential reader over `Db`. The
+ * `ActivityTailer` (ADR-0005, one per process) opens its LISTEN connection on
+ * the first SSE subscriber, never at build.
  */
 export const AppLive = Layer.mergeAll(
   Layer.provideMerge(vaultLayer, Db.layer),
   jobQueueProducerLayer,
-  blobStoreLayer
+  blobStoreLayer,
+  Layer.provide(activityTailerLayer, Db.layer)
 );
 
 /** The slice of Vite's `import.meta.hot` this module uses. */
@@ -77,7 +82,11 @@ export const appRuntime = makeAppRuntime(AppLive);
  * `AppLive`.
  */
 export async function runApp<A>(
-  effect: Effect.Effect<A, DomainTag, Db | JobQueue | BlobStore | Vault>
+  effect: Effect.Effect<
+    A,
+    DomainTag,
+    Db | JobQueue | BlobStore | Vault | ActivityTailer
+  >
 ): Promise<A> {
   return appRuntime.runPromise(effect.pipe(Effect.mapError(toOrpcError)));
 }

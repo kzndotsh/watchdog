@@ -117,7 +117,7 @@
                     "properties": {
                       "id": {
                         "type": "string",
-                        "format": "uuid"
+                        "minLength": 1
                       },
                       "kind": {
                         "enum": [

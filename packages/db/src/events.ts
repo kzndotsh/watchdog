@@ -8,6 +8,8 @@ import type { WatchdogEvent } from "@watchdog/schemas/feed";
 import { client } from "./client";
 
 export const WATCHDOG_CHANNEL = "watchdog_events";
+/** The activity log's wake-up channel; only the `activity_notify` trigger sends on it. */
+export const ACTIVITY_CHANNEL = "watchdog_activity";
 
 const RECONNECT_DELAY_MS = 1000;
 const INITIAL_CONNECT_MAX_ATTEMPTS = 30;
@@ -19,16 +21,9 @@ export async function notifyEvent(event: WatchdogEvent): Promise<void> {
   await client.notify(WATCHDOG_CHANNEL, JSON.stringify(event));
 }
 
-/**
- * Open a dedicated LISTEN connection and call onNotification for each
- * message on watchdog_events. Returns a cleanup function.
- *
- * Reconnects after mid-run disconnects. `onError` is only called after
- * repeated initial connection failures.
- *
- * Used by the SSE route in apps/web — keeps postgres out of web's deps.
- */
-export function listenForEvents(
+/** `listenForEvents` for any channel (the activity tailer listens on `ACTIVITY_CHANNEL`). */
+export function listenOnChannel(
+  channel: string,
   onNotification: (payload: string) => void,
   onReady?: () => void,
   onError?: (error: unknown) => void
@@ -47,7 +42,7 @@ export function listenForEvents(
 
   async function loop(): Promise<void> {
     let failedAttempts = 0;
-    // LISTEN reconnect must run sequentially after each disconnect.
+    // Initial-connection retries run sequentially.
     /* oxlint-disable eslint/no-await-in-loop, eslint/no-unmodified-loop-condition, eslint/no-loop-func */
     while (!ended) {
       sql = postgres(env.DATABASE_URL, {
@@ -56,17 +51,18 @@ export function listenForEvents(
         connect_timeout: 10,
       });
       try {
-        await sql.listen(WATCHDOG_CHANNEL, onNotification, () => {
+        await sql.listen(channel, onNotification, () => {
           if (!readyNotified) {
             readyNotified = true;
-            onReady?.();
             failedAttempts = 0;
+            onReady?.();
           }
         });
-        if (!ended) {
-          await endConnection();
-          await sleep(RECONNECT_DELAY_MS);
-        }
+        // Established: keep the connection open until `end()`. (Awaiting
+        // `listen` only waits for LISTEN to start; ending the connection here
+        // would drop every notification.) postgres.js re-LISTENs on its own
+        // after a dropped connection; consumers keep a fallback poll for the gap.
+        return;
       } catch (error) {
         await endConnection();
         if (ended) return;
@@ -91,4 +87,22 @@ export function listenForEvents(
       await endConnection();
     },
   };
+}
+
+/**
+ * Open a dedicated LISTEN connection and call onNotification for each
+ * message on watchdog_events. Returns a cleanup function.
+ *
+ * Retries the initial connection; once LISTEN is established the connection
+ * stays open until `end()` (postgres.js re-LISTENs after a drop). `onError`
+ * is only called after repeated initial connection failures.
+ *
+ * Used by the SSE route in apps/web — keeps postgres out of web's deps.
+ */
+export function listenForEvents(
+  onNotification: (payload: string) => void,
+  onReady?: () => void,
+  onError?: (error: unknown) => void
+): { end: () => Promise<void> } {
+  return listenOnChannel(WATCHDOG_CHANNEL, onNotification, onReady, onError);
 }

@@ -19,10 +19,6 @@ vi.mock("../../graph/patch/guards", () => ({
   requireTrimmedGraphId: vi.fn(),
 }));
 
-vi.mock("../../infra/events", () => ({
-  notifyTaskChangedEffect: () => Effect.void,
-}));
-
 vi.mock("../../infra/postgres-tx", () => ({
   transact: () => Effect.succeed([]),
 }));

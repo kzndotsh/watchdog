@@ -22,14 +22,14 @@ Drizzle ORM + postgres.js for the Watchdog Case Graph and Better Auth tables.
 | Repository | `src/repos/*.repo.ts` | SQL only: queries/commands over `DbExec` (`src/exec.ts`) |
 | Barrel | `src/repos/index.ts` | Named re-exports, entrypoint `@watchdog/db` (`@watchdog/db/schema` for schema-only) |
 
-Services (`@watchdog/core`) call repos; controllers (`@watchdog/api`) call services. Apps never write SQL, except `@watchdog/auth` and SSE `listenForEvents`. The barrel is re-exports only: do not add an aggregate `repos` object (it would pull every repo and table into any importer's graph). Repos take `exec: DbExec` first (pass `db` outside a TX, `tx` inside) so multi-table units of work such as Inbox Accept stay one transaction.
+Services (`@watchdog/core`) call repos; controllers (`@watchdog/api`) call services. Apps never write SQL, except `@watchdog/auth`; the SSE route reaches Postgres through core (`listenForEvents`, the `ActivityTailer`). The barrel is re-exports only: do not add an aggregate `repos` object (it would pull every repo and table into any importer's graph). Repos take `exec: DbExec` first (pass `db` outside a TX, `tx` inside) so multi-table units of work such as Inbox Accept stay one transaction.
 
 ## Repo contract
 
 | # | Rule | Enforced by |
 | --- | --- | --- |
 | 1 | Rows, not DTOs: no `.toISOString()`, no API-shaped objects. Display read-model joins are fine (`…Row` / `…With…`), nested, never flattened | `check:repos` (`toISOString`); nesting is review |
-| 2 | Never `notifyEvent` in a repo; services fire it after commit | `check:repos` |
+| 2 | Never `notifyEvent` in a repo; services fire it after commit. The one exception is the `activity` log: its `AFTER INSERT` trigger sends the NOTIFY, so the signal is part of the transaction (delivered at commit, dropped on rollback) | `check:repos` |
 | 3 | Never throw domain errors; return `null` / `[]` and let the service decide 404 vs conflict. Unique-violation mapping lives in core (`tryDb` / `mapPostgresCatch`) | `check:repos` |
 | 4 | Never open a transaction; only services call `transact` | `check:repos` |
 | 5 | Plain values only: no `SQL` / `eq(...)` in public signatures | `check:repos` |
@@ -53,11 +53,12 @@ Repos do **not** re-validate display strings (name/title/text, slugify, blank→
 
 ## Gotchas
 
-- `notifyEvent` uses the shared pool; `listenForEvents` opens a dedicated postgres.js connection; `listenForEventsStream` is its Effect wrapper.
+- `notifyEvent` uses the shared pool; `listenForEvents` (and `listenOnChannel`, the same for any channel) opens a dedicated postgres.js connection that stays open until `end()`: awaiting `sql.listen` only waits for LISTEN to start, so ending the connection behind it silently drops every notification (fixed in ADR-0005 S1; postgres.js re-LISTENs after a dropped connection, so consumers keep a fallback poll). `listenForEventsStream` is its Effect wrapper.
+- Activity log (ADR-0005): table `activity` (`id bigint identity`, `xid xid8 default pg_current_xact_id()`), the only writer is `activityLogRepo.append(tx, ...)` through core's `appendActivityEffect`. The migration `activity_trigger_and_backfill` (hand-written SQL with its snapshot) installs the `activity_notify` trigger, which `pg_notify`s `watchdog_activity` with `{id, caseId}` (a wake-up; readers fetch rows). Read only through `activityLogRepo.drain`: `(xid, id) > cursor AND xid < pg_snapshot_xmin(pg_current_snapshot())`, which never returns a row that an older still-open transaction could precede. `createActivityTailer` is the per-process tailer (one LISTEN connection, a 5 s fallback poll, a 250 ms re-poll while a transaction holds rows back). Backfilled rows carry `xid = 0`. An `xid8` restored from another cluster can sit in the future (boot check lands with S7).
 - Jobs: unique `(playbook_run_id, playbook_step, playbook_fan_index)` (`jobs_playbook_run_step_fan_uq`); new steps insert `queued` (legacy `blocked` handling: [`jobs.md`](../../.agents/skills/effect/references/jobs.md)). The `actor_label` columns store an API-key display snapshot (`api-key:…`) only; `actor_id` stays the user id.
 - Tasks: `position` int NOT NULL; list order is `position, createdAt`; use `nextPosition` / `rewriteOrder`, never `createdAt` alone.
 - Cap cache is unique on `(case_id, capability_id, input_hash)`; `lookupActive` is case-scoped.
-- `activity_events` and `auth.auth_event` are append-only process rows (not Graph, not SSE sources). `onAuthSessionCreated` stamps `session.active_organization_id` from the user's membership; `promoteFirstUserToInstanceAdmin` runs from the auth `user.create.after` hook; the DB does not auto-create an organization.
+- `activity` (the log) feeds Recent activity for Tasks and the live signal; the old `activity_events` table is no longer written (its rows were copied into `activity`; it is dropped in the contract slice). `auth.auth_event` is an append-only process row (not Graph, not an SSE source). `onAuthSessionCreated` stamps `session.active_organization_id` from the user's membership; `promoteFirstUserToInstanceAdmin` runs from the auth `user.create.after` hook; the DB does not auto-create an organization.
 - `casesRepo.getById(exec, id, organizationId)` is the default. `getByIdUnchecked` is only for worker/export internals whose Case id came from a trusted Job or child row.
 - Search `ilike`: escape user terms with `containsPattern` (`src/repos/_ilike.ts`); never concatenate `%` in callers.
 - Postgres `53300` is usually Vite/tsx HMR leaking pools: restart vite + worker rather than raising the pool `max`.

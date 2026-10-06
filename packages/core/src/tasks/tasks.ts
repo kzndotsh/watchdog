@@ -1,11 +1,6 @@
 import { Effect } from "effect";
 
-import {
-  activityEventsRepo,
-  casesRepo,
-  tasksRepo,
-  type TaskRow,
-} from "@watchdog/db";
+import { casesRepo, tasksRepo, type TaskRow } from "@watchdog/db";
 import {
   dueDatePatchSchema,
   parseGraphUuidList,
@@ -18,6 +13,7 @@ import {
   type TaskStatus,
 } from "@watchdog/schemas/shared";
 
+import { appendActivityEffect } from "../activity/append";
 import { optionalActorId } from "../actors/require-actor-id";
 import {
   assertCaseInOrgEffect,
@@ -25,7 +21,6 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import { notifyTaskChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -251,22 +246,19 @@ export function createTaskEffect(
         if (!row) {
           return yield* new InternalError({ reason: "Failed to create Task" });
         }
-        yield* tryDb(() =>
-          activityEventsRepo.create(tx, {
-            caseId: scopedCaseId,
-            kind: "task",
-            action: "created",
-            subjectId: row.id,
-            label: row.title,
-            toValue: row.status,
-            actorId: optionalActorId(input.actorId),
-          })
-        );
+        yield* appendActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "task",
+          action: "created",
+          subjectId: row.id,
+          label: row.title,
+          toValue: row.status,
+          actorId: optionalActorId(input.actorId),
+        });
         return row;
       })
     );
 
-    yield* notifyTaskChangedEffect(scopedCaseId, entityId ?? undefined);
     return toRecord(created);
   });
 }
@@ -336,29 +328,33 @@ export function updateTaskEffect(
           return yield* new NotFoundError({ entity: "Task", id: taskId });
         }
 
-        if (statusChanged) {
-          yield* tryDb(() =>
-            activityEventsRepo.create(tx, {
-              caseId: scopedCaseId,
-              kind: "task",
-              action: "status_changed",
-              subjectId: row.id,
-              label: row.title,
-              fromValue: existing.status,
-              toValue: row.status,
-              actorId: optionalActorId(input.actorId),
-            })
-          );
-        }
+        yield* appendActivityEffect(
+          tx,
+          statusChanged
+            ? {
+                caseId: scopedCaseId,
+                kind: "task",
+                action: "status_changed",
+                subjectId: row.id,
+                label: row.title,
+                fromValue: existing.status,
+                toValue: row.status,
+                actorId: optionalActorId(input.actorId),
+              }
+            : {
+                caseId: scopedCaseId,
+                kind: "task",
+                action: "updated",
+                subjectId: row.id,
+                label: row.title,
+                actorId: optionalActorId(input.actorId),
+              }
+        );
 
         return row;
       })
     );
 
-    yield* notifyTaskChangedEffect(
-      scopedCaseId,
-      updated.entityId ?? existing.entityId ?? undefined
-    );
     return toRecord(updated);
   });
 }
@@ -391,23 +387,16 @@ export function deleteTaskEffect(
             id: normalizedTaskId,
           });
         }
-        yield* tryDb(() =>
-          activityEventsRepo.create(tx, {
-            caseId: scopedCaseId,
-            kind: "task",
-            action: "deleted",
-            subjectId: existing.id,
-            label: existing.title,
-            fromValue: existing.status,
-            actorId: activityActor,
-          })
-        );
+        yield* appendActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "task",
+          action: "deleted",
+          subjectId: existing.id,
+          label: existing.title,
+          fromValue: existing.status,
+          actorId: activityActor,
+        });
       })
-    );
-
-    yield* notifyTaskChangedEffect(
-      scopedCaseId,
-      existing.entityId ?? undefined
     );
   });
 }
@@ -468,11 +457,16 @@ export function reorderTasksEffect(
             status: input.status,
           })
         );
+        yield* appendActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "task",
+          action: "reordered",
+          toValue: input.status,
+        });
         return next.map(toRecord);
       })
     );
 
-    yield* notifyTaskChangedEffect(scopedCaseId);
     return records;
   });
 }

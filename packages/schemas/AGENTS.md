@@ -2,7 +2,7 @@
 
 > Scope: `packages/schemas` (inherits root AGENTS.md)
 
-Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normalize + validate, and the input schemas that web, API, and CLI share. Zod + TypeScript only; a leaf dependency (no DB, Caps, or app imports, held by `package.json`). Import through a domain subpath, never the bare package: `@watchdog/schemas/{shared,cases,graph,evidence,jobs,caps,feed}` (each `src/<domain>.ts`, declared in `package.json` `exports`; `check:boundaries` rejects undeclared subpaths). There is no root import or `src/index.ts`. `feed` (`src/feed.ts`) groups the `activity`, `tasks` and `watchdog-events` modules. A new module joins the domain it belongs to; a name lives in exactly one domain. Find a schema by name with `grep`. Types contract: [`types.md`](../../docs/reference/platform/types.md).
+Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normalize + validate, and the input schemas that web, API, and CLI share. Zod + TypeScript only; a leaf dependency (no DB, Caps, or app imports, held by `package.json`). Import through a domain subpath, never the bare package: `@watchdog/schemas/{shared,cases,graph,evidence,jobs,caps,feed}` (each `src/<domain>.ts`, declared in `package.json` `exports`; `check:boundaries` rejects undeclared subpaths). There is no root import or `src/index.ts`. `feed` (`src/feed.ts`) groups the `activity`, `activity-log`, `tasks` and `watchdog-events` modules. A new module joins the domain it belongs to; a name lives in exactly one domain. Find a schema by name with `grep`. Types contract: [`types.md`](../../docs/reference/platform/types.md).
 
 ## Commands
 
@@ -25,4 +25,5 @@ Shared atoms: vocab, `PatchOp`, snapshots, job-artifact ids, identifier normaliz
 - Job status subsets are named once in `vocab.ts` (`OPEN_` / `CANCELLABLE_` / `LIVE_` / `TERMINAL_JOB_STATUSES` plus `is*JobStatus`); cancellable is currently the open set by design. Do not repeat status arrays in repos, core, or web.
 - `TASK_STATUSES.blocked` is a kanban column, not `JOB_STATUSES.blocked` (a legacy playbook Job wait kept for old rows; see [`jobs.md`](../../.agents/skills/effect/references/jobs.md)).
 - SSE `caseId` goes through `parseTrimmedCaseId` (trim + UUID, invalid → `null`); `parseSseCaseIdParam` turns that into a 400.
+- Activity log wire shape (ADR-0005): `activity-log.ts` holds `activityEntrySchema`, the kind and per-kind action lists, the `xid:id` cursor (`parseActivityCursor`, `compareActivityCursor`; `xid` is decimal text, it exceeds 2^53), `createActivityGate` and the legacy adapter `legacyEventForActivityEntry`. A domain moving onto the log adds its verbs to `ACTIVITY_ENTRY_ACTIONS` and its mapping to the adapter in the same change.
 - Dashboard Activity wire shape (`ACTIVITY_KINDS` / `activityItemSchema`) lives in `activity.ts`; api and web import it from `@watchdog/schemas/feed`, do not fork or re-export it.

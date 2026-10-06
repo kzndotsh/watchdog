@@ -75,21 +75,6 @@ export function notifyEvidenceChangedEffect(
   ).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
 }
 
-/**
- * Fan-out after a Task mutation. Tasks are not Graph writes — separate event
- * so dossier/board consumers can invalidate without graph refetch.
- */
-export function notifyTaskChangedEffect(
-  caseId: CaseId,
-  entityId?: string
-): Effect.Effect<void> {
-  return notifyWatchdogEventEffect(
-    entityId === undefined
-      ? { type: "task_changed", caseId }
-      : { type: "task_changed", caseId, entityId }
-  ).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
-}
-
 export function notifyProposalCreatedEffect(
   caseId: CaseId,
   proposalId: string
