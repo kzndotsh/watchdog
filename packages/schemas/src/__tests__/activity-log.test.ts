@@ -179,13 +179,32 @@ describe("legacyEventForActivityEntry", () => {
     expect(legacyEventForActivityEntry(job)).toBeNull();
   });
 
-  it("returns null for a kind that has no legacy event yet", () => {
-    const graphEntity = activityEntrySchema.parse({
+  it.each([
+    "entity",
+    "edge",
+    "claim",
+    "identifier",
+    "event",
+    "question",
+  ] as const)("maps a %s entry to entity_changed", (kind) => {
+    const graph = activityEntrySchema.parse({
       ...entry,
-      kind: "entity",
+      kind,
       action: "created",
     });
-    expect(legacyEventForActivityEntry(graphEntity)).toBeNull();
+    expect(legacyEventForActivityEntry(graph)).toEqual({
+      type: "entity_changed",
+      caseId: entry.caseId,
+    });
+  });
+
+  it("returns null for a Case entry: a Case update never had a legacy event", () => {
+    const updated = activityEntrySchema.parse({
+      ...entry,
+      kind: "case",
+      action: "updated",
+    });
+    expect(legacyEventForActivityEntry(updated)).toBeNull();
   });
 });
 

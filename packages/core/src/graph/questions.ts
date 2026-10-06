@@ -10,8 +10,8 @@ import type {
 import { trimmedOrNull, trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
 import {
   ConflictError,
   InternalError,
@@ -19,6 +19,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { appendGraphActivityEffect } from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
@@ -143,17 +144,30 @@ export function createQuestionEffect(
     if (text === undefined) {
       return yield* new InvalidError({ reason: "Question text is required" });
     }
-    const row = yield* tryDbWith((exec) =>
-      questionsRepo.create(exec, {
-        entityId,
-        text,
-        status: "open",
+    const row = yield* transact((tx) =>
+      Effect.gen(function* createQuestionTx() {
+        const created = yield* tryDb(() =>
+          questionsRepo.create(tx, {
+            entityId,
+            text,
+            status: "open",
+          })
+        );
+        if (!created) {
+          return yield* new InternalError({
+            reason: "Failed to create Question",
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "question",
+          action: "created",
+          subjectId: created.id,
+          label: created.text,
+        });
+        return created;
       })
     );
-    if (!row) {
-      return yield* new InternalError({ reason: "Failed to create Question" });
-    }
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -180,15 +194,31 @@ export function resolveQuestionEffect(
       return yield* new ConflictError({ reason: "Question already resolved" });
     }
 
-    const row = yield* tryDbWith((exec) =>
-      questionsRepo.resolveInCase(exec, scopedCaseId, questionId, {
-        resolvedNote: trimmedOrNull(input.resolvedNote),
+    const row = yield* transact((tx) =>
+      Effect.gen(function* resolveQuestionTx() {
+        const resolved = yield* tryDb(() =>
+          questionsRepo.resolveInCase(tx, scopedCaseId, questionId, {
+            resolvedNote: trimmedOrNull(input.resolvedNote),
+          })
+        );
+        if (!resolved) {
+          return yield* new NotFoundError({
+            entity: "Question",
+            id: questionId,
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "question",
+          action: "resolved",
+          subjectId: resolved.id,
+          label: resolved.text,
+          fromValue: "open",
+          toValue: "resolved",
+        });
+        return resolved;
       })
     );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Question", id: questionId });
-    }
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -227,18 +257,32 @@ export function updateQuestionEffect(
       return yield* new InvalidError({ reason: "Question text is required" });
     }
 
-    const row = yield* tryDbWith((exec) =>
-      questionsRepo.updateInCase(exec, scopedCaseId, questionId, {
-        ...(nextText === undefined ? {} : { text: nextText }),
-        ...(input.resolvedNote === undefined
-          ? {}
-          : { resolvedNote: trimmedOrNull(input.resolvedNote) }),
+    const row = yield* transact((tx) =>
+      Effect.gen(function* updateQuestionTx() {
+        const updated = yield* tryDb(() =>
+          questionsRepo.updateInCase(tx, scopedCaseId, questionId, {
+            ...(nextText === undefined ? {} : { text: nextText }),
+            ...(input.resolvedNote === undefined
+              ? {}
+              : { resolvedNote: trimmedOrNull(input.resolvedNote) }),
+          })
+        );
+        if (!updated) {
+          return yield* new NotFoundError({
+            entity: "Question",
+            id: questionId,
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "question",
+          action: "updated",
+          subjectId: updated.id,
+          label: updated.text,
+        });
+        return updated;
       })
     );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Question", id: questionId });
-    }
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -265,16 +309,32 @@ export function reopenQuestionEffect(
       return yield* new ConflictError({ reason: "Question is already open" });
     }
 
-    const row = yield* tryDbWith((exec) =>
-      questionsRepo.updateInCase(exec, scopedCaseId, questionId, {
-        status: "open",
-        resolvedNote: null,
+    const row = yield* transact((tx) =>
+      Effect.gen(function* reopenQuestionTx() {
+        const reopened = yield* tryDb(() =>
+          questionsRepo.updateInCase(tx, scopedCaseId, questionId, {
+            status: "open",
+            resolvedNote: null,
+          })
+        );
+        if (!reopened) {
+          return yield* new NotFoundError({
+            entity: "Question",
+            id: questionId,
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "question",
+          action: "updated",
+          subjectId: reopened.id,
+          label: reopened.text,
+          fromValue: existing.status,
+          toValue: "open",
+        });
+        return reopened;
       })
     );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Question", id: questionId });
-    }
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -300,15 +360,25 @@ export function deleteQuestionEffect(
       });
     }
 
-    const deleted = yield* tryDbWith((exec) =>
-      questionsRepo.deleteInCase(exec, scopedCaseId, normalizedQuestionId)
+    yield* transact((tx) =>
+      Effect.gen(function* deleteQuestionTx() {
+        const deleted = yield* tryDb(() =>
+          questionsRepo.deleteInCase(tx, scopedCaseId, normalizedQuestionId)
+        );
+        if (!deleted) {
+          return yield* new NotFoundError({
+            entity: "Question",
+            id: normalizedQuestionId,
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "question",
+          action: "deleted",
+          subjectId: normalizedQuestionId,
+          label: existing.text,
+        });
+      })
     );
-    if (!deleted) {
-      return yield* new NotFoundError({
-        entity: "Question",
-        id: normalizedQuestionId,
-      });
-    }
-    yield* notifyEntityChangedEffect(scopedCaseId);
   });
 }

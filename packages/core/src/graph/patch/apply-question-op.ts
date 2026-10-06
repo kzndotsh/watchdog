@@ -12,6 +12,8 @@ import {
   type DomainTag,
 } from "../../infra/tagged-errors";
 import {
+  appendPatchActivityEffect,
+  type PatchActor,
   requireDomainStringEffect,
   requireDomainUuidEffect,
 } from "./apply-patch-helpers";
@@ -20,7 +22,8 @@ import { assertEntityInCaseEffect } from "./guards";
 export function applyQuestionOpEffect(
   tx: DbTx,
   caseId: CaseId,
-  op: PatchOp
+  op: PatchOp,
+  actor: PatchActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyQuestionOpGen() {
     if (op.op !== "create") {
@@ -42,5 +45,11 @@ export function applyQuestionOpEffect(
     if (!created) {
       return yield* new InternalError({ reason: "Failed to create Question" });
     }
+    yield* appendPatchActivityEffect(tx, caseId, actor, {
+      kind: "question",
+      action: "created",
+      subjectId: created.id,
+      label: created.text,
+    });
   });
 }

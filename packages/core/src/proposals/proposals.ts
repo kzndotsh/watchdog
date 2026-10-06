@@ -40,7 +40,6 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -377,6 +376,7 @@ export function acceptProposalEffect(input: {
           patch: pending.patch,
           confidence: input.confidence,
           sharedEvidenceIds: allShared,
+          actorId,
           tx,
         });
 
@@ -405,7 +405,6 @@ export function acceptProposalEffect(input: {
         return accepted;
       })
     );
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return yield* enrichProposalRecordEffect(updated);
   });
 }

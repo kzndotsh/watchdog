@@ -23,6 +23,8 @@ import {
   type DomainTag,
 } from "../../infra/tagged-errors";
 import {
+  appendPatchActivityEffect,
+  type PatchActor,
   requireDomainEnumEffect,
   requireDomainStringEffect,
   requireDomainUuidEffect,
@@ -34,7 +36,8 @@ export function applyEdgeOpEffect(
   caseId: CaseId,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
-  evidenceIds: string[]
+  evidenceIds: string[],
+  actor: PatchActor
 ): Effect.Effect<void, DomainTag> {
   return Effect.gen(function* applyEdgeOpGen() {
     if (op.op !== "create" && op.op !== "upsert") {
@@ -104,6 +107,12 @@ export function applyEdgeOpEffect(
           evidenceLinksRepo.linkEdge(tx, existing.id, evidenceIds)
         );
         yield* assertEvidenceLinkedEffect(linked);
+        yield* appendPatchActivityEffect(tx, caseId, actor, {
+          kind: "edge",
+          action: "updated",
+          subjectId: existing.id,
+          label: predicate,
+        });
         return;
       }
     }
@@ -124,5 +133,11 @@ export function applyEdgeOpEffect(
       evidenceLinksRepo.linkEdge(tx, created.id, evidenceIds)
     );
     yield* assertEvidenceLinkedEffect(linked);
+    yield* appendPatchActivityEffect(tx, caseId, actor, {
+      kind: "edge",
+      action: "created",
+      subjectId: created.id,
+      label: predicate,
+    });
   });
 }

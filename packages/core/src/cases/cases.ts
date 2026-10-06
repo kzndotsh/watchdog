@@ -10,17 +10,18 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
+import { appendGraphActivityEffect } from "../graph/graph-activity";
 import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
 import { deleteCaseArtifactsEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
 import {
   removeCaseExportDirEffect,
   renameCaseExportDirEffect,
   scheduleCaseExportEffect,
 } from "../infra/export-sync";
-import { tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
 import { logProcess, logSwallowed } from "../infra/process-log";
 import {
   ConflictError,
@@ -206,24 +207,35 @@ export function updateCaseEffect(input: {
       nextSlug === undefined
         ? `Slug conflict`
         : `Slug "${nextSlug}" already exists`;
-    const updated = yield* tryDbWith(
-      (exec) =>
-        casesRepo.update(exec, caseId, input.organizationId, {
-          ...(nextName === undefined ? {} : { name: nextName }),
-          ...(nextSlug === undefined ? {} : { slug: nextSlug }),
-          ...(input.description === undefined
-            ? {}
-            : { description: trimmedOrNull(input.description) }),
-          ...(input.allowThirdPartyEgress === undefined
-            ? {}
-            : { allowThirdPartyEgress: input.allowThirdPartyEgress }),
+    const updated = yield* transact(
+      (tx) =>
+        Effect.gen(function* updateCaseTx() {
+          const row = yield* tryDb(() =>
+            casesRepo.update(tx, caseId, input.organizationId, {
+              ...(nextName === undefined ? {} : { name: nextName }),
+              ...(nextSlug === undefined ? {} : { slug: nextSlug }),
+              ...(input.description === undefined
+                ? {}
+                : { description: trimmedOrNull(input.description) }),
+              ...(input.allowThirdPartyEgress === undefined
+                ? {}
+                : { allowThirdPartyEgress: input.allowThirdPartyEgress }),
+            })
+          );
+          if (!row) {
+            return yield* new NotFoundError({ entity: "Case", id: caseId });
+          }
+          yield* appendGraphActivityEffect(tx, {
+            caseId,
+            kind: "case",
+            action: "updated",
+            subjectId: row.id,
+            label: row.name,
+          });
+          return row;
         }),
       { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
     );
-
-    if (!updated) {
-      return yield* new NotFoundError({ entity: "Case", id: caseId });
-    }
 
     if (nextSlug !== undefined) {
       yield* renameCaseExportDirEffect(
@@ -275,8 +287,8 @@ export function deleteCaseEffect(
         actorId: logActorId,
       });
     }
-    yield* notifyEntityChangedEffect(caseId);
-
+    // Case delete is not logged (ADR-0005 decision 2): the FK cascade would remove its
+    // own entry. A client on the deleted Case gets a 404 when it reconnects.
     yield* deleteCaseArtifactsEffect(caseId).pipe(
       Effect.catch((error) =>
         Effect.sync(() => {

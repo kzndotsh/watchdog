@@ -13,7 +13,6 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -24,6 +23,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
+import { appendGraphActivityEffect } from "./graph-activity";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
 
@@ -148,12 +148,18 @@ export function createEntityEffect(
             });
           }
           yield* seedDefaultQuestionsEffect(tx, row);
+          yield* appendGraphActivityEffect(tx, {
+            caseId: scopedCaseId,
+            kind: "entity",
+            action: "created",
+            subjectId: row.id,
+            label: row.name,
+          });
           return row;
         }),
       { uniqueIndex: SLUG_UNIQUE_INDEX, conflictReason }
     );
 
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(created);
   });
 }
@@ -188,23 +194,33 @@ export function updateEntityFieldsEffect(
       );
     }
 
-    const updated = yield* tryDbWith((exec) =>
-      entitiesRepo.updateInCase(exec, scopedCaseId, entityId, {
-        ...(input.kind === undefined ? {} : { kind: input.kind }),
-        ...(nextName === undefined ? {} : { name: nextName }),
-        ...(input.summary === undefined
-          ? {}
-          : { summary: trimmedOrNull(input.summary) }),
-        ...(input.notes === undefined
-          ? {}
-          : { notes: trimmedOrNull(input.notes) }),
+    const updated = yield* transact((tx) =>
+      Effect.gen(function* updateEntityTx() {
+        const row = yield* tryDb(() =>
+          entitiesRepo.updateInCase(tx, scopedCaseId, entityId, {
+            ...(input.kind === undefined ? {} : { kind: input.kind }),
+            ...(nextName === undefined ? {} : { name: nextName }),
+            ...(input.summary === undefined
+              ? {}
+              : { summary: trimmedOrNull(input.summary) }),
+            ...(input.notes === undefined
+              ? {}
+              : { notes: trimmedOrNull(input.notes) }),
+          })
+        );
+        if (!row) {
+          return yield* new NotFoundError({ entity: "Entity", id: entityId });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "entity",
+          action: "updated",
+          subjectId: row.id,
+          label: row.name,
+        });
+        return row;
       })
     );
-    if (!updated) {
-      return yield* new NotFoundError({ entity: "Entity", id: entityId });
-    }
-
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(updated);
   });
 }
@@ -227,16 +243,25 @@ export function deleteEntityEffect(
       });
     }
 
-    const deleted = yield* tryDbWith((exec) =>
-      entitiesRepo.deleteInCase(exec, scopedCaseId, normalizedEntityId)
+    yield* transact((tx) =>
+      Effect.gen(function* deleteEntityTx() {
+        const deleted = yield* tryDb(() =>
+          entitiesRepo.deleteInCase(tx, scopedCaseId, normalizedEntityId)
+        );
+        if (!deleted) {
+          return yield* new NotFoundError({
+            entity: "Entity",
+            id: normalizedEntityId,
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "entity",
+          action: "deleted",
+          subjectId: normalizedEntityId,
+          label: existing.name,
+        });
+      })
     );
-    if (!deleted) {
-      return yield* new NotFoundError({
-        entity: "Entity",
-        id: normalizedEntityId,
-      });
-    }
-
-    yield* notifyEntityChangedEffect(scopedCaseId);
   });
 }

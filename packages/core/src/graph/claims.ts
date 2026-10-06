@@ -19,7 +19,6 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -29,6 +28,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { appendGraphActivityEffect } from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -160,11 +160,17 @@ export function createClaimEffect(
           evidenceLinksRepo.linkClaim(tx, created.id, evidenceIds)
         );
         yield* assertEvidenceLinkedEffect(linked);
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "claim",
+          action: "created",
+          subjectId: created.id,
+          label: created.text,
+        });
         return created;
       })
     );
 
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, evidenceIds);
   });
 }
@@ -196,21 +202,34 @@ export function retractClaimEffect(
     }
 
     const scopedActorId = yield* requireActorIdEffect(actorId);
-    const row = yield* tryDbWith((exec) =>
-      claimsRepo.retractInCase(exec, scopedCaseId, claimId, {
-        retractKind: input.kind,
-        retractedReason: reason,
-        retractedBy: scopedActorId,
+    const row = yield* transact((tx) =>
+      Effect.gen(function* retractClaimTx() {
+        const retracted = yield* tryDb(() =>
+          claimsRepo.retractInCase(tx, scopedCaseId, claimId, {
+            retractKind: input.kind,
+            retractedReason: reason,
+            retractedBy: scopedActorId,
+          })
+        );
+        if (!retracted) {
+          return yield* new NotFoundError({ entity: "Claim", id: claimId });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "claim",
+          action: "retracted",
+          subjectId: retracted.id,
+          label: retracted.text,
+          actorId: scopedActorId,
+          toValue: input.kind,
+        });
+        return retracted;
       })
     );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Claim", id: claimId });
-    }
 
     const byClaim = yield* tryDbWith((exec) =>
       evidenceLinksRepo.listForClaims(exec, [row.id])
     );
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, byClaim.get(row.id) ?? []);
   });
 }
@@ -286,11 +305,17 @@ export function updateClaimEffect(
         if (!updated) {
           return yield* new NotFoundError({ entity: "Claim", id: claimId });
         }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "claim",
+          action: "updated",
+          subjectId: updated.id,
+          label: updated.text,
+        });
         return { row: updated, evidenceIds: nextIds };
       })
     );
 
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, nextEvidenceIds);
   });
 }
