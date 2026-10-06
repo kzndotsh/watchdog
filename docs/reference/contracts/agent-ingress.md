@@ -12,7 +12,7 @@
 ## Escape hatch: graph write
 
 - `POST …/graph/write` / `wd graph write` with body `userOverride: true` (CLI verb _is_ the hatch: no boolean flag).
-- Lands Graph @ **`unverified`** + `graph_writes` row in the **same tx** as `applyPatch`.
+- Lands Graph @ **`unverified`** + `graph_writes` row in the **same tx** as `applyPatch`. Each applied op also appends one activity entry (agent as actor) in that tx; the entry is a live-update and feed signal, not custody: `graph_writes` stays the complete, un-pruned, idempotent record, and a replayed `idempotencyKey` appends nothing.
 - Optional `idempotencyKey` (replay returns `replayed: true`, `opCount: 0`).
 - No Proposal on this path.
 

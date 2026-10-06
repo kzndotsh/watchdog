@@ -21,6 +21,8 @@ import {
 import { assertEntityKindChangeAllowedEffect } from "../edge-update";
 import { seedDefaultQuestionsEffect } from "../questions";
 import {
+  appendPatchActivityEffect,
+  type PatchActor,
   requireDomainEntitySlugEffect,
   requireDomainEnumEffect,
   requireDomainStringEffect,
@@ -30,7 +32,8 @@ import { assertEntityInCaseEffect } from "./guards";
 export function applyEntityOpEffect(
   tx: DbTx,
   caseId: CaseId,
-  op: PatchOp
+  op: PatchOp,
+  actor: PatchActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEntityOpGen() {
     if (op.op === "create" || op.op === "upsert") {
@@ -81,6 +84,12 @@ export function applyEntityOpEffect(
               id: existing.id,
             });
           }
+          yield* appendPatchActivityEffect(tx, caseId, actor, {
+            kind: "entity",
+            action: "updated",
+            subjectId: updated.id,
+            label: updated.name,
+          });
           return;
         }
       }
@@ -122,6 +131,12 @@ export function applyEntityOpEffect(
         return yield* new InternalError({ reason: "Failed to create Entity" });
       }
       yield* seedDefaultQuestionsEffect(tx, created);
+      yield* appendPatchActivityEffect(tx, caseId, actor, {
+        kind: "entity",
+        action: "created",
+        subjectId: created.id,
+        label: created.name,
+      });
       return;
     }
     if (op.op === "update") {
@@ -149,6 +164,12 @@ export function applyEntityOpEffect(
       if (!updated) {
         return yield* new NotFoundError({ entity: "Entity", id: entityId });
       }
+      yield* appendPatchActivityEffect(tx, caseId, actor, {
+        kind: "entity",
+        action: "updated",
+        subjectId: updated.id,
+        label: updated.name,
+      });
       return;
     }
     return yield* new InvalidError({

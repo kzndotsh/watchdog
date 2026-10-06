@@ -17,7 +17,6 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -31,6 +30,7 @@ import {
   assertEdgeKindsAllowedEffect,
   validateEdgeUpdateEffect,
 } from "./edge-update";
+import { appendGraphActivityEffect } from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -273,6 +273,13 @@ export function createEdgeEffect(
             evidenceLinksRepo.linkEdge(tx, row.id, evidenceIds)
           );
           yield* assertEvidenceLinkedEffect(linked);
+          yield* appendGraphActivityEffect(tx, {
+            caseId: scopedCaseId,
+            kind: "edge",
+            action: "created",
+            subjectId: row.id,
+            label: row.predicate,
+          });
           return row;
         }),
       {
@@ -288,7 +295,6 @@ export function createEdgeEffect(
       return yield* new InvalidError({ reason: "Edge created but not found" });
     }
 
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(listed, viewEntityId, evidenceIds);
   });
 }
@@ -349,6 +355,13 @@ export function updateEdgeEffect(
             scopedInput,
             validated
           );
+          yield* appendGraphActivityEffect(tx, {
+            caseId: scopedCaseId,
+            kind: "edge",
+            action: "updated",
+            subjectId: edgeId,
+            label: listedRow.predicate,
+          });
           return { listed: listedRow, evidenceIds: nextIds };
         }),
       {
@@ -359,7 +372,6 @@ export function updateEdgeEffect(
 
     const viewEntityId =
       parseOptionalTrimmedUuid(input.viewEntityId) ?? existing.fromId;
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(listed, viewEntityId, nextEvidenceIds);
   });
 }
@@ -379,13 +391,25 @@ export function deleteEdgeEffect(
       return yield* new NotFoundError({ entity: "Edge", id: normalizedEdgeId });
     }
 
-    const deleted = yield* tryDbWith((exec) =>
-      edgesRepo.deleteInCase(exec, scopedCaseId, normalizedEdgeId)
+    yield* transact((tx) =>
+      Effect.gen(function* deleteEdgeTx() {
+        const deleted = yield* tryDb(() =>
+          edgesRepo.deleteInCase(tx, scopedCaseId, normalizedEdgeId)
+        );
+        if (!deleted) {
+          return yield* new NotFoundError({
+            entity: "Edge",
+            id: normalizedEdgeId,
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "edge",
+          action: "deleted",
+          subjectId: normalizedEdgeId,
+          label: existing.predicate,
+        });
+      })
     );
-    if (!deleted) {
-      return yield* new NotFoundError({ entity: "Edge", id: normalizedEdgeId });
-    }
-
-    yield* notifyEntityChangedEffect(scopedCaseId);
   });
 }

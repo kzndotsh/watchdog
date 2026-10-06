@@ -9,14 +9,15 @@ import {
 } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
-import { tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
 import {
   InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { appendGraphActivityEffect } from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
@@ -93,18 +94,29 @@ export function createEventEffect(
     if (what === undefined) {
       return yield* new InvalidError({ reason: "Event what is required" });
     }
-    const row = yield* tryDbWith((exec) =>
-      eventsRepo.create(exec, {
-        entityId,
-        when,
-        what,
-        whereText: trimmedOrNull(input.where),
+    const row = yield* transact((tx) =>
+      Effect.gen(function* createEventTx() {
+        const created = yield* tryDb(() =>
+          eventsRepo.create(tx, {
+            entityId,
+            when,
+            what,
+            whereText: trimmedOrNull(input.where),
+          })
+        );
+        if (!created) {
+          return yield* new InternalError({ reason: "Failed to create Event" });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "event",
+          action: "created",
+          subjectId: created.id,
+          label: created.what,
+        });
+        return created;
       })
     );
-    if (!row) {
-      return yield* new InternalError({ reason: "Failed to create Event" });
-    }
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -142,20 +154,31 @@ export function updateEventEffect(
       nextWhat = what;
     }
 
-    const row = yield* tryDbWith((exec) =>
-      eventsRepo.updateInCase(exec, scopedCaseId, eventId, {
-        when: nextWhen,
-        what: nextWhat,
-        whereText:
-          input.where === undefined
-            ? existing.whereText
-            : trimmedOrNull(input.where),
+    const row = yield* transact((tx) =>
+      Effect.gen(function* updateEventTx() {
+        const updated = yield* tryDb(() =>
+          eventsRepo.updateInCase(tx, scopedCaseId, eventId, {
+            when: nextWhen,
+            what: nextWhat,
+            whereText:
+              input.where === undefined
+                ? existing.whereText
+                : trimmedOrNull(input.where),
+          })
+        );
+        if (!updated) {
+          return yield* new NotFoundError({ entity: "Event", id: eventId });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "event",
+          action: "updated",
+          subjectId: updated.id,
+          label: updated.what,
+        });
+        return updated;
       })
     );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Event", id: eventId });
-    }
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row);
   });
 }
@@ -178,15 +201,25 @@ export function deleteEventEffect(
       });
     }
 
-    const deleted = yield* tryDbWith((exec) =>
-      eventsRepo.deleteInCase(exec, scopedCaseId, normalizedEventId)
+    yield* transact((tx) =>
+      Effect.gen(function* deleteEventTx() {
+        const deleted = yield* tryDb(() =>
+          eventsRepo.deleteInCase(tx, scopedCaseId, normalizedEventId)
+        );
+        if (!deleted) {
+          return yield* new NotFoundError({
+            entity: "Event",
+            id: normalizedEventId,
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "event",
+          action: "deleted",
+          subjectId: normalizedEventId,
+          label: existing.what,
+        });
+      })
     );
-    if (!deleted) {
-      return yield* new NotFoundError({
-        entity: "Event",
-        id: normalizedEventId,
-      });
-    }
-    yield* notifyEntityChangedEffect(scopedCaseId);
   });
 }

@@ -113,8 +113,8 @@ export function compareActivityCursor(
 
 /**
  * The adapter for consumers that still speak `WatchdogEvent` (old web hook,
- * old worker). Returns `null` for kinds that are not on the log yet: their
- * `notify*Effect` still fires on the old channel.
+ * old worker). Every Graph kind maps to `entity_changed` (what the 20 Graph notify
+ * sites sent); a Case update maps to nothing, as it did before S4.
  */
 export function legacyEventForActivityEntry(
   entry: ActivityEntry
@@ -147,6 +147,17 @@ export function legacyEventForActivityEntry(
         }
       : { type: "proposal_queue_changed", caseId: entry.caseId };
   }
+  if (
+    entry.kind === "entity" ||
+    entry.kind === "edge" ||
+    entry.kind === "claim" ||
+    entry.kind === "identifier" ||
+    entry.kind === "event" ||
+    entry.kind === "question"
+  ) {
+    return { type: "entity_changed", caseId: entry.caseId };
+  }
+  // `case` (an update) never had a legacy event; the `activity` event carries it.
   return null;
 }
 

@@ -22,7 +22,6 @@ import {
   parseGraphEvidenceIdsEffect,
 } from "../evidence/evidence";
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -31,6 +30,7 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import { appendGraphActivityEffect } from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -211,12 +211,18 @@ export function createIdentifierEffect(
             evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
           );
           yield* assertEvidenceLinkedEffect(linked);
+          yield* appendGraphActivityEffect(tx, {
+            caseId: scopedCaseId,
+            kind: "identifier",
+            action: "created",
+            subjectId: created.id,
+            label: created.value,
+          });
           return created;
         }),
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
     );
 
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, evidenceIds);
   });
 }
@@ -319,25 +325,37 @@ export function updateIdentifierEffect(
             patch.notes = trimmedOrNull(input.notes);
           }
 
-          if (Object.keys(patch).length === 0) {
-            return { row: existing, evidenceIds: nextIds };
+          let current = existing;
+          if (Object.keys(patch).length > 0) {
+            const updated = yield* tryDb(() =>
+              identifiersRepo.updateInCase(
+                tx,
+                scopedCaseId,
+                identifierId,
+                patch
+              )
+            );
+            if (!updated) {
+              return yield* new NotFoundError({
+                entity: "Identifier",
+                id: identifierId,
+              });
+            }
+            current = updated;
           }
-
-          const updated = yield* tryDb(() =>
-            identifiersRepo.updateInCase(tx, scopedCaseId, identifierId, patch)
-          );
-          if (!updated) {
-            return yield* new NotFoundError({
-              entity: "Identifier",
-              id: identifierId,
-            });
-          }
-          return { row: updated, evidenceIds: nextIds };
+          // An evidence-only update still changed the Identifier's links.
+          yield* appendGraphActivityEffect(tx, {
+            caseId: scopedCaseId,
+            kind: "identifier",
+            action: "updated",
+            subjectId: current.id,
+            label: current.value,
+          });
+          return { row: current, evidenceIds: nextIds };
         }),
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
     );
 
-    yield* notifyEntityChangedEffect(scopedCaseId);
     return toRecord(row, nextEvidenceIds);
   });
 }
@@ -363,16 +381,25 @@ export function deleteIdentifierEffect(
       });
     }
 
-    const deleted = yield* tryDbWith((exec) =>
-      identifiersRepo.deleteInCase(exec, scopedCaseId, normalizedIdentifierId)
+    yield* transact((tx) =>
+      Effect.gen(function* deleteIdentifierTx() {
+        const deleted = yield* tryDb(() =>
+          identifiersRepo.deleteInCase(tx, scopedCaseId, normalizedIdentifierId)
+        );
+        if (!deleted) {
+          return yield* new NotFoundError({
+            entity: "Identifier",
+            id: normalizedIdentifierId,
+          });
+        }
+        yield* appendGraphActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "identifier",
+          action: "deleted",
+          subjectId: normalizedIdentifierId,
+          label: existing.value,
+        });
+      })
     );
-    if (!deleted) {
-      return yield* new NotFoundError({
-        entity: "Identifier",
-        id: normalizedIdentifierId,
-      });
-    }
-
-    yield* notifyEntityChangedEffect(scopedCaseId);
   });
 }

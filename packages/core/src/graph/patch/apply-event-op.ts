@@ -12,6 +12,8 @@ import {
   type DomainTag,
 } from "../../infra/tagged-errors";
 import {
+  appendPatchActivityEffect,
+  type PatchActor,
   requireDomainStringEffect,
   requireDomainUuidEffect,
 } from "./apply-patch-helpers";
@@ -20,7 +22,8 @@ import { assertEntityInCaseEffect } from "./guards";
 export function applyEventOpEffect(
   tx: DbTx,
   caseId: CaseId,
-  op: PatchOp
+  op: PatchOp,
+  actor: PatchActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyEventOpGen() {
     if (op.op !== "create") {
@@ -46,5 +49,11 @@ export function applyEventOpEffect(
     if (!created) {
       return yield* new InternalError({ reason: "Failed to create Event" });
     }
+    yield* appendPatchActivityEffect(tx, caseId, actor, {
+      kind: "event",
+      action: "created",
+      subjectId: created.id,
+      label: created.what,
+    });
   });
 }

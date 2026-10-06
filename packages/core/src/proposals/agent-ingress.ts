@@ -21,7 +21,6 @@ import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
-import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -246,6 +245,8 @@ export function writeGraphFromAgentEffect(input: {
             patch: plan.patch,
             confidence: "unverified",
             sharedEvidenceIds,
+            actorId,
+            actorLabel,
             tx,
           });
 
@@ -290,10 +291,6 @@ export function writeGraphFromAgentEffect(input: {
         })
       )
     );
-
-    if (!result.replayed) {
-      yield* notifyEntityChangedEffect(scopedCaseId);
-    }
 
     return result;
   });

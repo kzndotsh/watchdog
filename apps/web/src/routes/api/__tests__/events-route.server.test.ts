@@ -336,6 +336,42 @@ describe("api events route", () => {
     expect(await response.text()).toBe("Not Found");
   });
 
+  it("returns 404 and replays nothing when a client reconnects with Last-Event-ID on a Case deleted since (ADR-0005 decision 2)", async () => {
+    const caseId = testId(11);
+    replayActivityEffectMock.mockClear();
+    createApiContextMock.mockResolvedValue({
+      actor: {
+        userId: "u1",
+        email: null,
+        name: null,
+        organizationId: "org-1",
+      },
+    });
+    assertCaseInOrgEffectMock.mockReturnValue(
+      Effect.fail(new NotFoundError({ entity: "Case", id: caseId }))
+    );
+    const handlers = (
+      Route.options as {
+        server: {
+          handlers: Record<
+            string,
+            (ctx: { request: Request }) => Promise<Response>
+          >;
+        };
+      }
+    ).server.handlers;
+
+    const response = await handlers.GET({
+      request: new Request(
+        testHttpOrigin("localhost", `/api/events?caseId=${caseId}`),
+        { headers: { "last-event-id": "12:34" } }
+      ),
+    });
+
+    expect(response.status).toBe(404);
+    expect(replayActivityEffectMock).not.toHaveBeenCalled();
+  });
+
   it("does not deliver events for a Case core no longer lists as visible", async () => {
     const hiddenCaseId = testId(12);
     createApiContextMock.mockResolvedValue({

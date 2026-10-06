@@ -19,6 +19,8 @@ import {
   type DomainTag,
 } from "../../infra/tagged-errors";
 import {
+  appendPatchActivityEffect,
+  type PatchActor,
   requireDomainEnumEffect,
   requireDomainStringEffect,
   requireDomainUuidEffect,
@@ -30,7 +32,8 @@ export function applyIdentifierOpEffect(
   caseId: CaseId,
   op: PatchOp,
   confidence: ConfidenceTier | undefined,
-  evidenceIds: string[]
+  evidenceIds: string[],
+  actor: PatchActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* applyIdentifierOpGen() {
     if (op.op !== "create" && op.op !== "upsert") {
@@ -92,6 +95,12 @@ export function applyIdentifierOpEffect(
           evidenceLinksRepo.linkIdentifier(tx, existing.id, evidenceIds)
         );
         yield* assertEvidenceLinkedEffect(linked);
+        yield* appendPatchActivityEffect(tx, caseId, actor, {
+          kind: "identifier",
+          action: "updated",
+          subjectId: existing.id,
+          label: value,
+        });
         return;
       }
     }
@@ -116,5 +125,11 @@ export function applyIdentifierOpEffect(
       evidenceLinksRepo.linkIdentifier(tx, created.id, evidenceIds)
     );
     yield* assertEvidenceLinkedEffect(linked);
+    yield* appendPatchActivityEffect(tx, caseId, actor, {
+      kind: "identifier",
+      action: "created",
+      subjectId: created.id,
+      label: value,
+    });
   });
 }
