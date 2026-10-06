@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 const apiMocks = vi.hoisted(() => ({
   listEntities: vi.fn(),
@@ -22,7 +22,7 @@ describe("entityTitlesForJobs", () => {
   });
 
   it("returns an empty map when jobs have no entityId inputs", async () => {
-    const titles = await entityTitlesForJobs("case-1", [
+    const titles = await entityTitlesForJobs(testCaseId(0), [
       { input: { host: "x" } },
     ]);
     expect(titles.size).toBe(0);
@@ -30,7 +30,7 @@ describe("entityTitlesForJobs", () => {
   });
 
   it("loads entity display labels for referenced ids", async () => {
-    const caseId = testId(0);
+    const caseId = testCaseId(0);
     const entityId = "00000000-0000-4000-8000-000000000001";
     apiMocks.listEntities.mockResolvedValue([
       {

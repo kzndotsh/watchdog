@@ -11,6 +11,7 @@ import {
   mimeInputSchema,
   sha256HexSchema,
 } from "@watchdog/schemas/shared";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 import { api } from "./client";
 import { fail } from "./io";
@@ -108,7 +109,7 @@ async function readEvidenceFile(filePath: string): Promise<Buffer> {
 }
 
 interface UploadEvidenceFileInput {
-  caseId: string;
+  caseId: CaseId;
   path: string;
   label?: string;
   entityId?: string;

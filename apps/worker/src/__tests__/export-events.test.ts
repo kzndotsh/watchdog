@@ -2,6 +2,7 @@ import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WatchdogEvent } from "@watchdog/schemas/feed";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 const { claimCaseExportEffect } = vi.hoisted(() => ({
   claimCaseExportEffect: vi.fn(() => Effect.succeed(Effect.void)),
@@ -20,6 +21,7 @@ import { Db, recordingBlobStore, fakeVault } from "@watchdog/core/worker";
 import {
   claimExportEventEffect,
   hasSchedulableCaseId,
+  normalizeSchedulableCaseId,
   shouldTriggerCaseExport,
 } from "../export-events";
 
@@ -171,5 +173,23 @@ describe("claimExportEventEffect", () => {
     );
 
     expect(claimCaseExportEffect).not.toHaveBeenCalled();
+  });
+});
+
+describe("normalizeSchedulableCaseId (ADR-0003)", () => {
+  it("mints a CaseId from a padded uuid and rejects anything else", () => {
+    const id = "11111111-1111-4111-8111-000000000001";
+    const minted: CaseId | null = normalizeSchedulableCaseId(`  ${id}  `);
+    expect(minted).toBe(id);
+    expect(normalizeSchedulableCaseId("not-a-uuid")).toBeNull();
+  });
+
+  it("returns a CaseId, so a plain string cannot stand in for it", () => {
+    const id = normalizeSchedulableCaseId(
+      "11111111-1111-4111-8111-000000000001"
+    );
+    // @ts-expect-error the result is CaseId | null: narrow it before use
+    const notNarrowed: CaseId = id;
+    expect(notNarrowed).toBeDefined();
   });
 });

@@ -28,7 +28,7 @@ import {
 } from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 import { Button } from "@/shared/ui/primitives/button";
-import { uuidSchema } from "@watchdog/schemas/shared";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/cases/$caseSlug");
 
@@ -133,10 +133,11 @@ export const Route = createFileRoute("/_protected/cases/$caseSlug")({
     }
 
     // Legacy bookmarks used /cases/$caseId — redirect to slug.
-    if (uuidSchema.safeParse(caseSlug).success) {
+    const legacyCaseId = parseTrimmedCaseId(caseSlug);
+    if (legacyCaseId !== null) {
       const byId = await ensureAppQueryData(
         queryClient,
-        caseByIdQuery(caseSlug)
+        caseByIdQuery(legacyCaseId)
       );
       if (!byId) {
         // oxlint-disable-next-line typescript/only-throw-error -- TanStack Router's notFound() throws a plain object, per docs

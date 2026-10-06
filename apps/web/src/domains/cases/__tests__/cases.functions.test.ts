@@ -42,6 +42,7 @@ import {
   writeActiveCaseId,
 } from "@/domains/cases/lib/active-case.server";
 import type { CaseRecord } from "@/domains/cases/types";
+import { asCaseId } from "@watchdog/schemas/shared";
 
 interface ServerContext {
   context: Record<string, never>;
@@ -70,7 +71,9 @@ const CASE_B: CaseRecord = {
 describe("cases.functions", () => {
   it("heals the active case cookie when the stored id is missing", async () => {
     casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
-    vi.mocked(readActiveCaseId).mockReturnValue("missing-id");
+    vi.mocked(readActiveCaseId).mockReturnValue(
+      asCaseId("770e8400-e29b-41d4-a716-446655440009")
+    );
 
     const ctx = await (
       getCasesContextFn as unknown as (
@@ -137,7 +140,7 @@ describe("cases.functions", () => {
   ) => Promise<{ changed: boolean }>;
 
   it("heals the cookie to the route's Case when it still holds the expected value", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(CASE_B.id);
+    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_B.id));
     vi.mocked(writeActiveCaseId).mockClear();
     casesApi.get.mockResolvedValue(CASE_A);
 
@@ -167,7 +170,7 @@ describe("cases.functions", () => {
   it("does not overwrite a cookie a newer switch changed after the loader read it", async () => {
     // The loader observed B; the user switched to C before heal(A) reached the server.
     const CASE_C = "770e8400-e29b-41d4-a716-446655440002";
-    vi.mocked(readActiveCaseId).mockReturnValue(CASE_C);
+    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_C));
     vi.mocked(writeActiveCaseId).mockClear();
     casesApi.get.mockResolvedValue(CASE_A);
 
@@ -181,7 +184,7 @@ describe("cases.functions", () => {
   });
 
   it("leaves the cookie alone when the route's Case is already Active", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(CASE_A.id);
+    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_A.id));
     vi.mocked(writeActiveCaseId).mockClear();
 
     const result = await heal({
@@ -194,7 +197,7 @@ describe("cases.functions", () => {
   });
 
   it("refuses to heal to a Case outside the caller's org and writes no cookie", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(CASE_B.id);
+    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_B.id));
     vi.mocked(writeActiveCaseId).mockClear();
     casesApi.get.mockResolvedValue(null);
 
@@ -222,7 +225,7 @@ describe("cases.functions", () => {
   });
 
   it("clears or advances the active case cookie after delete", async () => {
-    vi.mocked(readActiveCaseId).mockReturnValue(CASE_A.id);
+    vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_A.id));
     casesApi.delete.mockResolvedValue(undefined);
     casesApi.list.mockResolvedValue([CASE_B]);
 

@@ -15,6 +15,7 @@ import { renderEntityMarkdownEffect } from "@watchdog/core/export";
 import { getEntityByCaseSlugEffect } from "@watchdog/core/graph";
 import type { Db } from "@watchdog/core/infra";
 import {
+  type CaseId,
   type OrganizationId,
   parseTrimmedCaseId,
 } from "@watchdog/schemas/shared";
@@ -24,24 +25,19 @@ type EntityExportMdResult =
   | { kind: "ok"; markdown: string };
 
 function entityExportMdEffect(
-  caseId: string,
+  caseId: CaseId,
   slug: string,
   organizationId: OrganizationId
 ): Effect.Effect<EntityExportMdResult, DomainTag, Db> {
   return Effect.gen(function* entityExportMdGen() {
-    const scopedCaseId = parseTrimmedCaseId(caseId);
-    if (scopedCaseId === null) {
-      return { kind: "missing" as const };
-    }
-    const scopedCase = yield* getCaseByIdEffect(
-      scopedCaseId,
-      organizationId
-    ).pipe(Effect.catchTag("NotFoundError", () => Effect.succeed(null)));
+    const scopedCase = yield* getCaseByIdEffect(caseId, organizationId).pipe(
+      Effect.catchTag("NotFoundError", () => Effect.succeed(null))
+    );
     if (scopedCase === null) {
       return { kind: "missing" as const };
     }
     const entity = yield* getEntityByCaseSlugEffect(
-      scopedCaseId,
+      caseId,
       organizationId,
       slug
     ).pipe(Effect.catchTag("NotFoundError", () => Effect.succeed(null)));
@@ -77,7 +73,12 @@ export const Route = createFileRoute(
           return new Response("Forbidden", { status: 403 });
         }
 
-        const { caseId, slug } = params;
+        const { slug } = params;
+        // Route params are plain strings: brand at the edge, 404 when not a case id.
+        const caseId = parseTrimmedCaseId(params.caseId);
+        if (caseId === null) {
+          return new Response("Not Found", { status: 404 });
+        }
         const exported = await runApp(
           entityExportMdEffect(caseId, slug, ctx.actor.organizationId)
         );

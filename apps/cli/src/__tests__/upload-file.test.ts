@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
 
-const CASE_ID = testId(0);
+const CASE_ID = testCaseId(0);
 
 const apiMocks = vi.hoisted(() => {
   const caseId = "11111111-1111-4111-8111-000000000000";

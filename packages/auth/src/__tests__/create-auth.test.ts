@@ -127,4 +127,18 @@ describe("createAuth", () => {
       actorId: "user-1",
     });
   });
+
+  it("aborts the deletion instead of passing the hook a blank organization id", async () => {
+    const beforeDeleteOrganization = vi.fn(async () => {});
+    createAuth({ beforeDeleteOrganization });
+
+    const call = vi.mocked(organization).mock.calls.at(-1)?.[0];
+    await expect(
+      call?.organizationHooks?.beforeDeleteOrganization?.({
+        organization: { id: "" },
+        user: { id: "user-1" },
+      } as never)
+    ).rejects.toThrow();
+    expect(beforeDeleteOrganization).not.toHaveBeenCalled();
+  });
 });

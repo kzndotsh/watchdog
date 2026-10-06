@@ -7,7 +7,7 @@ import { DashboardHome } from "@/domains/dashboard/components/dashboard-home";
 import { warmDashboardQueries } from "@/domains/dashboard/lib/prefetch-dashboard";
 import { RouteError } from "@/shared/layout/route-error";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
-import { optionalUuidSchema } from "@watchdog/schemas/shared";
+import { optionalCaseIdSchema } from "@watchdog/schemas/shared";
 
 const routeApi = getRouteApi("/_protected/");
 
@@ -36,7 +36,7 @@ function DashboardPage() {
 
 export const Route = createFileRoute("/_protected/")({
   validateSearch: z.object({
-    activityCase: optionalUuidSchema,
+    activityCase: optionalCaseIdSchema,
   }),
   loader: async ({ context: { queryClient } }) => {
     const { active } = await ensureAppQueryData(

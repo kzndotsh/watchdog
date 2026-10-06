@@ -6,7 +6,11 @@ import {
 } from "@tanstack/react-start/server";
 
 import { ACTIVE_CASE_COOKIE } from "@/domains/cases/lib/active-case";
-import { parseTrimmedCaseId, trimmedOrNull } from "@watchdog/schemas/shared";
+import {
+  type CaseId,
+  parseTrimmedCaseId,
+  trimmedOrNull,
+} from "@watchdog/schemas/shared";
 
 const COOKIE_OPTS = {
   path: "/",
@@ -15,14 +19,14 @@ const COOKIE_OPTS = {
   httpOnly: true,
 };
 
-function normalizeActiveCaseId(caseId: string | null): string | null {
+function normalizeActiveCaseId(caseId: string | null): CaseId | null {
   const trimmed = trimmedOrNull(caseId);
   if (trimmed === null) return null;
   return parseTrimmedCaseId(trimmed);
 }
 
-/** Read active Case id from the request cookie (null if unset or blank). */
-export function readActiveCaseId(): string | null {
+/** Read active Case id from the request cookie: a cookie is untrusted, so it is parsed into a `CaseId` (null if unset, blank or invalid). */
+export function readActiveCaseId(): CaseId | null {
   return normalizeActiveCaseId(getCookie(ACTIVE_CASE_COOKIE) ?? null);
 }
 

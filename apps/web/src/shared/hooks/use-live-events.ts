@@ -6,6 +6,7 @@ import {
   WATCHDOG_EVENT_TYPES,
   type WatchdogEvent,
 } from "@watchdog/schemas/feed";
+import type { CaseId } from "@watchdog/schemas/shared";
 
 type EventHandler = (event: WatchdogEvent) => void;
 
@@ -138,7 +139,7 @@ function subscribeLiveEvents(
   };
 }
 
-function normalizeLiveEventsCaseId(caseId: string): string | undefined {
+function normalizeLiveEventsCaseId(caseId: string): CaseId | undefined {
   return normalizeSseCaseId(caseId);
 }
 
@@ -152,7 +153,7 @@ function liveEventsSubscriptionKey(
   if (caseId.length === 0) return "";
   const normalized = caseId
     .map((id) => normalizeLiveEventsCaseId(id))
-    .filter((id): id is string => id !== undefined)
+    .filter((id): id is CaseId => id !== undefined)
     .sort();
   return normalized.join("\0");
 }
