@@ -11,7 +11,7 @@ import {
 import { appendActivityEffect } from "../../activity/append";
 import { attachEvidenceIds } from "../../graph/attach-evidence";
 import type { Db } from "../../infra/db-service";
-import { tryDb, tryDbWith } from "../../infra/postgres-effect";
+import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
 import {
   InvalidError,
@@ -24,19 +24,6 @@ export interface ProposeResult {
   proposalId: string | null;
   resultSummary: string | null;
   suppressedCount: number;
-}
-
-export interface ProposeStageInput {
-  caseId: CaseId;
-  kept: PatchOp[];
-  suppressed: number;
-  /** Cap-owned prose only — all-known lives in `suppressedCount`, not the string. */
-  resultSummary: string | null;
-  attachEvidenceIds: string[];
-  /** Cap Jobs set this; agent propose leaves null. */
-  jobId?: string | null;
-  agentSourced?: boolean;
-  createdBy?: string | null;
 }
 
 export interface SuppressAndProposeStageInput {
@@ -132,7 +119,12 @@ export function suppressAndProposeStageEffect(
           kind: "proposal",
           action: "created",
           subjectId: prop.id,
-          actorId: createdByForProposal(input.createdBy),
+          // S3 contract: only an agent Proposal has an actor; a Cap Job's
+          // Proposal is attributed to its Job, not to the Job's user.
+          actorId:
+            input.agentSourced === true
+              ? createdByForProposal(input.createdBy)
+              : null,
           toValue: "pending",
         });
       }
@@ -144,51 +136,4 @@ export function suppressAndProposeStageEffect(
       };
     })
   );
-}
-
-/** Insert a pending Proposal with evidence attached to claim/identifier/edge ops. */
-export function proposeStageEffect(
-  input: ProposeStageInput
-): Effect.Effect<ProposeResult, DomainTag, Db> {
-  if (input.kept.length === 0) {
-    return Effect.succeed({
-      proposalId: null,
-      resultSummary: input.resultSummary,
-      suppressedCount: input.suppressed,
-    });
-  }
-
-  const sharedEvidenceIds = parseGraphUuidList(input.attachEvidenceIds);
-  if (sharedEvidenceIds === null) {
-    return new InvalidError({
-      reason: "attachEvidenceIds contains an invalid UUID",
-    });
-  }
-  const attached = attachEvidenceIds(input.kept, sharedEvidenceIds);
-  if (!attached.ok) {
-    return new InvalidError({ reason: attached.error });
-  }
-  const withEvidence = attached.patch;
-
-  return Effect.gen(function* proposeStageGen() {
-    const prop = yield* tryDbWith((exec) =>
-      proposalsRepo.create(exec, {
-        caseId: input.caseId,
-        jobId: input.jobId ?? null,
-        status: "pending",
-        patch: withEvidence,
-        summary: input.resultSummary,
-        suppressedCount: input.suppressed,
-        evidenceIds: sharedEvidenceIds,
-        agentSourced: input.agentSourced ?? false,
-        userOverridden: false,
-        createdBy: createdByForProposal(input.createdBy),
-      })
-    );
-    return {
-      proposalId: prop?.id ?? null,
-      resultSummary: input.resultSummary,
-      suppressedCount: input.suppressed,
-    };
-  });
 }

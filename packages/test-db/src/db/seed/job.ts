@@ -18,13 +18,16 @@ type SeedJobOverrides = Partial<NewJob> &
 
 /**
  * The log entries core would have appended for a Job seeded in `status`:
- * queued, then the status entry when it is not queued (a `blocked` Job has no
- * log verb). Keeps seeded Jobs visible in Recent activity.
+ * queued, running, then the terminal status (as the demo seed and real writes
+ * do); a `blocked` Job has no log verb. Keeps seeded Jobs visible in Recent
+ * activity.
  */
 async function seedJobActivity(exec: DbExec, job: JobRow): Promise<void> {
-  const actions = (
-    job.status === "blocked" ? [] : ["queued", job.status]
-  ).filter(
+  const lifecycle =
+    job.status === "queued" || job.status === "blocked"
+      ? ["queued"]
+      : ["queued", "running", job.status];
+  const actions = (job.status === "blocked" ? [] : lifecycle).filter(
     (action, index, all) =>
       all.indexOf(action) === index &&
       (ACTIVITY_ENTRY_ACTIONS.job as readonly string[]).includes(action)

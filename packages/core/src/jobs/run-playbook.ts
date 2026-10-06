@@ -318,20 +318,10 @@ export function cancelPlaybookRunEffect(
         const cancelledJobIds = updatedIds.filter((id): id is string =>
           Boolean(id)
         );
+        // each entry carries the Job's own actor and label snapshot
         yield* Effect.forEach(
-          cancelledJobIds,
-          (id) =>
-            appendJobActivityEffect(
-              tx,
-              {
-                id,
-                caseId: scopedCaseId,
-                actorId: run.actorId,
-                actorLabel: run.actorLabel,
-                playbookRunId: normalizedPlaybookRunId,
-              },
-              "cancelled"
-            ),
+          cancellable.filter((row) => cancelledJobIds.includes(row.id)),
+          (job) => appendJobActivityEffect(tx, job, "cancelled"),
           { concurrency: 1 }
         );
         return { playbookRunId: normalizedPlaybookRunId, cancelledJobIds };

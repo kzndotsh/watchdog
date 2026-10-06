@@ -153,7 +153,11 @@ describe("legacyEventForActivityEntry", () => {
       proposalId: testId(20),
     });
     expect(isWatchdogEvent(created)).toBe(true);
-    for (const action of ["accepted", "rejected"]) {
+    const decisions = ACTIVITY_ENTRY_ACTIONS.proposal.filter(
+      (action) => action !== "created"
+    );
+    expect(decisions).not.toHaveLength(0);
+    for (const action of decisions) {
       const decided = legacyEventForActivityEntry(
         activityEntrySchema.parse({ ...entry, kind: "proposal", action })
       );

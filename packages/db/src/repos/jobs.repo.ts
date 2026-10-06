@@ -475,11 +475,11 @@ export const jobsRepo = {
     exec: DbExec,
     caseId: string,
     playbookRunId: string
-  ): Promise<{ id: string }[]> {
+  ): Promise<JobRow[]> {
     const scoped = trimScopedCaseIds(caseId, playbookRunId);
     if (!scoped) return [];
     return exec
-      .select({ id: jobs.id })
+      .select()
       .from(jobs)
       .where(
         and(
@@ -586,11 +586,11 @@ export const jobsRepo = {
     exec: DbExec,
     playbookRunId: string,
     error: string
-  ): Promise<string[]> {
+  ): Promise<JobRow[]> {
     const scopedPlaybookRunId = trimResourceId(playbookRunId);
     if (scopedPlaybookRunId === undefined) return [];
     const now = new Date();
-    const rows = await exec
+    return exec
       .update(jobs)
       .set({
         status: "cancelled",
@@ -603,8 +603,7 @@ export const jobsRepo = {
           eq(jobs.status, "blocked")
         )
       )
-      .returning({ id: jobs.id });
-    return rows.map((row) => row.id);
+      .returning();
   },
 
   async cancelCancellable(

@@ -71,8 +71,10 @@ function jobStatusOfAction(action: string): JobStatus | undefined {
 function pickResultSummary(
   steps: readonly JobActivityLabelRow[]
 ): string | null {
+  // Newest first; the Job id breaks a tie so the pick is stable across reads.
   const newestFirst = [...steps].sort(
-    (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+    (a, b) =>
+      b.updatedAt.getTime() - a.updatedAt.getTime() || b.id.localeCompare(a.id)
   );
   for (const step of newestFirst) {
     const summary = step.resultSummary?.trim();
@@ -146,27 +148,27 @@ function inputsOfCase(
     .map((subject) => subject.input);
 }
 
+/** At most this many per-Case title lookups run at once (one pooled query each). */
+const TITLE_LOOKUP_CONCURRENCY = 4;
+
 function loadEntityTitleMapEffect(
   subjects: readonly JobLabelSubject[]
 ): Effect.Effect<ReadonlyMap<string, string>, DomainTag, Db> {
   const byCase = idsByCase(subjects, (inputs) =>
     entityIdsFromJobInputs(inputs)
   );
-  return Effect.gen(function* loadEntityTitleMapGen() {
-    const labels = new Map<string, string>();
-    for (const [caseId, entityIds] of byCase) {
-      const entityRows = yield* tryDbWith((exec) =>
+  return Effect.forEach(
+    [...byCase],
+    ([caseId, entityIds]) =>
+      tryDbWith((exec) =>
         entitiesRepo.listNamesByIdsInCase(exec, caseId, entityIds)
-      );
-      for (const [id, label] of entityTitleMapForJobInputs(
-        entityRows,
-        inputsOfCase(subjects, caseId)
-      )) {
-        labels.set(id, label);
-      }
-    }
-    return labels;
-  });
+      ).pipe(
+        Effect.map((entityRows) =>
+          entityTitleMapForJobInputs(entityRows, inputsOfCase(subjects, caseId))
+        )
+      ),
+    { concurrency: TITLE_LOOKUP_CONCURRENCY }
+  ).pipe(Effect.map((maps) => new Map(maps.flatMap((map) => [...map]))));
 }
 
 function loadEvidenceTitleMapEffect(
@@ -175,21 +177,21 @@ function loadEvidenceTitleMapEffect(
   const byCase = idsByCase(subjects, (inputs) =>
     evidenceIdsFromJobInputs(inputs)
   );
-  return Effect.gen(function* loadEvidenceTitleMapGen() {
-    const labels = new Map<string, string>();
-    for (const [caseId, evidenceIds] of byCase) {
-      const evidenceRows = yield* tryDbWith((exec) =>
+  return Effect.forEach(
+    [...byCase],
+    ([caseId, evidenceIds]) =>
+      tryDbWith((exec) =>
         evidenceRepo.listActivityLabelsInCase(exec, caseId, evidenceIds)
-      );
-      for (const [id, title] of evidenceTitleMapForJobInputs(
-        evidenceRows,
-        inputsOfCase(subjects, caseId)
-      )) {
-        labels.set(id, title);
-      }
-    }
-    return labels;
-  });
+      ).pipe(
+        Effect.map((evidenceRows) =>
+          evidenceTitleMapForJobInputs(
+            evidenceRows,
+            inputsOfCase(subjects, caseId)
+          )
+        )
+      ),
+    { concurrency: TITLE_LOOKUP_CONCURRENCY }
+  ).pipe(Effect.map((maps) => new Map(maps.flatMap((map) => [...map]))));
 }
 
 /**

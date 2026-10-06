@@ -263,7 +263,8 @@ export const activityLogRepo = {
       })
       .from(jobs)
       .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
-      .where(or(...match));
+      .where(or(...match))
+      .orderBy(jobs.id);
   },
 
   /**

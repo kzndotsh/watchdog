@@ -10,6 +10,7 @@ import {
 } from "@watchdog/core/proposals";
 import { activityLogRepo, db } from "@watchdog/db";
 import { legacyEventForActivityEntry } from "@watchdog/schemas/feed";
+import type { CaseId } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
@@ -34,13 +35,11 @@ async function log() {
   );
 }
 
-function pendingCount(caseId: string) {
+function pendingCount(caseId: CaseId) {
   return runDomain(
-    listProposalsForCaseEffect(
-      caseId as Parameters<typeof listProposalsForCaseEffect>[0],
-      TEST_ORGANIZATION_ID,
-      { status: "pending" }
-    )
+    listProposalsForCaseEffect(caseId, TEST_ORGANIZATION_ID, {
+      status: "pending",
+    })
   ).then((rows) => rows.length);
 }
 
@@ -96,6 +95,8 @@ describe("Proposal write paths append to the activity log", () => {
         resultSummary: "found",
         attachEvidenceIds: [],
         jobId: job.id,
+        // run-job passes the Job's user; the log entry still has no actor
+        createdBy: job.actorId,
       })
     );
     const empty = await runDomain(
