@@ -27,14 +27,8 @@ import { normalizedPlaybookRunId } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { credentialsKeys } from "@/domains/settings/queries";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import {
-  bindCasesChangedInvalidation,
-  invalidateAfterEntityChanged,
-  invalidateAfterEvidenceMutation,
-  invalidateAfterJobMutation,
-} from "@/shared/lib/query-invalidation";
+import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import { entitySearchHaystackMapFromRows } from "@watchdog/schemas/graph";
 import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
@@ -217,7 +211,6 @@ export function useCollectWorkspace({
     jobs,
     queue: jobs,
     jobsListFetching,
-    live: false,
   });
 
   useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
@@ -230,18 +223,6 @@ export function useCollectWorkspace({
       selection.rowId
     );
   }, [caseId, queryClient, selection.rowId]);
-
-  useLiveEvents(caseId, (event) => {
-    if (event.type === "job_update") {
-      void invalidateAfterJobMutation(queryClient, caseId);
-    }
-    if (event.type === "evidence_changed") {
-      void invalidateAfterEvidenceMutation(queryClient, caseId);
-    }
-    if (event.type === "entity_changed") {
-      void invalidateAfterEntityChanged(queryClient, caseId);
-    }
-  });
 
   const urlSyncOutOfDate =
     trimmedOrNull(urlId) !== selection.rowId &&

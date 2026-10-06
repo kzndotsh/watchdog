@@ -20,7 +20,6 @@ import {
 import { jobDetailQuery, jobsKeys } from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
 import { errMessage } from "@/lib/utils";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
@@ -75,8 +74,6 @@ export interface UseJobsWorkspaceOptions {
   queue: JobListRecord[];
   /** True while the jobs list query is refetching (hold URL id not yet in queue). */
   jobsListFetching?: boolean;
-  /** When false, skip SSE `job_update` — parent workspace owns invalidation. */
-  live?: boolean;
 }
 
 export function useJobsWorkspace(
@@ -88,7 +85,6 @@ export function useJobsWorkspace(
     jobs,
     queue,
     jobsListFetching = false,
-    live = true,
   }: UseJobsWorkspaceOptions
 ) {
   const queryClient = useQueryClient();
@@ -172,12 +168,6 @@ export function useJobsWorkspace(
       }),
     [jobs, now]
   );
-
-  useLiveEvents(live ? caseId : null, (event) => {
-    if (event.type === "job_update") {
-      void invalidateAfterJobMutation(queryClient, caseId);
-    }
-  });
 
   const startMutation = useMutation({
     mutationFn: async (vars: {

@@ -14,18 +14,6 @@ vi.mock("@/domains/activity/queries", () => ({
   recentActivityQuery: () => ({ queryKey: ["activity", "recent"] }),
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
-}));
-
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  invalidateAfterEntityChanged: vi.fn(),
-  invalidateAfterEvidenceMutation: vi.fn(),
-  invalidateAfterJobMutation: vi.fn(),
-  invalidateAfterProposalQueueChange: vi.fn(),
-  invalidateAfterTaskMutation: vi.fn(),
-}));
-
 const activityState = vi.hoisted(() => ({
   items: [] as ActivityItem[],
   isError: false,
@@ -46,15 +34,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
       isPlaceholderData: false,
       refetch: vi.fn(),
     }),
-    useQueryClient: () => ({
-      invalidateQueries: vi.fn(),
-      refetchQueries: vi.fn(),
-    }),
   };
 });
-
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 
 import { RecentActivity } from "../recent-activity";
 
@@ -94,33 +75,78 @@ describe("RecentActivity", () => {
     expect(screen.getByText("By")).toBeInTheDocument();
   });
 
-  it("invalidates activity on entity_changed live events", () => {
-    const caseId = testId(10);
-    render(
-      <RecentActivity
-        cases={[
-          {
-            id: caseId,
-            name: "Ada",
-            slug: "ada",
-            description: null,
-            allowThirdPartyEgress: false,
-          },
-        ]}
-      />
-    );
+  it("opens no live connection of its own: the shell owns the one activity stream", () => {
+    const eventSource = vi.fn();
+    vi.stubGlobal("EventSource", eventSource);
+    try {
+      const cases = Array.from({ length: 5 }, (_, index) => ({
+        id: testId(20 + index),
+        name: `Case ${index}`,
+        slug: `case-${index}`,
+        description: null,
+        allowThirdPartyEgress: false,
+      }));
+      render(<RecentActivity cases={cases} />);
+      expect(eventSource).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 
-    const onEvent = vi.mocked(useLiveEvents).mock.calls[0]?.[1];
-    expect(onEvent).toBeTypeOf("function");
-    onEvent?.({
-      type: "entity_changed",
-      caseId,
-    });
+  it("shows Proposal history: proposed, then the decision with its transition", () => {
+    activityState.items = [
+      {
+        id: "12",
+        kind: "proposal",
+        action: "Accepted",
+        caseId: testId(10),
+        caseName: "Ada",
+        label: "Registrar is Acme",
+        status: "accepted",
+        fromStatus: "pending",
+        toStatus: "accepted",
+        at: "2026-01-02T00:00:00.000Z",
+      },
+      {
+        id: "11",
+        kind: "proposal",
+        action: "Proposed",
+        caseId: testId(10),
+        caseName: "Ada",
+        label: "Registrar is Acme",
+        status: "pending",
+        at: "2026-01-01T00:00:00.000Z",
+      },
+    ];
 
-    expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(
-      expect.anything(),
-      caseId
-    );
+    render(<RecentActivity cases={[]} />);
+
+    const [decided, proposed] = screen.getAllByRole("listitem");
+    expect(decided).toHaveTextContent("ProposalAccepted");
+    expect(decided).toHaveTextContent("Registrar is Acme");
+    expect(proposed).toHaveTextContent("ProposalProposed");
+    expect(proposed).toHaveTextContent("Registrar is Acme");
+  });
+
+  it("shows a captured Evidence row", () => {
+    activityState.items = [
+      {
+        id: "7",
+        kind: "evidence",
+        action: "Captured",
+        caseId: testId(10),
+        caseName: "Ada",
+        label: "photo.png",
+        at: "2026-01-01T00:00:00.000Z",
+        actor: "ada",
+      },
+    ];
+
+    render(<RecentActivity cases={[]} />);
+
+    expect(screen.getByText("Evidence")).toBeInTheDocument();
+    expect(screen.getByText("Captured")).toBeInTheDocument();
+    expect(screen.getByText("photo.png")).toBeInTheDocument();
   });
 
   it("shows a retryable error when activity fails to load", () => {

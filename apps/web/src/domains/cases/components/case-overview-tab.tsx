@@ -1,4 +1,4 @@
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
@@ -23,16 +23,8 @@ import { countLiveJobs } from "@/domains/jobs/lib/status";
 import { jobsListQuery } from "@/domains/jobs/queries";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import {
-  invalidateAfterEntityChanged,
-  invalidateAfterEvidenceMutation,
-  invalidateAfterJobMutation,
-  invalidateAfterProposalQueueChange,
-  invalidateAfterTaskMutation,
-} from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -44,7 +36,6 @@ import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import type { ActivityKind } from "@watchdog/schemas/feed";
-import { isProposalQueueLiveEvent } from "@watchdog/schemas/feed";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 function inboxMetricTone(
@@ -106,7 +97,6 @@ export function CaseOverviewTab({
   listsPending?: boolean;
   listsPlaceholder?: boolean;
 }) {
-  const queryClient = useQueryClient();
   const queryResults = useQueries({
     queries: caseOverviewQueries(caseId),
   });
@@ -131,24 +121,6 @@ export function CaseOverviewTab({
   const statsPending = listsPending || overviewPending;
   const overviewPlaceholder =
     listsPlaceholder || anyQueryPlaceholderData(queryResults);
-
-  useLiveEvents(caseId, (event) => {
-    if (event.type === "job_update") {
-      void invalidateAfterJobMutation(queryClient, caseId);
-    }
-    if (isProposalQueueLiveEvent(event)) {
-      void invalidateAfterProposalQueueChange(queryClient, caseId);
-    }
-    if (event.type === "entity_changed") {
-      void invalidateAfterEntityChanged(queryClient, caseId);
-    }
-    if (event.type === "task_changed") {
-      void invalidateAfterTaskMutation(queryClient, caseId);
-    }
-    if (event.type === "evidence_changed") {
-      void invalidateAfterEvidenceMutation(queryClient, caseId);
-    }
-  });
 
   const liveJobCount = useMemo(() => countLiveJobs(jobs), [jobs]);
 

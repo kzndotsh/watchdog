@@ -33,10 +33,6 @@ vi.mock("@/domains/jobs/queries", () => ({
   },
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
-}));
-
 const useQueryMock = vi.hoisted(() => vi.fn());
 const useMutationMock = vi.hoisted(() => vi.fn());
 const startMutation = vi.hoisted(() => ({

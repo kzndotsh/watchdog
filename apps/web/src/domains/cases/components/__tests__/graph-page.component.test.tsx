@@ -54,10 +54,6 @@ vi.mock("@/domains/cases/components/case-graph/case-graph-canvas", () => ({
   CaseGraphCanvas: () => <div>Graph canvas</div>,
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
-}));
-
 import { GraphPage } from "@/domains/cases/components/graph-page";
 import type { CaseRecord } from "@/domains/cases/types";
 import { edgesForCaseQuery } from "@/domains/entities/edges/queries";

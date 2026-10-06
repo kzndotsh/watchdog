@@ -29,6 +29,10 @@ vi.mock("@/shared/lib/warm-query", () => ({
   ensureAppQueryData: vi.fn().mockResolvedValue({ cases: [], active: null }),
 }));
 
+vi.mock("@/shared/hooks/use-activity-stream", () => ({
+  useActivityInvalidation: vi.fn(),
+}));
+
 vi.mock("@/shared/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="app-shell">{children}</div>
@@ -51,6 +55,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 import { ensureAppSession } from "@/auth/ensure-session";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { Route } from "@/routes/_protected";
+import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
 describe("_protected route", () => {
@@ -124,5 +129,13 @@ describe("_protected route", () => {
     expect(screen.getByTestId("app-shell")).toBeInTheDocument();
     expect(screen.getByText("Protected outlet")).toBeInTheDocument();
     expect(Route.options.component).toBeDefined();
+  });
+
+  it("binds the one organization-wide activity stream for the whole signed-in app", () => {
+    vi.mocked(useActivityInvalidation).mockClear();
+    const Layout = Route.options.component!;
+    render(<Layout />);
+
+    expect(useActivityInvalidation).toHaveBeenCalledTimes(1);
   });
 });

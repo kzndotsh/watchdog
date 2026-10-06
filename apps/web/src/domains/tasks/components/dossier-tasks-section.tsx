@@ -8,7 +8,7 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { FieldError } from "@watchdog/ui/components/field";
 
 export function DossierTasksSection({ caseId, entityId }: DossierSectionProps) {
-  const ws = useTaskWorkspace(caseId, { entityId, live: false });
+  const ws = useTaskWorkspace(caseId, { entityId });
 
   if (ws.pending) {
     return dossierTasksFallback();

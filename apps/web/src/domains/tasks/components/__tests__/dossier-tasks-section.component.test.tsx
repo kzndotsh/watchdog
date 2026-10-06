@@ -70,7 +70,6 @@ describe("DossierTasksSection", () => {
     expect(screen.getByText("Task board (1)")).toBeInTheDocument();
     expect(useTaskWorkspaceMock).toHaveBeenCalledWith(CASE_ID, {
       entityId: ENTITY_ID,
-      live: false,
     });
     expect(screen.queryByText("Task form open")).not.toBeInTheDocument();
   });

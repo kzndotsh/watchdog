@@ -27,18 +27,10 @@ import type { TaskRecord } from "@/domains/tasks/types";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import {
-  bindCasesChangedInvalidation,
-  invalidateAfterEntityChanged,
-  invalidateAfterEvidenceMutation,
-  invalidateAfterJobMutation,
-  invalidateAfterProposalQueueChange,
-  invalidateAfterTaskMutation,
-} from "@/shared/lib/query-invalidation";
+import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -49,7 +41,6 @@ import {
 } from "@/shared/ui/skeletons";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
-import { isProposalQueueLiveEvent } from "@watchdog/schemas/feed";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -188,7 +179,6 @@ function DashboardActive({
   active: CaseRecord;
   caseCount: number;
 }) {
-  const queryClient = useQueryClient();
   const queryResults = useQueries({
     queries: dashboardActiveQueries(active.id),
   });
@@ -205,24 +195,6 @@ function DashboardActive({
   const jobsRaw = jobsQuery.data ?? EMPTY_JOBS;
   const tasksRaw = tasksQuery.data ?? EMPTY_TASKS;
   const entities = entitiesQuery.data ?? EMPTY_ENTITIES;
-
-  useLiveEvents(active.id, (event) => {
-    if (event.type === "job_update") {
-      void invalidateAfterJobMutation(queryClient, active.id);
-    }
-    if (isProposalQueueLiveEvent(event)) {
-      void invalidateAfterProposalQueueChange(queryClient, active.id);
-    }
-    if (event.type === "task_changed") {
-      void invalidateAfterTaskMutation(queryClient, active.id);
-    }
-    if (event.type === "entity_changed") {
-      void invalidateAfterEntityChanged(queryClient, active.id);
-    }
-    if (event.type === "evidence_changed") {
-      void invalidateAfterEvidenceMutation(queryClient, active.id);
-    }
-  });
 
   const proposals = useMemo(
     () => selectRecentProposals(pendingProposals),

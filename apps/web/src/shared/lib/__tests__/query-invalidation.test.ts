@@ -8,7 +8,12 @@ vi.mock("@/auth/server", () => ({
 import { activityKeys } from "@/domains/activity/queries";
 import { CASES_CHANGED_EVENT } from "@/domains/cases/lib/active-case";
 import { casesKeys } from "@/domains/cases/queries";
+import { claimsKeys } from "@/domains/entities/claims/queries";
+import { edgesKeys } from "@/domains/entities/edges/queries";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
+import { eventsKeys } from "@/domains/entities/events/queries";
+import { identifiersKeys } from "@/domains/entities/identifiers/queries";
+import { questionsKeys } from "@/domains/entities/questions/queries";
 import { jobsKeys } from "@/domains/jobs/queries";
 import { searchKeys } from "@/domains/search/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
@@ -16,6 +21,8 @@ import {
   bindCasesChangedInvalidation,
   invalidateAfterCaseSwitch,
   invalidateAfterEntityChanged,
+  invalidateAfterGraphActivity,
+  invalidateAfterResync,
   invalidateAfterJobMutation,
   invalidateAfterProposalAccept,
 } from "@/shared/lib/query-invalidation";
@@ -110,6 +117,40 @@ describe("query invalidation contracts", () => {
       queryKey: searchKeys.all,
       refetchType: "none",
     });
+  });
+
+  it("invalidateAfterGraphActivity refreshes every entity-scoped slice of the Case", async () => {
+    const client = mockClient();
+    await invalidateAfterGraphActivity(client, "case-1");
+    for (const queryKey of [
+      entitiesKeys.all("case-1"),
+      edgesKeys.prefix("case-1"),
+      identifiersKeys.prefix("case-1"),
+      claimsKeys.prefix("case-1"),
+      eventsKeys.prefix("case-1"),
+      questionsKeys.prefix("case-1"),
+      proposalsKeys.all("case-1"),
+      activityKeys.all,
+      searchKeys.all,
+    ]) {
+      expect(client.invalidateQueries).toHaveBeenCalledWith({
+        queryKey,
+        refetchType: "none",
+      });
+      expect(client.refetchQueries).toHaveBeenCalledWith({
+        queryKey,
+        type: "active",
+      });
+    }
+  });
+
+  it("invalidateAfterResync marks every query stale and refetches the active ones", async () => {
+    const client = mockClient();
+    await invalidateAfterResync(client);
+    expect(client.invalidateQueries).toHaveBeenCalledWith({
+      refetchType: "none",
+    });
+    expect(client.refetchQueries).toHaveBeenCalledWith({ type: "active" });
   });
 
   it("bindCasesChangedInvalidation listens for case switch events", async () => {

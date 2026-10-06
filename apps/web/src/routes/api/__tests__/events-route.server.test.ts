@@ -22,6 +22,7 @@ const tailerState = vi.hoisted(() => ({
   listener: undefined as ((entry: unknown) => void) | undefined,
   unsubscribe: vi.fn(),
   subscribeFails: false,
+  subscriptions: 0,
 }));
 const ActivityTailerTag = await vi.hoisted(async () => {
   const { Context } = await import("effect");
@@ -72,6 +73,7 @@ vi.mock("@watchdog/api", () => ({
           tailerState.subscribeFails
             ? Effect.fail(new Error("tailer down"))
             : Effect.sync(() => {
+                tailerState.subscriptions += 1;
                 tailerState.listener = listener;
                 return tailerState.unsubscribe;
               }),
@@ -240,7 +242,6 @@ describe("api events route", () => {
     });
     assertCaseInOrgEffectMock.mockReturnValue(Effect.succeed(caseId));
     listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([caseId]));
-    listenForEventsMock.mockReturnValue({ end: vi.fn() });
     const handlers = (
       Route.options as {
         server: {
@@ -273,8 +274,7 @@ describe("api events route", () => {
         organizationId: "org-1",
       };
       createApiContextMock.mockResolvedValue({ actor });
-      const end = vi.fn();
-      listenForEventsMock.mockReturnValue({ end });
+      tailerState.unsubscribe.mockClear();
       const handlers = (
         Route.options as {
           server: {
@@ -294,7 +294,7 @@ describe("api events route", () => {
       createApiContextMock.mockResolvedValue({ actor: null });
       await vi.advanceTimersByTimeAsync(25_000);
 
-      expect(end).toHaveBeenCalled();
+      expect(tailerState.unsubscribe).toHaveBeenCalled();
       await response.body?.cancel();
     } finally {
       vi.useRealTimers();
@@ -372,8 +372,7 @@ describe("api events route", () => {
     expect(replayActivityEffectMock).not.toHaveBeenCalled();
   });
 
-  it("does not deliver events for a Case core no longer lists as visible", async () => {
-    const hiddenCaseId = testId(12);
+  it("opens no LISTEN connection of its own: the process tailer is the only one", async () => {
     createApiContextMock.mockResolvedValue({
       actor: {
         userId: "u1",
@@ -383,14 +382,7 @@ describe("api events route", () => {
       },
     });
     listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([]));
-    let onMessage: ((raw: string) => void) | undefined;
-    listenForEventsMock.mockImplementation(
-      (cb: (raw: string) => void, onReady?: () => void) => {
-        onMessage = cb;
-        onReady?.();
-        return { end: vi.fn() };
-      }
-    );
+    listenForEventsMock.mockClear();
     const handlers = (
       Route.options as {
         server: {
@@ -402,76 +394,16 @@ describe("api events route", () => {
       }
     ).server.handlers;
 
-    const response = await handlers.GET({
-      request: new Request(testHttpOrigin("localhost", "/api/events")),
-    });
-    onMessage?.(
-      JSON.stringify({ type: "entity_changed", caseId: hiddenCaseId })
+    const responses = await Promise.all(
+      [1, 2, 3].map(() =>
+        handlers.GET({
+          request: new Request(testHttpOrigin("localhost", "/api/events")),
+        })
+      )
     );
-    // let the allowed-set refresh through core settle
-    await new Promise((resolve) => {
-      setTimeout(resolve, 0);
-    });
 
-    const reader = response.body?.getReader();
-    const first = await reader?.read();
-    const text = new TextDecoder().decode(first?.value);
-    expect(text).toContain("connected");
-    expect(text).not.toContain("entity_changed");
-    await reader?.cancel();
-  });
-
-  it("drops the event and logs when the visibility read fails", async () => {
-    const caseId = testId(13);
-    createApiContextMock.mockResolvedValue({
-      actor: {
-        userId: "u1",
-        email: null,
-        name: null,
-        organizationId: "org-1",
-      },
-    });
-    listVisibleCaseIdsEffectMock
-      .mockReturnValueOnce(Effect.succeed([]))
-      .mockReturnValueOnce(Effect.die(new Error("pool exhausted")));
-    let onMessage: ((raw: string) => void) | undefined;
-    listenForEventsMock.mockImplementation(
-      (cb: (raw: string) => void, onReady?: () => void) => {
-        onMessage = cb;
-        onReady?.();
-        return { end: vi.fn() };
-      }
-    );
-    const handlers = (
-      Route.options as {
-        server: {
-          handlers: Record<
-            string,
-            (ctx: { request: Request }) => Promise<Response>
-          >;
-        };
-      }
-    ).server.handlers;
-
-    const response = await handlers.GET({
-      request: new Request(testHttpOrigin("localhost", "/api/events")),
-    });
-    onMessage?.(JSON.stringify({ type: "entity_changed", caseId }));
-    await new Promise((resolve) => {
-      setTimeout(resolve, 0);
-    });
-
-    expect(logErrorMock).toHaveBeenCalledTimes(1);
-    expect(logErrorMock.mock.calls[0]?.[0]).toBeInstanceOf(Error);
-    expect(logEmitMock).toHaveBeenCalled();
-    // no Case id (or payload) goes into the log context
-    expect(JSON.stringify(createLoggerMock.mock.calls)).not.toContain(caseId);
-    const reader = response.body?.getReader();
-    const first = await reader?.read();
-    const text = new TextDecoder().decode(first?.value);
-    expect(text).toContain("connected");
-    expect(text).not.toContain("entity_changed");
-    await reader?.cancel();
+    expect(listenForEventsMock).not.toHaveBeenCalled();
+    await Promise.all(responses.map((response) => response.body?.cancel()));
   });
 });
 
@@ -537,19 +469,14 @@ describe("api events route: activity log", () => {
   beforeEach(() => {
     createApiContextMock.mockResolvedValue({ actor });
     listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([caseId]));
-    listenForEventsMock.mockImplementation(
-      (_cb: unknown, onReady?: () => void) => {
-        onReady?.();
-        return { end: vi.fn() };
-      }
-    );
     replayActivityEffectMock.mockReset();
     tailerState.listener = undefined;
     tailerState.subscribeFails = false;
+    tailerState.subscriptions = 0;
     tailerState.unsubscribe.mockClear();
   });
 
-  it("sends a live entry as its legacy event and as an activity event, both with the cursor id", async () => {
+  it("sends a live entry as one activity event with the cursor id, and no legacy event", async () => {
     const response = await connect();
     await readUntil(response, (text) => text.includes("connected"));
 
@@ -558,13 +485,64 @@ describe("api events route: activity log", () => {
       t.includes("event: activity")
     );
 
-    expect(text).toContain(
-      `id: 7:5\nevent: task_changed\ndata: ${JSON.stringify({ type: "task_changed", caseId })}\n\n`
-    );
     expect(text).toContain("id: 7:5\nevent: activity\ndata: ");
     expect(text).toContain('"label":"task 5"');
+    expect(text).not.toContain("task_changed");
     expect(replayActivityEffectMock).not.toHaveBeenCalled();
     await response.body?.cancel();
+  });
+
+  it("serves the whole organization on one connection when no caseId is given", async () => {
+    const other = testId(20);
+    listVisibleCaseIdsEffectMock.mockReturnValue(
+      Effect.succeed([caseId, other])
+    );
+    const response = await connect();
+    await readUntil(response, (text) => text.includes("connected"));
+
+    tailerState.listener?.(entry(1, caseId));
+    tailerState.listener?.(entry(2, other));
+    const text = await readUntil(
+      response,
+      (t) => (t.match(/event: activity/g) ?? []).length >= 2
+    );
+
+    expect(text).toContain("id: 7:1\n");
+    expect(text).toContain("id: 7:2\n");
+    expect(tailerState.subscriptions).toBe(1);
+    await response.body?.cancel();
+  });
+
+  it("never sends an entry of a Case outside the organization, and logs a failed visibility read", async () => {
+    const hidden = testId(22);
+    const response = await connect();
+    await readUntil(response, (text) => text.includes("connected"));
+
+    tailerState.listener?.(entry(1, hidden));
+    tailerState.listener?.(entry(2, caseId));
+    const text = await readUntil(response, (t) =>
+      t.includes("event: activity")
+    );
+
+    expect(text).toContain("id: 7:2\n");
+    expect(text).not.toContain("id: 7:1\n");
+    await response.body?.cancel();
+
+    // A visibility read that fails drops the entry (fail closed) and is logged
+    // without the Case id.
+    logErrorMock.mockClear();
+    listVisibleCaseIdsEffectMock.mockReset();
+    listVisibleCaseIdsEffectMock
+      .mockReturnValueOnce(Effect.succeed([caseId]))
+      .mockReturnValueOnce(Effect.die(new Error("pool exhausted")));
+    const failing = await connect();
+    await readUntil(failing, (t) => t.includes("connected"));
+    tailerState.listener?.(entry(3, hidden));
+    await vi.waitFor(() => {
+      expect(logErrorMock).toHaveBeenCalledTimes(1);
+    });
+    expect(JSON.stringify(createLoggerMock.mock.calls)).not.toContain(hidden);
+    await failing.body?.cancel();
   });
 
   it("filters entries by the caseId query and by organization visibility", async () => {

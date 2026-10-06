@@ -21,13 +21,9 @@ import {
 } from "@/domains/tasks/tasks.functions";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
 import { errMessage } from "@/lib/utils";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import {
-  invalidateAfterEntityChanged,
-  invalidateAfterTaskMutation,
-} from "@/shared/lib/query-invalidation";
+import { invalidateAfterTaskMutation } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import {
   TOAST_TASK_CREATED,
@@ -47,15 +43,13 @@ const EMPTY_ENTITIES: EntityRecord[] = [];
 
 export interface UseTaskWorkspaceOptions {
   entityId?: string;
-  /** When false, skip SSE invalidation (parent already listens). Default true. */
-  live?: boolean;
 }
 
 export function useTaskWorkspace(
   caseId: string,
   options: UseTaskWorkspaceOptions = {}
 ) {
-  const { entityId: rawEntityId, live = true } = options;
+  const { entityId: rawEntityId } = options;
   const scopedEntityId = scopeOptionalUuid(rawEntityId);
   const qc = useQueryClient();
   const filters = useMemo(
@@ -93,15 +87,6 @@ export function useTaskWorkspace(
   const [selected, setSelected] = useState<TaskRecord | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [quickCreateError, setQuickCreateError] = useState<string | null>(null);
-
-  useLiveEvents(live ? caseId : null, (event) => {
-    if (event.type === "task_changed") {
-      void invalidateAfterTaskMutation(qc, caseId);
-    }
-    if (event.type === "entity_changed") {
-      void invalidateAfterEntityChanged(qc, caseId);
-    }
-  });
 
   function openCreate(status: TaskStatus = "backlog") {
     setFormError(null);

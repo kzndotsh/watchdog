@@ -1,19 +1,11 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import { recentActivityQuery } from "@/domains/activity/queries";
 import type { CaseRecord } from "@/domains/cases/types";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import {
-  invalidateAfterEntityChanged,
-  invalidateAfterEvidenceMutation,
-  invalidateAfterJobMutation,
-  invalidateAfterProposalQueueChange,
-  invalidateAfterTaskMutation,
-} from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { ActorMention } from "@/shared/ui/actor-mention";
@@ -31,7 +23,6 @@ import {
 } from "@/shared/ui/vocab";
 import {
   activityKindLabel,
-  isProposalQueueLiveEvent,
   type ActivityItem,
   type ActivityKind,
 } from "@watchdog/schemas/feed";
@@ -225,7 +216,6 @@ function RecentActivityList({
   caseSlugById: ReadonlyMap<string, string>;
   onClearFilter: () => void;
 }) {
-  const queryClient = useQueryClient();
   const activityQuery = useQuery(
     recentActivityQuery(caseId ? { caseId } : undefined)
   );
@@ -237,28 +227,6 @@ function RecentActivityList({
   );
   const items = activityQuery.data ?? EMPTY_ACTIVITY_ITEMS;
   const activityPlaceholder = isQueryPlaceholderData(activityQuery);
-  const liveCaseIds = useMemo(
-    () => caseId ?? [...caseSlugById.keys()],
-    [caseId, caseSlugById]
-  );
-
-  useLiveEvents(liveCaseIds.length > 0 ? liveCaseIds : null, (event) => {
-    if (event.type === "job_update") {
-      void invalidateAfterJobMutation(queryClient, event.caseId);
-    }
-    if (event.type === "evidence_changed") {
-      void invalidateAfterEvidenceMutation(queryClient, event.caseId);
-    }
-    if (isProposalQueueLiveEvent(event)) {
-      void invalidateAfterProposalQueueChange(queryClient, event.caseId);
-    }
-    if (event.type === "task_changed") {
-      void invalidateAfterTaskMutation(queryClient, event.caseId);
-    }
-    if (event.type === "entity_changed") {
-      void invalidateAfterEntityChanged(queryClient, event.caseId);
-    }
-  });
 
   if (activityLoadError) {
     return (

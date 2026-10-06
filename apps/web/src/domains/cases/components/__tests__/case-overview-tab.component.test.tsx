@@ -15,10 +15,6 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
-}));
-
 vi.mock("@/domains/cases/components/case-settings-form", () => ({
   CaseSettingsForm: () => <div>Case settings form</div>,
 }));

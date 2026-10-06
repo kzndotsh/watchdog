@@ -14,11 +14,10 @@ import {
 } from "@/domains/triage/triage.functions";
 import type { AcceptFormValues } from "@/domains/triage/types";
 import { errMessage } from "@/lib/utils";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
+import { useActivityEntries } from "@/shared/hooks/use-activity-stream";
 import { listPending } from "@/shared/lib/list-pending";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import {
-  invalidateAfterEvidenceMutation,
   invalidateAfterProposalAccept,
   invalidateAfterProposalQueueChange,
 } from "@/shared/lib/query-invalidation";
@@ -28,7 +27,6 @@ import { resolveQueueSelection } from "@/shared/lib/queue-selection";
 import { toast } from "@/shared/ui/toast";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";
-import { isProposalQueueLiveEvent } from "@watchdog/schemas/feed";
 import {
   acceptProposalInputSchema,
   rejectProposalInputSchema,
@@ -121,16 +119,11 @@ export function useTriageWorkspace(
     return allProposals.find((r) => r.id === selectedId) ?? null;
   }, [rows, selectedId, allProposals]);
 
-  useLiveEvents(caseId, (event) => {
-    if (isProposalQueueLiveEvent(event)) {
+  // Refetching belongs to the shared activity binding; a new or decided Proposal
+  // also puts the queue back on its pending view.
+  useActivityEntries((entry) => {
+    if (entry.kind === "proposal" && entry.caseId === caseId) {
       setFilters((prev) => ({ ...PENDING_TRIAGE_FILTERS, q: prev.q }));
-      void invalidateAfterProposalQueueChange(queryClient, caseId);
-    }
-    if (event.type === "entity_changed") {
-      void invalidateAfterProposalQueueChange(queryClient, caseId);
-    }
-    if (event.type === "evidence_changed") {
-      void invalidateAfterEvidenceMutation(queryClient, caseId);
     }
   });
 

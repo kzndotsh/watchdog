@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useState } from "react";
@@ -20,10 +20,8 @@ import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options"
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
 import { listPending } from "@/shared/lib/list-pending";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { useDataTable } from "@/shared/ui/data-table";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
@@ -121,7 +119,6 @@ export function useEntityTableState(
   onDeleteEntity: (entity: EntityRecord) => void
 ) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const entitiesQuery = useQuery(entitiesListQuery(active.id));
   const edgesQuery = useQuery(edgesForCaseQuery(active.id));
   const pending = listPending(entitiesQuery) || listPending(edgesQuery);
@@ -134,12 +131,6 @@ export function useEntityTableState(
     entitiesQuery.isPlaceholderData || edgesQuery.isPlaceholderData;
   const rows = entitiesQuery.data;
   const caseEdges = edgesQuery.data;
-
-  useLiveEvents(active.id, (event) => {
-    if (event.type === "entity_changed") {
-      void invalidateAfterEntityChanged(queryClient, active.id);
-    }
-  });
 
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<string[]>([]);
