@@ -1,3 +1,4 @@
+export { activityCursorsRepo } from "./activity-cursors.repo";
 export { activityLogRepo } from "./activity-log.repo";
 export type {
   ActivityRow,

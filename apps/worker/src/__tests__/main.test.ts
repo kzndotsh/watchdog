@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "@effect/vitest";
-import { Cause, Effect, Exit, Fiber, FiberMap, Stream } from "effect";
+import { Cause, Effect, Exit, Fiber, FiberMap } from "effect";
 import { vi, type MockInstance } from "vitest";
 
 const workerMocks = vi.hoisted(() => ({
   reconcileStaleJobsEffect: vi.fn(),
   reconcileStuckPlaybookRunsEffect: vi.fn(),
   reconcileOrphanedQueuedJobsEffect: vi.fn(),
-  listenForEventsStream: vi.fn(),
+  runActivityConsumerEffect: vi.fn(),
   listActiveJobIds: vi.fn(() => [] as string[]),
   findCancelledJobIdsEffect: vi.fn(),
   executeJobOnMap: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
     ...actual,
     executeJobOnMap: workerMocks.executeJobOnMap,
     findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
-    listenForEventsStream: workerMocks.listenForEventsStream,
+    runActivityConsumerEffect: workerMocks.runActivityConsumerEffect,
     listActiveJobIds: workerMocks.listActiveJobIds,
     reconcileStaleJobsEffect: workerMocks.reconcileStaleJobsEffect,
     reconcileStuckPlaybookRunsEffect:
@@ -111,7 +111,7 @@ function startBoot(fake: FakeDriver, { listening = true } = {}) {
         expect(process.listenerCount("SIGINT")).toBeGreaterThan(sigintBaseline);
         if (listening) {
           expect(fake.work).toHaveBeenCalled();
-          expect(workerMocks.listenForEventsStream).toHaveBeenCalled();
+          expect(workerMocks.runActivityConsumerEffect).toHaveBeenCalled();
         }
       })
     );
@@ -127,7 +127,7 @@ workerMocks.reconcileOrphanedQueuedJobsEffect.mockReturnValue(
 workerMocks.findCancelledJobIdsEffect.mockReturnValue(
   Effect.succeed([] as string[])
 );
-workerMocks.listenForEventsStream.mockReturnValue(Stream.never);
+workerMocks.runActivityConsumerEffect.mockReturnValue(Effect.never);
 
 /** The `message` of every `worker.shutdown` log so far. */
 function shutdownLogs(): string[] {
@@ -144,7 +144,7 @@ describe("bootWorkerEffect", () => {
 
   beforeEach(() => {
     workerLog.emitOnce.mockClear();
-    workerMocks.listenForEventsStream.mockClear();
+    workerMocks.runActivityConsumerEffect.mockClear();
     workerMocks.reconcileStaleJobsEffect.mockClear();
     workerMocks.reconcileStuckPlaybookRunsEffect.mockClear();
     workerMocks.reconcileOrphanedQueuedJobsEffect.mockClear();
@@ -188,7 +188,7 @@ describe("bootWorkerEffect", () => {
           { localConcurrency: 1, pollingIntervalSeconds: 2 },
           expect.any(Function)
         );
-        expect(workerMocks.listenForEventsStream).toHaveBeenCalled();
+        expect(workerMocks.runActivityConsumerEffect).toHaveBeenCalled();
       })
   );
 
@@ -304,13 +304,13 @@ describe("bootWorkerEffect", () => {
       Effect.gen(function* bootWorkerListenFailureTestGen() {
         const fake = fakeDriver();
         const fiber = yield* startBoot(fake);
-        const args = workerMocks.listenForEventsStream.mock.calls.at(
+        const args = workerMocks.runActivityConsumerEffect.mock.calls.at(
           -1
         )?.[0] as {
-          onError: (error: unknown) => void;
+          onListenError: (error: unknown) => void;
         };
         const cause = new Error("connection lost");
-        args.onError(cause);
+        args.onListenError(cause);
         const result = yield* Fiber.await(fiber);
         expect(Exit.isFailure(result)).toBe(true);
         if (Exit.isFailure(result)) {
@@ -331,11 +331,13 @@ describe("bootWorkerEffect", () => {
   it.effect("force-exits 1 when LISTEN fails during shutdown", () =>
     Effect.gen(function* bootWorkerListenDuringShutdownTestGen() {
       yield* startBoot(fakeDriver());
-      const args = workerMocks.listenForEventsStream.mock.calls.at(-1)?.[0] as {
-        onError: (error: unknown) => void;
+      const args = workerMocks.runActivityConsumerEffect.mock.calls.at(
+        -1
+      )?.[0] as {
+        onListenError: (error: unknown) => void;
       };
       process.emit("SIGTERM");
-      args.onError(new Error("connection lost"));
+      args.onListenError(new Error("connection lost"));
       expect(exit).toHaveBeenCalledWith(1);
     })
   );
@@ -376,10 +378,12 @@ describe("bootWorkerEffect", () => {
   it.effect("logs (failure) when LISTEN fails", () =>
     Effect.gen(function* bootWorkerFailureLogTestGen() {
       const fiber = yield* startBoot(fakeDriver());
-      const args = workerMocks.listenForEventsStream.mock.calls.at(-1)?.[0] as {
-        onError: (error: unknown) => void;
+      const args = workerMocks.runActivityConsumerEffect.mock.calls.at(
+        -1
+      )?.[0] as {
+        onListenError: (error: unknown) => void;
       };
-      args.onError(new Error("connection lost"));
+      args.onListenError(new Error("connection lost"));
       yield* Fiber.await(fiber);
       expect(shutdownLogs()).toEqual(["shutting down (failure)"]);
     })

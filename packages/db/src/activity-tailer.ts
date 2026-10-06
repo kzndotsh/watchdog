@@ -31,6 +31,18 @@ export interface ActivityTailerOptions {
   onHeldBack?: (heldMs: number) => void;
   /** A failed drain or LISTEN; the tailer keeps polling. */
   onError?: (error: unknown) => void;
+  /**
+   * A LISTEN connection that could not be established (the connect retries ran
+   * out). Defaults to `onError`; a consumer that must fail fast on it (the
+   * worker) sets it apart from the drain errors the tailer survives.
+   */
+  onListenError?: (error: unknown) => void;
+  /**
+   * Resume after this cursor instead of the head: the first drain delivers
+   * every committed row past it (a durable consumer's catch-up), then the live
+   * tail follows.
+   */
+  startAt?: ActivityCursor;
 }
 
 export interface ActivityTailSubscription {
@@ -94,6 +106,10 @@ export function createActivityTailer(
 
   function reportError(error: unknown): void {
     options.onError?.(error);
+  }
+
+  function reportListenError(error: unknown): void {
+    (options.onListenError ?? options.onError)?.(error);
   }
 
   function emit(row: ActivityRow): void {
@@ -199,12 +215,17 @@ export function createActivityTailer(
     generation += 1;
     cursor = null;
     const mine = generation;
-    connection = listen(wake, wake, reportError);
-    // The cursor starts at the head; the first drain then also catches whatever
-    // committed while LISTEN was connecting.
-    ready = activityLogRepo.head(options.exec).then((head) => {
+    connection = listen(wake, wake, reportListenError);
+    // The cursor starts at the head (or `startAt`); the first drain then also
+    // catches whatever committed while LISTEN was connecting.
+    const resumeAt = options.startAt;
+    ready = (
+      resumeAt === undefined
+        ? activityLogRepo.head(options.exec)
+        : Promise.resolve(resumeAt)
+    ).then((initial) => {
       if (mine !== generation) return;
-      cursor = head;
+      cursor = initial;
       void drain();
     });
     ready.catch(reportError);

@@ -22,3 +22,7 @@ export {
   taskEventAction,
   type ListRecentActivityOpts,
 } from "./recent-activity";
+export {
+  runActivityConsumerEffect,
+  type ActivityConsumerOpts,
+} from "./consumer";

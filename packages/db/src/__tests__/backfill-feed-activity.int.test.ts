@@ -20,13 +20,13 @@ import {
 } from "../index.ts";
 
 /**
- * Migration `0016_backfill_feed_activity` (ADR-0005 S6): the pre-log Evidence,
+ * Migration `0017_backfill_feed_activity` (ADR-0005 S6): the pre-log Evidence,
  * Proposals and Jobs of the last 90 days get the entries their write paths
  * append today, once. Runs the migration's own statements against rows that
  * were written without log entries.
  */
 const MIGRATION = new URL(
-  "../../drizzle/0016_backfill_feed_activity.sql",
+  "../../drizzle/0017_backfill_feed_activity.sql",
   import.meta.url
 );
 

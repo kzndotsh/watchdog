@@ -40,9 +40,12 @@ export class ActivityTailer extends Context.Service<
   ActivityTailerApi
 >()("@watchdog/core/activity/ActivityTailer") {}
 
-function liveTailerOptions(exec: DbExec): ActivityTailerOptions {
+/** Live tailer options over `exec`: errors and stalls logged; `extra` overrides (a consumer's `startAt`, test timings). */
+export function liveTailerOptions(
+  exec: DbExec,
+  extra: Partial<ActivityTailerOptions> = {}
+): ActivityTailerOptions {
   return {
-    exec,
     onError: (error) => {
       logSwallowed("activity.tailer", error);
     },
@@ -53,6 +56,8 @@ function liveTailerOptions(exec: DbExec): ActivityTailerOptions {
         { heldMs }
       );
     },
+    ...extra,
+    exec,
   };
 }
 

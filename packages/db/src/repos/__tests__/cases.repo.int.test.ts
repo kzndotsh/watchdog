@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import {
+  TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
+} from "@watchdog/schemas/testing";
 import { seedCase, withTestTx } from "@watchdog/test-db";
 
 import { casesRepo } from "../cases.repo.ts";
@@ -19,6 +22,21 @@ describe("casesRepo", () => {
 
       const listed = await casesRepo.list(tx, created.organizationId);
       expect(listed.some((row) => row.id === created.id)).toBe(true);
+    });
+  });
+
+  it("lists the Case ids of every organization for the worker re-scan", async () => {
+    await withTestTx(async (tx) => {
+      const mine = await seedCase(tx, { slug: "mine" });
+      const theirs = await seedCase(tx, {
+        slug: "theirs",
+        organizationId: TEST_OTHER_ORGANIZATION_ID,
+      });
+      const ids = await casesRepo.listAllIdsUnchecked(tx);
+      expect(ids).toEqual(expect.arrayContaining([mine.id, theirs.id]));
+      expect(await casesRepo.listIds(tx, TEST_ORGANIZATION_ID)).not.toContain(
+        theirs.id
+      );
     });
   });
 

@@ -12,7 +12,7 @@ import {
 import type { ActivityEntryKind } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 
-import { createdAt } from "./_helpers";
+import { createdAt, timestamptz } from "./_helpers";
 import { cases } from "./cases";
 
 /**
@@ -69,3 +69,16 @@ export const activity = pgTable(
     check("activity_label_len", sql`char_length(${t.label}) <= 200`),
   ]
 );
+
+/**
+ * A durable read position in the log, one row per consumer (ADR-0005 decision
+ * 4, S5): the worker export consumer resumes from it after a restart.
+ * `(xid, id)` is the last entry the consumer finished handling. Not a Graph
+ * table and not an audit: a consumer with no row starts at the head.
+ */
+export const activityCursors = pgTable("activity_cursors", {
+  consumer: text("consumer").primaryKey(),
+  xid: xid8("xid").notNull(),
+  id: bigint("id", { mode: "number" }).notNull(),
+  updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+});

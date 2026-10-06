@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { Cause, Data, Deferred, Effect, Stream } from "effect";
+import { Cause, Data, Deferred, Effect } from "effect";
 
 import {
   type JobFibers,
@@ -13,7 +13,8 @@ import {
   extractDomainJobIdFromPayload,
   failInvalidCapDeliveryEffect,
   isCapJobPayload,
-  listenForEventsStream,
+  runActivityConsumerEffect,
+  claimCaseExportEffect,
   JobQueueWorker,
   reconcileStaleJobsEffect,
   reconcileStuckPlaybookRunsEffect,
@@ -26,12 +27,12 @@ import {
   initWatchdogLogger,
   jobWideEventFields,
 } from "@watchdog/log";
-import { isWatchdogEvent } from "@watchdog/schemas/feed";
-import { trimmedUuidSchema } from "@watchdog/schemas/shared";
+import type { ActivityEntry } from "@watchdog/schemas/feed";
+import { trimmedUuidSchema, type CaseId } from "@watchdog/schemas/shared";
 
 import { cancelPollLoopEffect } from "./cancel-poll";
 import {
-  claimExportEventEffect,
+  claimExportEntryEffect,
   shouldTriggerCaseExport,
 } from "./export-events";
 import { WorkerShutdown, type WorkerShutdownApi } from "./shutdown";
@@ -197,73 +198,73 @@ function processCapJobEffect(
   );
 }
 
-function parseWatchdogEventPayload(rawPayload: string): unknown {
-  try {
-    return JSON.parse(rawPayload) as unknown;
-  } catch {
-    return undefined;
-  }
+/** Forks only the wait of a claimed export; a failed write is logged, not fatal. */
+function forkExportWait(awaitWrite: Effect.Effect<void>) {
+  return Effect.forkChild(
+    awaitWrite.pipe(
+      Effect.catchCause((cause) =>
+        Effect.sync(() => {
+          logWorkerError(
+            "export-sync",
+            "export scheduling failed",
+            Cause.squash(cause)
+          );
+        })
+      )
+    )
+  );
 }
 
-function handleExportEventPayloadEffect(
-  rawPayload: string
-): Effect.Effect<void> {
-  return Effect.gen(function* handleExportEventPayloadGen() {
-    const parsed = parseWatchdogEventPayload(rawPayload);
-    if (parsed === undefined) {
-      logWorkerError(
-        "export-sync.listen",
-        "malformed watchdog_events payload",
-        new Error("invalid JSON")
-      );
-      return;
-    }
-    if (!isWatchdogEvent(parsed)) {
-      logWorkerError(
-        "export-sync.listen",
-        "ignored non-watchdog payload",
-        new Error("payload failed watchdog event schema")
-      );
-      return;
-    }
-    if (!shouldTriggerCaseExport(parsed)) {
-      return;
-    }
-    // Mark the case dirty (and start-or-join the write) in this fiber, then fork
-    // only the wait. A shutdown that interrupts the forked child before its
-    // first step can no longer lose the mark.
-    const awaitWrite = yield* claimExportEventEffect(parsed);
-    yield* Effect.forkChild(
-      awaitWrite.pipe(
-        Effect.catchCause((cause) =>
-          Effect.sync(() => {
-            logWorkerError(
-              "export-sync",
-              "export scheduling failed",
-              Cause.squash(cause)
-            );
-          })
-        )
-      )
-    );
+/**
+ * One activity entry for the export consumer. Entries that do not change an
+ * export (Task, Proposal, other Job actions) return at once. The Case is marked
+ * dirty (and the write started or joined) in this fiber, then only the wait is
+ * forked: a shutdown that interrupts the forked child before its first step can
+ * no longer lose the mark. The consumer stores its cursor after this returns.
+ */
+function handleExportEntryEffect(entry: ActivityEntry): Effect.Effect<void> {
+  return Effect.gen(function* handleExportEntryGen() {
+    if (!shouldTriggerCaseExport(entry)) return;
+    const awaitWrite = yield* claimExportEntryEffect(entry);
+    yield* forkExportWait(awaitWrite);
   });
 }
 
-export { handleExportEventPayloadEffect };
+/**
+ * The consumer's cursor was ahead of the log (a restore or a wiped log), so
+ * what changed is unknowable: schedule an export of every Case. Marks are made
+ * here, before the consumer stores the new cursor.
+ */
+function rescanAllCasesEffect(caseIds: readonly CaseId[]): Effect.Effect<void> {
+  return Effect.gen(function* rescanAllCasesGen() {
+    emitOnce("export-sync", {
+      message: `activity cursor ahead of the log: re-exporting ${caseIds.length} Case(s)`,
+    });
+    for (const caseId of caseIds) {
+      const awaitWrite = yield* claimCaseExportEffect(caseId);
+      yield* forkExportWait(awaitWrite);
+    }
+  });
+}
+
+export { handleExportEntryEffect, rescanAllCasesEffect };
+
+/** The worker's cursor row in `activity_cursors`. */
+const EXPORT_CONSUMER = "worker-export";
 
 function onExportEventListening(): void {
-  emitOnce("export-sync", { message: "listening for graph events" });
+  emitOnce("export-sync", { message: "listening for activity" });
 }
 
 function exportEventsEffect(shutdown: WorkerShutdownApi) {
   return Effect.raceFirst(
-    Stream.runForEach(
-      listenForEventsStream({
-        onReady: onExportEventListening,
-        onError: shutdown.onListenError,
-      }),
-      (payload) => handleExportEventPayloadEffect(payload)
-    ),
+    runActivityConsumerEffect({
+      consumer: EXPORT_CONSUMER,
+      handle: handleExportEntryEffect,
+      onResync: rescanAllCasesEffect,
+      onReady: onExportEventListening,
+      onListenError: shutdown.onListenError,
+    }),
     Deferred.await(shutdown.listenFailed)
   );
 }

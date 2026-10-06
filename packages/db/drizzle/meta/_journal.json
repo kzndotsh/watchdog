@@ -117,8 +117,15 @@
     {
       "idx": 16,
       "version": "7",
+      "when": 1791274896052,
+      "tag": "0016_add_activity_cursors",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
       "when": 1791274920395,
-      "tag": "0016_backfill_feed_activity",
+      "tag": "0017_backfill_feed_activity",
       "breakpoints": true
     }
   ]

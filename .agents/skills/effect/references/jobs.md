@@ -22,7 +22,7 @@ package AGENTS.md files link here.
   with `WorkerListenError`, so the same release runs (queue drain first) and
   the process exits non-zero (1). This is a behavior change from exit 0; a
   restart-on-failure supervisor now restarts the worker.
-- Export LISTEN: `listenForEventsStream` + `Stream.runForEach` only (R = `Db`: it also tails the activity log and maps entries to legacy events).
+- Export trigger: `runActivityConsumerEffect` only (R = `Db`): the worker reads the activity log from its durable cursor (`activity_cursors`, consumer `worker-export`), catching up at boot then live; there is no legacy-event LISTEN path.
 - The pg-boss work handler runs `processCapJobBatchEffect` with `JobFibers`
   provided; it yields `executeJobOnMap(jobId)`.
 
