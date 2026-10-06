@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import {
+  activityLogRepo,
   jobs,
   jobsRepo,
   type DbExec,
@@ -8,11 +9,40 @@ import {
   type JobRow,
   type NewJob,
 } from "@watchdog/db";
+import { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 type SeedJobOverrides = Partial<NewJob> &
   Partial<Pick<JobPatch, "resultSummary">>;
+
+/**
+ * The log entries core would have appended for a Job seeded in `status`:
+ * queued, then the status entry when it is not queued (a `blocked` Job has no
+ * log verb). Keeps seeded Jobs visible in Recent activity.
+ */
+async function seedJobActivity(exec: DbExec, job: JobRow): Promise<void> {
+  const actions = (
+    job.status === "blocked" ? [] : ["queued", job.status]
+  ).filter(
+    (action, index, all) =>
+      all.indexOf(action) === index &&
+      (ACTIVITY_ENTRY_ACTIONS.job as readonly string[]).includes(action)
+  );
+  for (const action of actions) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
+    const row = await activityLogRepo.append(exec, {
+      caseId: job.caseId,
+      kind: "job",
+      action,
+      subjectId: job.id,
+      groupId: job.playbookRunId,
+      actorId: job.actorId,
+      toValue: action,
+    });
+    if (!row) throw new Error("seedJob activity failed");
+  }
+}
 
 export async function seedJob(
   exec: DbExec,
@@ -37,6 +67,7 @@ export async function seedJob(
   if (!created) {
     throw new Error("seedJob failed");
   }
+  await seedJobActivity(exec, created);
   if (resultSummary === undefined) {
     return created;
   }

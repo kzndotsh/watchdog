@@ -1,21 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const { update, updateInCase, notifyEvent } = vi.hoisted(() => ({
+const { update, updateInCase, append } = vi.hoisted(() => ({
   update: vi.fn(),
   updateInCase: vi.fn(),
-  notifyEvent: vi.fn().mockResolvedValue(undefined),
+  append: vi.fn(),
 }));
 
 vi.mock("@watchdog/db", () => ({
-  db: {},
+  // `transact` runs its body on a stand-in transaction handle.
+  db: { transaction: (body: (tx: object) => unknown) => body({}) },
   jobsRepo: {
     update,
     updateInCase,
   },
-  notifyEvent: (...args: unknown[]) => notifyEvent(...args),
+  activityLogRepo: { append },
 }));
 
 import { runDomain } from "../../infra/run-domain";
@@ -25,18 +26,38 @@ describe("setJobStatus", () => {
   const caseId = testCaseId(10);
   const jobId = testId(20);
 
-  it("returns null when update matches no row", async () => {
+  beforeEach(() => {
+    update.mockClear();
+    updateInCase.mockReset();
+    append.mockReset();
+    append.mockResolvedValue({
+      id: 1,
+      xid: "1",
+      caseId,
+      kind: "job",
+      action: "succeeded",
+      subjectId: jobId,
+      groupId: null,
+      label: null,
+      actorId: "actor",
+      actorLabel: null,
+      fromValue: null,
+      toValue: "succeeded",
+      createdAt: new Date(),
+    });
+  });
+
+  it("returns null and appends nothing when update matches no row", async () => {
     updateInCase.mockResolvedValueOnce(null);
     const result = await runDomain(
       setJobStatusEffect(jobId, { status: "running" }, { caseId })
     );
     expect(result).toBeNull();
-    expect(notifyEvent).not.toHaveBeenCalled();
+    expect(append).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
   });
 
   it("returns null for invalid scoped ids without calling the repo", async () => {
-    updateInCase.mockClear();
     const result = await runDomain(
       setJobStatusEffect(
         "job-1",
@@ -46,39 +67,41 @@ describe("setJobStatus", () => {
     );
     expect(result).toBeNull();
     expect(updateInCase).not.toHaveBeenCalled();
+    expect(append).not.toHaveBeenCalled();
   });
 
-  it("returns updated row and optionally notifies", async () => {
-    update.mockClear();
-    updateInCase.mockClear();
+  it("returns the updated row and appends its entry on the same handle", async () => {
+    const tx = {};
     updateInCase.mockResolvedValueOnce({
       id: jobId,
       caseId,
       status: "succeeded",
+      actorId: "actor",
+      actorLabel: null,
+      playbookRunId: testId(30),
     });
     const result = await runDomain(
-      setJobStatusEffect(
-        jobId,
-        { status: "succeeded" },
-        { notify: true, caseId }
-      )
+      setJobStatusEffect(jobId, { status: "succeeded" }, { caseId })
     );
     expect(result?.status).toBe("succeeded");
     expect(updateInCase).toHaveBeenCalledWith(
-      {},
+      expect.anything(),
       caseId,
       jobId,
       { status: "succeeded" },
       { unlessCancelled: undefined, onlyStatuses: undefined }
     );
     expect(update).not.toHaveBeenCalled();
-    await vi.waitFor(() => {
-      expect(notifyEvent).toHaveBeenCalledWith({
-        type: "job_update",
+    expect(append).toHaveBeenCalledWith(
+      updateInCase.mock.calls[0]?.[0] ?? tx,
+      expect.objectContaining({
         caseId,
-        jobId,
-        status: "succeeded",
-      });
-    });
+        kind: "job",
+        action: "succeeded",
+        subjectId: jobId,
+        groupId: testId(30),
+        toValue: "succeeded",
+      })
+    );
   });
 });

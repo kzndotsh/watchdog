@@ -12,6 +12,7 @@ import {
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { jobs } from "../../schema/jobs.ts";
+import { activityLogRepo } from "../activity-log.repo.ts";
 import { evidenceRepo } from "../evidence.repo.ts";
 import { jobsRepo } from "../jobs.repo.ts";
 
@@ -546,6 +547,44 @@ describe("jobsRepo", () => {
         actorId: TEST_ACTOR_ID,
       });
       expect(created).toBeNull();
+    });
+  });
+
+  it("activityLogRepo.jobLabelRows returns the named Jobs and every step of the named runs", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const run = await seedPlaybookRun(tx, cased.id, {
+        playbookId: "host-footprint-lite",
+        seed: { host: "example.com" },
+      });
+      const step0 = await seedJob(tx, cased.id, {
+        playbookRunId: run.id,
+        playbookStep: 0,
+      });
+      const step1 = await seedJob(tx, cased.id, {
+        playbookRunId: run.id,
+        playbookStep: 1,
+      });
+      const solo = await seedJob(tx, cased.id);
+      await seedJob(tx, cased.id);
+
+      const rows = await activityLogRepo.jobLabelRows(tx, {
+        jobIds: [solo.id],
+        playbookRunIds: [run.id],
+      });
+      expect(new Set(rows.map((row) => row.id))).toEqual(
+        new Set([step0.id, step1.id, solo.id])
+      );
+      expect(rows.find((row) => row.id === step0.id)?.playbookId).toBe(
+        "host-footprint-lite"
+      );
+      expect(rows.find((row) => row.id === solo.id)?.playbookId).toBeNull();
+      expect(
+        await activityLogRepo.jobLabelRows(tx, {
+          jobIds: [],
+          playbookRunIds: [],
+        })
+      ).toEqual([]);
     });
   });
 

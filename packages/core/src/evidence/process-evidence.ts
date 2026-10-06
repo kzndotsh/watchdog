@@ -32,7 +32,6 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -44,6 +43,7 @@ import {
 import type { Vault } from "../infra/vault";
 import { assertCapAvailabilityEffect } from "../jobs/cap-availability";
 import { parseValidatedCapInputEffect } from "../jobs/cap-input";
+import { appendJobActivityEffect } from "../jobs/job-activity";
 import type { JobQueue } from "../jobs/job-queue";
 import {
   enqueueCreatedJobEffect,
@@ -146,6 +146,7 @@ function startCapForEvidenceEffect(input: {
         if (!row) {
           return yield* new InternalError({ reason: "Failed to create Job" });
         }
+        yield* appendJobActivityEffect(tx, row, "queued");
         return { kind: "created" as const, job: row };
       })
     );
@@ -160,7 +161,6 @@ function startCapForEvidenceEffect(input: {
       outcome.job,
       input.capabilityId
     );
-    yield* notifyJobUpdateEffect(scopedCaseId, outcome.job.id, "queued");
     const users = yield* loadActorUsersEffect([outcome.job.actorId]);
     return toJobRecord(outcome.job, null, null, users);
   });

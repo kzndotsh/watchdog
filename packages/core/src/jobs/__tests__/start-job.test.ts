@@ -8,15 +8,16 @@ const CASE_ID = testCaseId(1);
 const JOB_ID = testId(2);
 const ACTOR_ID = "actor-1";
 
-const { create, notifyEvent } = vi.hoisted(() => ({
+const { create, append } = vi.hoisted(() => ({
   create: vi.fn(),
-  notifyEvent: vi.fn().mockResolvedValue(undefined),
+  append: vi.fn(),
 }));
 
 vi.mock("@watchdog/db", () => ({
-  db: {},
+  // `transact` runs its body on a stand-in transaction handle.
+  db: { transaction: (body: (tx: object) => unknown) => body({}) },
   jobsRepo: { create },
-  notifyEvent: (...args: unknown[]) => notifyEvent(...args),
+  activityLogRepo: { append },
 }));
 
 vi.mock("@watchdog/caps", () => ({
@@ -64,10 +65,25 @@ describe("startJobEffect", () => {
   beforeEach(() => {
     queue.sends.length = 0;
     create.mockClear();
-    notifyEvent.mockClear();
+    append.mockReset();
+    append.mockResolvedValue({
+      id: 1,
+      xid: "1",
+      caseId: CASE_ID,
+      kind: "job",
+      action: "queued",
+      subjectId: JOB_ID,
+      groupId: null,
+      label: null,
+      actorId: ACTOR_ID,
+      actorLabel: null,
+      fromValue: null,
+      toValue: "queued",
+      createdAt: new Date(),
+    });
   });
 
-  it("notifies queued after enqueue", async () => {
+  it("appends the queued entry and enqueues the Job", async () => {
     create.mockResolvedValueOnce({
       id: JOB_ID,
       caseId: CASE_ID,
@@ -105,15 +121,17 @@ describe("startJobEffect", () => {
     );
 
     expect(queue.sends.map((s) => s.payload.jobId)).toEqual([JOB_ID]);
-    expect(notifyEvent).toHaveBeenCalled();
-    await vi.waitFor(() => {
-      expect(notifyEvent).toHaveBeenCalledWith({
-        type: "job_update",
+    expect(append).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
         caseId: CASE_ID,
-        jobId: JOB_ID,
-        status: "queued",
-      });
-    });
+        kind: "job",
+        action: "queued",
+        subjectId: JOB_ID,
+        groupId: null,
+        toValue: "queued",
+      })
+    );
   });
 
   it("rejects whitespace-only capability ids", async () => {

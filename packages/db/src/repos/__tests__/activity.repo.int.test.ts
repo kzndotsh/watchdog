@@ -33,29 +33,6 @@ describe("activityRepo", () => {
     });
   });
 
-  it("includes playbookId for playbook jobs", async () => {
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      const run = await seedPlaybookRun(tx, cased.id, {
-        playbookId: "host-footprint-lite",
-        seed: { host: "example.com" },
-      });
-      const job = await seedJob(tx, cased.id, {
-        playbookRunId: run.id,
-        playbookStep: 0,
-        capabilityId: "network.dns.lookup",
-        input: { host: "example.com" },
-      });
-      const recent = await activityRepo.recentJobs(tx, {
-        organizationId: TEST_ORGANIZATION_ID,
-        caseId: cased.id,
-        limit: 10,
-      });
-      const row = recent.find((entry) => entry.id === job.id);
-      expect(row?.playbookId).toBe("host-footprint-lite");
-    });
-  });
-
   it("includes playbookId for proposals linked to playbook jobs", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);

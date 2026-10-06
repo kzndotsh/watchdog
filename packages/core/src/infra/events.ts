@@ -59,16 +59,3 @@ export function notifyEntityChangedEffect(caseId: CaseId): Effect.Effect<void> {
     Effect.asVoid
   );
 }
-
-export function notifyJobUpdateEffect(
-  caseId: CaseId,
-  jobId: string,
-  status: string
-): Effect.Effect<void> {
-  return notifyWatchdogEventEffect({
-    type: "job_update",
-    caseId,
-    jobId,
-    status,
-  }).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
-}

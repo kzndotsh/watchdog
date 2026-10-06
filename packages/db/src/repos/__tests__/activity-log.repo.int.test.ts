@@ -4,7 +4,10 @@ import path from "node:path";
 import { sql } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import {
+  TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
+} from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, withTestTx } from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
@@ -186,6 +189,104 @@ describe("activityLogRepo", () => {
     expect(await activityLogRepo.head(db)).toEqual({
       xid: row?.xid,
       id: row?.id,
+    });
+  });
+});
+
+describe("activityLogRepo.recentCollapsed", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  const JOB_ACTIONS = ["queued", "running", "succeeded"] as const;
+
+  async function appendJob(
+    tx: Parameters<typeof activityLogRepo.append>[0],
+    caseId: Parameters<typeof activityLogRepo.append>[1]["caseId"],
+    subjectId: string,
+    action: (typeof JOB_ACTIONS)[number],
+    groupId: string | null = null
+  ) {
+    const row = await activityLogRepo.append(tx, {
+      caseId,
+      kind: "job",
+      action,
+      subjectId,
+      groupId,
+      toValue: action,
+    });
+    if (row === null) throw new Error("append failed");
+    return row;
+  }
+
+  it("keeps a solo Job's whole history and one row per group (the newest)", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const solo = testId(40);
+      const run = testId(41);
+      for (const action of JOB_ACTIONS) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
+        await appendJob(tx, cased.id, solo, action);
+      }
+      await appendJob(tx, cased.id, testId(42), "queued", run);
+      await appendJob(tx, cased.id, testId(42), "succeeded", run);
+      const last = await appendJob(tx, cased.id, testId(43), "running", run);
+
+      const rows = await activityLogRepo.recentCollapsed(tx, {
+        organizationId: TEST_ORGANIZATION_ID,
+        caseId: cased.id,
+        kind: "job",
+        actions: JOB_ACTIONS,
+        limit: 20,
+      });
+      expect(rows).toHaveLength(4);
+      expect(rows.filter((row) => row.subjectId === solo)).toHaveLength(3);
+      const grouped = rows.filter((row) => row.groupId === run);
+      expect(grouped.map((row) => row.id)).toEqual([last.id]);
+    });
+  });
+
+  it("collapses before limiting, so a busy run cannot crowd out other rows", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const run = testId(41);
+      await appendJob(tx, cased.id, testId(50), "queued");
+      for (let i = 0; i < 5; i += 1) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
+        await appendJob(tx, cased.id, testId(51), "running", run);
+      }
+      const rows = await activityLogRepo.recentCollapsed(tx, {
+        organizationId: TEST_ORGANIZATION_ID,
+        caseId: cased.id,
+        kind: "job",
+        actions: JOB_ACTIONS,
+        limit: 2,
+      });
+      expect(rows.map((row) => row.groupId)).toHaveLength(2);
+      expect(rows.map((row) => row.groupId)).toEqual(
+        expect.arrayContaining([null, run])
+      );
+    });
+  });
+
+  it("is org scoped and honours the action allowlist", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      await appendJob(tx, cased.id, testId(60), "queued");
+      const other = await activityLogRepo.recentCollapsed(tx, {
+        organizationId: TEST_OTHER_ORGANIZATION_ID,
+        kind: "job",
+        actions: JOB_ACTIONS,
+        limit: 20,
+      });
+      expect(other).toEqual([]);
+      const none = await activityLogRepo.recentCollapsed(tx, {
+        organizationId: TEST_ORGANIZATION_ID,
+        kind: "job",
+        actions: ["succeeded"],
+        limit: 20,
+      });
+      expect(none).toEqual([]);
     });
   });
 });

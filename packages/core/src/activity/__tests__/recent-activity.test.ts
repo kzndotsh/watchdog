@@ -1,143 +1,116 @@
 import { describe, expect, it } from "vitest";
 
-import type { RecentJobActivityRow } from "@watchdog/db";
+import type { JobActivityLabelRow } from "@watchdog/db";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
+import { jobLabelSubject } from "../job-feed";
 import {
   clampActivityLimit,
-  collapseRecentJobActivityRows,
   mergeActivityItems,
   perSourceFetchLimit,
 } from "../recent-activity";
 
-function jobRow(
-  overrides: Partial<RecentJobActivityRow> & Pick<RecentJobActivityRow, "id">
-): RecentJobActivityRow {
+function labelRow(
+  overrides: Partial<JobActivityLabelRow> & Pick<JobActivityLabelRow, "id">
+): JobActivityLabelRow {
   return {
     caseId: testCaseId(10),
-    caseName: "Case",
     capabilityId: "network.dns.lookup",
-    status: "running",
     resultSummary: null,
     input: { host: "example.com" },
     playbookRunId: null,
     playbookStep: null,
+    playbookFanIndex: 0,
     playbookId: null,
-    actorId: "actor",
-    actorLabel: "actor",
-    at: new Date("2026-01-03T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-03T00:00:00.000Z"),
     ...overrides,
   };
 }
 
-describe("collapseRecentJobActivityRows", () => {
-  it("keeps solo jobs and collapses playbook steps into one row per run", () => {
+describe("jobLabelSubject", () => {
+  it("labels a solo entry from its own Job", () => {
+    const job = labelRow({ id: testId(11), resultSummary: "dns ok" });
+    const subject = jobLabelSubject({ subjectId: job.id, groupId: null }, [
+      labelRow({ id: testId(12), capabilityId: "network.whois.lookup" }),
+      job,
+    ]);
+    expect(subject).toMatchObject({
+      capabilityId: "network.dns.lookup",
+      resultSummary: "dns ok",
+      playbookId: null,
+    });
+  });
+
+  it("labels a group from the run's seed step, playbook and newest summary", () => {
     const runId = testId(14);
-    const rows = collapseRecentJobActivityRows([
-      jobRow({ id: testId(11) }),
-      jobRow({
+    const rows = [
+      labelRow({
+        id: testId(21),
+        playbookRunId: runId,
+        playbookStep: 1,
+        capabilityId: "network.whois.lookup",
+        playbookId: "host-footprint-lite",
+        resultSummary: "whois ok",
+        updatedAt: new Date("2026-01-03T00:02:00.000Z"),
+      }),
+      labelRow({
         id: testId(20),
         playbookRunId: runId,
         playbookStep: 0,
         playbookId: "host-footprint-lite",
-        status: "succeeded",
         resultSummary: "dns ok",
-        at: new Date("2026-01-03T00:01:00.000Z"),
+        updatedAt: new Date("2026-01-03T00:01:00.000Z"),
       }),
-      jobRow({
-        id: testId(21),
-        playbookRunId: runId,
-        playbookStep: 1,
-        playbookId: "host-footprint-lite",
-        status: "running",
-        at: new Date("2026-01-03T00:02:00.000Z"),
-      }),
-    ]);
-
-    expect(rows).toHaveLength(2);
-    const collapsed = rows.find((row) => row.id === runId);
-    expect(collapsed?.status).toBe("running");
-    expect(collapsed?.resultSummary).toBe("dns ok");
-    expect(collapsed?.playbookId).toBe("host-footprint-lite");
+    ];
+    const subject = jobLabelSubject(
+      { subjectId: testId(21), groupId: runId },
+      rows
+    );
+    expect(subject).toMatchObject({
+      capabilityId: "network.dns.lookup",
+      playbookId: "host-footprint-lite",
+      resultSummary: "whois ok",
+    });
   });
 
-  it("prefers blocked over queued when a later step is only queued", () => {
+  it("skips blank summaries when picking the newest one", () => {
     const runId = testId(15);
-    const rows = collapseRecentJobActivityRows([
-      jobRow({
+    const subject = jobLabelSubject({ subjectId: testId(30), groupId: runId }, [
+      labelRow({
         id: testId(30),
         playbookRunId: runId,
         playbookStep: 0,
-        playbookId: "host-footprint-lite",
-        status: "blocked",
-        at: new Date("2026-01-03T00:01:00.000Z"),
+        resultSummary: "dns ok",
+        updatedAt: new Date("2026-01-03T00:01:00.000Z"),
       }),
-      jobRow({
+      labelRow({
         id: testId(31),
         playbookRunId: runId,
         playbookStep: 1,
-        playbookId: "host-footprint-lite",
-        status: "queued",
-        at: new Date("2026-01-03T00:02:00.000Z"),
+        resultSummary: "   ",
+        updatedAt: new Date("2026-01-03T00:02:00.000Z"),
       }),
     ]);
-
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.status).toBe("blocked");
+    expect(subject?.resultSummary).toBe("dns ok");
   });
 
-  it("groups playbook steps when run id is padded with whitespace", () => {
+  it("matches a group when its id is padded with whitespace", () => {
     const runId = testId(16);
-    const rows = collapseRecentJobActivityRows([
-      jobRow({
-        id: testId(40),
-        playbookRunId: `  ${runId}  `,
-        playbookStep: 0,
-        playbookId: "host-footprint-lite",
-        status: "succeeded",
-        at: new Date("2026-01-03T00:01:00.000Z"),
-      }),
-      jobRow({
-        id: testId(41),
-        playbookRunId: runId,
-        playbookStep: 1,
-        playbookId: "host-footprint-lite",
-        status: "running",
-        at: new Date("2026-01-03T00:02:00.000Z"),
-      }),
-    ]);
-
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.id).toBe(runId);
-    expect(rows[0]?.status).toBe("running");
+    const subject = jobLabelSubject(
+      { subjectId: testId(40), groupId: `  ${runId}  ` },
+      [labelRow({ id: testId(40), playbookRunId: runId, playbookStep: 0 })]
+    );
+    expect(subject).toBeDefined();
   });
 
-  it("treats invalid playbook run ids as solo jobs", () => {
-    const rows = collapseRecentJobActivityRows([
-      jobRow({
-        id: testId(50),
-        playbookRunId: "run-1",
-        playbookStep: 0,
-        status: "succeeded",
-      }),
-      jobRow({
-        id: testId(51),
-        playbookRunId: testId(52),
-        playbookStep: 0,
-        status: "running",
-      }),
-      jobRow({
-        id: testId(53),
-        playbookRunId: testId(52),
-        playbookStep: 1,
-        status: "queued",
-      }),
-    ]);
-
-    expect(rows).toHaveLength(2);
-    expect(rows.some((row) => row.id === testId(50))).toBe(true);
-    expect(rows.some((row) => row.id === testId(52))).toBe(true);
+  it("returns undefined when the Job is gone", () => {
+    expect(
+      jobLabelSubject({ subjectId: testId(50), groupId: null }, [])
+    ).toBeUndefined();
+    expect(
+      jobLabelSubject({ subjectId: testId(50), groupId: testId(51) }, [])
+    ).toBeUndefined();
   });
 });
 

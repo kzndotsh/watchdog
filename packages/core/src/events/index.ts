@@ -1,6 +1,2 @@
-export {
-  notifyEntityChangedEffect,
-  notifyJobUpdateEffect,
-  listenForEvents,
-} from "../infra/events";
+export { notifyEntityChangedEffect, listenForEvents } from "../infra/events";
 export { listenForEventsStream } from "../infra/listen-events-stream";

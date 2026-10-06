@@ -133,7 +133,7 @@ export function failJobEffect(
         logs,
         finishedAt,
       },
-      { unlessCancelled: true, notify: true, caseId: opts.caseId }
+      { unlessCancelled: true, caseId: opts.caseId }
     );
   });
 }

@@ -5,15 +5,15 @@ import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
 import { parseTrimmedCaseId, parseTrimmedUuid } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
-import { notifyJobUpdateEffect } from "../infra/events";
-import { tryDbWith } from "../infra/postgres-effect";
+import { tryDb } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
 import type { DomainTag } from "../infra/tagged-errors";
+import { appendJobActivityEffect } from "./job-activity";
 
 interface SetJobStatusOpts {
   caseId: CaseId;
   unlessCancelled?: boolean;
   onlyStatuses?: JobStatus[];
-  notify?: boolean;
 }
 
 type JobStatusPatch = JobPatch & { status: JobStatus };
@@ -21,7 +21,9 @@ type JobStatusPatch = JobPatch & { status: JobStatus };
 /**
  * Persist Job status (+ related fields). Returns the updated row, or null when
  * the update matched no row (e.g. already cancelled with unlessCancelled).
- * Optional SSE notify after a successful write.
+ * A matched write appends its activity entry (queued, running or a terminal
+ * state) in the same transaction (ADR-0005); the database trigger notifies at
+ * commit, so there is no separate SSE notify.
  */
 export function setJobStatusEffect(
   jobId: string,
@@ -38,18 +40,22 @@ export function setJobStatusEffect(
       unlessCancelled: opts?.unlessCancelled,
       onlyStatuses: opts?.onlyStatuses,
     };
-    const updated = yield* tryDbWith((exec) =>
-      jobsRepo.updateInCase(
-        exec,
-        scopedCaseId,
-        normalizedJobId,
-        { ...patch },
-        updateOpts
-      )
+    return yield* transact((tx) =>
+      Effect.gen(function* setJobStatusTx() {
+        const updated = yield* tryDb(() =>
+          jobsRepo.updateInCase(
+            tx,
+            scopedCaseId,
+            normalizedJobId,
+            { ...patch },
+            updateOpts
+          )
+        );
+        if (updated) {
+          yield* appendJobActivityEffect(tx, updated, patch.status);
+        }
+        return updated;
+      })
     );
-    if (updated && opts?.notify === true) {
-      yield* notifyJobUpdateEffect(scopedCaseId, normalizedJobId, patch.status);
-    }
-    return updated;
   });
 }

@@ -3,29 +3,12 @@ import { Effect } from "effect";
 import {
   activityLogRepo,
   activityRepo,
-  entitiesRepo,
-  evidenceRepo,
   type RecentActivityLogRow,
-  type RecentJobActivityRow,
 } from "@watchdog/db";
 import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import type { ActivityItem } from "@watchdog/schemas/feed";
-import {
-  entityIdsFromJobInputs,
-  entityTitleMapForJobInputs,
-  evidenceIdsFromJobInputs,
-  evidenceTitleMapForJobInputs,
-} from "@watchdog/schemas/jobs";
-import type {
-  CaseId,
-  JobStatus,
-  OrganizationId,
-} from "@watchdog/schemas/shared";
-import {
-  pickPlaybookAggregateStatus,
-  parseTrimmedCaseId,
-  parseTrimmedUuid,
-} from "@watchdog/schemas/shared";
+import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import { parseTrimmedCaseId } from "@watchdog/schemas/shared";
 
 import {
   labelForActor,
@@ -36,8 +19,8 @@ import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
-import { jobActivityLabel } from "../jobs/job-display";
 import { proposalActivityLabel } from "../proposals/proposal-display";
+import { mapJobFeedRowsEffect } from "./job-feed";
 
 export interface ListRecentActivityOpts {
   organizationId: OrganizationId;
@@ -67,6 +50,7 @@ export { clampActivityLimit, perSourceFetchLimit };
  */
 export const FEED_ACTIONS = {
   task: ["created", "status_changed", "deleted"],
+  job: ["queued", "running", "succeeded", "failed", "cancelled"],
 } as const;
 
 /** Map stored task event codes → display verb. */
@@ -82,34 +66,6 @@ export function taskEventAction(
     return "Moved";
   }
   return "Updated";
-}
-
-/** Derive a verb from job lifecycle status. */
-export function jobActivityAction(status: JobStatus): string {
-  switch (status) {
-    case "succeeded": {
-      return "Succeeded";
-    }
-    case "failed": {
-      return "Failed";
-    }
-    case "cancelled": {
-      return "Cancelled";
-    }
-    case "running": {
-      return "Running";
-    }
-    case "blocked": {
-      return "Blocked";
-    }
-    case "queued": {
-      return "Queued";
-    }
-    default: {
-      const _exhaustive: never = status;
-      return _exhaustive;
-    }
-  }
 }
 
 function mapTaskEvent(
@@ -129,153 +85,6 @@ function mapTaskEvent(
     at: row.at.toISOString(),
     actor: row.actorId ? labelForActor(row.actorId, users) : undefined,
   };
-}
-
-function pickPlaybookResultSummary(
-  steps: readonly RecentJobActivityRow[]
-): string | null {
-  const ordered = [...steps].sort((a, b) => b.at.getTime() - a.at.getTime());
-  for (const step of ordered) {
-    const summary = step.resultSummary?.trim();
-    if (summary) return summary;
-  }
-  return null;
-}
-
-/** Collapse playbook step rows into one activity row per run. */
-export function collapseRecentJobActivityRows(
-  rows: RecentJobActivityRow[]
-): RecentJobActivityRow[] {
-  const solo: RecentJobActivityRow[] = [];
-  const byRun = new Map<string, RecentJobActivityRow[]>();
-
-  for (const row of rows) {
-    const runId =
-      row.playbookRunId === null ? null : parseTrimmedUuid(row.playbookRunId);
-    if (runId === null) {
-      solo.push(row);
-    } else {
-      const bucket = byRun.get(runId) ?? [];
-      bucket.push(row);
-      byRun.set(runId, bucket);
-    }
-  }
-
-  const collapsed = [...solo];
-  for (const [runId, steps] of byRun) {
-    const first = steps[0];
-    if (first === undefined) continue;
-    let latest = first;
-    for (let i = 1; i < steps.length; i += 1) {
-      const step = steps[i];
-      if (step !== undefined && step.at >= latest.at) latest = step;
-    }
-    const seed =
-      [...steps].sort(
-        (a, b) => (a.playbookStep ?? 0) - (b.playbookStep ?? 0)
-      )[0] ?? latest;
-    collapsed.push({
-      ...latest,
-      id: runId,
-      capabilityId: seed.capabilityId,
-      status: pickPlaybookAggregateStatus(steps.map((step) => step.status)),
-      input: seed.input,
-      playbookId: seed.playbookId,
-      resultSummary: pickPlaybookResultSummary(steps),
-    });
-  }
-
-  return collapsed;
-}
-
-function evidenceIdsByCaseFromJobRows(
-  rows: readonly RecentJobActivityRow[]
-): Map<string, string[]> {
-  const byCase = new Map<string, Set<string>>();
-  for (const row of rows) {
-    for (const id of evidenceIdsFromJobInputs([row.input])) {
-      const bucket = byCase.get(row.caseId) ?? new Set<string>();
-      bucket.add(id);
-      byCase.set(row.caseId, bucket);
-    }
-  }
-  const out = new Map<string, string[]>();
-  for (const [caseId, ids] of byCase) {
-    out.set(caseId, [...ids]);
-  }
-  return out;
-}
-
-function entityIdsByCaseFromJobRows(
-  rows: readonly RecentJobActivityRow[]
-): Map<string, string[]> {
-  const byCase = new Map<string, Set<string>>();
-  for (const row of rows) {
-    for (const id of entityIdsFromJobInputs([row.input])) {
-      const bucket = byCase.get(row.caseId) ?? new Set<string>();
-      bucket.add(id);
-      byCase.set(row.caseId, bucket);
-    }
-  }
-  const out = new Map<string, string[]>();
-  for (const [caseId, ids] of byCase) {
-    out.set(caseId, [...ids]);
-  }
-  return out;
-}
-
-function loadEntityTitleMapEffect(
-  rows: readonly RecentJobActivityRow[]
-): Effect.Effect<ReadonlyMap<string, string>, DomainTag, Db> {
-  const byCase = entityIdsByCaseFromJobRows(rows);
-  if (byCase.size === 0) {
-    return Effect.succeed(new Map<string, string>());
-  }
-  return Effect.gen(function* loadEntityTitleMapGen() {
-    const labels = new Map<string, string>();
-    for (const [caseId, entityIds] of byCase) {
-      const caseInputs = rows
-        .filter((row) => row.caseId === caseId)
-        .map((row) => row.input);
-      const entityRows = yield* tryDbWith((exec) =>
-        entitiesRepo.listNamesByIdsInCase(exec, caseId, entityIds)
-      );
-      for (const [id, label] of entityTitleMapForJobInputs(
-        entityRows,
-        caseInputs
-      )) {
-        labels.set(id, label);
-      }
-    }
-    return labels;
-  });
-}
-
-function loadEvidenceTitleMapEffect(
-  rows: readonly RecentJobActivityRow[]
-): Effect.Effect<ReadonlyMap<string, string>, DomainTag, Db> {
-  const byCase = evidenceIdsByCaseFromJobRows(rows);
-  if (byCase.size === 0) {
-    return Effect.succeed(new Map<string, string>());
-  }
-  return Effect.gen(function* loadEvidenceTitleMapGen() {
-    const labels = new Map<string, string>();
-    for (const [caseId, evidenceIds] of byCase) {
-      const caseInputs = rows
-        .filter((row) => row.caseId === caseId)
-        .map((row) => row.input);
-      const evidenceRows = yield* tryDbWith((exec) =>
-        evidenceRepo.listActivityLabelsInCase(exec, caseId, evidenceIds)
-      );
-      for (const [id, title] of evidenceTitleMapForJobInputs(
-        evidenceRows,
-        caseInputs
-      )) {
-        labels.set(id, title);
-      }
-    }
-    return labels;
-  });
 }
 
 /** Pure merge/sort for unit tests — newer `at` first. */
@@ -312,7 +121,13 @@ export function listRecentActivityEffect(
     const [evidenceRows, jobRows, proposalRows, taskEvents] = yield* Effect.all(
       [
         tryDbWith((exec) => activityRepo.recentEvidence(exec, repoOpts)),
-        tryDbWith((exec) => activityRepo.recentJobs(exec, repoOpts)),
+        tryDbWith((exec) =>
+          activityLogRepo.recentCollapsed(exec, {
+            ...repoOpts,
+            kind: "job",
+            actions: FEED_ACTIONS.job,
+          })
+        ),
         tryDbWith((exec) =>
           activityRepo.recentPendingProposals(exec, repoOpts)
         ),
@@ -332,6 +147,7 @@ export function listRecentActivityEffect(
       ...jobRows.map((row) => row.actorId),
       ...taskEvents.map((row) => row.actorId),
     ]);
+    const jobItems = yield* mapJobFeedRowsEffect(jobRows, users);
 
     const {
       entityNames: proposalEntityNames,
@@ -342,11 +158,6 @@ export function listRecentActivityEffect(
         patch: row.patch,
       }))
     );
-
-    const collapsedJobRows = collapseRecentJobActivityRows(jobRows);
-    const evidenceTitleById =
-      yield* loadEvidenceTitleMapEffect(collapsedJobRows);
-    const entityTitleById = yield* loadEntityTitleMapEffect(collapsedJobRows);
 
     const items: ActivityItem[] = [
       ...evidenceRows.map((row) => ({
@@ -363,24 +174,7 @@ export function listRecentActivityEffect(
         at: row.at.toISOString(),
         actor: labelForActor(row.actorId, users, row.actorLabel),
       })),
-      ...collapsedJobRows.map((row) => ({
-        id: row.id,
-        kind: "job" as const,
-        action: jobActivityAction(row.status),
-        caseId: row.caseId,
-        caseName: row.caseName,
-        label: jobActivityLabel({
-          capabilityId: row.capabilityId,
-          resultSummary: row.resultSummary,
-          input: row.input,
-          playbookId: row.playbookId,
-          evidenceTitleById,
-          entityTitleById,
-        }),
-        status: row.status,
-        at: row.at.toISOString(),
-        actor: labelForActor(row.actorId, users, row.actorLabel),
-      })),
+      ...jobItems,
       ...proposalRows.map((row) => ({
         id: row.id,
         kind: "proposal" as const,

@@ -4,8 +4,6 @@ import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
   CaseId,
   EvidenceKind,
-  JobStatus,
-  JsonObject,
   OrganizationId,
 } from "@watchdog/schemas/shared";
 
@@ -31,22 +29,6 @@ export interface RecentEvidenceActivityRow {
   kind: EvidenceKind;
   label: string | null;
   sourceUrl: string | null;
-  actorId: string;
-  actorLabel: string | null;
-  at: Date;
-}
-
-export interface RecentJobActivityRow {
-  id: string;
-  caseId: CaseId;
-  caseName: string;
-  capabilityId: string;
-  status: JobStatus;
-  resultSummary: string | null;
-  input: JsonObject;
-  playbookRunId: string | null;
-  playbookStep: number | null;
-  playbookId: string | null;
   actorId: string;
   actorLabel: string | null;
   at: Date;
@@ -90,35 +72,6 @@ export const activityRepo = {
         )
       )
       .orderBy(desc(evidence.capturedAt))
-      .limit(safeLimit);
-  },
-
-  async recentJobs(
-    exec: DbExec,
-    opts: RecentActivityOpts
-  ): Promise<RecentJobActivityRow[]> {
-    const safeLimit = clampSearchLimit(opts.limit);
-    return exec
-      .select({
-        id: jobs.id,
-        caseId: jobs.caseId,
-        caseName: cases.name,
-        capabilityId: jobs.capabilityId,
-        status: jobs.status,
-        resultSummary: jobs.resultSummary,
-        input: jobs.input,
-        playbookRunId: jobs.playbookRunId,
-        playbookStep: jobs.playbookStep,
-        playbookId: playbookRuns.playbookId,
-        actorId: jobs.actorId,
-        actorLabel: jobs.actorLabel,
-        at: jobs.updatedAt,
-      })
-      .from(jobs)
-      .innerJoin(cases, eq(cases.id, jobs.caseId))
-      .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
-      .where(orgCaseFilter(opts.organizationId, opts.caseId, cases.id))
-      .orderBy(desc(jobs.updatedAt))
       .limit(safeLimit);
   },
 

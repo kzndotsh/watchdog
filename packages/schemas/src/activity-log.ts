@@ -122,6 +122,15 @@ export function legacyEventForActivityEntry(
   if (entry.kind === "task") {
     return { type: "task_changed", caseId: entry.caseId };
   }
+  if (entry.kind === "job") {
+    if (entry.subjectId === null) return null;
+    return {
+      type: "job_update",
+      caseId: entry.caseId,
+      jobId: entry.subjectId,
+      status: entry.action,
+    };
+  }
   if (entry.kind === "evidence" && entry.subjectId !== null) {
     return {
       type: "evidence_changed",

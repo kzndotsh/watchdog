@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  appendActivity: vi.fn().mockResolvedValue({ id: 1 }),
   createCase: vi.fn(),
   createEntity: vi.fn(),
   createEvidence: vi.fn(),
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@watchdog/db", () => ({
+  activityLogRepo: { append: mocks.appendActivity },
   casesRepo: { create: mocks.createCase },
   entitiesRepo: { create: mocks.createEntity },
   evidenceRepo: { create: mocks.createEvidence },
@@ -110,6 +112,10 @@ describe("test-kit db seeds", () => {
     const row = await seedJob(exec, testCaseId(1));
     expect(row.id).toBe("job-1");
     expect(mocks.createJob).toHaveBeenCalled();
+    expect(mocks.appendActivity).toHaveBeenCalledWith(
+      exec,
+      expect.objectContaining({ kind: "job", action: "queued" })
+    );
   });
 
   it("seedPlaybookRun creates running playbook runs", async () => {
