@@ -19,6 +19,11 @@ import { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
 import { logSwallowed } from "../infra/process-log";
 import { InternalError, type DomainTag } from "../infra/tagged-errors";
+import {
+  activityLogCeiling,
+  isUnservableActivityCursor,
+  readActivityLogBoundsEffect,
+} from "./log-bounds";
 import { acquireActivityTailer, liveTailerOptions } from "./tailer";
 
 export interface ActivityConsumerOpts {
@@ -32,9 +37,10 @@ export interface ActivityConsumerOpts {
    */
   handle: (entry: ActivityEntry) => Effect.Effect<void>;
   /**
-   * The cursor is ahead of the database (a restore or a wiped log): entries
-   * between it and the head are unknowable, so every Case is rescanned. The
-   * cursor moves to the head once this returns.
+   * The cursor cannot be continued from the log: it is ahead of the database
+   * (a restore or a wiped log) or below the retention floor (the prune job
+   * deleted entries after it). What changed is unknowable, so every Case is
+   * rescanned. The cursor moves to the head once this returns.
    */
   onResync: (caseIds: readonly CaseId[]) => Effect.Effect<void>;
   /** The tailer is subscribed from the stored cursor (catch-up has begun). */
@@ -43,13 +49,6 @@ export interface ActivityConsumerOpts {
   onListenError?: (error: unknown) => void;
   /** Tailer timings for tests (`pollMs`, `repollMs`, `listen`). */
   tailer?: Partial<ActivityTailerOptions>;
-}
-
-function isAheadOfLog(
-  cursor: ActivityCursor,
-  newest: ActivityCursor | null
-): boolean {
-  return compareActivityCursor(cursor, newest ?? { xid: "0", id: 0 }) > 0;
 }
 
 /** Where to resume: the stored cursor, the head on a first boot, or the head after a resync. */
@@ -68,11 +67,16 @@ function resolveStartEffect(
       );
       return head;
     }
-    const newest = yield* tryDbWith((exec) => activityLogRepo.newest(exec));
-    if (!isAheadOfLog(stored, newest)) return stored;
+    const bounds = yield* readActivityLogBoundsEffect();
+    if (!isUnservableActivityCursor(stored, bounds)) return stored;
     // Read the head before the scan: a change committed after it is past the
     // head and arrives through the tail, one committed before is in the scan.
-    const head = yield* tryDbWith((exec) => activityLogRepo.head(exec));
+    // Never store a cursor below the floor, or the next boot would resync again
+    // (the floor can sit above the head of a log that Case deletes emptied).
+    const logHead = yield* tryDbWith((exec) => activityLogRepo.head(exec));
+    const ceiling = activityLogCeiling({ newest: null, floor: bounds.floor });
+    const head =
+      compareActivityCursor(logHead, ceiling) >= 0 ? logHead : ceiling;
     const caseIds = yield* tryDbWith((exec) =>
       casesRepo.listAllIdsUnchecked(exec)
     );
@@ -89,7 +93,7 @@ function resolveStartEffect(
  * interrupted (or until a handler dies).
  *
  * 1. Resume point: the consumer's stored cursor; none (first boot) means the
- *    head; a cursor ahead of the log means a resync (`onResync`, then the head).
+ *    head; a cursor ahead of the log or below the floor means a resync (`onResync`, then the head).
  * 2. A tailer started at that cursor delivers every commit-safe entry past it
  *    (catch-up for what happened while the process was down), then the live
  *    tail, in `(xid, id)` order, into one queue.
@@ -97,8 +101,8 @@ function resolveStartEffect(
  *    entries were all handled, never before: a crash replays the batch
  *    (at-least-once), it cannot skip one.
  *
- * Not yet handled: a retention floor. Pruning lands in S7; a cursor older than
- * the floor then joins the resync case.
+ * A cursor below the retention floor (entries after it were pruned) is a
+ * resync like one ahead of the log (ADR-0005 decision 8).
  */
 export function runActivityConsumerEffect(
   opts: ActivityConsumerOpts

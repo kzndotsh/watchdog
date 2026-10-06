@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, gte, sql } from "drizzle-orm";
 
 import type { ActivityCursor } from "@watchdog/schemas/feed";
 
@@ -33,5 +33,28 @@ export const activityCursorsRepo = {
         target: activityCursors.consumer,
         set: { xid: cursor.xid, id: cursor.id, updatedAt: sql`now()` },
       });
+  },
+
+  /**
+   * The lowest position among consumers whose cursor moved at or after `since`,
+   * `null` when there is none. A consumer that has not moved for the whole
+   * retention window is abandoned: pruning does not wait for it (it resyncs).
+   */
+  async slowestActive(
+    exec: DbExec,
+    since: Date
+  ): Promise<ActivityCursor | null> {
+    const [row] = await exec
+      .select({ xid: activityCursors.xid, id: activityCursors.id })
+      .from(activityCursors)
+      .where(gte(activityCursors.updatedAt, since))
+      .orderBy(activityCursors.xid, activityCursors.id)
+      .limit(1);
+    return row === undefined ? null : { xid: row.xid, id: row.id };
+  },
+
+  /** Restore repair: every cursor's xid is rewritten with the log's (see `activityLogRepo.zeroXids`). */
+  async zeroXids(exec: DbExec): Promise<void> {
+    await exec.update(activityCursors).set({ xid: sql`'0'::xid8` });
   },
 };

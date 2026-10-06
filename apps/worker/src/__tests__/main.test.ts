@@ -7,6 +7,11 @@ const workerMocks = vi.hoisted(() => ({
   reconcileStuckPlaybookRunsEffect: vi.fn(),
   reconcileOrphanedQueuedJobsEffect: vi.fn(),
   runActivityConsumerEffect: vi.fn(),
+  // Boot never touches a database in unit tests (CI has none).
+  pruneActivityEffect: vi.fn(() => Effect.succeed({ pruned: 0, batches: 0 })),
+  repairRestoredActivityXidsEffect: vi.fn(() =>
+    Effect.succeed({ repaired: 0 })
+  ),
   listActiveJobIds: vi.fn(() => [] as string[]),
   findCancelledJobIdsEffect: vi.fn(),
   executeJobOnMap: vi.fn(),
@@ -19,6 +24,9 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
     executeJobOnMap: workerMocks.executeJobOnMap,
     findCancelledJobIdsEffect: workerMocks.findCancelledJobIdsEffect,
     runActivityConsumerEffect: workerMocks.runActivityConsumerEffect,
+    pruneActivityEffect: workerMocks.pruneActivityEffect,
+    repairRestoredActivityXidsEffect:
+      workerMocks.repairRestoredActivityXidsEffect,
     listActiveJobIds: workerMocks.listActiveJobIds,
     reconcileStaleJobsEffect: workerMocks.reconcileStaleJobsEffect,
     reconcileStuckPlaybookRunsEffect:

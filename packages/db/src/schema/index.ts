@@ -1,6 +1,4 @@
-export { activity, activityCursors } from "./activity";
-
-export { activityEvents } from "./activity-events";
+export { activity, activityCursors, activityFloor } from "./activity";
 
 export {
   account,

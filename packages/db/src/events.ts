@@ -3,11 +3,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import postgres from "postgres";
 
 import { env } from "@watchdog/env/server";
-import type { WatchdogEvent } from "@watchdog/schemas/feed";
 
-import { client } from "./client";
-
-export const WATCHDOG_CHANNEL = "watchdog_events";
 /** The activity log's wake-up channel; only the `activity_notify` trigger sends on it. */
 export const ACTIVITY_CHANNEL = "watchdog_activity";
 
@@ -15,13 +11,14 @@ const RECONNECT_DELAY_MS = 1000;
 const INITIAL_CONNECT_MAX_ATTEMPTS = 30;
 
 /**
- * Emit a NOTIFY on the watchdog_events channel via the shared pool.
+ * Open a dedicated LISTEN connection on `channel` (the activity tailer listens
+ * on `ACTIVITY_CHANNEL`) and call `onNotification` for each message. Returns a
+ * cleanup function.
+ *
+ * Retries the initial connection; once LISTEN is established the connection
+ * stays open until `end()` (postgres.js re-LISTENs after a drop). `onError` is
+ * only called after repeated initial connection failures.
  */
-export async function notifyEvent(event: WatchdogEvent): Promise<void> {
-  await client.notify(WATCHDOG_CHANNEL, JSON.stringify(event));
-}
-
-/** `listenForEvents` for any channel (the activity tailer listens on `ACTIVITY_CHANNEL`). */
 export function listenOnChannel(
   channel: string,
   onNotification: (payload: string) => void,
@@ -87,22 +84,4 @@ export function listenOnChannel(
       await endConnection();
     },
   };
-}
-
-/**
- * Open a dedicated LISTEN connection and call onNotification for each
- * message on watchdog_events. Returns a cleanup function.
- *
- * Retries the initial connection; once LISTEN is established the connection
- * stays open until `end()` (postgres.js re-LISTENs after a drop). `onError`
- * is only called after repeated initial connection failures.
- *
- * Used by the SSE route in apps/web — keeps postgres out of web's deps.
- */
-export function listenForEvents(
-  onNotification: (payload: string) => void,
-  onReady?: () => void,
-  onError?: (error: unknown) => void
-): { end: () => Promise<void> } {
-  return listenOnChannel(WATCHDOG_CHANNEL, onNotification, onReady, onError);
 }

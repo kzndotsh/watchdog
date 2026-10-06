@@ -4,7 +4,6 @@ import { testId } from "@watchdog/test-kit";
 
 import { activityItemSchema } from "../activity.ts";
 import { evidenceSnapshotSchema } from "../evidence-snapshot.ts";
-import { isWatchdogEvent } from "../watchdog-events.ts";
 
 describe("evidenceSnapshotSchema", () => {
   it("accepts a packed snapshot and rejects a missing text field", () => {
@@ -39,19 +38,5 @@ describe("activityItemSchema", () => {
       at: "2026-01-01T00:00:00.000Z",
     });
     expect(parsed.success).toBe(false);
-  });
-});
-
-describe("isWatchdogEvent", () => {
-  it("accepts known payloads and rejects unknown types", () => {
-    expect(
-      isWatchdogEvent({
-        type: "job_update",
-        caseId: testId(10),
-        jobId: testId(11),
-        status: "queued",
-      })
-    ).toBe(true);
-    expect(isWatchdogEvent({ type: "tape_update" })).toBe(false);
   });
 });

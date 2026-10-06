@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-
-import { sql } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -446,53 +442,5 @@ describe("activity_notify trigger", () => {
     } finally {
       await listener.end();
     }
-  });
-});
-
-describe("activity backfill (migration 0015)", () => {
-  beforeEach(async () => {
-    await resetTestDb();
-  });
-
-  it("copies activity_events rows in with xid 0, in time order, label cut to 200", async () => {
-    const migration = readFileSync(
-      path.resolve(
-        import.meta.dirname,
-        "../../../drizzle/0015_activity_trigger_and_backfill.sql"
-      ),
-      "utf-8"
-    );
-    const backfill = migration
-      .split("--> statement-breakpoint")
-      .find((chunk) => chunk.includes('INSERT INTO "activity"'));
-    expect(backfill).toBeDefined();
-
-    await withTestTx(async (tx) => {
-      const cased = await seedCase(tx);
-      await tx.execute(sql`
-        INSERT INTO activity_events (case_id, kind, action, subject_id, label, actor_id, from_value, to_value, created_at)
-        VALUES
-          (${cased.id}, 'task', 'status_changed', ${testId(21)}, 'later', 'u1', 'backlog', 'done', '2026-01-02T00:00:00Z'),
-          (${cased.id}, 'task', 'created', ${testId(21)}, ${"y".repeat(250)}, NULL, NULL, 'backlog', '2026-01-01T00:00:00Z')
-      `);
-      await tx.execute(sql.raw(backfill ?? ""));
-      const rows = await activityLogRepo.drain(tx, {
-        after: START,
-        limit: 10,
-      });
-      expect(rows.map((row) => row.action)).toEqual([
-        "created",
-        "status_changed",
-      ]);
-      expect(rows.every((row) => row.xid === "0")).toBe(true);
-      expect(rows[0]?.label).toHaveLength(200);
-      expect(rows[1]).toMatchObject({
-        label: "later",
-        actorId: "u1",
-        fromValue: "backlog",
-        toValue: "done",
-      });
-      expect(rows[0]?.id).toBeLessThan(rows[1]?.id ?? 0);
-    });
   });
 });

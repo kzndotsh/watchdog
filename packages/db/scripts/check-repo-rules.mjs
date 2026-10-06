@@ -10,8 +10,8 @@ const root = path.resolve(import.meta.dirname, "../src/repos");
 
 const BANNED = [
   {
-    re: /\bnotifyEvent\b/,
-    msg: "rule 2: repos must not emit events — services notify after commit",
+    re: /\bpg_notify\b|\.notify\s*\(/,
+    msg: "rule 2: repos must not emit events — only the activity trigger notifies (ADR-0005)",
   },
   {
     re: /\.transaction\s*\(/,

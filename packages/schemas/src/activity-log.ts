@@ -1,13 +1,11 @@
 import { z } from "zod";
 
 import { uuidSchema } from "./primitives";
-import type { WatchdogEvent } from "./watchdog-events";
 
 /**
  * The activity log (ADR-0005): one append-only entry per domain change. The
  * wire schema here is the single Zod shape for the SSE `activity` event, the
- * replay response and the tailer; the legacy `WatchdogEvent` is derived from it
- * by `legacyEventForActivityEntry` until the contract phase deletes it.
+ * replay response and the tailer.
  */
 
 export const ACTIVITY_ENTRY_KINDS = [
@@ -109,56 +107,6 @@ export function compareActivityCursor(
   if (ax !== bx) return ax < bx ? -1 : 1;
   if (a.id === b.id) return 0;
   return a.id < b.id ? -1 : 1;
-}
-
-/**
- * The adapter for consumers that still speak `WatchdogEvent` (old web hook,
- * old worker). Every Graph kind maps to `entity_changed` (what the 20 Graph notify
- * sites sent); a Case update maps to nothing, as it did before S4.
- */
-export function legacyEventForActivityEntry(
-  entry: ActivityEntry
-): WatchdogEvent | null {
-  if (entry.kind === "task") {
-    return { type: "task_changed", caseId: entry.caseId };
-  }
-  if (entry.kind === "job") {
-    if (entry.subjectId === null) return null;
-    return {
-      type: "job_update",
-      caseId: entry.caseId,
-      jobId: entry.subjectId,
-      status: entry.action,
-    };
-  }
-  if (entry.kind === "evidence" && entry.subjectId !== null) {
-    return {
-      type: "evidence_changed",
-      caseId: entry.caseId,
-      evidenceId: entry.subjectId,
-    };
-  }
-  if (entry.kind === "proposal") {
-    return entry.action === "created" && entry.subjectId !== null
-      ? {
-          type: "proposal_created",
-          caseId: entry.caseId,
-          proposalId: entry.subjectId,
-        }
-      : { type: "proposal_queue_changed", caseId: entry.caseId };
-  }
-  if (
-    entry.kind === "entity" ||
-    entry.kind === "edge" ||
-    entry.kind === "claim" ||
-    entry.kind === "identifier" ||
-    entry.kind === "event" ||
-    entry.kind === "question"
-  ) {
-    return { type: "entity_changed", caseId: entry.caseId };
-  }
-  // `case` (an update) never had a legacy event; the `activity` event carries it.
-  return null;
 }
 
 export interface ActivityGate {
