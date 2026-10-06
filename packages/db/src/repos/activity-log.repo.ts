@@ -1,11 +1,18 @@
-import { and, desc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
 
 import type { ActivityCursor, ActivityEntryKind } from "@watchdog/schemas/feed";
-import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
+import {
+  normalizeUuidList,
+  type CaseId,
+  type JsonObject,
+  type OrganizationId,
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { activity } from "../schema/activity";
 import { cases } from "../schema/cases";
+import { jobs } from "../schema/jobs";
+import { playbookRuns } from "../schema/playbook-runs";
 import { clampSearchLimit } from "./_limits";
 import { orgCaseFilter } from "./_org-case-filter";
 import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
@@ -50,11 +57,27 @@ export interface RecentActivityLogRow {
   kind: ActivityEntryKind;
   action: string;
   subjectId: string | null;
+  groupId: string | null;
   label: string | null;
   fromValue: string | null;
   toValue: string | null;
   actorId: string | null;
+  actorLabel: string | null;
   at: Date;
+}
+
+/** What Recent activity needs to label a Job entry (Job labels are resolved on read). */
+export interface JobActivityLabelRow {
+  id: string;
+  caseId: CaseId;
+  capabilityId: string;
+  resultSummary: string | null;
+  input: JsonObject;
+  playbookRunId: string | null;
+  playbookStep: number | null;
+  playbookFanIndex: number;
+  playbookId: string | null;
+  updatedAt: Date;
 }
 
 /**
@@ -188,10 +211,12 @@ export const activityLogRepo = {
         kind: activity.kind,
         action: activity.action,
         subjectId: activity.subjectId,
+        groupId: activity.groupId,
         label: activity.label,
         fromValue: activity.fromValue,
         toValue: activity.toValue,
         actorId: activity.actorId,
+        actorLabel: activity.actorLabel,
         at: activity.createdAt,
       })
       .from(activity)
@@ -204,6 +229,103 @@ export const activityLogRepo = {
         )
       )
       .orderBy(desc(activity.createdAt), desc(activity.id))
+      .limit(clampSearchLimit(opts.limit));
+  },
+
+  /**
+   * Label inputs for the Jobs a feed page names: the entries' own Jobs plus
+   * every step of the playbook runs they collapse into. The caller passes ids
+   * taken from an org-scoped read of the log; this method does not scope.
+   */
+  async jobLabelRows(
+    exec: DbExec,
+    opts: { jobIds: readonly string[]; playbookRunIds: readonly string[] }
+  ): Promise<JobActivityLabelRow[]> {
+    const jobIds = normalizeUuidList([...opts.jobIds]);
+    const runIds = normalizeUuidList([...opts.playbookRunIds]);
+    const match = [
+      jobIds.length > 0 ? inArray(jobs.id, jobIds) : undefined,
+      runIds.length > 0 ? inArray(jobs.playbookRunId, runIds) : undefined,
+    ].filter((clause) => clause !== undefined);
+    if (match.length === 0) return [];
+    return exec
+      .select({
+        id: jobs.id,
+        caseId: jobs.caseId,
+        capabilityId: jobs.capabilityId,
+        resultSummary: jobs.resultSummary,
+        input: jobs.input,
+        playbookRunId: jobs.playbookRunId,
+        playbookStep: jobs.playbookStep,
+        playbookFanIndex: jobs.playbookFanIndex,
+        playbookId: playbookRuns.playbookId,
+        updatedAt: jobs.updatedAt,
+      })
+      .from(jobs)
+      .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
+      .where(or(...match));
+  },
+
+  /**
+   * Like `recent`, collapsed by `group_id`: only the newest entry of each
+   * group survives (a playbook run's step Jobs show as one row), and an entry
+   * with no group is its own group, so a solo Job keeps its whole history.
+   * The collapse runs before the limit, so a busy run cannot crowd the page.
+   */
+  async recentCollapsed(
+    exec: DbExec,
+    opts: RecentActivityLogOpts
+  ): Promise<RecentActivityLogRow[]> {
+    if (opts.actions.length === 0) return [];
+    const ranked = exec
+      .select({
+        id: activity.id,
+        caseId: activity.caseId,
+        caseName: cases.name,
+        kind: activity.kind,
+        action: activity.action,
+        subjectId: activity.subjectId,
+        groupId: activity.groupId,
+        label: activity.label,
+        fromValue: activity.fromValue,
+        toValue: activity.toValue,
+        actorId: activity.actorId,
+        actorLabel: activity.actorLabel,
+        at: activity.createdAt,
+        newestInGroup:
+          sql<number>`row_number() over (partition by coalesce(${activity.groupId}::text, ${activity.id}::text) order by ${activity.createdAt} desc, ${activity.id} desc)`.as(
+            "newest_in_group"
+          ),
+      })
+      .from(activity)
+      .innerJoin(cases, eq(cases.id, activity.caseId))
+      .where(
+        and(
+          orgCaseFilter(opts.organizationId, opts.caseId, activity.caseId),
+          eq(activity.kind, opts.kind),
+          inArray(activity.action, [...opts.actions])
+        )
+      )
+      .as("ranked");
+    return exec
+      .select({
+        id: ranked.id,
+        caseId: ranked.caseId,
+        caseName: ranked.caseName,
+        kind: ranked.kind,
+        action: ranked.action,
+        subjectId: ranked.subjectId,
+        groupId: ranked.groupId,
+        label: ranked.label,
+        fromValue: ranked.fromValue,
+        toValue: ranked.toValue,
+        actorId: ranked.actorId,
+        actorLabel: ranked.actorLabel,
+        at: ranked.at,
+      })
+      .from(ranked)
+      .where(eq(ranked.newestInGroup, 1))
+      .orderBy(desc(ranked.at), desc(ranked.id))
       .limit(clampSearchLimit(opts.limit));
   },
 };

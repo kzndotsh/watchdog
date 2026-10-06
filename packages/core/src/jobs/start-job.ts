@@ -36,8 +36,8 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { notifyJobUpdateEffect } from "../infra/events";
-import { tryDbWith } from "../infra/postgres-effect";
+import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
 import {
   ConflictError,
@@ -50,6 +50,7 @@ import type { Vault } from "../infra/vault";
 import { enqueueCapJobEffect } from "./boss";
 import { assertCapAvailabilityEffect } from "./cap-availability";
 import { parseValidatedCapInputEffect } from "./cap-input";
+import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
 import { failJobEffect } from "./stages/helpers";
 
@@ -203,24 +204,28 @@ export function startJobEffect(
       cap,
     });
 
-    const row = yield* tryDbWith((exec) =>
-      jobsRepo.create(exec, {
-        caseId: scopedCaseId,
-        capabilityId,
-        input: normalizedCapInput,
-        status: "queued",
-        actorId,
-        actorLabel: actorLabelForPersist(input.actorLabel),
-        logs: [],
+    const row = yield* transact((tx) =>
+      Effect.gen(function* startJobTx() {
+        const created = yield* tryDb(() =>
+          jobsRepo.create(tx, {
+            caseId: scopedCaseId,
+            capabilityId,
+            input: normalizedCapInput,
+            status: "queued",
+            actorId,
+            actorLabel: actorLabelForPersist(input.actorLabel),
+            logs: [],
+          })
+        );
+        if (!created) {
+          return yield* new InternalError({ reason: "Failed to create Job" });
+        }
+        yield* appendJobActivityEffect(tx, created, "queued");
+        return created;
       })
     );
 
-    if (!row) {
-      return yield* new InternalError({ reason: "Failed to create Job" });
-    }
-
     yield* enqueueCreatedJobEffect(scopedCaseId, row, capabilityId);
-    yield* notifyJobUpdateEffect(scopedCaseId, row.id, "queued");
 
     const users = yield* loadActorUsersEffect([row.actorId]);
     return toJobRecord(row, null, null, users);
@@ -284,20 +289,27 @@ export function cancelJobEffect(
       return yield* new NotFoundError({ entity: "Job", id: normalizedJobId });
     }
     const finishedAt = yield* nowDateEffect;
-    const cancelledId = yield* tryDbWith((exec) =>
-      jobsRepo.cancelCancellableInCase(
-        exec,
-        scopedCaseId,
-        normalizedJobId,
-        finishedAt
-      )
+    const cancelledId = yield* transact((tx) =>
+      Effect.gen(function* cancelJobTx() {
+        const id = yield* tryDb(() =>
+          jobsRepo.cancelCancellableInCase(
+            tx,
+            scopedCaseId,
+            normalizedJobId,
+            finishedAt
+          )
+        );
+        if (id) {
+          yield* appendJobActivityEffect(tx, row.job, "cancelled");
+        }
+        return id;
+      })
     );
     if (!cancelledId) {
       return yield* new ConflictError({
         reason: "Only queued/running/blocked Jobs can be cancelled",
       });
     }
-    yield* notifyJobUpdateEffect(scopedCaseId, normalizedJobId, "cancelled");
     const refreshed = yield* tryDbWith((exec) =>
       jobsRepo.getInCase(exec, scopedCaseId, normalizedJobId)
     );

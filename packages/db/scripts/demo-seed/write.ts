@@ -549,6 +549,46 @@ export class SeedKit {
       .update(jobs)
       .set({ createdAt: input.at })
       .where(eq(jobs.id, created.id));
+    // A `blocked` Job (legacy status) has no log verb: it never queued.
+    const lifecycle: { action: JobStatus; at: Date }[] =
+      input.status === "blocked" ? [] : [{ action: "queued", at: input.at }];
+    if (input.status !== "queued" && input.status !== "blocked") {
+      lifecycle.push({
+        action: "running",
+        at: input.startedAt ?? input.at,
+      });
+    }
+    if (
+      input.status !== "queued" &&
+      input.status !== "running" &&
+      input.status !== "blocked"
+    ) {
+      lifecycle.push({
+        action: input.status,
+        at: input.finishedAt ?? input.startedAt ?? input.at,
+      });
+    }
+    for (const step of lifecycle) {
+      const entry = must(
+        `activity job ${input.capabilityId} ${step.action}`,
+        // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in lifecycle order
+        await activityLogRepo.append(this.exec, {
+          caseId: input.caseId,
+          kind: "job",
+          action: step.action,
+          subjectId: created.id,
+          groupId: input.playbookRunId ?? null,
+          actorId: this.actorId,
+          toValue: step.action,
+        })
+      );
+      // oxlint-disable-next-line eslint/no-await-in-loop -- see above
+      await this.exec
+        .update(activity)
+        .set({ createdAt: step.at })
+        .where(eq(activity.id, entry.id));
+      this.tally.activity += 1;
+    }
     this.tally.jobs += 1;
     return created.id;
   }

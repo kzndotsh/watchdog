@@ -19,6 +19,8 @@ import {
 } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
+import { setJobStatusEffect } from "../../jobs/set-job-status.ts";
+
 describe("listRecentActivity", () => {
   beforeEach(async () => {
     await resetTestDb();
@@ -165,18 +167,17 @@ describe("listRecentActivity", () => {
       playbookId: "host-footprint-lite",
       seed: { host: "example.com" },
     });
-    await Promise.all(
-      [0, 1, 2].map((step) =>
-        seedJob(db, cased.id, {
-          playbookRunId: run.id,
-          playbookStep: step,
-          capabilityId: "network.dns.lookup",
-          input: { host: "example.com" },
-          status: step === 2 ? "running" : "succeeded",
-          resultSummary: step === 1 ? "dns ok" : null,
-        })
-      )
-    );
+    for (const step of [0, 1, 2]) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- entries must land in step order
+      await seedJob(db, cased.id, {
+        playbookRunId: run.id,
+        playbookStep: step,
+        capabilityId: "network.dns.lookup",
+        input: { host: "example.com" },
+        status: step === 2 ? "running" : "succeeded",
+        resultSummary: step === 1 ? "dns ok" : null,
+      });
+    }
 
     const items = await runDomain(
       listRecentActivityEffect({
@@ -188,9 +189,40 @@ describe("listRecentActivity", () => {
 
     const jobItems = items.filter((row) => row.kind === "job");
     expect(jobItems).toHaveLength(1);
-    expect(jobItems[0]?.id).toBe(run.id);
     expect(jobItems[0]?.label).toBe("Host Footprint Lite — dns ok");
     expect(jobItems[0]?.action).toBe("Running");
+    expect(jobItems[0]?.status).toBe("running");
+  });
+
+  it("shows a solo Job as history: queued, running and succeeded rows", async () => {
+    const cased = await seedCase(db);
+    const job = await seedJob(db, cased.id, {
+      capabilityId: "network.dns.lookup",
+      input: { host: "example.com" },
+    });
+    for (const status of ["running", "succeeded"] as const) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- one entry per transition, in order
+      await runDomain(
+        setJobStatusEffect(job.id, { status }, { caseId: cased.id })
+      );
+    }
+
+    const items = await runDomain(
+      listRecentActivityEffect({
+        organizationId: TEST_ORGANIZATION_ID,
+        caseId: cased.id,
+        limit: 20,
+      })
+    );
+
+    const jobItems = items.filter((row) => row.kind === "job");
+    expect(jobItems.map((row) => row.action)).toEqual([
+      "Succeeded",
+      "Running",
+      "Queued",
+    ]);
+    expect(new Set(jobItems.map((row) => row.id)).size).toBe(3);
+    expect(jobItems.every((row) => row.actor === TEST_ACTOR_ID)).toBe(true);
   });
 
   it("labels evidence without user label using source URL host", async () => {

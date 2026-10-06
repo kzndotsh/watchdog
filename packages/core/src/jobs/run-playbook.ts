@@ -31,7 +31,6 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import { notifyJobUpdateEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import { logProcess } from "../infra/process-log";
@@ -45,6 +44,7 @@ import {
 } from "../infra/tagged-errors";
 import { hasCredentialEffect, type Vault } from "../infra/vault";
 import { parseValidatedCapInputEffect } from "./cap-input";
+import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
 import {
   enqueueCreatedJobEffect,
@@ -231,6 +231,7 @@ export function runPlaybookEffect(
           });
         }
 
+        yield* appendJobActivityEffect(tx, row, "queued");
         return { run, jobRows: [row] };
       })
     );
@@ -238,11 +239,6 @@ export function runPlaybookEffect(
     yield* Effect.forEach(
       result.jobRows.filter((row) => row.status === "queued"),
       (row) => enqueueCreatedJobEffect(scopedCaseId, row, row.capabilityId),
-      { concurrency: "unbounded" }
-    );
-    yield* Effect.forEach(
-      result.jobRows.filter((row) => row.status === "queued"),
-      (row) => notifyJobUpdateEffect(scopedCaseId, row.id, "queued"),
       { concurrency: "unbounded" }
     );
 
@@ -322,6 +318,22 @@ export function cancelPlaybookRunEffect(
         const cancelledJobIds = updatedIds.filter((id): id is string =>
           Boolean(id)
         );
+        yield* Effect.forEach(
+          cancelledJobIds,
+          (id) =>
+            appendJobActivityEffect(
+              tx,
+              {
+                id,
+                caseId: scopedCaseId,
+                actorId: run.actorId,
+                actorLabel: run.actorLabel,
+                playbookRunId: normalizedPlaybookRunId,
+              },
+              "cancelled"
+            ),
+          { concurrency: 1 }
+        );
         return { playbookRunId: normalizedPlaybookRunId, cancelledJobIds };
       })
     );
@@ -335,9 +347,6 @@ export function cancelPlaybookRunEffect(
           cancelledJobCount: result.cancelledJobIds.length,
         });
       });
-    }
-    for (const jobId of result.cancelledJobIds) {
-      yield* notifyJobUpdateEffect(scopedCaseId, jobId, "cancelled");
     }
     return result;
   });

@@ -2,12 +2,10 @@ import { Effect } from "effect";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
-import { testId } from "@watchdog/test-kit";
 
 import {
   notifyEntityChangedEffect,
   notifyEvidenceChangedEffect,
-  notifyJobUpdateEffect,
 } from "../events";
 
 const notifyEvent = vi.fn();
@@ -44,23 +42,5 @@ describe("notify* effects", () => {
     const caseId = testCaseId(2);
     await Effect.runPromise(notifyEvidenceChangedEffect(caseId, "not-a-uuid"));
     expect(notifyEvent).not.toHaveBeenCalled();
-  });
-
-  it("emits job_update with trimmed ids", async () => {
-    const caseId = testCaseId(3);
-    const jobId = testId(4);
-    await Effect.runPromise(
-      notifyJobUpdateEffect(
-        untrustedCaseId(` ${caseId} `),
-        ` ${jobId} `,
-        "queued"
-      )
-    );
-    expect(notifyEvent).toHaveBeenCalledWith({
-      type: "job_update",
-      caseId,
-      jobId,
-      status: "queued",
-    });
   });
 });

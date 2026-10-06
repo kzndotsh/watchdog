@@ -78,7 +78,7 @@ function convergeReclaimStopEffect(
     yield* setJobStatusEffect(
       jobId,
       { status: "succeeded", finishedAt },
-      { unlessCancelled: true, notify: true, caseId: job.caseId }
+      { unlessCancelled: true, caseId: job.caseId }
     );
   });
 }
@@ -197,7 +197,6 @@ function preparePreflightReadyEffect(
       {
         unlessCancelled: true,
         onlyStatuses: [...LIVE_JOB_STATUSES],
-        notify: true,
         caseId: job.caseId,
       }
     );

@@ -2,13 +2,13 @@ export { activityRepo } from "./activity.repo";
 export type {
   RecentActivityOpts,
   RecentEvidenceActivityRow,
-  RecentJobActivityRow,
   RecentProposalActivityRow,
 } from "./activity.repo";
 export { activityLogRepo } from "./activity-log.repo";
 export type {
   ActivityRow,
   DrainActivityOpts,
+  JobActivityLabelRow,
   NewActivityRow,
   RecentActivityLogOpts,
   RecentActivityLogRow,

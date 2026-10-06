@@ -5,10 +5,7 @@ import type { JobHandoff } from "@watchdog/schemas/shared";
 import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import {
-  notifyJobUpdateEffect,
-  notifyProposalCreatedEffect,
-} from "../../infra/events";
+import { notifyProposalCreatedEffect } from "../../infra/events";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { setJobStatusEffect } from "../set-job-status";
 import { linkedEvidenceIdStrict, type JobLog } from "./helpers";
@@ -27,8 +24,10 @@ interface FinishInput {
 }
 
 /**
- * Persist terminal Job outcome (succeeded write, or skip if cancelled),
- * notify, optionally stamp source Evidence processed.
+ * Persist terminal Job outcome (succeeded write plus its activity entry, or
+ * skip if cancelled), optionally stamp source Evidence processed. The Job's
+ * `succeeded` entry commits with the status write, so a client may refetch
+ * before `processedAt` lands; the Evidence stamp notifies on its own.
  */
 export function finishEffect(
   input: FinishInput
@@ -51,7 +50,7 @@ export function finishEffect(
         finishedAt,
         ...(input.handoff ? { handoff: input.handoff } : {}),
       },
-      { unlessCancelled: true, notify: false, caseId: state.job.caseId }
+      { unlessCancelled: true, caseId: state.job.caseId }
     );
 
     if (!finished) {
@@ -86,9 +85,6 @@ export function finishEffect(
         });
       }
     }
-
-    // SSE after DB writes so clients refetch committed state (processedAt included).
-    yield* notifyJobUpdateEffect(state.job.caseId, state.jobId, "succeeded");
 
     if (input.proposalId !== null && input.interpretError === null) {
       const proposalId = input.proposalId;

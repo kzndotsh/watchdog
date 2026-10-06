@@ -108,13 +108,40 @@ describe("legacyEventForActivityEntry", () => {
     expect(isWatchdogEvent(event)).toBe(true);
   });
 
-  it("returns null for a kind that has no legacy event yet", () => {
+  it("adapts a job entry to the legacy job_update event (status is the action)", () => {
+    const job = activityEntrySchema.parse({
+      ...entry,
+      kind: "job",
+      action: "succeeded",
+      toValue: "succeeded",
+    });
+    const event = legacyEventForActivityEntry(job);
+    expect(event).toEqual({
+      type: "job_update",
+      caseId: testId(10),
+      jobId: testId(20),
+      status: "succeeded",
+    });
+    expect(isWatchdogEvent(event)).toBe(true);
+  });
+
+  it("returns null for a job entry without a subject", () => {
     const job = activityEntrySchema.parse({
       ...entry,
       kind: "job",
       action: "queued",
+      subjectId: null,
     });
     expect(legacyEventForActivityEntry(job)).toBeNull();
+  });
+
+  it("returns null for a kind that has no legacy event yet", () => {
+    const evidence = activityEntrySchema.parse({
+      ...entry,
+      kind: "evidence",
+      action: "captured",
+    });
+    expect(legacyEventForActivityEntry(evidence)).toBeNull();
   });
 });
 
