@@ -19,7 +19,11 @@ export const activityFloorRepo = {
     return row === undefined ? null : { xid: row.xid, id: row.id };
   },
 
-  /** Move the floor forward to `cursor`; a lower one is ignored (the floor never retreats). */
+  /**
+   * Move the floor forward to `cursor`; an equal or lower one is ignored (the
+   * floor never retreats). `updated_at` is therefore the last time the floor
+   * moved, not the last prune run.
+   */
   async raise(exec: DbExec, cursor: ActivityCursor): Promise<void> {
     await exec
       .insert(activityFloor)

@@ -262,7 +262,7 @@ export const activityLogRepo = {
     }>(sql`
       WITH candidates AS (
         SELECT a.id FROM activity a
-        WHERE a.created_at < ${opts.before.toISOString()}::timestamptz
+        WHERE a.created_at < to_timestamp(${opts.before.getTime()}::double precision / 1000)
           AND a.id < ${keepFrom}
           AND ${readByConsumers}
         ORDER BY a.xid, a.id
