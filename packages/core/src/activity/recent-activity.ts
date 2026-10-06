@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 
 import {
-  activityEventsRepo,
+  activityLogRepo,
   activityRepo,
   entitiesRepo,
   evidenceRepo,
-  type RecentActivityEventRow,
+  type RecentActivityLogRow,
   type RecentJobActivityRow,
 } from "@watchdog/db";
 import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
@@ -60,6 +60,15 @@ function perSourceFetchLimit(limit: number): number {
 
 export { clampActivityLimit, perSourceFetchLimit };
 
+/**
+ * The `(kind, action)` pairs of the activity log the workspace feed shows
+ * (ADR-0005 decision 5). Task edits that keep the status and reorders are in
+ * the log (they notify) but not in the feed, as before.
+ */
+export const FEED_ACTIONS = {
+  task: ["created", "status_changed", "deleted"],
+} as const;
+
 /** Map stored task event codes → display verb. */
 export function taskEventAction(
   action: string,
@@ -104,16 +113,16 @@ export function jobActivityAction(status: JobStatus): string {
 }
 
 function mapTaskEvent(
-  row: RecentActivityEventRow,
+  row: RecentActivityLogRow,
   users: ReadonlyMap<string, { name: string; email: string }>
 ): ActivityItem {
   return {
-    id: row.id,
+    id: String(row.id),
     kind: "task",
     action: taskEventAction(row.action, row.toValue),
     caseId: row.caseId,
     caseName: row.caseName,
-    label: row.label,
+    label: row.label ?? "",
     status: row.toValue ?? undefined,
     fromStatus: row.fromValue ?? undefined,
     toStatus: row.toValue ?? undefined,
@@ -308,7 +317,11 @@ export function listRecentActivityEffect(
           activityRepo.recentPendingProposals(exec, repoOpts)
         ),
         tryDbWith((exec) =>
-          activityEventsRepo.recent(exec, { ...repoOpts, kind: "task" })
+          activityLogRepo.recent(exec, {
+            ...repoOpts,
+            kind: "task",
+            actions: FEED_ACTIONS.task,
+          })
         ),
       ],
       { concurrency: "unbounded" }

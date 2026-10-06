@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { FEED_ACTIONS } from "@watchdog/core/activity";
 import { InvalidError, isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import {
@@ -9,7 +10,7 @@ import {
   reorderTasksEffect,
   updateTaskEffect,
 } from "@watchdog/core/tasks";
-import { activityEventsRepo, db } from "@watchdog/db";
+import { activityLogRepo, db } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase, seedEntity } from "@watchdog/test-db";
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
@@ -64,9 +65,11 @@ describe("createTask", () => {
         actorId: "   ",
       })
     );
-    const events = await activityEventsRepo.recent(db, {
+    const events = await activityLogRepo.recent(db, {
       organizationId: TEST_ORGANIZATION_ID,
       caseId: cased.id,
+      kind: "task",
+      actions: FEED_ACTIONS.task,
       limit: 10,
     });
     const createdEvent = events.find(
@@ -94,9 +97,11 @@ describe("createTask", () => {
         actorId: TEST_ACTOR_ID,
       })
     );
-    const events = await activityEventsRepo.recent(db, {
+    const events = await activityLogRepo.recent(db, {
       organizationId: TEST_ORGANIZATION_ID,
       caseId: cased.id,
+      kind: "task",
+      actions: FEED_ACTIONS.task,
       limit: 10,
     });
     expect(events.some((row) => row.action === "status_changed")).toBe(true);

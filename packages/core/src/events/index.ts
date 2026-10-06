@@ -1,7 +1,6 @@
 export {
   notifyEntityChangedEffect,
   notifyEvidenceChangedEffect,
-  notifyTaskChangedEffect,
   notifyProposalCreatedEffect,
   notifyProposalQueueChangedEffect,
   notifyJobUpdateEffect,
