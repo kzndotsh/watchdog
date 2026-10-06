@@ -15,7 +15,6 @@ const corsPreflightResponseMock = vi.hoisted(() => vi.fn());
 const applyWatchdogCorsMock = vi.hoisted(() =>
   vi.fn((_request: Request, response: Response) => response)
 );
-const listenForEventsMock = vi.hoisted(() => vi.fn());
 const replayActivityEffectMock = vi.hoisted(() => vi.fn());
 /** The fake tailer a route subscribes to: tests play live entries through `listener`. */
 const tailerState = vi.hoisted(() => ({
@@ -92,10 +91,6 @@ vi.mock("@watchdog/core/graph", () => ({
 
 vi.mock("@watchdog/core/cases", () => ({
   listVisibleCaseIdsEffect: listVisibleCaseIdsEffectMock,
-}));
-
-vi.mock("@watchdog/core/events", () => ({
-  listenForEvents: listenForEventsMock,
 }));
 
 vi.mock("@watchdog/log", () => ({ createLogger: createLoggerMock }));
@@ -372,7 +367,7 @@ describe("api events route", () => {
     expect(replayActivityEffectMock).not.toHaveBeenCalled();
   });
 
-  it("opens no LISTEN connection of its own: the process tailer is the only one", async () => {
+  it("serves every client from the process tailer: one subscription each, no connection of its own", async () => {
     createApiContextMock.mockResolvedValue({
       actor: {
         userId: "u1",
@@ -382,7 +377,7 @@ describe("api events route", () => {
       },
     });
     listVisibleCaseIdsEffectMock.mockReturnValue(Effect.succeed([]));
-    listenForEventsMock.mockClear();
+    tailerState.subscriptions = 0;
     const handlers = (
       Route.options as {
         server: {
@@ -402,7 +397,7 @@ describe("api events route", () => {
       )
     );
 
-    expect(listenForEventsMock).not.toHaveBeenCalled();
+    expect(tailerState.subscriptions).toBe(3);
     await Promise.all(responses.map((response) => response.body?.cancel()));
   });
 });

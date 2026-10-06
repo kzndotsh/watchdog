@@ -1,7 +1,7 @@
 import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { appendActivityEffect, toActivityEntry } from "@watchdog/core/activity";
+import { appendActivityEffect } from "@watchdog/core/activity";
 import { recordingBlobStore } from "@watchdog/core/blob";
 import { InternalError } from "@watchdog/core/errors";
 import {
@@ -16,7 +16,6 @@ import {
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
 import { activity, activityLogRepo, db } from "@watchdog/db";
-import { legacyEventForActivityEntry } from "@watchdog/schemas/feed";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -203,25 +202,6 @@ describe("Evidence write paths append to the activity log", () => {
       ).pipe(Effect.flip)
     );
     expect(await log()).toHaveLength(1);
-  });
-
-  it("derives the legacy evidence_changed event from an entry", async () => {
-    const cased = await seedCase(db);
-    const dumped = await runDomain(
-      dumpUrlEffect({
-        caseId: cased.id,
-        organizationId: TEST_ORGANIZATION_ID,
-        sourceUrl: "https://example.test/x",
-        actorId: TEST_ACTOR_ID,
-      })
-    );
-    const [row] = await log();
-    if (row === undefined) throw new Error("expected an entry");
-    expect(legacyEventForActivityEntry(toActivityEntry(row))).toEqual({
-      type: "evidence_changed",
-      caseId: cased.id,
-      evidenceId: dumped.id,
-    });
   });
 
   it("refuses a verb that is not listed for Evidence", async () => {

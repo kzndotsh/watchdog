@@ -1,17 +1,18 @@
 import { Effect } from "effect";
 
-import { activityLogRepo } from "@watchdog/db";
-import {
-  compareActivityCursor,
-  type ActivityCursor,
-  type ActivityEntry,
-} from "@watchdog/schemas/feed";
+import { activityFloorRepo, activityLogRepo } from "@watchdog/db";
+import type { ActivityCursor, ActivityEntry } from "@watchdog/schemas/feed";
 import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 
 import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 import { toActivityEntry } from "./append";
+import {
+  isBelowActivityFloor,
+  isUnservableActivityCursor,
+  readActivityLogBoundsEffect,
+} from "./log-bounds";
 
 /** Most entries one replay sends; a client further behind gets `resync`. */
 export const ACTIVITY_REPLAY_LIMIT = 500;
@@ -34,16 +35,16 @@ export interface ReplayActivityOpts {
  * transaction arrive later, from the live path).
  *
  * `resync` instead of entries when the cursor is ahead of the database (a
- * restore, or a wiped log) or the client is more than `ACTIVITY_REPLAY_LIMIT`
- * entries behind; the client then refetches everything for the Case. There is
- * no retention floor yet (pruning lands in a later slice).
+ * restore, or a wiped log), below the retention floor (the prune job deleted
+ * entries after it) or more than `ACTIVITY_REPLAY_LIMIT` entries behind; the
+ * client then refetches everything for the Case.
  */
 export function replayActivityEffect(
   opts: ReplayActivityOpts
 ): Effect.Effect<ActivityReplay, DomainTag, Db> {
   return Effect.gen(function* replayActivityGen() {
-    const newest = yield* tryDbWith((exec) => activityLogRepo.newest(exec));
-    if (newest === null || compareActivityCursor(opts.after, newest) > 0) {
+    const bounds = yield* readActivityLogBoundsEffect();
+    if (isUnservableActivityCursor(opts.after, bounds)) {
       return { kind: "resync" } as const;
     }
     const rows = yield* tryDbWith((exec) =>
@@ -55,6 +56,13 @@ export function replayActivityEffect(
       })
     );
     if (rows.length > ACTIVITY_REPLAY_LIMIT) {
+      return { kind: "resync" } as const;
+    }
+    // A prune that committed after the bounds read but before the drain removed
+    // rows the drain cannot return; it raised the floor in the same transaction,
+    // so the floor read after the drain sees it.
+    const floorAfter = yield* tryDbWith((exec) => activityFloorRepo.get(exec));
+    if (isBelowActivityFloor(opts.after, floorAfter)) {
       return { kind: "resync" } as const;
     }
     return { kind: "entries", entries: rows.map(toActivityEntry) } as const;

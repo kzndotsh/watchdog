@@ -1,4 +1,5 @@
 export { activityCursorsRepo } from "./activity-cursors.repo";
+export { activityFloorRepo } from "./activity-floor.repo";
 export { activityLogRepo } from "./activity-log.repo";
 export type {
   ActivityRow,
@@ -6,6 +7,8 @@ export type {
   FeedFilter,
   JobActivityLabelRow,
   NewActivityRow,
+  PruneActivityOpts,
+  PruneActivityResult,
   ProposalActivityLabelRow,
   RecentActivityLogRow,
   RecentFeedOpts,

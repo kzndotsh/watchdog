@@ -11,7 +11,7 @@ export { resolveUserOrganizationId } from "./auth/resolve-organization";
 export {
   account,
   activity,
-  activityEvents,
+  activityFloor,
   apiKey,
   authEvent,
   authSchema,
@@ -43,20 +43,10 @@ export {
 } from "./schema/index";
 export type { JobArtifact } from "./schema/index";
 export * from "./repos/index";
-export {
-  notifyEvent,
-  listenForEvents,
-  listenOnChannel,
-  ACTIVITY_CHANNEL,
-  WATCHDOG_CHANNEL,
-} from "./events";
+export { listenOnChannel, ACTIVITY_CHANNEL } from "./events";
 export {
   createActivityTailer,
   type ActivityTailer,
   type ActivityTailerOptions,
   type ActivityTailSubscription,
 } from "./activity-tailer";
-export {
-  listenForEventsStream,
-  type ListenForEventsStreamOpts,
-} from "./listen-events-stream";

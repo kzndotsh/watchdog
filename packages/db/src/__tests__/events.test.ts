@@ -15,18 +15,9 @@ vi.mock("@watchdog/env/server", () => ({
   env: { DATABASE_URL: "postgres://test" },
 }));
 
-vi.mock("../client", () => ({
-  client: { notify: vi.fn() },
-}));
+import { ACTIVITY_CHANNEL, listenOnChannel } from "../events";
 
-import {
-  ACTIVITY_CHANNEL,
-  listenForEvents,
-  listenOnChannel,
-  WATCHDOG_CHANNEL,
-} from "../events";
-
-describe("listenForEvents", () => {
+describe("listenOnChannel", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -43,7 +34,7 @@ describe("listenForEvents", () => {
     );
     const onReady = vi.fn();
 
-    const listener = listenForEvents(() => {}, onReady);
+    const listener = listenOnChannel(ACTIVITY_CHANNEL, () => {}, onReady);
 
     await vi.waitFor(() => {
       expect(postgresMocks.listen).toHaveBeenCalledTimes(1);
@@ -56,7 +47,7 @@ describe("listenForEvents", () => {
     expect(postgresMocks.end).not.toHaveBeenCalled();
     expect(postgresMocks.listen).toHaveBeenCalledTimes(1);
     expect(postgresMocks.listen).toHaveBeenCalledWith(
-      WATCHDOG_CHANNEL,
+      ACTIVITY_CHANNEL,
       expect.any(Function),
       expect.any(Function)
     );

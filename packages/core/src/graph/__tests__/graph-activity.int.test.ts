@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { toActivityEntry } from "@watchdog/core/activity";
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { activityLogRepo, db } from "@watchdog/db";
-import { legacyEventForActivityEntry } from "@watchdog/schemas/feed";
 import { resetTestDb } from "@watchdog/test-db";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit";
 
@@ -47,12 +45,12 @@ describe("every registered Graph mutation appends exactly once", () => {
   });
 });
 
-describe("Graph entries carry the subject, a label and the legacy event", () => {
+describe("Graph entries carry the subject and a label", () => {
   beforeEach(async () => {
     await resetTestDb();
   });
 
-  it("entity.created points at the Entity, labels it with its name and maps to entity_changed", async () => {
+  it("entity.created points at the Entity, labels it with its name", async () => {
     const fx = await seedGraphFixture();
     const created = (await runDomain(
       mutationNamed("entity.create").run(fx)
@@ -63,10 +61,6 @@ describe("Graph entries carry the subject, a label and the legacy event", () => 
       action: "created",
       subjectId: created.id,
       label: "Grace Hopper",
-    });
-    expect(legacyEventForActivityEntry(toActivityEntry(row))).toEqual({
-      type: "entity_changed",
-      caseId: fx.caseId,
     });
   });
 
@@ -100,7 +94,7 @@ describe("Graph entries carry the subject, a label and the legacy event", () => 
     });
   });
 
-  it("a Case update keeps the Case as the subject and maps to no legacy event", async () => {
+  it("a Case update keeps the Case as the subject", async () => {
     const fx = await seedGraphFixture();
     await runDomain(mutationNamed("case.update").run(fx));
     const row = (await allEntries()).at(-1)!;
@@ -109,7 +103,6 @@ describe("Graph entries carry the subject, a label and the legacy event", () => 
       action: "updated",
       subjectId: fx.caseId,
     });
-    expect(legacyEventForActivityEntry(toActivityEntry(row))).toBeNull();
   });
 
   it("a patch with several ops appends one entry per op, with the actor", async () => {

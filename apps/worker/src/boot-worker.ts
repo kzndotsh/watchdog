@@ -30,6 +30,10 @@ import {
 import type { ActivityEntry } from "@watchdog/schemas/feed";
 import { trimmedUuidSchema, type CaseId } from "@watchdog/schemas/shared";
 
+import {
+  activityPruneLoopEffect,
+  repairRestoredActivityXidsAtBootEffect,
+} from "./activity-maintenance";
 import { cancelPollLoopEffect } from "./cancel-poll";
 import {
   claimExportEntryEffect,
@@ -364,9 +368,12 @@ export const bootWorkerEffect = Effect.scoped(
     });
     emitOnce("worker.boot", { message: `listening on ${CAP_JOB_QUEUE}` });
     yield* reconcileWorkerStartupEffect();
+    // Before the consumer: restored xids in the future would be held back.
+    yield* repairRestoredActivityXidsAtBootEffect();
     yield* registerCapJobHandlerEffect((jobId) => executeJobOnMap(jobId));
     const shutdown = yield* WorkerShutdown;
     yield* cancelPollLoopEffect.pipe(Effect.forkChild);
+    yield* activityPruneLoopEffect.pipe(Effect.forkChild);
     return yield* exportEventsEffect(shutdown);
   })
 );

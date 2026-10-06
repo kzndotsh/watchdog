@@ -18,7 +18,6 @@
     "@watchdog/env": "workspace:*",
     "@watchdog/schemas": "workspace:*",
     "drizzle-orm": "catalog:",
-    "effect": "catalog:",
     "postgres": "^3.4.9"
   },
   "devDependencies": {

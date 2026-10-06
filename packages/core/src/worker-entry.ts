@@ -40,11 +40,15 @@ export {
 } from "./infra/blob-store";
 export { findCancelledJobIdsEffect } from "./jobs/start-job";
 
-export { listenForEvents } from "./infra/events";
 export {
   runActivityConsumerEffect,
   type ActivityConsumerOpts,
 } from "./activity/consumer";
+export {
+  pruneActivityEffect,
+  type PruneActivityResult,
+} from "./activity/retention";
+export { repairRestoredActivityXidsEffect } from "./activity/restore-check";
 export {
   claimCaseExportEffect,
   ExportWriteServices,

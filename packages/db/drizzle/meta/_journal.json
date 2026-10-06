@@ -127,6 +127,20 @@
       "when": 1791274920395,
       "tag": "0017_backfill_feed_activity",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791278582793,
+      "tag": "0018_drop_activity_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791278588832,
+      "tag": "0019_add_activity_floor",
+      "breakpoints": true
     }
   ]
 }

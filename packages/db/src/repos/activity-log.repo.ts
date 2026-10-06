@@ -34,6 +34,24 @@ export interface NewActivityRow {
   toValue?: string | null;
 }
 
+export interface PruneActivityOpts {
+  /** Delete only entries created before this instant. */
+  before: Date;
+  /** Always keep this many newest entries (by id) of every Case. */
+  keepPerCase: number;
+  /** Delete at most this many entries. */
+  limit: number;
+  /** Delete only entries at or below this position (what a durable consumer has read). */
+  notPast?: ActivityCursor | null;
+}
+
+export interface PruneActivityResult {
+  /** Entries deleted by this batch. */
+  count: number;
+  /** The newest position deleted; `null` when nothing was. */
+  newest: ActivityCursor | null;
+}
+
 export interface DrainActivityOpts {
   /** Exclusive lower bound. */
   after: ActivityCursor;
@@ -212,6 +230,83 @@ export const activityLogRepo = {
       .orderBy(desc(activity.xid), desc(activity.id))
       .limit(1);
     return cursorOf(row);
+  },
+
+  /**
+   * Delete one batch of old entries, oldest position first (ADR-0005 decision
+   * 8): created before `before`, outside the newest `keepPerCase` entries of
+   * their Case, and not past `notPast`. The caller runs it in the same
+   * transaction that raises the replay floor to `newest`.
+   */
+  async pruneBatch(
+    exec: DbExec,
+    opts: PruneActivityOpts
+  ): Promise<PruneActivityResult> {
+    const keep = Math.max(0, Math.trunc(opts.keepPerCase));
+    const limit = Math.max(1, Math.trunc(opts.limit));
+    const bound = opts.notPast ?? null;
+    // `keep_from` is the id of the keep-th newest entry of the Case (0 when the
+    // Case has fewer): only entries below it are beyond the kept tail.
+    const keepFrom =
+      keep === 0
+        ? sql`9223372036854775807`
+        : sql`COALESCE((SELECT k.id FROM activity k WHERE k.case_id = a.case_id ORDER BY k.id DESC OFFSET ${keep - 1} LIMIT 1), 0)`;
+    const readByConsumers =
+      bound === null
+        ? sql`TRUE`
+        : sql`(a.xid, a.id) <= (${bound.xid}::xid8, ${bound.id})`;
+    const rows = await exec.execute<{
+      n: string;
+      xid: string;
+      id: string;
+    }>(sql`
+      WITH candidates AS (
+        SELECT a.id FROM activity a
+        WHERE a.created_at < ${opts.before.toISOString()}::timestamptz
+          AND a.id < ${keepFrom}
+          AND ${readByConsumers}
+        ORDER BY a.xid, a.id
+        LIMIT ${limit}
+      ), gone AS (
+        DELETE FROM activity d USING candidates c
+        WHERE d.id = c.id
+        RETURNING d.xid, d.id
+      )
+      SELECT (SELECT count(*) FROM gone)::text AS n, newest.xid::text AS xid, newest.id::text AS id
+      FROM (SELECT xid, id FROM gone ORDER BY xid DESC, id DESC LIMIT 1) newest
+    `);
+    const [row] = rows;
+    if (row === undefined) return { count: 0, newest: null };
+    return {
+      count: Number(row.n),
+      newest: { xid: row.xid, id: Number(row.id) },
+    };
+  },
+
+  /**
+   * True when a row carries an `xid` this cluster has not handed out yet: only
+   * a log restored from another cluster can (ADR-0005 failure mode 2). Such a
+   * row is never below `pg_snapshot_xmin`, so no reader would ever see it.
+   */
+  async hasFutureXid(exec: DbExec): Promise<boolean> {
+    const rows = await exec.execute<{ future: boolean }>(
+      sql`SELECT EXISTS (SELECT 1 FROM activity WHERE xid >= pg_snapshot_xmax(pg_current_snapshot())) AS future`
+    );
+    return rows[0]?.future ?? false;
+  },
+
+  /**
+   * Restore repair: rewrite every entry's `xid` to 0 and return how many rows
+   * that was. Ids keep the insertion order, so `(0, id)` is a total order that
+   * every later (real) xid sorts after; a partial rewrite would put the
+   * restored tail before older rows.
+   */
+  async zeroXids(exec: DbExec): Promise<number> {
+    const rows = await exec
+      .update(activity)
+      .set({ xid: sql`'0'::xid8` })
+      .returning({ id: activity.id });
+    return rows.length;
   },
 
   /**

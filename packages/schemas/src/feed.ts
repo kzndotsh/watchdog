@@ -14,7 +14,6 @@ export {
   createActivityGate,
   formatActivityCursor,
   isActivityActionForKind,
-  legacyEventForActivityEntry,
   parseActivityCursor,
 } from "./activity-log";
 export type {
@@ -50,5 +49,3 @@ export {
   taskSchema,
   taskUpdateInputSchema,
 } from "./tasks";
-export type { WatchdogEvent } from "./watchdog-events";
-export { isWatchdogEvent, watchdogEventSchema } from "./watchdog-events";

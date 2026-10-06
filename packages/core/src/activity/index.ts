@@ -26,3 +26,15 @@ export {
   runActivityConsumerEffect,
   type ActivityConsumerOpts,
 } from "./consumer";
+export {
+  ACTIVITY_KEEP_PER_CASE,
+  ACTIVITY_PRUNE_BATCH,
+  ACTIVITY_RETENTION_DAYS,
+  pruneActivityEffect,
+  type PruneActivityOpts,
+  type PruneActivityResult,
+} from "./retention";
+export {
+  repairRestoredActivityXidsEffect,
+  type RepairRestoredXidsResult,
+} from "./restore-check";

@@ -10,11 +10,9 @@ import {
   createActivityGate,
   formatActivityCursor,
   isActivityActionForKind,
-  legacyEventForActivityEntry,
   parseActivityCursor,
   type ActivityEntry,
 } from "../activity-log.ts";
-import { isWatchdogEvent } from "../watchdog-events.ts";
 
 const entry = {
   cursor: "7:3",
@@ -98,113 +96,6 @@ describe("activityEntrySchema", () => {
       activityEntrySchema.safeParse({ ...entry, label: "x".repeat(201) })
         .success
     ).toBe(false);
-  });
-});
-
-describe("legacyEventForActivityEntry", () => {
-  it("adapts a task entry to the legacy task_changed event", () => {
-    const event = legacyEventForActivityEntry(activityEntrySchema.parse(entry));
-    expect(event).toEqual({ type: "task_changed", caseId: testId(10) });
-    expect(isWatchdogEvent(event)).toBe(true);
-  });
-
-  it("adapts a job entry to the legacy job_update event (status is the action)", () => {
-    const job = activityEntrySchema.parse({
-      ...entry,
-      kind: "job",
-      action: "succeeded",
-      toValue: "succeeded",
-    });
-    const event = legacyEventForActivityEntry(job);
-    expect(event).toEqual({
-      type: "job_update",
-      caseId: testId(10),
-      jobId: testId(20),
-      status: "succeeded",
-    });
-    expect(isWatchdogEvent(event)).toBe(true);
-  });
-
-  it("adapts every evidence action to evidence_changed with the Evidence id", () => {
-    for (const action of ACTIVITY_ENTRY_ACTIONS.evidence) {
-      const event = legacyEventForActivityEntry(
-        activityEntrySchema.parse({ ...entry, kind: "evidence", action })
-      );
-      expect(event).toEqual({
-        type: "evidence_changed",
-        caseId: testId(10),
-        evidenceId: testId(20),
-      });
-      expect(isWatchdogEvent(event)).toBe(true);
-    }
-  });
-
-  it("adapts a created Proposal to proposal_created and a decision to proposal_queue_changed", () => {
-    const created = legacyEventForActivityEntry(
-      activityEntrySchema.parse({
-        ...entry,
-        kind: "proposal",
-        action: "created",
-      })
-    );
-    expect(created).toEqual({
-      type: "proposal_created",
-      caseId: testId(10),
-      proposalId: testId(20),
-    });
-    expect(isWatchdogEvent(created)).toBe(true);
-    const decisions = ACTIVITY_ENTRY_ACTIONS.proposal.filter(
-      (action) => action !== "created"
-    );
-    expect(decisions).not.toHaveLength(0);
-    for (const action of decisions) {
-      const decided = legacyEventForActivityEntry(
-        activityEntrySchema.parse({ ...entry, kind: "proposal", action })
-      );
-      expect(decided).toEqual({
-        type: "proposal_queue_changed",
-        caseId: testId(10),
-      });
-      expect(isWatchdogEvent(decided)).toBe(true);
-    }
-  });
-
-  it("returns null for a job entry without a subject", () => {
-    const job = activityEntrySchema.parse({
-      ...entry,
-      kind: "job",
-      action: "queued",
-      subjectId: null,
-    });
-    expect(legacyEventForActivityEntry(job)).toBeNull();
-  });
-
-  it.each([
-    "entity",
-    "edge",
-    "claim",
-    "identifier",
-    "event",
-    "question",
-  ] as const)("maps a %s entry to entity_changed", (kind) => {
-    const graph = activityEntrySchema.parse({
-      ...entry,
-      kind,
-      action: "created",
-    });
-    expect(legacyEventForActivityEntry(graph)).toEqual({
-      type: "entity_changed",
-      caseId: entry.caseId,
-    });
-  });
-
-  it("returns null for a Case entry: a Case update never had a legacy event", () => {
-    const updated = activityEntrySchema.parse({
-      ...entry,
-      kind: "case",
-      action: "updated",
-    });
-    expect(legacyEventForActivityEntry(updated)).toBeNull();
   });
 });
 

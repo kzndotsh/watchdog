@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   check,
   customType,
   index,
@@ -82,3 +83,21 @@ export const activityCursors = pgTable("activity_cursors", {
   id: bigint("id", { mode: "number" }).notNull(),
   updatedAt: timestamptz("updated_at").notNull().defaultNow(),
 });
+
+/**
+ * The retention floor (ADR-0005 decision 8, S7): the newest `(xid, id)` the
+ * prune job has ever deleted, one row. A reader whose cursor is below it may
+ * have missed pruned entries and is told to `resync`. It only moves forward,
+ * in the same transaction as the delete (`activityFloorRepo.raise`). No row
+ * means nothing was ever pruned.
+ */
+export const activityFloor = pgTable(
+  "activity_floor",
+  {
+    singleton: boolean("singleton").primaryKey().default(true),
+    xid: xid8("xid").notNull(),
+    id: bigint("id", { mode: "number" }).notNull(),
+    updatedAt: timestamptz("updated_at").notNull().defaultNow(),
+  },
+  (t) => [check("activity_floor_singleton", sql`${t.singleton}`)]
+);

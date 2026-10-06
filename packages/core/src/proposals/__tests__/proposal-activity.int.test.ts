@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { toActivityEntry } from "@watchdog/core/activity";
 import { runDomain } from "@watchdog/core/infra";
 import {
   acceptProposalEffect,
@@ -9,7 +8,6 @@ import {
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
 import { activity, activityLogRepo, db } from "@watchdog/db";
-import { legacyEventForActivityEntry } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
@@ -79,11 +77,6 @@ describe("Proposal write paths append to the activity log", () => {
       label: null,
     });
     expect(await pendingCount(cased.id)).toBe(1);
-    expect(legacyEventForActivityEntry(toActivityEntry(rows[0]!))).toEqual({
-      type: "proposal_created",
-      caseId: cased.id,
-      proposalId: proposal.id,
-    });
   });
 
   it("logs created for a Job-created Proposal, and none when everything is suppressed", async () => {
@@ -214,10 +207,6 @@ describe("Proposal write paths append to the activity log", () => {
       toValue: "rejected",
     });
     expect(await pendingCount(cased.id)).toBe(0);
-    expect(legacyEventForActivityEntry(toActivityEntry(rows[0]!))).toEqual({
-      type: "proposal_queue_changed",
-      caseId: cased.id,
-    });
   });
 
   it("logs one accepted entry when two Accepts race", async () => {

@@ -59,6 +59,19 @@ describe("check-repo-rules gate (packages/db)", () => {
     expect(res.output).toContain("rule 3: repos must not throw");
   });
 
+  it("fails a repo that sends a NOTIFY itself", () => {
+    const repo = repoWith([
+      "  async get(exec: DbExec) {",
+      "    return exec.execute(sql`select pg_notify('c', 'x')`);",
+      "  },",
+    ]);
+
+    const res = repo.runFile(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("rule 2");
+  });
+
   it("fails a repo that opens a transaction", () => {
     const repo = repoWith([
       "  async get(exec: DbExec) {",

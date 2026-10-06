@@ -8,7 +8,6 @@
     "./caps": "./src/caps/index.ts",
     "./cases": "./src/cases/index.ts",
     "./errors": "./src/errors/index.ts",
-    "./events": "./src/events/index.ts",
     "./evidence": "./src/evidence/index.ts",
     "./export": "./src/export/index.ts",
     "./graph": "./src/graph/index.ts",
