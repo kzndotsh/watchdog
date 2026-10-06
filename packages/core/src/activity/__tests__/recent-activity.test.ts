@@ -95,6 +95,32 @@ describe("jobLabelSubject", () => {
     expect(subject?.resultSummary).toBe("dns ok");
   });
 
+  it("breaks an updatedAt tie by Job id, whatever the row order", () => {
+    const runId = testId(17);
+    const at = new Date("2026-01-03T00:01:00.000Z");
+    const rows = [
+      labelRow({
+        id: testId(60),
+        playbookRunId: runId,
+        playbookStep: 0,
+        resultSummary: "low id",
+        updatedAt: at,
+      }),
+      labelRow({
+        id: testId(61),
+        playbookRunId: runId,
+        playbookStep: 1,
+        resultSummary: "high id",
+        updatedAt: at,
+      }),
+    ];
+    const entry = { subjectId: testId(60), groupId: runId };
+    expect(jobLabelSubject(entry, rows)?.resultSummary).toBe("high id");
+    const [low, high] = rows;
+    if (low === undefined || high === undefined) throw new TypeError("rows");
+    expect(jobLabelSubject(entry, [high, low])?.resultSummary).toBe("high id");
+  });
+
   it("matches a group when its id is padded with whitespace", () => {
     const runId = testId(16);
     const subject = jobLabelSubject(

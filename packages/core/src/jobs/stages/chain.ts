@@ -200,7 +200,7 @@ export function advancePlaybookRunEffect(input: {
             } satisfies AdvanceOutcome;
           }
           case "abandon": {
-            const abandonedJobIds = yield* tryDb(() =>
+            const abandoned = yield* tryDb(() =>
               jobsRepo.abandonBlockedForPlaybook(
                 tx,
                 playbookRunId,
@@ -208,19 +208,9 @@ export function advancePlaybookRunEffect(input: {
               )
             );
             yield* Effect.forEach(
-              abandonedJobIds,
-              (id) =>
-                appendJobActivityEffect(
-                  tx,
-                  {
-                    id,
-                    caseId: run.caseId,
-                    actorId: run.actorId,
-                    actorLabel: run.actorLabel,
-                    playbookRunId,
-                  },
-                  "cancelled"
-                ),
+              abandoned,
+              // each entry carries the Job's own actor and label snapshot
+              (job) => appendJobActivityEffect(tx, job, "cancelled"),
               { concurrency: 1 }
             );
             yield* maybeFinishPlaybookRunEffect(tx, playbookRunId);

@@ -8,14 +8,15 @@ const CASE_ID = testCaseId(1);
 const JOB_ID = testId(2);
 const ACTOR_ID = "actor-1";
 
-const { create, append } = vi.hoisted(() => ({
+const { create, append, tx } = vi.hoisted(() => ({
+  tx: { handle: "tx" },
   create: vi.fn(),
   append: vi.fn(),
 }));
 
 vi.mock("@watchdog/db", () => ({
   // `transact` runs its body on a stand-in transaction handle.
-  db: { transaction: (body: (tx: object) => unknown) => body({}) },
+  db: { transaction: (body: (tx: object) => unknown) => body(tx) },
   jobsRepo: { create },
   activityLogRepo: { append },
 }));
@@ -121,8 +122,11 @@ describe("startJobEffect", () => {
     );
 
     expect(queue.sends.map((s) => s.payload.jobId)).toEqual([JOB_ID]);
+    // strict identity: the Job insert and the entry share one transaction handle
+    expect(create.mock.calls[0]?.[0]).toBe(tx);
+    expect(append.mock.calls[0]?.[0]).toBe(tx);
     expect(append).toHaveBeenCalledWith(
-      expect.anything(),
+      tx,
       expect.objectContaining({
         caseId: CASE_ID,
         kind: "job",

@@ -413,7 +413,11 @@ describe("jobsRepo", () => {
         ` ${run.id} `,
         "prior failed"
       );
-      expect(abandonedIds).toEqual([blocked.id]);
+      expect(abandonedIds.map((row) => row.id)).toEqual([blocked.id]);
+      expect(abandonedIds[0]).toMatchObject({
+        status: "cancelled",
+        actorId: blocked.actorId,
+      });
       const after = await jobsRepo.get(tx, blocked.id);
       expect(after?.status).toBe("cancelled");
       const again = await jobsRepo.abandonBlockedForPlaybook(

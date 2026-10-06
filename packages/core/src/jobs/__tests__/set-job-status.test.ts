@@ -3,18 +3,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const { update, updateInCase, append } = vi.hoisted(() => ({
-  update: vi.fn(),
-  updateInCase: vi.fn(),
-  append: vi.fn(),
-}));
+const { update, updateInCase, getStatusAndPlaybook, append, tx } = vi.hoisted(
+  () => ({
+    update: vi.fn(),
+    updateInCase: vi.fn(),
+    getStatusAndPlaybook: vi.fn(),
+    append: vi.fn(),
+    tx: { handle: "tx" },
+  })
+);
 
 vi.mock("@watchdog/db", () => ({
   // `transact` runs its body on a stand-in transaction handle.
-  db: { transaction: (body: (tx: object) => unknown) => body({}) },
+  db: { transaction: (body: (tx: object) => unknown) => body(tx) },
   jobsRepo: {
     update,
     updateInCase,
+    getStatusAndPlaybook,
   },
   activityLogRepo: { append },
 }));
@@ -29,6 +34,11 @@ describe("setJobStatus", () => {
   beforeEach(() => {
     update.mockClear();
     updateInCase.mockReset();
+    getStatusAndPlaybook.mockReset();
+    getStatusAndPlaybook.mockResolvedValue({
+      status: "running",
+      playbookRunId: null,
+    });
     append.mockReset();
     append.mockResolvedValue({
       id: 1,
@@ -70,8 +80,7 @@ describe("setJobStatus", () => {
     expect(append).not.toHaveBeenCalled();
   });
 
-  it("returns the updated row and appends its entry on the same handle", async () => {
-    const tx = {};
+  it("returns the updated row and appends its entry on the very same handle", async () => {
     updateInCase.mockResolvedValueOnce({
       id: jobId,
       caseId,
@@ -85,15 +94,19 @@ describe("setJobStatus", () => {
     );
     expect(result?.status).toBe("succeeded");
     expect(updateInCase).toHaveBeenCalledWith(
-      expect.anything(),
+      tx,
       caseId,
       jobId,
       { status: "succeeded" },
       { unlessCancelled: undefined, onlyStatuses: undefined }
     );
     expect(update).not.toHaveBeenCalled();
+    // strict identity: write, status read and append all use the transaction handle
+    expect(updateInCase.mock.calls[0]?.[0]).toBe(tx);
+    expect(getStatusAndPlaybook.mock.calls[0]?.[0]).toBe(tx);
+    expect(append.mock.calls[0]?.[0]).toBe(tx);
     expect(append).toHaveBeenCalledWith(
-      updateInCase.mock.calls[0]?.[0] ?? tx,
+      tx,
       expect.objectContaining({
         caseId,
         kind: "job",
@@ -103,5 +116,22 @@ describe("setJobStatus", () => {
         toValue: "succeeded",
       })
     );
+  });
+
+  it("appends nothing when the write does not change the status", async () => {
+    updateInCase.mockResolvedValueOnce({
+      id: jobId,
+      caseId,
+      status: "running",
+      actorId: "actor",
+      actorLabel: null,
+      playbookRunId: null,
+    });
+    const result = await runDomain(
+      setJobStatusEffect(jobId, { status: "running" }, { caseId })
+    );
+    expect(result?.status).toBe("running");
+    expect(updateInCase).toHaveBeenCalledTimes(1);
+    expect(append).not.toHaveBeenCalled();
   });
 });
