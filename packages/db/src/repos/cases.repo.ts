@@ -59,6 +59,15 @@ export const casesRepo = {
     return rows.map((row) => row.id);
   },
 
+  /**
+   * Every Case id in the database, across organizations. Worker internals only
+   * (the export consumer's full re-scan after a resync); never an HTTP path.
+   */
+  async listAllIdsUnchecked(exec: DbExec): Promise<CaseId[]> {
+    const rows = await exec.select({ id: cases.id }).from(cases);
+    return rows.map((row) => row.id);
+  },
+
   async search(
     exec: DbExec,
     organizationId: OrganizationId,

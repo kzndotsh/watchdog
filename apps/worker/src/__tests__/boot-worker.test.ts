@@ -1,21 +1,26 @@
 import { Deferred, Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { claimExportEventEffect } = vi.hoisted(() => ({
-  claimExportEventEffect: vi.fn(() => Effect.succeed(Effect.void)),
+import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
+import { testCaseId } from "@watchdog/schemas/testing";
+
+const { claimCaseExportEffect } = vi.hoisted(() => ({
+  claimCaseExportEffect: vi.fn((_caseId: string) =>
+    Effect.succeed(Effect.void)
+  ),
 }));
 
-vi.mock("../export-events", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../export-events")>();
+vi.mock("@watchdog/core/worker", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@watchdog/core/worker")>();
   return {
     ...actual,
-    claimExportEventEffect,
+    claimCaseExportEffect,
   };
 });
 
 import { Db, recordingBlobStore, fakeVault } from "@watchdog/core/worker";
 
-import { handleExportEventPayloadEffect } from "../boot-worker";
+import { handleExportEntryEffect, rescanAllCasesEffect } from "../boot-worker";
 
 const workerTestServices = Layer.mergeAll(
   Db.layer,
@@ -23,46 +28,73 @@ const workerTestServices = Layer.mergeAll(
   fakeVault().layer
 );
 
-describe("handleExportEventPayloadEffect", () => {
+const CASE_ID = "11111111-1111-4111-8111-000000000001";
+
+function entryOf(
+  kind: ActivityEntryKind,
+  action: string,
+  caseId: string = CASE_ID
+): ActivityEntry {
+  return {
+    cursor: "10:1",
+    id: 1,
+    caseId,
+    kind,
+    action,
+    subjectId: null,
+    groupId: null,
+    label: null,
+    actorId: null,
+    actorLabel: null,
+    fromValue: null,
+    toValue: null,
+    at: "2026-10-06T00:00:00.000Z",
+  };
+}
+
+describe("handleExportEntryEffect", () => {
   beforeEach(() => {
-    claimExportEventEffect.mockReset();
-    claimExportEventEffect.mockReturnValue(Effect.succeed(Effect.void));
+    claimCaseExportEffect.mockReset();
+    claimCaseExportEffect.mockReturnValue(Effect.succeed(Effect.void));
   });
 
-  it("ignores malformed JSON without scheduling export", async () => {
+  it("claims the Case export for a Graph entry", async () => {
     await Effect.runPromise(
       Effect.provide(
-        handleExportEventPayloadEffect("{not json"),
+        handleExportEntryEffect(entryOf("entity", "updated")),
         workerTestServices
       )
     );
-    expect(claimExportEventEffect).not.toHaveBeenCalled();
+    expect(claimCaseExportEffect).toHaveBeenCalledWith(CASE_ID);
   });
 
-  it("ignores valid JSON that fails the watchdog event schema", async () => {
+  it("claims the Case export for Evidence and a succeeded Job", async () => {
     await Effect.runPromise(
       Effect.provide(
-        handleExportEventPayloadEffect(JSON.stringify({ type: "unknown" })),
+        Effect.all([
+          handleExportEntryEffect(entryOf("evidence", "hidden")),
+          handleExportEntryEffect(entryOf("job", "succeeded")),
+        ]),
         workerTestServices
       )
     );
-    expect(claimExportEventEffect).not.toHaveBeenCalled();
+    expect(claimCaseExportEffect).toHaveBeenCalledTimes(2);
   });
 
-  it("schedules export for valid watchdog events", async () => {
-    const event = {
-      type: "entity_changed",
-      caseId: "11111111-1111-4111-8111-000000000001",
-    };
+  it("claims nothing for Task and Proposal entries", async () => {
     await Effect.runPromise(
       Effect.provide(
-        handleExportEventPayloadEffect(JSON.stringify(event)),
+        Effect.all([
+          handleExportEntryEffect(entryOf("task", "created")),
+          handleExportEntryEffect(entryOf("task", "status_changed")),
+          handleExportEntryEffect(entryOf("proposal", "created")),
+          handleExportEntryEffect(entryOf("proposal", "accepted")),
+          handleExportEntryEffect(entryOf("job", "running")),
+        ]),
         workerTestServices
       )
     );
-    await vi.waitFor(() => {
-      expect(claimExportEventEffect).toHaveBeenCalledWith(event);
-    });
+    expect(claimCaseExportEffect).not.toHaveBeenCalled();
   });
 
   it("marks the case before forking, so an interrupted child cannot lose the mark", async () => {
@@ -70,7 +102,7 @@ describe("handleExportEventPayloadEffect", () => {
     // ran inside the forked child would see a different fiber id.
     const seen: { claimFiber?: number; joined: boolean } = { joined: false };
     const gate = Deferred.makeUnsafe<undefined>();
-    claimExportEventEffect.mockReturnValue(
+    claimCaseExportEffect.mockReturnValue(
       Effect.gen(function* claimGen() {
         seen.claimFiber = yield* Effect.fiberId;
         // oxlint-disable-next-line effecttsgo/return-effect-in-gen -- the claim's result IS an Effect (the wait to fork), so `Effect<Effect>` is the contract under test
@@ -83,15 +115,11 @@ describe("handleExportEventPayloadEffect", () => {
         );
       })
     );
-    const event = {
-      type: "entity_changed",
-      caseId: "11111111-1111-4111-8111-000000000001",
-    };
     const callerFiber = await Effect.runPromise(
       Effect.provide(
         Effect.gen(function* handleGen() {
           const id = yield* Effect.fiberId;
-          yield* handleExportEventPayloadEffect(JSON.stringify(event));
+          yield* handleExportEntryEffect(entryOf("entity", "created"));
           return id;
         }),
         workerTestServices
@@ -104,30 +132,50 @@ describe("handleExportEventPayloadEffect", () => {
     await Effect.runPromise(Deferred.succeed(gate, undefined));
   });
 
-  it("ignores watchdog events with empty or invalid caseId", async () => {
+  it("ignores entries with an empty or invalid caseId", async () => {
     await Effect.runPromise(
       Effect.provide(
-        handleExportEventPayloadEffect(
-          JSON.stringify({ type: "entity_changed", caseId: "   " })
-        ),
+        Effect.all([
+          handleExportEntryEffect(entryOf("entity", "created", "   ")),
+          handleExportEntryEffect(entryOf("entity", "created", "nope")),
+        ]),
         workerTestServices
       )
     );
-    expect(claimExportEventEffect).not.toHaveBeenCalled();
+    expect(claimCaseExportEffect).not.toHaveBeenCalled();
   });
 
-  it("ignores non-triggering watchdog events without forking export", async () => {
-    await Effect.runPromise(
-      Effect.provide(
-        handleExportEventPayloadEffect(
-          JSON.stringify({
-            type: "task_changed",
-            caseId: "11111111-1111-4111-8111-000000000001",
-          })
-        ),
-        workerTestServices
+  it("fails (and so ends the consumer before its cursor moves) when the claim defects", async () => {
+    claimCaseExportEffect.mockReturnValueOnce(Effect.die(new Error("no disk")));
+    await expect(
+      Effect.runPromise(
+        Effect.provide(
+          handleExportEntryEffect(entryOf("entity", "created")),
+          workerTestServices
+        )
       )
+    ).rejects.toThrow(/no disk/);
+  });
+});
+
+describe("rescanAllCasesEffect", () => {
+  beforeEach(() => {
+    claimCaseExportEffect.mockReset();
+    claimCaseExportEffect.mockReturnValue(Effect.succeed(Effect.void));
+  });
+
+  it("claims an export for every Case it is given", async () => {
+    const ids = [testCaseId(1), testCaseId(2)];
+    await Effect.runPromise(
+      Effect.provide(rescanAllCasesEffect(ids), workerTestServices)
     );
-    expect(claimExportEventEffect).not.toHaveBeenCalled();
+    expect(claimCaseExportEffect.mock.calls.map(([id]) => id)).toEqual(ids);
+  });
+
+  it("does nothing for an empty database", async () => {
+    await Effect.runPromise(
+      Effect.provide(rescanAllCasesEffect([]), workerTestServices)
+    );
+    expect(claimCaseExportEffect).not.toHaveBeenCalled();
   });
 });
