@@ -41,7 +41,10 @@ export {
 export { findCancelledJobIdsEffect } from "./jobs/start-job";
 
 export { listenForEvents } from "./infra/events";
-export { listenForEventsStream } from "./infra/listen-events-stream";
+export {
+  runActivityConsumerEffect,
+  type ActivityConsumerOpts,
+} from "./activity/consumer";
 export {
   claimCaseExportEffect,
   ExportWriteServices,

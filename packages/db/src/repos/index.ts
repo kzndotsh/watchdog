@@ -4,6 +4,7 @@ export type {
   RecentEvidenceActivityRow,
   RecentProposalActivityRow,
 } from "./activity.repo";
+export { activityCursorsRepo } from "./activity-cursors.repo";
 export { activityLogRepo } from "./activity-log.repo";
 export type {
   ActivityRow,

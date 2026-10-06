@@ -160,6 +160,44 @@ describe("createActivityTailer", () => {
     ]);
   });
 
+  it("starts after a supplied cursor and delivers the rows already past it", async () => {
+    const cased = await seedCase(db);
+    const first = await append(cased.id, "handled before the restart");
+    await append(cased.id, "written while down one");
+    await append(cased.id, "written while down two");
+    if (first === null) throw new Error("append failed");
+    await start({ startAt: { xid: first.xid, id: first.id } });
+    await until(() => seen.length >= 2, 2000);
+    expect(seen.map((row) => row.label)).toEqual([
+      "written while down one",
+      "written while down two",
+    ]);
+    await append(cased.id, "live");
+    await until(() => seen.length >= 3, 2000);
+    expect(seen.map((row) => row.label).at(-1)).toBe("live");
+  });
+
+  it("reports a LISTEN failure to onListenError and keeps drain errors on onError", async () => {
+    const listenFailures: unknown[] = [];
+    const errors: unknown[] = [];
+    const failure = new Error("listen failed");
+    await start({
+      pollMs: 5000,
+      listen: (_wake, _ready, onError) => {
+        onError(failure);
+        return { end: async () => {} };
+      },
+      onListenError: (error) => {
+        listenFailures.push(error);
+      },
+      onError: (error) => {
+        errors.push(error);
+      },
+    });
+    expect(listenFailures).toEqual([failure]);
+    expect(errors).toEqual([]);
+  });
+
   it("delivers a row once even when a wake-up and the poll both fire", async () => {
     const cased = await seedCase(db);
     await start({ pollMs: 20 });

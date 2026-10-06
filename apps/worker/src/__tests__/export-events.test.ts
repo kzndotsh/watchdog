@@ -1,7 +1,12 @@
 import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { WatchdogEvent } from "@watchdog/schemas/feed";
+import {
+  ACTIVITY_ENTRY_ACTIONS,
+  ACTIVITY_ENTRY_KINDS,
+  type ActivityEntry,
+  type ActivityEntryKind,
+} from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 
 const { claimCaseExportEffect } = vi.hoisted(() => ({
@@ -19,7 +24,7 @@ vi.mock("@watchdog/core/worker", async (importOriginal) => {
 import { Db, recordingBlobStore, fakeVault } from "@watchdog/core/worker";
 
 import {
-  claimExportEventEffect,
+  claimExportEntryEffect,
   hasSchedulableCaseId,
   normalizeSchedulableCaseId,
   shouldTriggerCaseExport,
@@ -31,60 +36,88 @@ const workerTestServices = Layer.mergeAll(
   fakeVault().layer
 );
 
+const CASE_ID = "11111111-1111-4111-8111-000000000001";
+
+function entryOf(
+  kind: ActivityEntryKind,
+  action: string,
+  caseId: string = CASE_ID
+): ActivityEntry {
+  return {
+    cursor: "10:1",
+    id: 1,
+    caseId,
+    kind,
+    action,
+    subjectId: null,
+    groupId: null,
+    label: null,
+    actorId: null,
+    actorLabel: null,
+    fromValue: null,
+    toValue: null,
+    at: "2026-10-06T00:00:00.000Z",
+  };
+}
+
+const GRAPH_KINDS = new Set<ActivityEntryKind>([
+  "entity",
+  "edge",
+  "claim",
+  "identifier",
+  "event",
+  "question",
+]);
+
+/** Every (kind, action) the log can hold, from the closed verb list. */
+const ALL_ENTRIES = ACTIVITY_ENTRY_KINDS.flatMap((kind) =>
+  ACTIVITY_ENTRY_ACTIONS[kind].map((action) => entryOf(kind, action))
+);
+
+function label(entry: ActivityEntry): string {
+  return `${entry.kind}.${entry.action}`;
+}
+
 describe("shouldTriggerCaseExport", () => {
-  const caseId = "11111111-1111-4111-8111-000000000001";
-
-  it("returns true for a succeeded job_update", () => {
-    const event: WatchdogEvent = {
-      type: "job_update",
-      caseId,
-      jobId: "22222222-2222-4222-8222-000000000002",
-      status: "succeeded",
-    };
-    expect(shouldTriggerCaseExport(event)).toBe(true);
+  it("exports exactly: a succeeded Job, any Evidence entry, any Graph kind", () => {
+    const triggering = ALL_ENTRIES.filter((entry) =>
+      shouldTriggerCaseExport(entry)
+    ).map(label);
+    const expected = ALL_ENTRIES.filter(
+      (entry) =>
+        (entry.kind === "job" && entry.action === "succeeded") ||
+        entry.kind === "evidence" ||
+        GRAPH_KINDS.has(entry.kind)
+    ).map(label);
+    expect([...triggering].sort()).toEqual([...expected].sort());
+    // Spot checks that pin the derived table above to the intent.
+    expect(triggering).toContain("job.succeeded");
+    expect(triggering).toContain("evidence.captured");
+    expect(triggering).toContain("entity.deleted");
+    expect(triggering).toContain("claim.retracted");
+    expect(triggering).toContain("question.resolved");
   });
 
-  it("returns false for a failed job_update", () => {
-    const event: WatchdogEvent = {
-      type: "job_update",
-      caseId,
-      jobId: "22222222-2222-4222-8222-000000000002",
-      status: "failed",
-    };
-    expect(shouldTriggerCaseExport(event)).toBe(false);
+  it("does not export for Task entries", () => {
+    for (const action of ACTIVITY_ENTRY_ACTIONS.task) {
+      expect(shouldTriggerCaseExport(entryOf("task", action))).toBe(false);
+    }
   });
 
-  it("returns true for entity_changed", () => {
-    const event: WatchdogEvent = { type: "entity_changed", caseId };
-    expect(shouldTriggerCaseExport(event)).toBe(true);
+  it("does not export for Proposal entries", () => {
+    for (const action of ACTIVITY_ENTRY_ACTIONS.proposal) {
+      expect(shouldTriggerCaseExport(entryOf("proposal", action))).toBe(false);
+    }
   });
 
-  it("returns true for evidence_changed", () => {
-    const event: WatchdogEvent = {
-      type: "evidence_changed",
-      caseId,
-      evidenceId: "22222222-2222-4222-8222-000000000002",
-    };
-    expect(shouldTriggerCaseExport(event)).toBe(true);
+  it("does not export for a Job that has not succeeded", () => {
+    for (const action of ["queued", "running", "failed", "cancelled"]) {
+      expect(shouldTriggerCaseExport(entryOf("job", action))).toBe(false);
+    }
   });
 
-  it("returns false for proposal_created", () => {
-    const event: WatchdogEvent = {
-      type: "proposal_created",
-      caseId,
-      proposalId: "22222222-2222-4222-8222-000000000002",
-    };
-    expect(shouldTriggerCaseExport(event)).toBe(false);
-  });
-
-  it("returns false for proposal_queue_changed", () => {
-    const event: WatchdogEvent = { type: "proposal_queue_changed", caseId };
-    expect(shouldTriggerCaseExport(event)).toBe(false);
-  });
-
-  it("returns false for task_changed", () => {
-    const event: WatchdogEvent = { type: "task_changed", caseId };
-    expect(shouldTriggerCaseExport(event)).toBe(false);
+  it("does not export for a Case update (it schedules its own export)", () => {
+    expect(shouldTriggerCaseExport(entryOf("case", "updated"))).toBe(false);
   });
 });
 
@@ -105,9 +138,7 @@ describe("hasSchedulableCaseId", () => {
   });
 });
 
-describe("claimExportEventEffect", () => {
-  const caseId = "11111111-1111-4111-8111-000000000001";
-
+describe("claimExportEntryEffect", () => {
   beforeEach(() => {
     claimCaseExportEffect.mockReset();
     claimCaseExportEffect.mockReturnValue(Effect.succeed(Effect.void));
@@ -121,18 +152,18 @@ describe("claimExportEventEffect", () => {
     await expect(
       Effect.runPromise(
         Effect.provide(
-          claimExportEventEffect({ type: "entity_changed", caseId }),
+          claimExportEntryEffect(entryOf("entity", "updated")),
           workerTestServices
         )
       )
     ).rejects.toThrow(/disk full/);
   });
 
-  it("skips export for non-triggering events", async () => {
+  it("skips export for non-triggering entries", async () => {
     await Effect.runPromise(
       Effect.flatten(
         Effect.provide(
-          claimExportEventEffect({ type: "task_changed", caseId }),
+          claimExportEntryEffect(entryOf("task", "created")),
           workerTestServices
         )
       )
@@ -142,31 +173,25 @@ describe("claimExportEventEffect", () => {
   });
 
   it("claims export with a trimmed case id", async () => {
-    const paddedCaseId = `  ${caseId}  `;
-
     await Effect.runPromise(
       Effect.flatten(
         Effect.provide(
-          claimExportEventEffect({
-            type: "entity_changed",
-            caseId: paddedCaseId,
-          }),
+          claimExportEntryEffect(
+            entryOf("entity", "updated", `  ${CASE_ID}  `)
+          ),
           workerTestServices
         )
       )
     );
 
-    expect(claimCaseExportEffect).toHaveBeenCalledWith(caseId);
+    expect(claimCaseExportEffect).toHaveBeenCalledWith(CASE_ID);
   });
 
   it("skips export when case id is not schedulable", async () => {
     await Effect.runPromise(
       Effect.flatten(
         Effect.provide(
-          claimExportEventEffect({
-            type: "entity_changed",
-            caseId: "not-a-uuid",
-          }),
+          claimExportEntryEffect(entryOf("entity", "updated", "not-a-uuid")),
           workerTestServices
         )
       )

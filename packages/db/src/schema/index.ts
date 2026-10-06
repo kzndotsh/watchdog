@@ -1,4 +1,4 @@
-export { activity } from "./activity";
+export { activity, activityCursors } from "./activity";
 
 export { activityEvents } from "./activity-events";
 
