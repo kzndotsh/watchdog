@@ -16,6 +16,7 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
+import { appendActivityEffect } from "../activity/append";
 import { requireActorIdEffect } from "../actors/require-actor-id";
 import {
   labelForActor,
@@ -39,11 +40,7 @@ import {
 } from "../graph/patch/guards";
 import { nowDateEffect } from "../infra/clock";
 import type { Db } from "../infra/db-service";
-import {
-  notifyEntityChangedEffect,
-  notifyEvidenceChangedEffect,
-  notifyProposalQueueChangedEffect,
-} from "../infra/events";
+import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -396,14 +393,19 @@ export function acceptProposalEffect(input: {
             reason: "Proposal is not pending",
           });
         }
+        yield* appendActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "proposal",
+          action: "accepted",
+          subjectId: accepted.id,
+          actorId,
+          fromValue: "pending",
+          toValue: "accepted",
+        });
         return accepted;
       })
     );
     yield* notifyEntityChangedEffect(scopedCaseId);
-    yield* notifyProposalQueueChangedEffect(scopedCaseId);
-    if (attestationText !== undefined) {
-      yield* notifyEvidenceChangedEffect(scopedCaseId);
-    }
     return yield* enrichProposalRecordEffect(updated);
   });
 }
@@ -459,10 +461,18 @@ export function rejectProposalEffect(input: {
           tx,
         });
 
+        yield* appendActivityEffect(tx, {
+          caseId: scopedCaseId,
+          kind: "proposal",
+          action: "rejected",
+          subjectId: row.id,
+          actorId,
+          fromValue: "pending",
+          toValue: "rejected",
+        });
         return row;
       })
     );
-    yield* notifyProposalQueueChangedEffect(scopedCaseId);
     return yield* enrichProposalRecordEffect(rejected);
   });
 }

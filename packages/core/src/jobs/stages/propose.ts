@@ -8,6 +8,7 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
+import { appendActivityEffect } from "../../activity/append";
 import { attachEvidenceIds } from "../../graph/attach-evidence";
 import type { Db } from "../../infra/db-service";
 import { tryDb, tryDbWith } from "../../infra/postgres-effect";
@@ -125,6 +126,16 @@ export function suppressAndProposeStageEffect(
           createdBy: createdByForProposal(input.createdBy),
         })
       );
+      if (prop) {
+        yield* appendActivityEffect(tx, {
+          caseId: input.caseId,
+          kind: "proposal",
+          action: "created",
+          subjectId: prop.id,
+          actorId: createdByForProposal(input.createdBy),
+          toValue: "pending",
+        });
+      }
       return {
         proposalId: prop?.id ?? null,
         resultSummary: input.resultSummary,
