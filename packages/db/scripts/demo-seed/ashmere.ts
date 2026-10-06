@@ -828,7 +828,7 @@ export async function seedAshmere(
       "Harvested the lookup host and the footer org. Proposal is waiting in triage.",
     evidenceIds: [page],
   });
-  const vt = await kit.job({
+  await kit.job({
     caseId,
     capabilityId: "threat.virustotal.lookup",
     input: { host: "ship-ashmere.example" },
@@ -865,7 +865,7 @@ export async function seedAshmere(
     status: "accepted",
     at: hoursAgo(24 * 15),
   });
-  const whoisProposal = await kit.proposal({
+  await kit.proposal({
     caseId,
     jobId: whoisJob,
     summary: "WHOIS registrant is Lena Voss for Ashmere Fulfillment LLC.",
@@ -880,7 +880,7 @@ export async function seedAshmere(
     status: "accepted",
     at: hoursAgo(24 * 14),
   });
-  const harvestProposal = await kit.proposal({
+  await kit.proposal({
     caseId,
     jobId: harvest,
     summary:
@@ -1015,34 +1015,6 @@ export async function seedAshmere(
   });
   await kit.activity({
     caseId,
-    kind: "job",
-    action: "status_changed",
-    subjectId: dnsJob,
-    label: "DNS lookup",
-    fromValue: "running",
-    toValue: "succeeded",
-    at: hoursAgo(24 * 15 + 3),
-  });
-  await kit.activity({
-    caseId,
-    kind: "proposal",
-    action: "status_changed",
-    subjectId: whoisProposal,
-    label: "WHOIS registrant is Lena Voss",
-    fromValue: "pending",
-    toValue: "accepted",
-    at: hoursAgo(24 * 14),
-  });
-  await kit.activity({
-    caseId,
-    kind: "evidence",
-    action: "created",
-    subjectId: receipt,
-    label: "Northwharf box 14 receipt",
-    at: hoursAgo(24 * 11),
-  });
-  await kit.activity({
-    caseId,
     kind: "task",
     action: "status_changed",
     subjectId: taskMerge,
@@ -1059,14 +1031,6 @@ export async function seedAshmere(
     label: "Find a second source for the “sells the template” post",
     toValue: "backlog",
     at: hoursAgo(24 * 2),
-  });
-  await kit.activity({
-    caseId,
-    kind: "evidence",
-    action: "created",
-    subjectId: forum,
-    label: "Forum post naming Marek",
-    at: hoursAgo(24 * 3),
   });
   await kit.activity({
     caseId,
@@ -1087,25 +1051,6 @@ export async function seedAshmere(
     fromValue: "backlog",
     toValue: "dropped",
     at: hoursAgo(24 * 7),
-  });
-  await kit.activity({
-    caseId,
-    kind: "proposal",
-    action: "created",
-    subjectId: harvestProposal,
-    label: "Tracking page harvest",
-    toValue: "pending",
-    at: hoursAgo(25),
-  });
-  await kit.activity({
-    caseId,
-    kind: "job",
-    action: "status_changed",
-    subjectId: vt,
-    label: "VirusTotal lookup",
-    fromValue: "running",
-    toValue: "failed",
-    at: hoursAgo(22),
   });
   await kit.activity({
     caseId,

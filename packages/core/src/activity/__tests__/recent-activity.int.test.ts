@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { listRecentActivityEffect } from "@watchdog/core/activity";
+import { NotFoundError } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
-import { db, evidenceRepo } from "@watchdog/db";
+import { activityLogRepo, db, evidenceRepo, proposalsRepo } from "@watchdog/db";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
+  TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -20,6 +22,21 @@ import {
 import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 
 import { setJobStatusEffect } from "../../jobs/set-job-status.ts";
+
+async function appendActivityRow(
+  caseId: string,
+  kind: "evidence",
+  action: string,
+  subjectId: string
+): Promise<void> {
+  const row = await activityLogRepo.append(db, {
+    caseId,
+    kind,
+    action,
+    subjectId,
+  });
+  if (row === null) throw new Error("append failed");
+}
 
 describe("listRecentActivity", () => {
   beforeEach(async () => {
@@ -331,5 +348,150 @@ describe("listRecentActivity", () => {
           row.kind === "job" && row.label === "Shodan Lookup — Delta Corp"
       )
     ).toBe(true);
+  });
+
+  it("shows a pending Proposal as proposed, with its summary", async () => {
+    const cased = await seedCase(db);
+    await seedProposal(db, cased.id, [], { summary: "Registrar is Acme" });
+
+    const items = await runDomain(
+      listRecentActivityEffect({
+        organizationId: TEST_ORGANIZATION_ID,
+        caseId: cased.id,
+        limit: 20,
+      })
+    );
+
+    const row = items.find((item) => item.kind === "proposal");
+    expect(row).toMatchObject({
+      action: "Proposed",
+      label: "Registrar is Acme",
+      status: "pending",
+    });
+  });
+
+  it("keeps a decided Proposal as history: proposed, then accepted or rejected", async () => {
+    const cased = await seedCase(db);
+    await seedProposal(db, cased.id, [], {
+      summary: "Took the lead",
+      status: "accepted",
+    });
+    await seedProposal(db, cased.id, [], {
+      summary: "Dead end",
+      status: "rejected",
+    });
+
+    const items = await runDomain(
+      listRecentActivityEffect({
+        organizationId: TEST_ORGANIZATION_ID,
+        caseId: cased.id,
+        limit: 20,
+      })
+    );
+
+    const proposals = items.filter((item) => item.kind === "proposal");
+    expect(
+      proposals.map((item) => `${item.action}:${item.label}`).sort()
+    ).toEqual([
+      "Accepted:Took the lead",
+      "Proposed:Dead end",
+      "Proposed:Took the lead",
+      "Rejected:Dead end",
+    ]);
+    const accepted = proposals.find((item) => item.action === "Accepted");
+    expect(accepted).toMatchObject({
+      status: "accepted",
+      fromStatus: "pending",
+      toStatus: "accepted",
+    });
+  });
+
+  it("shows Evidence from its captured entry and not its other verbs", async () => {
+    const cased = await seedCase(db);
+    const ev = await seedEvidence(db, cased.id, { label: "photo.png" });
+    await appendActivityRow(cased.id, "evidence", "hidden", ev.id);
+    await appendActivityRow(cased.id, "evidence", "processed", ev.id);
+
+    const items = await runDomain(
+      listRecentActivityEffect({
+        organizationId: TEST_ORGANIZATION_ID,
+        caseId: cased.id,
+        limit: 20,
+      })
+    );
+
+    const rows = items.filter((item) => item.kind === "evidence");
+    expect(rows.map((item) => item.action)).toEqual(["Captured"]);
+    expect(rows[0]).toMatchObject({ label: "photo.png", actor: TEST_ACTOR_ID });
+  });
+
+  it("reads only the log: rows written without an entry are not shown", async () => {
+    const cased = await seedCase(db);
+    await evidenceRepo.create(db, {
+      caseId: cased.id,
+      entityId: null,
+      kind: "attestation",
+      label: "no entry",
+      notes: null,
+      mime: "text/plain",
+      uri: null,
+      sha256: null,
+      text: "body",
+      sourceUrl: null,
+      actorId: TEST_ACTOR_ID,
+    });
+    await proposalsRepo.create(db, {
+      caseId: cased.id,
+      status: "pending",
+      patch: [],
+      summary: "no entry",
+      evidenceIds: [],
+    });
+
+    const items = await runDomain(
+      listRecentActivityEffect({
+        organizationId: TEST_ORGANIZATION_ID,
+        limit: 20,
+      })
+    );
+
+    expect(items).toEqual([]);
+  });
+
+  it("never returns another organization's activity, for the feed or a Case filter", async () => {
+    const mine = await seedCase(db);
+    const theirs = await seedCase(db, {
+      organizationId: TEST_OTHER_ORGANIZATION_ID,
+    });
+    await seedEvidence(db, mine.id, { label: "mine" });
+    await seedEvidence(db, theirs.id, { label: "theirs" });
+    await seedProposal(db, theirs.id, [], { summary: "theirs too" });
+    await seedJob(db, theirs.id);
+
+    const all = await runDomain(
+      listRecentActivityEffect({
+        organizationId: TEST_ORGANIZATION_ID,
+        limit: 50,
+      })
+    );
+    expect(all.map((item) => item.label)).toEqual(["mine"]);
+    expect(all.every((item) => item.caseId === mine.id)).toBe(true);
+
+    const theirFeed = await runDomain(
+      listRecentActivityEffect({
+        organizationId: TEST_OTHER_ORGANIZATION_ID,
+        limit: 50,
+      })
+    );
+    expect(theirFeed.every((item) => item.caseId === theirs.id)).toBe(true);
+
+    await expect(
+      runDomain(
+        listRecentActivityEffect({
+          organizationId: TEST_ORGANIZATION_ID,
+          caseId: theirs.id,
+        })
+      )
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 });

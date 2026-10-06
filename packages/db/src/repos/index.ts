@@ -1,17 +1,13 @@
-export { activityRepo } from "./activity.repo";
-export type {
-  RecentActivityOpts,
-  RecentEvidenceActivityRow,
-  RecentProposalActivityRow,
-} from "./activity.repo";
 export { activityLogRepo } from "./activity-log.repo";
 export type {
   ActivityRow,
   DrainActivityOpts,
+  FeedFilter,
   JobActivityLabelRow,
   NewActivityRow,
-  RecentActivityLogOpts,
+  ProposalActivityLabelRow,
   RecentActivityLogRow,
+  RecentFeedOpts,
 } from "./activity-log.repo";
 export { casesRepo } from "./cases.repo";
 export type { CasePatch, CaseRow, NewCase } from "./cases.repo";

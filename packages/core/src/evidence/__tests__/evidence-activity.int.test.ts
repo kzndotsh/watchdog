@@ -15,7 +15,7 @@ import {
   softDeleteEvidenceEffect,
 } from "@watchdog/core/evidence";
 import { Db, runDomainWith, transact } from "@watchdog/core/infra";
-import { activityLogRepo, db } from "@watchdog/db";
+import { activity, activityLogRepo, db } from "@watchdog/db";
 import { legacyEventForActivityEntry } from "@watchdog/schemas/feed";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
@@ -45,6 +45,11 @@ const START = { xid: "0", id: 0 } as const;
 async function log() {
   const rows = await activityLogRepo.drain(db, { after: START, limit: 1000 });
   return rows.filter((row) => row.kind === "evidence");
+}
+
+/** The seeds append their own entries; these tests count only what the code under test appends. */
+async function forgetSeedActivity() {
+  await db.delete(activity);
 }
 
 describe("Evidence write paths append to the activity log", () => {
@@ -111,6 +116,7 @@ describe("Evidence write paths append to the activity log", () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id);
     const evidence = await seedEvidence(db, cased.id, { label: "kept note" });
+    await forgetSeedActivity();
     const base = {
       caseId: cased.id,
       organizationId: TEST_ORGANIZATION_ID,
@@ -156,6 +162,7 @@ describe("Evidence write paths append to the activity log", () => {
   it("logs processed once, and nothing for already processed Evidence", async () => {
     const cased = await seedCase(db);
     const evidence = await seedEvidence(db, cased.id, { label: "to process" });
+    await forgetSeedActivity();
     const input = { caseId: cased.id, evidenceId: evidence.id } as const;
 
     await runDomain(markEvidenceProcessedEffect(input));

@@ -77,6 +77,15 @@ describe("test-kit db seeds", () => {
     const row = await seedEvidence(exec, testCaseId(1));
     expect(row.kind).toBe("attestation");
     expect(mocks.createEvidence).toHaveBeenCalled();
+    expect(mocks.appendActivity).toHaveBeenCalledWith(
+      exec,
+      expect.objectContaining({
+        kind: "evidence",
+        action: "captured",
+        subjectId: "ev-1",
+        label: "Attestation",
+      })
+    );
   });
 
   it("seedGraphWrite inserts a graph write patch", async () => {
@@ -134,6 +143,29 @@ describe("test-kit db seeds", () => {
     const row = await seedProposal(exec, testCaseId(1), patch);
     expect(row.id).toBe("prop-1");
     expect(mocks.createProposal).toHaveBeenCalled();
+    expect(mocks.appendActivity).toHaveBeenCalledWith(
+      exec,
+      expect.objectContaining({
+        kind: "proposal",
+        action: "created",
+        subjectId: "prop-1",
+      })
+    );
+  });
+
+  it("seedProposal also appends the decision of a decided proposal", async () => {
+    mocks.createProposal.mockResolvedValueOnce({ id: "prop-3" });
+    await seedProposal(exec, testCaseId(1), [], { status: "rejected" });
+    expect(mocks.appendActivity).toHaveBeenCalledWith(
+      exec,
+      expect.objectContaining({
+        kind: "proposal",
+        action: "rejected",
+        subjectId: "prop-3",
+        fromValue: "pending",
+        toValue: "rejected",
+      })
+    );
   });
 
   it("seedProposal preserves explicit null summary", async () => {

@@ -34,7 +34,7 @@ import {
   type DbExec,
   type NewProposal,
 } from "@watchdog/db";
-import type { ActivityKind } from "@watchdog/schemas/feed";
+import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import { fingerprintPatchOp, type PatchOp } from "@watchdog/schemas/graph";
 import type {
   ClaimClass,
@@ -336,6 +336,15 @@ export class SeedKit {
         throw new Error(`demo seed: mark processed failed for ${input.label}`);
       }
     }
+    await this.logEntry({
+      caseId: input.caseId,
+      kind: "evidence",
+      action: "captured",
+      subjectId: created.id,
+      label: evidenceDisplayLabel(created),
+      actorId: this.actorId,
+      at: input.at,
+    });
     this.tally.evidence += 1;
     return created.id;
   }
@@ -427,9 +436,46 @@ export class SeedKit {
     return created.id;
   }
 
+  /**
+   * The log entry a write path appends for a row the kit inserts directly,
+   * stamped at the time of the row itself, so Recent activity (which reads only
+   * the log) shows the seeded Evidence and Proposals.
+   */
+  private async logEntry(input: {
+    caseId: string;
+    kind: "evidence" | "proposal";
+    action: string;
+    subjectId: string;
+    label?: string;
+    actorId?: string;
+    fromValue?: string;
+    toValue?: string;
+    at: Date;
+  }): Promise<void> {
+    const entry = must(
+      `activity ${input.kind} ${input.action}`,
+      await activityLogRepo.append(this.exec, {
+        caseId: input.caseId,
+        kind: input.kind,
+        action: input.action,
+        subjectId: input.subjectId,
+        label: input.label ?? null,
+        actorId: input.actorId ?? null,
+        fromValue: input.fromValue ?? null,
+        toValue: input.toValue ?? null,
+      })
+    );
+    await this.exec
+      .update(activity)
+      .set({ createdAt: input.at })
+      .where(eq(activity.id, entry.id));
+    this.tally.activity += 1;
+  }
+
   async activity(input: {
     caseId: string;
-    kind: ActivityKind;
+    /** Task rows only: the other kinds are appended by the kit methods that insert them. */
+    kind: "task";
     action: "created" | "status_changed" | "updated" | "deleted";
     subjectId: string;
     label: string;
@@ -669,6 +715,26 @@ export class SeedKit {
       .update(proposals)
       .set({ createdAt: input.at })
       .where(eq(proposals.id, created.id));
+    await this.logEntry({
+      caseId: input.caseId,
+      kind: "proposal",
+      action: "created",
+      subjectId: created.id,
+      actorId: input.agentSourced === true ? this.actorId : undefined,
+      at: input.at,
+    });
+    if (input.status === "accepted" || input.status === "rejected") {
+      await this.logEntry({
+        caseId: input.caseId,
+        kind: "proposal",
+        action: input.status,
+        subjectId: created.id,
+        actorId: this.actorId,
+        fromValue: "pending",
+        toValue: input.status,
+        at: input.at,
+      });
+    }
     this.tally.proposals += 1;
     return created.id;
   }

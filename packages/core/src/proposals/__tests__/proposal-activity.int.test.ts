@@ -8,7 +8,7 @@ import {
   listProposalsForCaseEffect,
   rejectProposalEffect,
 } from "@watchdog/core/proposals";
-import { activityLogRepo, db } from "@watchdog/db";
+import { activity, activityLogRepo, db } from "@watchdog/db";
 import { legacyEventForActivityEntry } from "@watchdog/schemas/feed";
 import type { CaseId } from "@watchdog/schemas/shared";
 import {
@@ -41,6 +41,11 @@ function pendingCount(caseId: CaseId) {
       status: "pending",
     })
   ).then((rows) => rows.length);
+}
+
+/** The seeds append their own entries; these tests count only what the code under test appends. */
+async function forgetSeedActivity() {
+  await db.delete(activity);
 }
 
 describe("Proposal write paths append to the activity log", () => {
@@ -122,6 +127,7 @@ describe("Proposal write paths append to the activity log", () => {
     const { id: proposalId } = await seedProposal(db, cased.id, [
       buildClaimCreateOp(entity.id, "Attested", { id: testId(32) }),
     ]);
+    await forgetSeedActivity();
     const pendingBefore = await pendingCount(cased.id);
 
     await runDomain(
@@ -158,6 +164,7 @@ describe("Proposal write paths append to the activity log", () => {
     const { id: proposalId } = await seedProposal(db, cased.id, [
       buildClaimCreateOp(entity.id, "Needs evidence", { id: testId(33) }),
     ]);
+    await forgetSeedActivity();
 
     await expect(
       runDomain(
@@ -184,6 +191,7 @@ describe("Proposal write paths append to the activity log", () => {
     const { id: proposalId } = await seedProposal(db, cased.id, [
       buildClaimCreateOp(entity.id, "Wrong", { id: testId(34) }),
     ]);
+    await forgetSeedActivity();
     const input = {
       caseId: cased.id,
       organizationId: TEST_ORGANIZATION_ID,
@@ -218,6 +226,7 @@ describe("Proposal write paths append to the activity log", () => {
     const { id: proposalId } = await seedProposal(db, cased.id, [
       buildClaimCreateOp(entity.id, "Race", { id: testId(35) }),
     ]);
+    await forgetSeedActivity();
     const accept = () =>
       runDomain(
         acceptProposalEffect({

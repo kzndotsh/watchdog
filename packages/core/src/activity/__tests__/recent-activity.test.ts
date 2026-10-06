@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import type { JobActivityLabelRow } from "@watchdog/db";
+import {
+  ACTIVITY_ENTRY_KINDS,
+  isActivityActionForKind,
+} from "@watchdog/schemas/feed";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { jobLabelSubject } from "../job-feed";
 import {
   clampActivityLimit,
-  mergeActivityItems,
-  perSourceFetchLimit,
+  FEED_ACTIONS,
+  proposalEventAction,
 } from "../recent-activity";
 
 function labelRow(
@@ -140,36 +144,6 @@ describe("jobLabelSubject", () => {
   });
 });
 
-describe("mergeActivityItems", () => {
-  it("sorts newest first and caps the list", () => {
-    const merged = mergeActivityItems(
-      [
-        {
-          id: testId(1),
-          kind: "job",
-          action: "Running",
-          caseId: testCaseId(10),
-          caseName: "Case",
-          label: "Job",
-          at: "2026-01-01T00:00:00.000Z",
-        },
-        {
-          id: testId(2),
-          kind: "evidence",
-          action: "Captured",
-          caseId: testCaseId(10),
-          caseName: "Case",
-          label: "Evidence",
-          at: "2026-01-03T00:00:00.000Z",
-        },
-      ],
-      1
-    );
-    expect(merged).toHaveLength(1);
-    expect(merged[0]?.kind).toBe("evidence");
-  });
-});
-
 describe("clampActivityLimit", () => {
   it("clamps to [1, 100] and falls back for non-finite values", () => {
     expect(clampActivityLimit(undefined)).toBe(15);
@@ -179,10 +153,37 @@ describe("clampActivityLimit", () => {
   });
 });
 
-describe("perSourceFetchLimit", () => {
-  it("over-fetches per source before merge without unbounded growth", () => {
-    expect(perSourceFetchLimit(15)).toBe(60);
-    expect(perSourceFetchLimit(30)).toBe(100);
-    expect(perSourceFetchLimit(5)).toBe(20);
+describe("proposalEventAction", () => {
+  it("names the entry verbs and falls back to proposed", () => {
+    expect(proposalEventAction("created")).toBe("Proposed");
+    expect(proposalEventAction("accepted")).toBe("Accepted");
+    expect(proposalEventAction("rejected")).toBe("Rejected");
+  });
+});
+
+describe("FEED_ACTIONS", () => {
+  it("only lists verbs the log allows for the kind", () => {
+    for (const [kind, actions] of Object.entries(FEED_ACTIONS)) {
+      for (const action of actions) {
+        expect(
+          isActivityActionForKind(
+            ACTIVITY_ENTRY_KINDS.find((k) => k === kind) ?? "task",
+            action
+          )
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("keeps Graph, Case and the non-feed Evidence and Task verbs out", () => {
+    expect(Object.keys(FEED_ACTIONS).sort()).toEqual([
+      "evidence",
+      "job",
+      "proposal",
+      "task",
+    ]);
+    expect(FEED_ACTIONS.evidence).toEqual(["captured"]);
+    expect(FEED_ACTIONS.task).not.toContain("updated");
+    expect(FEED_ACTIONS.task).not.toContain("reordered");
   });
 });

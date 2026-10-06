@@ -1,6 +1,7 @@
 import { and, desc, eq, getTableColumns, inArray, or, sql } from "drizzle-orm";
 
 import type { ActivityCursor, ActivityEntryKind } from "@watchdog/schemas/feed";
+import type { PatchOp } from "@watchdog/schemas/graph";
 import {
   normalizeUuidList,
   type CaseId,
@@ -13,6 +14,7 @@ import { activity } from "../schema/activity";
 import { cases } from "../schema/cases";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
+import { proposals } from "../schema/proposals";
 import { clampSearchLimit } from "./_limits";
 import { orgCaseFilter } from "./_org-case-filter";
 import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
@@ -41,12 +43,17 @@ export interface DrainActivityOpts {
   caseId?: string;
 }
 
-export interface RecentActivityLogOpts {
+/** One kind and the actions of it the feed shows (`FEED_ACTIONS` in core). */
+export interface FeedFilter {
+  kind: ActivityEntryKind;
+  actions: readonly string[];
+}
+
+export interface RecentFeedOpts {
   organizationId: OrganizationId;
   caseId?: string;
-  kind: ActivityEntryKind;
-  /** The feed allowlist for the kind (`FEED_ACTIONS` in core). */
-  actions: readonly string[];
+  /** Allowlist of kind and action pairs; an entry outside every filter is never read. */
+  filters: readonly FeedFilter[];
   limit: number;
 }
 
@@ -64,6 +71,16 @@ export interface RecentActivityLogRow {
   actorId: string | null;
   actorLabel: string | null;
   at: Date;
+}
+
+/** What Recent activity needs to label a Proposal entry (Proposal labels are resolved on read). */
+export interface ProposalActivityLabelRow {
+  id: string;
+  caseId: CaseId;
+  summary: string | null;
+  patch: PatchOp[];
+  capabilityId: string | null;
+  playbookId: string | null;
 }
 
 /** What Recent activity needs to label a Job entry (Job labels are resolved on read). */
@@ -197,41 +214,6 @@ export const activityLogRepo = {
     return cursorOf(row);
   },
 
-  /** Recent entries of one kind for the workspace feed, newest first. */
-  async recent(
-    exec: DbExec,
-    opts: RecentActivityLogOpts
-  ): Promise<RecentActivityLogRow[]> {
-    if (opts.actions.length === 0) return [];
-    return exec
-      .select({
-        id: activity.id,
-        caseId: activity.caseId,
-        caseName: cases.name,
-        kind: activity.kind,
-        action: activity.action,
-        subjectId: activity.subjectId,
-        groupId: activity.groupId,
-        label: activity.label,
-        fromValue: activity.fromValue,
-        toValue: activity.toValue,
-        actorId: activity.actorId,
-        actorLabel: activity.actorLabel,
-        at: activity.createdAt,
-      })
-      .from(activity)
-      .innerJoin(cases, eq(cases.id, activity.caseId))
-      .where(
-        and(
-          orgCaseFilter(opts.organizationId, opts.caseId, activity.caseId),
-          eq(activity.kind, opts.kind),
-          inArray(activity.action, [...opts.actions])
-        )
-      )
-      .orderBy(desc(activity.createdAt), desc(activity.id))
-      .limit(clampSearchLimit(opts.limit));
-  },
-
   /**
    * Label inputs for the Jobs a feed page names: the entries' own Jobs plus
    * every step of the playbook runs they collapse into. The caller passes ids
@@ -268,16 +250,26 @@ export const activityLogRepo = {
   },
 
   /**
-   * Like `recent`, collapsed by `group_id`: only the newest entry of each
-   * group survives (a playbook run's step Jobs show as one row), and an entry
-   * with no group is its own group, so a solo Job keeps its whole history.
-   * The collapse runs before the limit, so a busy run cannot crowd the page.
+   * Recent activity: the newest entries the allowlist admits, newest first, in
+   * one org-scoped query (the only read of the feed). Collapsed by `group_id`:
+   * only the newest entry of each group survives (a playbook run's step Jobs
+   * show as one row), and an entry with no group is its own group, so a solo
+   * Job keeps its whole history. The collapse runs before the limit, so a busy
+   * run cannot crowd the page.
    */
-  async recentCollapsed(
+  async recentFeed(
     exec: DbExec,
-    opts: RecentActivityLogOpts
+    opts: RecentFeedOpts
   ): Promise<RecentActivityLogRow[]> {
-    if (opts.actions.length === 0) return [];
+    const admitted = opts.filters
+      .filter((filter) => filter.actions.length > 0)
+      .map((filter) =>
+        and(
+          eq(activity.kind, filter.kind),
+          inArray(activity.action, [...filter.actions])
+        )
+      );
+    if (admitted.length === 0) return [];
     const ranked = exec
       .select({
         id: activity.id,
@@ -303,8 +295,7 @@ export const activityLogRepo = {
       .where(
         and(
           orgCaseFilter(opts.organizationId, opts.caseId, activity.caseId),
-          eq(activity.kind, opts.kind),
-          inArray(activity.action, [...opts.actions])
+          or(...admitted)
         )
       )
       .as("ranked");
@@ -328,5 +319,33 @@ export const activityLogRepo = {
       .where(eq(ranked.newestInGroup, 1))
       .orderBy(desc(ranked.at), desc(ranked.id))
       .limit(clampSearchLimit(opts.limit));
+  },
+
+  /**
+   * Label inputs for the Proposals a feed page names: the Proposal's own
+   * summary and patch plus the capability and playbook of the Job that made
+   * it. The caller passes ids taken from an org-scoped read of the log; this
+   * method does not scope.
+   */
+  async proposalLabelRows(
+    exec: DbExec,
+    proposalIds: readonly string[]
+  ): Promise<ProposalActivityLabelRow[]> {
+    const ids = normalizeUuidList([...proposalIds]);
+    if (ids.length === 0) return [];
+    return exec
+      .select({
+        id: proposals.id,
+        caseId: proposals.caseId,
+        summary: proposals.summary,
+        patch: proposals.patch,
+        capabilityId: jobs.capabilityId,
+        playbookId: playbookRuns.playbookId,
+      })
+      .from(proposals)
+      .leftJoin(jobs, eq(proposals.jobId, jobs.id))
+      .leftJoin(playbookRuns, eq(jobs.playbookRunId, playbookRuns.id))
+      .where(inArray(proposals.id, ids))
+      .orderBy(proposals.id);
   },
 };
