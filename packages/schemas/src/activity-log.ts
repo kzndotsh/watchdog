@@ -131,6 +131,22 @@ export function legacyEventForActivityEntry(
       status: entry.action,
     };
   }
+  if (entry.kind === "evidence" && entry.subjectId !== null) {
+    return {
+      type: "evidence_changed",
+      caseId: entry.caseId,
+      evidenceId: entry.subjectId,
+    };
+  }
+  if (entry.kind === "proposal") {
+    return entry.action === "created" && entry.subjectId !== null
+      ? {
+          type: "proposal_created",
+          caseId: entry.caseId,
+          proposalId: entry.subjectId,
+        }
+      : { type: "proposal_queue_changed", caseId: entry.caseId };
+  }
   return null;
 }
 

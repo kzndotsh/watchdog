@@ -104,6 +104,8 @@ export const softDelete = authed
       softDeleteEvidenceEffect({
         ...input,
         organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
       })
     );
     return { ok: true as const };
@@ -123,6 +125,8 @@ export const restore = authed
       restoreEvidenceEffect({
         ...input,
         organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
       })
     );
     return { ok: true as const };
@@ -142,6 +146,8 @@ export const attachEntity = authed
       attachEvidenceEntityEffect({
         ...input,
         organizationId: context.actor.organizationId,
+        actorId: context.actor.userId,
+        actorLabel: actorLabelFromActor(context.actor),
       })
     )
   );

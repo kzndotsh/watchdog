@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { requireCapability } from "@watchdog/caps";
-import * as dbModule from "@watchdog/db";
-import { db, evidenceRepo, jobsRepo } from "@watchdog/db";
+import { activityLogRepo, db, evidenceRepo, jobsRepo } from "@watchdog/db";
 import { resetTestDb, seedCase, seedJob } from "@watchdog/test-db";
 
 import { runDomain } from "../../infra/run-domain";
@@ -10,6 +9,14 @@ import type { CollectResult } from "../stages/collect.ts";
 import { createJobLog } from "../stages/helpers.ts";
 import { landEvidenceEffect } from "../stages/land-evidence.ts";
 import type { PreflightState } from "../stages/preflight.ts";
+
+async function evidenceEntries() {
+  const rows = await activityLogRepo.drain(db, {
+    after: { xid: "0", id: 0 },
+    limit: 1000,
+  });
+  return rows.filter((row) => row.kind === "evidence");
+}
 
 function sha(): string {
   return "cd".repeat(32);
@@ -143,28 +150,26 @@ describe("landEvidence", () => {
     expect(rows).toHaveLength(0);
   });
 
-  it("emits evidence_changed after landing new artifacts", async () => {
-    const notifySpy = vi
-      .spyOn(dbModule, "notifyEvent")
-      .mockResolvedValue(undefined);
+  it("appends one captured entry per landed Evidence row", async () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
 
-    await runDomain(landEvidenceEffect(await stateFor(job.id), collected()));
+    const ids = await runDomain(
+      landEvidenceEffect(await stateFor(job.id), collected())
+    );
 
-    await vi.waitFor(() => {
-      expect(notifySpy).toHaveBeenCalledWith({
-        type: "evidence_changed",
-        caseId: cased.id,
-      });
+    const rows = await evidenceEntries();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      action: "captured",
+      subjectId: ids[0],
+      caseId: cased.id,
+      label: "snapshot.html",
+      actorId: job.actorId,
     });
-    notifySpy.mockRestore();
   });
 
-  it("does not emit evidence_changed when only linking source evidence", async () => {
-    const notifySpy = vi
-      .spyOn(dbModule, "notifyEvent")
-      .mockResolvedValue(undefined);
+  it("appends nothing when only linking source evidence", async () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
     const sourceId = "11111111-1111-4111-8111-000000000077";
@@ -189,14 +194,10 @@ describe("landEvidence", () => {
       )
     );
 
-    expect(notifySpy).not.toHaveBeenCalled();
-    notifySpy.mockRestore();
+    expect(await evidenceEntries()).toEqual([]);
   });
 
-  it("does not emit evidence_changed when reusing cached evidence ids", async () => {
-    const notifySpy = vi
-      .spyOn(dbModule, "notifyEvent")
-      .mockResolvedValue(undefined);
+  it("appends nothing when reusing cached evidence ids", async () => {
     const cased = await seedCase(db);
     const job = await seedJob(db, cased.id, { status: "running" });
 
@@ -210,7 +211,6 @@ describe("landEvidence", () => {
       )
     );
 
-    expect(notifySpy).not.toHaveBeenCalled();
-    notifySpy.mockRestore();
+    expect(await evidenceEntries()).toEqual([]);
   });
 });

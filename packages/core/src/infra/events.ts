@@ -59,39 +59,3 @@ export function notifyEntityChangedEffect(caseId: CaseId): Effect.Effect<void> {
     Effect.asVoid
   );
 }
-
-/**
- * Fan-out after Evidence mutations (dump, attach, hide/restore). Collect and
- * intake consumers invalidate evidence queries on receipt.
- */
-export function notifyEvidenceChangedEffect(
-  caseId: CaseId,
-  evidenceId?: string
-): Effect.Effect<void> {
-  return notifyWatchdogEventEffect(
-    evidenceId === undefined
-      ? { type: "evidence_changed", caseId }
-      : { type: "evidence_changed", caseId, evidenceId }
-  ).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
-}
-
-export function notifyProposalCreatedEffect(
-  caseId: CaseId,
-  proposalId: string
-): Effect.Effect<void> {
-  return notifyWatchdogEventEffect({
-    type: "proposal_created",
-    caseId,
-    proposalId,
-  }).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
-}
-
-/** Fan-out after accept/reject — Triage and overview pending counts. */
-export function notifyProposalQueueChangedEffect(
-  caseId: CaseId
-): Effect.Effect<void> {
-  return notifyWatchdogEventEffect({
-    type: "proposal_queue_changed",
-    caseId,
-  }).pipe(Effect.forkDetach({ startImmediately: true }), Effect.asVoid);
-}

@@ -1,10 +1,10 @@
 import { Effect } from "effect";
 
-import { evidenceRepo, jobsRepo } from "@watchdog/db";
+import { jobsRepo } from "@watchdog/db";
 import { isJobInternalArtifact } from "@watchdog/schemas/jobs";
 
+import { createCapturedEvidenceEffect } from "../../evidence/evidence-activity";
 import type { Db } from "../../infra/db-service";
-import { notifyEvidenceChangedEffect } from "../../infra/events";
 import { tryDb } from "../../infra/postgres-effect";
 import { transact } from "../../infra/postgres-tx";
 import { InvalidError, type DomainTag } from "../../infra/tagged-errors";
@@ -37,32 +37,29 @@ export function landEvidenceEffect(
   const entityId = entityParsed;
 
   return Effect.gen(function* landEvidenceGen() {
-    const { evidenceIds, newEvidenceCount } = yield* transact((tx) =>
+    return yield* transact((tx) =>
       Effect.gen(function* landEvidenceTx() {
         const landed: string[] = [];
         yield* Effect.forEach(
           collected.artifacts.filter((art) => !isJobInternalArtifact(art.name)),
           (art) =>
-            tryDb(() =>
-              evidenceRepo.create(tx, {
-                caseId: state.job.caseId,
-                entityId: entityId ?? null,
-                kind:
-                  art.mime?.startsWith("text/html") ||
-                  art.mime === "application/pdf"
-                    ? "url_archive"
-                    : "file",
-                label: art.name,
-                mime: art.mime,
-                uri: art.uri,
-                sha256: art.sha256,
-                actorId: state.job.actorId,
-                actorLabel: state.job.actorLabel,
-              })
-            ).pipe(
+            createCapturedEvidenceEffect(tx, state.job.caseId, {
+              entityId: entityId ?? null,
+              kind:
+                art.mime?.startsWith("text/html") ||
+                art.mime === "application/pdf"
+                  ? "url_archive"
+                  : "file",
+              label: art.name,
+              mime: art.mime,
+              uri: art.uri,
+              sha256: art.sha256,
+              actorId: state.job.actorId,
+              actorLabel: state.job.actorLabel,
+            }).pipe(
               Effect.tap((row) =>
                 Effect.sync(() => {
-                  if (row) landed.push(row.id);
+                  landed.push(row.id);
                 })
               )
             ),
@@ -83,16 +80,12 @@ export function landEvidenceEffect(
           })
         );
 
-        return { evidenceIds: jobEvidenceIds, newEvidenceCount: landed.length };
+        // Each new Evidence row appended its own entry above. Linking source
+        // Evidence via linkedSource updates Job.evidenceIds but not the Evidence
+        // table (Process caps land internal artifacts only; markEvidenceProcessed
+        // logs separately).
+        return jobEvidenceIds;
       })
     );
-
-    // Only new Evidence rows matter — linking source Evidence via linkedSource
-    // updates Job.evidenceIds but does not change the Evidence table (Process
-    // caps land internal artifacts only; markEvidenceProcessed fires separately).
-    if (newEvidenceCount > 0) {
-      yield* notifyEvidenceChangedEffect(state.job.caseId);
-    }
-    return evidenceIds;
   });
 }

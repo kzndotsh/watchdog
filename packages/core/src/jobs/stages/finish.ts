@@ -5,7 +5,6 @@ import type { JobHandoff } from "@watchdog/schemas/shared";
 import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import { notifyProposalCreatedEffect } from "../../infra/events";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { setJobStatusEffect } from "../set-job-status";
 import { linkedEvidenceIdStrict, type JobLog } from "./helpers";
@@ -84,11 +83,6 @@ export function finishEffect(
           evidenceId,
         });
       }
-    }
-
-    if (input.proposalId !== null && input.interpretError === null) {
-      const proposalId = input.proposalId;
-      yield* notifyProposalCreatedEffect(state.job.caseId, proposalId);
     }
 
     return "succeeded" as const;
