@@ -123,6 +123,10 @@ _Avoid_: Backup, master
 A kanban work item on a Case (backlog, in_progress, blocked, done, dropped); not a Graph write and not a Job. Detail: [`domains.md`](docs/reference/web/domains.md).
 _Avoid_: Job, ticket, to-do
 
+**Activity**:
+The append-only log of what changed on a Case: one entry per domain change (a subject noun, a verb, who, a short label), written in the same transaction as the change. It is the one source of Recent activity and of the live-update signal, pruned after 90 days; it is not the Graph audit (`graph_writes` is) and holds no Evidence bodies or patches. Detail: [`ADR-0005`](docs/adr/0005-unified-activity-log.md).
+_Avoid_: Changes, audit log, event stream
+
 ## Custody tiers
 
 **unverified**:

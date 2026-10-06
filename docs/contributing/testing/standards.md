@@ -14,7 +14,7 @@ Arrange / Act / Assert. One behavior per `it`. Names read as specs: `"rejects X 
 
 ## Contracts, not implementation
 
-Assert on outputs, persisted state, and caller-visible side effects. Do not assert "function X was called" unless the _contract_ is that a call happens (e.g. `notifyEvent` after commit). Prefer public contracts (module exports, API JSON, CLI JSON) over internal sequences.
+Assert on outputs, persisted state, and caller-visible side effects. Do not assert "function X was called" unless the _contract_ is that a call happens (e.g. an activity entry appended in the same transaction as the write). Prefer public contracts (module exports, API JSON, CLI JSON) over internal sequences.
 
 ## File suffixes
 
