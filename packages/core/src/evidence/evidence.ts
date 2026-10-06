@@ -40,14 +40,17 @@ import {
 } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
 import type { Db } from "../infra/db-service";
-import { notifyEvidenceChangedEffect } from "../infra/events";
-import { tryDbWith, tryDbOn } from "../infra/postgres-effect";
+import { tryDb, tryDbOn, tryDbWith } from "../infra/postgres-effect";
+import { transact } from "../infra/postgres-tx";
 import {
-  InternalError,
   InvalidError,
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
+import {
+  appendEvidenceActivityEffect,
+  createCapturedEvidenceEffect,
+} from "./evidence-activity";
 
 export interface EvidenceRecord {
   id: string;
@@ -101,6 +104,9 @@ export interface SoftDeleteInput {
   caseId: CaseId;
   organizationId: OrganizationId;
   evidenceId: string;
+  /** Who hid or restored it, for the activity entry. */
+  actorId?: string;
+  actorLabel?: string | null;
 }
 
 export interface PresignUploadInput {
@@ -238,9 +244,8 @@ export function dumpPasteEffect(
     });
     const entityId = entityIdForWrite(input.entityId);
     const actorId = yield* requireActorIdEffect(input.actorId);
-    const row = yield* tryDbWith((exec) =>
-      evidenceRepo.create(exec, {
-        caseId: scopedCaseId,
+    const row = yield* transact((tx) =>
+      createCapturedEvidenceEffect(tx, scopedCaseId, {
         entityId,
         kind: "file",
         label: trimmedOrNull(input.label),
@@ -252,12 +257,7 @@ export function dumpPasteEffect(
         actorLabel: actorLabelForPersist(input.actorLabel),
       })
     );
-    if (!row) {
-      return yield* new InternalError({ reason: "Failed to create Evidence" });
-    }
-    const record = yield* labeledEvidence(row);
-    yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
-    return record;
+    return yield* labeledEvidence(row);
   });
 }
 
@@ -276,9 +276,8 @@ export function dumpUrlEffect(
     }
     const entityId = entityIdForWrite(input.entityId);
     const actorId = yield* requireActorIdEffect(input.actorId);
-    const row = yield* tryDbWith((exec) =>
-      evidenceRepo.create(exec, {
-        caseId: scopedCaseId,
+    const row = yield* transact((tx) =>
+      createCapturedEvidenceEffect(tx, scopedCaseId, {
         entityId,
         kind: "other",
         label: trimmedOrNull(input.label),
@@ -289,12 +288,7 @@ export function dumpUrlEffect(
         actorLabel: actorLabelForPersist(input.actorLabel),
       })
     );
-    if (!row) {
-      return yield* new InternalError({ reason: "Failed to create Evidence" });
-    }
-    const record = yield* labeledEvidence(row);
-    yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
-    return record;
+    return yield* labeledEvidence(row);
   });
 }
 
@@ -310,13 +304,26 @@ export function softDeleteEvidenceEffect(
       input.evidenceId,
       "Evidence"
     );
-    const row = yield* tryDbWith((exec) =>
-      evidenceRepo.softDelete(exec, scopedCaseId, evidenceId)
+    yield* transact((tx) =>
+      Effect.gen(function* softDeleteEvidenceTx() {
+        const row = yield* tryDb(() =>
+          evidenceRepo.softDelete(tx, scopedCaseId, evidenceId)
+        );
+        if (!row) {
+          return yield* new NotFoundError({
+            entity: "Evidence",
+            id: evidenceId,
+          });
+        }
+        yield* appendEvidenceActivityEffect(tx, {
+          caseId: scopedCaseId,
+          action: "hidden",
+          evidenceId,
+          actorId: input.actorId,
+          actorLabel: input.actorLabel,
+        });
+      })
     );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
-    }
-    yield* notifyEvidenceChangedEffect(scopedCaseId, evidenceId);
   });
 }
 
@@ -333,13 +340,26 @@ export function restoreEvidenceEffect(
       input.evidenceId,
       "Evidence"
     );
-    const row = yield* tryDbWith((exec) =>
-      evidenceRepo.restore(exec, scopedCaseId, evidenceId)
+    yield* transact((tx) =>
+      Effect.gen(function* restoreEvidenceTx() {
+        const row = yield* tryDb(() =>
+          evidenceRepo.restore(tx, scopedCaseId, evidenceId)
+        );
+        if (!row) {
+          return yield* new NotFoundError({
+            entity: "Evidence",
+            id: evidenceId,
+          });
+        }
+        yield* appendEvidenceActivityEffect(tx, {
+          caseId: scopedCaseId,
+          action: "restored",
+          evidenceId,
+          actorId: input.actorId,
+          actorLabel: input.actorLabel,
+        });
+      })
     );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
-    }
-    yield* notifyEvidenceChangedEffect(scopedCaseId, evidenceId);
   });
 }
 
@@ -348,6 +368,8 @@ export function attachEvidenceEntityEffect(input: {
   organizationId: OrganizationId;
   evidenceId: string;
   entityId: string | null;
+  actorId?: string;
+  actorLabel?: string | null;
 }): Effect.Effect<EvidenceRecord, DomainTag, Db> {
   return Effect.gen(function* attachEvidenceEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(
@@ -360,15 +382,30 @@ export function attachEvidenceEntityEffect(input: {
     );
     yield* maybeAssertEntityEffect(scopedCaseId, input.entityId);
     const entityId = entityIdForWrite(input.entityId);
-    const row = yield* tryDbWith((exec) =>
-      evidenceRepo.setEntityInCase(exec, scopedCaseId, evidenceId, entityId)
+    const row = yield* transact((tx) =>
+      Effect.gen(function* attachEvidenceEntityTx() {
+        const updated = yield* tryDb(() =>
+          evidenceRepo.setEntityInCase(tx, scopedCaseId, evidenceId, entityId)
+        );
+        if (!updated) {
+          return yield* new NotFoundError({
+            entity: "Evidence",
+            id: evidenceId,
+          });
+        }
+        yield* appendEvidenceActivityEffect(tx, {
+          caseId: scopedCaseId,
+          action: "attached",
+          evidenceId,
+          row: updated,
+          actorId: input.actorId,
+          actorLabel: input.actorLabel,
+          toValue: entityId,
+        });
+        return updated;
+      })
     );
-    if (!row) {
-      return yield* new NotFoundError({ entity: "Evidence", id: evidenceId });
-    }
-    const record = yield* labeledEvidence(row);
-    yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
-    return record;
+    return yield* labeledEvidence(row);
   });
 }
 
@@ -418,9 +455,8 @@ export function confirmFileUploadEffect(
     });
     const entityId = entityIdForWrite(input.entityId);
     const scopedActorId = yield* requireActorIdEffect(actorId);
-    const row = yield* tryDbWith((exec) =>
-      evidenceRepo.create(exec, {
-        caseId: scopedCaseId,
+    const row = yield* transact((tx) =>
+      createCapturedEvidenceEffect(tx, scopedCaseId, {
         entityId,
         kind: "file",
         label: trimmedOrNull(input.label),
@@ -431,12 +467,7 @@ export function confirmFileUploadEffect(
         actorLabel: actorLabelForPersist(actorLabel),
       })
     );
-    if (!row) {
-      return yield* new InternalError({ reason: "Failed to create Evidence" });
-    }
-    const record = yield* labeledEvidence(row);
-    yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
-    return record;
+    return yield* labeledEvidence(row);
   });
 }
 
@@ -491,27 +522,23 @@ export function createAttestationEffect(
     }
 
     const actorId = yield* requireActorIdEffect(input.actorId);
-    const row = yield* tryDbOn(input.tx, (handle) =>
-      evidenceRepo.create(handle, {
-        caseId: scopedCaseId,
-        entityId,
-        kind: "attestation",
-        label: trimmedOrUndefined(input.label) ?? "Accept attestation",
-        text,
-        actorId,
-        actorLabel: actorLabelForPersist(input.actorLabel),
-      })
-    );
-    if (!row) {
-      return yield* new InternalError({
-        reason: "Failed to create attestation",
-      });
-    }
-    const record = yield* labeledEvidence(row);
-    if (input.tx === undefined) {
-      yield* notifyEvidenceChangedEffect(scopedCaseId, record.id);
-    }
-    return record;
+    const values = {
+      entityId,
+      kind: "attestation" as const,
+      label: trimmedOrUndefined(input.label) ?? "Accept attestation",
+      text,
+      actorId,
+      actorLabel: actorLabelForPersist(input.actorLabel),
+    };
+    // Inside the caller's transaction (Accept, agent write) the entry commits
+    // or rolls back with it; standing alone it gets its own.
+    const row =
+      input.tx === undefined
+        ? yield* transact((tx) =>
+            createCapturedEvidenceEffect(tx, scopedCaseId, values)
+          )
+        : yield* createCapturedEvidenceEffect(input.tx, scopedCaseId, values);
+    return yield* labeledEvidence(row);
   });
 }
 

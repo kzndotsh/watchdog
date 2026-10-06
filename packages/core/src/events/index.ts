@@ -1,8 +1,5 @@
 export {
   notifyEntityChangedEffect,
-  notifyEvidenceChangedEffect,
-  notifyProposalCreatedEffect,
-  notifyProposalQueueChangedEffect,
   notifyJobUpdateEffect,
   listenForEvents,
 } from "../infra/events";

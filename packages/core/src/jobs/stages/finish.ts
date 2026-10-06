@@ -5,10 +5,7 @@ import type { JobHandoff } from "@watchdog/schemas/shared";
 import { markEvidenceProcessedEffect } from "../../evidence/process-evidence";
 import { nowDateEffect } from "../../infra/clock";
 import type { Db } from "../../infra/db-service";
-import {
-  notifyJobUpdateEffect,
-  notifyProposalCreatedEffect,
-} from "../../infra/events";
+import { notifyJobUpdateEffect } from "../../infra/events";
 import type { DomainTag } from "../../infra/tagged-errors";
 import { setJobStatusEffect } from "../set-job-status";
 import { linkedEvidenceIdStrict, type JobLog } from "./helpers";
@@ -89,11 +86,6 @@ export function finishEffect(
 
     // SSE after DB writes so clients refetch committed state (processedAt included).
     yield* notifyJobUpdateEffect(state.job.caseId, state.jobId, "succeeded");
-
-    if (input.proposalId !== null && input.interpretError === null) {
-      const proposalId = input.proposalId;
-      yield* notifyProposalCreatedEffect(state.job.caseId, proposalId);
-    }
 
     return "succeeded" as const;
   });

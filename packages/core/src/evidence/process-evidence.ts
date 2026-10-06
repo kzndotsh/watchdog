@@ -32,11 +32,8 @@ import {
   requireTrimmedGraphId,
 } from "../graph/patch/guards";
 import type { Db } from "../infra/db-service";
-import {
-  notifyEvidenceChangedEffect,
-  notifyJobUpdateEffect,
-} from "../infra/events";
-import { tryDb, tryDbWith } from "../infra/postgres-effect";
+import { notifyJobUpdateEffect } from "../infra/events";
+import { tryDb } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
   InternalError,
@@ -53,6 +50,7 @@ import {
   toJobRecord,
   type JobRecord,
 } from "../jobs/start-job";
+import { appendEvidenceActivityEffect } from "./evidence-activity";
 
 function startCapForEvidenceEffect(input: {
   caseId: CaseId;
@@ -213,12 +211,20 @@ export function markEvidenceProcessedEffect(input: {
     if (caseId === undefined || evidenceId === undefined) {
       return;
     }
-    const marked = yield* tryDbWith((exec) =>
-      evidenceRepo.markProcessed(exec, caseId, evidenceId)
+    yield* transact((tx) =>
+      Effect.gen(function* markEvidenceProcessedTx() {
+        const marked = yield* tryDb(() =>
+          evidenceRepo.markProcessed(tx, caseId, evidenceId)
+        );
+        if (marked) {
+          yield* appendEvidenceActivityEffect(tx, {
+            caseId,
+            action: "processed",
+            evidenceId,
+          });
+        }
+      })
     );
-    if (marked) {
-      yield* notifyEvidenceChangedEffect(caseId, evidenceId);
-    }
   });
 }
 

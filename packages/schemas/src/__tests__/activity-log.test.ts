@@ -108,6 +108,46 @@ describe("legacyEventForActivityEntry", () => {
     expect(isWatchdogEvent(event)).toBe(true);
   });
 
+  it("adapts every evidence action to evidence_changed with the Evidence id", () => {
+    for (const action of ACTIVITY_ENTRY_ACTIONS.evidence) {
+      const event = legacyEventForActivityEntry(
+        activityEntrySchema.parse({ ...entry, kind: "evidence", action })
+      );
+      expect(event).toEqual({
+        type: "evidence_changed",
+        caseId: testId(10),
+        evidenceId: testId(20),
+      });
+      expect(isWatchdogEvent(event)).toBe(true);
+    }
+  });
+
+  it("adapts a created Proposal to proposal_created and a decision to proposal_queue_changed", () => {
+    const created = legacyEventForActivityEntry(
+      activityEntrySchema.parse({
+        ...entry,
+        kind: "proposal",
+        action: "created",
+      })
+    );
+    expect(created).toEqual({
+      type: "proposal_created",
+      caseId: testId(10),
+      proposalId: testId(20),
+    });
+    expect(isWatchdogEvent(created)).toBe(true);
+    for (const action of ["accepted", "rejected"]) {
+      const decided = legacyEventForActivityEntry(
+        activityEntrySchema.parse({ ...entry, kind: "proposal", action })
+      );
+      expect(decided).toEqual({
+        type: "proposal_queue_changed",
+        caseId: testId(10),
+      });
+      expect(isWatchdogEvent(decided)).toBe(true);
+    }
+  });
+
   it("returns null for a kind that has no legacy event yet", () => {
     const job = activityEntrySchema.parse({
       ...entry,

@@ -21,11 +21,7 @@ import { applyPatchEffect } from "../graph/patch/apply-patch";
 import { assertCaseInOrgEffect } from "../graph/patch/guards";
 import { parseAgentPatchEffect } from "../graph/patch/parse-agent-patch";
 import type { Db } from "../infra/db-service";
-import {
-  notifyEntityChangedEffect,
-  notifyEvidenceChangedEffect,
-  notifyProposalCreatedEffect,
-} from "../infra/events";
+import { notifyEntityChangedEffect } from "../infra/events";
 import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import {
@@ -143,7 +139,6 @@ export function createAgentProposalEffect(input: {
     }
 
     const proposalId = proposed.proposalId;
-    yield* notifyProposalCreatedEffect(scopedCaseId, proposalId);
 
     const proposal = yield* getProposalForCaseEffect(scopedCaseId, proposalId);
     if (!proposal) {
@@ -298,9 +293,6 @@ export function writeGraphFromAgentEffect(input: {
 
     if (!result.replayed) {
       yield* notifyEntityChangedEffect(scopedCaseId);
-      if (plan.summary !== null && plan.summary !== "") {
-        yield* notifyEvidenceChangedEffect(scopedCaseId);
-      }
     }
 
     return result;
