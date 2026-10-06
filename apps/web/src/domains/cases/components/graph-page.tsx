@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { CaseGraphCanvas } from "@/domains/cases/components/case-graph/case-graph-canvas";
@@ -9,11 +9,9 @@ import type { CaseEdgeRecord } from "@/domains/entities/edges/types";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { cn } from "@/lib/utils";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -30,7 +28,6 @@ function GraphCanvasBody({
   caseId: string;
   className?: string;
 }) {
-  const queryClient = useQueryClient();
   const entitiesQuery = useQuery(entitiesListQuery(caseId));
   const edgesQuery = useQuery(edgesForCaseQuery(caseId));
   const graphPending = listPending(entitiesQuery) || listPending(edgesQuery);
@@ -41,12 +38,6 @@ function GraphCanvasBody({
   );
   const graphPlaceholder =
     entitiesQuery.isPlaceholderData || edgesQuery.isPlaceholderData;
-
-  useLiveEvents(caseId, (event) => {
-    if (event.type === "entity_changed") {
-      void invalidateAfterEntityChanged(queryClient, caseId);
-    }
-  });
 
   if (graphLoadError) {
     return (

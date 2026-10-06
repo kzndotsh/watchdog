@@ -294,7 +294,7 @@ export async function seedBrine(kit: SeedKit, organizationId: string) {
     finishedAt: hoursAgo(24 * 5 - 2),
     resultSummary: "Redirects to https://brinecopper-pay.example/pay.",
   });
-  const vt = await kit.job({
+  await kit.job({
     caseId,
     capabilityId: "threat.virustotal.lookup",
     input: { url: "https://brinecopper-pay.example/pay" },
@@ -341,24 +341,6 @@ export async function seedBrine(kit: SeedKit, organizationId: string) {
     fromValue: "backlog",
     toValue: "in_progress",
     at: hoursAgo(24 * 4),
-  });
-  await kit.activity({
-    caseId,
-    kind: "job",
-    action: "status_changed",
-    subjectId: vt,
-    label: "VirusTotal lookup",
-    fromValue: "running",
-    toValue: "failed",
-    at: hoursAgo(24 * 5 - 1),
-  });
-  await kit.activity({
-    caseId,
-    kind: "evidence",
-    action: "created",
-    subjectId: page,
-    label: "Checkout page source",
-    at: hoursAgo(24 * 8),
   });
 }
 
@@ -685,25 +667,6 @@ export async function seedHalden(kit: SeedKit, organizationId: string) {
       "A company mobile that moved between staff is not an identity finding. Emails and roles differ.",
     at: hoursAgo(24 * 2),
   });
-
-  await kit.activity({
-    caseId,
-    kind: "job",
-    action: "status_changed",
-    subjectId: hibpJob,
-    label: "HIBP lookup",
-    fromValue: "running",
-    toValue: "succeeded",
-    at: hoursAgo(24 * 6 - 1),
-  });
-  await kit.activity({
-    caseId,
-    kind: "evidence",
-    action: "created",
-    subjectId: pdf,
-    label: "2024 crew sheet",
-    at: hoursAgo(24 * 16),
-  });
 }
 
 /** Closed vendor check. Mostly accepted, one retracted overclaim. */
@@ -885,14 +848,6 @@ export async function seedKeel(kit: SeedKit, organizationId: string) {
     at: hoursAgo(24 * 8),
   });
 
-  await kit.activity({
-    caseId,
-    kind: "evidence",
-    action: "created",
-    subjectId: invoice,
-    label: "Invoice 1844",
-    at: hoursAgo(24 * 35),
-  });
   await kit.activity({
     caseId,
     kind: "task",
@@ -1092,7 +1047,7 @@ export async function seedPlover(kit: SeedKit, organizationId: string) {
     suppressedCount: 1,
   });
 
-  const queue = await kit.proposal({
+  await kit.proposal({
     caseId,
     jobId: harvested,
     summary:
@@ -1175,34 +1130,6 @@ export async function seedPlover(kit: SeedKit, organizationId: string) {
     ],
     at: hoursAgo(4),
   });
-
-  await kit.activity({
-    caseId,
-    kind: "proposal",
-    action: "created",
-    subjectId: queue,
-    label: "Harvest from the hop",
-    toValue: "pending",
-    at: hoursAgo(24 * 3 - 2),
-  });
-  await kit.activity({
-    caseId,
-    kind: "evidence",
-    action: "created",
-    subjectId: hop,
-    label: "Hop from /r/18",
-    at: hoursAgo(24 * 3),
-  });
-  await kit.activity({
-    caseId,
-    kind: "job",
-    action: "status_changed",
-    subjectId: enrich,
-    label: "URL enrich",
-    fromValue: "running",
-    toValue: "succeeded",
-    at: hoursAgo(24 * 3 - 1),
-  });
 }
 
 /** Just opened. Shows a case that has not been worked. */
@@ -1263,14 +1190,6 @@ export async function seedWestpier(kit: SeedKit, organizationId: string) {
     priority: "medium",
     position: 1,
     at: hoursAgo(6),
-  });
-  await kit.activity({
-    caseId,
-    kind: "evidence",
-    action: "created",
-    subjectId: tip,
-    label: "Phone tip, 14:10",
-    at: hoursAgo(8),
   });
   await kit.activity({
     caseId,

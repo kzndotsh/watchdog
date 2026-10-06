@@ -5,7 +5,13 @@ import {
   acceptProposalEffect,
   writeGraphFromAgentEffect,
 } from "@watchdog/core/proposals";
-import { activityLogRepo, claimsRepo, db, graphWritesRepo } from "@watchdog/db";
+import {
+  activity,
+  activityLogRepo,
+  claimsRepo,
+  db,
+  graphWritesRepo,
+} from "@watchdog/db";
 import {
   buildClaimCreateOp,
   buildEntityCreateOp,
@@ -23,6 +29,11 @@ const START = { xid: "0", id: 0 } as const;
 
 async function entries() {
   return activityLogRepo.drain(db, { after: START, limit: 1000 });
+}
+
+/** The seeds append their own entries; these tests count only what the code under test appends. */
+async function forgetSeedActivity() {
+  await db.delete(activity);
 }
 
 describe("Accept appends one Graph entry per op in the Accept transaction", () => {
@@ -43,6 +54,7 @@ describe("Accept appends one Graph entry per op in the Accept transaction", () =
       }),
       buildClaimCreateOp(entity.id, "Coined debugging", { id: testId(41) }),
     ]);
+    await forgetSeedActivity();
 
     await runDomain(
       acceptProposalEffect({
@@ -77,6 +89,7 @@ describe("Accept appends one Graph entry per op in the Accept transaction", () =
       }),
       buildClaimCreateOp(testId(99), "Orphan claim", { id: testId(41) }),
     ]);
+    await forgetSeedActivity();
 
     await expect(
       runDomain(

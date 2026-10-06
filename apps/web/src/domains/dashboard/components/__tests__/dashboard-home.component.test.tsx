@@ -34,10 +34,6 @@ vi.mock("@/shared/hooks/use-hydrated", () => ({
   useHydrated: () => false,
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
-}));
-
 vi.mock("@/shared/lib/query-invalidation", () => ({
   bindCasesChangedInvalidation: vi.fn(),
   invalidateAfterJobMutation: vi.fn(),

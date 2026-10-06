@@ -5,12 +5,15 @@ import { authClient } from "@/auth/client";
 import { ensureAppSession } from "@/auth/ensure-session";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { organizationStateQuery } from "@/domains/organization/queries";
+import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
 import { AppShell } from "@/shared/layout/app-shell";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
 function ProtectedLayout() {
   // Mid-visit revocation / other-tab sign-out — beforeLoad only runs on enter.
   useAuthenticate(authClient);
+  // One organization-wide activity stream for the whole signed-in app.
+  useActivityInvalidation();
 
   return (
     <AppShell>

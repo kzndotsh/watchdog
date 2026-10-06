@@ -1,67 +1,14 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { useCallback } from "react";
 
 import type { DossierEditFormValues } from "@/domains/dossier/components/dossier-edit-dialog";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
-import {
-  invalidateAfterEntityChanged,
-  invalidateAfterEvidenceMutation,
-  invalidateAfterJobMutation,
-  invalidateAfterProposalQueueChange,
-  invalidateAfterTaskMutation,
-} from "@/shared/lib/query-invalidation";
+import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_ENTITY_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
-import {
-  isProposalQueueLiveEvent,
-  type WatchdogEvent,
-} from "@watchdog/schemas/feed";
-
-function handleDossierLiveEvent(
-  queryClient: QueryClient,
-  caseId: string,
-  entity: Pick<EntityRecord, "id" | "slug">,
-  event: WatchdogEvent
-): void {
-  if (event.type === "entity_changed") {
-    void invalidateAfterEntityChanged(queryClient, caseId, {
-      entityId: entity.id,
-      slug: entity.slug,
-    });
-  }
-  if (event.type === "job_update") {
-    void invalidateAfterJobMutation(queryClient, caseId);
-  }
-  if (event.type === "evidence_changed") {
-    void invalidateAfterEvidenceMutation(queryClient, caseId);
-  }
-  if (isProposalQueueLiveEvent(event)) {
-    void invalidateAfterProposalQueueChange(queryClient, caseId);
-    void invalidateAfterEvidenceMutation(queryClient, caseId);
-  }
-  if (event.type === "task_changed") {
-    void invalidateAfterTaskMutation(queryClient, caseId);
-  }
-}
-
-export function useDossierShellLiveInvalidation(
-  caseId: string,
-  entity: EntityRecord,
-  queryClient: QueryClient
-): void {
-  const onEvent = useCallback(
-    (event: WatchdogEvent) => {
-      handleDossierLiveEvent(queryClient, caseId, entity, event);
-    },
-    [queryClient, caseId, entity]
-  );
-  useLiveEvents(caseId, onEvent);
-}
 
 export interface EntityMutationContext {
   caseId: string;

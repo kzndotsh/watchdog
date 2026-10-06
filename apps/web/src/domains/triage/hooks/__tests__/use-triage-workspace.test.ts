@@ -4,6 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ProposalRecord } from "@watchdog/core/proposals";
+import type { ActivityEntry } from "@watchdog/schemas/feed";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -19,12 +20,11 @@ vi.mock("@/shared/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
+vi.mock("@/shared/hooks/use-activity-stream", () => ({
+  useActivityEntries: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
-  invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
   invalidateAfterProposalAccept: vi.fn().mockResolvedValue(undefined),
   invalidateAfterProposalQueueChange: vi.fn().mockResolvedValue(undefined),
 }));
@@ -42,11 +42,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { useTriageWorkspace } from "@/domains/triage/hooks/use-triage-workspace";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
-import {
-  invalidateAfterEvidenceMutation,
-  invalidateAfterProposalQueueChange,
-} from "@/shared/lib/query-invalidation";
+import { useActivityEntries } from "@/shared/hooks/use-activity-stream";
 
 const PROPOSALS: ProposalRecord[] = [
   {
@@ -94,6 +90,24 @@ const PROPOSALS: ProposalRecord[] = [
     identifierCollisions: [],
   },
 ];
+
+function proposalEntry(action: string, caseId: string): ActivityEntry {
+  return {
+    cursor: "0:1",
+    id: 1,
+    caseId,
+    kind: "proposal",
+    action,
+    subjectId: testId(99),
+    groupId: null,
+    label: null,
+    actorId: null,
+    actorLabel: null,
+    fromValue: null,
+    toValue: null,
+    at: "2026-01-01T00:00:00.000Z",
+  };
+}
 
 function renderWorkspace(proposalId?: string) {
   useQueryMock.mockReturnValue({
@@ -173,58 +187,33 @@ describe("useTriageWorkspace", () => {
     expect(result.current.selected?.id).toBe(testId(51));
   });
 
-  it("invalidates evidence on evidence_changed live events", () => {
-    renderWorkspace();
+  it("puts the queue back on its pending view when a Proposal entry of this Case arrives", () => {
+    const { result } = renderWorkspace();
+    act(() => {
+      result.current.setFilters({ q: "dns", statuses: [] });
+    });
+    expect(result.current.rows).toHaveLength(2);
 
-    const liveCall = vi
-      .mocked(useLiveEvents)
-      .mock.calls.find((call) => call[0] === testId(10));
-    const onEvent = liveCall?.[1];
-    onEvent?.({
-      type: "evidence_changed",
-      caseId: testId(10),
+    const onEntry = vi.mocked(useActivityEntries).mock.calls.at(-1)?.[0];
+    expect(onEntry).toBeTypeOf("function");
+    act(() => {
+      onEntry?.(proposalEntry("accepted", testId(10)));
     });
 
-    expect(invalidateAfterEvidenceMutation).toHaveBeenCalledWith(
-      expect.any(QueryClient),
-      testId(10)
-    );
+    expect(result.current.filters.q).toBe("dns");
+    expect(result.current.filters.statuses).toEqual(["pending"]);
   });
 
-  it("invalidates proposal queue on proposal_created live events", () => {
-    renderWorkspace();
-
-    const liveCall = vi
-      .mocked(useLiveEvents)
-      .mock.calls.find((call) => call[0] === testId(10));
-    const onEvent = liveCall?.[1];
-    onEvent?.({
-      type: "proposal_created",
-      caseId: testId(10),
-      proposalId: testId(99),
+  it("ignores entries of other Cases and other kinds", () => {
+    const { result } = renderWorkspace();
+    act(() => {
+      result.current.setFilters({ q: "", statuses: [] });
     });
-
-    expect(invalidateAfterProposalQueueChange).toHaveBeenCalledWith(
-      expect.any(QueryClient),
-      testId(10)
-    );
-  });
-
-  it("invalidates proposal queue on proposal_queue_changed live events", () => {
-    renderWorkspace();
-
-    const liveCall = vi
-      .mocked(useLiveEvents)
-      .mock.calls.find((call) => call[0] === testId(10));
-    const onEvent = liveCall?.[1];
-    onEvent?.({
-      type: "proposal_queue_changed",
-      caseId: testId(10),
+    const onEntry = vi.mocked(useActivityEntries).mock.calls.at(-1)?.[0];
+    act(() => {
+      onEntry?.(proposalEntry("created", testId(11)));
+      onEntry?.({ ...proposalEntry("created", testId(10)), kind: "task" });
     });
-
-    expect(invalidateAfterProposalQueueChange).toHaveBeenCalledWith(
-      expect.any(QueryClient),
-      testId(10)
-    );
+    expect(result.current.filters.statuses).toEqual([]);
   });
 });

@@ -65,11 +65,10 @@ describe("createTask", () => {
         actorId: "   ",
       })
     );
-    const events = await activityLogRepo.recent(db, {
+    const events = await activityLogRepo.recentFeed(db, {
       organizationId: TEST_ORGANIZATION_ID,
       caseId: cased.id,
-      kind: "task",
-      actions: FEED_ACTIONS.task,
+      filters: [{ kind: "task", actions: FEED_ACTIONS.task }],
       limit: 10,
     });
     const createdEvent = events.find(
@@ -97,11 +96,10 @@ describe("createTask", () => {
         actorId: TEST_ACTOR_ID,
       })
     );
-    const events = await activityLogRepo.recent(db, {
+    const events = await activityLogRepo.recentFeed(db, {
       organizationId: TEST_ORGANIZATION_ID,
       caseId: cased.id,
-      kind: "task",
-      actions: FEED_ACTIONS.task,
+      filters: [{ kind: "task", actions: FEED_ACTIONS.task }],
       limit: 10,
     });
     expect(events.some((row) => row.action === "status_changed")).toBe(true);

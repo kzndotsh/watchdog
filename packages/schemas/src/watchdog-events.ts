@@ -46,18 +46,7 @@ export const watchdogEventSchema = z.discriminatedUnion("type", [
 
 export type WatchdogEvent = z.infer<typeof watchdogEventSchema>;
 
-export const WATCHDOG_EVENT_TYPES = watchdogEventSchemas.map(
-  (schema) => schema.shape.type.value
-);
-
 /** Runtime guard for payloads read off the `watchdog_events` channel / SSE. */
 export function isWatchdogEvent(value: unknown): value is WatchdogEvent {
   return watchdogEventSchema.safeParse(value).success;
-}
-
-/** Inbox queue invalidation — new proposal or accept/reject from another client. */
-export function isProposalQueueLiveEvent(event: WatchdogEvent): boolean {
-  return (
-    event.type === "proposal_created" || event.type === "proposal_queue_changed"
-  );
 }

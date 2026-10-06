@@ -15,7 +15,7 @@ Query owns server-state caching. The router's `defaultPreloadStaleTime` is `0` (
 | Route `loader` + `queryClient.ensureQueryData(queryOptions)` | Prefetch during navigation and SSR |
 | `useQuery(queryOptions)` | Page and region reads: branch on `listPending` (skeleton) and `error` (`FetchErrorAlert` + retry) |
 | `useMutation` + a named invalidation contract | Writes |
-| SSE `useLiveEvents` calling the same contracts | Server-pushed job, proposal, entity, evidence, task updates |
+| The organization activity stream calling the same contracts | Server-pushed job, proposal, graph, evidence, task and Case updates |
 
 - Never copy server lists from `useLoaderData` into `useState`; local state is for selection, dialogs, form drafts, and client filters.
 - One `QueryClient` per request, created by `createAppQueryClient()` inside `getRouter()`. Never `export const queryClient = new QueryClient()`.
@@ -42,19 +42,24 @@ Loaders `ensureQueryData` identity only and call a `warm*Queries` helper with `v
 
 ## Live events
 
-`useLiveEvents(caseId, onEvent)` in `shared/hooks/use-live-events` opens an `EventSource` on `/api/events?caseId=...`. One shared `EventSource` per `caseId` is ref-counted, so mounting it in several places does not open several connections; the server side of that route listens through a dedicated postgres.js connection ([`packages/db/AGENTS.md`](../../../packages/db/AGENTS.md)). Event shapes are typed in `packages/schemas/src/watchdog-events.ts`.
+One `EventSource` on `/api/events` carries the whole organization (ADR-0005): every Case the caller can see, on one connection, however many Cases the dashboard shows and however many components mount. `useActivityInvalidation()` (`shared/hooks/use-activity-stream.ts`) is mounted once, in the `_protected` layout; it binds the stream (`shared/lib/activity-stream.ts`) to the Query cache through `bindActivityInvalidation` (`shared/lib/activity-invalidation.ts`). Screens do not subscribe for invalidation. A screen with a side effect beyond refetching uses `useActivityEntries(onEntry)` on the same connection (Triage resets its queue filter on a Proposal entry); filter by `entry.caseId` or `entry.kind` in the callback.
 
-| Type | Contract |
+The stream listens for one SSE event, `activity`, whose payload is `activityEntrySchema` (`packages/schemas/src/activity-log.ts`), and for `resync`. Each message carries `id:` = the entry cursor, so the browser resends it as `Last-Event-ID` after a transient drop and the server replays the gap. If the browser gives up (the source is `CLOSED`) the module reopens it after a backoff (1 s doubling to 30 s) with `?after=<last cursor>`. Delivery is at-least-once: the client drops entries at or below its last cursor.
+
+`invalidateForActivity(client, entry)` maps the entry to the same contracts the mutations use; a burst of entries of one target for one Case (a patch of N ops appends N) runs one pass:
+
+| Entry kind | Contract |
 | --- | --- |
-| `job_update` | `invalidateAfterJobMutation` (+ evidence where jobs touch intake) |
-| `proposal_created`, `proposal_queue_changed` | `invalidateAfterProposalQueueChange` (test with `isProposalQueueLiveEvent` from `@watchdog/schemas`) |
-| `entity_changed` | `invalidateAfterEntityChanged` |
-| `evidence_changed` | `invalidateAfterEvidenceMutation` |
-| `task_changed` | `invalidateAfterTaskMutation` (sent by the SSE route for every Task activity entry, with `id:` = the entry cursor; the route also sends one `activity` event per entry and one `resync` when a reconnect is too far behind, which this hook does not yet handle) |
+| `job` | `invalidateAfterJobMutation` |
+| `proposal` (`created`, `accepted`, `rejected`) | `invalidateAfterProposalQueueChange` |
+| `entity`, `edge`, `claim`, `identifier`, `event`, `question` | `invalidateAfterGraphActivity` (`invalidateAfterEntityChanged` plus the claim, event and question prefixes of the Case) |
+| `evidence` | `invalidateAfterEvidenceMutation` |
+| `task` | `invalidateAfterTaskMutation` |
+| `case` | `invalidateAfterCaseSwitch` (Case list, feed, search) |
+| `resync` | `invalidateAfterResync`: every query stale, the active ones refetched |
 
-The cross-case Dashboard Activity feed (`recentActivityQuery`) has no SSE type of its own; the task, job, proposal, and evidence contracts soft-invalidate `activityKeys.all`. Don't invent a workspace-wide channel for it.
+Recent activity (`recentActivityQuery`) has no SSE type of its own: every contract above soft-invalidates `activityKeys.all`, and the feed itself reads only the log (ADR-0005 decision 5; which `(kind, action)` pairs it shows is `FEED_ACTIONS` in `@watchdog/core/activity`). Don't invent a workspace-wide channel for it.
 
-- A `null` `caseId` means no connection. A nested workspace passes `live: false` (e.g. `useTaskWorkspace(caseId, { live: false })` in `dossier-tasks-section.tsx`) when its parent already listens.
 - No manual Refresh buttons on live paths. Keep previous rows on refetch; don't remount the split skeleton.
 - Optimistic writes settle through the same contract: board drag may `setQueriesData` under `tasksKeys.all(caseId)`, and a Cap start may seed `jobsKeys.all` and `jobsKeys.detail` from the mutation result before `onJobIdChange`, so URL selection does not flicker. Don't invent a second local list SoT.
 
@@ -77,4 +82,4 @@ Client-side sort, filter, and paging through `shared/ui/data-table` is correct f
 ## Gotchas
 
 - **Router loaders do not inherit parent loader data**; sibling pages share data via Query keys ([`architecture.md#gotchas`](architecture.md#gotchas)).
-- **SSE:** `useLiveEvents` ref-counts one `EventSource` per `caseId`; still prefer a single listener per surface tree and pass `live: false` into nested workspaces so one event doesn't run two handlers.
+- **SSE:** one organization-wide `EventSource`, bound to the Query cache once in `_protected`. Do not add a per-screen subscription for invalidation (it would run the same refetch twice); use `useActivityEntries` only for a side effect.

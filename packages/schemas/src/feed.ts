@@ -51,9 +51,4 @@ export {
   taskUpdateInputSchema,
 } from "./tasks";
 export type { WatchdogEvent } from "./watchdog-events";
-export {
-  WATCHDOG_EVENT_TYPES,
-  isProposalQueueLiveEvent,
-  isWatchdogEvent,
-  watchdogEventSchema,
-} from "./watchdog-events";
+export { isWatchdogEvent, watchdogEventSchema } from "./watchdog-events";

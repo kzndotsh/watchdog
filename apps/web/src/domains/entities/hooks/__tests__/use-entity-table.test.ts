@@ -32,10 +32,6 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
-}));
-
 vi.mock("@tanstack/react-form", () => ({
   useForm: () => ({
     reset: vi.fn(),

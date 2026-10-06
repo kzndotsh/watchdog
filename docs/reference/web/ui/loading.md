@@ -24,7 +24,7 @@ Skeletons are the fallback of last resort; reach for less first.
 8. **Reduced motion stops animation:** in-place pulse only (`animate-pulse` on `[data-slot=skeleton]`); no travelling shimmer.
 9. **Hydration-safe skeletons:** no `window`, `localStorage`, `Date.now()`, or random values in skeleton output. The first client render must equal the server HTML: any query read on first paint is either awaited by the loader or warmed (a no-op on the server).
 10. **Fetch only what is visible:** no query in collapsed panels or inside `.map()`; gate artifact content on `open`.
-11. **One SSE connection per case:** `useLiveEvents` ref-counts a shared `EventSource`; nested workspaces pass `live: false`.
+11. **One SSE connection per organization:** `useActivityInvalidation()` in the `_protected` layout binds the single activity `EventSource` to the Query cache; screens do not open their own.
 12. **Skeleton is last resort:** if a lesser but true rendering exists, show it and upgrade in place. `code-block.tsx` renders raw code in the same `<pre>` while shiki tokenizes.
 13. **Key change is an update, not a new page:** filter, sort, and search use `placeholderData: keepPreviousData` plus a subtle `isPlaceholderData` de-emphasis. Never `initialData` to fake a filtered page.
 14. **One pending surface per route:** `pendingComponent` or an in-page `PendingRegion`, never both for the same region. `ssr:false` / `ssr:'data-only'` routes need `pendingComponent` (or the default).

@@ -17,10 +17,6 @@ vi.mock("@/domains/tasks/tasks.functions", () => ({
   reorderTasksFn: vi.fn(),
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
-}));
-
 vi.mock("@/shared/lib/query-invalidation", () => ({
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
   invalidateAfterTaskMutation: vi.fn().mockResolvedValue(undefined),
@@ -60,11 +56,6 @@ import {
   reorderTasksFn,
   updateTaskFn,
 } from "@/domains/tasks/tasks.functions";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
-import {
-  invalidateAfterEntityChanged,
-  invalidateAfterTaskMutation,
-} from "@/shared/lib/query-invalidation";
 
 const CASE_ID = testId(10);
 const ENTITY_ID = testId(30);
@@ -181,7 +172,7 @@ describe("useTaskWorkspace", () => {
     vi.mocked(createTaskFn).mockResolvedValue(TASK);
 
     const { result } = renderHook(
-      () => useTaskWorkspace(CASE_ID, { entityId: ENTITY_ID, live: false }),
+      () => useTaskWorkspace(CASE_ID, { entityId: ENTITY_ID }),
       { wrapper }
     );
 
@@ -197,7 +188,6 @@ describe("useTaskWorkspace", () => {
         entityId: ENTITY_ID,
       }),
     });
-    expect(useLiveEvents).toHaveBeenCalledWith(null, expect.any(Function));
   });
 
   it("trims padded entity scope before listing tasks", () => {
@@ -207,7 +197,6 @@ describe("useTaskWorkspace", () => {
       () =>
         useTaskWorkspace(CASE_ID, {
           entityId: `  ${ENTITY_ID}  `,
-          live: false,
         }),
       { wrapper }
     );
@@ -247,46 +236,6 @@ describe("useTaskWorkspace", () => {
         orderedIds: [TASK_ID],
       },
     });
-  });
-
-  it("invalidates entity labels on entity_changed live events", () => {
-    mockQueries();
-
-    renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
-
-    const liveCall = vi
-      .mocked(useLiveEvents)
-      .mock.calls.find((call) => call[0] === CASE_ID);
-    const onEvent = liveCall?.[1];
-    onEvent?.({
-      type: "entity_changed",
-      caseId: CASE_ID,
-    });
-
-    expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(
-      expect.any(QueryClient),
-      CASE_ID
-    );
-  });
-
-  it("invalidates tasks on task_changed live events", () => {
-    mockQueries();
-
-    renderHook(() => useTaskWorkspace(CASE_ID), { wrapper });
-
-    const liveCall = vi
-      .mocked(useLiveEvents)
-      .mock.calls.find((call) => call[0] === CASE_ID);
-    const onEvent = liveCall?.[1];
-    onEvent?.({
-      type: "task_changed",
-      caseId: CASE_ID,
-    });
-
-    expect(invalidateAfterTaskMutation).toHaveBeenCalledWith(
-      expect.any(QueryClient),
-      CASE_ID
-    );
   });
 
   it("surfaces tasksLoadError when the tasks query fails", () => {

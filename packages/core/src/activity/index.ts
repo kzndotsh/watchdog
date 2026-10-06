@@ -18,7 +18,7 @@ export {
 export {
   FEED_ACTIONS,
   listRecentActivityEffect,
-  mergeActivityItems,
+  proposalEventAction,
   taskEventAction,
   type ListRecentActivityOpts,
 } from "./recent-activity";

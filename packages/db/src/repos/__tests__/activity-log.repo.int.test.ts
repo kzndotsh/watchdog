@@ -8,7 +8,14 @@ import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
 } from "@watchdog/schemas/testing";
-import { resetTestDb, seedCase, withTestTx } from "@watchdog/test-db";
+import {
+  resetTestDb,
+  seedCase,
+  seedJob,
+  seedPlaybookRun,
+  seedProposal,
+  withTestTx,
+} from "@watchdog/test-db";
 import { testId } from "@watchdog/test-kit";
 
 import { db } from "../../client.ts";
@@ -193,7 +200,7 @@ describe("activityLogRepo", () => {
   });
 });
 
-describe("activityLogRepo.recentCollapsed", () => {
+describe("activityLogRepo.recentFeed", () => {
   beforeEach(async () => {
     await resetTestDb();
   });
@@ -232,11 +239,10 @@ describe("activityLogRepo.recentCollapsed", () => {
       await appendJob(tx, cased.id, testId(42), "succeeded", run);
       const last = await appendJob(tx, cased.id, testId(43), "running", run);
 
-      const rows = await activityLogRepo.recentCollapsed(tx, {
+      const rows = await activityLogRepo.recentFeed(tx, {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
-        kind: "job",
-        actions: JOB_ACTIONS,
+        filters: [{ kind: "job", actions: JOB_ACTIONS }],
         limit: 20,
       });
       expect(rows).toHaveLength(4);
@@ -255,11 +261,10 @@ describe("activityLogRepo.recentCollapsed", () => {
         // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
         await appendJob(tx, cased.id, testId(51), "running", run);
       }
-      const rows = await activityLogRepo.recentCollapsed(tx, {
+      const rows = await activityLogRepo.recentFeed(tx, {
         organizationId: TEST_ORGANIZATION_ID,
         caseId: cased.id,
-        kind: "job",
-        actions: JOB_ACTIONS,
+        filters: [{ kind: "job", actions: JOB_ACTIONS }],
         limit: 2,
       });
       expect(rows.map((row) => row.groupId)).toHaveLength(2);
@@ -273,20 +278,115 @@ describe("activityLogRepo.recentCollapsed", () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
       await appendJob(tx, cased.id, testId(60), "queued");
-      const other = await activityLogRepo.recentCollapsed(tx, {
+      const other = await activityLogRepo.recentFeed(tx, {
         organizationId: TEST_OTHER_ORGANIZATION_ID,
-        kind: "job",
-        actions: JOB_ACTIONS,
+        filters: [{ kind: "job", actions: JOB_ACTIONS }],
         limit: 20,
       });
       expect(other).toEqual([]);
-      const none = await activityLogRepo.recentCollapsed(tx, {
+      const none = await activityLogRepo.recentFeed(tx, {
         organizationId: TEST_ORGANIZATION_ID,
-        kind: "job",
-        actions: ["succeeded"],
+        filters: [{ kind: "job", actions: ["succeeded"] }],
         limit: 20,
       });
       expect(none).toEqual([]);
+    });
+  });
+  it("reads several kinds in one query, each through its own allowlist", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const append = async (kind: "task" | "evidence", action: string) => {
+        const row = await activityLogRepo.append(tx, {
+          caseId: cased.id,
+          kind,
+          action,
+          subjectId: testId(70),
+        });
+        if (row === null) throw new Error("append failed");
+        return row;
+      };
+      await append("task", "updated");
+      const created = await append("task", "created");
+      const hidden = await append("evidence", "hidden");
+      const captured = await append("evidence", "captured");
+      const rows = await activityLogRepo.recentFeed(tx, {
+        organizationId: TEST_ORGANIZATION_ID,
+        filters: [
+          { kind: "task", actions: ["created"] },
+          { kind: "evidence", actions: ["captured"] },
+        ],
+        limit: 20,
+      });
+      expect(rows.map((row) => row.id)).toEqual([captured.id, created.id]);
+      expect(rows.map((row) => row.id)).not.toContain(hidden.id);
+    });
+  });
+
+  it("never returns another organization's entries, with or without a Case filter", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      await activityLogRepo.append(tx, {
+        caseId: cased.id,
+        kind: "task",
+        action: "created",
+        subjectId: testId(71),
+      });
+      const filters = [{ kind: "task" as const, actions: ["created"] }];
+      expect(
+        await activityLogRepo.recentFeed(tx, {
+          organizationId: TEST_OTHER_ORGANIZATION_ID,
+          filters,
+          limit: 20,
+        })
+      ).toEqual([]);
+      expect(
+        await activityLogRepo.recentFeed(tx, {
+          organizationId: TEST_OTHER_ORGANIZATION_ID,
+          caseId: cased.id,
+          filters,
+          limit: 20,
+        })
+      ).toEqual([]);
+    });
+  });
+});
+
+describe("activityLogRepo.proposalLabelRows", () => {
+  beforeEach(async () => {
+    await resetTestDb();
+  });
+
+  it("returns the summary, patch and the capability and playbook of the Proposal's Job", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const run = await seedPlaybookRun(tx, cased.id, {
+        playbookId: "host-footprint-lite",
+      });
+      const job = await seedJob(tx, cased.id, {
+        playbookRunId: run.id,
+        capabilityId: "network.dns.lookup",
+      });
+      const proposal = await seedProposal(tx, cased.id, [], {
+        summary: "s",
+        jobId: job.id,
+      });
+      const plain = await seedProposal(tx, cased.id, [], { summary: null });
+      const rows = await activityLogRepo.proposalLabelRows(tx, [
+        proposal.id,
+        plain.id,
+      ]);
+      expect(rows.find((row) => row.id === proposal.id)).toMatchObject({
+        caseId: cased.id,
+        summary: "s",
+        capabilityId: "network.dns.lookup",
+        playbookId: "host-footprint-lite",
+        patch: [],
+      });
+      expect(rows.find((row) => row.id === plain.id)).toMatchObject({
+        capabilityId: null,
+        playbookId: null,
+      });
+      expect(await activityLogRepo.proposalLabelRows(tx, [])).toEqual([]);
     });
   });
 });

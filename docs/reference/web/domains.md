@@ -29,7 +29,7 @@ domains/{noun}/
 
 Naming: `*.functions` are things you call across the network (RPC, not "client code"); `*.server` must never ship to the browser; `*.client` is wrong for server functions (they run on the server during SSR and loaders).
 
-**`lib/` vs `hooks/` is guidance, not a rule.** The intent: pure helpers in `lib/`, React hooks in `hooks/`. Nothing enforces it and four hooks already sit elsewhere (`entities/lib/use-bulk-add-identifiers-{paste,import}.ts`, `organization/lib/use-slug-availability.ts`, `tasks/components/use-task-form-dialog.ts`); move them when you touch them rather than copying the pattern. Cross-domain plumbing hooks live in `shared/hooks/` (`use-live-events`); UI-kit hooks sit beside their atom.
+**`lib/` vs `hooks/` is guidance, not a rule.** The intent: pure helpers in `lib/`, React hooks in `hooks/`. Nothing enforces it and four hooks already sit elsewhere (`entities/lib/use-bulk-add-identifiers-{paste,import}.ts`, `organization/lib/use-slug-availability.ts`, `tasks/components/use-task-form-dialog.ts`); move them when you touch them rather than copying the pattern. Cross-domain plumbing hooks live in `shared/hooks/` (`use-activity-stream`); UI-kit hooks sit beside their atom.
 
 Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts` and its own `*.functions.ts`. Dossier chrome stays under `dossier/components/` and has no `dossier.functions.ts`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
 
@@ -88,7 +88,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | --- | --- |
 | Entity picker | `EntityCombobox`: the parent passes options (no I/O in the combobox). The Dossier Evidence dump locks the Entity (`DumpDialogs entityLocked`, `useDumpEvidence`) |
 | Evidence options in Dossier or Triage | Parent loads the full Case list (`evidenceListQuery(caseId)`) and passes `readonly EvidenceOption[]`; composers use `EvidencePicker`, Job-linked cites use `EvidenceCiteChips` |
-| Workspaces | `useJobsWorkspace`, `useTriageWorkspace`, `useTaskWorkspace`, `useIntakeActions` own selection, queries, mutations, and SSE for their surface. Don't fork a second mutation machine for the same noun. Collect wraps the jobs workspace with `live: false` |
+| Workspaces | `useJobsWorkspace`, `useTriageWorkspace`, `useTaskWorkspace`, `useIntakeActions` own selection, queries, mutations, and SSE for their surface. Don't fork a second mutation machine for the same noun. |
 | Row and node menus | Pure `AppAction[]` factories (`entities/lib/entity-row-actions.ts`, `identifier-row-actions.ts`, `cases/lib/case-card-actions.ts`, `tasks/lib/task-card-actions.ts`, `dossier/lib/*-row-actions.ts`) feed both the actions menu and the row ContextMenu. Target actions only; chrome lives on the inset |
 | Bulk-add identifiers | `entities/lib/parse-identifier-paste.ts` is the parse API; row errors come from schemas `validateIdentifierWrite` (don't fork a second regex set). One `useMutation` loops `createIdentifierFn`; Dossier locks the Entity |
 | Palette, hotkeys, context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts`. `SearchChrome` registers Mod+K and `?`; Mod+B belongs to the vendored `SidebarProvider` ([`atoms.md`](ui/atoms.md#keyboard)) |

@@ -41,10 +41,6 @@ vi.mock("@/domains/intake/queries", () => ({
   }),
 }));
 
-vi.mock("@/shared/hooks/use-live-events", () => ({
-  useLiveEvents: vi.fn(),
-}));
-
 vi.mock("@/domains/collect/lib/prefetch-collect", () => ({
   prefetchCollectEvidenceBlobWhenSelected: vi.fn(),
 }));
@@ -83,12 +79,6 @@ vi.mock("@/domains/collect/hooks/use-collect-queue-data", () => ({
 }));
 
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
-import { useLiveEvents } from "@/shared/hooks/use-live-events";
-import {
-  invalidateAfterEntityChanged,
-  invalidateAfterEvidenceMutation,
-  invalidateAfterJobMutation,
-} from "@/shared/lib/query-invalidation";
 
 const CASE_ID = testId(10);
 const UNRELATED_ID = testId(11);
@@ -315,64 +305,5 @@ describe("useCollectWorkspace job-id adapter", () => {
     expect(result.current.indexRows).toHaveLength(1);
     expect(result.current.indexRows[0]?.id).toBe(testId(60));
     expect(result.current.visibleRows).toHaveLength(1);
-  });
-
-  it("invalidates entity lists on entity_changed live events", () => {
-    renderCollect(PLAYBOOK_RUN_ID);
-
-    const collectLiveCall = vi
-      .mocked(useLiveEvents)
-      .mock.calls.find((call) => call[0] === CASE_ID);
-    const onEvent = collectLiveCall?.[1];
-    expect(onEvent).toBeTypeOf("function");
-    onEvent?.({
-      type: "entity_changed",
-      caseId: CASE_ID,
-    });
-
-    expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(
-      expect.any(QueryClient),
-      CASE_ID
-    );
-  });
-
-  it("invalidates evidence on evidence_changed live events", () => {
-    renderCollect(PLAYBOOK_RUN_ID);
-
-    const collectLiveCall = vi
-      .mocked(useLiveEvents)
-      .mock.calls.find((call) => call[0] === CASE_ID);
-    const onEvent = collectLiveCall?.[1];
-    onEvent?.({
-      type: "evidence_changed",
-      caseId: CASE_ID,
-      evidenceId: EVIDENCE_ID,
-    });
-
-    expect(invalidateAfterEvidenceMutation).toHaveBeenCalledWith(
-      expect.any(QueryClient),
-      CASE_ID
-    );
-  });
-
-  it("refreshes jobs on job_update live events without invalidating evidence", () => {
-    renderCollect(PLAYBOOK_RUN_ID);
-
-    const collectLiveCall = vi
-      .mocked(useLiveEvents)
-      .mock.calls.find((call) => call[0] === CASE_ID);
-    const onEvent = collectLiveCall?.[1];
-    onEvent?.({
-      type: "job_update",
-      caseId: CASE_ID,
-      jobId: STEP1_ID,
-      status: "running",
-    });
-
-    expect(invalidateAfterJobMutation).toHaveBeenCalledWith(
-      expect.any(QueryClient),
-      CASE_ID
-    );
-    expect(invalidateAfterEvidenceMutation).not.toHaveBeenCalled();
   });
 });

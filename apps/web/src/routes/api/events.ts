@@ -1,21 +1,20 @@
 /**
  * GET /api/events
  *
- * Server-Sent Events endpoint. Streams the activity log (the per-process
- * `ActivityTailer`, ADR-0005) and the legacy NOTIFY events (`listenForEvents`,
- * for domains not on the log yet) to the browser; Case visibility is decided by
- * core, never by repos.
+ * Server-Sent Events endpoint: the organization-wide activity stream
+ * (ADR-0005). It streams the per-process `ActivityTailer` to the browser and
+ * opens no LISTEN connection of its own, so any number of clients and Cases
+ * cost the database one connection (the one held by the tailer). Case
+ * visibility is decided by core, never by repos.
  *
- * Every log entry is sent as its legacy event (`task_changed`, ...: the adapter
- * that keeps old clients working) and as an `activity` event, both with
- * `id: <cursor>`. `EventSource` resends the last id as `Last-Event-ID` after a
- * reconnect and the missed entries are replayed once; a client too far behind
- * (or holding a cursor the database does not know) gets one `resync` event and
- * refetches. Legacy channel events carry no id and are not replayed.
+ * Every log entry is sent as one `activity` event with `id: <cursor>`.
+ * `EventSource` resends the last id as `Last-Event-ID` after a reconnect and
+ * the missed entries are replayed once; a client too far behind (or holding a
+ * cursor the database does not know) gets one `resync` event and refetches.
  *
  * Query params:
- *   caseId  — filter events to this Case (optional)
- *   after   — resume cursor for a first connect (optional; `Last-Event-ID` wins)
+ *   caseId  - filter entries to this Case (optional; the web client omits it)
+ *   after   - resume cursor for a first connect (optional; `Last-Event-ID` wins)
  *
  * Auth: session cookie, Bearer token, or x-api-key (same as OpenAPI routes).
  */
@@ -30,13 +29,10 @@ import {
 import { runApp } from "@watchdog/api";
 import { ActivityTailer, replayActivityEffect } from "@watchdog/core/activity";
 import { listVisibleCaseIdsEffect } from "@watchdog/core/cases";
-import { listenForEvents } from "@watchdog/core/events";
 import { assertCaseInOrgEffect } from "@watchdog/core/graph";
 import { createLogger } from "@watchdog/log";
 import {
   createActivityGate,
-  isWatchdogEvent,
-  legacyEventForActivityEntry,
   parseActivityCursor,
   parseSseCaseIdParam,
   type ActivityEntry,
@@ -128,7 +124,6 @@ export const Route = createFileRoute("/api/events")({
           start(controller) {
             const enc = new TextEncoder();
             let closed = false;
-            let listener: ReturnType<typeof listenForEvents> | undefined;
             let unsubscribe: (() => void) | undefined;
             // Entries go out one at a time so a visibility refresh cannot reorder them.
             let entryChain: Promise<void> = Promise.resolve();
@@ -170,7 +165,6 @@ export const Route = createFileRoute("/api/events")({
               closed = true;
               clearInterval(heartbeat);
               unsubscribe?.();
-              void listener?.end();
               if (errorMessage !== undefined) {
                 send("error", JSON.stringify({ message: errorMessage }));
               }
@@ -182,10 +176,6 @@ export const Route = createFileRoute("/api/events")({
             }
 
             function sendEntry(entry: ActivityEntry) {
-              const legacy = legacyEventForActivityEntry(entry);
-              if (legacy !== null) {
-                send(legacy.type, JSON.stringify(legacy), entry.cursor);
-              }
               send("activity", JSON.stringify(entry), entry.cursor);
             }
 
@@ -217,6 +207,7 @@ export const Route = createFileRoute("/api/events")({
                 unsubscribe();
                 return;
               }
+              send("connected", JSON.stringify({ ok: true }));
               if (resume.malformed) {
                 send("resync", "{}");
                 gate.open([]);
@@ -247,45 +238,6 @@ export const Route = createFileRoute("/api/events")({
                 gate.open([]);
               }
             }
-
-            listener = listenForEvents(
-              (rawPayload) => {
-                try {
-                  const parsed: unknown = JSON.parse(rawPayload);
-                  if (!isWatchdogEvent(parsed)) return;
-                  const eventCaseId = parsed.caseId;
-                  if (eventCaseId === undefined || eventCaseId === "") return;
-                  if (caseId && eventCaseId !== caseId) return;
-                  if (allowed.has(eventCaseId)) {
-                    send(parsed.type, rawPayload);
-                    return;
-                  }
-                  void runApp(listVisibleCaseIdsEffect(scopeOrganizationId))
-                    .then((ids) => {
-                      allowed = new Set(ids);
-                      if (allowed.has(eventCaseId)) {
-                        send(parsed.type, rawPayload);
-                      }
-                    })
-                    .catch((error: unknown) => {
-                      // Fail closed: without a visibility read the event is dropped.
-                      // Log the failure (error only: no Case id, no payload) so a
-                      // dropped live update is observable.
-                      logVisibilityRefreshFailure(error);
-                    });
-                } catch {
-                  // malformed — skip
-                }
-              },
-              () => {
-                send("connected", JSON.stringify({ ok: true }));
-              },
-              (error: unknown) => {
-                closeStream(
-                  error instanceof Error ? error.message : String(error)
-                );
-              }
-            );
 
             closeOnCancel = () => {
               closeStream();

@@ -105,6 +105,35 @@ export async function invalidateAfterEntityChanged(
   }
 }
 
+/**
+ * A Graph entry (Entity, Edge, Claim, Identifier, timeline Event, Open
+ * Question) arrived for the Case: the entity slices, including the per-Entity
+ * claim, event and question lists of whichever Entity is open (their ids are
+ * not on the entry, so the Case prefixes are used).
+ */
+export async function invalidateAfterGraphActivity(
+  client: QueryClient,
+  caseId: string
+): Promise<void> {
+  await invalidateAfterEntityChanged(client, caseId);
+  await Promise.all([
+    softInvalidate(client, claimsKeys.prefix(caseId)),
+    softInvalidate(client, eventsKeys.prefix(caseId)),
+    softInvalidate(client, questionsKeys.prefix(caseId)),
+  ]);
+}
+
+/**
+ * The server could not replay what this client missed (`resync`): nothing
+ * cached can be trusted, so mark every query stale and refetch the active ones.
+ */
+export async function invalidateAfterResync(
+  client: QueryClient
+): Promise<void> {
+  await client.invalidateQueries({ refetchType: "none" });
+  await client.refetchQueries({ type: "active" });
+}
+
 export async function invalidateAfterTaskMutation(
   client: QueryClient,
   caseId: string
