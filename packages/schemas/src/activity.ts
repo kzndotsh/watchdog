@@ -24,7 +24,8 @@ export function activityKindLabel(kind: ActivityKind): string {
 }
 
 export const activityItemSchema = z.object({
-  id: uuidSchema,
+  /** Evidence, Job and Proposal rows carry their uuid; a log entry carries its numeric id as text. */
+  id: z.string().min(1),
   kind: activityKindSchema,
   action: z.string(),
   caseId: uuidSchema,

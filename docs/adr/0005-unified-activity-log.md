@@ -128,3 +128,16 @@ Proposed vertical slices, each shippable and green on its own. "Blocked by" name
 - **Label drift.** Snapshot labels go stale after a rename. Accepted for the feed; Job and Proposal labels are resolved at read.
 - **Trigger and Drizzle.** The trigger needs a custom migration with its journal snapshot ([`packages/db/AGENTS.md`](../../packages/db/AGENTS.md) migration rules); `check:migrations` must stay green.
 - **ADR numbering.** ADR-0004 is in an open PR (#167); this file takes 0005 as requested.
+
+## As built: S1
+
+What shipped for S1 (Tasks on the log) and where it differs from the text above.
+
+- **Built as specified:** the `activity` table with `xid8` and the `(xid, id)` and `(case_id, id desc)` indexes, `appendActivityEffect(tx, entry)` (backed by `activityLogRepo.append`), the `AFTER INSERT` trigger `activity_notify` on `watchdog_activity`, the single per-process tailer (LISTEN plus 5 s fallback poll, 250 ms re-poll while a transaction holds rows back, a warning after 5 s), SSE `id:` / `Last-Event-ID` / `?after=` replay with at most 500 entries and one `resync`, and the legacy-event adapter. The 4 Task write paths (create, update, delete, reorder) append in their `transact` body and no longer call `notifyTaskChangedEffect` (deleted); `activity_events` rows copy into `activity` in migration `activity_trigger_and_backfill` with `xid = 0` (this one copy is SQL, not a core one-off: Task labels are stored, so no `jobActivityLabel` is needed).
+- **Task edits that keep the status and reorders now append** (`updated`, `reordered`), because the append is what notifies. `FEED_ACTIONS.task` keeps them out of Recent activity, so the widget shows what it showed before.
+- **Not in S1:** `activity_cursors` (the worker's durable cursor, S5), the retention floor for `resync` (S7), the boot check for restored `xid`s (S7). The worker only gets the adapter: its events from before it started are not replayed.
+- **The legacy `task_changed` event no longer carries `entityId`** (the log has no entity column; every web handler used only `caseId`).
+- **`ActivityItem.id` is text, not a uuid:** Task feed rows carry the numeric log id.
+- **`ActivityTailer.subscribe` completes once the tailer's cursor is initialised.** A connection that replays must subscribe first and replay second; otherwise rows that commit between the replay snapshot and the cursor's start (the head, read at first subscribe) would be missed by both paths. The route and `createActivityGate` hold live entries while the replay is read and drop ids at or below the last sent cursor.
+- **The SSE route sends two events per entry** for an entry of a migrated kind: its legacy event (old clients) and `activity` (new clients), both with the cursor as `id:`. Legacy-channel events carry no id and are not replayed.
+- **Found and fixed on the way:** `listenForEvents` ended its own connection as soon as `sql.listen` resolved (that promise only waits for LISTEN to start), so it received almost no notifications. The connection now stays open until `end()`; the mocked test that asserted the reconnect loop is replaced by one that asserts the connection stays up, and the activity tests listen on a real connection.

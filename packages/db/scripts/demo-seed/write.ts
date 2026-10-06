@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 
 import {
-  activityEvents,
-  activityEventsRepo,
+  activity,
+  activityLogRepo,
   cases,
   casesRepo,
   claims,
@@ -439,7 +439,7 @@ export class SeedKit {
   }): Promise<void> {
     const created = must(
       `activity ${input.label}`,
-      await activityEventsRepo.create(this.exec, {
+      await activityLogRepo.append(this.exec, {
         caseId: input.caseId,
         kind: input.kind,
         action: input.action,
@@ -451,9 +451,9 @@ export class SeedKit {
       })
     );
     await this.exec
-      .update(activityEvents)
+      .update(activity)
       .set({ createdAt: input.at })
-      .where(eq(activityEvents.id, created.id));
+      .where(eq(activity.id, created.id));
     this.tally.activity += 1;
   }
 

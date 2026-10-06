@@ -1,4 +1,23 @@
 export type {
+  ActivityCursor,
+  ActivityEntry,
+  ActivityGate,
+  ActivityEntryKind,
+} from "./activity-log";
+export {
+  ACTIVITY_ENTRY_ACTIONS,
+  ACTIVITY_ENTRY_KINDS,
+  ACTIVITY_LABEL_MAX,
+  activityEntryKindSchema,
+  activityEntrySchema,
+  compareActivityCursor,
+  createActivityGate,
+  formatActivityCursor,
+  isActivityActionForKind,
+  legacyEventForActivityEntry,
+  parseActivityCursor,
+} from "./activity-log";
+export type {
   ActivityItem,
   ActivityKind,
   ListRecentActivityInput,

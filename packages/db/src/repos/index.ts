@@ -5,13 +5,14 @@ export type {
   RecentJobActivityRow,
   RecentProposalActivityRow,
 } from "./activity.repo";
-export { activityEventsRepo } from "./activity-events.repo";
+export { activityLogRepo } from "./activity-log.repo";
 export type {
-  ActivityEventRow,
-  NewActivityEvent,
-  RecentActivityEventOpts,
-  RecentActivityEventRow,
-} from "./activity-events.repo";
+  ActivityRow,
+  DrainActivityOpts,
+  NewActivityRow,
+  RecentActivityLogOpts,
+  RecentActivityLogRow,
+} from "./activity-log.repo";
 export { casesRepo } from "./cases.repo";
 export type { CasePatch, CaseRow, NewCase } from "./cases.repo";
 export { claimsRepo } from "./claims.repo";
