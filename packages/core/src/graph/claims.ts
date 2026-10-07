@@ -28,7 +28,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { appendGraphActivityEffect } from "./graph-activity";
+import {
+  appendGraphActivityEffect,
+  graphActorFields,
+  type GraphActor,
+} from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -51,7 +55,7 @@ export interface ClaimRecord {
   evidenceIds: string[];
 }
 
-export interface CreateClaimInput {
+export interface CreateClaimInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
@@ -61,7 +65,7 @@ export interface CreateClaimInput {
   evidenceIds?: string[];
 }
 
-export interface UpdateClaimInput {
+export interface UpdateClaimInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   claimId: string;
@@ -72,6 +76,7 @@ export interface UpdateClaimInput {
 }
 
 export interface RetractClaimInput {
+  actorLabel?: string;
   caseId: CaseId;
   organizationId: OrganizationId;
   claimId: string;
@@ -161,6 +166,7 @@ export function createClaimEffect(
         );
         yield* assertEvidenceLinkedEffect(linked);
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "claim",
           action: "created",
@@ -215,6 +221,7 @@ export function retractClaimEffect(
           return yield* new NotFoundError({ entity: "Claim", id: claimId });
         }
         yield* appendGraphActivityEffect(tx, {
+          actorLabel: input.actorLabel,
           caseId: scopedCaseId,
           kind: "claim",
           action: "retracted",
@@ -306,6 +313,7 @@ export function updateClaimEffect(
           return yield* new NotFoundError({ entity: "Claim", id: claimId });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "claim",
           action: "updated",

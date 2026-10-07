@@ -97,6 +97,7 @@ describe("claims procedures", () => {
       confidence: "unverified",
       class: "observation",
       organizationId: TEST_ORGANIZATION_ID,
+      actorId: actor.userId,
     });
   });
 

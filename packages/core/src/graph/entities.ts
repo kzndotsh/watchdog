@@ -23,7 +23,11 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 import { assertEntityKindChangeAllowedEffect } from "./edge-update";
-import { appendGraphActivityEffect } from "./graph-activity";
+import {
+  appendGraphActivityEffect,
+  graphActorFields,
+  type GraphActor,
+} from "./graph-activity";
 import { assertCaseInOrgEffect, requireTrimmedGraphId } from "./patch/guards";
 import { seedDefaultQuestionsEffect } from "./questions";
 
@@ -41,7 +45,7 @@ export interface EntityRecord {
   updatedAt: string;
 }
 
-export interface CreateEntityInput {
+export interface CreateEntityInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   kind: EntityKind;
@@ -49,7 +53,7 @@ export interface CreateEntityInput {
   slug: string;
 }
 
-export interface UpdateEntityFieldsInput {
+export interface UpdateEntityFieldsInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
@@ -149,6 +153,7 @@ export function createEntityEffect(
           }
           yield* seedDefaultQuestionsEffect(tx, row);
           yield* appendGraphActivityEffect(tx, {
+            ...graphActorFields(input),
             caseId: scopedCaseId,
             kind: "entity",
             action: "created",
@@ -212,6 +217,7 @@ export function updateEntityFieldsEffect(
           return yield* new NotFoundError({ entity: "Entity", id: entityId });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "entity",
           action: "updated",
@@ -228,7 +234,8 @@ export function updateEntityFieldsEffect(
 export function deleteEntityEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  entityId: string
+  entityId: string,
+  actor?: GraphActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEntityGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -255,11 +262,12 @@ export function deleteEntityEffect(
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(actor),
           caseId: scopedCaseId,
           kind: "entity",
           action: "deleted",
           subjectId: normalizedEntityId,
-          label: existing.name,
+          label: deleted.name,
         });
       })
     );

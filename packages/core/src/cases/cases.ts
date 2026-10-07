@@ -10,7 +10,11 @@ import {
 } from "@watchdog/schemas/shared";
 
 import { optionalActorId } from "../actors/require-actor-id";
-import { appendGraphActivityEffect } from "../graph/graph-activity";
+import {
+  appendGraphActivityEffect,
+  graphActorFields,
+  type GraphActor,
+} from "../graph/graph-activity";
 import { requireTrimmedCaseIdEffect } from "../graph/patch/guards";
 import { deleteCaseArtifactsEffect } from "../infra/blob";
 import type { BlobStore } from "../infra/blob-store";
@@ -160,13 +164,15 @@ export function createCaseEffect(
   });
 }
 
-export function updateCaseEffect(input: {
-  id: CaseId;
-  organizationId: OrganizationId;
-  name?: string;
-  description?: string | null;
-  allowThirdPartyEgress?: boolean;
-}): Effect.Effect<CaseRecord, DomainTag, Db> {
+export function updateCaseEffect(
+  input: {
+    id: CaseId;
+    organizationId: OrganizationId;
+    name?: string;
+    description?: string | null;
+    allowThirdPartyEgress?: boolean;
+  } & GraphActor
+): Effect.Effect<CaseRecord, DomainTag, Db> {
   return Effect.gen(function* updateCaseGen() {
     const caseId = yield* requireTrimmedCaseIdEffect(input.id);
     const existing = yield* tryDbWith((exec) =>
@@ -226,6 +232,7 @@ export function updateCaseEffect(input: {
             return yield* new NotFoundError({ entity: "Case", id: caseId });
           }
           yield* appendGraphActivityEffect(tx, {
+            ...graphActorFields(input),
             caseId,
             kind: "case",
             action: "updated",

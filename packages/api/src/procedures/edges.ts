@@ -15,6 +15,7 @@ import {
   updateEdgeInputSchema,
 } from "@watchdog/schemas/graph";
 
+import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
@@ -71,6 +72,7 @@ export const create = graphChildWrite
       createEdgeEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -90,6 +92,7 @@ export const update = graphChildWrite
       updateEdgeEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -105,7 +108,12 @@ export const remove = graphChildWrite
   .output(z.object({ ok: z.literal(true) }))
   .handler(async ({ input, context }) => {
     await runApp(
-      deleteEdgeEffect(input.caseId, context.actor.organizationId, input.edgeId)
+      deleteEdgeEffect(
+        input.caseId,
+        context.actor.organizationId,
+        input.edgeId,
+        graphActorFromContext(context.actor)
+      )
     );
     return { ok: true as const };
   });

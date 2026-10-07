@@ -20,6 +20,7 @@ import {
   type GraphFixture,
 } from "./graph-mutations";
 
+const APPEND_FAILURE = "append failed";
 const START = { xid: "0", id: 0 } as const;
 
 /** Every Graph row of the fixture Case, so a rolled-back write must leave all of it as it was. */
@@ -58,10 +59,12 @@ describe("a Graph write and its activity entry share one transaction", () => {
       after: START,
       limit: 1000,
     });
-    vi.spyOn(activityLogRepo, "append").mockRejectedValueOnce(
-      new Error("append failed")
-    );
-    await expect(runDomain(mutation.run(fx))).rejects.toBeDefined();
+    const append = vi
+      .spyOn(activityLogRepo, "append")
+      .mockRejectedValueOnce(new Error(APPEND_FAILURE));
+    // the injected failure is what rejects, and the write got as far as its append
+    await expect(runDomain(mutation.run(fx))).rejects.toThrow(APPEND_FAILURE);
+    expect(append).toHaveBeenCalledTimes(1);
     expect(await graphSnapshot(fx)).toBe(before);
     expect(
       await activityLogRepo.drain(db, { after: START, limit: 1000 })

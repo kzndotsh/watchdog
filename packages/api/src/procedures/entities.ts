@@ -15,6 +15,7 @@ import {
   updateEntityInputSchema,
 } from "@watchdog/schemas/graph";
 
+import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import { entitySchema } from "../schemas";
@@ -68,6 +69,7 @@ export const create = authed
       createEntityEffect({
         ...input,
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -86,6 +88,7 @@ export const update = authed
       updateEntityFieldsEffect({
         ...input,
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -104,7 +107,8 @@ export const remove = authed
       deleteEntityEffect(
         input.caseId,
         context.actor.organizationId,
-        input.entityId
+        input.entityId,
+        graphActorFromContext(context.actor)
       )
     );
     return { ok: true as const };

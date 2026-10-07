@@ -30,7 +30,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { appendGraphActivityEffect } from "./graph-activity";
+import {
+  appendGraphActivityEffect,
+  graphActorFields,
+  type GraphActor,
+} from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -54,7 +58,7 @@ export interface IdentifierRecord {
   evidenceIds: string[];
 }
 
-export interface CreateIdentifierInput {
+export interface CreateIdentifierInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
@@ -67,7 +71,7 @@ export interface CreateIdentifierInput {
   evidenceIds?: string[];
 }
 
-export interface UpdateIdentifierInput {
+export interface UpdateIdentifierInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   identifierId: string;
@@ -212,6 +216,7 @@ export function createIdentifierEffect(
           );
           yield* assertEvidenceLinkedEffect(linked);
           yield* appendGraphActivityEffect(tx, {
+            ...graphActorFields(input),
             caseId: scopedCaseId,
             kind: "identifier",
             action: "created",
@@ -325,33 +330,30 @@ export function updateIdentifierEffect(
             patch.notes = trimmedOrNull(input.notes);
           }
 
-          let current = existing;
-          if (Object.keys(patch).length > 0) {
-            const updated = yield* tryDb(() =>
-              identifiersRepo.updateInCase(
-                tx,
-                scopedCaseId,
-                identifierId,
-                patch
-              )
-            );
-            if (!updated) {
-              return yield* new NotFoundError({
-                entity: "Identifier",
-                id: identifierId,
-              });
-            }
-            current = updated;
+          // As before the log: a patch with no Identifier column writes nothing
+          // and signals nothing (an evidence-only update replaces links only),
+          // so no entry can outlive a concurrently deleted subject.
+          if (Object.keys(patch).length === 0) {
+            return { row: existing, evidenceIds: nextIds };
           }
-          // An evidence-only update still changed the Identifier's links.
+          const updated = yield* tryDb(() =>
+            identifiersRepo.updateInCase(tx, scopedCaseId, identifierId, patch)
+          );
+          if (!updated) {
+            return yield* new NotFoundError({
+              entity: "Identifier",
+              id: identifierId,
+            });
+          }
           yield* appendGraphActivityEffect(tx, {
+            ...graphActorFields(input),
             caseId: scopedCaseId,
             kind: "identifier",
             action: "updated",
-            subjectId: current.id,
-            label: current.value,
+            subjectId: updated.id,
+            label: updated.value,
           });
-          return { row: current, evidenceIds: nextIds };
+          return { row: updated, evidenceIds: nextIds };
         }),
       { uniqueIndex: NATURAL_KEY_INDEX, conflictReason: DUPLICATE_MESSAGE }
     );
@@ -363,7 +365,8 @@ export function updateIdentifierEffect(
 export function deleteIdentifierEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  identifierId: string
+  identifierId: string,
+  actor?: GraphActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteIdentifierGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -393,11 +396,12 @@ export function deleteIdentifierEffect(
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(actor),
           caseId: scopedCaseId,
           kind: "identifier",
           action: "deleted",
           subjectId: normalizedIdentifierId,
-          label: existing.value,
+          label: deleted.value,
         });
       })
     );

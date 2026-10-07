@@ -19,7 +19,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { appendGraphActivityEffect } from "./graph-activity";
+import {
+  appendGraphActivityEffect,
+  graphActorFields,
+  type GraphActor,
+} from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
@@ -34,21 +38,21 @@ export interface QuestionRecord {
   resolvedNote: string | null;
 }
 
-export interface CreateQuestionInput {
+export interface CreateQuestionInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
   text: string;
 }
 
-export interface ResolveQuestionInput {
+export interface ResolveQuestionInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   questionId: string;
   resolvedNote?: string;
 }
 
-export interface UpdateQuestionInput {
+export interface UpdateQuestionInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   questionId: string;
@@ -56,7 +60,7 @@ export interface UpdateQuestionInput {
   resolvedNote?: string | null;
 }
 
-export interface ReopenQuestionInput {
+export interface ReopenQuestionInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   questionId: string;
@@ -159,6 +163,7 @@ export function createQuestionEffect(
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "question",
           action: "created",
@@ -202,12 +207,23 @@ export function resolveQuestionEffect(
           })
         );
         if (!resolved) {
-          return yield* new NotFoundError({
-            entity: "Question",
-            id: questionId,
+          // The `open` check is part of the update: a miss is a concurrent
+          // resolve (Conflict) or a concurrent delete (NotFound).
+          const current = yield* tryDb(() =>
+            questionsRepo.getInCase(tx, scopedCaseId, questionId)
+          );
+          if (!current) {
+            return yield* new NotFoundError({
+              entity: "Question",
+              id: questionId,
+            });
+          }
+          return yield* new ConflictError({
+            reason: "Question already resolved",
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "question",
           action: "resolved",
@@ -274,6 +290,7 @@ export function updateQuestionEffect(
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "question",
           action: "updated",
@@ -312,24 +329,32 @@ export function reopenQuestionEffect(
     const row = yield* transact((tx) =>
       Effect.gen(function* reopenQuestionTx() {
         const reopened = yield* tryDb(() =>
-          questionsRepo.updateInCase(tx, scopedCaseId, questionId, {
-            status: "open",
-            resolvedNote: null,
-          })
+          questionsRepo.reopenInCase(tx, scopedCaseId, questionId)
         );
         if (!reopened) {
-          return yield* new NotFoundError({
-            entity: "Question",
-            id: questionId,
+          // The `resolved` check is part of the update: a miss is a
+          // concurrent reopen (Conflict) or a concurrent delete (NotFound).
+          const current = yield* tryDb(() =>
+            questionsRepo.getInCase(tx, scopedCaseId, questionId)
+          );
+          if (!current) {
+            return yield* new NotFoundError({
+              entity: "Question",
+              id: questionId,
+            });
+          }
+          return yield* new ConflictError({
+            reason: "Question is already open",
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "question",
           action: "updated",
           subjectId: reopened.id,
           label: reopened.text,
-          fromValue: existing.status,
+          fromValue: "resolved",
           toValue: "open",
         });
         return reopened;
@@ -342,7 +367,8 @@ export function reopenQuestionEffect(
 export function deleteQuestionEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  questionId: string
+  questionId: string,
+  actor?: GraphActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteQuestionGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -372,11 +398,12 @@ export function deleteQuestionEffect(
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(actor),
           caseId: scopedCaseId,
           kind: "question",
           action: "deleted",
           subjectId: normalizedQuestionId,
-          label: existing.text,
+          label: deleted.text,
         });
       })
     );

@@ -17,7 +17,11 @@ import {
   NotFoundError,
   type DomainTag,
 } from "../infra/tagged-errors";
-import { appendGraphActivityEffect } from "./graph-activity";
+import {
+  appendGraphActivityEffect,
+  graphActorFields,
+  type GraphActor,
+} from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
@@ -32,7 +36,7 @@ export interface EventRecord {
   where: string | null;
 }
 
-export interface CreateEventInput {
+export interface CreateEventInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
@@ -41,7 +45,7 @@ export interface CreateEventInput {
   where?: string;
 }
 
-export interface UpdateEventInput {
+export interface UpdateEventInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   eventId: string;
@@ -108,6 +112,7 @@ export function createEventEffect(
           return yield* new InternalError({ reason: "Failed to create Event" });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "event",
           action: "created",
@@ -170,6 +175,7 @@ export function updateEventEffect(
           return yield* new NotFoundError({ entity: "Event", id: eventId });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(input),
           caseId: scopedCaseId,
           kind: "event",
           action: "updated",
@@ -186,7 +192,8 @@ export function updateEventEffect(
 export function deleteEventEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  eventId: string
+  eventId: string,
+  actor?: GraphActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEventGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -213,11 +220,12 @@ export function deleteEventEffect(
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(actor),
           caseId: scopedCaseId,
           kind: "event",
           action: "deleted",
           subjectId: normalizedEventId,
-          label: existing.what,
+          label: deleted.what,
         });
       })
     );

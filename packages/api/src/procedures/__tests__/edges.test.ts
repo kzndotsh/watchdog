@@ -192,6 +192,7 @@ describe("edges procedures", () => {
       edgeId: "00000000-0000-4000-8000-000000000020",
       predicate: "related_to",
       organizationId: actor.organizationId,
+      actorId: actor.userId,
     });
   });
 

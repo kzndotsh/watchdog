@@ -329,10 +329,10 @@ export const edgesRepo = {
     exec: DbExec,
     caseId: string,
     edgeId: string
-  ): Promise<boolean> {
+  ): Promise<EdgeRow | null> {
     const scoped = trimScopedCaseIds(caseId, edgeId);
-    if (!scoped) return false;
-    const deleted = await exec
+    if (!scoped) return null;
+    const [deleted] = await exec
       .delete(edges)
       .where(
         and(
@@ -340,7 +340,7 @@ export const edgesRepo = {
           edgeRowInCase(edges.id, scoped.caseId)
         )
       )
-      .returning({ id: edges.id });
-    return deleted.length > 0;
+      .returning(edgeColumns);
+    return deleted ?? null;
   },
 };

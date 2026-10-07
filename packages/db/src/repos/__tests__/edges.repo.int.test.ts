@@ -149,13 +149,13 @@ describe("edgesRepo", () => {
         notes: null,
       });
       if (!created) throw new Error("edge");
-      expect(await edgesRepo.deleteInCase(tx, caseA.id, created.id)).toBe(
-        false
-      );
+      expect(await edgesRepo.deleteInCase(tx, caseA.id, created.id)).toBeNull();
       expect(
         await edgesRepo.getInCase(tx, caseB.id, created.id)
       ).not.toBeNull();
-      expect(await edgesRepo.deleteInCase(tx, caseB.id, created.id)).toBe(true);
+      expect(
+        await edgesRepo.deleteInCase(tx, caseB.id, created.id)
+      ).toMatchObject({ id: created.id, predicate: "owns" });
       expect(await edgesRepo.getInCase(tx, caseB.id, created.id)).toBeNull();
     });
   });

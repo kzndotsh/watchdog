@@ -335,10 +335,10 @@ export const entitiesRepo = {
     exec: DbExec,
     caseId: string,
     entityId: string
-  ): Promise<boolean> {
+  ): Promise<EntityRow | null> {
     const scoped = trimScopedCaseIds(caseId, entityId);
-    if (!scoped) return false;
-    const deleted = await exec
+    if (!scoped) return null;
+    const [deleted] = await exec
       .delete(entities)
       .where(
         and(
@@ -346,7 +346,7 @@ export const entitiesRepo = {
           eq(entities.caseId, scoped.caseId)
         )
       )
-      .returning({ id: entities.id });
-    return deleted.length > 0;
+      .returning(entityColumns);
+    return deleted ?? null;
   },
 };

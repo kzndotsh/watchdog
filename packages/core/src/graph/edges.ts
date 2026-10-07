@@ -30,7 +30,11 @@ import {
   assertEdgeKindsAllowedEffect,
   validateEdgeUpdateEffect,
 } from "./edge-update";
-import { appendGraphActivityEffect } from "./graph-activity";
+import {
+  appendGraphActivityEffect,
+  graphActorFields,
+  type GraphActor,
+} from "./graph-activity";
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
@@ -57,7 +61,7 @@ export interface EdgeRecord {
   direction: "out" | "in";
 }
 
-export interface CreateEdgeInput {
+export interface CreateEdgeInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   fromId: string;
@@ -73,7 +77,7 @@ export interface CreateEdgeInput {
   viewEntityId?: string;
 }
 
-export interface UpdateEdgeInput {
+export interface UpdateEdgeInput extends GraphActor {
   caseId: CaseId;
   organizationId: OrganizationId;
   edgeId: string;
@@ -274,6 +278,7 @@ export function createEdgeEffect(
           );
           yield* assertEvidenceLinkedEffect(linked);
           yield* appendGraphActivityEffect(tx, {
+            ...graphActorFields(input),
             caseId: scopedCaseId,
             kind: "edge",
             action: "created",
@@ -356,6 +361,7 @@ export function updateEdgeEffect(
             validated
           );
           yield* appendGraphActivityEffect(tx, {
+            ...graphActorFields(input),
             caseId: scopedCaseId,
             kind: "edge",
             action: "updated",
@@ -379,7 +385,8 @@ export function updateEdgeEffect(
 export function deleteEdgeEffect(
   caseId: CaseId,
   organizationId: OrganizationId,
-  edgeId: string
+  edgeId: string,
+  actor?: GraphActor
 ): Effect.Effect<void, DomainTag, Db> {
   return Effect.gen(function* deleteEdgeGen() {
     const scopedCaseId = yield* assertCaseInOrgEffect(caseId, organizationId);
@@ -403,11 +410,12 @@ export function deleteEdgeEffect(
           });
         }
         yield* appendGraphActivityEffect(tx, {
+          ...graphActorFields(actor),
           caseId: scopedCaseId,
           kind: "edge",
           action: "deleted",
           subjectId: normalizedEdgeId,
-          label: existing.predicate,
+          label: deleted.predicate,
         });
       })
     );

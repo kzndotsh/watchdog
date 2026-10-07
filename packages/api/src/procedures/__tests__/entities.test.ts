@@ -168,7 +168,8 @@ describe("entities procedures", () => {
     expect(deleteEntityEffect).toHaveBeenCalledWith(
       caseId,
       actor.organizationId,
-      entityId
+      entityId,
+      expect.objectContaining({ actorId: actor.userId })
     );
   });
 

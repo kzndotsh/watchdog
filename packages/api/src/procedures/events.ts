@@ -13,6 +13,7 @@ import {
   updateEventInputSchema,
 } from "@watchdog/schemas/graph";
 
+import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
@@ -52,6 +53,7 @@ export const create = graphChildWrite
       createEventEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -70,6 +72,7 @@ export const update = graphChildWrite
       updateEventEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -92,7 +95,8 @@ export const remove = graphChildWrite
       deleteEventEffect(
         input.caseId,
         context.actor.organizationId,
-        input.eventId
+        input.eventId,
+        graphActorFromContext(context.actor)
       )
     );
     return { ok: true as const };

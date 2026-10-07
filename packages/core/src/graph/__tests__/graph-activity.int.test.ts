@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { isDomainTag } from "@watchdog/core/errors";
 import { applyPatchEffect } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
 import { activityLogRepo, db } from "@watchdog/db";
@@ -34,13 +35,16 @@ describe("every registered Graph mutation appends exactly once", () => {
   )("%s", async (_name, mutation) => {
     const fx = await seedGraphFixture();
     const before = await allEntries();
-    await runDomain(mutation.run(fx));
+    const result = await runDomain(mutation.run(fx));
     const added = (await allEntries()).slice(before.length);
     expect(added).toHaveLength(mutation.entries ?? 1);
     for (const row of added) {
       expect(row.caseId).toBe(fx.caseId);
       expect(row.kind).toBe(mutation.kind);
       expect(row.action).toBe(mutation.action);
+      expect(row.subjectId).toBe(mutation.subjectId(fx, result));
+      // every mutation runs as the caller: no entry has a null actor
+      expect(row.actorId).toBe(TEST_ACTOR_ID);
     }
   });
 });
@@ -166,7 +170,9 @@ describe("Graph entries carry the subject and a label", () => {
           ],
         })
       )
-    ).rejects.toBeDefined();
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
     expect(await allEntries()).toHaveLength(before.length);
   });
 });
