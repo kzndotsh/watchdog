@@ -2,6 +2,7 @@ import { Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { recordingBlobStore } from "@watchdog/core/blob";
+import { isDomainTag } from "@watchdog/core/errors";
 import { processEvidenceEffect } from "@watchdog/core/evidence";
 import { Db, runDomainWith } from "@watchdog/core/infra";
 import {
@@ -155,7 +156,9 @@ describe("Job activity (ADR-0005 S2)", () => {
     const before = await jobEntries();
     await expect(
       runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id))
-    ).rejects.toBeDefined();
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "conflict"
+    );
     expect(await jobEntries()).toHaveLength(before.length);
   });
 
