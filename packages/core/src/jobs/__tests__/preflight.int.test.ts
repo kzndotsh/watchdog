@@ -26,7 +26,10 @@ describe("preflight", () => {
 
   it("stops when the job is cancelled", async () => {
     const cased = await seedCase(db);
-    const job = await seedJob(db, cased.id, { status: "cancelled" });
+    const job = await seedJob(db, cased.id, {
+      status: "cancelled",
+      transitions: ["queued", "cancelled"],
+    });
     const result = await runDomain(preflightEffect(job.id));
     expect(result).toEqual({ kind: "stop", reason: "cancelled" });
   });

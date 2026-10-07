@@ -10,27 +10,44 @@ import {
   type NewJob,
 } from "@watchdog/db";
 import { ACTIVITY_ENTRY_ACTIONS } from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
+import type { CaseId, JobStatus } from "@watchdog/schemas/shared";
 import { TEST_ACTOR_ID } from "@watchdog/test-kit/fixtures";
 
 type SeedJobOverrides = Partial<NewJob> &
-  Partial<Pick<JobPatch, "resultSummary">>;
+  Partial<Pick<JobPatch, "resultSummary">> & {
+    /**
+     * The statuses the Job actually entered, in order, ending with its own
+     * status (e.g. `["queued", "cancelled"]` for a Job cancelled before it
+     * ran). Default: queued, then running, then a terminal status; a `queued`
+     * or `blocked` Job entered only itself.
+     */
+    transitions?: readonly JobStatus[];
+  };
+
+function defaultTransitions(status: JobStatus): JobStatus[] {
+  if (status === "queued" || status === "blocked") return [status];
+  return status === "running"
+    ? ["queued", "running"]
+    : ["queued", "running", status];
+}
 
 /**
- * The log entries core would have appended for a Job seeded in `status`:
- * queued, running, then the terminal status (as the demo seed and real writes
- * do); a `blocked` Job has no log verb. Keeps seeded Jobs visible in Recent
- * activity.
+ * The log entries core would have appended for the transitions a seeded Job
+ * went through (a `blocked` Job has no log verb). Keeps seeded Jobs visible in
+ * Recent activity without inventing steps the Job never took.
  */
-async function seedJobActivity(exec: DbExec, job: JobRow): Promise<void> {
-  const lifecycle =
-    job.status === "queued" || job.status === "blocked"
-      ? ["queued"]
-      : ["queued", "running", job.status];
-  const actions = (job.status === "blocked" ? [] : lifecycle).filter(
-    (action, index, all) =>
-      all.indexOf(action) === index &&
-      (ACTIVITY_ENTRY_ACTIONS.job as readonly string[]).includes(action)
+async function seedJobActivity(
+  exec: DbExec,
+  job: JobRow,
+  transitions: readonly JobStatus[]
+): Promise<void> {
+  if (transitions.at(-1) !== job.status) {
+    throw new Error(
+      `seedJob transitions must end with the Job's status (${job.status})`
+    );
+  }
+  const actions = transitions.filter((action) =>
+    (ACTIVITY_ENTRY_ACTIONS.job as readonly string[]).includes(action)
   );
   for (const action of actions) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- entries must append in order
@@ -52,7 +69,7 @@ export async function seedJob(
   caseId: CaseId,
   overrides?: SeedJobOverrides
 ): Promise<JobRow> {
-  const { resultSummary, ...createOverrides } = overrides ?? {};
+  const { resultSummary, transitions, ...createOverrides } = overrides ?? {};
   const created = await jobsRepo.create(exec, {
     caseId,
     capabilityId: createOverrides.capabilityId ?? "network.dns.lookup",
@@ -70,7 +87,11 @@ export async function seedJob(
   if (!created) {
     throw new Error("seedJob failed");
   }
-  await seedJobActivity(exec, created);
+  await seedJobActivity(
+    exec,
+    created,
+    transitions ?? defaultTransitions(created.status)
+  );
   if (resultSummary === undefined) {
     return created;
   }

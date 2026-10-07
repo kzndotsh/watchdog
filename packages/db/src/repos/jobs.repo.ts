@@ -36,6 +36,7 @@ import { evidence } from "../schema/evidence";
 import { jobs } from "../schema/jobs";
 import { playbookRuns } from "../schema/playbook-runs";
 import { entitySlugIlikePatterns } from "./_ilike";
+import { jobActivityColumns, type JobActivityFields } from "./_job-activity";
 import {
   inArrayForDisplayLabelMatch,
   sqlCatalogIdIlike,
@@ -345,23 +346,19 @@ export const jobsRepo = {
     }));
   },
 
-  async getStatusAndPlaybook(
+  /** Status read with `FOR UPDATE`: a concurrent status write waits, so the caller's change check is atomic. Use inside a transaction. */
+  async lockStatus(
     exec: DbExec,
     jobId: string
-  ): Promise<{
-    status: JobStatus;
-    playbookRunId: string | null;
-  } | null> {
+  ): Promise<{ status: JobStatus } | null> {
     const scopedJobId = trimResourceId(jobId);
     if (scopedJobId === undefined) return null;
     const [row] = await exec
-      .select({
-        status: jobs.status,
-        playbookRunId: jobs.playbookRunId,
-      })
+      .select({ status: jobs.status })
       .from(jobs)
       .where(eq(jobs.id, scopedJobId))
-      .limit(1);
+      .limit(1)
+      .for("update");
     return row ?? null;
   },
 
@@ -475,11 +472,11 @@ export const jobsRepo = {
     exec: DbExec,
     caseId: string,
     playbookRunId: string
-  ): Promise<JobRow[]> {
+  ): Promise<JobActivityFields[]> {
     const scoped = trimScopedCaseIds(caseId, playbookRunId);
     if (!scoped) return [];
     return exec
-      .select()
+      .select(jobActivityColumns)
       .from(jobs)
       .where(
         and(
@@ -586,15 +583,14 @@ export const jobsRepo = {
     exec: DbExec,
     playbookRunId: string,
     error: string
-  ): Promise<JobRow[]> {
+  ): Promise<JobActivityFields[]> {
     const scopedPlaybookRunId = trimResourceId(playbookRunId);
     if (scopedPlaybookRunId === undefined) return [];
-    const now = new Date();
     return exec
       .update(jobs)
       .set({
         status: "cancelled",
-        finishedAt: now,
+        finishedAt: new Date(),
         error,
       })
       .where(
@@ -603,7 +599,7 @@ export const jobsRepo = {
           eq(jobs.status, "blocked")
         )
       )
-      .returning();
+      .returning(jobActivityColumns);
   },
 
   async cancelCancellable(

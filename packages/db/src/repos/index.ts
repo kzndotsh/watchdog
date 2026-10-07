@@ -68,6 +68,7 @@ export type {
 export { usersRepo } from "./users.repo";
 export type { UserDisplayRow } from "./users.repo";
 export { jobsRepo } from "./jobs.repo";
+export type { JobActivityFields } from "./_job-activity";
 export type {
   JobListRow,
   JobPatch,

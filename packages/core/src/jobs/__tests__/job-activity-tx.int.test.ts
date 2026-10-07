@@ -12,7 +12,7 @@ import {
   startJobEffect,
 } from "@watchdog/core/jobs";
 import { vaultLayer } from "@watchdog/core/vault";
-import { activityLogRepo, db, jobsRepo } from "@watchdog/db";
+import { activityLogRepo, db, jobsRepo, playbookRunsRepo } from "@watchdog/db";
 import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -42,11 +42,18 @@ async function jobEntries() {
   return rows.filter((row) => row.kind === "job");
 }
 
+const APPEND_FAILURE = "append failed";
+
 /** The next entry insert fails after the Job write ran: the whole transaction must roll back. */
 function failNextAppend() {
   return vi
     .spyOn(activityLogRepo, "append")
-    .mockRejectedValueOnce(new Error("append failed"));
+    .mockRejectedValueOnce(new Error(APPEND_FAILURE));
+}
+
+/** The rejection must be the injected append failure, not any other error. */
+async function expectAppendFailure(run: Promise<unknown>) {
+  await expect(run).rejects.toThrow(APPEND_FAILURE);
 }
 
 function startDns(caseId: Parameters<typeof startJobEffect>[0]["caseId"]) {
@@ -74,20 +81,22 @@ describe("a Job write and its activity entry share one transaction", () => {
     const cased = await seedCase(db);
     const job = await startDns(cased.id);
     const before = await jobEntries();
-    failNextAppend();
-    await expect(
+    const append = failNextAppend();
+    await expectAppendFailure(
       runDomain(
         setJobStatusEffect(job.id, { status: "running" }, { caseId: cased.id })
       )
-    ).rejects.toBeDefined();
+    );
+    expect(append).toHaveBeenCalledTimes(1);
     expect((await jobsRepo.get(db, job.id))?.status).toBe("queued");
     expect(await jobEntries()).toHaveLength(before.length);
   });
 
   it("start: a failed append leaves no Job row", async () => {
     const cased = await seedCase(db);
-    failNextAppend();
-    await expect(startDns(cased.id)).rejects.toBeDefined();
+    const append = failNextAppend();
+    await expectAppendFailure(startDns(cased.id));
+    expect(append).toHaveBeenCalled();
     expect(await jobsRepo.listForCase(db, cased.id)).toEqual([]);
     expect(await jobEntries()).toEqual([]);
   });
@@ -95,18 +104,19 @@ describe("a Job write and its activity entry share one transaction", () => {
   it("cancel: a failed append leaves the Job cancellable and queued", async () => {
     const cased = await seedCase(db);
     const job = await startDns(cased.id);
-    failNextAppend();
-    await expect(
+    const append = failNextAppend();
+    await expectAppendFailure(
       runDomain(cancelJobEffect(cased.id, TEST_ORGANIZATION_ID, job.id))
-    ).rejects.toBeDefined();
+    );
+    expect(append).toHaveBeenCalled();
     expect((await jobsRepo.get(db, job.id))?.status).toBe("queued");
     expect((await jobEntries()).map((row) => row.action)).toEqual(["queued"]);
   });
 
   it("playbook start: a failed append leaves no run and no Job", async () => {
     const cased = await seedCase(db);
-    failNextAppend();
-    await expect(
+    const append = failNextAppend();
+    await expectAppendFailure(
       runDomain(
         runPlaybookEffect({
           caseId: cased.id,
@@ -116,7 +126,8 @@ describe("a Job write and its activity entry share one transaction", () => {
           seed: { host: "mailhost.test" },
         })
       )
-    ).rejects.toBeDefined();
+    );
+    expect(append).toHaveBeenCalled();
     expect(await jobsRepo.listForCase(db, cased.id)).toEqual([]);
     expect(await jobEntries()).toEqual([]);
   });
@@ -132,8 +143,8 @@ describe("a Job write and its activity entry share one transaction", () => {
         seed: { host: "mailhost.test" },
       })
     );
-    failNextAppend();
-    await expect(
+    const append = failNextAppend();
+    await expectAppendFailure(
       runDomain(
         cancelPlaybookRunEffect(
           cased.id,
@@ -141,13 +152,18 @@ describe("a Job write and its activity entry share one transaction", () => {
           started.playbookRunId
         )
       )
-    ).rejects.toBeDefined();
+    );
+    expect(append).toHaveBeenCalled();
     const members = await jobsRepo.listForPlaybookRun(
       db,
       started.playbookRunId
     );
     expect(members.map((job) => job.status)).toEqual(["queued"]);
     expect((await jobEntries()).map((row) => row.action)).toEqual(["queued"]);
+    // the run row rolled back with the Jobs
+    expect(
+      (await playbookRunsRepo.get(db, started.playbookRunId))?.status
+    ).toBe("running");
   });
 
   it("chain advance: a failed append creates no next step", async () => {
@@ -170,14 +186,15 @@ describe("a Job write and its activity entry share one transaction", () => {
         { caseId: cased.id }
       )
     );
-    failNextAppend();
-    await expect(
+    const append = failNextAppend();
+    await expectAppendFailure(
       runDomain(
         advancePlaybookRunEffect({
           playbookRunId: started.playbookRunId,
         })
       )
-    ).rejects.toBeDefined();
+    );
+    expect(append).toHaveBeenCalled();
     const members = await jobsRepo.listForPlaybookRun(
       db,
       started.playbookRunId
@@ -188,8 +205,8 @@ describe("a Job write and its activity entry share one transaction", () => {
   it("process Evidence: a failed append leaves no Job", async () => {
     const cased = await seedCase(db);
     const evidence = await seedEvidence(db, cased.id, { kind: "file" });
-    failNextAppend();
-    await expect(
+    const append = failNextAppend();
+    await expectAppendFailure(
       runDomain(
         processEvidenceEffect({
           caseId: cased.id,
@@ -198,8 +215,37 @@ describe("a Job write and its activity entry share one transaction", () => {
           actorId: TEST_ACTOR_ID,
         })
       )
-    ).rejects.toBeDefined();
+    );
+    expect(append).toHaveBeenCalled();
     expect(await jobsRepo.listForCase(db, cased.id)).toEqual([]);
+  });
+
+  it("two concurrent writers of the same status append one entry", async () => {
+    const cased = await seedCase(db);
+    const job = await startDns(cased.id);
+    // Widen the window between the status check and the update: without a row
+    // lock every writer reads `queued` before any of them writes.
+    const updateInCase = jobsRepo.updateInCase.bind(jobsRepo);
+    vi.spyOn(jobsRepo, "updateInCase").mockImplementation(async (...args) => {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      return updateInCase(...args);
+    });
+    const writers = Array.from({ length: 4 }, () =>
+      runDomain(
+        setJobStatusEffect(
+          job.id,
+          { status: "running", startedAt: new Date() },
+          { caseId: cased.id }
+        )
+      )
+    );
+    await Promise.all(writers);
+    expect((await jobEntries()).map((row) => row.action)).toEqual([
+      "queued",
+      "running",
+    ]);
   });
 
   it("a write that keeps the status appends no second entry", async () => {

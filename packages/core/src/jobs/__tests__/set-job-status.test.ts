@@ -3,15 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { testCaseId, untrustedCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const { update, updateInCase, getStatusAndPlaybook, append, tx } = vi.hoisted(
-  () => ({
-    update: vi.fn(),
-    updateInCase: vi.fn(),
-    getStatusAndPlaybook: vi.fn(),
-    append: vi.fn(),
-    tx: { handle: "tx" },
-  })
-);
+const { update, updateInCase, lockStatus, append, tx } = vi.hoisted(() => ({
+  update: vi.fn(),
+  updateInCase: vi.fn(),
+  lockStatus: vi.fn(),
+  append: vi.fn(),
+  tx: { handle: "tx" },
+}));
 
 vi.mock("@watchdog/db", () => ({
   // `transact` runs its body on a stand-in transaction handle.
@@ -19,7 +17,7 @@ vi.mock("@watchdog/db", () => ({
   jobsRepo: {
     update,
     updateInCase,
-    getStatusAndPlaybook,
+    lockStatus,
   },
   activityLogRepo: { append },
 }));
@@ -34,10 +32,9 @@ describe("setJobStatus", () => {
   beforeEach(() => {
     update.mockClear();
     updateInCase.mockReset();
-    getStatusAndPlaybook.mockReset();
-    getStatusAndPlaybook.mockResolvedValue({
+    lockStatus.mockReset();
+    lockStatus.mockResolvedValue({
       status: "running",
-      playbookRunId: null,
     });
     append.mockReset();
     append.mockResolvedValue({
@@ -103,7 +100,7 @@ describe("setJobStatus", () => {
     expect(update).not.toHaveBeenCalled();
     // strict identity: write, status read and append all use the transaction handle
     expect(updateInCase.mock.calls[0]?.[0]).toBe(tx);
-    expect(getStatusAndPlaybook.mock.calls[0]?.[0]).toBe(tx);
+    expect(lockStatus.mock.calls[0]?.[0]).toBe(tx);
     expect(append.mock.calls[0]?.[0]).toBe(tx);
     expect(append).toHaveBeenCalledWith(
       tx,

@@ -116,6 +116,7 @@ describe("test-kit db seeds", () => {
   it("seedJob creates queued cap jobs", async () => {
     mocks.createJob.mockResolvedValueOnce({
       id: "job-1",
+      status: "queued",
       capabilityId: "network.dns.lookup",
     });
     const row = await seedJob(exec, testCaseId(1));
@@ -125,6 +126,33 @@ describe("test-kit db seeds", () => {
       exec,
       expect.objectContaining({ kind: "job", action: "queued" })
     );
+  });
+
+  it("seedJob records only the transitions the Job went through", async () => {
+    const actions = () =>
+      mocks.appendActivity.mock.calls.map(
+        (call) => (call[1] as { action: string }).action
+      );
+    mocks.appendActivity.mockClear();
+    mocks.createJob.mockResolvedValueOnce({ id: "job-2", status: "failed" });
+    await seedJob(exec, testCaseId(1), { status: "failed" });
+    expect(actions()).toEqual(["queued", "running", "failed"]);
+
+    mocks.appendActivity.mockClear();
+    mocks.createJob.mockResolvedValueOnce({ id: "job-3", status: "cancelled" });
+    await seedJob(exec, testCaseId(1), {
+      status: "cancelled",
+      transitions: ["queued", "cancelled"],
+    });
+    expect(actions()).toEqual(["queued", "cancelled"]);
+
+    mocks.createJob.mockResolvedValueOnce({ id: "job-4", status: "failed" });
+    await expect(
+      seedJob(exec, testCaseId(1), {
+        status: "failed",
+        transitions: ["queued", "running"],
+      })
+    ).rejects.toThrow("transitions must end");
   });
 
   it("seedPlaybookRun creates running playbook runs", async () => {
