@@ -311,14 +311,19 @@ export function updateTaskEffect(
             });
           }
         }
-        const current = yield* tryDb(() =>
-          tasksRepo.lockInCase(tx, scopedCaseId, taskId)
-        );
-        if (!current) {
+        // Only a requested status change needs the row lock; an edit of other
+        // fields keeps the plain UPDATE.
+        const current =
+          input.status === undefined
+            ? null
+            : yield* tryDb(() =>
+                tasksRepo.lockInCase(tx, scopedCaseId, taskId)
+              );
+        if (input.status !== undefined && !current) {
           return yield* new NotFoundError({ entity: "Task", id: taskId });
         }
         const statusChanged =
-          input.status !== undefined && input.status !== current.status;
+          current !== null && input.status !== current.status;
         const destStatus = input.status;
         const position =
           statusChanged && destStatus !== undefined
@@ -347,7 +352,7 @@ export function updateTaskEffect(
                 action: "status_changed",
                 subjectId: row.id,
                 label: row.title,
-                fromValue: current.status,
+                fromValue: current?.status,
                 toValue: row.status,
                 actorId: optionalActorId(input.actorId),
               }

@@ -5,6 +5,11 @@
  * depend on how fast the database or the runner is.
  */
 export function rendezvous(parties: number): () => Promise<void> {
+  if (!Number.isInteger(parties) || parties < 1) {
+    throw new RangeError(
+      `rendezvous needs a positive integer party count, got ${parties}`
+    );
+  }
   const waiting: (() => void)[] = [];
   return async () => {
     // oxlint-disable-next-line promise/avoid-new -- a barrier has no library promise to return
