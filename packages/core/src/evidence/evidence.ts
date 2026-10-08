@@ -54,7 +54,7 @@ import {
 
 export interface EvidenceRecord {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   entityId: string | null;
   kind: EvidenceKind;
   label: string | null;

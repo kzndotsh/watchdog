@@ -35,7 +35,7 @@ import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
 
 export interface GraphWriteRecord {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   actorId: string;
   actorLabel: string;
   channel: GraphWriteRow["channel"];

@@ -35,7 +35,7 @@ const SLUG_UNIQUE_INDEX = "entities_case_slug_uidx";
 
 export interface EntityRecord {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   kind: EntityKind;
   name: string;
   slug: string;

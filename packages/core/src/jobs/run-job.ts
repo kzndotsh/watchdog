@@ -14,7 +14,7 @@ import {
 
 import { capTimeoutMs } from "@watchdog/caps/sdk";
 import { jobsRepo, type JobRow } from "@watchdog/db";
-import { isOpenJobStatus } from "@watchdog/schemas/shared";
+import { isOpenJobStatus, type CaseId } from "@watchdog/schemas/shared";
 
 import type { BlobStore } from "../infra/blob-store";
 import { nowMillisEffect } from "../infra/clock";
@@ -62,7 +62,7 @@ export interface JobRunOutcome {
   fromCache?: boolean;
   reclaim?: boolean;
   durationMs: number;
-  caseId?: string;
+  caseId?: CaseId;
   capabilityId?: string;
   playbookRunId?: string | null;
 }

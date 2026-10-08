@@ -32,7 +32,7 @@ import {
 
 export interface TaskRecord {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   entityId: string | null;
   title: string;
   description: string | null;

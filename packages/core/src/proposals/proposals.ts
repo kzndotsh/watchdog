@@ -52,7 +52,7 @@ import { recordRejectedFingerprintsEffect } from "./finding-suppress";
 
 export interface ProposalRecord {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   jobId: string | null;
   capabilityId: string | null;
   playbookId: string | null;

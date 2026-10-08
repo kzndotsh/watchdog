@@ -66,7 +66,7 @@ export interface StartJobInput {
 
 export interface JobRecord {
   id: string;
-  caseId: string;
+  caseId: CaseId;
   capabilityId: string;
   input: JsonObject;
   output: JobArtifact[] | null;
