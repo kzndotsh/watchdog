@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { patchOpSchema } from "@watchdog/schemas/graph";
 import {
+  caseIdSchema,
   claimClassSchema,
   confidenceTierSchema,
   edgePredicateSchema,
@@ -24,7 +25,7 @@ export const userOverrideSchema = z
   .describe("Required as true when authenticating with an API key.");
 
 export const caseSchema = z.object({
-  id: z.uuid(),
+  id: caseIdSchema,
   name: z.string(),
   slug: z.string(),
   description: z.string().nullable(),
@@ -33,7 +34,7 @@ export const caseSchema = z.object({
 
 export const entitySchema = z.object({
   id: z.uuid(),
-  caseId: z.uuid(),
+  caseId: caseIdSchema,
   kind: entityKindSchema,
   name: z.string(),
   slug: z.string(),
@@ -138,7 +139,7 @@ export const presignedUploadSchema = z.object({
 
 export const evidenceSchema = z.object({
   id: z.uuid(),
-  caseId: z.uuid(),
+  caseId: caseIdSchema,
   entityId: z.uuid().nullable(),
   kind: evidenceKindSchema,
   label: z.string().nullable(),
@@ -157,7 +158,7 @@ export const evidenceSchema = z.object({
 
 export const jobSchema = z.object({
   id: z.uuid(),
-  caseId: z.uuid(),
+  caseId: caseIdSchema,
   capabilityId: z.string(),
   input: jsonObjectSchema,
   output: z
@@ -205,7 +206,7 @@ const identifierCollisionSchema = z.object({
 
 export const proposalSchema = z.object({
   id: z.uuid(),
-  caseId: z.uuid(),
+  caseId: caseIdSchema,
   jobId: z.uuid().nullable(),
   capabilityId: z.string().nullable(),
   playbookId: z.string().nullable(),
@@ -240,7 +241,7 @@ export const graphWriteResultSchema = z.object({
 
 export const graphWriteRecordSchema = z.object({
   id: z.uuid(),
-  caseId: z.uuid(),
+  caseId: caseIdSchema,
   actorId: z.string(),
   actorLabel: z.string(),
   channel: z.string(),
