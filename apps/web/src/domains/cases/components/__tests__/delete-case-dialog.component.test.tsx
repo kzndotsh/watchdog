@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@/domains/cases/cases.functions", () => ({
   deleteCaseFn: vi.fn(),
@@ -15,7 +16,7 @@ vi.mock("@/shared/lib/query-invalidation", () => ({
 import { DeleteCaseDialog } from "@/domains/cases/components/delete-case-dialog";
 
 const CASE: CaseRecord = {
-  id: "case-1",
+  id: testCaseId(1),
   slug: "alpha",
   name: "Alpha Case",
   description: null,

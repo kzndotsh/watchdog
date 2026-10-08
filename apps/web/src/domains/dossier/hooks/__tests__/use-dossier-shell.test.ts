@@ -4,6 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -42,7 +43,7 @@ import { useDossierShell } from "@/domains/dossier/hooks/use-dossier-shell";
 
 const ENTITY: EntityRecord = {
   id: testId(20),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   slug: "alpha",
   name: "Alpha Entity",
   kind: "person",

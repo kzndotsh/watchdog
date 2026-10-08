@@ -2,7 +2,8 @@ import { Deferred, Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ActivityEntry, ActivityEntryKind } from "@watchdog/schemas/feed";
-import { testCaseId } from "@watchdog/schemas/testing";
+import { asCaseId, type CaseId } from "@watchdog/schemas/shared";
+import { untrustedCaseId, testCaseId } from "@watchdog/schemas/testing";
 
 const { claimCaseExportEffect } = vi.hoisted(() => ({
   claimCaseExportEffect: vi.fn((_caseId: string) =>
@@ -28,12 +29,12 @@ const workerTestServices = Layer.mergeAll(
   fakeVault().layer
 );
 
-const CASE_ID = "11111111-1111-4111-8111-000000000001";
+const CASE_ID = asCaseId("11111111-1111-4111-8111-000000000001");
 
 function entryOf(
   kind: ActivityEntryKind,
   action: string,
-  caseId: string = CASE_ID
+  caseId: CaseId = CASE_ID
 ): ActivityEntry {
   return {
     cursor: "10:1",
@@ -136,8 +137,12 @@ describe("handleExportEntryEffect", () => {
     await Effect.runPromise(
       Effect.provide(
         Effect.all([
-          handleExportEntryEffect(entryOf("entity", "created", "   ")),
-          handleExportEntryEffect(entryOf("entity", "created", "nope")),
+          handleExportEntryEffect(
+            entryOf("entity", "created", untrustedCaseId("   "))
+          ),
+          handleExportEntryEffect(
+            entryOf("entity", "created", untrustedCaseId("nope"))
+          ),
         ]),
         workerTestServices
       )

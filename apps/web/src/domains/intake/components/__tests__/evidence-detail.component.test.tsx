@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { JobListRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -28,7 +29,7 @@ vi.mock("@/domains/intake/hooks/use-evidence-blob", () => ({
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {
     id: testId(40),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     entityId: null,
     kind: "attestation",
     label: "note",
@@ -109,7 +110,7 @@ describe("EvidenceDetail", () => {
     const user = userEvent.setup();
     const enrichJob: JobListRecord = {
       id: testId(12),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.url.enrich",
       status: "blocked",
       input: { sourceEvidenceId: testId(40) },

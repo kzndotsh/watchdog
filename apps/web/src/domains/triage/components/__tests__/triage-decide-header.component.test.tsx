@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -28,7 +29,7 @@ function pendingProposal(
 ): ProposalRecord {
   return {
     id: testId(50),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
     playbookId: null,

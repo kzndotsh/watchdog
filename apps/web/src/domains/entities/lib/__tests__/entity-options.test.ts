@@ -4,6 +4,7 @@ import {
   entityMatchesQuery,
   entityOptionsFromRecords,
 } from "@/domains/entities/lib/entity-options";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 describe("entityOptionsFromRecords", () => {
@@ -12,7 +13,7 @@ describe("entityOptionsFromRecords", () => {
       entityOptionsFromRecords([
         {
           id: testId(1),
-          caseId: testId(2),
+          caseId: testCaseId(2),
           kind: "org",
           name: "",
           slug: "acme-corp",

@@ -53,7 +53,7 @@ interface ServerDataContext<T> {
 }
 
 const CASE_A: CaseRecord = {
-  id: "550e8400-e29b-41d4-a716-446655440000",
+  id: asCaseId("550e8400-e29b-41d4-a716-446655440000"),
   slug: "alpha",
   name: "Alpha",
   description: null,
@@ -61,7 +61,7 @@ const CASE_A: CaseRecord = {
 };
 
 const CASE_B: CaseRecord = {
-  id: "660e8400-e29b-41d4-a716-446655440001",
+  id: asCaseId("660e8400-e29b-41d4-a716-446655440001"),
   slug: "beta",
   name: "Beta",
   description: null,

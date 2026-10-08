@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/intake/hooks/use-dump-evidence", () => ({
@@ -33,7 +34,7 @@ const ENTITY_ID = testId(20);
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {
     id: testId(40),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     entityId: ENTITY_ID,
     kind: "attestation",
     label: "Screenshot",

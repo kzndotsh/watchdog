@@ -1,10 +1,10 @@
-// @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { testId } from "@watchdog/test-kit";
+// @vitest-environment jsdom
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
@@ -87,7 +87,7 @@ vi.mock("@/domains/collect/hooks/use-collect-workspace", () => ({
 import { Collect } from "@/domains/collect/components/collect";
 
 const ACTIVE: CaseRecord = {
-  id: testId(10),
+  id: testCaseId(10),
   slug: "alpha",
   name: "Alpha",
   description: null,

@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { CaseRecord } from "@/domains/cases/types";
 import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
 import type { AppAction } from "@/shared/lib/app-action";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 class ResizeObserverMock {
@@ -52,7 +53,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 import { CommandPalette } from "@/domains/search/components/command-palette";
 
 const ACTIVE: CaseRecord = {
-  id: testId(10),
+  id: testCaseId(10),
   slug: "alpha",
   name: "Alpha",
   description: null,

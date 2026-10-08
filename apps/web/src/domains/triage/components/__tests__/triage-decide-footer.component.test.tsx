@@ -11,6 +11,7 @@ import type {
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import type { ConfidenceTier } from "@watchdog/schemas/shared";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/shared/ui/intake/evidence-picker", () => ({
@@ -44,7 +45,7 @@ function pendingProposal(
 ): ProposalRecord {
   return {
     id: testId(50),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
     playbookId: null,

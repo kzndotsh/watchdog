@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
+
 vi.mock("@/auth/server", () => ({
   auth: {},
 }));
@@ -22,7 +24,7 @@ import type { EntityRecord } from "@/domains/entities/types";
 
 const ENTITY: EntityRecord = {
   id: "ent-1",
-  caseId: "case-1",
+  caseId: testCaseId(1),
   slug: "alpha",
   name: "Alpha",
   kind: "person",

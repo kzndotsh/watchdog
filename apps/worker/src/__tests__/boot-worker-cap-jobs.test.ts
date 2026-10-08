@@ -1,6 +1,8 @@
 import { Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
+
 const { failInvalidCapDeliveryEffect } = vi.hoisted(() => ({
   failInvalidCapDeliveryEffect: vi.fn(() => Effect.void),
 }));
@@ -77,7 +79,7 @@ describe("processCapJobEffect", () => {
       Effect.succeed({
         outcome: "succeeded" as const,
         durationMs: 1,
-        caseId: "case-1",
+        caseId: testCaseId(1),
         capabilityId: "network.dns.lookup",
         playbookRunId: null,
       })
@@ -119,7 +121,7 @@ describe("processCapJobEffect", () => {
       Effect.succeed({
         outcome: "succeeded" as const,
         durationMs: 1,
-        caseId: "case-1",
+        caseId: testCaseId(1),
         capabilityId: "network.dns.lookup",
         playbookRunId: null,
       })

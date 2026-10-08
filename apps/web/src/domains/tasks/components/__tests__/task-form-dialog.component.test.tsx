@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 class ResizeObserverMock {
@@ -82,7 +83,7 @@ const ENTITIES = [
 
 const TASK: TaskRecord = {
   id: testId(20),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   entityId: testId(30),
   title: "Verify alias",
   description: "Check registration",

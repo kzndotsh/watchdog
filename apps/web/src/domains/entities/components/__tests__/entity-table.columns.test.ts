@@ -9,11 +9,12 @@ import {
 import type { EntityConnectionPeer } from "@/domains/entities/lib/connection-peers";
 import type { EntityRecord } from "@/domains/entities/types";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const ENTITY: EntityRecord = {
   id: testId(1),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   slug: "alpha",
   name: "Alpha Entity",
   kind: "person",

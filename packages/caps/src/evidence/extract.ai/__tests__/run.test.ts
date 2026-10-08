@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { createCapRunHarness, runCap } from "../../../testing";
@@ -11,7 +12,7 @@ describe("evidence.extract.ai run", () => {
     const harness = createCapRunHarness({
       evidenceSnapshot: {
         evidenceId: testId(40),
-        caseId: testId(10),
+        caseId: testCaseId(10),
         kind: "attestation",
         text: "   ",
         packedAt: "2026-01-01T00:00:00.000Z",

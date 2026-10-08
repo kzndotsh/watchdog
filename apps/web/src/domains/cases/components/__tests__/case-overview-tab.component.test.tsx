@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
@@ -32,7 +33,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
 
 const CASE: CaseRecord = {
-  id: "case-1",
+  id: testCaseId(1),
   slug: "alpha",
   name: "Alpha",
   description: null,

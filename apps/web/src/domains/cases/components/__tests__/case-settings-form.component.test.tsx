@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
@@ -35,7 +36,7 @@ vi.mock("@/domains/cases/lib/case-cache", () => ({
 import { CaseSettingsForm } from "@/domains/cases/components/case-settings-form";
 
 const CASE: CaseRecord = {
-  id: "case-1",
+  id: testCaseId(1),
   slug: "alpha",
   name: "Alpha Case",
   description: "Notes",

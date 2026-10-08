@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ActivityItem } from "@watchdog/schemas/feed";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -60,7 +61,7 @@ describe("RecentActivity", () => {
         id: testId(11),
         kind: "job",
         action: "Queued",
-        caseId: testId(10),
+        caseId: testCaseId(10),
         caseName: "Ada",
         label: "dns",
         at: "2026-01-01T00:00:00.000Z",
@@ -80,7 +81,7 @@ describe("RecentActivity", () => {
     vi.stubGlobal("EventSource", eventSource);
     try {
       const cases = Array.from({ length: 5 }, (_, index) => ({
-        id: testId(20 + index),
+        id: testCaseId(20 + index),
         name: `Case ${index}`,
         slug: `case-${index}`,
         description: null,
@@ -99,7 +100,7 @@ describe("RecentActivity", () => {
         id: "12",
         kind: "proposal",
         action: "Accepted",
-        caseId: testId(10),
+        caseId: testCaseId(10),
         caseName: "Ada",
         label: "Registrar is Acme",
         status: "accepted",
@@ -111,7 +112,7 @@ describe("RecentActivity", () => {
         id: "11",
         kind: "proposal",
         action: "Proposed",
-        caseId: testId(10),
+        caseId: testCaseId(10),
         caseName: "Ada",
         label: "Registrar is Acme",
         status: "pending",
@@ -134,7 +135,7 @@ describe("RecentActivity", () => {
         id: "7",
         kind: "evidence",
         action: "Captured",
-        caseId: testId(10),
+        caseId: testCaseId(10),
         caseName: "Ada",
         label: "photo.png",
         at: "2026-01-01T00:00:00.000Z",

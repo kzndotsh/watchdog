@@ -7,7 +7,8 @@ import {
   type ActivityEntry,
   type ActivityEntryKind,
 } from "@watchdog/schemas/feed";
-import type { CaseId } from "@watchdog/schemas/shared";
+import { asCaseId, type CaseId } from "@watchdog/schemas/shared";
+import { untrustedCaseId } from "@watchdog/schemas/testing";
 
 const { claimCaseExportEffect } = vi.hoisted(() => ({
   claimCaseExportEffect: vi.fn(() => Effect.succeed(Effect.void)),
@@ -36,12 +37,12 @@ const workerTestServices = Layer.mergeAll(
   fakeVault().layer
 );
 
-const CASE_ID = "11111111-1111-4111-8111-000000000001";
+const CASE_ID = asCaseId("11111111-1111-4111-8111-000000000001");
 
 function entryOf(
   kind: ActivityEntryKind,
   action: string,
-  caseId: string = CASE_ID
+  caseId: CaseId = CASE_ID
 ): ActivityEntry {
   return {
     cursor: "10:1",
@@ -177,7 +178,7 @@ describe("claimExportEntryEffect", () => {
       Effect.flatten(
         Effect.provide(
           claimExportEntryEffect(
-            entryOf("entity", "updated", `  ${CASE_ID}  `)
+            entryOf("entity", "updated", untrustedCaseId(`  ${CASE_ID}  `))
           ),
           workerTestServices
         )
@@ -191,7 +192,9 @@ describe("claimExportEntryEffect", () => {
     await Effect.runPromise(
       Effect.flatten(
         Effect.provide(
-          claimExportEntryEffect(entryOf("entity", "updated", "not-a-uuid")),
+          claimExportEntryEffect(
+            entryOf("entity", "updated", untrustedCaseId("not-a-uuid"))
+          ),
           workerTestServices
         )
       )

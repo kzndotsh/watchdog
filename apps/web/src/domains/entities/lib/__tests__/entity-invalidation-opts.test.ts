@@ -4,9 +4,10 @@ import { describe, expect, it } from "vitest";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import type { EntityRecord } from "@/domains/entities/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
-const CASE_ID = testId(10);
+const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(1);
 
 const ENTITY: EntityRecord = {

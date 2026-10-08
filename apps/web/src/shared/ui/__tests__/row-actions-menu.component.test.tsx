@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { cloneElement, type ReactElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
+
 vi.mock("@watchdog/ui/components/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
@@ -40,7 +42,7 @@ import { testId } from "@watchdog/test-kit";
 
 const ENTITY: EntityRecord = {
   id: testId(1),
-  caseId: testId(2),
+  caseId: testCaseId(2),
   slug: "alice",
   name: "Alice",
   kind: "person",

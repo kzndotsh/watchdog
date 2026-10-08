@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
@@ -53,7 +54,7 @@ vi.mock("@/domains/cases/lib/active-case", () => ({
 import { CaseList } from "@/domains/cases/components/case-list";
 
 const CASE_A: CaseRecord = {
-  id: "case-a",
+  id: testCaseId(1),
   slug: "alpha",
   name: "Alpha",
   description: "First case",
@@ -61,7 +62,7 @@ const CASE_A: CaseRecord = {
 };
 
 const CASE_B: CaseRecord = {
-  id: "case-b",
+  id: testCaseId(2),
   slug: "beta",
   name: "Beta",
   description: null,

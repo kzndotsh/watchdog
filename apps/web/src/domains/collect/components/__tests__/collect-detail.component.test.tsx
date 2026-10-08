@@ -7,6 +7,7 @@ import type { CollectRow } from "@/domains/collect/types";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -28,7 +29,7 @@ vi.mock("@/domains/intake/components/evidence-detail", () => ({
 function listJob(overrides: Partial<JobListRecord> = {}): JobListRecord {
   return {
     id: testId(12),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     capabilityId: "network.dns.lookup",
     status: "running",
     input: { host: "step1.test" },
@@ -67,7 +68,7 @@ function jobRecord(overrides: Partial<JobRecord> = {}): JobRecord {
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {
     id: testId(40),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     entityId: null,
     kind: "attestation",
     label: "note",

@@ -10,6 +10,7 @@ import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-ac
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { capabilityLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 import { Tabs } from "@watchdog/ui/components/tabs";
 
@@ -26,7 +27,7 @@ vi.mock("@tanstack/react-router", () => ({
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {
     id: testId(40),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     entityId: null,
     kind: "attestation",
     label: "note",

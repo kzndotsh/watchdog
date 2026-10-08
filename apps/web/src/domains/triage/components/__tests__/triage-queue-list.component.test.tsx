@@ -3,11 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TriageQueueList } from "@/domains/triage/components/triage-queue-list";
 import type { ProposalRecord } from "@watchdog/core/proposals";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const PROPOSAL: ProposalRecord = {
   id: testId(50),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   jobId: null,
   capabilityId: "network.dns.lookup",
   playbookId: null,

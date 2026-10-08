@@ -7,6 +7,7 @@ import { EMPTY_COLLECT_FILTERS } from "@/domains/collect/types";
 import { evidenceTitleMapFromRecords } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const cancelJobFn = vi.hoisted(() => vi.fn());
@@ -80,7 +81,7 @@ vi.mock("@/domains/collect/hooks/use-collect-queue-data", () => ({
 
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
 
-const CASE_ID = testId(10);
+const CASE_ID = testCaseId(10);
 const UNRELATED_ID = testId(11);
 const STEP1_ID = testId(12);
 const STEP2_ID = testId(13);

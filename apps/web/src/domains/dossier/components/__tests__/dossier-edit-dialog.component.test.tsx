@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/shared/ui/rich-text", () => ({
@@ -30,7 +31,7 @@ import { DossierEditDialog } from "@/domains/dossier/components/dossier-edit-dia
 
 const ENTITY: EntityRecord = {
   id: testId(1),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   slug: "alpha",
   name: "Alpha Entity",
   kind: "person",

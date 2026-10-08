@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { JobDetail } from "@/domains/jobs/components/job-detail";
 import type { JobRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -19,7 +20,7 @@ vi.mock("@/domains/jobs/components/artifact-content", () => ({
 function jobRecord(overrides: Partial<JobRecord> = {}): JobRecord {
   return {
     id: testId(11),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     capabilityId: "network.dns.lookup",
     status: "queued",
     input: { host: "mailhost.test" },

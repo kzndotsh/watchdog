@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 const useTaskWorkspaceMock = vi.hoisted(() => vi.fn());
@@ -23,7 +24,7 @@ vi.mock("@/domains/tasks/components/task-form-dialog", () => ({
 
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
 
-const CASE_ID = testId(10);
+const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(11);
 
 const TASK: TaskRecord = {

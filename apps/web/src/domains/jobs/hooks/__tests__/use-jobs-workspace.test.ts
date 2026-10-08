@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CapListItem } from "@/domains/jobs/types";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/jobs/jobs.functions", () => ({
@@ -74,7 +75,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 import { useJobsWorkspace } from "@/domains/jobs/hooks/use-jobs-workspace";
 
-const CASE_ID = testId(10);
+const CASE_ID = testCaseId(10);
 const JOB_ID = testId(11);
 
 const CAP: CapListItem = {
