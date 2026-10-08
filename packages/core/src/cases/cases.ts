@@ -38,7 +38,7 @@ import {
 const SLUG_UNIQUE_INDEX = "cases_organization_id_slug_uidx";
 
 export interface CaseRecord {
-  id: string;
+  id: CaseId;
   name: string;
   slug: string;
   description: string | null;

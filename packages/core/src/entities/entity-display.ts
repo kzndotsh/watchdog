@@ -86,7 +86,7 @@ export function loadEntityDisplayMapsForProposalPatchesEffect(
   DomainTag,
   Db
 > {
-  const idsByCase = new Map<string, Set<string>>();
+  const idsByCase = new Map<CaseId, Set<string>>();
   for (const row of rows) {
     const ids = idsByCase.get(row.caseId) ?? new Set<string>();
     for (const op of row.patch) {

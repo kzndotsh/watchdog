@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
+
 vi.mock("@/auth/server", () => ({
   auth: {},
 }));
@@ -60,7 +62,7 @@ import { edgesForCaseQuery } from "@/domains/entities/edges/queries";
 import { entitiesListQuery } from "@/domains/entities/queries";
 
 const CASE: CaseRecord = {
-  id: "case-1",
+  id: testCaseId(1),
   slug: "alpha",
   name: "Alpha",
   description: null,

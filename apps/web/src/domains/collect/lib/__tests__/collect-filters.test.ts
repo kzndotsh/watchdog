@@ -8,12 +8,13 @@ import {
 import type { CollectRow } from "@/domains/collect/types";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {
     id: testId(40),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     entityId: null,
     kind: "attestation",
     label: "note.txt",
@@ -35,7 +36,7 @@ function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
 function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
   return {
     id: testId(11),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     capabilityId: "network.dns.lookup",
     status: "running",
     input: { host: "example.com" },

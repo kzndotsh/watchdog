@@ -1,7 +1,8 @@
 import { and, asc, eq, ilike, isNull, max, or } from "drizzle-orm";
 
-import type { TaskStatus } from "@watchdog/schemas/shared";
 import {
+  type CaseId,
+  type TaskStatus,
   parseGraphUuidList,
   TASK_PRIORITY_LABELS,
   TASK_PRIORITIES,
@@ -82,7 +83,7 @@ function taskPatchEntityId(patch: TaskPatch): TaskPatch | null {
 export const tasksRepo = {
   async listForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     opts?: ListTasksRowsOpts
   ): Promise<TaskRow[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -110,7 +111,7 @@ export const tasksRepo = {
 
   async searchForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     term: string,
     limit: number
   ): Promise<TaskRow[]> {
@@ -166,7 +167,7 @@ export const tasksRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     taskId: string
   ): Promise<TaskRow | null> {
     const scoped = trimScopedCaseIds(caseId, taskId);
@@ -184,7 +185,7 @@ export const tasksRepo = {
   /** `getInCase` with `FOR UPDATE`: a concurrent write waits, so a status change check is atomic. Use inside a transaction. */
   async lockInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     taskId: string
   ): Promise<TaskRow | null> {
     const scoped = trimScopedCaseIds(caseId, taskId);
@@ -242,7 +243,7 @@ export const tasksRepo = {
 
   async updateInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     taskId: string,
     patch: TaskPatch
   ): Promise<TaskRow | null> {
@@ -273,7 +274,7 @@ export const tasksRepo = {
   /** Delete a Task in the Case and return the deleted row (its title and status are what the entry records). */
   async removeInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     taskId: string
   ): Promise<TaskRow | null> {
     const scoped = trimScopedCaseIds(caseId, taskId);
@@ -289,7 +290,7 @@ export const tasksRepo = {
 
   async nextPosition(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     status: TaskStatus
   ): Promise<number> {
     const scopedCaseId = trimCaseId(caseId);
@@ -303,7 +304,7 @@ export const tasksRepo = {
 
   async rewriteOrder(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     status: TaskStatus,
     orderedIds: readonly string[]
   ): Promise<boolean> {

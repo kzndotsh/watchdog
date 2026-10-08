@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { JobListRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { artifactDefaultOpen, orderJobArtifacts } from "../artifacts.ts";
@@ -24,7 +25,7 @@ import {
 function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
   return {
     id: testId(11),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     capabilityId: "network.dns.lookup",
     status: "queued",
     input: { host: "mailhost.test" },

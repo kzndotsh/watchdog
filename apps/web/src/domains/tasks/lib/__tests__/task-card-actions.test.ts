@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import type { TaskRecord } from "../../types.ts";
@@ -7,7 +8,7 @@ import { taskCardActions } from "../task-card-actions.ts";
 
 const TASK: TaskRecord = {
   id: testId(20),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   entityId: null,
   title: "Follow up",
   description: null,

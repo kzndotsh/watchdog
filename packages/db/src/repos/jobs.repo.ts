@@ -16,6 +16,7 @@ import {
   jobInputGraphIdFieldIssues,
 } from "@watchdog/schemas/jobs";
 import {
+  type CaseId,
   EVIDENCE_KIND_LABELS,
   EVIDENCE_KINDS,
   JOB_STATUS_LABELS,
@@ -210,7 +211,7 @@ export const jobsRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     jobId: string
   ): Promise<JobWithPlaybook<JobRow> | null> {
     const scoped = trimScopedCaseIds(caseId, jobId);
@@ -237,7 +238,7 @@ export const jobsRepo = {
 
   async listForCase(
     exec: DbExec,
-    caseId: string
+    caseId: CaseId
   ): Promise<JobWithPlaybook<JobListRow>[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
@@ -260,7 +261,7 @@ export const jobsRepo = {
 
   async searchForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     term: string,
     limit: number
   ): Promise<JobWithPlaybook<JobListRow>[]> {
@@ -407,7 +408,7 @@ export const jobsRepo = {
 
   async listActiveForCapability(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     capabilityId: string,
     limit = 50
   ): Promise<JobRow[]> {
@@ -434,7 +435,7 @@ export const jobsRepo = {
   /** Recent succeeded jobs for a capability — enrich snapshot lookup. */
   async listSucceededForCapability(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     capabilityId: string,
     limit = 40
   ): Promise<
@@ -470,7 +471,7 @@ export const jobsRepo = {
 
   async listCancellableForPlaybookRun(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     playbookRunId: string
   ): Promise<JobActivityFields[]> {
     const scoped = trimScopedCaseIds(caseId, playbookRunId);
@@ -551,7 +552,7 @@ export const jobsRepo = {
 
   async updateInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     jobId: string,
     patch: JobPatch,
     opts?: { unlessCancelled?: boolean; onlyStatuses?: JobStatus[] }
@@ -627,7 +628,7 @@ export const jobsRepo = {
 
   async cancelCancellableInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     jobId: string,
     finishedAt: Date
   ): Promise<string | null> {

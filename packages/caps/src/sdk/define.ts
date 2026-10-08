@@ -5,6 +5,7 @@ import type { z } from "zod";
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
 import type { PatchOp } from "@watchdog/schemas/graph";
 import type {
+  CaseId,
   EvidenceKind,
   IdentifierType,
   JobHandoff,
@@ -92,7 +93,7 @@ export type CapCredentialSpec =
 
 export interface CapContext<TInput> {
   input: TInput;
-  caseId: string;
+  caseId: CaseId;
   jobId: string;
   signal: AbortSignal;
   uploadArtifact: (input: {

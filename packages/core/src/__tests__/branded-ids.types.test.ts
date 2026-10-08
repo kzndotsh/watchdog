@@ -6,6 +6,8 @@
  */
 import { describe, expect, it } from "vitest";
 
+import { casesRepo, entitiesRepo } from "@watchdog/db";
+import type { DbExec } from "@watchdog/db";
 import {
   asCaseId,
   asOrganizationId,
@@ -16,9 +18,17 @@ import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";
 import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 
 import { getCaseByIdEffect, listCasesEffect } from "../cases";
+import type { CaseRecord } from "../cases";
+import type { EvidenceRecord } from "../evidence";
 import { assertCaseInOrgEffect } from "../graph";
+import type { EntityRecord } from "../graph";
+import type { JobRecord } from "../jobs";
+import type { ProposalRecord } from "../proposals";
+import type { TaskRecord } from "../tasks";
 
 const caseId = testCaseId(1);
+/** Type-level only: the repo calls below are never invoked. */
+declare const exec: DbExec;
 
 describe("branded ids: a swapped (organizationId, caseId) call does not compile", () => {
   it("getCaseByIdEffect takes (caseId, organizationId)", () => {
@@ -66,5 +76,41 @@ describe("branded ids: a swapped (organizationId, caseId) call does not compile"
     const crossed: CaseId = org;
     expect(minted).toBe(caseId);
     expect(crossed).toBe("org-1");
+  });
+});
+
+describe("branded ids: layers below core carry the brands (#165)", () => {
+  it("db repos take a CaseId, not a plain string or an OrganizationId", () => {
+    const ok = () => entitiesRepo.listForCase(exec, caseId);
+    // @ts-expect-error a plain string is not a CaseId
+    const plain = () => entitiesRepo.listForCase(exec, "not-branded");
+    // @ts-expect-error an OrganizationId is not a CaseId
+    const org = () => casesRepo.getByIdUnchecked(exec, TEST_ORGANIZATION_ID);
+    expect([typeof ok, typeof plain, typeof org]).toEqual([
+      "function",
+      "function",
+      "function",
+    ]);
+  });
+
+  it("result records expose their Case id as a CaseId", () => {
+    const ids = (records: {
+      kase: CaseRecord;
+      evidence: EvidenceRecord;
+      entity: EntityRecord;
+      job: JobRecord;
+      proposal: ProposalRecord;
+      task: TaskRecord;
+    }): CaseId[] => [
+      records.kase.id,
+      records.evidence.caseId,
+      records.entity.caseId,
+      records.job.caseId,
+      records.proposal.caseId,
+      records.task.caseId,
+    ];
+    // @ts-expect-error a record's Case id is not an OrganizationId
+    const crossed = (record: CaseRecord): OrganizationId => record.id;
+    expect([typeof ids, typeof crossed]).toEqual(["function", "function"]);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { TASK_STATUSES } from "@watchdog/schemas/shared";
+import { asCaseId, TASK_STATUSES } from "@watchdog/schemas/shared";
 
 import type { TaskRecord } from "../../types.ts";
 import {
@@ -22,7 +22,7 @@ function task(
   const title = opts?.title ?? id;
   return {
     id,
-    caseId: "11111111-1111-4111-8111-111111111111",
+    caseId: asCaseId("11111111-1111-4111-8111-111111111111"),
     entityId: opts?.entityId ?? null,
     title,
     description: null,

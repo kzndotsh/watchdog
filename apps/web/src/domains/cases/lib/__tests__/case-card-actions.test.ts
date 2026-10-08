@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 import type { CaseRecord } from "../../types.ts";
 import { caseCardActions } from "../case-card-actions.ts";
 
 const CASE: CaseRecord = {
-  id: testId(10),
+  id: testCaseId(10),
   slug: "alpha",
   name: "Alpha",
   description: null,

@@ -1,6 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { CaseId } from "@watchdog/schemas/shared";
+
 vi.mock("@/auth/server", () => ({
   auth: {},
 }));
@@ -58,7 +60,7 @@ function invalidated(client: QueryClient): unknown[] {
 
 function entry(
   kind: ActivityEntryKind,
-  caseId: string = CASE_A,
+  caseId: CaseId = CASE_A,
   action: string = ACTIVITY_ENTRY_ACTIONS[kind][0]
 ): ActivityEntry {
   return {

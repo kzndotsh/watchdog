@@ -5,6 +5,7 @@ import { NotFoundError } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import { createTaskEffect, updateTaskEffect } from "@watchdog/core/tasks";
 import { activityLogRepo, db, evidenceRepo, proposalsRepo } from "@watchdog/db";
+import type { CaseId } from "@watchdog/schemas/shared";
 import {
   buildClaimCreateOp,
   TEST_ORGANIZATION_ID,
@@ -24,7 +25,7 @@ import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
 import { setJobStatusEffect } from "../../jobs/set-job-status.ts";
 
 async function appendActivityRow(
-  caseId: string,
+  caseId: CaseId,
   kind: "evidence",
   action: string,
   subjectId: string

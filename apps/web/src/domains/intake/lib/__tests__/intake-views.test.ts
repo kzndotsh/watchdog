@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import { ENRICHED_MD_ARTIFACT } from "@watchdog/schemas/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import {
@@ -27,7 +28,7 @@ const ENRICHABLE_SOURCE = ["https", "://mailhost.test/"].join("");
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {
     id: testId(40),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     entityId: null,
     kind: "attestation",
     label: "note",
@@ -50,7 +51,7 @@ describe("intake evidence helpers", () => {
   function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
     return {
       id: testId(11),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.dns.lookup",
       status: "succeeded",
       input: {},

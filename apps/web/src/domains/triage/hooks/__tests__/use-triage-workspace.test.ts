@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import type { ActivityEntry } from "@watchdog/schemas/feed";
+import type { CaseId } from "@watchdog/schemas/shared";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -47,7 +49,7 @@ import { useActivityEntries } from "@/shared/hooks/use-activity-stream";
 const PROPOSALS: ProposalRecord[] = [
   {
     id: testId(50),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
     playbookId: null,
@@ -69,7 +71,7 @@ const PROPOSALS: ProposalRecord[] = [
   },
   {
     id: testId(51),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     jobId: null,
     capabilityId: "network.dns.lookup",
     playbookId: null,
@@ -91,7 +93,7 @@ const PROPOSALS: ProposalRecord[] = [
   },
 ];
 
-function proposalEntry(action: string, caseId: string): ActivityEntry {
+function proposalEntry(action: string, caseId: CaseId): ActivityEntry {
   return {
     cursor: "0:1",
     id: 1,
@@ -197,7 +199,7 @@ describe("useTriageWorkspace", () => {
     const onEntry = vi.mocked(useActivityEntries).mock.calls.at(-1)?.[0];
     expect(onEntry).toBeTypeOf("function");
     act(() => {
-      onEntry?.(proposalEntry("accepted", testId(10)));
+      onEntry?.(proposalEntry("accepted", testCaseId(10)));
     });
 
     expect(result.current.filters.q).toBe("dns");
@@ -211,8 +213,8 @@ describe("useTriageWorkspace", () => {
     });
     const onEntry = vi.mocked(useActivityEntries).mock.calls.at(-1)?.[0];
     act(() => {
-      onEntry?.(proposalEntry("created", testId(11)));
-      onEntry?.({ ...proposalEntry("created", testId(10)), kind: "task" });
+      onEntry?.(proposalEntry("created", testCaseId(11)));
+      onEntry?.({ ...proposalEntry("created", testCaseId(10)), kind: "task" });
     });
     expect(result.current.filters.statuses).toEqual([]);
   });

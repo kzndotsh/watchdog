@@ -1,11 +1,12 @@
 import { and, eq } from "drizzle-orm";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
-import type {
-  ConfidenceTier,
-  GraphWriteChannel,
+import {
+  type CaseId,
+  type ConfidenceTier,
+  type GraphWriteChannel,
+  trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
-import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { graphWrites } from "../schema/graph-writes";
@@ -14,7 +15,7 @@ import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
 export type GraphWriteRow = typeof graphWrites.$inferSelect;
 
 export interface NewGraphWrite {
-  caseId: string;
+  caseId: CaseId;
   actorId: string;
   actorLabel?: string | null;
   channel: GraphWriteChannel;
@@ -37,7 +38,7 @@ export const graphWritesRepo = {
     return row ?? null;
   },
 
-  async listForCase(exec: DbExec, caseId: string): Promise<GraphWriteRow[]> {
+  async listForCase(exec: DbExec, caseId: CaseId): Promise<GraphWriteRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
     return exec
@@ -49,7 +50,7 @@ export const graphWritesRepo = {
   async findIdByIdempotency(
     exec: DbExec,
     input: {
-      caseId: string;
+      caseId: CaseId;
       actorId: string;
       idempotencyKey: string;
     }

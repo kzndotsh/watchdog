@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { EvidenceSnapshot } from "@watchdog/schemas/evidence";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 import {
   MAX_SNAPSHOT_CHARS,
@@ -11,7 +12,7 @@ describe("snapshotToArtifactBytes", () => {
   it("serializes a snapshot under the char cap", () => {
     const snapshot: EvidenceSnapshot = {
       evidenceId: "11111111-1111-4111-8111-000000000001",
-      caseId: "11111111-1111-4111-8111-000000000002",
+      caseId: testCaseId(2),
       kind: "attestation",
       text: "hello",
       sha256: null,

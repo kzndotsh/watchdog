@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
 import type { JobListRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { countLiveJobs, selectDueTasks } from "../selectors.ts";
@@ -9,7 +10,7 @@ import { countLiveJobs, selectDueTasks } from "../selectors.ts";
 function job(status: JobListRecord["status"]): JobListRecord {
   return {
     id: testId(11),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     capabilityId: "network.dns.lookup",
     status,
     input: {},
@@ -54,7 +55,7 @@ describe("dashboard selectors", () => {
     expect(countLiveJobs([job("queued"), job("succeeded")])).toBe(1);
     const overdue: TaskRecord = {
       id: "t1",
-      caseId: "c",
+      caseId: testCaseId(1),
       entityId: null,
       title: "Late",
       description: null,

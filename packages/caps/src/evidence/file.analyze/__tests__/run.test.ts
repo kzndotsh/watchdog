@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import { createCapRunHarness, runCap } from "../../../testing";
@@ -15,7 +16,7 @@ describe("evidence.file.analyze run", () => {
     const harness = createCapRunHarness({
       evidenceSnapshot: {
         evidenceId: testId(40),
-        caseId: testId(10),
+        caseId: testCaseId(10),
         kind: "file",
         text: "SHOULD_NOT_USE",
         uri,
@@ -43,7 +44,7 @@ describe("evidence.file.analyze run", () => {
     const harness = createCapRunHarness({
       evidenceSnapshot: {
         evidenceId: testId(40),
-        caseId: testId(10),
+        caseId: testCaseId(10),
         kind: "file",
         text: "pasted plaintext file",
         packedAt,
@@ -65,7 +66,7 @@ describe("evidence.file.analyze run", () => {
     const harness = createCapRunHarness({
       evidenceSnapshot: {
         evidenceId: testId(40),
-        caseId: testId(10),
+        caseId: testCaseId(10),
         kind: "file",
         text: "   ",
         packedAt,
@@ -86,7 +87,7 @@ describe("evidence.file.analyze run", () => {
     const harness = createCapRunHarness({
       evidenceSnapshot: {
         evidenceId: testId(40),
-        caseId: testId(10),
+        caseId: testCaseId(10),
         kind: "file",
         text: "fallback-text",
         uri: "s3://test/missing.bin",

@@ -4,6 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -57,7 +58,7 @@ import {
   updateTaskFn,
 } from "@/domains/tasks/tasks.functions";
 
-const CASE_ID = testId(10);
+const CASE_ID = testCaseId(10);
 const ENTITY_ID = testId(30);
 const TASK_ID = testId(20);
 

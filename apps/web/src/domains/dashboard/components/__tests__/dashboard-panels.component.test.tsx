@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
 import type { ProposalRecord } from "@watchdog/core/proposals";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -27,7 +28,7 @@ import {
 
 const PROPOSAL = {
   id: "prop-1",
-  caseId: "case-1",
+  caseId: testCaseId(1),
   jobId: null,
   capabilityId: null,
   playbookId: null,
@@ -49,7 +50,7 @@ const PROPOSAL = {
 
 const TASK: TaskRecord = {
   id: "task-1",
-  caseId: "case-1",
+  caseId: testCaseId(1),
   entityId: null,
   title: "Review intake",
   description: null,

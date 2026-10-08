@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ProcessRunCard } from "@/domains/intake/components/process-run-card";
 import type { JobListRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -18,7 +19,7 @@ vi.mock("@/domains/jobs/components/artifact-content", () => ({
 function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
   return {
     id: testId(11),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     capabilityId: "network.dns.lookup",
     status: "succeeded",
     input: { host: "mailhost.test" },

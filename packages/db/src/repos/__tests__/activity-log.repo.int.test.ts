@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   TEST_ORGANIZATION_ID,
   TEST_OTHER_ORGANIZATION_ID,
+  testCaseId,
+  untrustedCaseId,
 } from "@watchdog/schemas/testing";
 import {
   resetTestDb,
@@ -71,7 +73,7 @@ describe("activityLogRepo", () => {
       ).toBeNull();
       expect(
         await activityLogRepo.append(tx, {
-          caseId: "nope",
+          caseId: untrustedCaseId("nope"),
           kind: "task",
           action: "created",
         })
@@ -125,7 +127,7 @@ describe("activityLogRepo", () => {
       after: START,
       limit: 10,
       organizationId: TEST_ORGANIZATION_ID,
-      caseId: testId(99),
+      caseId: testCaseId(99),
     });
     expect(foreign).toEqual([]);
   });

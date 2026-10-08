@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import type { ProposalRecord } from "@watchdog/core/proposals";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 import {
@@ -15,7 +16,7 @@ describe("buildCaseOverviewActivity", () => {
   it("labels evidence without user label using kind label", () => {
     const evidence: EvidenceRecord = {
       id: testId(42),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       entityId: null,
       kind: "attestation",
       label: null,
@@ -38,7 +39,7 @@ describe("buildCaseOverviewActivity", () => {
   it("sorts newest first and caps the list", () => {
     const evidence: EvidenceRecord = {
       id: testId(40),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       entityId: null,
       kind: "attestation",
       label: "old",
@@ -56,7 +57,7 @@ describe("buildCaseOverviewActivity", () => {
     };
     const job: JobListRecord = {
       id: testId(11),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.dns.lookup",
       status: "succeeded",
       input: {},
@@ -82,7 +83,7 @@ describe("buildCaseOverviewActivity", () => {
     };
     const pending: ProposalRecord = {
       id: testId(50),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       jobId: null,
       capabilityId: null,
       playbookId: null,
@@ -125,7 +126,7 @@ describe("buildCaseOverviewActivity", () => {
   it("labels jobs without resultSummary using cap title and input hint", () => {
     const job: JobListRecord = {
       id: testId(12),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.shodan.lookup",
       status: "running",
       input: { ip: "198.51.100.1" },
@@ -157,7 +158,7 @@ describe("buildCaseOverviewActivity", () => {
     const evidenceId = testId(43);
     const evidence: EvidenceRecord = {
       id: evidenceId,
-      caseId: testId(10),
+      caseId: testCaseId(10),
       entityId: null,
       kind: "attestation",
       label: "Vendor Report PDF",
@@ -175,7 +176,7 @@ describe("buildCaseOverviewActivity", () => {
     };
     const job: JobListRecord = {
       id: testId(12),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.shodan.lookup",
       status: "running",
       input: { evidenceId },
@@ -209,7 +210,7 @@ describe("buildCaseOverviewActivity", () => {
     const entityId = testId(47);
     const job: JobListRecord = {
       id: testId(12),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.shodan.lookup",
       status: "running",
       input: { entityId },
@@ -243,7 +244,7 @@ describe("buildCaseOverviewActivity", () => {
     const evidenceId = testId(43);
     const hidden: EvidenceRecord = {
       id: evidenceId,
-      caseId: testId(10),
+      caseId: testCaseId(10),
       entityId: null,
       kind: "file",
       label: "Hidden dump",
@@ -261,7 +262,7 @@ describe("buildCaseOverviewActivity", () => {
     };
     const job: JobListRecord = {
       id: testId(44),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "evidence.harvest",
       status: "running",
       input: { evidenceId },
@@ -295,7 +296,7 @@ describe("buildCaseOverviewActivity", () => {
     const runId = testId(14);
     const steps: JobListRecord[] = [0, 1, 2].map((step) => ({
       id: testId(20 + step),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.dns.lookup",
       status: step === 2 ? "running" : "succeeded",
       input: { host: "example.com" },
@@ -331,7 +332,7 @@ describe("buildCaseOverviewActivity", () => {
   it("labels playbook jobs with playbook title and seed subject", () => {
     const job: JobListRecord = {
       id: testId(13),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.dns.lookup",
       status: "running",
       input: { host: "example.com" },
@@ -362,7 +363,7 @@ describe("buildCaseOverviewActivity", () => {
   it("labels proposals without summary using proposal title", () => {
     const proposal: ProposalRecord = {
       id: testId(51),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       jobId: testId(11),
       capabilityId: "network.shodan.lookup",
       playbookId: null,
@@ -388,7 +389,7 @@ describe("buildCaseOverviewActivity", () => {
   it("deep-links activity rows to collect and triage detail", () => {
     const evidence: EvidenceRecord = {
       id: testId(40),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       entityId: null,
       kind: "attestation",
       label: "note",
@@ -406,7 +407,7 @@ describe("buildCaseOverviewActivity", () => {
     };
     const job: JobListRecord = {
       id: testId(11),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.dns.lookup",
       status: "running",
       input: {},
@@ -432,7 +433,7 @@ describe("buildCaseOverviewActivity", () => {
     };
     const proposal: ProposalRecord = {
       id: testId(51),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       jobId: null,
       capabilityId: null,
       playbookId: null,
@@ -473,7 +474,7 @@ describe("jobEvidenceLabelsForActivity", () => {
     const otherId = testId(44);
     const job: JobListRecord = {
       id: testId(12),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "evidence.harvest",
       status: "running",
       input: { evidenceId },
@@ -502,7 +503,7 @@ describe("jobEvidenceLabelsForActivity", () => {
       [
         {
           id: evidenceId,
-          caseId: testId(10),
+          caseId: testCaseId(10),
           entityId: null,
           kind: "file",
           label: "Hidden dump",
@@ -520,7 +521,7 @@ describe("jobEvidenceLabelsForActivity", () => {
         },
         {
           id: otherId,
-          caseId: testId(10),
+          caseId: testCaseId(10),
           entityId: null,
           kind: "file",
           label: "Other",
@@ -548,7 +549,7 @@ describe("jobEntityLabelsForActivity", () => {
     const otherId = testId(48);
     const job: JobListRecord = {
       id: testId(12),
-      caseId: testId(10),
+      caseId: testCaseId(10),
       capabilityId: "network.shodan.lookup",
       status: "running",
       input: { entityId },

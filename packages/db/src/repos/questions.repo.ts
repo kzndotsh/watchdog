@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 
+import type { CaseId } from "@watchdog/schemas/shared";
 import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
@@ -53,7 +54,7 @@ export const questionsRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     questionId: string
   ): Promise<QuestionRow | null> {
     const scoped = trimScopedCaseIds(caseId, questionId);
@@ -75,7 +76,7 @@ export const questionsRepo = {
   /** Text keys for FP suppress — scoped to case + entity ids. */
   async listTextKeysInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityIds: string[]
   ): Promise<QuestionTextKey[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -124,7 +125,7 @@ export const questionsRepo = {
 
   async updateInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     questionId: string,
     patch: QuestionPatch
   ): Promise<QuestionRow | null> {
@@ -168,7 +169,7 @@ export const questionsRepo = {
    */
   async resolveInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     questionId: string,
     values: ResolveQuestionValues
   ): Promise<QuestionRow | null> {
@@ -194,7 +195,7 @@ export const questionsRepo = {
   /** Reopen a resolved Question in the Case; `null` when it is missing or already open. */
   async reopenInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     questionId: string
   ): Promise<QuestionRow | null> {
     const scoped = trimScopedCaseIds(caseId, questionId);
@@ -225,7 +226,7 @@ export const questionsRepo = {
 
   async deleteInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     questionId: string
   ): Promise<QuestionRow | null> {
     const scoped = trimScopedCaseIds(caseId, questionId);

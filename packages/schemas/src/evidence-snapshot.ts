@@ -1,12 +1,13 @@
 import { z } from "zod";
 
 import { evidenceKindSchema } from "./enums";
+import { caseIdSchema } from "./ids";
 import { uuidSchema } from "./primitives";
 
 /** What a Process Cap may read — packed once by core/worker. */
 export const evidenceSnapshotSchema = z.object({
   evidenceId: uuidSchema,
-  caseId: uuidSchema,
+  caseId: caseIdSchema,
   entityId: uuidSchema.optional(),
   kind: evidenceKindSchema,
   label: z.string().optional(),

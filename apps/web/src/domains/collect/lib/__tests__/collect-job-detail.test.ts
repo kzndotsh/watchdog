@@ -6,12 +6,13 @@ import {
 } from "@/domains/collect/lib/collect-job-detail";
 import type { CollectRow } from "@/domains/collect/types";
 import type { JobListRecord } from "@watchdog/core/jobs";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 function job(overrides: Partial<JobListRecord> = {}): JobListRecord {
   return {
     id: testId(11),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     capabilityId: "network.dns.lookup",
     status: "running",
     input: {},

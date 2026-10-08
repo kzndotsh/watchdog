@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
 import { TASK_STATUSES } from "@watchdog/schemas/shared";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 class ResizeObserverMock {
@@ -86,7 +87,7 @@ vi.mock("@/domains/tasks/components/task-board-column", () => ({
 
 import { TaskBoard } from "@/domains/tasks/components/task-board";
 
-const CASE_ID = testId(10);
+const CASE_ID = testCaseId(10);
 
 function task(
   id: string,

@@ -178,7 +178,7 @@ describe("interpret stage", () => {
     const runtime = makeRuntime({
       evidenceSnapshot: {
         evidenceId: testId(30),
-        caseId: testId(2),
+        caseId: testCaseId(2),
         kind: "other",
         text: "   \n  ",
         packedAt: "2026-01-03T00:00:00.000Z",

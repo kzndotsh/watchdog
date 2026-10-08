@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId, testHttpUrl } from "@watchdog/test-kit";
 
 const useQueryMock = vi.hoisted(() => vi.fn());
@@ -31,7 +32,7 @@ function fetchedQuery<T>(data: T) {
 
 const EVIDENCE: EvidenceRecord = {
   id: testId(40),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   entityId: null,
   kind: "attestation",
   label: "Screenshot note",

@@ -4,7 +4,7 @@ import { createElement, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
-import { testId } from "@watchdog/test-kit";
+import { testCaseId } from "@watchdog/schemas/testing";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
@@ -61,7 +61,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 import { useEntityTable } from "@/domains/entities/hooks/use-entity-table";
 
 const ACTIVE: CaseRecord = {
-  id: testId(10),
+  id: testCaseId(10),
   slug: "alpha",
   name: "Alpha",
   description: null,

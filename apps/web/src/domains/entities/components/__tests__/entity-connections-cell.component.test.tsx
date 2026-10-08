@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { EntityConnectionsCell } from "@/domains/entities/components/entity-connections-cell";
 import type { EntityRecord } from "@/domains/entities/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/domains/entities/components/connection-composer-fields", () => ({
@@ -12,7 +13,7 @@ vi.mock("@/domains/entities/components/connection-composer-fields", () => ({
 
 const ENTITY: EntityRecord = {
   id: testId(1),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   slug: "alpha",
   name: "Alpha Entity",
   kind: "person",

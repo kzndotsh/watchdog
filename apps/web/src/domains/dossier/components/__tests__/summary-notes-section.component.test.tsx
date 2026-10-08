@@ -8,6 +8,7 @@ import {
 } from "@/domains/dossier/components/summary-notes-section";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import type { EntityRecord } from "@/domains/entities/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -51,7 +52,7 @@ vi.mock("@/shared/ui/rich-text", () => ({
 
 const ENTITY: EntityRecord = {
   id: testId(1),
-  caseId: testId(10),
+  caseId: testCaseId(10),
   slug: "alpha",
   name: "Alpha Entity",
   kind: "person",

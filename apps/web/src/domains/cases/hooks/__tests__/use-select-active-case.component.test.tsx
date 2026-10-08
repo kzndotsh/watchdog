@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { casesKeys } from "@/domains/cases/queries";
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
 import { Toaster } from "@/shared/ui/toast";
+import { asCaseId, type CaseId } from "@watchdog/schemas/shared";
 
 vi.mock("@/auth/server", () => ({
   auth: {},
@@ -21,10 +22,10 @@ import {
   useSelectActiveCase,
 } from "../use-select-active-case";
 
-const ALPHA_ID = "550e8400-e29b-41d4-a716-446655440000";
-const BETA_ID = "550e8400-e29b-41d4-a716-446655440001";
+const ALPHA_ID = asCaseId("550e8400-e29b-41d4-a716-446655440000");
+const BETA_ID = asCaseId("550e8400-e29b-41d4-a716-446655440001");
 
-function caseRow(id: string, slug: string): CaseRecord {
+function caseRow(id: CaseId, slug: string): CaseRecord {
   return {
     id,
     name: slug,

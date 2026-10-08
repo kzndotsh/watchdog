@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { mergeEvidenceRecords } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 function evidenceRow(id: string, label: string): EvidenceRecord {
   return {
     id,
-    caseId: testId(1),
+    caseId: testCaseId(1),
     entityId: null,
     kind: "file",
     label,

@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 
 import { REPORT_JSON_ARTIFACT } from "@watchdog/schemas/jobs";
 import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit/fixtures";
 
 import type {
@@ -42,7 +43,7 @@ export function createCapRunHarness<
   const ctx: CapContext<I> = {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- default input is empty; callers pass `input` when I is specific
     input: opts?.input ?? ({} as I),
-    caseId: testId(1),
+    caseId: testCaseId(1),
     jobId: testId(2),
     signal: opts?.signal ?? new AbortController().signal,
     uploadArtifact: ({ bytes, mime, name }) => {

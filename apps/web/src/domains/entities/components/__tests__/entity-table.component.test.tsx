@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -77,7 +78,7 @@ vi.mock("@/domains/entities/hooks/use-entity-table", () => ({
 import { EntityTable } from "@/domains/entities/components/entity-table";
 
 const ACTIVE: CaseRecord = {
-  id: testId(10),
+  id: testCaseId(10),
   slug: "alpha",
   name: "Alpha",
   description: null,

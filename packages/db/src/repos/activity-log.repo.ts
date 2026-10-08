@@ -22,7 +22,7 @@ import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
 export type ActivityRow = typeof activity.$inferSelect;
 
 export interface NewActivityRow {
-  caseId: string;
+  caseId: CaseId;
   kind: ActivityEntryKind;
   action: string;
   subjectId?: string | null;
@@ -58,7 +58,7 @@ export interface DrainActivityOpts {
   limit: number;
   /** Scope to an organization's Cases (replay); omit for the process-wide tailer. */
   organizationId?: OrganizationId;
-  caseId?: string;
+  caseId?: CaseId;
 }
 
 /** One kind and the actions of it the feed shows (`FEED_ACTIONS` in core). */
@@ -69,7 +69,7 @@ export interface FeedFilter {
 
 export interface RecentFeedOpts {
   organizationId: OrganizationId;
-  caseId?: string;
+  caseId?: CaseId;
   /** Allowlist of kind and action pairs; an entry outside every filter is never read. */
   filters: readonly FeedFilter[];
   limit: number;

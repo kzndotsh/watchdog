@@ -7,7 +7,7 @@ import {
   taskStatusSchema,
   trimmedTaskStatusSchema,
 } from "./enums";
-import { trimmedCaseIdSchema } from "./ids";
+import { caseIdSchema, trimmedCaseIdSchema } from "./ids";
 import {
   nonEmptyTrimmed,
   nullableTrimmedPatchSchema,
@@ -22,7 +22,7 @@ import {
 
 export const taskSchema = z.object({
   id: uuidSchema,
-  caseId: uuidSchema,
+  caseId: caseIdSchema,
   entityId: uuidSchema.nullable(),
   title: z.string(),
   description: z.string().nullable(),

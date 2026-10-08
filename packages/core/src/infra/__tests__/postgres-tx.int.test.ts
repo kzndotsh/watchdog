@@ -9,7 +9,8 @@ import {
 } from "@watchdog/core/errors";
 import { Db, outsideTransaction, transact, tryDb } from "@watchdog/core/infra";
 import { casesRepo, db } from "@watchdog/db";
-import { TEST_ORGANIZATION_ID } from "@watchdog/schemas/testing";
+import type { CaseId } from "@watchdog/schemas/shared";
+import { TEST_ORGANIZATION_ID, testCaseId } from "@watchdog/schemas/testing";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 
 import { runDomain } from "../run-domain";
@@ -18,7 +19,7 @@ class Greeter extends Context.Service<Greeter, { readonly hi: string }>()(
   "test/Greeter"
 ) {}
 
-function caseExists(id: string): Promise<boolean> {
+function caseExists(id: CaseId): Promise<boolean> {
   return casesRepo.getByIdUnchecked(db, id).then((row) => row !== null);
 }
 
@@ -79,7 +80,7 @@ describe("transact", () => {
 
   it("passes the same tagged error instance through and rolls back", async () => {
     const error = new ConflictError({ reason: "taken" });
-    let id = "";
+    let id = testCaseId(0);
     const failure = await runDomain(
       Effect.flip(
         transact((tx) =>
@@ -129,7 +130,7 @@ describe("transact", () => {
   });
 
   it("interrupting the caller aborts the body and rolls back", async () => {
-    let id = "";
+    let id = testCaseId(0);
     let inserted!: () => void;
     const insertedSignal = new Promise<void>((resolve) => {
       inserted = resolve;
@@ -153,7 +154,7 @@ describe("transact", () => {
   });
 
   it("maps a driver constraint error to ConflictError inside the body and rolls back", async () => {
-    let firstId = "";
+    let firstId = testCaseId(0);
     const failure = await Effect.runPromise(
       Effect.provide(
         Effect.flip(
@@ -192,7 +193,7 @@ describe("transact", () => {
 
   it("dies on a nested transact before opening a second transaction", async () => {
     const transaction = vi.spyOn(db, "transaction");
-    let id = "";
+    let id = testCaseId(0);
     const exit = await Effect.runPromiseExit(
       Effect.provide(
         transact((tx) =>
@@ -215,8 +216,8 @@ describe("transact", () => {
 
   it("lets a detached fiber forked inside a body run its own transact", async () => {
     const transaction = vi.spyOn(db, "transaction");
-    let outerId = "";
-    let innerId = "";
+    let outerId = testCaseId(0);
+    let innerId = testCaseId(0);
     let detachedExit: Exit.Exit<unknown, unknown> | undefined;
     const outcome = await Effect.runPromiseExit(
       Effect.provide(

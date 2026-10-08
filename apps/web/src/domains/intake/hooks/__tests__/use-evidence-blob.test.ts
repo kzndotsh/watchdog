@@ -2,6 +2,7 @@ import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId, testHttpUrl } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -24,7 +25,7 @@ import { evidenceNeedsBlobText } from "@/domains/intake/hooks/use-evidence-blob.
 function evidence(overrides: Partial<EvidenceRecord> = {}): EvidenceRecord {
   return {
     id: testId(40),
-    caseId: testId(10),
+    caseId: testCaseId(10),
     entityId: null,
     kind: "attestation",
     label: "note",

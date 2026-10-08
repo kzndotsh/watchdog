@@ -1,7 +1,8 @@
 import { and, asc, eq, ilike, inArray, or } from "drizzle-orm";
 
-import type { IdentifierType } from "@watchdog/schemas/shared";
 import {
+  type CaseId,
+  type IdentifierType,
   CONFIDENCE_TIER_LABELS,
   CONFIDENCE_TIERS,
   IDENTIFIER_STATUS_LABELS,
@@ -83,7 +84,7 @@ export const identifiersRepo = {
   /** All identifiers whose owning entity belongs to the Case. */
   async listForCase(
     exec: DbExec,
-    caseId: string
+    caseId: CaseId
   ): Promise<IdentifierListRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
@@ -108,7 +109,7 @@ export const identifiersRepo = {
 
   async searchForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     term: string,
     limit: number
   ): Promise<IdentifierListRow[]> {
@@ -180,7 +181,7 @@ export const identifiersRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     identifierId: string
   ): Promise<IdentifierRow | null> {
     const scoped = trimScopedCaseIds(caseId, identifierId);
@@ -221,7 +222,7 @@ export const identifiersRepo = {
   /** Natural keys for FP suppress — scoped to case + entity ids. */
   async listNaturalKeysInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityIds: string[]
   ): Promise<IdentifierNaturalKey[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -282,7 +283,7 @@ export const identifiersRepo = {
 
   async updateInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     identifierId: string,
     patch: IdentifierPatch
   ): Promise<IdentifierRow | null> {
@@ -304,7 +305,7 @@ export const identifiersRepo = {
   /** Delete an identifier only when its owning entity is in the Case; returns the deleted row. */
   async deleteInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     identifierId: string
   ): Promise<IdentifierRow | null> {
     const scoped = trimScopedCaseIds(caseId, identifierId);

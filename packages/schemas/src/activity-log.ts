@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { caseIdSchema } from "./ids";
 import { uuidSchema } from "./primitives";
 
 /**
@@ -57,7 +58,7 @@ export const activityEntrySchema = z.object({
   /** Opaque `xid:id` resume token; the SSE `id:` field. */
   cursor: z.string(),
   id: z.number().int().positive(),
-  caseId: uuidSchema,
+  caseId: caseIdSchema,
   kind: activityEntryKindSchema,
   action: z.string().min(1),
   subjectId: uuidSchema.nullable(),

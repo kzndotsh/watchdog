@@ -1,6 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
+import { testCaseId } from "@watchdog/schemas/testing";
+
 vi.mock("@/auth/server", () => ({
   auth: {},
 }));
@@ -14,7 +16,7 @@ import {
 import type { CaseRecord, CasesContext } from "@/domains/cases/types";
 
 const CASE: CaseRecord = {
-  id: "case-1",
+  id: testCaseId(1),
   slug: "alpha",
   name: "Alpha",
   description: null,

@@ -1,11 +1,7 @@
 import { z } from "zod";
 
-import type { CaseId } from "./ids";
-import {
-  optionalCaseIdSchema,
-  parseTrimmedCaseId,
-  uuidSchema,
-} from "./primitives";
+import { caseIdSchema, type CaseId } from "./ids";
+import { optionalCaseIdSchema, parseTrimmedCaseId } from "./primitives";
 
 export const ACTIVITY_KINDS = ["evidence", "job", "proposal", "task"] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
@@ -28,7 +24,7 @@ export const activityItemSchema = z.object({
   id: z.string().min(1),
   kind: activityKindSchema,
   action: z.string(),
-  caseId: uuidSchema,
+  caseId: caseIdSchema,
   caseName: z.string(),
   label: z.string(),
   status: z.string().optional(),

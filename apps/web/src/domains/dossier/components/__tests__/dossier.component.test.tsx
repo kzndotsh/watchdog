@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { EntityRecord } from "@/domains/entities/types";
+import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
 vi.mock("@/auth/server", () => ({
@@ -119,7 +120,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 import { Dossier } from "@/domains/dossier/components/dossier";
 
 const CASE = {
-  id: testId(10),
+  id: testCaseId(10),
   slug: "alpha-case",
   name: "Alpha Case",
   description: null,
