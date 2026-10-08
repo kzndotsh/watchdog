@@ -58,6 +58,9 @@ const integrationEnv = {
  * while the setup file clears the module registry before every file so `vi.mock` still
  * applies to our own modules. The catch: process-wide state (process.env, globalThis,
  * fake timers, DOM) is shared between files in a worker, so tests must restore what they change.
+ * `unstubGlobals` / `unstubEnvs` undo `vi.stubGlobal` / `vi.stubEnv` after every test: a leaked
+ * `fetch` stub made unrelated suites (msw-backed cap runs, certspotter, ...) fail depending on
+ * which files shared a worker.
  */
 export default defineConfig({
   test: {
@@ -101,6 +104,8 @@ export default defineConfig({
           exclude: unitExclude,
           environment: "node",
           isolate: false,
+          unstubGlobals: true,
+          unstubEnvs: true,
           setupFiles: ["vitest.reset-modules.ts"],
           env: webTestEnv,
         },
@@ -118,6 +123,8 @@ export default defineConfig({
           exclude: ["**/node_modules/**", ...webDomTestGlobs],
           environment: "node",
           isolate: false,
+          unstubGlobals: true,
+          unstubEnvs: true,
           setupFiles: ["vitest.reset-modules.ts"],
           env: webTestEnv,
         },
@@ -132,6 +139,8 @@ export default defineConfig({
           exclude: ["**/node_modules/**"],
           environment: "node",
           isolate: false,
+          unstubGlobals: true,
+          unstubEnvs: true,
           setupFiles: ["vitest.reset-modules.ts"],
           env: webTestEnv,
         },
@@ -152,6 +161,8 @@ export default defineConfig({
           environment: "happy-dom",
           pool: "threads",
           isolate: false,
+          unstubGlobals: true,
+          unstubEnvs: true,
           setupFiles: ["vitest.reset-modules.ts", "apps/web/src/test-setup.ts"],
           deps: {
             optimizer: {
@@ -170,6 +181,8 @@ export default defineConfig({
           include: ["scripts/__tests__/**/*.gate.test.ts"],
           environment: "node",
           isolate: false,
+          unstubGlobals: true,
+          unstubEnvs: true,
           setupFiles: ["vitest.reset-modules.ts"],
           testTimeout: 30_000,
         },
@@ -186,6 +199,8 @@ export default defineConfig({
           fileParallelism: false,
           maxWorkers: 1,
           isolate: false,
+          unstubGlobals: true,
+          unstubEnvs: true,
           setupFiles: ["vitest.reset-modules.ts"],
           env: integrationEnv,
         },

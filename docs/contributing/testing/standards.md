@@ -108,6 +108,6 @@ Every Vitest project (unit, web-unit, property, component, integration) runs wit
 
 What this means when writing tests:
 
-- **Restore what you change.** `process.env`, `globalThis`, fake timers, `window` / DOM, and module-level state outside the module registry are shared by the files that run in the same worker. Set and restore them in `beforeEach` / `afterEach` (`vi.stubEnv` + `vi.unstubAllEnvs`, `vi.useFakeTimers` + `vi.useRealTimers`).
+- **Restore what you change.** `process.env`, `globalThis`, fake timers, `window` / DOM, and module-level state outside the module registry are shared by the files that run in the same worker. Set and restore them in `beforeEach` / `afterEach` (`vi.useFakeTimers` + `vi.useRealTimers`). `vi.stubGlobal` and `vi.stubEnv` are undone after every test by `unstubGlobals` / `unstubEnvs` in `vitest.config.ts` (a leaked `fetch` stub once made msw-backed suites fail depending on file order); a direct assignment such as `globalThis.fetch = ...` or `process.env.X = ...` is not undone, so restore it yourself.
 - **A leak shows up as an order-dependent failure.** Reproduce with `pnpm exec vitest run --project <name> --sequence.shuffle.files`, then fix the test's cleanup; do not turn isolation back on for the project.
 - **Tests that spawn processes need their own timeout.** `wrapper-lint-coverage.test.ts` runs oxlint and sets 60s, because the default 5s is easy to exceed when the whole suite saturates the CPU.
