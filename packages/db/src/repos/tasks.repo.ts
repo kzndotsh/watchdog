@@ -181,6 +181,25 @@ export const tasksRepo = {
     return row ?? null;
   },
 
+  /** `getInCase` with `FOR UPDATE`: a concurrent write waits, so a status change check is atomic. Use inside a transaction. */
+  async lockInCase(
+    exec: DbExec,
+    caseId: string,
+    taskId: string
+  ): Promise<TaskRow | null> {
+    const scoped = trimScopedCaseIds(caseId, taskId);
+    if (!scoped) return null;
+    const [row] = await exec
+      .select(taskColumns)
+      .from(tasks)
+      .where(
+        and(eq(tasks.id, scoped.resourceId), eq(tasks.caseId, scoped.caseId))
+      )
+      .limit(1)
+      .for("update");
+    return row ?? null;
+  },
+
   async create(exec: DbExec, values: NewTask): Promise<TaskRow | null> {
     const scopedCaseId = trimCaseId(values.caseId);
     if (scopedCaseId === undefined) return null;
@@ -251,20 +270,21 @@ export const tasksRepo = {
     return deleted.length > 0;
   },
 
+  /** Delete a Task in the Case and return the deleted row (its title and status are what the entry records). */
   async removeInCase(
     exec: DbExec,
     caseId: string,
     taskId: string
-  ): Promise<boolean> {
+  ): Promise<TaskRow | null> {
     const scoped = trimScopedCaseIds(caseId, taskId);
-    if (!scoped) return false;
-    const deleted = await exec
+    if (!scoped) return null;
+    const [deleted] = await exec
       .delete(tasks)
       .where(
         and(eq(tasks.id, scoped.resourceId), eq(tasks.caseId, scoped.caseId))
       )
-      .returning({ id: tasks.id });
-    return deleted.length > 0;
+      .returning(taskColumns);
+    return deleted ?? null;
   },
 
   async nextPosition(

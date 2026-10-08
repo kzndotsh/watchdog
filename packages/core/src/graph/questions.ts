@@ -27,6 +27,7 @@ import {
 import {
   assertCaseInOrgEffect,
   assertEntityInCaseEffect,
+  missedUpdateEffect,
   requireTrimmedGraphId,
 } from "./patch/guards";
 
@@ -105,6 +106,25 @@ export function seedDefaultQuestionsEffect(
         reason: `Failed to seed ${row.kind} Questions`,
       });
     }
+  });
+}
+
+/** A conditional status UPDATE matched nothing: Conflict if the Question exists, else NotFound. */
+function questionMissEffect(
+  tx: DbExec,
+  caseId: CaseId,
+  questionId: string,
+  conflictReason: string
+): Effect.Effect<never, DomainTag> {
+  return Effect.gen(function* questionMissGen() {
+    const current = yield* tryDb(() =>
+      questionsRepo.getInCase(tx, caseId, questionId)
+    );
+    return yield* missedUpdateEffect(
+      current !== null,
+      { entity: "Question", id: questionId },
+      conflictReason
+    );
   });
 }
 
@@ -207,20 +227,12 @@ export function resolveQuestionEffect(
           })
         );
         if (!resolved) {
-          // The `open` check is part of the update: a miss is a concurrent
-          // resolve (Conflict) or a concurrent delete (NotFound).
-          const current = yield* tryDb(() =>
-            questionsRepo.getInCase(tx, scopedCaseId, questionId)
+          return yield* questionMissEffect(
+            tx,
+            scopedCaseId,
+            questionId,
+            "Question already resolved"
           );
-          if (!current) {
-            return yield* new NotFoundError({
-              entity: "Question",
-              id: questionId,
-            });
-          }
-          return yield* new ConflictError({
-            reason: "Question already resolved",
-          });
         }
         yield* appendGraphActivityEffect(tx, {
           ...graphActorFields(input),
@@ -332,20 +344,12 @@ export function reopenQuestionEffect(
           questionsRepo.reopenInCase(tx, scopedCaseId, questionId)
         );
         if (!reopened) {
-          // The `resolved` check is part of the update: a miss is a
-          // concurrent reopen (Conflict) or a concurrent delete (NotFound).
-          const current = yield* tryDb(() =>
-            questionsRepo.getInCase(tx, scopedCaseId, questionId)
+          return yield* questionMissEffect(
+            tx,
+            scopedCaseId,
+            questionId,
+            "Question is already open"
           );
-          if (!current) {
-            return yield* new NotFoundError({
-              entity: "Question",
-              id: questionId,
-            });
-          }
-          return yield* new ConflictError({
-            reason: "Question is already open",
-          });
         }
         yield* appendGraphActivityEffect(tx, {
           ...graphActorFields(input),

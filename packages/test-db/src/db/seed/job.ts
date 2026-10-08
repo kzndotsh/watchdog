@@ -41,11 +41,6 @@ async function seedJobActivity(
   job: JobRow,
   transitions: readonly JobStatus[]
 ): Promise<void> {
-  if (transitions.at(-1) !== job.status) {
-    throw new Error(
-      `seedJob transitions must end with the Job's status (${job.status})`
-    );
-  }
   const actions = transitions.filter((action) =>
     (ACTIVITY_ENTRY_ACTIONS.job as readonly string[]).includes(action)
   );
@@ -70,11 +65,19 @@ export async function seedJob(
   overrides?: SeedJobOverrides
 ): Promise<JobRow> {
   const { resultSummary, transitions, ...createOverrides } = overrides ?? {};
+  const status = createOverrides.status ?? "queued";
+  const entered = transitions ?? defaultTransitions(status);
+  // Validate before the insert: a bad list must not leave a Job row behind.
+  if (entered.at(-1) !== status) {
+    throw new Error(
+      `seedJob transitions must end with the Job's status (${status})`
+    );
+  }
   const created = await jobsRepo.create(exec, {
     caseId,
     capabilityId: createOverrides.capabilityId ?? "network.dns.lookup",
     input: createOverrides.input ?? { host: "example.com" },
-    status: createOverrides.status ?? "queued",
+    status,
     actorId: createOverrides.actorId ?? TEST_ACTOR_ID,
     logs: createOverrides.logs,
     playbookRunId: createOverrides.playbookRunId,
@@ -87,11 +90,7 @@ export async function seedJob(
   if (!created) {
     throw new Error("seedJob failed");
   }
-  await seedJobActivity(
-    exec,
-    created,
-    transitions ?? defaultTransitions(created.status)
-  );
+  await seedJobActivity(exec, created, entered);
   if (resultSummary === undefined) {
     return created;
   }

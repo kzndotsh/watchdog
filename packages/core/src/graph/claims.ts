@@ -36,6 +36,7 @@ import {
 import {
   assertCaseInOrgEffect,
   assertConfidenceEvidenceEffect,
+  missedUpdateEffect,
   assertEntityInCaseEffect,
   assertEvidenceLinkedEffect,
   requireTrimmedGraphId,
@@ -218,7 +219,16 @@ export function retractClaimEffect(
           })
         );
         if (!retracted) {
-          return yield* new NotFoundError({ entity: "Claim", id: claimId });
+          // `retracted = false` is part of the UPDATE: a miss is a concurrent
+          // retract (Conflict) or a concurrent delete (NotFound).
+          const current = yield* tryDb(() =>
+            claimsRepo.getInCase(tx, scopedCaseId, claimId)
+          );
+          return yield* missedUpdateEffect(
+            current !== null,
+            { entity: "Claim", id: claimId },
+            "Claim already retracted"
+          );
         }
         yield* appendGraphActivityEffect(tx, {
           actorLabel: input.actorLabel,

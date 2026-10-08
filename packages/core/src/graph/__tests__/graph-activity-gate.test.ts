@@ -40,7 +40,7 @@ const APPEND_CALL =
  * `const f = function* () {}`), so an arrow-function mutation cannot hide.
  */
 const TOP_LEVEL_FUNCTION =
-  /^(?:export )?(?:(?:async )?function\*? (\w+)|const (\w+)\s*(?::[^=\n]+)?=\s*(?:async\s*)?(?:function\b|\(|\w+\s*=>))/gm;
+  /^(?:export )?(?:(?:async )?function\*? (\w+)|const (\w+)\s*(?::[^\n]*?)?=(?!>)\s*(?:async\s*)?(?:function\b|\(|\w+\s*=>))/gm;
 
 /** Names of the top-level functions in `source`, with the offset each starts at. */
 function topLevelFunctions(source: string): { name: string; index: number }[] {
@@ -148,7 +148,9 @@ describe("Graph mutation gate scanner", () => {
       "const bare = x => x;",
       "export const expression = function named() {};",
       "export const typed: Handler = async () => {};",
+      "export const mutate: (id: string) => void = (id) => {};",
       "export const notAFunction = 42;",
+      "export const table: Record<string, number> = {};",
       "  const nested = () => {};",
     ].join("\n");
     expect(topLevelFunctions(source).map((fn) => fn.name)).toEqual([
@@ -159,6 +161,7 @@ describe("Graph mutation gate scanner", () => {
       "bare",
       "expression",
       "typed",
+      "mutate",
     ]);
   });
 

@@ -189,6 +189,7 @@ export const claimsRepo = {
     return row ?? null;
   },
 
+  /** Retract a still-live Claim: `retracted = false` is in the UPDATE, so of two concurrent retracts one matches. */
   async retractInCase(
     exec: DbExec,
     caseId: string,
@@ -210,7 +211,8 @@ export const claimsRepo = {
       .where(
         and(
           eq(claims.id, scoped.resourceId),
-          entityRowInCase(claims.entityId, scoped.caseId)
+          entityRowInCase(claims.entityId, scoped.caseId),
+          eq(claims.retracted, false)
         )
       )
       .returning(claimColumns);

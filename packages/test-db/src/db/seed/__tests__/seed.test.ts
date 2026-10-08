@@ -146,13 +146,15 @@ describe("test-kit db seeds", () => {
     });
     expect(actions()).toEqual(["queued", "cancelled"]);
 
-    mocks.createJob.mockResolvedValueOnce({ id: "job-4", status: "failed" });
+    mocks.createJob.mockClear();
     await expect(
       seedJob(exec, testCaseId(1), {
         status: "failed",
         transitions: ["queued", "running"],
       })
     ).rejects.toThrow("transitions must end");
+    // validated before the insert: no Job row for the bad list
+    expect(mocks.createJob).not.toHaveBeenCalled();
   });
 
   it("seedPlaybookRun creates running playbook runs", async () => {

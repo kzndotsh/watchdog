@@ -212,13 +212,13 @@ describe("tasksRepo", () => {
         status: "backlog",
       });
       if (!created) throw new Error("task");
-      expect(await tasksRepo.removeInCase(tx, caseA.id, created.id)).toBe(
-        false
-      );
+      expect(await tasksRepo.removeInCase(tx, caseA.id, created.id)).toBeNull();
       expect(
         await tasksRepo.getInCase(tx, caseB.id, created.id)
       ).not.toBeNull();
-      expect(await tasksRepo.removeInCase(tx, caseB.id, created.id)).toBe(true);
+      expect(
+        await tasksRepo.removeInCase(tx, caseB.id, created.id)
+      ).toMatchObject({ id: created.id, title: "Do not delete" });
       expect(await tasksRepo.getInCase(tx, caseB.id, created.id)).toBeNull();
     });
   });

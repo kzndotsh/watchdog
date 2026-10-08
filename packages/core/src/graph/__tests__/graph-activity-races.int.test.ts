@@ -9,6 +9,7 @@ import {
   deleteQuestionEffect,
   reopenQuestionEffect,
   resolveQuestionEffect,
+  retractClaimEffect,
   updateIdentifierEffect,
 } from "@watchdog/core/graph";
 import { runDomain } from "@watchdog/core/infra";
@@ -20,10 +21,11 @@ import {
   eventsRepo,
   evidenceLinksRepo,
   identifiersRepo,
+  claimsRepo,
   questionsRepo,
 } from "@watchdog/db";
 import { resetTestDb } from "@watchdog/test-db";
-import { TEST_ACTOR_ID } from "@watchdog/test-kit";
+import { rendezvous, TEST_ACTOR_ID } from "@watchdog/test-kit";
 
 import { seedGraphFixture } from "./graph-mutations";
 
@@ -40,10 +42,13 @@ async function entriesFor(subjectId: string) {
   return rows.filter((row) => row.subjectId === subjectId);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
+/** The rejection of the one settled promise that lost, which must be a Conflict. */
+function expectConflictLoser(settled: PromiseSettledResult<unknown>[]) {
+  expect(settled.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+  const lost = settled.find((r) => r.status === "rejected");
+  expect(isDomainTag(lost?.reason) && lost.reason.code === "conflict").toBe(
+    true
+  );
 }
 
 describe("Graph activity races", () => {
@@ -155,11 +160,13 @@ describe("Graph activity races", () => {
   describe("concurrent Question status writes append once", () => {
     it("two concurrent resolves: one wins, the other is a conflict", async () => {
       const fx = await seedGraphFixture();
-      // Both pass the existence read before either writes.
+      // Both transactions are open and past the existence read before either
+      // UPDATE runs: neither can be the only writer.
+      const arrive = rendezvous(2);
       const real = questionsRepo.resolveInCase.bind(questionsRepo);
       vi.spyOn(questionsRepo, "resolveInCase").mockImplementation(
         async (...args) => {
-          await sleep(100);
+          await arrive();
           return real(...args);
         }
       );
@@ -173,11 +180,7 @@ describe("Graph activity races", () => {
         runDomain(resolveQuestionEffect(input)),
         runDomain(resolveQuestionEffect(input)),
       ]);
-      expect(settled.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-      const lost = settled.find((r) => r.status === "rejected");
-      expect(isDomainTag(lost?.reason) && lost.reason.code === "conflict").toBe(
-        true
-      );
+      expectConflictLoser(settled);
       const resolved = (await entriesFor(fx.questionId)).filter(
         (row) => row.action === "resolved"
       );
@@ -190,10 +193,11 @@ describe("Graph activity races", () => {
 
     it("two concurrent reopens: one wins, the other is a conflict", async () => {
       const fx = await seedGraphFixture();
+      const arrive = rendezvous(2);
       const real = questionsRepo.reopenInCase.bind(questionsRepo);
       vi.spyOn(questionsRepo, "reopenInCase").mockImplementation(
         async (...args) => {
-          await sleep(100);
+          await arrive();
           return real(...args);
         }
       );
@@ -207,7 +211,7 @@ describe("Graph activity races", () => {
         runDomain(reopenQuestionEffect(input)),
         runDomain(reopenQuestionEffect(input)),
       ]);
-      expect(settled.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      expectConflictLoser(settled);
       expect((await entriesFor(fx.resolvedQuestionId)).length - before).toBe(1);
     });
 
@@ -236,6 +240,37 @@ describe("Graph activity races", () => {
           (row) => row.action === "resolved"
         )
       ).toEqual([]);
+    });
+  });
+
+  describe("concurrent Claim retracts append once", () => {
+    it("two concurrent retracts: one wins, the other is a conflict", async () => {
+      const fx = await seedGraphFixture();
+      const arrive = rendezvous(2);
+      const real = claimsRepo.retractInCase.bind(claimsRepo);
+      vi.spyOn(claimsRepo, "retractInCase").mockImplementation(
+        async (...args) => {
+          await arrive();
+          return real(...args);
+        }
+      );
+      const input = {
+        caseId: fx.caseId,
+        organizationId: fx.organizationId,
+        claimId: fx.claimId,
+        kind: "retracted" as const,
+        reason: "Wrong person",
+      };
+      const settled = await Promise.allSettled([
+        runDomain(retractClaimEffect(input, TEST_ACTOR_ID)),
+        runDomain(retractClaimEffect(input, TEST_ACTOR_ID)),
+      ]);
+      expectConflictLoser(settled);
+      expect(
+        (await entriesFor(fx.claimId)).filter(
+          (row) => row.action === "retracted"
+        )
+      ).toHaveLength(1);
     });
   });
 
