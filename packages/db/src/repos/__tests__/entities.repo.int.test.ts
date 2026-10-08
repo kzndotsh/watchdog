@@ -263,15 +263,15 @@ describe("entitiesRepo", () => {
         name: "Other case",
         slug: "other-case-delete",
       });
-      expect(await entitiesRepo.deleteInCase(tx, caseA.id, entityB.id)).toBe(
-        false
-      );
+      expect(
+        await entitiesRepo.deleteInCase(tx, caseA.id, entityB.id)
+      ).toBeNull();
       expect(
         await entitiesRepo.getInCase(tx, caseB.id, entityB.id)
       ).not.toBeNull();
-      expect(await entitiesRepo.deleteInCase(tx, caseB.id, entityB.id)).toBe(
-        true
-      );
+      expect(
+        await entitiesRepo.deleteInCase(tx, caseB.id, entityB.id)
+      ).toMatchObject({ id: entityB.id, name: "Other case" });
       expect(await entitiesRepo.getInCase(tx, caseB.id, entityB.id)).toBeNull();
     });
   });

@@ -14,6 +14,7 @@ Dev-only test helpers: ids, URLs, fast-check, MSW. It has no `@watchdog/*` depen
 ## Gotchas
 
 - Entrypoints (see `package.json` `exports`): `/fc` is fast-check (unit/property only), `/fixtures` is ids + URLs without fast-check or MSW, `/http` is MSW. Import MSW only via `@watchdog/test-kit/http`; call listen/reset/close in the test file (or `src/http/msw-setup.ts`). Guidance.
+- `rendezvous(n)` (root export) is a barrier for forcing a race: wrap a repo call in a spy that awaits it, so all `n` transactions are open before any writes; use it instead of a sleep. Guidance.
 - Use extensionless relative imports: consumers typecheck these files with stricter tsconfigs that reject `.ts` extensions.
 - `testId(1)` is a greppable UUID-v4-shaped id (plain string); `TEST_ACTOR_ID` is `"test-actor"`. The branded fixtures live in `@watchdog/schemas/testing`: `testCaseId(1)` is the same value as a branded `CaseId`; `TEST_ORGANIZATION_ID` / `TEST_OTHER_ORGANIZATION_ID` are branded `OrganizationId`s; `testActor(overrides?)` is the shared `ApiActor` in `TEST_ORGANIZATION_ID` (do not hand-write actor literals). They mint brands through the schema constructors; `packages/schemas/src/testing` is the only tree exempt from the `watchdog/no-brand-cast` lint rule.
 - Effect programs that need `TestClock` or scoped Layers use `it.effect` from `@effect/vitest`; do not return a bare Effect from a plain `it()`. Shared-worker restore rules: [`standards.md`](../../docs/contributing/testing/standards.md).

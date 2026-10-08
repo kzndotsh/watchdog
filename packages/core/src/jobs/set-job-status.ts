@@ -45,7 +45,7 @@ export function setJobStatusEffect(
         // The write may match without changing the status (a reclaim sets an
         // already running Job running again): only a real transition is an entry.
         const before = yield* tryDb(() =>
-          jobsRepo.getStatusAndPlaybook(tx, normalizedJobId)
+          jobsRepo.lockStatus(tx, normalizedJobId)
         );
         const updated = yield* tryDb(() =>
           jobsRepo.updateInCase(

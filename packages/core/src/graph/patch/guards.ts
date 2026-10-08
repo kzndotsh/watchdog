@@ -18,6 +18,7 @@ import {
 import type { Db } from "../../infra/db-service";
 import { tryDbOn } from "../../infra/postgres-effect";
 import {
+  ConflictError,
   InternalError,
   InvalidError,
   NotFoundError,
@@ -35,6 +36,22 @@ export function requireTrimmedGraphId(
     return new NotFoundError({ entity, id: value });
   }
   return Effect.succeed(trimmed);
+}
+
+/**
+ * A conditional UPDATE (the status check is in its WHERE) matched no row:
+ * Conflict when the row still exists, so the condition failed (a concurrent
+ * writer won), NotFound when it is gone. Call it with a re-read taken in the
+ * same transaction.
+ */
+export function missedUpdateEffect(
+  rowExists: boolean,
+  target: { entity: NotFoundEntity; id: string },
+  conflictReason: string
+): Effect.Effect<never, NotFoundError | ConflictError> {
+  return rowExists
+    ? Effect.fail(new ConflictError({ reason: conflictReason }))
+    : Effect.fail(new NotFoundError(target));
 }
 
 /** Trim a Case id or fail not_found. */

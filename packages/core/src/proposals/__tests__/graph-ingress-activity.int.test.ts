@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { isDomainTag } from "@watchdog/core/errors";
 import { runDomain } from "@watchdog/core/infra";
 import {
   acceptProposalEffect,
@@ -10,7 +11,9 @@ import {
   activityLogRepo,
   claimsRepo,
   db,
+  entitiesRepo,
   graphWritesRepo,
+  proposalsRepo,
 } from "@watchdog/db";
 import {
   buildClaimCreateOp,
@@ -101,7 +104,15 @@ describe("Accept appends one Graph entry per op in the Accept transaction", () =
           confidence: "unverified",
         })
       )
-    ).rejects.toBeDefined();
+    ).rejects.toSatisfy(
+      (error: unknown) => isDomainTag(error) && error.code === "not_found"
+    );
+    // the first op's Entity rolled back with the second op's failure
+    expect(await entitiesRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(await graphWritesRepo.listForCase(db, cased.id)).toEqual([]);
+    expect(
+      (await proposalsRepo.getInCase(db, cased.id, proposalId))?.proposal.status
+    ).toBe("pending");
     expect(await entries()).toEqual([]);
   });
 });
@@ -181,9 +192,9 @@ describe("the agent graph write appends per op and leaves graph_writes alone", (
   it("a failed append rolls back the graph_writes row and the Graph", async () => {
     const cased = await seedCase(db);
     const entity = await seedEntity(db, cased.id, { id: testId(20) });
-    vi.spyOn(activityLogRepo, "append").mockRejectedValueOnce(
-      new Error("append failed")
-    );
+    const append = vi
+      .spyOn(activityLogRepo, "append")
+      .mockRejectedValueOnce(new Error("append failed"));
 
     await expect(
       runDomain(
@@ -198,7 +209,8 @@ describe("the agent graph write appends per op and leaves graph_writes alone", (
           ],
         })
       )
-    ).rejects.toBeDefined();
+    ).rejects.toThrow("append failed");
+    expect(append).toHaveBeenCalledTimes(1);
 
     expect(await graphWritesRepo.listForCase(db, cased.id)).toEqual([]);
     expect(await claimsRepo.listForEntity(db, entity.id)).toEqual([]);

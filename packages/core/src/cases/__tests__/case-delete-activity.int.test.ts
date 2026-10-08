@@ -75,6 +75,19 @@ describe("Case delete is not logged (ADR-0005 decision 2)", () => {
       })
     );
     const [seen] = await activityLogRepo.drain(db, { after: START, limit: 10 });
+    // Another Case keeps the log past the client's cursor, so the replay below
+    // is answerable: over a log emptied behind the cursor it is a `resync`,
+    // which the assertion must not mask.
+    const other = await seedCase(db, { slug: "other" });
+    await runDomain(
+      createEntityEffect({
+        caseId: other.id,
+        organizationId: TEST_ORGANIZATION_ID,
+        kind: "person",
+        name: "Grace",
+        slug: "grace",
+      })
+    );
     await runWithBlobs(
       deleteCaseEffect(doomed.id, { organizationId: TEST_ORGANIZATION_ID })
     );
@@ -84,7 +97,8 @@ describe("Case delete is not logged (ADR-0005 decision 2)", () => {
     ).rejects.toSatisfy(
       (error: unknown) => isDomainTag(error) && error.code === "not_found"
     );
-    // Even a replay that slips through has nothing to send for the deleted Case.
+    // Even a replay that slips through has nothing to send for the deleted Case:
+    // an empty entry list, not a `resync` (which would send the client to refetch).
     const replay = await runDomain(
       replayActivityEffect({
         organizationId: TEST_ORGANIZATION_ID,
@@ -92,6 +106,6 @@ describe("Case delete is not logged (ADR-0005 decision 2)", () => {
         after: { xid: seen!.xid, id: seen!.id },
       })
     );
-    expect(replay.kind === "entries" ? replay.entries : []).toEqual([]);
+    expect(replay).toEqual({ kind: "entries", entries: [] });
   });
 });

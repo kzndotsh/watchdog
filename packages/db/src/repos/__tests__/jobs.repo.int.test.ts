@@ -398,6 +398,37 @@ describe("jobsRepo", () => {
     });
   });
 
+  it("lists cancellable playbook jobs with only the fields an entry needs", async () => {
+    await withTestTx(async (tx) => {
+      const cased = await seedCase(tx);
+      const run = await seedPlaybookRun(tx, cased.id);
+      const queued = await seedJob(tx, cased.id, {
+        playbookRunId: run.id,
+        playbookStep: 0,
+        status: "queued",
+      });
+      await seedJob(tx, cased.id, {
+        playbookRunId: run.id,
+        playbookStep: 1,
+        status: "succeeded",
+      });
+      const rows = await jobsRepo.listCancellableForPlaybookRun(
+        tx,
+        cased.id,
+        run.id
+      );
+      expect(rows).toEqual([
+        {
+          id: queued.id,
+          caseId: cased.id,
+          actorId: queued.actorId,
+          actorLabel: queued.actorLabel,
+          playbookRunId: run.id,
+        },
+      ]);
+    });
+  });
+
   it("abandons blocked playbook jobs and lists running", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
@@ -414,9 +445,12 @@ describe("jobsRepo", () => {
         "prior failed"
       );
       expect(abandonedIds.map((row) => row.id)).toEqual([blocked.id]);
-      expect(abandonedIds[0]).toMatchObject({
-        status: "cancelled",
+      expect(abandonedIds[0]).toEqual({
+        id: blocked.id,
+        caseId: cased.id,
+        playbookRunId: run.id,
         actorId: blocked.actorId,
+        actorLabel: blocked.actorLabel,
       });
       const after = await jobsRepo.get(tx, blocked.id);
       expect(after?.status).toBe("cancelled");
@@ -465,7 +499,10 @@ describe("jobsRepo", () => {
   it("findCancelledJobIds trims and dedupes job ids", async () => {
     await withTestTx(async (tx) => {
       const cased = await seedCase(tx);
-      const cancelled = await seedJob(tx, cased.id, { status: "cancelled" });
+      const cancelled = await seedJob(tx, cased.id, {
+        status: "cancelled",
+        transitions: ["queued", "cancelled"],
+      });
       const running = await seedJob(tx, cased.id, { status: "running" });
       const ids = await jobsRepo.findCancelledJobIds(tx, [
         `  ${cancelled.id}  `,

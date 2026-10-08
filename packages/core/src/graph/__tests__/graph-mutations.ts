@@ -156,11 +156,33 @@ export interface GraphMutation {
   action: string;
   /** How many entries the run appends (default 1). */
   entries?: number;
+  /** The id `subject_id` must hold; `result` is what `run` returned (a created row). */
+  subjectId: (fx: GraphFixture, result: unknown) => string;
   run: (fx: GraphFixture) => Effect.Effect<unknown, DomainTag, Db>;
 }
 
+/** The `id` of a created record returned by a mutation. */
+export function resultId(result: unknown): string {
+  if (
+    typeof result === "object" &&
+    result !== null &&
+    "id" in result &&
+    typeof result.id === "string"
+  ) {
+    return result.id;
+  }
+  throw new TypeError("mutation did not return a record with an id");
+}
+
+/** Every mutation runs as the same caller; each entry must carry it. */
+const ACTOR = { actorId: TEST_ACTOR_ID } as const;
+
 function scope(fx: GraphFixture) {
-  return { caseId: fx.caseId, organizationId: fx.organizationId };
+  return {
+    caseId: fx.caseId,
+    organizationId: fx.organizationId,
+    ...ACTOR,
+  };
 }
 
 function patch(
@@ -183,6 +205,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/entities.ts#createEntityEffect"],
     kind: "entity",
     action: "created",
+    subjectId: (_fx, result) => resultId(result),
     run: (fx) =>
       createEntityEffect({
         ...scope(fx),
@@ -196,6 +219,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/entities.ts#updateEntityFieldsEffect"],
     kind: "entity",
     action: "updated",
+    subjectId: (fx) => fx.entityId,
     run: (fx) =>
       updateEntityFieldsEffect({
         ...scope(fx),
@@ -208,14 +232,16 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/entities.ts#deleteEntityEffect"],
     kind: "entity",
     action: "deleted",
+    subjectId: (fx) => fx.otherEntityId,
     run: (fx) =>
-      deleteEntityEffect(fx.caseId, fx.organizationId, fx.otherEntityId),
+      deleteEntityEffect(fx.caseId, fx.organizationId, fx.otherEntityId, ACTOR),
   },
   {
     name: "edge.create",
     sites: ["graph/edges.ts#createEdgeEffect"],
     kind: "edge",
     action: "created",
+    subjectId: (_fx, result) => resultId(result),
     run: (fx) =>
       createEdgeEffect({
         ...scope(fx),
@@ -231,6 +257,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/edges.ts#updateEdgeEffect"],
     kind: "edge",
     action: "updated",
+    subjectId: (fx) => fx.edgeId,
     run: (fx) =>
       updateEdgeEffect({ ...scope(fx), edgeId: fx.edgeId, notes: "updated" }),
   },
@@ -239,13 +266,16 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/edges.ts#deleteEdgeEffect"],
     kind: "edge",
     action: "deleted",
-    run: (fx) => deleteEdgeEffect(fx.caseId, fx.organizationId, fx.edgeId),
+    subjectId: (fx) => fx.edgeId,
+    run: (fx) =>
+      deleteEdgeEffect(fx.caseId, fx.organizationId, fx.edgeId, ACTOR),
   },
   {
     name: "claim.create",
     sites: ["graph/claims.ts#createClaimEffect"],
     kind: "claim",
     action: "created",
+    subjectId: (_fx, result) => resultId(result),
     run: (fx) =>
       createClaimEffect({
         ...scope(fx),
@@ -260,6 +290,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/claims.ts#updateClaimEffect"],
     kind: "claim",
     action: "updated",
+    subjectId: (fx) => fx.claimId,
     run: (fx) =>
       updateClaimEffect({ ...scope(fx), claimId: fx.claimId, text: "Edited" }),
   },
@@ -268,6 +299,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/claims.ts#retractClaimEffect"],
     kind: "claim",
     action: "retracted",
+    subjectId: (fx) => fx.claimId,
     run: (fx) =>
       retractClaimEffect(
         {
@@ -284,6 +316,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/identifiers.ts#createIdentifierEffect"],
     kind: "identifier",
     action: "created",
+    subjectId: (_fx, result) => resultId(result),
     run: (fx) =>
       createIdentifierEffect({
         ...scope(fx),
@@ -299,6 +332,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/identifiers.ts#updateIdentifierEffect"],
     kind: "identifier",
     action: "updated",
+    subjectId: (fx) => fx.identifierId,
     run: (fx) =>
       updateIdentifierEffect({
         ...scope(fx),
@@ -311,14 +345,21 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/identifiers.ts#deleteIdentifierEffect"],
     kind: "identifier",
     action: "deleted",
+    subjectId: (fx) => fx.identifierId,
     run: (fx) =>
-      deleteIdentifierEffect(fx.caseId, fx.organizationId, fx.identifierId),
+      deleteIdentifierEffect(
+        fx.caseId,
+        fx.organizationId,
+        fx.identifierId,
+        ACTOR
+      ),
   },
   {
     name: "event.create",
     sites: ["graph/events-timeline.ts#createEventEffect"],
     kind: "event",
     action: "created",
+    subjectId: (_fx, result) => resultId(result),
     run: (fx) =>
       createEventEffect({
         ...scope(fx),
@@ -332,6 +373,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/events-timeline.ts#updateEventEffect"],
     kind: "event",
     action: "updated",
+    subjectId: (fx) => fx.eventId,
     run: (fx) =>
       updateEventEffect({
         ...scope(fx),
@@ -344,13 +386,16 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/events-timeline.ts#deleteEventEffect"],
     kind: "event",
     action: "deleted",
-    run: (fx) => deleteEventEffect(fx.caseId, fx.organizationId, fx.eventId),
+    subjectId: (fx) => fx.eventId,
+    run: (fx) =>
+      deleteEventEffect(fx.caseId, fx.organizationId, fx.eventId, ACTOR),
   },
   {
     name: "question.create",
     sites: ["graph/questions.ts#createQuestionEffect"],
     kind: "question",
     action: "created",
+    subjectId: (_fx, result) => resultId(result),
     run: (fx) =>
       createQuestionEffect({
         ...scope(fx),
@@ -363,6 +408,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/questions.ts#resolveQuestionEffect"],
     kind: "question",
     action: "resolved",
+    subjectId: (fx) => fx.questionId,
     run: (fx) =>
       resolveQuestionEffect({
         ...scope(fx),
@@ -375,6 +421,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/questions.ts#updateQuestionEffect"],
     kind: "question",
     action: "updated",
+    subjectId: (fx) => fx.questionId,
     run: (fx) =>
       updateQuestionEffect({
         ...scope(fx),
@@ -387,6 +434,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/questions.ts#reopenQuestionEffect"],
     kind: "question",
     action: "updated",
+    subjectId: (fx) => fx.resolvedQuestionId,
     run: (fx) =>
       reopenQuestionEffect({ ...scope(fx), questionId: fx.resolvedQuestionId }),
   },
@@ -395,18 +443,21 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/questions.ts#deleteQuestionEffect"],
     kind: "question",
     action: "deleted",
+    subjectId: (fx) => fx.questionId,
     run: (fx) =>
-      deleteQuestionEffect(fx.caseId, fx.organizationId, fx.questionId),
+      deleteQuestionEffect(fx.caseId, fx.organizationId, fx.questionId, ACTOR),
   },
   {
     name: "case.update",
     sites: ["cases/cases.ts#updateCaseEffect"],
     kind: "case",
     action: "updated",
+    subjectId: (fx) => fx.caseId,
     run: (fx) =>
       updateCaseEffect({
         id: fx.caseId,
         organizationId: fx.organizationId,
+        ...ACTOR,
         description: "Updated description",
       }),
   },
@@ -416,6 +467,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-entity-op.ts#applyEntityOpEffect"],
     kind: "entity",
     action: "created",
+    subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
         op: "create",
@@ -429,6 +481,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-entity-op.ts#applyEntityOpEffect"],
     kind: "entity",
     action: "updated",
+    subjectId: (fx) => fx.entityId,
     run: (fx) =>
       patch(fx, {
         op: "upsert",
@@ -442,6 +495,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-entity-op.ts#applyEntityOpEffect"],
     kind: "entity",
     action: "updated",
+    subjectId: (fx) => fx.entityId,
     run: (fx) =>
       patch(fx, {
         op: "update",
@@ -455,6 +509,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-claim-op.ts#applyClaimOpEffect"],
     kind: "claim",
     action: "created",
+    subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
         op: "create",
@@ -468,6 +523,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-edge-op.ts#applyEdgeOpEffect"],
     kind: "edge",
     action: "created",
+    subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
         op: "create",
@@ -486,6 +542,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-edge-op.ts#applyEdgeOpEffect"],
     kind: "edge",
     action: "updated",
+    subjectId: (fx) => fx.edgeId,
     run: (fx) =>
       patch(fx, {
         op: "upsert",
@@ -504,6 +561,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-identifier-op.ts#applyIdentifierOpEffect"],
     kind: "identifier",
     action: "created",
+    subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
         op: "create",
@@ -521,6 +579,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-identifier-op.ts#applyIdentifierOpEffect"],
     kind: "identifier",
     action: "updated",
+    subjectId: (fx) => fx.identifierId,
     run: (fx) =>
       patch(fx, {
         op: "upsert",
@@ -539,6 +598,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-event-op.ts#applyEventOpEffect"],
     kind: "event",
     action: "created",
+    subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
         op: "create",
@@ -552,6 +612,7 @@ export const GRAPH_MUTATIONS: readonly GraphMutation[] = [
     sites: ["graph/patch/apply-question-op.ts#applyQuestionOpEffect"],
     kind: "question",
     action: "created",
+    subjectId: () => NEW_ID,
     run: (fx) =>
       patch(fx, {
         op: "create",

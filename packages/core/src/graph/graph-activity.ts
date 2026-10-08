@@ -8,6 +8,7 @@ import type {
 import type { CaseId } from "@watchdog/schemas/shared";
 
 import { appendActivityEffect } from "../activity/append";
+import { optionalActorId } from "../actors/require-actor-id";
 import type { DomainTag } from "../infra/tagged-errors";
 
 /** The activity kinds a Graph or Case mutation appends (ADR-0005 S4). */
@@ -42,4 +43,25 @@ export function appendGraphActivityEffect<K extends GraphActivityKind>(
   input: GraphActivityInput<K>
 ): Effect.Effect<void, DomainTag> {
   return appendActivityEffect(tx, input).pipe(Effect.asVoid);
+}
+
+/**
+ * Who made a Dossier edit. The API passes the caller; a function without an
+ * actor appends a null one (the entry then reads as a system write).
+ */
+export interface GraphActor {
+  actorId?: string;
+  /** API-key display snapshot (`api-key:...`), never a user name. */
+  actorLabel?: string;
+}
+
+/** The actor fields of an entry, from an input that may carry a {@link GraphActor}. */
+export function graphActorFields(actor: GraphActor | undefined): {
+  actorId: string | undefined;
+  actorLabel: string | undefined;
+} {
+  return {
+    actorId: optionalActorId(actor?.actorId),
+    actorLabel: actor?.actorLabel,
+  };
 }

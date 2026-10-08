@@ -77,3 +77,4 @@ export {
   type CreateEntityInput,
   type UpdateEntityFieldsInput,
 } from "./entities";
+export { type GraphActor } from "./graph-activity";

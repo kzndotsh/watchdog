@@ -236,12 +236,12 @@ describe("identifiersRepo", () => {
         platform: "",
       });
 
-      expect(await identifiersRepo.deleteInCase(tx, other.id, created.id)).toBe(
-        false
-      );
-      expect(await identifiersRepo.deleteInCase(tx, cased.id, created.id)).toBe(
-        true
-      );
+      expect(
+        await identifiersRepo.deleteInCase(tx, other.id, created.id)
+      ).toBeNull();
+      expect(
+        await identifiersRepo.deleteInCase(tx, cased.id, created.id)
+      ).toMatchObject({ id: created.id, value: "delete-me@example.com" });
       expect(
         await identifiersRepo.getInCase(tx, cased.id, created.id)
       ).toBeNull();

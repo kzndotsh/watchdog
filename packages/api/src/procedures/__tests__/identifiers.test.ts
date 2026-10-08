@@ -86,7 +86,8 @@ describe("identifiers procedures", () => {
     expect(deleteIdentifierEffect).toHaveBeenCalledWith(
       caseId,
       actor.organizationId,
-      identifierId
+      identifierId,
+      expect.objectContaining({ actorId: actor.userId })
     );
   });
 

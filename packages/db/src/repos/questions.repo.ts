@@ -161,6 +161,11 @@ export const questionsRepo = {
     return row ?? null;
   },
 
+  /**
+   * Resolve a still-open Question in the Case. The `open` check is part of the
+   * UPDATE, so of two concurrent resolves only one matches a row; `null` also
+   * covers an already resolved Question (the caller tells that from a miss).
+   */
   async resolveInCase(
     exec: DbExec,
     caseId: string,
@@ -178,7 +183,30 @@ export const questionsRepo = {
       .where(
         and(
           eq(questions.id, scoped.resourceId),
-          entityRowInCase(questions.entityId, scoped.caseId)
+          entityRowInCase(questions.entityId, scoped.caseId),
+          eq(questions.status, "open")
+        )
+      )
+      .returning(questionColumns);
+    return row ?? null;
+  },
+
+  /** Reopen a resolved Question in the Case; `null` when it is missing or already open. */
+  async reopenInCase(
+    exec: DbExec,
+    caseId: string,
+    questionId: string
+  ): Promise<QuestionRow | null> {
+    const scoped = trimScopedCaseIds(caseId, questionId);
+    if (!scoped) return null;
+    const [row] = await exec
+      .update(questions)
+      .set({ status: "open", resolvedNote: null })
+      .where(
+        and(
+          eq(questions.id, scoped.resourceId),
+          entityRowInCase(questions.entityId, scoped.caseId),
+          eq(questions.status, "resolved")
         )
       )
       .returning(questionColumns);

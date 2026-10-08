@@ -13,6 +13,7 @@ import {
   updateCaseInputSchema,
 } from "@watchdog/schemas/cases";
 
+import { graphActorFromContext } from "../actor-label";
 import { authed } from "../os";
 import { runApp } from "../runtime";
 import { caseSchema } from "../schemas";
@@ -76,6 +77,7 @@ export const update = authed
       updateCaseEffect({
         id: input.caseId,
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
         ...(input.name === undefined ? {} : { name: input.name }),
         ...(input.description === undefined
           ? {}

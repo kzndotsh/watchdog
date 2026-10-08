@@ -13,6 +13,7 @@ import {
   updateClaimInputSchema,
 } from "@watchdog/schemas/graph";
 
+import { graphActorFromContext } from "../actor-label";
 import { withoutUserOverride } from "../graph-input";
 import { authed, graphChildWrite } from "../os";
 import { runApp } from "../runtime";
@@ -55,6 +56,7 @@ export const create = graphChildWrite
       createClaimEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -73,6 +75,7 @@ export const update = graphChildWrite
       updateClaimEffect({
         ...withoutUserOverride(input),
         organizationId: context.actor.organizationId,
+        ...graphActorFromContext(context.actor),
       })
     )
   );
@@ -92,6 +95,7 @@ export const retract = graphChildWrite
         {
           ...withoutUserOverride(input),
           organizationId: context.actor.organizationId,
+          actorLabel: graphActorFromContext(context.actor).actorLabel,
         },
         context.actor.userId
       )

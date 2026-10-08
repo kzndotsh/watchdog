@@ -301,15 +301,15 @@ export const identifiersRepo = {
     return updated ?? null;
   },
 
-  /** Delete an identifier only when its owning entity is in the Case. */
+  /** Delete an identifier only when its owning entity is in the Case; returns the deleted row. */
   async deleteInCase(
     exec: DbExec,
     caseId: string,
     identifierId: string
-  ): Promise<boolean> {
+  ): Promise<IdentifierRow | null> {
     const scoped = trimScopedCaseIds(caseId, identifierId);
-    if (!scoped) return false;
-    const deleted = await exec
+    if (!scoped) return null;
+    const [deleted] = await exec
       .delete(identifiers)
       .where(
         and(
@@ -317,7 +317,7 @@ export const identifiersRepo = {
           entityRowInCase(identifiers.entityId, scoped.caseId)
         )
       )
-      .returning({ id: identifiers.id });
-    return deleted.length > 0;
+      .returning(identifierColumns);
+    return deleted ?? null;
   },
 };

@@ -34,7 +34,26 @@ const GRAPH_REPOS = [
 const READ_METHOD = /^(get|list|find|search|lock)/;
 const APPEND_CALL =
   /\b(appendGraphActivityEffect|appendPatchActivityEffect|appendActivityEffect)\(/g;
-const TOP_LEVEL_FUNCTION = /^(?:export )?(?:async )?function\*? (\w+)/gm;
+/**
+ * A top-level function: a `function` declaration, or a `const` bound to an
+ * arrow or function expression (`export const f = async (...) =>`,
+ * `const f = function* () {}`), so an arrow-function mutation cannot hide.
+ */
+const TOP_LEVEL_FUNCTION =
+  /^(?:export )?(?:(?:async )?function\*? (\w+)|const (\w+)\s*(?::[^\n]*?)?=(?!>)\s*(?:async\s*)?(?:function\b|\(|\w+\s*=>))/gm;
+
+/** Names of the top-level functions in `source`, with the offset each starts at. */
+function topLevelFunctions(source: string): { name: string; index: number }[] {
+  return [...source.matchAll(TOP_LEVEL_FUNCTION)].map((match) => ({
+    name: match[1] ?? match[2] ?? "?",
+    index: match.index,
+  }));
+}
+
+/** A path under `base` as a registry key: forward slashes on every platform. */
+function registryPath(base: string, file: string): string {
+  return path.relative(base, file).split(path.sep).join("/");
+}
 
 function repoWriteMethods(): Map<string, Set<string>> {
   const byRepo = new Map<string, Set<string>>();
@@ -82,7 +101,7 @@ function scanFunctions(): Map<string, FunctionScan> {
   const found = new Map<string, FunctionScan>();
   for (const file of productionFiles(CORE_SRC)) {
     const source = readFileSync(file, "utf-8");
-    const starts = [...source.matchAll(TOP_LEVEL_FUNCTION)];
+    const starts = topLevelFunctions(source);
     for (const [index, start] of starts.entries()) {
       const body = source.slice(
         start.index,
@@ -99,7 +118,7 @@ function scanFunctions(): Map<string, FunctionScan> {
           writes.push(`${repo}.${method}`);
         }
       }
-      found.set(`${path.relative(CORE_SRC, file)}#${start[1] ?? "?"}`, {
+      found.set(`${registryPath(CORE_SRC, file)}#${start.name}`, {
         writes,
         appends: [...body.matchAll(APPEND_CALL)].length,
         inTransaction: /\btransact\(|\btx: Db(Tx|Exec)\b/.test(body),
@@ -116,6 +135,46 @@ const writers = new Map(
 const registered = new Set(GRAPH_MUTATIONS.flatMap((m) => [...m.sites]));
 const helpers = new Set(Object.keys(GRAPH_MUTATION_HELPERS));
 const exempt = new Set(Object.keys(GRAPH_MUTATION_EXEMPTIONS));
+
+describe("Graph mutation gate scanner", () => {
+  it("sees declarations, arrow functions and function expressions", () => {
+    const source = [
+      "export function declared() {}",
+      "export async function* generated() {}",
+      "export const arrow = (a: string) => a;",
+      "export const asyncArrow = async (",
+      "  a: string",
+      "): Promise<string> => a;",
+      "const bare = x => x;",
+      "export const expression = function named() {};",
+      "export const typed: Handler = async () => {};",
+      "export const mutate: (id: string) => void = (id) => {};",
+      "export const notAFunction = 42;",
+      "export const table: Record<string, number> = {};",
+      "  const nested = () => {};",
+    ].join("\n");
+    expect(topLevelFunctions(source).map((fn) => fn.name)).toEqual([
+      "declared",
+      "generated",
+      "arrow",
+      "asyncArrow",
+      "bare",
+      "expression",
+      "typed",
+      "mutate",
+    ]);
+  });
+
+  it("keys registry paths with forward slashes whatever the platform separator", () => {
+    const base = path.join("core", "src");
+    expect(registryPath(base, path.join(base, "graph", "entities.ts"))).toBe(
+      "graph/entities.ts"
+    );
+    expect(registryPath(base, path.join(base, "graph", "patch", "a.ts"))).toBe(
+      "graph/patch/a.ts"
+    );
+  });
+});
 
 describe("Graph mutation gate (ADR-0005 S4)", () => {
   it("finds the Graph writers it is meant to guard", () => {
