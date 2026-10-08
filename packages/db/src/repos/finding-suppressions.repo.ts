@@ -1,5 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 
+import type { CaseId } from "@watchdog/schemas/shared";
+
 import type { DbExec } from "../exec";
 import { findingSuppressions } from "../schema/finding-suppressions";
 import { trimCaseId, trimResourceId } from "./_scoped-ids";
@@ -7,7 +9,7 @@ import { trimCaseId, trimResourceId } from "./_scoped-ids";
 export type FindingSuppressionRow = typeof findingSuppressions.$inferSelect;
 
 export interface NewFindingSuppression {
-  caseId: string;
+  caseId: CaseId;
   fingerprint: string;
   reason: string;
   proposalId: string;
@@ -16,7 +18,7 @@ export interface NewFindingSuppression {
 export const findingSuppressionsRepo = {
   async listFingerprints(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     fingerprints: string[]
   ): Promise<string[]> {
     const scopedCaseId = trimCaseId(caseId);

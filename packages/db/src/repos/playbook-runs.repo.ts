@@ -71,7 +71,7 @@ export const playbookRunsRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     playbookRunId: string
   ): Promise<PlaybookRunRow | null> {
     const scoped = trimScopedCaseIds(caseId, playbookRunId);

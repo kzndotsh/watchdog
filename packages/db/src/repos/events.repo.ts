@@ -1,5 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 
+import type { CaseId } from "@watchdog/schemas/shared";
+
 import type { DbExec } from "../exec";
 import { entities } from "../schema/entities";
 import { events } from "../schema/events";
@@ -43,7 +45,7 @@ export const eventsRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     eventId: string
   ): Promise<EventRow | null> {
     const scoped = trimScopedCaseIds(caseId, eventId);
@@ -97,7 +99,7 @@ export const eventsRepo = {
 
   async updateInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     eventId: string,
     patch: EventPatch
   ): Promise<EventRow | null> {
@@ -128,7 +130,7 @@ export const eventsRepo = {
 
   async deleteInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     eventId: string
   ): Promise<EventRow | null> {
     const scoped = trimScopedCaseIds(caseId, eventId);

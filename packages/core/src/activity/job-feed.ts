@@ -17,6 +17,7 @@ import {
 import {
   JOB_STATUSES,
   parseTrimmedUuid,
+  type CaseId,
   type JobStatus,
   type JsonObject,
 } from "@watchdog/schemas/shared";
@@ -29,7 +30,7 @@ import { jobActivityLabel } from "../jobs/job-display";
 
 /** The Job fields a feed label is built from: the Job itself, or a run's seed step. */
 interface JobLabelSubject {
-  caseId: string;
+  caseId: CaseId;
   capabilityId: string;
   input: JsonObject;
   resultSummary: string | null;
@@ -124,14 +125,14 @@ export function jobLabelSubject(
 function idsByCase(
   subjects: readonly JobLabelSubject[],
   pick: (inputs: JsonObject[]) => string[]
-): Map<string, string[]> {
-  const inputsByCase = new Map<string, JsonObject[]>();
+): Map<CaseId, string[]> {
+  const inputsByCase = new Map<CaseId, JsonObject[]>();
   for (const subject of subjects) {
     const bucket = inputsByCase.get(subject.caseId) ?? [];
     bucket.push(subject.input);
     inputsByCase.set(subject.caseId, bucket);
   }
-  const out = new Map<string, string[]>();
+  const out = new Map<CaseId, string[]>();
   for (const [caseId, inputs] of inputsByCase) {
     const ids = pick(inputs);
     if (ids.length > 0) out.set(caseId, ids);
@@ -141,7 +142,7 @@ function idsByCase(
 
 function inputsOfCase(
   subjects: readonly JobLabelSubject[],
-  caseId: string
+  caseId: CaseId
 ): JsonObject[] {
   return subjects
     .filter((subject) => subject.caseId === caseId)

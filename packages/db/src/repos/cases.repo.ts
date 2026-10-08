@@ -98,7 +98,7 @@ export const casesRepo = {
 
   async getById(
     exec: DbExec,
-    id: string,
+    id: CaseId,
     organizationId: OrganizationId
   ): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
@@ -112,7 +112,7 @@ export const casesRepo = {
   },
 
   /** Worker / export internals: case id already came from a trusted job or child row. */
-  async getByIdUnchecked(exec: DbExec, id: string): Promise<CaseRow | null> {
+  async getByIdUnchecked(exec: DbExec, id: CaseId): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [row] = await exec
@@ -124,7 +124,7 @@ export const casesRepo = {
   },
 
   /** Serialize proposal ingress for a Case (suppress + insert). */
-  async lockById(exec: DbExec, id: string): Promise<CaseRow | null> {
+  async lockById(exec: DbExec, id: CaseId): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);
     if (scopedId === undefined) return null;
     const [row] = await exec
@@ -161,7 +161,7 @@ export const casesRepo = {
 
   async update(
     exec: DbExec,
-    id: string,
+    id: CaseId,
     organizationId: OrganizationId,
     patch: CasePatch
   ): Promise<CaseRow | null> {
@@ -177,7 +177,7 @@ export const casesRepo = {
 
   async delete(
     exec: DbExec,
-    id: string,
+    id: CaseId,
     organizationId: OrganizationId
   ): Promise<CaseRow | null> {
     const scopedId = trimCaseId(id);

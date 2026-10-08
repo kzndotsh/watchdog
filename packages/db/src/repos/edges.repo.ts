@@ -1,8 +1,11 @@
 import { and, asc, eq, inArray, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
-import type { EdgePredicate } from "@watchdog/schemas/shared";
-import { normalizeUuidList } from "@watchdog/schemas/shared";
+import {
+  type CaseId,
+  type EdgePredicate,
+  normalizeUuidList,
+} from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { edges } from "../schema/edges";
@@ -71,7 +74,7 @@ function edgePatchEndpointIds(patch: EdgePatch): EdgePatch | null {
 
 async function listWithEndpoints(
   exec: DbExec,
-  caseId: string,
+  caseId: CaseId,
   entityId?: string
 ): Promise<EdgeListRow[]> {
   const scopedCaseId = trimCaseId(caseId);
@@ -113,21 +116,21 @@ async function listWithEndpoints(
 export const edgesRepo = {
   async listForEntity(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityId: string
   ): Promise<EdgeListRow[]> {
     return listWithEndpoints(exec, caseId, entityId);
   },
 
   /** All edges whose both endpoints belong to the Case. */
-  async listForCase(exec: DbExec, caseId: string): Promise<EdgeListRow[]> {
+  async listForCase(exec: DbExec, caseId: CaseId): Promise<EdgeListRow[]> {
     return listWithEndpoints(exec, caseId);
   },
 
   /** Outbound edges only (export Connections section). */
   async listOutboundForEntity(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityId: string
   ): Promise<EdgeRow[]> {
     const scoped = trimScopedCaseIds(caseId, entityId);
@@ -150,7 +153,7 @@ export const edgesRepo = {
 
   async getListedInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     edgeId: string
   ): Promise<EdgeListRow | null> {
     const scoped = trimScopedCaseIds(caseId, edgeId);
@@ -184,7 +187,7 @@ export const edgesRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     edgeId: string
   ): Promise<EdgeRow | null> {
     const scoped = trimScopedCaseIds(caseId, edgeId);
@@ -228,7 +231,7 @@ export const edgesRepo = {
   /** Natural keys for FP suppress — scoped to case + endpoint entity ids. */
   async listNaturalKeysInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityIds: string[]
   ): Promise<EdgeNaturalKey[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -294,7 +297,7 @@ export const edgesRepo = {
 
   async updateInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     edgeId: string,
     patch: EdgePatch
   ): Promise<EdgeRow | null> {
@@ -327,7 +330,7 @@ export const edgesRepo = {
 
   async deleteInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     edgeId: string
   ): Promise<EdgeRow | null> {
     const scoped = trimScopedCaseIds(caseId, edgeId);

@@ -1,8 +1,9 @@
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 
 import type { PatchOp } from "@watchdog/schemas/graph";
-import type { ProposalStatus } from "@watchdog/schemas/shared";
 import {
+  type CaseId,
+  type ProposalStatus,
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   parseGraphUuidList,
@@ -51,7 +52,7 @@ export type NewProposal = Pick<
 export const proposalsRepo = {
   async listForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     opts?: { status?: ProposalStatus }
   ): Promise<ProposalWithCapability[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -82,7 +83,7 @@ export const proposalsRepo = {
   /** Pending proposals matching summary, linked cap id, or patch text. */
   async searchPendingForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     term: string,
     limit: number
   ): Promise<ProposalWithCapability[]> {
@@ -144,7 +145,7 @@ export const proposalsRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     proposalId: string
   ): Promise<ProposalWithCapability | null> {
     const scoped = trimScopedCaseIds(caseId, proposalId);
@@ -176,7 +177,7 @@ export const proposalsRepo = {
   /** Row lock for Accept/Reject — joins none so FOR UPDATE is not on a nullable side. */
   async lockInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     proposalId: string
   ): Promise<ProposalRow | null> {
     const scoped = trimScopedCaseIds(caseId, proposalId);
@@ -197,7 +198,7 @@ export const proposalsRepo = {
 
   async listPendingPatches(
     exec: DbExec,
-    caseId: string
+    caseId: CaseId
   ): Promise<{ patch: PatchOp[] }[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
@@ -257,7 +258,7 @@ export const proposalsRepo = {
 
   async accept(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     proposalId: string,
     values: { decidedBy: string; decidedAt: Date }
   ): Promise<ProposalRow | null> {
@@ -285,7 +286,7 @@ export const proposalsRepo = {
 
   async reject(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     proposalId: string,
     values: {
       rejectReason: string | null;

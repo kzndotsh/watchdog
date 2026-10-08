@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 
+import type { CaseId } from "@watchdog/schemas/shared";
 import { normalizeUuidList } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
@@ -76,7 +77,7 @@ export const claimsRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     claimId: string
   ): Promise<ClaimRow | null> {
     const scoped = trimScopedCaseIds(caseId, claimId);
@@ -98,7 +99,7 @@ export const claimsRepo = {
   /** Active claim text keys for FP suppress — scoped to case + entity ids. */
   async listTextKeysInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityIds: string[]
   ): Promise<ClaimTextKey[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -148,7 +149,7 @@ export const claimsRepo = {
 
   async updateInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     claimId: string,
     patch: ClaimPatch
   ): Promise<ClaimRow | null> {
@@ -192,7 +193,7 @@ export const claimsRepo = {
   /** Retract a still-live Claim: `retracted = false` is in the UPDATE, so of two concurrent retracts one matches. */
   async retractInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     claimId: string,
     values: RetractClaimValues
   ): Promise<ClaimRow | null> {

@@ -2,6 +2,7 @@ import { Deferred, Effect, Layer } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { casesRepo, db } from "@watchdog/db";
+import type { CaseId } from "@watchdog/schemas/shared";
 import { asCaseId } from "@watchdog/schemas/shared";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 
@@ -28,7 +29,7 @@ describe("detached export write services", () => {
   it("uses the pool, not the caller's transaction, once that transaction rolled back", async () => {
     const row = await seedCase(db, { name: "Exported" });
     const seen: string[] = [];
-    const writeExport = (id: string) =>
+    const writeExport = (id: CaseId) =>
       tryDbWith((exec) => casesRepo.getByIdUnchecked(exec, id)).pipe(
         Effect.tap((found) =>
           Effect.sync(() => {

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import type { CaseId } from "@watchdog/schemas/shared";
 import { resetTestDb, seedCase } from "@watchdog/test-db";
 
 import {
@@ -55,7 +56,7 @@ describe("createActivityTailer", () => {
     return subscription;
   }
 
-  async function append(caseId: string, label: string) {
+  async function append(caseId: CaseId, label: string) {
     return activityLogRepo.append(db, {
       caseId,
       kind: "task",

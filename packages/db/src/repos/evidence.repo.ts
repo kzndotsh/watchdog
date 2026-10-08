@@ -10,8 +10,9 @@ import {
   or,
 } from "drizzle-orm";
 
-import type { EvidenceKind } from "@watchdog/schemas/shared";
 import {
+  type CaseId,
+  type EvidenceKind,
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   EVIDENCE_KIND_LABELS,
@@ -98,7 +99,7 @@ function softDeleteFilter(opts?: ListEvidenceRowsOpts) {
 export const evidenceRepo = {
   async listForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     opts?: ListEvidenceRowsOpts
   ): Promise<EvidenceRow[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -121,7 +122,7 @@ export const evidenceRepo = {
 
   async searchForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     term: string,
     limit: number
   ): Promise<EvidenceRow[]> {
@@ -183,7 +184,7 @@ export const evidenceRepo = {
   /** Active evidence attached to an entity — export order (oldest first). */
   async listForEntity(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityId: string
   ): Promise<EvidenceRow[]> {
     const scoped = trimScopedCaseIds(caseId, entityId);
@@ -204,7 +205,7 @@ export const evidenceRepo = {
   /** Active (non-deleted) evidence in a case — export order (oldest first). */
   async listActiveForCaseAsc(
     exec: DbExec,
-    caseId: string
+    caseId: CaseId
   ): Promise<EvidenceRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
@@ -217,7 +218,7 @@ export const evidenceRepo = {
 
   async getActiveInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceId: string
   ): Promise<EvidenceRow | null> {
     const scoped = trimScopedCaseIds(caseId, evidenceId);
@@ -260,7 +261,7 @@ export const evidenceRepo = {
   /** Soft-deleted rows included — Hidden dumps must stay downloadable. */
   async getUriInCaseIncludingDeleted(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceId: string
   ): Promise<{ uri: string | null } | null> {
     const scoped = trimScopedCaseIds(caseId, evidenceId);
@@ -284,7 +285,7 @@ export const evidenceRepo = {
    */
   async listIdsInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceIds: string[]
   ): Promise<{ id: string }[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -302,7 +303,7 @@ export const evidenceRepo = {
   /** Label fields for job/activity chrome — includes hidden when explicitly referenced. */
   async listActivityLabelsInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceIds: string[]
   ): Promise<
     {
@@ -331,7 +332,7 @@ export const evidenceRepo = {
 
   async softDelete(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceId: string
   ): Promise<{ id: string } | null> {
     const scoped = trimScopedCaseIds(caseId, evidenceId);
@@ -352,7 +353,7 @@ export const evidenceRepo = {
 
   async restore(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceId: string
   ): Promise<{ id: string } | null> {
     const scoped = trimScopedCaseIds(caseId, evidenceId);
@@ -374,7 +375,7 @@ export const evidenceRepo = {
   /** Active (non-deleted) row fields needed to start a Cap from Evidence. */
   async getCapSeedInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceId: string
   ): Promise<EvidenceCapSeed | null> {
     const scoped = trimScopedCaseIds(caseId, evidenceId);
@@ -400,7 +401,7 @@ export const evidenceRepo = {
 
   async markProcessed(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceId: string
   ): Promise<boolean> {
     const scoped = trimScopedCaseIds(caseId, evidenceId);
@@ -422,7 +423,7 @@ export const evidenceRepo = {
 
   async setEntityInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     evidenceId: string,
     entityId: string | null
   ): Promise<EvidenceRow | null> {

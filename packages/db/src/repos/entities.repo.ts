@@ -1,11 +1,12 @@
 import { and, asc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 
 import {
+  type CaseId,
+  type OrganizationId,
   ENTITY_KIND_LABELS,
   ENTITY_KINDS,
   normalizeUuidList,
 } from "@watchdog/schemas/shared";
-import type { OrganizationId } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
 import { cases } from "../schema/cases";
@@ -60,7 +61,7 @@ export type EntityPatch = Partial<
 >;
 
 export const entitiesRepo = {
-  async listForCase(exec: DbExec, caseId: string): Promise<EntityRow[]> {
+  async listForCase(exec: DbExec, caseId: CaseId): Promise<EntityRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
     return exec
@@ -72,7 +73,7 @@ export const entitiesRepo = {
 
   async searchForCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     term: string,
     limit: number
   ): Promise<EntityRow[]> {
@@ -137,7 +138,7 @@ export const entitiesRepo = {
 
   async listPeersForCase(
     exec: DbExec,
-    caseId: string
+    caseId: CaseId
   ): Promise<EntityPeerRow[]> {
     const scopedCaseId = trimCaseId(caseId);
     if (scopedCaseId === undefined) return [];
@@ -153,7 +154,7 @@ export const entitiesRepo = {
 
   async getInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityId: string
   ): Promise<EntityRow | null> {
     const scoped = trimScopedCaseIds(caseId, entityId);
@@ -204,7 +205,7 @@ export const entitiesRepo = {
 
   async getByCaseSlug(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     slug: string
   ): Promise<EntityRow | null> {
     const scopedCaseId = trimCaseId(caseId);
@@ -222,7 +223,7 @@ export const entitiesRepo = {
 
   async listSlugsInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     slugs: string[]
   ): Promise<{ slug: string }[]> {
     const scopedCaseId = trimCaseId(caseId);
@@ -247,7 +248,7 @@ export const entitiesRepo = {
 
   async listNamesByIdsInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityIds: string[]
   ): Promise<
     {
@@ -302,7 +303,7 @@ export const entitiesRepo = {
 
   async updateInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityId: string,
     patch: EntityPatch
   ): Promise<EntityRow | null> {
@@ -333,7 +334,7 @@ export const entitiesRepo = {
 
   async deleteInCase(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     entityId: string
   ): Promise<EntityRow | null> {
     const scoped = trimScopedCaseIds(caseId, entityId);

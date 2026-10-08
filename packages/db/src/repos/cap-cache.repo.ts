@@ -1,5 +1,6 @@
 import { and, eq, gt } from "drizzle-orm";
 
+import type { CaseId } from "@watchdog/schemas/shared";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
 import type { DbExec } from "../exec";
@@ -17,7 +18,7 @@ export interface CapCacheLookup {
 }
 
 export interface UpsertCapCacheValues {
-  caseId: string;
+  caseId: CaseId;
   capabilityId: string;
   inputHash: string;
   jobId: string;
@@ -31,7 +32,7 @@ export interface UpsertCapCacheValues {
 export const capCacheRepo = {
   async lookupActive(
     exec: DbExec,
-    caseId: string,
+    caseId: CaseId,
     capabilityId: string,
     inputHash: string,
     now: Date
