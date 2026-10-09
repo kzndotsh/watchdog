@@ -43,5 +43,5 @@ May edit any file a failing gate points at, to make that gate pass. Does not cha
 - `test:integration` needs Postgres (`just test-db`). If services are down, report **Blocked**; do not skip silently.
 - `generate:caps` / `generate:client` fail on drift: run the generator and commit the artifact; do not hand-edit generated output. `generate-routes` is not a CI drift job; run it when route files change.
 - `check:docs-affected:strict` needs paired doc touches in the same commit (or `docs:allow-affect — reason` in that commit's own message). It runs at commit-msg on the staged diff, and on mapped **code** paths, not only `docs/**`.
-- `pnpm --filter @watchdog/db check:repos` is mechanical only; passing does not satisfy the review-only repo rules in `packages/db/AGENTS.md`.
+- The `watchdog/db-repo-*` lint rules (part of `pnpm check`) are mechanical only; passing does not satisfy the review-only repo rules in `packages/db/AGENTS.md`.
 - `pnpm doctor:react` and desloppify are advisory (CI Advisory job / main only), not merge gates.

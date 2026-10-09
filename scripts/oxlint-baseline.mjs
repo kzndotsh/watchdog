@@ -28,7 +28,7 @@ const configAt = args.indexOf("--config");
 const config =
   configAt === -1 ? "oxlint.config.ts" : (args[configAt + 1] ?? "");
 const ruleId = args.find(
-  (arg, i) => !arg.startsWith("--") && i !== configAt + 1
+  (arg, i) => !arg.startsWith("--") && (configAt === -1 || i !== configAt + 1)
 );
 
 if (!ruleId || !config) {

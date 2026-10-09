@@ -320,6 +320,24 @@ export default defineConfig({
   },
   overrides: [
     {
+      // packages/db repo contract (packages/db/AGENTS.md Repo contract): repo modules only,
+      // not the `_*.ts` helpers or tests beside them.
+      files: ["packages/db/src/repos/*.repo.ts"],
+      rules: {
+        "watchdog/db-repo-exec-first": "error",
+        "watchdog/db-repo-no-dto-date": "error",
+        "watchdog/db-repo-no-job-status-set": "error",
+        "watchdog/db-repo-no-notify": "error",
+        "watchdog/db-repo-no-raw-sql": "error",
+        "watchdog/db-repo-no-sql-param": "error",
+        "watchdog/db-repo-no-throw": "error",
+        "watchdog/db-repo-no-transaction": "error",
+        "watchdog/db-repo-no-trim-or-null": "error",
+        "watchdog/db-repo-no-validation-import": "error",
+        "watchdog/db-repo-trim-lookup-only": "error",
+      },
+    },
+    {
       // Tests and test-helper trees may stamp unvalidated brands (ADR-0003).
       files: [
         "**/__tests__/**",

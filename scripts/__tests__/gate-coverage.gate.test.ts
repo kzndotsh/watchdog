@@ -262,9 +262,6 @@ describe("gate coverage (meta)", () => {
     expect([...gateScripts.keys()]).toContain(
       "apps/web/scripts/ds-ban-check.mjs"
     );
-    expect([...gateScripts.keys()]).toContain(
-      "packages/db/scripts/check-repo-rules.mjs"
-    );
   });
 
   it("fails on any hook or CI command that is neither one of our scripts nor an allow-listed tool", () => {

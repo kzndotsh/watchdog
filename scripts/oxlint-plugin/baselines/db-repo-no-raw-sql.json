@@ -1,0 +1,8 @@
+{
+  "packages/db/src/repos/activity-cursors.repo.ts": 2,
+  "packages/db/src/repos/activity-floor.repo.ts": 3,
+  "packages/db/src/repos/activity-log.repo.ts": 10,
+  "packages/db/src/repos/entities.repo.ts": 9,
+  "packages/db/src/repos/jobs.repo.ts": 16,
+  "packages/db/src/repos/proposals.repo.ts": 8
+}

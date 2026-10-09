@@ -58,7 +58,7 @@ Hash scheme (same as the `skills` CLI): sha256 over every file in the skill fold
 
 ## Gate tests
 
-Vitest project `gate` (`pnpm test:gate`, also in `pnpm test`): `scripts/__tests__/*.gate.test.ts`, named `<script basename>.gate.test.ts`. Each test builds a temporary git repo, copies the gate script in (`scripts/__tests__/helpers/gate-repo.ts`; gates that resolve paths from their own location, such as `packages/db/scripts/check-repo-rules.mjs` and `apps/web/scripts/ds-ban-check.mjs`, keep their package layout), runs `node <script>` as lefthook or CI would, and asserts on exit code and key output phrases. Tests never import gate internals. Every gate needs a must-fail and a must-pass fixture; changing a gate script means changing its test.
+Vitest project `gate` (`pnpm test:gate`, also in `pnpm test`): `scripts/__tests__/*.gate.test.ts`, named `<script basename>.gate.test.ts`. Each test builds a temporary git repo, copies the gate script in (`scripts/__tests__/helpers/gate-repo.ts`; gates that resolve paths from their own location, such as `apps/web/scripts/ds-ban-check.mjs`, keep their package layout), runs `node <script>` as lefthook or CI would, and asserts on exit code and key output phrases. Tests never import gate internals. Every gate needs a must-fail and a must-pass fixture; changing a gate script means changing its test.
 
 The fixture strips `CI`, `GITHUB_*`, `DOCS_AFFECT_*` and `GIT_*` from the environment a gate sees, so a suite running under GitHub Actions cannot flip a gate into CI mode; a test that wants CI mode passes those variables through the `env` option.
 

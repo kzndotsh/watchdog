@@ -119,9 +119,17 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 
 | Rule | Scope | Stated in | Enforced by | Status |
 | --- | --- | --- | --- | --- |
-| Repos: no NOTIFY (`pg_notify`, `.notify(`; only the `activity` trigger sends one), no throw, no transaction, no `SQL`-typed parameters, leading `exec: DbExec`, no `trimmedOrNull` | db | `packages/db/AGENTS.md` Repo contract | `pnpm --filter @watchdog/db check:repos` | enforced |
-| Job status sets (open, cancellable, live, terminal) are defined in `@watchdog/schemas` vocab; repository modules define no job status sets | db, schemas | `packages/db/AGENTS.md` Repo contract | `pnpm --filter @watchdog/db check:repos` | enforced |
-| Repos return rows, not DTOs (`check:repos` only flags `.toISOString()` calls) | db | `packages/db/AGENTS.md` Repo contract | guidance | guidance |
+| Repos (`packages/db/src/repos/*.repo.ts`): no NOTIFY (`pg_notify`, `.notify(`; only the `activity` trigger sends one) | db | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-no-notify`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Repos: no throw | db | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-no-throw`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Repos: no transaction (`.transaction(`, `transact(`); services own the boundary | db | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-no-transaction`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Repos: no `SQL` type (plain values only) | db | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-no-sql-param`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Repos: every method takes `exec: DbExec` first | db | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-exec-first`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Repos: no `trimmedOrNull`; `trimmedOrUndefined` only in lookup-only methods (`TRIM_LOOKUP_METHODS` in `scripts/oxlint-plugin/lib/db-repo.mjs`) | db | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-no-trim-or-null`, `watchdog/db-repo-trim-lookup-only`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Repos: no `.toISOString()` (rows, not DTOs) | db | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-no-dto-date`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Repos: no `zod` / `drizzle-zod` import (validation is core and schemas work) | db | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-no-validation-import`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Job status sets (open, cancellable, live, terminal) are defined in `@watchdog/schemas` vocab; repository modules define no job status sets | db, schemas | `packages/db/AGENTS.md` Repo contract | `watchdog/db-repo-no-job-status-set`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | enforced |
+| Repos use the builder API: no raw `sql` template fragments (existing ones are baselined per file in `scripts/oxlint-plugin/baselines/db-repo-no-raw-sql.json`; `db.query` is not checked) | db | `packages/db/AGENTS.md` Schema conventions | `watchdog/db-repo-no-raw-sql`, `scripts/__tests__/oxlint-db-repo-rules.gate.test.ts` | baselined |
+| Repos return rows, not DTOs (the lint rule above only flags `.toISOString()` calls; nesting is review) | db | `packages/db/AGENTS.md` Repo contract | guidance | guidance |
 | Services own transactions and pass `exec` first to repos (the repo side is in the row above; nothing checks services) | core | `packages/core/AGENTS.md` Rules | guidance | guidance |
 | Repo lookups trim scoped ids; an invalid UUID returns `[]` / `null` | db | `packages/db/AGENTS.md` Repo contract | `packages/db/src/repos/__tests__/scoped-ids.test.ts` | enforced |
 | Soft delete is the repo's job: only `evidence`, excluded by default, `includeDeleted` is explicit | db | `packages/db/AGENTS.md` Repo contract | guidance | guidance |
@@ -139,7 +147,6 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | A cursor below the retention floor, or above everything the log has held, gets `resync` in replay and in the worker consumer (which then stores a cursor at or above the floor, so the next boot does not resync again) | core | `docs/adr/0005-unified-activity-log.md` As built: S7 | `packages/core/src/activity/__tests__/activity-retention.int.test.ts` | enforced |
 | The worker's boot check rewrites future `xid`s (and the floor and consumer cursors) to 0 before its consumer starts, so a restored database is readable; the restore how-to documents it | core, worker | `docs/how-to/restore-database.md` | `packages/core/src/activity/__tests__/activity-retention.int.test.ts` | enforced |
 | Enums via `text().$type<T>()`, never `pgEnum`; no `relations()` | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
-| Repos use the builder API only: no `db.query`, no raw `sql` fragments (fragments exist in repos today; decision: fix and enforce by extending `check:repos`, Tier 2 in spec #55) | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
 | Never set `updatedAt` by hand; migrations keep `drizzle/meta` in sync with `_journal.json` | db | `packages/db/AGENTS.md` Schema conventions | guidance | guidance |
 | Case lookup defaults to `getById(exec, id, organizationId)`; `getByIdUnchecked` only for worker and export | db, core | `packages/db/AGENTS.md` Gotchas | guidance | guidance |
 | Normalize display fields (trim, slugify, `InvalidError`) in services before repo writes | core | `packages/core/AGENTS.md` Rules | guidance | guidance |

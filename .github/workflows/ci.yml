@@ -272,10 +272,6 @@ jobs:
           git diff --exit-code -- packages/client/src/generated/ \
             || (echo "client contract out of date — run pnpm generate:client" && exit 1)
 
-      - name: Repo layer contract
-        if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm --filter @watchdog/db check:repos
-
       - name: Migration drift
         if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:migrations
