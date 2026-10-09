@@ -8,7 +8,8 @@ Build new foundations and atoms on `/ui` before adding chrome to live pages. `sh
 
 | Gate | Command |
 | --- | --- |
-| Typecheck + DS bans | `pnpm --filter @watchdog/web ds:check` |
+| DS bans | `pnpm check` (oxlint `watchdog/no-decorative-class`, `no-banned-surface-name`, `no-opaque-id-slice`) |
+| Typecheck | `pnpm --filter @watchdog/web typecheck` |
 | Vendored primitives lock | `pnpm check:vendor` (change with `pnpm ui:add` / `pnpm ui:sync`) |
 
 ## Chrome lexicon (UI parts)
@@ -40,6 +41,6 @@ Name the **layout kind**, then the **parts**. These are component and layout wor
 
 | Word | Status | Why |
 | --- | --- | --- |
-| Console, Workbench, Tape | **Banned** | v2 metaphor names for what are Queue + Detail. Enforced for export names by `ds:ban` `surface-name`. |
-| Panel | Standard meaning only | A tab's content region (ARIA `tabpanel`: `SettingsPanel`) or a resizable region (`ResizablePanel`). Never a whole screen. Review-only: `ds:ban` does not check it. |
+| Console, Workbench, Tape | **Banned** | v2 metaphor names for what are Queue + Detail. Enforced for export names by `watchdog/no-banned-surface-name`. |
+| Panel | Standard meaning only | A tab's content region (ARIA `tabpanel`: `SettingsPanel`) or a resizable region (`ResizablePanel`). Never a whole screen. Review-only: no lint rule checks it. |
 | Pane, Rail, Strip | Avoid | Use the lexicon part (Detail, Section, Toolbar). Vendor `SidebarRail` is fine. |

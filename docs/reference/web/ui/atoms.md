@@ -45,4 +45,4 @@ Callers place components (layout classes, `truncate`) and pick a size or variant
 - **Button as Link:** Base UI `Button` + `render={<Link />}` needs `nativeButton={false}`.
 - **`scrollbar-gutter: stable`** forces classic scrollbar mode and ignores `::-webkit-scrollbar`; avoid it on styled scroll areas.
 - **Theme:** the toggle sets `.dark` / `.light` on `<html>` and toasts inherit the document's CSS variables; don't reintroduce `next-themes` without a provider.
-- **Opaque ids:** never `.slice(0, N)` a hash or id in `domains/`; use `IdChip` / `formatOpaqueId` (`ds:ban` greps for the common form only).
+- **Opaque ids:** never `.slice(0, N)` a hash or id in `domains/`; use `IdChip` / `formatOpaqueId` (`watchdog/no-opaque-id-slice` flags the common form only).

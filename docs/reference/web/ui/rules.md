@@ -2,7 +2,7 @@
 
 Every web UI rule worth stating, with the thing that fails when it is broken. **Enforced by** names a lint rule, gate, or test; `guidance` means nothing fails and it is checked in review. The design intent behind the taste rules is [`/DESIGN.md`](../../../../DESIGN.md), which owns the wording.
 
-Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) · `ds:ban` (`apps/web/scripts/ds-ban-check.mjs`, run by `pnpm --filter @watchdog/web ds:check`) · `check:vendor` · `check:size` · a named test · `typecheck` · `guidance`.
+Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. the local `watchdog/*` rules in `scripts/oxlint-plugin/`) · `check:vendor` · `check:size` · a named test · `typecheck` · `guidance`.
 
 ## Correctness
 
@@ -11,7 +11,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) · `ds:
 | Web never imports `@watchdog/db` (auth's db access lives in `@watchdog/auth`) | [`domains.md`](../domains.md) | `oxlint` `no-restricted-imports` |
 | No `RoutePending` and no raw `Skeleton` in `domains/` or `routes/` (one pending surface per region) | [`loading.md`](loading.md) | `oxlint` `no-restricted-imports` |
 | Client code must not import the `@watchdog/policy` barrel or `@watchdog/core` domain subpaths at runtime (use `@watchdog/policy/patch-needs-confidence`, `@watchdog/core/job-display`) | [`domains.md`](../domains.md) | `guidance` (only type imports of `@watchdog/core` subpaths exist today) |
-| Opaque ids render via `IdChip` / `formatOpaqueId`, never `.slice(0, N)` | [`atoms.md`](atoms.md) | `ds:ban` `opaque-id` (`domains/` only, narrow pattern) |
+| Opaque ids render via `IdChip` / `formatOpaqueId`, never `.slice(0, N)` | [`atoms.md`](atoms.md) | `oxlint` `watchdog/no-opaque-id-slice` (`domains/` only; `id`, `x.id`, `sha256`, `jobId`, `proposalId`, `entityId` with `.slice(0, N)`) |
 | No fictional vocab (`probable`, `dormant`, `merged`); badges take schema unions | [`atoms.md`](atoms.md) | `typecheck` |
 | Status is never color-only (one glyph shape per status via `STATUS_GLYPH`) | [`DESIGN.md`](../../../../DESIGN.md#colors) | test `shared/ui/__tests__/status.component.test.tsx` |
 | Router keeps `scrollRestoration: false`, `defaultPendingMs` 400, `defaultPendingMinMs` 500, `defaultPreloadStaleTime` 0 | [`page-shell.md`](page-shell.md), [`loading.md`](loading.md) | test `apps/web/src/__tests__/router.test.ts` |
@@ -37,14 +37,14 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) · `ds:
 | TanStack Form only, no react-hook-form; field errors via `fieldInvalid` / `fieldErrorList` | [`forms.md`](forms.md) | absence from `package.json` (an import fails `typecheck`); the rest `guidance` |
 | Mutations and SSE use the named contracts in `shared/lib/query-invalidation.ts`, not ad-hoc `invalidateQueries` key lists | [`data.md`](../data.md) | `guidance` |
 | No manual Refresh buttons on live paths | [`data.md`](../data.md) | `guidance` |
-| Screens are named by layout kind; Console / Workbench / Tape banned; never a screen named `*Panel` | [`README.md`](README.md#chrome-lexicon-ui-parts) | `ds:ban` `surface-name` (export names only); `*Panel` is `guidance` |
+| Screens are named by layout kind; Console / Workbench / Tape banned; never a screen named `*Panel` | [`README.md`](README.md#chrome-lexicon-ui-parts) | `oxlint` `watchdog/no-banned-surface-name` (export names only); `*Panel` is `guidance` |
 | Copy: `Couldn't` / `Can't` / `Failed to`; Title Case labels; `Verb + Noun` primaries | [`ux.md`](../../../explanation/ux.md) | `guidance` |
 
 ## Taste
 
 | Rule | Enforced by |
 | --- | --- |
-| Gradients, gradient text, glass or backdrop blur (`// ds:allow-decorative - reason` for functional blur) | `ds:ban` `decorative` |
+| Gradients, gradient text, glass or backdrop blur (`// ds:allow-decorative - reason` for functional blur) | `oxlint` `watchdog/no-decorative-class` |
 | Radius ladder sm / md / lg | `--radius-xl..4xl` capped in `styles/wd-theme.css` (by construction) |
 | Writing fields tint the border on focus, no outer ring | `styles/wd-overrides.css` (CSS) |
 | Nested cards, glow, icon-tile grids, bounce easing, mono-as-decoration, decorative side borders | `guidance` |

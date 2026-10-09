@@ -1,7 +1,7 @@
 # Testing: platform index
 
 **What this is:** where tests live, what each tier needs, and the non-obvious runner facts. Commands are the `test*` scripts in `package.json`.  
-**What this is not:** how to write a good test ([`standards.md`](standards.md)) or web design-system gates (`pnpm --filter @watchdog/web ds:check`, [`ci-gates.md`](../ci-gates.md)).
+**What this is not:** how to write a good test ([`standards.md`](standards.md)) or web design-system bans (oxlint `watchdog/*` rules, [`ci-gates.md`](../ci-gates.md)).
 
 Run order that matters: `pnpm test` runs unit + property + gate (no Postgres). `just test-db` creates and migrates `watchdog_test` / `watchdog_e2e` before `pnpm test:integration` or `pnpm test:e2e`. `pnpm test:e2e:smoke` is `@smoke` + `@custody`; `pnpm test:e2e:journey` is `@journey` only. `pnpm exec vitest run --project e2e-parser` runs the harness unit tests under `e2e/`. `pnpm test:coverage` writes a v8 report (a reviewer signal, not a percentage gate).
 

@@ -34,7 +34,7 @@ Not adopted on Operate surfaces: shimmer, staggered section entry, content fade-
 
 ## Enforcement
 
-oxlint `no-restricted-imports` bans `RoutePending` (`@/shared/layout/route-pending`) and the raw `Skeleton` primitive in `domains/` and `routes/`. Nothing enforces the rest: not `await Promise.all` in route loaders (outside `routes/api/**`), not `animate-pulse` or `aria-busy` outside `shared/ui`. The `// ds:allow-<rule> - reason` escape (a dash or em dash plus a reason) applies to `ds:ban` rules only.
+oxlint `no-restricted-imports` bans `RoutePending` (`@/shared/layout/route-pending`) and the raw `Skeleton` primitive in `domains/` and `routes/`. Nothing enforces the rest: not `await Promise.all` in route loaders (outside `routes/api/**`), not `animate-pulse` or `aria-busy` outside `shared/ui`. The `// ds:allow-<rule> - reason` escape (a dash or em dash plus a reason) applies to `watchdog/no-decorative-class` and `watchdog/no-banned-surface-name` only.
 
 ## Gotchas
 

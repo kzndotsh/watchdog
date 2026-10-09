@@ -18,7 +18,6 @@ Authority: product nouns → [`GLOSSARY.md`](GLOSSARY.md) (doctrine and narrativ
 | Affected packages | `pnpm changed` (list, with dependents) · `pnpm changed --run` (typecheck + unit tests for them only) |
 | Typecheck / test | `pnpm typecheck` · `pnpm test` · `pnpm test:component` · `pnpm test:integration` · `pnpm test:e2e` · `pnpm test:e2e:smoke` |
 | Gates | `pnpm check:agents:strict` · `pnpm validate:agents` · `pnpm check:docs:strict` · `pnpm check:docs-affected:strict` · `pnpm check:effect-edges:strict` · `pnpm check:tagged-errors:strict` · `pnpm check:design-tokens` · `pnpm check:size` · `pnpm check:vendor` · `pnpm check:workspace` · `pnpm check:boundaries` · `pnpm check:workspace-reexports` · `pnpm check:migrations` |
-| Web DS | `pnpm --filter @watchdog/web ds:check` |
 | Vendored shadcn | `pnpm ui:add <name>` · `pnpm ui:sync` |
 | Regenerate | `pnpm generate:caps` · `pnpm generate:client` |
 | Desloppify (local, advisory) | `pnpm desloppify:bootstrap` · `:scan` · `:status` · `:next` |
@@ -49,7 +48,7 @@ Canonical detail: [`docs/reference/contracts/`](docs/reference/contracts/README.
 | Collect → Evidence; Caps `interpret` → Proposal → Triage Accept | Caps/machines write Graph or set `confirmed` | `@watchdog/policy` gates at runtime; caps has no db dep ([`custody`](docs/reference/contracts/custody.md)) |
 | Agents/CLI default to propose; a graph write needs `userOverride` and lands `unverified` + `graph_writes` | Silent machine Graph writes | policy gates + `apps/cli/src/custody.ts` ([`agent-ingress`](docs/reference/contracts/agent-ingress.md)) |
 | Secrets via vault / `ctx.getCredential` | Cap secrets in env or `Job.input` | guidance |
-| Chrome: Queue + Detail | Console / Workbench / Tape surfaces; a screen named `*Panel` | `ds:check` for the first three; `*Panel` is guidance ([ui lexicon](docs/reference/web/ui/README.md#chrome-lexicon-ui-parts)) |
+| Chrome: Queue + Detail | Console / Workbench / Tape surfaces; a screen named `*Panel` | `watchdog/no-banned-surface-name` for the first three; `*Panel` is guidance ([ui lexicon](docs/reference/web/ui/README.md#chrome-lexicon-ui-parts)) |
 | Process logs via `@watchdog/log` | Secrets/Evidence bodies in logs; treating evlog as Graph audit | guidance ([`evlog`](docs/reference/contracts/evlog.md)) |
 
 Ingress: Collect → Evidence · Caps → artifacts + Proposal · Triage Accept → Graph · Dossier = human Graph edit. Accept tiers and breach caveats: [`custody`](docs/reference/contracts/custody.md).

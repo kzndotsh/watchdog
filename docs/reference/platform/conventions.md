@@ -78,10 +78,10 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | No `text-[Npx]` or other off-scale arbitrary values (layout values allowed) | web | `DESIGN.md` Typography | oxlint `shadcn/no-arbitrary-values` | enforced |
 | Every Tailwind class must generate CSS | web | `docs/reference/web/ui/rules.md` Consistency | oxlint `shadcn/no-unknown-classes` | enforced |
 | Callers don't restyle components in `domains/` and `routes/`; pick a size or variant | web | `docs/reference/web/ui/atoms.md` Variants, not overrides | oxlint `shadcn/no-restyle` | enforced |
-| Opaque ids render via `IdChip` / `formatOpaqueId`, never `.slice(0, N)` | web | `docs/reference/web/ui/atoms.md` Gotchas | `ds:check` (`ds:ban` `opaque-id`, `domains/` only, narrow pattern) | enforced |
-| Screens are named by layout kind; no `*Console`, `*Workbench` or `*Tape` exports | web | `docs/reference/web/ui/README.md` Chrome lexicon | `ds:check` (`ds:ban` `surface-name`) | enforced |
+| Opaque ids render via `IdChip` / `formatOpaqueId`, never `.slice(0, N)` | web | `docs/reference/web/ui/atoms.md` Gotchas | `watchdog/no-opaque-id-slice` (`scripts/__tests__/oxlint-web-ds-bans.gate.test.ts`) | enforced |
+| Screens are named by layout kind; no `*Console`, `*Workbench` or `*Tape` exports | web | `docs/reference/web/ui/README.md` Chrome lexicon | `watchdog/no-banned-surface-name` (`scripts/__tests__/oxlint-web-ds-bans.gate.test.ts`) | enforced |
 | Never a screen named `*Panel`; never a component named `Entity` | web | `docs/reference/web/ui/README.md` Chrome lexicon | guidance | guidance |
-| No gradients, gradient text, glass or backdrop blur (`// ds:allow-decorative - reason` for functional blur) | web | `DESIGN.md` Do's and Don'ts | `ds:check` (`ds:ban` `decorative`) | enforced |
+| No gradients, gradient text, glass or backdrop blur (`// ds:allow-decorative - reason` for functional blur) | web | `DESIGN.md` Do's and Don'ts | `watchdog/no-decorative-class` (`scripts/__tests__/oxlint-web-ds-bans.gate.test.ts`) | enforced |
 | Status is never color-only (one glyph shape per status via `STATUS_GLYPH`) | web | `DESIGN.md` Colors | `apps/web/src/shared/ui/__tests__/status.component.test.tsx` | enforced |
 | Label and tone maps in `shared/ui/vocab/` are exhaustive `Record`s over schema unions; no fictional vocab (`probable`, `dormant`, `merged`) | web | `docs/reference/web/ui/atoms.md` Which atom | `pnpm typecheck` | enforced |
 | Router keeps `scrollRestoration: false`, `defaultPendingMs` 400, `defaultPendingMinMs` 500, `defaultPreloadStaleTime` 0 | web | `docs/reference/web/ui/loading.md` Doctrine | `apps/web/src/__tests__/router.test.ts` | enforced |

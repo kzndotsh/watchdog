@@ -260,8 +260,8 @@ const CONVENTION_HEADER = [
   "Status",
 ];
 const STATUSES = new Set(["enforced", "baselined", "guidance"]);
-/** Backticked enforced-by tokens shaped like a package script (`check:size`, `ds:check`). */
-const SCRIPT_TOKEN = /^(?:check|validate|test|ds):[\w:-]+$/;
+/** Backticked enforced-by tokens shaped like a package script (`check:size`, `test:gate`). */
+const SCRIPT_TOKEN = /^(?:check|validate|test):[\w:-]+$/;
 const TEST_FILE_TOKEN = /\/.+\.(?:test|spec)\.tsx?$/;
 
 /**

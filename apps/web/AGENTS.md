@@ -10,7 +10,7 @@ TanStack Start UI. UI contracts live in **[`docs/reference/web/`](../../docs/ref
 | --- | --- |
 | Dev | `pnpm dev:web` |
 | Typecheck | `pnpm --filter @watchdog/web typecheck` |
-| DS bans | `pnpm --filter @watchdog/web ds:check` |
+| DS bans | `pnpm check` (oxlint `watchdog/no-decorative-class`, `no-banned-surface-name`, `no-opaque-id-slice`) |
 | Unit tests | `pnpm test:unit` (includes the `web-unit` project: `apps/web/src/**/__tests__/**/*.test.ts`) |
 | Component tests | `pnpm test:component` |
 | E2E | `pnpm test:e2e` · `pnpm test:e2e:smoke` · `pnpm test:e2e:journey` |
@@ -22,7 +22,7 @@ TanStack Start UI. UI contracts live in **[`docs/reference/web/`](../../docs/ref
 | Rule | Enforced by |
 | --- | --- |
 | Primitives: vanilla from `@watchdog/ui/components/*`, wrapped ones from `@/shared/ui/primitives/*` (the wrapped list is derived in `oxlint.config.ts`) | oxlint `no-restricted-imports`; `shadcn/no-restyle` bans `className` restyling in `domains/**` and `routes/**` |
-| Split view = Queue + Detail (`SplitView`); no `*Console` / `*Workbench` / `*Tape` exports | `ds:check` (a `*Panel` screen name is reviewed by hand) |
+| Split view = Queue + Detail (`SplitView`); no `*Console` / `*Workbench` / `*Tape` exports | `watchdog/no-banned-surface-name` (a `*Panel` screen name is reviewed by hand) |
 | Query cache is the source of truth: `ensureQueryData` loaders and `useQuery` / named invalidation; no loader→`useState` forks, no QueryClient singleton | guidance |
 | Caps/agents → Proposal → Triage Accept; never land output as `confirmed` Graph | guidance (root Boundaries) |
 

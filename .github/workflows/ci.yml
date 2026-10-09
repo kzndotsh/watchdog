@@ -254,10 +254,6 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.site == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm --filter @watchdog/site build
 
-      - name: Web DS bans
-        if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm --filter @watchdog/web ds:check
-
       - name: CapDescriptor drift
         if: github.event_name != 'pull_request' || needs.changes.outputs.caps == 'true' || needs.changes.outputs.config == 'true'
         run: |
