@@ -24,6 +24,7 @@ import { noDecorativeClass } from "./rules/no-decorative-class.mjs";
 import { noEffectRunOutsideEdge } from "./rules/no-effect-run-outside-edge.mjs";
 import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
+import { procedureMustBeGuarded } from "./rules/procedure-must-be-guarded.mjs";
 
 export default {
   meta: { name: "watchdog" },
@@ -43,6 +44,7 @@ export default {
     "no-core-s3-dynamic-import": noCoreS3DynamicImport,
     "no-brand-cast": noBrandCast,
     "no-untrusted-id-import": noUntrustedIdImport,
+    "procedure-must-be-guarded": procedureMustBeGuarded,
     "effect-try-requires-catch": effectTryRequiresCatch,
     "no-effect-run-outside-edge": noEffectRunOutsideEdge,
     "no-decorative-class": noDecorativeClass,
