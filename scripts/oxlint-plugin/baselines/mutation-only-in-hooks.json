@@ -1,0 +1,14 @@
+{
+  "apps/web/src/domains/dossier/components/claims-section.tsx": 3,
+  "apps/web/src/domains/dossier/components/connections-section.tsx": 3,
+  "apps/web/src/domains/dossier/components/events-section.tsx": 3,
+  "apps/web/src/domains/dossier/components/identifiers-section.tsx": 2,
+  "apps/web/src/domains/dossier/components/questions-section.tsx": 5,
+  "apps/web/src/domains/dossier/components/summary-notes-section.tsx": 1,
+  "apps/web/src/domains/organization/components/accept-invitation.tsx": 2,
+  "apps/web/src/domains/organization/components/organization-members.tsx": 5,
+  "apps/web/src/domains/organization/components/organization-profile.tsx": 3,
+  "apps/web/src/domains/organization/components/your-organizations.tsx": 2,
+  "apps/web/src/domains/settings/components/settings-credentials-form.tsx": 1,
+  "apps/web/src/domains/settings/components/settings-users.tsx": 3
+}

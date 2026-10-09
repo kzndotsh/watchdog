@@ -1,0 +1,10 @@
+{
+  "apps/web/src/domains/cases/lib/case-cache.ts": 4,
+  "apps/web/src/domains/dossier/components/summary-notes-section.tsx": 1,
+  "apps/web/src/domains/organization/components/organization-members.tsx": 1,
+  "apps/web/src/domains/organization/components/organization-profile.tsx": 1,
+  "apps/web/src/domains/organization/components/your-organizations.tsx": 1,
+  "apps/web/src/domains/settings/components/settings-users.tsx": 1,
+  "apps/web/src/routes/_protected/cases/$caseSlug.tsx": 1,
+  "apps/web/src/shared/lib/active-case-switch.ts": 4
+}

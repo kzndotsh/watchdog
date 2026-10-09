@@ -17,7 +17,7 @@ const EFFECT_MODULES = new Set(["effect", "effect/Effect"]);
  * @param {Record<string, unknown>} member
  * @returns {string | null}
  */
-const propertyName = (member) => {
+export const propertyName = (member) => {
   const { property } = member;
   if (!isRecord(property)) return null;
   if (member.computed !== true) {
@@ -44,6 +44,26 @@ const propertyName = (member) => {
     }
   }
   return null;
+};
+
+/**
+ * True when `name`, seen from `node`, resolves to a binding that is not an import (a
+ * local variable or parameter shadowing it). Without scope support nothing is shadowed.
+ * @param {ScopeContext} context
+ * @param {string} name
+ * @param {unknown} node
+ */
+export const isShadowedBinding = (context, name, node) => {
+  const source = context.sourceCode;
+  if (typeof source?.getScope !== "function") return false;
+  /** @type {Scope | null | undefined} */
+  let scope = source.getScope(node);
+  while (scope) {
+    const variable = scope.set.get(name);
+    if (variable) return variable.defs[0]?.type !== "ImportBinding";
+    scope = scope.upper;
+  }
+  return false;
 };
 
 /**
@@ -86,23 +106,10 @@ export const createEffectResolver = (context) => {
   };
 
   /**
-   * True when `name`, seen from `node`, resolves to a binding that is not an import (a
-   * local variable or parameter shadowing it). Without scope support nothing is shadowed.
    * @param {string} name
    * @param {unknown} node
    */
-  const isShadowed = (name, node) => {
-    const source = context.sourceCode;
-    if (typeof source?.getScope !== "function") return false;
-    /** @type {Scope | null | undefined} */
-    let scope = source.getScope(node);
-    while (scope) {
-      const variable = scope.set.get(name);
-      if (variable) return variable.defs[0]?.type !== "ImportBinding";
-      scope = scope.upper;
-    }
-    return false;
-  };
+  const isShadowed = (name, node) => isShadowedBinding(context, name, node);
 
   return {
     /** @param {{ body?: readonly unknown[] }} program */

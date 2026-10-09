@@ -456,6 +456,50 @@ export default defineConfig({
       rules: { "watchdog/no-opaque-id-slice": "error" },
     },
     {
+      // TanStack Query ownership (docs/reference/web/data.md): mutations and cache writes
+      // live in hooks, query keys in queries modules. Allowed trees and tests are off.
+      files: ["apps/web/src/**/*.{ts,tsx}"],
+      rules: {
+        "watchdog/mutation-only-in-hooks": "error",
+        "watchdog/cache-writes-only-in-hooks": "error",
+        "watchdog/query-keys-in-queries-modules": "error",
+      },
+    },
+    {
+      files: [
+        "apps/web/src/domains/*/hooks/**/*.{ts,tsx}",
+        "apps/web/src/shared/hooks/**/*.{ts,tsx}",
+      ],
+      rules: {
+        "watchdog/mutation-only-in-hooks": "off",
+        "watchdog/cache-writes-only-in-hooks": "off",
+      },
+    },
+    {
+      files: ["apps/web/src/shared/lib/query-invalidation.ts"],
+      rules: { "watchdog/cache-writes-only-in-hooks": "off" },
+    },
+    {
+      // A queries module is a domain's `queries.ts`, a `*-queries.ts` or a `*-keys.ts`.
+      files: [
+        "apps/web/src/**/queries.ts",
+        "apps/web/src/**/*-queries.ts",
+        "apps/web/src/**/*-keys.ts",
+      ],
+      rules: { "watchdog/query-keys-in-queries-modules": "off" },
+    },
+    {
+      files: [
+        "apps/web/src/**/__tests__/**/*.{ts,tsx}",
+        "apps/web/src/**/*.{test,spec}.{ts,tsx}",
+      ],
+      rules: {
+        "watchdog/mutation-only-in-hooks": "off",
+        "watchdog/cache-writes-only-in-hooks": "off",
+        "watchdog/query-keys-in-queries-modules": "off",
+      },
+    },
+    {
       files: [
         "apps/web/src/shared/ui/primitives/**/*.{ts,tsx}",
         "apps/web/src/auth/ui/**/*.{ts,tsx}",

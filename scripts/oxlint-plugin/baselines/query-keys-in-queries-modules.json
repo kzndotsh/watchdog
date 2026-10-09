@@ -1,0 +1,7 @@
+{
+  "apps/web/src/domains/organization/components/accept-invitation.tsx": 1,
+  "apps/web/src/domains/organization/components/organization-members.tsx": 1,
+  "apps/web/src/domains/organization/components/organization-profile.tsx": 1,
+  "apps/web/src/domains/organization/components/your-organizations.tsx": 1,
+  "apps/web/src/domains/settings/components/settings-users.tsx": 1
+}

@@ -4,6 +4,7 @@
  * per rule under `rules/`, shared helpers under `lib/`; the recipe for adding a rule
  * is in docs/reference/platform/conventions.md.
  */
+import { cacheWritesInHooks } from "./rules/cache-writes-only-in-hooks.mjs";
 import { dbRepoExecFirst } from "./rules/db-repo-exec-first.mjs";
 import { dbRepoNoDtoDate } from "./rules/db-repo-no-dto-date.mjs";
 import { dbRepoNoJobStatusSet } from "./rules/db-repo-no-job-status-set.mjs";
@@ -16,6 +17,7 @@ import { dbRepoNoTrimOrNull } from "./rules/db-repo-no-trim-or-null.mjs";
 import { dbRepoNoValidationImport } from "./rules/db-repo-no-validation-import.mjs";
 import { dbRepoTrimLookupOnly } from "./rules/db-repo-trim-lookup-only.mjs";
 import { effectTryRequiresCatch } from "./rules/effect-try-requires-catch.mjs";
+import { mutationOnlyInHooks } from "./rules/mutation-only-in-hooks.mjs";
 import { noBannedSurfaceName } from "./rules/no-banned-surface-name.mjs";
 import { noBrandCast } from "./rules/no-brand-cast.mjs";
 import { noCoreDbDynamicImport } from "./rules/no-core-db-dynamic-import.mjs";
@@ -25,6 +27,7 @@ import { noEffectRunOutsideEdge } from "./rules/no-effect-run-outside-edge.mjs";
 import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
 import { procedureMustBeGuarded } from "./rules/procedure-must-be-guarded.mjs";
+import { keysInQueries } from "./rules/query-keys-in-queries-modules.mjs";
 
 export default {
   meta: { name: "watchdog" },
@@ -50,5 +53,8 @@ export default {
     "no-decorative-class": noDecorativeClass,
     "no-banned-surface-name": noBannedSurfaceName,
     "no-opaque-id-slice": noOpaqueIdSlice,
+    "mutation-only-in-hooks": mutationOnlyInHooks,
+    "cache-writes-only-in-hooks": cacheWritesInHooks,
+    "query-keys-in-queries-modules": keysInQueries,
   },
 };

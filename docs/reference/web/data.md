@@ -32,6 +32,10 @@ Query owns server-state caching. The router's `defaultPreloadStaleTime` is `0` (
 
 Mutations and SSE call the named contracts in `shared/lib/query-invalidation.ts` (`invalidateAfterCaseSwitch`, `invalidateAfterJobMutation`, `invalidateAfterProposalAccept`, `invalidateAfterProposalQueueChange`, `invalidateAfterEntityChanged`, `invalidateAfterTaskMutation`, `invalidateAfterEvidenceMutation`, `invalidateAfterCredentialMutation`), not scattered `invalidateQueries` key lists. Inside them, soft settle is `invalidateQueries({ refetchType: "none" })` then `refetchQueries({ type: "active" })`, so nothing flashes a loading state. `invalidateAfterEntityChanged` soft-invalidates the `entities` plus `edges` / `identifiers` prefixes so case-wide lists refresh denormalized labels.
 
+### Mutations and cache writes
+
+`useMutation` and QueryClient cache writes (`invalidateQueries`, `setQueryData`, `setQueriesData`, `removeQueries`, `resetQueries`, `refetchQueries`, `cancelQueries`) live in `domains/*/hooks/` and `shared/hooks/`; cache writes may also live in `shared/lib/query-invalidation.ts`. A component calls the hook (`useDeleteCase`, `useDeleteEntity`) and keeps only dialog and form state. Query keys are defined in a queries module, which means a `queries.ts`, a `*-queries.ts` or a `*-keys.ts` file, and imported everywhere else; calling a factory (`queryKey: casesKeys.all`) is always fine. Lint enforces all three (`watchdog/mutation-only-in-hooks`, `watchdog/cache-writes-only-in-hooks`, `watchdog/query-keys-in-queries-modules`); sites that predate the rules are baselined per file and the baselines only shrink.
+
 ### Loaders, warm helpers, pending
 
 Loaders `ensureQueryData` identity only and call a `warm*Queries` helper with `void prefetchQuery` (the per-layout table is in [`domains.md`](domains.md#page-ownership); helpers live in each domain's `lib/prefetch-*.ts`). Collect is the exception: its loader awaits `ensureCollectQueueQueries` (plus the job detail when `?id=` is a job). Warm helpers run in the browser only (server no-op), so SSR HTML and the first client render agree ([`ui/loading.md`](ui/loading.md#doctrine)).
