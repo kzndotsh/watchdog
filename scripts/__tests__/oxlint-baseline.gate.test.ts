@@ -9,6 +9,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import {
   chmodSync,
+  mkdtempSync,
   existsSync,
   mkdirSync,
   readdirSync,
@@ -366,9 +367,18 @@ console.log(JSON.stringify({ diagnostics: [{ message: "m", code: "watchdog(no-le
       expect(existsSync(target)).toBe(false);
     });
 
-    const countStub = `const n = Number(process.env.STUB_COUNT);
-const d = { message: "m", code: "watchdog(no-legacy-marker)", filename: ${JSON.stringify(A)} };
-setTimeout(() => console.log(JSON.stringify({ diagnostics: Array(n).fill(d) })), Number(process.env.STUB_DELAY_MS));`;
+    const countStub = `const fs = require("node:fs");
+const path = require("node:path");
+const dir = process.env.STUB_BARRIER_DIR;
+fs.writeFileSync(path.join(dir, "scanned-" + process.env.STUB_ID), "");
+// Barrier: both scans finish before either run reaches the write.
+const wait = () => {
+  if (fs.existsSync(path.join(dir, "scanned-a")) && fs.existsSync(path.join(dir, "scanned-b"))) {
+    const d = { message: "m", code: "watchdog(no-legacy-marker)", filename: ${JSON.stringify(A)} };
+    setTimeout(() => console.log(JSON.stringify({ diagnostics: Array(Number(process.env.STUB_COUNT)).fill(d) })), Number(process.env.STUB_DELAY_MS));
+  } else setTimeout(wait, 10);
+};
+wait();`;
 
     const spawnScript = (
       fixture: OxlintFixture,
@@ -388,20 +398,73 @@ setTimeout(() => console.log(JSON.stringify({ diagnostics: Array(n).fill(d) })),
       });
 
     it(
-      "serialises two concurrent runs: the delayed, higher scan cannot win",
+      "serialises two concurrent runs: the earlier, higher write cannot overwrite the lower one",
       async () => {
         const fixture = scriptFixture();
         fixture.write(BASELINE, `{ "${A}": 5 }\n`);
         stubOxlint(fixture, countStub);
+        const barrier = {
+          STUB_BARRIER_DIR: mkdtempSync(
+            path.join(fixture.repo.dir, "barrier-")
+          ),
+        };
         const codes = await Promise.all([
-          spawnScript(fixture, { STUB_COUNT: "4", STUB_DELAY_MS: "1500" }),
-          spawnScript(fixture, { STUB_COUNT: "3", STUB_DELAY_MS: "0" }),
+          // A enters the lock first and holds it after its re-read; B arrives while it is held.
+          spawnScript(fixture, {
+            ...barrier,
+            STUB_ID: "a",
+            STUB_COUNT: "4",
+            STUB_DELAY_MS: "0",
+            WATCHDOG_BASELINE_HOLD_MS: "1500",
+          }),
+          spawnScript(fixture, {
+            ...barrier,
+            STUB_ID: "b",
+            STUB_COUNT: "3",
+            STUB_DELAY_MS: "400",
+          }),
         ]);
         expect(codes).toEqual([0, 0]);
         expect(JSON.parse(read(fixture))).toEqual({ [A]: 3 });
         expect(
           existsSync(path.join(fixture.repo.dir, `${BASELINE}.lock`))
         ).toBe(false);
+      },
+      LINT_TIMEOUT_MS
+    );
+
+    it("releases the lock when --init is refused inside the critical section", () => {
+      const fixture = scriptFixture();
+      const target = path.join(fixture.repo.dir, BASELINE);
+      mkdirSync(path.dirname(target), { recursive: true });
+      // The baseline appears mid-scan, after the early --init check and before the lock.
+      stubOxlint(
+        fixture,
+        `require("node:fs").writeFileSync(${JSON.stringify(target)}, '{}\\n');
+console.log(JSON.stringify({ diagnostics: [] }));`
+      );
+      const res = fixture.repo.runFile(SCRIPT, {
+        args: ["no-legacy-marker", "--init", "--config", FIXTURE_CONFIG],
+      });
+      expect(res.code).toBe(1);
+      expect(res.output).toContain("baseline already exists");
+      expect(existsSync(`${target}.lock`)).toBe(false);
+    });
+
+    it.each(["abc", "-5"])(
+      "falls back to the default lock timeout for %j instead of hanging",
+      (value) => {
+        const fixture = scriptFixture();
+        fixture.write(BASELINE, `{ "${A}": 2 }\n`);
+        fixture.write(A, withLegacy(1));
+        fixture.write(`${BASELINE}.lock`, "");
+        // A fresh lock plus a bogus timeout: the run must still give up, not spin forever.
+        const res = fixture.repo.runFile(SCRIPT, {
+          args: ["no-legacy-marker", "--config", FIXTURE_CONFIG],
+          env: { WATCHDOG_BASELINE_LOCK_TIMEOUT_MS: value },
+        });
+        expect(res.code).toBe(2);
+        expect(res.output).toContain("could not take");
       },
       LINT_TIMEOUT_MS
     );

@@ -33,9 +33,17 @@ import {
 } from "./oxlint-plugin/lib/baseline.mjs";
 
 const LOCK_STALE_MS = 60_000;
-const LOCK_TIMEOUT_MS = Number(
-  process.env.WATCHDOG_BASELINE_LOCK_TIMEOUT_MS ?? 10_000
+const DEFAULT_LOCK_TIMEOUT_MS = 10_000;
+const requestedTimeout = Number(
+  process.env.WATCHDOG_BASELINE_LOCK_TIMEOUT_MS ?? DEFAULT_LOCK_TIMEOUT_MS
 );
+// A NaN or non-positive timeout would make the wait loop never (or instantly) give up.
+const LOCK_TIMEOUT_MS =
+  Number.isInteger(requestedTimeout) && requestedTimeout > 0
+    ? requestedTimeout
+    : DEFAULT_LOCK_TIMEOUT_MS;
+// Test seam: hold the lock this long after the re-read, so a gate test can force contention.
+const HOLD_MS = Number(process.env.WATCHDOG_BASELINE_HOLD_MS ?? 0);
 const PLUGIN_CRASH = "Error running JS plugin";
 
 const args = process.argv.slice(2);
@@ -168,9 +176,8 @@ if (failures.length > 0) {
  * `wx` flag), so concurrent runs cannot interleave their read-modify-write. A lock older
  * than LOCK_STALE_MS belongs to a crashed run and is removed; waiting longer than
  * LOCK_TIMEOUT_MS aborts without touching the baseline.
- * @template T
- * @param {() => T} fn
- * @returns {T}
+ * @param {() => number} fn
+ * @returns {number}
  */
 const withLock = (fn) => {
   const lock = `${target}.lock`;
@@ -204,14 +211,16 @@ const withLock = (fn) => {
   }
 };
 
-withLock(() => {
+// The critical section returns the exit code instead of calling process.exit, which would
+// skip `finally` and leave the lock file behind.
+const exitCode = withLock(() => {
   // Re-read under the lock: a concurrent shrink may have lowered counts or dropped
   // files since the scan, and a write must never raise an allowance or revive an entry.
   if (init && existsSync(target)) {
     console.error(
       `✗ ${ruleId}: baseline already exists; run without --init to shrink it`
     );
-    process.exit(1);
+    return 1;
   }
   const fresh = init ? null : readBaseline(ruleId);
   /** @type {Record<string, number>} */
@@ -221,15 +230,19 @@ withLock(() => {
     const now = fresh === null ? count : fresh.get(file);
     if (now !== undefined) sorted[file] = Math.min(count, now);
   }
+  if (HOLD_MS > 0)
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, HOLD_MS);
   const size = Object.keys(sorted).length;
   if (size === 0) {
     rmSync(target, { force: true });
     console.log(`oxlint-baseline: ${ruleId} is clean, baseline removed`);
-    return;
+    return 0;
   }
   // Write beside the target and rename, so a concurrent reader never sees partial JSON.
   const tmp = `${target}.${process.pid}.tmp`;
   writeFileSync(tmp, `${JSON.stringify(sorted, null, 2)}\n`);
   renameSync(tmp, target);
   console.log(`oxlint-baseline: ${ruleId} baseline written (${size} file(s))`);
+  return 0;
 });
+process.exit(exitCode);
