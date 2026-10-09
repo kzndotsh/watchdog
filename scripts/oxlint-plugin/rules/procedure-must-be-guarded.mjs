@@ -58,13 +58,17 @@ const accessedName = (node) => {
 
 /**
  * Name of a destructured property key: `{ pub }`, `{ "pub": p }`.
- * @param {unknown} key
+ * @param {Node} prop
  * @returns {string | null}
  */
-const keyName = (key) =>
-  isRecord(key) && key.type === "Literal" && typeof key.value === "string"
-    ? key.value
-    : typeNameOf(key);
+const keyName = (prop) => {
+  const { key } = prop;
+  if (isRecord(key) && key.type === "Literal") {
+    return typeof key.value === "string" ? key.value : null;
+  }
+  // `{ [pub]: x }` reads a variable, not the name "pub".
+  return prop.computed ? null : typeNameOf(key);
+};
 
 /**
  * Walk up to the statement that sits directly under Program.
@@ -105,6 +109,8 @@ export const procedureMustBeGuarded = {
      * @type {Map<string, "pub" | "os">}
      */
     const namespaces = new Map();
+    /** One report per statement: the justification is per statement too. */
+    const reported = new Set();
     /** @type {readonly Comment[] | null} */
     let comments = null;
     /** @type {string[] | null} */
@@ -154,7 +160,9 @@ export const procedureMustBeGuarded = {
      * @param {string} what
      */
     const flag = (node, what) => {
-      if (isJustified(topLevelStatement(node))) return;
+      const statement = topLevelStatement(node);
+      if (reported.has(statement) || isJustified(statement)) return;
+      reported.add(statement);
       context.report({
         node,
         message: `${what} builds an unguarded API procedure: ${FIX}`,
@@ -260,7 +268,7 @@ export const procedureMustBeGuarded = {
         const wanted = namespaces.get(init.name);
         if (wanted === undefined) return;
         for (const prop of id.properties ?? []) {
-          if (prop.type === "Property" && keyName(prop.key) === wanted) {
+          if (prop.type === "Property" && keyName(prop) === wanted) {
             flag(
               prop,
               wanted === "pub"

@@ -50,6 +50,10 @@ const FAIL_CASES = {
     'import * as server from "@orpc/server";\n\nexport const a = server.os.handler(() => 1);\n',
   "orpc-namespace-destructured":
     'import * as server from "@orpc/server";\n\nconst { os } = server;\nexport const a = os.handler(() => 1);\n',
+  "pub-namespace-computed-literal":
+    'import * as os from "../os";\n\nconst { ["pub"]: open } = os;\nexport const a = open.handler(() => 1);\n',
+  "pub-double-tracked":
+    'import { pub } from "../os";\nimport * as os from "../os";\n\nexport const a = () => {\n  const { pub } = os;\n  return pub;\n};\n',
   "orpc-os-aliased":
     'import { os as builder } from "@orpc/server";\n\nexport const a = builder.handler(() => 1);\n',
 } as const;
@@ -79,6 +83,8 @@ const PASS_CASES = {
     'import { resolveAuthMethod } from "../os";\n\nexport const kind = resolveAuthMethod;\n',
   "orpc-namespace-other":
     'import * as server from "@orpc/server";\n\nexport const a = server.ORPCError;\n',
+  "pub-computed-identifier-key":
+    'import * as os from "../os";\n\nconst pub = "health";\nexport const a = { [pub]: 1 };\nconst { [pub]: handler } = os as unknown as Record<string, unknown>;\nexport const b = handler;\n',
   "plain-file": "export const LIMIT = 50;\n",
   "pub-named-property":
     "export const a = { pub: 1 };\nexport const b = a.pub;\n",
@@ -128,6 +134,9 @@ describe("procedure-must-be-guarded (oxlint.config.ts)", () => {
     expect(hit?.message).toContain("// public:");
     expect(hit?.message).toContain("conventions");
     expect(hit?.line).toBe(3);
+  });
+  it("reports once per statement when a name is tracked twice", () => {
+    expect(hits(`${DIR}/pub-double-tracked.ts`)).toHaveLength(1);
   });
   it("reports a raw os builder at its import", () => {
     const [hit] = hits(`${DIR}/orpc-os-direct.ts`);
