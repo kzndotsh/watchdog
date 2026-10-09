@@ -27,7 +27,10 @@ export const dbRepoExecFirst = {
           first !== null && isRecord(first.typeAnnotation)
             ? first.typeAnnotation.typeAnnotation
             : null;
-        const named = first?.type === "Identifier" && first.name === "exec";
+        const named =
+          first?.type === "Identifier" &&
+          first.name === "exec" &&
+          first.optional !== true;
         const typed =
           isRecord(annotation) &&
           annotation.type === "TSTypeReference" &&

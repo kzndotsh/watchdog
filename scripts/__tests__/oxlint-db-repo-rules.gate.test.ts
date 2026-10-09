@@ -203,6 +203,34 @@ const FAIL: readonly Case[] = [
     lines: [2],
   },
   {
+    rule: "db-repo-exec-first",
+    name: "exec-optional",
+    src: repo("  async get(exec?: DbExec) {", "    return null;", "  },"),
+    lines: [2],
+  },
+  {
+    rule: "db-repo-exec-first",
+    name: "exec-defaulted",
+    src: repo("  async get(exec: DbExec = db) {", "    return null;", "  },"),
+    lines: [2],
+  },
+  {
+    rule: "db-repo-exec-first",
+    name: "exec-destructured",
+    src: repo(
+      "  async get({ exec }: { exec: DbExec }) {",
+      "    return null;",
+      "  },"
+    ),
+    lines: [2],
+  },
+  {
+    rule: "db-repo-exec-first",
+    name: "exec-rest",
+    src: repo("  async get(...exec: DbExec[]) {", "    return null;", "  },"),
+    lines: [2],
+  },
+  {
     rule: "db-repo-no-trim-or-null",
     name: "trim-or-null",
     src: repo(
