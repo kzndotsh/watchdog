@@ -84,7 +84,7 @@ const PASS_CASES = {
   "orpc-namespace-other":
     'import * as server from "@orpc/server";\n\nexport const a = server.ORPCError;\n',
   "pub-computed-identifier-key":
-    'import * as os from "../os";\n\nconst pub = "health";\nexport const a = { [pub]: 1 };\nconst { [pub]: handler } = os as unknown as Record<string, unknown>;\nexport const b = handler;\n',
+    'import * as os from "../os";\n\nconst pub = "health";\nexport const a = { [pub]: 1 };\nconst { [pub]: handler } = os;\nexport const b = handler;\n',
   "plain-file": "export const LIMIT = 50;\n",
   "pub-named-property":
     "export const a = { pub: 1 };\nexport const b = a.pub;\n",

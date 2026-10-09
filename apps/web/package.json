@@ -7,9 +7,7 @@
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "ds:ban": "node ./scripts/ds-ban-check.mjs",
-    "ds:check": "pnpm typecheck && pnpm ds:ban"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@better-auth-ui/core": "1.7.26",

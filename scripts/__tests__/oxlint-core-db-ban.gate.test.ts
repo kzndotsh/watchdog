@@ -6,7 +6,11 @@
  */
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
+import {
+  LINT_TIMEOUT_MS,
+  findingsFor,
+  oxlintFixtureFactory,
+} from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const PROBE = "packages/core/src/probe";
@@ -40,7 +44,7 @@ beforeAll(() => {
     fixture.write(`${PROBE}/${name}.ts`, src);
   }
   result = fixture.lint([PROBE]);
-});
+}, LINT_TIMEOUT_MS);
 
 const restrictedFor = (name: string) =>
   findingsFor(result, `${PROBE}/${name}.ts`).filter((f) =>

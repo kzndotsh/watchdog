@@ -6,7 +6,11 @@
  */
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
+import {
+  LINT_TIMEOUT_MS,
+  findingsFor,
+  oxlintFixtureFactory,
+} from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const RULE = "watchdog/no-untrusted-id-import";
@@ -38,7 +42,7 @@ beforeAll(() => {
   fixture.write(`${SCHEMAS_TESTING}/kit.ts`, IMPORT);
   fixture.write(`${CAPS_TESTING}/helper.ts`, IMPORT);
   result = fixture.lint([PROD, SCHEMAS_TESTING, CAPS_TESTING]);
-});
+}, LINT_TIMEOUT_MS);
 
 const hitsFor = (file: string) => findingsFor(result, file, RULE);
 

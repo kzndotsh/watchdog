@@ -10,7 +10,7 @@ description: >-
   Watchdog runtime conventions only.
 metadata:
   owner: watchdog
-  sources: scripts/check-effect-edges.mjs, docs/reference/platform/jobs-orpc.md
+  sources: oxlint.config.ts, docs/reference/platform/jobs-orpc.md
 ---
 
 # Effect (Watchdog)
@@ -25,13 +25,13 @@ Single home for Watchdog Effect runtime doctrine. Not an Effect API tutorial.
 
 ## Edit scope
 
-May edit Effect programs under `packages/*` / `apps/*` and `scripts/check-effect-edges.mjs` when adding an allowlisted edge. Does not restore deleted identity Layers.
+May edit Effect programs under `packages/*` / `apps/*` and `oxlint.config.ts` (`effectRunEdges`) when adding an allowlisted edge. Does not restore deleted identity Layers.
 
 ## Instructions
 
 1. For Effect API syntax read [`node_modules/effect/AGENTS.md`](../../../node_modules/effect/AGENTS.md) completely, then search `node_modules/effect/src`. Then read the nearest package/app `AGENTS.md`.
 2. Keep `DomainTag` / `ToolsTag` in `E` until a documented edge; do not `orDie` tagged domain failures mid-pipeline. Never throw in production: yield tagged errors. Defects stay defects.
-3. `Effect.runPromise` / `runSync` / `appRuntime.runPromise` only on the `ALLOW` list in `scripts/check-effect-edges.mjs` (enforced by `pnpm check:effect-edges:strict`; tests are skipped). A new production `run*` goes on that list and its reason in the nearest `AGENTS.md`. `tryPromise` needs `{ try, catch }`.
+3. `Effect.runPromise` / `runSync` / `appRuntime.runPromise` only on the `effectRunEdges` list in `oxlint.config.ts` (enforced by `watchdog/no-effect-run-outside-edge` in `pnpm check`; tests are skipped). A new production `run*` goes on that list and its reason in the nearest `AGENTS.md`. `tryPromise` / `try` need an inline `{ try, catch }` (`watchdog/effect-try-requires-catch`). A `catch` handler never returns `unknown` (`effecttsgo/unknown-in-effect-catch`), and `run*` is never called inside an Effect (`effecttsgo/run-effect-inside-effect`); both are errors over the same roots, tests exempt.
 4. Cap `interpret` stays pure/sync (may throw); Cap `run` is `Effect` (`CapRun`); tests use `runCap` / `itRunsCollectCap`.
 5. Provide `toolsHttpClientLayer` once at Cap `run` / job collect / vitest root, not per HTTP call. Vendor clients export `*Effect` only.
 6. Worker and Job execution, cancel, boss roles: [references/jobs.md](references/jobs.md).

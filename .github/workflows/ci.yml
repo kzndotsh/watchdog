@@ -192,10 +192,6 @@ jobs:
           DOCS_AFFECT_AFTER: ${{ github.event.after }}
         run: pnpm check:docs-affected:strict
 
-      - name: Effect run* edges
-        if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm check:effect-edges:strict
-
       - name: Tagged error names and codes
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:tagged-errors:strict
@@ -254,10 +250,6 @@ jobs:
         if: github.event_name != 'pull_request' || needs.changes.outputs.site == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm --filter @watchdog/site build
 
-      - name: Web DS bans
-        if: github.event_name != 'pull_request' || needs.changes.outputs.web == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm --filter @watchdog/web ds:check
-
       - name: CapDescriptor drift
         if: github.event_name != 'pull_request' || needs.changes.outputs.caps == 'true' || needs.changes.outputs.config == 'true'
         run: |
@@ -271,10 +263,6 @@ jobs:
           pnpm generate:client
           git diff --exit-code -- packages/client/src/generated/ \
             || (echo "client contract out of date — run pnpm generate:client" && exit 1)
-
-      - name: Repo layer contract
-        if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm --filter @watchdog/db check:repos
 
       - name: Migration drift
         if: github.event_name != 'pull_request' || needs.changes.outputs.db == 'true' || needs.changes.outputs.config == 'true'

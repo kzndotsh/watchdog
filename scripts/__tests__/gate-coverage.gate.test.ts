@@ -18,7 +18,7 @@ import { parse } from "yaml";
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const TEST_DIR = path.join(repoRoot, "scripts/__tests__");
 
-const GATE_DIRS = ["scripts/", "packages/db/scripts/", "apps/web/scripts/"];
+const GATE_DIRS = ["scripts/", "packages/db/scripts/"];
 const HOOKS = ["pre-commit", "commit-msg", "pre-push"];
 const CI_JOBS = ["gates"];
 const MUST_FAIL = /fails|must fail|rejects/i;
@@ -258,12 +258,6 @@ describe("gate coverage (meta)", () => {
     expect(gateScripts.size).toBeGreaterThanOrEqual(8);
     expect([...gateScripts.keys()]).toContain(
       "scripts/check-docs-affected.mjs"
-    );
-    expect([...gateScripts.keys()]).toContain(
-      "apps/web/scripts/ds-ban-check.mjs"
-    );
-    expect([...gateScripts.keys()]).toContain(
-      "packages/db/scripts/check-repo-rules.mjs"
     );
   });
 

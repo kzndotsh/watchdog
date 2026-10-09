@@ -8,7 +8,7 @@ Drizzle ORM + postgres.js for the Watchdog Case Graph and Better Auth tables.
 
 | Task | Command |
 | --- | --- |
-| Repo rule gate | `pnpm --filter @watchdog/db check:repos` |
+| Repo rules | `pnpm check` (oxlint `watchdog/db-repo-*`, scoped to `src/repos/*.repo.ts`) |
 | Generate / apply migrations | `pnpm db:generate` · `pnpm db:migrate` |
 | Studio | `pnpm db:studio` |
 | Wipe case data | `just wipe` / `just wipe yes`: truncates public Graph/Jobs/Inbox/Evidence; keeps `auth.*` (users, orgs, members, API keys), `credentials`, and migrations. Also empties the evidence bucket when the local `watchdog-s3` container is running and `S3_ENDPOINT` is local. Not `docker compose down -v`. |
@@ -28,14 +28,16 @@ Services (`@watchdog/core`) call repos; controllers (`@watchdog/api`) call servi
 
 | # | Rule | Enforced by |
 | --- | --- | --- |
-| 1 | Rows, not DTOs: no `.toISOString()`, no API-shaped objects. Display read-model joins are fine (`…Row` / `…With…`), nested, never flattened | `check:repos` (`toISOString`); nesting is review |
-| 2 | Never send a NOTIFY (`pg_notify`, `.notify(`) from a repo. The only sender is the `activity` log's `AFTER INSERT` trigger, so the signal is part of the transaction (delivered at commit, dropped on rollback) | `check:repos` |
-| 3 | Never throw domain errors; return `null` / `[]` and let the service decide 404 vs conflict. Unique-violation mapping lives in core (`tryDb` / `mapPostgresCatch`) | `check:repos` |
-| 4 | Never open a transaction; only services call `transact` | `check:repos` |
-| 5 | Plain values only: no `SQL` / `eq(...)` in public signatures | `check:repos` |
+| 1 | Rows, not DTOs: no `.toISOString()`, no API-shaped objects. Display read-model joins are fine (`…Row` / `…With…`), nested, never flattened | `watchdog/db-repo-no-dto-date` (`toISOString`); nesting is review |
+| 2 | Never send a NOTIFY (`pg_notify`, `.notify(`) from a repo. The only sender is the `activity` log's `AFTER INSERT` trigger, so the signal is part of the transaction (delivered at commit, dropped on rollback) | `watchdog/db-repo-no-notify` |
+| 3 | Never throw domain errors; return `null` / `[]` and let the service decide 404 vs conflict. Unique-violation mapping lives in core (`tryDb` / `mapPostgresCatch`) | `watchdog/db-repo-no-throw` |
+| 4 | Never open a transaction; only services call `transact` | `watchdog/db-repo-no-transaction` |
+| 5 | Plain values only: no `SQL` / `eq(...)` in public signatures | `watchdog/db-repo-no-sql-param` |
 | 6 | Soft delete is the repo's job: only `evidence` has `deletedAt`; exclude deleted by default, require `includeDeleted`, and name methods that include them (`getUriInCaseIncludingDeleted`) | review only |
-| - | No local job status set: use `OPEN_` / `CANCELLABLE_` / `LIVE_` / `TERMINAL_JOB_STATUSES` from `@watchdog/schemas` | `check:repos` |
-| - | Leading `exec: DbExec` parameter; no `trimmedOrNull` in repos; `trimmedOrUndefined` only in lookup-only methods | `check:repos` |
+| - | No local job status set: use `OPEN_` / `CANCELLABLE_` / `LIVE_` / `TERMINAL_JOB_STATUSES` from `@watchdog/schemas` | `watchdog/db-repo-no-job-status-set` |
+| - | Builder API only: no raw `sql` template fragments (existing ones are baselined per file; shrink, never raise) | `watchdog/db-repo-no-raw-sql` |
+| - | No `zod` / `drizzle-zod` import: repos do not validate | `watchdog/db-repo-no-validation-import` |
+| - | Leading `exec: DbExec` parameter; no `trimmedOrNull` in repos; `trimmedOrUndefined` only in lookup-only methods | `watchdog/db-repo-exec-first`, `watchdog/db-repo-no-trim-or-null`, `watchdog/db-repo-trim-lookup-only` |
 
 Repos do **not** re-validate display strings (name/title/text, slugify, blank→null): Zod and core `*Effect` own that. Repos do keep lookup scoping (`trimCaseId` / `trimResourceId` / `trimActorId` on WHERE; an invalid UUID returns `[]` / `null`), slug WHERE keys (`slugForLookup`; case slugs are unique per organization, so case-by-slug lookups take `organizationId`), fail-closed graph ids, and actor integrity on proposals. `create`/`update` return `null` for a scoped-id miss, actor reject, or zero-row update/delete, not for empty display text. Padded-UUID lookup behavior is tested once in `src/repos/__tests__/scoped-ids.test.ts`.
 

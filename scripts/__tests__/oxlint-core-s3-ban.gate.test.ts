@@ -8,7 +8,11 @@
  */
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
+import {
+  LINT_TIMEOUT_MS,
+  findingsFor,
+  oxlintFixtureFactory,
+} from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const PROBE = "packages/core/src/probe";
@@ -52,7 +56,7 @@ beforeAll(() => {
   // The one place allowed to build the client: same violating source, exempt path.
   fixture.write(BLOB_STORE, FAIL_CASES.named);
   result = fixture.lint([PROBE, BLOB_STORE]);
-});
+}, LINT_TIMEOUT_MS);
 
 const restrictedFor = (file: string) =>
   findingsFor(result, file).filter((f) => RESTRICTED.test(f.rule));
