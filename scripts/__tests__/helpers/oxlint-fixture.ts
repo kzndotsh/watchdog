@@ -14,6 +14,12 @@ import path from "node:path";
 import { gateRepoFactory } from "./gate-repo.ts";
 import type { GateRepo } from "./gate-repo.ts";
 
+/**
+ * Timeout for a hook or test that runs oxlint: a cold run is a second or two, but the
+ * gate project runs many files in parallel and the default 5s/10s is easy to exceed.
+ */
+export const LINT_TIMEOUT_MS = 60_000;
+
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 
 /** One diagnostic from `oxlint --format json`, with the plugin/rule split out of `code`. */

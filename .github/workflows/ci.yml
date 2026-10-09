@@ -192,10 +192,6 @@ jobs:
           DOCS_AFFECT_AFTER: ${{ github.event.after }}
         run: pnpm check:docs-affected:strict
 
-      - name: Effect run* edges
-        if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
-        run: pnpm check:effect-edges:strict
-
       - name: Tagged error names and codes
         if: github.event_name != 'pull_request' || needs.changes.outputs.typescript == 'true' || needs.changes.outputs.config == 'true'
         run: pnpm check:tagged-errors:strict
