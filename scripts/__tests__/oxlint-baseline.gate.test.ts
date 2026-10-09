@@ -6,7 +6,7 @@
  * (flags the identifier `legacy`), is wrapped in `withBaseline` inside the throwaway repo;
  * no real rule is needed. Also asserts every committed baseline entry names a file that exists.
  */
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   chmodSync,
   existsSync,
@@ -14,6 +14,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -347,6 +348,92 @@ console.log(JSON.stringify({ diagnostics: [d, d] }));`
       });
       expect(res.code).toBe(0);
       expect(JSON.parse(read(fixture))).toEqual({ [A]: 1 });
+    });
+
+    it("deletes the file, never writes {}, when a concurrent run already removed the only entry", () => {
+      const fixture = scriptFixture();
+      fixture.write(BASELINE, `{ "${A}": 1 }\n`);
+      const target = path.join(fixture.repo.dir, BASELINE);
+      stubOxlint(
+        fixture,
+        `require("node:fs").rmSync(${JSON.stringify(target)});
+console.log(JSON.stringify({ diagnostics: [{ message: "m", code: "watchdog(no-legacy-marker)", filename: ${JSON.stringify(A)} }] }));`
+      );
+      const res = fixture.repo.runFile(SCRIPT, {
+        args: ["no-legacy-marker", "--config", FIXTURE_CONFIG],
+      });
+      expect(res.code).toBe(0);
+      expect(existsSync(target)).toBe(false);
+    });
+
+    const countStub = `const n = Number(process.env.STUB_COUNT);
+const d = { message: "m", code: "watchdog(no-legacy-marker)", filename: ${JSON.stringify(A)} };
+setTimeout(() => console.log(JSON.stringify({ diagnostics: Array(n).fill(d) })), Number(process.env.STUB_DELAY_MS));`;
+
+    const spawnScript = (
+      fixture: OxlintFixture,
+      env: Record<string, string>
+    ): Promise<number | null> =>
+      new Promise((resolve) => {
+        const child = spawn(
+          process.execPath,
+          [SCRIPT, "no-legacy-marker", "--config", FIXTURE_CONFIG],
+          {
+            cwd: fixture.repo.dir,
+            env: { ...process.env, ...env },
+            stdio: "ignore",
+          }
+        );
+        child.on("close", resolve);
+      });
+
+    it(
+      "serialises two concurrent runs: the delayed, higher scan cannot win",
+      async () => {
+        const fixture = scriptFixture();
+        fixture.write(BASELINE, `{ "${A}": 5 }\n`);
+        stubOxlint(fixture, countStub);
+        const codes = await Promise.all([
+          spawnScript(fixture, { STUB_COUNT: "4", STUB_DELAY_MS: "1500" }),
+          spawnScript(fixture, { STUB_COUNT: "3", STUB_DELAY_MS: "0" }),
+        ]);
+        expect(codes).toEqual([0, 0]);
+        expect(JSON.parse(read(fixture))).toEqual({ [A]: 3 });
+        expect(
+          existsSync(path.join(fixture.repo.dir, `${BASELINE}.lock`))
+        ).toBe(false);
+      },
+      LINT_TIMEOUT_MS
+    );
+
+    it("aborts without writing when a fresh lock is held", () => {
+      const fixture = scriptFixture();
+      fixture.write(BASELINE, `{ "${A}": 2 }\n`);
+      fixture.write(`${BASELINE}.lock`, "");
+      fixture.write(A, withLegacy(1));
+      const res = fixture.repo.runFile(SCRIPT, {
+        args: ["no-legacy-marker", "--config", FIXTURE_CONFIG],
+        env: { WATCHDOG_BASELINE_LOCK_TIMEOUT_MS: "300" },
+      });
+      expect(res.code).toBe(2);
+      expect(res.output).toContain("could not take");
+      expect(read(fixture)).toBe(`{ "${A}": 2 }\n`);
+    });
+
+    it("removes a stale lock left by a crashed run and proceeds", () => {
+      const fixture = scriptFixture();
+      fixture.write(BASELINE, `{ "${A}": 2 }\n`);
+      fixture.write(A, withLegacy(1));
+      const lock = path.join(fixture.repo.dir, `${BASELINE}.lock`);
+      writeFileSync(lock, "");
+      const old = new Date(Date.now() - 10 * 60_000);
+      utimesSync(lock, old, old);
+      const res = fixture.repo.runFile(SCRIPT, {
+        args: ["no-legacy-marker", "--config", FIXTURE_CONFIG],
+      });
+      expect(res.code).toBe(0);
+      expect(JSON.parse(read(fixture))).toEqual({ [A]: 1 });
+      expect(existsSync(lock)).toBe(false);
     });
   }
 );

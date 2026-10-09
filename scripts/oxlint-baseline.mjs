@@ -11,7 +11,17 @@
  * `--config <path>` lints with another oxlint config (fixture repos in the gate tests).
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  renameSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 
 import { isRecord } from "./oxlint-plugin/lib/ast.mjs";
@@ -22,6 +32,10 @@ import {
   readBaseline,
 } from "./oxlint-plugin/lib/baseline.mjs";
 
+const LOCK_STALE_MS = 60_000;
+const LOCK_TIMEOUT_MS = Number(
+  process.env.WATCHDOG_BASELINE_LOCK_TIMEOUT_MS ?? 10_000
+);
 const PLUGIN_CRASH = "Error running JS plugin";
 
 const args = process.argv.slice(2);
@@ -59,6 +73,7 @@ const res = spawnSync(
 /**
  * A scan that did not really run must never rewrite or delete a baseline: abort first.
  * @param {string} reason
+ * @returns {never}
  */
 const abort = (reason) => {
   console.error(
@@ -81,10 +96,17 @@ try {
 if (!isRecord(report) || !Array.isArray(report.diagnostics)) {
   abort("oxlint report has no diagnostics array");
 }
-const diagnostics = isRecord(report) ? report.diagnostics : [];
+/** @type {unknown[]} */
+const diagnostics =
+  isRecord(report) && Array.isArray(report.diagnostics)
+    ? report.diagnostics
+    : [];
 
-for (const d of Array.isArray(diagnostics) ? diagnostics : []) {
-  if (!isRecord(d)) continue;
+for (const d of diagnostics) {
+  if (!isRecord(d)) {
+    abort("oxlint report has a malformed diagnostic entry");
+    continue;
+  }
   const crashed =
     typeof d.message === "string" && d.message.startsWith(PLUGIN_CRASH);
   // Every rule diagnostic carries `plugin(rule)`; a parse error does not.
@@ -98,7 +120,7 @@ for (const d of Array.isArray(diagnostics) ? diagnostics : []) {
 
 /** @type {Map<string, number>} */
 const current = new Map();
-for (const d of Array.isArray(diagnostics) ? diagnostics : []) {
+for (const d of diagnostics) {
   if (
     !isRecord(d) ||
     d.code !== `watchdog(${ruleId})` ||
@@ -141,27 +163,73 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-if (next.size === 0) {
-  if (existsSync(target)) unlinkSync(target);
-  console.log(`oxlint-baseline: ${ruleId} is clean, baseline removed`);
-} else {
-  // Re-read right before writing: a concurrent shrink may have lowered counts or dropped
+/**
+ * Runs `fn` holding an exclusive per-rule lock file (`<baseline>.lock`, created with the
+ * `wx` flag), so concurrent runs cannot interleave their read-modify-write. A lock older
+ * than LOCK_STALE_MS belongs to a crashed run and is removed; waiting longer than
+ * LOCK_TIMEOUT_MS aborts without touching the baseline.
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+const withLock = (fn) => {
+  const lock = `${target}.lock`;
+  const deadline = Date.now() + LOCK_TIMEOUT_MS;
+  mkdirSync(path.dirname(target), { recursive: true });
+  let fd = -1;
+  while (fd === -1) {
+    try {
+      fd = openSync(lock, "wx");
+    } catch (error) {
+      if (
+        !(error instanceof Error && "code" in error && error.code === "EEXIST")
+      ) {
+        throw error;
+      }
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS)
+          unlinkSync(lock);
+      } catch {
+        // Released by its owner in the meantime: retry.
+      }
+      if (Date.now() > deadline) abort(`could not take ${lock}`);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+    }
+  }
+  try {
+    return fn();
+  } finally {
+    closeSync(fd);
+    rmSync(lock, { force: true });
+  }
+};
+
+withLock(() => {
+  // Re-read under the lock: a concurrent shrink may have lowered counts or dropped
   // files since the scan, and a write must never raise an allowance or revive an entry.
+  if (init && existsSync(target)) {
+    console.error(
+      `✗ ${ruleId}: baseline already exists; run without --init to shrink it`
+    );
+    process.exit(1);
+  }
   const fresh = init ? null : readBaseline(ruleId);
   /** @type {Record<string, number>} */
   const sorted = {};
   for (const file of [...next.keys()].sort((a, b) => a.localeCompare(b))) {
     const count = next.get(file) ?? 0;
-    if (fresh === null) {
-      sorted[file] = count;
-      continue;
-    }
-    const now = fresh.get(file);
+    const now = fresh === null ? count : fresh.get(file);
     if (now !== undefined) sorted[file] = Math.min(count, now);
   }
-  mkdirSync(path.dirname(target), { recursive: true });
-  writeFileSync(target, `${JSON.stringify(sorted, null, 2)}\n`);
-  console.log(
-    `oxlint-baseline: ${ruleId} baseline written (${Object.keys(sorted).length} file(s))`
-  );
-}
+  const size = Object.keys(sorted).length;
+  if (size === 0) {
+    rmSync(target, { force: true });
+    console.log(`oxlint-baseline: ${ruleId} is clean, baseline removed`);
+    return;
+  }
+  // Write beside the target and rename, so a concurrent reader never sees partial JSON.
+  const tmp = `${target}.${process.pid}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify(sorted, null, 2)}\n`);
+  renameSync(tmp, target);
+  console.log(`oxlint-baseline: ${ruleId} baseline written (${size} file(s))`);
+});
