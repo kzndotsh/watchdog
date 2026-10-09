@@ -138,8 +138,8 @@ export default defineConfig({
     // Tailwind v4-aware class checks (theme tokens, unknown classes, arbitrary values).
     // Web only — enabled in the apps/web override below. Pin exact: pre-1.0.
     "@shadcn/lint",
-    // Local rules oxlint has no built-in for (scripts/oxlint-plugin-watchdog.mjs).
-    "./scripts/oxlint-plugin-watchdog.mjs",
+    // Local rules oxlint has no built-in for (scripts/oxlint-plugin/index.mjs).
+    "./scripts/oxlint-plugin/index.mjs",
   ],
   rules: {
     // --- Permanent off: low signal / huge churn (lint debt burn-down P7) ---

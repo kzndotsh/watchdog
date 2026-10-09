@@ -2,18 +2,17 @@
  * Proves the real `oxlint.config.ts` bans bare casts to the branded id types
  * (`as OrganizationId`, `as CaseId`, `as unknown as CaseId`, `<CaseId>x`) outside
  * `packages/schemas/src/testing`, while constructors, other casts and the schemas testing fixtures stay
- * allowed. Probe files are written under covered paths (the config's `files` globs are
- * repo-relative) and removed after.
+ * allowed. Probe files are written into a throwaway repo that carries the real config
+ * and plugin (helpers/oxlint-fixture.ts); nothing touches the working tree.
  */
-import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import path from "node:path";
+import { beforeAll, describe, expect, it } from "vitest";
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
+import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
-const repoRoot = path.resolve(import.meta.dirname, "../..");
-const coreSrc = path.join(repoRoot, "packages/core/src");
-const schemasTestingSrc = path.join(repoRoot, "packages/schemas/src/testing");
+const RULE = "watchdog/no-brand-cast";
+const PROBE = "packages/core/src/probe";
+const EXEMPT = "packages/schemas/src/testing/probe";
 
 const TYPES =
   'import type { CaseId, OrganizationId } from "@watchdog/schemas/shared";\n';
@@ -48,52 +47,35 @@ const PASS_CASES = {
   "similar-name": `export type CaseIdLike = string;\nexport const a = (v: string) => v as CaseIdLike;\n`,
 } as const;
 
-let coreProbeDir = "";
-let exemptProbeDir = "";
-let output = "";
+const createFixture = oxlintFixtureFactory();
+
+let result: LintResult;
 
 beforeAll(() => {
-  coreProbeDir = mkdtempSync(path.join(coreSrc, "__oxlint-probe-"));
-  exemptProbeDir = mkdtempSync(path.join(schemasTestingSrc, "__oxlint-probe-"));
+  const fixture = createFixture();
   for (const [name, src] of Object.entries({ ...FAIL_CASES, ...PASS_CASES })) {
-    writeFileSync(path.join(coreProbeDir, `${name}.ts`), src);
+    fixture.write(`${PROBE}/${name}.ts`, src);
   }
-  writeFileSync(
-    path.join(exemptProbeDir, "exempt.ts"),
-    FAIL_CASES["as-case-id"]
-  );
-  const res = spawnSync(
-    path.join(repoRoot, "node_modules/.bin/oxlint"),
-    [
-      "-c",
-      "oxlint.config.ts",
-      path.relative(repoRoot, coreProbeDir),
-      path.relative(repoRoot, exemptProbeDir),
-    ],
-    { cwd: repoRoot, encoding: "utf-8" }
-  );
-  output = `${res.stdout ?? ""}${res.stderr ?? ""}`;
+  fixture.write(`${EXEMPT}/exempt.ts`, FAIL_CASES["as-case-id"]);
+  result = fixture.lint([PROBE, EXEMPT]);
 });
 
-afterAll(() => {
-  if (coreProbeDir) rmSync(coreProbeDir, { recursive: true, force: true });
-  if (exemptProbeDir) rmSync(exemptProbeDir, { recursive: true, force: true });
-});
-
-const hitsFor = (dir: string, name: string) =>
-  output
-    .split("\n")
-    .filter((line) => line.includes(`${path.basename(dir)}/${name}.ts:`))
-    .filter((line) => line.includes("no-brand-cast"));
+const hitsFor = (file: string) => findingsFor(result, file, RULE);
 
 describe("branded id cast ban (oxlint.config.ts)", () => {
   it.each(Object.keys(FAIL_CASES))("rejects %s", (name) => {
-    expect(hitsFor(coreProbeDir, name)).not.toHaveLength(0);
+    expect(hitsFor(`${PROBE}/${name}.ts`)).not.toHaveLength(0);
   });
   it.each(Object.keys(PASS_CASES))("allows %s", (name) => {
-    expect(hitsFor(coreProbeDir, name)).toHaveLength(0);
+    expect(hitsFor(`${PROBE}/${name}.ts`)).toHaveLength(0);
   });
   it("exempts packages/schemas/src/testing fixtures", () => {
-    expect(hitsFor(exemptProbeDir, "exempt")).toHaveLength(0);
+    expect(hitsFor(`${EXEMPT}/exempt.ts`)).toHaveLength(0);
+  });
+  it("reports the message and the cast location", () => {
+    const [hit] = hitsFor(`${PROBE}/as-case-id.ts`);
+    expect(hit?.message).toContain("Do not cast to a type containing CaseId");
+    expect(hit?.message).toContain("asCaseId");
+    expect(hit?.line).toBe(2);
   });
 });

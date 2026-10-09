@@ -1,19 +1,18 @@
 /**
  * Proves the real `oxlint.config.ts` only lets tests and test-helper trees import the
  * unvalidated brand stampers `untrustedCaseId` / `untrustedOrganizationId` from
- * `@watchdog/schemas/testing` (ADR-0003). Probe files are written under covered paths and
- * removed after.
+ * `@watchdog/schemas/testing` (ADR-0003). Probe files are written into a throwaway
+ * repo that carries the real config and plugin (helpers/oxlint-fixture.ts).
  */
-import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import path from "node:path";
+import { beforeAll, describe, expect, it } from "vitest";
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
+import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
-const repoRoot = path.resolve(import.meta.dirname, "../..");
-const coreSrc = path.join(repoRoot, "packages/core/src");
-const schemasTesting = path.join(repoRoot, "packages/schemas/src/testing");
-const capsTesting = path.join(repoRoot, "packages/caps/src/testing");
+const RULE = "watchdog/no-untrusted-id-import";
+const PROD = "packages/core/src/probe";
+const SCHEMAS_TESTING = "packages/schemas/src/testing/probe";
+const CAPS_TESTING = "packages/caps/src/testing/probe";
 
 const IMPORT =
   'import { untrustedCaseId } from "@watchdog/schemas/testing";\n\nexport const a = untrustedCaseId("x");\n';
@@ -24,70 +23,51 @@ const REEXPORT =
 const SAFE =
   'import { testCaseId } from "@watchdog/schemas/testing";\n\nexport const a = testCaseId(1);\n';
 
-let probeDir = "";
-let testsDir = "";
-let kitDir = "";
-let capsDir = "";
-let output = "";
+const createFixture = oxlintFixtureFactory();
+
+let result: LintResult;
 
 beforeAll(() => {
-  probeDir = mkdtempSync(path.join(coreSrc, "__oxlint-probe-"));
-  testsDir = path.join(probeDir, "__tests__");
-  mkdirSync(testsDir);
-  mkdirSync(schemasTesting, { recursive: true });
-  kitDir = mkdtempSync(path.join(schemasTesting, "__oxlint-probe-"));
-  mkdirSync(capsTesting, { recursive: true });
-  capsDir = mkdtempSync(path.join(capsTesting, "__oxlint-probe-"));
-  writeFileSync(path.join(probeDir, "prod-import.ts"), IMPORT);
-  writeFileSync(path.join(probeDir, "prod-aliased.ts"), IMPORT_FIXTURES);
-  writeFileSync(path.join(probeDir, "prod-reexport.ts"), REEXPORT);
-  writeFileSync(path.join(probeDir, "prod-safe.ts"), SAFE);
-  writeFileSync(path.join(probeDir, "in-test.test.ts"), IMPORT);
-  writeFileSync(path.join(testsDir, "in-tests-dir.ts"), IMPORT);
-  writeFileSync(path.join(kitDir, "kit.ts"), IMPORT);
-  writeFileSync(path.join(capsDir, "helper.ts"), IMPORT);
-  const res = spawnSync(
-    path.join(repoRoot, "node_modules/.bin/oxlint"),
-    [
-      "-c",
-      "oxlint.config.ts",
-      ...[probeDir, kitDir, capsDir].map((d) => path.relative(repoRoot, d)),
-    ],
-    { cwd: repoRoot, encoding: "utf-8" }
-  );
-  output = `${res.stdout ?? ""}${res.stderr ?? ""}`;
+  const fixture = createFixture();
+  fixture.write(`${PROD}/prod-import.ts`, IMPORT);
+  fixture.write(`${PROD}/prod-aliased.ts`, IMPORT_FIXTURES);
+  fixture.write(`${PROD}/prod-reexport.ts`, REEXPORT);
+  fixture.write(`${PROD}/prod-safe.ts`, SAFE);
+  fixture.write(`${PROD}/in-test.test.ts`, IMPORT);
+  fixture.write(`${PROD}/__tests__/in-tests-dir.ts`, IMPORT);
+  fixture.write(`${SCHEMAS_TESTING}/kit.ts`, IMPORT);
+  fixture.write(`${CAPS_TESTING}/helper.ts`, IMPORT);
+  result = fixture.lint([PROD, SCHEMAS_TESTING, CAPS_TESTING]);
 });
 
-afterAll(() => {
-  for (const dir of [probeDir, kitDir, capsDir]) {
-    if (dir) rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-const hitsFor = (dir: string, file: string) =>
-  output
-    .split("\n")
-    .filter((line) => line.includes(`${path.basename(dir)}/${file}:`))
-    .filter((line) => line.includes("no-untrusted-id-import"));
+const hitsFor = (file: string) => findingsFor(result, file, RULE);
 
 describe("untrusted id helper import ban (oxlint.config.ts)", () => {
   it.each(["prod-import.ts", "prod-aliased.ts", "prod-reexport.ts"])(
     "rejects %s in a production file",
     (file) => {
-      expect(hitsFor(probeDir, file)).not.toHaveLength(0);
+      expect(hitsFor(`${PROD}/${file}`)).not.toHaveLength(0);
     }
   );
   it("allows other test-kit imports in production files", () => {
-    expect(hitsFor(probeDir, "prod-safe.ts")).toHaveLength(0);
+    expect(hitsFor(`${PROD}/prod-safe.ts`)).toHaveLength(0);
   });
   it("allows *.test.ts", () => {
-    expect(hitsFor(probeDir, "in-test.test.ts")).toHaveLength(0);
+    expect(hitsFor(`${PROD}/in-test.test.ts`)).toHaveLength(0);
   });
   it("allows __tests__ directories", () => {
-    expect(hitsFor(probeDir, "__tests__/in-tests-dir.ts")).toHaveLength(0);
+    expect(hitsFor(`${PROD}/__tests__/in-tests-dir.ts`)).toHaveLength(0);
   });
-  it("allows packages/test-kit/src and caps testing helpers", () => {
-    expect(hitsFor(kitDir, "kit.ts")).toHaveLength(0);
-    expect(hitsFor(capsDir, "helper.ts")).toHaveLength(0);
+  it("allows packages/schemas testing and caps testing helpers", () => {
+    expect(hitsFor(`${SCHEMAS_TESTING}/kit.ts`)).toHaveLength(0);
+    expect(hitsFor(`${CAPS_TESTING}/helper.ts`)).toHaveLength(0);
+  });
+  it("reports the helper name, the fix and the import location", () => {
+    const [hit] = hitsFor(`${PROD}/prod-import.ts`);
+    expect(hit?.message).toContain(
+      "untrustedCaseId stamps an unvalidated brand"
+    );
+    expect(hit?.message).toContain("asCaseId");
+    expect(hit?.line).toBe(1);
   });
 });
