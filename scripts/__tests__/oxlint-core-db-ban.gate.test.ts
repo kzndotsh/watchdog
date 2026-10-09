@@ -1,17 +1,15 @@
 /**
  * Proves the real `oxlint.config.ts` bans the global `db` client in
  * `packages/core/src` (static, aliased, namespace and dynamic imports) while
- * type imports and repo imports stay allowed. Probe files are written under the
- * covered path (the config's `files` globs are repo-relative) and removed after.
+ * type imports and repo imports stay allowed. Probe files are written into a
+ * throwaway repo that carries the real config and plugin (helpers/oxlint-fixture.ts).
  */
-import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import path from "node:path";
+import { beforeAll, describe, expect, it } from "vitest";
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
+import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
-const repoRoot = path.resolve(import.meta.dirname, "../..");
-const coreSrc = path.join(repoRoot, "packages/core/src");
+const PROBE = "packages/core/src/probe";
 
 const FAIL_CASES = {
   named: 'import { db } from "@watchdog/db";\nexport const a = db;\n',
@@ -29,33 +27,25 @@ const PASS_CASES = {
   "other-dynamic": 'export const a = () => import("@watchdog/log");\n',
 } as const;
 
-const RESTRICTED = /no-restricted-imports|no-core-db-dynamic-import/;
+const RESTRICTED =
+  /^(eslint\/no-restricted-imports|watchdog\/no-core-db-dynamic-import)$/;
 
-let probeDir = "";
-let output = "";
+const createFixture = oxlintFixtureFactory();
+
+let result: LintResult;
 
 beforeAll(() => {
-  probeDir = mkdtempSync(path.join(coreSrc, "__oxlint-probe-"));
+  const fixture = createFixture();
   for (const [name, src] of Object.entries({ ...FAIL_CASES, ...PASS_CASES })) {
-    writeFileSync(path.join(probeDir, `${name}.ts`), src);
+    fixture.write(`${PROBE}/${name}.ts`, src);
   }
-  const res = spawnSync(
-    path.join(repoRoot, "node_modules/.bin/oxlint"),
-    ["-c", "oxlint.config.ts", path.relative(repoRoot, probeDir)],
-    { cwd: repoRoot, encoding: "utf-8" }
-  );
-  output = `${res.stdout ?? ""}${res.stderr ?? ""}`;
-});
-
-afterAll(() => {
-  if (probeDir) rmSync(probeDir, { recursive: true, force: true });
+  result = fixture.lint([PROBE]);
 });
 
 const restrictedFor = (name: string) =>
-  output
-    .split("\n")
-    .filter((line) => line.includes(`${path.basename(probeDir)}/${name}.ts:`))
-    .filter((line) => RESTRICTED.test(line));
+  findingsFor(result, `${PROBE}/${name}.ts`).filter((f) =>
+    RESTRICTED.test(f.rule)
+  );
 
 describe("core global-db import ban (oxlint.config.ts)", () => {
   for (const name of Object.keys(FAIL_CASES)) {
@@ -68,4 +58,13 @@ describe("core global-db import ban (oxlint.config.ts)", () => {
       expect(restrictedFor(name)).toHaveLength(0);
     });
   }
+  it("reports the dynamic import with its fix and location", () => {
+    const [hit] = findingsFor(
+      result,
+      `${PROBE}/dynamic.ts`,
+      "watchdog/no-core-db-dynamic-import"
+    );
+    expect(hit?.message).toContain("Db service");
+    expect(hit?.line).toBe(1);
+  });
 });

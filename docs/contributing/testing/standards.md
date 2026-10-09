@@ -93,6 +93,10 @@ Each Playwright test runs after the automatic `_resetDb` fixture (`resetE2eDb()`
 
 Add when the behavior crosses pages, real browser timing, or auth/session chrome that unit/integration/component tests cannot structurally cover. Put the spec in the matching `e2e/specs/<area>/` folder, reuse fixtures and page objects, and assert on persisted/API-visible outcomes: not mock internals.
 
+## Lint rule tests
+
+A custom oxlint rule (`scripts/oxlint-plugin/`) is tested like a gate: `scripts/__tests__/oxlint-<rule>.gate.test.ts` writes fixture files into a throwaway repo with `oxlintFixtureFactory` (`scripts/__tests__/helpers/oxlint-fixture.ts`), runs the real oxlint against the real `oxlint.config.ts`, and asserts the rule id, message and line, never the rule's internals. A rule that crashes fails the harness instead of passing vacuously. The recipe for a new rule, including its shrink-only baseline test, is in [conventions](../../reference/platform/conventions.md#adding-a-lint-rule).
+
 ## Tests are typechecked
 
 Vitest strips types, and every package's main `tsconfig.json` excludes its tests, so a test could drift from the types it exercises and stay green. Tests are therefore typechecked, as part of the normal `pnpm typecheck` (blocking in pre-push and CI), through a separate config per package or app.

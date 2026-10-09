@@ -22,7 +22,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterEach } from "vitest";
+import { afterAll, afterEach } from "vitest";
 
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 
@@ -39,7 +39,7 @@ export interface GateRepo {
   git: (...args: string[]) => string;
   /** Stage everything and commit. */
   commitAll: (message: string) => void;
-  /** Copy a file from the real repo into the same relative path in the fixture. */
+  /** Copy a file or directory tree from the real repo into the same relative path in the fixture. */
   copyFromRepo: (rel: string) => void;
   /** Run `node <rel> ...args` in the fixture, optionally feeding stdin. */
   runFile: (
@@ -74,13 +74,17 @@ function cleanEnv(extra: Record<string, string> = {}) {
 }
 
 /**
- * Registers per-test cleanup and returns a factory. `scripts` are file names
- * under the real `scripts/` dir that get copied into the fixture's `scripts/`.
+ * Registers cleanup and returns a factory. `scripts` are file names under the
+ * real `scripts/` dir that get copied into the fixture's `scripts/`. Cleanup runs
+ * after each test by default; `lifetime: "suite"` keeps fixtures until the file
+ * finishes, for suites that build one repo in `beforeAll` and assert many times.
  */
-export function gateRepoFactory() {
+export function gateRepoFactory({
+  lifetime = "test",
+}: { readonly lifetime?: "test" | "suite" } = {}) {
   const dirs: string[] = [];
 
-  afterEach(() => {
+  (lifetime === "suite" ? afterAll : afterEach)(() => {
     for (const dir of dirs.splice(0)) {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -144,7 +148,9 @@ export function gateRepoFactory() {
       },
       copyFromRepo(rel) {
         mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
-        cpSync(path.join(repoRoot, rel), path.join(dir, rel));
+        cpSync(path.join(repoRoot, rel), path.join(dir, rel), {
+          recursive: true,
+        });
       },
       runFile(rel, { args = [], input, env = {} } = {}) {
         const res = spawnSync(process.execPath, [rel, ...args], {
