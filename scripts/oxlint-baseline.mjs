@@ -22,13 +22,16 @@ import {
   readBaseline,
 } from "./oxlint-plugin/lib/baseline.mjs";
 
+const PLUGIN_CRASH = "Error running JS plugin";
+
 const args = process.argv.slice(2);
 const init = args.includes("--init");
 const configAt = args.indexOf("--config");
 const config =
   configAt === -1 ? "oxlint.config.ts" : (args[configAt + 1] ?? "");
+// The value after `--config` is not the rule id; with no `--config`, nothing is skipped.
 const ruleId = args.find(
-  (arg, i) => !arg.startsWith("--") && i !== configAt + 1
+  (arg, i) => !arg.startsWith("--") && (configAt === -1 || i !== configAt + 1)
 );
 
 if (!ruleId || !config) {
@@ -37,6 +40,10 @@ if (!ruleId || !config) {
   );
   process.exit(2);
 }
+
+// Read before the slow scan; the write below re-reads to catch a concurrent shrink.
+const target = baselinePath(ruleId);
+const existing = readBaseline(ruleId);
 
 const res = spawnSync(
   path.join(REPO_ROOT, "node_modules/.bin/oxlint"),
@@ -49,22 +56,49 @@ const res = spawnSync(
   }
 );
 
+/**
+ * A scan that did not really run must never rewrite or delete a baseline: abort first.
+ * @param {string} reason
+ */
+const abort = (reason) => {
+  console.error(
+    `oxlint-baseline: ${reason}; baseline left untouched\n${res.stderr ?? ""}`
+  );
+  process.exit(2);
+};
+
+if (res.error || typeof res.stdout !== "string") {
+  abort(`oxlint did not run (${res.error?.message ?? "no output"})`);
+}
+
 /** @type {unknown} */
 let report = null;
 try {
   report = JSON.parse(res.stdout);
 } catch {
-  console.error(`oxlint-baseline: no JSON report from oxlint\n${res.stderr}`);
-  process.exit(2);
+  abort("no JSON report from oxlint");
 }
-const diagnostics =
-  isRecord(report) && Array.isArray(report.diagnostics)
-    ? report.diagnostics
-    : [];
+if (!isRecord(report) || !Array.isArray(report.diagnostics)) {
+  abort("oxlint report has no diagnostics array");
+}
+const diagnostics = isRecord(report) ? report.diagnostics : [];
+
+for (const d of Array.isArray(diagnostics) ? diagnostics : []) {
+  if (!isRecord(d)) continue;
+  const crashed =
+    typeof d.message === "string" && d.message.startsWith(PLUGIN_CRASH);
+  // Every rule diagnostic carries `plugin(rule)`; a parse error does not.
+  const noRule = typeof d.code !== "string" || d.code === "";
+  if (crashed || noRule) {
+    abort(
+      `scan incomplete (${String(d.message)} in ${String(d.filename)}), fix it first`
+    );
+  }
+}
 
 /** @type {Map<string, number>} */
 const current = new Map();
-for (const d of diagnostics) {
+for (const d of Array.isArray(diagnostics) ? diagnostics : []) {
   if (
     !isRecord(d) ||
     d.code !== `watchdog(${ruleId})` ||
@@ -75,15 +109,14 @@ for (const d of diagnostics) {
   current.set(d.filename, (current.get(d.filename) ?? 0) + 1);
 }
 
-const target = baselinePath(ruleId);
-const existing = readBaseline(ruleId);
 /** @type {Map<string, number>} */
 const next = new Map();
 /** @type {string[]} */
 const failures = [];
 
 if (init) {
-  if (existing.size > 0) {
+  // Any existing file (empty, malformed, no valid entries) still means "already initialised".
+  if (existsSync(target)) {
     console.error(
       `✗ ${ruleId}: baseline already exists; run without --init to shrink it`
     );
@@ -112,14 +145,23 @@ if (next.size === 0) {
   if (existsSync(target)) unlinkSync(target);
   console.log(`oxlint-baseline: ${ruleId} is clean, baseline removed`);
 } else {
+  // Re-read right before writing: a concurrent shrink may have lowered counts or dropped
+  // files since the scan, and a write must never raise an allowance or revive an entry.
+  const fresh = init ? null : readBaseline(ruleId);
   /** @type {Record<string, number>} */
   const sorted = {};
   for (const file of [...next.keys()].sort((a, b) => a.localeCompare(b))) {
-    sorted[file] = next.get(file) ?? 0;
+    const count = next.get(file) ?? 0;
+    if (fresh === null) {
+      sorted[file] = count;
+      continue;
+    }
+    const now = fresh.get(file);
+    if (now !== undefined) sorted[file] = Math.min(count, now);
   }
   mkdirSync(path.dirname(target), { recursive: true });
   writeFileSync(target, `${JSON.stringify(sorted, null, 2)}\n`);
   console.log(
-    `oxlint-baseline: ${ruleId} baseline written (${next.size} file(s))`
+    `oxlint-baseline: ${ruleId} baseline written (${Object.keys(sorted).length} file(s))`
   );
 }
