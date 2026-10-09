@@ -37,7 +37,7 @@ Services (`@watchdog/core`) call repos; controllers (`@watchdog/api`) call servi
 | - | No local job status set: use `OPEN_` / `CANCELLABLE_` / `LIVE_` / `TERMINAL_JOB_STATUSES` from `@watchdog/schemas` | `watchdog/db-repo-no-job-status-set` |
 | - | Builder API only: no raw `sql` template fragments (existing ones are baselined per file; shrink, never raise) | `watchdog/db-repo-no-raw-sql` |
 | - | No `zod` / `drizzle-zod` import: repos do not validate | `watchdog/db-repo-no-validation-import` |
-| - | Leading `exec: DbExec` parameter; no `trimmedOrNull` in repos; `trimmedOrUndefined` only in lookup-only methods | `watchdog/db-repo-exec-first`, `-no-trim-or-null`, `-trim-lookup-only` |
+| - | Leading `exec: DbExec` parameter; no `trimmedOrNull` in repos; `trimmedOrUndefined` only in lookup-only methods | `watchdog/db-repo-exec-first`, `watchdog/db-repo-no-trim-or-null`, `watchdog/db-repo-trim-lookup-only` |
 
 Repos do **not** re-validate display strings (name/title/text, slugify, blank→null): Zod and core `*Effect` own that. Repos do keep lookup scoping (`trimCaseId` / `trimResourceId` / `trimActorId` on WHERE; an invalid UUID returns `[]` / `null`), slug WHERE keys (`slugForLookup`; case slugs are unique per organization, so case-by-slug lookups take `organizationId`), fail-closed graph ids, and actor integrity on proposals. `create`/`update` return `null` for a scoped-id miss, actor reject, or zero-row update/delete, not for empty display text. Padded-UUID lookup behavior is tested once in `src/repos/__tests__/scoped-ids.test.ts`.
 

@@ -231,6 +231,72 @@ const FAIL: readonly Case[] = [
     lines: [2],
   },
   {
+    rule: "db-repo-no-transaction",
+    name: "transaction-template-key",
+    src: repo(
+      "  async get(exec: DbExec) {",
+      "    return exec[`transaction`](async () => null);",
+      "  },"
+    ),
+    lines: [3],
+  },
+  {
+    rule: "db-repo-no-notify",
+    name: "pg-notify-uppercase",
+    src: repo(
+      "  async get(exec: DbExec) {",
+      "    return exec.execute(sql`select PG_NOTIFY('c', 'x')`);",
+      "  },"
+    ),
+    lines: [3],
+  },
+  {
+    rule: "db-repo-no-sql-param",
+    name: "sql-aliased-import",
+    src: `import type { SQL as Fragment } from "drizzle-orm";\n\n${repo(
+      "  async get(exec: DbExec, where: Fragment) {",
+      "    return exec.select().where(where);",
+      "  },"
+    )}`,
+    lines: [4],
+  },
+  {
+    rule: "db-repo-no-trim-or-null",
+    name: "trim-or-null-qualified",
+    src: repo(
+      "  async create(exec: DbExec, name: string) {",
+      "    return shared.trimmedOrNull(name);",
+      "  },"
+    ),
+    lines: [3],
+  },
+  {
+    rule: "db-repo-trim-lookup-only",
+    name: "trim-or-undefined-qualified",
+    src: repo(
+      "  async rename(exec: DbExec, name: string) {",
+      "    return shared.trimmedOrUndefined(name);",
+      "  },"
+    ),
+    lines: [3],
+  },
+  {
+    rule: "db-repo-no-validation-import",
+    name: "zod-dynamic-import",
+    src: repo(
+      "  async get(exec: DbExec) {",
+      '    return import("zod");',
+      "  },"
+    ),
+    lines: [3],
+  },
+  {
+    rule: "db-repo-no-validation-import",
+    name: "zod-reexport",
+    src: `export { z } from "zod";\n\n${repo(ok)}`,
+    lines: [1],
+  },
+  {
     rule: "db-repo-no-trim-or-null",
     name: "trim-or-null",
     src: repo(

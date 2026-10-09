@@ -57,21 +57,35 @@ export const memberName = (member) => {
   if (property.type === "Literal" && typeof property.value === "string") {
     return property.value;
   }
+  if (
+    property.type === "TemplateLiteral" &&
+    Array.isArray(property.expressions) &&
+    property.expressions.length === 0 &&
+    Array.isArray(property.quasis) &&
+    isRecord(property.quasis[0]) &&
+    isRecord(property.quasis[0].value) &&
+    typeof property.quasis[0].value.cooked === "string"
+  ) {
+    return property.quasis[0].value.cooked;
+  }
   return null;
 };
 
 /**
- * The bare callee name of `name(...)`, or null.
+ * The callee name of `name(...)` or `ns.name(...)`, or null.
  * @param {Node} call
  * @returns {string | null}
  */
 export const calleeName = (call) => {
   const { callee } = call;
-  return isRecord(callee) &&
+  if (
+    isRecord(callee) &&
     callee.type === "Identifier" &&
     typeof callee.name === "string"
-    ? callee.name
-    : null;
+  ) {
+    return callee.name;
+  }
+  return memberName(callee);
 };
 
 /** Wrapper nodes that do not change which object an initializer is. */

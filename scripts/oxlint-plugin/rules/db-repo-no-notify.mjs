@@ -1,6 +1,6 @@
 import { memberName, REPO_CONTRACT } from "../lib/db-repo.mjs";
 
-const NOTIFY = /\bpg_notify\b/;
+const NOTIFY = /\bpg_notify\b/i;
 
 /**
  * Repos never send a NOTIFY: only the `activity` log's AFTER INSERT trigger does, so the
@@ -26,7 +26,7 @@ export const dbRepoNoNotify = {
       },
       /** @param {{ name?: unknown }} node */
       Identifier(node) {
-        if (node.name === "pg_notify") flag(node);
+        if (typeof node.name === "string" && NOTIFY.test(node.name)) flag(node);
       },
       /** @param {{ value?: unknown }} node */
       Literal(node) {
