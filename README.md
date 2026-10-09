@@ -6,11 +6,9 @@
 
 [Quick start](#quick-start) • [Caps](#capabilities) • [Architecture](#architecture) • [Docs](#docs) • [Roadmap](ROADMAP.md)
 
-> !WARNING]
+> [!WARNING]
 >
 > **Pre-1.0 and under active development.** Schemas, Cap ids, and API shapes change without notice, and several surfaces in [ROADMAP.md](ROADMAP.md) are half-built. Organization-scoped tenancy (Better Auth orgs, invites, org-bound cases) ships for small teams, but the install is not hardened for hostile multi-tenant SaaS or production deployment at scale.
-
-
 
 ## Why Watchdog
 
@@ -25,15 +23,11 @@ Small-team OSINT usually runs on general-purpose tools: a chat thread for coordi
 - More lookups produce more data, not more clarity.
 - A coincidence becomes a confirmed link.
 
-
-
 ### Watchdog was built to solve these problems.
 
 - You decide what lands: every result comes back as a proposal, not a conclusion. Nothing reaches the case until you say so.
 - One source of truth: the "real" case lives in one place — not a thread, not a doc. One graph, one record. The export regenerates from it any time.
 - Collect without the noise: run as many lookups as you need. Accept what holds, reject what doesn't. The case grows with your judgment.
-
-
 
 ## How it differs
 
@@ -54,10 +48,6 @@ flowchart LR
   D --> E["Export<br/>markdown + zip"]
 ```
 
-
-
-
-
 ## Quick start
 
 Requires Docker, Node ≥ 22, pnpm 11. [Nix](https://nixos.org/download) is optional and pins the whole toolchain.
@@ -70,25 +60,19 @@ pnpm install
 just dev                    # Postgres + S3 + migrations + web app + worker + marketing site
 ```
 
-
-
 ## Capabilities
 
 Each Cap is a folder under `packages/caps/src/` named for its id, such as `network/dns.lookup/`, holding a `run` that collects and a pure `interpret` that maps the report to proposed operations. Keeping `interpret` pure means it tests against recorded fixtures with no network.
 
-
-| Category   | Examples                                                              |
-| ---------- | --------------------------------------------------------------------- |
-| `network`  | DNS, WHOIS/RDAP, certificate transparency, TLS audit, Shodan, urlscan |
-| `threat`   | VirusTotal, AbuseIPDB, GreyNoise, URLhaus, OTX, Safe Browsing         |
-| `identity` | GitHub, Keybase, Gravatar, PGP, email reputation                      |
-| `breach`   | HIBP, Dehashed, Snusbase, Hudson Rock                                 |
-| `archive`  | Wayback lookup and fetch, Common Crawl, save-page                     |
-| `evidence` | Deterministic harvest, AI extraction, file and `.eml` analysis        |
-| `web`      | URL unshortening, page enrichment                                     |
-
-
-
+| Category | Examples |
+| --- | --- |
+| `network` | DNS, WHOIS/RDAP, certificate transparency, TLS audit, Shodan, urlscan |
+| `threat` | VirusTotal, AbuseIPDB, GreyNoise, URLhaus, OTX, Safe Browsing |
+| `identity` | GitHub, Keybase, Gravatar, PGP, email reputation |
+| `breach` | HIBP, Dehashed, Snusbase, Hudson Rock |
+| `archive` | Wayback lookup and fetch, Common Crawl, save-page |
+| `evidence` | Deterministic harvest, AI extraction, file and `.eml` analysis |
+| `web` | URL unshortening, page enrichment |
 
 ## Architecture
 
@@ -116,28 +100,22 @@ packages/
 └── test-kit/             Dev-only ids, URLs, fast-check, MSW; no workspace deps
 ```
 
-
-
 ## Docs
 
 The [docs index](docs/README.md) lists everything. The ones you will want first:
 
-
-| Doc                                                          | Read it for                                                                         |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| [First investigation](docs/tutorials/first-investigation.md) | A guided case: dump evidence, process it, triage, build the dossier                 |
-| [Auth setup](docs/how-to/auth-setup.md)                      | The first account, organizations, invites, API keys                                 |
-| [Local development](docs/how-to/local-dev.md)                | The services, the ports, and the usual traps                                        |
-| [Agent CLI](docs/how-to/agent-cli.md)                        | Driving Watchdog with `wd` or an agent, and the OpenAPI spec at `/api/v1/spec.json` |
-| [Product](docs/explanation/product.md)                       | What this is for, and what it refuses to build                                      |
-| [Platform reference](docs/reference/platform/README.md)      | Packages and import rules, jobs, oRPC, Caps, schemas                                |
-| [Web reference](docs/reference/web/README.md)                | The UI, design system, domains, and data fetching                                   |
-| [Glossary](GLOSSARY.md)                                      | What a Case, Evidence, Proposal and Accept mean here                                |
-| [AGENTS.md](AGENTS.md)                                       | Commands and conventions, including the rules coding agents break most              |
-| [Security](SECURITY.md)                                      | Supported versions and reporting a vulnerability                                    |
-
-
-
+| Doc | Read it for |
+| --- | --- |
+| [First investigation](docs/tutorials/first-investigation.md) | A guided case: dump evidence, process it, triage, build the dossier |
+| [Auth setup](docs/how-to/auth-setup.md) | The first account, organizations, invites, API keys |
+| [Local development](docs/how-to/local-dev.md) | The services, the ports, and the usual traps |
+| [Agent CLI](docs/how-to/agent-cli.md) | Driving Watchdog with `wd` or an agent, and the OpenAPI spec at `/api/v1/spec.json` |
+| [Product](docs/explanation/product.md) | What this is for, and what it refuses to build |
+| [Platform reference](docs/reference/platform/README.md) | Packages and import rules, jobs, oRPC, Caps, schemas |
+| [Web reference](docs/reference/web/README.md) | The UI, design system, domains, and data fetching |
+| [Glossary](GLOSSARY.md) | What a Case, Evidence, Proposal and Accept mean here |
+| [AGENTS.md](AGENTS.md) | Commands and conventions, including the rules coding agents break most |
+| [Security](SECURITY.md) | Supported versions and reporting a vulnerability |
 
 ## License
 
