@@ -1,7 +1,7 @@
 import { BulkAddMapStage } from "@/domains/entities/components/bulk-add-map-stage";
+import { useBulkAddIdentifiersImport } from "@/domains/entities/hooks/use-bulk-add-identifiers-import";
 import type { IdentifierPasteEntity } from "@/domains/entities/lib/parse-identifier-paste";
 import { isIdentifierPasteRowImportable } from "@/domains/entities/lib/parse-identifier-paste";
-import { useBulkAddIdentifiersImport } from "@/domains/entities/lib/use-bulk-add-identifiers-import";
 import { useBulkAddIdentifiersPaste } from "@/domains/entities/lib/use-bulk-add-identifiers-paste";
 import { errMessage } from "@/lib/utils";
 import {
