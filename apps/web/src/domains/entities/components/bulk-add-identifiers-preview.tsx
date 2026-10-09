@@ -1,6 +1,6 @@
 import { ArrowRightIcon, CircleAlertIcon, InfoIcon } from "lucide-react";
 
-import { parsePasteTarget } from "@/domains/entities/hooks/use-bulk-add-identifiers-paste";
+import { parsePasteTarget } from "@/domains/entities/lib/bulk-add-paste-state";
 import {
   identifierPasteColumnSamples,
   identifierPasteRowKey,

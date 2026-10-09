@@ -24,6 +24,8 @@ let result: LintResult;
 /** One violating import per file, each a different spelling. */
 const FAIL = {
   "alias.ts": 'import { a } from "@/domains/entities/lib/a";\nexport { a };\n',
+  "alias-dotdot.ts":
+    'import { a } from "@/shared/ui/../../domains/entities/types";\nexport { a };\n',
   "alias-type.ts":
     'import type { A } from "@/domains/entities/types";\nexport type X = A;\n',
   "alias-inline-type.ts":

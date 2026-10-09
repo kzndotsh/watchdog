@@ -30,7 +30,9 @@ export const webSrcPath = (filename) => {
  * @returns {string | null}
  */
 export const resolveWebSpecifier = (fileRel, specifier) => {
-  if (specifier.startsWith("@/")) return specifier.slice(2);
+  if (specifier.startsWith("@/")) {
+    return path.posix.normalize(specifier.slice(2));
+  }
   if (specifier.startsWith("./") || specifier.startsWith("../")) {
     return path.posix.join(path.posix.dirname(fileRel), specifier);
   }

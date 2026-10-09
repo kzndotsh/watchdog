@@ -89,6 +89,21 @@ const FAIL: Record<string, readonly [string, number]> = {
   "reexport-type.ts": [`export type { A } from "${FNS}";\n`, 1],
   "reexport-inline-type.ts": [`export { type A } from "${FNS}";\n`, 1],
   "reexport-type-all.ts": [`export type * from "${FNS}";\n`, 1],
+  "reexport-value.ts": [`export { fn } from "${FNS}";\n`, 1],
+  "reexport-all.ts": [`export * from "${FNS}";\n`, 1],
+  "reexport-aliased.ts": [`export { fn as other } from "${FNS}";\n`, 1],
+  "local-value-shadow.ts": [
+    `import { A } from "${FNS}";\nexport function f(a: A) {\n  const run = () => {\n    const A = 1;\n    return A;\n  };\n  return [a, run];\n}\n`,
+    1,
+  ],
+  "local-value-same-name.ts": [
+    `import type { A } from "${FNS}";\nexport const x: A = null as never;\nexport const other = () => {\n  const A = 1;\n  return A;\n};\n`,
+    1,
+  ],
+  "signature-key-same-name.ts": [
+    `import { A } from "${FNS}";\nexport interface I {\n  A: string;\n  load(): A;\n}\nexport interface J {\n  A(): void;\n}\n`,
+    1,
+  ],
   "import-type-expression.ts": [`export type X = import("${FNS}").A;\n`, 1],
 };
 
@@ -100,7 +115,6 @@ const OK: Record<string, string> = {
   "namespace-value-use.ts": `import * as F from "${FNS}";\nexport const x = F.fn();\nexport type X = F.A;\n`,
   "jsx-use.tsx": `import { Comp } from "${FNS}";\nexport const x = <Comp />;\n`,
   "export-value.ts": `import { fn } from "${FNS}";\nexport { fn };\n`,
-  "reexport-value.ts": `export { fn } from "${FNS}";\n`,
   "side-effect.ts": `import "${FNS}";\n`,
   "types-module.ts": `import type { A } from "@/domains/entities/edges/types";\nexport type X = A;\n`,
   "schemas.ts": `import type { A } from "@watchdog/schemas/graph";\nexport type X = A;\n`,
@@ -125,6 +139,8 @@ beforeAll(() => {
   fixture.write(`${SRC}/domains/dossier/lib/queries-helper.ts`, typeImport);
   fixture.write(`${SRC}/domains/dossier/lib/queries.test.ts`, typeImport);
   fixture.write(`${SRC}/routes/route.tsx`, typeImport);
+  fixture.write(`${SRC}/shared/queries.ts`, typeImport);
+  fixture.write(`${SRC}/shared/lib/helper.functions.ts`, typeImport);
   fixture.write(`${SRC}/shared/ui/primitive.tsx`, typeImport);
   fixture.write(`${SRC}/domains/dossier/hooks/use-x.ts`, typeImport);
   fixture.write(
@@ -175,6 +191,8 @@ describe("no types from *.functions modules (no-types-from-functions)", () => {
   it("applies to hooks, routes, shared/ui, lib files, tests-like names and every other web file", () => {
     expect(hits(`${SRC}/domains/dossier/hooks/use-x.ts`)).toHaveLength(1);
     expect(hits(`${SRC}/routes/route.tsx`)).toHaveLength(1);
+    expect(hits(`${SRC}/shared/queries.ts`)).toHaveLength(1);
+    expect(hits(`${SRC}/shared/lib/helper.functions.ts`)).toHaveLength(1);
     expect(hits(`${SRC}/shared/ui/primitive.tsx`)).toHaveLength(1);
     expect(hits(`${SRC}/domains/dossier/lib/queries-helper.ts`)).toHaveLength(
       1

@@ -482,9 +482,9 @@ export default defineConfig({
     {
       // A domain's own server-function and Query modules sit next to the RPC surface they wrap.
       files: [
-        "apps/web/src/**/*.functions.ts",
-        "apps/web/src/**/queries.ts",
-        "apps/web/src/**/*-queries.ts",
+        "apps/web/src/domains/**/*.functions.ts",
+        "apps/web/src/domains/**/queries.ts",
+        "apps/web/src/domains/**/*-queries.ts",
       ],
       rules: { "watchdog/no-types-from-functions": "off" },
     },

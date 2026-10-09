@@ -30,12 +30,13 @@ const typeHolderKey = (type) => {
  * reference or a value reference, and every `import("x.functions").T` type.
  * An identifier counts as a type reference only in a type-name position (`T`, `ns.T`,
  * `implements T`, `extends T`, `export type { T }`); `typeof fn` is a value reference.
- * Shadowing is not resolved, and errs toward silence: a same-named local counts as a
- * value use, and a binding with any value use is never reported.
+ * Only identifiers that resolve to an import binding count (`isImport`), so a same-named
+ * local value or type never changes what the import is used for.
  * @param {unknown} root
+ * @param {(name: string, node: unknown) => boolean} isImport true when `name`, seen from `node`, resolves to an import binding
  * @returns {Scan}
  */
-const scan = (root) => {
+const scan = (root, isImport) => {
   /** @type {Scan} */
   const out = { types: new Set(), values: new Set(), typeImports: [] };
   /**
@@ -55,7 +56,7 @@ const scan = (root) => {
       }
       case "Identifier":
       case "JSXIdentifier": {
-        if (typeof node.name === "string") {
+        if (typeof node.name === "string" && isImport(node.name, node)) {
           (inType ? out.types : out.values).add(node.name);
         }
         // `const x: T` / `(a: T)` hang the annotation off the binding identifier.
@@ -97,13 +98,45 @@ const scan = (root) => {
       const isName =
         NAME_KEYS.has(key) &&
         node.computed !== true &&
-        (node.type === "MemberExpression" || node.type === "Property");
+        (node.type === "MemberExpression" ||
+          node.type === "Property" ||
+          node.type === "TSPropertySignature" ||
+          node.type === "TSMethodSignature");
       if (isName) continue;
       walk(value, key === typeHolder, inQuery);
     }
   };
   walk(root, false, false);
   return out;
+};
+
+/** @param {string} name */
+const reexportMessage = (name) =>
+  `${name} is re-exported from a *.functions server-function module, which leaks its types past every import check: import the function where it is used and the type from @watchdog/schemas or the domain's types.ts (conventions: types are imported from schemas or types.ts, never from *.functions)`;
+
+/**
+ * @typedef {{ set: Map<string, { defs: { type?: string }[] }>, upper: Scope | null }} Scope
+ * @typedef {{ sourceCode?: { getScope?: (node: unknown) => Scope | null } }} ScopeContext
+ */
+
+/**
+ * True when `name`, seen from `node`, resolves to an import binding. Without scope
+ * support every name counts.
+ * @param {ScopeContext} context
+ * @param {string} name
+ * @param {unknown} node
+ */
+const isImport = (context, name, node) => {
+  const source = context.sourceCode;
+  if (typeof source?.getScope !== "function") return true;
+  /** @type {Scope | null | undefined} */
+  let scope = source.getScope(node);
+  while (scope) {
+    const variable = scope.set.get(name);
+    if (variable) return variable.defs[0]?.type === "ImportBinding";
+    scope = scope.upper;
+  }
+  return false;
 };
 
 /** @param {string} name */
@@ -122,8 +155,8 @@ const nameOf = (spec) => {
 
 /**
  * Bans importing a type (an `import type`, an inline `type` specifier, or a binding the
- * file only uses in type positions) from a `*.functions` module, plus `export type ...
- * from` and `import("x.functions").T`. Server-function modules own the RPC surface;
+ * file only uses in type positions) from a `*.functions` module, any re-export from
+ * one (`export { x } from`, `export * from`) and `import("x.functions").T`. Server-function modules own the RPC surface;
  * their types come from `@watchdog/schemas` or the domain `types.ts`. The domain's own
  * `*.functions.ts` and `queries.ts` / `*-queries.ts` are exempted in `oxlint.config.ts`.
  */
@@ -140,7 +173,9 @@ export const noTypesFromFunctions = {
     return {
       /** @param {{ body?: readonly unknown[] }} program */
       Program(program) {
-        const usage = scan(program);
+        const usage = scan(program, (name, node) =>
+          isImport(context, name, node)
+        );
         for (const stmt of program.body ?? []) {
           if (!isRecord(stmt)) continue;
           const source = literalString(stmt.source);
@@ -161,19 +196,17 @@ export const noTypesFromFunctions = {
               }
             }
           } else if (stmt.type === "ExportNamedDeclaration") {
+            // A re-export cannot tell a type from a value: it leaks the module's types.
             for (const spec of specifiers) {
-              if (
-                isRecord(spec) &&
-                (stmt.exportKind === "type" || spec.exportKind === "type")
-              ) {
-                context.report({ node: spec, message: message(nameOf(spec)) });
+              if (isRecord(spec)) {
+                context.report({
+                  node: spec,
+                  message: reexportMessage(nameOf(spec)),
+                });
               }
             }
-          } else if (
-            stmt.type === "ExportAllDeclaration" &&
-            stmt.exportKind === "type"
-          ) {
-            context.report({ node: stmt, message: message("*") });
+          } else if (stmt.type === "ExportAllDeclaration") {
+            context.report({ node: stmt, message: reexportMessage("*") });
           }
         }
         for (const node of usage.typeImports) {

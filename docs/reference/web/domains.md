@@ -46,8 +46,8 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | Predicate, confidence, and kind options come from `@watchdog/schemas` (labels from `shared/ui/vocab/`); don't re-export them through domain `types.ts` | `typecheck` for the unions; otherwise `guidance` |
 | Client code imports the `@watchdog/policy` subpaths (`@watchdog/policy/patch-needs-confidence`, `@watchdog/policy/confirmed-evidence`), never the `@watchdog/policy` barrel (Effect stays off the client) | `guidance` |
 | One noun is one product concern (no Cap run chrome under Triage); prefer `@/domains/{noun}/...` imports | `guidance` |
-| Types are imported from `@watchdog/schemas` or the domain `types.ts`, never from a `*.functions` module (the domain's own `*.functions.ts` and `queries.ts` are exempt) | `watchdog/no-types-from-functions` |
-| An import that leaves its `domains/<x>/` folder uses the `@/` alias, not `../../` hops | `watchdog/no-cross-domain-relative-imports` |
+| Types come from `@watchdog/schemas` or the domain `types.ts` | `guidance`; `watchdog/no-types-from-functions` enforces only the ban: no type imports from, or re-exports of, a `*.functions` module, except in `*.functions.ts`, `queries.ts` and `*-queries.ts` under `domains/` |
+| An import that leaves its `domains/<x>/` folder for another path under `src` uses the `@/` alias, not `../../` hops (relative paths resolving outside `src` are not checked) | `watchdog/no-cross-domain-relative-imports` |
 | `shared/ui` imports no domain code | `watchdog/shared-ui-no-domain-imports` |
 | No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` (baselined) |
 
