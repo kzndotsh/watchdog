@@ -5,10 +5,13 @@
  * is in docs/reference/platform/conventions.md.
  */
 import { effectTryRequiresCatch } from "./rules/effect-try-requires-catch.mjs";
+import { noBannedSurfaceName } from "./rules/no-banned-surface-name.mjs";
 import { noBrandCast } from "./rules/no-brand-cast.mjs";
 import { noCoreDbDynamicImport } from "./rules/no-core-db-dynamic-import.mjs";
 import { noCoreS3DynamicImport } from "./rules/no-core-s3-dynamic-import.mjs";
+import { noDecorativeClass } from "./rules/no-decorative-class.mjs";
 import { noEffectRunOutsideEdge } from "./rules/no-effect-run-outside-edge.mjs";
+import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
 
 export default {
@@ -20,5 +23,8 @@ export default {
     "no-untrusted-id-import": noUntrustedIdImport,
     "effect-try-requires-catch": effectTryRequiresCatch,
     "no-effect-run-outside-edge": noEffectRunOutsideEdge,
+    "no-decorative-class": noDecorativeClass,
+    "no-banned-surface-name": noBannedSurfaceName,
+    "no-opaque-id-slice": noOpaqueIdSlice,
   },
 };

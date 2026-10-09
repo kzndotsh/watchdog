@@ -424,6 +424,27 @@ export default defineConfig({
       },
     },
     {
+      // Web design-system bans (ported from the retired ds-ban-check.mjs; inventory in
+      // docs/reference/web/ui/rules.md). The decorative ban skips vendored primitives and
+      // the Better Auth UI shells; the id-slice ban is for domain screens only.
+      files: ["apps/web/src/**/*.{ts,tsx}"],
+      rules: {
+        "watchdog/no-decorative-class": "error",
+        "watchdog/no-banned-surface-name": "error",
+      },
+    },
+    {
+      files: ["apps/web/src/domains/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-opaque-id-slice": "error" },
+    },
+    {
+      files: [
+        "apps/web/src/shared/ui/primitives/**/*.{ts,tsx}",
+        "apps/web/src/auth/ui/**/*.{ts,tsx}",
+      ],
+      rules: { "watchdog/no-decorative-class": "off" },
+    },
+    {
       // Loading doctrine (docs/reference/web/ui/loading.md): pages own their pending surface
       // with PendingRegion + shape skeletons; the route-level shell is the router's floor.
       files: [

@@ -2,7 +2,7 @@
 
 > Scope: `apps/site` (inherits root [AGENTS.md](../../AGENTS.md) unless noted)
 
-Static Astro landing for Watchdog. No Case Graph, auth, API routes, or worker: it links out to the product app and docs. Imports from `@watchdog/db`, `@watchdog/core`, or `apps/web/src` are kept out by an empty dependency list, not by lint. Design tokens are copied (trimmed) from `apps/web/src/styles/wd-*`; there is no `ds:check` coupling. Copy comes from `README.md` and `docs/explanation/product.md` only.
+Static Astro landing for Watchdog. No Case Graph, auth, API routes, or worker: it links out to the product app and docs. Imports from `@watchdog/db`, `@watchdog/core`, or `apps/web/src` are kept out by an empty dependency list, not by lint. Design tokens are copied (trimmed) from `apps/web/src/styles/wd-*`; the web `watchdog/*` design-system lint rules do not apply here. Copy comes from `README.md` and `docs/explanation/product.md` only.
 
 ## Commands
 

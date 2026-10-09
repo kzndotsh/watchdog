@@ -164,14 +164,9 @@ pre-push:
     gate-tests:
       glob:
         - "scripts/**"
-        - "apps/web/scripts/**"
         - "packages/db/scripts/**"
         - "lefthook.yml"
         - ".github/workflows/**"
         - "skills-lock.json"
         - "vitest.config.ts"
       run: pnpm test:gate
-    web-ds:
-      root: apps/web/
-      glob: "apps/web/**"
-      run: pnpm ds:check

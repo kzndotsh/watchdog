@@ -174,23 +174,6 @@ function main() {
       f.includes("docs/explanation/ux.md") ||
       f.includes("AGENTS.md")
   );
-  const dsBanScript = path.join(root, "apps/web/scripts/ds-ban-check.mjs");
-  if (webUiChanged && existsSync(dsBanScript)) {
-    const ban = spawnSync(process.execPath, [dsBanScript], {
-      cwd: path.join(root, "apps/web"),
-      encoding: "utf8",
-    });
-    if (ban.status !== 0) {
-      parts.push(
-        "`pnpm --filter @watchdog/web ds:check` failed after web UI edits. Read `docs/reference/web/ui/rules.md` and `docs/explanation/ux.md`, fix the violation, then stop.",
-        "",
-        "```",
-        clip(formatSpawn(ban)),
-        "```"
-      );
-    }
-  }
-
   const agentsMdChanged = files.some((f) => f.endsWith("AGENTS.md"));
   if (agentsMdChanged) {
     const res = spawnSync(
