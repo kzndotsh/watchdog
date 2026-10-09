@@ -13,10 +13,9 @@ import {
   createIdentifierFn,
   updateIdentifierFn,
 } from "@/domains/entities/identifiers/identifiers.functions";
-import type { IdentifierRecord } from "@/domains/entities/identifiers/identifiers.functions";
 import { identifiersListQuery } from "@/domains/entities/identifiers/queries";
+import type { IdentifierRecord } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
-import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
@@ -45,6 +44,7 @@ import {
   identifierCreateCanSubmit,
   useIdentifierCreateForm,
 } from "@/shared/ui/identifiers/identifier-composer";
+import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { toast } from "@/shared/ui/toast";

@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useEffect, useMemo, type SubmitEvent } from "react";
 
 import type { EvidenceOption } from "@/domains/dossier/types";
-import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
+import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { FieldCombobox } from "@/shared/ui/field-combobox";

@@ -1,4 +1,4 @@
-import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
+import type { EdgeRecord } from "@/domains/entities/edges/types";
 import {
   confidenceStroke,
   type GraphEdge,

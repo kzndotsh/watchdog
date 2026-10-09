@@ -29,7 +29,7 @@ domains/{noun}/
 
 Naming: `*.functions` are things you call across the network (RPC, not "client code"); `*.server` must never ship to the browser; `*.client` is wrong for server functions (they run on the server during SSR and loaders).
 
-**`lib/` vs `hooks/` is guidance, not a rule.** The intent: pure helpers in `lib/`, React hooks in `hooks/`. Nothing enforces it and four hooks already sit elsewhere (`entities/lib/use-bulk-add-identifiers-{paste,import}.ts`, `organization/lib/use-slug-availability.ts`, `tasks/components/use-task-form-dialog.ts`); move them when you touch them rather than copying the pattern. Cross-domain plumbing hooks live in `shared/hooks/` (`use-activity-stream`); UI-kit hooks sit beside their atom.
+**`lib/` holds no hooks** (`watchdog/no-hooks-in-lib`): pure helpers in `lib/`, React hooks in `hooks/`. Hooks sit in the domain's `hooks/` folder, cross-domain plumbing hooks in `shared/hooks/` (`use-activity-stream`, `use-global-hotkeys`), UI-kit hooks beside their atom. `shared/lib` still holds five hooks in four files that mix pure helpers with a hook (`data-hotkey.ts`, `display-scale.ts`, `palette-commands.ts`, `queue-keyboard.ts`); the rule baselines them (`scripts/oxlint-plugin/baselines/no-hooks-in-lib.json`): split the hook out to `shared/hooks/` when you touch one, and the baseline shrinks. `tasks/components/use-task-form-dialog.ts` is a hook in `components/`, outside the rule.
 
 Graph children live in `domains/entities/{claims,identifiers,edges,events,questions}/`, each with `types.ts` and its own `*.functions.ts`. Dossier chrome stays under `dossier/components/` and has no `dossier.functions.ts`. Connection create/update payloads come only from `entities/lib/edge-write.ts` (`buildCreateEdgeData` / `buildUpdateEdgeData`), used by both the Entities table and the Dossier.
 
@@ -46,6 +46,10 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | Predicate, confidence, and kind options come from `@watchdog/schemas` (labels from `shared/ui/vocab/`); don't re-export them through domain `types.ts` | `typecheck` for the unions; otherwise `guidance` |
 | Client code imports the `@watchdog/policy` subpaths (`@watchdog/policy/patch-needs-confidence`, `@watchdog/policy/confirmed-evidence`), never the `@watchdog/policy` barrel (Effect stays off the client) | `guidance` |
 | One noun is one product concern (no Cap run chrome under Triage); prefer `@/domains/{noun}/...` imports | `guidance` |
+| Types are imported from `@watchdog/schemas` or the domain `types.ts`, never from a `*.functions` module (the domain's own `*.functions.ts` and `queries.ts` are exempt) | `watchdog/no-types-from-functions` |
+| An import that leaves its `domains/<x>/` folder uses the `@/` alias, not `../../` hops | `watchdog/no-cross-domain-relative-imports` |
+| `shared/ui` imports no domain code | `watchdog/shared-ui-no-domain-imports` |
+| No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` (baselined) |
 
 ## Map
 
@@ -89,7 +93,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | Entity picker | `EntityCombobox`: the parent passes options (no I/O in the combobox). The Dossier Evidence dump locks the Entity (`DumpDialogs entityLocked`, `useDumpEvidence`) |
 | Evidence options in Dossier or Triage | Parent loads the full Case list (`evidenceListQuery(caseId)`) and passes `readonly EvidenceOption[]`; composers use `EvidencePicker`, Job-linked cites use `EvidenceCiteChips` |
 | Workspaces | `useJobsWorkspace`, `useTriageWorkspace`, `useTaskWorkspace`, `useIntakeActions` own selection, queries, mutations, and SSE for their surface. Don't fork a second mutation machine for the same noun. |
-| Row and node menus | Pure `AppAction[]` factories (`entities/lib/entity-row-actions.ts`, `identifier-row-actions.ts`, `cases/lib/case-card-actions.ts`, `tasks/lib/task-card-actions.ts`, `dossier/lib/*-row-actions.ts`) feed both the actions menu and the row ContextMenu. Target actions only; chrome lives on the inset |
+| Row and node menus | Pure `AppAction[]` factories (`entities/lib/entity-row-actions.ts`, `shared/ui/identifiers/identifier-row-actions.ts` (shared by the Identifiers page and the Dossier tab), `cases/lib/case-card-actions.ts`, `tasks/lib/task-card-actions.ts`, `dossier/lib/*-row-actions.ts`) feed both the actions menu and the row ContextMenu. Target actions only; chrome lives on the inset |
 | Bulk-add identifiers | `entities/lib/parse-identifier-paste.ts` is the parse API; row errors come from schemas `validateIdentifierWrite` (don't fork a second regex set). One `useMutation` loops `createIdentifierFn`; Dossier locks the Entity |
 | Palette, hotkeys, context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts`. `SearchChrome` registers Mod+K and `?`; Mod+B belongs to the vendored `SidebarProvider` ([`atoms.md`](ui/atoms.md#keyboard)) |
 | Triage Accept | Policy lives in core and [`custody`](../contracts/custody.md); UX-only rules in [`ux.md`](../../explanation/ux.md#triage-accept-ux-only-rules). The Accept gate uses `shared/lib/confirmed-evidence.ts` |

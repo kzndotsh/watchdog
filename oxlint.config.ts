@@ -463,6 +463,43 @@ export default defineConfig({
       rules: { "watchdog/no-decorative-class": "off" },
     },
     {
+      // Web layering (docs/reference/web/domains.md, conventions table "Web" rows).
+      files: ["apps/web/src/shared/ui/**/*.{ts,tsx}"],
+      rules: { "watchdog/shared-ui-no-domain-imports": "error" },
+    },
+    {
+      files: ["apps/web/src/**/lib/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-hooks-in-lib": "error" },
+    },
+    {
+      files: ["apps/web/src/domains/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-cross-domain-relative-imports": "error" },
+    },
+    {
+      files: ["apps/web/src/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-types-from-functions": "error" },
+    },
+    {
+      // A domain's own server-function and Query modules sit next to the RPC surface they wrap.
+      files: [
+        "apps/web/src/**/*.functions.ts",
+        "apps/web/src/**/queries.ts",
+        "apps/web/src/**/*-queries.ts",
+      ],
+      rules: { "watchdog/no-types-from-functions": "off" },
+    },
+    {
+      // Tests may build hooks as helpers, and a shared/ui test may compose a domain factory.
+      files: [
+        "apps/web/src/**/__tests__/**/*.{ts,tsx}",
+        "apps/web/src/**/*.{test,spec}.{ts,tsx}",
+      ],
+      rules: {
+        "watchdog/no-hooks-in-lib": "off",
+        "watchdog/shared-ui-no-domain-imports": "off",
+      },
+    },
+    {
       // Loading doctrine (docs/reference/web/ui/loading.md): pages own their pending surface
       // with PendingRegion + shape skeletons; the route-level shell is the router's floor.
       files: [

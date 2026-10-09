@@ -7,13 +7,6 @@ import type {
 } from "@tanstack/react-table";
 
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import {
-  tryCommitIdentifierPlatform,
-  tryCommitIdentifierType,
-  tryCommitIdentifierValue,
-} from "@/domains/entities/lib/commit-identifier-field";
-import { entityMatchesQuery } from "@/domains/entities/lib/entity-options";
-import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import {
   DataTableColumnHeader,
@@ -22,6 +15,12 @@ import {
   EditableTextCell,
 } from "@/shared/ui/data-table";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import { entityMatchesQuery } from "@/shared/ui/entity-match";
+import {
+  tryCommitIdentifierPlatform,
+  tryCommitIdentifierType,
+  tryCommitIdentifierValue,
+} from "@/shared/ui/identifiers/commit-identifier-field";
 import {
   IdentifierValueCopyControl,
   PLATFORM_OPTIONS,
@@ -31,6 +30,7 @@ import {
 } from "@/shared/ui/identifiers/identifier-cells";
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
+import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { toast } from "@/shared/ui/toast";

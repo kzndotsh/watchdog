@@ -12,7 +12,6 @@ import type {
   CreateEntityConnectionInput,
   UpdateEntityConnectionInput,
 } from "@/domains/entities/lib/edge-write";
-import { entityMatchesQuery } from "@/domains/entities/lib/entity-options";
 import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
 import type { EntityRecord } from "@/domains/entities/types";
 import {
@@ -22,6 +21,7 @@ import {
 } from "@/shared/ui/data-table";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
+import { entityMatchesQuery } from "@/shared/ui/entity-match";
 import { NotesIconCell } from "@/shared/ui/identifiers/identifier-notes-cell";
 import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";

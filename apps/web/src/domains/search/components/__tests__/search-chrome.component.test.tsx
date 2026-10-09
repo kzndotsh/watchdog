@@ -16,7 +16,7 @@ vi.mock("@/domains/search/components/shortcuts-dialog", () => ({
     open ? <div data-testid="shortcuts-open">Shortcuts</div> : null,
 }));
 
-vi.mock("@/shared/lib/use-global-hotkeys", () => ({
+vi.mock("@/shared/hooks/use-global-hotkeys", () => ({
   useGlobalHotkeys: (...args: unknown[]) => useGlobalHotkeysMock(...args),
 }));
 

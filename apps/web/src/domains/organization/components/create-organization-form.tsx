@@ -5,7 +5,7 @@ import { useRef, useState, type SubmitEvent } from "react";
 import { authClient } from "@/auth/client";
 import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
 import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
-import { useSlugAvailability } from "@/domains/organization/lib/use-slug-availability";
+import { useSlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
 import { errMessage, nextAutoSlug, slugifyName } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { FieldMessage } from "@/shared/ui/field-message";
