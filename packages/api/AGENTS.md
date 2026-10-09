@@ -23,6 +23,7 @@ oRPC procedures + OpenAPI contract for `/api/v1`. Procedures call `@watchdog/cor
 | Case-id inputs use the brand schemas (`trimmedCaseIdSchema` in the shared input schemas, `optionalCaseIdSchema` for optional ones), so the id is a `CaseId` once parsed; output schemas (`schemas.ts`) use `caseIdSchema` for Case ids too, so oRPC clients, web server functions and the CLI infer `CaseId` from `z.output` (ADR-0003: no re-parse at the edge, `.brand()` is type-only). `z.input` stays a plain string, so the OpenAPI contract and `packages/client/src/generated` are unchanged. Procedures pass `context.actor.organizationId` (an `OrganizationId`) and `input.caseId` straight to core | `pnpm typecheck` |
 | Name nested wire objects in `schemas.ts` (e.g. `identifierCollisionSchema`); no anonymous inline Zod on the wire. Do not leak DB rows or drizzle types | guidance |
 | Credentials procedures expose vault **slots** only, never plaintext | guidance |
+| Procedures in `src/procedures/` are built from `authed` (or `graphChildWrite`); the public builder `pub` (or a raw `os`) needs an adjacent `// public: <reason>` comment (only `health` has one) | `watchdog/procedure-must-be-guarded` (`oxlint.config.ts`) |
 
 ## Gotchas
 
