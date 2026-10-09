@@ -1,7 +1,7 @@
 import { isRecord, typeNameOf } from "../lib/ast.mjs";
 
 /**
- * @typedef {{ loc: { start: { line: number }, end: { line: number } }, value: string }} Comment
+ * @typedef {{ loc: { start: { line: number, column: number }, end: { line: number } }, value: string }} Comment
  * @typedef {{
  *   type: string,
  *   name: string,
@@ -18,10 +18,13 @@ import { isRecord, typeNameOf } from "../lib/ast.mjs";
  *   object?: unknown,
  *   computed?: boolean,
  *   shorthand?: boolean,
+ *   id?: Node,
+ *   init?: Node,
+ *   properties?: readonly Node[],
  * }} Node
  * @typedef {{
  *   report: (diagnostic: { node: unknown, message: string }) => void,
- *   sourceCode: { getAllComments: () => readonly Comment[] },
+ *   sourceCode: { getAllComments: () => readonly Comment[], text: string },
  * }} RuleContext
  */
 
@@ -39,6 +42,31 @@ const FIX =
   "build the procedure from `authed` (or `graphChildWrite`), or justify a public one with an adjacent `// public: <reason>` comment directly above its statement (conventions: API procedures are guarded unless justified public)";
 
 /**
+ * Name read by a member access: `a.pub` or `a["pub"]`.
+ * @param {Node} node
+ * @returns {string | null}
+ */
+const accessedName = (node) => {
+  const { property } = node;
+  if (!node.computed) return typeNameOf(property);
+  return isRecord(property) &&
+    property.type === "Literal" &&
+    typeof property.value === "string"
+    ? property.value
+    : null;
+};
+
+/**
+ * Name of a destructured property key: `{ pub }`, `{ "pub": p }`.
+ * @param {unknown} key
+ * @returns {string | null}
+ */
+const keyName = (key) =>
+  isRecord(key) && key.type === "Literal" && typeof key.value === "string"
+    ? key.value
+    : typeNameOf(key);
+
+/**
  * Walk up to the statement that sits directly under Program.
  * @param {Node} node
  * @returns {Node}
@@ -53,11 +81,12 @@ const topLevelStatement = (node) => {
 
 /**
  * Every API procedure is built from the authenticated builder. The public builder
- * `pub` (imported, aliased, namespaced, re-exported or wrapped in a helper) and a raw
- * `os` from `@orpc/server` build unguarded procedures, so each use needs a
- * `// public: <reason>` comment on the line(s) directly above its top-level statement
- * (or on the same line). Scoped to `packages/api/src/procedures` (not its tests) in
- * `oxlint.config.ts`.
+ * `pub` (imported, aliased, namespaced, destructured, re-exported or wrapped in a
+ * helper) and a raw `os` from `@orpc/server` build unguarded procedures, so each use
+ * needs a `// public: <reason>` comment on the line(s) directly above its top-level
+ * statement (or on the same line). Scoped to `packages/api/src/procedures` (not its
+ * tests) in `oxlint.config.ts`. Matching is by name, not scope: a local also called
+ * `pub` in a file that imports the builder is reported too (rename it).
  */
 export const procedureMustBeGuarded = {
   meta: {
@@ -69,11 +98,27 @@ export const procedureMustBeGuarded = {
   },
   /** @param {RuleContext} context */
   create(context) {
-    /** Local names bound to the public builder (`pub`), and namespace imports of the builders module. */
+    /** Local names bound to the public builder (`pub`). */
     const pubNames = new Set();
-    const namespaces = new Set();
+    /**
+     * Local namespace name -> the builder it exposes: pub (builders module) or os (@orpc/server).
+     * @type {Map<string, "pub" | "os">}
+     */
+    const namespaces = new Map();
     /** @type {readonly Comment[] | null} */
     let comments = null;
+    /** @type {string[] | null} */
+    let lines = null;
+
+    /** @param {Comment} c */
+    const isTrailing = (c) => {
+      lines ??= context.sourceCode.text.split("\n");
+      const before = (lines[c.loc.start.line - 1] ?? "").slice(
+        0,
+        c.loc.start.column
+      );
+      return before.trim() !== "";
+    };
 
     /** @param {Node} statement */
     const isJustified = (statement) => {
@@ -93,10 +138,11 @@ export const procedureMustBeGuarded = {
       ) {
         return true;
       }
-      // Contiguous comment lines directly above; a blank line breaks adjacency.
+      // Contiguous comment lines directly above; a blank line breaks adjacency, and a
+      // comment trailing the previous statement belongs to that statement.
       let needed = startLine - 1;
       for (const c of sorted) {
-        if (c.loc.end.line !== needed) continue;
+        if (c.loc.end.line !== needed || isTrailing(c)) continue;
         if (JUSTIFICATION.test(c.value)) return true;
         needed = c.loc.start.line - 1;
       }
@@ -122,7 +168,9 @@ export const procedureMustBeGuarded = {
         if (typeof source !== "string" || node.importKind === "type") return;
         if (source === "@orpc/server") {
           for (const spec of node.specifiers ?? []) {
-            if (
+            if (spec.type === "ImportNamespaceSpecifier") {
+              namespaces.set(typeNameOf(spec.local) ?? "", "os");
+            } else if (
               spec.type === "ImportSpecifier" &&
               spec.importKind !== "type" &&
               typeNameOf(spec.imported) === "os"
@@ -135,10 +183,12 @@ export const procedureMustBeGuarded = {
         if (!OS_MODULE.test(source)) return;
         for (const spec of node.specifiers ?? []) {
           if (spec.importKind === "type") continue;
+          const local = typeNameOf(spec.local);
+          if (local === null) continue;
           if (spec.type === "ImportNamespaceSpecifier") {
-            namespaces.add(spec.local.name);
+            namespaces.set(local, "pub");
           } else if (typeNameOf(spec.imported) === "pub") {
-            pubNames.add(spec.local.name);
+            pubNames.add(local);
           }
         }
       },
@@ -189,15 +239,35 @@ export const procedureMustBeGuarded = {
       },
       /** @param {Node} node */
       MemberExpression(node) {
-        const { object, property } = node;
-        if (
-          isRecord(object) &&
-          object.type === "Identifier" &&
-          namespaces.has(object.name) &&
-          !node.computed &&
-          typeNameOf(property) === "pub"
-        ) {
-          flag(node, "`pub` (the public builder)");
+        const { object } = node;
+        if (!isRecord(object) || object.type !== "Identifier") return;
+        const wanted = namespaces.get(object.name);
+        if (wanted !== undefined && accessedName(node) === wanted) {
+          flag(
+            node,
+            wanted === "pub"
+              ? "`pub` (the public builder)"
+              : "The raw `os` builder from @orpc/server"
+          );
+        }
+      },
+      /** @param {Node} node */
+      VariableDeclarator(node) {
+        const { id, init } = node;
+        if (init?.type !== "Identifier" || id?.type !== "ObjectPattern") {
+          return;
+        }
+        const wanted = namespaces.get(init.name);
+        if (wanted === undefined) return;
+        for (const prop of id.properties ?? []) {
+          if (prop.type === "Property" && keyName(prop.key) === wanted) {
+            flag(
+              prop,
+              wanted === "pub"
+                ? "Destructuring `pub` (the public builder)"
+                : "Destructuring the raw `os` builder"
+            );
+          }
         }
       },
     };

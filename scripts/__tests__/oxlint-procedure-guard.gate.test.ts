@@ -41,6 +41,15 @@ const FAIL_CASES = {
   "pub-barrel-reexport": 'export { pub } from "../index";\n',
   "orpc-os-direct":
     'import { os } from "@orpc/server";\n\nexport const a = os.handler(() => 1);\n',
+  "pub-namespace-computed":
+    'import * as os from "../os";\n\nexport const a = os["pub"].handler(() => 1);\n',
+  "pub-namespace-destructured":
+    'import * as os from "../os";\n\nconst { pub } = os;\nexport const a = pub.handler(() => 1);\n',
+  "pub-second-trailing": `${OS_PUB}export const a = pub.handler(() => 1); // public: uptime probes\nexport const b = pub.handler(() => 2);\n`,
+  "orpc-namespace":
+    'import * as server from "@orpc/server";\n\nexport const a = server.os.handler(() => 1);\n',
+  "orpc-namespace-destructured":
+    'import * as server from "@orpc/server";\n\nconst { os } = server;\nexport const a = os.handler(() => 1);\n',
   "orpc-os-aliased":
     'import { os as builder } from "@orpc/server";\n\nexport const a = builder.handler(() => 1);\n',
 } as const;
@@ -68,6 +77,8 @@ const PASS_CASES = {
     'import { pub } from "../schemas";\nimport { pub as p2 } from "@watchdog/schemas";\n\nexport const a = [pub, p2];\n',
   "helper-file":
     'import { resolveAuthMethod } from "../os";\n\nexport const kind = resolveAuthMethod;\n',
+  "orpc-namespace-other":
+    'import * as server from "@orpc/server";\n\nexport const a = server.ORPCError;\n',
   "plain-file": "export const LIMIT = 50;\n",
   "pub-named-property":
     "export const a = { pub: 1 };\nexport const b = a.pub;\n",
