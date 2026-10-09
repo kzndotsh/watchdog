@@ -59,6 +59,48 @@ const effecttsgoTier1Warn = {
 } as const;
 
 /**
+ * Effect edge conventions (formerly `scripts/check-effect-edges.mjs`): production source
+ * of these roots may not start an Effect (`watchdog/no-effect-run-outside-edge`), must give
+ * `Effect.try` / `tryPromise` its own `{ try, catch }` (`watchdog/effect-try-requires-catch`),
+ * and may not return `unknown` from a catch or run an Effect inside one
+ * (`effecttsgo/unknown-in-effect-catch`, `effecttsgo/run-effect-inside-effect`).
+ */
+const effectEdgeRoots = [
+  "packages/core/src/**/*.{ts,tsx}",
+  "packages/api/src/**/*.{ts,tsx}",
+  "packages/tools/src/**/*.{ts,tsx}",
+  "packages/policy/src/**/*.{ts,tsx}",
+  "packages/caps/src/**/*.{ts,tsx}",
+  "packages/ai/src/**/*.{ts,tsx}",
+  "packages/db/src/**/*.{ts,tsx}",
+  "packages/log/src/**/*.{ts,tsx}",
+  "apps/cli/src/**/*.{ts,tsx}",
+  "apps/worker/src/**/*.{ts,tsx}",
+  "apps/web/src/**/*.{ts,tsx}",
+];
+
+/** Tests start Effects freely: `__tests__` trees and `*.test.*` files. */
+const effectEdgeTests = ["**/__tests__/**", "**/*.test.{ts,tsx}"];
+
+/**
+ * The sanctioned `Effect.run*` edges: the allowlist. A new production edge is added here
+ * with its reason in the nearest AGENTS.md.
+ */
+const effectRunEdges = [
+  // Process: the API ManagedRuntime and `runApp`.
+  "packages/api/src/runtime.ts",
+  // Process: the worker boot (`NodeRuntime.runMain`).
+  "apps/worker/src/boot-worker.ts",
+  // `runDomain`, the test and script bridge for core programs.
+  "packages/core/src/infra/run-domain.ts",
+  // `transact`: the driver's transaction API is promise-based, so the body runs
+  // through `runPromiseExitWith` (caller services, abort signal) at this one edge.
+  "packages/core/src/infra/postgres-tx.ts",
+  // `runCap`, the Promise edge for Cap `run()` tests.
+  "packages/caps/src/sdk/run.ts",
+];
+
+/**
  * Same-name Watchdog wrappers over shadcn primitives (apps/web/src/shared/ui/primitives).
  * Their vanilla `@watchdog/ui/components/<name>` path is banned in app code so nobody
  * silently skips the wrapper; the list follows the folder, so adding a wrapper bans its twin.
@@ -538,6 +580,32 @@ export default defineConfig({
         "packages/core/src/**/*.{test,spec,int.test}.{ts,tsx}",
       ],
       rules: effecttsgoOff,
+    },
+    {
+      // Effect edge conventions over the old gate's roots (see `effectEdgeRoots`).
+      files: effectEdgeRoots,
+      rules: {
+        "watchdog/no-effect-run-outside-edge": "error",
+        "watchdog/effect-try-requires-catch": "error",
+        "effecttsgo/unknown-in-effect-catch": "error",
+        "effecttsgo/run-effect-inside-effect": "error",
+      },
+    },
+    {
+      files: effectRunEdges,
+      rules: {
+        "watchdog/no-effect-run-outside-edge": "off",
+        "effecttsgo/run-effect-inside-effect": "off",
+      },
+    },
+    {
+      files: effectEdgeTests,
+      rules: {
+        "watchdog/no-effect-run-outside-edge": "off",
+        "watchdog/effect-try-requires-catch": "off",
+        "effecttsgo/unknown-in-effect-catch": "off",
+        "effecttsgo/run-effect-inside-effect": "off",
+      },
     },
     {
       // ADR-0002 phase 2: core reaches the database through the `Db` service

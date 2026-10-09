@@ -63,17 +63,6 @@ pre-commit:
         - "apps/web/src/styles/wd-*.css"
         - "scripts/check-design-tokens.mjs"
       run: pnpm check:design-tokens
-    effect-edges:
-      glob:
-        - "packages/**/*.ts"
-        - "apps/**/*.ts"
-        - "apps/**/*.tsx"
-        - "scripts/check-effect-edges.mjs"
-      exclude:
-        - "**/__tests__/**"
-        - "**/*.test.ts"
-        - "**/*.test.tsx"
-      run: pnpm check:effect-edges:strict
     tagged-errors:
       glob:
         - "packages/**/*.ts"
