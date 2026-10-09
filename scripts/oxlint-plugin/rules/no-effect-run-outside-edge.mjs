@@ -2,7 +2,7 @@ import { isRecord } from "../lib/ast.mjs";
 import { createEffectResolver } from "../lib/effect-calls.mjs";
 
 /**
- * @typedef {{ report: (diagnostic: { node: unknown, message: string }) => void }} RuleContext
+ * @typedef {{ report: (diagnostic: { node: unknown, message: string }) => void } & import("../lib/effect-calls.mjs").ScopeContext} RuleContext
  */
 
 /** `Effect.run*` entry points that start an Effect from plain code. */
@@ -55,7 +55,7 @@ export const noEffectRunOutsideEdge = {
   },
   /** @param {RuleContext} context */
   create(context) {
-    const effect = createEffectResolver();
+    const effect = createEffectResolver(context);
     /** @param {{ callee: unknown }} node */
     const check = (node) => {
       const name = effect.calleeName(node.callee);
@@ -72,9 +72,9 @@ export const noEffectRunOutsideEdge = {
       });
     };
     return {
-      /** @param {{ specifiers?: readonly unknown[] }} node */
-      ImportDeclaration(node) {
-        effect.record(node);
+      /** @param {{ body?: readonly unknown[] }} node */
+      Program(node) {
+        effect.init(node);
       },
       CallExpression: check,
     };

@@ -29,6 +29,10 @@ const RUN_FAIL = {
   "run-callback": `${IMPORT}export const a = () => Effect.runCallback(Effect.void);\n`,
   "run-promise-with": `${IMPORT}export const a = (c: never) => Effect.runPromiseWith(c)(Effect.void);\n`,
   "run-promise-exit-with": `${IMPORT}export const a = (c: never) => Effect.runPromiseExitWith(c)(Effect.void);\n`,
+  "computed-literal": `${IMPORT}export const a = () => Effect["runPromise"](Effect.void);\n`,
+  "computed-template": `${IMPORT}export const a = () => Effect[\`runSync\`](Effect.void);\n`,
+  "import-after-call": `export const a = () => E.runPromise(E.void);\nimport { Effect as E } from "effect";\n`,
+  "named-import-after-call": `export const a = () => go(1 as never);\nimport { runFork as go } from "effect/Effect";\n`,
   "app-runtime": `export const a = (appRuntime: { runPromise: (e: unknown) => unknown }) => appRuntime.runPromise(1);\n`,
   "aliased-namespace": `import { Effect as E } from "effect";\nexport const a = () => E.runPromise(E.void);\n`,
   "namespace-import": `import * as E from "effect/Effect";\nexport const a = () => E.runSync(E.void);\n`,
@@ -41,6 +45,10 @@ const RUN_PASS = {
   string: `export const a = "Effect.runPromise(program)";\n`,
   "other-effect-call": `${IMPORT}export const a = Effect.succeed(1);\n`,
   "other-object-run-promise": `export const a = (queue: { runPromise: () => void }) => queue.runPromise();\n`,
+  "shadowed-parameter": `${IMPORT}export const a = (Effect: { runPromise: (x: unknown) => void }) => Effect.runPromise(1);\nexport const b = Effect.void;\n`,
+  "shadowed-local": `export const a = () => {\n  const Effect = { runSync: (x: unknown) => x };\n  return Effect.runSync(1);\n};\n`,
+  "shadowed-named-import": `import { runPromise } from "effect/Effect";\nexport const a = (runPromise: () => void) => runPromise();\nexport const b = runPromise;\n`,
+  "computed-dynamic": `${IMPORT}export const a = (k: "runPromise") => Effect[k](Effect.void);\n`,
   "run-named-non-effect": `export const a = (m: { runSync: () => void }) => m.runSync();\n`,
 } as const;
 
@@ -50,6 +58,9 @@ const TRY_FAIL = {
   "object-without-catch": `${IMPORT}export const a = Effect.tryPromise({ try: () => fetch("x") });\n`,
   "options-by-reference": `${IMPORT}const options = { try: () => fetch("x"), catch: (e: unknown) => e };\nexport const a = Effect.tryPromise(options);\n`,
   "aliased-namespace": `import { Effect as E } from "effect";\nexport const a = E.try(() => 1);\n`,
+  "computed-literal": `${IMPORT}export const a = Effect["tryPromise"](() => fetch("x"));\n`,
+  "spread-only-options": `${IMPORT}declare const base: { catch: () => Error };\nexport const a = Effect.try({ try: () => 1, ...base });\n`,
+  "import-after-call": `export const a = E.try(() => 1);\nimport { Effect as E } from "effect";\n`,
   "named-import": `import { tryPromise } from "effect/Effect";\nexport const a = tryPromise(() => fetch("x"));\n`,
   // The old script accepted this: a `catch:` appears within 200 lines, but it belongs to
   // the next call, not to the bare tryPromise above it.
@@ -76,6 +87,7 @@ const TRY_PASS = {
   "try-promise-with-catch": `${IMPORT}class LoadError extends Error {}\nexport const a = Effect.tryPromise({\n  try: () => fetch("x"),\n  catch: (cause) => new LoadError(String(cause)),\n});\n`,
   "try-with-catch": `${IMPORT}class ParseError extends Error {}\nexport const a = Effect.try({\n  try: () => JSON.parse("{}"),\n  catch: (cause) => new ParseError(String(cause)),\n});\n`,
   "quoted-catch-key": `${IMPORT}export const a = Effect.try({\n  try: () => 1,\n  "catch": () => new Error("x"),\n});\n`,
+  "shadowed-parameter": `${IMPORT}export const a = (Effect: { try: (f: () => void) => void }) => Effect.try(() => {});\nexport const b = Effect.void;\n`,
   "other-try-call": `export const a = (x: { try: (f: () => void) => void }) => x.try(() => {});\n`,
   "comment-only": `${IMPORT}// Effect.tryPromise(() => fetch("x")) in a comment\nexport const a = Effect.void;\n`,
 } as const;
@@ -97,6 +109,9 @@ const OUT_OF_SCOPE = [
   "packages/test-kit/src/probe.ts",
   "scripts/probe.ts",
 ] as const;
+
+/** A sanctioned edge: runs an Effect and keeps its tryPromise valid. */
+const SANCTIONED_SOURCE = `${IMPORT}export const a = () => Effect.runPromise(Effect.void);\nexport const b = Effect.tryPromise({\n  try: () => fetch("x"),\n  catch: (cause) => new Error(String(cause)),\n});\n`;
 
 const EDGE_SOURCE = `${IMPORT}export const a = () => Effect.runPromise(Effect.void);\nexport const b = Effect.tryPromise(() => fetch("x"));\n`;
 
@@ -146,7 +161,10 @@ beforeAll(() => {
   for (const [name, src] of Object.entries({ ...TRY_FAIL, ...TRY_PASS })) {
     fixture.write(`${PROBE}/try/${name}.ts`, src);
   }
-  for (const file of [...SANCTIONED, ...OUT_OF_SCOPE]) {
+  for (const file of SANCTIONED) {
+    fixture.write(file, SANCTIONED_SOURCE);
+  }
+  for (const file of OUT_OF_SCOPE) {
     fixture.write(file, EDGE_SOURCE);
   }
   for (const root of ROOTS) {
@@ -174,6 +192,7 @@ describe("Effect run* edge ban (oxlint.config.ts)", () => {
   });
   it.each(SANCTIONED)("allows the sanctioned edge %s", (file) => {
     expect(hitsFor(file, RUN)).toHaveLength(0);
+    expect(hitsFor(file, TRY)).toHaveLength(0);
   });
   it.each(ROOTS)("covers the old root %s", (root) => {
     expect(hitsFor(`${root}/edge-probe.ts`, RUN)).toHaveLength(1);

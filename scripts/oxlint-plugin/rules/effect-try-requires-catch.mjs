@@ -2,14 +2,14 @@ import { isRecord } from "../lib/ast.mjs";
 import { createEffectResolver } from "../lib/effect-calls.mjs";
 
 /**
- * @typedef {{ report: (diagnostic: { node: unknown, message: string }) => void }} RuleContext
+ * @typedef {{ report: (diagnostic: { node: unknown, message: string }) => void } & import("../lib/effect-calls.mjs").ScopeContext} RuleContext
  */
 
 const TRY_FUNCTIONS = new Set(["try", "tryPromise"]);
 
 /**
- * True when `arg` is an inline object literal that names a `catch` handler (or spreads
- * something that may, which cannot be judged statically and is not guessed at).
+ * True when `arg` is an inline object literal with a direct `catch` property (a spread
+ * may carry one, but that cannot be judged statically, so it does not count).
  * @param {unknown} arg
  * @returns {boolean}
  */
@@ -18,7 +18,6 @@ const hasCatchOption = (arg) => {
   if (!Array.isArray(arg.properties)) return false;
   return arg.properties.some((prop) => {
     if (!isRecord(prop)) return false;
-    if (prop.type === "SpreadElement") return true;
     if (prop.type !== "Property" || !isRecord(prop.key)) return false;
     return prop.key.name === "catch" || prop.key.value === "catch";
   });
@@ -41,11 +40,11 @@ export const effectTryRequiresCatch = {
   },
   /** @param {RuleContext} context */
   create(context) {
-    const effect = createEffectResolver();
+    const effect = createEffectResolver(context);
     return {
-      /** @param {{ specifiers?: readonly unknown[] }} node */
-      ImportDeclaration(node) {
-        effect.record(node);
+      /** @param {{ body?: readonly unknown[] }} node */
+      Program(node) {
+        effect.init(node);
       },
       /** @param {{ callee: unknown, arguments: readonly unknown[] }} node */
       CallExpression(node) {
