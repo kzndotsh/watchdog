@@ -24,9 +24,9 @@ import {
   createClaimFn,
   retractClaimFn,
   updateClaimFn,
-  type ClaimRecord,
 } from "@/domains/entities/claims/claims.functions";
 import { claimsListQuery } from "@/domains/entities/claims/queries";
+import type { ClaimRecord } from "@/domains/entities/claims/types";
 import { cn, errMessage } from "@/lib/utils";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";

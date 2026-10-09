@@ -16,12 +16,12 @@ export interface DeleteIdentifierTarget {
   entitySlug?: string;
 }
 
-/** Delete an Identifier, then settle its Entity caches; the dialog owns open state and copy. */
 export interface DeleteIdentifierVariables {
   caseId: string;
   target: DeleteIdentifierTarget;
 }
 
+/** Delete an Identifier, then settle its Entity caches; the dialog owns open state and copy. */
 export function useDeleteIdentifier({
   onOpenChange,
   onDeleted,

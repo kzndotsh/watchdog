@@ -6,13 +6,6 @@ import type {
 } from "@tanstack/react-table";
 import { CopyIcon } from "lucide-react";
 
-import type { IdentifierRecord } from "@/domains/entities/identifiers/identifiers.functions";
-import {
-  tryCommitIdentifierPlatform,
-  tryCommitIdentifierType,
-  tryCommitIdentifierValue,
-} from "@/domains/entities/lib/commit-identifier-field";
-import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { TOAST_COPIED, TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import {
@@ -23,8 +16,14 @@ import {
   type EditableSelectOption,
 } from "@/shared/ui/data-table";
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
+import {
+  tryCommitIdentifierPlatform,
+  tryCommitIdentifierType,
+  tryCommitIdentifierValue,
+} from "@/shared/ui/identifiers/commit-identifier-field";
 import { IdentifierEvidenceCell } from "@/shared/ui/identifiers/identifier-evidence-cell";
 import { IdentifierNotesCell } from "@/shared/ui/identifiers/identifier-notes-cell";
+import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 import { Button } from "@/shared/ui/primitives/button";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
@@ -36,6 +35,7 @@ import {
   IDENTIFIER_TYPE_OPTIONS,
   identifierPlatformOptionMatchesQuery,
 } from "@/shared/ui/vocab";
+import type { IdentifierRecord } from "@watchdog/core/graph";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import {
   trimmedConfidenceTierSchema,
@@ -46,7 +46,7 @@ import {
   type IdentifierType,
 } from "@watchdog/schemas/shared";
 
-export { isHandleWithoutPlatform } from "@/domains/entities/lib/commit-identifier-field";
+export { isHandleWithoutPlatform } from "@/shared/ui/identifiers/commit-identifier-field";
 
 export function IdentifierValueCopyControl({ value }: { value: string }) {
   return (

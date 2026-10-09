@@ -13,7 +13,8 @@ import { toast } from "@/shared/ui/toast";
 import { createIdentifierInputSchema } from "@watchdog/schemas/graph";
 
 export function useBulkAddIdentifiersImport(options: {
-  onImported?: (entityIds: string[]) => Promise<void>;
+  /** `caseId` is the Case the rows were written to, not the Case the screen shows now. */
+  onImported?: (entityIds: string[], caseId: string) => Promise<void>;
   onClose: () => void;
   retainFailedImport: (input: {
     paste: string;
@@ -72,7 +73,7 @@ export function useBulkAddIdentifiersImport(options: {
     onSuccess: async (result, vars) => {
       const uniqueIds = [...new Set(result.importedEntityIds)];
       if (uniqueIds.length > 0) {
-        await onImported?.(uniqueIds);
+        await onImported?.(uniqueIds, vars.caseId);
       }
       const invalidCount = vars.rows.filter(
         (row) => !isIdentifierPasteRowImportable(row)

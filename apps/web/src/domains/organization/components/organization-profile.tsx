@@ -7,8 +7,8 @@ import { useState, type SubmitEvent } from "react";
 import { authClient } from "@/auth/client";
 import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
 import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
+import { useSlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
-import { useSlugAvailability } from "@/domains/organization/lib/use-slug-availability";
 import { errMessage } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
 import {

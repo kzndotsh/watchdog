@@ -7,7 +7,7 @@ vi.mock("@/shared/lib/hotkeys", () => ({
   createHotkeyListener,
 }));
 
-import { useGlobalHotkeys } from "@/shared/lib/use-global-hotkeys";
+import { useGlobalHotkeys } from "@/shared/hooks/use-global-hotkeys";
 
 describe("useGlobalHotkeys", () => {
   it("registers a window keydown listener via createHotkeyListener", () => {

@@ -1,5 +1,6 @@
 import { ArrowRightIcon, CircleAlertIcon, InfoIcon } from "lucide-react";
 
+import { parsePasteTarget } from "@/domains/entities/lib/bulk-add-paste-state";
 import {
   identifierPasteColumnSamples,
   identifierPasteRowKey,
@@ -10,7 +11,6 @@ import {
   type IdentifierPasteTarget,
 } from "@/domains/entities/lib/parse-identifier-paste";
 import { pasteEntityErrorLabel } from "@/domains/entities/lib/paste-entity-error-label";
-import { parsePasteTarget } from "@/domains/entities/lib/use-bulk-add-identifiers-paste";
 import {
   EditableSelectCell,
   EditableSuggestCell,

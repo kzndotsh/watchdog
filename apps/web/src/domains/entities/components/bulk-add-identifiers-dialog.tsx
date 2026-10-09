@@ -1,8 +1,8 @@
 import { BulkAddMapStage } from "@/domains/entities/components/bulk-add-map-stage";
 import { useBulkAddIdentifiersImport } from "@/domains/entities/hooks/use-bulk-add-identifiers-import";
+import { useBulkAddIdentifiersPaste } from "@/domains/entities/hooks/use-bulk-add-identifiers-paste";
 import type { IdentifierPasteEntity } from "@/domains/entities/lib/parse-identifier-paste";
 import { isIdentifierPasteRowImportable } from "@/domains/entities/lib/parse-identifier-paste";
-import { useBulkAddIdentifiersPaste } from "@/domains/entities/lib/use-bulk-add-identifiers-paste";
 import { errMessage } from "@/lib/utils";
 import {
   TOAST_IMPORT_FAILED,
@@ -28,7 +28,7 @@ interface Props {
   caseId: string;
   entities: readonly EntityOption[];
   lockEntity?: IdentifierPasteEntity | null;
-  onImported?: (entityIds: string[]) => Promise<void>;
+  onImported?: (entityIds: string[], caseId: string) => Promise<void>;
 }
 
 export function BulkAddIdentifiersDialog({

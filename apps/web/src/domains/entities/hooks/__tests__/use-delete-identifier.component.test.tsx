@@ -61,6 +61,9 @@ describe("useDeleteIdentifier", () => {
       result.current.deleteMutation.mutate({ caseId: CASE_A, target });
     });
     rerender({ tag: CASE_B });
+    await waitFor(() => {
+      expect(deleteIdentifierFn).toHaveBeenCalled();
+    });
     await act(async () => {
       finish();
       await Promise.resolve();

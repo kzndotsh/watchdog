@@ -59,6 +59,9 @@ describe("useDeleteCase", () => {
       result.current.deleteMutation.mutate(caseA);
     });
     rerender({ tag: "second" });
+    await waitFor(() => {
+      expect(deleteCaseFn).toHaveBeenCalled();
+    });
     await act(async () => {
       finish();
       await Promise.resolve();

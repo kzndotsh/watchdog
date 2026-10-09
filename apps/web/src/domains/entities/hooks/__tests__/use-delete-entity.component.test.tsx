@@ -58,6 +58,9 @@ describe("useDeleteEntity", () => {
       result.current.deleteMutation.mutate({ caseId: CASE_A, entity });
     });
     rerender({ tag: CASE_B });
+    await waitFor(() => {
+      expect(deleteEntityFn).toHaveBeenCalled();
+    });
     await act(async () => {
       finish();
       await Promise.resolve();

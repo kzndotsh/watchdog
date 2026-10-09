@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { connectionRowActions } from "@/domains/dossier/lib/connection-row-actions";
-import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
+import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
