@@ -1,14 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BriefcaseIcon } from "lucide-react";
-import { useState } from "react";
 
-import { deleteCaseFn } from "@/domains/cases/cases.functions";
-import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
+import { useDeleteCase } from "@/domains/cases/hooks/use-delete-case";
 import type { CaseRecord } from "@/domains/cases/types";
-import { errMessage } from "@/lib/utils";
-import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
-import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
 
 export function DeleteCaseDialog({
   caseRow,
@@ -21,23 +15,9 @@ export function DeleteCaseDialog({
   onOpenChange: (open: boolean) => void;
   onDeleted?: (deleted: CaseRecord) => void;
 }) {
-  const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) =>
-      deleteCaseFn({ data: deleteCaseInputSchema.parse({ caseId: id }) }),
-    onSuccess: async () => {
-      if (!caseRow) return;
-      setError(null);
-      onOpenChange(false);
-      await invalidateAfterCaseSwitch(queryClient);
-      notifyCasesChanged();
-      onDeleted?.(caseRow);
-    },
-    onError: (caughtError) => {
-      setError(errMessage(caughtError, "Delete failed"));
-    },
+  const { deleteMutation, error, setError } = useDeleteCase({
+    onOpenChange,
+    onDeleted,
   });
 
   return (
@@ -61,7 +41,7 @@ export function DeleteCaseDialog({
       loading={deleteMutation.isPending}
       error={error}
       onConfirm={() => {
-        if (caseRow) deleteMutation.mutate(caseRow.id);
+        if (caseRow) deleteMutation.mutate(caseRow);
       }}
     />
   );

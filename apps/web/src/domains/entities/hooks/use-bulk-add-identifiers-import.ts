@@ -13,18 +13,21 @@ import { toast } from "@/shared/ui/toast";
 import { createIdentifierInputSchema } from "@watchdog/schemas/graph";
 
 export function useBulkAddIdentifiersImport(options: {
-  caseId: string;
-  onImported?: (entityIds: string[]) => Promise<void>;
+  /** `caseId` is the Case the rows were written to, not the Case the screen shows now. */
+  onImported?: (entityIds: string[], caseId: string) => Promise<void>;
   onClose: () => void;
   retainFailedImport: (input: {
     paste: string;
     serverErrors: Map<string, string>;
   }) => void;
 }) {
-  const { caseId, onImported, onClose, retainFailedImport } = options;
+  const { onImported, onClose, retainFailedImport } = options;
 
   return useMutation({
+    // `caseId` travels as a mutation variable: an Active Case switch mid-import must not
+    // redirect the remaining rows.
     mutationFn: async (input: {
+      caseId: string;
       rows: IdentifierPasteRow[];
       table: IdentifierPasteTable;
     }) => {
@@ -45,7 +48,7 @@ export function useBulkAddIdentifiersImport(options: {
         }
         try {
           const data = createIdentifierInputSchema.parse({
-            caseId,
+            caseId: input.caseId,
             entityId: row.entityId,
             type: row.type,
             value: row.value,
@@ -70,7 +73,7 @@ export function useBulkAddIdentifiersImport(options: {
     onSuccess: async (result, vars) => {
       const uniqueIds = [...new Set(result.importedEntityIds)];
       if (uniqueIds.length > 0) {
-        await onImported?.(uniqueIds);
+        await onImported?.(uniqueIds, vars.caseId);
       }
       const invalidCount = vars.rows.filter(
         (row) => !isIdentifierPasteRowImportable(row)

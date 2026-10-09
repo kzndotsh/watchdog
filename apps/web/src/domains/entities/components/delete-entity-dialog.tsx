@@ -1,14 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { UserRoundIcon } from "lucide-react";
-import { useState } from "react";
 
-import { deleteEntityFn } from "@/domains/entities/entities.functions";
+import { useDeleteEntity } from "@/domains/entities/hooks/use-delete-entity";
 import type { EntityRecord } from "@/domains/entities/types";
-import { errMessage } from "@/lib/utils";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
-import { toast } from "@/shared/ui/toast";
-import { deleteEntityInputSchema } from "@watchdog/schemas/graph";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 export function DeleteEntityDialog({
@@ -24,25 +18,9 @@ export function DeleteEntityDialog({
   onOpenChange: (open: boolean) => void;
   onDeleted?: (deleted: Pick<EntityRecord, "id" | "name" | "slug">) => void;
 }) {
-  const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
-
-  const deleteMutation = useMutation({
-    mutationFn: async (entityId: string) =>
-      deleteEntityFn({
-        data: deleteEntityInputSchema.parse({ caseId, entityId }),
-      }),
-    onSuccess: async () => {
-      if (!entity) return;
-      setError(null);
-      onOpenChange(false);
-      await invalidateAfterEntityChanged(queryClient, caseId);
-      toast.success("Entity deleted");
-      onDeleted?.(entity);
-    },
-    onError: (caughtError) => {
-      setError(errMessage(caughtError, "Delete failed"));
-    },
+  const { deleteMutation, error, setError } = useDeleteEntity({
+    onOpenChange,
+    onDeleted,
   });
 
   const displayName = entity === null ? null : entityDisplayLabel(entity);
@@ -68,7 +46,7 @@ export function DeleteEntityDialog({
       loading={deleteMutation.isPending}
       error={error}
       onConfirm={() => {
-        if (entity) deleteMutation.mutate(entity.id);
+        if (entity) deleteMutation.mutate({ caseId, entity });
       }}
     />
   );

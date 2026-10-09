@@ -266,8 +266,8 @@ function IdentifiersActive({ active }: { active: CaseRecord }) {
         onOpenChange={setBulkOpen}
         caseId={active.id}
         entities={entityOptions}
-        onImported={async () => {
-          await invalidateAfterEntityChanged(queryClient, active.id);
+        onImported={async (_entityIds, importedCaseId) => {
+          await invalidateAfterEntityChanged(queryClient, importedCaseId);
         }}
       />
       <DeleteIdentifierDialog

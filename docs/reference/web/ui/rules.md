@@ -35,7 +35,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | Callers don't restyle components in `domains/` and `routes/`; pick a size or variant | [`atoms.md`](atoms.md#variants-not-overrides) | `oxlint` `shadcn/no-restyle` |
 | Source files at most 600 lines (baseline may only shrink) |  | `check:size` |
 | TanStack Form only, no react-hook-form; field errors via `fieldInvalid` / `fieldErrorList` | [`forms.md`](forms.md) | absence from `package.json` (an import fails `typecheck`); the rest `guidance` |
-| Mutations and SSE use the named contracts in `shared/lib/query-invalidation.ts`, not ad-hoc `invalidateQueries` key lists | [`data.md`](../data.md) | `guidance` |
+| Mutations and SSE use the named contracts in `shared/lib/query-invalidation.ts`; `useMutation` and cache writes only in hooks (cache writes also in `shared/lib/query-invalidation.ts`), query keys only in queries modules | [`data.md`](../data.md#mutations-and-cache-writes) | `oxlint` `watchdog/mutation-only-in-hooks`, `watchdog/cache-writes-only-in-hooks`, `watchdog/query-keys-in-queries-modules` (baselined); the named-contract choice is `guidance` |
 | No manual Refresh buttons on live paths | [`data.md`](../data.md) | `guidance` |
 | Screens are named by layout kind; Console / Workbench / Tape banned; never a screen named `*Panel` | [`README.md`](README.md#chrome-lexicon-ui-parts) | `oxlint` `watchdog/no-banned-surface-name` (export names only); `*Panel` is `guidance` |
 | Copy: `Couldn't` / `Can't` / `Failed to`; Title Case labels; `Verb + Noun` primaries | [`ux.md`](../../../explanation/ux.md) | `guidance` |
