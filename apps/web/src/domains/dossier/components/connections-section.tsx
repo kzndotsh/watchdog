@@ -14,9 +14,9 @@ import {
   createEdgeFn,
   deleteEdgeFn,
   updateEdgeFn,
-  type EdgeRecord,
 } from "@/domains/entities/edges/edges.functions";
 import { edgesListQuery } from "@/domains/entities/edges/queries";
+import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { sortEdgesByPeerLabel } from "@/domains/entities/lib/connection-peers";
 import {
   buildCreateEdgeData,

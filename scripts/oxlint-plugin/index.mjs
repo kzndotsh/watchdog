@@ -20,11 +20,15 @@ import { noBannedSurfaceName } from "./rules/no-banned-surface-name.mjs";
 import { noBrandCast } from "./rules/no-brand-cast.mjs";
 import { noCoreDbDynamicImport } from "./rules/no-core-db-dynamic-import.mjs";
 import { noCoreS3DynamicImport } from "./rules/no-core-s3-dynamic-import.mjs";
+import { noCrossDomainRelativeImports } from "./rules/no-cross-domain-relative-imports.mjs";
 import { noDecorativeClass } from "./rules/no-decorative-class.mjs";
 import { noEffectRunOutsideEdge } from "./rules/no-effect-run-outside-edge.mjs";
+import { noHooksInLib } from "./rules/no-hooks-in-lib.mjs";
 import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
+import { noTypesFromFunctions } from "./rules/no-types-from-functions.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
 import { procedureMustBeGuarded } from "./rules/procedure-must-be-guarded.mjs";
+import { sharedUiNoDomainImports } from "./rules/shared-ui-no-domain-imports.mjs";
 
 export default {
   meta: { name: "watchdog" },
@@ -50,5 +54,9 @@ export default {
     "no-decorative-class": noDecorativeClass,
     "no-banned-surface-name": noBannedSurfaceName,
     "no-opaque-id-slice": noOpaqueIdSlice,
+    "shared-ui-no-domain-imports": sharedUiNoDomainImports,
+    "no-hooks-in-lib": noHooksInLib,
+    "no-types-from-functions": noTypesFromFunctions,
+    "no-cross-domain-relative-imports": noCrossDomainRelativeImports,
   },
 };

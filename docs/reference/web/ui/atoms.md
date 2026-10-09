@@ -1,6 +1,6 @@
 # UI: hand-owned atoms
 
-Which atom for which need, the keyboard contracts, and the traps. The atoms themselves are in `apps/web/src/shared/ui/` (code and JSDoc are the registry); the style guide and specimen page is **`/ui`**. New atoms go in `shared/ui/` and get a `/ui` specimen. `shared/ui` never fetches, mutates, or routes (`guidance`: nothing enforces it).
+Which atom for which need, the keyboard contracts, and the traps. The atoms themselves are in `apps/web/src/shared/ui/` (code and JSDoc are the registry); the style guide and specimen page is **`/ui`**. New atoms go in `shared/ui/` and get a `/ui` specimen. `shared/ui` never fetches, mutates, or routes (`guidance`: nothing enforces it) and imports no domain code (`watchdog/shared-ui-no-domain-imports`; a domain-shaped helper it needs lives in `shared/`).
 
 ## Which atom
 

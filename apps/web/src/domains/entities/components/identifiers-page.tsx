@@ -10,7 +10,6 @@ import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-ide
 import type { IdentifiersTableMeta } from "@/domains/entities/components/identifiers-table.columns";
 import { useIdentifiersTable } from "@/domains/entities/hooks/use-identifiers-table";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import { identifierRowActions } from "@/domains/entities/lib/identifier-row-actions";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
@@ -25,6 +24,7 @@ import {
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { IdentifierComposerAppend } from "@/shared/ui/identifiers/identifier-composer";
+import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-actions";
 import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";

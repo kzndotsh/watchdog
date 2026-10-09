@@ -1,3 +1,9 @@
+import {
+  GRAPH_NODE_HEIGHT,
+  GRAPH_NODE_WIDTH,
+} from "@/shared/ui/graph/graph-layout";
+import { confidenceStroke } from "@/shared/ui/graph/graph-styles";
+import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
 import type {
   ConfidenceTier,
   EdgePredicate,
@@ -5,15 +11,6 @@ import type {
 } from "@watchdog/schemas/shared";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
-import {
-  GRAPH_NODE_HEIGHT,
-  GRAPH_NODE_WIDTH,
-} from "../../../../shared/ui/graph/graph-layout.ts";
-import { confidenceStroke } from "../../../../shared/ui/graph/graph-styles.ts";
-import type {
-  GraphEdge,
-  GraphNode,
-} from "../../../../shared/ui/graph/types.ts";
 import {
   computeDirectedNodeRanks,
   placeLayeredGraphNodes,

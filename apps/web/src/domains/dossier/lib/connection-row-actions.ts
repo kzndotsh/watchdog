@@ -1,4 +1,4 @@
-import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
+import type { EdgeRecord } from "@/domains/entities/edges/types";
 import type { AppAction } from "@/shared/lib/app-action";
 
 export interface ConnectionRowActionHandlers {

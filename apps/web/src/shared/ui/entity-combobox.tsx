@@ -1,8 +1,8 @@
 import type { KeyboardEvent } from "react";
 
-import { entityMatchesQuery } from "@/domains/entities/lib/entity-options";
 import { cn } from "@/lib/utils";
 import { CONTROL_CELL_SHELL, CONTROL_HEIGHT } from "@/shared/ui/control-chrome";
+import { entityMatchesQuery } from "@/shared/ui/entity-match";
 import {
   Combobox,
   ComboboxContent,

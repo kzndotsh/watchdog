@@ -7,10 +7,10 @@ import {
   SearchUiContext,
   useSearchUi,
 } from "@/domains/search/hooks/use-search-ui";
+import { useGlobalHotkeys } from "@/shared/hooks/use-global-hotkeys";
 import type { AppAction } from "@/shared/lib/app-action";
 import { useDataHotkeys } from "@/shared/lib/data-hotkey";
 import type { HotkeyBinding } from "@/shared/lib/hotkeys";
-import { useGlobalHotkeys } from "@/shared/lib/use-global-hotkeys";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { useSidebar } from "@watchdog/ui/components/sidebar";
 

@@ -1,4 +1,4 @@
-import type { SlugAvailability } from "@/domains/organization/lib/use-slug-availability";
+import type { SlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
 import { cn } from "@/lib/utils";
 import { Field, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";

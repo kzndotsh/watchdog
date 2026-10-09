@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
 
-import { edgePhraseValue } from "@watchdog/schemas/shared";
-
 import {
   clampEdgePhrase,
   edgePhraseOptions,
@@ -9,7 +7,8 @@ import {
   filterPeerOptionsForPhrase,
   peerKindAllowedForPhrase,
   preferredEdgePhrase,
-} from "../../../../shared/ui/vocab/edge-predicate.ts";
+} from "@/shared/ui/vocab/edge-predicate";
+import { edgePhraseValue } from "@watchdog/schemas/shared";
 
 function requirePhrase(hit: ReturnType<typeof preferredEdgePhrase>) {
   expect(hit).toBeDefined();

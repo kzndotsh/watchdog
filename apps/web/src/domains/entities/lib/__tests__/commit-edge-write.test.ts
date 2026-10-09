@@ -5,7 +5,8 @@ import {
   tryCommitIdentifierPlatform,
   tryCommitIdentifierType,
   tryCommitIdentifierValue,
-} from "../commit-identifier-field.ts";
+} from "@/shared/ui/identifiers/commit-identifier-field";
+
 import { connectionComposerIssues } from "../connection-composer.ts";
 import { buildCreateEdgeData, buildUpdateEdgeData } from "../edge-write.ts";
 import { pasteEntityErrorLabel } from "../paste-entity-error-label.ts";

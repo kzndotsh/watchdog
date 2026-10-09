@@ -22,8 +22,8 @@ import {
   reopenQuestionFn,
   resolveQuestionFn,
   updateQuestionFn,
-  type QuestionRecord,
 } from "@/domains/entities/questions/questions.functions";
+import type { QuestionRecord } from "@/domains/entities/questions/types";
 import { cn, errMessage } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";

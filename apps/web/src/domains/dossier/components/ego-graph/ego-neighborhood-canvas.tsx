@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
-import type { EdgeRecord } from "@/domains/entities/edges/edges.functions";
+import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { cn } from "@/lib/utils";
 import type { AppAction } from "@/shared/lib/app-action";
 import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
