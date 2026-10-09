@@ -8,7 +8,7 @@ Build new foundations and atoms on `/ui` before adding chrome to live pages. `sh
 
 | Gate | Command |
 | --- | --- |
-| DS bans | `pnpm check` (oxlint `watchdog/no-decorative-class`, `no-banned-surface-name`, `no-opaque-id-slice`) |
+| DS bans | `pnpm check` (oxlint `watchdog/no-decorative-class`, `watchdog/no-banned-surface-name`, `watchdog/no-opaque-id-slice`) |
 | Typecheck | `pnpm --filter @watchdog/web typecheck` |
 | Vendored primitives lock | `pnpm check:vendor` (change with `pnpm ui:add` / `pnpm ui:sync`) |
 

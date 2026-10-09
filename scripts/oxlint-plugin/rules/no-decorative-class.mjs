@@ -7,7 +7,7 @@ import { isLineAllowed, lineOfOffset } from "../lib/ds-allow.mjs";
 
 /** Gradients, gradient text and glass: the DESIGN.md refuse list. */
 const DECORATIVE_RE =
-  /\b(?:bg-gradient-to-|bg-linear-|bg-radial|bg-conic|bg-clip-text|backdrop-blur)/;
+  /\b(?:bg-gradient-to-|bg-linear-|bg-radial|bg-conic|bg-clip-text|backdrop-blur(?!-none\b))/g;
 
 /**
  * Bans decorative Tailwind classes (gradients, gradient text, glass / backdrop blur) in
@@ -26,18 +26,29 @@ export const noDecorativeClass = {
   create(context) {
     /**
      * @param {Ranged} node
+     * @param {string} token
+     */
+    const report = (node, token) => {
+      context.report({
+        node,
+        message: `${token} is on the refuse list (gradient / gradient text / glass): use a flat token surface (DESIGN.md Do's and Don'ts). For functional blur add \`// ds:allow-decorative - reason\` on the line above (conventions: no gradients, glass or backdrop blur)`,
+      });
+    };
+    /**
+     * @param {Ranged} node
      * @param {string} source source text of the string, matched against the ban
      */
     const check = (node, source) => {
-      const match = DECORATIVE_RE.exec(source);
-      if (match === null) return;
       const { text } = context.sourceCode;
-      const line = lineOfOffset(text, node.range[0] + match.index);
-      if (isLineAllowed(text, line, "decorative")) return;
-      context.report({
-        node,
-        message: `${match[0]} is on the refuse list (gradient / gradient text / glass): use a flat token surface (DESIGN.md Do's and Don'ts). For functional blur add \`// ds:allow-decorative - reason\` on the line above (conventions: no gradients, glass or backdrop blur)`,
-      });
+      // A template element's range may include its opening backtick: anchor on the text.
+      const found = text.indexOf(source, node.range[0]);
+      const base = found === -1 ? node.range[0] : found;
+      for (const match of source.matchAll(DECORATIVE_RE)) {
+        const line = lineOfOffset(text, base + match.index);
+        if (isLineAllowed(text, line, "decorative")) continue;
+        report(node, match[0]);
+        return;
+      }
     };
     return {
       /** @param {Ranged & { value?: unknown, raw?: string }} node */

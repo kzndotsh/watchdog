@@ -40,6 +40,12 @@ const SURFACE_FAIL = {
   "fn-tape.tsx": "export function EvidenceTape() { return null; }\n",
   "const-console.tsx": "export const CaseConsole = () => null;\n",
   "bare-console.tsx": "export function Console() { return null; }\n",
+  "async-fn.tsx": "export async function CaseConsole() { return null; }\n",
+  "class.tsx": "export class CaseWorkbench {}\n",
+  "reexport.tsx":
+    "function CaseConsole() { return null; }\nexport { CaseConsole };\n",
+  "default-fn.tsx": "export default function CaseTape() { return null; }\n",
+  "default-class.tsx": "export default class CaseTape {}\n",
 } as const;
 
 const SLICE_FAIL = {
@@ -50,6 +56,12 @@ const SLICE_FAIL = {
   "entityId.ts":
     "export const s = (entityId: string) => entityId.slice( 0, 8 );\n",
   "bare-id.ts": "export const s = (id: string) => id.slice(0, 8);\n",
+  "optional-id.ts": "export const s = (id?: string) => id?.slice(0, 8);\n",
+  "optional-dot-id.ts":
+    "export const s = (x: { id?: string }) => x.id?.slice(0, 8);\n",
+  "paren-optional-id.ts":
+    "export const s = (id?: string) => (id)?.slice(0,8);\n",
+  "negative-end.ts": "export const s = (id: string) => id.slice(0, -4);\n",
   "dot-id.ts":
     "export const s = (job: { id: string }) => job.id.slice(0, 8);\n",
 } as const;
@@ -73,6 +85,20 @@ beforeAll(() => {
     'declare const cn: (...a: string[]) => string;\nexport const x = cn("p-2", "backdrop-blur");\n'
   );
   fixture.write(`${DOMAIN}/deco-ok.tsx`, jsx("p-2 bg-muted backdrop"));
+  fixture.write(`${DOMAIN}/deco-blur-none.tsx`, jsx("backdrop-blur-none"));
+  fixture.write(
+    `${DOMAIN}/deco-multiline.tsx`,
+    [
+      "// ds:allow-decorative - functional blur",
+      "export const x = `backdrop-blur",
+      "bg-gradient-to-r`;",
+      "",
+    ].join("\n")
+  );
+  fixture.write(
+    `${DOMAIN}/deco-cr.tsx`,
+    `// ds:allow-decorative - functional blur\r${jsx("backdrop-blur")}`
+  );
   fixture.write(
     `${DOMAIN}/deco-comment.tsx`,
     "// bg-gradient-to-r is banned\nexport const x = 1;\n"
@@ -102,7 +128,7 @@ beforeAll(() => {
   }
   fixture.write(
     `${DOMAIN}/surface-ok.tsx`,
-    "export function CaseList() { return null; }\nexport const ConsoleLog = 1;\nfunction LocalConsole() { return null; }\nexport { LocalConsole };\n"
+    "export function CaseList() { return null; }\nexport const ConsoleLog = 1;\nfunction LocalConsole() { return null; }\nexport const used = LocalConsole;\n"
   );
   fixture.write(
     `${DOMAIN}/surface-allowed.tsx`,
@@ -158,6 +184,15 @@ describe("decorative class ban (no-decorative-class)", () => {
   it("allows ordinary classes and comments that mention a banned class", () => {
     expect(hits(`${DOMAIN}/deco-ok.tsx`, DECORATIVE)).toHaveLength(0);
     expect(hits(`${DOMAIN}/deco-comment.tsx`, DECORATIVE)).toHaveLength(0);
+  });
+  it("allows backdrop-blur-none", () => {
+    expect(hits(`${DOMAIN}/deco-blur-none.tsx`, DECORATIVE)).toHaveLength(0);
+  });
+  it("checks every banned token, not only the first, in a multiline string", () => {
+    expect(hits(`${DOMAIN}/deco-multiline.tsx`, DECORATIVE)).toHaveLength(1);
+  });
+  it("reads a lone CR as a line break for the allow comment", () => {
+    expect(hits(`${DOMAIN}/deco-cr.tsx`, DECORATIVE)).toHaveLength(0);
   });
   it("honours a ds:allow-decorative comment with a reason on the line above", () => {
     expect(hits(`${DOMAIN}/deco-allowed.tsx`, DECORATIVE)).toHaveLength(0);

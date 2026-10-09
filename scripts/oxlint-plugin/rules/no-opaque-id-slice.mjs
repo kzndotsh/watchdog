@@ -34,12 +34,26 @@ const lastName = (node) => {
   return null;
 };
 
-/** @param {unknown} arg @param {number | null} value */
-const isNumber = (arg, value) =>
-  isRecord(arg) &&
-  arg.type === "Literal" &&
-  typeof arg.value === "number" &&
-  (value === null || arg.value === value);
+/**
+ * A numeric literal, optionally signed (`8`, `-4`).
+ * @param {unknown} arg
+ * @param {number | null} value required value, or null for any number
+ * @returns {boolean}
+ */
+const isNumber = (arg, value) => {
+  if (!isRecord(arg)) return false;
+  if (
+    arg.type === "UnaryExpression" &&
+    (arg.operator === "-" || arg.operator === "+")
+  ) {
+    return value === null && isNumber(arg.argument, null);
+  }
+  return (
+    arg.type === "Literal" &&
+    typeof arg.value === "number" &&
+    (value === null || arg.value === value)
+  );
+};
 
 /**
  * Bans `<id>.slice(0, N)` on opaque ids and hashes (`sha256`, `jobId`, `proposalId`,

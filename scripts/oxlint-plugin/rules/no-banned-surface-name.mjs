@@ -52,22 +52,37 @@ export const noBannedSurfaceName = {
       });
     };
     return {
-      /** @param {{ declaration?: unknown } & Located} node */
+      /** @param {{ declaration?: unknown, specifiers?: readonly unknown[] } & Located} node */
       ExportNamedDeclaration(node) {
         const { declaration } = node;
-        if (!isRecord(declaration)) return;
+        if (isRecord(declaration)) {
+          if (
+            declaration.type === "FunctionDeclaration" ||
+            declaration.type === "ClassDeclaration"
+          ) {
+            check(declaration.id, node);
+          } else if (
+            declaration.type === "VariableDeclaration" &&
+            Array.isArray(declaration.declarations)
+          ) {
+            for (const d of declaration.declarations) {
+              if (isRecord(d)) check(d.id, node);
+            }
+          }
+        }
+        for (const spec of node.specifiers ?? []) {
+          if (isRecord(spec)) check(spec.exported, node);
+        }
+      },
+      /** @param {{ declaration?: unknown } & Located} node */
+      ExportDefaultDeclaration(node) {
+        const { declaration } = node;
         if (
-          declaration.type === "FunctionDeclaration" ||
-          declaration.type === "ClassDeclaration"
+          isRecord(declaration) &&
+          (declaration.type === "FunctionDeclaration" ||
+            declaration.type === "ClassDeclaration")
         ) {
           check(declaration.id, node);
-        } else if (
-          declaration.type === "VariableDeclaration" &&
-          Array.isArray(declaration.declarations)
-        ) {
-          for (const d of declaration.declarations) {
-            if (isRecord(d)) check(d.id, node);
-          }
         }
       },
     };

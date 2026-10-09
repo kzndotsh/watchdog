@@ -10,7 +10,7 @@ TanStack Start UI. UI contracts live in **[`docs/reference/web/`](../../docs/ref
 | --- | --- |
 | Dev | `pnpm dev:web` |
 | Typecheck | `pnpm --filter @watchdog/web typecheck` |
-| DS bans | `pnpm check` (oxlint `watchdog/no-decorative-class`, `no-banned-surface-name`, `no-opaque-id-slice`) |
+| DS bans | `pnpm check` (oxlint `watchdog/no-decorative-class`, `watchdog/no-banned-surface-name`, `watchdog/no-opaque-id-slice`) |
 | Unit tests | `pnpm test:unit` (includes the `web-unit` project: `apps/web/src/**/__tests__/**/*.test.ts`) |
 | Component tests | `pnpm test:component` |
 | E2E | `pnpm test:e2e` · `pnpm test:e2e:smoke` · `pnpm test:e2e:journey` |

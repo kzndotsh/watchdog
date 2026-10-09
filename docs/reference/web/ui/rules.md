@@ -44,7 +44,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 
 | Rule | Enforced by |
 | --- | --- |
-| Gradients, gradient text, glass or backdrop blur (`// ds:allow-decorative - reason` for functional blur) | `oxlint` `watchdog/no-decorative-class` |
+| Gradients, gradient text, glass or backdrop blur (`// ds:allow-decorative - reason` for functional blur) | `oxlint` `watchdog/no-decorative-class` (all of `apps/web/src` except `shared/ui/primitives/` and `auth/ui/`) |
 | Radius ladder sm / md / lg | `--radius-xl..4xl` capped in `styles/wd-theme.css` (by construction) |
 | Writing fields tint the border on focus, no outer ring | `styles/wd-overrides.css` (CSS) |
 | Nested cards, glow, icon-tile grids, bounce easing, mono-as-decoration, decorative side borders | `guidance` |
