@@ -9,6 +9,7 @@
  * (`packages/core/src/**`, `packages/schemas/src/testing/**`, ...).
  */
 import { spawnSync } from "node:child_process";
+import { rmSync } from "node:fs";
 import path from "node:path";
 
 import { gateRepoFactory } from "./gate-repo.ts";
@@ -127,6 +128,11 @@ export function oxlintFixtureFactory({
     const repo = createGateRepo([]);
     repo.copyFromRepo("oxlint.config.ts");
     repo.copyFromRepo("scripts/oxlint-plugin");
+    // Committed baselines name real repo files; a fixture starts with none and writes its own.
+    rmSync(path.join(repo.dir, "scripts/oxlint-plugin/baselines"), {
+      recursive: true,
+      force: true,
+    });
     // The config lists `apps/web/.../primitives/*.tsx` at load time; an empty dir suffices.
     repo.write("apps/web/src/shared/ui/primitives/.keep", "");
     repo.write(

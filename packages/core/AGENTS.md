@@ -20,7 +20,7 @@ Import from a per-domain subpath, never the root: `@watchdog/core/<domain>` wher
 
 | Rule | Enforced by |
 | --- | --- |
-| Services call repos with `exec: DbExec` first and own transactions (`transact`); repos never open one | `pnpm --filter @watchdog/db check:repos` (repo side) |
+| Services call repos with `exec: DbExec` first and own transactions (`transact`); repos never open one | `watchdog/db-repo-exec-first`, `watchdog/db-repo-no-transaction` (repo side, `pnpm check`) |
 | Normalize display fields (trim, slugify, `InvalidError`) before repo writes; repos do not reject blank name/text. Trim `actorLabel` with `actorLabelForPersist` | guidance |
 | Caps via catalog + `interpret` → Proposal; Caps and Jobs never write Graph directly | guidance (root Boundaries) |
 | Enqueue only through `enqueueCapJobEffect` (`R = JobQueue`); never construct a `PgBoss` outside `jobs/job-queue.ts`. A process composes exactly one role Layer (`jobQueueProducerLayer` or `jobQueueWorkerLayer`) | guidance (a second `PgBoss` is not blocked by lint; `job-queue.test.ts` covers the Layers) |
