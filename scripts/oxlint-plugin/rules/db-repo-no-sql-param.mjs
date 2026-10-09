@@ -14,13 +14,23 @@ export const dbRepoNoSqlParam = {
   create(context) {
     const names = new Set(["SQL"]);
     return {
-      /** @param {{ specifiers: readonly unknown[] }} node */
+      /** @param {{ source: unknown, specifiers: readonly unknown[] }} node */
       ImportDeclaration(node) {
+        const from =
+          isRecord(node.source) && typeof node.source.value === "string"
+            ? node.source.value
+            : "";
+        const drizzle =
+          from === "drizzle-orm" || from.startsWith("drizzle-orm/");
         for (const spec of node.specifiers) {
           if (!isRecord(spec) || spec.type !== "ImportSpecifier") continue;
           const local = typeNameOf(spec.local);
-          if (typeNameOf(spec.imported) === "SQL" && local !== null) {
+          if (local === null) continue;
+          if (drizzle && typeNameOf(spec.imported) === "SQL") {
             names.add(local);
+          } else if (local === "SQL") {
+            // An unrelated module's `SQL` shadows the Drizzle name in this file.
+            names.delete("SQL");
           }
         }
       },

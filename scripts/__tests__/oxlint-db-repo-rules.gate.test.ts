@@ -261,6 +261,18 @@ const FAIL: readonly Case[] = [
     lines: [4],
   },
   {
+    rule: "db-repo-no-validation-import",
+    name: "zod-export-all",
+    src: `export * from "zod";\n\n${repo(ok)}`,
+    lines: [1],
+  },
+  {
+    rule: "db-repo-no-validation-import",
+    name: "zod-export-all-as",
+    src: `export * as z from "zod";\n\n${repo(ok)}`,
+    lines: [1],
+  },
+  {
     rule: "db-repo-no-trim-or-null",
     name: "trim-or-null-qualified",
     src: repo(
@@ -417,6 +429,22 @@ const PASS: readonly { readonly name: string; readonly src: string }[] = [
       "    return exec.select().from(things).where(eq(things.id, id));",
       "  },"
     ),
+  },
+  {
+    name: "unrelated-sql-alias",
+    src: `import type { SQL as Fragment } from "./other";\n\n${repo(
+      "  async get(exec: DbExec, where: Fragment) {",
+      "    return exec.select().where(where);",
+      "  },"
+    )}`,
+  },
+  {
+    name: "unrelated-sql-import",
+    src: `import type { SQL } from "./other";\n\n${repo(
+      "  async get(exec: DbExec, where: SQL) {",
+      "    return exec.select().where(where);",
+      "  },"
+    )}`,
   },
   {
     name: "arrow-with-exec",
