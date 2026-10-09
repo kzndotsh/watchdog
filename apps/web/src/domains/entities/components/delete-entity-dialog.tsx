@@ -19,8 +19,6 @@ export function DeleteEntityDialog({
   onDeleted?: (deleted: Pick<EntityRecord, "id" | "name" | "slug">) => void;
 }) {
   const { deleteMutation, error, setError } = useDeleteEntity({
-    caseId,
-    entity,
     onOpenChange,
     onDeleted,
   });
@@ -48,7 +46,7 @@ export function DeleteEntityDialog({
       loading={deleteMutation.isPending}
       error={error}
       onConfirm={() => {
-        if (entity) deleteMutation.mutate(entity.id);
+        if (entity) deleteMutation.mutate({ caseId, entity });
       }}
     />
   );

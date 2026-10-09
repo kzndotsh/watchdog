@@ -16,7 +16,6 @@ export function DeleteCaseDialog({
   onDeleted?: (deleted: CaseRecord) => void;
 }) {
   const { deleteMutation, error, setError } = useDeleteCase({
-    caseRow,
     onOpenChange,
     onDeleted,
   });
@@ -42,7 +41,7 @@ export function DeleteCaseDialog({
       loading={deleteMutation.isPending}
       error={error}
       onConfirm={() => {
-        if (caseRow) deleteMutation.mutate(caseRow.id);
+        if (caseRow) deleteMutation.mutate(caseRow);
       }}
     />
   );

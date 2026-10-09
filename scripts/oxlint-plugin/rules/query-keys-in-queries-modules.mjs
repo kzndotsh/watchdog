@@ -1,5 +1,6 @@
 import { isRecord } from "../lib/ast.mjs";
 import { withBaseline } from "../lib/baseline.mjs";
+import { staticKeyName } from "../lib/react-query.mjs";
 
 /**
  * @typedef {{ report: (diagnostic: { node: unknown, message: string }) => void }} RuleContext
@@ -61,8 +62,84 @@ const isKeyTuple = (node) => {
 };
 
 /**
- * True for an arrow or function that returns a key tuple (expression body, or a
- * top-level `return` statement).
+ * True when an expression can evaluate to a key tuple: the tuple itself or any branch of
+ * a conditional, logical or sequence expression.
+ * @param {unknown} node
+ * @returns {boolean}
+ */
+const yieldsKeyTuple = (node) => {
+  const expr = unwrap(node);
+  if (!isRecord(expr)) return false;
+  if (expr.type === "ConditionalExpression") {
+    return yieldsKeyTuple(expr.consequent) || yieldsKeyTuple(expr.alternate);
+  }
+  if (expr.type === "LogicalExpression") {
+    return yieldsKeyTuple(expr.left) || yieldsKeyTuple(expr.right);
+  }
+  if (expr.type === "SequenceExpression" && Array.isArray(expr.expressions)) {
+    return yieldsKeyTuple(expr.expressions.at(-1));
+  }
+  return isKeyTuple(expr);
+};
+
+/**
+ * True when any `return` reachable in a statement (through blocks, `if`, `switch`, `try`
+ * and loops, never into a nested function) returns a key tuple.
+ * @param {unknown} stmt
+ * @returns {boolean}
+ */
+const statementReturnsKeyTuple = (stmt) => {
+  if (!isRecord(stmt)) return false;
+  switch (stmt.type) {
+    case "ReturnStatement": {
+      return yieldsKeyTuple(stmt.argument);
+    }
+    case "BlockStatement": {
+      return (
+        Array.isArray(stmt.body) && stmt.body.some(statementReturnsKeyTuple)
+      );
+    }
+    case "IfStatement": {
+      return (
+        statementReturnsKeyTuple(stmt.consequent) ||
+        statementReturnsKeyTuple(stmt.alternate)
+      );
+    }
+    case "SwitchStatement": {
+      return (
+        Array.isArray(stmt.cases) &&
+        stmt.cases.some(
+          (c) =>
+            isRecord(c) &&
+            Array.isArray(c.consequent) &&
+            c.consequent.some(statementReturnsKeyTuple)
+        )
+      );
+    }
+    case "TryStatement": {
+      return (
+        statementReturnsKeyTuple(stmt.block) ||
+        (isRecord(stmt.handler) &&
+          statementReturnsKeyTuple(stmt.handler.body)) ||
+        statementReturnsKeyTuple(stmt.finalizer)
+      );
+    }
+    case "ForStatement":
+    case "ForInStatement":
+    case "ForOfStatement":
+    case "WhileStatement":
+    case "DoWhileStatement":
+    case "LabeledStatement": {
+      return statementReturnsKeyTuple(stmt.body);
+    }
+    default: {
+      return false;
+    }
+  }
+};
+
+/**
+ * True for an arrow or function that returns a key tuple on any branch.
  * @param {unknown} node
  */
 const returnsKeyTuple = (node) => {
@@ -77,14 +154,8 @@ const returnsKeyTuple = (node) => {
   }
   const { body } = fn;
   if (!isRecord(body)) return false;
-  if (body.type !== "BlockStatement") return isKeyTuple(body);
-  const statements = Array.isArray(body.body) ? body.body : [];
-  return statements.some(
-    (stmt) =>
-      isRecord(stmt) &&
-      stmt.type === "ReturnStatement" &&
-      isKeyTuple(stmt.argument)
-  );
+  if (body.type !== "BlockStatement") return yieldsKeyTuple(body);
+  return statementReturnsKeyTuple(body);
 };
 
 /** @param {unknown} node a value that is a key tuple or a function returning one */
@@ -125,9 +196,7 @@ export const keysInQueries = withBaseline("query-keys-in-queries-modules", {
     return {
       /** @param {Record<string, unknown>} node */
       Property(node) {
-        const { key } = node;
-        if (!isRecord(key) || node.computed === true) return;
-        const name = key.type === "Identifier" ? key.name : key.value;
+        const name = staticKeyName(node);
         if (name === "queryKey" && isArrayLiteral(unwrap(node.value))) {
           context.report({ node, message: MESSAGE });
         }

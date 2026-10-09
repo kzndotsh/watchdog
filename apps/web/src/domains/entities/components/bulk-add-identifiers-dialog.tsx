@@ -69,7 +69,6 @@ export function BulkAddIdentifiersDialog({
   }
 
   const importMutation = useBulkAddIdentifiersImport({
-    caseId,
     onImported,
     onClose: () => {
       handleOpenChange(false);
@@ -174,7 +173,7 @@ export function BulkAddIdentifiersDialog({
               type="button"
               disabled={busy || validRows.length === 0}
               onClick={() => {
-                const input = { rows, table };
+                const input = { caseId, rows, table };
                 void toast.promise(importMutation.mutateAsync(input), {
                   loading: TOAST_IMPORT_LOADING,
                   success: (result) => {

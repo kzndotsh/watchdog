@@ -1,7 +1,7 @@
 import { isRecord } from "../lib/ast.mjs";
 import { withBaseline } from "../lib/baseline.mjs";
 import { propertyName } from "../lib/effect-calls.mjs";
-import { CACHE_WRITE_MEMBERS } from "../lib/react-query.mjs";
+import { CACHE_WRITE_MEMBERS, staticKeyName } from "../lib/react-query.mjs";
 
 /**
  * @typedef {{ report: (diagnostic: { node: unknown, message: string }) => void }} RuleContext
@@ -43,15 +43,8 @@ export const cacheWritesInHooks = withBaseline("cache-writes-only-in-hooks", {
       ObjectPattern(node) {
         for (const prop of node.properties ?? []) {
           if (!isRecord(prop) || prop.type !== "Property") continue;
-          const { key } = prop;
-          if (!isRecord(key)) continue;
-          let name = null;
-          if (prop.computed !== true && key.type === "Identifier") {
-            name = key.name;
-          } else if (key.type === "Literal") {
-            name = key.value;
-          }
-          if (typeof name === "string" && CACHE_WRITE_MEMBERS.has(name)) {
+          const name = staticKeyName(prop);
+          if (name !== null && CACHE_WRITE_MEMBERS.has(name)) {
             context.report({ node: prop, message: message(name) });
           }
         }

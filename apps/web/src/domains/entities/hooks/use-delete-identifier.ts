@@ -17,14 +17,15 @@ export interface DeleteIdentifierTarget {
 }
 
 /** Delete an Identifier, then settle its Entity caches; the dialog owns open state and copy. */
+export interface DeleteIdentifierVariables {
+  caseId: string;
+  target: DeleteIdentifierTarget;
+}
+
 export function useDeleteIdentifier({
-  caseId,
-  target,
   onOpenChange,
   onDeleted,
 }: {
-  caseId: string;
-  target: DeleteIdentifierTarget | null;
   onOpenChange: (open: boolean) => void;
   onDeleted?: (deleted: DeleteIdentifierTarget) => void;
 }) {
@@ -32,12 +33,16 @@ export function useDeleteIdentifier({
   const [error, setError] = useState<string | null>(null);
 
   const deleteMutation = useMutation({
-    mutationFn: async (identifierId: string) =>
+    // Case and target travel as the mutation variables: hook props follow re-renders (an
+    // Active Case switch), and a pending deletion must settle the Case it was started for.
+    mutationFn: async ({ caseId, target }: DeleteIdentifierVariables) =>
       deleteIdentifierFn({
-        data: deleteIdentifierInputSchema.parse({ caseId, identifierId }),
+        data: deleteIdentifierInputSchema.parse({
+          caseId,
+          identifierId: target.id,
+        }),
       }),
-    onSuccess: async () => {
-      if (!target) return;
+    onSuccess: async (_data, { caseId, target }) => {
       setError(null);
       onOpenChange(false);
       await invalidateAfterEntityChanged(

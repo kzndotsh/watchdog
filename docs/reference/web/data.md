@@ -1,6 +1,6 @@
 # Data: Query, Case scope, live events
 
-How data reaches the UI and when it refreshes. oRPC internals are in [`architecture.md`](architecture.md) and [`../platform/README.md`](../platform/README.md). Nothing here is mechanically enforced except where a test or type is named; the rest is `guidance`.
+How data reaches the UI and when it refreshes. oRPC internals are in [`architecture.md`](architecture.md) and [`../platform/README.md`](../platform/README.md). Nothing here is mechanically enforced except where a test, type or lint rule is named; the rest is `guidance`.
 
 ## Case scope
 
@@ -34,7 +34,7 @@ Mutations and SSE call the named contracts in `shared/lib/query-invalidation.ts`
 
 ### Mutations and cache writes
 
-`useMutation` and QueryClient cache writes (`invalidateQueries`, `setQueryData`, `setQueriesData`, `removeQueries`, `resetQueries`, `refetchQueries`, `cancelQueries`) live in `domains/*/hooks/` and `shared/hooks/`; cache writes may also live in `shared/lib/query-invalidation.ts`. A component calls the hook (`useDeleteCase`, `useDeleteEntity`) and keeps only dialog and form state. Query keys are defined in a queries module, which means a `queries.ts`, a `*-queries.ts` or a `*-keys.ts` file, and imported everywhere else; calling a factory (`queryKey: casesKeys.all`) is always fine. Lint enforces all three (`watchdog/mutation-only-in-hooks`, `watchdog/cache-writes-only-in-hooks`, `watchdog/query-keys-in-queries-modules`); sites that predate the rules are baselined per file and the baselines only shrink.
+`useMutation` and QueryClient cache writes (`invalidateQueries`, `setQueryData`, `setQueriesData`, `removeQueries`, `resetQueries`, `refetchQueries`, `cancelQueries`) live in `domains/*/hooks/` and `shared/hooks/`; cache writes may also live in `shared/lib/query-invalidation.ts`. A component calls the hook (`useDeleteCase`, `useDeleteEntity`) and keeps its own UI state; the mutation logic moves to the hook. A hook passes the Case and target of a write through the mutation variables, not hook props, so a pending write settles the Case it started in after an Active Case switch. Query keys are defined in a queries module, which means a `queries.ts`, a `*-queries.ts` or a `*-keys.ts` file, and imported everywhere else; calling a factory (`queryKey: casesKeys.all`) is always fine. Lint enforces all three (`watchdog/mutation-only-in-hooks`, `watchdog/cache-writes-only-in-hooks`, `watchdog/query-keys-in-queries-modules`); sites that predate the rules are baselined per file and the baselines only shrink.
 
 ### Loaders, warm helpers, pending
 

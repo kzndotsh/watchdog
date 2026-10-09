@@ -26,8 +26,6 @@ export function DeleteIdentifierDialog({
   onDeleted?: (deleted: DeleteIdentifierTarget) => void;
 }) {
   const { deleteMutation, error, setError } = useDeleteIdentifier({
-    caseId,
-    target,
     onOpenChange,
     onDeleted,
   });
@@ -67,7 +65,7 @@ export function DeleteIdentifierDialog({
             variant="destructive"
             loading={deleteMutation.isPending}
             onClick={() => {
-              if (target) deleteMutation.mutate(target.id);
+              if (target) deleteMutation.mutate({ caseId, target });
             }}
           >
             Delete

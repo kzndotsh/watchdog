@@ -26,6 +26,20 @@ export const CACHE_WRITE_MEMBERS = new Set([
 ]);
 
 /**
+ * The statically known name of an object property: `a`, `"a"`, `["a"]` or `` [`a`] ``.
+ * @param {Record<string, unknown>} prop a `Property` node
+ * @returns {string | null}
+ */
+export const staticKeyName = (prop) => {
+  const { key } = prop;
+  if (!isRecord(key)) return null;
+  if (prop.computed !== true && key.type === "Literal") {
+    return typeof key.value === "string" ? key.value : null;
+  }
+  return propertyName({ property: key, computed: prop.computed });
+};
+
+/**
  * Tracks the local names bound to `useMutation` (named, aliased) and to a namespace import
  * of `@tanstack/react-query` in one file. Call `init(program)` from the `Program` visitor
  * (imports hoist), then `isUseMutation(callee)` per call. A name that a nested scope

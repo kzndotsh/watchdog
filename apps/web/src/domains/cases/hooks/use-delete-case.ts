@@ -10,11 +10,9 @@ import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
 
 /** Delete a Case, then settle the Case caches; the dialog owns open state and copy. */
 export function useDeleteCase({
-  caseRow,
   onOpenChange,
   onDeleted,
 }: {
-  caseRow: CaseRecord | null;
   onOpenChange: (open: boolean) => void;
   onDeleted?: (deleted: CaseRecord) => void;
 }) {
@@ -22,10 +20,13 @@ export function useDeleteCase({
   const [error, setError] = useState<string | null>(null);
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) =>
-      deleteCaseFn({ data: deleteCaseInputSchema.parse({ caseId: id }) }),
-    onSuccess: async () => {
-      if (!caseRow) return;
+    // The Case being deleted travels as the mutation variable: a hook prop would follow
+    // a re-render, and a pending deletion must settle the Case it was started for.
+    mutationFn: async (caseRow: CaseRecord) =>
+      deleteCaseFn({
+        data: deleteCaseInputSchema.parse({ caseId: caseRow.id }),
+      }),
+    onSuccess: async (_data, caseRow) => {
       setError(null);
       onOpenChange(false);
       await invalidateAfterCaseSwitch(queryClient);

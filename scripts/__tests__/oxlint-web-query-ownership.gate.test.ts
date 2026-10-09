@@ -61,6 +61,10 @@ const CACHE_FAIL = {
     "export const f = (qc: any) => qc.invalidateQueries.call(qc, {});\n",
   "destructured.tsx":
     "export const f = (qc: any) => {\n  const { invalidateQueries } = qc;\n  return invalidateQueries;\n};\n",
+  "destructured-template.tsx":
+    "export const f = (qc: any) => {\n  const { [`invalidateQueries`]: inv } = qc;\n  return inv;\n};\n",
+  "destructured-computed.tsx":
+    'export const f = (qc: any) => {\n  const { ["setQueryData"]: put } = qc;\n  return put;\n};\n',
   "destructured-alias.tsx":
     "export const f = (qc: any) => {\n  const { setQueryData: put } = qc;\n  return put;\n};\n",
   "chained.tsx":
@@ -87,6 +91,16 @@ const KEYS_FAIL = {
     "export const f = (id: string) => {\n  const previewQueryKey = [`preview`, id] as const;\n  return previewQueryKey;\n};\n",
   "key-fn.ts":
     'export const fooQueryKey = (id: string) => ["foo", id] as const;\n',
+  "key-fn-conditional.ts":
+    'export const fooKey = (id?: string) => (id ? ["foo", id] : ["foo"]);\n',
+  "key-fn-logical.ts":
+    'export const fooKey = (id?: string) => id && ["foo", id];\n',
+  "key-fn-if-return.ts":
+    'export function fooKey(id?: string) {\n  if (id) {\n    return ["foo", id];\n  }\n  return undefined;\n}\n',
+  "key-fn-switch-return.ts":
+    'export const fooKey = (k: number) => {\n  switch (k) {\n    case 1:\n      return ["foo"];\n    default:\n      return undefined;\n  }\n};\n',
+  "inline-key-computed.ts": 'export const o = { ["queryKey"]: ["foo"] };\n',
+  "inline-key-template.ts": 'export const o = { [`queryKey`]: ["foo"] };\n',
   "key-fn-decl.ts":
     'export function fooKey(id: string) {\n  return ["foo", id];\n}\n',
 } as const;
@@ -206,6 +220,9 @@ beforeAll(() => {
       "declare const someKey: readonly unknown[];",
       "export const labelKeys = { a: 1, b: 2 };",
       "export const d = { key: [1, 2] };",
+      "export const fooKey = (id?: string) => (id ? id.toUpperCase() : undefined);",
+      'export const e = { [dynamicName]: ["a"] };',
+      "declare const dynamicName: string;",
       "",
     ].join("\n")
   );
