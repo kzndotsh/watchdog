@@ -25,8 +25,12 @@ import { isRecord, typeNameOf } from "../lib/ast.mjs";
  * }} RuleContext
  */
 
-/** Matches `os`, `./os`, `../os`, `../os.ts` (the module exporting the builders). */
-const OS_MODULE = /(^|\/)os(\.(ts|mjs|js))?$/;
+/**
+ * Modules that export the builders: `os.ts` itself, the API barrel `src/index.ts`
+ * (`../index`, `..`, `../..`, `./index`) and the package `@watchdog/api`.
+ */
+const OS_MODULE =
+  /^(?:@watchdog\/api(?:\/os)?|.*\/os(?:\.(?:ts|mjs|js))?|os|\.{1,2}(?:\/\.\.)*(?:\/index(?:\.(?:ts|mjs|js))?)?\/?)$/;
 
 /** `// public: <reason>`; the reason must be non-empty. */
 const JUSTIFICATION = /^[\s*]*public:\s*\S/;

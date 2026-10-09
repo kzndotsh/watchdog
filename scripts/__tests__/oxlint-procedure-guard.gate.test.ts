@@ -30,6 +30,15 @@ const FAIL_CASES = {
   "pub-comment-not-adjacent": `${OS_PUB}// public: probe reachable by uptime monitors\n\n${USE}`,
   "pub-comment-empty-reason": `${OS_PUB}// public:\n${USE}`,
   "pub-comment-wrong-word": `${OS_PUB}// TODO: guard this\n${USE}`,
+  "pub-barrel-index": `import { pub } from "../index";\n\n${USE}`,
+  "pub-barrel-dir": `import { pub } from "..";\n\n${USE}`,
+  "pub-barrel-up-two": `import { pub } from "../../index";\n\n${USE}`,
+  "pub-barrel-package": `import { pub } from "@watchdog/api";\n\n${USE}`,
+  "pub-barrel-aliased":
+    'import { pub as open } from "../index";\n\nexport const a = open.handler(() => 1);\n',
+  "pub-barrel-namespace":
+    'import * as api from "..";\n\nexport const a = api.pub.handler(() => 1);\n',
+  "pub-barrel-reexport": 'export { pub } from "../index";\n',
   "orpc-os-direct":
     'import { os } from "@orpc/server";\n\nexport const a = os.handler(() => 1);\n',
   "orpc-os-aliased":
@@ -50,6 +59,13 @@ const PASS_CASES = {
   "pub-alias-justified": `${OS_PUB}// public: health-style probes share one builder\nconst open = pub;\nexport const a = open.handler(() => 1);\n`,
   "pub-reexport-justified":
     '// public: the probe module re-exports the public builder\nexport { pub } from "../os";\n',
+  "barrel-authed":
+    'import { authed } from "../index";\n\nexport const a = authed.handler(() => 1);\n',
+  "barrel-type-import":
+    'import type { pub } from "../index";\n\nexport type A = typeof pub;\n',
+  "barrel-pub-justified": `import { pub } from "..";\n\n// public: probe\n${USE}`,
+  "unrelated-barrel-pub":
+    'import { pub } from "../schemas";\nimport { pub as p2 } from "@watchdog/schemas";\n\nexport const a = [pub, p2];\n',
   "helper-file":
     'import { resolveAuthMethod } from "../os";\n\nexport const kind = resolveAuthMethod;\n',
   "plain-file": "export const LIMIT = 50;\n",
