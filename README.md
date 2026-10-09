@@ -1,47 +1,39 @@
-<div align="center">
-    <p>
-        <a href="https://github.com/kzndotsh/watchdog/actions/workflows/ci.yml">
-            <img alt="CI" src="https://github.com/kzndotsh/watchdog/actions/workflows/ci.yml/badge.svg"></a>
-        <a href="https://codecov.io/gh/kzndotsh/watchdog">
-            <img alt="Coverage" src="https://codecov.io/gh/kzndotsh/watchdog/graph/badge.svg"></a>
-        <a href="https://www.typescriptlang.org">
-            <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-7-3178c6?logo=typescript&logoColor=white"></a>
-        <a href="https://effect.website">
-            <img alt="Effect" src="https://img.shields.io/badge/Effect-4-8b5cf6"></a>
-        <a href="https://tanstack.com/start">
-            <img alt="TanStack Start" src="https://img.shields.io/badge/TanStack_Start-ff4154?logo=react&logoColor=white"></a>
-        <a href="https://www.postgresql.org">
-            <img alt="Postgres" src="https://img.shields.io/badge/Postgres-18-4169e1?logo=postgresql&logoColor=white"></a>
-        <a href="https://orpc.dev">
-            <img alt="oRPC" src="https://img.shields.io/badge/oRPC-OpenAPI-6366f1"></a>
-    </p>
-    <h1>Watchdog</h1>
-    <p><strong>An OSINT case platform where machines collect and humans decide.</strong></p>
-    <p>
-        <a href="#quick-start">Quick start</a> •
-        <a href="#capabilities">Caps</a> •
-        <a href="#architecture">Architecture</a> •
-        <a href="#status">Status</a> •
-        <a href="docs/README.md">Docs</a> •
-        <a href="ROADMAP.md">Roadmap</a>
-    </p>
-</div>
+![CI](https://github.com/kzndotsh/watchdog/actions/workflows/ci.yml/badge.svg) ![Coverage](https://codecov.io/gh/kzndotsh/watchdog/graph/badge.svg) ![TypeScript](https://img.shields.io/badge/TypeScript-7-3178c6?logo=typescript&logoColor=white) ![Effect](https://img.shields.io/badge/Effect-4-8b5cf6) ![TanStack Start](https://img.shields.io/badge/TanStack_Start-ff4154?logo=react&logoColor=white) ![Postgres](https://img.shields.io/badge/Postgres-18-4169e1?logo=postgresql&logoColor=white) ![oRPC](https://img.shields.io/badge/oRPC-OpenAPI-6366f1)
 
-> [!WARNING]
+# Watchdog
+
+## Investigations are messy. Your OSINT work requires a place you can trust.
+
+[Quick start](#quick-start) • [Caps](#capabilities) • [Architecture](#architecture) • [Docs](#docs) • [Roadmap](ROADMAP.md)
+
+> !WARNING]
 >
-> **Pre-1.0 and under active development.** Schemas, Cap ids, and API shapes change without notice, and several surfaces in [`ROADMAP.md`](ROADMAP.md) are half-built. Organization-scoped tenancy (Better Auth orgs, invites, org-bound cases) ships for small teams, but the install is not hardened for hostile multi-tenant SaaS or production deployment at scale.
+> **Pre-1.0 and under active development.** Schemas, Cap ids, and API shapes change without notice, and several surfaces in [ROADMAP.md](ROADMAP.md) are half-built. Organization-scoped tenancy (Better Auth orgs, invites, org-bound cases) ships for small teams, but the install is not hardened for hostile multi-tenant SaaS or production deployment at scale.
 
-## Why
+
+
+## Why Watchdog
+
+Most tools are built to collect. Watchdog is built to conclude.
+
+### What usually goes wrong:
 
 Small-team OSINT usually runs on general-purpose tools: a chat thread for coordination, a growing document for the case file, an assistant for summarizing, and ad-hoc scripts for collection. That works until the case gets big enough to hit the same failures every time.
 
-- Summaries get treated as fact, with no evidence chain behind them.
-- The system of record becomes the chat log, and separate copies of the case file diverge.
-- Catching up means reading scrollback instead of reading the case.
-- Identity links rest on a matching handle, a shared mailbox, or a coincidence.
-- More collection produces less clarity rather than more.
+- Summaries and assumptions get treated as fact.
+- The case lives in three places at once. None of them agree.
+- More lookups produce more data, not more clarity.
+- A coincidence becomes a confirmed link.
 
-Watchdog exists for the opposite: one case graph of claims and evidence you can defend, built while collection stays fast. Every claim carries its evidence, a person accepts each one before it lands, and the whole case exports as a package you can hand to someone else.
+
+
+### Watchdog was built to solve these problems.
+
+- You decide what lands: every result comes back as a proposal, not a conclusion. Nothing reaches the case until you say so.
+- One source of truth: the "real" case lives in one place — not a thread, not a doc. One graph, one record. The export regenerates from it any time.
+- Collect without the noise: run as many lookups as you need. Accept what holds, reject what doesn't. The case grows with your judgment.
+
+
 
 ## How it differs
 
@@ -62,6 +54,10 @@ flowchart LR
   D --> E["Export<br/>markdown + zip"]
 ```
 
+
+
+
+
 ## Quick start
 
 Requires Docker, Node ≥ 22, pnpm 11. [Nix](https://nixos.org/download) is optional and pins the whole toolchain.
@@ -69,87 +65,30 @@ Requires Docker, Node ≥ 22, pnpm 11. [Nix](https://nixos.org/download) is opti
 ```bash
 git clone https://github.com/kzndotsh/watchdog.git
 cd watchdog
-nix develop                 # optional
 cp env.example .env         # set BETTER_AUTH_SECRET + WD_MASTER_VAULT_KEY
-                            # openssl rand -base64 32
 pnpm install
-just dev                    # Postgres + S3 + migrations + web + worker + marketing site (:3001)
+just dev                    # Postgres + S3 + migrations + web app + worker + marketing site
 ```
 
-No account is seeded and registration is closed by default. See [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) for signup, invites, and env detail, and [`docs/how-to/local-dev.md`](docs/how-to/local-dev.md) for services and traps.
 
-**Bootstrap:** set `BETTER_AUTH_ALLOW_SIGNUP=1`, create the first account at `/auth/sign-up`; it becomes the instance admin, then onboarding asks you to create your organization. Leave the flag on for an open install (anyone can sign up and create organizations), or set it back to `0` to lock the install to invitations (Settings → Organization → **Members**: copy link, or optional SMTP in `.env`).
-
-**First investigation tutorial:** [`docs/tutorials/first-investigation.md`](docs/tutorials/first-investigation.md) (dump → Process → Triage → Dossier).
-
-Everything binds to loopback: product app on `:3000`, static marketing site on `:3001` (no infra; `just dev` starts it too), Postgres on `:5432`, S3 storage (SeaweedFS) on `:9100`. Agents: [`docs/how-to/agent-cli.md`](docs/how-to/agent-cli.md) · OpenAPI `/api/v1/spec.json`.
-
-**pnpm only.** Version is pinned in `package.json`; npm and yarn will produce a broken workspace.
-
-## Environment
-
-`@watchdog/env` validates these at boot, so a bad `.env` fails immediately rather than at first query. Copying `env.example` gives you working local defaults for everything except the two secrets.
-
-**Required**
-
-| Variable | Description |
-| --- | --- |
-| `DATABASE_URL` | Postgres connection string |
-| `BETTER_AUTH_SECRET` | Session signing key, 32+ chars |
-| `WD_MASTER_VAULT_KEY` | Encrypts Cap credentials at rest; 32-byte base64 or 64-char hex |
-| `S3_ENDPOINT` · `S3_ACCESS_KEY` · `S3_SECRET_KEY` · `S3_BUCKET` | Evidence and artifact storage |
-
-**Optional**
-
-| Variable | Description |
-| --- | --- |
-| `DATABASE_URL_MIGRATE` | Superuser URL for migrations; falls back to `DATABASE_URL` |
-| `BETTER_AUTH_URL` | Default `http://127.0.0.1:3000` |
-| `BETTER_AUTH_ALLOW_SIGNUP` | Open registration and self-serve organizations; default off (invitation-only) |
-| `BETTER_AUTH_TRUSTED_ORIGINS` | Comma-separated extra origins |
-| `SMTP_HOST` · `SMTP_FROM` | Optional invitation mail (`SMTP_PORT` / `SMTP_USER` / `SMTP_PASS`); copy-link works without SMTP |
-| `S3_REGION` | Default `us-east-1` |
-| `WD_EXPORT_DIR` | Markdown shadow location; default `<repo>/export` |
-| `NODE_ENV` | `development` · `production` · `test` |
-
-The CLI reads its own pair: `WD_API_URL` and `WD_API_KEY`, the latter created in Settings → API Keys. **Cap API keys never go here.** They live in the encrypted vault. API and CLI calls are scoped to the caller's Better Auth organization (session `activeOrganizationId`, or the organization the key was created in).
-
-## A case, end to end
-
-```bash
-wd cases create --name "Example"
-# {"id":"0b8f…","name":"Example","slug":"example"}
-wd jobs start -c 0b8f… --cap network.dns.lookup -i '{"host":"example.com"}'
-# {"id":"3c21…","status":"queued","capabilityId":"network.dns.lookup"}
-wd proposals list -c 0b8f…
-# 1 proposal: 4 identifiers, 1 claim (job 3c21…)
-wd proposals accept -c 0b8f… 4d90… --confidence possible
-wd export zip -c 0b8f…
-```
-
-Output is compact JSON so it pipes into `jq`; add `--table` when a human is reading. Lists return a `help` array suggesting the next command, which is how agents navigate without a tutorial. Chain Caps with a playbook instead of running them one at a time:
-
-```bash
-wd jobs playbook -c 0b8f… --id host-footprint --host example.com
-```
-
-Agents propose by default. `wd graph write` skips Triage: it always sends `userOverride: true` (no flag), still lands at `unverified`, and records a row in `graph_writes`. Child nouns (`claims`, `identifiers`, …) still need `--user-override`.
 
 ## Capabilities
 
 Each Cap is a folder under `packages/caps/src/` named for its id, such as `network/dns.lookup/`, holding a `run` that collects and a pure `interpret` that maps the report to proposed operations. Keeping `interpret` pure means it tests against recorded fixtures with no network.
 
-| Category | Examples |
-| --- | --- |
-| `network` | DNS, WHOIS/RDAP, certificate transparency, TLS audit, Shodan, urlscan |
-| `threat` | VirusTotal, AbuseIPDB, GreyNoise, URLhaus, OTX, Safe Browsing |
-| `identity` | GitHub, Keybase, Gravatar, PGP, email reputation |
-| `breach` | HIBP, Dehashed, Snusbase, Hudson Rock |
-| `archive` | Wayback lookup and fetch, Common Crawl, save-page |
-| `evidence` | Deterministic harvest, AI extraction, file and `.eml` analysis |
-| `web` | URL unshortening, page enrichment |
 
-Every Cap declares its egress (many make no third-party call at all) and tags itself `Passive` or `Active`, so you know before running one whether it touches the target. Credentials come from an encrypted vault at runtime via `ctx.getCredential`, never from environment variables or job input. Run `pnpm generate:caps` after adding one.
+| Category   | Examples                                                              |
+| ---------- | --------------------------------------------------------------------- |
+| `network`  | DNS, WHOIS/RDAP, certificate transparency, TLS audit, Shodan, urlscan |
+| `threat`   | VirusTotal, AbuseIPDB, GreyNoise, URLhaus, OTX, Safe Browsing         |
+| `identity` | GitHub, Keybase, Gravatar, PGP, email reputation                      |
+| `breach`   | HIBP, Dehashed, Snusbase, Hudson Rock                                 |
+| `archive`  | Wayback lookup and fetch, Common Crawl, save-page                     |
+| `evidence` | Deterministic harvest, AI extraction, file and `.eml` analysis        |
+| `web`      | URL unshortening, page enrichment                                     |
+
+
+
 
 ## Architecture
 
@@ -177,63 +116,28 @@ packages/
 └── test-kit/             Dev-only ids, URLs, fast-check, MSW; no workspace deps
 ```
 
-Dependencies flow one direction and the boundaries are enforced, not suggested: `caps` cannot import `db`, `api` cannot reach past `core` to SQL, and `web` cannot import `db`. Only `core` calls repos for product logic (`auth` depends on `db` for its Better Auth adapter, and the dev-only `test-db` seeds use repos too). Matrix and what enforces it: [`docs/reference/platform/packages.md`](docs/reference/platform/packages.md).
 
-### Effect
-
-Most server-side product logic runs on **[Effect](https://effect.website)** (v4): `@watchdog/core` exposes `*Effect` entrypoints for cases, jobs, evidence, proposals, and export; the worker boots with `NodeRuntime.runMain`; Cap `run` handlers are Effect programs with tagged errors and `HttpClient` layers; pg-boss enqueue/cancel and job fibers use `FiberMap`, schedules, and scoped resources. The web app stays mostly React — ServerFns call into core via `runApp`, and the browser never imports Effect-tagged modules (policy exposes a thin `patch-needs-confidence` entry for Triage UI). Conventions and allowlisted `run*` edges: [`AGENTS.md`](AGENTS.md) · [`docs/reference/platform/jobs-orpc.md`](docs/reference/platform/jobs-orpc.md) · `node_modules/effect/AGENTS.md`.
-
-### Organizations and tenancy
-
-Better Auth **organizations** bound the case graph: each Case row carries an `organization_id`; list/get/create/update/delete and search filter on the active org. Users create organizations themselves (onboarding, or the sidebar switcher when signup is open) or join by invitation (`/auth/accept-invitation/{id}`) with org role `admin` or `member`. Instance admins (`auth.user.role`, the first account) manage accounts under Settings → **Users**; org owners and admins invite under **Organization**. Missing org context on an API call is **403**, not a silent cross-org leak. Details: [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md).
-
-A job's path: `enqueueCapJobEffect` → the `watchdog.cap-jobs` queue → worker runs the Cap → artifacts to S3, Proposal to Triage → Accept applies the patch in one transaction → worker re-syncs the case's markdown shadow.
-
-| Layer | Stack |
-| --- | --- |
-| **Frontend** | TanStack Start · React · Tailwind 4 · shadcn/ui · TanStack Query |
-| **API** | oRPC (RPC for the app, OpenAPI for agents) · Zod |
-| **Data** | Postgres 18 · Drizzle ORM · S3-compatible storage |
-| **Jobs** | pg-boss · dedicated worker process · Effect fibers + tagged errors |
-| **Auth** | Better Auth (sessions, orgs, invites, API keys, instance admin) |
-| **Observability** | evlog structured wide events |
-| **Tooling** | pnpm · Nix · just · Vitest · Playwright · oxlint · oxfmt |
-
-## Commands
-
-The quick-reference table (dev, database, lint, test, codegen, desloppify) is in [`AGENTS.md`](AGENTS.md#quick-reference); the `justfile` and `package.json` scripts are the SoT. Integration and end-to-end runs need their own databases first: `just test-db`.
-
-## Status
-
-Third design, first one that ships. A vault-plus-Python-pipeline version and a broad platform spec both got frozen before this; [`docs/explanation/product.md`](docs/explanation/product.md) records what each one taught and what not to resurrect.
-
-Today: 15 packages and 4 apps, with unit, property, component, integration and Playwright tiers. The Cap catalog is `packages/caps/capabilities.gen.json`. The investigator loop runs end to end: bootstrap auth, org-scoped cases, dump evidence, run Caps, accept proposals, export the package.
-
-Not there yet, worth knowing before you invest time:
-
-- **MCP server.** Not built. Agents use the OpenAPI surface today.
-- **Playbooks** are linear chains, with no branching and no conditionals.
-- **Hardened multi-tenancy.** Organizations are self-serve and Cases are org-scoped, but there is no billing and no external adversarial-tenant review yet (an automated tenant-isolation matrix, `packages/api/src/__tests__/org-isolation.int.test.ts`, and production rate limits on sign-up and organization actions exist). Deleting an organization (owner only) deletes all of its Cases, evidence, and artifacts first.
-- **End-to-end coverage.** Playwright specs in `e2e/specs/` (`@smoke` / `@custody` / `@journey`) cover the core loop, custody gates and auth on top of the lower tiers; they do not cover every screen.
-
-Investigation content (corpus, entity notes, mirrors) lives in a separate private repo and never enters this one.
 
 ## Docs
 
-| Read | For |
-| --- | --- |
-| [`docs/explanation/product.md`](docs/explanation/product.md) | Intent, personas, what this refuses to build and why |
-| [`docs/reference/platform/`](docs/reference/platform/README.md) | Packages and import rules ([`packages.md`](docs/reference/platform/packages.md)), jobs, oRPC, Caps, schemas |
-| [`docs/reference/platform/jobs-orpc.md`](docs/reference/platform/jobs-orpc.md) | Jobs queue, oRPC/OpenAPI, Effect runtime edges |
-| [`docs/how-to/auth-setup.md`](docs/how-to/auth-setup.md) | Bootstrap, orgs, invites, API keys, actor labels |
-| [`docs/reference/platform/caps-lexicon.md`](docs/reference/platform/caps-lexicon.md) · [`packages/caps/AGENTS.md`](packages/caps/AGENTS.md) | Cap naming, method vocabulary, ship gates, how to write one |
-| [`docs/reference/platform/types.md`](docs/reference/platform/types.md) | Shared Zod schemas and vocabulary |
-| [`docs/explanation/ux.md`](docs/explanation/ux.md) | Information architecture and investigator flows |
-| [`docs/reference/web/`](docs/reference/web/README.md) | UI, design system, domains, data fetching |
-| [`DESIGN.md`](DESIGN.md) | Design direction and taste rules |
-| [`apps/site/README.md`](apps/site/README.md) | Marketing site dev, build, `PUBLIC_APP_URL` for sign-in links |
-| [`AGENTS.md`](AGENTS.md) | Conventions for coding agents in this repo |
-| [`SECURITY.md`](SECURITY.md) | Supported versions and private vulnerability reporting |
+The [docs index](docs/README.md) lists everything. The ones you will want first:
+
+
+| Doc                                                          | Read it for                                                                         |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| [First investigation](docs/tutorials/first-investigation.md) | A guided case: dump evidence, process it, triage, build the dossier                 |
+| [Auth setup](docs/how-to/auth-setup.md)                      | The first account, organizations, invites, API keys                                 |
+| [Local development](docs/how-to/local-dev.md)                | The services, the ports, and the usual traps                                        |
+| [Agent CLI](docs/how-to/agent-cli.md)                        | Driving Watchdog with `wd` or an agent, and the OpenAPI spec at `/api/v1/spec.json` |
+| [Product](docs/explanation/product.md)                       | What this is for, and what it refuses to build                                      |
+| [Platform reference](docs/reference/platform/README.md)      | Packages and import rules, jobs, oRPC, Caps, schemas                                |
+| [Web reference](docs/reference/web/README.md)                | The UI, design system, domains, and data fetching                                   |
+| [Glossary](GLOSSARY.md)                                      | What a Case, Evidence, Proposal and Accept mean here                                |
+| [AGENTS.md](AGENTS.md)                                       | Commands and conventions, including the rules coding agents break most              |
+| [Security](SECURITY.md)                                      | Supported versions and reporting a vulnerability                                    |
+
+
+
 
 ## License
 
