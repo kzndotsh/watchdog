@@ -9,10 +9,17 @@
  * (`packages/core/src/**`, `packages/schemas/src/testing/**`, ...).
  */
 import { spawnSync } from "node:child_process";
+import { rmSync } from "node:fs";
 import path from "node:path";
 
 import { gateRepoFactory } from "./gate-repo.ts";
 import type { GateRepo } from "./gate-repo.ts";
+
+/**
+ * Timeout for a hook or test that runs oxlint: a cold run is a second or two, but the
+ * gate project runs many files in parallel and the default 5s/10s is easy to exceed.
+ */
+export const LINT_TIMEOUT_MS = 60_000;
 
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 
@@ -121,6 +128,11 @@ export function oxlintFixtureFactory({
     const repo = createGateRepo([]);
     repo.copyFromRepo("oxlint.config.ts");
     repo.copyFromRepo("scripts/oxlint-plugin");
+    // Committed baselines name real repo files; a fixture starts with none and writes its own.
+    rmSync(path.join(repo.dir, "scripts/oxlint-plugin/baselines"), {
+      recursive: true,
+      force: true,
+    });
     // The config lists `apps/web/.../primitives/*.tsx` at load time; an empty dir suffices.
     repo.write("apps/web/src/shared/ui/primitives/.keep", "");
     repo.write(

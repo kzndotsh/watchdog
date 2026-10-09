@@ -261,6 +261,57 @@ const FAIL: readonly Case[] = [
     lines: [4],
   },
   {
+    // imports are hoisted: the alias import comes after its use
+    rule: "db-repo-no-sql-param",
+    name: "sql-alias-import-after-use",
+    src: `${repo(
+      "  async get(exec: DbExec, where: Fragment) {",
+      "    return exec.select().where(where);",
+      "  },"
+    )}\nimport type { SQL as Fragment } from "drizzle-orm";\n`,
+    lines: [2],
+  },
+  {
+    rule: "db-repo-no-sql-param",
+    name: "sql-namespace-import",
+    src: `import type * as d from "drizzle-orm";\n\n${repo(
+      "  async get(exec: DbExec, where: d.SQL) {",
+      "    return exec.select().where(where);",
+      "  },"
+    )}`,
+    lines: [4],
+  },
+  {
+    rule: "db-repo-no-raw-sql",
+    name: "raw-sql-aliased-import",
+    src: `import { sql as q } from "drizzle-orm";\n\n${repo(
+      "  async get(exec: DbExec) {",
+      "    return exec.select().where(q`now() > created_at`);",
+      "  },"
+    )}`,
+    lines: [5],
+  },
+  {
+    rule: "db-repo-no-raw-sql",
+    name: "raw-sql-namespace-import",
+    src: `import * as d from "drizzle-orm";\n\n${repo(
+      "  async get(exec: DbExec) {",
+      "    return exec.select().where(d.sql`now() > created_at`);",
+      "  },"
+    )}`,
+    lines: [5],
+  },
+  {
+    rule: "db-repo-no-raw-sql",
+    name: "raw-sql-alias-import-after-use",
+    src: `${repo(
+      "  async get(exec: DbExec) {",
+      "    return exec.select().where(q`now() > created_at`);",
+      "  },"
+    )}\nimport { sql as q } from "drizzle-orm";\n`,
+    lines: [3],
+  },
+  {
     rule: "db-repo-no-validation-import",
     name: "zod-export-all",
     src: `export * from "zod";\n\n${repo(ok)}`,
@@ -429,6 +480,14 @@ const PASS: readonly { readonly name: string; readonly src: string }[] = [
       "    return exec.select().from(things).where(eq(things.id, id));",
       "  },"
     ),
+  },
+  {
+    name: "unrelated-sql-tag",
+    src: `import { sql as q, sql } from "./other";\n\n${repo(
+      "  async get(exec: DbExec) {",
+      "    return [q`a`, sql`b`, other.sql`c`, d.sql`d`];",
+      "  },"
+    )}`,
   },
   {
     name: "unrelated-sql-alias",
