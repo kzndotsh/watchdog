@@ -7,7 +7,11 @@
  */
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { findingsFor, oxlintFixtureFactory } from "./helpers/oxlint-fixture.ts";
+import {
+  LINT_TIMEOUT_MS,
+  findingsFor,
+  oxlintFixtureFactory,
+} from "./helpers/oxlint-fixture.ts";
 import type { LintResult } from "./helpers/oxlint-fixture.ts";
 
 const RULE = "watchdog/no-brand-cast";
@@ -58,7 +62,7 @@ beforeAll(() => {
   }
   fixture.write(`${EXEMPT}/exempt.ts`, FAIL_CASES["as-case-id"]);
   result = fixture.lint([PROBE, EXEMPT]);
-});
+}, LINT_TIMEOUT_MS);
 
 const hitsFor = (file: string) => findingsFor(result, file, RULE);
 
