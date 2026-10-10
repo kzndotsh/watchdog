@@ -1,5 +1,4 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
 import { format, isValid, parse } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
@@ -7,16 +6,13 @@ import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
+import { useCreateEvent } from "@/domains/dossier/hooks/use-create-event";
+import { useDeleteEvent } from "@/domains/dossier/hooks/use-delete-event";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
-import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
+import { useUpdateEvent } from "@/domains/dossier/hooks/use-update-event";
 import { eventRowActions } from "@/domains/dossier/lib/event-row-actions";
 import type { DossierSectionProps } from "@/domains/dossier/types";
-import {
-  createEventFn,
-  deleteEventFn,
-  updateEventFn,
-} from "@/domains/entities/events/events.functions";
 import { eventsListQuery } from "@/domains/entities/events/queries";
 import { cn, errMessage } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
@@ -26,12 +22,6 @@ import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
-import { toast } from "@/shared/ui/toast";
-import {
-  createEventInputSchema,
-  eventScopeInputSchema,
-  updateEventInputSchema,
-} from "@watchdog/schemas/graph";
 import { Calendar } from "@watchdog/ui/components/calendar";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
@@ -320,7 +310,7 @@ export function EventsSection({
   entitySlug,
   emptyPresentation = "inline",
 }: DossierSectionProps) {
-  const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
+  const scope = { caseId, entityId, entitySlug };
   const {
     data: rows,
     placeholder,
@@ -331,55 +321,15 @@ export function EventsSection({
 
   const editor = useDossierSectionEditor();
 
-  const createMutation = useMutation({
-    mutationFn: async (value: EventFormValues) =>
-      createEventFn({
-        data: createEventInputSchema.parse({
-          caseId,
-          entityId,
-          when: value.when,
-          what: value.what,
-          where: value.where,
-        }),
-      }),
-    onSuccess: async () => {
-      editor.handleStopAdding();
-      await invalidate();
-      toast.success("Event added");
-    },
+  const createMutation = useCreateEvent({
+    onCreated: editor.handleStopAdding,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (input: { eventId: string; value: EventFormValues }) =>
-      updateEventFn({
-        data: updateEventInputSchema.parse({
-          caseId,
-          eventId: input.eventId,
-          when: input.value.when,
-          what: input.value.what,
-          where: input.value.where,
-        }),
-      }),
-    onSuccess: async () => {
-      editor.handleCloseEdit();
-      await invalidate();
-      toast.success("Event updated");
-    },
+  const updateMutation = useUpdateEvent({
+    onUpdated: editor.handleCloseEdit,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (eventId: string) =>
-      deleteEventFn({
-        data: eventScopeInputSchema.parse({ caseId, eventId }),
-      }),
-    onSuccess: async () => {
-      await invalidate();
-      toast.success("Event deleted");
-    },
-    onError: (e) => {
-      editor.handleError(errMessage(e, "Delete failed"));
-    },
-  });
+  const deleteMutation = useDeleteEvent({ onError: editor.handleError });
 
   const showSpine = editor.adding || rows.length > 0;
 
@@ -435,7 +385,7 @@ export function EventsSection({
                   onCancel={editor.handleStopAdding}
                   onError={editor.handleError}
                   onSubmit={async (value) => {
-                    await createMutation.mutateAsync(value);
+                    await createMutation.mutateAsync({ ...scope, value });
                   }}
                 />
               </TimelineNode>
@@ -456,6 +406,7 @@ export function EventsSection({
                     onError={editor.handleError}
                     onSubmit={async (value) => {
                       await updateMutation.mutateAsync({
+                        ...scope,
                         eventId: row.id,
                         value,
                       });
@@ -471,7 +422,7 @@ export function EventsSection({
                     }}
                     onDelete={() => {
                       editor.handleError(null);
-                      deleteMutation.mutate(row.id);
+                      deleteMutation.mutate({ ...scope, eventId: row.id });
                     }}
                   />
                 )}

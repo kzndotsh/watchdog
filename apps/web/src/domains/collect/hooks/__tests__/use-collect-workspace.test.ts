@@ -30,7 +30,6 @@ vi.mock("@/domains/jobs/jobs.functions", () => ({
 }));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
-  bindCasesChangedInvalidation: vi.fn(() => () => undefined),
   invalidateAfterEntityChanged: vi.fn().mockResolvedValue(undefined),
   invalidateAfterEvidenceMutation: vi.fn().mockResolvedValue(undefined),
   invalidateAfterJobMutation: vi.fn().mockResolvedValue(undefined),

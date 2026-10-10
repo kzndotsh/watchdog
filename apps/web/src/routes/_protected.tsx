@@ -6,6 +6,7 @@ import { ensureAppSession } from "@/auth/ensure-session";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { organizationStateQuery } from "@/domains/organization/queries";
 import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
+import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
 import { AppShell } from "@/shared/layout/app-shell";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
@@ -14,6 +15,8 @@ function ProtectedLayout() {
   useAuthenticate(authClient);
   // One organization-wide activity stream for the whole signed-in app.
   useActivityInvalidation();
+  // One Active Case switch binding for every screen under the layout.
+  useCasesChangedInvalidation();
 
   return (
     <AppShell>

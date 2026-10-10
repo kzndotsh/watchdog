@@ -1,28 +1,27 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
 import { CheckIcon } from "lucide-react";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
+import { useCreateQuestion } from "@/domains/dossier/hooks/use-create-question";
+import { useDeleteQuestion } from "@/domains/dossier/hooks/use-delete-question";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import type { DossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
-import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
+import { useReopenQuestion } from "@/domains/dossier/hooks/use-reopen-question";
+import { useResolveQuestion } from "@/domains/dossier/hooks/use-resolve-question";
+import { useUpdateQuestion } from "@/domains/dossier/hooks/use-update-question";
 import {
   openQuestionRowActions,
   resolvedQuestionRowActions,
 } from "@/domains/dossier/lib/question-row-actions";
-import type { DossierSectionProps } from "@/domains/dossier/types";
+import type {
+  DossierEntityScope,
+  DossierSectionProps,
+} from "@/domains/dossier/types";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
-import {
-  createQuestionFn,
-  deleteQuestionFn,
-  reopenQuestionFn,
-  resolveQuestionFn,
-  updateQuestionFn,
-} from "@/domains/entities/questions/questions.functions";
 import type { QuestionRecord } from "@/domains/entities/questions/types";
 import { cn, errMessage } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
@@ -35,13 +34,6 @@ import { SectionLabel } from "@/shared/ui/section-label";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
 import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
-import { toast } from "@/shared/ui/toast";
-import {
-  createQuestionInputSchema,
-  questionScopeInputSchema,
-  resolveQuestionInputSchema,
-  updateQuestionInputSchema,
-} from "@watchdog/schemas/graph";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
@@ -220,41 +212,30 @@ function QuestionComposer({
 }
 
 function ResolveForm({
-  caseId,
+  scope,
   questionId,
   onCancel,
   onError,
   onSaved,
 }: {
-  caseId: string;
+  scope: DossierEntityScope;
   questionId: string;
   onCancel: () => void;
   onError: (message: string | null) => void;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
 }) {
-  const resolveMutation = useMutation({
-    mutationFn: async (resolvedNote: string | undefined) =>
-      resolveQuestionFn({
-        data: resolveQuestionInputSchema.parse({
-          caseId,
-          questionId,
-          resolvedNote,
-        }),
-      }),
-    onSuccess: async () => {
-      await onSaved();
-      toast.success("Question resolved");
-    },
-  });
+  const resolveMutation = useResolveQuestion({ onResolved: onSaved });
 
   const resolveForm = useForm({
     defaultValues: { resolveNote: "" },
     onSubmit: async ({ value }) => {
       onError(null);
       try {
-        await resolveMutation.mutateAsync(
-          value.resolveNote.trim() || undefined
-        );
+        await resolveMutation.mutateAsync({
+          ...scope,
+          questionId,
+          resolvedNote: value.resolveNote.trim() || undefined,
+        });
       } catch (caughtError) {
         onError(errMessage(caughtError, "Resolve failed"));
       }
@@ -352,7 +333,7 @@ function QuestionNode({
 }
 
 function OpenQuestionRow({
-  caseId,
+  scope,
   label,
   question,
   editor,
@@ -362,14 +343,14 @@ function OpenQuestionRow({
   onResolved,
   onDelete,
 }: {
-  caseId: string;
+  scope: DossierEntityScope;
   label: string;
   question: QuestionRecord;
   editor: DossierSectionEditor;
   resolvingId: string | null;
   onResolvingChange: (id: string | null) => void;
   onSaveEdit: (text: string) => Promise<void>;
-  onResolved: () => Promise<void>;
+  onResolved: () => void;
   onDelete: () => void;
 }) {
   const editing = editor.editId === question.id;
@@ -427,7 +408,7 @@ function OpenQuestionRow({
           ) : null}
           {resolving ? (
             <ResolveForm
-              caseId={caseId}
+              scope={scope}
               questionId={question.id}
               onCancel={() => {
                 onResolvingChange(null);
@@ -531,7 +512,7 @@ export function QuestionsSection({
   entitySlug,
   emptyPresentation = "inline",
 }: DossierSectionProps) {
-  const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
+  const scope = { caseId, entityId, entitySlug };
   const {
     data: rows,
     placeholder,
@@ -543,72 +524,29 @@ export function QuestionsSection({
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const editor = useDossierSectionEditor();
 
-  const createMutation = useMutation({
-    mutationFn: async (text: string) =>
-      createQuestionFn({
-        data: createQuestionInputSchema.parse({ caseId, entityId, text }),
-      }),
-    onSuccess: async () => {
-      editor.handleStopAdding();
-      await invalidate();
-      toast.success("Question added");
-    },
+  const createMutation = useCreateQuestion({
+    onCreated: editor.handleStopAdding,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (input: {
-      questionId: string;
-      text: string;
-      resolvedNote?: string | null;
-    }) =>
-      updateQuestionFn({
-        data: updateQuestionInputSchema.parse({
-          caseId,
-          questionId: input.questionId,
-          text: input.text,
-          ...(input.resolvedNote === undefined
-            ? {}
-            : { resolvedNote: input.resolvedNote }),
-        }),
-      }),
-    onSuccess: async () => {
-      editor.handleCloseEdit();
-      await invalidate();
-      toast.success("Question updated");
-    },
+  const updateMutation = useUpdateQuestion({
+    onUpdated: editor.handleCloseEdit,
   });
 
-  const reopenMutation = useMutation({
-    mutationFn: async (questionId: string) =>
-      reopenQuestionFn({
-        data: questionScopeInputSchema.parse({ caseId, questionId }),
-      }),
-    onSuccess: async () => {
+  const reopenMutation = useReopenQuestion({
+    onReopened: () => {
       editor.handleCloseEdit();
       editor.handleError(null);
-      await invalidate();
-      toast.success("Question reopened");
     },
-    onError: (caughtError) => {
-      editor.handleError(errMessage(caughtError, "Reopen failed"));
-    },
+    onError: editor.handleError,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (questionId: string) =>
-      deleteQuestionFn({
-        data: questionScopeInputSchema.parse({ caseId, questionId }),
-      }),
-    onSuccess: async () => {
+  const deleteMutation = useDeleteQuestion({
+    onDeleted: () => {
       editor.handleCloseEdit();
       editor.handleError(null);
       setResolvingId(null);
-      await invalidate();
-      toast.success("Question deleted");
     },
-    onError: (caughtError) => {
-      editor.handleError(errMessage(caughtError, "Delete failed"));
-    },
+    onError: editor.handleError,
   });
 
   function handleDelete(questionId: string) {
@@ -619,7 +557,7 @@ export function QuestionsSection({
       setResolvingId(null);
     }
     editor.handleError(null);
-    deleteMutation.mutate(questionId);
+    deleteMutation.mutate({ ...scope, questionId });
   }
 
   const open = rows.filter((r) => r.status === "open");
@@ -674,7 +612,7 @@ export function QuestionsSection({
             onCancel={editor.handleStopAdding}
             onError={editor.handleError}
             onSubmit={async ({ text }) => {
-              await createMutation.mutateAsync(text);
+              await createMutation.mutateAsync({ ...scope, text });
             }}
           />
         ) : null}
@@ -684,7 +622,7 @@ export function QuestionsSection({
             {open.map((row, i) => (
               <OpenQuestionRow
                 key={row.id}
-                caseId={caseId}
+                scope={scope}
                 label={qIndex(i)}
                 question={row}
                 editor={editor}
@@ -692,13 +630,13 @@ export function QuestionsSection({
                 onResolvingChange={setResolvingId}
                 onSaveEdit={async (text) => {
                   await updateMutation.mutateAsync({
+                    ...scope,
                     questionId: row.id,
                     text,
                   });
                 }}
-                onResolved={async () => {
+                onResolved={() => {
                   setResolvingId(null);
-                  await invalidate();
                 }}
                 onDelete={() => {
                   handleDelete(row.id);
@@ -725,13 +663,14 @@ export function QuestionsSection({
                   editor={editor}
                   onSaveEdit={async (value) => {
                     await updateMutation.mutateAsync({
+                      ...scope,
                       questionId: row.id,
                       text: value.text,
                       resolvedNote: value.resolvedNote,
                     });
                   }}
                   onReopen={() => {
-                    reopenMutation.mutate(row.id);
+                    reopenMutation.mutate({ ...scope, questionId: row.id });
                   }}
                   onDelete={() => {
                     handleDelete(row.id);

@@ -33,6 +33,10 @@ vi.mock("@/shared/hooks/use-activity-stream", () => ({
   useActivityInvalidation: vi.fn(),
 }));
 
+vi.mock("@/shared/hooks/use-cases-changed-invalidation", () => ({
+  useCasesChangedInvalidation: vi.fn(),
+}));
+
 vi.mock("@/shared/layout/app-shell", () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="app-shell">{children}</div>
@@ -56,6 +60,7 @@ import { ensureAppSession } from "@/auth/ensure-session";
 import { casesContextQuery } from "@/domains/cases/queries";
 import { Route } from "@/routes/_protected";
 import { useActivityInvalidation } from "@/shared/hooks/use-activity-stream";
+import { useCasesChangedInvalidation } from "@/shared/hooks/use-cases-changed-invalidation";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";
 
 describe("_protected route", () => {
@@ -137,5 +142,13 @@ describe("_protected route", () => {
     render(<Layout />);
 
     expect(useActivityInvalidation).toHaveBeenCalledTimes(1);
+  });
+
+  it("binds the Active Case switch invalidation once for the whole signed-in app", () => {
+    vi.mocked(useCasesChangedInvalidation).mockClear();
+    const Layout = Route.options.component!;
+    render(<Layout />);
+
+    expect(useCasesChangedInvalidation).toHaveBeenCalledTimes(1);
   });
 });

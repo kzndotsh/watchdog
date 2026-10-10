@@ -28,7 +28,6 @@ import { jobsListQuery } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { credentialsKeys } from "@/domains/settings/queries";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
-import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import { entitySearchHaystackMapFromRows } from "@watchdog/schemas/graph";
 import { entityTitleMapForJobInputs } from "@watchdog/schemas/jobs";
@@ -212,8 +211,6 @@ export function useCollectWorkspace({
     queue: jobs,
     jobsListFetching,
   });
-
-  useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
   useEffect(() => {
     if (selection.rowId === null) return;

@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
@@ -8,23 +8,16 @@ import { ConnectionDialog } from "@/domains/dossier/components/ego-graph/connect
 import type { ConnectionFormValues } from "@/domains/dossier/components/ego-graph/connection-dialog";
 import { CompactConnectionList } from "@/domains/dossier/components/ego-graph/connection-list";
 import { EgoNeighborhoodCanvas } from "@/domains/dossier/components/ego-graph/ego-neighborhood-canvas";
-import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
+import { useCreateConnection } from "@/domains/dossier/hooks/use-create-connection";
+import { useDeleteConnection } from "@/domains/dossier/hooks/use-delete-connection";
+import { useUpdateConnection } from "@/domains/dossier/hooks/use-update-connection";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
-import {
-  createEdgeFn,
-  deleteEdgeFn,
-  updateEdgeFn,
-} from "@/domains/entities/edges/edges.functions";
 import { edgesListQuery } from "@/domains/entities/edges/queries";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { sortEdgesByPeerLabel } from "@/domains/entities/lib/connection-peers";
-import {
-  buildCreateEdgeData,
-  buildUpdateEdgeData,
-} from "@/domains/entities/lib/edge-write";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
-import { cn, errMessage } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
@@ -40,8 +33,6 @@ import {
   AlertDialogTitle,
 } from "@/shared/ui/primitives/alert-dialog";
 import { DossierConnectionsSkeletonLayout } from "@/shared/ui/skeletons";
-import { toast } from "@/shared/ui/toast";
-import { edgeScopeInputSchema } from "@watchdog/schemas/graph";
 import { FieldError } from "@watchdog/ui/components/field";
 
 export type ConnectionsSectionProps = DossierSectionWithEvidenceProps & {
@@ -66,7 +57,7 @@ export function ConnectionsSection({
   emptyPresentation = "inline",
   fillHeight = false,
 }: ConnectionsSectionProps) {
-  const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
+  const scope = { caseId, entityId, entitySlug };
   const edgesQuery = useQuery(edgesListQuery(caseId, entityId));
   const entitiesQuery = useQuery(entitiesListQuery(caseId));
   const queryResults = [edgesQuery, entitiesQuery];
@@ -103,86 +94,28 @@ export function ConnectionsSection({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-  const createMutation = useMutation({
-    mutationFn: async (values: ConnectionFormValues) =>
-      createEdgeFn({
-        data: buildCreateEdgeData({
-          caseId,
-          centerId: entityId,
-          core: {
-            peerId: values.peerId,
-            predicate: values.predicate,
-            orientation: values.orientation,
-            notes: values.notes,
-          },
-          confidence: values.confidence,
-          evidenceIds: values.evidenceIds,
-        }),
-      }),
-    onSuccess: async () => {
-      toast.success("Connection added");
+  const createMutation = useCreateConnection({
+    onCreated: () => {
       setDialog({ mode: "closed" });
       setSubmitError(null);
-      await invalidate();
     },
-    onError: (e) => {
-      setSubmitError(errMessage(e, "Failed to add"));
-    },
+    onError: setSubmitError,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({
-      edge,
-      values,
-    }: {
-      edge: EdgeRecord;
-      values: ConnectionFormValues;
-    }) =>
-      updateEdgeFn({
-        data: buildUpdateEdgeData({
-          caseId,
-          centerId: entityId,
-          edgeId: edge.id,
-          core: {
-            peerId: values.peerId,
-            predicate: values.predicate,
-            orientation: values.orientation,
-            notes: values.notes,
-          },
-          existing: {
-            fromId: edge.fromId,
-            toId: edge.toId,
-            peerId: edge.peerId,
-          },
-          confidence: values.confidence,
-          evidenceIds: values.evidenceIds,
-        }),
-      }),
-    onSuccess: async () => {
-      toast.success("Connection updated");
+  const updateMutation = useUpdateConnection({
+    onUpdated: () => {
       setDialog({ mode: "closed" });
       setSubmitError(null);
-      await invalidate();
     },
-    onError: (e) => {
-      setSubmitError(errMessage(e, "Update failed"));
-    },
+    onError: setSubmitError,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (edgeId: string) =>
-      deleteEdgeFn({
-        data: edgeScopeInputSchema.parse({ caseId, edgeId }),
-      }),
-    onSuccess: async () => {
+  const deleteMutation = useDeleteConnection({
+    onDeleted: () => {
       setPendingDeleteId(null);
       setDeleteError(null);
-      await invalidate();
-      toast.success("Connection deleted");
     },
-    onError: (e) => {
-      setDeleteError(errMessage(e, "Delete failed"));
-    },
+    onError: setDeleteError,
   });
 
   function handleOpenCreate() {
@@ -203,11 +136,15 @@ export function ConnectionsSection({
   async function handleDialogSubmit(values: ConnectionFormValues) {
     try {
       if (dialog.mode === "create") {
-        await createMutation.mutateAsync(values);
+        await createMutation.mutateAsync({ ...scope, values });
         return;
       }
       if (dialog.mode === "edit") {
-        await updateMutation.mutateAsync({ edge: dialog.edge, values });
+        await updateMutation.mutateAsync({
+          ...scope,
+          edge: dialog.edge,
+          values,
+        });
       }
     } catch {
       // onError already set submitError — keep dialog open
@@ -327,7 +264,10 @@ export function ConnectionsSection({
                 loading={deleteMutation.isPending}
                 onClick={() => {
                   if (pendingDeleteId) {
-                    deleteMutation.mutate(pendingDeleteId);
+                    deleteMutation.mutate({
+                      ...scope,
+                      edgeId: pendingDeleteId,
+                    });
                   }
                 }}
               >

@@ -1,14 +1,15 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode, type SubmitEvent } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionAddButton } from "@/domains/dossier/components/dossier-section-add-button";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
 import { ClaimClassSelect } from "@/domains/dossier/components/graph-field-selects";
+import { useCreateClaim } from "@/domains/dossier/hooks/use-create-claim";
 import { useDossierSectionEditor } from "@/domains/dossier/hooks/use-dossier-section-editor";
 import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
-import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
+import { useRetractClaim } from "@/domains/dossier/hooks/use-retract-claim";
+import { useUpdateClaim } from "@/domains/dossier/hooks/use-update-claim";
 import {
   claimDefaultsFromRow,
   claimEvidenceIdsValidator,
@@ -19,12 +20,10 @@ import {
   claimRowActions,
   type ClaimRowActionKind,
 } from "@/domains/dossier/lib/claim-row-actions";
-import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
-import {
-  createClaimFn,
-  retractClaimFn,
-  updateClaimFn,
-} from "@/domains/entities/claims/claims.functions";
+import type {
+  DossierEntityScope,
+  DossierSectionWithEvidenceProps,
+} from "@/domains/dossier/types";
 import { claimsListQuery } from "@/domains/entities/claims/queries";
 import type { ClaimRecord } from "@/domains/entities/claims/types";
 import { cn, errMessage } from "@/lib/utils";
@@ -39,14 +38,8 @@ import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
 import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
-import { toast } from "@/shared/ui/toast";
 import { ClaimClassBadge, ConfidenceBadge } from "@/shared/ui/vocab";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
-import {
-  createClaimInputSchema,
-  retractClaimInputSchema,
-  updateClaimInputSchema,
-} from "@watchdog/schemas/graph";
 import type { RetractKind } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
@@ -338,34 +331,23 @@ function ClaimComposer({
 }
 
 function ClaimActionForm({
-  caseId,
+  scope,
   claimId,
   action,
   onCancel,
   onError,
   onSaved,
 }: {
-  caseId: string;
+  scope: DossierEntityScope;
   claimId: string;
   action: ClaimAction;
   onCancel: () => void;
   onError: (message: string | null) => void;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
 }) {
-  const retractMutation = useMutation({
-    mutationFn: async (reason: string) =>
-      retractClaimFn({
-        data: retractClaimInputSchema.parse({
-          caseId,
-          claimId,
-          kind: ACTION_TO_KIND[action],
-          reason,
-        }),
-      }),
-    onSuccess: async () => {
-      await onSaved();
-      toast.success(ACTION_SUCCESS_LABEL[action]);
-    },
+  const retractMutation = useRetractClaim({
+    successMessage: ACTION_SUCCESS_LABEL[action],
+    onRetracted: onSaved,
   });
 
   const failureCopy = `Couldn't ${ACTION_LABELS[action].toLowerCase()} claim`;
@@ -376,7 +358,12 @@ function ClaimActionForm({
       if (!reason) return;
       onError(null);
       try {
-        await retractMutation.mutateAsync(reason);
+        await retractMutation.mutateAsync({
+          ...scope,
+          claimId,
+          kind: ACTION_TO_KIND[action],
+          reason,
+        });
       } catch (caughtError) {
         onError(errMessage(caughtError, failureCopy));
       }
@@ -446,7 +433,7 @@ export function ClaimsSection({
   onEvidenceClick,
   emptyPresentation = "inline",
 }: DossierSectionWithEvidenceProps) {
-  const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
+  const scope = { caseId, entityId, entitySlug };
   const {
     data: claimsRaw,
     placeholder,
@@ -462,42 +449,12 @@ export function ClaimsSection({
   const [actionState, setActionState] = useState<ActionState>(null);
   const editor = useDossierSectionEditor();
 
-  const createMutation = useMutation({
-    mutationFn: async (value: ClaimFormValues) =>
-      createClaimFn({
-        data: createClaimInputSchema.parse({
-          caseId,
-          entityId,
-          text: value.text,
-          class: value.claimClass,
-          confidence: value.confidence,
-          evidenceIds: value.evidenceIds,
-        }),
-      }),
-    onSuccess: async () => {
-      editor.handleStopAdding();
-      await invalidate();
-      toast.success("Claim saved");
-    },
+  const createMutation = useCreateClaim({
+    onCreated: editor.handleStopAdding,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (input: { claimId: string; value: ClaimFormValues }) =>
-      updateClaimFn({
-        data: updateClaimInputSchema.parse({
-          caseId,
-          claimId: input.claimId,
-          text: input.value.text,
-          class: input.value.claimClass,
-          confidence: input.value.confidence,
-          evidenceIds: input.value.evidenceIds,
-        }),
-      }),
-    onSuccess: async () => {
-      editor.handleCloseEdit();
-      await invalidate();
-      toast.success("Claim updated");
-    },
+  const updateMutation = useUpdateClaim({
+    onUpdated: editor.handleCloseEdit,
   });
 
   function openAction(claimId: string, action: ClaimAction) {
@@ -558,7 +515,7 @@ export function ClaimsSection({
             onCancel={editor.handleStopAdding}
             onError={editor.handleError}
             onSubmit={async (value) => {
-              await createMutation.mutateAsync(value);
+              await createMutation.mutateAsync({ ...scope, value });
             }}
           />
         ) : null}
@@ -591,6 +548,7 @@ export function ClaimsSection({
                         onError={editor.handleError}
                         onSubmit={async (value) => {
                           await updateMutation.mutateAsync({
+                            ...scope,
                             claimId: row.id,
                             value,
                           });
@@ -623,16 +581,15 @@ export function ClaimsSection({
                 {actionState?.claimId === row.id ? (
                   <ClaimActionForm
                     key={`${row.id}-${actionState.action}`}
-                    caseId={caseId}
+                    scope={scope}
                     claimId={row.id}
                     action={actionState.action}
                     onCancel={() => {
                       setActionState(null);
                     }}
                     onError={editor.handleError}
-                    onSaved={async () => {
+                    onSaved={() => {
                       setActionState(null);
-                      await invalidate();
                     }}
                   />
                 ) : null}

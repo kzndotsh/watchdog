@@ -41,7 +41,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 });
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
-  bindCasesChangedInvalidation: vi.fn(),
+  invalidateAfterCaseSwitch: vi.fn(),
 }));
 
 vi.mock("@watchdog/ui/components/sidebar", () => ({

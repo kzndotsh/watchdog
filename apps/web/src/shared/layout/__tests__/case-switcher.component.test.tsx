@@ -41,7 +41,7 @@ vi.mock("@/domains/cases/hooks/use-select-active-case", () => ({
 }));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
-  bindCasesChangedInvalidation: vi.fn(),
+  invalidateAfterCaseSwitch: vi.fn(),
 }));
 
 vi.mock("@watchdog/ui/components/sidebar", () => ({
