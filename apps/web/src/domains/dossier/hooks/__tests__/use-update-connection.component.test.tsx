@@ -39,10 +39,11 @@ const EDGE: EdgeRecord = {
 };
 
 describe("useUpdateConnection", () => {
-  it("settles the Case the connection was edited in after the screen moves to another Case", async () => {
+  it("settles the Case the connection was edited in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
-      useVerb: () => useUpdateConnection({ onError }),
+      useVerb: (onDone) => useUpdateConnection({ onUpdated: onDone, onError }),
       serverFn,
+      expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
         edge: EDGE,

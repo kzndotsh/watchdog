@@ -20,10 +20,11 @@ import {
 } from "./helpers/entity-write-harness";
 
 describe("useResolveQuestion", () => {
-  it("settles the Case the question was resolved in after the screen moves to another Case", async () => {
+  it("settles the Case the question was resolved in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
-      useVerb: () => useResolveQuestion(),
+      useVerb: (onDone) => useResolveQuestion({ onResolved: onDone }),
       serverFn,
+      expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
         questionId: testId(30),

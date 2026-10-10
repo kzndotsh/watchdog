@@ -19,10 +19,11 @@ import {
 } from "./helpers/entity-write-harness";
 
 describe("useCreateQuestion", () => {
-  it("settles the Case the question was added in after the screen moves to another Case", async () => {
+  it("settles the Case the question was added in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
-      useVerb: () => useCreateQuestion(),
+      useVerb: (onDone) => useCreateQuestion({ onCreated: onDone }),
       serverFn,
+      expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
         text: "Who owns the domain?",

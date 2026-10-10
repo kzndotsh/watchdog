@@ -11,10 +11,10 @@ import { identifiersKeys } from "@/domains/entities/identifiers/queries";
 import { questionsKeys } from "@/domains/entities/questions/queries";
 import { testId } from "@watchdog/test-kit";
 
-const CASE_A = testId(10);
-const CASE_B = testId(11);
+export const CASE_A = testId(10);
+export const CASE_B = testId(11);
 export const ENTITY_ID = testId(20);
-const ENTITY_SLUG = "alpha";
+export const ENTITY_SLUG = "alpha";
 
 /** The Case + Entity a write is started for, as the mutation variables carry it. */
 export const SCOPE_A = {
@@ -60,30 +60,46 @@ interface WriteVerb<V> {
 }
 
 /**
- * A write started in Case A settles Case A's Entity caches even when the
- * screen re-renders for Case B before the server answers, and leaves Case B's
- * caches alone. `serverFn` is the mocked server function the hook calls.
+ * A write started in Case A settles Case A's Entity caches, not Case B's, even
+ * when the screen re-renders for Case B before the server answers: the Case and
+ * Entity come from the mutation variables fixed at `mutate`, never from what the
+ * hook or screen holds when the answer lands. `serverFn` is the mocked server
+ * function the hook calls.
+ *
+ * `useVerb` receives `onDone`, which the test wires to the hook's success
+ * callback; the helper then pins the order every hook inherited from the
+ * pre-hook sections: the callback fires before the cache settles. Pass
+ * `resolveWith` for the server's answer and read the returned `queryClient`
+ * for cache seeds.
  */
 export async function expectSettlesStartingCase<V>({
   useVerb,
   serverFn,
   variables,
+  resolveWith = {},
+  expectCallbackBeforeInvalidation = false,
 }: {
-  useVerb: () => WriteVerb<V>;
+  useVerb: (onDone: () => void) => WriteVerb<V>;
   serverFn: Mock;
   variables: V;
+  resolveWith?: unknown;
+  expectCallbackBeforeInvalidation?: boolean;
 }) {
   let finish: () => void = () => undefined;
   serverFn.mockReturnValue(
     new Promise<unknown>((resolve) => {
       finish = () => {
-        resolve({});
+        resolve(resolveWith);
       };
     })
   );
-  const { wrapper, invalidated } = createHarness();
+  const { queryClient, wrapper, invalidated } = createHarness();
+  const settledAtCallback: boolean[][] = [];
+  const onDone = () => {
+    settledAtCallback.push(invalidated(CASE_A));
+  };
   const { result, rerender } = renderHook(
-    (_props: { activeCaseId: string }) => useVerb(),
+    (_props: { activeCaseId: string }) => useVerb(onDone),
     { wrapper, initialProps: { activeCaseId: CASE_A } }
   );
 
@@ -108,6 +124,10 @@ export async function expectSettlesStartingCase<V>({
     expect(invalidated(CASE_A)).toEqual(settledKeys(CASE_A).map(() => true));
   });
   expect(invalidated(CASE_B)).toEqual(settledKeys(CASE_B).map(() => false));
+  if (expectCallbackBeforeInvalidation) {
+    expect(settledAtCallback).toEqual([settledKeys(CASE_A).map(() => false)]);
+  }
+  return { queryClient };
 }
 
 /** A rejected write reports the server's message and leaves every cache untouched. */
@@ -134,4 +154,5 @@ export async function expectReportsFailure<V>({
     expect(onError).toHaveBeenCalledWith("nope");
   });
   expect(invalidated(CASE_A)).toEqual(settledKeys(CASE_A).map(() => false));
+  expect(invalidated(CASE_B)).toEqual(settledKeys(CASE_B).map(() => false));
 }

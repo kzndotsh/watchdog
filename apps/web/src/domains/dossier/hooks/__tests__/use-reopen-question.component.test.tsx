@@ -22,10 +22,11 @@ import {
 } from "./helpers/entity-write-harness";
 
 describe("useReopenQuestion", () => {
-  it("settles the Case the question was reopened in after the screen moves to another Case", async () => {
+  it("settles the Case the question was reopened in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
-      useVerb: () => useReopenQuestion({ onError }),
+      useVerb: (onDone) => useReopenQuestion({ onReopened: onDone, onError }),
       serverFn,
+      expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
         questionId: testId(30),

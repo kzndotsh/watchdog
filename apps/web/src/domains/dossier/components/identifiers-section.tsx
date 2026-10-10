@@ -295,9 +295,21 @@ export function IdentifiersSection({
           caseId={caseId}
           entities={[lockedEntity]}
           lockEntity={lockedEntity}
-          onImported={async (_entityIds, importedCaseId) =>
-            invalidateEntity({ ...scope, caseId: importedCaseId })
-          }
+          onImported={async (importedEntityIds, importedCaseId) => {
+            // The import's own Case and Entity ids: the screen may show another Entity by now.
+            await Promise.all(
+              importedEntityIds.map(async (importedEntityId) =>
+                invalidateEntity({
+                  caseId: importedCaseId,
+                  entityId: importedEntityId,
+                  entitySlug:
+                    importedEntityId === scope.entityId
+                      ? scope.entitySlug
+                      : undefined,
+                })
+              )
+            );
+          }}
         />
         <DeleteIdentifierDialog
           caseId={caseId}

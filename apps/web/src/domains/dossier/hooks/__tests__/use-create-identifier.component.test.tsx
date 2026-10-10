@@ -19,7 +19,7 @@ import {
 } from "./helpers/entity-write-harness";
 
 describe("useCreateIdentifier", () => {
-  it("settles the Case the identifier was added in after the screen moves to another Case", async () => {
+  it("settles the Case the identifier was added in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: () => useCreateIdentifier(),
       serverFn,

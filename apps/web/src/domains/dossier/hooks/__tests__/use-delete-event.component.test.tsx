@@ -22,7 +22,7 @@ import {
 } from "./helpers/entity-write-harness";
 
 describe("useDeleteEvent", () => {
-  it("settles the Case the event was deleted in after the screen moves to another Case", async () => {
+  it("settles the Case the event was deleted in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
       useVerb: () => useDeleteEvent({ onError }),
       serverFn,

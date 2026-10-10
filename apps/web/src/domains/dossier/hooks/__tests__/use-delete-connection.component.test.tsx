@@ -22,10 +22,11 @@ import {
 } from "./helpers/entity-write-harness";
 
 describe("useDeleteConnection", () => {
-  it("settles the Case the connection was deleted in after the screen moves to another Case", async () => {
+  it("settles the Case the connection was deleted in (from the variables) when the screen re-renders for another Case", async () => {
     await expectSettlesStartingCase({
-      useVerb: () => useDeleteConnection({ onError }),
+      useVerb: (onDone) => useDeleteConnection({ onDeleted: onDone, onError }),
       serverFn,
+      expectCallbackBeforeInvalidation: true,
       variables: {
         ...SCOPE_A,
         edgeId: testId(32),
