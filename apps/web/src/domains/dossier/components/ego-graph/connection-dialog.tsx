@@ -404,7 +404,7 @@ export function ConnectionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <ConnectionForm
-          key={`${mode}:${initial?.id ?? ""}`}
+          key={`${mode}:${rest.center.id}:${initial?.id ?? ""}`}
           mode={mode}
           initial={initial}
           busy={busy}

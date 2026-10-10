@@ -210,5 +210,24 @@ describe("RecentActivity", () => {
         screen.getByRole("combobox", { name: /filter activity by case/i })
       ).toHaveTextContent("All cases");
     });
+
+    it("filters by the Case again if it becomes visible again (the URL id is left alone)", () => {
+      const props = { onActivityCaseChange: vi.fn() };
+      const view = render(
+        <RecentActivity cases={[caseB]} activityCaseId={caseA.id} {...props} />
+      );
+      expect(askedFilters.at(-1)).toBeUndefined();
+
+      view.rerender(
+        <RecentActivity
+          cases={[caseA, caseB]}
+          activityCaseId={caseA.id}
+          {...props}
+        />
+      );
+
+      expect(askedFilters.at(-1)).toEqual({ caseId: caseA.id });
+      expect(props.onActivityCaseChange).not.toHaveBeenCalled();
+    });
   });
 });

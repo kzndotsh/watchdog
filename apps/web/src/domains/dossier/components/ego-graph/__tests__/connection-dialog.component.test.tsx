@@ -155,6 +155,26 @@ describe("ConnectionDialog", () => {
     expect(new Set(committedPeers)).toEqual(new Set([""]));
   });
 
+  it("starts a fresh form when the connection is added from another center entity", async () => {
+    const user = userEvent.setup();
+    const view = render(dialog({ mode: "create" }));
+    await user.type(screen.getByPlaceholderText("Short why…"), "scratch");
+
+    view.rerender(
+      <ConnectionDialog
+        open
+        onOpenChange={vi.fn()}
+        mode="create"
+        center={{ ...CENTER, id: "center-2", slug: "other" }}
+        entities={[...PEERS]}
+        evidenceOptions={[]}
+        onSubmit={vi.fn()}
+      />
+    );
+
+    expect(screen.getByPlaceholderText("Short why…")).toHaveValue("");
+  });
+
   it("drops unsaved edits when the dialog is closed and opened again", async () => {
     const user = userEvent.setup();
     const view = render(dialog({ mode: "create" }));

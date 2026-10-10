@@ -293,7 +293,11 @@ export function RecentActivity({
   const [internalCaseId, setInternalCaseId] = useState<string | null>(null);
   const controlled = onActivityCaseChange !== undefined;
   const selectedCaseId = controlled ? (activityCaseId ?? null) : internalCaseId;
-  // A Case that is gone (deleted, or not visible any more) reads as "all cases".
+  // A Case that is not in `cases` reads as "all cases". The URL-backed id is left
+  // alone on purpose: clearing it would need an effect, and it would also wipe a valid
+  // link while the Case list is momentarily empty. The stale id is harmless (it only
+  // filters while its Case is visible, which is what the link asked for) and the next
+  // pick in the Select replaces it.
   const caseId =
     selectedCaseId !== null && cases.some((c) => c.id === selectedCaseId)
       ? selectedCaseId
