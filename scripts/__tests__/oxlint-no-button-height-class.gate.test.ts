@@ -52,6 +52,14 @@ const FAIL = {
   "render-prop.tsx": `${IMPORT}export const X = () => <Trigger render={<Button className="h-7" />} />;\nfunction Trigger(_p: { render: unknown }) { return null; }\n`,
   "multiline.tsx": `${IMPORT}export const X = () => (\n  <Button\n    variant="ghost"\n    className="text-xs\n      h-6"\n  >\n    a\n  </Button>\n);\n`,
   "as-cast.tsx": `${IMPORT}export const X = () => <Button className={"h-8" as string}>a</Button>;\n`,
+  "computed-key.tsx": `${IMPORT}${CN}export const X = ({ on }: { on: boolean }) => <Button className={cn({ ["h-8"]: on })}>a</Button>;\n`,
+  "computed-template-key.tsx": `${IMPORT}${CN}export const X = ({ on }: { on: boolean }) => <Button className={cn({ [\`h-8\`]: on })}>a</Button>;\n`,
+  "computed-const-key.tsx": `${IMPORT}${CN}const K = "h-8";\nexport const X = ({ on }: { on: boolean }) => <Button className={cn({ [K]: on })}>a</Button>;\n`,
+  "self-hover.tsx": `${IMPORT}export const X = () => <Button className="[&:hover]:h-8">a</Button>;\n`,
+  "self-class.tsx": `${IMPORT}export const X = () => <Button className="[&.active]:min-h-0">a</Button>;\n`,
+  "self-attr.tsx": `${IMPORT}export const X = () => <Button className="[&[data-x]]:size-6">a</Button>;\n`,
+  "shadowed-first.tsx": `${IMPORT}function A() {\n  const cls = "h-8";\n  return <Button className={cls}>a</Button>;\n}\nfunction B() {\n  const cls = "px-2";\n  return <Button className={cls}>b</Button>;\n}\nexport const X = [A, B];\n`,
+  "shadowed-last.tsx": `${IMPORT}function A() {\n  const cls = "px-2";\n  return <Button className={cls}>a</Button>;\n}\nfunction B() {\n  const cls = "h-8";\n  return <Button className={cls}>b</Button>;\n}\nexport const X = [A, B];\n`,
   "many.tsx": `${IMPORT}export const X = () => <Button className="h-8 min-h-0 size-6">a</Button>;\n`,
 } as const;
 
@@ -59,6 +67,8 @@ const OK = {
   "no-class.tsx": `${IMPORT}export const X = () => <Button size="lg">a</Button>;\n`,
   "other-classes.tsx": `${IMPORT}export const X = () => <Button className="w-full px-2 text-xs justify-start">a</Button>;\n`,
   "width-only.tsx": `${IMPORT}export const X = () => <Button className="w-7 min-w-0 max-w-xs">a</Button>;\n`,
+  "child-variants.tsx": `${IMPORT}export const X = () => <Button className="[&_*]:size-4 [&>svg]:h-3 [&_svg]:h-3 [&+span]:h-3">a</Button>;\n`,
+  "plain-key.tsx": `${IMPORT}${CN}const active = "px-2";\nexport const X = ({ on }: { on: boolean }) => <Button className={cn({ active: on, [active]: on })}>a</Button>;\n`,
   "child-selector.tsx": `${IMPORT}export const X = () => <Button className="[&_svg]:size-4 [&>svg]:h-3 *:size-4">a</Button>;\n`,
   "look-alikes.tsx": `${IMPORT}export const X = () => <Button className="has-data-[icon]:pl-1 hover:bg-muted leading-none shrink-0">a</Button>;\n`,
   "spread-props.tsx": `${IMPORT}export const X = (props: object) => <Button {...props}>a</Button>;\n`,

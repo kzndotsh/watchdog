@@ -1,7 +1,7 @@
 import { isRecord } from "../lib/ast.mjs";
 
 /**
- * @typedef {{ filename: string, report: (diagnostic: { node: unknown, message: string }) => void }} RuleContext
+ * @typedef {{ filename: string, sourceCode?: { getScope?: (node: unknown) => Scope | null }, report: (diagnostic: { node: unknown, message: string }) => void }} RuleContext
  */
 
 /** Modules whose `Button` export is the control: the wrapper and the vanilla primitive. */
@@ -10,6 +10,13 @@ const BUTTON_MODULE =
 
 /** A height utility: `h-*`, `min-h-*`, `max-h-*`, `size-*` (which sets height too). */
 const HEIGHT_UTILITY = /^(?:(?:min-|max-)?h|size)-/;
+
+/**
+ * An arbitrary variant whose selector reaches another element: `[&_svg]`, `[&>svg]`,
+ * `[&_*]`, `[&+x]`, `[&~x]`. `[&:hover]`, `[&.x]` and `[&[data-x]]` select the element
+ * itself, so a height behind them still sizes the Button.
+ */
+const CHILD_VARIANT = /^\[&[\s_>+~]/;
 
 /**
  * Splits a class token on `:` outside brackets: `data-[size=sm]:h-7` gives
@@ -48,7 +55,9 @@ const heightTokens = (source) =>
     if (!HEIGHT_UTILITY.test(utility)) return false;
     return !parts
       .slice(0, -1)
-      .some((variant) => variant.includes("&") || variant.startsWith("*"));
+      .some(
+        (variant) => variant.startsWith("*") || CHILD_VARIANT.test(variant)
+      );
   });
 
 /** Expression nodes whose class strings come from these child fields. */
@@ -108,6 +117,39 @@ const classNameValues = (attributes) =>
   });
 
 /**
+ * @typedef {{ set: Map<string, { defs: readonly { type?: string, node?: unknown }[] }>, upper: Scope | null }} Scope
+ */
+
+/**
+ * Initializers of the variable `name` resolves to from `at`, by lexical scope: a
+ * same-named variable in another function never counts. Null when the scope API is
+ * missing or the name is not bound in this file (the caller falls back to the file's
+ * declarations).
+ * @param {{ sourceCode?: { getScope?: (node: unknown) => Scope | null } }} context
+ * @param {string} name
+ * @param {unknown} at
+ * @returns {{ node: unknown, at: unknown }[] | null}
+ */
+const lexicalInits = (context, name, at) => {
+  const source = context.sourceCode;
+  if (typeof source?.getScope !== "function") return null;
+  let scope = source.getScope(at);
+  while (scope) {
+    const variable = scope.set.get(name);
+    if (variable) {
+      return variable.defs.flatMap((def) => {
+        const decl = def.node;
+        return def.type === "Variable" && isRecord(decl) && isRecord(decl.init)
+          ? [{ node: decl.init, at: decl }]
+          : [];
+      });
+    }
+    scope = scope.upper;
+  }
+  return null;
+};
+
+/**
  * Bans height utilities on the Button wrapper (`<Button className="h-8">`, in a string,
  * template literal, `cn()` / `clsx()` argument, a const the className names, or a spread
  * `{...{ className }}`; aliased and namespace imports are followed). The size scale
@@ -131,19 +173,52 @@ export const noButtonHeightClass = {
     const buttons = new Set();
     /** Local names bound to a namespace import of a button module. */
     const namespaces = new Set();
-    /** Program-level `const NAME = <expr>` initializers, for className identifiers. */
-    /** @type {Map<string, unknown>} */
+    /**
+     * Every `const NAME = <expr>` initializer in the file, per name, at any depth. A
+     * className identifier reads all of them: a same-named declaration elsewhere can
+     * only add findings, never hide one.
+     * @type {Map<string, unknown[]>}
+     */
     const consts = new Map();
     /** @type {{ node: unknown, values: unknown[] }[]} */
     const pending = [];
 
     /**
+     * Initializers a name refers to from `at`: the lexically visible `const` / `let`
+     * declarations when the scope API answers, else every same-named one in the file.
+     * @param {string} name
+     * @param {unknown} at
+     * @returns {{ node: unknown, at: unknown }[]}
+     */
+    const initsOf = (name, at) => {
+      const scoped = lexicalInits(context, name, at);
+      if (scoped !== null) return scoped;
+      return (consts.get(name) ?? []).map((node) => ({ node, at }));
+    };
+
+    /**
+     * The class strings an object property's key contributes: a literal key, or a
+     * computed key that is a static string, template or const (`{ ["h-8"]: on }`).
+     * A plain identifier key (`{ active: on }`) is a name, not a class.
+     * @param {Record<string, unknown>} prop
+     * @param {Set<unknown>} seen
+     * @param {unknown} at node whose scope resolves identifiers
+     * @returns {string[]}
+     */
+    const classKeyStrings = (prop, seen, at) =>
+      prop.computed === true ||
+      (isRecord(prop.key) && prop.key.type === "Literal")
+        ? classStrings(prop.key, seen, at)
+        : [];
+
+    /**
      * Every string a class expression can contribute.
      * @param {unknown} node
      * @param {Set<unknown>} seen
+     * @param {unknown} at node whose scope resolves identifiers
      * @returns {string[]}
      */
-    const classStrings = (node, seen) => {
+    const classStrings = (node, seen, at) => {
       if (!isRecord(node) || seen.has(node)) return [];
       seen.add(node);
       const type = String(node.type);
@@ -158,19 +233,23 @@ export const noButtonHeightClass = {
         );
         return [
           ...quasis,
-          ...asArray(node.expressions).flatMap((e) => classStrings(e, seen)),
+          ...asArray(node.expressions).flatMap((e) =>
+            classStrings(e, seen, at)
+          ),
         ];
       }
       if (type === "Identifier") {
-        return typeof node.name === "string" && consts.has(node.name)
-          ? classStrings(consts.get(node.name), seen)
+        return typeof node.name === "string"
+          ? initsOf(node.name, at).flatMap((init) =>
+              classStrings(init.node, seen, init.at)
+            )
           : [];
       }
       if (type === "ObjectExpression") {
         // `clsx({ "h-8": on })`: the keys are the classes.
         return asArray(node.properties).flatMap((p) =>
-          isRecord(p) && p.type === "Property" && p.computed !== true
-            ? classStrings(p.key, seen)
+          isRecord(p) && p.type === "Property"
+            ? classKeyStrings(p, seen, at)
             : []
         );
       }
@@ -178,7 +257,7 @@ export const noButtonHeightClass = {
         const child = node[key];
         /** @type {unknown[]} */
         const list = Array.isArray(child) ? child : [child];
-        return list.flatMap((c) => classStrings(c, seen));
+        return list.flatMap((c) => classStrings(c, seen, at));
       });
     };
 
@@ -232,7 +311,10 @@ export const noButtonHeightClass = {
           typeof node.id.name === "string" &&
           isRecord(node.init)
         ) {
-          consts.set(node.id.name, node.init);
+          consts.set(node.id.name, [
+            ...(consts.get(node.id.name) ?? []),
+            node.init,
+          ]);
         }
       },
       /** @param {{ name?: unknown, attributes?: readonly unknown[] }} node */
@@ -246,7 +328,7 @@ export const noButtonHeightClass = {
       "Program:exit"() {
         for (const { node, values } of pending) {
           const found = values.flatMap((value) =>
-            classStrings(value, new Set()).flatMap(heightTokens)
+            classStrings(value, new Set(), node).flatMap(heightTokens)
           );
           if (found.length === 0) continue;
           const tokens = [...new Set(found)].join(" ");

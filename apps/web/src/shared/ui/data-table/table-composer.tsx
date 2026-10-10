@@ -68,6 +68,7 @@ export function DataTableComposerActions({
           variant="ghost"
           disabled={busy || !canSubmit}
           onClick={onSubmit}
+          aria-label="Save"
           title="Save (Enter)"
         >
           <CheckIcon className="size-3.5" />
@@ -78,6 +79,7 @@ export function DataTableComposerActions({
           variant="ghost"
           disabled={busy}
           onClick={onCancel}
+          aria-label="Cancel"
           title="Cancel (Esc)"
         >
           <XIcon className="size-3.5" />

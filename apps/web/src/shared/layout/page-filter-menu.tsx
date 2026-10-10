@@ -46,7 +46,7 @@ export function PageFilterMenu({
             <Button
               type="button"
               variant="ghost"
-              size="lg"
+              size="icon-lg"
               aria-label={active ? `${label}, ${chips.length} active` : label}
             />
           }

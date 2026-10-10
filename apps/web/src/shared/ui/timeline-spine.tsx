@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Vertical spine (`border-l`) for timeline-style lists — events, questions, activity.
- * Callers use `ml-2 pl-4` (the spacing `TimelineDot`'s offset assumes) and own the
+ * Callers use `pl-4` (the spacing `TimelineDot`'s offset assumes) and own the
  * border color via `className`.
  */
 export function TimelineSpine({
@@ -33,10 +33,11 @@ export function TimelineSpine({
 const DOT_SIZE = { sm: "size-2", md: "size-2.5" } as const;
 
 /**
- * Dot marker for an item inside a `TimelineSpine` (`ml-2 pl-4`). The one offset lives
- * here: the dot's centre sits on the spine line (one rem plus the half-pixel border to
- * the left of the item), whatever its diameter, so callers pass only fill / border
- * colour via `className`, never a position.
+ * Dot marker for an item inside a `TimelineSpine`. The item must be `relative` and sit
+ * directly in the spine's `pl-4` (1px `border-l`): the one offset assumes both, so a dot
+ * whose containing block is anything else lands off the line. Its centre sits on the
+ * line whatever its diameter; callers pass only fill / border colour via `className`,
+ * never a position.
  */
 export function TimelineDot({
   className,

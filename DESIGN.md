@@ -31,7 +31,7 @@ widths:
 
 # Watchdog
 
-The single home for Watchdog's design direction and taste rules for `apps/web`. Edit a rule here first. [`rules.md`](docs/reference/web/ui/rules.md) lists what enforces each rule; the other docs under [`docs/reference/web/ui/`](docs/reference/web/ui/README.md) cover mechanics (loading, atoms, vendoring). **The CSS in `apps/web/src/styles/` is the source of truth for values**; if this file and the CSS disagree, the CSS wins and this file is stale. Only the `colors` and `widths` front matter are checked (`pnpm check:design-tokens` syncs them to `wd-tokens.css` / `wd-dark.css` and `wd-theme.css`); everything below is prose and is not checked.
+The single home for Watchdog's design direction and taste rules for `apps/web`. Edit a rule here first. [`rules.md`](docs/reference/web/ui/rules.md) lists what enforces each rule; the other docs under [`docs/reference/web/ui/`](docs/reference/web/ui/README.md) cover mechanics (loading, atoms, vendoring). **The CSS in `apps/web/src/styles/` is the source of truth for values**; if this file and the CSS disagree, the CSS wins and this file is stale. Only the `colors` and `widths` front matter are checked (`pnpm check:design-tokens` checks them against `wd-tokens.css` / `wd-dark.css` and `wd-theme.css`); everything below is prose and is not checked.
 
 ## Overview
 
@@ -87,7 +87,7 @@ A three-step radius ladder: `rounded-sm` (3px, checkbox/tiny inset), `rounded-md
 
 - Primitives are shadcn `base-mira` (Base UI) in `packages/ui`, generated and locked ([`vendor.md`](docs/reference/web/ui/vendor.md)). Watchdog behavior goes in a same-name wrapper under `apps/web/src/shared/ui/primitives/` or in tokens; never restyle a primitive at the call site.
 - **Button height comes from `size`, never from `className`:** `xs` h-5, `sm` h-6, default h-7, `lg` h-8, square `icon-xs` / `icon-sm` / `icon` / `icon-lg`, and `inline` for a text link in running text. Same-role buttons are the same height across Triage, Collect and Dossier. If no size fits, add one to the wrapper; lint fails `h-*` on a Button.
-- Repeated small pieces are primitives, not copied classes: `Eyebrow` (uppercase tracked label), `TimelineDot` (timeline marker with one offset on a `ml-2 pl-4` `TimelineSpine`), and named widths such as `w-filter-menu` (`widths` in the front matter).
+- Repeated small pieces are primitives, not copied classes: `Eyebrow` (uppercase tracked label), `TimelineDot` (timeline marker with one offset on a `pl-4` `TimelineSpine`), and named widths such as `w-filter-menu` (`widths` in the front matter).
 - Hand-owned atoms live in `apps/web/src/shared/ui/` and never fetch, mutate, or route. Domains own I/O.
 - Chrome is **Queue + Detail**. Do not introduce Console, Workbench, or Tape surfaces, and never name a screen `*Panel`. Never name a component `Entity` (that word means the graph subject).
 - Keyboard first on work surfaces: `j`/`k` move through a Queue, single-key actions (`a` Accept, `r` Reject) sit on the buttons that own them and show their key, Enter confirms dialogs, Mod+K reaches every page and command.

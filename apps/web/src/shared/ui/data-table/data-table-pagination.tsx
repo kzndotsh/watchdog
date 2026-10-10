@@ -28,6 +28,7 @@ export function DataTablePagination<TData extends RowData>({
           type="button"
           variant="ghost"
           size="icon"
+          aria-label="Previous page"
           disabled={!table.getCanPreviousPage()}
           onClick={() => {
             table.previousPage();
@@ -39,6 +40,7 @@ export function DataTablePagination<TData extends RowData>({
           type="button"
           variant="ghost"
           size="icon"
+          aria-label="Next page"
           disabled={!table.getCanNextPage()}
           onClick={() => {
             table.nextPage();
