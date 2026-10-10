@@ -1,10 +1,16 @@
 "use client";
 
 import { useSession } from "@better-auth-ui/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { authClient } from "@/auth/client";
+import { useCancelInvitation } from "@/domains/organization/hooks/use-cancel-invitation";
+import { useInviteMember } from "@/domains/organization/hooks/use-invite-member";
+import { useRemoveMember } from "@/domains/organization/hooks/use-remove-member";
+import { useResendInvitation } from "@/domains/organization/hooks/use-resend-invitation";
+import { useUpdateMemberRole } from "@/domains/organization/hooks/use-update-member-role";
+import { organizationKeys } from "@/domains/organization/queries";
 import { cn, errMessage, messageOr } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -54,8 +60,6 @@ const ROLE_FILTER_OPTIONS = [
   { value: "admin", label: "Admins" },
   { value: "member", label: "Members" },
 ] as const;
-
-const TEAM_QUERY_KEY = ["auth-org", "team"] as const;
 
 function hasRole(roles: string, role: string): boolean {
   return roles.split(",").some((part) => part.trim() === role);
@@ -116,12 +120,12 @@ async function loadTeam() {
 }
 
 export function OrganizationMembers() {
-  const queryClient = useQueryClient();
   const { data: session } = useSession(authClient);
+  const teamKey = organizationKeys.team();
   const teamQuery = useQuery({
-    queryKey: TEAM_QUERY_KEY,
+    queryKey: teamKey,
     queryFn: loadTeam,
-    placeholderData: placeholderDataForQueryKey(TEAM_QUERY_KEY),
+    placeholderData: placeholderDataForQueryKey(teamKey),
   });
 
   const [email, setEmail] = useState("");
@@ -137,88 +141,15 @@ export function OrganizationMembers() {
   const manage = canManageTeam(selfMember?.role ?? "");
   const selfIsOwner = hasRole(selfMember?.role ?? "", "owner");
 
-  const invalidate = async () =>
-    queryClient.invalidateQueries({ queryKey: TEAM_QUERY_KEY });
-
-  const invite = useMutation({
-    mutationFn: async () => {
-      const { error } = await authClient.organization.inviteMember({
-        email,
-        role,
-      });
-      if (error)
-        throw new Error(messageOr(error.message, "Couldn't send invitation"));
-    },
-    onSuccess: async () => {
+  const invite = useInviteMember({
+    onInvited: () => {
       setEmail("");
-      toast.success(
-        "Invitation created. Copy the link if mail is not configured."
-      );
-      await invalidate();
-    },
-    onError: (error) => {
-      toast.error(errMessage(error, "Couldn't send invitation"));
     },
   });
-
-  const cancelInvite = useMutation({
-    mutationFn: async (invitationId: string) => {
-      const { error } = await authClient.organization.cancelInvitation({
-        invitationId,
-      });
-      if (error)
-        throw new Error(messageOr(error.message, "Couldn't cancel invitation"));
-    },
-    onSuccess: invalidate,
-    onError: (error) => {
-      toast.error(errMessage(error, "Couldn't cancel invitation"));
-    },
-  });
-
-  const resendInvite = useMutation({
-    mutationFn: async (row: OrgInvitation) => {
-      const { error } = await authClient.organization.inviteMember({
-        email: row.email,
-        role: row.role === "admin" ? "admin" : "member",
-        resend: true,
-      });
-      if (error)
-        throw new Error(messageOr(error.message, "Couldn't resend invitation"));
-    },
-    onSuccess: async () => {
-      toast.success("Invitation sent again.");
-      await invalidate();
-    },
-    onError: (error) => {
-      toast.error(errMessage(error, "Couldn't resend invitation"));
-    },
-  });
-
-  const updateRole = useMutation({
-    mutationFn: async (input: { memberId: string; role: string }) => {
-      const { error } = await authClient.organization.updateMemberRole(input);
-      if (error)
-        throw new Error(messageOr(error.message, "Couldn't update role"));
-    },
-    onSuccess: invalidate,
-    onError: (error) => {
-      toast.error(errMessage(error, "Couldn't update role"));
-    },
-  });
-
-  const removeMember = useMutation({
-    mutationFn: async (memberIdOrEmail: string) => {
-      const { error } = await authClient.organization.removeMember({
-        memberIdOrEmail,
-      });
-      if (error)
-        throw new Error(messageOr(error.message, "Couldn't remove member"));
-    },
-    onSuccess: invalidate,
-    onError: (error) => {
-      toast.error(errMessage(error, "Couldn't remove member"));
-    },
-  });
+  const cancelInvite = useCancelInvitation();
+  const resendInvite = useResendInvitation();
+  const updateRole = useUpdateMemberRole();
+  const removeMember = useRemoveMember();
 
   const teamPending = listPending(teamQuery);
   const teamLoadError = queryLoadError(
@@ -269,7 +200,7 @@ export function OrganizationMembers() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            invite.mutate();
+            invite.mutate({ email, role });
           }}
         >
           <FormSection

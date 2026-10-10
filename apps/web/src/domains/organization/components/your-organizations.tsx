@@ -3,15 +3,18 @@ import {
   useListOrganizations,
   useSetActiveOrganization,
 } from "@better-auth-ui/react/plugins/organization";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 
 import { authClient } from "@/auth/client";
 import { CreateOrganizationForm } from "@/domains/organization/components/create-organization-form";
 import { OrgAvatar } from "@/domains/organization/components/org-avatar";
+import { useAcceptUserInvitation } from "@/domains/organization/hooks/use-accept-user-invitation";
+import { useDeclineInvitation } from "@/domains/organization/hooks/use-decline-invitation";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
-import { errMessage, messageOr } from "@/lib/utils";
+import { organizationKeys } from "@/domains/organization/queries";
+import { messageOr } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
 import { Button } from "@/shared/ui/primitives/button";
 import {
@@ -21,7 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
-import { toast } from "@/shared/ui/toast";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
 interface UserInvitation {
@@ -31,8 +33,6 @@ interface UserInvitation {
   role: string;
   status: string;
 }
-
-const INVITATIONS_KEY = ["auth-org", "user-invitations"] as const;
 
 async function loadUserInvitations(): Promise<UserInvitation[]> {
   const { data, error } = await authClient.organization.listUserInvitations();
@@ -44,54 +44,26 @@ async function loadUserInvitations(): Promise<UserInvitation[]> {
 
 /** Every organization you belong to, plus invitations addressed to you. */
 export function YourOrganizations() {
-  const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const { data: session } = useSession(authClient);
   const { data: organizations, isPending } = useListOrganizations(authClient);
   const setActive = useSetActiveOrganization(authClient);
   const invitations = useQuery({
-    queryKey: INVITATIONS_KEY,
+    queryKey: organizationKeys.userInvitations(),
     queryFn: loadUserInvitations,
   });
   const activeId = session?.session.activeOrganizationId ?? null;
 
-  const accept = useMutation({
-    mutationFn: async (invitation: UserInvitation) => {
-      const { error } = await authClient.organization.acceptInvitation({
-        invitationId: invitation.id,
-      });
-      if (error) {
-        throw new Error(messageOr(error.message, "Couldn't accept"));
-      }
-      return invitation.organizationId;
-    },
-    onSuccess: (organizationId) => {
+  const accept = useAcceptUserInvitation({
+    onAccepted: (organizationId) => {
       setActive.mutate(
         { organizationId },
         { onSuccess: reloadIntoOrganization }
       );
     },
-    onError: (error) => {
-      toast.error(errMessage(error, "Couldn't accept the invitation"));
-    },
   });
 
-  const reject = useMutation({
-    mutationFn: async (invitationId: string) => {
-      const { error } = await authClient.organization.rejectInvitation({
-        invitationId,
-      });
-      if (error) {
-        throw new Error(messageOr(error.message, "Couldn't decline"));
-      }
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: INVITATIONS_KEY });
-    },
-    onError: (error) => {
-      toast.error(errMessage(error, "Couldn't decline the invitation"));
-    },
-  });
+  const reject = useDeclineInvitation();
 
   if (isPending && !organizations) {
     return (

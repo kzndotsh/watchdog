@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -6,15 +6,15 @@ import { SettingsCredentialsDialogs } from "@/domains/settings/components/settin
 import {
   bindConfigureOpenChange,
   bindConfigureSlot,
+  bindCredentialDeleted,
+  bindCredentialDeleteFailed,
   bindCredentialSaved,
   bindDeleteConfirm,
   bindDeleteOpenChange,
   bindDeleteSlot,
-  handleCredentialDeleted,
-  handleCredentialDeleteError,
 } from "@/domains/settings/components/settings-credentials-handlers";
+import { useDeleteCredential } from "@/domains/settings/hooks/use-delete-credential";
 import { credentialsListQuery } from "@/domains/settings/queries";
-import { deleteCredentialFn } from "@/domains/settings/settings.functions";
 import { cn } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -27,7 +27,6 @@ import { Button } from "@/shared/ui/primitives/button";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { CredentialSlot } from "@watchdog/core/vault";
-import { deleteCredentialInputSchema } from "@watchdog/schemas/caps";
 import { Alert, AlertDescription } from "@watchdog/ui/components/alert";
 import { Separator } from "@watchdog/ui/components/separator";
 
@@ -166,13 +165,9 @@ export function SettingsCredentialsForm() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const deleteMutation = useMutation({
-    mutationFn: async (name: string) =>
-      deleteCredentialFn({ data: deleteCredentialInputSchema.parse({ name }) }),
-    onSuccess: () => void handleCredentialDeleted(queryClient, setDeleteTarget),
-    onError: (e) => {
-      handleCredentialDeleteError(e, setDeleteError);
-    },
+  const deleteMutation = useDeleteCredential({
+    onDeleted: bindCredentialDeleted(setDeleteTarget),
+    onFailed: bindCredentialDeleteFailed(setDeleteError),
   });
 
   const configureSlotRow = findSlotByName(slots, configureName);

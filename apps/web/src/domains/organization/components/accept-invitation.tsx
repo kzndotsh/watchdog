@@ -1,13 +1,16 @@
 "use client";
 
 import { useSession } from "@better-auth-ui/react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { authClient } from "@/auth/client";
-import { fetchInvitationPreview, inviteSignUp } from "@/auth/invitation-api";
+import { fetchInvitationPreview } from "@/auth/invitation-api";
 import { PasswordStrengthMeter } from "@/auth/ui/password-strength-meter";
-import { errMessage, messageOr } from "@/lib/utils";
+import { useAcceptInvitation } from "@/domains/organization/hooks/use-accept-invitation";
+import { useRegisterInvitee } from "@/domains/organization/hooks/use-register-invitee";
+import { organizationKeys } from "@/domains/organization/queries";
+import { errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
@@ -29,7 +32,7 @@ import { Spinner } from "@watchdog/ui/components/spinner";
 
 export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   const { data: session, isPending: sessionPending } = useSession(authClient);
-  const previewQueryKey = ["invitation-preview", invitationId] as const;
+  const previewQueryKey = organizationKeys.invitationPreview(invitationId);
   const previewQuery = useQuery({
     queryKey: previewQueryKey,
     queryFn: async () => fetchInvitationPreview(invitationId),
@@ -40,27 +43,14 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const acceptExisting = useMutation({
-    mutationFn: async () => {
-      const { error } = await authClient.organization.acceptInvitation({
-        invitationId,
-      });
-      if (error)
-        throw new Error(messageOr(error.message, "Couldn't accept invitation"));
-    },
-    onSuccess: () => {
+  const acceptExisting = useAcceptInvitation({
+    onAccepted: () => {
       window.location.assign("/");
     },
   });
 
-  const registerInvitee = useMutation({
-    mutationFn: async () =>
-      inviteSignUp({
-        invitationId,
-        name: name.trim(),
-        password,
-      }),
-    onSuccess: () => {
+  const registerInvitee = useRegisterInvitee({
+    onRegistered: () => {
       window.location.assign("/");
     },
   });
@@ -150,7 +140,7 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
               disabled={pending}
               onClick={() => {
                 setFormError(null);
-                acceptExisting.mutate();
+                acceptExisting.mutate(invitationId);
               }}
             >
               {pending ? <Spinner /> : null}
@@ -168,7 +158,11 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
                   setFormError("Name and password are required.");
                   return;
                 }
-                registerInvitee.mutate();
+                registerInvitee.mutate({
+                  invitationId,
+                  name: name.trim(),
+                  password,
+                });
               }}
             >
               <FieldGroup>

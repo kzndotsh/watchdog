@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 import { updateCaseFn } from "@/domains/cases/cases.functions";
+import { writeCaseRecordCache } from "@/domains/cases/hooks/case-cache";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
-import { writeCaseRecordCache } from "@/domains/cases/lib/case-cache";
 import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
 import { errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
