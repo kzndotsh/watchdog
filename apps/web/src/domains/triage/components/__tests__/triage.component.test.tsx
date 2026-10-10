@@ -88,10 +88,6 @@ vi.mock("@/domains/triage/hooks/use-triage-workspace", () => ({
   useTriageWorkspace: (...args: unknown[]) => useTriageWorkspaceMock(...args),
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  bindCasesChangedInvalidation: vi.fn(),
-}));
-
 import { Triage } from "@/domains/triage/components/triage";
 
 const ACTIVE: CaseRecord = {

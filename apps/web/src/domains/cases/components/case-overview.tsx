@@ -1,7 +1,7 @@
-import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, DownloadIcon } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { CaseOverviewPending } from "@/domains/cases/components/case-overview-pending";
 import { CaseOverviewTab } from "@/domains/cases/components/case-overview-tab";
@@ -15,7 +15,6 @@ import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
-import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { Chip } from "@/shared/ui/chip";
 import { EditableTextCell } from "@/shared/ui/data-table";
@@ -28,7 +27,6 @@ const EMPTY_IDENTIFIERS: CaseIdentifierRecord[] = [];
 
 export function CaseOverview({ caseId }: { caseId: string }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [caseQuery, casesCtxQuery] = useQueries({
@@ -64,8 +62,6 @@ export function CaseOverview({ caseId }: { caseId: string }) {
     if (entitiesQuery.isError) void entitiesQuery.refetch();
     if (identifiersQuery.isError) void identifiersQuery.refetch();
   };
-
-  useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
   const renameMutation = useUpdateCase(caseId, caseRow?.slug);
   /** Bumped when a rename fails so the editor drops its unsaved draft. */

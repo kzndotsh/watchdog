@@ -1,0 +1,48 @@
+import { describe, it, vi } from "vitest";
+
+vi.mock("@/auth/server", () => ({ auth: {} }));
+
+const serverFn = vi.hoisted(() => vi.fn());
+const onError = vi.hoisted(() => vi.fn());
+
+vi.mock("@/domains/entities/questions/questions.functions", () => ({
+  reopenQuestionFn: serverFn,
+}));
+vi.mock("@/shared/ui/toast", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+import { useReopenQuestion } from "@/domains/dossier/hooks/use-reopen-question";
+import { testId } from "@watchdog/test-kit";
+
+import {
+  SCOPE_A,
+  expectReportsFailure,
+  expectSettlesStartingCase,
+} from "./helpers/entity-write-harness";
+
+describe("useReopenQuestion", () => {
+  it("settles the Case the question was reopened in (from the variables) when the screen re-renders for another Case", async () => {
+    await expectSettlesStartingCase({
+      useVerb: (onDone) => useReopenQuestion({ onReopened: onDone, onError }),
+      serverFn,
+      expectCallbackBeforeInvalidation: true,
+      variables: {
+        ...SCOPE_A,
+        questionId: testId(30),
+      },
+    });
+  });
+
+  it("reports a rejected write and settles nothing", async () => {
+    await expectReportsFailure({
+      useVerb: () => useReopenQuestion({ onError }),
+      serverFn,
+      variables: {
+        ...SCOPE_A,
+        questionId: testId(30),
+      },
+      onError,
+    });
+  });
+});

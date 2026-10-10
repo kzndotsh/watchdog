@@ -1,5 +1,5 @@
-import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useQueries } from "@tanstack/react-query";
+import { useMemo, type ReactNode } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -30,7 +30,6 @@ import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { anyQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
@@ -339,7 +338,6 @@ export function DashboardHome({
   activityCaseId?: string;
   onActivityCaseChange?: (next: string | null) => void;
 } = {}) {
-  const queryClient = useQueryClient();
   const {
     active,
     cases,
@@ -347,8 +345,6 @@ export function DashboardHome({
     loadError: casesLoadError,
     retry: retryCases,
   } = useCasesContext();
-
-  useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
   if (casesLoadError) {
     return (

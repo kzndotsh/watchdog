@@ -1,31 +1,23 @@
-import { useMutation } from "@tanstack/react-query";
 import { ListPlusIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
 import { DossierSectionQueryGate } from "@/domains/dossier/components/dossier-section-query-gate";
+import { useCreateIdentifier } from "@/domains/dossier/hooks/use-create-identifier";
 import { useDossierSectionQuery } from "@/domains/dossier/hooks/use-dossier-section-query";
 import { useInvalidateEntity } from "@/domains/dossier/hooks/use-invalidate-entity";
+import { useUpdateIdentifier } from "@/domains/dossier/hooks/use-update-identifier";
 import type { DossierSectionWithEvidenceProps } from "@/domains/dossier/types";
 import { BulkAddIdentifiersDialog } from "@/domains/entities/components/bulk-add-identifiers-dialog";
 import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-identifier-dialog";
-import {
-  createIdentifierFn,
-  updateIdentifierFn,
-} from "@/domains/entities/identifiers/identifiers.functions";
 import { identifiersListQuery } from "@/domains/entities/identifiers/queries";
 import type { IdentifierRecord } from "@/domains/entities/identifiers/types";
 import { copyIdentifierValue } from "@/domains/entities/lib/entity-export";
-import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
 import type { EntityRecord } from "@/domains/entities/types";
 import { errMessage } from "@/lib/utils";
 import type { AppAction } from "@/shared/lib/app-action";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import {
-  TOAST_COULDNT_COPY,
-  TOAST_IDENTIFIER_ADDED,
-  TOAST_IDENTIFIER_UPDATED,
-} from "@/shared/lib/toast-copy";
+import { TOAST_COULDNT_COPY } from "@/shared/lib/toast-copy";
 import {
   DataTable,
   DataTableAddRow,
@@ -48,16 +40,7 @@ import { identifierRowActions } from "@/shared/ui/identifiers/identifier-row-act
 import { Button } from "@/shared/ui/primitives/button";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { toast } from "@/shared/ui/toast";
-import {
-  createIdentifierInputSchema,
-  HANDLE_REQUIRES_PLATFORM,
-} from "@watchdog/schemas/graph";
-import {
-  normalizeIdentifierPlatform,
-  type ConfidenceTier,
-  type IdentifierStatus,
-  type IdentifierType,
-} from "@watchdog/schemas/shared";
+import { HANDLE_REQUIRES_PLATFORM } from "@watchdog/schemas/graph";
 import { FieldError } from "@watchdog/ui/components/field";
 
 export type IdentifiersSectionProps = DossierSectionWithEvidenceProps & {
@@ -73,7 +56,11 @@ export function IdentifiersSection({
   onEvidenceClick,
   emptyPresentation = "inline",
 }: IdentifiersSectionProps) {
-  const invalidate = useInvalidateEntity({ caseId, entityId, entitySlug });
+  const scope = useMemo(
+    () => ({ caseId, entityId, entitySlug }),
+    [caseId, entityId, entitySlug]
+  );
+  const invalidateEntity = useInvalidateEntity();
   const {
     data: rows,
     placeholder,
@@ -94,34 +81,7 @@ export function IdentifiersSection({
   } | null>(null);
   const lockedEntity = { id: entity.id, name: entity.name, slug: entity.slug };
 
-  const createMutation = useMutation({
-    mutationFn: async (value: {
-      type: IdentifierType;
-      value: string;
-      platform: string;
-      status: IdentifierStatus;
-      confidence: ConfidenceTier;
-      evidenceIds: string[];
-    }) => {
-      const platform = normalizeIdentifierPlatform(value.platform);
-      return createIdentifierFn({
-        data: createIdentifierInputSchema.parse({
-          caseId,
-          entityId,
-          type: value.type,
-          value: value.value,
-          platform: platform || undefined,
-          status: value.status,
-          confidence: value.confidence,
-          evidenceIds: value.evidenceIds,
-        }),
-      });
-    },
-    onSuccess: async () => {
-      toast.success(TOAST_IDENTIFIER_ADDED);
-      await invalidate();
-    },
-  });
+  const createMutation = useCreateIdentifier();
 
   const createForm = useIdentifierCreateForm(async ({ value, reset }) => {
     if (!identifierCreateCanSubmit(value)) {
@@ -132,7 +92,7 @@ export function IdentifiersSection({
     }
     setSubmitError(null);
     try {
-      await createMutation.mutateAsync(value);
+      await createMutation.mutateAsync({ ...scope, value });
       reset();
       setComposing(false);
     } catch (error) {
@@ -145,28 +105,11 @@ export function IdentifiersSection({
     setComposing(false);
   }
 
-  const updateMutation = useMutation({
-    mutationFn: async (input: {
-      identifierId: string;
-      value?: string;
-      platform?: string;
-      type?: IdentifierType;
-      status?: IdentifierStatus;
-      confidence?: ConfidenceTier;
-      notes?: string;
-      evidenceIds?: string[];
-    }) =>
-      updateIdentifierFn({
-        data: buildUpdateIdentifierData(caseId, input),
-      }),
-    onSuccess: async () => {
+  const updateMutation = useUpdateIdentifier({
+    onUpdated: () => {
       setUpdateError(null);
-      toast.success(TOAST_IDENTIFIER_UPDATED);
-      await invalidate();
     },
-    onError: (e) => {
-      setUpdateError(errMessage(e, "Update failed"));
-    },
+    onError: setUpdateError,
   });
 
   function openComposer() {
@@ -181,16 +124,19 @@ export function IdentifiersSection({
 
   const updateField = useCallback(
     (identifierId: string, field: IdentifierFieldUpdate) => {
-      updateMutation.mutate({ identifierId, ...field });
+      updateMutation.mutate({ ...scope, patch: { identifierId, ...field } });
     },
-    [updateMutation]
+    [scope, updateMutation]
   );
 
   const saveEvidence = useCallback(
     async (identifierId: string, evidenceIds: string[]) => {
-      await updateMutation.mutateAsync({ identifierId, evidenceIds });
+      await updateMutation.mutateAsync({
+        ...scope,
+        patch: { identifierId, evidenceIds },
+      });
     },
-    [updateMutation]
+    [scope, updateMutation]
   );
 
   function onComposerKey(e: React.KeyboardEvent) {
@@ -349,7 +295,21 @@ export function IdentifiersSection({
           caseId={caseId}
           entities={[lockedEntity]}
           lockEntity={lockedEntity}
-          onImported={invalidate}
+          onImported={async (importedEntityIds, importedCaseId) => {
+            // The import's own Case and Entity ids: the screen may show another Entity by now.
+            await Promise.all(
+              importedEntityIds.map(async (importedEntityId) =>
+                invalidateEntity({
+                  caseId: importedCaseId,
+                  entityId: importedEntityId,
+                  entitySlug:
+                    importedEntityId === scope.entityId
+                      ? scope.entitySlug
+                      : undefined,
+                })
+              )
+            );
+          }}
         />
         <DeleteIdentifierDialog
           caseId={caseId}
