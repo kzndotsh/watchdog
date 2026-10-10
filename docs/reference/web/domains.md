@@ -95,7 +95,7 @@ One copy of "layout kind to who owns the Page, loader, and pending UI". The doma
 | Workspaces | `useJobsWorkspace`, `useTriageWorkspace`, `useTaskWorkspace`, `useIntakeActions` own selection, queries, mutations, and SSE for their surface. Don't fork a second mutation machine for the same noun. |
 | Row and node menus | Pure `AppAction[]` factories (`entities/lib/entity-row-actions.ts`, `shared/ui/identifiers/identifier-row-actions.ts` (shared by the Identifiers page and the Dossier tab), `cases/lib/case-card-actions.ts`, `tasks/lib/task-card-actions.ts`, `dossier/lib/*-row-actions.ts`) feed both the actions menu and the row ContextMenu. Target actions only; chrome lives on the inset |
 | Bulk-add identifiers | `entities/lib/parse-identifier-paste.ts` is the parse API; row errors come from schemas `validateIdentifierWrite` (don't fork a second regex set). One `useMutation` loops `createIdentifierFn`; Dossier locks the Entity |
-| Palette, hotkeys, context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts`. `SearchChrome` registers Mod+K and `?`; Mod+B belongs to the vendored `SidebarProvider` ([`atoms.md`](ui/atoms.md#keyboard)) |
+| Palette, hotkeys, context menu | `domains/search` + `shared/lib/app-action.ts` + `shared/lib/hotkeys.ts`. `HOTKEYS` is the one shortcut registry; `SearchChrome` binds its `global` entries (Mod+K, `?`) and Mod+B belongs to the vendored `SidebarProvider` ([`atoms.md`](ui/atoms.md#keyboard)) |
 | Triage Accept | Policy lives in core and [`custody`](../contracts/custody.md); UX-only rules in [`ux.md`](../../explanation/ux.md#triage-accept-ux-only-rules). The Accept gate uses `shared/lib/confirmed-evidence.ts` |
 
 ## Anti-patterns

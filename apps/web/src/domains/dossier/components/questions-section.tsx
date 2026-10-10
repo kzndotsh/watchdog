@@ -24,6 +24,7 @@ import type {
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import type { QuestionRecord } from "@/domains/entities/questions/types";
 import { cn, errMessage } from "@/lib/utils";
+import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ComposerShell } from "@/shared/ui/composer-shell";
@@ -104,6 +105,7 @@ function QuestionComposer({
   onError: (message: string | null) => void;
   onSubmit: (value: QuestionComposerValues) => Promise<void>;
 }) {
+  const modKeyLabel = useModKeyLabel();
   const form = useForm({
     defaultValues: { text: defaultText, note: defaultNote },
     onSubmit: async ({ value }) => {
@@ -186,7 +188,7 @@ function QuestionComposer({
       ) : null}
       <div className="flex justify-end gap-1">
         <span className="text-muted-foreground self-center text-xs tracking-wider uppercase">
-          ⌘↵ to save
+          {modKeyLabel}↵ to save
         </span>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel

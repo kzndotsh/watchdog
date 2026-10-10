@@ -1,7 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 import {
+  chordMatcher,
   createHotkeyListener,
+  formatChord,
+  HOTKEYS,
+  hotkeyAttrs,
+  hotkeyBindings,
   isEditableTarget,
   matchesChord,
   type HotkeyBinding,
@@ -84,5 +89,29 @@ describe("createHotkeyListener", () => {
     listener(keyEvent("?", { target: input }));
     listener(keyEvent("k", { metaKey: true, target: input }));
     expect(runs).toEqual(["palette"]);
+  });
+});
+
+describe("registry helpers", () => {
+  it("parses and formats chords", () => {
+    expect(chordMatcher("Mod+K")).toEqual({ key: "K", mod: true });
+    expect(chordMatcher("?")).toEqual({ key: "?" });
+    expect(formatChord("Mod+K", "Ctrl")).toBe("Ctrl K");
+    expect(formatChord("?", "Ctrl")).toBe("?");
+  });
+
+  it("derives data-hotkey attributes from the registry key", () => {
+    expect(hotkeyAttrs("triage-accept")).toEqual({
+      "data-hotkey": "a",
+      "aria-keyshortcuts": "a",
+    });
+  });
+
+  it("binds one entry per global registry id", () => {
+    const run = vi.fn();
+    const bindings = hotkeyBindings({ "command-palette": run, shortcuts: run });
+    expect(bindings.map((b) => b.id)).toEqual(
+      HOTKEYS.filter((e) => e.owner === "global").map((e) => e.id)
+    );
   });
 });

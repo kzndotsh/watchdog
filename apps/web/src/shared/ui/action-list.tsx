@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import { cn } from "@/lib/utils";
 import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
 import {
+  actionChord,
   filterActionsForSurface,
   shouldSeparateActions,
   type AppAction,
@@ -72,10 +73,10 @@ export function DropdownActionItems({
         >
           <ActionIcon action={action} />
           <span>{action.label}</span>
-          {action.shortcut ? (
+          {actionChord(action) ? (
             <DropdownMenuShortcut className="tracking-normal">
               <ActionShortcutChord
-                chord={action.shortcut}
+                chord={actionChord(action) ?? ""}
                 kbdClassName={MENU_KBD_CLASS}
               />
             </DropdownMenuShortcut>
@@ -107,10 +108,10 @@ export function ContextActionItems({
         >
           <ActionIcon action={action} />
           <span>{action.label}</span>
-          {action.shortcut ? (
+          {actionChord(action) ? (
             <ContextMenuShortcut className="tracking-normal">
               <ActionShortcutChord
-                chord={action.shortcut}
+                chord={actionChord(action) ?? ""}
                 kbdClassName={MENU_KBD_CLASS}
               />
             </ContextMenuShortcut>

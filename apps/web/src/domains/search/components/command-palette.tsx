@@ -12,7 +12,7 @@ import {
 } from "@/domains/search/lib/hit-labels";
 import { jumpNavItems } from "@/domains/search/lib/jump-nav";
 import { searchCaseQuery } from "@/domains/search/queries";
-import type { AppAction } from "@/shared/lib/app-action";
+import { actionChord, type AppAction } from "@/shared/lib/app-action";
 import { useRegisteredPaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
@@ -90,10 +90,10 @@ function PaletteActionGroup({
             >
               {Icon ? <Icon /> : null}
               <span>{action.label}</span>
-              {action.shortcut ? (
+              {actionChord(action) ? (
                 <CommandShortcut>
                   <ActionShortcutChord
-                    chord={action.shortcut}
+                    chord={actionChord(action) ?? ""}
                     kbdClassName={MENU_KBD_CLASS}
                   />
                 </CommandShortcut>
@@ -204,7 +204,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     if (showResults) {
       return "No results found.";
     }
-    return "Type at least 2 characters to search.";
+    return `Type at least ${SEARCH_MIN_QUERY_LENGTH} characters to search.`;
   })();
 
   const resultHits = showResults && !isError ? hits : null;

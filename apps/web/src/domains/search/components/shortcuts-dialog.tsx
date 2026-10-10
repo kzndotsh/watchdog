@@ -1,4 +1,4 @@
-import { HOTKEYS } from "@/shared/lib/hotkeys";
+import { HOTKEYS, hotkeyDef } from "@/shared/lib/hotkeys";
 import { ActionShortcutChord } from "@/shared/ui/action-list";
 import {
   Dialog,
@@ -20,7 +20,8 @@ export function ShortcutsDialog({ open, onOpenChange }: ShortcutsDialogProps) {
         <DialogHeader>
           <DialogTitle>Shortcuts</DialogTitle>
           <DialogDescription>
-            Mod+K then type to search the Active Case or jump to a page.
+            {hotkeyDef("command-palette").chord} then type to search the Active
+            Case or jump to a page.
           </DialogDescription>
         </DialogHeader>
         <ul className="flex flex-col gap-3">

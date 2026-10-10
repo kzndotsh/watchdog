@@ -16,6 +16,7 @@ import {
   type DecideEvidenceMode,
 } from "@/domains/triage/lib/decide-header-view";
 import { proposalPatch } from "@/domains/triage/lib/filters";
+import { hotkeyAttrs, hotkeyDef } from "@/shared/lib/hotkeys";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
@@ -388,8 +389,7 @@ export function TriageDecideFooter({
                 <Button
                   type="button"
                   size="sm"
-                  data-hotkey="a"
-                  aria-keyshortcuts="a"
+                  {...hotkeyAttrs("triage-accept")}
                   loading={acceptBusy}
                   disabled={!gate.canAccept}
                   onClick={() => {
@@ -407,15 +407,14 @@ export function TriageDecideFooter({
                   )}
                   Accept
                   <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
-                    A
+                    {hotkeyDef("triage-accept").chord}
                   </Kbd>
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  data-hotkey="r"
-                  aria-keyshortcuts="r"
+                  {...hotkeyAttrs("triage-reject")}
                   disabled={pending}
                   onClick={() => {
                     onRejectingChange(true);
@@ -425,7 +424,7 @@ export function TriageDecideFooter({
                   <XIcon className="size-3" data-icon="inline-start" />
                   Reject
                   <Kbd aria-hidden className={BUTTON_KBD_CLASS}>
-                    R
+                    {hotkeyDef("triage-reject").chord}
                   </Kbd>
                 </Button>
               </>
