@@ -29,7 +29,7 @@ vi.mock("@/domains/cases/lib/active-case", () => ({
   notifyCasesChanged: vi.fn(),
 }));
 
-vi.mock("@/domains/cases/lib/case-cache", () => ({
+vi.mock("@/domains/cases/hooks/case-cache", () => ({
   writeCaseRecordCache: vi.fn(),
 }));
 

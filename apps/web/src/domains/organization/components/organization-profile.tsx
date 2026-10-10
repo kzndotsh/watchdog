@@ -1,14 +1,17 @@
-import { authQueryKeys } from "@better-auth-ui/core";
 import { useSession } from "@better-auth-ui/react";
 import { useListOrganizations } from "@better-auth-ui/react/plugins/organization";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState, type SubmitEvent } from "react";
 
 import { authClient } from "@/auth/client";
 import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
 import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
+import { useDeleteOrganization } from "@/domains/organization/hooks/use-delete-organization";
+import { useLeaveOrganization } from "@/domains/organization/hooks/use-leave-organization";
 import { useSlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
+import { useUpdateOrganization } from "@/domains/organization/hooks/use-update-organization";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
+import { organizationKeys } from "@/domains/organization/queries";
 import { errMessage } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
 import {
@@ -44,14 +47,13 @@ function roleSentence(role: string): string {
 
 /** The active organization: rename it (owner / admin) or leave it (anyone but the last owner). */
 export function OrganizationProfile() {
-  const queryClient = useQueryClient();
   const { data: sessionData } = useSession(authClient);
   const { data: organizations, isPending } = useListOrganizations(authClient);
   const activeId = sessionData?.session.activeOrganizationId ?? null;
   const organization =
     organizations?.find((org) => org.id === activeId) ?? organizations?.[0];
   const { data: roleData } = useQuery({
-    queryKey: ["organization", "member-role", organization?.id],
+    queryKey: organizationKeys.memberRole(organization?.id),
     enabled: organization !== undefined,
     queryFn: async () => {
       const { data, error } =
@@ -60,41 +62,9 @@ export function OrganizationProfile() {
       return data;
     },
   });
-  const update = useMutation({
-    mutationFn: async (input: {
-      id: string;
-      name: string;
-      slug: string;
-      logo: string | null;
-    }) => {
-      const { error } = await authClient.organization.update({
-        organizationId: input.id,
-        data: {
-          name: input.name,
-          slug: input.slug,
-          logo: input.logo ?? "",
-        },
-      });
-      if (error) throw new Error(error.message ?? "Couldn't save");
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: authQueryKeys.all });
-    },
-  });
-  const remove = useMutation({
-    mutationFn: async (organizationId: string) => {
-      const { error } = await authClient.organization.delete({
-        organizationId,
-      });
-      if (error) throw new Error(error.message ?? "Couldn't delete");
-    },
-  });
-  const leave = useMutation({
-    mutationFn: async (organizationId: string) => {
-      const { error } = await authClient.organization.leave({ organizationId });
-      if (error) throw new Error(error.message ?? "Couldn't leave");
-    },
-  });
+  const update = useUpdateOrganization();
+  const remove = useDeleteOrganization();
+  const leave = useLeaveOrganization();
   const [draft, setDraft] = useState<{
     name: string;
     slug: string;

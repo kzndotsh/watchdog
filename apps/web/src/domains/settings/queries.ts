@@ -8,6 +8,10 @@ export const credentialsKeys = {
   all: ["credentials"] as const,
 };
 
+export const usersKeys = {
+  all: ["auth-admin", "users"] as const,
+};
+
 export const credentialsListQuery = () => {
   const queryKey = credentialsKeys.all;
   return queryOptions({

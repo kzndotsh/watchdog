@@ -4,15 +4,6 @@ import { errMessage } from "@/lib/utils";
 import { invalidateAfterCredentialMutation } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
-export async function handleCredentialDeleted(
-  queryClient: QueryClient,
-  setDeleteTarget: (name: string | null) => void
-): Promise<void> {
-  toast.success("Credential removed");
-  setDeleteTarget(null);
-  await invalidateAfterCredentialMutation(queryClient);
-}
-
 export function handleCredentialDeleteError(
   error: unknown,
   setDeleteError: (message: string | null) => void
@@ -125,5 +116,21 @@ export function bindDeleteConfirm(
 ): () => void {
   return () => {
     handleDeleteConfirm(deleteTarget, mutate);
+  };
+}
+
+export function bindCredentialDeleted(
+  setDeleteTarget: (name: string | null) => void
+): () => void {
+  return () => {
+    setDeleteTarget(null);
+  };
+}
+
+export function bindCredentialDeleteFailed(
+  setDeleteError: (message: string | null) => void
+): (error: unknown) => void {
+  return (error) => {
+    handleCredentialDeleteError(error, setDeleteError);
   };
 }
