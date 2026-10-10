@@ -1,14 +1,24 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
-import { authClient } from "@/auth/client";
+import { slugTakenQuery } from "@/domains/organization/queries";
 
 export type SlugAvailability = "idle" | "checking" | "available" | "taken";
 
 const DEBOUNCE_MS = 400;
 
-/** Cleanup for the skipped case: nothing was started. */
-function noop(): void {
-  return undefined;
+/** `value`, but only after it has stopped changing for `delayMs`; `""` until the first delay passes. */
+function useDebouncedValue(value: string, delayMs: number): string {
+  const [debounced, setDebounced] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebounced(value);
+    }, delayMs);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delayMs]);
+  return debounced;
 }
 
 /**
@@ -21,35 +31,16 @@ export function useSlugAvailability(
 ): SlugAvailability {
   const trimmed = slug.trim();
   const skip = trimmed === "" || trimmed === current;
-  const [result, setResult] = useState<{
-    slug: string;
-    /** `null` when the check itself failed: the server decides at submit time. */
-    taken: boolean | null;
-  } | null>(null);
+  const debounced = useDebouncedValue(trimmed, DEBOUNCE_MS);
+  const settled = debounced === trimmed;
 
-  useEffect(() => {
-    if (skip) return noop;
-    let cancelled = false;
-    const timer = setTimeout(() => {
-      void (async () => {
-        try {
-          const { error } = await authClient.organization.checkSlug({
-            slug: trimmed,
-          });
-          if (!cancelled) setResult({ slug: trimmed, taken: Boolean(error) });
-        } catch {
-          if (!cancelled) setResult({ slug: trimmed, taken: null });
-        }
-      })();
-    }, DEBOUNCE_MS);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [skip, trimmed]);
+  const { data: taken, isError } = useQuery({
+    ...slugTakenQuery(debounced),
+    enabled: !skip && settled,
+  });
 
   if (skip) return "idle";
-  if (result?.slug !== trimmed) return "checking";
-  if (result.taken === null) return "idle";
-  return result.taken ? "taken" : "available";
+  if (!settled || (taken === undefined && !isError)) return "checking";
+  if (isError) return "idle";
+  return taken ? "taken" : "available";
 }
