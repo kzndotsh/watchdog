@@ -1,0 +1,25 @@
+import { useMutation } from "@tanstack/react-query";
+
+import { authClient } from "@/auth/client";
+import { messageOr } from "@/lib/utils";
+
+/**
+ * Accept the invitation with the signed-in account (variable: the invitation id). The caller
+ * shows the error from the returned mutation and navigates in `onAccepted`.
+ */
+export function useAcceptInvitation({
+  onAccepted,
+}: { onAccepted?: () => void } = {}) {
+  return useMutation({
+    mutationFn: async (invitationId: string) => {
+      const { error } = await authClient.organization.acceptInvitation({
+        invitationId,
+      });
+      if (error)
+        throw new Error(messageOr(error.message, "Couldn't accept invitation"));
+    },
+    onSuccess: () => {
+      onAccepted?.();
+    },
+  });
+}

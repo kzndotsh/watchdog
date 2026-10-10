@@ -1,28 +1,24 @@
 "use client";
 
 import { useSession } from "@better-auth-ui/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
-import { cn, errMessage, messageOr } from "@/lib/utils";
+import { useDisableUser } from "@/domains/settings/hooks/use-disable-user";
+import { useEnableUser } from "@/domains/settings/hooks/use-enable-user";
+import { useRevokeUserSessions } from "@/domains/settings/hooks/use-revoke-user-sessions";
+import { usersKeys } from "@/domains/settings/queries";
+import { cn, messageOr } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { placeholderDataForQueryKey } from "@/shared/lib/query-placeholder";
-import {
-  TOAST_SESSIONS_REVOKED,
-  TOAST_USER_DISABLED,
-  TOAST_USER_ENABLED,
-} from "@/shared/lib/toast-copy";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { FormSection } from "@/shared/ui/form-section";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { toast } from "@/shared/ui/toast";
 import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
 import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 import { Spinner } from "@watchdog/ui/components/spinner";
-
-const USERS_QUERY_KEY = ["auth-admin", "users"] as const;
 
 interface ListedUser {
   id: string;
@@ -49,68 +45,17 @@ function roleLabel(role: string | null | undefined): string {
 }
 
 export function SettingsUsers() {
-  const queryClient = useQueryClient();
   const { data: session } = useSession(authClient);
   const selfId = session?.user.id;
   const usersQuery = useQuery({
-    queryKey: USERS_QUERY_KEY,
+    queryKey: usersKeys.all,
     queryFn: loadUsers,
-    placeholderData: placeholderDataForQueryKey(USERS_QUERY_KEY),
+    placeholderData: placeholderDataForQueryKey(usersKeys.all),
   });
 
-  const invalidate = async () =>
-    queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
-
-  const disableUser = useMutation({
-    mutationFn: async (userId: string) => {
-      const { error } = await authClient.admin.banUser({
-        userId,
-        banReason: "disabled",
-      });
-      if (error)
-        throw new Error(messageOr(error.message, "Could not disable user"));
-    },
-    onSuccess: () => {
-      void invalidate();
-      toast.success(TOAST_USER_DISABLED);
-    },
-    onError: (error) => {
-      toast.error(errMessage(error, "Could not disable user"));
-    },
-  });
-
-  const enableUser = useMutation({
-    mutationFn: async (userId: string) => {
-      const { error } = await authClient.admin.unbanUser({ userId });
-      if (error)
-        throw new Error(messageOr(error.message, "Could not enable user"));
-    },
-    onSuccess: () => {
-      void invalidate();
-      toast.success(TOAST_USER_ENABLED);
-    },
-    onError: (error) => {
-      toast.error(errMessage(error, "Could not enable user"));
-    },
-  });
-
-  const revokeSessions = useMutation({
-    mutationFn: async (userId: string) => {
-      const { error } = await authClient.admin.revokeUserSessions({ userId });
-      if (error) {
-        throw new Error(
-          messageOr(error.message, "Could not sign out sessions")
-        );
-      }
-    },
-    onSuccess: () => {
-      void invalidate();
-      toast.success(TOAST_SESSIONS_REVOKED);
-    },
-    onError: (error) => {
-      toast.error(errMessage(error, "Could not sign out sessions"));
-    },
-  });
+  const disableUser = useDisableUser();
+  const enableUser = useEnableUser();
+  const revokeSessions = useRevokeUserSessions();
 
   const usersPending = listPending(usersQuery);
   const usersLoadError = queryLoadError(

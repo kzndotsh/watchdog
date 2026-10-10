@@ -7,7 +7,7 @@ vi.mock("@/auth/server", () => ({
   auth: {},
 }));
 
-import { writeCaseRecordCache } from "@/domains/cases/lib/case-cache";
+import { writeCaseRecordCache } from "@/domains/cases/hooks/case-cache";
 import {
   caseByIdQuery,
   caseBySlugQuery,
