@@ -37,10 +37,10 @@ export function RowActionsMenu({
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size="icon-sm"
             aria-label={label}
             className={cn(
-              "h-6 w-6 shrink-0 p-0 transition-opacity",
+              "shrink-0 transition-opacity",
               !alwaysVisible &&
                 "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
               className

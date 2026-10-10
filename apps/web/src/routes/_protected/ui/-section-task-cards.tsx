@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { GuideSection } from "@/routes/_protected/ui/-guide-chrome";
+import { Eyebrow } from "@/shared/ui/eyebrow";
 import { STATUS_TONES } from "@/shared/ui/vocab/status.lib";
 import {
   TASK_PRIORITY_TONE_MAP,
@@ -103,14 +104,15 @@ function PriorityDot({ priority }: { priority: TaskPriority }) {
 
 function Chip({ priority }: { priority: TaskPriority }) {
   return (
-    <span
+    <Eyebrow
+      tone="inherit"
       className={cn(
-        "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-normal tracking-wider uppercase",
+        "inline-flex shrink-0 items-center rounded-sm px-1 py-px leading-none font-normal",
         STATUS_TONES[TASK_PRIORITY_TONE_MAP[priority]].low
       )}
     >
       {taskPriorityShortLabel(priority)}
-    </span>
+    </Eyebrow>
   );
 }
 

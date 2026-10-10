@@ -251,7 +251,6 @@ export function JobCapRunForm({
                     chips={filterChips}
                     onClearAll={clearCapFilters}
                     align="end"
-                    contentClassName="w-[16rem]"
                     icon={ListFilterIcon}
                     label="Advanced"
                   >
@@ -432,8 +431,7 @@ export function JobCapRunForm({
                   >
                     <Button
                       type="submit"
-                      size="sm"
-                      className="h-8"
+                      size="lg"
                       loading={isSubmitting}
                       disabled={
                         !view.canRun || visibleCaps.length === 0 || isSubmitting

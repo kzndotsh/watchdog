@@ -204,7 +204,6 @@ export function JobPlaybookRunForm({
                     chips={filterChips}
                     onClearAll={clearPlaybookFilters}
                     align="end"
-                    contentClassName="w-[16rem]"
                     icon={ListFilterIcon}
                     label="Playbook filters"
                   >
@@ -294,8 +293,7 @@ export function JobPlaybookRunForm({
                   >
                     <Button
                       type="submit"
-                      size="sm"
-                      className="h-8"
+                      size="lg"
                       loading={isSubmitting}
                       disabled={!view.canRun || isSubmitting}
                     >

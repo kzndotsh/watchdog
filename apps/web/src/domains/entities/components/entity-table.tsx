@@ -186,7 +186,6 @@ function EntityTableActive({ active }: { active: CaseRecord }) {
               onClearAll={() => {
                 setKindFilter([]);
               }}
-              contentClassName="w-[16rem]"
             >
               <FieldSet>
                 <FieldLegend variant="label">Kind</FieldLegend>

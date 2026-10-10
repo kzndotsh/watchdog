@@ -14,6 +14,7 @@ import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
 import { cn } from "@/lib/utils";
 import { filterActionsForSurface } from "@/shared/lib/app-action";
 import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
+import { Eyebrow } from "@/shared/ui/eyebrow";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
@@ -81,14 +82,15 @@ function TaskCardBody({
       {hasFooter ? (
         <div className="border-border flex h-6 min-w-0 items-center gap-2 border-t px-2.5">
           {task.priority ? (
-            <span
+            <Eyebrow
+              tone="inherit"
               className={cn(
-                "inline-flex shrink-0 items-center rounded-sm px-1 py-px text-xs leading-none font-normal tracking-wider uppercase",
+                "inline-flex shrink-0 items-center rounded-sm px-1 py-px leading-none font-normal",
                 STATUS_TONES[TASK_PRIORITY_TONE_MAP[task.priority]].low
               )}
             >
               {taskPriorityShortLabel(task.priority)}
-            </span>
+            </Eyebrow>
           ) : null}
           {task.dueDate ? (
             <span

@@ -28,6 +28,7 @@ import { cn, errMessage } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ComposerShell } from "@/shared/ui/composer-shell";
+import { Eyebrow } from "@/shared/ui/eyebrow";
 import { FieldMessage } from "@/shared/ui/field-message";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
@@ -193,9 +194,7 @@ function QuestionComposer({
         </form.Field>
       ) : null}
       <div className="flex justify-end gap-1">
-        <span className="text-muted-foreground self-center text-xs tracking-wider uppercase">
-          ⌘↵ to save
-        </span>
+        <Eyebrow className="self-center">⌘↵ to save</Eyebrow>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
@@ -341,8 +340,9 @@ function QuestionNode({
       )}
     >
       <TimelineDot
+        size="md"
         className={cn(
-          "bg-background top-1.5 -left-[1.4rem] size-2.5 border-2",
+          "bg-background border-2",
           resolved ? "border-border/40" : "border-muted-foreground/55"
         )}
       />
@@ -680,7 +680,7 @@ export function QuestionsSection({
         ) : null}
 
         {open.length > 0 ? (
-          <TimelineSpine className="border-border/70 ml-1.5 pl-5">
+          <TimelineSpine className="border-border/70 ml-2 pl-4">
             {open.map((row, i) => (
               <OpenQuestionRow
                 key={row.id}
@@ -715,7 +715,7 @@ export function QuestionsSection({
             </SectionLabel>
             <TimelineSpine
               dashed={false}
-              className="border-border/30 ml-1.5 pl-5"
+              className="border-border/30 ml-2 pl-4"
             >
               {resolved.map((row, i) => (
                 <ResolvedQuestionRow

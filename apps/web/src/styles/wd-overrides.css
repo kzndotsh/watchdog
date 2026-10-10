@@ -316,10 +316,11 @@ html [data-slot="switch-thumb"] {
 /*
  * Touch targets — coarse pointers only (phones, tablets). Desktop density is
  * untouched. Buttons and Queue rows grow toward the 44px touch target; table
- * cells keep their fixed control height so the colgroup grid holds.
+ * cells keep their fixed control height so the colgroup grid holds. An inline
+ * text link (`size="inline"`) stays on its line of text.
  */
 @media (pointer: coarse) {
-  [data-slot="button"]:not(td [data-slot="button"]) {
+  [data-slot="button"]:not(td [data-slot="button"], [data-size="inline"]) {
     min-height: 2.5rem;
   }
 

@@ -22,7 +22,7 @@ Which atom for which need, the keyboard contracts, and the traps. The atoms them
 | Toolbar filter search | `SearchField` (fixed width; don't override per page) |
 | Evidence pickers | `EvidencePicker` / `EvidenceCiteChips` in `shared/ui/intake/evidence-picker.tsx` |
 
-Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dense icon actions use `xs`. Button icons use `data-icon="inline-start|inline-end"`.
+Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dense icon actions use `xs`. Button icons use `data-icon="inline-start|inline-end"`. The full scale is `xs` h-5, `sm` h-6, default h-7, `lg` h-8 (a primary action in a card or a filter bar), the square `icon-xs` h-5, `icon-sm` h-6, `icon` h-7, `icon-lg` h-8, and `inline` (h-auto, no padding, with `variant="link"`) for a text link that sits in running text. Same-role buttons use the same size in every domain; the specimens are on `/ui` (Atoms, "Button").
 
 **Labels:** display labels for schema enums live in `shared/ui/vocab/` (exhaustive label and tone maps). `@watchdog/schemas` stays free of UI and the CLI emits raw enums. Tone maps reuse the existing `--status-*` tokens; a badge is named for its meaning (`ConfidenceBadge`), never its color. There is no fictional vocab (`probable`, `dormant`, `merged`): the label and tone maps are exhaustive `Record`s over the schema unions, so typecheck enforces it for them.
 
@@ -36,7 +36,7 @@ Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dens
 
 ## Variants, not overrides
 
-Callers place components (layout classes, `truncate`) and pick a size or variant; they do not patch a component's spacing, type, color, or shape with `className`. Enforced in `domains/` and `routes/` by `shadcn/no-restyle` ([`rules.md`](rules.md)). If a screen needs a look the component lacks, use the stock component or a token. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`QueueRow`, `StatusDot`, `EmptyState size="sm"`). Which components have Watchdog wrappers, and how: [`vendor.md`](vendor.md).
+Callers place components (layout classes, `truncate`) and pick a size or variant (a Button's height is never a `className`: `watchdog/no-button-height-class`); they do not patch a component's spacing, type, color, or shape with `className`. Enforced in `domains/` and `routes/` by `shadcn/no-restyle` ([`rules.md`](rules.md)). If a screen needs a look the component lacks, use the stock component or a token. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`QueueRow`, `StatusDot`, `EmptyState size="sm"`). Which components have Watchdog wrappers, and how: [`vendor.md`](vendor.md).
 
 ## Gotchas
 
@@ -45,4 +45,5 @@ Callers place components (layout classes, `truncate`) and pick a size or variant
 - **Button as Link:** Base UI `Button` + `render={<Link />}` needs `nativeButton={false}`.
 - **`scrollbar-gutter: stable`** forces classic scrollbar mode and ignores `::-webkit-scrollbar`; avoid it on styled scroll areas.
 - **Theme:** the toggle sets `.dark` / `.light` on `<html>` and toasts inherit the document's CSS variables; don't reintroduce `next-themes` without a provider.
+- **Eyebrow, TimelineDot, width token:** the uppercase tracked label is `Eyebrow` (`tone` muted, foreground or inherit; `EYEBROW_CLASS` for a component that only takes `className`, such as `KindBadge`), never a hand-written `tracking-wider uppercase`. `TimelineDot` (`size` `sm` or `md`; the caller passes fill and border colour only) owns the one offset that centres a dot on the `TimelineSpine` line, so the spine must be `ml-2 pl-4`. A width used in more than one place is a named width (`w-filter-menu`, from `--container-filter-menu` in `wd-theme.css`, mirrored in DESIGN.md `widths`); `check:design-tokens` fails when the two disagree. Nothing flags a new arbitrary width or a hand-written eyebrow (`guidance`).
 - **Opaque ids:** never `.slice(0, N)` a hash or id in `domains/`; use `IdChip` / `formatOpaqueId` (`watchdog/no-opaque-id-slice` flags the common form only).

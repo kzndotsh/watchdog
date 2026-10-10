@@ -27,8 +27,7 @@ export function DataTablePagination<TData extends RowData>({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
+          size="icon"
           disabled={!table.getCanPreviousPage()}
           onClick={() => {
             table.previousPage();
@@ -39,8 +38,7 @@ export function DataTablePagination<TData extends RowData>({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
+          size="icon"
           disabled={!table.getCanNextPage()}
           onClick={() => {
             table.nextPage();

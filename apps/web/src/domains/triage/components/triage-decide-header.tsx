@@ -35,7 +35,8 @@ function ProducingCapLink({
     <Button
       nativeButton={false}
       variant="link"
-      className="text-foreground/80 h-auto min-h-0 p-0 text-xs font-normal underline-offset-2 hover:underline"
+      size="inline"
+      className="text-foreground/80 text-xs font-normal underline-offset-2 hover:underline"
       render={<Link to="/collect" search={{ id: scopedJobId }} />}
     >
       {label}

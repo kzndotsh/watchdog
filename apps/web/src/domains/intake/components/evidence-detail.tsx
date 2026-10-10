@@ -512,8 +512,6 @@ export function EvidenceDetail({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              className="h-7"
               disabled={
                 loadingUrl || downloadUrl === null || downloadUrl === ""
               }

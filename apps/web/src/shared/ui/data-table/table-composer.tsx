@@ -64,9 +64,8 @@ export function DataTableComposerActions({
       <div className="flex w-full items-center justify-center gap-1">
         <Button
           type="button"
-          size="sm"
+          size="icon-sm"
           variant="ghost"
-          className="h-6 w-6 p-0"
           disabled={busy || !canSubmit}
           onClick={onSubmit}
           title="Save (Enter)"
@@ -75,9 +74,8 @@ export function DataTableComposerActions({
         </Button>
         <Button
           type="button"
-          size="sm"
+          size="icon-sm"
           variant="ghost"
-          className="h-6 w-6 p-0"
           disabled={busy}
           onClick={onCancel}
           title="Cancel (Esc)"

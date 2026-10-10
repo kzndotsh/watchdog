@@ -11,6 +11,7 @@ import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { resolveSelectValue } from "@/shared/ui/control-chrome";
 import { EmptyState } from "@/shared/ui/empty-state";
+import { Eyebrow } from "@/shared/ui/eyebrow";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { RelativeTime } from "@/shared/ui/relative-time";
@@ -114,12 +115,8 @@ function ActivityRows({
             <div className="flex flex-wrap items-start justify-between gap-2 px-0 py-2.5">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-muted-foreground text-xs tracking-wider uppercase">
-                    {activityKindLabel(item.kind)}
-                  </span>
-                  <span className="text-foreground text-xs tracking-wider uppercase">
-                    {item.action}
-                  </span>
+                  <Eyebrow>{activityKindLabel(item.kind)}</Eyebrow>
+                  <Eyebrow tone="foreground">{item.action}</Eyebrow>
                 </div>
                 <div className="mt-0.5 min-w-0">
                   {caseSlug ? (

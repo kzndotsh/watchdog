@@ -272,7 +272,6 @@ function TimelineNode({
     <div className="group relative mb-3 last:mb-0">
       <TimelineDot
         className={cn(
-          "top-1.5 -left-[1.3rem] size-2",
           provisional ? "bg-foreground/70 ring-muted" : "bg-muted-foreground/60"
         )}
       />

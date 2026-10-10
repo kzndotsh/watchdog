@@ -29,7 +29,7 @@ Domain code imports vanilla primitives from `@watchdog/ui/components/<name>` and
 
 `shared/ui/toast.tsx` is also a wrapper, kept outside `primitives/` because it has no `className` surface for the restyle linter to trace. It re-exports upstream's `toast` manager and `Toaster` and adds `toast.success/error/warning/info/loading`. App code imports it from `@/shared/ui/toast`; oxlint bans `@watchdog/ui/components/toast` everywhere else.
 
-A new wrapper must also be listed in `primitives/__tests__/wrapper-lint-coverage.test.ts`, which fails if the linter stops checking it. Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`), so don't add `text-xs` / `h-*` patches to match an older scale.
+A new wrapper must also be listed in `primitives/__tests__/wrapper-lint-coverage.test.ts`, which fails if the linter stops checking it. Mira sets the density scale (Button default `h-7`, `sm` `h-6`, `xs` `h-5`, `lg` `h-8`), so don't add `text-xs` / `h-*` patches to match an older scale; `watchdog/no-button-height-class` fails a height utility on a Button. The Button wrapper adds one size on top of the vendored scale, `inline` (a text link: `h-auto min-h-0 p-0`, no coarse-pointer minimum), without editing `packages/ui`.
 
 ## Lock
 
