@@ -1,11 +1,6 @@
 import { useEffect, type RefObject } from "react";
 
-import {
-  chordMatcher,
-  hotkeyDef,
-  isEditableTarget,
-  matchesChord,
-} from "@/shared/lib/hotkeys";
+import { bareKey, isEditableTarget } from "@/shared/lib/hotkeys";
 
 /**
  * Queue keyboard flow: `j` / `k` (anywhere outside editable fields) and
@@ -41,12 +36,8 @@ export function queueStepForKey(
 ): QueueStep | null {
   if (event.metaKey || event.ctrlKey || event.altKey) return null;
   if (isEditableTarget(event.target)) return null;
-  if (matchesChord(event, chordMatcher(hotkeyDef("queue-next").chord))) {
-    return 1;
-  }
-  if (matchesChord(event, chordMatcher(hotkeyDef("queue-previous").chord))) {
-    return -1;
-  }
+  if (event.key === bareKey("queue-next")) return 1;
+  if (event.key === bareKey("queue-previous")) return -1;
   if (!focusInQueue) return null;
   if (event.key === "ArrowDown") return 1;
   if (event.key === "ArrowUp") return -1;

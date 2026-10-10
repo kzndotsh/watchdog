@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, expectTypeOf, vi } from "vitest";
 
 import {
   chordMatcher,
@@ -105,6 +105,15 @@ describe("registry helpers", () => {
       "data-hotkey": "a",
       "aria-keyshortcuts": "a",
     });
+  });
+
+  it("restricts hotkeyAttrs to data-hotkey ids (no modifier-dropping)", () => {
+    expectTypeOf<Parameters<typeof hotkeyAttrs>[0]>().toEqualTypeOf<
+      "triage-accept" | "triage-reject"
+    >();
+    expect(
+      HOTKEYS.filter((e) => e.owner === "data-hotkey").map((e) => e.id)
+    ).toEqual(["triage-accept", "triage-reject"]);
   });
 
   it("binds one entry per global registry id", () => {

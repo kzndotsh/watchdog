@@ -40,8 +40,8 @@ function Probe() {
       <span data-testid="palette-ids">
         {ui.paletteCommands.map((a) => a.id).join(",")}
       </span>
-      <span data-testid="chrome-hotkeys">
-        {ui.chromeActions.map((a) => a.hotkey).join(",")}
+      <span data-testid="chrome-pairs">
+        {ui.chromeActions.map((a) => `${a.id}=${a.hotkey}`).join(",")}
       </span>
     </div>
   );
@@ -113,10 +113,8 @@ describe("one shortcut registry", () => {
     expect(screen.getByTestId("palette-ids")).toHaveTextContent(
       paletteIds.join(",")
     );
-    for (const hotkey of screen
-      .getByTestId("chrome-hotkeys")
-      .textContent.split(",")) {
-      expect(HOTKEYS.map((e) => e.id as string)).toContain(hotkey);
-    }
+    expect(screen.getByTestId("chrome-pairs")).toHaveTextContent(
+      "command-palette=command-palette,toggle-sidebar=toggle-sidebar,shortcuts=shortcuts"
+    );
   });
 });

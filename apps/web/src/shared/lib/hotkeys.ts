@@ -107,6 +107,9 @@ export type HotkeyId = HotkeyEntry["id"];
 
 export type GlobalHotkeyId = Extract<HotkeyEntry, { owner: "global" }>["id"];
 
+/** Ids a control can claim with `hotkeyAttrs` (bare single keys only). */
+export type DataHotkeyId = Extract<HotkeyEntry, { owner: "data-hotkey" }>["id"];
+
 export function hotkeyDef(id: HotkeyId): HotkeyDef {
   const def = HOTKEYS.find((entry) => entry.id === id);
   if (!def) throw new Error(`Unknown hotkey id: ${id}`);
@@ -128,12 +131,20 @@ export function formatChord(chord: string, modLabel: string): string {
     : chord;
 }
 
+/**
+ * Exact `KeyboardEvent.key` of a bare single-key entry (`J` -> `j`). Unlike
+ * `matchesChord` it does not fold case, so Shift+J and caps-lock J stay inert.
+ */
+export function bareKey(id: HotkeyId): string {
+  return chordMatcher(hotkeyDef(id).chord).key.toLowerCase();
+}
+
 /** Attributes that make a control answer to a `data-hotkey` registry key. */
-export function hotkeyAttrs(id: HotkeyId): {
+export function hotkeyAttrs(id: DataHotkeyId): {
   "data-hotkey": string;
   "aria-keyshortcuts": string;
 } {
-  const key = chordMatcher(hotkeyDef(id).chord).key.toLowerCase();
+  const key = bareKey(id);
   return { "data-hotkey": key, "aria-keyshortcuts": key };
 }
 
