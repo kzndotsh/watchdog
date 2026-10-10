@@ -15,17 +15,13 @@ describe("useInvalidateEntity", () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     );
-    const { result } = renderHook(
-      () =>
-        useInvalidateEntity({
-          caseId: "case-1",
-          entityId: "ent-1",
-          entitySlug: "alpha",
-        }),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useInvalidateEntity(), { wrapper });
 
-    await result.current();
+    await result.current({
+      caseId: "case-1",
+      entityId: "ent-1",
+      entitySlug: "alpha",
+    });
     expect(invalidateAfterEntityChanged).toHaveBeenCalledWith(
       client,
       "case-1",

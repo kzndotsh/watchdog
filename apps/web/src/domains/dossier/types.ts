@@ -18,6 +18,16 @@ export interface DossierSectionProps {
   emptyPresentation?: DossierEmptyPresentation;
 }
 
+/**
+ * Case + Entity a dossier write was started for. Mutation hooks take it in the
+ * mutation variables, never in hook props: props follow re-renders (an Active
+ * Case switch) and would redirect the invalidation of a pending write.
+ */
+export type DossierEntityScope = Pick<
+  DossierSectionProps,
+  "caseId" | "entityId" | "entitySlug"
+>;
+
 /** Sections that link Evidence chips in composers / rows. */
 export type DossierSectionWithEvidenceProps = DossierSectionProps & {
   evidenceOptions: readonly EvidenceOption[];

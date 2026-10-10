@@ -1,15 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { DossierSection } from "@/domains/dossier/components/dossier-section";
-import { entitiesKeys } from "@/domains/entities/entities-keys";
-import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
-import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
+import { useSaveEntityProse } from "@/domains/dossier/hooks/use-save-entity-prose";
 import type { EntityRecord } from "@/domains/entities/types";
-import { errMessage } from "@/lib/utils";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { scopeCaseSlug } from "@/shared/lib/query-ingress";
-import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { FieldError } from "@watchdog/ui/components/field";
 
@@ -17,38 +11,12 @@ import { FieldError } from "@watchdog/ui/components/field";
  * Local draft of entity prose (Markdown). Remount owner with `key={entity.id}`
  * on identity change — draft seeds once and never re-syncs from props.
  */
-function useEntityProseFields(caseId: string, entity: EntityRecord) {
-  const queryClient = useQueryClient();
+function useEntityProseFields(entity: EntityRecord) {
   const [summary, setSummary] = useState(entity.summary ?? "");
   const [notes, setNotes] = useState(entity.notes ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  const saveMutation = useMutation({
-    mutationFn: async (patch: {
-      summary?: string | null;
-      notes?: string | null;
-    }) =>
-      updateEntityFieldsFn({
-        data: buildUpdateEntityFieldsData(caseId, {
-          entityId: entity.id,
-          ...patch,
-        }),
-      }),
-    onSuccess: async (next) => {
-      const { scoped } = scopeCaseSlug(caseId, entity.slug);
-      queryClient.setQueryData(
-        entitiesKeys.detail(scoped.caseId, scoped.slug),
-        next
-      );
-      await invalidateAfterEntityChanged(queryClient, caseId, {
-        entityId: entity.id,
-        slug: entity.slug,
-      });
-    },
-    onError: (e) => {
-      setError(errMessage(e, "Save failed"));
-    },
-  });
+  const saveMutation = useSaveEntityProse({ onError: setError });
 
   return {
     summary,
@@ -82,12 +50,17 @@ export function SummarySection({
     saveMutation,
     summaryDirty,
     editorKey,
-  } = useEntityProseFields(caseId, entity);
+  } = useEntityProseFields(entity);
 
   function onSave() {
     if (!summaryDirty) return;
     setError(null);
-    saveMutation.mutate({ summary });
+    saveMutation.mutate({
+      caseId,
+      entityId: entity.id,
+      entitySlug: entity.slug,
+      patch: { summary },
+    });
   }
 
   return (
@@ -131,12 +104,17 @@ export function NotesSection({
     saveMutation,
     notesDirty,
     editorKey,
-  } = useEntityProseFields(caseId, entity);
+  } = useEntityProseFields(entity);
 
   function onSave() {
     if (!notesDirty) return;
     setError(null);
-    saveMutation.mutate({ notes });
+    saveMutation.mutate({
+      caseId,
+      entityId: entity.id,
+      entitySlug: entity.slug,
+      patch: { notes },
+    });
   }
 
   return (
