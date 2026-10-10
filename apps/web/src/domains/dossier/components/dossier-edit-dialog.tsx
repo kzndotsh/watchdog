@@ -66,7 +66,9 @@ function DossierEditForm({
   busy,
   error,
   onSubmit,
-}: Pick<Props, "entity" | "busy" | "error" | "onSubmit"> & {
+}: Pick<Props, "entity" | "onSubmit"> & {
+  busy: boolean;
+  error: string | null;
   onClose: () => void;
 }) {
   const form = useForm({
