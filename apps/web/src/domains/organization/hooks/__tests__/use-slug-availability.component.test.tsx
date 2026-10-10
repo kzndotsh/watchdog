@@ -14,6 +14,11 @@ vi.mock("@/auth/client", () => ({
 import { useSlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
 
 const DEBOUNCE_MS = 400;
+const TAKEN_ERROR = {
+  code: "ORGANIZATION_SLUG_ALREADY_TAKEN",
+  message: "Organization slug already taken",
+  status: 400,
+};
 
 function newClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -83,7 +88,10 @@ describe("useSlugAvailability", () => {
   });
 
   it("reports taken when the server refuses the slug", async () => {
-    checkSlug.mockResolvedValue({ data: null, error: { message: "taken" } });
+    checkSlug.mockResolvedValue({
+      data: null,
+      error: TAKEN_ERROR,
+    });
     const { result } = setup("acme");
     await advance(DEBOUNCE_MS);
     expect(result.current).toBe("taken");
@@ -114,7 +122,7 @@ describe("useSlugAvailability", () => {
 
   it("goes back to checking when the slug changes after a result", async () => {
     checkSlug
-      .mockResolvedValueOnce({ data: null, error: { message: "taken" } })
+      .mockResolvedValueOnce({ data: null, error: TAKEN_ERROR })
       .mockResolvedValueOnce({ data: { status: true }, error: null });
     const { result, rerender } = setup("acme");
     await advance(DEBOUNCE_MS);
@@ -136,5 +144,42 @@ describe("useSlugAvailability", () => {
     expect(checkSlug).toHaveBeenCalledTimes(1);
     expect(first.result.current).toBe("available");
     expect(second.result.current).toBe("available");
+  });
+
+  it.each([
+    { status: 500, code: "INTERNAL_SERVER_ERROR" },
+    { status: 429, code: "TOO_MANY_REQUESTS" },
+  ])(
+    "does not mark the slug taken on a $status answer (the server decides at submit)",
+    async (error) => {
+      checkSlug.mockResolvedValue({
+        data: null,
+        error: { ...error, message: "nope" },
+      });
+      const { result } = setup("acme");
+      await advance(DEBOUNCE_MS);
+      expect(checkSlug).toHaveBeenCalledTimes(1);
+      expect(result.current).toBe("idle");
+    }
+  );
+
+  it("waits out the debounce again when the slug returns to the last checked one", async () => {
+    checkSlug.mockResolvedValue({ data: { status: true }, error: null });
+    const { result, rerender } = setup("a");
+    await advance(DEBOUNCE_MS);
+    expect(checkSlug).toHaveBeenCalledTimes(1);
+    expect(result.current).toBe("available");
+
+    rerender({ slug: "b", current: undefined });
+    await advance(100);
+    rerender({ slug: "a", current: undefined });
+    await advance(100);
+
+    expect(result.current).toBe("checking");
+    expect(checkSlug).toHaveBeenCalledTimes(1);
+
+    await advance(DEBOUNCE_MS);
+    expect(checkSlug).toHaveBeenCalledTimes(2);
+    expect(result.current).toBe("available");
   });
 });

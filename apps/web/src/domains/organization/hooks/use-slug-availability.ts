@@ -7,18 +7,22 @@ export type SlugAvailability = "idle" | "checking" | "available" | "taken";
 
 const DEBOUNCE_MS = 400;
 
-/** `value`, but only after it has stopped changing for `delayMs`; `""` until the first delay passes. */
-function useDebouncedValue(value: string, delayMs: number): string {
-  const [debounced, setDebounced] = useState("");
+/**
+ * `true` once `value` has stopped changing for `delayMs`. Every change of `value`,
+ * including a return to an earlier one, starts the wait again.
+ */
+function useSettled(value: string, delayMs: number): boolean {
+  const [state, setState] = useState({ input: "", settled: false });
+  if (state.input !== value) setState({ input: value, settled: false });
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebounced(value);
+      setState({ input: value, settled: true });
     }, delayMs);
     return () => {
       clearTimeout(timer);
     };
   }, [value, delayMs]);
-  return debounced;
+  return state.input === value && state.settled;
 }
 
 /**
@@ -31,11 +35,10 @@ export function useSlugAvailability(
 ): SlugAvailability {
   const trimmed = slug.trim();
   const skip = trimmed === "" || trimmed === current;
-  const debounced = useDebouncedValue(trimmed, DEBOUNCE_MS);
-  const settled = debounced === trimmed;
+  const settled = useSettled(trimmed, DEBOUNCE_MS);
 
   const { data: taken, isError } = useQuery({
-    ...slugTakenQuery(debounced),
+    ...slugTakenQuery(trimmed),
     enabled: !skip && settled,
   });
 
