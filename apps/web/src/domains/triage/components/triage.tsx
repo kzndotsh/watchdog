@@ -186,10 +186,15 @@ function TriageWithCase({
   const [seededStatus, setSeededStatus] = useState(initialStatus);
   if (seededStatus !== initialStatus) {
     setSeededStatus(initialStatus);
-    setFilters((prev) => ({
-      ...prev,
-      statuses: triageStatusesFromSearch(initialStatus),
-    }));
+    // The URL only encodes a single non-default status. When the facet already
+    // encodes to the new URL status, the URL is following the facet (a second status
+    // was ticked, the facet was cleared): keep it.
+    if (triageStatusSearchParam(filters) !== initialStatus) {
+      setFilters((prev) => ({
+        ...prev,
+        statuses: triageStatusesFromSearch(initialStatus),
+      }));
+    }
   }
 
   const handleFiltersChange = useCallback(

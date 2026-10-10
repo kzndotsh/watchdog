@@ -229,6 +229,34 @@ describe("Triage", () => {
       });
     });
 
+    it("keeps a status added on top of the one in the URL when the URL then loses its status", () => {
+      const { switchTo } = renderTriage("rejected");
+      const options = latestWorkspaceOptions();
+      act(() => {
+        options.onFiltersChange({ q: "", statuses: ["rejected", "pending"] });
+      });
+
+      // The URL cannot say "two statuses", so it drops `?status=`.
+      switchTo(undefined);
+
+      expect(committedFacets).toEqual(["rejected,pending"]);
+      expect(latestWorkspaceOptions().filters.statuses).toEqual([
+        "rejected",
+        "pending",
+      ]);
+    });
+
+    it("keeps an emptied facet when the URL loses its status", () => {
+      const { switchTo } = renderTriage("rejected");
+      act(() => {
+        latestWorkspaceOptions().onFiltersChange({ q: "", statuses: [] });
+      });
+
+      switchTo(undefined);
+
+      expect(committedFacets).toEqual([""]);
+    });
+
     it("keeps a multi-status choice the URL cannot express, and mirrors the single case to the URL", () => {
       const { onStatusSearchChange } = renderTriage();
       const options = latestWorkspaceOptions();
