@@ -10,6 +10,7 @@ Start with [`../../../apps/web/AGENTS.md`](../../../apps/web/AGENTS.md), then op
 | [`ui/README.md`](ui/README.md) | Chrome lexicon, delivery rules |
 | [`ui/rules.md`](ui/rules.md) | Each UI rule and what enforces it |
 | [`ui/page-shell.md`](ui/page-shell.md) · [`ui/loading.md`](ui/loading.md) · [`ui/tables.md`](ui/tables.md) · [`ui/forms.md`](ui/forms.md) · [`ui/atoms.md`](ui/atoms.md) | Page chrome, loading doctrine, tables, forms, atoms and keyboard |
+| [`ui/effects.md`](ui/effects.md) | When `useEffect` is allowed: no prop-to-state sync, no fetch in an effect, reset by `key` |
 | [`ui/vendor.md`](ui/vendor.md) · [`ui/auth-ui.md`](ui/auth-ui.md) | Vendored primitives; owned auth screens |
 
 Also: [`product`](../../explanation/product.md), [`ux`](../../explanation/ux.md), [`types`](../platform/types.md), [`caps-lexicon`](../platform/caps-lexicon.md), [`platform hub`](../platform/README.md).
