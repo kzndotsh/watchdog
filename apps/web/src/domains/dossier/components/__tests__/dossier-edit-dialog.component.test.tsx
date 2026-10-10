@@ -74,7 +74,7 @@ describe("DossierEditDialog", () => {
     id: testId(2),
     slug: "beta",
     name: "Beta Entity",
-    kind: "organization",
+    kind: "org",
     summary: "Second subject",
     notes: "Other notes",
   };

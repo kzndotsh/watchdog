@@ -65,7 +65,13 @@ vi.mock("@/shared/ui/split-view", () => ({
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
 const useQueryMock = vi.hoisted(() => vi.fn());
-const useTriageWorkspaceMock = vi.hoisted(() => vi.fn());
+interface WorkspaceOptions {
+  filters: TriageQueueFilters;
+  onFiltersChange: (next: TriageQueueFilters) => void;
+}
+const useTriageWorkspaceMock = vi.hoisted(() =>
+  vi.fn<(caseId: string, options: WorkspaceOptions) => unknown>()
+);
 
 function mockCasesContextLoaded(
   active: CaseRecord | null,
@@ -95,7 +101,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 vi.mock("@/domains/triage/hooks/use-triage-workspace", () => ({
-  useTriageWorkspace: (...args: unknown[]) => useTriageWorkspaceMock(...args),
+  useTriageWorkspace: (caseId: string, options: WorkspaceOptions) =>
+    useTriageWorkspaceMock(caseId, options),
 }));
 
 import { Triage } from "@/domains/triage/components/triage";
@@ -188,16 +195,15 @@ describe("Triage", () => {
       };
     }
 
-    function filtersOfEachRender(): TriageQueueFilters[] {
-      return useTriageWorkspaceMock.mock.calls.map(
-        ([, options]: [string, { filters: TriageQueueFilters }]) =>
-          options.filters
-      );
+    function latestWorkspaceOptions(): WorkspaceOptions {
+      const call = useTriageWorkspaceMock.mock.calls.at(-1);
+      if (!call) throw new Error("the workspace was never asked for");
+      return call[1];
     }
 
     it("seeds the queue from the status in the URL", () => {
       renderTriage("rejected");
-      expect(filtersOfEachRender().at(-1)?.statuses).toEqual(["rejected"]);
+      expect(latestWorkspaceOptions().filters.statuses).toEqual(["rejected"]);
     });
 
     it("follows an external status change on the first render, never showing the old facet", () => {
@@ -210,31 +216,27 @@ describe("Triage", () => {
 
     it("keeps the search text when the status in the URL changes", () => {
       const { switchTo } = renderTriage("pending");
-      const [, options] = useTriageWorkspaceMock.mock.calls.at(-1) as [
-        string,
-        { onFiltersChange: (next: TriageQueueFilters) => void },
-      ];
+      const options = latestWorkspaceOptions();
       act(() => {
         options.onFiltersChange({ q: "needle", statuses: ["pending"] });
       });
 
       switchTo("rejected");
 
-      const last = filtersOfEachRender().at(-1);
-      expect(last).toEqual({ q: "needle", statuses: ["rejected"] });
+      expect(latestWorkspaceOptions().filters).toEqual({
+        q: "needle",
+        statuses: ["rejected"],
+      });
     });
 
     it("keeps a multi-status choice the URL cannot express, and mirrors the single case to the URL", () => {
       const { onStatusSearchChange } = renderTriage();
-      const [, options] = useTriageWorkspaceMock.mock.calls.at(-1) as [
-        string,
-        { onFiltersChange: (next: TriageQueueFilters) => void },
-      ];
+      const options = latestWorkspaceOptions();
 
       act(() => {
         options.onFiltersChange({ q: "", statuses: ["pending", "rejected"] });
       });
-      expect(filtersOfEachRender().at(-1)?.statuses).toEqual([
+      expect(latestWorkspaceOptions().filters.statuses).toEqual([
         "pending",
         "rejected",
       ]);

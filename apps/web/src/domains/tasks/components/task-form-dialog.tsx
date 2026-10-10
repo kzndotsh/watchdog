@@ -41,16 +41,16 @@ type EditProps = BaseProps & {
 
 type Props = CreateProps | EditProps;
 
-export function TaskFormDialog(props: Props) {
-  const {
-    open,
-    onOpenChange,
-    entities,
-    busy = false,
-    error = null,
-    onSubmit,
-    mode,
-  } = props;
+/** The dialog's props minus its shell: `busy` and `error` arrive resolved. */
+type FormBodyProps<P = Props> = P extends unknown
+  ? Omit<P, "open" | "busy" | "error"> & {
+      busy: boolean;
+      error: string | null;
+    }
+  : never;
+
+function TaskFormBody(props: FormBodyProps) {
+  const { onOpenChange, entities, busy, error, onSubmit, mode } = props;
 
   const defaultStatus =
     mode === "create" ? (props.defaultStatus ?? "backlog") : "backlog";
@@ -59,7 +59,6 @@ export function TaskFormDialog(props: Props) {
   const onDelete = mode === "edit" ? props.onDelete : undefined;
 
   const { form, handleSubmit } = useTaskFormDialog({
-    open,
     mode,
     task,
     defaultStatus,
@@ -68,27 +67,49 @@ export function TaskFormDialog(props: Props) {
   });
 
   return (
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <DialogHeader>
+        <DialogTitle>{mode === "edit" ? "Edit task" : "New task"}</DialogTitle>
+      </DialogHeader>
+
+      <TaskFormFields form={form} entities={entities} busy={busy} />
+
+      {error ? <FieldError>{error}</FieldError> : null}
+
+      <TaskFormDialogFooter
+        form={form}
+        mode={mode}
+        busy={busy}
+        onOpenChange={onOpenChange}
+        onDelete={onDelete}
+      />
+    </form>
+  );
+}
+
+export function TaskFormDialog({
+  open,
+  onOpenChange,
+  busy = false,
+  error = null,
+  ...rest
+}: Props) {
+  // The form remounts for another task or another create context, so its values
+  // always start from what is on screen; nothing resets it afterwards.
+  const formKey =
+    rest.mode === "edit"
+      ? `edit:${rest.task?.id ?? ""}`
+      : `create:${rest.defaultStatus ?? "backlog"}:${rest.defaultEntityId ?? ""}`;
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>
-              {mode === "edit" ? "Edit task" : "New task"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <TaskFormFields form={form} entities={entities} busy={busy} />
-
-          {error ? <FieldError>{error}</FieldError> : null}
-
-          <TaskFormDialogFooter
-            form={form}
-            mode={mode}
-            busy={busy}
-            onOpenChange={onOpenChange}
-            onDelete={onDelete}
-          />
-        </form>
+        <TaskFormBody
+          key={formKey}
+          onOpenChange={onOpenChange}
+          busy={busy}
+          error={error}
+          {...rest}
+        />
       </DialogContent>
     </Dialog>
   );
