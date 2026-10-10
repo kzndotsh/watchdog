@@ -141,8 +141,8 @@ export function DashboardTriageSection({
           hasCase ? (
             <Button
               variant="link"
-              size="xs"
-              className="text-muted-foreground h-auto p-0 text-xs"
+              size="inline"
+              className="text-muted-foreground text-xs"
               nativeButton={false}
               render={
                 <Link
@@ -184,8 +184,8 @@ export function DashboardDueTasksSection({
           hasCase ? (
             <Button
               variant="link"
-              size="xs"
-              className="text-muted-foreground h-auto p-0 text-xs"
+              size="inline"
+              className="text-muted-foreground text-xs"
               nativeButton={false}
               render={<Link to="/tasks" />}
             >

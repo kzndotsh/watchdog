@@ -158,14 +158,12 @@ export function IdentifierEvidenceCell({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size={hasLinks ? "icon-sm" : "sm"}
               aria-label={hasLinks ? "Edit evidence links" : "Link evidence"}
               title={hasLinks ? "Edit evidence links" : "Link evidence"}
               className={cn(
-                "shrink-0",
-                hasLinks
-                  ? "text-muted-foreground size-6 px-0"
-                  : "text-muted-foreground h-6 gap-1 px-1 text-xs font-normal"
+                "text-muted-foreground shrink-0",
+                !hasLinks && "gap-1 px-1 text-xs font-normal"
               )}
             />
           }
@@ -203,7 +201,7 @@ export function IdentifierEvidenceCell({
               type="button"
               size="sm"
               variant="ghost"
-              className="h-6 text-xs"
+              className="text-xs"
               onClick={() => {
                 setOpen(false);
               }}
@@ -213,7 +211,7 @@ export function IdentifierEvidenceCell({
             <Button
               type="button"
               size="sm"
-              className="h-6 text-xs"
+              className="text-xs"
               loading={saving}
               disabled={confirmedBlocked}
               onClick={() => {

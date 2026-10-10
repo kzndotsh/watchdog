@@ -387,7 +387,6 @@ export function TriageDecideFooter({
               <>
                 <Button
                   type="button"
-                  size="sm"
                   data-hotkey="a"
                   aria-keyshortcuts="a"
                   loading={acceptBusy}
@@ -395,7 +394,6 @@ export function TriageDecideFooter({
                   onClick={() => {
                     void acceptForm.handleSubmit();
                   }}
-                  className="h-7"
                   title={
                     gate.confirmedWithoutBundle
                       ? CONFIRMED_REQUIRES_EVIDENCE
@@ -412,7 +410,6 @@ export function TriageDecideFooter({
                 </Button>
                 <Button
                   type="button"
-                  size="sm"
                   variant="outline"
                   data-hotkey="r"
                   aria-keyshortcuts="r"
@@ -420,7 +417,6 @@ export function TriageDecideFooter({
                   onClick={() => {
                     onRejectingChange(true);
                   }}
-                  className="h-7"
                 >
                   <XIcon className="size-3" data-icon="inline-start" />
                   Reject

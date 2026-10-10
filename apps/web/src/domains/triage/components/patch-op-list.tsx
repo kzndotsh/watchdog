@@ -158,8 +158,8 @@ export function PatchOpList({
             <Button
               nativeButton={false}
               variant="link"
-              size="sm"
-              className="h-auto px-0 text-xs"
+              size="inline"
+              className="text-xs"
               render={<Link to="/collect" search={{ id: jobId }} />}
             >
               Open in Collect

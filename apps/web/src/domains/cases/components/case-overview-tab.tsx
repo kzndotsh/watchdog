@@ -247,7 +247,7 @@ export function CaseOverviewTab({
                     <TimelineSpine className="ml-2 pl-4">
                       {group.items.map((item) => (
                         <div key={item.id} className="relative pb-3 last:pb-0">
-                          <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
+                          <TimelineDot className="bg-foreground" />
                           <div className="flex items-baseline gap-4">
                             <Link
                               to={item.href.to}

@@ -11,6 +11,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | Web never imports `@watchdog/db` (auth's db access lives in `@watchdog/auth`) | [`domains.md`](../domains.md) | `oxlint` `no-restricted-imports` |
 | No `RoutePending` and no raw `Skeleton` in `domains/` or `routes/` (one pending surface per region) | [`loading.md`](loading.md) | `oxlint` `no-restricted-imports` |
 | Client code must not import the `@watchdog/policy` barrel or `@watchdog/core` domain subpaths at runtime (use `@watchdog/policy/patch-needs-confidence`, `@watchdog/core/job-display`) | [`domains.md`](../domains.md) | `guidance` (only type imports of `@watchdog/core` subpaths exist today) |
+| Button height comes from `size` (`xs` h-5, `sm` h-6, default h-7, `lg` h-8, `icon*`, `inline`); no `h-*` / `min-h-*` / `max-h-*` / `size-*` on a `<Button>` | [`atoms.md`](atoms.md#variants-not-overrides) | `oxlint` `watchdog/no-button-height-class` (all of `apps/web/src` except `shared/ui/primitives/` and tests; no baseline) |
 | Opaque ids render via `IdChip` / `formatOpaqueId`, never `.slice(0, N)` | [`atoms.md`](atoms.md) | `oxlint` `watchdog/no-opaque-id-slice` (`domains/` only; `id`, `x.id`, `sha256`, `jobId`, `proposalId`, `entityId` with `.slice(0, N)`) |
 | No fictional vocab (`probable`, `dormant`, `merged`); badges take schema unions | [`atoms.md`](atoms.md) | `typecheck` |
 | Status is never color-only (one glyph shape per status via `STATUS_GLYPH`) | [`DESIGN.md`](../../../../DESIGN.md#colors) | test `shared/ui/__tests__/status.component.test.tsx` |
@@ -22,6 +23,7 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | Base UI `Button` + `render={<Link/>}` sets `nativeButton={false}`; no `<button>` in `<button>` | [`atoms.md`](atoms.md) | `guidance` (breaks as a hydration error) |
 | `DataTable`: every column sets `size`; tables use `pending`, never `PendingRegion` | [`tables.md`](tables.md) | `guidance` |
 | `shared/ui` never fetches, mutates, or routes | [`atoms.md`](atoms.md) | `guidance` |
+| Uppercase tracked label is `Eyebrow` (`EYEBROW_CLASS` for a `className`-only slot); timeline marker is `TimelineDot` inside a `TimelineSpine` with `pl-4`; a repeated arbitrary width is a named width token | [`atoms.md`](atoms.md#variants-not-overrides) | `guidance` (the token value is synced by `check:design-tokens`) |
 
 ## Consistency
 

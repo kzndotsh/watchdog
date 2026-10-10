@@ -87,12 +87,7 @@ function JobPlaybookSpine({
             const isCurrent = step.playbookStep === currentStep;
             return (
               <div key={step.id} className={cn("relative", !isLast && "pb-3")}>
-                <TimelineDot
-                  className={cn(
-                    "top-1.5 left-[-1.3rem] size-2",
-                    STATUS_DOT[step.status]
-                  )}
-                />
+                <TimelineDot className={STATUS_DOT[step.status]} />
                 <p className="text-xs">
                   {i + 1} · {capabilityLabel(step.capabilityId)}{" "}
                   <span className="text-muted-foreground font-normal">
@@ -323,10 +318,8 @@ function JobDetailFooterBar({
         <Button
           type="button"
           variant="outline"
-          size="sm"
           loading={busy}
           onClick={onCancel}
-          className="h-7"
         >
           Cancel
         </Button>
@@ -335,10 +328,8 @@ function JobDetailFooterBar({
         <Button
           type="button"
           variant="outline"
-          size="sm"
           loading={cancelPlaybookBusy}
           onClick={onCancelPlaybook}
-          className="h-7"
         >
           Cancel run
         </Button>
@@ -346,8 +337,6 @@ function JobDetailFooterBar({
       {view.proposalId === null ? null : (
         <Button
           nativeButton={false}
-          size="sm"
-          className="h-7"
           render={
             <Link to="/triage" search={{ proposalId: view.proposalId }} />
           }

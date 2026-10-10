@@ -62,11 +62,8 @@ export function NotesIconCell({
       <Button
         type="button"
         variant="ghost"
-        size="sm"
-        className={cn(
-          "size-6 p-0",
-          hasNotes ? "text-foreground" : "text-muted-foreground"
-        )}
+        size="icon-sm"
+        className={hasNotes ? "text-foreground" : "text-muted-foreground"}
         aria-label={label}
         title={label}
         onClick={openSheet}
