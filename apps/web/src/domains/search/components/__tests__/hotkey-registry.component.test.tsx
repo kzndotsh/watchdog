@@ -110,10 +110,10 @@ describe("one shortcut registry", () => {
     const paletteIds = HOTKEYS.filter((e) => "palette" in e && e.palette).map(
       (e) => e.id
     );
-    expect(screen.getByTestId("palette-ids")).toHaveTextContent(
+    expect(screen.getByTestId("palette-ids").textContent).toBe(
       paletteIds.join(",")
     );
-    expect(screen.getByTestId("chrome-pairs")).toHaveTextContent(
+    expect(screen.getByTestId("chrome-pairs").textContent).toBe(
       "command-palette=command-palette,toggle-sidebar=toggle-sidebar,shortcuts=shortcuts"
     );
   });

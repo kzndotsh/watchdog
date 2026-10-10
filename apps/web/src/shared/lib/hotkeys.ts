@@ -107,6 +107,12 @@ export type HotkeyId = HotkeyEntry["id"];
 
 export type GlobalHotkeyId = Extract<HotkeyEntry, { owner: "global" }>["id"];
 
+/** Ids whose registry chord is a bare key (no `Mod+`). */
+export type BareHotkeyId = Exclude<
+  HotkeyEntry,
+  { chord: `Mod+${string}` }
+>["id"];
+
 /** Ids a control can claim with `hotkeyAttrs` (bare single keys only). */
 export type DataHotkeyId = Extract<HotkeyEntry, { owner: "data-hotkey" }>["id"];
 
@@ -135,7 +141,7 @@ export function formatChord(chord: string, modLabel: string): string {
  * Exact `KeyboardEvent.key` of a bare single-key entry (`J` -> `j`). Unlike
  * `matchesChord` it does not fold case, so Shift+J and caps-lock J stay inert.
  */
-export function bareKey(id: HotkeyId): string {
+export function bareKey(id: BareHotkeyId): string {
   return chordMatcher(hotkeyDef(id).chord).key.toLowerCase();
 }
 

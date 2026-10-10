@@ -1,6 +1,7 @@
 import { describe, it, expect, expectTypeOf, vi } from "vitest";
 
 import {
+  bareKey,
   chordMatcher,
   createHotkeyListener,
   formatChord,
@@ -114,6 +115,17 @@ describe("registry helpers", () => {
     expect(
       HOTKEYS.filter((e) => e.owner === "data-hotkey").map((e) => e.id)
     ).toEqual(["triage-accept", "triage-reject"]);
+  });
+
+  it("restricts bareKey to bare-key ids (Mod chords excluded)", () => {
+    expectTypeOf<Parameters<typeof bareKey>[0]>().toEqualTypeOf<
+      | "shortcuts"
+      | "queue-next"
+      | "queue-previous"
+      | "triage-accept"
+      | "triage-reject"
+    >();
+    expect(bareKey("queue-next")).toBe("j");
   });
 
   it("binds one entry per global registry id", () => {
