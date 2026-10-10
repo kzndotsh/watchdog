@@ -33,8 +33,8 @@ export function DataTableViewOptions<TData extends RowData>({
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="h-8 gap-1.5"
+            size="lg"
+            className="gap-1.5"
             aria-label={`Fields ${visibleCount} of ${totalCount}`}
           />
         }
@@ -58,7 +58,6 @@ export function DataTableViewOptions<TData extends RowData>({
                 onClick={() => {
                   table.resetColumnVisibility();
                 }}
-                className="h-auto px-1.5 py-0.5 text-xs"
               >
                 Show all
               </Button>

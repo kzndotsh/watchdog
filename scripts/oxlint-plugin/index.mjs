@@ -20,6 +20,7 @@ import { effectTryRequiresCatch } from "./rules/effect-try-requires-catch.mjs";
 import { mutationOnlyInHooks } from "./rules/mutation-only-in-hooks.mjs";
 import { noBannedSurfaceName } from "./rules/no-banned-surface-name.mjs";
 import { noBrandCast } from "./rules/no-brand-cast.mjs";
+import { noButtonHeightClass } from "./rules/no-button-height-class.mjs";
 import { noCoreDbDynamicImport } from "./rules/no-core-db-dynamic-import.mjs";
 import { noCoreS3DynamicImport } from "./rules/no-core-s3-dynamic-import.mjs";
 import { noCrossDomainRelativeImports } from "./rules/no-cross-domain-relative-imports.mjs";
@@ -55,6 +56,7 @@ export default {
     "effect-try-requires-catch": effectTryRequiresCatch,
     "no-effect-run-outside-edge": noEffectRunOutsideEdge,
     "no-decorative-class": noDecorativeClass,
+    "no-button-height-class": noButtonHeightClass,
     "no-banned-surface-name": noBannedSurfaceName,
     "no-opaque-id-slice": noOpaqueIdSlice,
     "mutation-only-in-hooks": mutationOnlyInHooks,

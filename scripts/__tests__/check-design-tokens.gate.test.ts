@@ -30,12 +30,23 @@ const LIGHT: Record<string, string> = {
   "light-success": "--success",
   "light-destructive": "--destructive",
 };
+// DESIGN.md `widths` token -> theme variable (value is the same on both sides).
+const WIDTHS: Record<string, string> = {
+  "filter-menu": "--container-filter-menu",
+};
+const WIDTH = "16rem";
 const DARK_HEX = "#111111";
 const LIGHT_HEX = "#eeeeee";
 
 function cssFor(map: Record<string, string>, hex: string) {
   const vars = [...new Set(Object.values(map))];
   return `:root {\n${vars.map((v) => `  ${v}: ${hex};`).join("\n")}\n}\n`;
+}
+
+function themeCss(width = WIDTH) {
+  return `@theme inline {\n${Object.values(WIDTHS)
+    .map((v) => `  ${v}: ${width};`)
+    .join("\n")}\n}\n`;
 }
 
 function designMd(overrides: Record<string, string> = {}, omit: string[] = []) {
@@ -45,7 +56,10 @@ function designMd(overrides: Record<string, string> = {}, omit: string[] = []) {
   ]
     .filter(([k]) => !omit.includes(k))
     .map(([k, v]) => `  ${k}: "${overrides[k] ?? v}"`);
-  return `---\ncolors:\n${entries.join("\n")}\n---\n\n# Design\n`;
+  const widths = Object.keys(WIDTHS)
+    .filter((k) => !omit.includes(k))
+    .map((k) => `  ${k}: "${overrides[k] ?? WIDTH}"`);
+  return `---\ncolors:\n${entries.join("\n")}\nwidths:\n${widths.join("\n")}\n---\n\n# Design\n`;
 }
 
 function repoWith(design: string) {
@@ -53,6 +67,7 @@ function repoWith(design: string) {
   repo.write("DESIGN.md", design);
   repo.write("apps/web/src/styles/wd-tokens.css", cssFor(LIGHT, LIGHT_HEX));
   repo.write("apps/web/src/styles/wd-dark.css", cssFor(DARK, DARK_HEX));
+  repo.write("apps/web/src/styles/wd-theme.css", themeCss());
   return repo;
 }
 
@@ -77,6 +92,21 @@ describe("check-design-tokens gate", () => {
 
     expect(res.code).toBe(1);
     expect(res.output).toContain("DESIGN.md is missing colors.light-signal");
+  });
+
+  it("fails naming the token when a DESIGN.md width drifted from the theme CSS", () => {
+    const res = repoWith(designMd({ "filter-menu": "20rem" })).run(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("widths.filter-menu");
+    expect(res.output).toContain("20rem");
+  });
+
+  it("fails when DESIGN.md is missing a width", () => {
+    const res = repoWith(designMd({}, ["filter-menu"])).run(GATE);
+
+    expect(res.code).toBe(1);
+    expect(res.output).toContain("DESIGN.md is missing widths.filter-menu");
   });
 
   it("follows var() references in the CSS", () => {

@@ -42,8 +42,8 @@ export function QueueFilterBar({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="h-8 px-2"
+          size="lg"
+          className="px-2"
           onClick={onReset}
         >
           Reset

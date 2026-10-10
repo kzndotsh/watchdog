@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { Eyebrow } from "@/shared/ui/eyebrow";
 import {
   getFloatingEdgeParams,
   graphNodeRect,
@@ -101,12 +102,13 @@ export function GraphEdgePath({
           className="pointer-events-none overflow-visible"
         >
           <div className="flex h-full w-full items-center justify-center">
-            <div
-              className="bg-background text-muted-foreground max-w-[9rem] truncate rounded px-1.5 py-0.5 text-xs tracking-wider whitespace-nowrap uppercase"
+            <Eyebrow
+              as="div"
+              className="bg-background max-w-[9rem] truncate rounded px-1.5 py-0.5 whitespace-nowrap"
               title={label}
             >
               {label}
-            </div>
+            </Eyebrow>
           </div>
         </foreignObject>
       ) : null}

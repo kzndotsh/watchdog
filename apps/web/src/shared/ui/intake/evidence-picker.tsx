@@ -3,6 +3,7 @@ import { useId, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { CHIP_SIZE_CLASS, Chip } from "@/shared/ui/chip";
+import { Eyebrow } from "@/shared/ui/eyebrow";
 import {
   evidenceLabel,
   evidenceMatchesPickerFilter,
@@ -203,9 +204,7 @@ function EvidenceChecklist({
                   <span className="min-w-0 flex-1 truncate" title={label}>
                     {label}
                   </span>
-                  <span className="text-muted-foreground shrink-0 text-xs tracking-wider uppercase">
-                    {kindLabel(row.kind)}
-                  </span>
+                  <Eyebrow className="shrink-0">{kindLabel(row.kind)}</Eyebrow>
                 </label>
               </li>
             );

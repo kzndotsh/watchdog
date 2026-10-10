@@ -114,7 +114,6 @@ export function TaskBoardColumn({
             type="button"
             size="icon-xs"
             variant="ghost"
-            className="size-5"
             aria-label={`Add task to ${taskStatusLabel(column)}`}
             disabled={quickCreateBusy}
             onClick={openComposer}

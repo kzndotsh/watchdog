@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Fails when a color in DESIGN.md front matter differs from the CSS it summarizes.
- * CSS (apps/web/src/styles/wd-tokens.css = light + ramps, wd-dark.css = dark) is the
- * source of truth; DESIGN.md is a hand-kept snapshot for agents.
+ * Fails when a color or width in DESIGN.md front matter differs from the CSS it
+ * summarizes. CSS (apps/web/src/styles/wd-tokens.css = light + ramps, wd-dark.css = dark,
+ * wd-theme.css = named widths) is the source of truth; DESIGN.md is a hand-kept snapshot
+ * for agents.
  */
 import { readFileSync } from "node:fs";
 
@@ -31,6 +32,14 @@ const LIGHT = {
   "light-signal": "--signal",
   "light-success": "--success",
   "light-destructive": "--destructive",
+};
+
+/**
+ * DESIGN.md `widths` token -> CSS theme variable (`--container-*` backs `w-<name>` and
+ * `max-w-<name>` in Tailwind v4).
+ */
+const WIDTHS = {
+  "filter-menu": "--container-filter-menu",
 };
 
 /** @param {string} value */
@@ -63,6 +72,7 @@ function resolve(name, scope, base) {
 
 const tokens = readFileSync(`${STYLES}/wd-tokens.css`, "utf-8");
 const darkCss = readFileSync(`${STYLES}/wd-dark.css`, "utf-8");
+const theme = declarations(readFileSync(`${STYLES}/wd-theme.css`, "utf-8"));
 const light = declarations(tokens);
 const dark = declarations(darkCss);
 
@@ -79,23 +89,25 @@ const problems = [];
 /**
  * @param {Record<string, string>} map
  * @param {Map<string, string>} scope
+ * @param {string} group DESIGN.md front-matter section the tokens live in
  */
-const check = (map, scope) => {
+const check = (map, scope, group) => {
   for (const [token, cssVar] of Object.entries(map)) {
     const want = resolve(cssVar, scope, light);
     const have = doc.get(token);
     if (have === undefined)
-      problems.push(`DESIGN.md is missing colors.${token}`);
+      problems.push(`DESIGN.md is missing ${group}.${token}`);
     else if (want === undefined)
-      problems.push(`${cssVar} not found for colors.${token}`);
+      problems.push(`${cssVar} not found for ${group}.${token}`);
     else if (have !== want)
       problems.push(
-        `colors.${token}: DESIGN.md has ${have}, CSS ${cssVar} is ${want}`
+        `${group}.${token}: DESIGN.md has ${have}, CSS ${cssVar} is ${want}`
       );
   }
 };
-check(DARK, dark);
-check(LIGHT, light);
+check(DARK, dark, "colors");
+check(LIGHT, light, "colors");
+check(WIDTHS, theme, "widths");
 
 if (problems.length > 0) {
   console.error(

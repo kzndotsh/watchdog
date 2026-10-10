@@ -64,22 +64,22 @@ export function DataTableComposerActions({
       <div className="flex w-full items-center justify-center gap-1">
         <Button
           type="button"
-          size="sm"
+          size="icon-sm"
           variant="ghost"
-          className="h-6 w-6 p-0"
           disabled={busy || !canSubmit}
           onClick={onSubmit}
+          aria-label="Save"
           title="Save (Enter)"
         >
           <CheckIcon className="size-3.5" />
         </Button>
         <Button
           type="button"
-          size="sm"
+          size="icon-sm"
           variant="ghost"
-          className="h-6 w-6 p-0"
           disabled={busy}
           onClick={onCancel}
+          aria-label="Cancel"
           title="Cancel (Esc)"
         >
           <XIcon className="size-3.5" />

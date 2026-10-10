@@ -195,7 +195,7 @@ function ComposerEvidenceField({
                     <Button
                       type="button"
                       variant="ghost"
-                      size="sm"
+                      size={selected.length > 0 ? "icon-sm" : "sm"}
                       aria-label={
                         selected.length > 0
                           ? "Edit evidence links"
@@ -208,10 +208,9 @@ function ComposerEvidenceField({
                       }
                       disabled={form.state.isSubmitting}
                       className={cn(
-                        "shrink-0",
-                        selected.length > 0
-                          ? "text-muted-foreground size-6 px-0"
-                          : "text-muted-foreground h-6 gap-1 px-1 text-xs font-normal"
+                        "text-muted-foreground shrink-0",
+                        selected.length === 0 &&
+                          "gap-1 px-1 text-xs font-normal"
                       )}
                     />
                   }

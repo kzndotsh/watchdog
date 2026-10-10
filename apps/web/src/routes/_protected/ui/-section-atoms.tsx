@@ -1,5 +1,9 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 
+import {
+  CONTROL_ATOMS,
+  type AtomEntry,
+} from "@/routes/_protected/ui/-atoms-controls";
 import { GuideSection, Specimen } from "@/routes/_protected/ui/-guide-chrome";
 import { DropdownActionItems } from "@/shared/ui/action-list";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
@@ -53,13 +57,8 @@ const SAMPLE_SHA =
   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 const SAMPLE_AT = "2026-09-05T12:00:00.000Z";
 
-interface AtomEntry {
-  name: string;
-  blurb: string;
-  render: () => ReactNode;
-}
-
 const ATOM_CATALOG: AtomEntry[] = [
+  ...CONTROL_ATOMS,
   {
     name: "IdChip",
     blurb: "Opaque ids/hashes — never .slice(0,N). Copyable = whole chip.",
@@ -379,13 +378,25 @@ const ATOM_CATALOG: AtomEntry[] = [
   },
   {
     name: "TimelineSpine",
-    blurb: "Vertical spine for events/questions.",
+    blurb:
+      "Vertical spine (ml-2 pl-4) + TimelineDot: one offset, sm and md dots centre on the line.",
     render: () => (
-      <TimelineSpine className="ml-2 min-h-10 pl-4">
-        <TimelineDot className="bg-foreground top-1.5 -left-[1.3rem] size-2" />
-        <span className="text-muted-foreground text-sm leading-normal">
-          Milestone
-        </span>
+      <TimelineSpine className="ml-2 pl-4">
+        <div className="relative pb-3">
+          <TimelineDot className="bg-foreground" />
+          <span className="text-muted-foreground text-sm leading-normal">
+            Milestone (sm)
+          </span>
+        </div>
+        <div className="relative">
+          <TimelineDot
+            size="md"
+            className="bg-background border-muted-foreground/55 border-2"
+          />
+          <span className="text-muted-foreground text-sm leading-normal">
+            Open question (md)
+          </span>
+        </div>
       </TimelineSpine>
     ),
   },
