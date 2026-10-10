@@ -29,10 +29,13 @@ Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dens
 ## Keyboard
 
 - `QueueShell` owns Queue keyboard flow (`shared/lib/queue-keyboard.ts`): `j` / `k` anywhere outside editable fields, arrow keys while focus is in the Queue. It clicks the next `[data-slot=queue-row]`, so each Queue keeps its own `onSelect` and URL wiring. Opt out with `keyboard={false}`.
-- Single-key actions are declarative: `data-hotkey="<key>"` + `aria-keyshortcuts` on the control and a `Kbd` hint inside it. `useDataHotkeys` (mounted in `SearchChrome`) clicks the first live match, so disabled controls stay gated. Add every shortcut to `HOTKEYS` so the Shortcuts dialog lists it.
+- Single-key actions are declarative: `data-hotkey="<key>"` + `aria-keyshortcuts` on the control and a `Kbd` hint inside it. `useDataHotkeys` (mounted in `SearchChrome`) clicks the first live match, so disabled controls stay gated. Spread `hotkeyAttrs(id)` (`shared/lib/hotkeys.ts`) for the attributes and read the `Kbd` text from `hotkeyDef(id).chord`; never type the key twice.
 - Render Mod-chord hints through `useModKeyLabel` (`shared/hooks`), not `modKeyLabel()` in render: server and first client render say "Ctrl" and the platform glyph lands after mount, so hydration never mismatches.
 - A surface registers page commands with `usePaletteCommands(actions)` (`shared/lib/palette-commands.ts`); Mod+K lists them under **This Page**. Reuse the AppAction the button or menu runs.
-- `SearchChrome` binds Mod+K and `?` only. Mod+B belongs to the vendored `SidebarProvider` ([`vendor.md`](vendor.md)); don't bind it again (two listeners toggle twice and cancel out).
+- `HOTKEYS` (`shared/lib/hotkeys.ts`) is the only definition of a shortcut: id, label, chord, description, and an `owner` saying who attaches the listener (`global`, `sidebar-provider`, `queue-keyboard`, `data-hotkey`). An `AppAction` names its chord with `hotkey: <id>` (never a chord string); `SearchChrome` builds its bindings with `hotkeyBindings` (the `global` owners, Mod+K and `?`), the palette lists the entries flagged `palette`, and the Shortcuts dialog renders every entry. The registry centralizes shortcut metadata only: a new entry still needs its owner-specific implementation (a runner in `SearchChrome`'s `hotkeyBindings` call for `global`, `hotkeyAttrs(id)` on a control for `data-hotkey`, the queue listener for `queue-keyboard`).
+- The composer's Mod+Enter save (`questions-section.tsx`) is a component-local shortcut outside the registry on purpose: it is not bound globally and is not listed in the Shortcuts dialog, and a registry entry would add it to that list. Its label still uses `useModKeyLabel`.
+- Mod+B is `sidebar-provider`: the vendored `SidebarProvider` binds it ([`vendor.md`](vendor.md)), so `hotkeyBindings` skips it and the menu/palette action only runs `toggleSidebar`. Don't bind it again (two listeners toggle twice and cancel out).
+- Mod-key text: `useModKeyLabel` / `formatChord(chord, label)`; never type `Ctrl` or the Apple glyph. The search minimum is `SEARCH_MIN_QUERY_LENGTH` (`@watchdog/schemas`), also in copy.
 
 ## Variants, not overrides
 

@@ -27,6 +27,11 @@ describe("queueStepForKey", () => {
     expect(queueStepForKey({ ...bare, key: "ArrowUp" }, true)).toBe(-1);
   });
 
+  it("matches j/k exactly: Shift+J and caps-lock J do not move the queue", () => {
+    expect(queueStepForKey({ ...bare, key: "J" }, true)).toBeNull();
+    expect(queueStepForKey({ ...bare, key: "K" }, true)).toBeNull();
+  });
+
   it("ignores modified keys and editable targets", () => {
     expect(
       queueStepForKey({ ...bare, key: "j", metaKey: true }, true)

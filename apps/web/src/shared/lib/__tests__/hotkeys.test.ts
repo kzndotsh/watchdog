@@ -1,7 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, expectTypeOf, vi } from "vitest";
 
 import {
+  bareKey,
+  chordMatcher,
   createHotkeyListener,
+  formatChord,
+  HOTKEYS,
+  hotkeyAttrs,
+  hotkeyBindings,
   isEditableTarget,
   matchesChord,
   type HotkeyBinding,
@@ -84,5 +90,49 @@ describe("createHotkeyListener", () => {
     listener(keyEvent("?", { target: input }));
     listener(keyEvent("k", { metaKey: true, target: input }));
     expect(runs).toEqual(["palette"]);
+  });
+});
+
+describe("registry helpers", () => {
+  it("parses and formats chords", () => {
+    expect(chordMatcher("Mod+K")).toEqual({ key: "K", mod: true });
+    expect(chordMatcher("?")).toEqual({ key: "?" });
+    expect(formatChord("Mod+K", "Ctrl")).toBe("Ctrl K");
+    expect(formatChord("?", "Ctrl")).toBe("?");
+  });
+
+  it("derives data-hotkey attributes from the registry key", () => {
+    expect(hotkeyAttrs("triage-accept")).toEqual({
+      "data-hotkey": "a",
+      "aria-keyshortcuts": "a",
+    });
+  });
+
+  it("restricts hotkeyAttrs to data-hotkey ids (no modifier-dropping)", () => {
+    expectTypeOf<Parameters<typeof hotkeyAttrs>[0]>().toEqualTypeOf<
+      "triage-accept" | "triage-reject"
+    >();
+    expect(
+      HOTKEYS.filter((e) => e.owner === "data-hotkey").map((e) => e.id)
+    ).toEqual(["triage-accept", "triage-reject"]);
+  });
+
+  it("restricts bareKey to bare-key ids (Mod chords excluded)", () => {
+    expectTypeOf<Parameters<typeof bareKey>[0]>().toEqualTypeOf<
+      | "shortcuts"
+      | "queue-next"
+      | "queue-previous"
+      | "triage-accept"
+      | "triage-reject"
+    >();
+    expect(bareKey("queue-next")).toBe("j");
+  });
+
+  it("binds one entry per global registry id", () => {
+    const run = vi.fn();
+    const bindings = hotkeyBindings({ "command-palette": run, shortcuts: run });
+    expect(bindings.map((b) => b.id)).toEqual(
+      HOTKEYS.filter((e) => e.owner === "global").map((e) => e.id)
+    );
   });
 });

@@ -14,31 +14,68 @@ export interface HotkeyBinding extends HotkeyChord {
   run: () => void;
 }
 
-/** Static catalog for the Shortcuts dialog (not runtime bindings). */
+/**
+ * Who attaches the runtime listener for a registry entry:
+ * - `global`: `SearchChrome` via `hotkeyBindings` / `useGlobalHotkeys`.
+ * - `sidebar-provider`: the vendored `SidebarProvider` (unpatched); never bind it again.
+ * - `queue-keyboard`: `useQueueKeyboard` (`shared/lib/queue-keyboard.ts`).
+ * - `data-hotkey`: a control carrying `hotkeyAttrs(id)`, clicked by `useDataHotkeys`.
+ */
+export type HotkeyOwner =
+  | "global"
+  | "sidebar-provider"
+  | "queue-keyboard"
+  | "data-hotkey";
+
+export interface HotkeyDef {
+  id: string;
+  label: string;
+  /** Display and match source: `Mod+K`, `?`, `J`. */
+  chord: string;
+  description: string;
+  owner: HotkeyOwner;
+  /** Listed as a Command in the Mod+K palette. */
+  palette?: boolean;
+  /** Fire even when focus is in an editable field. */
+  allowInEditable?: boolean;
+}
+
+/**
+ * The only definition of a keyboard shortcut. The Shortcuts dialog, palette
+ * and menu chords (`AppAction.hotkey`), `hotkeyBindings`, `hotkeyAttrs` and
+ * the queue keys all read from here.
+ */
 export const HOTKEYS = [
   {
     id: "command-palette",
     label: "Command palette",
     chord: "Mod+K",
     description: "Search the Active Case or jump to a page",
+    owner: "global",
+    allowInEditable: true,
   },
   {
     id: "toggle-sidebar",
     label: "Toggle sidebar",
     chord: "Mod+B",
     description: "Collapse or expand the sidebar",
+    owner: "sidebar-provider",
+    palette: true,
   },
   {
     id: "shortcuts",
     label: "Shortcuts",
     chord: "?",
     description: "Open this shortcuts list",
+    owner: "global",
+    palette: true,
   },
   {
     id: "queue-next",
     label: "Next row",
     chord: "J",
     description: "Select the next Queue row (or ↓ while the Queue has focus)",
+    owner: "queue-keyboard",
   },
   {
     id: "queue-previous",
@@ -46,20 +83,94 @@ export const HOTKEYS = [
     chord: "K",
     description:
       "Select the previous Queue row (or ↑ while the Queue has focus)",
+    owner: "queue-keyboard",
   },
   {
     id: "triage-accept",
     label: "Accept",
     chord: "A",
     description: "Triage: accept the selected Proposal (when the gate allows)",
+    owner: "data-hotkey",
   },
   {
     id: "triage-reject",
     label: "Reject",
     chord: "R",
     description: "Triage: open the reject composer for the selected Proposal",
+    owner: "data-hotkey",
   },
-] as const;
+] as const satisfies readonly HotkeyDef[];
+
+type HotkeyEntry = (typeof HOTKEYS)[number];
+
+export type HotkeyId = HotkeyEntry["id"];
+
+export type GlobalHotkeyId = Extract<HotkeyEntry, { owner: "global" }>["id"];
+
+/** Ids whose registry chord is a bare key (no `Mod+`). */
+export type BareHotkeyId = Exclude<
+  HotkeyEntry,
+  { chord: `Mod+${string}` }
+>["id"];
+
+/** Ids a control can claim with `hotkeyAttrs` (bare single keys only). */
+export type DataHotkeyId = Extract<HotkeyEntry, { owner: "data-hotkey" }>["id"];
+
+export function hotkeyDef(id: HotkeyId): HotkeyDef {
+  const def = HOTKEYS.find((entry) => entry.id === id);
+  if (!def) throw new Error(`Unknown hotkey id: ${id}`);
+  return def;
+}
+
+/** Match descriptor parsed from a display chord (`Mod+K` -> mod + `k`). */
+export function chordMatcher(chord: string): HotkeyChord {
+  if (chord.startsWith("Mod+")) {
+    return { key: chord.slice("Mod+".length), mod: true };
+  }
+  return { key: chord };
+}
+
+/** Chord text for display, with the mod-key text supplied (`useModKeyLabel`). */
+export function formatChord(chord: string, modLabel: string): string {
+  return chord.startsWith("Mod+")
+    ? `${modLabel} ${chord.slice("Mod+".length)}`
+    : chord;
+}
+
+/**
+ * Exact `KeyboardEvent.key` of a bare single-key entry (`J` -> `j`). Unlike
+ * `matchesChord` it does not fold case, so Shift+J and caps-lock J stay inert.
+ */
+export function bareKey(id: BareHotkeyId): string {
+  return chordMatcher(hotkeyDef(id).chord).key.toLowerCase();
+}
+
+/** Attributes that make a control answer to a `data-hotkey` registry key. */
+export function hotkeyAttrs(id: DataHotkeyId): {
+  "data-hotkey": string;
+  "aria-keyshortcuts": string;
+} {
+  const key = bareKey(id);
+  return { "data-hotkey": key, "aria-keyshortcuts": key };
+}
+
+/** Runtime bindings for every `global` registry entry, in registry order. */
+export function hotkeyBindings(
+  runners: Readonly<Record<GlobalHotkeyId, () => void>>
+): HotkeyBinding[] {
+  const bindings: HotkeyBinding[] = [];
+  for (const entry of HOTKEYS) {
+    if (entry.owner !== "global") continue;
+    const def: HotkeyDef = entry;
+    bindings.push({
+      id: entry.id,
+      ...chordMatcher(entry.chord),
+      ...(def.allowInEditable === true ? { allowInEditable: true } : {}),
+      run: runners[entry.id],
+    });
+  }
+  return bindings;
+}
 
 /** Duck-typed so unit tests work without a DOM. */
 export function isEditableTarget(target: unknown): boolean {
@@ -75,7 +186,7 @@ export function isEditableTarget(target: unknown): boolean {
 }
 
 export function matchesChord(
-  event: KeyboardEvent,
+  event: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "altKey">,
   chord: HotkeyChord
 ): boolean {
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;

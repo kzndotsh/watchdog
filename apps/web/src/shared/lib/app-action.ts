@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
+import { hotkeyDef, type HotkeyId } from "@/shared/lib/hotkeys";
+
 export type AppActionSurface = "context" | "dropdown" | "palette";
 
 export type AppActionGroup = "target" | "page" | "app";
@@ -11,8 +13,8 @@ export interface AppAction {
   group: AppActionGroup;
   run: () => void;
   icon?: LucideIcon;
-  /** Display chord (`Mod+K`, `?`) — not wired to hotkeys this pass. */
-  shortcut?: string;
+  /** Registry id in `HOTKEYS`; the chord shown beside the action derives from it. */
+  hotkey?: HotkeyId;
   destructive?: boolean;
   disabled?: boolean;
   keywords?: string;
@@ -25,6 +27,13 @@ const DEFAULT_SURFACES: Record<AppActionGroup, readonly AppActionSurface[]> = {
   page: ["context", "palette"],
   app: ["context", "palette"],
 };
+
+/** Display chord (`Mod+K`, `?`) of the action's registry hotkey, if any. */
+export function actionChord(action: AppAction): string | undefined {
+  return action.hotkey === undefined
+    ? undefined
+    : hotkeyDef(action.hotkey).chord;
+}
 
 export function actionSurfaces(action: AppAction): readonly AppActionSurface[] {
   return action.surfaces ?? DEFAULT_SURFACES[action.group];

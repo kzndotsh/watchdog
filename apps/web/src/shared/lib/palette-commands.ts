@@ -67,7 +67,7 @@ export function usePaletteCommands(actions: readonly AppAction[]): void {
         a.disabled === true,
         a.group,
         a.icon?.displayName ?? a.icon?.name,
-        a.shortcut,
+        a.hotkey,
         a.keywords,
         a.surfaces,
       ])

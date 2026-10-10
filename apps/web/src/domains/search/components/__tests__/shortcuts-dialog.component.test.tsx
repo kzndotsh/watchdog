@@ -13,7 +13,7 @@ describe("ShortcutsDialog", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Mod+K then type to search the Active Case or jump to a page."
+        "Ctrl K then type to search the Active Case or jump to a page."
       )
     ).toBeInTheDocument();
 
@@ -21,5 +21,17 @@ describe("ShortcutsDialog", () => {
       expect(screen.getAllByText(entry.label).length).toBeGreaterThan(0);
       expect(screen.getByText(entry.description)).toBeInTheDocument();
     }
+  });
+
+  it("shows the platform mod-key label in the description, never the literal Mod+", () => {
+    vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
+    render(<ShortcutsDialog open onOpenChange={vi.fn()} />);
+
+    const description = screen.getByText(/then type to search/);
+    expect(description.textContent).toBe(
+      "⌘ K then type to search the Active Case or jump to a page."
+    );
+    expect(description.textContent).not.toContain("Mod+");
+    vi.restoreAllMocks();
   });
 });

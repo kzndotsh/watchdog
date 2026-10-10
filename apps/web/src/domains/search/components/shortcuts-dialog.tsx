@@ -1,4 +1,5 @@
-import { HOTKEYS } from "@/shared/lib/hotkeys";
+import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
+import { formatChord, HOTKEYS, hotkeyDef } from "@/shared/lib/hotkeys";
 import { ActionShortcutChord } from "@/shared/ui/action-list";
 import {
   Dialog,
@@ -14,13 +15,15 @@ interface ShortcutsDialogProps {
 }
 
 export function ShortcutsDialog({ open, onOpenChange }: ShortcutsDialogProps) {
+  const modKeyLabel = useModKeyLabel();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Shortcuts</DialogTitle>
           <DialogDescription>
-            Mod+K then type to search the Active Case or jump to a page.
+            {formatChord(hotkeyDef("command-palette").chord, modKeyLabel)} then
+            type to search the Active Case or jump to a page.
           </DialogDescription>
         </DialogHeader>
         <ul className="flex flex-col gap-3">
