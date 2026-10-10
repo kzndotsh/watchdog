@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useEffect, type SubmitEvent } from "react";
+import type { SubmitEvent } from "react";
 
 import type { EntityRecord } from "@/domains/entities/types";
 import { FieldSelect } from "@/shared/ui/field-select";
@@ -56,14 +56,19 @@ function dossierEditFormIssues(v: DossierEditFormValues): string[] {
   return issues;
 }
 
-export function DossierEditDialog({
-  open,
-  onOpenChange,
+/**
+ * The form mounts with the dialog and again for another entity (`key`), so its values
+ * always start from the entity on screen; nothing resets it afterwards.
+ */
+function DossierEditForm({
+  onClose,
   entity,
-  busy = false,
-  error = null,
+  busy,
+  error,
   onSubmit,
-}: Props) {
+}: Pick<Props, "entity" | "busy" | "error" | "onSubmit"> & {
+  onClose: () => void;
+}) {
   const form = useForm({
     defaultValues: defaultsFromRecord(entity),
     onSubmit: async ({ value }) => {
@@ -75,11 +80,6 @@ export function DossierEditDialog({
     },
   });
 
-  useEffect(() => {
-    if (!open) return;
-    form.reset(defaultsFromRecord(entity));
-  }, [open, entity, form]);
-
   function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -87,112 +87,127 @@ export function DossierEditDialog({
   }
 
   return (
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <DialogHeader>
+        <DialogTitle>Edit entity</DialogTitle>
+      </DialogHeader>
+
+      <FieldGroup>
+        <form.Field name="name">
+          {(field) => (
+            <Field>
+              <FieldLabel>Name</FieldLabel>
+              <Input
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => {
+                  field.handleChange(e.target.value);
+                }}
+                disabled={busy}
+                aria-label="Entity name"
+                autoFocus
+              />
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="kind">
+          {(field) => (
+            <Field>
+              <FieldLabel>Kind</FieldLabel>
+              <FieldSelect
+                value={field.state.value}
+                options={ENTITY_KIND_OPTIONS}
+                onValueChange={(next) => {
+                  field.handleChange(trimmedEntityKindSchema.parse(next));
+                }}
+                disabled={busy}
+                aria-label="Entity kind"
+              />
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="summary">
+          {(field) => (
+            <Field>
+              <FieldLabel>Summary</FieldLabel>
+              <RichTextEditor
+                editorKey={`edit-summary:${entity.id}`}
+                value={field.state.value}
+                onChange={(next) => {
+                  field.handleChange(next);
+                }}
+                onBlurShell={field.handleBlur}
+                disabled={busy}
+                ariaLabel="Summary"
+              />
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="notes">
+          {(field) => (
+            <Field>
+              <FieldLabel>Notes</FieldLabel>
+              <RichTextEditor
+                editorKey={`edit-notes:${entity.id}`}
+                value={field.state.value}
+                onChange={(next) => {
+                  field.handleChange(next);
+                }}
+                onBlurShell={field.handleBlur}
+                disabled={busy}
+                ariaLabel="Notes"
+              />
+            </Field>
+          )}
+        </form.Field>
+      </FieldGroup>
+
+      <FieldError>{error}</FieldError>
+
+      <DialogFooter>
+        <Button type="button" variant="ghost" disabled={busy} onClick={onClose}>
+          Cancel
+        </Button>
+        <form.Subscribe selector={(s) => s.values}>
+          {(values) => (
+            <Button
+              type="submit"
+              loading={busy}
+              disabled={dossierEditFormIssues(values).length > 0}
+            >
+              Save
+            </Button>
+          )}
+        </form.Subscribe>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function DossierEditDialog({
+  open,
+  onOpenChange,
+  entity,
+  busy = false,
+  error = null,
+  onSubmit,
+}: Props) {
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Edit entity</DialogTitle>
-          </DialogHeader>
-
-          <FieldGroup>
-            <form.Field name="name">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Name</FieldLabel>
-                  <Input
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => {
-                      field.handleChange(e.target.value);
-                    }}
-                    disabled={busy}
-                    aria-label="Entity name"
-                    autoFocus
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <form.Field name="kind">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Kind</FieldLabel>
-                  <FieldSelect
-                    value={field.state.value}
-                    options={ENTITY_KIND_OPTIONS}
-                    onValueChange={(next) => {
-                      field.handleChange(trimmedEntityKindSchema.parse(next));
-                    }}
-                    disabled={busy}
-                    aria-label="Entity kind"
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <form.Field name="summary">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Summary</FieldLabel>
-                  <RichTextEditor
-                    editorKey={`edit-summary:${entity.id}:${open}`}
-                    value={field.state.value}
-                    onChange={(next) => {
-                      field.handleChange(next);
-                    }}
-                    onBlurShell={field.handleBlur}
-                    disabled={busy}
-                    ariaLabel="Summary"
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <form.Field name="notes">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Notes</FieldLabel>
-                  <RichTextEditor
-                    editorKey={`edit-notes:${entity.id}:${open}`}
-                    value={field.state.value}
-                    onChange={(next) => {
-                      field.handleChange(next);
-                    }}
-                    onBlurShell={field.handleBlur}
-                    disabled={busy}
-                    ariaLabel="Notes"
-                  />
-                </Field>
-              )}
-            </form.Field>
-          </FieldGroup>
-
-          <FieldError>{error}</FieldError>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => {
-                onOpenChange(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <form.Subscribe selector={(s) => s.values}>
-              {(values) => (
-                <Button
-                  type="submit"
-                  loading={busy}
-                  disabled={dossierEditFormIssues(values).length > 0}
-                >
-                  Save
-                </Button>
-              )}
-            </form.Subscribe>
-          </DialogFooter>
-        </form>
+        <DossierEditForm
+          key={entity.id}
+          entity={entity}
+          busy={busy}
+          error={error}
+          onSubmit={onSubmit}
+          onClose={() => {
+            onOpenChange(false);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
