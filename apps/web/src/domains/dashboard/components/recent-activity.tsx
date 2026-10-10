@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { recentActivityQuery } from "@/domains/activity/queries";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -292,18 +292,17 @@ export function RecentActivity({
 }) {
   const [internalCaseId, setInternalCaseId] = useState<string | null>(null);
   const controlled = onActivityCaseChange !== undefined;
-  const caseId = controlled ? (activityCaseId ?? null) : internalCaseId;
+  const selectedCaseId = controlled ? (activityCaseId ?? null) : internalCaseId;
+  // A Case that is gone (deleted, or not visible any more) reads as "all cases".
+  const caseId =
+    selectedCaseId !== null && cases.some((c) => c.id === selectedCaseId)
+      ? selectedCaseId
+      : null;
   const setCaseId = controlled ? onActivityCaseChange : setInternalCaseId;
   const caseSlugById = useMemo(
     () => new Map(cases.map((c) => [c.id, c.slug] as const)),
     [cases]
   );
-
-  useEffect(() => {
-    if (caseId !== null && !cases.some((c) => c.id === caseId)) {
-      setCaseId(null);
-    }
-  }, [cases, caseId, setCaseId]);
 
   return (
     <section
