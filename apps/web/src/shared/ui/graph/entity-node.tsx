@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { AppAction } from "@/shared/lib/app-action";
+import { EYEBROW_CLASS } from "@/shared/ui/eyebrow";
 import { ENTITY_NODE_SHELL_CLASS } from "@/shared/ui/graph/entity-node-chrome";
 import { kindBorder } from "@/shared/ui/graph/graph-styles";
 import type { EntityNodeData } from "@/shared/ui/graph/types";
@@ -30,10 +31,7 @@ export function EntityNode({
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm leading-snug">{data.label}</div>
           <div className="mt-1 flex flex-wrap items-center gap-1">
-            <KindBadge
-              kind={data.kind}
-              className="text-xs tracking-wider uppercase"
-            />
+            <KindBadge kind={data.kind} className={EYEBROW_CLASS} />
           </div>
         </div>
         {actions && actions.length > 0 ? (

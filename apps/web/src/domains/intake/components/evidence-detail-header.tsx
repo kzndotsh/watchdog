@@ -226,13 +226,7 @@ export function EvidenceHeaderActions({
 
   if (isHidden) {
     return (
-      <Button
-        type="button"
-        size="sm"
-        className="h-7"
-        disabled={busy}
-        onClick={onRestore}
-      >
+      <Button type="button" disabled={busy} onClick={onRestore}>
         Restore
       </Button>
     );
@@ -245,9 +239,7 @@ export function EvidenceHeaderActions({
       {canEnrich ? (
         <Button
           type="button"
-          size="sm"
           variant="outline"
-          className="h-7"
           loading={enriching}
           disabled={busy}
           onClick={onEnrich}
@@ -257,8 +249,6 @@ export function EvidenceHeaderActions({
       ) : null}
       <Button
         type="button"
-        size="sm"
-        className="h-7"
         loading={processing}
         disabled={busy || processed}
         onClick={onProcess}
@@ -275,9 +265,7 @@ export function EvidenceHeaderActions({
       >
         <Button
           type="button"
-          size="sm"
           variant="outline"
-          className="h-7"
           loading={aiProcessing}
           disabled={aiDisabled}
           onClick={onAiProcess}
@@ -288,8 +276,6 @@ export function EvidenceHeaderActions({
       <Button
         type="button"
         variant="outline"
-        size="sm"
-        className="h-7"
         disabled={busy}
         onClick={onHideRequested}
       >
@@ -357,8 +343,9 @@ export function EvidenceDetailHeader({
               <Button
                 type="button"
                 variant="link"
-                // oxlint-disable-next-line shadcn/no-restyle -- inline text link inside a context line: muted ink, no padding; a one-off, not a Button treatment
-                className="text-foreground/80 h-auto min-h-0 p-0 text-xs font-normal underline-offset-2 hover:underline"
+                size="inline"
+                // oxlint-disable-next-line shadcn/no-restyle -- inline text link inside a context line: muted ink; a one-off, not a Button treatment
+                className="text-foreground/80 text-xs font-normal underline-offset-2 hover:underline"
                 onClick={() => {
                   onShowProducingRun?.(producingCap.id);
                 }}

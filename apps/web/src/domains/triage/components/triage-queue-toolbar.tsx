@@ -58,7 +58,6 @@ export function TriageQueueToolbar({
             onClearAll={() => {
               onFiltersChange({ ...EMPTY_TRIAGE_FILTERS, q: filters.q });
             }}
-            contentClassName="w-[16rem]"
           >
             <FieldSet>
               <FieldLegend variant="label">

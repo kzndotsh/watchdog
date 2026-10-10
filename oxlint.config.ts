@@ -449,6 +449,7 @@ export default defineConfig({
       rules: {
         "watchdog/no-decorative-class": "error",
         "watchdog/no-banned-surface-name": "error",
+        "watchdog/no-button-height-class": "error",
       },
     },
     {
@@ -505,6 +506,15 @@ export default defineConfig({
         "apps/web/src/auth/ui/**/*.{ts,tsx}",
       ],
       rules: { "watchdog/no-decorative-class": "off" },
+    },
+    {
+      // The wrapper defines the size scale, so it is where heights live; tests probe it.
+      files: [
+        "apps/web/src/shared/ui/primitives/**/*.{ts,tsx}",
+        "apps/web/src/**/__tests__/**/*.{ts,tsx}",
+        "apps/web/src/**/*.{test,spec}.{ts,tsx}",
+      ],
+      rules: { "watchdog/no-button-height-class": "off" },
     },
     {
       // Web layering (docs/reference/web/domains.md, conventions table "Web" rows).

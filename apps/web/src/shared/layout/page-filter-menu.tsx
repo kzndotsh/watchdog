@@ -46,8 +46,7 @@ export function PageFilterMenu({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              className="h-8"
+              size="icon-lg"
               aria-label={active ? `${label}, ${chips.length} active` : label}
             />
           }
@@ -56,15 +55,15 @@ export function PageFilterMenu({
         </PopoverTrigger>
         <PopoverContent
           align={align}
-          className={cn("w-[16rem] space-y-3", contentClassName)}
+          className={cn("w-filter-menu space-y-3", contentClassName)}
         >
           {children}
           {active && onClearAll ? (
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              className="h-8 w-full"
+              size="lg"
+              className="w-full"
               onClick={onClearAll}
             >
               Clear filters

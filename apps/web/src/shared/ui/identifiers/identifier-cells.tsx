@@ -53,8 +53,8 @@ export function IdentifierValueCopyControl({ value }: { value: string }) {
     <Button
       type="button"
       variant="ghost"
-      size="sm"
-      className="text-muted-foreground hover:text-foreground size-6 shrink-0 p-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+      size="icon-sm"
+      className="text-muted-foreground hover:text-foreground shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
       aria-label="Copy value"
       title="Copy value"
       onClick={(event) => {
