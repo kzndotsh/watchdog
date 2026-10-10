@@ -67,6 +67,7 @@ describe("useAcceptUserInvitation", () => {
     });
 
     expect(run.events).toEqual(["toast.error"]);
+    expect(toast.error).toHaveBeenCalledWith("network down");
     expect(onAccepted).not.toHaveBeenCalled();
   });
 });

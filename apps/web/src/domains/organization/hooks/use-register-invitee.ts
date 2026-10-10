@@ -15,6 +15,7 @@ export interface RegisterInviteeVariables {
 export function useRegisterInvitee({
   onRegistered,
 }: { onRegistered?: () => void } = {}) {
+  // oxlint-disable-next-line react-doctor/query-mutation-missing-invalidation -- the caller hard-navigates to "/" on success, which discards every cache; there is no mounted screen left to go stale
   return useMutation({
     mutationFn: async (input: RegisterInviteeVariables) => inviteSignUp(input),
     onSuccess: () => {

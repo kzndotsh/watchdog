@@ -58,6 +58,7 @@ describe("useDeclineInvitation", () => {
     });
 
     expect(run.events).toEqual(["toast.error"]);
+    expect(toast.error).toHaveBeenCalledWith("network down");
     expect(run.invalidated(organizationKeys.userInvitations())).toBe(false);
   });
 });

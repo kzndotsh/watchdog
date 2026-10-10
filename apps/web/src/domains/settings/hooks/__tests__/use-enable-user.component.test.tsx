@@ -58,6 +58,7 @@ describe("useEnableUser", () => {
     });
 
     expect(run.events).toEqual(["toast.error"]);
+    expect(toast.error).toHaveBeenCalledWith("network down");
     expect(run.invalidated(usersKeys.all)).toBe(false);
   });
 });

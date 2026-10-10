@@ -46,6 +46,9 @@ export async function runAuthMutation<V>({
   seed?: readonly (readonly unknown[])[];
 }) {
   const events: string[] = [];
+  vi.mocked(toast.success).mockClear();
+  vi.mocked(toast.error).mockClear();
+  authCall.mockClear();
   vi.mocked(toast.success).mockImplementation(() => {
     events.push("toast.success");
     return "toast-id";

@@ -16,6 +16,7 @@ export interface AcceptUserInvitationVariables {
 export function useAcceptUserInvitation({
   onAccepted,
 }: { onAccepted?: (organizationId: string) => void } = {}) {
+  // oxlint-disable-next-line react-doctor/query-mutation-missing-invalidation -- the caller makes the joined org active and hard-reloads, which discards every cache; there is no mounted screen left to go stale
   return useMutation({
     mutationFn: async (invitation: AcceptUserInvitationVariables) => {
       const { error } = await authClient.organization.acceptInvitation({

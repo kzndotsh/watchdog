@@ -7,6 +7,7 @@ import { authClient } from "@/auth/client";
  * another organization on success, which drops every cache.
  */
 export function useLeaveOrganization() {
+  // oxlint-disable-next-line react-doctor/query-mutation-missing-invalidation -- the caller hard-reloads into another organization, which discards every cache; there is no mounted screen left to go stale
   return useMutation({
     mutationFn: async (organizationId: string) => {
       const { error } = await authClient.organization.leave({ organizationId });
