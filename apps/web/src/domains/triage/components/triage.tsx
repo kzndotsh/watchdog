@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
@@ -17,7 +16,6 @@ import {
 } from "@/domains/triage/lib/filters";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import { Button } from "@/shared/ui/primitives/button";
@@ -86,10 +84,6 @@ function TriageActive({
   ws: ReturnType<typeof useTriageWorkspace>;
   onProposalIdChange: (next: string | null) => void;
 }) {
-  const queryClient = useQueryClient();
-
-  useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
-
   return (
     <>
       {/* Sibling, not an early return — an early return here unmounts the

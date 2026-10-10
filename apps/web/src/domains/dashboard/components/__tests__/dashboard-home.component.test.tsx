@@ -35,7 +35,6 @@ vi.mock("@/shared/hooks/use-hydrated", () => ({
 }));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
-  bindCasesChangedInvalidation: vi.fn(),
   invalidateAfterJobMutation: vi.fn(),
   invalidateAfterProposalQueueChange: vi.fn(),
   invalidateAfterTaskMutation: vi.fn(),

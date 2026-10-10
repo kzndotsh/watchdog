@@ -32,10 +32,6 @@ vi.mock("@/domains/entities/components/delete-entity-dialog", () => ({
   DeleteEntityDialog: () => null,
 }));
 
-vi.mock("@/shared/lib/query-invalidation", () => ({
-  bindCasesChangedInvalidation: vi.fn(),
-}));
-
 vi.mock("@/domains/dossier/hooks/use-dossier-shell", () => ({
   useDossierShell: () => ({
     evidenceAll: [],

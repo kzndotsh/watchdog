@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link, notFound, useNavigate } from "@tanstack/react-router";
 import { PencilIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -31,7 +31,6 @@ import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-se
 import { Page, PageHeader } from "@/shared/layout/page";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
-import { bindCasesChangedInvalidation } from "@/shared/lib/query-invalidation";
 import { queryLoadError } from "@/shared/lib/query-load-error";
 import { isQueryPlaceholderData } from "@/shared/lib/query-placeholder";
 import {
@@ -517,15 +516,12 @@ export function Dossier({
   tab?: string;
   onTabChange: (tab: DossierTab) => void;
 }) {
-  const queryClient = useQueryClient();
   const {
     active,
     pending: casesPending,
     loadError: casesLoadError,
     retry: retryCases,
   } = useCasesContext();
-
-  useEffect(() => bindCasesChangedInvalidation(queryClient), [queryClient]);
 
   if (casesLoadError) {
     return (

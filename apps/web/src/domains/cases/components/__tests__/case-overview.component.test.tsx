@@ -34,7 +34,6 @@ vi.mock("@/shared/ui/toast", () => ({
 }));
 
 vi.mock("@/shared/lib/query-invalidation", () => ({
-  bindCasesChangedInvalidation: vi.fn(),
   invalidateAfterCaseSwitch: vi.fn().mockResolvedValue(undefined),
 }));
 
