@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CaseRecord } from "@/domains/cases/types";
+import type { TriageQueueFilters } from "@/domains/triage/lib/filters";
 import { testCaseId } from "@watchdog/schemas/testing";
 import { testId } from "@watchdog/test-kit";
 
@@ -34,8 +36,16 @@ vi.mock("@/domains/triage/components/triage-queue-list", () => ({
   TriageQueueList: () => <div>Triage queue list</div>,
 }));
 
+/** The status facet the toolbar showed on each committed render. */
+const committedFacets = vi.hoisted(() => [] as string[]);
+
 vi.mock("@/domains/triage/components/triage-queue-toolbar", () => ({
-  TriageQueueToolbar: () => <div>Triage queue toolbar</div>,
+  TriageQueueToolbar: ({ filters }: { filters: TriageQueueFilters }) => {
+    useLayoutEffect(() => {
+      committedFacets.push(filters.statuses.join(","));
+    });
+    return <div>Triage queue toolbar</div>;
+  },
 }));
 
 vi.mock("@/shared/ui/split-view", () => ({
@@ -55,7 +65,13 @@ vi.mock("@/shared/ui/split-view", () => ({
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
 const useQueryMock = vi.hoisted(() => vi.fn());
-const useTriageWorkspaceMock = vi.hoisted(() => vi.fn());
+interface WorkspaceOptions {
+  filters: TriageQueueFilters;
+  onFiltersChange: (next: TriageQueueFilters) => void;
+}
+const useTriageWorkspaceMock = vi.hoisted(() =>
+  vi.fn<(caseId: string, options: WorkspaceOptions) => unknown>()
+);
 
 function mockCasesContextLoaded(
   active: CaseRecord | null,
@@ -85,7 +101,8 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 vi.mock("@/domains/triage/hooks/use-triage-workspace", () => ({
-  useTriageWorkspace: (...args: unknown[]) => useTriageWorkspaceMock(...args),
+  useTriageWorkspace: (caseId: string, options: WorkspaceOptions) =>
+    useTriageWorkspaceMock(caseId, options),
 }));
 
 import { Triage } from "@/domains/triage/components/triage";
@@ -151,5 +168,112 @@ describe("Triage", () => {
     expect(screen.getByTestId("split-detail")).toBeInTheDocument();
     expect(useTriageWorkspaceMock).toHaveBeenCalled();
     expect(useCasesContextMock).toHaveBeenCalled();
+  });
+
+  describe("status filter", () => {
+    function renderTriage(initialStatus?: "pending" | "rejected") {
+      mockCasesContextLoaded(ACTIVE);
+      mockWorkspace();
+      useTriageWorkspaceMock.mockClear();
+      const onStatusSearchChange = vi.fn();
+      const ui = (status?: "pending" | "rejected") => (
+        <QueryClientProvider client={new QueryClient()}>
+          <Triage
+            initialStatus={status}
+            onProposalIdChange={vi.fn()}
+            onStatusSearchChange={onStatusSearchChange}
+          />
+        </QueryClientProvider>
+      );
+      const view = render(ui(initialStatus));
+      return {
+        onStatusSearchChange,
+        switchTo: (status?: "pending" | "rejected") => {
+          committedFacets.length = 0;
+          view.rerender(ui(status));
+        },
+      };
+    }
+
+    function latestWorkspaceOptions(): WorkspaceOptions {
+      const call = useTriageWorkspaceMock.mock.calls.at(-1);
+      if (!call) throw new Error("the workspace was never asked for");
+      return call[1];
+    }
+
+    it("seeds the queue from the status in the URL", () => {
+      renderTriage("rejected");
+      expect(latestWorkspaceOptions().filters.statuses).toEqual(["rejected"]);
+    });
+
+    it("follows an external status change on the first render, never showing the old facet", () => {
+      const { switchTo } = renderTriage("rejected");
+
+      switchTo(undefined);
+
+      expect(committedFacets).toEqual(["pending"]);
+    });
+
+    it("keeps the search text when the status in the URL changes", () => {
+      const { switchTo } = renderTriage("pending");
+      const options = latestWorkspaceOptions();
+      act(() => {
+        options.onFiltersChange({ q: "needle", statuses: ["pending"] });
+      });
+
+      switchTo("rejected");
+
+      expect(latestWorkspaceOptions().filters).toEqual({
+        q: "needle",
+        statuses: ["rejected"],
+      });
+    });
+
+    it("keeps a status added on top of the one in the URL when the URL then loses its status", () => {
+      const { switchTo } = renderTriage("rejected");
+      const options = latestWorkspaceOptions();
+      act(() => {
+        options.onFiltersChange({ q: "", statuses: ["rejected", "pending"] });
+      });
+
+      // The URL cannot say "two statuses", so it drops `?status=`.
+      switchTo(undefined);
+
+      expect(committedFacets).toEqual(["rejected,pending"]);
+      expect(latestWorkspaceOptions().filters.statuses).toEqual([
+        "rejected",
+        "pending",
+      ]);
+    });
+
+    it("keeps an emptied facet when the URL loses its status", () => {
+      const { switchTo } = renderTriage("rejected");
+      act(() => {
+        latestWorkspaceOptions().onFiltersChange({ q: "", statuses: [] });
+      });
+
+      switchTo(undefined);
+
+      expect(committedFacets).toEqual([""]);
+    });
+
+    it("keeps a multi-status choice the URL cannot express, and mirrors the single case to the URL", () => {
+      const { onStatusSearchChange } = renderTriage();
+      const options = latestWorkspaceOptions();
+
+      act(() => {
+        options.onFiltersChange({ q: "", statuses: ["pending", "rejected"] });
+      });
+      expect(latestWorkspaceOptions().filters.statuses).toEqual([
+        "pending",
+        "rejected",
+      ]);
+      expect(onStatusSearchChange).toHaveBeenLastCalledWith(undefined);
+
+      act(() => {
+        options.onFiltersChange({ q: "", statuses: ["rejected"] });
+      });
+      expect(onStatusSearchChange).toHaveBeenLastCalledWith("rejected");
+    });
   });
 });

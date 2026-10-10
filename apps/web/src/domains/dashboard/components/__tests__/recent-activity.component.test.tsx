@@ -11,8 +11,14 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
+/** The filter each committed render asked the activity query for. */
+const askedFilters = vi.hoisted(() => [] as ({ caseId: string } | undefined)[]);
+
 vi.mock("@/domains/activity/queries", () => ({
-  recentActivityQuery: () => ({ queryKey: ["activity", "recent"] }),
+  recentActivityQuery: (filter?: { caseId: string }) => {
+    askedFilters.push(filter);
+    return { queryKey: ["activity", "recent"] };
+  },
 }));
 
 const activityState = vi.hoisted(() => ({
@@ -159,5 +165,69 @@ describe("RecentActivity", () => {
 
     expect(screen.getByText("activity failed")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  describe("case filter", () => {
+    const caseA = {
+      id: testCaseId(20),
+      name: "Case A",
+      slug: "case-a",
+      description: null,
+      allowThirdPartyEgress: false,
+    };
+    const caseB = { ...caseA, id: testCaseId(21), name: "Case B", slug: "b" };
+
+    it("filters by the Case in the URL", () => {
+      askedFilters.length = 0;
+      render(
+        <RecentActivity
+          cases={[caseA, caseB]}
+          activityCaseId={caseB.id}
+          onActivityCaseChange={vi.fn()}
+        />
+      );
+      expect(askedFilters.at(-1)).toEqual({ caseId: caseB.id });
+    });
+
+    it("never filters by a Case that is gone, not even for one render", () => {
+      const props = { onActivityCaseChange: vi.fn() };
+      const view = render(
+        <RecentActivity
+          cases={[caseA, caseB]}
+          activityCaseId={caseA.id}
+          {...props}
+        />
+      );
+      askedFilters.length = 0;
+
+      view.rerender(
+        <RecentActivity cases={[caseB]} activityCaseId={caseA.id} {...props} />
+      );
+
+      expect(askedFilters.length).toBeGreaterThan(0);
+      for (const filter of askedFilters) expect(filter).toBeUndefined();
+      expect(
+        screen.getByRole("combobox", { name: /filter activity by case/i })
+      ).toHaveTextContent("All cases");
+    });
+
+    it("filters by the Case again if it becomes visible again (the URL id is left alone)", () => {
+      const props = { onActivityCaseChange: vi.fn() };
+      const view = render(
+        <RecentActivity cases={[caseB]} activityCaseId={caseA.id} {...props} />
+      );
+      expect(askedFilters.at(-1)).toBeUndefined();
+
+      view.rerender(
+        <RecentActivity
+          cases={[caseA, caseB]}
+          activityCaseId={caseA.id}
+          {...props}
+        />
+      );
+
+      expect(askedFilters.at(-1)).toEqual({ caseId: caseA.id });
+      expect(props.onActivityCaseChange).not.toHaveBeenCalled();
+    });
   });
 });

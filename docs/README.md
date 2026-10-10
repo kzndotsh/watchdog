@@ -59,6 +59,7 @@ Which doc gets updated with which code change is `scripts/doc-map.mjs`, enforced
 | [`reference/web/ui/rules.md`](reference/web/ui/rules.md) | Every UI rule: reason, kind, enforcer |
 | [`reference/web/ui/page-shell.md`](reference/web/ui/page-shell.md) | Page / trail / toolbar |
 | [`reference/web/ui/forms.md`](reference/web/ui/forms.md) | Forms |
+| [`reference/web/ui/effects.md`](reference/web/ui/effects.md) | When `useEffect` is allowed |
 | [`reference/web/ui/tables.md`](reference/web/ui/tables.md) | Column sizing + DataTable pending |
 | [`reference/web/ui/loading.md`](reference/web/ui/loading.md) | Skeletons + hydration |
 | [`reference/web/ui/atoms.md`](reference/web/ui/atoms.md) | Hand-owned atoms + primitive wrappers |

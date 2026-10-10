@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { recentActivityQuery } from "@/domains/activity/queries";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -292,18 +292,21 @@ export function RecentActivity({
 }) {
   const [internalCaseId, setInternalCaseId] = useState<string | null>(null);
   const controlled = onActivityCaseChange !== undefined;
-  const caseId = controlled ? (activityCaseId ?? null) : internalCaseId;
+  const selectedCaseId = controlled ? (activityCaseId ?? null) : internalCaseId;
+  // A Case that is not in `cases` reads as "all cases". The URL-backed id is left
+  // alone on purpose: clearing it would need an effect, and it would also wipe a valid
+  // link while the Case list is momentarily empty. The stale id is harmless (it only
+  // filters while its Case is visible, which is what the link asked for) and the next
+  // pick in the Select replaces it.
+  const caseId =
+    selectedCaseId !== null && cases.some((c) => c.id === selectedCaseId)
+      ? selectedCaseId
+      : null;
   const setCaseId = controlled ? onActivityCaseChange : setInternalCaseId;
   const caseSlugById = useMemo(
     () => new Map(cases.map((c) => [c.id, c.slug] as const)),
     [cases]
   );
-
-  useEffect(() => {
-    if (caseId !== null && !cases.some((c) => c.id === caseId)) {
-      setCaseId(null);
-    }
-  }, [cases, caseId, setCaseId]);
 
   return (
     <section

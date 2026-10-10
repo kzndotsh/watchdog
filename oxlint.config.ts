@@ -340,6 +340,10 @@ export default defineConfig({
     "react-doctor/no-derived-state": "error",
     "react-doctor/no-derived-state-effect": "error",
     "react-doctor/no-fetch-in-effect": "error",
+    // Effect policy (docs/reference/web/ui/effects.md): no prop-to-state sync.
+    "react-doctor/no-mirror-prop-effect": "error",
+    "react-doctor/no-adjust-state-on-prop-change": "error",
+    "react-doctor/no-reset-all-state-on-prop-change": "error",
     "react/only-export-components": [
       "error",
       {

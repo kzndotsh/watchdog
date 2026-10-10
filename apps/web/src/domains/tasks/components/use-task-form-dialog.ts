@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useEffect, type SubmitEvent } from "react";
+import type { SubmitEvent } from "react";
 
 import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog-form";
 import {
@@ -13,7 +13,6 @@ import type { TaskRecord } from "@/domains/tasks/types";
 import type { TaskStatus } from "@watchdog/schemas/shared";
 
 interface TaskFormDialogCoreProps {
-  open: boolean;
   mode: "create" | "edit";
   task: TaskRecord | null;
   defaultStatus: TaskStatus;
@@ -30,18 +29,6 @@ function createDefaults(
     status: defaultStatus,
     entityId: defaultEntityId ?? "",
   };
-}
-
-function resetTaskFormValues(
-  form: TaskDialogForm,
-  props: TaskFormDialogCoreProps
-): void {
-  if (props.mode === "edit") {
-    if (!props.task) return;
-    form.reset(defaultsFromTask(props.task));
-    return;
-  }
-  form.reset(createDefaults(props.defaultStatus, props.defaultEntityId));
 }
 
 async function submitTaskFormValues(
@@ -68,8 +55,12 @@ function preventTaskFormDefault(
   void form.handleSubmit();
 }
 
+/**
+ * The form's values start from `task` (edit) or the defaults (create) and are never reset:
+ * the caller mounts it again, through a `key`, for another task or another create context.
+ */
 export function useTaskFormDialog(props: TaskFormDialogCoreProps) {
-  const { open, mode, task, defaultStatus, defaultEntityId, onSubmit } = props;
+  const { mode, task, defaultStatus, defaultEntityId, onSubmit } = props;
 
   const form = useForm({
     defaultValues:
@@ -78,18 +69,6 @@ export function useTaskFormDialog(props: TaskFormDialogCoreProps) {
         : createDefaults(defaultStatus, defaultEntityId),
     onSubmit: createTaskFormSubmitHandler(onSubmit),
   });
-
-  useEffect(() => {
-    if (!open) return;
-    resetTaskFormValues(form as TaskDialogForm, {
-      open,
-      mode,
-      task,
-      defaultStatus,
-      defaultEntityId,
-      onSubmit,
-    });
-  }, [open, mode, task, defaultEntityId, defaultStatus, form, onSubmit]);
 
   const handleSubmit = (event: SubmitEvent) => {
     preventTaskFormDefault(form as TaskDialogForm, event);

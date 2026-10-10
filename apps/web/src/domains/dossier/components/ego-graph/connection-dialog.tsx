@@ -1,6 +1,6 @@
 /* oxlint-disable react/only-export-components, react-doctor/only-export-components -- dialog + shared form validators */
 import { useForm } from "@tanstack/react-form";
-import { useEffect, useMemo, type SubmitEvent } from "react";
+import { useMemo, type SubmitEvent } from "react";
 
 import type { EvidenceOption } from "@/domains/dossier/types";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
@@ -124,18 +124,25 @@ export function connectionFormIssues(
   return issues;
 }
 
-export function ConnectionDialog({
-  open,
-  onOpenChange,
+/**
+ * The form mounts with the dialog and again for another edge or mode (`key`), so its
+ * values always start from the connection on screen; nothing resets it afterwards.
+ */
+function ConnectionForm({
+  onClose,
   mode,
   initial,
   center,
   entities,
   evidenceOptions,
-  busy = false,
-  error = null,
+  busy,
+  error,
   onSubmit,
-}: Props) {
+}: Omit<Props, "open" | "onOpenChange" | "busy" | "error"> & {
+  busy: boolean;
+  error: string | null;
+  onClose: () => void;
+}) {
   const form = useForm({
     defaultValues:
       mode === "edit" && initial ? defaultsFromEdge(initial) : CREATE_DEFAULTS,
@@ -149,13 +156,6 @@ export function ConnectionDialog({
       await onSubmit(normalized);
     },
   });
-
-  useEffect(() => {
-    if (!open) return;
-    form.reset(
-      mode === "edit" && initial ? defaultsFromEdge(initial) : CREATE_DEFAULTS
-    );
-  }, [open, mode, initial, form]);
 
   const entitiesById = useMemo(() => {
     const map = new Map<string, ConnectionPeerOption>();
@@ -175,233 +175,245 @@ export function ConnectionDialog({
   }
 
   return (
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <DialogHeader>
+        <DialogTitle>
+          {mode === "edit" ? "Edit connection" : "Add connection"}
+        </DialogTitle>
+      </DialogHeader>
+
+      <FieldGroup>
+        <form.Subscribe
+          selector={(s) => ({
+            predicate: s.values.predicate,
+            orientation: s.values.orientation,
+          })}
+        >
+          {({ predicate, orientation }) => (
+            <form.Field name="peerId">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Peer</FieldLabel>
+                  <EntityCombobox
+                    entities={peerOptions.filter((entity) =>
+                      peerKindAllowedForPhrase(
+                        center.kind,
+                        entity.kind,
+                        predicate,
+                        orientation
+                      )
+                    )}
+                    value={field.state.value}
+                    onValueChange={(next) => {
+                      const peerId =
+                        parseOptionalTrimmedUuid(next) ?? next.trim();
+                      field.handleChange(peerId);
+                      const peer = entitiesById.get(peerId);
+                      if (!peer) return;
+                      const clamped = clampEdgePhrase(
+                        center.kind,
+                        peer.kind,
+                        form.getFieldValue("predicate"),
+                        form.getFieldValue("orientation")
+                      );
+                      form.setFieldValue("predicate", clamped.predicate);
+                      form.setFieldValue("orientation", clamped.orientation);
+                    }}
+                    emptyLabel="Select entity…"
+                    allowEmpty={false}
+                    disabled={busy}
+                    aria-label="Peer entity"
+                  />
+                </Field>
+              )}
+            </form.Field>
+          )}
+        </form.Subscribe>
+
+        <form.Subscribe
+          selector={(s) => ({
+            peerId: s.values.peerId,
+            predicate: s.values.predicate,
+            orientation: s.values.orientation,
+          })}
+        >
+          {({ peerId, predicate, orientation }) => {
+            const scopedPeerId =
+              parseOptionalTrimmedUuid(peerId) ?? peerId.trim();
+            const peer = scopedPeerId
+              ? entitiesById.get(scopedPeerId)
+              : undefined;
+            const phrases = edgePhraseOptionsForPeers(
+              center.kind,
+              peerOptions,
+              peer?.kind
+            );
+            const selectOptions = phrases.map((p) => ({
+              value: p.value,
+              label: p.label,
+              group: p.group,
+            }));
+            const phraseValue = edgePhraseValue(predicate, orientation);
+
+            return (
+              <Field>
+                <FieldLabel>Relationship</FieldLabel>
+                <FieldCombobox
+                  value={phraseValue}
+                  options={selectOptions}
+                  onValueChange={(v) => {
+                    const parsed = parseEdgePhraseValue(v);
+                    if (!parsed) return;
+                    form.setFieldValue("predicate", parsed.predicate);
+                    form.setFieldValue("orientation", parsed.orientation);
+                    if (
+                      peer &&
+                      !peerKindAllowedForPhrase(
+                        center.kind,
+                        peer.kind,
+                        parsed.predicate,
+                        parsed.orientation
+                      )
+                    ) {
+                      form.setFieldValue("peerId", "");
+                    }
+                  }}
+                  disabled={busy || selectOptions.length === 0}
+                  placeholder="Search relationships…"
+                  emptyText="No matching relationships."
+                  aria-label="Relationship"
+                />
+                {peer ? (
+                  <p className="text-muted-foreground text-xs">
+                    {orientation === "forward"
+                      ? `${entityDisplayLabel(center)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(peer)}`
+                      : `${entityDisplayLabel(peer)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(center)}`}
+                    {orientation === "inverse"
+                      ? ` · here: ${predicateLabel(predicate, "in")}`
+                      : null}
+                  </p>
+                ) : null}
+              </Field>
+            );
+          }}
+        </form.Subscribe>
+
+        <form.Subscribe selector={(s) => s.values.predicate}>
+          {(predicate) => (
+            <form.Field name="notes">
+              {(field) => (
+                <Field>
+                  <FieldLabel>
+                    {predicate === "related_to" ? "Why (required)" : "Notes"}
+                  </FieldLabel>
+                  <Input
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => {
+                      field.handleChange(e.target.value);
+                    }}
+                    placeholder={
+                      predicate === "related_to"
+                        ? "Short why…"
+                        : "Optional notes…"
+                    }
+                    disabled={busy}
+                  />
+                </Field>
+              )}
+            </form.Field>
+          )}
+        </form.Subscribe>
+
+        <form.Field name="confidence">
+          {(field) => (
+            <Field>
+              <FieldLabel>Confidence</FieldLabel>
+              <FieldSelect
+                value={field.state.value}
+                options={CONFIDENCE_OPTIONS}
+                onValueChange={(v) => {
+                  field.handleChange(trimmedConfidenceTierSchema.parse(v));
+                }}
+                disabled={busy}
+                aria-label="Confidence"
+              />
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="evidenceIds">
+          {(field) => (
+            <Field>
+              <FieldLabel>Evidence</FieldLabel>
+              <EvidencePicker
+                options={evidenceOptions}
+                selectedIds={field.state.value}
+                onChange={(ids) => {
+                  field.handleChange(ids);
+                }}
+              />
+            </Field>
+          )}
+        </form.Field>
+      </FieldGroup>
+
+      <form.Subscribe selector={(s) => s.values}>
+        {(values) => {
+          const issues = connectionFormIssues(values, center.id).filter(
+            (i) => i !== "Select a peer entity"
+          );
+          return issues.map((issue) => (
+            <FormInlineWarning key={issue}>{issue}</FormInlineWarning>
+          ));
+        }}
+      </form.Subscribe>
+
+      <FieldError>{error}</FieldError>
+
+      <DialogFooter>
+        <Button type="button" variant="ghost" disabled={busy} onClick={onClose}>
+          Cancel
+        </Button>
+        <form.Subscribe selector={(s) => s.values}>
+          {(values) => (
+            <Button
+              type="submit"
+              loading={busy}
+              disabled={connectionFormIssues(values, center.id).length > 0}
+            >
+              {mode === "edit" ? "Save" : "Add"}
+            </Button>
+          )}
+        </form.Subscribe>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function ConnectionDialog({
+  open,
+  onOpenChange,
+  initial,
+  mode,
+  busy = false,
+  error = null,
+  ...rest
+}: Props) {
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>
-              {mode === "edit" ? "Edit connection" : "Add connection"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <FieldGroup>
-            <form.Subscribe
-              selector={(s) => ({
-                predicate: s.values.predicate,
-                orientation: s.values.orientation,
-              })}
-            >
-              {({ predicate, orientation }) => (
-                <form.Field name="peerId">
-                  {(field) => (
-                    <Field>
-                      <FieldLabel>Peer</FieldLabel>
-                      <EntityCombobox
-                        entities={peerOptions.filter((entity) =>
-                          peerKindAllowedForPhrase(
-                            center.kind,
-                            entity.kind,
-                            predicate,
-                            orientation
-                          )
-                        )}
-                        value={field.state.value}
-                        onValueChange={(next) => {
-                          const peerId =
-                            parseOptionalTrimmedUuid(next) ?? next.trim();
-                          field.handleChange(peerId);
-                          const peer = entitiesById.get(peerId);
-                          if (!peer) return;
-                          const clamped = clampEdgePhrase(
-                            center.kind,
-                            peer.kind,
-                            form.getFieldValue("predicate"),
-                            form.getFieldValue("orientation")
-                          );
-                          form.setFieldValue("predicate", clamped.predicate);
-                          form.setFieldValue(
-                            "orientation",
-                            clamped.orientation
-                          );
-                        }}
-                        emptyLabel="Select entity…"
-                        allowEmpty={false}
-                        disabled={busy}
-                        aria-label="Peer entity"
-                      />
-                    </Field>
-                  )}
-                </form.Field>
-              )}
-            </form.Subscribe>
-
-            <form.Subscribe
-              selector={(s) => ({
-                peerId: s.values.peerId,
-                predicate: s.values.predicate,
-                orientation: s.values.orientation,
-              })}
-            >
-              {({ peerId, predicate, orientation }) => {
-                const scopedPeerId =
-                  parseOptionalTrimmedUuid(peerId) ?? peerId.trim();
-                const peer = scopedPeerId
-                  ? entitiesById.get(scopedPeerId)
-                  : undefined;
-                const phrases = edgePhraseOptionsForPeers(
-                  center.kind,
-                  peerOptions,
-                  peer?.kind
-                );
-                const selectOptions = phrases.map((p) => ({
-                  value: p.value,
-                  label: p.label,
-                  group: p.group,
-                }));
-                const phraseValue = edgePhraseValue(predicate, orientation);
-
-                return (
-                  <Field>
-                    <FieldLabel>Relationship</FieldLabel>
-                    <FieldCombobox
-                      value={phraseValue}
-                      options={selectOptions}
-                      onValueChange={(v) => {
-                        const parsed = parseEdgePhraseValue(v);
-                        if (!parsed) return;
-                        form.setFieldValue("predicate", parsed.predicate);
-                        form.setFieldValue("orientation", parsed.orientation);
-                        if (
-                          peer &&
-                          !peerKindAllowedForPhrase(
-                            center.kind,
-                            peer.kind,
-                            parsed.predicate,
-                            parsed.orientation
-                          )
-                        ) {
-                          form.setFieldValue("peerId", "");
-                        }
-                      }}
-                      disabled={busy || selectOptions.length === 0}
-                      placeholder="Search relationships…"
-                      emptyText="No matching relationships."
-                      aria-label="Relationship"
-                    />
-                    {peer ? (
-                      <p className="text-muted-foreground text-xs">
-                        {orientation === "forward"
-                          ? `${entityDisplayLabel(center)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(peer)}`
-                          : `${entityDisplayLabel(peer)} → ${predicateLabel(predicate, "out")} → ${entityDisplayLabel(center)}`}
-                        {orientation === "inverse"
-                          ? ` · here: ${predicateLabel(predicate, "in")}`
-                          : null}
-                      </p>
-                    ) : null}
-                  </Field>
-                );
-              }}
-            </form.Subscribe>
-
-            <form.Subscribe selector={(s) => s.values.predicate}>
-              {(predicate) => (
-                <form.Field name="notes">
-                  {(field) => (
-                    <Field>
-                      <FieldLabel>
-                        {predicate === "related_to"
-                          ? "Why (required)"
-                          : "Notes"}
-                      </FieldLabel>
-                      <Input
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => {
-                          field.handleChange(e.target.value);
-                        }}
-                        placeholder={
-                          predicate === "related_to"
-                            ? "Short why…"
-                            : "Optional notes…"
-                        }
-                        disabled={busy}
-                      />
-                    </Field>
-                  )}
-                </form.Field>
-              )}
-            </form.Subscribe>
-
-            <form.Field name="confidence">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Confidence</FieldLabel>
-                  <FieldSelect
-                    value={field.state.value}
-                    options={CONFIDENCE_OPTIONS}
-                    onValueChange={(v) => {
-                      field.handleChange(trimmedConfidenceTierSchema.parse(v));
-                    }}
-                    disabled={busy}
-                    aria-label="Confidence"
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <form.Field name="evidenceIds">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Evidence</FieldLabel>
-                  <EvidencePicker
-                    options={evidenceOptions}
-                    selectedIds={field.state.value}
-                    onChange={(ids) => {
-                      field.handleChange(ids);
-                    }}
-                  />
-                </Field>
-              )}
-            </form.Field>
-          </FieldGroup>
-
-          <form.Subscribe selector={(s) => s.values}>
-            {(values) => {
-              const issues = connectionFormIssues(values, center.id).filter(
-                (i) => i !== "Select a peer entity"
-              );
-              return issues.map((issue) => (
-                <FormInlineWarning key={issue}>{issue}</FormInlineWarning>
-              ));
-            }}
-          </form.Subscribe>
-
-          <FieldError>{error}</FieldError>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => {
-                onOpenChange(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <form.Subscribe selector={(s) => s.values}>
-              {(values) => (
-                <Button
-                  type="submit"
-                  loading={busy}
-                  disabled={connectionFormIssues(values, center.id).length > 0}
-                >
-                  {mode === "edit" ? "Save" : "Add"}
-                </Button>
-              )}
-            </form.Subscribe>
-          </DialogFooter>
-        </form>
+        <ConnectionForm
+          key={`${mode}:${rest.center.id}:${initial?.id ?? ""}`}
+          mode={mode}
+          initial={initial}
+          busy={busy}
+          error={error}
+          onClose={() => {
+            onOpenChange(false);
+          }}
+          {...rest}
+        />
       </DialogContent>
     </Dialog>
   );

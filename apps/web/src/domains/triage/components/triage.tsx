@@ -1,5 +1,5 @@
 import { Link, Navigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
@@ -180,12 +180,22 @@ function TriageWithCase({
     statuses: triageStatusesFromSearch(initialStatus),
   }));
 
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      statuses: triageStatusesFromSearch(initialStatus),
-    }));
-  }, [initialStatus]);
+  // The URL status seeds the facet again when it changes from outside (back/forward,
+  // a link). Adjusted during render, so the first render after the change already
+  // shows the new facet; the search text stays.
+  const [seededStatus, setSeededStatus] = useState(initialStatus);
+  if (seededStatus !== initialStatus) {
+    setSeededStatus(initialStatus);
+    // The URL only encodes a single non-default status. When the facet already
+    // encodes to the new URL status, the URL is following the facet (a second status
+    // was ticked, the facet was cleared): keep it.
+    if (triageStatusSearchParam(filters) !== initialStatus) {
+      setFilters((prev) => ({
+        ...prev,
+        statuses: triageStatusesFromSearch(initialStatus),
+      }));
+    }
+  }
 
   const handleFiltersChange = useCallback(
     (next: TriageQueueFilters) => {

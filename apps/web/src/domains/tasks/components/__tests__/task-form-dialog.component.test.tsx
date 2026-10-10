@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { TaskRecord } from "@/domains/tasks/types";
@@ -47,6 +48,9 @@ vi.mock("@/shared/ui/entity-combobox", () => ({
   ),
 }));
 
+/** The status the select showed on each committed render. */
+const committedStatuses = vi.hoisted(() => [] as string[]);
+
 vi.mock("@/shared/ui/field-select", () => ({
   FieldSelect: ({
     value,
@@ -58,21 +62,26 @@ vi.mock("@/shared/ui/field-select", () => ({
     options: { value: string; label: string }[];
     onValueChange: (value: string) => void;
     "aria-label"?: string;
-  }) => (
-    <select
-      aria-label={ariaLabel}
-      value={value}
-      onChange={(event) => {
-        onValueChange(event.target.value);
-      }}
-    >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  ),
+  }) => {
+    useLayoutEffect(() => {
+      if (ariaLabel === "Task status") committedStatuses.push(value);
+    });
+    return (
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(event) => {
+          onValueChange(event.target.value);
+        }}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  },
 }));
 
 import { TaskFormDialog } from "@/domains/tasks/components/task-form-dialog";
@@ -163,5 +172,101 @@ describe("TaskFormDialog", () => {
       );
       expect(onDelete).toHaveBeenCalledTimes(1);
     });
+  });
+
+  const OTHER_TASK: TaskRecord = {
+    ...TASK,
+    id: testId(21),
+    title: "Chase invoice",
+    description: "Ask accounts",
+    status: "done",
+  };
+
+  it("shows the other task when the edited task switches, with no flash of the old one", () => {
+    const edit = (task: TaskRecord) => (
+      <TaskFormDialog
+        mode="edit"
+        open
+        onOpenChange={vi.fn()}
+        entities={ENTITIES}
+        task={task}
+        onSubmit={vi.fn()}
+      />
+    );
+    const view = render(edit(TASK));
+    expect(screen.getByLabelText("Task title")).toHaveValue("Verify alias");
+    committedStatuses.length = 0;
+
+    view.rerender(edit(OTHER_TASK));
+
+    expect(screen.getByLabelText("Task title")).toHaveValue("Chase invoice");
+    expect(screen.getByLabelText("Task description")).toHaveValue(
+      "Ask accounts"
+    );
+    expect(committedStatuses.length).toBeGreaterThan(0);
+    expect(new Set(committedStatuses)).toEqual(new Set(["done"]));
+  });
+
+  it("starts from the column's status when New task is opened from another column", () => {
+    const create = (defaultStatus: "backlog" | "done") => (
+      <TaskFormDialog
+        mode="create"
+        open
+        onOpenChange={vi.fn()}
+        entities={ENTITIES}
+        defaultStatus={defaultStatus}
+        onSubmit={vi.fn()}
+      />
+    );
+    const view = render(create("backlog"));
+    committedStatuses.length = 0;
+
+    view.rerender(create("done"));
+
+    expect(new Set(committedStatuses)).toEqual(new Set(["done"]));
+  });
+
+  it("keeps what is typed when the parent re-renders with a new onSubmit", () => {
+    const create = () => (
+      <TaskFormDialog
+        mode="create"
+        open
+        onOpenChange={vi.fn()}
+        entities={ENTITIES}
+        onSubmit={vi.fn()}
+      />
+    );
+    const view = render(create());
+    fireEvent.change(screen.getByLabelText("Task title"), {
+      target: { value: "Half typed" },
+    });
+
+    view.rerender(create());
+
+    expect(screen.getByLabelText("Task title")).toHaveValue("Half typed");
+  });
+
+  it("drops unsaved edits when the dialog is closed and opened again", async () => {
+    const dialog = (open: boolean) => (
+      <TaskFormDialog
+        mode="create"
+        open={open}
+        onOpenChange={vi.fn()}
+        entities={ENTITIES}
+        onSubmit={vi.fn()}
+      />
+    );
+    const view = render(dialog(true));
+    fireEvent.change(screen.getByLabelText("Task title"), {
+      target: { value: "Scratch" },
+    });
+
+    view.rerender(dialog(false));
+    await waitFor(() => {
+      expect(screen.queryByLabelText("Task title")).not.toBeInTheDocument();
+    });
+    view.rerender(dialog(true));
+
+    expect(screen.getByLabelText("Task title")).toHaveValue("");
   });
 });
