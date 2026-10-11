@@ -27,6 +27,7 @@ vi.mock("@dnd-kit/core", () => ({
   ),
   PointerSensor: class PointerSensor {},
   KeyboardSensor: class KeyboardSensor {},
+  KeyboardCode: { Space: "Space", Enter: "Enter", Esc: "Escape" },
   useSensor: vi.fn(),
   useSensors: () => [],
   closestCorners: vi.fn(() => []),

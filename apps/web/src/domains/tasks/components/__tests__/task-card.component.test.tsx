@@ -79,17 +79,22 @@ describe("TaskCard", () => {
   it.each([
     ["Enter", "{Enter}"],
     ["Space", " "],
-  ])("selects on %s from the keyboard", async (_label, keys) => {
-    const user = userEvent.setup();
-    const onSelect = vi.fn();
-    render(<TaskCard task={TASK} onSelect={onSelect} onDelete={vi.fn()} />);
+  ])(
+    "activates on %s as a native button (card alone, dnd-kit mocked; the board's real sensors are in task-board-keyboard.component.test.tsx)",
+    async (_label, keys) => {
+      const user = userEvent.setup();
+      const onSelect = vi.fn();
+      render(<TaskCard task={TASK} onSelect={onSelect} onDelete={vi.fn()} />);
 
-    await user.tab();
-    expect(screen.getByRole("button", { name: "Verify alias" })).toHaveFocus();
-    await user.keyboard(keys);
-    expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect).toHaveBeenCalledWith(TASK);
-  });
+      await user.tab();
+      expect(
+        screen.getByRole("button", { name: "Verify alias" })
+      ).toHaveFocus();
+      await user.keyboard(keys);
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith(TASK);
+    }
+  );
 
   it("keeps the actions menu a separate button, not nested in the card button", () => {
     render(<TaskCard task={TASK} onSelect={vi.fn()} onDelete={vi.fn()} />);

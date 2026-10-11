@@ -427,7 +427,6 @@ function OpenQuestionRow({
               variant="ghost"
               size="icon-xs"
               aria-label="Mark resolved"
-              title="Mark resolved"
               onClick={() => {
                 editor.handleCloseEdit();
                 onResolvingChange(question.id);

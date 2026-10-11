@@ -37,7 +37,7 @@ The shell (Page, header, toolbar) stays mounted; only the data region swaps stat
 | Blocking policy (e.g. dual-control) | Inline Alert, not a toast |
 | Destructive confirm fail | Inline error inside the dialog; stay open |
 
-One failure gets one layer, not a toast plus an inline error. Error copy: user-state `Couldn't` / `Can't`, system `Failed to`; never `Unable to` or `Oops`. The title names the resource (`Couldn't load jobs`). A failure message is `Couldn't <verb> <noun>`, built with `couldnt(verb, noun)` in `apps/web/src/lib/utils.ts` and handed to `errMessage` as the fallback: the server's own message wins when the caller can fix it, and a server failure reads `Couldn't <verb> <noun>. Try again.`.
+One failure gets one layer, not a toast plus an inline error. Error copy: user-state `Couldn't` / `Can't`, system `Failed to`; never `Unable to` or `Oops`. The title names the resource (`Couldn't load jobs`). The standard fallback for a failed action is `Couldn't <verb> <noun>`, built with `couldnt(verb, noun)` in `apps/web/src/lib/utils.ts` and handed to `errMessage` (system load failures may still say `Failed to ...`, and a few verb-only fallbacks are kept): the server's own message wins when the caller can fix it, and a server failure reads `Couldn't <verb> <noun>. Try again.`.
 
 ## Destructive actions
 

@@ -163,8 +163,9 @@ export function TaskCard({
   }
 
   // The card is a real button laid over its content (a button cannot contain the ⋯ menu's
-  // button): it names the card, takes the click and is the dnd-kit drag handle. Enter and
-  // Space activate it natively, or start a keyboard drag when dragging is on.
+  // button): it names the card, takes the click and is the dnd-kit drag handle. Enter
+  // activates it natively; on the board the KeyboardSensor lifts the card on Space only
+  // (see `keyboardCodes` in task-board.tsx).
   const inner = (
     <>
       <button

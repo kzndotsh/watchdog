@@ -136,8 +136,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   );
 
   const queryReady = query.trim().length >= SEARCH_MIN_QUERY_LENGTH;
+  // Below the minimum the last settled term stays for a tick; hide its results at once.
   const debouncedReady =
-    debouncedQuery.trim().length >= SEARCH_MIN_QUERY_LENGTH;
+    queryReady && debouncedQuery.trim().length >= SEARCH_MIN_QUERY_LENGTH;
   const pendingDebounce = queryReady && query.trim() !== debouncedQuery.trim();
   const showResults = debouncedReady && activeCaseId.length > 0;
   const searchQuery = searchCaseQuery(activeCaseId, debouncedQuery);
