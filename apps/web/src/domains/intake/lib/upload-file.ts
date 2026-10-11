@@ -3,6 +3,7 @@ import {
   presignUploadFn,
 } from "@/domains/intake/intake.functions";
 import type { EvidenceRecord } from "@/domains/intake/types";
+import { couldnt } from "@/lib/utils";
 import {
   confirmFileUploadInputSchema,
   presignUploadInputSchema,
@@ -58,7 +59,7 @@ export function uploadFileEvidence(input: {
         body: input.file,
       }).then((res) => {
         if (!res.ok) {
-          throw new Error(`Upload failed (${res.status})`);
+          throw new Error(`${couldnt("upload", "file")} (${res.status})`);
         }
         return { put, sha256, mime };
       })

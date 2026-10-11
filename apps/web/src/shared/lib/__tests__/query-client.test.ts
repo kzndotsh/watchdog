@@ -43,4 +43,11 @@ describe("createAppQueryClient", () => {
     } as never);
     expect(toastErrorMock).toHaveBeenCalledWith("Couldn't load. Try again.");
   });
+
+  it("toasts house copy when the error is not an Error or string", () => {
+    const cache = createAppQueryClient().getQueryCache();
+    toastErrorMock.mockClear();
+    cache.config.onError?.({ code: "x" } as never, { meta: {} } as never);
+    expect(toastErrorMock).toHaveBeenCalledWith("Couldn't complete request");
+  });
 });

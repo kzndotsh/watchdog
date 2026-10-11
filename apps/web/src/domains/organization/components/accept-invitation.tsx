@@ -10,7 +10,7 @@ import { PasswordStrengthMeter } from "@/auth/ui/password-strength-meter";
 import { useAcceptInvitation } from "@/domains/organization/hooks/use-accept-invitation";
 import { useRegisterInvitee } from "@/domains/organization/hooks/use-register-invitee";
 import { organizationKeys } from "@/domains/organization/queries";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
@@ -59,7 +59,7 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   const previewLoadError = queryLoadError(
     previewQuery,
     previewPending,
-    "Couldn't load invitation"
+    couldnt("load", "invitation")
   );
 
   if (previewPending || sessionPending) {
@@ -99,11 +99,14 @@ export function AcceptInvitation({ invitationId }: { invitationId: string }) {
   if (actionError === null && acceptExisting.error) {
     actionError = errMessage(
       acceptExisting.error,
-      "Couldn't accept invitation"
+      couldnt("accept", "invitation")
     );
   }
   if (actionError === null && registerInvitee.error) {
-    actionError = errMessage(registerInvitee.error, "Couldn't create account");
+    actionError = errMessage(
+      registerInvitee.error,
+      couldnt("create", "account")
+    );
   }
 
   return (

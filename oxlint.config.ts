@@ -340,6 +340,8 @@ export default defineConfig({
     "react-doctor/no-derived-state": "error",
     "react-doctor/no-derived-state-effect": "error",
     "react-doctor/no-fetch-in-effect": "error",
+    // An icon-only Button needs an accessible name, aria-label or sr-only text (docs/reference/web/ui/atoms.md Accessibility).
+    "react-doctor/shadcn-icon-button-requires-label": "error",
     // Effect policy (docs/reference/web/ui/effects.md): no prop-to-state sync.
     "react-doctor/no-mirror-prop-effect": "error",
     "react-doctor/no-adjust-state-on-prop-change": "error",

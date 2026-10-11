@@ -5,7 +5,7 @@ import {
   setActiveCaseIdInputSchema,
   type CaseRecord,
 } from "@/domains/cases/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import {
   finalizeActiveCaseSwitch,
   navigateAfterActiveCaseSwitch,
@@ -23,7 +23,7 @@ type NavigateFn = (opts: {
 }) => Promise<void> | void;
 
 /** The one failure copy for switching the Active Case (house style: errMessage adds "Try again." on a 500). */
-export const ACTIVE_CASE_SWITCH_ERROR = "Couldn't switch Case.";
+export const ACTIVE_CASE_SWITCH_ERROR = `${couldnt("switch", "Case")}.`;
 
 /**
  * The one way to switch the Active Case: server write, optimistic cache update,

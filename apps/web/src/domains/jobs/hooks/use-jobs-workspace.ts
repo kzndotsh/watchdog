@@ -19,7 +19,7 @@ import {
 } from "@/domains/jobs/lib/status";
 import { jobDetailQuery, jobsKeys } from "@/domains/jobs/queries";
 import type { CapListItem } from "@/domains/jobs/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { queryEnabledFlag } from "@/shared/lib/query-enabled";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
@@ -198,7 +198,7 @@ export function useJobsWorkspace(
       await invalidateAfterJobMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setError(errMessage(e, "Couldn't start job"));
+      setError(errMessage(e, couldnt("start", "job")));
     },
   });
 
@@ -243,7 +243,7 @@ export function useJobsWorkspace(
       await invalidateAfterJobMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setError(errMessage(e, "Couldn't start playbook"));
+      setError(errMessage(e, couldnt("start", "playbook")));
     },
   });
 
@@ -258,7 +258,7 @@ export function useJobsWorkspace(
       await invalidateAfterJobMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setError(errMessage(e, "Cancel failed"));
+      setError(errMessage(e, couldnt("cancel", "job")));
     },
   });
 
@@ -277,7 +277,7 @@ export function useJobsWorkspace(
       await invalidateAfterJobMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setError(errMessage(e, "Couldn't cancel playbook"));
+      setError(errMessage(e, couldnt("cancel", "playbook")));
     },
   });
 

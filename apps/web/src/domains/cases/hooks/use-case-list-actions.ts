@@ -5,7 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
@@ -60,7 +60,7 @@ function buildCaseListActionHandlers(
       try {
         await navigateToCase(navigate, caseRow);
       } catch (error) {
-        setSubmitError(errMessage(error, "Couldn't open Case."));
+        setSubmitError(errMessage(error, `${couldnt("open", "Case")}.`));
       }
     },
     openCreate: () => {

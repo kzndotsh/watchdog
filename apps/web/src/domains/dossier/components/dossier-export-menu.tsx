@@ -4,7 +4,7 @@ import {
   copyEntityMarkdown,
   openEntityMarkdownInChat,
 } from "@/domains/entities/lib/entity-export";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
@@ -20,7 +20,7 @@ async function handleCopyMarkdown(caseId: string, entitySlug: string) {
   try {
     await copyEntityMarkdown(caseId, entitySlug);
   } catch (error: unknown) {
-    toast.error(errMessage(error, "Copy failed"));
+    toast.error(errMessage(error, couldnt("copy", "Markdown")));
   }
 }
 
@@ -33,7 +33,7 @@ async function handleOpenInClaude(caseId: string, entitySlug: string) {
       "Opened in Claude"
     );
   } catch (error: unknown) {
-    toast.error(errMessage(error, "Open failed"));
+    toast.error(errMessage(error, couldnt("open", "Markdown in chat")));
   }
 }
 
@@ -46,7 +46,7 @@ async function handleOpenInChatGpt(caseId: string, entitySlug: string) {
       "Opened in ChatGPT"
     );
   } catch (error: unknown) {
-    toast.error(errMessage(error, "Open failed"));
+    toast.error(errMessage(error, couldnt("open", "Markdown in chat")));
   }
 }
 

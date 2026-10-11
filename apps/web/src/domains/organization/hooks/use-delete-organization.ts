@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
+import { couldnt } from "@/lib/utils";
 
 /**
  * Delete an organization (variable: its id). No cache settling: the caller reloads into
@@ -13,7 +14,8 @@ export function useDeleteOrganization() {
       const { error } = await authClient.organization.delete({
         organizationId,
       });
-      if (error) throw new Error(error.message ?? "Couldn't delete");
+      if (error)
+        throw new Error(error.message ?? couldnt("delete", "organization"));
     },
   });
 }

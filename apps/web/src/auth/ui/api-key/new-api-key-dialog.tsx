@@ -5,7 +5,7 @@ import { Check, Copy, Key } from "lucide-react";
 import { useState } from "react";
 
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
-import { errMessage, firstNonEmpty } from "@/lib/utils";
+import { couldnt, errMessage, firstNonEmpty } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +52,7 @@ export function NewApiKeyDialog({
         setCopied(false);
       }, 1500);
     } catch (error) {
-      toast.error(errMessage(error, "Copy failed"));
+      toast.error(errMessage(error, couldnt("copy", "API key")));
     }
   };
 

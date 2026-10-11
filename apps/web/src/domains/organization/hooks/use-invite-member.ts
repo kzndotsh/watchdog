@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
 import { organizationKeys } from "@/domains/organization/queries";
-import { errMessage, messageOr } from "@/lib/utils";
+import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
 export interface InviteMemberVariables {
@@ -22,7 +22,9 @@ export function useInviteMember({
         role,
       });
       if (error)
-        throw new Error(messageOr(error.message, "Couldn't send invitation"));
+        throw new Error(
+          messageOr(error.message, couldnt("send", "invitation"))
+        );
     },
     onSuccess: async () => {
       onInvited?.();
@@ -34,7 +36,7 @@ export function useInviteMember({
       });
     },
     onError: (error) => {
-      toast.error(errMessage(error, "Couldn't send invitation"));
+      toast.error(errMessage(error, couldnt("send", "invitation")));
     },
   });
 }

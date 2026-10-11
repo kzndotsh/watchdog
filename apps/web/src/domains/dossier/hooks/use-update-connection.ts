@@ -5,7 +5,7 @@ import type { DossierEntityScope } from "@/domains/dossier/types";
 import { updateEdgeFn } from "@/domains/entities/edges/edges.functions";
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import { buildUpdateEdgeData } from "@/domains/entities/lib/edge-write";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
@@ -61,7 +61,7 @@ export function useUpdateConnection({
       });
     },
     onError: (caughtError) => {
-      onError?.(errMessage(caughtError, "Update failed"));
+      onError?.(errMessage(caughtError, couldnt("update", "connection")));
     },
   });
 }

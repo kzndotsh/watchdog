@@ -18,7 +18,7 @@ import {
 } from "@/domains/entities/lib/edge-write";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import {
   TOAST_ENTITY_CREATED,
@@ -73,7 +73,7 @@ async function onEntityFieldsUpdated(
 }
 
 function onEntityFieldsError(error: unknown): void {
-  toast.error(errMessage(error, "Update failed"));
+  toast.error(errMessage(error, couldnt("update", "entity")));
 }
 
 function createEntityConnection(caseId: string, vars: ConnectionVars) {
@@ -242,7 +242,7 @@ export function useEntityTableMutations(caseId: string) {
     onSuccess: async (_data, vars) =>
       onConnectionDeleted(queryClient, caseId, vars.centerId),
     onError: (error) => {
-      toast.error(errMessage(error, "Delete failed"));
+      toast.error(errMessage(error, couldnt("delete", "connection")));
     },
   });
 

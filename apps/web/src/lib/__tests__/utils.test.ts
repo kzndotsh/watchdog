@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 
 import {
+  couldnt,
   errMessage,
   firstNonEmpty,
   messageOr,
@@ -63,9 +64,9 @@ describe("errMessage", () => {
     expect(
       errMessage(
         { code: "INTERNAL_SERVER_ERROR", status: 500 },
-        "Import failed"
+        couldnt("import", "identifiers")
       )
-    ).toBe("Import failed. Try again.");
+    ).toBe("Couldn't import identifiers. Try again.");
   });
 
   it("keeps caller-fixable and non-error messages unchanged", () => {
@@ -75,6 +76,29 @@ describe("errMessage", () => {
     expect(errMessage(invalid, "Couldn't save claim")).toBe("Name is required");
     expect(errMessage("weird", "Couldn't save claim")).toBe(
       "Couldn't save claim"
+    );
+  });
+});
+
+describe("couldnt", () => {
+  it("composes Couldn't <verb> <noun>", () => {
+    expect(couldnt("save", "claim")).toBe("Couldn't save claim");
+    expect(couldnt("sign out", "sessions")).toBe("Couldn't sign out sessions");
+  });
+
+  it("is the fallback errMessage shows for an opaque error and for a 500", () => {
+    expect(errMessage("weird", couldnt("delete", "Case"))).toBe(
+      "Couldn't delete Case"
+    );
+    expect(
+      errMessage({ code: "INTERNAL_SERVER_ERROR" }, couldnt("contest", "claim"))
+    ).toBe("Couldn't contest claim. Try again.");
+  });
+
+  it("lets a caller-fixable server message through unchanged", () => {
+    const invalid = new ORPCError("BAD_REQUEST", { message: "Name is taken" });
+    expect(errMessage(invalid, couldnt("create", "Case"))).toBe(
+      "Name is taken"
     );
   });
 });

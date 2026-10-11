@@ -9,7 +9,7 @@ import {
   restoreEvidenceFn,
   softDeleteEvidenceFn,
 } from "@/domains/intake/intake.functions";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import {
   invalidateAfterEvidenceMutation,
   invalidateAfterJobMutation,
@@ -86,7 +86,7 @@ export function useIntakeActions({
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setActionError(errMessage(e, "Harvest/Extract failed"));
+      setActionError(errMessage(e, couldnt("harvest or extract", "evidence")));
     },
     onSettled: () => {
       setPending(null);
@@ -104,7 +104,7 @@ export function useIntakeActions({
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setActionError(errMessage(e, "Enrich failed"));
+      setActionError(errMessage(e, couldnt("enrich", "evidence")));
     },
     onSettled: () => {
       setPending(null);
@@ -121,7 +121,7 @@ export function useIntakeActions({
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setActionError(errMessage(e, "Hide failed"));
+      setActionError(errMessage(e, couldnt("hide", "evidence")));
     },
   });
 
@@ -136,7 +136,7 @@ export function useIntakeActions({
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setActionError(errMessage(e, "Restore failed"));
+      setActionError(errMessage(e, couldnt("restore", "evidence")));
     },
   });
 
@@ -153,7 +153,7 @@ export function useIntakeActions({
       await invalidateAfterEvidenceMutation(queryClient, caseId);
     },
     onError: (e) => {
-      setActionError(errMessage(e, "Attach failed"));
+      setActionError(errMessage(e, couldnt("attach", "evidence")));
     },
   });
 

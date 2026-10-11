@@ -242,6 +242,42 @@ describe("CommandPalette", () => {
     });
   });
 
+  it("hides settled hits in the same render once the input drops below the minimum", async () => {
+    renderPalette(true, {
+      data: {
+        entities: [
+          {
+            id: testId(20),
+            name: "Target One",
+            slug: "target-one",
+            kind: "person",
+          },
+        ],
+        identifiers: [],
+        evidence: [],
+        tasks: [],
+        jobs: [],
+        proposals: [],
+        cases: [],
+        evidenceLabels: {},
+        entityLabels: {},
+      },
+      isFetching: false,
+      isError: false,
+    });
+    const input = screen.getByPlaceholderText(
+      "Search entities, evidence, tasks…"
+    );
+
+    fireEvent.change(input, { target: { value: "ta" } });
+    await waitFor(() => {
+      expect(screen.getByText("Target One")).toBeInTheDocument();
+    });
+
+    fireEvent.change(input, { target: { value: "t" } });
+    expect(screen.queryByText("Target One")).not.toBeInTheDocument();
+  });
+
   it("shows slug fallback for entity hits with blank names", async () => {
     renderPalette(true, {
       data: {

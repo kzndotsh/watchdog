@@ -14,7 +14,7 @@ import { useAcceptUserInvitation } from "@/domains/organization/hooks/use-accept
 import { useDeclineInvitation } from "@/domains/organization/hooks/use-decline-invitation";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
 import { organizationKeys } from "@/domains/organization/queries";
-import { messageOr } from "@/lib/utils";
+import { couldnt, messageOr } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
 import { Button } from "@/shared/ui/primitives/button";
 import {
@@ -37,7 +37,7 @@ interface UserInvitation {
 async function loadUserInvitations(): Promise<UserInvitation[]> {
   const { data, error } = await authClient.organization.listUserInvitations();
   if (error) {
-    throw new Error(messageOr(error.message, "Couldn't load invitations"));
+    throw new Error(messageOr(error.message, couldnt("load", "invitations")));
   }
   return (data as UserInvitation[]).filter((row) => row.status === "pending");
 }

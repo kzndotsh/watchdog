@@ -45,6 +45,10 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | No manual Refresh buttons on live paths | [`data.md`](../data.md) | `guidance` |
 | Screens are named by layout kind; Console / Workbench / Tape banned; never a screen named `*Panel` | [`README.md`](README.md#chrome-lexicon-ui-parts) | `oxlint` `watchdog/no-banned-surface-name` (export names only); `*Panel` is `guidance` |
 | Copy: `Couldn't` / `Can't` / `Failed to`; Title Case labels; `Verb + Noun` primaries | [`ux.md`](../../../explanation/ux.md) | `guidance` |
+| No hand-written `<Verb> failed` or `Could not ...` failure string; a failure fallback is `couldnt(verb, noun)` into `errMessage` (`Failed to ...` for system load failures and a few verb-only fallbacks stay) | [`ux.md`](../../../explanation/ux.md) | `apps/web/src/lib/__tests__/source-conventions.test.ts` bans the two string shapes; using the helper at call sites is `guidance` |
+| Typed-input debounce uses `useDebouncedValue` (`shared/hooks`, TanStack Pacer) with a delay named in `shared/lib/debounce.ts` | [`effects.md`](effects.md) | `apps/web/src/lib/__tests__/source-conventions.test.ts` bans a `*DEBOUNCE*` constant outside `debounce.ts`; avoiding a local typing timer is `guidance` |
+| An icon-only control has an accessible name: `aria-label` or sr-only text; `title` alone is a tooltip, not a name | [`atoms.md`](atoms.md#accessibility) | `oxlint` `react-doctor/shadcn-icon-button-requires-label` (the `Button` primitive only); an icon-only raw `<button>` is `guidance` |
+| No `role="button"` literal; a clickable card is a real `<button>` (an overlay when it holds other controls) | [`atoms.md`](atoms.md#accessibility) | `apps/web/src/lib/__tests__/source-conventions.test.ts` bans the literal; real-button cards are `guidance` |
 
 ## Taste
 

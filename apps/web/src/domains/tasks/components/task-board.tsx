@@ -1,6 +1,7 @@
 import {
   DndContext,
   DragOverlay,
+  KeyboardCode,
   KeyboardSensor,
   PointerSensor,
   closestCorners,
@@ -104,6 +105,13 @@ export function TaskBoard({
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
+      // Space lifts a card; Enter is left to the card button, which selects it. While a
+      // card is lifted, Space or Enter drops it and Escape cancels.
+      keyboardCodes: {
+        start: [KeyboardCode.Space],
+        cancel: [KeyboardCode.Esc],
+        end: [KeyboardCode.Space, KeyboardCode.Enter],
+      },
     })
   );
 

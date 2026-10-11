@@ -1,6 +1,6 @@
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 
-import { isServerFailure, serverFailureMessage } from "@/lib/utils";
+import { couldnt, isServerFailure, serverFailureMessage } from "@/lib/utils";
 import { GC_DEFAULT, STALE_DEFAULT } from "@/shared/lib/query-stale";
 import { toast } from "@/shared/ui/toast";
 
@@ -8,7 +8,7 @@ function errorMessage(error: unknown): string {
   if (isServerFailure(error)) return serverFailureMessage("Couldn't load");
   if (error instanceof Error && error.message) return error.message;
   if (typeof error === "string" && error.length > 0) return error;
-  return "Request failed";
+  return couldnt("complete", "request");
 }
 
 /** Fresh QueryClient per router instance (SSR-safe). Not a module singleton. */

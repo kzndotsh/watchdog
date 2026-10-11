@@ -6,7 +6,7 @@ import {
   buildUpdateIdentifierData,
   type UpdateIdentifierPatch,
 } from "@/domains/entities/lib/identifier-write";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_IDENTIFIER_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
@@ -40,7 +40,7 @@ export function useUpdateIdentifier({
       });
     },
     onError: (caughtError) => {
-      onError?.(errMessage(caughtError, "Update failed"));
+      onError?.(errMessage(caughtError, couldnt("update", "identifier")));
     },
   });
 }

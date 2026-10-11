@@ -1,3 +1,4 @@
+import { couldnt } from "@/lib/utils";
 import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
@@ -12,7 +13,7 @@ export async function fetchEntityMarkdown(
   const url = entityMarkdownExportPath(caseId, entitySlug);
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`Export failed (${res.status})`);
+    throw new Error(`${couldnt("export", "entities")} (${res.status})`);
   }
   return res.text();
 }

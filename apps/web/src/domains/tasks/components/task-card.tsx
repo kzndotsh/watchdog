@@ -1,12 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarIcon } from "lucide-react";
-import {
-  useMemo,
-  type KeyboardEvent,
-  type MouseEvent,
-  type PointerEvent,
-} from "react";
+import { useMemo, type MouseEvent, type PointerEvent } from "react";
 
 import { isTaskDueOverdue } from "@/domains/tasks/lib/due-date";
 import { taskCardActions } from "@/domains/tasks/lib/task-card-actions";
@@ -121,6 +116,7 @@ export function TaskCard({
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -150,7 +146,7 @@ export function TaskCard({
 
   const shellClassName = cn(
     TASK_CARD_SHELL_CLASS,
-    "group cursor-grab touch-none text-left active:cursor-grabbing",
+    "group text-left",
     !isDragging && "overflow-hidden",
     selected && !isDragging && "ring-foreground/25 ring-1",
     isDragging && "border-primary/70 bg-primary/5 border-dashed shadow-none",
@@ -166,32 +162,40 @@ export function TaskCard({
     onSelect(task);
   }
 
-  function onCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-    event.preventDefault();
-    selectFromCard();
-  }
-
+  // The card is a real button laid over its content (a button cannot contain the ⋯ menu's
+  // button): it names the card, takes the click and is the dnd-kit drag handle. Enter
+  // activates it natively; on the board the KeyboardSensor lifts the card on Space only
+  // (see `keyboardCodes` in task-board.tsx).
   const inner = (
-    <div className={cn("min-w-0 flex-1", isDragging && "invisible")}>
-      <TaskCardBody task={task} entity={entity} overdue={overdue} />
-      {dropdownActions.length > 0 && !isDragging ? (
-        // oxlint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- stop ⋯ pointer from selecting/dragging the card
-        <div
-          className="absolute top-1 right-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
-          onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
-            event.stopPropagation();
-          }}
-          onClick={(event: MouseEvent<HTMLDivElement>) => {
-            event.stopPropagation();
-          }}
-        >
-          <RowActionsMenu label="Task actions" actions={dropdownActions} />
-        </div>
-      ) : null}
-    </div>
+    <>
+      <button
+        ref={setActivatorNodeRef}
+        type="button"
+        title={task.title}
+        aria-label={task.title}
+        className="focus-visible:ring-ring/50 absolute inset-0 cursor-grab touch-none rounded-md focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset active:cursor-grabbing"
+        onClick={selectFromCard}
+        {...attributes}
+        {...listeners}
+      />
+      <div className={cn("min-w-0 flex-1", isDragging && "invisible")}>
+        <TaskCardBody task={task} entity={entity} overdue={overdue} />
+        {dropdownActions.length > 0 && !isDragging ? (
+          // oxlint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- stop ⋯ pointer from selecting/dragging the card
+          <div
+            className="absolute top-1 right-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+            onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
+              event.stopPropagation();
+            }}
+            onClick={(event: MouseEvent<HTMLDivElement>) => {
+              event.stopPropagation();
+            }}
+          >
+            <RowActionsMenu label="Task actions" actions={dropdownActions} />
+          </div>
+        ) : null}
+      </div>
+    </>
   );
 
   if (actions.length > 0) {
@@ -199,18 +203,7 @@ export function TaskCard({
       <ActionsContextMenu
         actions={actions}
         trigger={
-          <div
-            ref={setNodeRef}
-            style={shellStyle}
-            className={shellClassName}
-            onClick={selectFromCard}
-            onKeyDown={onCardKeyDown}
-            {...attributes}
-            {...listeners}
-            role="button"
-            tabIndex={0}
-            aria-label={task.title}
-          />
+          <div ref={setNodeRef} style={shellStyle} className={shellClassName} />
         }
       >
         {inner}
@@ -219,18 +212,7 @@ export function TaskCard({
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={shellStyle}
-      className={shellClassName}
-      onClick={selectFromCard}
-      onKeyDown={onCardKeyDown}
-      {...attributes}
-      {...listeners}
-      role="button"
-      tabIndex={0}
-      aria-label={task.title}
-    >
+    <div ref={setNodeRef} style={shellStyle} className={shellClassName}>
       {inner}
     </div>
   );

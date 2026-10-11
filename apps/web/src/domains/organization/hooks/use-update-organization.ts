@@ -2,6 +2,7 @@ import { authQueryKeys } from "@better-auth-ui/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
+import { couldnt } from "@/lib/utils";
 
 export interface UpdateOrganizationVariables {
   id: string;
@@ -23,7 +24,8 @@ export function useUpdateOrganization() {
           logo: input.logo ?? "",
         },
       });
-      if (error) throw new Error(error.message ?? "Couldn't save");
+      if (error)
+        throw new Error(error.message ?? couldnt("save", "organization"));
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: authQueryKeys.all });

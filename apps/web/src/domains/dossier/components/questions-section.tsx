@@ -23,7 +23,7 @@ import type {
 } from "@/domains/dossier/types";
 import { questionsListQuery } from "@/domains/entities/questions/queries";
 import type { QuestionRecord } from "@/domains/entities/questions/types";
-import { cn, errMessage } from "@/lib/utils";
+import { cn, couldnt, errMessage } from "@/lib/utils";
 import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
@@ -119,7 +119,7 @@ function QuestionComposer({
           ...(includeNote ? { resolvedNote: value.note.trim() || null } : {}),
         });
       } catch (caughtError) {
-        onError(errMessage(caughtError, "Save failed"));
+        onError(errMessage(caughtError, couldnt("save", "question")));
       }
     },
   });
@@ -239,7 +239,7 @@ function ResolveForm({
           resolvedNote: value.resolveNote.trim() || undefined,
         });
       } catch (caughtError) {
-        onError(errMessage(caughtError, "Resolve failed"));
+        onError(errMessage(caughtError, couldnt("resolve", "question")));
       }
     },
   });
@@ -421,17 +421,20 @@ function OpenQuestionRow({
           ) : null}
         </div>
         {resolving ? null : (
-          <button
-            type="button"
-            title="Mark resolved"
-            className="text-muted-foreground hover:text-foreground mt-0.5 rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-            onClick={() => {
-              editor.handleCloseEdit();
-              onResolvingChange(question.id);
-            }}
-          >
-            <CheckIcon className="size-3.5" />
-          </button>
+          <span className="mt-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Mark resolved"
+              onClick={() => {
+                editor.handleCloseEdit();
+                onResolvingChange(question.id);
+              }}
+            >
+              <CheckIcon className="size-3.5" />
+            </Button>
+          </span>
         )}
       </TargetActionsHost>
     </QuestionNode>

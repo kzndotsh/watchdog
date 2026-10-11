@@ -15,6 +15,7 @@ import { authClient } from "@/auth/client";
 import { CreateOrganizationForm } from "@/domains/organization/components/create-organization-form";
 import { OrgAvatar } from "@/domains/organization/components/org-avatar";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
+import { couldnt } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -103,7 +104,7 @@ export function OrgSwitcher() {
                           onSuccess: reloadIntoOrganization,
                           onError: (error) => {
                             toast.error(
-                              error.message || "Could not switch organization"
+                              error.message || couldnt("switch", "organization")
                             );
                           },
                         }

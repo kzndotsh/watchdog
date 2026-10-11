@@ -44,4 +44,18 @@ describe("useDeleteEvent", () => {
       onError,
     });
   });
+
+  it("reports a server failure as Couldn't delete event, then Try again", async () => {
+    await expectReportsFailure({
+      useVerb: () => useDeleteEvent({ onError }),
+      serverFn,
+      variables: {
+        ...SCOPE_A,
+        eventId: testId(33),
+      },
+      onError,
+      rejectWith: { code: "INTERNAL_SERVER_ERROR", status: 500 },
+      message: "Couldn't delete event. Try again.",
+    });
+  });
 });

@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { dumpPasteFn, dumpUrlFn } from "@/domains/intake/intake.functions";
 import { uploadFileEvidence } from "@/domains/intake/lib/upload-file";
 import type { EvidenceRecord } from "@/domains/intake/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEvidenceMutation } from "@/shared/lib/query-invalidation";
 import {
   TOAST_UPLOAD_FAILED,
@@ -58,7 +58,7 @@ export function useDumpEvidence({
         } catch (error) {
           failures.push({
             name: file.name,
-            message: errMessage(error, "Upload failed"),
+            message: errMessage(error, couldnt("upload", "file")),
           });
         }
       }
@@ -86,7 +86,7 @@ export function useDumpEvidence({
       }
     },
     onError: (e) => {
-      setDumpError(errMessage(e, "Upload failed"));
+      setDumpError(errMessage(e, couldnt("upload", "file")));
     },
     onSettled: () => {
       setUploadStatus(null);
@@ -113,7 +113,7 @@ export function useDumpEvidence({
       onSuccess?.([created]);
     },
     onError: (e) => {
-      setDumpError(errMessage(e, "Dump failed"));
+      setDumpError(errMessage(e, couldnt("dump", "evidence")));
     },
   });
 
@@ -133,7 +133,7 @@ export function useDumpEvidence({
       onSuccess?.([created]);
     },
     onError: (e) => {
-      setDumpError(errMessage(e, "Dump failed"));
+      setDumpError(errMessage(e, couldnt("dump", "evidence")));
     },
   });
 

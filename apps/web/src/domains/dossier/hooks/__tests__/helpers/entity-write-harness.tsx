@@ -136,13 +136,19 @@ export async function expectReportsFailure<V>({
   serverFn,
   variables,
   onError,
+  rejectWith = new Error("nope"),
+  message = "nope",
 }: {
   useVerb: () => WriteVerb<V>;
   serverFn: Mock;
   variables: V;
   onError: Mock;
+  /** What the server function rejects with (default: a plain `Error("nope")`). */
+  rejectWith?: unknown;
+  /** The failure message the hook must report for it. */
+  message?: string;
 }) {
-  serverFn.mockRejectedValue(new Error("nope"));
+  serverFn.mockRejectedValue(rejectWith);
   const { wrapper, invalidated } = createHarness();
   const { result } = renderHook(() => useVerb(), { wrapper });
 
@@ -151,7 +157,7 @@ export async function expectReportsFailure<V>({
   });
 
   await waitFor(() => {
-    expect(onError).toHaveBeenCalledWith("nope");
+    expect(onError).toHaveBeenCalledWith(message);
   });
   expect(invalidated(CASE_A)).toEqual(settledKeys(CASE_A).map(() => false));
   expect(invalidated(CASE_B)).toEqual(settledKeys(CASE_B).map(() => false));

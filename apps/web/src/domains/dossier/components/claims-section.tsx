@@ -26,7 +26,7 @@ import type {
 } from "@/domains/dossier/types";
 import { claimsListQuery } from "@/domains/entities/claims/queries";
 import type { ClaimRecord } from "@/domains/entities/claims/types";
-import { cn, errMessage } from "@/lib/utils";
+import { cn, couldnt, errMessage } from "@/lib/utils";
 import { isConfirmedBlocked } from "@/shared/lib/confirmed-evidence";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
@@ -201,7 +201,7 @@ function ClaimComposer({
           text,
         });
       } catch (caughtError) {
-        onError(errMessage(caughtError, "Save failed"));
+        onError(errMessage(caughtError, couldnt("save", "claim")));
       }
     },
   });
@@ -350,7 +350,7 @@ function ClaimActionForm({
     onRetracted: onSaved,
   });
 
-  const failureCopy = `Couldn't ${ACTION_LABELS[action].toLowerCase()} claim`;
+  const failureCopy = couldnt(ACTION_LABELS[action].toLowerCase(), "claim");
   const actionForm = useForm({
     defaultValues: { actionReason: "" },
     onSubmit: async ({ value }) => {

@@ -4,7 +4,7 @@ import { Camera, Trash2, Upload } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
 
 import { UserAvatar } from "@/auth/ui/user/user-avatar";
-import { cn, errMessage, firstNonEmpty } from "@/lib/utils";
+import { cn, couldnt, errMessage, firstNonEmpty } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
 import { Field } from "@watchdog/ui/components/field";
@@ -52,7 +52,7 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
         }
       );
     } catch (error) {
-      toast.error(errMessage(error, "Avatar upload failed"));
+      toast.error(errMessage(error, couldnt("upload", "avatar")));
     }
 
     setIsUploading(false);
