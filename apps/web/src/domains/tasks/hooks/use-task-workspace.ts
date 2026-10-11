@@ -20,7 +20,7 @@ import {
   updateTaskFn,
 } from "@/domains/tasks/tasks.functions";
 import type { TaskEntityLabel, TaskRecord } from "@/domains/tasks/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { invalidateAfterTaskMutation } from "@/shared/lib/query-invalidation";
@@ -116,7 +116,7 @@ export function useTaskWorkspace(
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
-      setFormError(errMessage(e, "Create failed"));
+      setFormError(errMessage(e, couldnt("create", "task")));
     },
   });
 
@@ -139,7 +139,7 @@ export function useTaskWorkspace(
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
-      setQuickCreateError(errMessage(e, "Create failed"));
+      setQuickCreateError(errMessage(e, couldnt("create", "task")));
     },
   });
 
@@ -157,7 +157,7 @@ export function useTaskWorkspace(
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
-      setFormError(errMessage(e, "Update failed"));
+      setFormError(errMessage(e, couldnt("update", "task")));
     },
   });
 
@@ -175,7 +175,7 @@ export function useTaskWorkspace(
       await invalidateAfterTaskMutation(qc, caseId);
     },
     onError: (e) => {
-      toast.error(errMessage(e, "Delete failed"));
+      toast.error(errMessage(e, couldnt("delete", "task")));
     },
   });
 
@@ -209,7 +209,7 @@ export function useTaskWorkspace(
           qc.setQueryData(key, data);
         }
       }
-      toast.error(errMessage(e, "Move failed"));
+      toast.error(errMessage(e, couldnt("move", "task")));
     },
     onSettled: async () => {
       await invalidateAfterTaskMutation(qc, caseId);
@@ -226,7 +226,7 @@ export function useTaskWorkspace(
         }),
       }),
     onError: (e) => {
-      toast.error(errMessage(e, "Reorder failed"));
+      toast.error(errMessage(e, couldnt("reorder", "tasks")));
     },
     onSettled: async () => {
       await invalidateAfterTaskMutation(qc, caseId);

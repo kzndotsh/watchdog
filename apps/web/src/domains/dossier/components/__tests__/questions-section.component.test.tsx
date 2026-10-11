@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { QuestionRecord } from "@/domains/entities/questions/types";
@@ -99,5 +100,14 @@ describe("QuestionsSection", () => {
     expect(screen.getByText("Q01")).toBeInTheDocument();
     expect(screen.getByText("Resolved")).toBeInTheDocument();
     expect(screen.getByText("→ Found in WHOIS")).toBeInTheDocument();
+  });
+
+  it("names the icon-only resolve control and opens the resolve form from it", async () => {
+    const user = userEvent.setup();
+    renderSection([OPEN]);
+    await user.click(screen.getByRole("button", { name: "Mark resolved" }));
+    expect(
+      screen.getByPlaceholderText("What resolved this?")
+    ).toBeInTheDocument();
   });
 });
