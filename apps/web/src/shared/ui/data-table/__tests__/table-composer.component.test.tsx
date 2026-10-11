@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { DataTableAddRow } from "@/shared/ui/data-table/data-table-add-row";
@@ -21,6 +22,31 @@ describe("table composer", () => {
 
     fireEvent.click(screen.getByText("Add identifier"));
     expect(onClick).toHaveBeenCalled();
+  });
+
+  it("exposes the add row as a keyboard-operable button, not a clickable row", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <DataTableAddRow
+            colSpan={2}
+            label="Add identifier"
+            onClick={onClick}
+          />
+        </tbody>
+      </table>
+    );
+
+    const button = screen.getByRole("button", { name: "Add identifier" });
+    await user.click(screen.getByRole("row"));
+    expect(onClick).not.toHaveBeenCalled();
+    await user.tab();
+    expect(button).toHaveFocus();
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+    expect(onClick).toHaveBeenCalledTimes(2);
   });
 
   it("submits or cancels from keyboard shortcuts", () => {

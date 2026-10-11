@@ -1,5 +1,6 @@
 import { PlusIcon } from "lucide-react";
 
+import { Button } from "@/shared/ui/primitives/button";
 import { TableCell, TableRow } from "@watchdog/ui/components/table";
 
 export function DataTableAddRow({
@@ -12,15 +13,18 @@ export function DataTableAddRow({
   onClick: () => void;
 }) {
   return (
-    <TableRow
-      className="text-muted-foreground hover:bg-muted/30 hover:text-foreground cursor-pointer border-dashed"
-      onClick={onClick}
-    >
+    <TableRow className="border-dashed">
       <TableCell colSpan={colSpan}>
-        <span className="inline-flex items-center gap-1.5 text-xs">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground gap-1.5 text-xs"
+          onClick={onClick}
+        >
           <PlusIcon className="size-3.5 -translate-y-px" />
           {label}
-        </span>
+        </Button>
       </TableCell>
     </TableRow>
   );

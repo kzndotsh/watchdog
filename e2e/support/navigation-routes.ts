@@ -50,7 +50,7 @@ export const primaryRoutes: RouteSmoke[] = [
     path: "/identifiers",
     ready: async (page) => {
       await expect(
-        page.getByRole("button", { name: /add identifier/i })
+        page.getByRole("button", { name: /add identifier/i }).first()
       ).toBeVisible({ timeout: 30_000 });
     },
   },
