@@ -1,6 +1,6 @@
 # UI: hand-owned atoms
 
-Which atom for which need, the keyboard contracts, and the traps. The atoms themselves are in `apps/web/src/shared/ui/` (code and JSDoc are the registry); the style guide and specimen page is **`/ui`**. New atoms go in `shared/ui/` and get a `/ui` specimen. `shared/ui` never fetches, mutates, or routes (`guidance`: nothing enforces it) and imports no domain code (`watchdog/shared-ui-no-domain-imports`; a domain-shaped helper it needs lives in `shared/`).
+Which atom for which need, the keyboard contracts, and the traps. The atoms themselves are in `apps/web/src/shared/ui/` (code and JSDoc are the registry); the style guide and specimen page is **`/ui`**. New atoms go in `shared/ui/` and get a `/ui` specimen. One file exports one component (`watchdog/one-component-per-file`); a family of related pieces is a folder of such files with an `index.ts` barrel that callers import from (`skeletons/`: one file per skeleton, grouped by screen, the barrel keeps `@/shared/ui/skeletons` stable), and a helper used by two or more of them lives in a `parts/` folder beside them. `shared/ui` never fetches, mutates, or routes (`guidance`: nothing enforces it) and imports no domain code (`watchdog/shared-ui-no-domain-imports`; a domain-shaped helper it needs lives in `shared/`).
 
 ## Which atom
 

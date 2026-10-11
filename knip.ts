@@ -18,7 +18,6 @@ const config: KnipConfig = {
     "apps/web/src/auth/server.ts": ["types"],
     // WD UI + domain helpers exported for /ui gallery, COMPONENTS.md, and tests.
     "apps/web/src/shared/ui/active-tab-body.tsx": ["exports"],
-    "apps/web/src/shared/ui/skeletons.tsx": ["exports"],
     "apps/web/src/shared/ui/graph/index.ts": ["exports"],
     "apps/web/src/shared/ui/graph/graph-bezier.ts": ["exports"],
     "apps/web/src/shared/ui/graph/graph-canvas-background.tsx": ["exports"],

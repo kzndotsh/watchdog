@@ -30,6 +30,7 @@ import { noHooksInLib } from "./rules/no-hooks-in-lib.mjs";
 import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
 import { noTypesFromFunctions } from "./rules/no-types-from-functions.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
+import { oneComponentPerFile } from "./rules/one-component-per-file.mjs";
 import { procedureMustBeGuarded } from "./rules/procedure-must-be-guarded.mjs";
 import { keysInQueries } from "./rules/query-keys-in-queries-modules.mjs";
 import { sharedUiNoDomainImports } from "./rules/shared-ui-no-domain-imports.mjs";
@@ -64,6 +65,7 @@ export default {
     "query-keys-in-queries-modules": keysInQueries,
     "shared-ui-no-domain-imports": sharedUiNoDomainImports,
     "no-hooks-in-lib": noHooksInLib,
+    "one-component-per-file": oneComponentPerFile,
     "no-types-from-functions": noTypesFromFunctions,
     "no-cross-domain-relative-imports": noCrossDomainRelativeImports,
   },

@@ -9,6 +9,8 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | Rule | Where | Enforced by |
 | --- | --- | --- |
 | Web never imports `@watchdog/db` (auth's db access lives in `@watchdog/auth`) | [`domains.md`](../domains.md) | `oxlint` `no-restricted-imports` |
+| One exported component per `.tsx` file under `apps/web/src`; a family of parts is a folder of single-component files re-exported from an `index.ts` barrel (`shared/ui/skeletons/`). Private helper components are not counted. Exempt: tests, the `/ui` gallery routes, `shared/ui/primitives/` wrappers | [`atoms.md`](atoms.md) | `oxlint` `watchdog/one-component-per-file` (baselined: 23 files still export more than one) |
+| A private helper component lives in the file of its only user; one shared by two or more goes in a `parts/` folder beside them | [`atoms.md`](atoms.md) | `guidance` (the rule above does not count private helpers) |
 | No `RoutePending` and no raw `Skeleton` in `domains/` or `routes/` (one pending surface per region) | [`loading.md`](loading.md) | `oxlint` `no-restricted-imports` |
 | Client code must not import the `@watchdog/policy` barrel or `@watchdog/core` domain subpaths at runtime (use `@watchdog/policy/patch-needs-confidence`, `@watchdog/core/job-display`) | [`domains.md`](../domains.md) | `guidance` (only type imports of `@watchdog/core` subpaths exist today) |
 | Button height comes from `size` (`xs` h-5, `sm` h-6, default h-7, `lg` h-8, `icon*`, `inline`); no `h-*` / `min-h-*` / `max-h-*` / `size-*` on a `<Button>` | [`atoms.md`](atoms.md#variants-not-overrides) | `oxlint` `watchdog/no-button-height-class` (all of `apps/web/src` except `shared/ui/primitives/` and tests; no baseline) |
