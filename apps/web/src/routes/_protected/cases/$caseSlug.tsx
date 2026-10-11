@@ -21,7 +21,8 @@ import {
   casesContextQuery,
 } from "@/domains/cases/queries";
 import type { CaseRecord } from "@/domains/cases/types";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { RouteError } from "@/shared/layout/route-error";
 import { RouteNotFoundCenter } from "@/shared/layout/route-not-found-center";
 import { finalizeActiveCaseSwitch } from "@/shared/lib/active-case-switch";

@@ -4,14 +4,12 @@ import type { ReactNode } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
-import {
-  CollectDumpButtons,
-  CollectRunPopover,
-} from "@/domains/collect/components/collect-action-controls";
 import { CollectDetail } from "@/domains/collect/components/collect-detail";
+import { CollectDumpButtons } from "@/domains/collect/components/collect-dump-buttons";
 import { CollectQueueBody } from "@/domains/collect/components/collect-queue-body";
 import { CollectQueueToolbar } from "@/domains/collect/components/collect-queue-toolbar";
 import { CollectRunForm } from "@/domains/collect/components/collect-run-form";
+import { CollectRunPopover } from "@/domains/collect/components/collect-run-popover";
 import { useCollectWorkspace } from "@/domains/collect/hooks/use-collect-workspace";
 import { collectQueueCountLabel } from "@/domains/collect/lib/collect-queue-label";
 import { DumpDialogs } from "@/domains/intake/components/dump-dialogs";
@@ -21,7 +19,8 @@ import {
 } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";

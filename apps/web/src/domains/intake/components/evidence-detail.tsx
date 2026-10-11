@@ -1,10 +1,8 @@
 import { DownloadIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  EvidenceDetailHeader,
-  EvidenceHeaderActions,
-} from "@/domains/intake/components/evidence-detail-header";
+import { EvidenceDetailHeader } from "@/domains/intake/components/evidence-detail-header";
+import { EvidenceHeaderActions } from "@/domains/intake/components/evidence-header-actions";
 import { ProcessRunCard } from "@/domains/intake/components/process-run-card";
 import { useEvidenceBlob } from "@/domains/intake/hooks/use-evidence-blob";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";

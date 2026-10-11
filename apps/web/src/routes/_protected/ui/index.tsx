@@ -5,7 +5,8 @@ import { AtomsSection } from "@/routes/_protected/ui/-section-atoms";
 import { FoundationsSection } from "@/routes/_protected/ui/-section-foundations";
 import { SidebarFooterSection } from "@/routes/_protected/ui/-section-sidebar-footer";
 import { TaskCardsSection } from "@/routes/_protected/ui/-section-task-cards";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 
 function StyleGuidePage() {
   return (

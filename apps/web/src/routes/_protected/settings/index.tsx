@@ -35,7 +35,8 @@ import {
 } from "@/domains/settings/components/settings-shell";
 import { SettingsUsers } from "@/domains/settings/components/settings-users";
 import { credentialsListQuery } from "@/domains/settings/queries";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { RouteError } from "@/shared/layout/route-error";
 import { tabSearchParam } from "@/shared/lib/tab-search";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";

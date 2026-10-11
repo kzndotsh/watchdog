@@ -13,7 +13,8 @@ import {
 } from "@/domains/dossier/lib/dossier-tabs";
 import { warmDossierQueries } from "@/domains/dossier/lib/prefetch-dossier";
 import { entityBySlugQuery } from "@/domains/entities/queries";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { RouteError } from "@/shared/layout/route-error";
 import { normalizeEntitySlug } from "@/shared/lib/route-slug";
 import { ensureAppQueryData } from "@/shared/lib/warm-query";

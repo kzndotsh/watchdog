@@ -21,10 +21,8 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-import {
-  DashboardDueTasksSection,
-  DashboardTriageSection,
-} from "@/domains/dashboard/components/dashboard-panels";
+import { DashboardDueTasksSection } from "@/domains/dashboard/components/dashboard-due-tasks-section";
+import { DashboardTriageSection } from "@/domains/dashboard/components/dashboard-triage-section";
 
 const PROPOSAL = {
   id: "prop-1",

@@ -3,10 +3,8 @@ import { useMemo, type ReactNode } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import type { CaseRecord } from "@/domains/cases/types";
-import {
-  DashboardDueTasksSection,
-  DashboardTriageSection,
-} from "@/domains/dashboard/components/dashboard-panels";
+import { DashboardDueTasksSection } from "@/domains/dashboard/components/dashboard-due-tasks-section";
+import { DashboardTriageSection } from "@/domains/dashboard/components/dashboard-triage-section";
 import {
   MetricsSection,
   type MetricTile,
@@ -27,7 +25,8 @@ import type { TaskRecord } from "@/domains/tasks/types";
 import { proposalsByStatusQuery } from "@/domains/triage/queries";
 import { cn } from "@/lib/utils";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";

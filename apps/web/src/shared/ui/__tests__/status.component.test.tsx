@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { StatusBadge, StatusInk } from "@/shared/ui/vocab/status";
+import { StatusBadge } from "@/shared/ui/vocab/status-badge";
+import { StatusInk } from "@/shared/ui/vocab/status-ink";
 import {
   STATUS_DOT,
   STATUS_GLYPH,

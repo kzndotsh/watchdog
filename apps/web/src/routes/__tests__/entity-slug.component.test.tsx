@@ -44,6 +44,9 @@ vi.mock("@/domains/dossier/lib/prefetch-dossier", () => ({
 
 vi.mock("@/shared/layout/page", () => ({
   Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/shared/layout/page-header", () => ({
   PageHeader: ({
     current,
     description,

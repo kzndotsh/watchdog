@@ -2,10 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  EvidenceDetailHeader,
-  EvidenceHeaderActions,
-} from "@/domains/intake/components/evidence-detail-header";
+import { EvidenceDetailHeader } from "@/domains/intake/components/evidence-detail-header";
+import { EvidenceHeaderActions } from "@/domains/intake/components/evidence-header-actions";
 import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-actions";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { capabilityLabel } from "@/shared/ui/vocab";

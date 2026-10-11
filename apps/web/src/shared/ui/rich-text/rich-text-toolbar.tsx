@@ -1,11 +1,9 @@
 import { KEYS } from "platejs";
 import { useEditorRef, useEditorSelector } from "platejs/react";
 
-import {
-  RichTextHeadingToggleGroup,
-  RichTextListButtons,
-  RichTextMarkToggleGroup,
-} from "@/shared/ui/rich-text/rich-text-toolbar-controls";
+import { RichTextHeadingToggleGroup } from "@/shared/ui/rich-text/rich-text-heading-toggle-group";
+import { RichTextListButtons } from "@/shared/ui/rich-text/rich-text-list-buttons";
+import { RichTextMarkToggleGroup } from "@/shared/ui/rich-text/rich-text-mark-toggle-group";
 import {
   activeHeading,
   activeMarks,

@@ -18,11 +18,9 @@ import { EntityEvidenceSection } from "@/domains/dossier/components/entity-evide
 import { EventsSection } from "@/domains/dossier/components/events-section";
 import { EvidencePreviewDrawer } from "@/domains/dossier/components/evidence-preview-drawer";
 import { IdentifiersSection } from "@/domains/dossier/components/identifiers-section";
+import { NotesSection } from "@/domains/dossier/components/notes-section";
 import { QuestionsSection } from "@/domains/dossier/components/questions-section";
-import {
-  NotesSection,
-  SummarySection,
-} from "@/domains/dossier/components/summary-notes-section";
+import { SummarySection } from "@/domains/dossier/components/summary-section";
 import { useDossierShell } from "@/domains/dossier/hooks/use-dossier-shell";
 import {
   resolveDossierTab,
@@ -32,7 +30,8 @@ import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";

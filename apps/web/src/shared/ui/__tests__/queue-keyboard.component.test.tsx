@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 
-import { useDataHotkeys } from "@/shared/lib/data-hotkey";
+import { useDataHotkeys } from "@/shared/hooks/use-data-hotkeys";
 import { QueueRow } from "@/shared/ui/queue-row";
 import { QueueShell } from "@/shared/ui/queue-shell";
 

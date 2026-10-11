@@ -18,7 +18,7 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useMemo, useRef, useState } from "react";
 
 import { TaskBoardColumn } from "@/domains/tasks/components/task-board-column";
-import { TaskCardPreview } from "@/domains/tasks/components/task-card";
+import { TaskCardPreview } from "@/domains/tasks/components/task-card-preview";
 import { useLiveRegion } from "@/domains/tasks/hooks/use-live-region";
 import {
   dropSlotIndex,

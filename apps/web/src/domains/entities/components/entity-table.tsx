@@ -9,8 +9,9 @@ import type { EntityTableMeta } from "@/domains/entities/components/entity-table
 import { useEntityTable } from "@/domains/entities/hooks/use-entity-table";
 import { entityRowActions } from "@/domains/entities/lib/entity-row-actions";
 import type { EntityRecord } from "@/domains/entities/types";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
+import { PageHeader } from "@/shared/layout/page-header";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import {

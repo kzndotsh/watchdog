@@ -34,7 +34,8 @@ import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { DossierPanelSkeletonLayout } from "@/shared/ui/skeletons";
 import { TargetActionsHost } from "@/shared/ui/target-actions-host";
-import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import { TimelineDot } from "@/shared/ui/timeline-dot";
+import { TimelineSpine } from "@/shared/ui/timeline-spine";
 import { FieldError } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
 

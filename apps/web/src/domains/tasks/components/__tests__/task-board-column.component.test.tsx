@@ -47,6 +47,9 @@ vi.mock("@/domains/tasks/components/task-card", () => ({
       {task.title}
     </button>
   ),
+}));
+
+vi.mock("@/domains/tasks/components/task-card-preview", () => ({
   TaskCardPreview: ({ task }: { task: TaskRecord }) => (
     <div>{task.title} preview</div>
   ),

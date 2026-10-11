@@ -10,8 +10,9 @@ import { DeleteIdentifierDialog } from "@/domains/entities/components/delete-ide
 import type { IdentifiersTableMeta } from "@/domains/entities/components/identifiers-table.columns";
 import { useIdentifiersTable } from "@/domains/entities/hooks/use-identifiers-table";
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
 import { PageFilterMenu } from "@/shared/layout/page-filter-menu";
+import { PageHeader } from "@/shared/layout/page-header";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";

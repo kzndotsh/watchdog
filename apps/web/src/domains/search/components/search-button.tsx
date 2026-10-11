@@ -4,7 +4,7 @@ import { useContext } from "react";
 import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
 import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
 import { formatChord, hotkeyDef } from "@/shared/lib/hotkeys";
-import { WithTooltip } from "@/shared/ui/timestamp";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 import {
   SidebarMenu,
   SidebarMenuButton,

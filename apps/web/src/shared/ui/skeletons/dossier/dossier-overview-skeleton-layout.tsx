@@ -1,8 +1,6 @@
 import { cn } from "@/lib/utils";
-import {
-  GRAPH_CANVAS_EMBED_SHELL_CLASS,
-  GraphCanvasLoadingRegion,
-} from "@/shared/ui/graph/graph-canvas-skeleton";
+import { GraphCanvasLoadingRegion } from "@/shared/ui/graph/graph-canvas-loading-region";
+import { GRAPH_CANVAS_EMBED_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-shell-classes";
 import { DossierClaimRowSkeleton } from "@/shared/ui/skeletons/dossier/parts/dossier-claim-row-skeleton";
 import { DossierConnectionListSkeleton } from "@/shared/ui/skeletons/dossier/parts/dossier-connection-list-skeleton";
 import { DossierSectionBlockSkeleton } from "@/shared/ui/skeletons/dossier/parts/dossier-section-block-skeleton";

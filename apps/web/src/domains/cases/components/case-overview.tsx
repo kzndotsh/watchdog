@@ -13,7 +13,8 @@ import { identifiersForCaseQuery } from "@/domains/entities/identifiers/queries"
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { caseExportZipPath } from "@/shared/lib/api-urls";
 import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";

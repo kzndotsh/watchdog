@@ -2,10 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  NotesSection,
-  SummarySection,
-} from "@/domains/dossier/components/summary-notes-section";
+import { NotesSection } from "@/domains/dossier/components/notes-section";
+import { SummarySection } from "@/domains/dossier/components/summary-section";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import type { EntityRecord } from "@/domains/entities/types";
 import { testCaseId } from "@watchdog/schemas/testing";

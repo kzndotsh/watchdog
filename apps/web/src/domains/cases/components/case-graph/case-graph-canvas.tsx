@@ -10,7 +10,7 @@ import type { EntityRecord } from "@/domains/entities/types";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
-import { GRAPH_CANVAS_PAGE_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-skeleton";
+import { GRAPH_CANVAS_PAGE_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-shell-classes";
 import type { GraphNode } from "@/shared/ui/graph/types";
 
 export function CaseGraphCanvas({

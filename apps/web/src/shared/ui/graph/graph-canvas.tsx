@@ -24,7 +24,7 @@ import {
   GRAPH_CANVAS_BG_CLASS,
   graphCanvasDotStyle,
 } from "@/shared/ui/graph/graph-canvas-background";
-import { GraphCanvasPendingShell } from "@/shared/ui/graph/graph-canvas-skeleton";
+import { GraphCanvasPendingShell } from "@/shared/ui/graph/graph-canvas-pending-shell";
 import { GraphEdgePath } from "@/shared/ui/graph/graph-edge";
 import {
   computeGraphBounds,

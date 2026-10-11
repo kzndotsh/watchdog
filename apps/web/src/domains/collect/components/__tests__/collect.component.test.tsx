@@ -19,6 +19,9 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("@/shared/layout/page", () => ({
   Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/shared/layout/page-header", () => ({
   PageHeader: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -57,8 +60,11 @@ vi.mock("@/domains/intake/components/dump-dialogs", () => ({
   DumpDialogs: () => null,
 }));
 
-vi.mock("@/domains/collect/components/collect-action-controls", () => ({
+vi.mock("@/domains/collect/components/collect-dump-buttons", () => ({
   CollectDumpButtons: () => null,
+}));
+
+vi.mock("@/domains/collect/components/collect-run-popover", () => ({
   CollectRunPopover: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="run-popover">{children}</div>
   ),

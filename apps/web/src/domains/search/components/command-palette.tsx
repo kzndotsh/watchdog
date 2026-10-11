@@ -19,7 +19,10 @@ import { SEARCH_DEBOUNCE_MS } from "@/shared/lib/debounce";
 import { useRegisteredPaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
-import { ActionShortcutChord, MENU_KBD_CLASS } from "@/shared/ui/action-list";
+import {
+  ActionShortcutChord,
+  MENU_KBD_CLASS,
+} from "@/shared/ui/action-shortcut-chord";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
 import {
   statusLabel,

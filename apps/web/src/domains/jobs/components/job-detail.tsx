@@ -16,10 +16,8 @@ import { cn } from "@/lib/utils";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { CodeBlock } from "@/shared/ui/code-block";
-import {
-  DetailContextHeader,
-  DetailContextSep,
-} from "@/shared/ui/detail-context-line";
+import { DetailContextHeader } from "@/shared/ui/detail-context-header";
+import { DetailContextSep } from "@/shared/ui/detail-context-sep";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { EmptyState } from "@/shared/ui/empty-state";
@@ -28,7 +26,8 @@ import { JsonView } from "@/shared/ui/json-view";
 import { Button } from "@/shared/ui/primitives/button";
 import { SectionLabel } from "@/shared/ui/section-label";
 import { TabCount } from "@/shared/ui/tab-count";
-import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import { TimelineDot } from "@/shared/ui/timeline-dot";
+import { TimelineSpine } from "@/shared/ui/timeline-spine";
 import {
   StatusInk,
   capabilityLabel,

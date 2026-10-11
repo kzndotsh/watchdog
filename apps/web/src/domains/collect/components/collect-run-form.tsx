@@ -1,4 +1,4 @@
-import type { CollectRunMode } from "@/domains/collect/components/collect-action-controls";
+import type { CollectRunMode } from "@/domains/collect/components/collect-run-mode-toggle";
 import {
   JobCapRunForm,
   type CapRunVars,

@@ -12,6 +12,9 @@ vi.mock("@/auth/server", () => ({
 
 vi.mock("@/shared/layout/page", () => ({
   Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/shared/layout/page-header", () => ({
   PageHeader: ({
     actions,
     count,

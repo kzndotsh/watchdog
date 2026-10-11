@@ -32,6 +32,9 @@ vi.mock("@/routes/_protected/ui/-section-foundations", () => ({
 
 vi.mock("@/shared/layout/page", () => ({
   Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/shared/layout/page-header", () => ({
   PageHeader: () => <div>Style guide header</div>,
 }));
 

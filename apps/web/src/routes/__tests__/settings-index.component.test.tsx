@@ -100,6 +100,9 @@ vi.mock("@/domains/settings/components/settings-shell", () => ({
 
 vi.mock("@/shared/layout/page", () => ({
   Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/shared/layout/page-header", () => ({
   PageHeader: () => <div>Settings header</div>,
 }));
 

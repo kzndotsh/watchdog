@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { CollectRunMode } from "@/domains/collect/components/collect-action-controls";
+import type { CollectRunMode } from "@/domains/collect/components/collect-run-mode-toggle";
 import { collectDetailPending } from "@/domains/collect/lib/collect-detail-pending";
 import {
   evidenceSearchHaystackByIdFromRecords,

@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 
 import type { AppAction } from "@/shared/lib/app-action";
 import { skipEditableContextMenu } from "@/shared/lib/skip-editable-context-menu";
-import { ContextActionItems } from "@/shared/ui/action-list";
+import { ContextActionItems } from "@/shared/ui/context-action-items";
 import {
   ContextMenu,
   ContextMenuContent,

@@ -5,6 +5,9 @@ vi.mock("@/domains/search/components/search-chrome", () => ({
   SearchChrome: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="search-chrome">{children}</div>
   ),
+}));
+
+vi.mock("@/domains/search/components/app-inset-context-menu", () => ({
   AppInsetContextMenu: ({ children }: { children: React.ReactNode }) => (
     <div id="app-main" data-testid="app-inset-context-menu">
       {children}

@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
-import { WithTooltip } from "@/shared/ui/timestamp";
 import {
   STATUS_GLYPH,
   statusLabel,
   type DisplayStatus,
 } from "@/shared/ui/vocab";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 
 interface StatusDotProps {
   status: DisplayStatus;

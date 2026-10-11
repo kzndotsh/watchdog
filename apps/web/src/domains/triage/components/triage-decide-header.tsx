@@ -10,10 +10,8 @@ import { cn } from "@/lib/utils";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { ComposerShell } from "@/shared/ui/composer-shell";
-import {
-  DetailContextHeader,
-  DetailContextSep,
-} from "@/shared/ui/detail-context-line";
+import { DetailContextHeader } from "@/shared/ui/detail-context-header";
+import { DetailContextSep } from "@/shared/ui/detail-context-sep";
 import { EntityMention } from "@/shared/ui/entity-mention";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import { Button } from "@/shared/ui/primitives/button";
