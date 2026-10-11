@@ -10,19 +10,21 @@ import {
   ToggleGroupItem,
 } from "@watchdog/ui/components/toggle-group";
 
+type RichTextHeadingToggleGroupProps = {
+  editor: PlateEditor;
+  headingValue: HeadingValue[];
+  isH1: boolean;
+  isH2: boolean;
+  isH3: boolean;
+};
+
 export function RichTextHeadingToggleGroup({
   editor,
   headingValue,
   isH1,
   isH2,
   isH3,
-}: {
-  editor: PlateEditor;
-  headingValue: HeadingValue[];
-  isH1: boolean;
-  isH2: boolean;
-  isH3: boolean;
-}) {
+}: RichTextHeadingToggleGroupProps) {
   return (
     <ToggleGroup
       variant="outline"

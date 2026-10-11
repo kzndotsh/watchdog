@@ -73,17 +73,15 @@ function preview(value: unknown): string {
   return "";
 }
 
-/** Wrap matches in <mark> spans. */
-function Highlighted({
-  text,
-  pattern,
-  className,
-}: {
+type HighlightedProps = {
   text: string;
   pattern: RegExp | null | undefined;
   className?: string;
   highlightClass?: string;
-}) {
+};
+
+/** Wrap matches in <mark> spans. */
+function Highlighted({ text, pattern, className }: HighlightedProps) {
   if (!pattern) return <span className={className}>{text}</span>;
   const parts: React.ReactNode[] = [];
   let last = 0;

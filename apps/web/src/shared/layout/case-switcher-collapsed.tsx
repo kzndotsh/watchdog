@@ -18,19 +18,21 @@ import {
 
 import { CasePickerItems } from "./case-picker-items";
 
+type CaseSwitcherCollapsedProps = {
+  cases: CaseRecord[];
+  active: CaseRecord | null | undefined;
+  activeId: string;
+  onSelectCase: (id: string) => void;
+  onCreate: () => void;
+};
+
 export function CaseSwitcherCollapsed({
   cases,
   active,
   activeId,
   onSelectCase,
   onCreate,
-}: {
-  cases: CaseRecord[];
-  active: CaseRecord | null | undefined;
-  activeId: string;
-  onSelectCase: (id: string) => void;
-  onCreate: () => void;
-}) {
+}: CaseSwitcherCollapsedProps) {
   return (
     <SidebarMenu>
       <SidebarMenuItem>

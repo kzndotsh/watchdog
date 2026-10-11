@@ -10,19 +10,21 @@ import {
   ToggleGroupItem,
 } from "@watchdog/ui/components/toggle-group";
 
+type RichTextMarkToggleGroupProps = {
+  editor: PlateEditor;
+  markValue: MarkValue[];
+  isBold: boolean;
+  isItalic: boolean;
+  isUnderline: boolean;
+};
+
 export function RichTextMarkToggleGroup({
   editor,
   markValue,
   isBold,
   isItalic,
   isUnderline,
-}: {
-  editor: PlateEditor;
-  markValue: MarkValue[];
-  isBold: boolean;
-  isItalic: boolean;
-  isUnderline: boolean;
-}) {
+}: RichTextMarkToggleGroupProps) {
   return (
     <ToggleGroup
       multiple

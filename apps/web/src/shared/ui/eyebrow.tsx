@@ -15,6 +15,14 @@ const TONE = {
   inherit: "",
 } as const;
 
+type EyebrowProps = {
+  children: ReactNode;
+  className?: string;
+  tone?: keyof typeof TONE;
+  title?: string;
+  as?: ElementType;
+};
+
 /**
  * Small uppercase label for a kind, an action or a hint: "FACT", "⌘↵ TO SAVE". Not a
  * heading (`SectionLabel`) and not the large page kicker (`tracking-eyebrow`).
@@ -25,13 +33,7 @@ export function Eyebrow({
   tone = "muted",
   title,
   as: Comp = "span",
-}: {
-  children: ReactNode;
-  className?: string;
-  tone?: keyof typeof TONE;
-  title?: string;
-  as?: ElementType;
-}) {
+}: EyebrowProps) {
   return (
     <Comp className={cn(EYEBROW_CLASS, TONE[tone], className)} title={title}>
       {children}

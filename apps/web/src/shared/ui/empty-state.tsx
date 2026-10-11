@@ -22,18 +22,7 @@ function capitalize(items: string): string {
   return items.charAt(0).toUpperCase() + items.slice(1);
 }
 
-export function EmptyState({
-  intent,
-  items,
-  query,
-  onClearFilters,
-  title: titleOverride,
-  description: descriptionOverride,
-  action,
-  size = "default",
-  framed = false,
-  className,
-}: {
+type EmptyStateProps = {
   intent: EmptyStateIntent;
   /** Plural resource noun for copy (“jobs”, “proposals”). */
   items: string;
@@ -49,7 +38,20 @@ export function EmptyState({
   /** Dashed frame for a whole-page empty (Dossier section). */
   framed?: boolean;
   className?: string;
-}) {
+};
+
+export function EmptyState({
+  intent,
+  items,
+  query,
+  onClearFilters,
+  title: titleOverride,
+  description: descriptionOverride,
+  action,
+  size = "default",
+  framed = false,
+  className,
+}: EmptyStateProps) {
   const Items = capitalize(items);
   const q = query?.trim();
 

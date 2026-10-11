@@ -6,16 +6,18 @@ import { LoadingRegion } from "@/shared/ui/loading-region";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 
+type EvidenceSlotSkeletonProps = {
+  mode: "cite" | "pick";
+  citeCount?: number;
+  className?: string;
+};
+
 /** Loading shell beside confidence — matches picker trigger or cite chips. */
 export function EvidenceSlotSkeleton({
   mode,
   citeCount = 1,
   className,
-}: {
-  mode: "cite" | "pick";
-  citeCount?: number;
-  className?: string;
-}) {
+}: EvidenceSlotSkeletonProps) {
   if (mode === "cite") {
     const count = Math.max(citeCount, 1);
     return (

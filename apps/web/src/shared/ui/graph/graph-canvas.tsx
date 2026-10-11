@@ -36,16 +36,7 @@ import {
 } from "@/shared/ui/graph/graph-layout";
 import type { GraphEdge, GraphNode } from "@/shared/ui/graph/types";
 
-function GraphNodeHitTarget({
-  node,
-  nodesDraggable,
-  actions,
-  suppressNodeClickRef,
-  onNodePointerDown,
-  onNodePointerMove,
-  onNodePointerUp,
-  onNodeClick,
-}: {
+type GraphNodeHitTargetProps = {
   node: GraphNode;
   nodesDraggable: boolean;
   actions: readonly AppAction[];
@@ -57,7 +48,18 @@ function GraphNodeHitTarget({
   onNodePointerMove: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onNodePointerUp: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onNodeClick?: (event: ReactMouseEvent, node: GraphNode) => void;
-}) {
+};
+
+function GraphNodeHitTarget({
+  node,
+  nodesDraggable,
+  actions,
+  suppressNodeClickRef,
+  onNodePointerDown,
+  onNodePointerMove,
+  onNodePointerUp,
+  onNodeClick,
+}: GraphNodeHitTargetProps) {
   const dropdownActions = filterActionsForSurface(actions, "dropdown");
   const shellProps = {
     "data-graph-node": "",
@@ -145,19 +147,7 @@ function zoomAtPoint(
   };
 }
 
-export function GraphCanvas({
-  nodes,
-  edges,
-  className,
-  minZoom = GRAPH_CANVAS_MIN_ZOOM,
-  maxZoom = GRAPH_CANVAS_MAX_ZOOM,
-  fitPadding = GRAPH_CANVAS_FIT_PADDING,
-  nodesDraggable = true,
-  onNodeClick,
-  getNodeActions,
-  onEdgeClick,
-  onPaneClick,
-}: {
+type GraphCanvasProps = {
   nodes: GraphNode[];
   edges: GraphEdge[];
   className?: string;
@@ -170,7 +160,21 @@ export function GraphCanvas({
   getNodeActions?: (node: GraphNode) => readonly AppAction[];
   onEdgeClick?: (event: ReactMouseEvent, edge: GraphEdge) => void;
   onPaneClick?: () => void;
-}) {
+};
+
+export function GraphCanvas({
+  nodes,
+  edges,
+  className,
+  minZoom = GRAPH_CANVAS_MIN_ZOOM,
+  maxZoom = GRAPH_CANVAS_MAX_ZOOM,
+  fitPadding = GRAPH_CANVAS_FIT_PADDING,
+  nodesDraggable = true,
+  onNodeClick,
+  getNodeActions,
+  onEdgeClick,
+  onPaneClick,
+}: GraphCanvasProps) {
   const hydrated = useHydrated();
   const containerRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<GraphTransform>({ x: 0, y: 0, k: 1 });

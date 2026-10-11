@@ -7,15 +7,17 @@ import type { EntityNodeData } from "@/shared/ui/graph/types";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { KindBadge } from "@/shared/ui/vocab";
 
+type EntityNodeProps = {
+  data: EntityNodeData;
+  selected?: boolean;
+  actions?: readonly AppAction[];
+};
+
 export function EntityNode({
   data,
   selected = false,
   actions,
-}: {
-  data: EntityNodeData;
-  selected?: boolean;
-  actions?: readonly AppAction[];
-}) {
+}: EntityNodeProps) {
   const border = kindBorder(data.kind);
 
   return (

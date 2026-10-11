@@ -39,15 +39,17 @@ function resolveEvidenceLabel(
   return formatOpaqueId(evidenceId, 8);
 }
 
+type LinkedEvidenceSummaryProps = {
+  options: readonly EvidenceOption[];
+  evidenceIds: string[];
+  onEvidenceClick?: (evidenceId: string) => void;
+};
+
 function LinkedEvidenceSummary({
   options,
   evidenceIds,
   onEvidenceClick,
-}: {
-  options: readonly EvidenceOption[];
-  evidenceIds: string[];
-  onEvidenceClick?: (evidenceId: string) => void;
-}) {
+}: LinkedEvidenceSummaryProps) {
   const byId = useMemo(() => {
     const map = new Map<string, EvidenceOption>();
     for (const row of options) map.set(row.id, row);
@@ -106,12 +108,7 @@ function LinkedEvidenceSummary({
   );
 }
 
-export function IdentifierEvidenceCell({
-  row,
-  evidenceOptions,
-  onEvidenceClick,
-  saveEvidence,
-}: {
+type IdentifierEvidenceCellProps = {
   row: IdentifierEvidenceRow;
   evidenceOptions: readonly EvidenceOption[];
   onEvidenceClick?: (evidenceId: string) => void;
@@ -119,7 +116,14 @@ export function IdentifierEvidenceCell({
     identifierId: string,
     evidenceIds: string[]
   ) => void | Promise<void>;
-}) {
+};
+
+export function IdentifierEvidenceCell({
+  row,
+  evidenceOptions,
+  onEvidenceClick,
+  saveEvidence,
+}: IdentifierEvidenceCellProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editEvidenceIds, setEditEvidenceIds] = useState<string[]>(

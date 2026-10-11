@@ -2,16 +2,18 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+type DetailFooterProps = {
+  children?: ReactNode;
+  leading?: ReactNode;
+  className?: string;
+};
+
 /** Sticky-bottom Detail CTA bar — omit when there are no actions. */
 export function DetailFooter({
   children,
   leading,
   className,
-}: {
-  children?: ReactNode;
-  leading?: ReactNode;
-  className?: string;
-}) {
+}: DetailFooterProps) {
   if (children === undefined && leading === undefined) return null;
 
   return (

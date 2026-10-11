@@ -9,6 +9,14 @@ import {
 } from "@/shared/ui/intake/evidence-option";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 
+type EvidenceCiteChipsProps = {
+  options: readonly EvidenceOption[];
+  ids: string[];
+  className?: string;
+  /** Swap the "Evidence" text label for an icon + tooltip in dense bands. */
+  withIcon?: boolean;
+};
+
 /**
  * Read-only Job/proposal cite chips.
  */
@@ -17,13 +25,7 @@ export function EvidenceCiteChips({
   ids,
   className,
   withIcon = false,
-}: {
-  options: readonly EvidenceOption[];
-  ids: string[];
-  className?: string;
-  /** Swap the "Evidence" text label for an icon + tooltip in dense bands. */
-  withIcon?: boolean;
-}) {
+}: EvidenceCiteChipsProps) {
   const byId = useMemo(() => {
     const map = new Map<string, EvidenceOption>();
     for (const row of options) map.set(row.id, row);

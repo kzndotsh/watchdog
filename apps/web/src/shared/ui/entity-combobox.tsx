@@ -31,6 +31,29 @@ type SelectOption = {
   kind?: EntityKind;
 };
 
+type EntityComboboxProps = {
+  entities: readonly EntityOption[];
+  value: string;
+  onValueChange: (id: string) => void;
+  emptyLabel?: string;
+  placeholder?: string;
+  allowEmpty?: boolean;
+  /** Return null when there are no entities (Jobs attach). */
+  hideWhenEmpty?: boolean;
+  disabled?: boolean;
+  className?: string;
+  "aria-label"?: string;
+  "aria-invalid"?: boolean;
+  /** Width density only — height matches CONTROL_HEIGHT either way. Ignored for `cell`. */
+  size?: "default" | "sm";
+  /** `cell` = ghost table-composer chrome (matches EditableSelectCell). */
+  variant?: "default" | "cell";
+  autoFocus?: boolean;
+  /** Override clear (X). Default: shown when `allowEmpty` and a value is set. */
+  showClear?: boolean;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+};
+
 /**
  * Filterable entity picker. Domain chrome over Combobox — options are passed in
  * (parent owns fetch / case scoping). No I/O here.
@@ -53,28 +76,7 @@ export function EntityCombobox({
   autoFocus = false,
   showClear,
   onKeyDown,
-}: {
-  entities: readonly EntityOption[];
-  value: string;
-  onValueChange: (id: string) => void;
-  emptyLabel?: string;
-  placeholder?: string;
-  allowEmpty?: boolean;
-  /** Return null when there are no entities (Jobs attach). */
-  hideWhenEmpty?: boolean;
-  disabled?: boolean;
-  className?: string;
-  "aria-label"?: string;
-  "aria-invalid"?: boolean;
-  /** Width density only — height matches CONTROL_HEIGHT either way. Ignored for `cell`. */
-  size?: "default" | "sm";
-  /** `cell` = ghost table-composer chrome (matches EditableSelectCell). */
-  variant?: "default" | "cell";
-  autoFocus?: boolean;
-  /** Override clear (X). Default: shown when `allowEmpty` and a value is set. */
-  showClear?: boolean;
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
-}) {
+}: EntityComboboxProps) {
   if (hideWhenEmpty && entities.length === 0) {
     return null;
   }

@@ -12,17 +12,19 @@ function handleText(label: string): string {
   return trimmed;
 }
 
+type ActorMentionProps = {
+  label: string;
+  size?: ChipSize;
+  prefix?: string;
+  className?: string;
+};
+
 export function ActorMention({
   label,
   size = "md",
   prefix,
   className,
-}: {
-  label: string;
-  size?: ChipSize;
-  prefix?: string;
-  className?: string;
-}) {
+}: ActorMentionProps) {
   const trimmed = label.trim();
   if (trimmed === "") return null;
   const isApiKey = trimmed.startsWith(API_KEY_PREFIX);

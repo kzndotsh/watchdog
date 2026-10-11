@@ -16,16 +16,18 @@ export function capabilityLabel(
   return capabilityIdLabel(capabilityId);
 }
 
+type CapabilityLabelProps = {
+  capabilityId: string | null | undefined;
+  title?: string | null;
+  className?: string;
+};
+
 /** Presentational span — parent supplies optional catalog title. */
 export function CapabilityLabel({
   capabilityId,
   title,
   className,
-}: {
-  capabilityId: string | null | undefined;
-  title?: string | null;
-  className?: string;
-}) {
+}: CapabilityLabelProps) {
   const label = capabilityLabel(capabilityId, title);
   if (!label) return null;
   return <span className={className}>{label}</span>;

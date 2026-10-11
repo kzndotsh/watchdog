@@ -59,6 +59,13 @@ function ColumnShell({ children }: { children: ReactNode }) {
   );
 }
 
+type StackedSplitProps = {
+  list: ReactNode;
+  detail: ReactNode;
+  backLabel: string;
+  className?: string;
+};
+
 /**
  * Narrow viewports (< 768px): one column at a time. Queue first; tapping a
  * Queue row shows Detail with a back control. Auto-selection (URL sync) does
@@ -69,12 +76,7 @@ function StackedSplit({
   detail,
   backLabel,
   className,
-}: {
-  list: ReactNode;
-  detail: ReactNode;
-  backLabel: string;
-  className?: string;
-}) {
+}: StackedSplitProps) {
   const [pane, setPane] = useState<"list" | "detail">("list");
 
   function handleListClick(event: MouseEvent<HTMLDivElement>) {

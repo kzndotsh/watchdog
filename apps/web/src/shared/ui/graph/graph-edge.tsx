@@ -15,19 +15,21 @@ import { predicateLabel } from "@/shared/ui/vocab";
 const EDGE_LABEL_BOX_WIDTH = 160;
 const EDGE_LABEL_BOX_HEIGHT = 24;
 
+type GraphEdgePathProps = {
+  edge: GraphEdge;
+  sourceNode: GraphNode;
+  targetNode: GraphNode;
+  zoom: number;
+  onSelect?: (edge: GraphEdge, event: React.MouseEvent<SVGPathElement>) => void;
+};
+
 export function GraphEdgePath({
   edge,
   sourceNode,
   targetNode,
   zoom,
   onSelect,
-}: {
-  edge: GraphEdge;
-  sourceNode: GraphNode;
-  targetNode: GraphNode;
-  zoom: number;
-  onSelect?: (edge: GraphEdge, event: React.MouseEvent<SVGPathElement>) => void;
-}) {
+}: GraphEdgePathProps) {
   const [hovered, setHovered] = useState(false);
   const selected = edge.selected === true;
 

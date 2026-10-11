@@ -3,6 +3,18 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { SectionHeaderBar } from "@/shared/ui/section-header-bar";
 
+type QueueDayGroupProps = {
+  label: ReactNode;
+  count?: number;
+  children: ReactNode;
+  className?: string;
+  listClassName?: string;
+  /** Optional aria-label for the inner ul (parent listbox usually owns it). */
+  listLabel?: string;
+  /** `panel` for skeletons in a clipped pane — sticky day bars overlap rows. */
+  headerVariant?: "sticky" | "panel";
+};
+
 /**
  * One day bucket in a Queue list — sticky label + count + row list.
  * Presentational only.
@@ -15,17 +27,7 @@ export function QueueDayGroup({
   listClassName,
   listLabel,
   headerVariant = "sticky",
-}: {
-  label: ReactNode;
-  count?: number;
-  children: ReactNode;
-  className?: string;
-  listClassName?: string;
-  /** Optional aria-label for the inner ul (parent listbox usually owns it). */
-  listLabel?: string;
-  /** `panel` for skeletons in a clipped pane — sticky day bars overlap rows. */
-  headerVariant?: "sticky" | "panel";
-}) {
+}: QueueDayGroupProps) {
   return (
     <section
       className={cn("border-border border-b last:border-b-0", className)}

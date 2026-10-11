@@ -23,6 +23,15 @@ export type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 
 const FILTER_THRESHOLD = 8;
 
+type EvidenceChecklistProps = {
+  options: readonly EvidenceOption[];
+  selectedIds: string[];
+  filter: string;
+  onFilterChange: (next: string) => void;
+  onToggle: (id: string, checked: boolean) => void;
+  idPrefix: string;
+};
+
 function EvidenceChecklist({
   options,
   selectedIds,
@@ -30,14 +39,7 @@ function EvidenceChecklist({
   onFilterChange,
   onToggle,
   idPrefix,
-}: {
-  options: readonly EvidenceOption[];
-  selectedIds: string[];
-  filter: string;
-  onFilterChange: (next: string) => void;
-  onToggle: (id: string, checked: boolean) => void;
-  idPrefix: string;
-}) {
+}: EvidenceChecklistProps) {
   const showFilter = options.length > FILTER_THRESHOLD;
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const filteredOptions = options.filter((row) =>
@@ -111,6 +113,20 @@ function EvidenceChecklist({
   );
 }
 
+type EvidencePickerProps = {
+  options: readonly EvidenceOption[];
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+  className?: string;
+  /**
+   * Dashed trigger instead of trailing helper text when nothing is selected.
+   * For bands that already message the confirmed-needs-evidence gate elsewhere.
+   */
+  dashedWhenEmpty?: boolean;
+  /** `trigger` = chips + add control. `panel` = checklist only. */
+  layout?: "trigger" | "panel";
+};
+
 /**
  * Dense multi-select Case Evidence — chips + compact add popover.
  * Options are passed in — parent owns fetch (same contract as EntityCombobox).
@@ -124,19 +140,7 @@ export function EvidencePicker({
   className,
   dashedWhenEmpty = false,
   layout = "trigger",
-}: {
-  options: readonly EvidenceOption[];
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
-  className?: string;
-  /**
-   * Dashed trigger instead of trailing helper text when nothing is selected.
-   * For bands that already message the confirmed-needs-evidence gate elsewhere.
-   */
-  dashedWhenEmpty?: boolean;
-  /** `trigger` = chips + add control. `panel` = checklist only. */
-  layout?: "trigger" | "panel";
-}) {
+}: EvidencePickerProps) {
   const idPrefix = useId();
   const [filter, setFilter] = useState("");
   const byId = useMemo(() => {

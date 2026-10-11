@@ -16,18 +16,20 @@ function notesPresent(notes: string | null | undefined): boolean {
   return (notes ?? "").trim() !== "";
 }
 
+type NotesIconCellProps = {
+  id: string;
+  notes: string | null | undefined;
+  saveNotes: (id: string, notes: string) => void | Promise<void>;
+  editorAriaLabel?: string;
+};
+
 /** Narrow sticky-note control: opens a Markdown notes Sheet (blur/close autosave). */
 export function NotesIconCell({
   id,
   notes,
   saveNotes,
   editorAriaLabel = "Notes",
-}: {
-  id: string;
-  notes: string | null | undefined;
-  saveNotes: (id: string, notes: string) => void | Promise<void>;
-  editorAriaLabel?: string;
-}) {
+}: NotesIconCellProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(notes ?? "");
   const [editorKey, setEditorKey] = useState(0);

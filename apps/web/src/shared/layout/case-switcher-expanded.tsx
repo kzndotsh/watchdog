@@ -16,6 +16,15 @@ import {
 import { CaseNavLinks } from "./case-nav-links";
 import { CasePickerItems } from "./case-picker-items";
 
+type CaseSwitcherExpandedProps = {
+  cases: CaseRecord[];
+  active: CaseRecord | null | undefined;
+  activeId: string;
+  collapsed: boolean;
+  onSelectCase: (id: string) => void;
+  onCreate: () => void;
+};
+
 export function CaseSwitcherExpanded({
   cases,
   active,
@@ -23,14 +32,7 @@ export function CaseSwitcherExpanded({
   collapsed,
   onSelectCase,
   onCreate,
-}: {
-  cases: CaseRecord[];
-  active: CaseRecord | null | undefined;
-  activeId: string;
-  collapsed: boolean;
-  onSelectCase: (id: string) => void;
-  onCreate: () => void;
-}) {
+}: CaseSwitcherExpandedProps) {
   return (
     <>
       <SidebarGroupLabel>Case</SidebarGroupLabel>

@@ -17,15 +17,7 @@ export type PageFilterChip = {
   onClear: () => void;
 };
 
-export function PageFilterMenu({
-  chips,
-  onClearAll,
-  children,
-  contentClassName,
-  align = "start",
-  icon: Icon = FilterIcon,
-  label = "Filters",
-}: {
+type PageFilterMenuProps = {
   chips: PageFilterChip[];
   onClearAll?: () => void;
   children: ReactNode;
@@ -35,7 +27,17 @@ export function PageFilterMenu({
   icon?: LucideIcon;
   /** Base aria-label (active count is appended when chips exist). */
   label?: string;
-}) {
+};
+
+export function PageFilterMenu({
+  chips,
+  onClearAll,
+  children,
+  contentClassName,
+  align = "start",
+  icon: Icon = FilterIcon,
+  label = "Filters",
+}: PageFilterMenuProps) {
   const active = chips.length > 0;
 
   return (

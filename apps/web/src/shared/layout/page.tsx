@@ -4,20 +4,18 @@ import { cn } from "@/lib/utils";
 
 export type PageDensity = "default" | "split";
 
+type PageProps = {
+  children: ReactNode;
+  className?: string;
+  density?: PageDensity;
+};
+
 /**
  * Standard page frame.
  * pt-0 so PageHeader sits flush at the top of the inset (no gap above it).
  * Side + bottom padding kept for content breathing room.
  */
-export function Page({
-  children,
-  className,
-  density = "default",
-}: {
-  children: ReactNode;
-  className?: string;
-  density?: PageDensity;
-}) {
+export function Page({ children, className, density = "default" }: PageProps) {
   // Route content is interactive once the page frame has committed: the root
   // `html[data-hydrated]` only says the providers mounted, before the lazy route.
   useEffect(() => {
