@@ -1,3 +1,5 @@
+import { couldnt } from "@/lib/utils";
+
 /** Transient toast copy — keep user-state verbs (`Couldn't`) per docs/explanation/ux.md */
 
 export const TOAST_COPIED = "Copied";
@@ -17,6 +19,6 @@ export const TOAST_USER_ENABLED = "User enabled";
 export const TOAST_SESSIONS_REVOKED = "Sessions revoked";
 
 export const TOAST_IMPORT_LOADING = "Importing identifiers…";
-export const TOAST_IMPORT_FAILED = "Import failed";
+export const TOAST_IMPORT_FAILED = couldnt("import", "identifiers");
 export const TOAST_UPLOAD_LOADING = "Uploading files…";
-export const TOAST_UPLOAD_FAILED = "Upload failed";
+export const TOAST_UPLOAD_FAILED = couldnt("upload", "files");

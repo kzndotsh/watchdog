@@ -4,7 +4,7 @@ import type { DossierEntityScope } from "@/domains/dossier/types";
 import { entitiesKeys } from "@/domains/entities/entities-keys";
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { scopeCaseSlug } from "@/shared/lib/query-ingress";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 
@@ -36,7 +36,7 @@ export function useSaveEntityProse({
       });
     },
     onError: (caughtError) => {
-      onError?.(errMessage(caughtError, "Save failed"));
+      onError?.(errMessage(caughtError, couldnt("save", "entity")));
     },
   });
 }

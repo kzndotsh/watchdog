@@ -3,7 +3,7 @@ import { Eye, EyeOff, KeyRoundIcon } from "lucide-react";
 import { useState, type SyntheticEvent } from "react";
 
 import { putCredentialFn } from "@/domains/settings/settings.functions";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { LocalDateTime } from "@/shared/ui/local-date-time";
 import {
@@ -75,7 +75,7 @@ export function ConfigureCredentialDialog({
         onOpenChange(false);
         onSaved();
       } catch (error) {
-        setSaveError(errMessage(error, "Save failed"));
+        setSaveError(errMessage(error, couldnt("save", "credential")));
       }
     },
   });

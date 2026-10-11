@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
 import { usersKeys } from "@/domains/settings/queries";
-import { errMessage, messageOr } from "@/lib/utils";
+import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { TOAST_SESSIONS_REVOKED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 
@@ -14,7 +14,7 @@ export function useRevokeUserSessions() {
       const { error } = await authClient.admin.revokeUserSessions({ userId });
       if (error) {
         throw new Error(
-          messageOr(error.message, "Could not sign out sessions")
+          messageOr(error.message, couldnt("sign out", "sessions"))
         );
       }
     },
@@ -23,7 +23,7 @@ export function useRevokeUserSessions() {
       toast.success(TOAST_SESSIONS_REVOKED);
     },
     onError: (error) => {
-      toast.error(errMessage(error, "Could not sign out sessions"));
+      toast.error(errMessage(error, couldnt("sign out", "sessions")));
     },
   });
 }

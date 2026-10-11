@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
-import { errMessage, messageOr } from "@/lib/utils";
+import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
 export interface AcceptUserInvitationVariables {
@@ -23,7 +23,9 @@ export function useAcceptUserInvitation({
         invitationId: invitation.id,
       });
       if (error) {
-        throw new Error(messageOr(error.message, "Couldn't accept"));
+        throw new Error(
+          messageOr(error.message, couldnt("accept", "invitation"))
+        );
       }
       return invitation.organizationId;
     },
@@ -31,7 +33,7 @@ export function useAcceptUserInvitation({
       onAccepted?.(organizationId);
     },
     onError: (error) => {
-      toast.error(errMessage(error, "Couldn't accept the invitation"));
+      toast.error(errMessage(error, couldnt("accept", "the invitation")));
     },
   });
 }

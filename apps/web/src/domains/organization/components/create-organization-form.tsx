@@ -6,7 +6,7 @@ import { authClient } from "@/auth/client";
 import { OrgLogoField } from "@/domains/organization/components/org-logo-field";
 import { OrgSlugField } from "@/domains/organization/components/org-slug-field";
 import { useSlugAvailability } from "@/domains/organization/hooks/use-slug-availability";
-import { errMessage, nextAutoSlug, slugifyName } from "@/lib/utils";
+import { couldnt, errMessage, nextAutoSlug, slugifyName } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { FieldMessage } from "@/shared/ui/field-message";
 import { Button } from "@/shared/ui/primitives/button";
@@ -46,7 +46,9 @@ export function CreateOrganizationForm({
         });
         onCreated();
       } catch (error) {
-        setServerError(errMessage(error, "Couldn't create the organization"));
+        setServerError(
+          errMessage(error, couldnt("create", "the organization"))
+        );
       }
     },
   });

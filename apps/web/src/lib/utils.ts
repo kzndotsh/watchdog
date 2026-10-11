@@ -61,6 +61,16 @@ export function isServerFailure(err: unknown): boolean {
   );
 }
 
+/**
+ * House failure copy: `Couldn't <verb> <noun>` (e.g. `couldnt("save", "claim")` is
+ * `Couldn't save claim`). Pass it as the fallback to `errMessage` / `queryLoadError`, or use
+ * it where there is no error object; never write a failure message by hand. The verb is
+ * lower case and in its base form; the noun names the thing that did not happen.
+ */
+export function couldnt(verb: string, noun: string): string {
+  return `Couldn't ${verb} ${noun}`;
+}
+
 /** House copy for a failed server action: names the action, then `Try again.` */
 export function serverFailureMessage(action: string): string {
   return `${action.replace(/[.\s]+$/, "")}. Try again.`;

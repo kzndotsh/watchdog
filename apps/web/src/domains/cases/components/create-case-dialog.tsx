@@ -2,7 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { useRef } from "react";
 
 import { createCaseFn } from "@/domains/cases/cases.functions";
-import { errMessage, nextAutoSlug } from "@/lib/utils";
+import { couldnt, errMessage, nextAutoSlug } from "@/lib/utils";
 import { fieldErrorList, fieldInvalid } from "@/shared/lib/field-errors";
 import { Button } from "@/shared/ui/primitives/button";
 import {
@@ -49,7 +49,7 @@ export function CreateCaseDialog({
         onOpenChange(false);
         onCreated();
       } catch (error) {
-        onError(errMessage(error, "Create failed"));
+        onError(errMessage(error, couldnt("create", "Case")));
       }
     },
   });

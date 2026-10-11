@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
+import { couldnt } from "@/lib/utils";
 
 /**
  * Leave an organization (variable: its id). No cache settling: the caller reloads into
@@ -11,7 +12,8 @@ export function useLeaveOrganization() {
   return useMutation({
     mutationFn: async (organizationId: string) => {
       const { error } = await authClient.organization.leave({ organizationId });
-      if (error) throw new Error(error.message ?? "Couldn't leave");
+      if (error)
+        throw new Error(error.message ?? couldnt("leave", "organization"));
     },
   });
 }

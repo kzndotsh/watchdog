@@ -4,7 +4,7 @@ import { useState } from "react";
 import { deleteCaseFn } from "@/domains/cases/cases.functions";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import type { CaseRecord } from "@/domains/cases/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { deleteCaseInputSchema } from "@watchdog/schemas/cases";
 
@@ -34,7 +34,7 @@ export function useDeleteCase({
       onDeleted?.(caseRow);
     },
     onError: (caughtError) => {
-      setError(errMessage(caughtError, "Delete failed"));
+      setError(errMessage(caughtError, couldnt("delete", "Case")));
     },
   });
 

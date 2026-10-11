@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { deleteIdentifierFn } from "@/domains/entities/identifiers/identifiers.functions";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { deleteIdentifierInputSchema } from "@watchdog/schemas/graph";
@@ -59,7 +59,7 @@ export function useDeleteIdentifier({
       onDeleted?.(target);
     },
     onError: (caughtError) => {
-      setError(errMessage(caughtError, "Delete failed"));
+      setError(errMessage(caughtError, couldnt("delete", "identifier")));
     },
   });
 

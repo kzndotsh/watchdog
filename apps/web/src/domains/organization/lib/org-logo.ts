@@ -1,3 +1,5 @@
+import { couldnt } from "@/lib/utils";
+
 /** Longest edge of a stored organization logo. Logos live in the `logo` column as a data URL. */
 const ORG_LOGO_SIZE = 128;
 
@@ -32,7 +34,7 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
       resolve(image);
     });
     image.addEventListener("error", () => {
-      reject(new Error("Couldn't read the image"));
+      reject(new Error(couldnt("read", "the image")));
     });
     image.src = url;
   });
@@ -41,7 +43,8 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
 function drawSquareLogo(image: HTMLImageElement): string {
   const { naturalWidth: width, naturalHeight: height } = image;
   // A file that loads but has no readable size would otherwise draw a blank logo.
-  if (width === 0 || height === 0) throw new Error("Couldn't read the image");
+  if (width === 0 || height === 0)
+    throw new Error(couldnt("read", "the image"));
   if (width > MAX_LOGO_EDGE || height > MAX_LOGO_EDGE) {
     throw new Error(
       `Image is too large; use one up to ${MAX_LOGO_EDGE} pixels on each side`
@@ -52,7 +55,7 @@ function drawSquareLogo(image: HTMLImageElement): string {
   canvas.width = ORG_LOGO_SIZE;
   canvas.height = ORG_LOGO_SIZE;
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("Couldn't read the image");
+  if (!context) throw new Error(couldnt("read", "the image"));
   context.drawImage(
     image,
     (width - side) / 2,

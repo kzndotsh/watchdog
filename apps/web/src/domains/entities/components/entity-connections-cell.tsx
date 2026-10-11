@@ -12,7 +12,7 @@ import type {
   UpdateEntityConnectionInput,
 } from "@/domains/entities/lib/edge-write";
 import type { EntityRecord } from "@/domains/entities/types";
-import { cn } from "@/lib/utils";
+import { cn, couldnt } from "@/lib/utils";
 import { CHIP_SIZE_CLASS } from "@/shared/ui/chip";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
@@ -134,7 +134,7 @@ export function EntityConnectionsCell({
       close();
     } catch (error) {
       setSaveError(
-        error instanceof Error ? error.message : "Couldn't unlink connection"
+        error instanceof Error ? error.message : couldnt("unlink", "connection")
       );
     } finally {
       setUnlinkingEdgeId(null);
@@ -174,8 +174,8 @@ export function EntityConnectionsCell({
     } catch (error) {
       const fallback =
         mode.kind === "edit"
-          ? "Couldn't update connection"
-          : "Couldn't create connection";
+          ? couldnt("update", "connection")
+          : couldnt("create", "connection");
       setSaveError(error instanceof Error ? error.message : fallback);
     } finally {
       setSaving(false);

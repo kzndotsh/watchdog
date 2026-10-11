@@ -19,7 +19,7 @@ import {
 import { entityOptionsFromRecords } from "@/domains/entities/lib/entity-options";
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import type { PageFilterChip } from "@/shared/layout/page-filter-menu";
 import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
@@ -176,7 +176,7 @@ export function useEntityTableState(
       try {
         await copyEntityLink(entity.slug);
       } catch (error: unknown) {
-        toast.error(errMessage(error, "Copy failed"));
+        toast.error(errMessage(error, couldnt("copy", "entity")));
       }
     })();
   }, []);
@@ -187,7 +187,7 @@ export function useEntityTableState(
         try {
           await copyEntityMarkdown(active.id, entity.slug);
         } catch (error: unknown) {
-          toast.error(errMessage(error, "Copy failed"));
+          toast.error(errMessage(error, couldnt("copy", "entity")));
         }
       })();
     },

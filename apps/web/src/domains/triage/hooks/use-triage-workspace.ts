@@ -13,7 +13,7 @@ import {
   rejectProposalFn,
 } from "@/domains/triage/triage.functions";
 import type { AcceptFormValues } from "@/domains/triage/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { useActivityEntries } from "@/shared/hooks/use-activity-stream";
 import { listPending } from "@/shared/lib/list-pending";
 import { scopeOptionalUuid } from "@/shared/lib/query-ingress";
@@ -155,7 +155,7 @@ export function useTriageWorkspace(
       await invalidateAfterProposalAccept(queryClient, caseId);
     },
     onError: (e) => {
-      setError(errMessage(e, "Accept failed"));
+      setError(errMessage(e, couldnt("accept", "proposal")));
     },
   });
 
@@ -176,7 +176,7 @@ export function useTriageWorkspace(
       await invalidateAfterProposalQueueChange(queryClient, caseId);
     },
     onError: (e) => {
-      setError(errMessage(e, "Reject failed"));
+      setError(errMessage(e, couldnt("reject", "proposal")));
     },
   });
 

@@ -8,7 +8,7 @@ import { useDisableUser } from "@/domains/settings/hooks/use-disable-user";
 import { useEnableUser } from "@/domains/settings/hooks/use-enable-user";
 import { useRevokeUserSessions } from "@/domains/settings/hooks/use-revoke-user-sessions";
 import { usersKeys } from "@/domains/settings/queries";
-import { cn, messageOr } from "@/lib/utils";
+import { cn, couldnt, messageOr } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
@@ -35,7 +35,7 @@ async function loadUsers(): Promise<ListedUser[]> {
     query: { limit: 100, sortBy: "createdAt", sortDirection: "asc" },
   });
   if (error) {
-    throw new Error(messageOr(error.message, "Could not load users"));
+    throw new Error(messageOr(error.message, couldnt("load", "users")));
   }
   return data?.users ?? EMPTY_USERS;
 }
@@ -61,7 +61,7 @@ export function SettingsUsers() {
   const usersLoadError = queryLoadError(
     usersQuery,
     usersPending,
-    "Could not load users"
+    couldnt("load", "users")
   );
 
   if (usersPending) {

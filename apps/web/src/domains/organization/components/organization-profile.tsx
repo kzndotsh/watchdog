@@ -12,7 +12,7 @@ import { useSlugAvailability } from "@/domains/organization/hooks/use-slug-avail
 import { useUpdateOrganization } from "@/domains/organization/hooks/use-update-organization";
 import { reloadIntoOrganization } from "@/domains/organization/lib/switch-organization";
 import { organizationKeys } from "@/domains/organization/queries";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { FormSection } from "@/shared/ui/form-section";
 import {
   AlertDialog,
@@ -58,7 +58,7 @@ export function OrganizationProfile() {
     queryFn: async () => {
       const { data, error } =
         await authClient.organization.getActiveMemberRole();
-      if (error) throw new Error(error.message ?? "Couldn't load your role");
+      if (error) throw new Error(error.message ?? couldnt("load", "your role"));
       return data;
     },
   });
@@ -116,7 +116,7 @@ export function OrganizationProfile() {
           setDraft(null);
         },
         onError: (mutationError) => {
-          setError(errMessage(mutationError, "Couldn't save"));
+          setError(errMessage(mutationError, couldnt("save", "organization")));
         },
       }
     );
@@ -203,7 +203,12 @@ export function OrganizationProfile() {
                     leave.mutate(organization.id, {
                       onSuccess: reloadIntoOrganization,
                       onError: (mutationError) => {
-                        setError(errMessage(mutationError, "Couldn't leave"));
+                        setError(
+                          errMessage(
+                            mutationError,
+                            couldnt("leave", "organization")
+                          )
+                        );
                       },
                     });
                   }}
@@ -265,7 +270,10 @@ export function OrganizationProfile() {
                         onSuccess: reloadIntoOrganization,
                         onError: (mutationError) => {
                           setError(
-                            errMessage(mutationError, "Couldn't delete")
+                            errMessage(
+                              mutationError,
+                              couldnt("delete", "organization")
+                            )
                           );
                         },
                       });

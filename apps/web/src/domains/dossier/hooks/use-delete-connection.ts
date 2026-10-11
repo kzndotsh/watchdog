@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { deleteEdgeFn } from "@/domains/entities/edges/edges.functions";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { edgeScopeInputSchema } from "@watchdog/schemas/graph";
@@ -36,7 +36,7 @@ export function useDeleteConnection({
       toast.success("Connection deleted");
     },
     onError: (caughtError) => {
-      onError?.(errMessage(caughtError, "Delete failed"));
+      onError?.(errMessage(caughtError, couldnt("delete", "connection")));
     },
   });
 }

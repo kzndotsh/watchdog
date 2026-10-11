@@ -6,7 +6,7 @@ import {
   orgInitials,
   resizeLogoToDataUrl,
 } from "@/domains/organization/lib/org-logo";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { Field, FieldError } from "@watchdog/ui/components/field";
 import { Label } from "@watchdog/ui/components/label";
@@ -43,7 +43,7 @@ export function OrgLogoField({
       onChange(await resizeLogoToDataUrl(file));
       setProblem(null);
     } catch (error) {
-      setProblem(errMessage(error, "Couldn't read the image"));
+      setProblem(errMessage(error, couldnt("read", "the image")));
     } finally {
       setProcessing(false);
     }

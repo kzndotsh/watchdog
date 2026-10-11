@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { deleteEntityFn } from "@/domains/entities/entities.functions";
 import type { EntityRecord } from "@/domains/entities/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { deleteEntityInputSchema } from "@watchdog/schemas/graph";
@@ -41,7 +41,7 @@ export function useDeleteEntity({
       onDeleted?.(entity);
     },
     onError: (caughtError) => {
-      setError(errMessage(caughtError, "Delete failed"));
+      setError(errMessage(caughtError, couldnt("delete", "entity")));
     },
   });
 

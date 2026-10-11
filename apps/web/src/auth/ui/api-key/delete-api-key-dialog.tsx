@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { authClient } from "@/auth/client";
 import { apiKeyPlugin } from "@/auth/plugins/api-key";
-import { errMessage, firstNonEmpty } from "@/lib/utils";
+import { couldnt, errMessage, firstNonEmpty } from "@/lib/utils";
 import { DestructiveConfirmDialog } from "@/shared/ui/destructive-confirm-dialog";
 
 export interface DeleteApiKeyDialogProps {
@@ -34,7 +34,7 @@ export function DeleteApiKeyDialog({
         onOpenChange(false);
       },
       onError: (err: unknown) => {
-        setError(errMessage(err, "Delete failed"));
+        setError(errMessage(err, couldnt("delete", "API key")));
       },
     }
   );

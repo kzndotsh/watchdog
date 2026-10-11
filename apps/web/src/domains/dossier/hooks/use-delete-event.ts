@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { deleteEventFn } from "@/domains/entities/events/events.functions";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { eventScopeInputSchema } from "@watchdog/schemas/graph";
@@ -29,7 +29,7 @@ export function useDeleteEvent({
       toast.success("Event deleted");
     },
     onError: (caughtError) => {
-      onError?.(errMessage(caughtError, "Delete failed"));
+      onError?.(errMessage(caughtError, couldnt("delete", "event")));
     },
   });
 }

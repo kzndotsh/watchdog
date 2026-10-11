@@ -5,7 +5,7 @@ import { updateCaseFn } from "@/domains/cases/cases.functions";
 import { writeCaseRecordCache } from "@/domains/cases/hooks/case-cache";
 import { notifyCasesChanged } from "@/domains/cases/lib/active-case";
 import { buildUpdateCaseData } from "@/domains/cases/lib/case-write";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterCaseSwitch } from "@/shared/lib/query-invalidation";
 import { TOAST_CASE_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
@@ -39,7 +39,7 @@ export function useUpdateCase(caseId: string, currentSlug: string | undefined) {
       await invalidateAfterCaseSwitch(queryClient);
     },
     onError: (err) => {
-      toast.error(errMessage(err, "Update failed"));
+      toast.error(errMessage(err, couldnt("update", "Case")));
     },
   });
 }

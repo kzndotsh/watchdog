@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
 import { organizationKeys } from "@/domains/organization/queries";
-import { errMessage, messageOr } from "@/lib/utils";
+import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
 export interface ResendInvitationVariables {
@@ -21,7 +21,9 @@ export function useResendInvitation() {
         resend: true,
       });
       if (error)
-        throw new Error(messageOr(error.message, "Couldn't resend invitation"));
+        throw new Error(
+          messageOr(error.message, couldnt("resend", "invitation"))
+        );
     },
     onSuccess: async () => {
       toast.success("Invitation sent again.");
@@ -30,7 +32,7 @@ export function useResendInvitation() {
       });
     },
     onError: (error) => {
-      toast.error(errMessage(error, "Couldn't resend invitation"));
+      toast.error(errMessage(error, couldnt("resend", "invitation")));
     },
   });
 }

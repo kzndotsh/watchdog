@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
 import { organizationKeys } from "@/domains/organization/queries";
-import { errMessage, messageOr } from "@/lib/utils";
+import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
 export interface UpdateMemberRoleVariables {
@@ -17,12 +17,12 @@ export function useUpdateMemberRole() {
     mutationFn: async (input: UpdateMemberRoleVariables) => {
       const { error } = await authClient.organization.updateMemberRole(input);
       if (error)
-        throw new Error(messageOr(error.message, "Couldn't update role"));
+        throw new Error(messageOr(error.message, couldnt("update", "role")));
     },
     onSuccess: async () =>
       queryClient.invalidateQueries({ queryKey: organizationKeys.team() }),
     onError: (error) => {
-      toast.error(errMessage(error, "Couldn't update role"));
+      toast.error(errMessage(error, couldnt("update", "role")));
     },
   });
 }

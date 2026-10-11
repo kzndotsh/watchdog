@@ -61,4 +61,16 @@ describe("useEnableUser", () => {
     expect(toast.error).toHaveBeenCalledWith("network down");
     expect(run.invalidated(usersKeys.all)).toBe(false);
   });
+
+  it("falls back to Couldn't enable user when the refusal carries no message", async () => {
+    await runAuthMutation({
+      useVerb: () => useEnableUser(),
+      authCall: unbanUser,
+      answer: { kind: "refused" },
+      variables: "u-2",
+      seed: SEED,
+    });
+
+    expect(toast.error).toHaveBeenCalledWith("Couldn't enable user");
+  });
 });

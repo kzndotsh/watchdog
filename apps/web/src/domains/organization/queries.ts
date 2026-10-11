@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
 import { getOrganizationStateFn } from "@/domains/organization/organization.functions";
+import { couldnt } from "@/lib/utils";
 
 export const organizationKeys = {
   state: () => ["organization", "state"] as const,
@@ -40,7 +41,7 @@ export const slugTakenQuery = (slug: string) =>
       const { error } = await authClient.organization.checkSlug({ slug });
       if (!error) return false;
       if (error.code === SLUG_TAKEN_CODE) return true;
-      throw new Error(error.message ?? "Couldn't check the slug");
+      throw new Error(error.message ?? couldnt("check", "the slug"));
     },
     // An availability answer is only true now: never serve it from cache.
     staleTime: 0,

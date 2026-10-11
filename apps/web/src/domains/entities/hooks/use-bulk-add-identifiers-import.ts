@@ -8,7 +8,7 @@ import {
   type IdentifierPasteRow,
   type IdentifierPasteTable,
 } from "@/domains/entities/lib/parse-identifier-paste";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 import { createIdentifierInputSchema } from "@watchdog/schemas/graph";
 
@@ -100,7 +100,7 @@ export function useBulkAddIdentifiersImport(options: {
       });
     },
     onError: (e) => {
-      toast.error(errMessage(e, "Import failed"));
+      toast.error(errMessage(e, couldnt("import", "identifiers")));
     },
   });
 }

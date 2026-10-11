@@ -2,7 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { tableComposerKeyDown } from "@/shared/ui/data-table";
 import type { EntityKind } from "@watchdog/schemas/shared";
 
@@ -32,7 +32,7 @@ async function submitEntityCreate(
     ctx.resetForm();
     ctx.setComposing(false);
   } catch (error) {
-    ctx.setSubmitError(errMessage(error, "Create failed"));
+    ctx.setSubmitError(errMessage(error, couldnt("create", "entity")));
   }
 }
 

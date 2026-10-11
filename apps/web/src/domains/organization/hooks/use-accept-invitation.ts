@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { authClient } from "@/auth/client";
-import { messageOr } from "@/lib/utils";
+import { couldnt, messageOr } from "@/lib/utils";
 
 /**
  * Accept the invitation with the signed-in account (variable: the invitation id). The caller
@@ -17,7 +17,9 @@ export function useAcceptInvitation({
         invitationId,
       });
       if (error)
-        throw new Error(messageOr(error.message, "Couldn't accept invitation"));
+        throw new Error(
+          messageOr(error.message, couldnt("accept", "invitation"))
+        );
     },
     onSuccess: () => {
       onAccepted?.();

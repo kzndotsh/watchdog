@@ -5,7 +5,7 @@ import { updateIdentifierFn } from "@/domains/entities/identifiers/identifiers.f
 import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types";
 import { entityChangedOpts } from "@/domains/entities/lib/entity-invalidation-opts";
 import { buildUpdateIdentifierData } from "@/domains/entities/lib/identifier-write";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_IDENTIFIER_UPDATED } from "@/shared/lib/toast-copy";
 import type { IdentifierFieldUpdate } from "@/shared/ui/identifiers/identifier-cells";
@@ -51,7 +51,7 @@ async function onIdentifierUpdated(
 }
 
 function onIdentifierUpdateError(error: unknown): void {
-  toast.error(errMessage(error, "Update failed"));
+  toast.error(errMessage(error, couldnt("update", "identifier")));
 }
 
 function buildIdentifierMutationHandlers(

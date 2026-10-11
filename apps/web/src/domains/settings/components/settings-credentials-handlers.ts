@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterCredentialMutation } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 
@@ -8,7 +8,7 @@ export function handleCredentialDeleteError(
   error: unknown,
   setDeleteError: (message: string | null) => void
 ): void {
-  setDeleteError(errMessage(error, "Delete failed"));
+  setDeleteError(errMessage(error, couldnt("delete", "credential")));
 }
 
 export function openConfigureCredential(

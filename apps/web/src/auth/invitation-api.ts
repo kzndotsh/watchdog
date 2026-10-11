@@ -1,4 +1,5 @@
 import { authClient } from "@/auth/client";
+import { couldnt } from "@/lib/utils";
 
 export interface InvitationPreview {
   id: string;
@@ -37,6 +38,6 @@ export async function inviteSignUp(input: {
     body: input,
   });
   if (error) {
-    throw new Error(fetchErrorMessage(error, "Could not create account"));
+    throw new Error(fetchErrorMessage(error, couldnt("create", "account")));
   }
 }

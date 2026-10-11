@@ -5,7 +5,7 @@ import type { DossierEditFormValues } from "@/domains/dossier/components/dossier
 import { updateEntityFieldsFn } from "@/domains/entities/entities.functions";
 import { buildUpdateEntityFieldsData } from "@/domains/entities/lib/entity-write";
 import type { EntityRecord } from "@/domains/entities/types";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_ENTITY_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
@@ -44,7 +44,7 @@ async function onRenameSuccess(ctx: EntityMutationContext): Promise<void> {
 }
 
 function onRenameError(ctx: EntityMutationContext, err: unknown): void {
-  ctx.setRenameError(errMessage(err, "Rename failed"));
+  ctx.setRenameError(errMessage(err, couldnt("rename", "entity")));
 }
 
 function editEntity(ctx: EntityMutationContext, values: DossierEditFormValues) {
@@ -67,7 +67,7 @@ async function onEditSuccess(ctx: EntityMutationContext): Promise<void> {
 }
 
 function onEditError(ctx: EntityMutationContext, err: unknown): void {
-  ctx.setEditError(errMessage(err, "Update failed"));
+  ctx.setEditError(errMessage(err, couldnt("update", "entity")));
 }
 
 export function useDossierShellMutations(ctx: EntityMutationContext) {

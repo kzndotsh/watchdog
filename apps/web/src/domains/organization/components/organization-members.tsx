@@ -11,7 +11,7 @@ import { useRemoveMember } from "@/domains/organization/hooks/use-remove-member"
 import { useResendInvitation } from "@/domains/organization/hooks/use-resend-invitation";
 import { useUpdateMemberRole } from "@/domains/organization/hooks/use-update-member-role";
 import { organizationKeys } from "@/domains/organization/queries";
-import { cn, errMessage, messageOr } from "@/lib/utils";
+import { cn, couldnt, errMessage, messageOr } from "@/lib/utils";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
@@ -83,7 +83,7 @@ async function copyInviteLink(url: string): Promise<void> {
     await navigator.clipboard.writeText(url);
     toast.success(TOAST_COPIED);
   } catch (error) {
-    toast.error(errMessage(error, "Copy failed"));
+    toast.error(errMessage(error, couldnt("copy", "invite link")));
   }
 }
 
@@ -101,12 +101,12 @@ async function loadTeam() {
   ]);
   if (membersResult.error) {
     throw new Error(
-      messageOr(membersResult.error.message, "Couldn't load members")
+      messageOr(membersResult.error.message, couldnt("load", "members"))
     );
   }
   if (invitationsResult.error) {
     throw new Error(
-      messageOr(invitationsResult.error.message, "Couldn't load invitations")
+      messageOr(invitationsResult.error.message, couldnt("load", "invitations"))
     );
   }
   const members = membersResult.data?.members ?? EMPTY_MEMBERS;
@@ -155,7 +155,7 @@ export function OrganizationMembers() {
   const teamLoadError = queryLoadError(
     teamQuery,
     teamPending,
-    "Couldn't load team"
+    couldnt("load", "team")
   );
 
   if (teamPending) {

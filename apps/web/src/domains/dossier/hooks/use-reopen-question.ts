@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { DossierEntityScope } from "@/domains/dossier/types";
 import { reopenQuestionFn } from "@/domains/entities/questions/questions.functions";
-import { errMessage } from "@/lib/utils";
+import { couldnt, errMessage } from "@/lib/utils";
 import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { questionScopeInputSchema } from "@watchdog/schemas/graph";
@@ -36,7 +36,7 @@ export function useReopenQuestion({
       toast.success("Question reopened");
     },
     onError: (caughtError) => {
-      onError?.(errMessage(caughtError, "Reopen failed"));
+      onError?.(errMessage(caughtError, couldnt("reopen", "question")));
     },
   });
 }

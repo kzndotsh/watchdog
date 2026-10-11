@@ -14,7 +14,7 @@ import { useUpdateEvent } from "@/domains/dossier/hooks/use-update-event";
 import { eventRowActions } from "@/domains/dossier/lib/event-row-actions";
 import type { DossierSectionProps } from "@/domains/dossier/types";
 import { eventsListQuery } from "@/domains/entities/events/queries";
-import { cn, errMessage } from "@/lib/utils";
+import { cn, couldnt, errMessage } from "@/lib/utils";
 import { fieldInvalid } from "@/shared/lib/field-errors";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { FieldMessage } from "@/shared/ui/field-message";
@@ -143,7 +143,7 @@ function EventNodeComposer({
           where: value.where.trim(),
         });
       } catch (caughtError) {
-        onError(errMessage(caughtError, "Save failed"));
+        onError(errMessage(caughtError, couldnt("save", "event")));
       }
     },
   });
