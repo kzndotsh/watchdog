@@ -127,15 +127,17 @@ function renderAcceptEvidenceSlot({
   );
 }
 
+type AcceptWarningsProps = {
+  acceptForm: TriageAcceptForm;
+  proposal: ProposalRecord;
+  linkedIds: string[];
+};
+
 function AcceptWarnings({
   acceptForm,
   proposal,
   linkedIds,
-}: {
-  acceptForm: TriageAcceptForm;
-  proposal: ProposalRecord;
-  linkedIds: string[];
-}) {
+}: AcceptWarningsProps) {
   return (
     <acceptForm.Subscribe
       selector={(state) => ({
@@ -162,6 +164,17 @@ function AcceptWarnings({
   );
 }
 
+type AcceptControlsProps = {
+  acceptForm: TriageAcceptForm;
+  proposal: ProposalRecord;
+  linkedIds: string[];
+  caseEvidence: EvidenceRecord[];
+  missingJobEvidenceCount: number;
+  evidenceLoading: boolean;
+  evidenceMode: DecideEvidenceMode;
+  showAttestation: boolean;
+};
+
 function AcceptControls({
   acceptForm,
   proposal,
@@ -171,16 +184,7 @@ function AcceptControls({
   evidenceLoading,
   evidenceMode,
   showAttestation,
-}: {
-  acceptForm: TriageAcceptForm;
-  proposal: ProposalRecord;
-  linkedIds: string[];
-  caseEvidence: EvidenceRecord[];
-  missingJobEvidenceCount: number;
-  evidenceLoading: boolean;
-  evidenceMode: DecideEvidenceMode;
-  showAttestation: boolean;
-}) {
+}: AcceptControlsProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
@@ -236,17 +240,19 @@ function AcceptControls({
   );
 }
 
+type RejectComposerProps = {
+  rejectForm: TriageRejectForm;
+  pending: boolean;
+  rejecting: boolean;
+  onRejectingChange: (rejecting: boolean) => void;
+};
+
 function RejectComposer({
   rejectForm,
   pending,
   rejecting,
   onRejectingChange,
-}: {
-  rejectForm: TriageRejectForm;
-  pending: boolean;
-  rejecting: boolean;
-  onRejectingChange: (rejecting: boolean) => void;
-}) {
+}: RejectComposerProps) {
   return (
     <ComposerShell density="dense" className="w-full gap-1.5">
       <rejectForm.Field name="rejectReason">
@@ -296,6 +302,20 @@ function RejectComposer({
   );
 }
 
+type TriageDecideFooterProps = {
+  proposal: ProposalRecord;
+  acceptForm: TriageAcceptForm;
+  rejectForm: TriageRejectForm;
+  linkedIds: string[];
+  caseEvidence: EvidenceRecord[];
+  missingJobEvidenceCount: number;
+  evidenceLoading: boolean;
+  pending: boolean;
+  error: string | null;
+  rejecting: boolean;
+  onRejectingChange: (rejecting: boolean) => void;
+};
+
 export function TriageDecideFooter({
   proposal,
   acceptForm,
@@ -308,19 +328,7 @@ export function TriageDecideFooter({
   error,
   rejecting,
   onRejectingChange,
-}: {
-  proposal: ProposalRecord;
-  acceptForm: TriageAcceptForm;
-  rejectForm: TriageRejectForm;
-  linkedIds: string[];
-  caseEvidence: EvidenceRecord[];
-  missingJobEvidenceCount: number;
-  evidenceLoading: boolean;
-  pending: boolean;
-  error: string | null;
-  rejecting: boolean;
-  onRejectingChange: (rejecting: boolean) => void;
-}) {
+}: TriageDecideFooterProps) {
   const view = buildDecideHeaderView({
     proposal,
     linkedIds,

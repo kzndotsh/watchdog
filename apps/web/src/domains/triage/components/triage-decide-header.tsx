@@ -42,15 +42,17 @@ function ProducingCapLink({
   );
 }
 
+type DecideHeaderSubjectProps = {
+  view: DecideHeaderView;
+  proposal: ProposalRecord;
+  subject: string;
+};
+
 function DecideHeaderSubject({
   view,
   proposal,
   subject,
-}: {
-  view: DecideHeaderView;
-  proposal: ProposalRecord;
-  subject: string;
-}) {
+}: DecideHeaderSubjectProps) {
   return (
     <>
       <span className="text-foreground/80 inline-flex min-w-0 items-center gap-1">
@@ -83,15 +85,17 @@ function DecideHeaderSubject({
   );
 }
 
+type DecideHeaderMetaProps = {
+  proposal: ProposalRecord;
+  view: DecideHeaderView;
+  actorLabel: string | null | undefined;
+};
+
 function DecideHeaderMeta({
   proposal,
   view,
   actorLabel,
-}: {
-  proposal: ProposalRecord;
-  view: DecideHeaderView;
-  actorLabel: string | null | undefined;
-}) {
+}: DecideHeaderMetaProps) {
   return (
     <>
       <DetailContextSep />

@@ -75,17 +75,19 @@ export type EvidenceDetailProps = {
   actions: IntakeEvidenceActions;
 };
 
+type EvidenceOutputTabProps = {
+  caseId: string;
+  enrichRunning: boolean;
+  enrichBlocked: boolean;
+  enrichOutput: ReturnType<typeof latestEnrichOutput>;
+};
+
 function EvidenceOutputTab({
   caseId,
   enrichRunning,
   enrichBlocked,
   enrichOutput,
-}: {
-  caseId: string;
-  enrichRunning: boolean;
-  enrichBlocked: boolean;
-  enrichOutput: ReturnType<typeof latestEnrichOutput>;
-}) {
+}: EvidenceOutputTabProps) {
   if (enrichRunning && !enrichOutput) {
     return (
       <div className="text-muted-foreground flex items-center gap-2 py-6 text-xs">
@@ -133,17 +135,19 @@ function EvidenceOutputTab({
   );
 }
 
+type EvidenceJobsTabProps = {
+  relatedJobs: JobListRecord[];
+  canEnrich: boolean;
+  focusedJobId: string | null;
+  onFocusedJobChange: (jobId: string | null) => void;
+};
+
 function EvidenceJobsTab({
   relatedJobs,
   canEnrich,
   focusedJobId,
   onFocusedJobChange,
-}: {
-  relatedJobs: JobListRecord[];
-  canEnrich: boolean;
-  focusedJobId: string | null;
-  onFocusedJobChange: (jobId: string | null) => void;
-}) {
+}: EvidenceJobsTabProps) {
   if (relatedJobs.length === 0) {
     return (
       <EmptyState
@@ -242,6 +246,18 @@ function evidenceContentBody({
   };
 }
 
+type EvidenceContentPanelProps = {
+  evidence: EvidenceRecord;
+  canEnrich: boolean;
+  isImage: boolean;
+  downloadUrl: string | null;
+  loadingBlob: boolean;
+  resolvedText: string | null;
+  hasUri: boolean;
+  contentLoadError: string | null;
+  onRetryContent: () => void;
+};
+
 function EvidenceContentPanel({
   evidence,
   canEnrich,
@@ -252,17 +268,7 @@ function EvidenceContentPanel({
   hasUri,
   contentLoadError,
   onRetryContent,
-}: {
-  evidence: EvidenceRecord;
-  canEnrich: boolean;
-  isImage: boolean;
-  downloadUrl: string | null;
-  loadingBlob: boolean;
-  resolvedText: string | null;
-  hasUri: boolean;
-  contentLoadError: string | null;
-  onRetryContent: () => void;
-}) {
+}: EvidenceContentPanelProps) {
   const title = evidenceTitle(evidence);
   const notes =
     evidence.notes !== null && evidence.notes !== "" ? evidence.notes : null;

@@ -2,6 +2,15 @@ import type { IntakeEvidenceActions } from "@/domains/intake/hooks/use-intake-ac
 import { Button } from "@/shared/ui/primitives/button";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 
+type EvidenceHeaderActionsProps = {
+  isHidden: boolean;
+  actions: IntakeEvidenceActions;
+  canEnrich: boolean;
+  processed: boolean;
+  allowThirdPartyEgress?: boolean;
+  onHideRequested: () => void;
+};
+
 export function EvidenceHeaderActions({
   isHidden,
   actions,
@@ -9,14 +18,7 @@ export function EvidenceHeaderActions({
   processed,
   allowThirdPartyEgress = false,
   onHideRequested,
-}: {
-  isHidden: boolean;
-  actions: IntakeEvidenceActions;
-  canEnrich: boolean;
-  processed: boolean;
-  allowThirdPartyEgress?: boolean;
-  onHideRequested: () => void;
-}) {
+}: EvidenceHeaderActionsProps) {
   const {
     busy,
     processing,

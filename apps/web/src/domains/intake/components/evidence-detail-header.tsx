@@ -14,6 +14,21 @@ import { jobHeadlineLabel } from "@/shared/ui/vocab";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import { TabsList, TabsTrigger } from "@watchdog/ui/components/tabs";
 
+type EvidenceDetailHeaderProps = {
+  evidence: EvidenceRecord;
+  isHidden: boolean;
+  producingCap: JobListRecord | null;
+  entityName?: string | null;
+  entities?: readonly EntityOption[];
+  canEnrich: boolean;
+  enrichJobs: JobListRecord[];
+  enrichOutput: ReturnType<typeof latestEnrichOutput>;
+  relatedJobs: JobListRecord[];
+  attaching?: boolean;
+  onAttachEntity?: (entityId: string) => void;
+  onShowProducingRun?: (jobId: string) => void;
+};
+
 export function EvidenceDetailHeader({
   evidence,
   isHidden,
@@ -27,20 +42,7 @@ export function EvidenceDetailHeader({
   attaching = false,
   onAttachEntity,
   onShowProducingRun,
-}: {
-  evidence: EvidenceRecord;
-  isHidden: boolean;
-  producingCap: JobListRecord | null;
-  entityName?: string | null;
-  entities?: readonly EntityOption[];
-  canEnrich: boolean;
-  enrichJobs: JobListRecord[];
-  enrichOutput: ReturnType<typeof latestEnrichOutput>;
-  relatedJobs: JobListRecord[];
-  attaching?: boolean;
-  onAttachEntity?: (entityId: string) => void;
-  onShowProducingRun?: (jobId: string) => void;
-}) {
+}: EvidenceDetailHeaderProps) {
   const attachedId = evidence.entityId ?? "";
 
   return (
