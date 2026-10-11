@@ -25,18 +25,18 @@ export class InvalidOutputError extends Data.TaggedError("InvalidOutputError")<{
 
 export type StructuredExtractTag = RateLimitedOutputError | InvalidOutputError;
 
-export interface StructuredExtractUsage {
+export type StructuredExtractUsage = {
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
-}
+};
 
-export interface StructuredExtractResult<T> {
+export type StructuredExtractResult<T> = {
   object: T;
   usage?: StructuredExtractUsage;
-}
+};
 
-interface StructuredExtractInput<TSchema extends z.ZodType> {
+type StructuredExtractInput<TSchema extends z.ZodType> = {
   model: LanguageModel;
   schema: TSchema;
   instructions?: string;
@@ -44,7 +44,7 @@ interface StructuredExtractInput<TSchema extends z.ZodType> {
   abortSignal?: AbortSignal;
   temperature?: number;
   maxOutputTokens?: number;
-}
+};
 
 function httpStatusCode(error: unknown): number | undefined {
   if (StreamProviderError.isInstance(error)) {

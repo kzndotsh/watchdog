@@ -12,10 +12,10 @@ import type { ipctlLookupInput } from "./input";
 
 type IpctlInput = z.infer<typeof ipctlLookupInput>;
 
-interface SummaryPart {
+type SummaryPart = {
   when: (report: IpctlLookupSnapshot) => boolean;
   format: (report: IpctlLookupSnapshot) => string;
-}
+};
 
 const SUMMARY_PARTS: SummaryPart[] = [
   { when: (r) => r.asn !== null, format: (r) => `ASN=${r.asn}` },

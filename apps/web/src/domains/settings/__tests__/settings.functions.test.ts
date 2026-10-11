@@ -25,13 +25,13 @@ import {
   putCredentialFn,
 } from "@/domains/settings/settings.functions";
 
-interface ServerContext {
+type ServerContext = {
   context: Record<string, never>;
-}
-interface ServerDataContext<T> {
+};
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 describe("settings.functions", () => {
   it("lists credentials through oRPC", async () => {

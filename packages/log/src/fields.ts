@@ -3,7 +3,7 @@
  * Keep payloads small; never put Evidence body / secrets here.
  */
 
-export interface JobLogFields {
+export type JobLogFields = {
   jobId?: string;
   outcome?: string;
   stopReason?: string;
@@ -11,27 +11,27 @@ export interface JobLogFields {
   fromCache?: boolean;
   reclaim?: boolean;
   durationMs?: number;
-}
+};
 
-export interface CaseLogFields {
+export type CaseLogFields = {
   caseId?: string;
-}
+};
 
-export interface CapLogFields {
+export type CapLogFields = {
   capabilityId?: string;
   playbookRunId?: string;
-}
+};
 
-export interface UserLogFields {
+export type UserLogFields = {
   userId?: string;
   email?: string;
-}
+};
 
-export interface AuthLogFields {
+export type AuthLogFields = {
   method?: "session" | "apiKey" | "none";
   denied?: boolean;
   reason?: string;
-}
+};
 
 function trimLogId(value: string | null | undefined): string | undefined {
   if (value === null || value === undefined) return undefined;

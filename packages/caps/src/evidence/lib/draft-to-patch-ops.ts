@@ -15,15 +15,15 @@ import {
 } from "../../lib/collect/resolve-collect-entity-id";
 import { validatedIdentifierValue } from "../../lib/collect/validated-identifier-value";
 
-export interface DraftToPatchOpsCtx {
+export type DraftToPatchOpsCtx = {
   evidenceId: string;
   entityId?: string;
-}
+};
 
-interface NormalizedDraftCtx {
+type NormalizedDraftCtx = {
   evidenceId: string;
   entityId: string;
-}
+};
 
 type DraftCtxIssue = "missing_entity" | "invalid_entity" | "invalid_evidence";
 

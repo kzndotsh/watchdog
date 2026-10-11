@@ -1,11 +1,11 @@
 import { auditRedactPreset, initLogger } from "evlog";
 import { createFsDrain } from "evlog/fs";
 
-export interface InitWatchdogLoggerOptions {
+export type InitWatchdogLoggerOptions = {
   service: string;
   drainDir: string;
   pretty?: boolean;
-}
+};
 
 const EXTRA_REDACT_PATHS = [
   "password",

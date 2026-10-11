@@ -23,16 +23,16 @@ export type NavTo =
   | "/tasks"
   | "/settings";
 
-export interface NavItem {
+export type NavItem = {
   to: NavTo;
   label: string;
   icon: LucideIcon;
-}
+};
 
-export interface NavGroup {
+export type NavGroup = {
   label: string;
   items: NavItem[];
-}
+};
 
 /** Active-Case graph nouns — rendered with the Case switcher (flat), not in NAV_GROUPS. */
 export const CASE_NAV_ITEMS: NavItem[] = [

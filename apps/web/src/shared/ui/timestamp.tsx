@@ -9,14 +9,14 @@ import {
 
 type TooltipSide = ComponentProps<typeof TooltipContent>["side"];
 
-interface TimestampProps {
+type TimestampProps = {
   /** ISO-8601 instant. */
   value: string | null | undefined;
   /** Visible label (relative / clock / short date). */
   children: ReactNode;
   className?: string;
   side?: TooltipSide;
-}
+};
 
 function formatFullLocalDateTime(iso: string): string {
   try {

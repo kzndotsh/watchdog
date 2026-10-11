@@ -86,10 +86,10 @@ function parseCommoncrawlCdxLines(text: string): Record<string, unknown>[] {
   return out;
 }
 
-interface CollinfoIndex {
+type CollinfoIndex = {
   id: string;
   cdxApi: string;
-}
+};
 
 const COMMONCRAWL_CDX_HOST = "index.commoncrawl.org";
 
@@ -198,13 +198,13 @@ function fetchCdxHitsForIndexEffect(
   });
 }
 
-interface CommoncrawlLookupOptions {
+type CommoncrawlLookupOptions = {
   userAgent?: string;
   /** How many newest indexes to query (default 2). */
   indexes?: number;
   /** Max hits to keep across indexes (default 40). */
   limit?: number;
-}
+};
 
 /**
  * Common Crawl CDX — recent crawl indexes for URLs under a host.

@@ -31,41 +31,41 @@ import {
   requireTrimmedGraphId,
 } from "./patch/guards";
 
-export interface QuestionRecord {
+export type QuestionRecord = {
   id: string;
   entityId: string;
   text: string;
   status: QuestionStatus;
   resolvedNote: string | null;
-}
+};
 
-export interface CreateQuestionInput extends GraphActor {
+export type CreateQuestionInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
   text: string;
-}
+} & GraphActor;
 
-export interface ResolveQuestionInput extends GraphActor {
+export type ResolveQuestionInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   questionId: string;
   resolvedNote?: string;
-}
+} & GraphActor;
 
-export interface UpdateQuestionInput extends GraphActor {
+export type UpdateQuestionInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   questionId: string;
   text?: string;
   resolvedNote?: string | null;
-}
+} & GraphActor;
 
-export interface ReopenQuestionInput extends GraphActor {
+export type ReopenQuestionInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   questionId: string;
-}
+} & GraphActor;
 
 const DEFAULT_QUESTIONS: Partial<Record<EntityKind, readonly string[]>> = {
   person: [
@@ -77,10 +77,10 @@ const DEFAULT_QUESTIONS: Partial<Record<EntityKind, readonly string[]>> = {
   ],
 };
 
-interface SeedQuestionEntity {
+type SeedQuestionEntity = {
   id: string;
   kind: EntityKind;
-}
+};
 
 export function seedDefaultQuestionsEffect(
   tx: DbExec,

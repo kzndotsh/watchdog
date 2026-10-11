@@ -2,12 +2,12 @@ import { PlusIcon } from "lucide-react";
 
 import { Button } from "@/shared/ui/primitives/button";
 
-interface Props {
+type Props = {
   /** Panel empty-state CTA uses a solid button + noun label; header uses ghost "Add". */
   variant: "ghost" | "panel";
   noun?: string;
   onClick: () => void;
-}
+};
 
 export function DossierSectionAddButton({ variant, noun, onClick }: Props) {
   if (variant === "panel") {

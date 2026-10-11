@@ -1,10 +1,10 @@
 import { parseEdgePhraseValue } from "@watchdog/schemas/shared";
 
-export interface ConnectionComposerValues {
+export type ConnectionComposerValues = {
   peerId: string;
   phraseValue: string;
   notes: string;
-}
+};
 
 export function connectionComposerIssues(
   values: ConnectionComposerValues,

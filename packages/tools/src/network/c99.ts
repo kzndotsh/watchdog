@@ -70,11 +70,11 @@ function parseHit(row: unknown): C99SubdomainHit | null {
  * @see https://api.c99.nl/api_overview
  */
 
-interface C99Options {
+type C99Options = {
   userAgent?: string;
   realtime?: boolean;
   limit?: number;
-}
+};
 
 export function fetchC99SubdomainsEffect(
   hostRaw: string,

@@ -23,11 +23,11 @@ import { mapJobFeedRowsEffect } from "./job-feed";
 
 type FeedUsers = ReadonlyMap<string, { name: string; email: string }>;
 
-export interface ListRecentActivityOpts {
+export type ListRecentActivityOpts = {
   organizationId: OrganizationId;
   caseId?: CaseId;
   limit?: number;
-}
+};
 
 const DEFAULT_LIMIT = 15;
 const MAX_LIMIT = 100;

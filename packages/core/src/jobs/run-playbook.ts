@@ -52,20 +52,20 @@ import {
   type JobRecord,
 } from "./start-job";
 
-export interface RunPlaybookInput {
+export type RunPlaybookInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   playbookId: string;
   actorId: string;
   actorLabel?: string | null;
   seed: SeedValues;
-}
+};
 
-export interface PlaybookRunResult {
+export type PlaybookRunResult = {
   playbookId: string;
   playbookRunId: string;
   jobs: JobRecord[];
-}
+};
 
 function loadPlaybookEffect(playbookId: string) {
   return Effect.try({
@@ -252,14 +252,14 @@ export function runPlaybookEffect(
   });
 }
 
-interface CancelPlaybookRunOpts {
+type CancelPlaybookRunOpts = {
   actorId?: string;
-}
+};
 
-interface CancelPlaybookRunResult {
+type CancelPlaybookRunResult = {
   playbookRunId: string;
   cancelledJobIds: string[];
-}
+};
 
 export function cancelPlaybookRunEffect(
   caseId: CaseId,

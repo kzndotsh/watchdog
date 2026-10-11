@@ -83,10 +83,10 @@ function QuestionLine({
   );
 }
 
-interface QuestionComposerValues {
+type QuestionComposerValues = {
   text: string;
   resolvedNote?: string | null;
-}
+};
 
 function QuestionComposer({
   defaultText = "",

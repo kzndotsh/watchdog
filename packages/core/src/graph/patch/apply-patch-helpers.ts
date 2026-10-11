@@ -62,10 +62,10 @@ export function requireDomainEntitySlugEffect(
 }
 
 /** Who a patch is applied for (Accept: the reviewer; agent graph write: the agent). */
-export interface PatchActor {
+export type PatchActor = {
   actorId?: string | null;
   actorLabel?: string | null;
-}
+};
 
 /** One entry per applied op (ADR-0005 S4), appended in the patch transaction. */
 export function appendPatchActivityEffect<K extends GraphActivityKind>(

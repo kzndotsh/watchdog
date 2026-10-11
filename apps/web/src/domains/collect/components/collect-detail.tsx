@@ -6,7 +6,7 @@ import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import type { JobListRecord, JobRecord } from "@watchdog/core/jobs";
 
-export interface CollectDetailProps {
+export type CollectDetailProps = {
   row: CollectRow | null;
   job: JobRecord | null;
   caseId: string;
@@ -23,7 +23,7 @@ export interface CollectDetailProps {
   onCancel: () => void;
   onCancelPlaybook?: () => void;
   cancelPlaybookBusy?: boolean;
-}
+};
 
 export function CollectDetail({
   row,

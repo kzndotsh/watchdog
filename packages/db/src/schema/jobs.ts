@@ -21,12 +21,12 @@ import { timestamps, timestamptz } from "./_helpers";
 import { cases } from "./cases";
 import { playbookRuns } from "./playbook-runs";
 
-export interface JobArtifact {
+export type JobArtifact = {
   name: string;
   mime: string;
   uri: string;
   sha256: string;
-}
+};
 
 export const jobs = pgTable(
   "jobs",

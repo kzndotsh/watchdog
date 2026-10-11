@@ -1,9 +1,9 @@
 import type { AppAction } from "@/shared/lib/app-action";
 
-export interface EventRowActionHandlers {
+export type EventRowActionHandlers = {
   onEdit: () => void;
   onDelete: () => void;
-}
+};
 
 /** Shared ⋯ + ContextMenu actions for dossier event rows. */
 export function eventRowActions(handlers: EventRowActionHandlers): AppAction[] {

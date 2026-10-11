@@ -176,7 +176,7 @@ function renderTableBodyRows<TData extends RowData>({
   );
 }
 
-interface Props<TData extends RowData> {
+type Props<TData extends RowData> = {
   table: ReactTable<DataTableFeatures, TData>;
   emptyText?: string;
   className?: string;
@@ -190,7 +190,7 @@ interface Props<TData extends RowData> {
   skeletonRows?: number;
   /** Screen-reader label while `pending`. Uses per-cell skeleton rows. */
   pendingLabel?: string;
-}
+};
 
 export function DataTable<TData extends RowData>({
   table,

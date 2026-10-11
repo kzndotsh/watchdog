@@ -3,11 +3,11 @@ import type { ReactNode } from "react";
 import { Eyebrow } from "@/shared/ui/eyebrow";
 import { Button, type ButtonSize } from "@/shared/ui/primitives/button";
 
-export interface AtomEntry {
+export type AtomEntry = {
   name: string;
   blurb: string;
   render: () => ReactNode;
-}
+};
 
 /** Every Button size, in scale order: the one place all of them sit side by side. */
 const BUTTON_SIZES: readonly ButtonSize[] = [

@@ -122,9 +122,9 @@ function flattenSearchResults(results: unknown): {
  * @see https://docs.snusbase.com/
  */
 
-interface SnusbaseOptions {
+type SnusbaseOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchSnusbaseLookupEffect(
   queryRaw: string,

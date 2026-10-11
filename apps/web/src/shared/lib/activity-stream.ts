@@ -21,29 +21,29 @@ import {
  * below the last cursor are dropped here.
  */
 
-export interface ActivityStreamHandlers {
+export type ActivityStreamHandlers = {
   onEntry: (entry: ActivityEntry) => void;
   /** Entries were missed beyond what the server can replay: refetch everything. */
   onResync?: () => void;
-}
+};
 
 const EVENTS_URL = "/api/events";
 const REOPEN_BASE_MS = 1000;
 const REOPEN_MAX_MS = 30_000;
 
-interface Connection {
+type Connection = {
   es: EventSource;
   listeners: { type: string; listener: (event: Event) => void }[];
-}
+};
 
-interface StreamState {
+type StreamState = {
   handlers: Set<ActivityStreamHandlers>;
   connection: Connection | null;
   /** Last cursor delivered; resume point for a reopen and the duplicate guard. */
   last: ActivityCursor | null;
   reopenTimer: ReturnType<typeof setTimeout> | null;
   reopenDelay: number;
-}
+};
 
 const state: StreamState = {
   handlers: new Set(),

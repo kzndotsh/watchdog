@@ -6,7 +6,7 @@ import {
 
 import type { CapIoKind } from "../sdk";
 
-export interface SeedValues {
+export type SeedValues = {
   host?: string;
   url?: string;
   evidenceId?: string;
@@ -15,7 +15,7 @@ export interface SeedValues {
   email?: string;
   hash?: string;
   handle?: string;
-}
+};
 
 const SEED_JSON_KEYS = [
   "host",

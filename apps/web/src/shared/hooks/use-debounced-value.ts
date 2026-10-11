@@ -1,18 +1,18 @@
 import { useDebouncer } from "@tanstack/react-pacer";
 import { useEffect, useState } from "react";
 
-interface DebouncedValue<T> {
+type DebouncedValue<T> = {
   /** The last value that stayed unchanged for `waitMs`; `initial` until one does. */
   value: T;
   /** `true` once the current input has stayed unchanged for `waitMs`. */
   settled: boolean;
-}
+};
 
-interface DebounceState<T> {
+type DebounceState<T> = {
   input: T;
   output: T;
   settled: boolean;
-}
+};
 
 /**
  * The one debounce for typed input, built on TanStack Pacer's `useDebouncer`. Every change

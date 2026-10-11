@@ -20,18 +20,18 @@ export const ACTIVITY_PRUNE_BATCH = 5000;
 
 const DAY_MS = 86_400_000;
 
-export interface PruneActivityOpts {
+export type PruneActivityOpts = {
   /** The clock; tests pin it. */
   readonly now?: Date;
   readonly retentionDays?: number;
   readonly keepPerCase?: number;
   readonly batchSize?: number;
-}
+};
 
-export interface PruneActivityResult {
+export type PruneActivityResult = {
   readonly pruned: number;
   readonly batches: number;
-}
+};
 
 /**
  * Delete entries older than the retention window (ADR-0005 decision 8), in

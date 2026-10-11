@@ -27,7 +27,7 @@ export function predicateLabel(
   return titleCase(predicate);
 }
 
-export interface EdgePhraseOption {
+export type EdgePhraseOption = {
   /** Stable option id: `${predicate}:${orientation}` */
   value: string;
   label: string;
@@ -36,7 +36,7 @@ export interface EdgePhraseOption {
   predicate: EdgePredicate;
   /** forward = current entity is subject; inverse = current entity is object */
   orientation: EdgeOrientation;
-}
+};
 
 function allowsPair(
   predicate: EdgePredicate,

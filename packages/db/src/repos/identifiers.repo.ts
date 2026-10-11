@@ -60,12 +60,12 @@ export type IdentifierPatch = Partial<
   >
 >;
 
-export interface IdentifierNaturalKey {
+export type IdentifierNaturalKey = {
   entityId: string;
   type: IdentifierType;
   platform: string;
   value: string;
-}
+};
 
 export const identifiersRepo = {
   async listForEntity(

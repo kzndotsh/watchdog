@@ -6,14 +6,14 @@ import {
 } from "@/shared/ui/vocab";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 
-interface StatusDotProps {
+type StatusDotProps = {
   status: DisplayStatus;
   /** Spin the glyph for live statuses (running). */
   pulse?: boolean;
   className?: string;
   /** Hide tooltip (parent already labels). */
   tooltip?: boolean;
-}
+};
 
 /**
  * 12px lifecycle/status glyph for dense Queue rows. Shape carries the state

@@ -2,13 +2,13 @@ import type { UpdateEntityFieldsInput } from "@/domains/entities/types";
 import { updateEntityInputSchema as updateEntityFieldsInputSchema } from "@watchdog/schemas/graph";
 import type { EntityKind } from "@watchdog/schemas/shared";
 
-export interface UpdateEntityFieldsPatch {
+export type UpdateEntityFieldsPatch = {
   entityId: string;
   kind?: EntityKind;
   name?: string;
   summary?: string | null;
   notes?: string | null;
-}
+};
 
 /** Normalize entity field PATCH payloads at ingress. */
 export function buildUpdateEntityFieldsData(

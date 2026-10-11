@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 import { cn } from "@/lib/utils";
 
-export interface MetricTile {
+export type MetricTile = {
   id: string;
   label: string;
   value: number | string;
@@ -16,7 +16,7 @@ export interface MetricTile {
     | "/collect"
     | "/tasks";
   tone?: "default" | "warn" | "muted";
-}
+};
 
 export function MetricsSection({
   tiles,

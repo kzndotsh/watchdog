@@ -13,7 +13,7 @@ export type DecideEvidenceMode = "cite" | "pick";
 
 export type DecideMode = "accepting" | "rejecting" | "decided";
 
-export interface DecideHeaderView {
+export type DecideHeaderView = {
   isPending: boolean;
   decideMode: DecideMode;
   crumbLead: string;
@@ -28,7 +28,7 @@ export interface DecideHeaderView {
   showRejectComposer: boolean;
   showRejectReason: boolean;
   showFooterActions: boolean;
-}
+};
 
 export function decidedEdgeClass(status: ProposalStatus): string {
   switch (status) {

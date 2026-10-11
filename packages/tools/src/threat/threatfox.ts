@@ -68,9 +68,9 @@ function classifyQuery(raw: string): {
  * @see https://threatfox.abuse.ch/api/
  */
 
-interface ThreatfoxOptions {
+type ThreatfoxOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchThreatfoxLookupEffect(
   queryRaw: string,

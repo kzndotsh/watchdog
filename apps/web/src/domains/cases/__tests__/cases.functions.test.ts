@@ -47,13 +47,13 @@ import {
 import type { CaseRecord } from "@/domains/cases/types";
 import { asCaseId } from "@watchdog/schemas/shared";
 
-interface ServerContext {
+type ServerContext = {
   context: Record<string, never>;
-}
-interface ServerDataContext<T> {
+};
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 const CASE_A: CaseRecord = {
   id: asCaseId("550e8400-e29b-41d4-a716-446655440000"),

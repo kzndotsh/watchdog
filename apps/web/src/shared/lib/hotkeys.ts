@@ -1,18 +1,18 @@
 /** Global keyboard chords — plain window listener (no react-hotkeys-hook). */
 
-export interface HotkeyChord {
+export type HotkeyChord = {
   /** `KeyboardEvent.key` (lowercase compared for letters). */
   key: string;
   /** Require Meta (⌘) or Ctrl. */
   mod?: boolean;
   /** Fire even when focus is in an editable field. */
   allowInEditable?: boolean;
-}
+};
 
-export interface HotkeyBinding extends HotkeyChord {
+export type HotkeyBinding = {
   id: string;
   run: () => void;
-}
+} & HotkeyChord;
 
 /**
  * Who attaches the runtime listener for a registry entry:
@@ -27,7 +27,7 @@ export type HotkeyOwner =
   | "queue-keyboard"
   | "data-hotkey";
 
-export interface HotkeyDef {
+export type HotkeyDef = {
   id: string;
   label: string;
   /** Display and match source: `Mod+K`, `?`, `J`. */
@@ -38,7 +38,7 @@ export interface HotkeyDef {
   palette?: boolean;
   /** Fire even when focus is in an editable field. */
   allowInEditable?: boolean;
-}
+};
 
 /**
  * The only definition of a keyboard shortcut. The Shortcuts dialog, palette

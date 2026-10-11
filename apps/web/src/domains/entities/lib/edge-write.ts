@@ -19,12 +19,12 @@ import type {
 } from "@watchdog/schemas/shared";
 
 /** Shared create/update core (table + dossier). */
-export interface ConnectionWriteCore {
+export type ConnectionWriteCore = {
   peerId: string;
   predicate: EdgePredicate;
   orientation: EdgeOrientation;
   notes?: string;
-}
+};
 
 function scopedPeerId(peerId: string): string {
   const scoped = parseTrimmedUuid(peerId);
@@ -103,10 +103,10 @@ export function buildUpdateEdgeData(opts: {
 /** Compact table DTO (unverified, no evidence). */
 export type CreateEntityConnectionInput = ConnectionWriteCore;
 
-export interface UpdateEntityConnectionInput extends ConnectionWriteCore {
+export type UpdateEntityConnectionInput = {
   edgeId: string;
   existingFromId: string;
   existingToId: string;
   /** Peer before this edit (for endpoint resolution). */
   existingPeerId: string;
-}
+} & ConnectionWriteCore;

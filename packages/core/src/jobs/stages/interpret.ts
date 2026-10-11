@@ -15,19 +15,19 @@ import type { CollectRuntime } from "./collect";
 import type { JobLog } from "./helpers";
 import type { PreflightState } from "./preflight";
 
-export interface InterpretStageResult {
+export type InterpretStageResult = {
   resultSummary: string | null;
   markSourceProcessed: boolean | undefined;
   interpretError: string | null;
   /** Valid patch ops ready for suppress/propose; empty if none / error. */
   patch: PatchOp[];
   handoff?: JobHandoff;
-}
+};
 
-interface InterpretExistingState {
+type InterpretExistingState = {
   proposalId: string | null;
   resultSummary: string | null;
-}
+};
 
 /**
  * Load Cap report and run pure interpret → parse PatchOp[].

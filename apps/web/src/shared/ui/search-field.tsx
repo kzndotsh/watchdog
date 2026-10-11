@@ -13,7 +13,7 @@ import {
   InputGroupInput,
 } from "@watchdog/ui/components/input-group";
 
-interface SearchFieldProps {
+type SearchFieldProps = {
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
@@ -21,7 +21,7 @@ interface SearchFieldProps {
   className?: string;
   /** Show clear button when non-empty. Default true. */
   clearable?: boolean;
-}
+};
 
 /**
  * Named search input for Queue filter bars / toolbars.

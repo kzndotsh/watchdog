@@ -38,11 +38,11 @@ export type EntityRow = {
     keyof typeof entities.$inferSelect];
 };
 
-export interface EntityPeerRow {
+export type EntityPeerRow = {
   id: string;
   name: string;
   slug: string;
-}
+};
 
 export type EntityWithCaseRow = EntityRow & {
   caseSlug: string;

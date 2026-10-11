@@ -84,9 +84,9 @@ function summarize(raw: unknown): {
  * @see https://docs.hudsonrock.com/reference/search-by-domains
  */
 
-interface HudsonrockOptions {
+type HudsonrockOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchHudsonrockLookupEffect(
   queryRaw: string,

@@ -43,9 +43,9 @@ export type ListRecentActivityInput = z.output<
   typeof listRecentActivityInputSchema
 >;
 
-export interface SseCaseIdFilter {
+export type SseCaseIdFilter = {
   caseId: CaseId | null;
-}
+};
 
 export type ParseSseCaseIdParamResult =
   | { ok: true; value: SseCaseIdFilter }

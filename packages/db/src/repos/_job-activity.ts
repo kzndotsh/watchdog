@@ -1,13 +1,13 @@
 import { jobs } from "../schema/jobs";
 
 /** The Job fields an activity entry is derived from (cancel and abandon return only these). */
-export interface JobActivityFields {
+export type JobActivityFields = {
   id: string;
   caseId: (typeof jobs.$inferSelect)["caseId"];
   actorId: string;
   actorLabel: string | null;
   playbookRunId: string | null;
-}
+};
 
 export const jobActivityColumns = {
   id: jobs.id,

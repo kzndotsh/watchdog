@@ -26,13 +26,13 @@ import {
 } from "@/shared/ui/primitives/dialog";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
-interface UserInvitation {
+type UserInvitation = {
   id: string;
   organizationId: string;
   organizationName?: string | null;
   role: string;
   status: string;
-}
+};
 
 async function loadUserInvitations(): Promise<UserInvitation[]> {
   const { data, error } = await authClient.organization.listUserInvitations();

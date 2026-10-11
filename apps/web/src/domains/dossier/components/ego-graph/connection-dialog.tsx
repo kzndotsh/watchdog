@@ -46,23 +46,23 @@ import {
 } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 
-export interface ConnectionPeerOption {
+export type ConnectionPeerOption = {
   id: string;
   name: string;
   slug: string;
   kind: EntityKind;
-}
+};
 
-export interface ConnectionFormValues {
+export type ConnectionFormValues = {
   peerId: string;
   predicate: EdgePredicate;
   orientation: EdgeOrientation;
   notes: string;
   confidence: ConfidenceTier;
   evidenceIds: string[];
-}
+};
 
-interface Props {
+type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
@@ -73,7 +73,7 @@ interface Props {
   busy?: boolean;
   error?: string | null;
   onSubmit: (values: ConnectionFormValues) => void | Promise<void>;
-}
+};
 
 const CREATE_DEFAULTS: ConnectionFormValues = {
   peerId: "",

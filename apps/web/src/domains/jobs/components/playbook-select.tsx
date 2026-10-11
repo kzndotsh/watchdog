@@ -23,7 +23,7 @@ import { capabilityLabel } from "@/shared/ui/vocab/capability";
 import { capEgressLabel } from "@watchdog/schemas/caps";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
-interface PlaybookSelectProps {
+type PlaybookSelectProps = {
   playbooks: readonly PlaybookListItem[];
   value: string;
   onValueChange: (id: string) => void;
@@ -32,12 +32,12 @@ interface PlaybookSelectProps {
   /** Highlight trigger when selected playbook needs Case egress. */
   needsEgress?: boolean;
   className?: string;
-}
+};
 
-interface PlaybookGroup {
+type PlaybookGroup = {
   value: string;
   items: PlaybookListItem[];
-}
+};
 
 function PlaybookInfoCard({
   playbook,

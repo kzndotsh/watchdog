@@ -65,7 +65,7 @@ function noPreviewMessage(canEnrich: boolean, hasUri: boolean) {
     : "This Evidence has no stored body yet.";
 }
 
-export interface EvidenceDetailProps {
+export type EvidenceDetailProps = {
   evidence: EvidenceRecord | null;
   caseId: string;
   jobs: JobListRecord[];
@@ -73,7 +73,7 @@ export interface EvidenceDetailProps {
   entities?: readonly EntityOption[];
   allowThirdPartyEgress?: boolean;
   actions: IntakeEvidenceActions;
-}
+};
 
 function EvidenceOutputTab({
   caseId,

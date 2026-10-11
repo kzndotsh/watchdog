@@ -6,11 +6,11 @@ import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { createEventInputSchema } from "@watchdog/schemas/graph";
 
-export interface TimelineEventValues {
+export type TimelineEventValues = {
   when: string;
   what: string;
   where: string;
-}
+};
 
 export type CreateEventVariables = DossierEntityScope & {
   value: TimelineEventValues;

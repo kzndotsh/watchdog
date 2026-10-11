@@ -6,20 +6,20 @@ import { parseJsonValue, type JsonValue } from "@watchdog/schemas/shared";
 import { errorMessage } from "../infra/error-utils";
 import { InvalidError } from "../infra/tagged-errors";
 
-interface ArtifactRef {
+type ArtifactRef = {
   name: string;
   uri: string;
-}
+};
 
 /** True if artifacts include canonical Cap report. */
 export function artifactsHaveCapReport(artifacts: ArtifactRef[]): boolean {
   return artifacts.some((a) => a.name === REPORT_JSON_ARTIFACT);
 }
 
-interface CapReportLoadResult {
+type CapReportLoadResult = {
   report: JsonValue;
   name: string;
-}
+};
 
 /**
  * Load Cap report JSON for pure interpret.

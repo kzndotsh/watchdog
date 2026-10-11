@@ -9,10 +9,10 @@ import {
   DialogTitle,
 } from "@/shared/ui/primitives/dialog";
 
-interface ShortcutsDialogProps {
+type ShortcutsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+};
 
 export function ShortcutsDialog({ open, onOpenChange }: ShortcutsDialogProps) {
   const modKeyLabel = useModKeyLabel();

@@ -88,9 +88,9 @@ function urlhausHostUrlHasSubstance(row: Record<string, unknown>): boolean {
  * @see https://urlhaus-api.abuse.ch/
  */
 
-interface UrlhausOptions {
+type UrlhausOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchUrlhausLookupEffect(
   queryRaw: string,

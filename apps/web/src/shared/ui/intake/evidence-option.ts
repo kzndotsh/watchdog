@@ -4,13 +4,13 @@ import { evidenceDisplayLabel } from "@watchdog/schemas/evidence";
 import type { EvidenceKind } from "@watchdog/schemas/shared";
 
 /** Case Evidence option for pickers / composers (parent owns fetch). */
-export interface EvidenceOption {
+export type EvidenceOption = {
   id: string;
   kind: EvidenceKind;
   label?: string | null;
   sourceUrl?: string | null;
   sha256?: string | null;
-}
+};
 
 /** Shared label head: user label → URL host → kind. */
 export function evidencePrimaryLabel(row: {
@@ -51,7 +51,7 @@ export function evidenceLabel(row: EvidenceOption): string {
   return `${primary} · ${formatOpaqueId(row.id, 8)}`;
 }
 
-export interface EvidenceFilterFields {
+export type EvidenceFilterFields = {
   kind: EvidenceKind;
   label?: string | null;
   sourceUrl?: string | null;
@@ -59,7 +59,7 @@ export interface EvidenceFilterFields {
   notes?: string | null;
   text?: string | null;
   mime?: string | null;
-}
+};
 
 function evidenceFilterHead(
   row: EvidenceFilterFields & { id?: string }

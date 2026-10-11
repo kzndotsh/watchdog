@@ -20,20 +20,20 @@ export const COLLECT_STATE_FACET_OPTIONS = [
   readonly label: string;
 }[];
 
-export interface CollectIndex {
+export type CollectIndex = {
   readonly rows: readonly CollectRow[];
   readonly rowById: (id: string) => CollectRow | null;
   readonly titleForEvidence: (evidenceId: string) => string | null;
-}
+};
 
-export interface CollectFilters {
+export type CollectFilters = {
   readonly q: string;
   readonly states: readonly CollectState[];
   readonly hiddenOnly: boolean;
   readonly unprocessedOnly: boolean;
   readonly unattachedOnly: boolean;
   readonly capabilityIds: readonly string[];
-}
+};
 
 export const EMPTY_COLLECT_FILTERS: CollectFilters = {
   q: "",

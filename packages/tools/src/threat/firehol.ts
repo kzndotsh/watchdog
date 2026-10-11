@@ -22,15 +22,15 @@ export const fireholLookupSnapshotSchema = z.object({
 
 export type FireholLookupSnapshot = z.infer<typeof fireholLookupSnapshotSchema>;
 
-interface CidrEntry {
+type CidrEntry = {
   network: number;
   prefix: number;
-}
+};
 
-interface FireholList {
+type FireholList = {
   v4: CidrEntry[];
   v6: Set<string>;
-}
+};
 
 const LIST_TTL_MS = 24 * 60 * 60_000;
 const LIST_CACHE_KEY = "firehol_level1";
@@ -139,9 +139,9 @@ function fetchCidrListEffect(
  * @see http://iplists.firehol.org/?ipset=firehol_level1
  */
 
-interface FireholOptions {
+type FireholOptions = {
   userAgent?: string;
-}
+};
 export function fetchFireholLookupEffect(
   ipRaw: string,
   signal: AbortSignal,

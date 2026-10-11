@@ -21,10 +21,10 @@ export const trancoLookupSnapshotSchema = z.object({
 
 export type TrancoLookupSnapshot = z.infer<typeof trancoLookupSnapshotSchema>;
 
-interface TrancoRankRow {
+type TrancoRankRow = {
   date: string;
   rank: number;
-}
+};
 
 function parseRanks(value: unknown): TrancoRankRow[] {
   if (!Array.isArray(value)) return [];
@@ -50,9 +50,9 @@ function parseRanks(value: unknown): TrancoRankRow[] {
  * @see https://tranco-list.eu/api_documentation
  */
 
-interface TrancoOptions {
+type TrancoOptions = {
   userAgent?: string;
-}
+};
 
 function readTrancoBodyEffect(
   domain: string,

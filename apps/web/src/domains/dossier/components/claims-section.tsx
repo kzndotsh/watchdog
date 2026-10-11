@@ -74,12 +74,12 @@ const ACTION_PLACEHOLDERS = {
 /** Create uses the bordered composer surface; row edit renders in place. */
 type ClaimComposerShell = "composer" | "inline";
 
-interface ClaimComposerLayout {
+type ClaimComposerLayout = {
   textareaClass: string;
   /** Composer packs actions into the field row; inline edit gets its own footer row. */
   actionsInFieldRow: boolean;
   actionsClass: string;
-}
+};
 
 function claimComposerLayout(shell: ClaimComposerShell): ClaimComposerLayout {
   switch (shell) {

@@ -4,10 +4,10 @@ import { Context, Effect, Layer, Predicate } from "effect";
 import { env } from "@watchdog/env/server";
 
 /** The object-store client and bucket every blob operation runs against. */
-export interface BlobStoreApi {
+export type BlobStoreApi = {
   readonly client: S3Client;
   readonly bucket: string;
-}
+};
 
 /**
  * The blob store (S3-compatible) as an Effect service (ADR-0002 phase 3):
@@ -66,20 +66,20 @@ export const blobStoreLayer: Layer.Layer<BlobStore> =
   makeBlobStoreLayer(liveBlobStore);
 
 /** One command a recording blob store saw. */
-export interface RecordedBlobCall {
+export type RecordedBlobCall = {
   /** SDK command name, e.g. `PutObjectCommand`. */
   readonly command: string;
   /** The object key, when the command has one. */
   readonly key: string | undefined;
   readonly input: unknown;
-}
+};
 
-export interface RecordingBlobStoreOptions {
+export type RecordingBlobStoreOptions = {
   /** Objects `GetObject` serves and `PutObject` fills, by key. */
   readonly objects?: Map<string, Uint8Array>;
   /** Overrides the built-in answer for a command (throw to fail the send). */
   readonly respond?: (call: RecordedBlobCall) => unknown;
-}
+};
 
 function keyOf(input: unknown): string | undefined {
   return Predicate.isObject(input) && typeof input.Key === "string"

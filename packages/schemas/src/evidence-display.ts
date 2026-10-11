@@ -1,12 +1,12 @@
 import { EVIDENCE_KIND_LABELS } from "./display-labels";
 import type { EvidenceKind } from "./vocab";
 
-export interface EvidenceTitleRow {
+export type EvidenceTitleRow = {
   id: string;
   label?: string | null;
   kind: EvidenceKind;
   sourceUrl?: string | null;
-}
+};
 
 /** Short evidence label: user label → URL host → kind display label. */
 export function evidenceDisplayLabel(opts: {

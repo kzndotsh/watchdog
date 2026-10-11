@@ -39,9 +39,9 @@ function resolveTxtFlatEffect(
   );
 }
 
-interface MailConfigOptions {
+type MailConfigOptions = {
   dkimSelectors?: readonly string[];
-}
+};
 
 /**
  * Collect MX + SPF/DMARC/DKIM posture via DNS only (passive).

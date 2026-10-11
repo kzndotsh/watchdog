@@ -137,9 +137,9 @@ function parseJsonBytes(bytes: Uint8Array): unknown {
   }
 }
 
-interface OembedOptions {
+type OembedOptions = {
   userAgent: string;
-}
+};
 
 export function fetchOembedEffect(
   url: string,

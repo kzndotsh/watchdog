@@ -9,7 +9,7 @@ import type { ConfidenceTier } from "@watchdog/schemas/shared";
 
 export type AcceptGateStatus = "ready" | "needs" | "blocked";
 
-export interface GatedAcceptInput {
+export type GatedAcceptInput = {
   readonly confidence: ConfidenceTier;
   readonly evidenceIds: readonly string[];
   readonly linkedIds: readonly string[];
@@ -17,16 +17,16 @@ export interface GatedAcceptInput {
   readonly patch: readonly PatchOp[];
   readonly needsConfidence: boolean;
   readonly identifierCollisions: ProposalRecord["identifierCollisions"];
-}
+};
 
-export interface AcceptGateResult {
+export type AcceptGateResult = {
   readonly status: AcceptGateStatus;
   readonly canAccept: boolean;
   readonly confirmedWithoutBundle: boolean;
   readonly zeroEvidenceWarn: boolean;
   readonly hasInvalidIdentifierOps: boolean;
   readonly collisionCount: number;
-}
+};
 
 /** Single constructor for accept-gate inputs — do not spread ad hoc fields at call sites. */
 export function gatedAcceptInput(input: GatedAcceptInput): GatedAcceptInput {

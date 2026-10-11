@@ -7,13 +7,13 @@ import {
   type HttpProbeSnapshot,
 } from "./http-probe-schema";
 
-export interface ProbeHop {
+export type ProbeHop = {
   ok: boolean;
   status: number;
   headers: Headers;
   finalUrl: string;
   error?: string;
-}
+};
 
 export function emptyHttpProbeSnapshot(
   host: string,

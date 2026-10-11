@@ -32,14 +32,14 @@ export type QuestionPatch = Partial<
   Pick<typeof questions.$inferInsert, "text" | "status" | "resolvedNote">
 >;
 
-export interface ResolveQuestionValues {
+export type ResolveQuestionValues = {
   resolvedNote: string | null;
-}
+};
 
-export interface QuestionTextKey {
+export type QuestionTextKey = {
   entityId: string;
   text: string;
-}
+};
 
 export const questionsRepo = {
   async listForEntity(exec: DbExec, entityId: string): Promise<QuestionRow[]> {

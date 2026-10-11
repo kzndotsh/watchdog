@@ -6,10 +6,10 @@ import { Db } from "./db-service";
 import { isUniqueViolation } from "./error-utils";
 import { ConflictError, mapDomainCatch, type DomainTag } from "./tagged-errors";
 
-export interface MapPostgresCatchOpts {
+export type MapPostgresCatchOpts = {
   readonly uniqueIndex?: string;
   readonly conflictReason?: string;
-}
+};
 
 /**
  * Unique violations become `ConflictError`; tagged errors pass through;

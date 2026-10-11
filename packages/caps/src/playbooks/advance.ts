@@ -15,10 +15,10 @@ import {
   type SeedValues,
 } from "./plan";
 
-export interface PlaybookJobView {
+export type PlaybookJobView = {
   step: number;
   status: JobStatus;
-}
+};
 
 export type PlaybookAdvance =
   | { kind: "wait" }

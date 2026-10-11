@@ -2,11 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 
 import { inviteSignUp } from "@/auth/invitation-api";
 
-export interface RegisterInviteeVariables {
+export type RegisterInviteeVariables = {
   invitationId: string;
   name: string;
   password: string;
-}
+};
 
 /**
  * Create an account from an invitation. The caller shows the error from the returned

@@ -29,16 +29,16 @@ export type CollectState =
 /** Why a Job is attached to this Evidence row. Classification is join-private. */
 export type CollectRunRole = "collect" | "enrich" | "process" | "step";
 
-export interface CollectRun {
+export type CollectRun = {
   readonly job: JobListRecord;
   readonly role: CollectRunRole;
-}
+};
 
 /**
  * One acquisition join: Evidence plus Jobs around it. Owned by Intake so
  * EvidenceDetail can resolve runs without importing Collect queue builders.
  */
-export interface CollectRow {
+export type CollectRow = {
   readonly id: string;
   readonly title: string;
   readonly hint: string | null;
@@ -49,9 +49,9 @@ export interface CollectRow {
   readonly runs: readonly CollectRun[];
   readonly playbookRunId: string | null;
   readonly recipe: { readonly step: number; readonly total: number } | null;
-}
+};
 
-export interface PresignedUpload {
+export type PresignedUpload = {
   url: string;
   uri: string;
   sha256: string;
@@ -59,7 +59,7 @@ export interface PresignedUpload {
   byteLength: number;
   expiresIn: number;
   headers: Record<string, string>;
-}
+};
 
 export type ListEvidenceInput = z.output<typeof listEvidenceInputSchema>;
 

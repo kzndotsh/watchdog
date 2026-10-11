@@ -1,7 +1,7 @@
-export interface FilenameForensicHit {
+export type FilenameForensicHit = {
   label: string;
   detail: string;
-}
+};
 
 const RULES: {
   label: string;

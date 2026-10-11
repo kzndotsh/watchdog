@@ -12,10 +12,10 @@ export const CHIP_SIZE_CLASS: Record<ChipSize, string> = {
   md: "h-5 gap-1 rounded-md border border-border/60 px-1.5 py-0 text-2xs font-normal leading-none",
 };
 
-export interface ChipTone {
+export type ChipTone = {
   low: string;
   high: string;
-}
+};
 
 type ChipProps = Omit<ComponentProps<typeof Badge>, "variant"> & {
   size?: ChipSize;

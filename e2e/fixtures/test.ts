@@ -13,7 +13,7 @@ import {
   type AuthenticatedCase,
 } from "./authenticated-case";
 
-interface E2eFixtures {
+type E2eFixtures = {
   _resetDb: null;
   api: E2eApi;
   authenticatedCase: AuthenticatedCase;
@@ -22,7 +22,7 @@ interface E2eFixtures {
   collectPage: CollectPage;
   triagePage: TriagePage;
   identifiersPage: IdentifiersPage;
-}
+};
 
 export const test = base.extend<E2eFixtures>({
   _resetDb: [

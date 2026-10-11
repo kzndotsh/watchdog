@@ -55,7 +55,7 @@ export type JobRunOutcomeName =
   | "cancelled"
   | "stopped";
 
-export interface JobRunOutcome {
+export type JobRunOutcome = {
   outcome: JobRunOutcomeName;
   stopReason?: PreflightStopReason;
   abortReason?: JobAbortReason;
@@ -65,7 +65,7 @@ export interface JobRunOutcome {
   caseId?: CaseId;
   capabilityId?: string;
   playbookRunId?: string | null;
-}
+};
 
 function classifyRun(input: {
   jobId: string;
@@ -222,11 +222,11 @@ function cleanupCollectedRunEffect(
   );
 }
 
-interface ProposePipelineResult {
+type ProposePipelineResult = {
   proposalId: string | null;
   suppressedCount: number;
   interpreted: InterpretStageResult;
-}
+};
 
 function proposeFromInterpretEffect(
   state: PreflightState,

@@ -10,20 +10,20 @@ import {
   seedEvidenceRows,
 } from "./collect-index-build";
 
-export interface BuildCollectIndexOptions {
+export type BuildCollectIndexOptions = {
   readonly recipeStepsByPlaybookId?: ReadonlyMap<string, number>;
   readonly playbookTitleById?: ReadonlyMap<string, string>;
   /** Superset of titles for job row hints (e.g. includes hidden evidence). */
   readonly evidenceTitleById?: ReadonlyMap<string, string>;
   /** Entity display labels for job input subjects. */
   readonly entityTitleById?: ReadonlyMap<string, string>;
-}
+};
 
-export interface PlaybookCatalogEntry {
+export type PlaybookCatalogEntry = {
   readonly id: string;
   readonly title: string;
   readonly steps: readonly unknown[];
-}
+};
 
 export function collectIndexOptionsFromPlaybooks(
   playbooks: readonly PlaybookCatalogEntry[]

@@ -30,10 +30,10 @@ import {
   reorderTasksFn,
 } from "@/domains/tasks/tasks.functions";
 
-interface ServerDataContext<T> {
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 const TASK = {
   id: "550e8400-e29b-41d4-a716-446655440000",

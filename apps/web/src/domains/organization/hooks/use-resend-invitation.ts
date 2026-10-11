@@ -5,10 +5,10 @@ import { organizationKeys } from "@/domains/organization/queries";
 import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
-export interface ResendInvitationVariables {
+export type ResendInvitationVariables = {
   email: string;
   role: string;
-}
+};
 
 /** Send a pending invitation again, then refresh the team list. */
 export function useResendInvitation() {

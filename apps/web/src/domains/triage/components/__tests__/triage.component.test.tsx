@@ -65,10 +65,10 @@ vi.mock("@/shared/ui/split-view", () => ({
 
 const useCasesContextMock = vi.hoisted(() => vi.fn());
 const useQueryMock = vi.hoisted(() => vi.fn());
-interface WorkspaceOptions {
+type WorkspaceOptions = {
   filters: TriageQueueFilters;
   onFiltersChange: (next: TriageQueueFilters) => void;
-}
+};
 const useTriageWorkspaceMock = vi.hoisted(() =>
   vi.fn<(caseId: string, options: WorkspaceOptions) => unknown>()
 );

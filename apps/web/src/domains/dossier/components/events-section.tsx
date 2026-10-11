@@ -32,11 +32,11 @@ import {
   PopoverTrigger,
 } from "@watchdog/ui/components/popover";
 
-interface EventFormValues {
+type EventFormValues = {
   when: string;
   what: string;
   where: string;
-}
+};
 
 const WHEN_FORMAT = "yyyy-MM-dd";
 

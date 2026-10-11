@@ -4,9 +4,9 @@ import {
   REPORT_JSON_ARTIFACT,
 } from "@watchdog/schemas/jobs";
 
-interface NamedArtifact {
+type NamedArtifact = {
   name: string;
-}
+};
 
 /** Job Output display order: derived → report → rest. */
 export function orderJobArtifacts<T extends NamedArtifact>(output: T[]): T[] {

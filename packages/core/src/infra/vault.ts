@@ -15,22 +15,22 @@ import { VaultError, openSecret, sealSecret } from "./vault-crypto";
 
 export { VaultError };
 
-export interface CredentialMeta {
+export type CredentialMeta = {
   id: string;
   name: string;
   label: string | null;
   updatedAt: string;
-}
+};
 
-export interface PutCredentialInput {
+export type PutCredentialInput = {
   userId: string;
   name: string;
   secret: string;
   label?: string | null;
-}
+};
 
 /** Credential access: the vault reader/writer a process composes once. */
-export interface VaultApi {
+export type VaultApi = {
   /** Metadata only: never returns plaintext. */
   readonly list: (userId: string) => Effect.Effect<CredentialMeta[], DomainTag>;
   readonly has: (
@@ -49,7 +49,7 @@ export interface VaultApi {
     userId: string,
     name: string
   ) => Effect.Effect<void, DomainTag>;
-}
+};
 
 /**
  * The credential vault as an Effect service (ADR-0002 phase 3): every

@@ -44,11 +44,11 @@ const THIRD_PARTY = new Set([
 /** pnpm subcommands that run no gate. */
 const PNPM_NOOP = new Set(["install", "i", "ci", "add", "dlx"]);
 
-interface Pkg {
+type Pkg = {
   readonly dir: string;
   readonly name: string;
   readonly scripts: Record<string, string>;
-}
+};
 
 const readPkg = (dir: string): Pkg => {
   const json = JSON.parse(
@@ -67,10 +67,10 @@ for (const parent of ["apps", "packages"]) {
   }
 }
 
-interface Leaves {
+type Leaves = {
   readonly scripts: Set<string>;
   readonly tools: Set<string>;
-}
+};
 
 const norm = (p: string) => path.posix.normalize(p.split(path.sep).join("/"));
 
@@ -182,11 +182,11 @@ function expandSegment(
   }
 }
 
-interface Surface {
+type Surface = {
   readonly where: string;
   readonly command: string;
   readonly pkg: Pkg;
-}
+};
 
 function surfaces(): Surface[] {
   const found: Surface[] = [];

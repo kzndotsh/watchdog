@@ -16,20 +16,20 @@ import {
   placeLayeredGraphNodes,
 } from "./case-graph-ranks.ts";
 
-export interface CaseGraphEntity {
+export type CaseGraphEntity = {
   id: string;
   name: string;
   slug: string;
   kind: EntityKind;
-}
+};
 
-export interface CaseGraphEdgeInput {
+export type CaseGraphEdgeInput = {
   id: string;
   fromId: string;
   toId: string;
   predicate: EdgePredicate;
   confidence: ConfidenceTier;
-}
+};
 
 export const CASE_GRAPH_ENTITY_CAP = 150;
 

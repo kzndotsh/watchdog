@@ -20,13 +20,13 @@ type EvidenceActivityAction =
   | "attached"
   | "processed";
 
-interface EvidenceLabelSource {
+type EvidenceLabelSource = {
   label: string | null;
   kind: EvidenceKind;
   sourceUrl: string | null;
-}
+};
 
-export interface EvidenceActivityInput {
+export type EvidenceActivityInput = {
   caseId: CaseId;
   action: EvidenceActivityAction;
   evidenceId: string;
@@ -36,7 +36,7 @@ export interface EvidenceActivityInput {
   actorLabel?: string | null;
   /** `attached`: the Entity the Evidence now belongs to (null when detached). */
   toValue?: string | null;
-}
+};
 
 /**
  * Append one Evidence entry (ADR-0005) in the caller's transaction. The label

@@ -69,6 +69,7 @@ Every convention stated in an `AGENTS.md` file or a doc is enforced by a lint ru
 | A dependency declared by two or more workspace packages takes its version from the pnpm catalog (`"name": "catalog:"`) | repo | `AGENTS.md` Gotchas | `check:workspace` (`scripts/check-catalog.mjs`) | enforced |
 | Dependency versions agree across packages; `@types/*` and root tooling stay in devDependencies | repo | `AGENTS.md` Gotchas | `check:workspace` (sherif) | enforced |
 | Schema is the SoT (`z.infer`, no twin interfaces); `z.enum(CONST)`, not copied literals; no `z.any()` | schemas, web, api | `docs/reference/platform/types.md` Foundations | guidance | guidance |
+| Object types are `type X = { ... }`, never `interface` (`extends` becomes `&`); a `declare module` / global augmentation that must merge keeps `interface` with an inline disable and reason; `apps/web/src/auth/ui` (vendored upstream) is exempt | repo | `docs/reference/platform/types.md` Foundations | oxlint `typescript/consistent-type-definitions` (`["error", "type"]`), no baseline | enforced |
 | Web, API and CLI share one input schema per create/update/delete shape; never fork it per surface | schemas | `packages/schemas/AGENTS.md` Gotchas | guidance | guidance |
 | Wire objects are named in `schemas.ts` (no anonymous inline Zod); no DB rows or drizzle types on the wire | api | `packages/api/AGENTS.md` Rules | guidance | guidance |
 | Package manager is pnpm only | repo | `AGENTS.md` Quick reference | guidance | guidance |

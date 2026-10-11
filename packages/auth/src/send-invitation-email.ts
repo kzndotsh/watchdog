@@ -4,11 +4,11 @@ import { createLogger, maskEmail, peekRequestLogger } from "@watchdog/log";
 import { buildInvitationAcceptUrl } from "./invitation-url";
 import { sendSmtpMail } from "./smtp-mail";
 
-interface InvitationEmailData {
+type InvitationEmailData = {
   id: string;
   email: string;
   organization: { id: string; name: string };
-}
+};
 
 function invitationLogger() {
   return peekRequestLogger() ?? createLogger();

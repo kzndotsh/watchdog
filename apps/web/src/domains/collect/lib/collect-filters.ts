@@ -196,10 +196,10 @@ export function isCollectFiltered(filters: CollectFilters): boolean {
   );
 }
 
-export interface CollectSelection {
+export type CollectSelection = {
   readonly rowId: string | null;
   readonly focusRunId: string | null;
-}
+};
 
 export function resolveCollectSelection(
   urlId: string | undefined,

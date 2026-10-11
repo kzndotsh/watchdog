@@ -22,14 +22,14 @@ import { toast } from "@/shared/ui/toast";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
-interface Props {
+type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   caseId: string;
   entities: readonly EntityOption[];
   lockEntity?: IdentifierPasteEntity | null;
   onImported?: (entityIds: string[], caseId: string) => Promise<void>;
-}
+};
 
 export function BulkAddIdentifiersDialog({
   open,

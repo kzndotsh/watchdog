@@ -16,7 +16,7 @@ import type {
   IdentifierType,
 } from "@watchdog/schemas/shared";
 
-interface UpdateIdentifierVars {
+type UpdateIdentifierVars = {
   identifierId: string;
   value?: string;
   platform?: string;
@@ -25,7 +25,7 @@ interface UpdateIdentifierVars {
   confidence?: ConfidenceTier;
   notes?: string;
   evidenceIds?: string[];
-}
+};
 
 function updateIdentifierFields(caseId: string, input: UpdateIdentifierVars) {
   return updateIdentifierFn({

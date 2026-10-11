@@ -12,10 +12,10 @@ import type { ConfidenceTier } from "@watchdog/schemas/shared";
 export const CONFIRMED_REQUIRES_EVIDENCE =
   "confirmed requires at least one Evidence attachment";
 
-export interface ConfirmedEvidenceInput {
+export type ConfirmedEvidenceInput = {
   readonly confidence: ConfidenceTier | undefined;
   readonly evidenceCount: number;
-}
+};
 
 /** True when the write must be refused: confirmed with fewer than one piece of Evidence. */
 export function confirmedNeedsEvidence(input: ConfirmedEvidenceInput): boolean {

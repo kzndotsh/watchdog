@@ -18,18 +18,18 @@ import {
   trimmedOrUndefined,
 } from "@watchdog/schemas/shared";
 
-export interface EntityOption {
+export type EntityOption = {
   id: string;
   name: string;
   kind?: EntityKind;
   slug?: string;
-}
+};
 
-interface SelectOption {
+type SelectOption = {
   value: string;
   label: string;
   kind?: EntityKind;
-}
+};
 
 /**
  * Filterable entity picker. Domain chrome over Combobox — options are passed in

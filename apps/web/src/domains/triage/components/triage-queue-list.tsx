@@ -11,11 +11,11 @@ import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 
-interface TriageQueueListProps {
+type TriageQueueListProps = {
   proposals: ProposalRecord[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-}
+};
 
 export function TriageQueueList({
   proposals,

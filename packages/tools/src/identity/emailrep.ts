@@ -86,10 +86,10 @@ export function parseEmailrepBody(
  * @see https://docs.sublime.security/reference/emailrep-introduction
  */
 
-interface EmailrepOptions {
+type EmailrepOptions = {
   apiKey?: string;
   userAgent?: string;
-}
+};
 
 export function fetchEmailrepLookupEffect(
   emailRaw: string,

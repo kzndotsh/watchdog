@@ -87,11 +87,11 @@ function productionFiles(dir: string): string[] {
   return files;
 }
 
-interface FunctionScan {
+type FunctionScan = {
   writes: string[];
   appends: number;
   inTransaction: boolean;
-}
+};
 
 /** `file#function` to what the function does, for every top-level function in core. */
 function scanFunctions(): Map<string, FunctionScan> {

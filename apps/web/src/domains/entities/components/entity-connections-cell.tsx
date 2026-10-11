@@ -39,14 +39,14 @@ const EMPTY_FORM: ConnectionComposerValues = {
   notes: "",
 };
 
-interface Props {
+type Props = {
   entity: EntityRecord;
   peers: readonly EntityConnectionPeer[];
   entityOptions: readonly EntityOption[];
   onCreate: (input: CreateEntityConnectionInput) => Promise<void>;
   onUpdate: (input: UpdateEntityConnectionInput) => Promise<void>;
   onDelete: (edgeId: string) => Promise<void>;
-}
+};
 
 type PanelMode =
   | { kind: "create" }

@@ -5,10 +5,10 @@ import { organizationKeys } from "@/domains/organization/queries";
 import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
-export interface InviteMemberVariables {
+export type InviteMemberVariables = {
   email: string;
   role: "member" | "admin";
-}
+};
 
 /** Invite someone by email, then refresh the team list. */
 export function useInviteMember({

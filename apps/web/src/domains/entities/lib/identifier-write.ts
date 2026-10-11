@@ -12,7 +12,7 @@ import type {
   IdentifierType,
 } from "@watchdog/schemas/shared";
 
-export interface CreateIdentifierPatch {
+export type CreateIdentifierPatch = {
   entityId: string;
   type: IdentifierType;
   value: string;
@@ -21,9 +21,9 @@ export interface CreateIdentifierPatch {
   status?: IdentifierStatus;
   notes?: string;
   evidenceIds?: string[];
-}
+};
 
-export interface UpdateIdentifierPatch {
+export type UpdateIdentifierPatch = {
   identifierId: string;
   value?: string;
   platform?: string;
@@ -32,7 +32,7 @@ export interface UpdateIdentifierPatch {
   confidence?: ConfidenceTier;
   notes?: string;
   evidenceIds?: string[];
-}
+};
 
 /** Normalize dossier/table identifier POST payloads at ingress. */
 export function buildCreateIdentifierData(

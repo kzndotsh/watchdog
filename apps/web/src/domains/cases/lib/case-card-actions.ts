@@ -1,12 +1,12 @@
 import type { CaseRecord } from "@/domains/cases/types";
 import type { AppAction } from "@/shared/lib/app-action";
 
-export interface CaseCardActionHandlers {
+export type CaseCardActionHandlers = {
   onOpen: () => void;
   onSetActiveOnly?: () => void;
   onDelete: () => void;
   selecting?: boolean;
-}
+};
 
 /** Shared ⋯ + ContextMenu actions for Manage Cases cards. */
 export function caseCardActions(

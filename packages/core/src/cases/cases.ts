@@ -37,20 +37,20 @@ import {
 
 const SLUG_UNIQUE_INDEX = "cases_organization_id_slug_uidx";
 
-export interface CaseRecord {
+export type CaseRecord = {
   id: CaseId;
   name: string;
   slug: string;
   description: string | null;
   allowThirdPartyEgress: boolean;
-}
+};
 
-export interface CreateCaseInput {
+export type CreateCaseInput = {
   name: string;
   slug?: string;
   description?: string;
   organizationId: OrganizationId;
-}
+};
 
 /** Derive the Case URL slug from a display name. Empty if unsugifiable. */
 export function slugForCaseName(name: string): string {
@@ -77,10 +77,10 @@ export function listCasesEffect(
 }
 
 /** The Cases an organization can see and which one is Active for a stored selection. */
-export interface ActiveCaseContext {
+export type ActiveCaseContext = {
   cases: CaseRecord[];
   active: CaseRecord | null;
-}
+};
 
 /**
  * The one Active-Case rule. The stored selection (the web cookie) stays Active only while

@@ -3,13 +3,13 @@ import { isIP } from "node:net";
 import { expandIpv6 } from "../network/ip-lookup-cymru";
 import { asString, isRecord } from "../parse/coerce";
 
-export interface FeodoEntry {
+export type FeodoEntry = {
   ipAddress: string;
   malware: string | null;
   status: string | null;
   firstSeen: string | null;
   lastOnline: string | null;
-}
+};
 
 export function parseFeodoEntries(raw: unknown): FeodoEntry[] {
   if (!Array.isArray(raw)) return [];

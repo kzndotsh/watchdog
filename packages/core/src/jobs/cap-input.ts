@@ -6,9 +6,9 @@ import type { JsonObject } from "@watchdog/schemas/shared";
 
 import { InvalidError, type DomainTag } from "../infra/tagged-errors";
 
-export interface CapInputParser {
+export type CapInputParser = {
   input: z.ZodType;
-}
+};
 
 /** Validate Cap input against its schema and normalize graph id fields. */
 export function parseValidatedCapInputEffect(

@@ -17,13 +17,13 @@ import {
 } from "./resolve-collect-entity-id";
 import { validatedIdentifierValue } from "./validated-identifier-value";
 
-export interface IdentifierBatch {
+export type IdentifierBatch = {
   type: IdentifierType;
   values: readonly (string | null | undefined)[];
   platform?: string;
   /** Max Identifier ops for this batch (type-specific default when omitted). */
   limit?: number;
-}
+};
 
 function defaultIdentifierBatchLimit(type: IdentifierType): number {
   switch (type) {

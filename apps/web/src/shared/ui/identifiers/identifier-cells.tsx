@@ -80,16 +80,16 @@ export const PLATFORM_OPTIONS: EditableSelectOption[] =
 export const TYPE_OPTIONS: EditableSelectOption[] = IDENTIFIER_TYPE_OPTIONS;
 export const STATUS_OPTIONS: EditableSelectOption[] = IDENTIFIER_STATUS_OPTIONS;
 
-export interface IdentifierFieldUpdate {
+export type IdentifierFieldUpdate = {
   value?: string;
   platform?: string;
   type?: IdentifierType;
   status?: IdentifierStatus;
   confidence?: ConfidenceTier;
   notes?: string;
-}
+};
 
-export interface IdentifierTableMeta {
+export type IdentifierTableMeta = {
   updateField: (identifierId: string, field: IdentifierFieldUpdate) => void;
   evidenceOptions: readonly EvidenceOption[];
   onEvidenceClick?: (evidenceId: string) => void;
@@ -100,7 +100,7 @@ export interface IdentifierTableMeta {
   onOpenSubject?: (row: IdentifierRecord) => void;
   onCopyValue: (value: string) => void;
   onDeleteIdentifier: (row: IdentifierRecord) => void;
-}
+};
 
 function identifierMeta(
   ctx: Pick<CellContext<DataTableFeatures, IdentifierRecord>, "table">

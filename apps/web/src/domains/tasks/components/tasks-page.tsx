@@ -21,11 +21,11 @@ import { Button } from "@/shared/ui/primitives/button";
 import { BoardSkeleton } from "@/shared/ui/skeletons";
 import { FieldError } from "@watchdog/ui/components/field";
 
-interface Props {
+type Props = {
   entityId?: string;
   taskId?: string;
   onTaskIdChange?: (next?: string) => void;
-}
+};
 
 function TasksActive({
   active,

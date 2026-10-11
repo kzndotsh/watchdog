@@ -26,11 +26,11 @@ import {
 
 export type ProposalRow = typeof proposals.$inferSelect;
 
-export interface ProposalWithCapability {
+export type ProposalWithCapability = {
   proposal: ProposalRow;
   capabilityId: string | null;
   playbookId: string | null;
-}
+};
 
 export type NewProposal = Pick<
   typeof proposals.$inferInsert,

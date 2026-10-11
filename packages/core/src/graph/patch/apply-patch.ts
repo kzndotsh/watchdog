@@ -20,7 +20,7 @@ import { applyQuestionOpEffect } from "./apply-question-op";
 
 export type ApplyPatchTx = DbTx;
 
-export interface ApplyPatchOpts {
+export type ApplyPatchOpts = {
   caseId: CaseId;
   patch: PatchOp[];
   confidence?: ConfidenceTier;
@@ -30,7 +30,7 @@ export interface ApplyPatchOpts {
   actorLabel?: string | null;
   /** When set, run inside this transaction (no nested begin). */
   tx?: DbTx;
-}
+};
 
 function evidenceIdsForOp(
   op: PatchOp,

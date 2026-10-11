@@ -4,29 +4,29 @@ import type {
   EntityKind,
 } from "@watchdog/schemas/shared";
 
-export interface EntityNodeData {
+export type EntityNodeData = {
   label: string;
   kind: EntityKind;
   slug: string;
   isCenter: boolean;
-}
+};
 
-export interface PredicateEdgeData {
+export type PredicateEdgeData = {
   predicate: EdgePredicate;
   confidence: ConfidenceTier;
   edgeId: string;
-}
+};
 
-export interface GraphNode {
+export type GraphNode = {
   id: string;
   position: { x: number; y: number };
   width?: number;
   height?: number;
   data: EntityNodeData;
   selected?: boolean;
-}
+};
 
-export interface GraphEdge {
+export type GraphEdge = {
   id: string;
   source: string;
   target: string;
@@ -36,4 +36,4 @@ export interface GraphEdge {
     strokeWidth?: number;
   };
   selected?: boolean;
-}
+};

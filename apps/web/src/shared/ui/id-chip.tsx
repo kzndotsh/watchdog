@@ -16,7 +16,7 @@ const PRESET: Record<IdChipPreset, { head: number; tail: number }> = {
 const VALUE_TOOLTIP_CLASS =
   "max-w-[12rem] break-all px-2 py-1 font-mono text-2xs leading-snug";
 
-interface IdChipProps {
+type IdChipProps = {
   value: string;
   /** Visible label when it differs from the opaque `value` (tooltip still shows `value`). */
   display?: string;
@@ -35,7 +35,7 @@ interface IdChipProps {
   tail?: number;
   size?: IdChipSize;
   className?: string;
-}
+};
 
 /**
  * Opaque id / hash display — middle-truncate mono chip (or full when `full`).

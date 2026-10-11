@@ -3,7 +3,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { listPending } from "@/shared/lib/list-pending";
 
-interface DossierTabCounts {
+type DossierTabCounts = {
   claims: number;
   identifiers: number;
   connections: number;
@@ -11,7 +11,7 @@ interface DossierTabCounts {
   events: number;
   questions: number;
   tasks: number;
-}
+};
 
 const EMPTY_ROWS: never[] = [];
 

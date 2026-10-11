@@ -29,10 +29,10 @@ import {
   updateIdentifierFn,
 } from "@/domains/entities/identifiers/identifiers.functions";
 
-interface ServerDataContext<T> {
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 describe("identifiers.functions", () => {
   it("routes identifier list and write ServerFns through oRPC", async () => {

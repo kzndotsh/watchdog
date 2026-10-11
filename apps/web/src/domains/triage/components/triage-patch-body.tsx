@@ -31,7 +31,7 @@ function summaryIsRedundant(proposal: ProposalRecord): boolean {
   });
 }
 
-interface TriagePatchBodyProps {
+type TriagePatchBodyProps = {
   proposal: ProposalRecord;
   caseId: string;
   acceptForm: TriageAcceptForm;
@@ -50,7 +50,7 @@ interface TriagePatchBodyProps {
   onRejectingChange: (rejecting: boolean) => void;
   previewEvidence: EvidenceRecord | null;
   onPreviewEvidenceChange: (evidence: EvidenceRecord | null) => void;
-}
+};
 
 export function TriagePatchBody({
   proposal,

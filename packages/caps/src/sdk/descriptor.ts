@@ -30,18 +30,18 @@ export type CapDescriptorCredential =
   | { anyOf: string[] };
 
 /** Wire-safe jobPolicy (mutable arrays). */
-export interface CapDescriptorJobPolicy {
+export type CapDescriptorJobPolicy = {
   needsEvidenceSnapshot?: boolean;
   linkEvidenceFromInput?: ("evidenceId" | "sourceEvidenceId")[];
   markEvidenceProcessed?: boolean;
   cacheTtlMs?: number;
-}
+};
 
 /**
  * Serializable Cap metadata — no run/interpret. Derived from CapabilityDef
  * via {@link toCapDescriptor}. Hand-editing capabilities.gen.json is forbidden.
  */
-export interface CapDescriptor {
+export type CapDescriptor = {
   id: string;
   version: string;
   title: string;
@@ -63,7 +63,7 @@ export interface CapDescriptor {
    * (default entityId; Cap may list more e.g. model, sourceEvidenceId).
    */
   inputForm: JsonObject;
-}
+};
 
 function asJsonObject(value: unknown): JsonObject {
   if (!isJsonObject(value)) {

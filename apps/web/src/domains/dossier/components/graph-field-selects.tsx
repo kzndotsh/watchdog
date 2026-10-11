@@ -17,13 +17,13 @@ import {
   SelectValue,
 } from "@watchdog/ui/components/select";
 
-interface SelectProps<T extends string> {
+type SelectProps<T extends string> = {
   value: T;
   onChange: (value: T) => void;
   className?: string;
   id?: string;
   disabled?: boolean;
-}
+};
 
 export function ClaimClassSelect({
   value,

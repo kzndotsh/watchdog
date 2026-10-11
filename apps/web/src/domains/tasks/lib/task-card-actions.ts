@@ -1,10 +1,10 @@
 import type { TaskRecord } from "@/domains/tasks/types";
 import type { AppAction } from "@/shared/lib/app-action";
 
-export interface TaskCardActionHandlers {
+export type TaskCardActionHandlers = {
   onOpen: (task: TaskRecord) => void;
   onDelete: (task: TaskRecord) => void;
-}
+};
 
 /** Shared ⋯ + ContextMenu actions for task board cards. */
 export function taskCardActions(

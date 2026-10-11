@@ -10,14 +10,14 @@ import { trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type CapCacheRow = typeof capCache.$inferSelect;
 
-export interface CapCacheLookup {
+export type CapCacheLookup = {
   artifacts: JobArtifact[];
   resultSummary: string | null;
   jobId: string | null;
   evidenceIds: string[];
-}
+};
 
-export interface UpsertCapCacheValues {
+export type UpsertCapCacheValues = {
   caseId: CaseId;
   capabilityId: string;
   inputHash: string;
@@ -27,7 +27,7 @@ export interface UpsertCapCacheValues {
   ttlMs: number;
   createdAt: Date;
   expiresAt: Date;
-}
+};
 
 export const capCacheRepo = {
   async lookupActive(

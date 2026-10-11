@@ -11,11 +11,11 @@ import {
   PopoverTrigger,
 } from "@watchdog/ui/components/popover";
 
-export interface PageFilterChip {
+export type PageFilterChip = {
   id: string;
   label: string;
   onClear: () => void;
-}
+};
 
 export function PageFilterMenu({
   chips,
