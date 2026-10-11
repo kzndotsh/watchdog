@@ -2,6 +2,7 @@ import { PaperclipIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { EVIDENCE_PICKER_TRIGGER_CLASS } from "@/shared/ui/intake/evidence-picker-trigger-class";
+import { LoadingRegion } from "@/shared/ui/loading-region";
 import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 
@@ -18,11 +19,9 @@ export function EvidenceSlotSkeleton({
   if (mode === "cite") {
     const count = Math.max(citeCount, 1);
     return (
-      <div
+      <LoadingRegion
+        label="Loading evidence"
         className={cn("flex min-w-0 flex-wrap items-center gap-1.5", className)}
-        aria-busy
-        aria-live="polite"
-        aria-label="Loading evidence"
       >
         <WithTooltip content="Evidence" wrapSpan className="inline-flex">
           <PaperclipIcon
@@ -33,20 +32,18 @@ export function EvidenceSlotSkeleton({
         {Array.from({ length: count }).map((_, index) => (
           <Skeleton key={index} className="h-5 w-24 rounded-md" />
         ))}
-      </div>
+      </LoadingRegion>
     );
   }
 
   return (
-    <div
+    <LoadingRegion
+      label="Loading evidence"
       className={cn("flex min-w-0 items-center", className)}
-      aria-busy
-      aria-live="polite"
-      aria-label="Loading evidence"
     >
       <Skeleton
         className={cn(EVIDENCE_PICKER_TRIGGER_CLASS, "w-14 border-dashed")}
       />
-    </div>
+    </LoadingRegion>
   );
 }
