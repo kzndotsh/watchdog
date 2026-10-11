@@ -19,6 +19,9 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("@/shared/layout/page", () => ({
   Page: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/shared/layout/page-header", () => ({
   PageHeader: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

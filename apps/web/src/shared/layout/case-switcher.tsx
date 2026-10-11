@@ -12,11 +12,9 @@ import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 import { SidebarGroupLabel, useSidebar } from "@watchdog/ui/components/sidebar";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 
-import {
-  CaseSwitcherCollapsed,
-  CaseSwitcherEmpty,
-  CaseSwitcherExpanded,
-} from "./case-switcher-views";
+import { CaseSwitcherCollapsed } from "./case-switcher-collapsed";
+import { CaseSwitcherEmpty } from "./case-switcher-empty";
+import { CaseSwitcherExpanded } from "./case-switcher-expanded";
 
 function CaseSwitcherSkeleton() {
   return (

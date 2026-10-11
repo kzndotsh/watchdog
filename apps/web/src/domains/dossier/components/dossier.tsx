@@ -32,7 +32,8 @@ import { DeleteEntityDialog } from "@/domains/entities/components/delete-entity-
 import { entityBySlugQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { DossierTasksSection } from "@/domains/tasks/components/dossier-tasks-section";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";

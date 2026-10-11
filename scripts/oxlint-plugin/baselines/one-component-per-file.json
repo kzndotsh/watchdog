@@ -5,8 +5,5 @@
   "apps/web/src/domains/entities/components/bulk-add-identifiers-preview.tsx": 1,
   "apps/web/src/domains/intake/components/evidence-detail-header.tsx": 1,
   "apps/web/src/domains/search/components/search-chrome.tsx": 1,
-  "apps/web/src/domains/tasks/components/task-card.tsx": 1,
-  "apps/web/src/shared/layout/case-switcher-parts.tsx": 1,
-  "apps/web/src/shared/layout/case-switcher-views.tsx": 2,
-  "apps/web/src/shared/layout/page.tsx": 1
+  "apps/web/src/domains/tasks/components/task-card.tsx": 1
 }

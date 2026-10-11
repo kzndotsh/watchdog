@@ -7,7 +7,8 @@ import { useCaseList } from "@/domains/cases/hooks/use-case-list";
 import { caseCardActions } from "@/domains/cases/lib/case-card-actions";
 import type { CaseRecord } from "@/domains/cases/types";
 import { cn } from "@/lib/utils";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
 import { caseExportZipPath } from "@/shared/lib/api-urls";
 import {

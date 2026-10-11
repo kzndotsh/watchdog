@@ -14,7 +14,8 @@ import {
   triageStatusSearchParam,
   type TriageQueueFilters,
 } from "@/domains/triage/lib/filters";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";

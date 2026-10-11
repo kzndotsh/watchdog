@@ -21,7 +21,8 @@ import {
 } from "@/domains/jobs/queries";
 import type { CapListItem, PlaybookListItem } from "@/domains/jobs/types";
 import { cn } from "@/lib/utils";
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { listPending } from "@/shared/lib/list-pending";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";

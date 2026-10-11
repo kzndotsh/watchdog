@@ -1,4 +1,5 @@
-import { Page, PageHeader } from "@/shared/layout/page";
+import { Page } from "@/shared/layout/page";
+import { PageHeader } from "@/shared/layout/page-header";
 import { PendingRegion } from "@/shared/ui/pending-region";
 import { QueueSkeleton, StackBodySkeleton } from "@/shared/ui/skeletons";
 
