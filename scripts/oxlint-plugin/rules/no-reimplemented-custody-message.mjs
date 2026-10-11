@@ -290,8 +290,8 @@ export const noReimplementedCustodyMessage = {
     };
 
     /**
-     * Evaluate the builder `node` and report it when its parts spell the message only
-     * together; a part that spells it alone is reported where it is written.
+     * Queue the builder `node` for evaluation at `Program:exit`, once every write in
+     * the file is known; an operand of a larger builder is left to that builder.
      * @param {Record<string, unknown>} node
      */
     const checkBuilder = (node) => {
@@ -299,8 +299,7 @@ export const noReimplementedCustodyMessage = {
       builders.push(node);
     };
 
-    /** Builders are evaluated at `Program:exit`, once every write in the file is known. */
-    /** @type {Record<string, unknown>[]} */
+    /** @type {Record<string, unknown>[]} Builders queued by `checkBuilder`. */
     const builders = [];
 
     return {
