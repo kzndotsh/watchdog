@@ -2,10 +2,10 @@ import { ClipboardIcon, DownloadIcon } from "lucide-react";
 
 import {
   copyEntityMarkdown,
-  entityMarkdownExportPath,
   openEntityMarkdownInChat,
 } from "@/domains/entities/lib/entity-export";
 import { errMessage } from "@/lib/utils";
+import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { Button } from "@/shared/ui/primitives/button";
 import { toast } from "@/shared/ui/toast";
 import {

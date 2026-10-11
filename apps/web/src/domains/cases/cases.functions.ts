@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { resolveActiveCase } from "@/domains/cases/cases-active.server";
 import {
   readActiveCaseId,
   writeActiveCaseId,
@@ -19,21 +20,17 @@ import {
   updateCaseInputSchema,
 } from "@watchdog/schemas/cases";
 
-/** Cases + active Case from cookie; heals invalid/missing selection. */
+/** Cases + active Case from cookie; the healing rule is core's `resolveActiveCaseEffect`. */
 export const getCasesContextFn = createServerFn({ method: "GET" }).handler(
   async ({ context }): Promise<CasesContext> => {
-    const cases = await orpcFromContext(context).cases.list();
     const stored = readActiveCaseId();
-    const active =
-      (stored ? cases.find((c) => c.id === stored) : undefined) ??
-      cases[0] ??
-      null;
+    const resolved = await resolveActiveCase(context, stored);
 
-    if (active?.id !== stored) {
-      writeActiveCaseId(active?.id ?? null);
+    if (resolved.active?.id !== stored) {
+      writeActiveCaseId(resolved.active?.id ?? null);
     }
 
-    return { cases, active };
+    return resolved;
   }
 );
 
@@ -112,7 +109,7 @@ export const deleteCaseFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<void> => {
     await orpcFromContext(context).cases.delete(data);
     if (readActiveCaseId() === data.caseId) {
-      const remaining = await orpcFromContext(context).cases.list();
-      writeActiveCaseId(remaining[0]?.id ?? null);
+      const { active } = await resolveActiveCase(context, null);
+      writeActiveCaseId(active?.id ?? null);
     }
   });

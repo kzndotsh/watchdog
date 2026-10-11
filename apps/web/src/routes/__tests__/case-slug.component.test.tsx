@@ -132,6 +132,44 @@ describe("case slug route", () => {
     expect(validateSearch.parse({ tab: "  unknown  " })).toEqual({});
   });
 
+  it.each([
+    ["entities", "/entities"],
+    ["identifiers", "/identifiers"],
+    ["graph", "/graph"],
+    ["tasks", "/tasks"],
+  ])("sends the legacy %s tab to %s", async (tab, to) => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    const caseRow = { id: CASE_ID, slug: "alpha", name: "Alpha" };
+    const query = vi.fn(async (options: { queryKey: readonly string[] }) =>
+      options.queryKey[1] === "context" ? { cases: [], active: null } : caseRow
+    );
+    const loader = Route.options.loader as (ctx: never) => Promise<unknown>;
+
+    await expect(
+      loader({
+        context: {
+          queryClient: {
+            query,
+            invalidateQueries: vi.fn(),
+            refetchQueries: vi.fn(),
+            setQueryData: vi.fn(),
+          },
+        },
+        params: { caseSlug: "alpha" },
+        deps: validateSearch.parse({ tab }),
+      } as never)
+    ).rejects.toEqual(expect.objectContaining({ to, replace: true }));
+  });
+
+  it("drops an unknown tab so the overview renders", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
+  });
+
   it("redirects padded legacy overview tabs to first-class routes", async () => {
     const caseRow = {
       id: CASE_ID,

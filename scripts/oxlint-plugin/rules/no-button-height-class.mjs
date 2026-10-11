@@ -151,7 +151,7 @@ const lexicalInits = (context, name, at) => {
 
 /**
  * Bans height utilities on the Button wrapper (`<Button className="h-8">`, in a string,
- * template literal, `cn()` / `clsx()` argument, a const the className names, or a spread
+ * template literal, `cn()` / `clsx()` argument, a variable (const, let or var) the className names, or a spread
  * `{...{ className }}`; aliased and namespace imports are followed). The size scale
  * (`xs` / `sm` / default / `lg`, `icon*`, `inline`) owns Button height, so a height
  * override means a size is missing: add it to the wrapper, never patch the call site.
@@ -174,9 +174,9 @@ export const noButtonHeightClass = {
     /** Local names bound to a namespace import of a button module. */
     const namespaces = new Set();
     /**
-     * Every `const NAME = <expr>` initializer in the file, per name, at any depth. A
-     * className identifier reads all of them: a same-named declaration elsewhere can
-     * only add findings, never hide one.
+     * Every variable initializer (`const`, `let` and `var`: `NAME = <expr>`) in the file,
+     * per name, at any depth. Without scope information a className identifier reads all
+     * same-named initializers, so a declaration elsewhere can add findings but never hide one.
      * @type {Map<string, unknown[]>}
      */
     const consts = new Map();
@@ -184,8 +184,8 @@ export const noButtonHeightClass = {
     const pending = [];
 
     /**
-     * Initializers a name refers to from `at`: the lexically visible `const` / `let`
-     * declarations when the scope API answers, else every same-named one in the file.
+     * Initializers a name refers to from `at`: the lexically visible
+     * variable declarations (`const`, `let`, `var`) when the scope API answers, else every same-named one in the file.
      * @param {string} name
      * @param {unknown} at
      * @returns {{ node: unknown, at: unknown }[]}

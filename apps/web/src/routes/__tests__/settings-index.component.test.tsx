@@ -23,12 +23,18 @@ vi.mock("@/auth/server", () => ({
 
 const useSearchMock = vi.hoisted(() => vi.fn(() => ({ tab: undefined })));
 const useNavigateMock = vi.hoisted(() => vi.fn());
+const searchStrMock = vi.hoisted(() => vi.fn(() => ""));
 
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
+    useRouterState: ({
+      select,
+    }: {
+      select: (s: { location: { searchStr: string } }) => unknown;
+    }) => select({ location: { searchStr: searchStrMock() } }),
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
     getRouteApi: () => ({
       useSearch: useSearchMock,
@@ -66,6 +72,7 @@ vi.mock("@/domains/settings/components/settings-users", () => ({
 }));
 
 vi.mock("@/domains/settings/components/settings-shell", () => ({
+  SETTINGS_LEGACY_TABS: { team: "members" },
   SETTINGS_TABS: [
     "account",
     "security",
@@ -150,6 +157,35 @@ describe("settings index route", () => {
       parse: (value: unknown) => { tab?: string };
     };
     expect(validateSearch.parse({ tab: "team" })).toEqual({ tab: "members" });
+  });
+
+  it("clears an invalid ?tab= from the URL using the router location", () => {
+    useNavigateMock.mockClear();
+    searchStrMock.mockReturnValue("?tab=bogus");
+    useSearchMock.mockReturnValue({ tab: undefined });
+    const Page = Route.options.component!;
+    render(<Page />);
+    expect(useNavigateMock).toHaveBeenCalledTimes(1);
+    searchStrMock.mockReturnValue("");
+  });
+
+  it("leaves the URL alone when no tab is present", () => {
+    useNavigateMock.mockClear();
+    searchStrMock.mockReturnValue("");
+    useSearchMock.mockReturnValue({ tab: undefined });
+    const Page = Route.options.component!;
+    render(<Page />);
+    expect(useNavigateMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps a valid settings tab and drops an invalid one in validateSearch", () => {
+    const validateSearch = Route.options.validateSearch as {
+      parse: (value: unknown) => { tab?: string };
+    };
+    expect(validateSearch.parse({ tab: "security" })).toEqual({
+      tab: "security",
+    });
+    expect(validateSearch.parse({ tab: "bogus" }).tab).toBeUndefined();
   });
 
   it("trims padded settings tab in validateSearch", () => {

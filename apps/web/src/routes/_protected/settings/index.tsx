@@ -1,5 +1,9 @@
 import { useSession } from "@better-auth-ui/react";
-import { createFileRoute, getRouteApi } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  getRouteApi,
+  useRouterState,
+} from "@tanstack/react-router";
 import {
   BuildingIcon,
   KeyIcon,
@@ -23,6 +27,7 @@ import { YourOrganizations } from "@/domains/organization/components/your-organi
 import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
+  SETTINGS_LEGACY_TABS,
   SETTINGS_TABS,
   SettingsShell,
   type SettingsNavItem,
@@ -32,7 +37,7 @@ import { SettingsUsers } from "@/domains/settings/components/settings-users";
 import { credentialsListQuery } from "@/domains/settings/queries";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { RouteError } from "@/shared/layout/route-error";
-import { normalizeRouteSegment } from "@/shared/lib/route-slug";
+import { tabSearchParam } from "@/shared/lib/tab-search";
 import { warmEnsureQueryData } from "@/shared/lib/warm-query";
 import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
 import { Spinner } from "@watchdog/ui/components/spinner";
@@ -107,23 +112,8 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
   },
 ];
 
-/** Tab ids from older links. */
-const LEGACY_TABS: Record<string, SettingsTab> = { team: "members" };
-
-function parseSettingsTab(value: unknown): SettingsTab | undefined {
-  const slug =
-    typeof value === "string" ? normalizeRouteSegment(value) : undefined;
-  if (slug === undefined) return undefined;
-  const legacy = LEGACY_TABS[slug];
-  if (legacy !== undefined) return legacy;
-  for (const tab of SETTINGS_TABS) {
-    if (tab === slug) return tab;
-  }
-  return undefined;
-}
-
 const settingsSearchSchema = z.object({
-  tab: z.unknown().transform(parseSettingsTab).optional(),
+  tab: tabSearchParam(SETTINGS_TABS, SETTINGS_LEGACY_TABS),
 });
 
 function SettingsPanel({
@@ -201,6 +191,9 @@ function SettingsPanel({
 function SettingsPage() {
   const { tab: tabSearch } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
+  const searchStr = useRouterState({
+    select: (s) => s.location.searchStr,
+  });
   const { data: session, isPending: sessionPending } = useSession(authClient);
   const canManageUsers = isInstanceAdmin(
     (session?.user as { role?: string | null } | undefined)?.role
@@ -224,14 +217,14 @@ function SettingsPage() {
   );
 
   useEffect(() => {
-    const raw = new URLSearchParams(window.location.search).get("tab");
+    const raw = new URLSearchParams(searchStr).get("tab");
     if (raw !== null && raw !== "" && tabSearch === undefined) {
       void navigate({
         search: (prev) => ({ ...prev, tab: undefined }),
         replace: true,
       });
     }
-  }, [navigate, tabSearch]);
+  }, [navigate, searchStr, tabSearch]);
 
   return (
     <Page className="gap-0">
