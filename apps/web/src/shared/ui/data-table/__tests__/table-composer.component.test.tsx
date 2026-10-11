@@ -40,7 +40,8 @@ describe("table composer", () => {
     );
 
     const button = screen.getByRole("button", { name: "Add identifier" });
-    expect(screen.getByRole("row").onclick).toBeNull();
+    await user.click(screen.getByRole("row"));
+    expect(onClick).not.toHaveBeenCalled();
     await user.tab();
     expect(button).toHaveFocus();
     await user.keyboard("{Enter}");
