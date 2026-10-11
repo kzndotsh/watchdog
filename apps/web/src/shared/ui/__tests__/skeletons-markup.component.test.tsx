@@ -276,7 +276,7 @@ describe("skeletons markup", () => {
 
   it("matches the pre-split markup fixture", async () => {
     await expect(renderAll()).toMatchFileSnapshot(
-      "./__fixtures__/skeletons-markup.html"
+      "./__fixtures__/skeletons-markup.txt"
     );
   });
 });
