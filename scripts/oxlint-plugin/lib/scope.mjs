@@ -24,7 +24,13 @@ export const lexicalInits = (context, name, at) => {
     if (variable) {
       return variable.defs.flatMap((def) => {
         const decl = def.node;
-        return def.type === "Variable" && isRecord(decl) && isRecord(decl.init)
+        // A destructuring declarator (`const [a] = ...`) binds a part of its initializer,
+        // not the initializer itself, so only a plain `NAME = <expr>` counts.
+        return def.type === "Variable" &&
+          isRecord(decl) &&
+          isRecord(decl.id) &&
+          decl.id.type === "Identifier" &&
+          isRecord(decl.init)
           ? [{ node: decl.init, at: decl }]
           : [];
       });

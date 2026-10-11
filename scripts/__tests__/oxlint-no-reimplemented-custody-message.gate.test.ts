@@ -5,6 +5,9 @@
  * written into a throwaway repo that carries the real config and plugin
  * (helpers/oxlint-fixture.ts). The fixture starts with no baseline.
  */
+import { readdirSync } from "node:fs";
+import path from "node:path";
+
 import { beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -17,6 +20,15 @@ import type { LintResult } from "./helpers/oxlint-fixture.ts";
 const RULE = "watchdog/no-reimplemented-custody-message";
 const DIR = "apps/web/src/domains/cases/lib";
 const MSG = "confirmed requires at least one Evidence attachment";
+
+const repoRoot = path.resolve(import.meta.dirname, "../..");
+
+/** Every real app and package directory, so a new workspace is covered without an edit. */
+const scopes = ["apps", "packages"].flatMap((group) =>
+  readdirSync(path.join(repoRoot, group), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
+    .map((entry) => `${group}/${entry.name}`)
+);
 
 const createFixture = oxlintFixtureFactory();
 
@@ -50,6 +62,14 @@ const FAIL = {
   "shadow-last.ts": `const lead = "ok ";\nexport function f() {\n  const lead = "confirmed requires ";\n  return lead + "evidence";\n}\nexport const g = lead + "x";\n`,
   "string-raw.ts": `export const m = String.raw\`${MSG}\`;\n`,
   "as-cast.ts": `export const m = "${MSG}" as const;\n`,
+  "let-unchanged.ts": `let lead = "confirmed requires ";\nexport const m = lead + "evidence";\n`,
+  "var-unchanged.ts": `var lead = "confirmed requires ";\nexport const m = lead + "evidence";\n`,
+  "jsx-text.tsx": `export const X = () => <p>${MSG}</p>;\n`,
+  "jsx-text-multiline.tsx": `export const X = () => (\n  <p>\n    confirmed requires\n    at least one Evidence attachment\n  </p>\n);\n`,
+  "jsx-text-nbsp.tsx": `export const X = () => <p>confirmed&nbsp;requires&#160;evidence</p>;\n`,
+  "jsx-text-nested.tsx": `export const X = () => <div><span>Cannot save</span><p>confirmed requires evidence</p></div>;\n`,
+  "jsx-attribute.tsx": `export const X = () => <p title="${MSG}">a</p>;\n`,
+  "jsx-expression.tsx": `export const X = () => <p>{\`${MSG}\`}</p>;\n`,
   "tsx.tsx": `export const X = () => <p>{"${MSG}"}</p>;\n`,
 } as const;
 
@@ -67,6 +87,17 @@ const OK = {
   "split-by-call.ts": `export const f = (x: string) => \`confirmed requires \${x.trim()} evidence\`;\n`,
   "other-requires.ts": `export const m = "confirmed requires a Case";\n`,
   "scoped-ok.ts": `export function a() {\n  const lead = "confirmed requires ";\n  return lead;\n}\nexport function b() {\n  const lead = "ok ";\n  return lead + "evidence";\n}\n`,
+  "let-reassigned.ts": `let lead = "confirmed requires ";\nlead = "ok ";\nexport const m = lead + "evidence";\n`,
+  "let-appended.ts": `let lead = "confirmed requires ";\nlead += "x";\nexport const m = lead + "evidence";\n`,
+  "let-reassigned-later.ts": `let lead = "confirmed requires ";\nexport const m = () => lead + "evidence";\nexport const set = () => {\n  lead = "ok ";\n};\n`,
+  "var-reassigned.ts": `var lead = "confirmed requires ";\nlead = "ok ";\nexport const m = lead + "evidence";\n`,
+  "let-for-of.ts": `let lead = "confirmed requires ";\nfor (lead of ["a"]) { void lead; }\nexport const m = lead + "evidence";\n`,
+  "let-destructured-assign.ts": `let lead = "confirmed requires ";\n[lead] = ["ok "];\nexport const m = lead + "evidence";\n`,
+  "destructured-array.ts": `const [lead] = ["confirmed requires "];\nexport const m = lead + "evidence";\n`,
+  "destructured-object.ts": `const { lead } = { lead: "confirmed requires " };\nexport const m = lead + "evidence";\n`,
+  "jsx-text-valid.tsx": `export const X = () => <p>Attach Evidence to the claim; confirmed claims are final</p>;\n`,
+  "jsx-split-elements.tsx": `export const X = () => <p><b>confirmed</b> requires evidence</p>;\n`,
+  "jsx-constant.tsx": `import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";\nexport const X = () => <p>{CONFIRMED_REQUIRES_EVIDENCE}</p>;\n`,
   "join-unrelated.ts": `export const m = ["Accept", "needs", "a", "Case"].join(" ");\n`,
   "identifier-names.ts": `export const confirmedRequiresEvidence = true;\nexport const CONFIRMED_REQUIRES_EVIDENCE_FLAG = "x";\n`,
 } as const;
@@ -80,14 +111,14 @@ beforeAll(() => {
     fixture.write(`${DIR}/${name}`, source);
   }
   const literal = FAIL["exact.ts"];
-  fixture.write("packages/core/src/graph/probe.ts", literal);
-  fixture.write("packages/api/src/probe.ts", literal);
-  fixture.write("apps/cli/src/probe.ts", literal);
-  fixture.write("apps/worker/src/probe.ts", literal);
+  for (const scope of scopes) {
+    fixture.write(`${scope}/src/probe.ts`, literal);
+    fixture.write(`${scope}/src/__tests__/probe.test.ts`, literal);
+    fixture.write(`${scope}/src/probe.tsx`, FAIL["jsx-text.tsx"]);
+  }
   fixture.write(`${DIR}/__tests__/probe.test.ts`, literal);
   fixture.write(`${DIR}/probe.test.ts`, literal);
   fixture.write("packages/policy/src/confirmed-evidence.ts", literal);
-  fixture.write("packages/policy/src/__tests__/probe.test.ts", literal);
 
   result = fixture.lint(["apps", "packages"]);
 }, LINT_TIMEOUT_MS);
@@ -118,21 +149,36 @@ describe("no re-implemented custody message (no-reimplemented-custody-message)",
     expect(hits(`${DIR}/${name}`)).toHaveLength(0);
   });
 
-  it("applies in every app and package and in tests", () => {
-    for (const file of [
-      "packages/core/src/graph/probe.ts",
-      "packages/api/src/probe.ts",
-      "apps/cli/src/probe.ts",
-      "apps/worker/src/probe.ts",
-      `${DIR}/__tests__/probe.test.ts`,
-      `${DIR}/probe.test.ts`,
-    ]) {
-      expect(hits(file), file).toHaveLength(1);
-    }
+  it("scans every real app and package directory", () => {
+    expect(scopes).toEqual(
+      expect.arrayContaining(["apps/web", "apps/site", "packages/core"])
+    );
   });
 
-  it("exempts @watchdog/policy, source and tests", () => {
-    expect(hits("packages/policy/src/confirmed-evidence.ts")).toHaveLength(0);
-    expect(hits("packages/policy/src/__tests__/probe.test.ts")).toHaveLength(0);
+  it.each(scopes.filter((scope) => scope !== "packages/policy"))(
+    "applies in %s, in source, tests and JSX text",
+    (scope) => {
+      expect(hits(`${scope}/src/probe.ts`), scope).toHaveLength(1);
+      expect(hits(`${scope}/src/__tests__/probe.test.ts`), scope).toHaveLength(
+        1
+      );
+      expect(hits(`${scope}/src/probe.tsx`), scope).toHaveLength(1);
+    }
+  );
+
+  it("applies in tests beside the source", () => {
+    expect(hits(`${DIR}/__tests__/probe.test.ts`)).toHaveLength(1);
+    expect(hits(`${DIR}/probe.test.ts`)).toHaveLength(1);
+  });
+
+  it("exempts @watchdog/policy: source, tests and JSX text", () => {
+    for (const file of [
+      "packages/policy/src/confirmed-evidence.ts",
+      "packages/policy/src/probe.ts",
+      "packages/policy/src/__tests__/probe.test.ts",
+      "packages/policy/src/probe.tsx",
+    ]) {
+      expect(hits(file), file).toHaveLength(0);
+    }
   });
 });

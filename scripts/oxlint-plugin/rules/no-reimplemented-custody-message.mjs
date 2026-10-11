@@ -19,6 +19,13 @@ const PHRASES = [
 /** Stands for a value the rule cannot read, so text around it never joins into a match. */
 const UNKNOWN = "\u0000";
 
+/**
+ * JSX text keeps entities raw: turn the space-like ones into a space before matching.
+ * @param {string} text
+ */
+const decodeSpaces = (text) =>
+  text.replaceAll(/&(?:nbsp|ensp|emsp|thinsp|#160|#x0*a0);/gi, " ");
+
 /** @param {string} text */
 const matches = (text) => {
   const norm = text.toLowerCase().replaceAll(/\s+/g, " ");
@@ -126,7 +133,12 @@ const isOperand = (node) => {
  * parts resolve to by lexical scope. An imported `CONFIRMED_REQUIRES_EVIDENCE` (named,
  * aliased or through a namespace) is opaque and always legal; so is any part the rule
  * cannot read. A split message is reported once, on the whole expression, never at each
- * piece. `@watchdog/policy` itself is switched off by `overrides` in `oxlint.config.ts`.
+ * piece. A const is read only when proven unchanged: a `let` / `var` written anywhere
+ * else in the file (assignment, `+=`, `++`, destructuring or `for ... of` target) is
+ * unknown, and a destructured binding is never read. Plain JSX text is checked too
+ * (`<p>confirmed requires evidence</p>`, whitespace and `&nbsp;`-style entities
+ * normalised); text split across elements (`<b>confirmed</b> requires ...`) is not a
+ * finding, since no single node spells it. `@watchdog/policy` itself is switched off by `overrides` in `oxlint.config.ts`.
  */
 export const noReimplementedCustodyMessage = {
   meta: {
@@ -140,6 +152,42 @@ export const noReimplementedCustodyMessage = {
   create(context) {
     const message =
       "the custody evidence message is typed here, a second copy that drifts from the rule: import CONFIRMED_REQUIRES_EVIDENCE (or call confirmedEvidenceViolation) from @watchdog/policy in server code and from @watchdog/policy/confirmed-evidence in browser code, never the @watchdog/policy root; web forms ask isConfirmedBlocked in apps/web/src/shared/lib/confirmed-evidence.ts (conventions: one source per domain rule)";
+
+    /** Names written after their declaration anywhere in the file (`x = ...`, `x += ...`, `x++`, `[x] = ...`). */
+    const written = new Set();
+    /** @param {unknown} target */
+    const markWritten = (target) => {
+      if (!isRecord(target)) return;
+      if (target.type === "Identifier" && typeof target.name === "string") {
+        written.add(target.name);
+      } else if (target.type === "ArrayPattern") {
+        for (const e of asArray(target.elements)) markWritten(e);
+      } else if (target.type === "ObjectPattern") {
+        for (const p of asArray(target.properties)) {
+          markWritten(isRecord(p) && p.type === "Property" ? p.value : p);
+        }
+      } else if (target.type === "RestElement") markWritten(target.argument);
+      else if (target.type === "AssignmentPattern") markWritten(target.left);
+    };
+
+    /**
+     * The one initializer a name provably keeps: a `const`, or a `let` / `var` never
+     * written after its declaration. Anything else (reassigned, several declarations,
+     * unreadable scope) is null and evaluates as unknown.
+     * @param {string} name
+     * @param {unknown} at
+     * @returns {{ node: unknown, at: unknown } | null}
+     */
+    const stableInit = (name, at) => {
+      const inits = lexicalInits(context, name, at) ?? [];
+      const [init] = inits;
+      if (inits.length !== 1 || init === undefined) return null;
+      const decl = isRecord(init.at) ? init.at : null;
+      const kind =
+        decl !== null && isRecord(decl.parent) ? decl.parent.kind : null;
+      if (kind !== "const" && written.has(name)) return null;
+      return init;
+    };
 
     /**
      * The text units a string expression is built from, in order. An identifier is one
@@ -186,10 +234,8 @@ export const noReimplementedCustodyMessage = {
         return [...units(node.left, at, seen), ...units(node.right, at, seen)];
       }
       if (type === "Identifier" && typeof node.name === "string") {
-        const inits = lexicalInits(context, node.name, at) ?? [];
-        const [init] = inits;
-        // Reassigned or multiply declared: unreadable.
-        if (inits.length !== 1 || init === undefined) return [UNKNOWN];
+        const init = stableInit(node.name, at);
+        if (init === null) return [UNKNOWN];
         return [units(init.node, init.at, seen).join("")];
       }
       if (type === "ArrayExpression") {
@@ -232,9 +278,8 @@ export const noReimplementedCustodyMessage = {
         object.type === "Identifier" &&
         typeof object.name === "string"
       ) {
-        const inits = lexicalInits(context, object.name, at) ?? [];
-        const [init] = inits;
-        if (inits.length !== 1 || init === undefined) return [[UNKNOWN]];
+        const init = stableInit(object.name, at);
+        if (init === null) return [[UNKNOWN]];
         array = init.node;
         scope = init.at;
       }
@@ -251,12 +296,48 @@ export const noReimplementedCustodyMessage = {
      */
     const checkBuilder = (node) => {
       if (isOperand(node)) return;
-      const parts = units(node, node, new Set());
-      if (parts.some((part) => matches(part))) return;
-      if (matches(parts.join(""))) context.report({ node, message });
+      builders.push(node);
     };
 
+    /** Builders are evaluated at `Program:exit`, once every write in the file is known. */
+    /** @type {Record<string, unknown>[]} */
+    const builders = [];
+
     return {
+      "Program:exit"() {
+        for (const node of builders) {
+          const parts = units(node, node, new Set());
+          if (parts.some((part) => matches(part))) continue;
+          if (matches(parts.join(""))) context.report({ node, message });
+        }
+      },
+      /** @param {Record<string, unknown>} node */
+      AssignmentExpression(node) {
+        markWritten(node.left);
+      },
+      /** @param {Record<string, unknown>} node */
+      UpdateExpression(node) {
+        markWritten(node.argument);
+      },
+      /** @param {Record<string, unknown>} node */
+      ForInStatement(node) {
+        if (isRecord(node.left) && node.left.type !== "VariableDeclaration")
+          markWritten(node.left);
+      },
+      /** @param {Record<string, unknown>} node */
+      ForOfStatement(node) {
+        if (isRecord(node.left) && node.left.type !== "VariableDeclaration")
+          markWritten(node.left);
+      },
+      /** @param {Record<string, unknown>} node */
+      JSXText(node) {
+        if (
+          typeof node.value === "string" &&
+          matches(decodeSpaces(node.value))
+        ) {
+          context.report({ node, message });
+        }
+      },
       /** @param {Record<string, unknown>} node */
       Literal(node) {
         if (typeof node.value === "string" && matches(node.value)) {
