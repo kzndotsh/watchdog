@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { RichTextEditorPlugins } from "@/shared/ui/rich-text/plugins";
 import { RichTextToolbar } from "@/shared/ui/rich-text/rich-text-toolbar";
 
-interface Props {
+type Props = {
   value: string;
   onChange: (markdown: string) => void;
   placeholder?: string;
@@ -31,7 +31,7 @@ interface Props {
   fill?: boolean;
   /** Shell blur after toolbar clicks settle — used for autosave. */
   onBlurShell?: () => void;
-}
+};
 
 function shellMinHeight(fill: boolean, seamless: boolean): string {
   if (fill) return "min-h-0 flex-1";

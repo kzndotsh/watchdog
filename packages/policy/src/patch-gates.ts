@@ -25,10 +25,10 @@ export class CustodyViolationError extends Data.TaggedError(
   readonly code = "custody_violation" as const;
 }
 
-export interface PatchGateOpts {
+export type PatchGateOpts = {
   confidence?: ConfidenceTier;
   sharedEvidenceIds?: string[];
-}
+};
 
 export function requireString(
   data: Record<string, JsonValue>,

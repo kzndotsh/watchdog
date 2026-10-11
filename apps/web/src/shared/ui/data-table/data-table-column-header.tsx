@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 
 import type { DataTableFeatures } from "./table-features";
 
-interface Props<TData extends RowData, TValue> {
+type Props<TData extends RowData, TValue> = {
   column: Column<DataTableFeatures, TData, TValue>;
   title: string;
   className?: string;
-}
+};
 
 function SortGlyph({ sorted }: { sorted: false | "asc" | "desc" }) {
   switch (sorted) {

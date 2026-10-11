@@ -1,9 +1,9 @@
 /** Optional Cap secrets shown in Settings (hard-required names live on CapabilityDef.credentials). */
-export interface KnownCredential {
+export type KnownCredential = {
   name: string;
   label: string;
   description: string;
-}
+};
 
 /**
  * Vault slot catalog for Settings.

@@ -28,7 +28,7 @@ import { parseValidatedCapInputEffect } from "../cap-input";
 import { setJobStatusEffect } from "../set-job-status";
 import { failJobEffect, jobEvidenceIdsForReuse } from "./helpers";
 
-export interface PreflightState {
+export type PreflightState = {
   jobId: string;
   job: JobRow;
   cap: CapabilityDef<z.ZodType>;
@@ -37,7 +37,7 @@ export interface PreflightState {
   allowThirdPartyEgress: boolean;
   reclaimArtifacts: JobArtifact[] | null;
   reclaimEvidenceIds: string[];
-}
+};
 
 export type PreflightStopReason =
   | "not_found"

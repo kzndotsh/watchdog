@@ -33,7 +33,7 @@ import { seedDefaultQuestionsEffect } from "./questions";
 
 const SLUG_UNIQUE_INDEX = "entities_case_slug_uidx";
 
-export interface EntityRecord {
+export type EntityRecord = {
   id: string;
   caseId: CaseId;
   kind: EntityKind;
@@ -43,17 +43,17 @@ export interface EntityRecord {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-}
+};
 
-export interface CreateEntityInput extends GraphActor {
+export type CreateEntityInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   kind: EntityKind;
   name: string;
   slug: string;
-}
+} & GraphActor;
 
-export interface UpdateEntityFieldsInput extends GraphActor {
+export type UpdateEntityFieldsInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
@@ -61,7 +61,7 @@ export interface UpdateEntityFieldsInput extends GraphActor {
   name?: string;
   summary?: string | null;
   notes?: string | null;
-}
+} & GraphActor;
 
 function toRecord(row: EntityRow): EntityRecord {
   return {

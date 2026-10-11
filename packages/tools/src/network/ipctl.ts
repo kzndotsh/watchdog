@@ -123,9 +123,9 @@ export function parseIpctlBody(
  * @see https://ipctl.io/vs/bgpview
  */
 
-interface IpctlOptions {
+type IpctlOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchIpctlLookupEffect(
   ipRaw: string,

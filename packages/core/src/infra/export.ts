@@ -49,13 +49,13 @@ import {
 import { tryDbWith } from "./postgres-effect";
 import type { DomainTag } from "./tagged-errors";
 
-export interface EntityExport {
+export type EntityExport = {
   organizationId: OrganizationId;
   caseSlug: string;
   entitySlug: string;
   kind: EntityKind;
   markdown: string;
-}
+};
 
 /**
  * Fetch all data for an entity and render it as a markdown note.
@@ -141,12 +141,12 @@ export function renderEntityMarkdownEffect(
   });
 }
 
-interface CaseExportResult {
+type CaseExportResult = {
   files: Map<string, string>;
   evidenceRows: EvidenceRow[];
   /** Where the shadow workspace lives: `<export>/<organizationId>/<caseSlug>`. Null when the Case is gone. */
   location: { organizationId: OrganizationId; caseSlug: string } | null;
-}
+};
 
 /**
  * Render all entities in a Case and return them as a map of

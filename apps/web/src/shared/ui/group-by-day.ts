@@ -1,10 +1,10 @@
 /** Day-bucket helpers for Queue lists — presentational, no I/O. */
 
-export interface DayBucket<T> {
+export type DayBucket<T> = {
   key: string;
   label: string;
   items: T[];
-}
+};
 
 function formatDayKey(d: Date): string {
   return d.toISOString().slice(0, 10);

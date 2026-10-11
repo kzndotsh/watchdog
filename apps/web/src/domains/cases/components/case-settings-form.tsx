@@ -13,10 +13,10 @@ import { Input } from "@watchdog/ui/components/input";
 import { Switch } from "@watchdog/ui/components/switch";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
-interface CaseSettingsFormProps {
+type CaseSettingsFormProps = {
   caseId: string;
   caseRow: CaseRecord;
-}
+};
 
 export function CaseSettingsForm({ caseId, caseRow }: CaseSettingsFormProps) {
   const serverName = caseRow.name;

@@ -29,10 +29,10 @@ import {
   updateEventFn,
 } from "@/domains/entities/events/events.functions";
 
-interface ServerDataContext<T> {
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 describe("events.functions", () => {
   it("lists and mutates entity events through oRPC", async () => {

@@ -63,7 +63,7 @@ export const entityGlobalFilterFn: FilterFn<DataTableFeatures, EntityRecord> = (
   });
 };
 
-export interface EntityTableMeta {
+export type EntityTableMeta = {
   updateKind: (entityId: string, kind: EntityKind) => void;
   updateSummary: (entityId: string, summary: string) => void;
   updateNotes: (entityId: string, notes: string) => void;
@@ -82,7 +82,7 @@ export interface EntityTableMeta {
   onCopyEntityLink: (entity: EntityRecord) => void;
   onCopyEntityMarkdown: (entity: EntityRecord) => void;
   onDeleteEntity: (entity: EntityRecord) => void;
-}
+};
 
 function entityMeta(
   ctx: Pick<CellContext<DataTableFeatures, EntityRecord>, "table">

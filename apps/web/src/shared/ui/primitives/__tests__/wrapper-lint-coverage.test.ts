@@ -46,10 +46,10 @@ function probeSource(): string {
   ].join("\n");
 }
 
-interface Diagnostic {
+type Diagnostic = {
   code: string;
   message: string;
-}
+};
 
 function lintProbe(): Diagnostic[] {
   mkdirSync(PROBE_DIR, { recursive: true });

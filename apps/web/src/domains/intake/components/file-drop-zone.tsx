@@ -4,10 +4,10 @@ import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 
-export interface FileDropZoneProps {
+export type FileDropZoneProps = {
   disabled: boolean;
   onFiles: (files: FileList | File[]) => void;
-}
+};
 
 export function FileDropZone({ disabled, onFiles }: FileDropZoneProps) {
   const [dragOver, setDragOver] = useState(false);

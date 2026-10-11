@@ -17,13 +17,13 @@ import {
   SelectValue,
 } from "@watchdog/ui/components/select";
 
-interface SelectProps {
+type SelectProps = {
   value: ConfidenceTier;
   onChange: (value: ConfidenceTier) => void;
   className?: string;
   id?: string;
   disabled?: boolean;
-}
+};
 
 /** Confidence picker — same CONTROL chrome as FieldSelect. */
 export function ConfidenceSelect({

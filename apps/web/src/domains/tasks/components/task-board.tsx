@@ -43,7 +43,7 @@ const boardCollisionDetection: CollisionDetection = (args) => {
   return hits[0] ? [hits[0]] : [];
 };
 
-interface Props {
+type Props = {
   items: TaskRecord[];
   selectedId?: string | null;
   onSelect: (task: TaskRecord) => void;
@@ -56,7 +56,7 @@ interface Props {
   onQuickCreate?: (status: TaskStatus, title: string) => void | Promise<void>;
   quickCreateBusy?: boolean;
   entityById?: Map<string, TaskEntityLabel>;
-}
+};
 
 function withPendingStatus(
   rows: TaskRecord[],

@@ -31,27 +31,27 @@ import {
 } from "@watchdog/schemas/graph";
 import type { EntityKind } from "@watchdog/schemas/shared";
 
-interface UpdateEntityVars {
+type UpdateEntityVars = {
   entityId: string;
   kind?: EntityKind;
   summary?: string | null;
   notes?: string | null;
-}
+};
 
-interface ConnectionVars {
+type ConnectionVars = {
   centerId: string;
   input: CreateEntityConnectionInput;
-}
+};
 
-interface ConnectionUpdateVars {
+type ConnectionUpdateVars = {
   centerId: string;
   input: UpdateEntityConnectionInput;
-}
+};
 
-interface ConnectionDeleteVars {
+type ConnectionDeleteVars = {
   centerId: string;
   edgeId: string;
-}
+};
 
 function updateEntityFields(caseId: string, vars: UpdateEntityVars) {
   return updateEntityFieldsFn({

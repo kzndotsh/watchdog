@@ -41,9 +41,9 @@ import type { TaskStatus } from "@watchdog/schemas/shared";
 const EMPTY_TASKS: TaskRecord[] = [];
 const EMPTY_ENTITIES: EntityRecord[] = [];
 
-export interface UseTaskWorkspaceOptions {
+export type UseTaskWorkspaceOptions = {
   entityId?: string;
-}
+};
 
 export function useTaskWorkspace(
   caseId: string,

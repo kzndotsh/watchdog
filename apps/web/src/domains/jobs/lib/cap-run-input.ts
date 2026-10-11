@@ -39,10 +39,10 @@ function fieldPlaceholder(key: string, spec: JsonValue | undefined): string {
   return PLACEHOLDERS[key] ?? key;
 }
 
-export interface CapPrimaryField {
+export type CapPrimaryField = {
   key: string;
   placeholder: string;
-}
+};
 
 /** Primary Cap input field for the Jobs Run form (from CapDescriptor.inputForm). */
 export function capPrimaryField(

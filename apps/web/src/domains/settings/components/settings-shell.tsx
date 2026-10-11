@@ -32,21 +32,21 @@ export const SETTINGS_GROUPS = [
 
 export type SettingsGroup = (typeof SETTINGS_GROUPS)[number];
 
-export interface SettingsNavItem {
+export type SettingsNavItem = {
   id: SettingsTab;
   group: SettingsGroup;
   label: string;
   description: string;
   icon: LucideIcon;
-}
+};
 
-interface SettingsShellProps {
+type SettingsShellProps = {
   items: readonly SettingsNavItem[];
   titles?: readonly SettingsNavItem[];
   activeTab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
   children: ReactNode;
-}
+};
 
 /**
  * Traditional settings chrome: vertical section nav + main content column.

@@ -22,13 +22,13 @@ type IdentifierCreateValues = Parameters<
   Parameters<typeof useIdentifierCreateForm>[0]
 >[0]["value"];
 
-interface IdentifierComposerSubmitContext {
+type IdentifierComposerSubmitContext = {
   caseId: string;
   queryClient: QueryClient;
   setComposing: Dispatch<SetStateAction<boolean>>;
   setSubmitError: Dispatch<SetStateAction<string | null>>;
   createIdentifier: (value: IdentifierCreateValues) => Promise<unknown>;
-}
+};
 
 async function submitIdentifierCreate(
   ctx: IdentifierComposerSubmitContext,

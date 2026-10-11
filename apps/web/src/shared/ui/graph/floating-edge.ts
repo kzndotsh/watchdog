@@ -1,12 +1,12 @@
 import { graphNodeSize } from "@/shared/ui/graph/graph-layout";
 import type { GraphNode } from "@/shared/ui/graph/types";
 
-export interface GraphNodeRect {
+export type GraphNodeRect = {
   x: number;
   y: number;
   width: number;
   height: number;
-}
+};
 
 export type GraphEdgeSide = "top" | "right" | "bottom" | "left";
 

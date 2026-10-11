@@ -37,10 +37,10 @@ export type CertspotterLookupSnapshot = z.infer<
  * @see https://sslmate.com/certspotter/api/
  */
 
-interface CertspotterOptions {
+type CertspotterOptions = {
   userAgent?: string;
   limit?: number;
-}
+};
 
 function parseIssuanceId(row: Record<string, unknown>): string | null {
   const idRaw = row.id;

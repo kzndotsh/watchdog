@@ -13,18 +13,18 @@ export const GRAPH_CANVAS_FIT_MAX_ZOOM = 1;
 export const GRAPH_CANVAS_MIN_FIT_BOUNDS_WIDTH = 560;
 export const GRAPH_CANVAS_MIN_FIT_BOUNDS_HEIGHT = 420;
 
-export interface GraphBounds {
+export type GraphBounds = {
   x: number;
   y: number;
   width: number;
   height: number;
-}
+};
 
-export interface GraphTransform {
+export type GraphTransform = {
   x: number;
   y: number;
   k: number;
-}
+};
 
 export function graphNodeSize(node: GraphNode): {
   width: number;

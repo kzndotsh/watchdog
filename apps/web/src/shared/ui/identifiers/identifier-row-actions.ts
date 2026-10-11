@@ -1,18 +1,18 @@
 import type { AppAction } from "@/shared/lib/app-action";
 
 /** Minimal row shape for identifier ⋯ / ContextMenu factories. */
-export interface IdentifierRowActionTarget {
+export type IdentifierRowActionTarget = {
   id: string;
   value: string;
-}
+};
 
-export interface IdentifierRowActionHandlers<
+export type IdentifierRowActionHandlers<
   T extends IdentifierRowActionTarget = IdentifierRowActionTarget,
-> {
+> = {
   onOpenSubject?: (row: T) => void;
   onCopyValue: (value: string) => void;
   onDeleteIdentifier: (row: T) => void;
-}
+};
 
 /** Shared ⋯ + ContextMenu actions for Identifiers page and Dossier tab. */
 export function identifierRowActions<T extends IdentifierRowActionTarget>(

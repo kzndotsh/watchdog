@@ -6,7 +6,7 @@ const createGateRepo = gateRepoFactory();
 
 type Deps = Record<string, string>;
 
-interface Fixture {
+type Fixture = {
   /** Default catalog entries. */
   readonly catalog?: Deps;
   /** package.json dependencies, keyed by workspace dir ("." is the root). */
@@ -14,7 +14,7 @@ interface Fixture {
     string,
     { dependencies?: Deps; devDependencies?: Deps; peerDependencies?: Deps }
   >;
-}
+};
 
 function workspaceRepo({ catalog = {}, packages }: Fixture) {
   const repo = createGateRepo(["check-catalog.mjs"]);

@@ -9,12 +9,12 @@ import contract from "./generated/contract.json" with { type: "json" };
 export type { AppRouter } from "./generated/app-router";
 export type WatchdogClient = JsonifiedClient<ContractRouterClient<AppRouter>>;
 
-export interface CreateWatchdogClientOptions {
+export type CreateWatchdogClientOptions = {
   /** Base URL including `/api/v1` (default: `WD_API_URL`, else localhost). */
   baseUrl?: string;
   /** Better Auth API key (`x-api-key`). */
   apiKey: string;
-}
+};
 
 const DEFAULT_API_URL = "http://localhost:3000/api/v1";
 

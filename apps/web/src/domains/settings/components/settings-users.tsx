@@ -20,13 +20,13 @@ import { isInstanceAdmin } from "@watchdog/auth/instance-admin";
 import { DropdownMenuItem } from "@watchdog/ui/components/dropdown-menu";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
-interface ListedUser {
+type ListedUser = {
   id: string;
   name: string;
   email: string;
   role?: string | null;
   banned?: boolean | null;
-}
+};
 
 const EMPTY_USERS: ListedUser[] = [];
 

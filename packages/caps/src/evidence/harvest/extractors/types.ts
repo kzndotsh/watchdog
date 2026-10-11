@@ -2,7 +2,7 @@ import type { ProcessExtractDraft } from "@watchdog/ai";
 
 import type { DraftClaim, DraftId } from "../harvest-helpers";
 
-export interface HarvestCtx {
+export type HarvestCtx = {
   sourceText: string;
   cleaned: string;
   quotedAuthor: string | null;
@@ -11,9 +11,9 @@ export interface HarvestCtx {
   questions: ProcessExtractDraft["questions"];
   seen: Set<string>;
   fediSkip: Set<string>;
-}
+};
 
-export interface HarvestExtractor {
+export type HarvestExtractor = {
   id: string;
   collect: (ctx: HarvestCtx) => void;
-}
+};

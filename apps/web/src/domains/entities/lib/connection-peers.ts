@@ -6,7 +6,7 @@ import type {
 } from "@watchdog/schemas/shared";
 import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
-export interface EntityConnectionPeer {
+export type EntityConnectionPeer = {
   edgeId: string;
   peerId: string;
   peerName: string;
@@ -19,12 +19,12 @@ export interface EntityConnectionPeer {
   notes: string | null;
   fromId: string;
   toId: string;
-}
+};
 
-export interface EntityPeerText {
+export type EntityPeerText = {
   summary: string | null;
   notes: string | null;
-}
+};
 
 function peerDisplayLabel(peer: {
   peerName: string;

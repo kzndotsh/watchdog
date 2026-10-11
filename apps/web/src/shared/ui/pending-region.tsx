@@ -2,13 +2,13 @@ import type { ReactNode } from "react";
 
 import { LoadingRegion } from "@/shared/ui/loading-region";
 
-export interface PendingRegionProps {
+export type PendingRegionProps = {
   loading: boolean;
   label: string;
   children: ReactNode;
   fallback: ReactNode;
   className?: string;
-}
+};
 
 /** Gate a data slot: live children when ready, hand skeleton when pending. Not for `DataTable` (use `pending`). */
 export function PendingRegion({

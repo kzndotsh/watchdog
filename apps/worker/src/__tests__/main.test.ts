@@ -60,14 +60,14 @@ import { provideWorkerLayers } from "../layers";
 
 const CAP_JOB_ID = "11111111-1111-4111-8111-000000000001";
 
-interface FakeDriver {
+type FakeDriver = {
   readonly driver: BossDriver;
   readonly events: string[];
   readonly start: ReturnType<typeof vi.fn>;
   readonly ensureQueue: ReturnType<typeof vi.fn>;
   readonly stop: ReturnType<typeof vi.fn>;
   readonly work: ReturnType<typeof vi.fn>;
-}
+};
 
 function fakeDriver(): FakeDriver {
   const events: string[] = [];

@@ -33,10 +33,10 @@ import {
   updateQuestionFn,
 } from "@/domains/entities/questions/questions.functions";
 
-interface ServerDataContext<T> {
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 describe("questions.functions", () => {
   it("routes question list and lifecycle ServerFns through oRPC", async () => {

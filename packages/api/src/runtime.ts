@@ -32,15 +32,15 @@ export const AppLive = Layer.mergeAll(
 );
 
 /** The slice of Vite's `import.meta.hot` this module uses. */
-interface HotContext {
+type HotContext = {
   readonly dispose: (callback: () => void | Promise<void>) => void;
   readonly on: (event: string, callback: () => void | Promise<void>) => void;
-}
+};
 
-interface ModuleMeta {
+type ModuleMeta = {
   readonly url: string;
   readonly hot?: HotContext;
-}
+};
 
 /**
  * A runtime over `layer` that is disposed when this module is re-evaluated by

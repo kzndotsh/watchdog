@@ -5,10 +5,10 @@ import { organizationKeys } from "@/domains/organization/queries";
 import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
-export interface UpdateMemberRoleVariables {
+export type UpdateMemberRoleVariables = {
   memberId: string;
   role: string;
-}
+};
 
 /** Change a member's role, then refresh the team list. */
 export function useUpdateMemberRole() {

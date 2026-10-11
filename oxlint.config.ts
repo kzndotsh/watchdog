@@ -273,6 +273,7 @@ export default defineConfig({
     "typescript/ban-ts-comment": "error",
     "typescript/consistent-indexed-object-style": "error",
     "typescript/consistent-return": "error",
+    "typescript/consistent-type-definitions": ["error", "type"],
     "typescript/consistent-type-imports": "error",
     "typescript/no-base-to-string": "error",
     "typescript/no-confusing-void-expression": "error",

@@ -34,12 +34,12 @@ export type PasteSeedKind =
   | "hash"
   | "unknown";
 
-export interface PasteDetectResult {
+export type PasteDetectResult = {
   kind: PasteSeedKind;
   value: string;
   /** Normalized host when kind is host (or url host). */
   hostHint?: string;
-}
+};
 
 const IPV4_RE =
   /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
@@ -187,13 +187,13 @@ function pasteCompatibleKinds(paste: PasteDetectResult): Set<PasteSeedKind> {
   return kinds;
 }
 
-export interface CapMatchFilters {
+export type CapMatchFilters = {
   kindFilter: string;
   categoryFilter: string;
   useCaseFilter: string;
   needsKeyOnly: boolean;
   paste: PasteDetectResult | null;
-}
+};
 
 function capMatchesPaste(
   cap: CapListItem,

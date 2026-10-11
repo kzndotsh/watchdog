@@ -35,10 +35,10 @@ export type GreynoiseLookupSnapshot = z.infer<
  * @see https://docs.greynoise.io/reference/get_v3-community-ip
  */
 
-interface GreynoiseOptions {
+type GreynoiseOptions = {
   apiKey?: string;
   userAgent?: string;
-}
+};
 
 export function fetchGreynoiseCommunityEffect(
   ipRaw: string,

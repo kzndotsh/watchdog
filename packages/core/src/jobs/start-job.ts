@@ -54,7 +54,7 @@ import { appendJobActivityEffect } from "./job-activity";
 import type { JobQueue } from "./job-queue";
 import { failJobEffect } from "./stages/helpers";
 
-export interface StartJobInput {
+export type StartJobInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   capabilityId: string;
@@ -62,9 +62,9 @@ export interface StartJobInput {
   actorId: string;
   /** When the caller is an API key, `api-key:<keyname>`. */
   actorLabel?: string | null;
-}
+};
 
-export interface JobRecord {
+export type JobRecord = {
   id: string;
   caseId: CaseId;
   capabilityId: string;
@@ -91,7 +91,7 @@ export interface JobRecord {
   updatedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
-}
+};
 
 /** Job queue row without logs (detail via getJobForCase). */
 export type JobListRecord = Omit<JobRecord, "logs">;
@@ -269,9 +269,9 @@ export function getJobForCaseEffect(
   });
 }
 
-interface CancelJobOpts {
+type CancelJobOpts = {
   actorId?: string;
-}
+};
 
 export function cancelJobEffect(
   caseId: CaseId,

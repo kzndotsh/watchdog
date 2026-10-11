@@ -54,15 +54,15 @@ export function uploadProcessArtifacts(
   });
 }
 
-export interface ProcessEmptySummaries {
+export type ProcessEmptySummaries = {
   noEntity: string;
   empty: string;
-}
+};
 
-interface ProcessInterpretInput {
+type ProcessInterpretInput = {
   evidenceId: string;
   entityId?: string;
-}
+};
 
 /** Pure interpret — report is ProcessExtractDraft JSON from run. */
 export function interpretProcessDraft(

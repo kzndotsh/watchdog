@@ -19,10 +19,10 @@ vi.mock("@/lib/orpc.server", () => ({
 
 import { searchCaseFn } from "@/domains/search/search.functions";
 
-interface ServerDataContext<T> {
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 describe("search.functions", () => {
   it("delegates case search to the ORPC search endpoint", async () => {

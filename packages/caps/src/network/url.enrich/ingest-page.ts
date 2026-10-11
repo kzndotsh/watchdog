@@ -28,7 +28,7 @@ type UploadFn = (input: {
   name?: string;
 }) => Effect.Effect<CapArtifact, ToolsTag>;
 
-interface IngestRemotePageOpts {
+type IngestRemotePageOpts = {
   fetchUrl: string;
   /** Base URL for resolving relative hrefs (usually the live page URL). */
   linkBaseUrl: string;
@@ -39,16 +39,16 @@ interface IngestRemotePageOpts {
   /** Live may keep opaque/binary as text; Wayback treats that as failure. */
   allowPlainBinary: boolean;
   stepExtras?: Partial<StepResult>;
-}
+};
 
-interface IngestContext {
+type IngestContext = {
   fetched: FetchBytesResult;
   step: StepResult;
   label: IngestRemotePageOpts["label"];
   linkBaseUrl: string;
   uploadArtifact: UploadFn;
   log: IngestRemotePageOpts["log"];
-}
+};
 
 function buildStep(
   fetched: FetchBytesResult,

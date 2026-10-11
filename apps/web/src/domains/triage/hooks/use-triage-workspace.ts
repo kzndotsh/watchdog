@@ -35,12 +35,12 @@ import { trimmedOrNull, type ProposalStatus } from "@watchdog/schemas/shared";
 
 const EMPTY_PROPOSALS: ProposalRecord[] = [];
 
-export interface UseTriageWorkspaceOptions {
+export type UseTriageWorkspaceOptions = {
   proposalId?: string;
   initialStatus?: ProposalStatus;
   filters?: TriageQueueFilters;
   onFiltersChange?: (next: TriageQueueFilters) => void;
-}
+};
 
 function resolveTriageFilters(
   next: TriageQueueFilters | ((prev: TriageQueueFilters) => TriageQueueFilters),

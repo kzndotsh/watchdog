@@ -42,16 +42,16 @@ export type ClaimPatch = Partial<
   Pick<typeof claims.$inferInsert, "text" | "class" | "confidence">
 >;
 
-export interface RetractClaimValues {
+export type RetractClaimValues = {
   retractKind: NonNullable<(typeof claims.$inferSelect)["retractKind"]>;
   retractedReason: string;
   retractedBy: string;
-}
+};
 
-export interface ClaimTextKey {
+export type ClaimTextKey = {
   entityId: string;
   text: string;
-}
+};
 
 export const claimsRepo = {
   async listForEntity(

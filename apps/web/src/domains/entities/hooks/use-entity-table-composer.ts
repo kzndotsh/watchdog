@@ -8,17 +8,17 @@ import type { EntityKind } from "@watchdog/schemas/shared";
 
 type CreateEntityFn = (name: string, kind: EntityKind) => Promise<void>;
 
-interface EntityCreateValues {
+type EntityCreateValues = {
   name: string;
   kind: EntityKind;
-}
+};
 
-interface EntityComposerSubmitContext {
+type EntityComposerSubmitContext = {
   createEntity: CreateEntityFn;
   resetForm: () => void;
   setComposing: Dispatch<SetStateAction<boolean>>;
   setSubmitError: Dispatch<SetStateAction<string | null>>;
-}
+};
 
 async function submitEntityCreate(
   ctx: EntityComposerSubmitContext,

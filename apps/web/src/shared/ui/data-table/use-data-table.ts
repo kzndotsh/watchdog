@@ -14,10 +14,10 @@ import { useState } from "react";
 
 import { dataTableFeatures, type DataTableFeatures } from "./table-features";
 
-export interface UseDataTableOptions<
+export type UseDataTableOptions<
   TData extends RowData,
   TMeta = Record<string, unknown>,
-> {
+> = {
   data: readonly TData[];
   columns: ColumnDef<DataTableFeatures, TData>[];
   meta?: TMeta;
@@ -29,7 +29,7 @@ export interface UseDataTableOptions<
   onColumnFiltersChange?: OnChangeFn<ColumnFiltersState>;
   globalFilterFn?: FilterFn<DataTableFeatures, TData>;
   pageSize?: number;
-}
+};
 
 export function useDataTable<
   TData extends RowData,

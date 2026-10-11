@@ -36,9 +36,9 @@ export type ShodanLookupSnapshot = z.infer<typeof shodanLookupSnapshotSchema>;
  * @see https://developer.shodan.io/api
  */
 
-interface ShodanOptions {
+type ShodanOptions = {
   userAgent?: string;
-}
+};
 
 const optionalString = z.string().nullish();
 

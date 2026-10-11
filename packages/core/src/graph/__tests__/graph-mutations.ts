@@ -48,7 +48,7 @@ import { TEST_ACTOR_ID, testId } from "@watchdog/test-kit";
  * A site key is `<path under packages/core/src>#<function name>`.
  */
 
-export interface GraphFixture {
+export type GraphFixture = {
   caseId: CaseId;
   organizationId: typeof TEST_ORGANIZATION_ID;
   entityId: string;
@@ -59,7 +59,7 @@ export interface GraphFixture {
   eventId: string;
   questionId: string;
   resolvedQuestionId: string;
-}
+};
 
 /** Seeds a Case with two Entities and one row of every Graph kind (no entries are asserted on setup). */
 export async function seedGraphFixture(): Promise<GraphFixture> {
@@ -147,7 +147,7 @@ export async function seedGraphFixture(): Promise<GraphFixture> {
   };
 }
 
-export interface GraphMutation {
+export type GraphMutation = {
   /** `<resource>.<verb>` for the report. */
   name: string;
   /** Production functions holding the repo write this mutation exercises. */
@@ -159,7 +159,7 @@ export interface GraphMutation {
   /** The id `subject_id` must hold; `result` is what `run` returned (a created row). */
   subjectId: (fx: GraphFixture, result: unknown) => string;
   run: (fx: GraphFixture) => Effect.Effect<unknown, DomainTag, Db>;
-}
+};
 
 /** The `id` of a created record returned by a mutation. */
 export function resultId(result: unknown): string {

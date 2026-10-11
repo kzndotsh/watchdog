@@ -75,7 +75,7 @@ export const identifiersGlobalFilterFn: FilterFn<
   );
 };
 
-export interface IdentifiersTableMeta {
+export type IdentifiersTableMeta = {
   evidenceOptions: readonly EvidenceOption[];
   updateField: (identifierId: string, patch: IdentifierFieldUpdate) => void;
   saveEvidence: (
@@ -85,7 +85,7 @@ export interface IdentifiersTableMeta {
   onOpenSubject: (row: CaseIdentifierRecord) => void;
   onCopyValue: (value: string) => void;
   onDeleteIdentifier: (row: CaseIdentifierRecord) => void;
-}
+};
 
 function identifiersMeta(
   ctx: Pick<CellContext<DataTableFeatures, CaseIdentifierRecord>, "table">

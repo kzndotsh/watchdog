@@ -23,7 +23,7 @@ import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import { Field, FieldError, FieldLabel } from "@watchdog/ui/components/field";
 
-export interface PlaybookRunVars {
+export type PlaybookRunVars = {
   playbookId: string;
   host: string;
   url: string;
@@ -33,9 +33,9 @@ export interface PlaybookRunVars {
   email: string;
   hash: string;
   handle: string;
-}
+};
 
-interface JobPlaybookRunFormProps {
+type JobPlaybookRunFormProps = {
   playbooks: PlaybookListItem[];
   /** Intake URL dumps — picking one fills evidenceId + url. */
   urlDumps: UrlDumpOption[];
@@ -45,7 +45,7 @@ interface JobPlaybookRunFormProps {
   runError?: string | null;
   onRunPlaybook: (vars: PlaybookRunVars) => Promise<void>;
   layout?: "inline" | "stacked";
-}
+};
 
 export function JobPlaybookRunForm({
   playbooks,

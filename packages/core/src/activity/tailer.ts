@@ -15,7 +15,7 @@ import { InternalError } from "../infra/tagged-errors";
 import { toActivityEntry } from "./append";
 
 /** What a process reads from the activity log tail. */
-export interface ActivityTailerApi {
+export type ActivityTailerApi = {
   /**
    * Receive each commit-safe entry (`(xid, id)` order) from the tailer's cursor
    * on. The first subscriber opens the process's single LISTEN connection and
@@ -26,7 +26,7 @@ export interface ActivityTailerApi {
   readonly subscribe: (
     listener: (entry: ActivityEntry) => void
   ) => Effect.Effect<() => void, InternalError>;
-}
+};
 
 /**
  * The per-process activity tailer as an Effect service (ADR-0002 phase 3 style,

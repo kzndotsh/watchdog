@@ -9,7 +9,7 @@ import { artifactsHaveCapReport } from "../load-cap-report";
 import type { CollectRuntime } from "./collect";
 import type { PreflightState } from "./preflight";
 
-interface StoreCacheStageInput {
+type StoreCacheStageInput = {
   state: PreflightState;
   runtime: CollectRuntime;
   artifacts: JobArtifact[];
@@ -17,7 +17,7 @@ interface StoreCacheStageInput {
   fromCache: boolean;
   reclaim: boolean;
   interpretError: string | null;
-}
+};
 
 export function storeCacheStageEffect(
   input: StoreCacheStageInput

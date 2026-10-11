@@ -6,7 +6,7 @@ import { abortWhen } from "./abort-when";
 import { assertHttpUrlScheme, normalizeHttpUrl } from "./normalize-http-url";
 import { isBlockedUnshortenUrl } from "./unshorten-guards";
 
-export interface FetchBytesOptions {
+export type FetchBytesOptions = {
   /** User-Agent header (Cap OPSEC policy — pass from Cap, never hardcode Cap id here). */
   userAgent: string;
   /** Truncate response body to this many bytes. */
@@ -14,9 +14,9 @@ export interface FetchBytesOptions {
   /** Accept header. */
   accept?: string;
   headers?: Record<string, string>;
-}
+};
 
-export interface FetchBytesResult {
+export type FetchBytesResult = {
   ok: boolean;
   status: number;
   bytes: Uint8Array;
@@ -24,7 +24,7 @@ export interface FetchBytesResult {
   markdownTokensHint?: number;
   finalUrl: string;
   error?: string;
-}
+};
 
 function fetchBytesFailure(url: string, error: unknown): FetchBytesResult {
   return {

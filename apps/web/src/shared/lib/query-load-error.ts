@@ -1,10 +1,10 @@
 import { errMessage } from "@/lib/utils";
 
-interface QueryErrorState {
+type QueryErrorState = {
   isError: boolean;
   isFetching: boolean;
   error: unknown;
-}
+};
 
 /** Surface a query error only after initial fetch settles and refetch finishes. */
 export function queryLoadError(

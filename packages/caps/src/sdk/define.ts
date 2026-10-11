@@ -13,16 +13,16 @@ import type {
 } from "@watchdog/schemas/shared";
 import type { ToolsTag } from "@watchdog/tools/errors";
 
-export interface CapArtifact {
+export type CapArtifact = {
   name: string;
   mime: string;
   uri: string;
   sha256: string;
-}
+};
 
-export interface CapRunResult {
+export type CapRunResult = {
   artifacts: CapArtifact[];
-}
+};
 
 /**
  * Cap.run requirements. Vault/blob I/O is on `CapContext` as Effects (`ToolsTag`).
@@ -33,7 +33,7 @@ export type CapServices = HttpClient.HttpClient;
 /** Cap collect/act body — Effect; interpret stays pure/sync. */
 export type CapRun = Effect.Effect<CapRunResult, ToolsTag, CapServices>;
 
-export interface CapInterpretResult {
+export type CapInterpretResult = {
   patch: PatchOp[];
   summary?: string;
   /**
@@ -42,25 +42,25 @@ export interface CapInterpretResult {
    * and re-run). Omitted → mark only if a Proposal was created.
    */
   markSourceProcessed?: boolean;
-}
+};
 
 /**
  * Plain data for pure `interpret(report, opts)` — no CapContext / I/O.
  * Core loads `report.json` and passes Job input (+ Process snapshot hints).
  */
-export interface CapInterpretOpts<TInput> {
+export type CapInterpretOpts<TInput> = {
   input: TInput;
   /** Process: Entity from packed EvidenceSnapshot when Job.input omits it. */
   snapshotEntityId?: string;
   /** Process: snapshot text length — empty dumps must not lock Process. */
   snapshotTextChars?: number;
-}
+};
 
 /**
  * Declarative hooks for the Job runner — keep Cap taxonomy out of executeJob.
  * Omit / empty = generic Cap (DNS/WHOIS-style).
  */
-export interface CapJobPolicy {
+export type CapJobPolicy = {
   /** Pack EvidenceSnapshot into ctx before `run` (Process Caps). */
   needsEvidenceSnapshot?: boolean;
   /**
@@ -79,7 +79,7 @@ export interface CapJobPolicy {
    * Ignored when Cap `kind === "act"`.
    */
   cacheTtlMs?: number;
-}
+};
 
 /**
  * Declared Cap secrets. Runner preflights before `run`:
@@ -91,7 +91,7 @@ export type CapCredentialSpec =
   | { name: string; optional?: boolean }
   | { anyOf: readonly [string, ...string[]] };
 
-export interface CapContext<TInput> {
+export type CapContext<TInput> = {
   input: TInput;
   caseId: CaseId;
   jobId: string;
@@ -114,7 +114,7 @@ export interface CapContext<TInput> {
   log: (message: string) => void;
   /** Packed by core when `jobPolicy.needsEvidenceSnapshot` — never live Graph. */
   evidenceSnapshot?: EvidenceSnapshot;
-}
+};
 
 /** Whether Cap.run may send Case data to third-party APIs. Default `"none"`. */
 export type CapEgress = "none" | "third_party";
@@ -132,7 +132,7 @@ export type CapIoKind =
   | { kind: "url" }
   | { kind: "hash" };
 
-export interface CapabilityDef<TSchema extends z.ZodType> {
+export type CapabilityDef<TSchema extends z.ZodType> = {
   id: string;
   title: string;
   description?: string;
@@ -178,7 +178,7 @@ export interface CapabilityDef<TSchema extends z.ZodType> {
    * success (including cache hits). Independent of `produces`.
    */
   handoff?: (report: JsonValue) => JobHandoff | undefined;
-}
+};
 
 export function defineCapability<TSchema extends z.ZodType>(
   def: CapabilityDef<TSchema>

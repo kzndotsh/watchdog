@@ -121,14 +121,14 @@ function identifierWriteError(
   return written.ok ? undefined : written.message;
 }
 
-interface IdentifierComposerAppendProps {
+type IdentifierComposerAppendProps = {
   form: IdentifierCreateForm;
   onKeyDown: (e: React.KeyboardEvent) => void;
   onSubmit: () => void;
   onCancel: () => void;
   evidenceOptions: readonly EvidenceOption[];
   entityPicker?: { entities: EntityOption[] };
-}
+};
 
 function ComposerEvidenceField({
   form,

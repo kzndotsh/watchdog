@@ -6,17 +6,17 @@ import { parseGraphUuidList, trimmedOrNull } from "@watchdog/schemas/shared";
 
 import { tryParsePatch } from "./patch";
 
-export interface ParsedAgentPatch {
+export type ParsedAgentPatch = {
   ok: true;
   patch: PatchOp[];
   summary: string | null;
   evidenceIds: string[];
-}
+};
 
-export interface AgentPatchRefusal {
+export type AgentPatchRefusal = {
   ok: false;
   error: string;
-}
+};
 
 /** Write-only rules (userOverride, forced unverified) live at the call site. */
 export function parseAgentPatchEffect(input: {

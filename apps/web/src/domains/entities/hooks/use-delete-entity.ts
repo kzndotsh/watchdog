@@ -10,10 +10,10 @@ import { deleteEntityInputSchema } from "@watchdog/schemas/graph";
 
 type DeletedEntity = Pick<EntityRecord, "id" | "name" | "slug">;
 
-export interface DeleteEntityVariables {
+export type DeleteEntityVariables = {
   caseId: string;
   entity: DeletedEntity;
-}
+};
 
 /** Delete an Entity, then settle the Case graph caches; the dialog owns open state and copy. */
 export function useDeleteEntity({

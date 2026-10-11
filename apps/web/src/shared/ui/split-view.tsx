@@ -10,7 +10,7 @@ import {
 } from "@watchdog/ui/components/resizable";
 import { useIsMobile } from "@watchdog/ui/hooks/use-mobile";
 
-export interface SplitViewProps {
+export type SplitViewProps = {
   /** Queue column. */
   list: ReactNode;
   /** Detail column. */
@@ -43,7 +43,7 @@ export interface SplitViewProps {
    * Detail touch the sidebar and the window edge. On by default.
    */
   bleed?: boolean;
-}
+};
 
 /**
  * Page pads px-3 (sm:px-4) and pb-3 (sm:pb-4). A wrapper carries the negative margins: the

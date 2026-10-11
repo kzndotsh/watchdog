@@ -8,18 +8,18 @@ import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { toast } from "@/shared/ui/toast";
 import { deleteIdentifierInputSchema } from "@watchdog/schemas/graph";
 
-export interface DeleteIdentifierTarget {
+export type DeleteIdentifierTarget = {
   id: string;
   type: string;
   value: string;
   entityId: string;
   entitySlug?: string;
-}
+};
 
-export interface DeleteIdentifierVariables {
+export type DeleteIdentifierVariables = {
   caseId: string;
   target: DeleteIdentifierTarget;
-}
+};
 
 /** Delete an Identifier, then settle its Entity caches; the dialog owns open state and copy. */
 export function useDeleteIdentifier({

@@ -9,12 +9,12 @@ import { entityDisplayLabel } from "@watchdog/schemas/shared";
 
 export type { GraphEdge, GraphNode } from "@/shared/ui/graph";
 
-export interface EgoEntityRef {
+export type EgoEntityRef = {
   id: string;
   name: string;
   slug: string;
   kind: EntityKind;
-}
+};
 
 const CX = 480;
 const CY = 360;

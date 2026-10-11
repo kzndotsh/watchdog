@@ -17,10 +17,10 @@ const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getIte
 
 const DISPLAY_SCALE_INIT_SCRIPT = `(function(){try{var allowed=[1.1,1.2,1.35];var raw=window.localStorage.getItem('wd-display-scale');var scale=1.1;if(raw!==null){var parsed=parseFloat(raw);if(allowed.indexOf(parsed)!==-1){scale=parsed}}var root=document.documentElement;root.style.setProperty('--wd-display-scale',String(scale));root.dataset.displayScale=String(scale);}catch(e){}})();`;
 
-export interface RouterContext {
+export type RouterContext = {
   queryClient: QueryClient;
   allowSignup?: boolean;
-}
+};
 
 function NotFoundPage() {
   return (

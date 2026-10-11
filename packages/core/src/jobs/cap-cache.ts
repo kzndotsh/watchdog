@@ -64,7 +64,7 @@ export function lookupCapCacheEffect(input: {
   });
 }
 
-interface StoreCapCacheInput {
+type StoreCapCacheInput = {
   caseId: CaseId;
   capabilityId: string;
   inputHash: string;
@@ -72,7 +72,7 @@ interface StoreCapCacheInput {
   artifacts: JobArtifact[];
   resultSummary: string | null;
   ttlMs: number;
-}
+};
 
 export function storeCapCacheEffect(
   input: StoreCapCacheInput

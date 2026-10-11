@@ -8,7 +8,7 @@ import {
 
 type TooltipSide = ComponentProps<typeof TooltipContent>["side"];
 
-interface WithTooltipProps {
+type WithTooltipProps = {
   content: ReactNode;
   children: ReactNode;
   side?: TooltipSide;
@@ -18,7 +18,7 @@ interface WithTooltipProps {
   delay?: number;
   /** Render trigger as a span instead of button (use inside interactive elements) */
   wrapSpan?: boolean;
-}
+};
 
 /** Attach a design-system tooltip to any element (replaces native `title=`). */
 // oxlint-disable-next-line typescript/promise-function-async -- React 19's `ReactNode` union includes `Promise<AwaitedReactNode>`, so returning `children` widens the inferred return type; this component is always sync

@@ -6,11 +6,11 @@ const QUOTE_IPB =
 const QUOTE_PHPBB =
   /([\w .-]{2,25})\s+wrote:\s*(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+\w{3}\s+\d{1,2},\s+\d{4}\s+\d{1,2}:\d{2}\s*[ap]m/gi;
 
-interface QuoteHeader {
+type QuoteHeader = {
   index: number;
   headerEnd: number;
   author: string;
-}
+};
 
 function findQuoteHeaders(text: string): QuoteHeader[] {
   const headers: QuoteHeader[] = [];

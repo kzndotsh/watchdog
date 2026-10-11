@@ -14,14 +14,14 @@ import {
 import type { TaskStatus } from "@watchdog/schemas/shared";
 import { FieldError } from "@watchdog/ui/components/field";
 
-interface BaseProps {
+type BaseProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entities: EntityOption[];
   busy?: boolean;
   error?: string | null;
   onSubmit: (values: TaskFormValues) => void | Promise<void>;
-}
+};
 
 type CreateProps = BaseProps & {
   mode: "create";

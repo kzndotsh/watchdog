@@ -141,9 +141,9 @@ function dehashedEntryHasSubstance(entry: DehashedEntry): boolean {
  * @see https://docs.dehashed.com/
  */
 
-interface DehashedOptions {
+type DehashedOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchDehashedLookupEffect(
   queryRaw: string,

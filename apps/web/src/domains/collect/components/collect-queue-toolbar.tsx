@@ -28,12 +28,12 @@ import {
   FieldSet,
 } from "@watchdog/ui/components/field";
 
-export interface CollectQueueToolbarProps {
+export type CollectQueueToolbarProps = {
   filters: CollectFilters;
   onFiltersChange: (next: CollectFilters) => void;
   jobs: readonly JobListRecord[];
   actions?: ReactNode;
-}
+};
 
 export function CollectQueueToolbar({
   filters,

@@ -13,11 +13,11 @@ import {
 
 import { CASE_NAV_ITEMS, NAV_GROUPS, type NavTo } from "@/config/nav";
 
-export interface JumpNavItem {
+export type JumpNavItem = {
   to: NavTo | "/";
   label: string;
   icon: LucideIcon;
-}
+};
 
 const JUMP_ICONS: Partial<Record<NavTo | "/", LucideIcon>> = {
   "/": LayoutDashboardIcon,

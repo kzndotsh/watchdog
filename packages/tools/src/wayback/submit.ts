@@ -24,9 +24,9 @@ export {
  * Creates a public archive record — Cap must declare third_party egress.
  */
 
-interface SubmitOptions {
+type SubmitOptions = {
   userAgent?: string;
-}
+};
 export function submitWaybackSaveEffect(
   url: string,
   signal: AbortSignal,

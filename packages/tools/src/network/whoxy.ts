@@ -41,9 +41,9 @@ function contactField(contact: unknown, key: string): string | null {
  * @see https://www.whoxy.com/
  */
 
-interface WhoxyOptions {
+type WhoxyOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchWhoxyWhoisEffect(
   hostRaw: string,

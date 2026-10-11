@@ -30,10 +30,10 @@ import {
   updateEntityFieldsFn,
 } from "@/domains/entities/entities.functions";
 
-interface ServerDataContext<T> {
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 const ENTITY = {
   id: testId(1),

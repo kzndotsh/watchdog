@@ -42,10 +42,10 @@ export type UrlscanLookupSnapshot = z.infer<typeof urlscanLookupSnapshotSchema>;
  * @see https://urlscan.io/docs/api/
  */
 
-interface UrlscanOptions {
+type UrlscanOptions = {
   userAgent?: string;
   size?: number;
-}
+};
 
 function parseUrlscanHit(row: Record<string, unknown>): UrlscanHit | null {
   const task = isRecord(row.task) ? row.task : {};

@@ -17,9 +17,9 @@ export { JobQueueWorker, type QueuedJob } from "./job-queue-worker";
 /** pg-boss queue name for Cap Jobs. */
 export const CAP_JOB_QUEUE = "watchdog.cap-jobs";
 
-export interface CapJobPayload {
+export type CapJobPayload = {
   jobId: string;
-}
+};
 
 export type BossRole = "producer" | "worker";
 
@@ -29,21 +29,21 @@ const QUEUE_WARNING_SIZE = 100;
 /** A producer holds no handlers to drain: only in-flight sends settle. */
 const PRODUCER_STOP_TIMEOUT_MS = 5000;
 
-export interface QueueSendOptions {
+export type QueueSendOptions = {
   readonly expireInSeconds: number;
   readonly singletonKey: string;
-}
+};
 
-export interface BossStopOptions {
+export type BossStopOptions = {
   readonly graceful: boolean;
   readonly timeout: number;
-}
+};
 
 /**
  * The slice of pg-boss the service uses. The live Layers build it from
  * `PgBoss`; tests pass a fake through `makeJobQueueLayers`.
  */
-export interface BossDriver {
+export type BossDriver = {
   readonly start: () => Promise<unknown>;
   readonly stop: (options: BossStopOptions) => Promise<unknown>;
   /** Create (if missing) and update the Cap queue with the shared options. */
@@ -56,7 +56,7 @@ export interface BossDriver {
     options: QueueWorkOptions,
     handler: QueueWorkHandler
   ) => Promise<unknown>;
-}
+};
 
 /** Driver text stays in `cause` (log-only); the reason is a fixed safe string. */
 function mapBossCatch(error: unknown): InternalError {
@@ -104,14 +104,14 @@ function pgBossDriver(role: BossRole): BossDriver {
   };
 }
 
-export interface JobQueueApi {
+export type JobQueueApi = {
   readonly role: BossRole;
   /** Send one Cap Job delivery; fails with `InternalError` after the scope closed. */
   readonly send: (
     payload: CapJobPayload,
     options: QueueSendOptions
   ) => Effect.Effect<void, InternalError>;
-}
+};
 
 /**
  * The Cap Job queue as an Effect service (ADR-0002 phase 3): enqueue is
@@ -296,10 +296,10 @@ export const jobQueueWorkerLayer: Layer.Layer<
 > = makeJobQueueLayers(() => pgBossDriver("worker")).workerLayer;
 
 /** One recorded `send` of a recording queue. */
-export interface RecordedSend {
+export type RecordedSend = {
   readonly payload: CapJobPayload;
   readonly options: QueueSendOptions;
-}
+};
 
 /**
  * Test Layer: a `JobQueue` that records sends instead of reaching pg-boss.

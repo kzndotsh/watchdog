@@ -37,10 +37,10 @@ export type AbuseIpdbLookupSnapshot = z.infer<
  * @see https://docs.abuseipdb.com/
  */
 
-interface AbuseipdbOptions {
+type AbuseipdbOptions = {
   userAgent?: string;
   maxAgeInDays?: number;
-}
+};
 
 export function fetchAbuseIpdbCheckEffect(
   ipRaw: string,

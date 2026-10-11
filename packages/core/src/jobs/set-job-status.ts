@@ -10,11 +10,11 @@ import { transact } from "../infra/postgres-tx";
 import type { DomainTag } from "../infra/tagged-errors";
 import { appendJobActivityEffect } from "./job-activity";
 
-interface SetJobStatusOpts {
+type SetJobStatusOpts = {
   caseId: CaseId;
   unlessCancelled?: boolean;
   onlyStatuses?: JobStatus[];
-}
+};
 
 type JobStatusPatch = JobPatch & { status: JobStatus };
 

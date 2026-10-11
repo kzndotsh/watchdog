@@ -10,7 +10,7 @@ import { setJobStatusEffect } from "../set-job-status";
 import { linkedEvidenceIdStrict, type JobLog } from "./helpers";
 import type { PreflightState } from "./preflight";
 
-interface FinishInput {
+type FinishInput = {
   state: PreflightState;
   jobLog: JobLog;
   proposalId: string | null;
@@ -20,7 +20,7 @@ interface FinishInput {
   interpretError: string | null;
   markSourceProcessed: boolean | undefined;
   handoff?: JobHandoff;
-}
+};
 
 /**
  * Persist terminal Job outcome (succeeded write plus its activity entry, or

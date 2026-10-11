@@ -53,7 +53,7 @@ import type {
   TaskStatus,
 } from "@watchdog/schemas/shared";
 
-export interface SeedTally {
+export type SeedTally = {
   cases: number;
   entities: number;
   identifiers: number;
@@ -66,7 +66,7 @@ export interface SeedTally {
   jobs: number;
   proposals: number;
   activity: number;
-}
+};
 
 export function emptyTally(): SeedTally {
   return {

@@ -2,7 +2,7 @@ import { Context, Effect, Fiber, FiberMap, Layer, Option } from "effect";
 
 export type JobAbortReason = "timeout" | "cancel";
 
-export interface JobFibersApi {
+export type JobFibersApi = {
   readonly map: FiberMap.FiberMap<string>;
   /** Sets abort reason then interrupts the Job fiber (Effect, not runFork). */
   readonly abort: (
@@ -13,7 +13,7 @@ export interface JobFibersApi {
   readonly peekReason: (jobId: string) => JobAbortReason | undefined;
   readonly setReason: (jobId: string, reason: JobAbortReason) => void;
   readonly clearReason: (jobId: string) => void;
-}
+};
 
 export class JobFibers extends Context.Service<JobFibers, JobFibersApi>()(
   "@watchdog/core/jobs/JobFibers"

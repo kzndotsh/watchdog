@@ -85,7 +85,7 @@ export function jobCapLabel(row: {
   return capabilityIdLabel(row.capabilityId);
 }
 
-export interface CollapsibleJobListRow {
+export type CollapsibleJobListRow = {
   id: string;
   capabilityId: string;
   status: string;
@@ -96,7 +96,7 @@ export interface CollapsibleJobListRow {
   playbookStep?: number | null;
   createdAt: string;
   updatedAt?: string;
-}
+};
 
 function collapsePlaybookRunId(
   runId: string | null | undefined

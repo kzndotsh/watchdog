@@ -3,10 +3,10 @@ import type { AppAction } from "@/shared/lib/app-action";
 
 export type ClaimRowActionKind = "contest" | "disprove" | "retract";
 
-export interface ClaimRowActionHandlers {
+export type ClaimRowActionHandlers = {
   onEdit: (claim: ClaimRecord) => void;
   onAction: (claimId: string, action: ClaimRowActionKind) => void;
-}
+};
 
 /** Shared ⋯ + ContextMenu actions for dossier claim rows. */
 export function claimRowActions(

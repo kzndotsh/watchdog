@@ -36,19 +36,19 @@ const KIND_FILTERS = [
   { value: "act", label: "Act" },
 ] as const;
 
-interface CapRunFormValues {
+type CapRunFormValues = {
   capabilityId: string;
   runInput: string;
   entityId: string;
-}
+};
 
-export interface CapRunVars {
+export type CapRunVars = {
   capabilityId: string;
   runInput: string;
   entityId: string;
-}
+};
 
-interface JobCapRunFormProps {
+type JobCapRunFormProps = {
   caps: CapListItem[];
   entities: EntityOption[];
   allowThirdPartyEgress: boolean;
@@ -56,7 +56,7 @@ interface JobCapRunFormProps {
   runError?: string | null;
   onRunCap: (vars: CapRunVars) => Promise<void>;
   layout?: "inline" | "stacked";
-}
+};
 
 export function JobCapRunForm({
   caps,

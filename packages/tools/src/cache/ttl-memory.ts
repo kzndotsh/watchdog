@@ -1,14 +1,14 @@
-interface TtlCacheEntry<T> {
+type TtlCacheEntry<T> = {
   value: T;
   expiresAt: number;
-}
+};
 
-export interface TtlCache<T> {
+export type TtlCache<T> = {
   get: (key: string) => T | undefined;
   set: (key: string, value: T) => void;
   delete: (key: string) => void;
   clear: () => void;
-}
+};
 
 /**
  * Minimal in-memory TTL cache — single process, lazy expiry on read.

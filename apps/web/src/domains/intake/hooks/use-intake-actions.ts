@@ -25,7 +25,7 @@ type IntakePending = null | {
   evidenceId: string;
 };
 
-export interface IntakeEvidenceActions {
+export type IntakeEvidenceActions = {
   busy: boolean;
   processing: boolean;
   aiProcessing: boolean;
@@ -37,16 +37,16 @@ export interface IntakeEvidenceActions {
   onHide: () => void;
   onRestore: () => void;
   onAttachEntity: (entityId: string) => void;
-}
+};
 
-export interface UseIntakeActionsOptions {
+export type UseIntakeActionsOptions = {
   caseId: string;
   selectedEvidenceId: string | null;
   onEvidenceIdChange: (next: string | null) => void;
   resolveSelectionAfterHide?: (hiddenEvidenceId: string) => string | null;
   closeDumpModal: () => void;
   onRestoreShowActiveQueue: () => void;
-}
+};
 
 export function useIntakeActions({
   caseId,

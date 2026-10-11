@@ -61,13 +61,13 @@ function HighlightedLines({ lines }: { lines: ThemedToken[][] }) {
 
 // ─── component ───────────────────────────────────────────────────────────────
 
-interface CodeBlockProps {
+type CodeBlockProps = {
   code: string;
   mime?: string;
   lang?: ShikiLang;
   className?: string;
   maxHeight?: string;
-}
+};
 
 export function CodeBlock({
   code,

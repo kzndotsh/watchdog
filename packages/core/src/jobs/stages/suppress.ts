@@ -8,10 +8,10 @@ import type { DomainTag } from "../../infra/tagged-errors";
 import { suppressKnownFindingsEffect } from "../../proposals/finding-suppress";
 import type { JobLog } from "./helpers";
 
-export interface SuppressResult {
+export type SuppressResult = {
   kept: PatchOp[];
   suppressed: number;
-}
+};
 
 /** Drop ops already on Graph / pending Proposal / rejected FP memory. */
 export function suppressStageEffect(

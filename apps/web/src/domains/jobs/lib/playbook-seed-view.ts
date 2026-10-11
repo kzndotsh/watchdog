@@ -11,7 +11,7 @@ import {
   playbookSeedRequirements,
 } from "./playbook-seed-requirements";
 
-export interface PlaybookSeedInput {
+export type PlaybookSeedInput = {
   playbooks: readonly PlaybookListItem[];
   playbookId: string;
   host: string;
@@ -24,9 +24,9 @@ export interface PlaybookSeedInput {
   urlDumpCount: number;
   allowThirdPartyEgress: boolean;
   configuredCredentials: ReadonlySet<string>;
-}
+};
 
-export interface PlaybookSeedView {
+export type PlaybookSeedView = {
   selected: PlaybookListItem | undefined;
   needs: ReturnType<typeof playbookSeedRequirements>["needs"];
   needsHost: boolean;
@@ -43,7 +43,7 @@ export interface PlaybookSeedView {
   egressLabel: string;
   canRun: boolean;
   blockedReason: string | undefined;
-}
+};
 
 function blockedReason({
   selected,

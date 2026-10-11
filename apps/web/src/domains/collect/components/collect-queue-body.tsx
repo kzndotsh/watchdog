@@ -15,7 +15,7 @@ import {
   COLLECT_QUEUE_SKELETON_ROW_COUNT,
 } from "@/shared/ui/skeletons";
 
-export interface CollectQueueBodyProps {
+export type CollectQueueBodyProps = {
   queuePending: boolean;
   queueLoadError: string | null;
   onRetryQueue: () => void;
@@ -27,7 +27,7 @@ export interface CollectQueueBodyProps {
   blankSlateAction: ReactNode;
   onFiltersChange: (next: CollectFilters) => void;
   onIdChange: (next: string | null) => void;
-}
+};
 
 export function CollectQueueBody({
   queuePending,

@@ -45,7 +45,7 @@ import {
 
 const NATURAL_KEY_INDEX = "edges_natural_uidx";
 
-export interface EdgeRecord {
+export type EdgeRecord = {
   id: string;
   fromId: string;
   toId: string;
@@ -59,9 +59,9 @@ export interface EdgeRecord {
   peerSlug: string;
   peerKind: EntityKind;
   direction: "out" | "in";
-}
+};
 
-export interface CreateEdgeInput extends GraphActor {
+export type CreateEdgeInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   fromId: string;
@@ -75,9 +75,9 @@ export interface CreateEdgeInput extends GraphActor {
    * Defaults to `fromId`.
    */
   viewEntityId?: string;
-}
+} & GraphActor;
 
-export interface UpdateEdgeInput extends GraphActor {
+export type UpdateEdgeInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   edgeId: string;
@@ -93,7 +93,7 @@ export interface UpdateEdgeInput extends GraphActor {
   confidence?: ConfidenceTier;
   notes?: string | null;
   evidenceIds?: string[];
-}
+} & GraphActor;
 
 function toRecord(
   row: EdgeListRow,
@@ -142,7 +142,7 @@ export function listEdgesForEntityEffect(
 }
 
 /** Case-wide edge — absolute endpoints (no peer/direction). */
-export interface CaseEdgeRecord {
+export type CaseEdgeRecord = {
   id: string;
   fromId: string;
   fromName: string;
@@ -156,7 +156,7 @@ export interface CaseEdgeRecord {
   confidence: ConfidenceTier;
   notes: string | null;
   evidenceIds: string[];
-}
+};
 
 export function toCaseEdgeRecord(
   row: EdgeListRow,

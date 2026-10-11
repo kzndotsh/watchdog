@@ -113,11 +113,11 @@ function collectCrtShEntries(
   };
 }
 
-export interface FetchCrtShOptions {
+export type FetchCrtShOptions = {
   /** Max cert rows to keep after dedupe (default 50). */
   limit?: number;
   userAgent?: string;
-}
+};
 
 /**
  * Query crt.sh Certificate Transparency for `%.{host}` (and the bare host).

@@ -40,10 +40,10 @@ export type HibpLookupSnapshot = z.infer<typeof hibpLookupSnapshotSchema>;
  * Requires API key. Truncated list (max 40) for Proposal hygiene.
  */
 
-interface HibpOptions {
+type HibpOptions = {
   userAgent?: string;
   truncate?: number;
-}
+};
 
 export function fetchHibpBreachedAccountEffect(
   email: string,

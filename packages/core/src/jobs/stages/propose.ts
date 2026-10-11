@@ -20,13 +20,13 @@ import {
 } from "../../infra/tagged-errors";
 import { suppressKnownFindingsEffect } from "../../proposals/finding-suppress";
 
-export interface ProposeResult {
+export type ProposeResult = {
   proposalId: string | null;
   resultSummary: string | null;
   suppressedCount: number;
-}
+};
 
-export interface SuppressAndProposeStageInput {
+export type SuppressAndProposeStageInput = {
   caseId: CaseId;
   patch: PatchOp[];
   resultSummary: string | null;
@@ -35,11 +35,11 @@ export interface SuppressAndProposeStageInput {
   agentSourced?: boolean;
   createdBy?: string | null;
   onSuppressed?: (suppressed: number) => void;
-}
+};
 
-export interface SuppressAndProposeResult extends ProposeResult {
+export type SuppressAndProposeResult = {
   kept: PatchOp[];
-}
+} & ProposeResult;
 
 function createdByForProposal(
   createdBy: string | null | undefined

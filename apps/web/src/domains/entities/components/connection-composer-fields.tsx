@@ -17,13 +17,13 @@ import type { EntityKind } from "@watchdog/schemas/shared";
 import { Field, FieldGroup, FieldLabel } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 
-interface Props {
+type Props = {
   centerKind: EntityKind;
   peerOptions: readonly EntityOption[];
   values: ConnectionComposerValues;
   onChange: (next: ConnectionComposerValues) => void;
   disabled?: boolean;
-}
+};
 
 /**
  * Compact relationship + peer + related_to notes fields.

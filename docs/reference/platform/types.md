@@ -57,8 +57,9 @@ Where to find things:
 5. **Compose atoms**: domain/api objects import shared fields; use `.pick` / `.omit` / `.partial` / spread. Avoid deprecated `.merge()`.
 6. **No `z.any()`**; coerce only at form/query edges.
 7. **Outputs** (server-built rows): plain TS types are fine; Zod-parse responses only when data is untrusted.
+8. **`type`, not `interface`**: object shapes are `type X = { ... }` and `extends` becomes `&`. Only a `declare module` or global augmentation that must merge keeps `interface`, with an inline `oxlint-disable-next-line typescript/consistent-type-definitions -- <reason>`. `apps/web/src/auth/ui` (vendored upstream) is the one exempt tree.
 
-Enforced: one Zod version via the `zod` entry in the pnpm catalog and `overrides` in `pnpm-workspace.yaml`. Rules 1-7 and the naming/import rules below are **guidance** (review); oxlint's typescript rules catch some but no gate checks them.
+Enforced: one Zod version via the `zod` entry in the pnpm catalog and `overrides` in `pnpm-workspace.yaml`. Rule 8 is enforced by oxlint `typescript/consistent-type-definitions`. Rules 1-7 and the naming/import rules below are **guidance** (review); oxlint's typescript rules catch some but no gate checks them.
 
 ### Branded ids
 

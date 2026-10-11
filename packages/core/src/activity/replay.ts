@@ -21,13 +21,13 @@ export type ActivityReplay =
   | { readonly kind: "entries"; readonly entries: ActivityEntry[] }
   | { readonly kind: "resync" };
 
-export interface ReplayActivityOpts {
+export type ReplayActivityOpts = {
   organizationId: OrganizationId;
   /** Narrow to one Case (the SSE `caseId` filter). */
   caseId?: CaseId;
   /** The last cursor the client saw (`Last-Event-ID`, `?after=`). */
   after: ActivityCursor;
-}
+};
 
 /**
  * Entries a reconnecting client missed, in `(xid, id)` order, read from the

@@ -2,14 +2,14 @@ import { isoToDateInput } from "@/domains/tasks/lib/due-date";
 import type { TaskRecord } from "@/domains/tasks/types";
 import type { TaskPriority, TaskStatus } from "@watchdog/schemas/shared";
 
-export interface TaskFormValues {
+export type TaskFormValues = {
   title: string;
   description: string;
   status: TaskStatus;
   priority: TaskPriority | "";
   dueDate: string;
   entityId: string;
-}
+};
 
 export const EMPTY_TASK_FORM: TaskFormValues = {
   title: "",

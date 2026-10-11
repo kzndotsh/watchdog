@@ -16,9 +16,9 @@ import { runCap } from "../sdk";
 
 const SHA = "ab".repeat(32);
 
-export interface CapRunHarness<
+export type CapRunHarness<
   I extends Record<string, unknown> = Record<string, unknown>,
-> {
+> = {
   ctx: CapContext<I>;
   artifacts: {
     name: string;
@@ -28,7 +28,7 @@ export interface CapRunHarness<
     bytes: Uint8Array;
   }[];
   credentialCalls: string[];
-}
+};
 
 export function createCapRunHarness<
   I extends Record<string, unknown> = Record<string, unknown>,

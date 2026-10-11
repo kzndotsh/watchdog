@@ -50,7 +50,7 @@ import {
 } from "../infra/tagged-errors";
 import { recordRejectedFingerprintsEffect } from "./finding-suppress";
 
-export interface ProposalRecord {
+export type ProposalRecord = {
   id: string;
   caseId: CaseId;
   jobId: string | null;
@@ -86,7 +86,7 @@ export interface ProposalRecord {
   entityNotes?: Record<string, string>;
   /** Identifier ops whose type+value already exist on another Entity. */
   identifierCollisions?: IdentifierCollision[];
-}
+};
 
 function entityIdsFromPatch(patch: PatchOp[]): Set<string> {
   const entityIds = new Set<string>();

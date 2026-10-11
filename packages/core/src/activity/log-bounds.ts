@@ -13,12 +13,12 @@ import type { DomainTag } from "../infra/tagged-errors";
 const ORIGIN: ActivityCursor = { xid: "0", id: 0 };
 
 /** What the log holds: its newest row and the retention floor (S7). */
-export interface ActivityLogBounds {
+export type ActivityLogBounds = {
   /** The newest row of any state; `null` for an empty log. */
   readonly newest: ActivityCursor | null;
   /** The newest position the prune job deleted; `null` when nothing was. */
   readonly floor: ActivityCursor | null;
-}
+};
 
 export function readActivityLogBoundsEffect(): Effect.Effect<
   ActivityLogBounds,

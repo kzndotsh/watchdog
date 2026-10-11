@@ -35,11 +35,11 @@ const PDF_HINT_KEYS = [
   "/CreationDate",
 ] as const;
 
-interface MagicSignature {
+type MagicSignature = {
   magic: string;
   mime: string;
   matchesBytes: (bytes: Uint8Array) => boolean;
-}
+};
 
 const MAGIC_SIGNATURES: MagicSignature[] = [
   {

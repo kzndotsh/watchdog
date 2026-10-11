@@ -71,9 +71,9 @@ export function parseHkpMrIndex(body: string): PgpKeyHit[] {
  * Query: email, fingerprint, or key id.
  */
 
-interface PgpLookupOptions {
+type PgpLookupOptions = {
   userAgent?: string;
-}
+};
 export function fetchPgpLookupEffect(
   queryRaw: string,
   signal: AbortSignal,

@@ -7,9 +7,9 @@ import { queryLoadError } from "@/shared/lib/query-load-error";
 
 const EMPTY_CASES: CaseRecord[] = [];
 
-interface UseCasesContextOptions {
+type UseCasesContextOptions = {
   silentError?: boolean;
-}
+};
 
 /** Active case + case list from the cases context query. */
 export function useCasesContext(options?: UseCasesContextOptions) {

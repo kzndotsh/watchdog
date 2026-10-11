@@ -4,12 +4,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/auth/client";
 import { couldnt } from "@/lib/utils";
 
-export interface UpdateOrganizationVariables {
+export type UpdateOrganizationVariables = {
   id: string;
   name: string;
   slug: string;
   logo: string | null;
-}
+};
 
 /** Rename the organization (or change its slug / logo), then refresh the auth caches. */
 export function useUpdateOrganization() {

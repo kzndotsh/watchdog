@@ -26,10 +26,10 @@ let baselined: LintResult;
 const lines = (...rows: string[]) => `${rows.join("\n")}\n`;
 
 /** Source plus the 1-based lines the surplus components are reported on. */
-interface Case {
+type Case = {
   readonly source: string;
   readonly lines: readonly number[];
-}
+};
 
 const FAIL: Record<string, Case> = {
   "function-declarations.tsx": {

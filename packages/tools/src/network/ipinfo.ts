@@ -32,9 +32,9 @@ export type IpinfoLookupSnapshot = z.infer<typeof ipinfoLookupSnapshotSchema>;
  * @see https://ipinfo.io/developers
  */
 
-interface IpinfoOptions {
+type IpinfoOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchIpinfoLookupEffect(
   ipRaw: string,

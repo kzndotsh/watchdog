@@ -30,7 +30,7 @@ import {
   type DomainTag,
 } from "../infra/tagged-errors";
 
-export interface TaskRecord {
+export type TaskRecord = {
   id: string;
   caseId: CaseId;
   entityId: string | null;
@@ -42,9 +42,9 @@ export interface TaskRecord {
   position: number;
   createdAt: string;
   updatedAt: string;
-}
+};
 
-export interface CreateTaskInput {
+export type CreateTaskInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   title: string;
@@ -54,9 +54,9 @@ export interface CreateTaskInput {
   dueDate?: string | null;
   entityId?: string | null;
   actorId?: string;
-}
+};
 
-export interface UpdateTaskInput {
+export type UpdateTaskInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   taskId: string;
@@ -67,13 +67,13 @@ export interface UpdateTaskInput {
   dueDate?: string | null;
   entityId?: string | null;
   actorId?: string;
-}
+};
 
-export interface ListTasksOpts {
+export type ListTasksOpts = {
   entityId?: string;
   unattachedOnly?: boolean;
   status?: TaskStatus;
-}
+};
 
 function toRecord(row: TaskRow): TaskRecord {
   return {
@@ -416,12 +416,12 @@ export function deleteTaskEffect(
   });
 }
 
-export interface ReorderTasksInput {
+export type ReorderTasksInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   status: TaskStatus;
   orderedIds: string[];
-}
+};
 
 export function reorderTasksEffect(
   input: ReorderTasksInput

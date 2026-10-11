@@ -171,10 +171,10 @@ export function parseMnemonicPdnsBody(
  * @see https://docs.mnemonic.no/display/public/API/PassiveDNS+Integration+Guide
  */
 
-interface MnemonicOptions {
+type MnemonicOptions = {
   userAgent?: string;
   limit?: number;
-}
+};
 
 export function fetchMnemonicPdnsEffect(
   queryRaw: string,

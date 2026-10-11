@@ -1,9 +1,9 @@
 /** Adapters from TanStack Form field meta to shadcn's `Field` / `FieldError`. */
-interface FieldMeta {
+type FieldMeta = {
   isTouched: boolean;
   isValid: boolean;
   errors: readonly unknown[];
-}
+};
 
 /** Invalid only after the field is touched or a submit attempt ran. */
 export function fieldInvalid(meta: FieldMeta): boolean {

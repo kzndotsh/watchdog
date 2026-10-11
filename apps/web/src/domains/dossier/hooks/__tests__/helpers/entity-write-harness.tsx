@@ -55,9 +55,9 @@ function createHarness() {
   return { queryClient, wrapper, invalidated };
 }
 
-interface WriteVerb<V> {
+type WriteVerb<V> = {
   mutate: (variables: V) => void;
-}
+};
 
 /**
  * A write started in Case A settles Case A's Entity caches, not Case B's, even

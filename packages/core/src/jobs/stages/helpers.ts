@@ -102,10 +102,10 @@ export function jobEvidenceIdsForReuse(
   return parsed.ok ? parsed.ids : [];
 }
 
-export interface JobLog {
+export type JobLog = {
   lines: string[];
   log: (message: string) => void;
-}
+};
 
 export function createJobLog(initial: string[] = []): JobLog {
   const lines = [...initial];

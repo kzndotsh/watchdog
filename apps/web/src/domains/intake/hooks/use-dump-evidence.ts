@@ -17,12 +17,12 @@ import {
 } from "@watchdog/schemas/evidence";
 import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 
-export interface UseDumpEvidenceOptions {
+export type UseDumpEvidenceOptions = {
   caseId: string;
   /** Empty string = unattached. */
   entityId: string;
   onSuccess?: (created: EvidenceRecord[]) => void;
-}
+};
 
 export function useDumpEvidence({
   caseId,

@@ -20,14 +20,14 @@ import type { Db } from "../infra/db-service";
 import { tryDbWith } from "../infra/postgres-effect";
 import type { DomainTag } from "../infra/tagged-errors";
 
-export interface IdentifierCollision {
+export type IdentifierCollision = {
   opId: string;
   type: IdentifierType;
   value: string;
   entityId: string;
   entityName: string;
   entitySlug: string;
-}
+};
 
 function identifierKey(type: string, value: string): string {
   return `${type}\0${value}`;

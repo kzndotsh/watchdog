@@ -26,13 +26,13 @@ import { afterAll, afterEach } from "vitest";
 
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 
-export interface GateResult {
+export type GateResult = {
   readonly code: number;
   /** stdout + stderr, interleaving not preserved. */
   readonly output: string;
-}
+};
 
-export interface GateRepo {
+export type GateRepo = {
   readonly dir: string;
   /** Write a file (creating parent dirs) relative to the fixture root. */
   write: (rel: string, content: string) => void;
@@ -56,7 +56,7 @@ export interface GateRepo {
     args?: readonly string[],
     env?: Record<string, string>
   ) => GateResult;
-}
+};
 
 /**
  * Ambient variables a gate must never inherit: `GIT_*` would aim fixture git at the

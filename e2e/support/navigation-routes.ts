@@ -1,9 +1,9 @@
 import { expect, type Page } from "@playwright/test";
 
-export interface RouteSmoke {
+export type RouteSmoke = {
   path: string;
   ready: (page: Page) => Promise<void>;
-}
+};
 
 export const primaryRoutes: RouteSmoke[] = [
   {

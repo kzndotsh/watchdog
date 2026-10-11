@@ -6,11 +6,11 @@ const createGateRepo = gateRepoFactory();
 
 const GATE = "check-boundaries.mjs";
 
-interface Pkg {
+type Pkg = {
   readonly deps?: readonly string[];
   readonly exports?: Record<string, string>;
   readonly files?: Record<string, string>;
-}
+};
 
 /** A workspace with `packages/<name>` and `apps/<name>` entries; names are unscoped. */
 function workspace(packages: Record<string, Pkg>, apps: Record<string, Pkg>) {

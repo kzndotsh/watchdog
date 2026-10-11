@@ -31,10 +31,10 @@ import {
   updateEdgeFn,
 } from "@/domains/entities/edges/edges.functions";
 
-interface ServerDataContext<T> {
+type ServerDataContext<T> = {
   data: T;
   context: Record<string, never>;
-}
+};
 
 describe("edges.functions", () => {
   it("lists edges for an entity scope", async () => {

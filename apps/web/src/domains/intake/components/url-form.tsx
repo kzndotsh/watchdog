@@ -11,14 +11,14 @@ import {
 } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 
-export interface UrlFormProps {
+export type UrlFormProps = {
   disabled: boolean;
   loading?: boolean;
   formId?: string;
   showSubmit?: boolean;
   showHint?: boolean;
   onSubmit: (data: { sourceUrl: string; label?: string }) => void;
-}
+};
 
 export function UrlForm({
   disabled,

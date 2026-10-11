@@ -42,10 +42,10 @@ export function normalizeGithubHandle(raw: string): string {
  * Optional token raises rate limits; unauthenticated still works (public).
  */
 
-interface GithubUserOptions {
+type GithubUserOptions = {
   token?: string;
   userAgent?: string;
-}
+};
 
 function notFoundGithubSnapshot(
   handle: string,

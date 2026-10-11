@@ -21,12 +21,12 @@ export const PLAYBOOK_EGRESS_FILTERS = [
   { value: "third_party", label: "Third party" },
 ] as const;
 
-export interface PlaybookMatchFilters {
+export type PlaybookMatchFilters = {
   seedFilter: string;
   egressFilter: string;
   needsKeyOnly: boolean;
   urlDumpOnly: boolean;
-}
+};
 
 export function playbookPrimarySeed(
   playbook: PlaybookListItem

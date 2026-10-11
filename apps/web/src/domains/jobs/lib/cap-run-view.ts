@@ -10,24 +10,24 @@ import {
   missingCredentialReason,
 } from "./credential-gate";
 
-export interface CapRunInput {
+export type CapRunInput = {
   caps: readonly CapListItem[];
   capabilityId: string;
   runInput: string;
   entityId: string;
   allowThirdPartyEgress: boolean;
   configuredCredentials: ReadonlySet<string>;
-}
+};
 
-export interface CapInfoRow {
+export type CapInfoRow = {
   label: string;
   value: string;
   mono?: boolean;
-}
+};
 
 export { capInfoRows } from "./cap-info-rows";
 
-export interface CapRunView {
+export type CapRunView = {
   selected: CapListItem | undefined;
   primaryField: CapPrimaryField;
   needsEgress: boolean;
@@ -35,7 +35,7 @@ export interface CapRunView {
   canRun: boolean;
   blockedReason: string | undefined;
   showEvidenceOnlyHint: boolean;
-}
+};
 
 function blockedReason({
   selected,

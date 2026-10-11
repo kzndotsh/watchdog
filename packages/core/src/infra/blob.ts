@@ -41,12 +41,12 @@ export function artifactUri(
     : `${caseId}/${sha256}`;
 }
 
-export interface UploadedArtifact {
+export type UploadedArtifact = {
   uri: string;
   sha256: string;
   mime: string;
   byteLength: number;
-}
+};
 
 function mapBlobCatch(error: unknown): InvalidError {
   if (error instanceof InvalidError) return error;
@@ -57,7 +57,7 @@ function blobTry<A>(tryFn: () => Promise<A>): Effect.Effect<A, InvalidError> {
   return Effect.tryPromise({ try: tryFn, catch: mapBlobCatch });
 }
 
-export interface PresignedPut {
+export type PresignedPut = {
   url: string;
   uri: string;
   sha256: string;
@@ -65,7 +65,7 @@ export interface PresignedPut {
   byteLength: number;
   expiresIn: number;
   headers: Record<string, string>;
-}
+};
 
 export function uploadArtifactEffect(input: {
   caseId: CaseId;

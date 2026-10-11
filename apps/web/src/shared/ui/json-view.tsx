@@ -114,7 +114,7 @@ function Highlighted({
 
 // ─── node ─────────────────────────────────────────────────────────────────────
 
-interface NodeProps {
+type NodeProps = {
   value: unknown;
   field?: string;
   level: number;
@@ -123,7 +123,7 @@ interface NodeProps {
   isLast: boolean;
   highlightPattern?: RegExp | null;
   nodeRef?: React.RefObject<HTMLDivElement | null>;
-}
+};
 
 function JsonNode({
   value,
@@ -319,14 +319,14 @@ function JsonNode({
 
 // ─── public component ─────────────────────────────────────────────────────────
 
-interface JsonViewProps {
+type JsonViewProps = {
   data: unknown;
   /** Levels to expand on mount. 0=collapsed, 1=top level only, Infinity=all. */
   defaultExpanded?: number;
   /** Regex to highlight matching keys and values. */
   highlightPattern?: RegExp | null;
   className?: string;
-}
+};
 
 export function JsonView({
   data,

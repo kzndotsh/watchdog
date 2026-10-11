@@ -1,15 +1,15 @@
 import { entityDisplayLabel } from "./vocab";
 
-export interface EntityTitleRow {
+export type EntityTitleRow = {
   id: string;
   name: string;
   slug?: string | null;
-}
+};
 
-export interface EntitySearchRow extends EntityTitleRow {
+export type EntitySearchRow = {
   summary?: string | null;
   notes?: string | null;
-}
+} & EntityTitleRow;
 
 /** Id → display label for job-input subjects and search. */
 export function entityTitleMapFromRows(

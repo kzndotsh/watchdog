@@ -69,13 +69,13 @@ export function parseProposalList(
   });
 }
 
-export interface E2eJob {
+export type E2eJob = {
   id: string;
   capabilityId: string;
   status: string;
   error: string | null;
   interpretError: string | null;
-}
+};
 
 function nullableString(value: unknown): string | null {
   return typeof value === "string" ? value : null;

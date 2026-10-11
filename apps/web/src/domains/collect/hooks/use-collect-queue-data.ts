@@ -26,11 +26,11 @@ const EMPTY_JOB_ROWS: JobListRecord[] = [];
 const EMPTY_ENTITIES: EntityRecord[] = [];
 const EMPTY_CREDENTIAL_SLOTS: CredentialSlot[] = [];
 
-export interface CollectUrlDump {
+export type CollectUrlDump = {
   id: string;
   sourceUrl: string;
   label: string | null;
-}
+};
 export function useCollectQueueData(caseId: string) {
   const evidenceQuery = useQuery(
     evidenceListQuery(caseId, { hiddenOnly: false })

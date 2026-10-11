@@ -12,13 +12,13 @@ import {
 import type { TaskRecord } from "@/domains/tasks/types";
 import type { TaskStatus } from "@watchdog/schemas/shared";
 
-interface TaskFormDialogCoreProps {
+type TaskFormDialogCoreProps = {
   mode: "create" | "edit";
   task: TaskRecord | null;
   defaultStatus: TaskStatus;
   defaultEntityId: string | null | undefined;
   onSubmit: (values: TaskFormValues) => void | Promise<void>;
-}
+};
 
 function createDefaults(
   defaultStatus: TaskStatus,

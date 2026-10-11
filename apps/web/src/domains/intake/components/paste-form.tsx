@@ -12,7 +12,7 @@ import {
 import { Input } from "@watchdog/ui/components/input";
 import { Textarea } from "@watchdog/ui/components/textarea";
 
-export interface PasteFormProps {
+export type PasteFormProps = {
   disabled: boolean;
   loading?: boolean;
   formId?: string;
@@ -22,7 +22,7 @@ export interface PasteFormProps {
     label?: string;
     sourceUrl?: string;
   }) => void;
-}
+};
 
 export function PasteForm({
   disabled,

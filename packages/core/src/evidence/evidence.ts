@@ -52,7 +52,7 @@ import {
   createCapturedEvidenceEffect,
 } from "./evidence-activity";
 
-export interface EvidenceRecord {
+export type EvidenceRecord = {
   id: string;
   caseId: CaseId;
   entityId: string | null;
@@ -69,16 +69,16 @@ export interface EvidenceRecord {
   capturedAt: string;
   processedAt: string | null;
   deletedAt: string | null;
-}
+};
 
-export interface ListEvidenceOpts {
+export type ListEvidenceOpts = {
   unprocessedOnly?: boolean;
   unattachedOnly?: boolean;
   /** When true, only soft-deleted rows. Default: active queue only. */
   hiddenOnly?: boolean;
-}
+};
 
-export interface DumpPasteInput {
+export type DumpPasteInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   body: string;
@@ -87,9 +87,9 @@ export interface DumpPasteInput {
   entityId?: string;
   actorId: string;
   actorLabel?: string | null;
-}
+};
 
-export interface DumpUrlInput {
+export type DumpUrlInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   sourceUrl: string;
@@ -98,27 +98,27 @@ export interface DumpUrlInput {
   entityId?: string;
   actorId: string;
   actorLabel?: string | null;
-}
+};
 
-export interface SoftDeleteInput {
+export type SoftDeleteInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   evidenceId: string;
   /** Who hid or restored it, for the activity entry. */
   actorId?: string;
   actorLabel?: string | null;
-}
+};
 
-export interface PresignUploadInput {
+export type PresignUploadInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   sha256: string;
   mime: string;
   byteLength: number;
   name?: string;
-}
+};
 
-export interface ConfirmFileUploadInput {
+export type ConfirmFileUploadInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   uri: string;
@@ -127,9 +127,9 @@ export interface ConfirmFileUploadInput {
   byteLength: number;
   label?: string;
   entityId?: string;
-}
+};
 
-export interface CreateAttestationInput {
+export type CreateAttestationInput = {
   caseId: CaseId;
   text: string;
   label?: string;
@@ -138,7 +138,7 @@ export interface CreateAttestationInput {
   actorLabel?: string | null;
   /** When set, insert inside this transaction (no nested begin). */
   tx?: DbTx;
-}
+};
 
 function toRecord(
   row: EvidenceRow,

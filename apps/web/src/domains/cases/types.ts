@@ -16,10 +16,10 @@ export type GetCaseByIdInput = DeleteCaseInput;
 export type GetCaseBySlugInput = z.output<typeof getCaseBySlugInputSchema>;
 
 /** Cases list + healed active Case (cookie). */
-export interface CasesContext {
+export type CasesContext = {
   cases: CaseRecord[];
   active: CaseRecord | null;
-}
+};
 
 export const setActiveCaseIdInputSchema = z.object({
   caseId: z

@@ -25,21 +25,21 @@ import {
 } from "@watchdog/ui/components/field";
 import { Input } from "@watchdog/ui/components/input";
 
-export interface DossierEditFormValues {
+export type DossierEditFormValues = {
   name: string;
   kind: EntityKind;
   summary: string;
   notes: string;
-}
+};
 
-interface Props {
+type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entity: EntityRecord;
   busy?: boolean;
   error?: string | null;
   onSubmit: (values: DossierEditFormValues) => void | Promise<void>;
-}
+};
 
 function defaultsFromRecord(entity: EntityRecord): DossierEditFormValues {
   return {

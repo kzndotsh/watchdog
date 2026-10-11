@@ -1,12 +1,12 @@
 import type { EntityRecord } from "@/domains/entities/types";
 import type { AppAction } from "@/shared/lib/app-action";
 
-export interface EntityRowActionHandlers {
+export type EntityRowActionHandlers = {
   onOpenEntity: (entity: EntityRecord) => void;
   onCopyEntityLink: (entity: EntityRecord) => void;
   onCopyEntityMarkdown: (entity: EntityRecord) => void;
   onDeleteEntity: (entity: EntityRecord) => void;
-}
+};
 
 /** Shared ⋯ + row ContextMenu actions for the Entities table. */
 export function entityRowActions(

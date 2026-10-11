@@ -254,9 +254,9 @@ export function parseKeybaseBody(
  * @see https://keybase.io/docs/api/1.0/call/user/lookup
  */
 
-interface KeybaseOptions {
+type KeybaseOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchKeybaseLookupEffect(
   queryRaw: string,

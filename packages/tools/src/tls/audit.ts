@@ -11,10 +11,10 @@ import { tlsAuditSnapshotSchema, type TlsAuditSnapshot } from "./audit-schema";
 
 export { tlsAuditSnapshotSchema, type TlsAuditSnapshot };
 
-interface AuditOptions {
+type AuditOptions = {
   port?: number;
   servername?: string;
-}
+};
 
 function rejectAsError(reject: (reason: Error) => void, err: unknown): void {
   reject(err instanceof Error ? err : new Error(String(err)));
