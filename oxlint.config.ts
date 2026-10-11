@@ -530,6 +530,22 @@ export default defineConfig({
       rules: { "watchdog/no-hooks-in-lib": "error" },
     },
     {
+      // One exported component per .tsx file (docs/reference/web/ui/rules.md). Re-exports
+      // never count, so barrels pass; a file that defines several components on purpose
+      // (a gallery, an icon map) is exempt below.
+      files: ["apps/web/src/**/*.tsx"],
+      rules: { "watchdog/one-component-per-file": "error" },
+    },
+    {
+      // Registries: the /ui gallery routes hold specimen chrome on purpose, and a primitives/
+      // wrapper mirrors the several components of the vendored shadcn module it extends.
+      files: [
+        "apps/web/src/routes/_protected/ui/**/*.tsx",
+        "apps/web/src/shared/ui/primitives/**/*.tsx",
+      ],
+      rules: { "watchdog/one-component-per-file": "off" },
+    },
+    {
       files: ["apps/web/src/domains/**/*.{ts,tsx}"],
       rules: { "watchdog/no-cross-domain-relative-imports": "error" },
     },
@@ -554,6 +570,7 @@ export default defineConfig({
       ],
       rules: {
         "watchdog/no-hooks-in-lib": "off",
+        "watchdog/one-component-per-file": "off",
         "watchdog/shared-ui-no-domain-imports": "off",
       },
     },

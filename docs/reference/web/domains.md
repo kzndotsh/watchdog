@@ -50,6 +50,7 @@ Graph children live in `domains/entities/{claims,identifiers,edges,events,questi
 | An import that leaves its `domains/<x>/` folder for another path under `src` uses the `@/` alias, not `../../` hops (relative paths resolving outside `src` are not checked) | `watchdog/no-cross-domain-relative-imports` |
 | `shared/ui` imports no domain code | `watchdog/shared-ui-no-domain-imports` |
 | No hook (`use*`) is defined in a `lib/` folder | `watchdog/no-hooks-in-lib` (baselined) |
+| A `.tsx` file exports one component; a family of parts is a folder of single-component files with an `index.ts` barrel (`shared/ui/skeletons/`) | `watchdog/one-component-per-file` (baselined) |
 
 ## Map
 
