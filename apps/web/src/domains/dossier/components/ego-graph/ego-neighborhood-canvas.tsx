@@ -11,19 +11,21 @@ import { predicateLabel } from "@/shared/ui/vocab";
 
 import { edgesToEgoFlow, type EgoEntityRef } from "./edges-to-flow";
 
+type EgoNeighborhoodCanvasProps = {
+  center: EgoEntityRef;
+  edges: EdgeRecord[];
+  className?: string;
+  fillHeight?: boolean;
+  onEditEdge?: (edgeId: string) => void;
+};
+
 export function EgoNeighborhoodCanvas({
   center,
   edges,
   className,
   fillHeight = false,
   onEditEdge,
-}: {
-  center: EgoEntityRef;
-  edges: EdgeRecord[];
-  className?: string;
-  fillHeight?: boolean;
-  onEditEdge?: (edgeId: string) => void;
-}) {
+}: EgoNeighborhoodCanvasProps) {
   const navigate = useNavigate();
 
   const flow = useMemo(

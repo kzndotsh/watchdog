@@ -105,15 +105,17 @@ function claimComposerLayout(shell: ClaimComposerShell): ClaimComposerLayout {
   }
 }
 
+type ClaimComposerFrameProps = {
+  shell: ClaimComposerShell;
+  children: ReactNode;
+  onSubmit: (e: SubmitEvent) => void;
+};
+
 function ClaimComposerFrame({
   shell,
   children,
   onSubmit,
-}: {
-  shell: ClaimComposerShell;
-  children: ReactNode;
-  onSubmit: (e: SubmitEvent) => void;
-}) {
+}: ClaimComposerFrameProps) {
   switch (shell) {
     case "composer": {
       return (
@@ -136,6 +138,14 @@ function ClaimComposerFrame({
   }
 }
 
+type ClaimComposerActionsProps = {
+  submitLabel: string;
+  submitDisabled: boolean;
+  submitTitle?: string;
+  className?: string;
+  onCancel: () => void;
+};
+
 /** Shared Cancel + submit footer for every claim form (composer, row edit, action). */
 function ClaimComposerActions({
   submitLabel,
@@ -143,13 +153,7 @@ function ClaimComposerActions({
   submitTitle,
   className,
   onCancel,
-}: {
-  submitLabel: string;
-  submitDisabled: boolean;
-  submitTitle?: string;
-  className?: string;
-  onCancel: () => void;
-}) {
+}: ClaimComposerActionsProps) {
   return (
     <div className={cn("flex gap-1", className)}>
       <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
@@ -167,6 +171,17 @@ function ClaimComposerActions({
   );
 }
 
+type ClaimComposerProps = {
+  defaultValues: ClaimFormValues;
+  evidenceOptions: DossierSectionWithEvidenceProps["evidenceOptions"];
+  shell: ClaimComposerShell;
+  submitLabel: string;
+  textPlaceholder?: string;
+  onCancel: () => void;
+  onError: (message: string | null) => void;
+  onSubmit: (value: ClaimFormValues) => Promise<void>;
+};
+
 function ClaimComposer({
   defaultValues,
   evidenceOptions,
@@ -176,16 +191,7 @@ function ClaimComposer({
   onCancel,
   onError,
   onSubmit,
-}: {
-  defaultValues: ClaimFormValues;
-  evidenceOptions: DossierSectionWithEvidenceProps["evidenceOptions"];
-  shell: ClaimComposerShell;
-  submitLabel: string;
-  textPlaceholder?: string;
-  onCancel: () => void;
-  onError: (message: string | null) => void;
-  onSubmit: (value: ClaimFormValues) => Promise<void>;
-}) {
+}: ClaimComposerProps) {
   const form = useForm({
     ...claimFormOptions,
     defaultValues,
@@ -330,6 +336,15 @@ function ClaimComposer({
   );
 }
 
+type ClaimActionFormProps = {
+  scope: DossierEntityScope;
+  claimId: string;
+  action: ClaimAction;
+  onCancel: () => void;
+  onError: (message: string | null) => void;
+  onSaved: () => void;
+};
+
 function ClaimActionForm({
   scope,
   claimId,
@@ -337,14 +352,7 @@ function ClaimActionForm({
   onCancel,
   onError,
   onSaved,
-}: {
-  scope: DossierEntityScope;
-  claimId: string;
-  action: ClaimAction;
-  onCancel: () => void;
-  onError: (message: string | null) => void;
-  onSaved: () => void;
-}) {
+}: ClaimActionFormProps) {
   const retractMutation = useRetractClaim({
     successMessage: ACTION_SUCCESS_LABEL[action],
     onRetracted: onSaved,

@@ -43,18 +43,20 @@ function qIndex(i: number): string {
   return `Q${String(i + 1).padStart(2, "0")}`;
 }
 
+type QuestionLineProps = {
+  label: string;
+  text: string;
+  textClassName?: string;
+  onEdit?: () => void;
+};
+
 /** `Qnn` marker + question text — shared by open and resolved rows. */
 function QuestionLine({
   label,
   text,
   textClassName,
   onEdit,
-}: {
-  label: string;
-  text: string;
-  textClassName?: string;
-  onEdit?: () => void;
-}) {
+}: QuestionLineProps) {
   const textClass = cn(
     "min-w-0 text-sm leading-snug break-words whitespace-pre-wrap",
     textClassName
@@ -88,6 +90,17 @@ type QuestionComposerValues = {
   resolvedNote?: string | null;
 };
 
+type QuestionComposerProps = {
+  defaultText?: string;
+  defaultNote?: string;
+  density?: "default" | "dense";
+  includeNote?: boolean;
+  submitLabel?: string;
+  onCancel: () => void;
+  onError: (message: string | null) => void;
+  onSubmit: (value: QuestionComposerValues) => Promise<void>;
+};
+
 function QuestionComposer({
   defaultText = "",
   defaultNote = "",
@@ -97,16 +110,7 @@ function QuestionComposer({
   onCancel,
   onError,
   onSubmit,
-}: {
-  defaultText?: string;
-  defaultNote?: string;
-  density?: "default" | "dense";
-  includeNote?: boolean;
-  submitLabel?: string;
-  onCancel: () => void;
-  onError: (message: string | null) => void;
-  onSubmit: (value: QuestionComposerValues) => Promise<void>;
-}) {
+}: QuestionComposerProps) {
   const modKeyLabel = useModKeyLabel();
   const form = useForm({
     defaultValues: { text: defaultText, note: defaultNote },
@@ -214,19 +218,21 @@ function QuestionComposer({
   );
 }
 
+type ResolveFormProps = {
+  scope: DossierEntityScope;
+  questionId: string;
+  onCancel: () => void;
+  onError: (message: string | null) => void;
+  onSaved: () => void;
+};
+
 function ResolveForm({
   scope,
   questionId,
   onCancel,
   onError,
   onSaved,
-}: {
-  scope: DossierEntityScope;
-  questionId: string;
-  onCancel: () => void;
-  onError: (message: string | null) => void;
-  onSaved: () => void;
-}) {
+}: ResolveFormProps) {
   const resolveMutation = useResolveQuestion({ onResolved: onSaved });
 
   const resolveForm = useForm({
@@ -305,15 +311,17 @@ function QuestionNote({
   );
 }
 
+type QuestionNodeProps = {
+  children: ReactNode;
+  resolved?: boolean;
+  dimmed?: boolean;
+};
+
 function QuestionNode({
   children,
   resolved = false,
   dimmed,
-}: {
-  children: ReactNode;
-  resolved?: boolean;
-  dimmed?: boolean;
-}) {
+}: QuestionNodeProps) {
   const faded = dimmed ?? resolved;
   return (
     <div
@@ -335,6 +343,18 @@ function QuestionNode({
   );
 }
 
+type OpenQuestionRowProps = {
+  scope: DossierEntityScope;
+  label: string;
+  question: QuestionRecord;
+  editor: DossierSectionEditor;
+  resolvingId: string | null;
+  onResolvingChange: (id: string | null) => void;
+  onSaveEdit: (text: string) => Promise<void>;
+  onResolved: () => void;
+  onDelete: () => void;
+};
+
 function OpenQuestionRow({
   scope,
   label,
@@ -345,17 +365,7 @@ function OpenQuestionRow({
   onSaveEdit,
   onResolved,
   onDelete,
-}: {
-  scope: DossierEntityScope;
-  label: string;
-  question: QuestionRecord;
-  editor: DossierSectionEditor;
-  resolvingId: string | null;
-  onResolvingChange: (id: string | null) => void;
-  onSaveEdit: (text: string) => Promise<void>;
-  onResolved: () => void;
-  onDelete: () => void;
-}) {
+}: OpenQuestionRowProps) {
   const editing = editor.editId === question.id;
   const resolving = resolvingId === question.id;
 
@@ -442,14 +452,7 @@ function OpenQuestionRow({
   );
 }
 
-function ResolvedQuestionRow({
-  label,
-  question,
-  editor,
-  onSaveEdit,
-  onReopen,
-  onDelete,
-}: {
+type ResolvedQuestionRowProps = {
   label: string;
   question: QuestionRecord;
   editor: DossierSectionEditor;
@@ -459,7 +462,16 @@ function ResolvedQuestionRow({
   }) => Promise<void>;
   onReopen: () => void;
   onDelete: () => void;
-}) {
+};
+
+function ResolvedQuestionRow({
+  label,
+  question,
+  editor,
+  onSaveEdit,
+  onReopen,
+  onDelete,
+}: ResolvedQuestionRowProps) {
   const editing = editor.editId === question.id;
 
   if (editing) {

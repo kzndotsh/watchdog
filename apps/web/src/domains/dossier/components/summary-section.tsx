@@ -5,16 +5,18 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { FieldError } from "@watchdog/ui/components/field";
 
+type SummarySectionProps = {
+  caseId: string;
+  entity: EntityRecord;
+  placeholder?: boolean;
+};
+
 /** BLUF summary — lives on Overview. */
 export function SummarySection({
   caseId,
   entity,
   placeholder = false,
-}: {
-  caseId: string;
-  entity: EntityRecord;
-  placeholder?: boolean;
-}) {
+}: SummarySectionProps) {
   const {
     summary,
     setSummary,
