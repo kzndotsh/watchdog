@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useCasesContext } from "@/domains/cases/hooks/use-cases-context";
 import { useSelectActiveCase } from "@/domains/cases/hooks/use-select-active-case";
@@ -12,7 +12,10 @@ import {
 } from "@/domains/search/lib/hit-labels";
 import { jumpNavItems } from "@/domains/search/lib/jump-nav";
 import { searchCaseQuery } from "@/domains/search/queries";
+import { couldnt } from "@/lib/utils";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { actionChord, type AppAction } from "@/shared/lib/app-action";
+import { SEARCH_DEBOUNCE_MS } from "@/shared/lib/debounce";
 import { useRegisteredPaletteCommands } from "@/shared/lib/palette-commands";
 import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis";
 import { queryLoadError } from "@/shared/lib/query-load-error";
@@ -41,8 +44,6 @@ import {
   CommandShortcut,
 } from "@watchdog/ui/components/command";
 import { Spinner } from "@watchdog/ui/components/spinner";
-
-const DEBOUNCE_MS = 250;
 
 function taskHitShortcut(hit: {
   status: SearchCaseResult["tasks"][number]["status"];
@@ -114,7 +115,6 @@ interface CommandPaletteProps {
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   const { paletteCommands: commandActions } = useSearchUi();
   const pageActions = useRegisteredPaletteCommands();
 
@@ -127,18 +127,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const activeCaseId = activeCase?.id ?? "";
   const jumpItems = jumpNavItems();
 
-  useEffect(() => {
-    const trimmed = query.trim();
-    const delay = trimmed.length >= SEARCH_MIN_QUERY_LENGTH ? DEBOUNCE_MS : 0;
-    const timer = window.setTimeout(() => {
-      setDebouncedQuery(
-        trimmed.length >= SEARCH_MIN_QUERY_LENGTH ? trimmed : ""
-      );
-    }, delay);
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [query]);
+  const trimmed = query.trim();
+  const term = trimmed.length >= SEARCH_MIN_QUERY_LENGTH ? trimmed : "";
+  const { value: debouncedQuery } = useDebouncedValue(
+    term,
+    term === "" ? 0 : SEARCH_DEBOUNCE_MS,
+    ""
+  );
 
   const queryReady = query.trim().length >= SEARCH_MIN_QUERY_LENGTH;
   const debouncedReady =
@@ -167,7 +162,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   function handleOpenChange(next: boolean) {
     if (!next) {
       setQuery("");
-      setDebouncedQuery("");
     }
     onOpenChange(next);
   }
@@ -212,7 +206,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     ? queryLoadError(
         { isError, isFetching, error },
         pendingDebounce,
-        "Search failed"
+        couldnt("run", "search")
       )
     : null;
   const paletteLoadError = casesLoadError ?? searchLoadError;
