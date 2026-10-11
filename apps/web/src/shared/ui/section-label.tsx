@@ -5,13 +5,13 @@ import { cn } from "@/lib/utils";
 const BASE =
   "text-2xs font-medium text-muted-foreground normal-case tracking-normal";
 
-interface SectionLabelProps {
+type SectionLabelProps = {
   children: ReactNode;
   className?: string;
   /** Dense dossier rails (slightly smaller). */
   density?: "default" | "compact";
   as?: ElementType;
-}
+};
 
 export function SectionLabel({
   children,

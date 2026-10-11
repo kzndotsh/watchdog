@@ -18,10 +18,10 @@ import {
 
 export type { FieldComboboxOption } from "@/shared/ui/field-combobox.lib";
 
-interface FieldComboboxGroup {
+type FieldComboboxGroup = {
   value: string;
   items: FieldComboboxOption[];
-}
+};
 
 function groupOptions(
   options: readonly FieldComboboxOption[]

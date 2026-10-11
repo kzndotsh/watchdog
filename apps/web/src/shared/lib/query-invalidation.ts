@@ -16,10 +16,10 @@ import { credentialsKeys } from "@/domains/settings/queries";
 import { tasksKeys } from "@/domains/tasks/queries";
 import { proposalsKeys } from "@/domains/triage/queries";
 
-interface EntityChangedOpts {
+type EntityChangedOpts = {
   entityId?: string;
   slug?: string;
-}
+};
 
 /** Soft settle: mark stale without flashing loading, then refetch active observers. */
 async function softInvalidate(

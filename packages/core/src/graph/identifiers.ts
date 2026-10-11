@@ -46,7 +46,7 @@ import {
 const NATURAL_KEY_INDEX = "identifiers_natural_uidx";
 const DUPLICATE_MESSAGE = "That Identifier already exists on this Entity";
 
-export interface IdentifierRecord {
+export type IdentifierRecord = {
   id: string;
   entityId: string;
   type: IdentifierType;
@@ -56,9 +56,9 @@ export interface IdentifierRecord {
   status: IdentifierStatus;
   notes: string | null;
   evidenceIds: string[];
-}
+};
 
-export interface CreateIdentifierInput extends GraphActor {
+export type CreateIdentifierInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
@@ -69,9 +69,9 @@ export interface CreateIdentifierInput extends GraphActor {
   status: IdentifierStatus;
   notes?: string;
   evidenceIds?: string[];
-}
+} & GraphActor;
 
-export interface UpdateIdentifierInput extends GraphActor {
+export type UpdateIdentifierInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   identifierId: string;
@@ -82,7 +82,7 @@ export interface UpdateIdentifierInput extends GraphActor {
   confidence?: ConfidenceTier;
   notes?: string | null;
   evidenceIds?: string[];
-}
+} & GraphActor;
 
 function toRecord(row: IdentifierRow, evidenceIds: string[]): IdentifierRecord {
   return {
@@ -121,13 +121,13 @@ export function listIdentifiersForEntityEffect(
 }
 
 /** Identifier plus owning entity labels for case-wide lists. */
-export interface CaseIdentifierRecord extends IdentifierRecord {
+export type CaseIdentifierRecord = {
   entityName: string;
   entitySlug: string;
   entityKind: EntityKind;
   entitySummary: string | null;
   entityNotes: string | null;
-}
+} & IdentifierRecord;
 
 export function toCaseIdentifierRecord(
   row: IdentifierListRow,

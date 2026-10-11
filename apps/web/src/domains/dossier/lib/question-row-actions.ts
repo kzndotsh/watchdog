@@ -1,16 +1,16 @@
 import type { AppAction } from "@/shared/lib/app-action";
 
-export interface OpenQuestionRowActionHandlers {
+export type OpenQuestionRowActionHandlers = {
   onEdit: () => void;
   onDelete: () => void;
   onResolve: () => void;
-}
+};
 
-export interface ResolvedQuestionRowActionHandlers {
+export type ResolvedQuestionRowActionHandlers = {
   onEdit: () => void;
   onDelete: () => void;
   onReopen: () => void;
-}
+};
 
 /** Shared ⋯ + ContextMenu for open (unresolved) dossier questions. */
 export function openQuestionRowActions(

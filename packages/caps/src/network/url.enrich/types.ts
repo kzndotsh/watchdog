@@ -7,7 +7,7 @@ export type MdMethod =
   | "plain_text"
   | "none";
 
-export interface StepResult {
+export type StepResult = {
   ok: boolean;
   error?: string;
   status?: number;
@@ -17,9 +17,9 @@ export interface StepResult {
   timestamp?: string;
   mdMethod?: MdMethod;
   markdownTokensHint?: number;
-}
+};
 
-export interface EnrichSummary {
+export type EnrichSummary = {
   url: string;
   at: string;
   live: StepResult;
@@ -28,16 +28,16 @@ export interface EnrichSummary {
   textChars: number;
   linkCount: number;
   emailCount: number;
-}
+};
 
-export interface IngestResult {
+export type IngestResult = {
   step: StepResult;
   text: string;
   title?: string;
   urls: string[];
   emails: string[];
   artifacts: CapArtifact[];
-}
+};
 
 export const URL_ENRICH_UA = "Watchdog/1.0 (+network.url.enrich)";
 export const URL_ENRICH_MAX_BYTES = 2_000_000;

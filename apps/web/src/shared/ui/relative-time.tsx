@@ -2,13 +2,13 @@ import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
 import { Timestamp } from "@/shared/ui/timestamp";
 
-interface RelativeTimeProps {
+type RelativeTimeProps = {
   /** ISO-8601 instant. */
   value: string | null | undefined;
   className?: string;
   /** Fallback when value missing/invalid. */
   empty?: string;
-}
+};
 
 /** Compact relative label with full local tooltip via Timestamp. */
 export function RelativeTime({

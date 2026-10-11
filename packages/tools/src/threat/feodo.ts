@@ -35,10 +35,10 @@ const CACHE_TTL_MS = 60 * 60_000;
 let cachedEntries: FeodoEntry[] | null = null;
 let cachedAt = 0;
 
-interface FeodoOptions {
+type FeodoOptions = {
   userAgent?: string;
   apiKey?: string;
-}
+};
 
 function cachedBlocklist(now: number): FeodoEntry[] | null {
   if (cachedEntries && now - cachedAt < CACHE_TTL_MS) return cachedEntries;

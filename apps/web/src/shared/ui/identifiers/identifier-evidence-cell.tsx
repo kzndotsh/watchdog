@@ -24,11 +24,11 @@ import {
 
 const PREVIEW_CHIP_MAX = 1;
 
-export interface IdentifierEvidenceRow {
+export type IdentifierEvidenceRow = {
   id: string;
   confidence: ConfidenceTier;
   evidenceIds: string[];
-}
+};
 
 function resolveEvidenceLabel(
   byId: Map<string, EvidenceOption>,

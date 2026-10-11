@@ -73,11 +73,11 @@ export const activityEntrySchema = z.object({
 export type ActivityEntry = z.output<typeof activityEntrySchema>;
 
 /** Position in the log: the transaction id, then the row id inside it. */
-export interface ActivityCursor {
+export type ActivityCursor = {
   /** `xid8` as decimal text (it exceeds 2^53). */
   xid: string;
   id: number;
-}
+};
 
 const XID_MAX = 2n ** 64n - 1n;
 const CURSOR_PATTERN = /^(\d{1,20}):(\d{1,16})$/;
@@ -110,12 +110,12 @@ export function compareActivityCursor(
   return a.id < b.id ? -1 : 1;
 }
 
-export interface ActivityGate {
+export type ActivityGate = {
   /** A live entry from the tailer: held back until the replay is in, then passed on. */
   readonly live: (entry: ActivityEntry) => void;
   /** The replay is done: send `replayed` in order, then the held live entries, then go live. */
   readonly open: (replayed: readonly ActivityEntry[]) => void;
-}
+};
 
 /**
  * Per-connection ordering and duplicate guard for an SSE stream (ADR-0005

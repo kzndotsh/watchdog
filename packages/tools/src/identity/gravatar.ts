@@ -140,9 +140,9 @@ export function parseGravatarBody(
  * @see https://docs.gravatar.com/api/profiles/
  */
 
-interface GravatarOptions {
+type GravatarOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchGravatarLookupEffect(
   emailRaw: string,

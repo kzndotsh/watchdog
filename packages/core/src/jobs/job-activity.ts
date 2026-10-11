@@ -8,14 +8,14 @@ import { appendActivityEffect } from "../activity/append";
 import type { DomainTag } from "../infra/tagged-errors";
 
 /** The Job fields an activity entry is derived from. */
-export interface JobActivitySubject {
+export type JobActivitySubject = {
   id: string;
   caseId: CaseId;
   actorId: string;
   actorLabel: string | null;
   /** The playbook run: the entry's `group_id`, so the feed collapses step Jobs. */
   playbookRunId: string | null;
-}
+};
 
 type JobActivityAction = (typeof ACTIVITY_ENTRY_ACTIONS.job)[number];
 const JOB_ACTIONS = ACTIVITY_ENTRY_ACTIONS.job;

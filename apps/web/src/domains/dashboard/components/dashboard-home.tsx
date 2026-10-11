@@ -72,13 +72,13 @@ function dashboardActivityPanelPending() {
   );
 }
 
-interface OverviewMetrics {
+type OverviewMetrics = {
   proposalsPending: number;
   tasksOverdue: number;
   tasksDueSoon: number;
   jobsRunning: number;
   entities: number;
-}
+};
 
 function countTone(
   muted: boolean,

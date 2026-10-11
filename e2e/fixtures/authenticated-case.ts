@@ -4,11 +4,11 @@ import { E2eApi } from "../api/client";
 import { AuthPage } from "../pages/auth.page";
 import { CasesPage } from "../pages/cases.page";
 
-export interface AuthenticatedCase {
+export type AuthenticatedCase = {
   stamp: string;
   caseId: string;
   caseName: string;
-}
+};
 
 export async function setupAuthenticatedCase(
   page: Page,

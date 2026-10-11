@@ -17,7 +17,7 @@ import type { TaskPriority } from "@watchdog/schemas/shared";
 
 type EntityKind = "person" | "infra" | "org";
 
-interface Sample {
+type Sample = {
   title: string;
   priority?: TaskPriority;
   entity?: { name: string; kind: EntityKind };
@@ -26,7 +26,7 @@ interface Sample {
   overdue?: boolean;
   updated?: string;
   done?: boolean;
-}
+};
 
 const SAMPLES: Sample[] = [
   {

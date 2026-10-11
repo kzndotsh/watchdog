@@ -42,7 +42,7 @@ import {
   requireTrimmedGraphId,
 } from "./patch/guards";
 
-export interface ClaimRecord {
+export type ClaimRecord = {
   id: string;
   entityId: string;
   class: ClaimClass;
@@ -54,9 +54,9 @@ export interface ClaimRecord {
   retractedBy: string | null;
   retractedAt: string | null;
   evidenceIds: string[];
-}
+};
 
-export interface CreateClaimInput extends GraphActor {
+export type CreateClaimInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
@@ -64,9 +64,9 @@ export interface CreateClaimInput extends GraphActor {
   confidence: ConfidenceTier;
   class: ClaimClass;
   evidenceIds?: string[];
-}
+} & GraphActor;
 
-export interface UpdateClaimInput extends GraphActor {
+export type UpdateClaimInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   claimId: string;
@@ -74,16 +74,16 @@ export interface UpdateClaimInput extends GraphActor {
   class?: ClaimClass;
   confidence?: ConfidenceTier;
   evidenceIds?: string[];
-}
+} & GraphActor;
 
-export interface RetractClaimInput {
+export type RetractClaimInput = {
   actorLabel?: string;
   caseId: CaseId;
   organizationId: OrganizationId;
   claimId: string;
   kind: RetractKind;
   reason: string;
-}
+};
 
 function toRecord(row: ClaimRow, evidenceIds: string[]): ClaimRecord {
   return {
@@ -101,9 +101,9 @@ function toRecord(row: ClaimRow, evidenceIds: string[]): ClaimRecord {
   };
 }
 
-interface EntityListOpts {
+type EntityListOpts = {
   includeRetracted?: boolean;
-}
+};
 
 export function listClaimsForEntityEffect(
   caseId: CaseId,

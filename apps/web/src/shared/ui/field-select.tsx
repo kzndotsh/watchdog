@@ -14,10 +14,10 @@ import {
 /** Sentinel — Base UI Select disallows empty-string item values. */
 const EMPTY_VALUE = "__wd_empty__";
 
-export interface FieldSelectOption {
+export type FieldSelectOption = {
   value: string;
   label: string;
-}
+};
 
 function toItemValue(value: string): string {
   return value === "" ? EMPTY_VALUE : value;

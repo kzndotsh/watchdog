@@ -18,11 +18,11 @@ import {
   FieldSet,
 } from "@watchdog/ui/components/field";
 
-interface TriageQueueToolbarProps {
+type TriageQueueToolbarProps = {
   filters: TriageQueueFilters;
   onFiltersChange: (next: TriageQueueFilters) => void;
   pendingCount?: number;
-}
+};
 
 export function TriageQueueToolbar({
   filters,

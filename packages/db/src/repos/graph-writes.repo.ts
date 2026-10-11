@@ -14,7 +14,7 @@ import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type GraphWriteRow = typeof graphWrites.$inferSelect;
 
-export interface NewGraphWrite {
+export type NewGraphWrite = {
   caseId: CaseId;
   actorId: string;
   actorLabel?: string | null;
@@ -24,7 +24,7 @@ export interface NewGraphWrite {
   summary: string | null;
   patch: PatchOp[];
   idempotencyKey: string | null;
-}
+};
 
 export const graphWritesRepo = {
   async get(exec: DbExec, id: string): Promise<GraphWriteRow | null> {

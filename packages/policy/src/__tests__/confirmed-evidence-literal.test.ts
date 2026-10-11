@@ -25,11 +25,11 @@ import {
  * - "confirmed requires Evidence": `packages/policy/src/confirmed-evidence.ts`
  * - child-write custody messages: `packages/policy/src/custody-child-write.ts`
  */
-interface Rule {
+type Rule = {
   name: string;
   literals: readonly string[];
   ownModule: string;
-}
+};
 
 const EVIDENCE_RULE: Rule = {
   name: "confirmed requires Evidence",

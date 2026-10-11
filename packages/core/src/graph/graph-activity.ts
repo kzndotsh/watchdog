@@ -17,7 +17,7 @@ export type GraphActivityKind = Extract<
   "entity" | "edge" | "claim" | "identifier" | "event" | "question" | "case"
 >;
 
-export interface GraphActivityInput<K extends GraphActivityKind> {
+export type GraphActivityInput<K extends GraphActivityKind> = {
   caseId: CaseId;
   kind: K;
   /** A verb from `ACTIVITY_ENTRY_ACTIONS[kind]`. */
@@ -30,7 +30,7 @@ export interface GraphActivityInput<K extends GraphActivityKind> {
   actorLabel?: string | null;
   fromValue?: string | null;
   toValue?: string | null;
-}
+};
 
 /**
  * Append one Graph or Case entry (ADR-0005 S4) in the caller's transaction.
@@ -49,11 +49,11 @@ export function appendGraphActivityEffect<K extends GraphActivityKind>(
  * Who made a Dossier edit. The API passes the caller; a function without an
  * actor appends a null one (the entry then reads as a system write).
  */
-export interface GraphActor {
+export type GraphActor = {
   actorId?: string;
   /** API-key display snapshot (`api-key:...`), never a user name. */
   actorLabel?: string;
-}
+};
 
 /** The actor fields of an entry, from an input that may carry a {@link GraphActor}. */
 export function graphActorFields(actor: GraphActor | undefined): {

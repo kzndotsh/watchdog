@@ -19,11 +19,11 @@ import {
 } from "@watchdog/schemas/jobs";
 import { slugifyName, type ProposalStatus } from "@watchdog/schemas/shared";
 
-export interface TriageQueueFilters {
+export type TriageQueueFilters = {
   q: string;
   /** Empty = all statuses (same contract as Jobs). */
   statuses: ProposalStatus[];
-}
+};
 
 /** No facets / search — show every proposal (clear-filters). */
 export const EMPTY_TRIAGE_FILTERS: TriageQueueFilters = {

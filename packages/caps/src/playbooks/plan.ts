@@ -37,39 +37,39 @@ export type PlaybookStepBind =
   | { seed: PlaybookSeedKind }
   | { step: number; bag: BindBag; index?: number };
 
-export interface PlaybookStepFanOut {
+export type PlaybookStepFanOut = {
   from: { step: number; bag: HandoffBag };
   to: string;
   max?: number;
-}
+};
 
-export interface PlaybookStepDef {
+export type PlaybookStepDef = {
   capabilityId: string;
   input?: JsonObject;
   bind?: Record<string, PlaybookStepBind>;
   fanOut?: PlaybookStepFanOut;
-}
+};
 
 export type PlaybookStep = string | PlaybookStepDef;
 
-export interface PlaybookDef {
+export type PlaybookDef = {
   id: string;
   title: string;
   description: string;
   seedKinds: readonly [PlaybookSeedKind, ...PlaybookSeedKind[]];
   steps: readonly PlaybookStep[];
-}
+};
 
-export interface PlannedStep {
+export type PlannedStep = {
   capabilityId: string;
   input: JsonObject;
   playbookStep: number;
-}
+};
 
-export interface PlaybookPlan {
+export type PlaybookPlan = {
   playbookId: string;
   step: PlannedStep;
-}
+};
 
 export type PlanError =
   | { kind: "missing_seed"; seed: PlaybookSeedKind }
@@ -78,23 +78,23 @@ export type PlanError =
   | { kind: "invalid_input"; capabilityId: string; message: string }
   | { kind: "invalid_playbook"; message: string };
 
-export interface PlaybookRequires {
+export type PlaybookRequires = {
   credentials: CapDescriptorCredential[];
   egress: CapEgress;
   flags: CapFlag[];
-}
+};
 
 /** Credential/egress requirements for a single Cap (same wire shape as playbooks). */
 export type CapabilityRequires = PlaybookRequires;
 
-export interface PlaybookDescriptor {
+export type PlaybookDescriptor = {
   id: string;
   title: string;
   description: string;
   seedKinds: PlaybookSeedKind[];
   steps: string[];
   requires: PlaybookRequires;
-}
+};
 
 export type AvailabilityError =
   | { ok: false; kind: "missing_credential"; names: readonly string[] }
@@ -102,10 +102,10 @@ export type AvailabilityError =
 
 export type AvailabilityResult = { ok: true } | AvailabilityError;
 
-export interface PredecessorJob {
+export type PredecessorJob = {
   step: number;
   bags: Partial<Record<BindBag, string[]>>;
-}
+};
 
 export function predecessorFromJob(row: {
   playbookStep?: number | null;

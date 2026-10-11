@@ -11,7 +11,7 @@ export function graphIdUnit(id: string): number {
   return positive / 1_000_000;
 }
 
-export interface GraphBezierParams {
+export type GraphBezierParams = {
   sx: number;
   sy: number;
   tx: number;
@@ -19,7 +19,7 @@ export interface GraphBezierParams {
   sourcePos: GraphEdgeSide;
   targetPos: GraphEdgeSide;
   curvature: number;
-}
+};
 
 function controlPointForSide(
   x: number,

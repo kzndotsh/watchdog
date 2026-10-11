@@ -39,9 +39,9 @@ function firstArray(body: Record<string, unknown>, keys: string[]): unknown[] {
  * @see https://docs.leakix.net/docs/api/hostdetails/
  */
 
-interface LeakixOptions {
+type LeakixOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchLeakixLookupEffect(
   queryRaw: string,

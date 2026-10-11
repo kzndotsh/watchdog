@@ -16,7 +16,7 @@ import type { TaskStatus } from "@watchdog/schemas/shared";
 import { Input } from "@watchdog/ui/components/input";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
-interface Props {
+type Props = {
   column: TaskStatus;
   items: TaskRecord[];
   selectedId?: string | null;
@@ -28,7 +28,7 @@ interface Props {
   isDropTarget?: boolean;
   activeItem?: TaskRecord | null;
   dropSlotIndex?: number | null;
-}
+};
 
 function DropSlot({
   task,

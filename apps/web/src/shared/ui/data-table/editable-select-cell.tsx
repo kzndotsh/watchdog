@@ -6,7 +6,7 @@ import { FieldSelect, type FieldSelectOption } from "@/shared/ui/field-select";
 
 export type { FieldSelectOption as EditableSelectOption };
 
-interface Props {
+type Props = {
   value: string;
   options: FieldSelectOption[];
   onCommit: (next: string) => void;
@@ -16,7 +16,7 @@ interface Props {
   emptyLabel?: string;
   "aria-label"?: string;
   onKeyDown?: (e: KeyboardEvent<HTMLElement>) => void;
-}
+};
 
 /**
  * Dense select cell that commits immediately on pick.

@@ -8,7 +8,7 @@ import {
   toCustomPlatformSlug,
 } from "./platform-slug";
 
-export interface IdentifierPlatformDef {
+export type IdentifierPlatformDef = {
   slug: string;
   label: string;
   /** Lowercase aliases matched by resolveIdentifierPlatform. */
@@ -18,7 +18,7 @@ export interface IdentifierPlatformDef {
   /** Profile URL — `{value}` is the cleaned handle. */
   urlTemplate?: string;
   stripSigil?: string;
-}
+};
 
 /**
  * Default catalog. Order is picker-friendly (mainstream first, then messaging, forums, etc.).

@@ -47,7 +47,7 @@ import {
 
 const EMPTY_RUN_SIBLINGS: JobListRecord[] = [];
 
-interface JobDetailProps {
+type JobDetailProps = {
   job: JobRecord | null;
   runSiblings?: JobListRecord[];
   /** Case Evidence titles keyed by id — resolve Process/Enrich input subjects. */
@@ -59,7 +59,7 @@ interface JobDetailProps {
   onCancel: () => void;
   onCancelPlaybook?: () => void;
   cancelPlaybookBusy?: boolean;
-}
+};
 
 function JobPlaybookSpine({
   playbookId,

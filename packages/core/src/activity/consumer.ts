@@ -26,7 +26,7 @@ import {
 } from "./log-bounds";
 import { acquireActivityTailer, liveTailerOptions } from "./tailer";
 
-export interface ActivityConsumerOpts {
+export type ActivityConsumerOpts = {
   /** Names the durable cursor row (`activity_cursors.consumer`). */
   consumer: string;
   /**
@@ -49,7 +49,7 @@ export interface ActivityConsumerOpts {
   onListenError?: (error: unknown) => void;
   /** Tailer timings for tests (`pollMs`, `repollMs`, `listen`). */
   tailer?: Partial<ActivityTailerOptions>;
-}
+};
 
 /** Where to resume: the stored cursor, the head on a first boot, or the head after a resync. */
 function resolveStartEffect(

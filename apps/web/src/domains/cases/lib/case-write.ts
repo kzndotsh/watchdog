@@ -3,11 +3,11 @@ import {
   type UpdateCaseInput,
 } from "@watchdog/schemas/cases";
 
-export interface UpdateCasePatch {
+export type UpdateCasePatch = {
   name?: string;
   description?: string | null;
   allowThirdPartyEgress?: boolean;
-}
+};
 
 /** Normalize case PATCH payloads at ingress. */
 export function buildUpdateCaseData(

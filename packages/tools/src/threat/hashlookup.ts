@@ -75,9 +75,9 @@ function firstProductName(body: Record<string, unknown>): string | null {
  * @see https://hashlookup.circl.lu/
  */
 
-interface HashlookupOptions {
+type HashlookupOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchHashlookupEffect(
   hashRaw: string,

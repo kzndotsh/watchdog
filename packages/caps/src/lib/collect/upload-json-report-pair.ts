@@ -11,10 +11,10 @@ type UploadFn = (input: {
   name?: string;
 }) => Effect.Effect<CapArtifact, ToolsTag>;
 
-interface UploadJsonReportPairResult {
+type UploadJsonReportPairResult = {
   report: CapArtifact;
   artifact: CapArtifact;
-}
+};
 
 /** Upload report.json + a named JSON artifact with identical body (Collect Caps). */
 export function uploadJsonReportPair(

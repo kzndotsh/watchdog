@@ -29,7 +29,7 @@ import {
   assertEntityInCaseEffect,
 } from "./patch/guards";
 
-export interface ValidatedEdgeUpdate {
+export type ValidatedEdgeUpdate = {
   existing: NonNullable<Awaited<ReturnType<typeof edgesRepo.getInCase>>>;
   evidenceIds: string[];
   next: {
@@ -41,7 +41,7 @@ export interface ValidatedEdgeUpdate {
   };
   endpointsChanged: boolean;
   predicateChanged: boolean;
-}
+};
 
 export function validateEdgeUpdateEffect(
   input: UpdateEdgeInput,

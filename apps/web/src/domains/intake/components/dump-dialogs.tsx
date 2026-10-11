@@ -19,7 +19,7 @@ const EMPTY_DUMP_ENTITIES: EntityOption[] = [];
 
 export type DumpModal = "file" | "paste" | "url";
 
-export interface DumpDialogsProps {
+export type DumpDialogsProps = {
   open: DumpModal | null;
   onOpenChange: (next: DumpModal | null) => void;
   busy: boolean;
@@ -34,7 +34,7 @@ export interface DumpDialogsProps {
   onFiles: (files: FileList | File[]) => void;
   onPaste: (data: { body: string; label?: string; sourceUrl?: string }) => void;
   onUrl: (data: { sourceUrl: string; label?: string }) => void;
-}
+};
 
 function AssociationField({
   entities,

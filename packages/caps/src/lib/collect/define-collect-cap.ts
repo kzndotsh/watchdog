@@ -14,10 +14,10 @@ import {
 } from "../../sdk";
 import { uploadJsonReportPair } from "./upload-json-report-pair";
 
-interface CollectSnap<TSnap> {
+type CollectSnap<TSnap> = {
   readonly snap: TSnap;
   readonly artifactName: string;
-}
+};
 
 type CollectCapDef<TSchema extends z.ZodType, TSnap> = Omit<
   CapabilityDef<TSchema>,

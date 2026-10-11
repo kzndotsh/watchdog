@@ -3,11 +3,11 @@ import { GraphCanvasPendingShell } from "@/shared/ui/graph/graph-canvas-pending-
 import { GRAPH_CANVAS_PAGE_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-shell-classes";
 import { LoadingRegion } from "@/shared/ui/loading-region";
 
-interface GraphCanvasLoadingRegionProps {
+type GraphCanvasLoadingRegionProps = {
   label?: string;
   shellClassName?: string;
   className?: string;
-}
+};
 
 /** Runtime graph pending — hand cards on dot grid inside the real shell. */
 export function GraphCanvasLoadingRegion({

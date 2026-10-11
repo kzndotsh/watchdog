@@ -1,12 +1,12 @@
 import type { DbExec } from "../exec";
 import { authEvent, type AuthEventKind } from "../schema/auth";
 
-export interface InsertAuthEventInput {
+export type InsertAuthEventInput = {
   userId: string;
   kind: AuthEventKind;
   ipAddress?: string | null;
   userAgent?: string | null;
-}
+};
 
 export async function insertAuthEvent(
   exec: DbExec,

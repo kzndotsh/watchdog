@@ -63,11 +63,11 @@ function fetchLatestAsnEffect(
   });
 }
 
-interface AsnRankingResult {
+type AsnRankingResult = {
   asnDescription: string | null;
   asnRank: number | null;
   asnPosition: number | null;
-}
+};
 
 function fetchAsnRankingEffect(
   asn: number,
@@ -108,9 +108,9 @@ function fetchAsnRankingEffect(
  * @see https://github.com/D4-project/bgp-ranking
  */
 
-interface BgprankingOptions {
+type BgprankingOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchBgprankingLookupEffect(
   ipRaw: string,

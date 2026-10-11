@@ -13,7 +13,7 @@ import { FormInlineWarning } from "@/shared/ui/form-inline-message";
 import { IDENTIFIER_PLATFORM_OPTIONS } from "@/shared/ui/vocab";
 import { Field, FieldLabel } from "@watchdog/ui/components/field";
 
-interface BulkAddMapStageProps {
+type BulkAddMapStageProps = {
   table: IdentifierPasteTable;
   mapping: readonly IdentifierPasteTarget[];
   rows: IdentifierPasteRow[];
@@ -31,7 +31,7 @@ interface BulkAddMapStageProps {
     patch: IdentifierPasteRowOverride
   ) => void;
   busy: boolean;
-}
+};
 
 export function BulkAddMapStage({
   table,

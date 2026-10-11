@@ -5,11 +5,11 @@ import { normalizeUuidList } from "@watchdog/schemas/shared";
 import type { DbExec } from "../exec";
 import { user } from "../schema/auth";
 
-export interface UserDisplayRow {
+export type UserDisplayRow = {
   id: string;
   name: string;
   email: string;
-}
+};
 
 export const usersRepo = {
   async getByIds(exec: DbExec, ids: string[]): Promise<UserDisplayRow[]> {

@@ -117,9 +117,9 @@ function extractPulseInfo(body: Record<string, unknown>): {
  * @see https://otx.alienvault.com/assets/static/external_api.html
  */
 
-interface OtxOptions {
+type OtxOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchOtxLookupEffect(
   queryRaw: string,

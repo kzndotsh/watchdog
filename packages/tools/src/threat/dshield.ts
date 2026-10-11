@@ -90,9 +90,9 @@ export function parseDshieldBody(
  * @see https://isc.sans.edu/api
  */
 
-interface DshieldOptions {
+type DshieldOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchDshieldLookupEffect(
   ipRaw: string,

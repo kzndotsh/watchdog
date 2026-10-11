@@ -43,7 +43,7 @@ import {
 } from "./helpers";
 import type { PreflightState } from "./preflight";
 
-export interface CollectRuntime {
+export type CollectRuntime = {
   scratchDir: string;
   /** Fiber abort signal forwarded into Cap `ctx.signal`. */
   signal: AbortSignal;
@@ -52,16 +52,16 @@ export interface CollectRuntime {
   linkedSource: string | undefined;
   cacheTtlMs: number | null;
   inputHash: string | null;
-}
+};
 
-export interface CollectResult {
+export type CollectResult = {
   artifacts: JobArtifact[];
   /** Evidence ids already known (reclaim / cache); land-evidence skipped when set. */
   evidenceIds: string[];
   fromCache: boolean;
   reclaim: boolean;
   runtime: CollectRuntime;
-}
+};
 
 function packSnapshotIfNeededEffect(
   state: PreflightState,

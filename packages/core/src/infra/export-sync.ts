@@ -114,10 +114,10 @@ function evidenceExt(mime: string | null, label: string | null): string {
   return map[base] ?? ".bin";
 }
 
-interface EvidenceExportCounts {
+type EvidenceExportCounts = {
   included: number;
   skipped: number;
-}
+};
 
 type EvidenceWriteOutcome = "included" | "skipped" | "none";
 
@@ -258,10 +258,10 @@ type ExportWriter = (
 ) => Effect.Effect<void, ExportIOError, Db | BlobStore>;
 type ExportWrite = (id: CaseId) => Effect.Effect<void, ExportIOError>;
 
-interface ExportCoalesceState {
+type ExportCoalesceState = {
   dirty: Set<string>;
   inFlight: Map<string, Fiber.Fiber<void>>;
-}
+};
 
 const exportCoalesce = SynchronizedRef.makeUnsafe({
   dirty: new Set<string>(),

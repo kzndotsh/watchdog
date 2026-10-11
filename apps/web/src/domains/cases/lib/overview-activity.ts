@@ -17,13 +17,13 @@ export type ActivityHref =
   | { to: "/collect"; search: { id: string } }
   | { to: "/triage"; search: { proposalId: string } };
 
-export interface ActivityItem {
+export type ActivityItem = {
   id: string;
   kind: ActivityKind;
   label: string;
   at: string;
   href: ActivityHref;
-}
+};
 
 const MAX_ACTIVITY = 12;
 

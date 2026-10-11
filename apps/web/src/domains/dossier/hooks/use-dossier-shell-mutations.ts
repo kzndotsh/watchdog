@@ -10,14 +10,14 @@ import { invalidateAfterEntityChanged } from "@/shared/lib/query-invalidation";
 import { TOAST_ENTITY_UPDATED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 
-export interface EntityMutationContext {
+export type EntityMutationContext = {
   caseId: string;
   entity: EntityRecord;
   queryClient: QueryClient;
   setEditOpen: (open: boolean) => void;
   setEditError: (message: string | null) => void;
   setRenameError: (message: string | null) => void;
-}
+};
 
 async function invalidateDossierEntity(
   ctx: EntityMutationContext

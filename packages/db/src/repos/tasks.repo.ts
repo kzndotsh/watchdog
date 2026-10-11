@@ -66,12 +66,12 @@ export type TaskPatch = Partial<
   >
 >;
 
-export interface ListTasksRowsOpts {
+export type ListTasksRowsOpts = {
   entityId?: string;
   /** When true, only rows with entityId IS NULL. */
   unattachedOnly?: boolean;
   status?: TaskStatus;
-}
+};
 
 function taskPatchEntityId(patch: TaskPatch): TaskPatch | null {
   if (patch.entityId === undefined) return patch;

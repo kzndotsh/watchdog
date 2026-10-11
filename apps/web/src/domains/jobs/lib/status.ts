@@ -28,11 +28,11 @@ export function jobActivityAt(job: JobListRecord): string {
   return job.updatedAt ?? job.createdAt;
 }
 
-export interface JobQueueFilters {
+export type JobQueueFilters = {
   q: string;
   statuses: JobStatus[];
   capabilityIds: string[];
-}
+};
 
 export const EMPTY_JOB_FILTERS: JobQueueFilters = {
   q: "",

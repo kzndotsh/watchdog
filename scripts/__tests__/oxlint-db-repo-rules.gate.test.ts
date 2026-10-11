@@ -19,13 +19,13 @@ const repo = (...methods: string[]) =>
   `export const thingRepo = {\n${methods.join("\n")}\n};\n`;
 const ok = "  async get(exec: DbExec) {\n    return exec.select();\n  },";
 
-interface Case {
+type Case = {
   readonly rule: string;
   readonly name: string;
   readonly src: string;
   /** 1-based lines of the expected findings. */
   readonly lines: readonly number[];
-}
+};
 
 /** Violations: every shape the old script reported, plus regex misses. */
 const FAIL: readonly Case[] = [

@@ -31,13 +31,13 @@ function exitLabel(exit: Exit.Exit<unknown, unknown>): string {
   return Exit.hasInterrupts(exit) ? "interrupt" : "failure";
 }
 
-export interface WorkerShutdownApi {
+export type WorkerShutdownApi = {
   /** Fails with `WorkerListenError` when the LISTEN connection fails; the boot races it against the event stream. */
   readonly listenFailed: Deferred.Deferred<never, WorkerListenError>;
   readonly onListenError: (error: unknown) => void;
   /** The first shutdown signal seen (`SIGTERM` / `SIGINT`), if any. */
   readonly signal: () => string | undefined;
-}
+};
 
 export class WorkerShutdown extends Context.Service<
   WorkerShutdown,

@@ -1,11 +1,11 @@
 import type { EdgeRecord } from "@/domains/entities/edges/types";
 import type { AppAction } from "@/shared/lib/app-action";
 
-export interface ConnectionRowActionHandlers {
+export type ConnectionRowActionHandlers = {
   onOpenPeer: (edge: EdgeRecord) => void;
   onEdit: (edge: EdgeRecord) => void;
   onRemove: (edgeId: string) => void;
-}
+};
 
 /** Shared ⋯ + ContextMenu actions for dossier connection rows. */
 export function connectionRowActions(

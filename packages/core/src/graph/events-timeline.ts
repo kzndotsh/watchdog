@@ -28,31 +28,31 @@ import {
   requireTrimmedGraphId,
 } from "./patch/guards";
 
-export interface EventRecord {
+export type EventRecord = {
   id: string;
   entityId: string;
   when: string;
   what: string;
   where: string | null;
-}
+};
 
-export interface CreateEventInput extends GraphActor {
+export type CreateEventInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   entityId: string;
   when: string;
   what: string;
   where?: string;
-}
+} & GraphActor;
 
-export interface UpdateEventInput extends GraphActor {
+export type UpdateEventInput = {
   caseId: CaseId;
   organizationId: OrganizationId;
   eventId: string;
   when?: string;
   what?: string;
   where?: string | null;
-}
+} & GraphActor;
 
 function toRecord(row: EventRow): EventRecord {
   return {

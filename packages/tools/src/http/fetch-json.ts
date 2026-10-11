@@ -12,7 +12,7 @@ import {
 import { isRecord } from "../parse/coerce";
 import { abortWhen } from "./abort-when";
 
-export interface FetchJsonObjectInput {
+export type FetchJsonObjectInput = {
   url: string | URL;
   init?: RequestInit;
   signal: AbortSignal;
@@ -22,7 +22,7 @@ export interface FetchJsonObjectInput {
   acceptStatus?: (status: number) => boolean;
   /** Retry 429s. Default true; tests that stub fetch should pass false. */
   retry?: boolean;
-}
+};
 
 function parseRetryAfterMs(header: string | undefined): number | undefined {
   if (header === undefined || header === "") return undefined;

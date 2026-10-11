@@ -17,13 +17,13 @@ import {
 } from "@watchdog/schemas/shared";
 
 /** CapDescriptor wire shape from capabilities.list (serializable catalog). */
-export interface CapConsumeItem {
+export type CapConsumeItem = {
   kind: string;
   type?: string;
   evidenceKind?: string;
-}
+};
 
-export interface CapListItem {
+export type CapListItem = {
   id: string;
   version: string;
   title: string;
@@ -49,7 +49,7 @@ export interface CapListItem {
   };
   input: JsonObject;
   inputForm: JsonObject;
-}
+};
 
 export function inputFormProperties(
   inputForm: JsonObject | undefined
@@ -70,7 +70,7 @@ export type StartJobInput = z.output<typeof startJobInputSchema>;
 export type CancelJobInput = z.output<typeof cancelJobInputSchema>;
 
 /** PlaybookDescriptor wire shape from capabilities.listPlaybooks. */
-export interface PlaybookListItem {
+export type PlaybookListItem = {
   id: string;
   title: string;
   description: string;
@@ -81,7 +81,7 @@ export interface PlaybookListItem {
     egress: string;
     flags: string[];
   };
-}
+};
 
 export type StartPlaybookInput = z.output<typeof startPlaybookInputSchema>;
 

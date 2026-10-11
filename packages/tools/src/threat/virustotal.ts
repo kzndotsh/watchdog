@@ -38,9 +38,9 @@ export type VirusTotalLookupSnapshot = z.infer<
  * @see https://docs.virustotal.com/reference/ip-info
  */
 
-interface VirustotalOptions {
+type VirustotalOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchVirusTotalLookupEffect(
   queryRaw: string,

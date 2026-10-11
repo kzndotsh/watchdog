@@ -8,12 +8,12 @@ import { trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type FindingSuppressionRow = typeof findingSuppressions.$inferSelect;
 
-export interface NewFindingSuppression {
+export type NewFindingSuppression = {
   caseId: CaseId;
   fingerprint: string;
   reason: string;
   proposalId: string;
-}
+};
 
 export const findingSuppressionsRepo = {
   async listFingerprints(

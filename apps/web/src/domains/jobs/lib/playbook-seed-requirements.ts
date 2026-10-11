@@ -3,7 +3,7 @@ import { parseOptionalTrimmedUuid } from "@watchdog/schemas/shared";
 
 import type { PlaybookListItem } from "../types";
 
-export interface PlaybookSeedRequirements {
+export type PlaybookSeedRequirements = {
   needs: readonly PlaybookSeedKind[];
   needsHost: boolean;
   needsUrl: boolean;
@@ -13,7 +13,7 @@ export interface PlaybookSeedRequirements {
   needsHash: boolean;
   needsHandle: boolean;
   pickUrlDump: boolean;
-}
+};
 
 function seedFieldOk(required: boolean, value: string): boolean {
   return !required || Boolean(value.trim());

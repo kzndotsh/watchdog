@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { CONTROL_CELL } from "@/shared/ui/control-chrome";
 import { Input } from "@watchdog/ui/components/input";
 
-interface Props {
+type Props = {
   value: string;
   /** Return `false` to reject and revert. */
   // oxlint-disable-next-line typescript/no-invalid-void-type -- callers commonly pass a void-returning setter for "accept"; `boolean | undefined` would break every such call site
@@ -25,7 +25,7 @@ interface Props {
   prefix?: ReactNode;
   /** Trailing control beside the input (e.g. copy) — outside field chrome. */
   suffix?: ReactNode;
-}
+};
 
 /**
  * Notion/Airtable-style text cell.

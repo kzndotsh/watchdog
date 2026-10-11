@@ -16,7 +16,7 @@ import {
 
 export type JobDetailTab = "log" | "input" | "output";
 
-export interface JobDetailView {
+export type JobDetailView = {
   live: boolean;
   logs: string;
   duration: string | null;
@@ -31,7 +31,7 @@ export interface JobDetailView {
   showAllKnownOutcome: boolean;
   ranInstant: string;
   showSucceededOutcomeChip: boolean;
-}
+};
 
 /** Playbook spine hint for the current step (blocked / waiting on next). */
 export function playbookBlockedWaitingMessage(opts: {

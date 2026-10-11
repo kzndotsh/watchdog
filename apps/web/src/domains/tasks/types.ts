@@ -3,9 +3,9 @@ import type { EntityKind } from "@watchdog/schemas/shared";
 
 export type TaskRecord = CoreTaskRecord;
 
-export interface TaskEntityLabel {
+export type TaskEntityLabel = {
   id: string;
   name: string;
   slug: string;
   kind: EntityKind;
-}
+};

@@ -37,13 +37,13 @@ import { useCollectQueueData } from "./use-collect-queue-data";
 
 const EMPTY_JOBS: JobListRecord[] = [];
 
-export interface UseCollectWorkspaceOptions {
+export type UseCollectWorkspaceOptions = {
   caseId: string;
   caps: CapListItem[];
   playbooks: PlaybookListItem[];
   urlId?: string;
   onIdChange: (next: string | null) => void;
-}
+};
 export function useCollectWorkspace({
   caseId,
   caps,

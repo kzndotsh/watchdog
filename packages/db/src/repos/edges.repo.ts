@@ -50,12 +50,12 @@ export type EdgePatch = Partial<
   >
 >;
 
-export interface EdgeNaturalKey {
+export type EdgeNaturalKey = {
   fromId: string;
   toId: string;
   predicate: EdgePredicate;
   notes?: string | null;
-}
+};
 
 function edgePatchEndpointIds(patch: EdgePatch): EdgePatch | null {
   const next: EdgePatch = { ...patch };

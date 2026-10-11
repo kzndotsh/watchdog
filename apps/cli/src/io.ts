@@ -54,17 +54,17 @@ function limitHelpLines(help: string[] | undefined): string[] | undefined {
   return help.slice(0, MAX_HELP);
 }
 
-export interface CliErrorBody {
+export type CliErrorBody = {
   ok: false;
   error: { code: string; message: string; status?: number };
   help?: string[];
-}
+};
 
-export interface CliListBody<T> {
+export type CliListBody<T> = {
   count: number;
   items: T[];
   help?: string[];
-}
+};
 
 /** Thrown by `fail()` so wrappers can `process.exit` without racing stdout. */
 export class CliExitError extends Error {

@@ -1,12 +1,12 @@
 import { authClient } from "@/auth/client";
 import { couldnt } from "@/lib/utils";
 
-export interface InvitationPreview {
+export type InvitationPreview = {
   id: string;
   email: string;
   role: string;
   organizationName: string;
-}
+};
 
 function fetchErrorMessage(
   error: { message?: string; statusText?: string } | null | undefined,

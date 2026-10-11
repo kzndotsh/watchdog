@@ -5,9 +5,9 @@ import { Button } from "@/shared/ui/primitives/button";
 
 import type { DataTableFeatures } from "./table-features";
 
-interface Props<TData extends RowData> {
+type Props<TData extends RowData> = {
   table: ReactTable<DataTableFeatures, TData>;
-}
+};
 
 export function DataTablePagination<TData extends RowData>({
   table,

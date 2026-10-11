@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { SectionLabel } from "@/shared/ui/section-label";
 
-interface Props {
+type Props = {
   title: string;
   children: ReactNode;
   empty?: boolean;
@@ -26,7 +26,7 @@ interface Props {
   className?: string;
   /** Fill a flex parent (Notes tab). */
   fill?: boolean;
-}
+};
 
 function renderSectionBody({
   empty,

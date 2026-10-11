@@ -46,11 +46,11 @@ function collectStateIsLive(state: CollectState): boolean {
   return state === "queued" || state === "running" || state === "blocked";
 }
 
-export interface CollectQueueListProps {
+export type CollectQueueListProps = {
   rows: readonly CollectRow[];
   selectedId: string | null;
   onSelect: (id: string) => void;
-}
+};
 
 export function CollectQueueList({
   rows,

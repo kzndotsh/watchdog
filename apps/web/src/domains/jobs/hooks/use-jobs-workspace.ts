@@ -65,7 +65,7 @@ function cacheStartedJobs(
   }
 }
 
-export interface UseJobsWorkspaceOptions {
+export type UseJobsWorkspaceOptions = {
   /** Job list row id to select; `null` = no selection (no first-row fallback). */
   jobId?: string | null;
   onJobIdChange: (next: string | null) => void;
@@ -74,7 +74,7 @@ export interface UseJobsWorkspaceOptions {
   queue: JobListRecord[];
   /** True while the jobs list query is refetching (hold URL id not yet in queue). */
   jobsListFetching?: boolean;
-}
+};
 
 export function useJobsWorkspace(
   caseId: string,

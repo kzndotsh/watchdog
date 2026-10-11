@@ -6,7 +6,7 @@ export type { EvidenceOption };
 export type DossierEmptyPresentation = "inline" | "panel";
 
 /** Shared props for dossier CRUD list sections — Case + Entity scope. */
-export interface DossierSectionProps {
+export type DossierSectionProps = {
   caseId: string;
   entityId: string;
   /** Entity slug for `invalidateAfterEntityChanged` / detail cache keys. */
@@ -16,7 +16,7 @@ export interface DossierSectionProps {
    * `inline` for Overview nest; `panel` for dedicated tabs.
    */
   emptyPresentation?: DossierEmptyPresentation;
-}
+};
 
 /**
  * Case + Entity a dossier write was started for. Mutation hooks take it in the

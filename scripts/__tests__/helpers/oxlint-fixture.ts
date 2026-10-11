@@ -24,7 +24,7 @@ export const LINT_TIMEOUT_MS = 60_000;
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 
 /** One diagnostic from `oxlint --format json`, with the plugin/rule split out of `code`. */
-export interface LintFinding {
+export type LintFinding = {
   /** Rule id as written in the config, e.g. `watchdog/no-brand-cast`. */
   readonly rule: string;
   readonly message: string;
@@ -34,16 +34,16 @@ export interface LintFinding {
   readonly line: number;
   /** 1-based. */
   readonly column: number;
-}
+};
 
-export interface LintResult {
+export type LintResult = {
   readonly code: number;
   /** stdout + stderr; stdout is the JSON report. */
   readonly output: string;
   readonly findings: readonly LintFinding[];
-}
+};
 
-export interface OxlintFixture {
+export type OxlintFixture = {
   readonly repo: GateRepo;
   /** Write a fixture file (creating parent dirs) at a repo-relative path. */
   write: (rel: string, content: string) => void;
@@ -55,16 +55,16 @@ export interface OxlintFixture {
     paths?: readonly string[],
     options?: { readonly config?: string }
   ) => LintResult;
-}
+};
 
-interface RawDiagnostic {
+type RawDiagnostic = {
   readonly code?: string;
   readonly message?: string;
   readonly filename?: string;
   readonly labels?: readonly {
     readonly span?: { readonly line?: number; readonly column?: number };
   }[];
-}
+};
 
 /** `watchdog(no-brand-cast)` becomes `watchdog/no-brand-cast`; core rules are `eslint(x)` etc. */
 const ruleId = (code: string) => {

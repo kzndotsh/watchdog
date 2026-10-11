@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/shared/ui/primitives/button";
 import { SearchField } from "@/shared/ui/search-field";
 
-interface QueueFilterBarProps {
+type QueueFilterBarProps = {
   value: string;
   onValueChange: (value: string) => void;
   placeholder: string;
@@ -13,7 +13,7 @@ interface QueueFilterBarProps {
   onReset?: () => void;
   children?: ReactNode;
   className?: string;
-}
+};
 
 /**
  * Shared Queue filter row: SearchField + optional facets slot + ghost Reset.

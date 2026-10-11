@@ -14,14 +14,14 @@ import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 
-interface TriageDetailProps {
+type TriageDetailProps = {
   proposal: ProposalRecord | null;
   caseId: string;
   pending: boolean;
   error: string | null;
   onAccept: (values: AcceptFormValues) => void;
   onReject: (reason: string) => void;
-}
+};
 
 /**
  * Triage Detail — context strip header + patch ledger + decide footer.

@@ -4,10 +4,10 @@ import { authClient } from "@/auth/client";
 import { couldnt, errMessage, messageOr } from "@/lib/utils";
 import { toast } from "@/shared/ui/toast";
 
-export interface AcceptUserInvitationVariables {
+export type AcceptUserInvitationVariables = {
   id: string;
   organizationId: string;
-}
+};
 
 /**
  * Accept an invitation addressed to the signed-in user. `onAccepted` receives the joined

@@ -50,24 +50,24 @@ import type { DomainTag } from "../infra/tagged-errors";
 
 const DEFAULT_PER_GROUP = 8;
 
-export interface SearchCaseOpts {
+export type SearchCaseOpts = {
   caseId: CaseId;
   organizationId: OrganizationId;
   q: string;
   limit?: number;
   perGroup?: number;
-}
+};
 
 const MAX_SEARCH_PER_GROUP = 50;
 
-export interface SearchCaseEntityHit {
+export type SearchCaseEntityHit = {
   id: string;
   name: string;
   slug: string;
   kind: EntityKind;
-}
+};
 
-export interface SearchCaseIdentifierHit {
+export type SearchCaseIdentifierHit = {
   id: string;
   type: IdentifierType;
   platform: string;
@@ -75,49 +75,49 @@ export interface SearchCaseIdentifierHit {
   entityId: string;
   entityName: string;
   entitySlug: string;
-}
+};
 
-export interface SearchCaseEvidenceHit {
+export type SearchCaseEvidenceHit = {
   id: string;
   label: string | null;
   kind: EvidenceKind;
   sourceUrl: string | null;
   entityName: string | null;
-}
+};
 
-export interface SearchCaseTaskHit {
+export type SearchCaseTaskHit = {
   id: string;
   title: string;
   status: TaskStatus;
   priority: TaskPriority | null;
   entityId: string | null;
   entityName: string | null;
-}
+};
 
-export interface SearchCaseJobHit {
+export type SearchCaseJobHit = {
   id: string;
   capabilityId: string;
   status: JobStatus;
   resultSummary: string | null;
   input: JsonObject;
   playbookId: string | null;
-}
+};
 
-export interface SearchCaseProposalHit {
+export type SearchCaseProposalHit = {
   id: string;
   summary: string | null;
   capabilityId: string | null;
   playbookId: string | null;
   entityName: string | null;
-}
+};
 
-export interface SearchCaseCaseHit {
+export type SearchCaseCaseHit = {
   id: string;
   name: string;
   slug: string;
-}
+};
 
-export interface SearchCaseResult {
+export type SearchCaseResult = {
   q: string;
   entities: SearchCaseEntityHit[];
   identifiers: SearchCaseIdentifierHit[];
@@ -128,7 +128,7 @@ export interface SearchCaseResult {
   cases: SearchCaseCaseHit[];
   evidenceLabels: Record<string, string>;
   entityLabels: Record<string, string>;
-}
+};
 
 function emptyResult(q: string): SearchCaseResult {
   return {

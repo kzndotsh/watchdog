@@ -11,10 +11,10 @@ import { tryDb, tryDbWith } from "../infra/postgres-effect";
 import { transact } from "../infra/postgres-tx";
 import type { DomainTag } from "../infra/tagged-errors";
 
-export interface RepairRestoredXidsResult {
+export type RepairRestoredXidsResult = {
   /** Entries whose `xid` was rewritten to 0; 0 when the log was healthy. */
   readonly repaired: number;
-}
+};
 
 /**
  * Boot check for a database restored from another cluster (ADR-0005 failure

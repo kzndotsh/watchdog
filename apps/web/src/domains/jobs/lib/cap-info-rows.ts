@@ -4,17 +4,17 @@ import { titleCase } from "@watchdog/schemas/shared";
 import type { CapListItem } from "../types";
 import { formatCapCredentials, formatCapIo } from "./cap-run-input";
 
-export interface CapInfoRow {
+export type CapInfoRow = {
   label: string;
   value: string;
   mono?: boolean;
-}
+};
 
-interface CapInfoField {
+type CapInfoField = {
   label: string;
   read: (cap: CapListItem) => string;
   mono?: boolean;
-}
+};
 
 const CAP_INFO_FIELDS: CapInfoField[] = [
   { label: "Kind", read: (cap) => (cap.kind ? titleCase(cap.kind) : "") },

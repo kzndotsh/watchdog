@@ -32,14 +32,14 @@ import { parseValidatedCapInputEffect } from "../cap-input";
 import { appendJobActivityEffect } from "../job-activity";
 import type { JobQueue } from "../job-queue";
 
-interface ReleasedJob {
+type ReleasedJob = {
   id: string;
   capabilityId: string;
-}
+};
 
-interface AdvanceOutcome {
+type AdvanceOutcome = {
   jobs: ReleasedJob[];
-}
+};
 
 function maybeFinishPlaybookRunEffect(
   exec: DbExec,

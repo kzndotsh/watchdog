@@ -85,11 +85,11 @@ export type JobListRow = {
 };
 
 /** Read model: a Job plus the playbook it belongs to, if any. */
-export interface JobWithPlaybook<Row> {
+export type JobWithPlaybook<Row> = {
   job: Row;
   playbookId: string | null;
   playbookRunStatus: PlaybookRunStatus | null;
-}
+};
 
 export type NewJob = Pick<
   typeof jobs.$inferInsert,

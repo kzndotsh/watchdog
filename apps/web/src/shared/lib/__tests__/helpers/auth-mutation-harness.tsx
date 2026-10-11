@@ -5,12 +5,12 @@ import { expect, vi, type Mock } from "vitest";
 
 import { toast } from "@/shared/ui/toast";
 
-interface AuthMutation<V> {
+type AuthMutation<V> = {
   mutate: (variables: V) => void;
   isSuccess: boolean;
   isError: boolean;
   error: unknown;
-}
+};
 
 /** What a Better Auth client call answers: `{ error }` for a refused call, rejected for a transport failure. */
 type AuthAnswer =

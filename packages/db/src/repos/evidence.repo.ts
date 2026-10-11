@@ -73,21 +73,21 @@ export type NewEvidence = Pick<
   | "actorLabel"
 >;
 
-export interface EvidenceCapSeed {
+export type EvidenceCapSeed = {
   id: string;
   entityId: string | null;
   sourceUrl: string | null;
   text: string | null;
-}
+};
 
-export interface ListEvidenceRowsOpts {
+export type ListEvidenceRowsOpts = {
   /** Include soft-deleted rows alongside active. Default: active only. */
   includeDeleted?: boolean;
   /** Only soft-deleted rows (Hidden queue). Overrides includeDeleted. */
   deletedOnly?: boolean;
   unprocessedOnly?: boolean;
   unattachedOnly?: boolean;
-}
+};
 
 function softDeleteFilter(opts?: ListEvidenceRowsOpts) {
   if (opts?.deletedOnly === true) return isNotNull(evidence.deletedAt);

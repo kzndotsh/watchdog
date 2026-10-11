@@ -18,13 +18,13 @@ import {
 import { entityDisplayLabel, predicateLabel } from "./vocab";
 
 /** Graph patch op (confidence is chosen at Accept, never in data). */
-export interface PatchOp {
+export type PatchOp = {
   op: "create" | "upsert" | "update";
   resource: "entity" | "identifier" | "edge" | "claim" | "event" | "question";
   id: string;
   data: JsonObject;
   evidenceIds?: string[];
-}
+};
 
 const resourceSchema = z.enum([
   "entity",

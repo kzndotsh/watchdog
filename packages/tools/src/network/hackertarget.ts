@@ -27,10 +27,10 @@ export type HackertargetLookupSnapshot = z.infer<
  * @see https://hackertarget.com/reverse-ip-lookup/
  */
 
-interface HackertargetOptions {
+type HackertargetOptions = {
   userAgent?: string;
   limit?: number;
-}
+};
 
 function hackertargetResponseError(text: string): string | null {
   if (

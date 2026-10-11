@@ -25,11 +25,11 @@ function safeDownloadFilename(
   return base;
 }
 
-interface DownloadToFileInput {
+type DownloadToFileInput = {
   urlPath: string;
   outPath?: string;
   fallbackFilename: string;
-}
+};
 
 /**
  * Authenticated GET for binary/markdown export routes (not on oRPC contract).

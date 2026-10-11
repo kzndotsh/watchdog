@@ -25,11 +25,11 @@ function stringifyCause(cause: unknown): string {
   }
 }
 
-interface ErrorCauseFields {
+type ErrorCauseFields = {
   name: string;
   message: string;
   stack: string | undefined;
-}
+};
 
 /**
  * The full underlying cause for the request log (never the HTTP body). Errors keep
@@ -57,16 +57,16 @@ function logFieldsFor(error: DomainTag) {
  * Body shape every mapped error carries in the oRPC `data` field: the stable
  * `code` (never renamed once released) next to the safe message.
  */
-export interface ApiErrorData {
+export type ApiErrorData = {
   readonly code: DomainTag["code"];
-}
+};
 
 /** `not_found` also names what was missing: the entity and the caller-supplied id. */
-export interface NotFoundErrorData extends ApiErrorData {
+export type NotFoundErrorData = {
   readonly code: "not_found";
   readonly entity: NotFoundEntity;
   readonly id: string;
-}
+} & ApiErrorData;
 
 /** Convert a tagged domain failure to an oRPC HTTP error value. */
 export function toOrpcError(error: DomainTag) {

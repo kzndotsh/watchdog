@@ -1,9 +1,9 @@
 const API_KEY_ACTOR_PREFIX = "api-key:";
 
-export interface ActorUser {
+export type ActorUser = {
   name: string;
   email: string;
-}
+};
 
 /** Mask local-part except first character. Display only — not Graph audit. */
 export function maskEmailForActor(email: string): string {

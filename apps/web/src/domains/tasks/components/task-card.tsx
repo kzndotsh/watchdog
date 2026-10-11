@@ -12,14 +12,14 @@ import { ActionsContextMenu } from "@/shared/ui/actions-context-menu";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
 import { TASK_CARD_SHELL_CLASS } from "@/shared/ui/task-board-shell";
 
-interface Props {
+type Props = {
   task: TaskRecord;
   selected?: boolean;
   onSelect: (task: TaskRecord) => void;
   onDelete?: (task: TaskRecord) => void;
   entityById?: Map<string, TaskEntityLabel>;
   dragDisabled?: boolean;
-}
+};
 
 export function TaskCard({
   task,

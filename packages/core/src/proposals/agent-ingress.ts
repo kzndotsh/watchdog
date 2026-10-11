@@ -33,7 +33,7 @@ import {
 import { suppressAndProposeStageEffect } from "../jobs/stages/propose";
 import { getProposalForCaseEffect, type ProposalRecord } from "./proposals";
 
-export interface GraphWriteRecord {
+export type GraphWriteRecord = {
   id: string;
   caseId: CaseId;
   actorId: string;
@@ -43,7 +43,7 @@ export interface GraphWriteRecord {
   confidence: GraphWriteRow["confidence"];
   summary: string | null;
   createdAt: string;
-}
+};
 
 export function listGraphWritesForCaseEffect(
   caseId: CaseId,
@@ -82,13 +82,13 @@ function findGraphWriteByIdempotency(
   return graphWritesRepo.findIdByIdempotency(exec, input);
 }
 
-export interface AgentGraphWriteResult {
+export type AgentGraphWriteResult = {
   writeId: string;
   confidence: "unverified";
   opCount: number;
   replayed: boolean;
   actorLabel: string;
-}
+};
 
 export function createAgentProposalEffect(input: {
   caseId: CaseId;

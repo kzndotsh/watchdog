@@ -19,7 +19,7 @@ import {
 } from "@/shared/ui/primitives/combobox";
 import { trimmedOrUndefined } from "@watchdog/schemas/shared";
 
-interface CapCapabilitySelectProps {
+type CapCapabilitySelectProps = {
   caps: readonly CapListItem[];
   value: string;
   onValueChange: (id: string) => void;
@@ -27,12 +27,12 @@ interface CapCapabilitySelectProps {
   /** Highlight trigger when selected Cap needs Case egress. */
   needsEgress?: boolean;
   className?: string;
-}
+};
 
-interface CapGroup {
+type CapGroup = {
   value: string;
   items: CapListItem[];
-}
+};
 
 function CapInfoCard({
   cap,

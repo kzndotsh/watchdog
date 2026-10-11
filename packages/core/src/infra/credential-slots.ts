@@ -11,13 +11,13 @@ import {
 } from "./vault";
 
 /** Metadata slot for Settings / credentials API — never plaintext. */
-export interface CredentialSlot {
+export type CredentialSlot = {
   name: string;
   label: string;
   description: string;
   configured: boolean;
   updatedAt: string | null;
-}
+};
 
 function slotFromMeta(meta: CredentialMeta): CredentialSlot {
   const known = listKnownCredentials().find((k) => k.name === meta.name);
@@ -61,12 +61,12 @@ export function listCredentialSlotsEffect(
   );
 }
 
-interface PutCredentialSlotInput {
+type PutCredentialSlotInput = {
   userId: string;
   name: string;
   secret: string;
   label?: string | null;
-}
+};
 
 export function putCredentialSlotEffect(
   input: PutCredentialSlotInput

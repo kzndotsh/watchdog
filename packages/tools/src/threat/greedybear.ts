@@ -95,9 +95,9 @@ function fetchScannerFeedEffect(
  * @see https://greedybear-docs.readthedocs.io/en/latest/OpenAPI.html
  */
 
-interface GreedybearOptions {
+type GreedybearOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchGreedybearLookupEffect(
   queryRaw: string,

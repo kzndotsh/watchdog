@@ -14,9 +14,9 @@ import {
 
 import type { DataTableFeatures } from "./table-features";
 
-interface Props<TData extends RowData> {
+type Props<TData extends RowData> = {
   table: ReactTable<DataTableFeatures, TData>;
-}
+};
 
 export function DataTableViewOptions<TData extends RowData>({
   table,

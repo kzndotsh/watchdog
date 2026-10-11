@@ -91,7 +91,7 @@ export const EDGE_PREDICATE_GROUP_LABELS: Record<EdgePredicateGroup, string> = {
   other: "Other",
 };
 
-export interface EdgePredicateMeta {
+export type EdgePredicateMeta = {
   /** Outbound / canonical label (preferred directionality). */
   label: string;
   /** Inbound label; equals `label` when symmetric. */
@@ -104,7 +104,7 @@ export interface EdgePredicateMeta {
    * Empty = any pair.
    */
   validKinds: readonly EdgeKindPair[];
-}
+};
 
 const ANY_KINDS: readonly EdgeKindPair[] = [];
 

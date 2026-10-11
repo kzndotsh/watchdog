@@ -110,10 +110,10 @@ function PaletteActionGroup({
   );
 }
 
-interface CommandPaletteProps {
+type CommandPaletteProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+};
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();

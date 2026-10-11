@@ -48,9 +48,9 @@ const THREAT_TYPES = [
  * @see https://developers.google.com/safe-browsing/v4/lookup-api
  */
 
-interface SafebrowsingOptions {
+type SafebrowsingOptions = {
   userAgent?: string;
-}
+};
 
 export function fetchSafebrowsingLookupEffect(
   urlRaw: string,

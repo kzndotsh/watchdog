@@ -85,9 +85,9 @@ function fetchExitAddressesEffect(
  * @see https://check.torproject.org/exit-addresses
  */
 
-interface TorExitOptions {
+type TorExitOptions = {
   userAgent?: string;
-}
+};
 export function fetchTorExitLookupEffect(
   ipRaw: string,
   signal: AbortSignal,

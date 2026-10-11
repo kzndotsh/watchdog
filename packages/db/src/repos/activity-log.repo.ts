@@ -21,7 +21,7 @@ import { trimActorId, trimCaseId, trimResourceId } from "./_scoped-ids";
 
 export type ActivityRow = typeof activity.$inferSelect;
 
-export interface NewActivityRow {
+export type NewActivityRow = {
   caseId: CaseId;
   kind: ActivityEntryKind;
   action: string;
@@ -32,9 +32,9 @@ export interface NewActivityRow {
   actorLabel?: string | null;
   fromValue?: string | null;
   toValue?: string | null;
-}
+};
 
-export interface PruneActivityOpts {
+export type PruneActivityOpts = {
   /** Delete only entries created before this instant. */
   before: Date;
   /** Always keep this many newest entries (by id) of every Case. */
@@ -43,39 +43,39 @@ export interface PruneActivityOpts {
   limit: number;
   /** Delete only entries at or below this position (what a durable consumer has read). */
   notPast?: ActivityCursor | null;
-}
+};
 
-export interface PruneActivityResult {
+export type PruneActivityResult = {
   /** Entries deleted by this batch. */
   count: number;
   /** The newest position deleted; `null` when nothing was. */
   newest: ActivityCursor | null;
-}
+};
 
-export interface DrainActivityOpts {
+export type DrainActivityOpts = {
   /** Exclusive lower bound. */
   after: ActivityCursor;
   limit: number;
   /** Scope to an organization's Cases (replay); omit for the process-wide tailer. */
   organizationId?: OrganizationId;
   caseId?: CaseId;
-}
+};
 
 /** One kind and the actions of it the feed shows (`FEED_ACTIONS` in core). */
-export interface FeedFilter {
+export type FeedFilter = {
   kind: ActivityEntryKind;
   actions: readonly string[];
-}
+};
 
-export interface RecentFeedOpts {
+export type RecentFeedOpts = {
   organizationId: OrganizationId;
   caseId?: CaseId;
   /** Allowlist of kind and action pairs; an entry outside every filter is never read. */
   filters: readonly FeedFilter[];
   limit: number;
-}
+};
 
-export interface RecentActivityLogRow {
+export type RecentActivityLogRow = {
   id: number;
   caseId: CaseId;
   caseName: string;
@@ -89,20 +89,20 @@ export interface RecentActivityLogRow {
   actorId: string | null;
   actorLabel: string | null;
   at: Date;
-}
+};
 
 /** What Recent activity needs to label a Proposal entry (Proposal labels are resolved on read). */
-export interface ProposalActivityLabelRow {
+export type ProposalActivityLabelRow = {
   id: string;
   caseId: CaseId;
   summary: string | null;
   patch: PatchOp[];
   capabilityId: string | null;
   playbookId: string | null;
-}
+};
 
 /** What Recent activity needs to label a Job entry (Job labels are resolved on read). */
-export interface JobActivityLabelRow {
+export type JobActivityLabelRow = {
   id: string;
   caseId: CaseId;
   capabilityId: string;
@@ -113,7 +113,7 @@ export interface JobActivityLabelRow {
   playbookFanIndex: number;
   playbookId: string | null;
   updatedAt: Date;
-}
+};
 
 /**
  * Rows whose writing transaction is older than every still-running one: no row

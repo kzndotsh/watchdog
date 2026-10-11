@@ -12,12 +12,12 @@ export type ValidateIdentifierWriteResult =
   | { ok: true; type: IdentifierType; value: string; platform: string }
   | { ok: false; message: string };
 
-export interface InvalidIdentifierOp {
+export type InvalidIdentifierOp = {
   opId: string;
   type: string;
   value: string;
   message: string;
-}
+};
 
 export const HANDLE_REQUIRES_PLATFORM =
   "platform is required when type is handle";

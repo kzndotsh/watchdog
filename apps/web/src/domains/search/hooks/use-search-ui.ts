@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 
 import type { AppAction } from "@/shared/lib/app-action";
 
-export interface SearchUiValue {
+export type SearchUiValue = {
   openPalette: () => void;
   togglePalette: () => void;
   openShortcuts: () => void;
@@ -10,7 +10,7 @@ export interface SearchUiValue {
   chromeActions: readonly AppAction[];
   /** Idle Mod+K Commands (excludes open-palette by construction). */
   paletteCommands: readonly AppAction[];
-}
+};
 
 const SearchUiContext = createContext<SearchUiValue | null>(null);
 

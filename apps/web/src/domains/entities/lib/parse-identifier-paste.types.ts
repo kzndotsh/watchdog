@@ -41,19 +41,19 @@ export const IDENTIFIER_PASTE_TARGET_LABELS: Record<
 
 export type PasteDelimiter = "tab" | "comma" | "semicolon" | "pipe" | "none";
 
-export interface IdentifierPasteEntity {
+export type IdentifierPasteEntity = {
   id: string;
   name: string;
   slug: string;
-}
+};
 
-export interface IdentifierPasteDefaults {
+export type IdentifierPasteDefaults = {
   entityId: string;
   type: IdentifierType | null;
   platform: string;
-}
+};
 
-export interface IdentifierPasteRow {
+export type IdentifierPasteRow = {
   sourceIndex: number;
   columnIndex: number;
   sourceLine: string;
@@ -67,18 +67,18 @@ export interface IdentifierPasteRow {
   confidence: ConfidenceTier;
   error: string | null;
   note: string | null;
-}
+};
 
-export interface IdentifierPasteRowOverride {
+export type IdentifierPasteRowOverride = {
   entityId?: string;
   type?: IdentifierType | null;
   value?: string;
   platform?: string;
   status?: IdentifierStatus;
   confidence?: ConfidenceTier;
-}
+};
 
-export interface IdentifierPasteTable {
+export type IdentifierPasteTable = {
   delimiter: PasteDelimiter;
   hasHeader: boolean;
   headerLine: string | null;
@@ -89,7 +89,7 @@ export interface IdentifierPasteTable {
   cells: string[][];
   truncated: boolean;
   rawDataCount: number;
-}
+};
 
 export const FIELD_ALIASES: Record<string, IdentifierPasteTarget> = {
   value: "value",

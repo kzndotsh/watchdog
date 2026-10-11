@@ -10,13 +10,13 @@ import {
 } from "@watchdog/schemas/shared";
 import { Input } from "@watchdog/ui/components/input";
 
-export interface UrlDumpOption {
+export type UrlDumpOption = {
   id: string;
   sourceUrl: string;
   label?: string | null;
-}
+};
 
-export interface PlaybookRunFormValues {
+export type PlaybookRunFormValues = {
   playbookId: string;
   host: string;
   url: string;
@@ -26,7 +26,7 @@ export interface PlaybookRunFormValues {
   email: string;
   hash: string;
   handle: string;
-}
+};
 
 const SEED_TEXT_FIELDS = [
   {
@@ -74,21 +74,21 @@ const SEED_TEXT_FIELDS = [
   inlineClassName: string;
 }[];
 
-interface SeedFieldApi {
+type SeedFieldApi = {
   state: { value: string };
   handleBlur: () => void;
   handleChange: (value: string) => void;
-}
+};
 
-interface PlaybookSeedFormBind {
+type PlaybookSeedFormBind = {
   Field: (props: {
     name: keyof PlaybookRunFormValues;
     children: (field: SeedFieldApi) => ReactNode;
   }) => ReactNode | Promise<ReactNode>;
   setFieldValue: (name: "url", value: string) => void;
-}
+};
 
-interface PlaybookSeedFieldsProps {
+type PlaybookSeedFieldsProps = {
   layout: "inline" | "stacked";
   view: Pick<
     PlaybookSeedView,
@@ -97,7 +97,7 @@ interface PlaybookSeedFieldsProps {
   urlDumps: UrlDumpOption[];
   entities: EntityOption[];
   form: PlaybookSeedFormBind;
-}
+};
 
 function seedTextClassName(
   layout: "inline" | "stacked",

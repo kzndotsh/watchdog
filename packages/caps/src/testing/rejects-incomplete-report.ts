@@ -2,10 +2,10 @@ import { expect, it } from "vitest";
 
 import type { JsonObject } from "@watchdog/schemas/shared";
 
-interface InterpretableCap {
+type InterpretableCap = {
   id: string;
   interpret?: (...args: never[]) => unknown;
-}
+};
 
 /**
  * Shared Cap test-case factory. Call inside `describe`, not inside `it`.

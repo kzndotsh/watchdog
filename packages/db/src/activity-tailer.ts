@@ -15,7 +15,7 @@ type Listen = (
   onError: (error: unknown) => void
 ) => { end: () => Promise<void> };
 
-export interface ActivityTailerOptions {
+export type ActivityTailerOptions = {
   /** The pool handle the drain queries run on (never a transaction). */
   exec: DbExec;
   /** LISTEN seam; the default listens on `watchdog_activity` over a dedicated connection. */
@@ -43,9 +43,9 @@ export interface ActivityTailerOptions {
    * tail follows.
    */
   startAt?: ActivityCursor;
-}
+};
 
-export interface ActivityTailSubscription {
+export type ActivityTailSubscription = {
   /**
    * Settles once the tailer's cursor is initialised: every entry that becomes
    * safe after this point reaches the listener. A caller that replays history
@@ -54,9 +54,9 @@ export interface ActivityTailSubscription {
    */
   ready: Promise<void>;
   unsubscribe: () => void;
-}
+};
 
-export interface ActivityTailer {
+export type ActivityTailer = {
   /**
    * Receive every commit-safe entry after the tailer's cursor, in
    * `(xid, id)` order. The first subscriber starts the single LISTEN
@@ -65,7 +65,7 @@ export interface ActivityTailer {
   subscribe: (listener: (row: ActivityRow) => void) => ActivityTailSubscription;
   /** Drop every subscriber and end the LISTEN connection. */
   stop: () => Promise<void>;
-}
+};
 
 function defaultListen(
   onNotification: (payload: string) => void,

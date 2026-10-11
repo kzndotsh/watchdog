@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils";
 import { TYPE_SCALE_ROLES } from "@/routes/_protected/ui/-type-scale-roles";
 import { useDisplayScale } from "@/shared/lib/display-scale";
 
-interface RoleMetrics {
+type RoleMetrics = {
   px: number;
   rem: number;
   lineHeightPx: number;
   fontWeight: number;
-}
+};
 
 function formatPx(px: number): string {
   if (!Number.isFinite(px)) return "…";

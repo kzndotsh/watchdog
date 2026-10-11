@@ -7,7 +7,7 @@ export type AppActionSurface = "context" | "dropdown" | "palette";
 export type AppActionGroup = "target" | "page" | "app";
 
 /** Shared by ContextMenu, ⋯ DropdownMenu, and palette Commands. */
-export interface AppAction {
+export type AppAction = {
   id: string;
   label: string;
   group: AppActionGroup;
@@ -20,7 +20,7 @@ export interface AppAction {
   keywords?: string;
   /** Defaults: target → context+dropdown; page/app → context+palette. */
   surfaces?: readonly AppActionSurface[];
-}
+};
 
 const DEFAULT_SURFACES: Record<AppActionGroup, readonly AppActionSurface[]> = {
   target: ["context", "dropdown"],

@@ -85,13 +85,13 @@ export function originLookupName(ip: string): string {
   throw validationVendorError(`Invalid IP address: ${ip}`);
 }
 
-export interface CymruOriginFields {
+export type CymruOriginFields = {
   asns: string[];
   bgpPrefix: string | null;
   countryCode: string | null;
   registry: string | null;
   allocated: string | null;
-}
+};
 
 export function parseCymruOriginTxt(rawOrigin: string): CymruOriginFields {
   const parts = rawOrigin.split("|").map((p) => p.trim());

@@ -77,10 +77,10 @@ const TRACKER_PATTERNS: { vendor: string; re: RegExp }[] = [
 
 /** Live HTML → title/meta + tracker hints. */
 
-interface PageEnrichOptions {
+type PageEnrichOptions = {
   userAgent: string;
   maxBytes?: number;
-}
+};
 
 function pageEnrichValidationError(
   url: string,

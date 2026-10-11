@@ -29,13 +29,13 @@ import type { DomainTag } from "../infra/tagged-errors";
 import { jobActivityLabel } from "../jobs/job-display";
 
 /** The Job fields a feed label is built from: the Job itself, or a run's seed step. */
-interface JobLabelSubject {
+type JobLabelSubject = {
   caseId: CaseId;
   capabilityId: string;
   input: JsonObject;
   resultSummary: string | null;
   playbookId: string | null;
-}
+};
 
 /** Display verb for a Job status. */
 function jobActivityAction(status: JobStatus): string {

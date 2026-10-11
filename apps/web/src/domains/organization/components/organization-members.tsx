@@ -35,19 +35,19 @@ import { Input } from "@watchdog/ui/components/input";
 import { Label } from "@watchdog/ui/components/label";
 import { Spinner } from "@watchdog/ui/components/spinner";
 
-interface OrgMember {
+type OrgMember = {
   id: string;
   role: string;
   userId: string;
   user?: { name?: string | null; email?: string | null };
-}
+};
 
-interface OrgInvitation {
+type OrgInvitation = {
   id: string;
   email: string;
   role: string;
   status: string;
-}
+};
 
 const EMPTY_MEMBERS: OrgMember[] = [];
 const EMPTY_INVITATIONS: OrgInvitation[] = [];

@@ -14,7 +14,7 @@ import { actorLabelForPersist } from "../actors/actor-label-snapshot";
 import { tryDb } from "../infra/postgres-effect";
 import { InternalError, type DomainTag } from "../infra/tagged-errors";
 
-export interface ActivityAppendInput {
+export type ActivityAppendInput = {
   caseId: CaseId;
   kind: ActivityEntryKind;
   /** A verb from `ACTIVITY_ENTRY_ACTIONS[kind]`. */
@@ -27,7 +27,7 @@ export interface ActivityAppendInput {
   actorLabel?: string | null;
   fromValue?: string | null;
   toValue?: string | null;
-}
+};
 
 /** Wire shape of a stored row (the SSE `activity` event, the replay response). */
 export function toActivityEntry(row: ActivityRow): ActivityEntry {
