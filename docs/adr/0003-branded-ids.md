@@ -1,6 +1,6 @@
 # ADR-0003: Branded IDs, starting with OrganizationId and CaseId
 
-**Status:** accepted (2026-10-05) · closes [#50](https://github.com/kzndotsh/watchdog/issues/50) **What this is:** how identifiers become distinct types so that passing one kind where another is expected fails to compile, how branded values are created, and the order of the migration. **What this is not:** the migration itself (tickets under [#56](https://github.com/kzndotsh/watchdog/issues/56)) or a rule for how many parameters a function may take (deferred below).
+**Status:** accepted (2026-10-05) · closes [#50](https://github.com/kzndotsh/watchdog/issues/50) **What this is:** how identifiers become distinct types so that passing one kind where another is expected fails to compile, how branded values are created, and the order of the migration. **What this is not:** the migration itself (tickets under [#56](https://github.com/kzndotsh/watchdog/issues/56)) or a rule for how many parameters a function may take (decided in the object-parameters follow-up below: positional ids stay legal).
 
 ## Context
 
@@ -20,7 +20,7 @@ Measured on `main` (2026-10-05, by a throwaway prototype):
 2. **Phase 1 is `OrganizationId` and `CaseId` together**, as one sweep in dependency order: schemas, db, auth, core, api, then web, cli, worker and caps. Branding `OrganizationId` alone already turns a `(caseId, organizationId)` swap into a compile error; `CaseId` is added in the same sweep because it is the id that appears next to it everywhere. About 270 files.
 3. **Later phases:** `EntityId`, then the remaining kinds by usage (job, evidence, edge, identifier, proposal, task, claim, event, question, actor and user).
 4. **Brands are minted only through validating constructors.** `asOrganizationId(value)` and its siblings wrap `schema.parse`. A lint rule bans bare `as <Brand>` casts outside the test fixtures, so a branded type always means the value passed validation or came from a trusted typed source (a database column, the session). The shared fixtures (`TEST_ORGANIZATION_ID`, a `testCaseId()` helper, a `testActor()` factory) live in the test kit.
-5. **The object-parameter rule is deferred.** Brands already stop id swaps, so "a function with several ids takes one object" is a readability rule and can lag. Decide it after phase 1, with the real list of offenders, either as a lint rule in the local oxlint plugin with a baseline that can only shrink (like the size gate) or by leaving positional lists legal but type-checked.
+5. **The object-parameter rule was deferred, then decided: no rule.** Brands already stop id swaps, so "a function with several ids takes one object" is a readability rule and could lag. It was decided after phase 1 with the real list of offenders; see "Follow-up: object parameters" below.
 
 ## Consequences
 
@@ -52,6 +52,14 @@ The layers phase 1 left on plain strings now carry the brands. What changed and 
   - _Generated client._ `pnpm generate:client` and `pnpm generate:caps` produce no diff: `.brand()` leaves the JSON Schema untouched and `packages/client/src/generated/app-router.ts` is a type-only alias of the live router, so the SDK's output types carry the brand for free.
   - _Trade-off._ A brand on an output is a promise made by the server (it validated the uuid and a drizzle `$type` column supplied it); a client that is not this repo's SDK sees a plain string on the wire, as before.
 - **Still plain:** web and cli parameters and query keys that merely pass a Case id along (they accept a `CaseId`, nothing requires the brand), `@watchdog/log` field bags, the demo seed scripts and every non-case id kind.
+
+## Follow-up: object parameters (2026-10-11, closes [#161](https://github.com/kzndotsh/watchdog/issues/161))
+
+**Decision: positional ids stay legal; no lint rule is added now.**
+
+- **Count.** Exported non-test functions (declarations and exported const arrow or function expressions) in `packages/core/src`, `packages/db/src/repos` and `packages/api/src` with two or more positional id parameters (a parameter named `*Id` or `*Ids`, or typed `CaseId` or `OrganizationId`): **41**, of which **17 take three or more** (one takes four, `deleteTaskEffect`). By package: core 39 (17 with three or more), db repos 2 (`orgCaseFilter`, `trimScopedCaseIds`; none with three), api 0. Method: parse each file with the TypeScript compiler API, visit top-level exported functions, count parameters by that rule (the throwaway script is not committed). The count is a snapshot of `main` on the date above, not a gate.
+- **Why no rule.** `CaseId` and `OrganizationId` are branded, so swapping them is a compile error (pinned by `packages/core/src/__tests__/branded-ids.types.test.ts`). What remains is a swap between plain-uuid kinds (entity, edge, job, evidence, proposal, task, claim and actor ids) until their own phases brand them. An object-parameter rule would then be a readability preference over 41 call sites with no type-safety gain today, and a baseline of that size is churn.
+- **Reopen when** entity and edge ids are branded: a baselined lint rule that flags new multi-id positional exported functions becomes cheap, because the remaining offenders are mostly the `(caseId, organizationId, entityId)` shapes. Revisit then, with the shrink-only baseline pattern (`withBaseline`, see [conventions](../reference/platform/conventions.md#adding-a-lint-rule)) and a fresh count.
 
 ## Considered
 
