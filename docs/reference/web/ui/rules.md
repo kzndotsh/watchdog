@@ -45,6 +45,10 @@ Enforcers: `oxlint` (incl. `@shadcn/lint`, config in `oxlint.config.ts`) (incl. 
 | No manual Refresh buttons on live paths | [`data.md`](../data.md) | `guidance` |
 | Screens are named by layout kind; Console / Workbench / Tape banned; never a screen named `*Panel` | [`README.md`](README.md#chrome-lexicon-ui-parts) | `oxlint` `watchdog/no-banned-surface-name` (export names only); `*Panel` is `guidance` |
 | Copy: `Couldn't` / `Can't` / `Failed to`; Title Case labels; `Verb + Noun` primaries | [`ux.md`](../../../explanation/ux.md) | `guidance` |
+| A failure message is `Couldn't <verb> <noun>` built with `couldnt(verb, noun)` (`lib/utils.ts`) and passed as the fallback to `errMessage`, never a hand-written `<Verb> failed` or `Could not ...`; `Failed to ...` stays for system load failures | [`ux.md`](../../../explanation/ux.md) | `apps/web/src/lib/__tests__/source-conventions.test.ts` (no `... failed` / `Could not` string); using the helper rather than a literal `Couldn't ...` is `guidance` |
+| One debounce for typed input: `useDebouncedValue` (`shared/hooks`, on TanStack Pacer) with a delay from `shared/lib/debounce.ts` (`SEARCH_DEBOUNCE_MS`, `SLUG_CHECK_DEBOUNCE_MS`); no local typing timer | [`effects.md`](effects.md) | `apps/web/src/lib/__tests__/source-conventions.test.ts` (no `*DEBOUNCE*` constant outside `debounce.ts`) and `shared/hooks/__tests__/use-debounced-value.component.test.tsx`; a new `setTimeout` typing timer is `guidance` |
+| An icon-only control is the `Button` primitive with `aria-label` (or sr-only text); `title` alone is a tooltip, not a name | [`atoms.md`](atoms.md#accessibility) | `oxlint` `react-doctor/shadcn-icon-button-requires-label` (the `Button` primitive only); an icon-only raw `<button>` is `guidance` |
+| A clickable card is a real `<button>` (an overlay with the card as its `relative` container when it holds other controls), never a `role="button"` element | [`atoms.md`](atoms.md#accessibility) | `apps/web/src/lib/__tests__/source-conventions.test.ts` (no `role="button"` literal) |
 
 ## Taste
 

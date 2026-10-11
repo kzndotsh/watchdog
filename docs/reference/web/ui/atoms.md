@@ -37,6 +37,12 @@ Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dens
 - Mod+B is `sidebar-provider`: the vendored `SidebarProvider` binds it ([`vendor.md`](vendor.md)), so `hotkeyBindings` skips it and the menu/palette action only runs `toggleSidebar`. Don't bind it again (two listeners toggle twice and cancel out).
 - Mod-key text: `useModKeyLabel` / `formatChord(chord, label)`; never type `Ctrl` or the Apple glyph. The search minimum is `SEARCH_MIN_QUERY_LENGTH` (`@watchdog/schemas`), also in copy.
 
+## Accessibility
+
+- An icon-only control is the `Button` primitive with `aria-label` (or an sr-only text child). `title` is a tooltip, not an accessible name: keep it only as a supplement. `react-doctor/shadcn-icon-button-requires-label` flags an unnamed icon-only `Button`; an icon-only raw `<button>` is not covered by any lint rule here, so it is `guidance`.
+- A clickable card is a real `<button>`, never a `role="button"` element. A card that also holds controls (a `RowActionsMenu`) cannot nest one button in another: make the card a `relative` container, lay an `absolute inset-0` button over its content (name it with `aria-label`, give it the focus ring with `ring-inset`), and place the other controls after it so they paint above (`TaskCard`). Enter and Space then work natively, or start a keyboard drag when the card is a dnd-kit handle. No built-in lint rule covers this cleanly: `jsx-a11y/prefer-tag-over-role` also flags every Queue `role="option"` / `listbox`, so it stays off and `apps/web/src/lib/__tests__/source-conventions.test.ts` bans the `role="button"` literal.
+- Typing delays (search, slug check) go through `useDebouncedValue` with a named constant from `shared/lib/debounce.ts`; see [`effects.md`](effects.md).
+
 ## Variants, not overrides
 
 Callers place components (layout classes, `truncate`) and pick a size or variant (a Button's height is never a `className`: `watchdog/no-button-height-class`); they do not patch a component's spacing, type, color, or shape with `className`. Enforced in `domains/` and `routes/` by `shadcn/no-restyle` ([`rules.md`](rules.md)). If a screen needs a look the component lacks, use the stock component or a token. A pattern with its own meaning gets its own name in `shared/ui` and composes vanilla primitives (`QueueRow`, `StatusDot`, `EmptyState size="sm"`). Which components have Watchdog wrappers, and how: [`vendor.md`](vendor.md).
