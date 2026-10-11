@@ -67,6 +67,76 @@ const FAIL: Record<string, Case> = {
     ),
     lines: [2],
   },
+  "digit-names.tsx": {
+    source: lines(
+      "export function H1() { return <h1 />; }",
+      "export function H2() { return <h2 />; }"
+    ),
+    lines: [2],
+  },
+  "lazy-components.tsx": {
+    source: lines(
+      'import { lazy } from "react";',
+      'export const First = lazy(() => import("./first"));',
+      'export const Second = lazy(() => import("./second"));'
+    ),
+    lines: [3],
+  },
+  "react-lazy-components.tsx": {
+    source: lines(
+      'import React from "react";',
+      'export const First = React.lazy(() => import("./first"));',
+      'export const Second = React.lazy(async () => import("./second"));'
+    ),
+    lines: [3],
+  },
+  "memo-of-imported-components.tsx": {
+    source: lines(
+      'import { memo } from "react";',
+      'import { ImportedA, ImportedB } from "./imported";',
+      "export const A = memo(ImportedA);",
+      "export const B = memo(ImportedB);"
+    ),
+    lines: [4],
+  },
+  "forward-ref-of-imported-and-qualified.tsx": {
+    source: lines(
+      'import React, { forwardRef, memo } from "react";',
+      'import { Inner } from "./inner";',
+      'import * as ns from "./ns";',
+      "export const A = forwardRef(Inner);",
+      "export const B = React.memo(ns.Thing);",
+      "export const C = React.forwardRef(Inner);"
+    ),
+    lines: [5, 6],
+  },
+  "memo-of-aliased-import.tsx": {
+    source: lines(
+      'import { memo } from "react";',
+      'import { Real as Alias, Other as Alias2 } from "./real";',
+      "export const A = memo(Alias);",
+      "export const B = memo(Alias2);"
+    ),
+    lines: [4],
+  },
+  "nested-memo-forward-ref-of-imports.tsx": {
+    source: lines(
+      'import { memo, forwardRef } from "react";',
+      'import { Inner } from "./inner";',
+      "export const A = memo(forwardRef(Inner));",
+      "export const B = memo(forwardRef(Inner));"
+    ),
+    lines: [4],
+  },
+  "memo-of-local-component.tsx": {
+    source: lines(
+      'import { memo } from "react";',
+      "function Base() { return <div />; }",
+      "export const A = memo(Base);",
+      "export const B = memo(Base);"
+    ),
+    lines: [4],
+  },
   "three-components.tsx": {
     source: lines(
       "export function A() { return <div />; }",
@@ -242,6 +312,29 @@ const FAIL: Record<string, Case> = {
 };
 
 const OK: Record<string, string> = {
+  "constants-not-digit-components.tsx": lines(
+    "export const MAX_ROWS = () => 1;",
+    "export const DEFAULT = () => 1;",
+    "export const H1_ID = () => 1;",
+    "export function A() { return <div />; }"
+  ),
+  "non-component-memo-and-lazy-calls.tsx": lines(
+    'import { memo, lazy } from "react";',
+    "export const total = memo(5);",
+    "export const Lookup = memo(compute(1));",
+    "export const Loaded = lazy(5);",
+    "export const Plain = other(() => 1);",
+    "export function A() { return <div />; }"
+  ),
+  "single-lazy.tsx": lines(
+    'import { lazy } from "react";',
+    'export const A = lazy(() => import("./a"));'
+  ),
+  "single-memo-of-import.tsx": lines(
+    'import { memo } from "react";',
+    'import { Imported } from "./imported";',
+    "export const A = memo(Imported);"
+  ),
   "single.tsx": lines("export function A() { return <div />; }"),
   "single-default.tsx": lines(
     "export default function A() { return <div />; }"

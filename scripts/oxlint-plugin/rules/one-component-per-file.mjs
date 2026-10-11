@@ -7,10 +7,14 @@ import { webSrcPath } from "../lib/web-modules.mjs";
  * @typedef {{ name: string, node: unknown }} Component
  */
 
-/** `Foo`, `FooBar2`; not `foo`, not `FOO` / `FOO_BAR` (constants), not `useFoo`. */
-const COMPONENT_NAME = /^[A-Z]([A-Za-z0-9]*[a-z][A-Za-z0-9]*)?$/;
+/**
+ * `Foo`, `FooBar2`, `H1`; not `foo`, not `FOO` / `FOO_BAR` / `MAX_ROWS` (constants), not
+ * `useFoo`. PascalCase with a lowercase letter, or one capital followed only by digits.
+ */
+const COMPONENT_NAME = /^[A-Z]([A-Za-z0-9]*[a-z][A-Za-z0-9]*|[0-9]+)?$/;
 const CLASS_BASES = new Set(["Component", "PureComponent"]);
 const WRAPPERS = new Set(["memo", "forwardRef"]);
+const LAZY = "lazy";
 const ALIAS_DEPTH = 4;
 
 /**
@@ -43,18 +47,21 @@ const unwrap = (node) => {
 };
 
 /**
- * `memo(...)`, `forwardRef(...)`, `React.memo(...)`, `React.forwardRef(...)`.
+ * The called name of `f(...)` or `ns.f(...)` (`React.memo`), else null.
  * @param {unknown} callee
+ * @returns {string | null}
  */
-const isWrapperCallee = (callee) => {
+const calleeName = (callee) => {
   const name = identifierName(callee);
-  if (name !== null) return WRAPPERS.has(name);
-  return (
+  if (name !== null) return name;
+  if (
     isRecord(callee) &&
     callee.type === "MemberExpression" &&
-    callee.computed !== true &&
-    WRAPPERS.has(identifierName(callee.property) ?? "")
-  );
+    callee.computed !== true
+  ) {
+    return identifierName(callee.property);
+  }
+  return null;
 };
 
 /**
@@ -75,15 +82,18 @@ const isComponentClass = (node) => {
 };
 
 /**
- * True when an expression builds a component: a function or arrow, a memo/forwardRef
- * wrapper around one, a component class, or an identifier that resolves (through
- * module-level bindings) to one.
+ * True when an expression builds a component: a function or arrow, a `memo` /
+ * `forwardRef` wrapper around a component (a function, an identifier or member
+ * expression, possibly imported, or another wrapper), a `lazy` loader, a component
+ * class, or an identifier that resolves (through module-level bindings) to one.
  * @param {unknown} expr
  * @param {Map<string, unknown>} locals module-level binding name -> declaring node
  * @param {number} depth
+ * @param {boolean} wrapped the expression is the argument of memo/forwardRef, so an
+ *   identifier or member expression is the wrapped component whether local or imported
  * @returns {boolean}
  */
-const buildsComponent = (expr, locals, depth) => {
+const buildsComponent = (expr, locals, depth, wrapped = false) => {
   const node = unwrap(expr);
   if (!isRecord(node)) return false;
   switch (node.type) {
@@ -97,11 +107,27 @@ const buildsComponent = (expr, locals, depth) => {
     case "CallExpression": {
       /** @type {unknown} */
       const first = Array.isArray(node.arguments) ? node.arguments[0] : null;
-      return (
-        isWrapperCallee(node.callee) && buildsComponent(first, locals, depth)
-      );
+      const callee = calleeName(node.callee);
+      if (callee !== null && WRAPPERS.has(callee)) {
+        return buildsComponent(first, locals, depth, true);
+      }
+      if (callee === LAZY) {
+        const loader = unwrap(first);
+        return (
+          isRecord(loader) &&
+          (loader.type === "ArrowFunctionExpression" ||
+            loader.type === "FunctionExpression" ||
+            loader.type === "Identifier" ||
+            loader.type === "MemberExpression")
+        );
+      }
+      return false;
+    }
+    case "MemberExpression": {
+      return wrapped;
     }
     case "Identifier": {
+      if (wrapped) return true;
       const name = identifierName(node);
       if (name === null || depth <= 0) return false;
       return isLocalComponent(name, locals, depth - 1);
@@ -273,7 +299,7 @@ const exportedComponents = (body) => {
  * Bans a `.tsx` file under `apps/web/src` exporting more than one component. A file is
  * one screen part or one primitive; a second exported component is its own file (a
  * layout and its thin wrapper are two files). Counts exported function declarations,
- * PascalCase arrow/function-expression bindings (also wrapped in `memo` / `forwardRef`),
+ * PascalCase arrow/function-expression bindings (also wrapped in `memo` / `forwardRef`, around a local or imported component, or built by `lazy`),
  * component classes and `export { A, B }` / `export default` forms; a type, an
  * interface, a constant, a hook or a non-PascalCase function is not a component, and a
  * private helper component in the same file is not counted. Re-exports

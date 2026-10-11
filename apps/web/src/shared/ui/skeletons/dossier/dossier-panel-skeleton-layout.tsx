@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { DossierClaimRowSkeleton } from "@/shared/ui/skeletons/dossier/parts/dossier-claim-row-skeleton";
 import { DossierSectionBlockSkeleton } from "@/shared/ui/skeletons/dossier/parts/dossier-section-block-skeleton";
+import { TABLE_HEADER_CELLS } from "@/shared/ui/skeletons/dossier/parts/table-header-cells";
 import { TableBodySkeletonLayout } from "@/shared/ui/skeletons/table-body-skeleton-layout";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 
@@ -32,8 +33,8 @@ export function DossierPanelSkeletonLayout({
       {variant === "table" ? (
         <div className="border-border overflow-hidden rounded-md border">
           <div className="border-border bg-muted/30 flex h-8 items-center gap-2 border-b px-3">
-            {["w-24", "w-14", "w-14", "w-12", "w-16"].map((width) => (
-              <Skeleton key={width} className={cn("h-2.5 shrink-0", width)} />
+            {TABLE_HEADER_CELLS.map(({ id, width }) => (
+              <Skeleton key={id} className={cn("h-2.5 shrink-0", width)} />
             ))}
           </div>
           <TableBodySkeletonLayout rows={8} columns={5} />

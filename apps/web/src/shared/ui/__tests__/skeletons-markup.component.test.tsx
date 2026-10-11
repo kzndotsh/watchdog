@@ -1,6 +1,6 @@
 import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   BOARD_SKELETON_CARDS_PER_COLUMN,
@@ -249,6 +249,16 @@ describe("skeletons markup", () => {
       expect(container.innerHTML, name).not.toBe("");
       expect(container.innerHTML, name).not.toMatch(/undefined|NaN|\[object/);
       unmount();
+    }
+  });
+
+  it("renders every case without React warnings (duplicate keys and the like)", () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      for (const [, element] of cases) render(element()).unmount();
+      expect(errors.mock.calls).toEqual([]);
+    } finally {
+      errors.mockRestore();
     }
   });
 
