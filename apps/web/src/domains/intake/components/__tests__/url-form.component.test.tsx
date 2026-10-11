@@ -5,6 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 import { UrlForm } from "@/domains/intake/components/url-form";
 import { testHttpUrl } from "@watchdog/test-kit";
 
+// Flaked under shuffled file order (#224): task-board-keyboard left a keyboard
+// drag lifted, and dnd-kit's leftover document keydown listener swallowed the
+// next Space (label "blogpost"). Fixed there (Escape ends the drag); see the
+// comment in task-board-keyboard.component.test.tsx.
 describe("UrlForm", () => {
   it("submits a source URL and optional label", async () => {
     const onSubmit = vi.fn();
