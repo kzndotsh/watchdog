@@ -463,6 +463,17 @@ export default defineConfig({
       rules: { "watchdog/no-opaque-id-slice": "error" },
     },
     {
+      // One source per domain rule: the custody evidence message is typed once, in
+      // @watchdog/policy; everywhere else imports it (conventions: one source per domain
+      // rule). Tests are not exempt: they assert against the imported constant.
+      files: ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-reimplemented-custody-message": "error" },
+    },
+    {
+      files: ["packages/policy/**/*.{ts,tsx}"],
+      rules: { "watchdog/no-reimplemented-custody-message": "off" },
+    },
+    {
       // TanStack Query ownership (docs/reference/web/data.md): mutations and cache writes
       // live in hooks, query keys in queries modules. Allowed trees and tests are off.
       files: ["apps/web/src/**/*.{ts,tsx}"],

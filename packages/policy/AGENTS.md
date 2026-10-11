@@ -15,4 +15,4 @@ Pure Graph write custody (`assertPatchGates` / Accept rules). No DB, Caps, or I/
 
 - `assertPatchGates` / `assertPatchShape` return `Effect<void, CustodyViolationError>`. The shape helpers `requireString` / `requireEnum` throw `CustodyViolationError` and `runGate` rethrows that tagged error (never a plain `Error`). Tests use `it.effect` from `@effect/vitest`.
 - Browser UI imports `@watchdog/policy/patch-needs-confidence` and `@watchdog/policy/confirmed-evidence`, never the package root (Effect-tagged gates). Guidance; no lint rule.
-- `confirmed-evidence.ts` is the one home of the "confirmed needs Evidence" predicate and message (pure, no Effect or node). Never retype the message elsewhere: `confirmed-evidence-literal.test.ts` fails on it.
+- `confirmed-evidence.ts` is the one home of the "confirmed needs Evidence" predicate and message (pure, no Effect or node). Never retype the message elsewhere: lint rule `watchdog/no-reimplemented-custody-message` fails on a string, template or concatenation that spells it (tests included); `confirmed-evidence-literal.test.ts` is the raw-text backstop.
