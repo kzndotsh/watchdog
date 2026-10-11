@@ -1,7 +1,7 @@
 import { useRef, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { useQueueKeyboard } from "@/shared/lib/queue-keyboard";
+import { useQueueKeyboard } from "@/shared/hooks/use-queue-keyboard";
 import { ScrollArea } from "@watchdog/ui/components/scroll-area";
 
 /**

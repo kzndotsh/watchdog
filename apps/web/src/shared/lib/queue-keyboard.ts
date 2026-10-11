@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from "react";
+import type { RefObject } from "react";
 
 import { bareKey, isEditableTarget } from "@/shared/lib/hotkeys";
 
@@ -65,7 +65,10 @@ function moveSelection(container: HTMLElement, step: QueueStep): boolean {
   return true;
 }
 
-function attachQueueKeyboard(ref: RefObject<HTMLElement | null>): () => void {
+/** Listen for queue keys on the queue under `ref`; returns the cleanup. */
+export function attachQueueKeyboard(
+  ref: RefObject<HTMLElement | null>
+): () => void {
   activeQueues.push(ref);
 
   function onKeyDown(event: KeyboardEvent) {
@@ -86,15 +89,4 @@ function attachQueueKeyboard(ref: RefObject<HTMLElement | null>): () => void {
     const i = activeQueues.lastIndexOf(ref);
     if (i !== -1) activeQueues.splice(i, 1);
   };
-}
-
-/** Wire j/k + arrows to the queue under `ref` (no-op when `enabled` is false). */
-export function useQueueKeyboard(
-  ref: RefObject<HTMLElement | null>,
-  enabled = true
-): void {
-  useEffect(
-    () => (enabled ? attachQueueKeyboard(ref) : undefined),
-    [ref, enabled]
-  );
 }

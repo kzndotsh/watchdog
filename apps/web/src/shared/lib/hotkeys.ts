@@ -18,7 +18,7 @@ export interface HotkeyBinding extends HotkeyChord {
  * Who attaches the runtime listener for a registry entry:
  * - `global`: `SearchChrome` via `hotkeyBindings` / `useGlobalHotkeys`.
  * - `sidebar-provider`: the vendored `SidebarProvider` (unpatched); never bind it again.
- * - `queue-keyboard`: `useQueueKeyboard` (`shared/lib/queue-keyboard.ts`).
+ * - `queue-keyboard`: `useQueueKeyboard` (`shared/hooks/use-queue-keyboard.ts`).
  * - `data-hotkey`: a control carrying `hotkeyAttrs(id)`, clicked by `useDataHotkeys`.
  */
 export type HotkeyOwner =

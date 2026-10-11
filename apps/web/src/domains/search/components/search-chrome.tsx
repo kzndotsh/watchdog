@@ -4,9 +4,9 @@ import { useMemo, useState, type ReactNode } from "react";
 import { CommandPalette } from "@/domains/search/components/command-palette";
 import { ShortcutsDialog } from "@/domains/search/components/shortcuts-dialog";
 import { SearchUiContext } from "@/domains/search/hooks/use-search-ui";
+import { useDataHotkeys } from "@/shared/hooks/use-data-hotkeys";
 import { useGlobalHotkeys } from "@/shared/hooks/use-global-hotkeys";
 import type { AppAction } from "@/shared/lib/app-action";
-import { useDataHotkeys } from "@/shared/lib/data-hotkey";
 import { hotkeyBindings, hotkeyDef, type HotkeyId } from "@/shared/lib/hotkeys";
 import { useSidebar } from "@watchdog/ui/components/sidebar";
 

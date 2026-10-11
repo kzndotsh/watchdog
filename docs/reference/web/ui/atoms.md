@@ -28,7 +28,7 @@ Button sizes: PageHeader and toolbars use `sm` (or default); Queue rows and dens
 
 ## Keyboard
 
-- `QueueShell` owns Queue keyboard flow (`shared/lib/queue-keyboard.ts`): `j` / `k` anywhere outside editable fields, arrow keys while focus is in the Queue. It clicks the next `[data-slot=queue-row]`, so each Queue keeps its own `onSelect` and URL wiring. Opt out with `keyboard={false}`.
+- `QueueShell` owns Queue keyboard flow (`shared/hooks/use-queue-keyboard.ts`): `j` / `k` anywhere outside editable fields, arrow keys while focus is in the Queue. It clicks the next `[data-slot=queue-row]`, so each Queue keeps its own `onSelect` and URL wiring. Opt out with `keyboard={false}`.
 - Single-key actions are declarative: `data-hotkey="<key>"` + `aria-keyshortcuts` on the control and a `Kbd` hint inside it. `useDataHotkeys` (mounted in `SearchChrome`) clicks the first live match, so disabled controls stay gated. Spread `hotkeyAttrs(id)` (`shared/lib/hotkeys.ts`) for the attributes and read the `Kbd` text from `hotkeyDef(id).chord`; never type the key twice.
 - Render Mod-chord hints through `useModKeyLabel` (`shared/hooks`), not `modKeyLabel()` in render: server and first client render say "Ctrl" and the platform glyph lands after mount, so hydration never mismatches.
 - A surface registers page commands with `usePaletteCommands(actions)` (`shared/lib/palette-commands.ts`); Mod+K lists them under **This Page**. Reuse the AppAction the button or menu runs.
