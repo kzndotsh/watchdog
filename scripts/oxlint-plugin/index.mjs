@@ -28,6 +28,7 @@ import { noDecorativeClass } from "./rules/no-decorative-class.mjs";
 import { noEffectRunOutsideEdge } from "./rules/no-effect-run-outside-edge.mjs";
 import { noHooksInLib } from "./rules/no-hooks-in-lib.mjs";
 import { noOpaqueIdSlice } from "./rules/no-opaque-id-slice.mjs";
+import { noReimplementedCustodyMessage } from "./rules/no-reimplemented-custody-message.mjs";
 import { noTypesFromFunctions } from "./rules/no-types-from-functions.mjs";
 import { noUntrustedIdImport } from "./rules/no-untrusted-id-import.mjs";
 import { oneComponentPerFile } from "./rules/one-component-per-file.mjs";
@@ -60,6 +61,7 @@ export default {
     "no-button-height-class": noButtonHeightClass,
     "no-banned-surface-name": noBannedSurfaceName,
     "no-opaque-id-slice": noOpaqueIdSlice,
+    "no-reimplemented-custody-message": noReimplementedCustodyMessage,
     "mutation-only-in-hooks": mutationOnlyInHooks,
     "cache-writes-only-in-hooks": cacheWritesInHooks,
     "query-keys-in-queries-modules": keysInQueries,

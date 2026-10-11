@@ -1,7 +1,8 @@
 import { isRecord } from "../lib/ast.mjs";
+import { lexicalInits } from "../lib/scope.mjs";
 
 /**
- * @typedef {{ filename: string, sourceCode?: { getScope?: (node: unknown) => Scope | null }, report: (diagnostic: { node: unknown, message: string }) => void }} RuleContext
+ * @typedef {{ filename: string, sourceCode?: { getScope?: (node: unknown) => import("../lib/scope.mjs").Scope | null }, report: (diagnostic: { node: unknown, message: string }) => void }} RuleContext
  */
 
 /** Modules whose `Button` export is the control: the wrapper and the vanilla primitive. */
@@ -115,39 +116,6 @@ const classNameValues = (attributes) =>
     }
     return [];
   });
-
-/**
- * @typedef {{ set: Map<string, { defs: readonly { type?: string, node?: unknown }[] }>, upper: Scope | null }} Scope
- */
-
-/**
- * Initializers of the variable `name` resolves to from `at`, by lexical scope: a
- * same-named variable in another function never counts. Null when the scope API is
- * missing or the name is not bound in this file (the caller falls back to the file's
- * declarations).
- * @param {{ sourceCode?: { getScope?: (node: unknown) => Scope | null } }} context
- * @param {string} name
- * @param {unknown} at
- * @returns {{ node: unknown, at: unknown }[] | null}
- */
-const lexicalInits = (context, name, at) => {
-  const source = context.sourceCode;
-  if (typeof source?.getScope !== "function") return null;
-  let scope = source.getScope(at);
-  while (scope) {
-    const variable = scope.set.get(name);
-    if (variable) {
-      return variable.defs.flatMap((def) => {
-        const decl = def.node;
-        return def.type === "Variable" && isRecord(decl) && isRecord(decl.init)
-          ? [{ node: decl.init, at: decl }]
-          : [];
-      });
-    }
-    scope = scope.upper;
-  }
-  return null;
-};
 
 /**
  * Bans height utilities on the Button wrapper (`<Button className="h-8">`, in a string,
