@@ -25,6 +25,9 @@ vi.mock("@/lib/orpc.server", () => ({
   orpcNullIfNotFound: (value: unknown) => value,
 }));
 
+const resolveActiveCase = vi.hoisted(() => vi.fn());
+vi.mock("@/domains/cases/cases-active.server", () => ({ resolveActiveCase }));
+
 vi.mock("@/domains/cases/lib/active-case.server", () => ({
   readActiveCaseId: vi.fn(),
   writeActiveCaseId: vi.fn(),
@@ -70,10 +73,12 @@ const CASE_B: CaseRecord = {
 
 describe("cases.functions", () => {
   it("heals the active case cookie when the stored id is missing", async () => {
-    casesApi.list.mockResolvedValue([CASE_A, CASE_B]);
-    vi.mocked(readActiveCaseId).mockReturnValue(
-      asCaseId("770e8400-e29b-41d4-a716-446655440009")
-    );
+    const stale = asCaseId("770e8400-e29b-41d4-a716-446655440009");
+    resolveActiveCase.mockResolvedValue({
+      cases: [CASE_A, CASE_B],
+      active: CASE_A,
+    });
+    vi.mocked(readActiveCaseId).mockReturnValue(stale);
 
     const ctx = await (
       getCasesContextFn as unknown as (
@@ -84,7 +89,38 @@ describe("cases.functions", () => {
     });
 
     expect(ctx.active).toEqual(CASE_A);
+    expect(resolveActiveCase).toHaveBeenCalledWith({}, stale);
     expect(writeActiveCaseId).toHaveBeenCalledWith(CASE_A.id);
+  });
+
+  it("leaves the cookie alone when the stored id is already the resolved Active Case", async () => {
+    vi.mocked(writeActiveCaseId).mockClear();
+    resolveActiveCase.mockResolvedValue({
+      cases: [CASE_A, CASE_B],
+      active: CASE_B,
+    });
+    vi.mocked(readActiveCaseId).mockReturnValue(CASE_B.id);
+
+    const ctx = await (
+      getCasesContextFn as unknown as (
+        input: ServerContext
+      ) => Promise<{ cases: CaseRecord[]; active: CaseRecord | null }>
+    )({ context: {} });
+
+    expect(ctx.active).toEqual(CASE_B);
+    expect(writeActiveCaseId).not.toHaveBeenCalled();
+  });
+
+  it("clears the cookie when the organization has no Cases", async () => {
+    vi.mocked(writeActiveCaseId).mockClear();
+    resolveActiveCase.mockResolvedValue({ cases: [], active: null });
+    vi.mocked(readActiveCaseId).mockReturnValue(CASE_A.id);
+
+    await (
+      getCasesContextFn as unknown as (input: ServerContext) => Promise<unknown>
+    )({ context: {} });
+
+    expect(writeActiveCaseId).toHaveBeenCalledWith(null);
   });
 
   it("resolves a case by slug from the cases list", async () => {
@@ -227,7 +263,7 @@ describe("cases.functions", () => {
   it("clears or advances the active case cookie after delete", async () => {
     vi.mocked(readActiveCaseId).mockReturnValue(asCaseId(CASE_A.id));
     casesApi.delete.mockResolvedValue(undefined);
-    casesApi.list.mockResolvedValue([CASE_B]);
+    resolveActiveCase.mockResolvedValue({ cases: [CASE_B], active: CASE_B });
 
     await (
       deleteCaseFn as unknown as (

@@ -76,6 +76,36 @@ export function listCasesEffect(
   );
 }
 
+/** The Cases an organization can see and which one is Active for a stored selection. */
+export interface ActiveCaseContext {
+  cases: CaseRecord[];
+  active: CaseRecord | null;
+}
+
+/**
+ * The one Active-Case rule. The stored selection (the web cookie) stays Active only while
+ * it names a Case this organization can see; a deleted, invalid or foreign id heals to the
+ * first visible Case, and an organization with no Cases has none. The Case list is read
+ * with the same organization scope as `listCasesEffect`, so another organization's Case
+ * is never returned as `active`.
+ */
+export function resolveActiveCaseEffect(
+  organizationId: OrganizationId,
+  stored: CaseId | null
+): Effect.Effect<ActiveCaseContext, DomainTag, Db> {
+  return listCasesEffect(organizationId).pipe(
+    Effect.map((cases) => ({
+      cases,
+      active:
+        (stored === null
+          ? undefined
+          : cases.find((row) => row.id === stored)) ??
+        cases[0] ??
+        null,
+    }))
+  );
+}
+
 /**
  * Ids of every Case the organization can see. The live events stream filters
  * NOTIFY payloads against this set, so Case visibility is decided here, with the
