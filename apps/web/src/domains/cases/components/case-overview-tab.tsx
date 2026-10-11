@@ -83,6 +83,15 @@ function groupActivityByKind<T extends { kind: ActivityKind }>(
   return [...groups].map(([kind, rows]) => ({ kind, items: rows }));
 }
 
+type CaseOverviewTabProps = {
+  caseId: string;
+  caseRow: CaseRecord;
+  entities: EntityRecord[];
+  identifiers: CaseIdentifierRecord[];
+  listsPending?: boolean;
+  listsPlaceholder?: boolean;
+};
+
 export function CaseOverviewTab({
   caseId,
   caseRow,
@@ -90,14 +99,7 @@ export function CaseOverviewTab({
   identifiers,
   listsPending = false,
   listsPlaceholder = false,
-}: {
-  caseId: string;
-  caseRow: CaseRecord;
-  entities: EntityRecord[];
-  identifiers: CaseIdentifierRecord[];
-  listsPending?: boolean;
-  listsPlaceholder?: boolean;
-}) {
+}: CaseOverviewTabProps) {
   const queryResults = useQueries({
     queries: caseOverviewQueries(caseId),
   });

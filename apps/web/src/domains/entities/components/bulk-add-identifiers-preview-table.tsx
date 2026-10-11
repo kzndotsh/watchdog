@@ -75,13 +75,7 @@ function previewNote(row: IdentifierPasteRow) {
   return null;
 }
 
-export function BulkAddIdentifiersPreviewTable({
-  rows,
-  entityOptions,
-  lockEntity,
-  busy,
-  setRowPatch,
-}: {
+type BulkAddIdentifiersPreviewTableProps = {
   rows: IdentifierPasteRow[];
   entityOptions: EntityOption[];
   lockEntity: IdentifierPasteEntity | null;
@@ -90,7 +84,15 @@ export function BulkAddIdentifiersPreviewTable({
     row: IdentifierPasteRow,
     patch: IdentifierPasteRowOverride
   ) => void;
-}) {
+};
+
+export function BulkAddIdentifiersPreviewTable({
+  rows,
+  entityOptions,
+  lockEntity,
+  busy,
+  setRowPatch,
+}: BulkAddIdentifiersPreviewTableProps) {
   return (
     <div className="max-h-56 overflow-auto rounded-md border">
       <Table className="w-full table-fixed">

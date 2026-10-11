@@ -117,15 +117,17 @@ const settingsSearchSchema = z.object({
   tab: tabSearchParam(SETTINGS_TABS, SETTINGS_LEGACY_TABS),
 });
 
+type SettingsPanelProps = {
+  tab: SettingsTab;
+  canManageUsers: boolean;
+  sessionPending: boolean;
+};
+
 function SettingsPanel({
   tab,
   canManageUsers,
   sessionPending,
-}: {
-  tab: SettingsTab;
-  canManageUsers: boolean;
-  sessionPending: boolean;
-}) {
+}: SettingsPanelProps) {
   switch (tab) {
     case "account":
     case "security": {

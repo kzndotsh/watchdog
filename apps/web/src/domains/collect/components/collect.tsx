@@ -43,6 +43,18 @@ import { Separator } from "@watchdog/ui/components/separator";
 const EMPTY_CAPS: CapListItem[] = [];
 const EMPTY_PLAYBOOKS: PlaybookListItem[] = [];
 
+type CollectWithCaseProps = {
+  active: CaseRecord;
+  caps: CapListItem[];
+  playbooks: PlaybookListItem[];
+  runCatalogPending: boolean;
+  runCatalogPlaceholder: boolean;
+  runCatalogLoadError: string | null;
+  onRetryRunCatalog: () => void;
+  urlId?: string;
+  onIdChange: (next: string | null) => void;
+};
+
 function CollectWithCase({
   active,
   caps,
@@ -53,17 +65,7 @@ function CollectWithCase({
   onRetryRunCatalog,
   urlId,
   onIdChange,
-}: {
-  active: CaseRecord;
-  caps: CapListItem[];
-  playbooks: PlaybookListItem[];
-  runCatalogPending: boolean;
-  runCatalogPlaceholder: boolean;
-  runCatalogLoadError: string | null;
-  onRetryRunCatalog: () => void;
-  urlId?: string;
-  onIdChange: (next: string | null) => void;
-}) {
+}: CollectWithCaseProps) {
   const ws = useCollectWorkspace({
     caseId: active.id,
     caps,

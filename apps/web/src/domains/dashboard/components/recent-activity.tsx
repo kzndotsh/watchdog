@@ -73,15 +73,17 @@ function ActivityStatus({
   return null;
 }
 
+type StatusTransitionProps = {
+  kind: ActivityKind;
+  fromStatus: string | undefined;
+  toStatus: string | undefined;
+};
+
 function StatusTransition({
   kind,
   fromStatus,
   toStatus,
-}: {
-  kind: ActivityKind;
-  fromStatus: string | undefined;
-  toStatus: string | undefined;
-}) {
+}: StatusTransitionProps) {
   if (!fromStatus || !toStatus) return null;
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
@@ -94,15 +96,17 @@ function StatusTransition({
   );
 }
 
+type ActivityRowsProps = {
+  items: ActivityItem[];
+  showCaseLink: boolean;
+  caseSlugById: ReadonlyMap<string, string>;
+};
+
 function ActivityRows({
   items,
   showCaseLink,
   caseSlugById,
-}: {
-  items: ActivityItem[];
-  showCaseLink: boolean;
-  caseSlugById: ReadonlyMap<string, string>;
-}) {
+}: ActivityRowsProps) {
   return (
     <ul className="divide-border divide-y">
       {items.map((item) => {
@@ -204,15 +208,17 @@ function ActivityRows({
   );
 }
 
+type RecentActivityListProps = {
+  caseId: string | null;
+  caseSlugById: ReadonlyMap<string, string>;
+  onClearFilter: () => void;
+};
+
 function RecentActivityList({
   caseId,
   caseSlugById,
   onClearFilter,
-}: {
-  caseId: string | null;
-  caseSlugById: ReadonlyMap<string, string>;
-  onClearFilter: () => void;
-}) {
+}: RecentActivityListProps) {
   const activityQuery = useQuery(
     recentActivityQuery(caseId ? { caseId } : undefined)
   );
@@ -281,15 +287,17 @@ function RecentActivityList({
   );
 }
 
+type RecentActivityProps = {
+  cases: CaseRecord[];
+  activityCaseId?: string;
+  onActivityCaseChange?: (next: string | null) => void;
+};
+
 export function RecentActivity({
   cases,
   activityCaseId,
   onActivityCaseChange,
-}: {
-  cases: CaseRecord[];
-  activityCaseId?: string;
-  onActivityCaseChange?: (next: string | null) => void;
-}) {
+}: RecentActivityProps) {
   const [internalCaseId, setInternalCaseId] = useState<string | null>(null);
   const controlled = onActivityCaseChange !== undefined;
   const selectedCaseId = controlled ? (activityCaseId ?? null) : internalCaseId;

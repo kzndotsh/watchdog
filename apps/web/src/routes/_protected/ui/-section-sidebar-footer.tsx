@@ -67,20 +67,16 @@ function NavPlaceholder({ lines = 3 }: { lines?: number }) {
   );
 }
 
-/** A slice of the sidebar: expanded (16rem) next to icon mode (3rem). */
-function Variant({
-  id,
-  title,
-  note,
-  expanded,
-  collapsed,
-}: {
+type VariantProps = {
   id: string;
   title: string;
   note: string;
   expanded: ReactNode;
   collapsed: ReactNode;
-}) {
+};
+
+/** A slice of the sidebar: expanded (16rem) next to icon mode (3rem). */
+function Variant({ id, title, note, expanded, collapsed }: VariantProps) {
   return (
     <figure className="flex flex-col gap-2">
       <figcaption className="space-y-0.5">

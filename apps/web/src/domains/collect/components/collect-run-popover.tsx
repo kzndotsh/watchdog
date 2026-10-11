@@ -15,15 +15,17 @@ import {
   PopoverTrigger,
 } from "@watchdog/ui/components/popover";
 
+type CollectRunPopoverProps = {
+  runMode: CollectRunMode;
+  onRunModeChange: (next: CollectRunMode) => void;
+  children: ReactNode;
+};
+
 export function CollectRunPopover({
   runMode,
   onRunModeChange,
   children,
-}: {
-  runMode: CollectRunMode;
-  onRunModeChange: (next: CollectRunMode) => void;
-  children: ReactNode;
-}) {
+}: CollectRunPopoverProps) {
   return (
     <Popover>
       <PopoverTrigger

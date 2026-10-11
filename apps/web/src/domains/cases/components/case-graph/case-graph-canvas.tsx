@@ -13,15 +13,17 @@ import { GraphCanvas } from "@/shared/ui/graph/graph-canvas";
 import { GRAPH_CANVAS_PAGE_SHELL_CLASS } from "@/shared/ui/graph/graph-canvas-shell-classes";
 import type { GraphNode } from "@/shared/ui/graph/types";
 
+type CaseGraphCanvasProps = {
+  entities: EntityRecord[];
+  edges: CaseEdgeRecord[];
+  className?: string;
+};
+
 export function CaseGraphCanvas({
   entities,
   edges,
   className,
-}: {
-  entities: EntityRecord[];
-  edges: CaseEdgeRecord[];
-  className?: string;
-}) {
+}: CaseGraphCanvasProps) {
   const navigate = useNavigate();
 
   const entityInputs = useMemo(

@@ -2,19 +2,21 @@ import type { TaskDialogForm } from "@/domains/tasks/components/task-form-dialog
 import { Button } from "@/shared/ui/primitives/button";
 import { DialogFooter } from "@/shared/ui/primitives/dialog";
 
+type TaskFormDialogFooterProps = {
+  form: TaskDialogForm;
+  mode: "create" | "edit";
+  busy: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDelete?: () => void | Promise<void>;
+};
+
 export function TaskFormDialogFooter({
   form,
   mode,
   busy,
   onOpenChange,
   onDelete,
-}: {
-  form: TaskDialogForm;
-  mode: "create" | "edit";
-  busy: boolean;
-  onOpenChange: (open: boolean) => void;
-  onDelete?: () => void | Promise<void>;
-}) {
+}: TaskFormDialogFooterProps) {
   if (mode === "edit") {
     return (
       <DialogFooter className="sm:justify-between">
