@@ -5,7 +5,8 @@ export {
   confidenceLabel,
 } from "@/shared/ui/vocab/confidence.lib";
 
-export { StatusBadge, StatusInk } from "@/shared/ui/vocab/status";
+export { StatusBadge } from "@/shared/ui/vocab/status-badge";
+export { StatusInk } from "@/shared/ui/vocab/status-ink";
 export {
   STATUS_DOT,
   STATUS_GLYPH,
@@ -16,12 +17,10 @@ export {
   type DisplayStatus,
 } from "@/shared/ui/vocab/status.lib";
 
-export {
-  KindBadge,
-  ClaimClassBadge,
-  EntityKindIcon,
-  EntityKindGlyph,
-} from "@/shared/ui/vocab/kind";
+export { KindBadge } from "@/shared/ui/vocab/kind-badge";
+export { ClaimClassBadge } from "@/shared/ui/vocab/claim-class-badge";
+export { EntityKindIcon } from "@/shared/ui/vocab/entity-kind-icon";
+export { EntityKindGlyph } from "@/shared/ui/vocab/entity-kind-glyph";
 export {
   ENTITY_KIND_OPTIONS,
   IDENTIFIER_TYPE_OPTIONS,

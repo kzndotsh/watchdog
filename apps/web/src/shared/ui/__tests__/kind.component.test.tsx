@@ -1,11 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import {
-  ClaimClassBadge,
-  EntityKindGlyph,
-  KindBadge,
-} from "@/shared/ui/vocab/kind";
+import { ClaimClassBadge } from "@/shared/ui/vocab/claim-class-badge";
+import { EntityKindGlyph } from "@/shared/ui/vocab/entity-kind-glyph";
+import { KindBadge } from "@/shared/ui/vocab/kind-badge";
 import { isEntityKind, kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { ENTITY_KIND_LABELS } from "@watchdog/schemas/shared";
 
