@@ -14,8 +14,11 @@ export function findHotkeyTarget(
   root: ParentNode,
   key: string
 ): HTMLElement | null {
+  // Registry keys are lowercase; an uppercase `event.key` means Shift or
+  // CapsLock is active, so the bare shortcut stays inert.
+  if (key !== key.toLowerCase()) return null;
   const candidates = root.querySelectorAll<HTMLElement>(
-    `[${DATA_HOTKEY_ATTR}="${CSS.escape(key.toLowerCase())}"]`
+    `[${DATA_HOTKEY_ATTR}="${CSS.escape(key)}"]`
   );
   for (const el of candidates) {
     if (isHotkeyTargetLive(el)) return el;

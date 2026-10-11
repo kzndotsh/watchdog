@@ -112,4 +112,19 @@ describe("data-hotkey", () => {
     fireEvent.keyDown(window, { key: "a" });
     expect(presses).toBe(0);
   });
+
+  it("ignores shifted and caps-lock letters", () => {
+    let presses = 0;
+    render(
+      <HotkeyHost
+        disabled={false}
+        onPress={() => {
+          presses += 1;
+        }}
+      />
+    );
+    fireEvent.keyDown(window, { key: "A", shiftKey: true });
+    fireEvent.keyDown(window, { key: "A" });
+    expect(presses).toBe(0);
+  });
 });
