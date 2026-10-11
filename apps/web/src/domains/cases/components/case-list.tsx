@@ -9,6 +9,7 @@ import type { CaseRecord } from "@/domains/cases/types";
 import { cn } from "@/lib/utils";
 import { Page, PageHeader } from "@/shared/layout/page";
 import { PageToolbar } from "@/shared/layout/page-toolbar";
+import { caseExportZipPath } from "@/shared/lib/api-urls";
 import {
   filterActionsForSurface,
   type AppAction,
@@ -120,7 +121,7 @@ function NewCaseCard({ onClick }: { onClick: () => void }) {
 
 function exportActiveCaseZip(activeId: string): void {
   const a = document.createElement("a");
-  a.href = `/api/v1/cases/${activeId}/export.zip`;
+  a.href = caseExportZipPath(activeId);
   a.click();
 }
 

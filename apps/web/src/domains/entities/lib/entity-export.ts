@@ -1,14 +1,8 @@
+import { entityMarkdownExportPath } from "@/shared/lib/api-urls";
 import { TOAST_COPIED } from "@/shared/lib/toast-copy";
 import { toast } from "@/shared/ui/toast";
 
 const EXTERNAL_AI_URL_MAX = 1800;
-
-export function entityMarkdownExportPath(
-  caseId: string,
-  entitySlug: string
-): string {
-  return `/api/v1/cases/${caseId}/entities/${encodeURIComponent(entitySlug)}/export.md`;
-}
 
 /** Fetch entity Markdown export for clipboard / AI handoff. */
 export async function fetchEntityMarkdown(

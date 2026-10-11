@@ -14,6 +14,7 @@ import type { CaseIdentifierRecord } from "@/domains/entities/identifiers/types"
 import { entitiesListQuery } from "@/domains/entities/queries";
 import type { EntityRecord } from "@/domains/entities/types";
 import { Page, PageHeader } from "@/shared/layout/page";
+import { caseExportZipPath } from "@/shared/lib/api-urls";
 import { listPending } from "@/shared/lib/list-pending";
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { Chip } from "@/shared/ui/chip";
@@ -170,7 +171,7 @@ export function CaseOverview({ caseId }: { caseId: string }) {
               size="sm"
               onClick={() => {
                 const a = document.createElement("a");
-                a.href = `/api/v1/cases/${caseId}/export.zip`;
+                a.href = caseExportZipPath(caseId);
                 a.click();
               }}
             >
