@@ -5,7 +5,6 @@ import {
   type AtomEntry,
 } from "@/routes/_protected/ui/-atoms-controls";
 import { GuideSection, Specimen } from "@/routes/_protected/ui/-guide-chrome";
-import { DropdownActionItems } from "@/shared/ui/action-list";
 import { ActiveTabBody } from "@/shared/ui/active-tab-body";
 import { ActorMention } from "@/shared/ui/actor-mention";
 import { Chip } from "@/shared/ui/chip";
@@ -13,6 +12,7 @@ import { ClickableIdChip } from "@/shared/ui/clickable-id-chip";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailEmpty } from "@/shared/ui/detail-empty";
+import { DropdownActionItems } from "@/shared/ui/dropdown-action-items";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { EntityCombobox } from "@/shared/ui/entity-combobox";
 import { EntityMention } from "@/shared/ui/entity-mention";
@@ -24,7 +24,9 @@ import { IdChip } from "@/shared/ui/id-chip";
 import { InlineLoading } from "@/shared/ui/inline-loading";
 import { Button } from "@/shared/ui/primitives/button";
 import { QueueHeader } from "@/shared/ui/queue-header";
-import { QueueRow, QueueRowMeta, QueueRowTitle } from "@/shared/ui/queue-row";
+import { QueueRow } from "@/shared/ui/queue-row";
+import { QueueRowMeta } from "@/shared/ui/queue-row-meta";
+import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { RelativeTime } from "@/shared/ui/relative-time";
 import { RichTextEditor } from "@/shared/ui/rich-text";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
@@ -33,7 +35,8 @@ import { SectionLabel } from "@/shared/ui/section-label";
 import { QueueSkeleton } from "@/shared/ui/skeletons";
 import { SplitView } from "@/shared/ui/split-view";
 import { StatusDot } from "@/shared/ui/status-dot";
-import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import { TimelineDot } from "@/shared/ui/timeline-dot";
+import { TimelineSpine } from "@/shared/ui/timeline-spine";
 import { Timestamp } from "@/shared/ui/timestamp";
 import {
   ClaimClassBadge,

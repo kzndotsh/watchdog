@@ -1,8 +1,6 @@
 import { cn } from "@/lib/utils";
-import {
-  DetailContextHeader,
-  DetailContextSep,
-} from "@/shared/ui/detail-context-line";
+import { DetailContextHeader } from "@/shared/ui/detail-context-header";
+import { DetailContextSep } from "@/shared/ui/detail-context-sep";
 import { DetailFooter } from "@/shared/ui/detail-footer";
 import { Skeleton } from "@watchdog/ui/components/skeleton";
 

@@ -1,12 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import {
-  QueueRow,
-  QueueRowInstantMeta,
-  QueueRowMeta,
-  QueueRowTitle,
-} from "@/shared/ui/queue-row";
+import { QueueRow } from "@/shared/ui/queue-row";
+import { QueueRowInstantMeta } from "@/shared/ui/queue-row-instant-meta";
+import { QueueRowMeta } from "@/shared/ui/queue-row-meta";
+import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 
 describe("QueueRow", () => {
   it("renders row chrome and instant meta helpers", () => {

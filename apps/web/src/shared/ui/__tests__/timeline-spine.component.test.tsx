@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
+import { TimelineDot } from "@/shared/ui/timeline-dot";
+import { TimelineSpine } from "@/shared/ui/timeline-spine";
 
 describe("TimelineSpine", () => {
   it("renders dashed spine content and dot markers", () => {

@@ -4,11 +4,9 @@ import type { CollectRow, CollectState } from "@/domains/collect/types";
 import { Chip } from "@/shared/ui/chip";
 import { groupItemsByDay } from "@/shared/ui/group-by-day";
 import { QueueDayGroup } from "@/shared/ui/queue-day-group";
-import {
-  QueueRow,
-  QueueRowInstantMeta,
-  QueueRowTitle,
-} from "@/shared/ui/queue-row";
+import { QueueRow } from "@/shared/ui/queue-row";
+import { QueueRowInstantMeta } from "@/shared/ui/queue-row-instant-meta";
+import { QueueRowTitle } from "@/shared/ui/queue-row-title";
 import { StatusDot } from "@/shared/ui/status-dot";
 import type { DisplayStatus } from "@/shared/ui/vocab";
 

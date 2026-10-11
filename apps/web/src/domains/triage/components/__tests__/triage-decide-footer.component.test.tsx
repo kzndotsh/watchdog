@@ -34,7 +34,13 @@ vi.mock("@/shared/ui/intake/evidence-picker", () => ({
       </button>
     </div>
   ),
+}));
+
+vi.mock("@/shared/ui/intake/evidence-cite-chips", () => ({
   EvidenceCiteChips: () => <div>Evidence cites</div>,
+}));
+
+vi.mock("@/shared/ui/intake/evidence-slot-skeleton", () => ({
   EvidenceSlotSkeleton: ({ mode }: { mode: string }) => (
     <div aria-label="Loading evidence">Loading {mode}</div>
   ),

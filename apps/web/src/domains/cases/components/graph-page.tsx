@@ -15,7 +15,7 @@ import { placeholderDeemphasisClass } from "@/shared/lib/placeholder-deemphasis"
 import { combinedQueryLoadError } from "@/shared/lib/query-load-error";
 import { EmptyState } from "@/shared/ui/empty-state";
 import { FetchErrorAlert } from "@/shared/ui/fetch-error-alert";
-import { GraphCanvasLoadingRegion } from "@/shared/ui/graph/graph-canvas-skeleton";
+import { GraphCanvasLoadingRegion } from "@/shared/ui/graph/graph-canvas-loading-region";
 import { stackPendingFallback } from "@/shared/ui/stack-pending-fallback";
 
 const EMPTY_ENTITIES: EntityRecord[] = [];

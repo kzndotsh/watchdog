@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { MiddleTruncate } from "@/shared/ui/middle-truncate";
-import { WithTooltip } from "@/shared/ui/timestamp";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 
 type IdChipSize = "sm" | "md";
 type IdChipPreset = "default" | "sha256";

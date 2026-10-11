@@ -22,11 +22,11 @@ import {
 import type { DataTableFeatures } from "@/shared/ui/data-table/table-features";
 import type { EntityOption } from "@/shared/ui/entity-combobox";
 import { entityMatchesQuery } from "@/shared/ui/entity-match";
-import { NotesIconCell } from "@/shared/ui/identifiers/identifier-notes-cell";
+import { NotesIconCell } from "@/shared/ui/identifiers/notes-icon-cell";
 import { formatRelativeTime } from "@/shared/ui/relative-time.lib";
 import { RowActionsMenu } from "@/shared/ui/row-actions-menu";
-import { WithTooltip } from "@/shared/ui/timestamp";
 import { ENTITY_KIND_OPTIONS, EntityKindGlyph } from "@/shared/ui/vocab";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 import {
   entityDisplayLabel,
   trimmedEntityKindSchema,

@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { MetaGrid, MetaGridItem, MetaRow } from "@/shared/ui/meta-row";
+import { MetaGrid } from "@/shared/ui/meta-grid";
+import { MetaGridItem } from "@/shared/ui/meta-grid-item";
+import { MetaRow } from "@/shared/ui/meta-row";
 
 describe("MetaRow", () => {
   it("renders label/value rows and grid items", () => {

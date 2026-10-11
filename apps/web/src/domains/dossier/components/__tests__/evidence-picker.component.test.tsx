@@ -1,11 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  EvidenceCiteChips,
-  EvidencePicker,
-  EvidenceSlotSkeleton,
-} from "@/shared/ui/intake/evidence-picker";
+import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
+import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
+import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
 import { testId } from "@watchdog/test-kit";
 
 const OPTION = {

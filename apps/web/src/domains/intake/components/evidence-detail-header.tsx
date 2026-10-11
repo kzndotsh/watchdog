@@ -9,15 +9,13 @@ import {
 } from "@/domains/intake/lib/evidence";
 import type { EvidenceRecord } from "@/domains/intake/types";
 import { ActorMention } from "@/shared/ui/actor-mention";
-import {
-  DetailContextHeader,
-  DetailContextSep,
-} from "@/shared/ui/detail-context-line";
+import { DetailContextHeader } from "@/shared/ui/detail-context-header";
+import { DetailContextSep } from "@/shared/ui/detail-context-sep";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { Button } from "@/shared/ui/primitives/button";
 import { TabCount } from "@/shared/ui/tab-count";
-import { WithTooltip } from "@/shared/ui/timestamp";
 import { jobHeadlineLabel } from "@/shared/ui/vocab";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 import type { JobListRecord } from "@watchdog/core/jobs";
 import {
   entityDisplayLabel,

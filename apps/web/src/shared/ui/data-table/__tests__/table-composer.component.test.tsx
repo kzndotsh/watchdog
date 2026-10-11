@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { DataTableAddRow } from "@/shared/ui/data-table/table-composer";
+import { DataTableAddRow } from "@/shared/ui/data-table/data-table-add-row";
 import { tableComposerKeyDown } from "@/shared/ui/data-table/table-composer.lib";
 
 describe("table composer", () => {

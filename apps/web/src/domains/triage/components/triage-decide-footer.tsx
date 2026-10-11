@@ -20,13 +20,11 @@ import { hotkeyAttrs, hotkeyDef } from "@/shared/lib/hotkeys";
 import { ComposerShell } from "@/shared/ui/composer-shell";
 import { ConfidenceSelect } from "@/shared/ui/confidence-select";
 import { DetailFooter } from "@/shared/ui/detail-footer";
-import {
-  EvidenceCiteChips,
-  EvidencePicker,
-  EvidenceSlotSkeleton,
-} from "@/shared/ui/intake/evidence-picker";
+import { EvidenceCiteChips } from "@/shared/ui/intake/evidence-cite-chips";
+import { EvidencePicker } from "@/shared/ui/intake/evidence-picker";
+import { EvidenceSlotSkeleton } from "@/shared/ui/intake/evidence-slot-skeleton";
 import { Button } from "@/shared/ui/primitives/button";
-import { WithTooltip } from "@/shared/ui/timestamp";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 import type { ProposalRecord } from "@watchdog/core/proposals";
 import { CONFIRMED_REQUIRES_EVIDENCE } from "@watchdog/policy/confirmed-evidence";
 import { patchNeedsConfidence } from "@watchdog/policy/patch-needs-confidence";

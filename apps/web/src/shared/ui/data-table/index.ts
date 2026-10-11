@@ -6,11 +6,9 @@ export { EditableTextCell } from "./editable-text-cell";
 export { EditableSelectCell } from "./editable-select-cell";
 export type { EditableSelectOption } from "./editable-select-cell";
 export { EditableSuggestCell } from "./editable-suggest-cell";
-export {
-  DataTableAddRow,
-  DataTableComposerActions,
-  DataTableComposerRow,
-  TableComposerInput,
-} from "./table-composer";
+export { DataTableAddRow } from "./data-table-add-row";
+export { DataTableComposerActions } from "./data-table-composer-actions";
+export { DataTableComposerRow } from "./data-table-composer-row";
+export { TableComposerInput } from "./table-composer-input";
 export { tableComposerKeyDown } from "./table-composer.lib";
 export { useDataTable } from "./use-data-table";

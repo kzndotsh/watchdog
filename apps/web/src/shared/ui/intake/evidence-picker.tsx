@@ -2,14 +2,14 @@ import { PaperclipIcon, PlusIcon, XIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { CHIP_SIZE_CLASS, Chip } from "@/shared/ui/chip";
+import { Chip } from "@/shared/ui/chip";
 import { Eyebrow } from "@/shared/ui/eyebrow";
 import {
   evidenceLabel,
   evidenceMatchesPickerFilter,
   type EvidenceOption,
 } from "@/shared/ui/intake/evidence-option";
-import { WithTooltip } from "@/shared/ui/timestamp";
+import { EVIDENCE_PICKER_TRIGGER_CLASS } from "@/shared/ui/intake/evidence-picker-trigger-class";
 import { kindLabel } from "@/shared/ui/vocab/kind.lib";
 import { Checkbox } from "@watchdog/ui/components/checkbox";
 import { Input } from "@watchdog/ui/components/input";
@@ -18,114 +18,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@watchdog/ui/components/popover";
-import { Skeleton } from "@watchdog/ui/components/skeleton";
 
 export type { EvidenceOption } from "@/shared/ui/intake/evidence-option";
 
 const FILTER_THRESHOLD = 8;
-
-const PICKER_TRIGGER_CLASS = cn(
-  CHIP_SIZE_CLASS.sm,
-  "text-muted-foreground hover:text-foreground hover:bg-muted/50 border-border/60 focus-visible:ring-ring/50 inline-flex cursor-pointer items-center bg-transparent transition-colors outline-none focus-visible:ring-2"
-);
-
-/**
- * Read-only Job/proposal cite chips.
- */
-export function EvidenceCiteChips({
-  options,
-  ids,
-  className,
-  withIcon = false,
-}: {
-  options: readonly EvidenceOption[];
-  ids: string[];
-  className?: string;
-  /** Swap the "Evidence" text label for an icon + tooltip in dense bands. */
-  withIcon?: boolean;
-}) {
-  const byId = useMemo(() => {
-    const map = new Map<string, EvidenceOption>();
-    for (const row of options) map.set(row.id, row);
-    return map;
-  }, [options]);
-
-  const rows = ids
-    .map((id) => byId.get(id))
-    .filter((row): row is EvidenceOption => row !== undefined);
-
-  return (
-    <div
-      className={cn("flex min-w-0 flex-wrap items-center gap-1.5", className)}
-    >
-      {withIcon ? (
-        <WithTooltip content="Evidence" wrapSpan className="inline-flex">
-          <PaperclipIcon
-            aria-hidden
-            className="text-muted-foreground size-3.5 shrink-0"
-          />
-        </WithTooltip>
-      ) : (
-        <span className="text-muted-foreground text-xs">Evidence</span>
-      )}
-      {rows.map((row) => (
-        <Chip
-          key={row.id}
-          size="sm"
-          className="max-w-[12rem] truncate"
-          title={evidenceLabel(row)}
-        >
-          {evidenceLabel(row)}
-          <span className="text-muted-foreground">· Job</span>
-        </Chip>
-      ))}
-    </div>
-  );
-}
-
-/** Loading shell beside confidence — matches picker trigger or cite chips. */
-export function EvidenceSlotSkeleton({
-  mode,
-  citeCount = 1,
-  className,
-}: {
-  mode: "cite" | "pick";
-  citeCount?: number;
-  className?: string;
-}) {
-  if (mode === "cite") {
-    const count = Math.max(citeCount, 1);
-    return (
-      <div
-        className={cn("flex min-w-0 flex-wrap items-center gap-1.5", className)}
-        aria-busy
-        aria-live="polite"
-        aria-label="Loading evidence"
-      >
-        <WithTooltip content="Evidence" wrapSpan className="inline-flex">
-          <PaperclipIcon
-            aria-hidden
-            className="text-muted-foreground size-3.5 shrink-0"
-          />
-        </WithTooltip>
-        {Array.from({ length: count }).map((_, index) => (
-          <Skeleton key={index} className="h-5 w-24 rounded-md" />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn("flex min-w-0 items-center", className)}
-      aria-busy
-      aria-live="polite"
-      aria-label="Loading evidence"
-    >
-      <Skeleton className={cn(PICKER_TRIGGER_CLASS, "w-14 border-dashed")} />
-    </div>
-  );
-}
 
 function EvidenceChecklist({
   options,
@@ -288,7 +184,7 @@ export function EvidencePicker({
         >
           <PopoverTrigger
             className={cn(
-              PICKER_TRIGGER_CLASS,
+              EVIDENCE_PICKER_TRIGGER_CLASS,
               totalCount === 0 ? "gap-1 px-1.5" : "size-5 justify-center px-0",
               dashedWhenEmpty && totalCount === 0 && "border-dashed"
             )}

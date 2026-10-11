@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ActionShortcutChord } from "../action-list.tsx";
+import { ActionShortcutChord } from "../action-shortcut-chord.tsx";
 
 describe("ActionShortcutChord", () => {
   it("renders Mod chords as separate Kbd keys", () => {

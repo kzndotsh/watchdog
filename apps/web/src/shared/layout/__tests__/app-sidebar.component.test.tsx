@@ -66,7 +66,7 @@ vi.mock("@/shared/ui/primitives/button", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/timestamp", () => ({
+vi.mock("@/shared/ui/with-tooltip", () => ({
   WithTooltip: ({ children }: { children: React.ReactNode }) => children,
 }));
 

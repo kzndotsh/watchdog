@@ -1,6 +1,6 @@
 import { useModKeyLabel } from "@/shared/hooks/use-mod-key-label";
 import { formatChord, HOTKEYS, hotkeyDef } from "@/shared/lib/hotkeys";
-import { ActionShortcutChord } from "@/shared/ui/action-list";
+import { ActionShortcutChord } from "@/shared/ui/action-shortcut-chord";
 import {
   Dialog,
   DialogContent,

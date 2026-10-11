@@ -23,7 +23,7 @@ vi.mock("@watchdog/ui/components/sidebar", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/timestamp", () => ({
+vi.mock("@/shared/ui/with-tooltip", () => ({
   WithTooltip: ({ children }: { children: React.ReactNode }) => children,
 }));
 

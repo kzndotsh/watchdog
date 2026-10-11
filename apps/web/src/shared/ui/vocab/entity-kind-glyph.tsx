@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import { WithTooltip } from "@/shared/ui/timestamp";
 import { EntityKindIcon } from "@/shared/ui/vocab/entity-kind-icon";
 import type { EntityKindIconSize } from "@/shared/ui/vocab/kind.lib";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 import { ENTITY_KIND_LABELS } from "@watchdog/schemas/shared";
 import type { EntityKind } from "@watchdog/schemas/shared";
 

@@ -18,7 +18,6 @@ import {
 } from "@/shared/ui/data-table";
 import { EntityCombobox, type EntityOption } from "@/shared/ui/entity-combobox";
 import { FieldSelect } from "@/shared/ui/field-select";
-import { WithTooltip } from "@/shared/ui/timestamp";
 import {
   CONFIDENCE_OPTIONS,
   IDENTIFIER_PLATFORM_OPTIONS,
@@ -26,6 +25,7 @@ import {
   IDENTIFIER_TYPE_OPTIONS,
   identifierPlatformOptionMatchesQuery,
 } from "@/shared/ui/vocab";
+import { WithTooltip } from "@/shared/ui/with-tooltip";
 import {
   trimmedConfidenceTierSchema,
   trimmedIdentifierStatusSchema,
