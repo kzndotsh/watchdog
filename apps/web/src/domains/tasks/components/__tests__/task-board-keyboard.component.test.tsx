@@ -70,9 +70,19 @@ describe("TaskBoard keyboard (real dnd-kit sensors)", () => {
     await user.keyboard(" ");
 
     // A lifted card also renders as the drag overlay preview.
-    await waitFor(() => {
-      expect(screen.getAllByText("Verify alias")).toHaveLength(2);
-    });
-    expect(onSelect).not.toHaveBeenCalled();
+    try {
+      await waitFor(() => {
+        expect(screen.getAllByText("Verify alias")).toHaveLength(2);
+      });
+      expect(onSelect).not.toHaveBeenCalled();
+    } finally {
+      // Isolation leak (#224): this lift leaves dnd-kit's KeyboardSensor holding
+      // document-level keydown listeners that swallow the next Space/Enter
+      // (preventDefault + end drag). Unmounting does not remove them, and the
+      // component project shares workers (`isolate: false`), so a later file that
+      // types a space (UrlForm, PasteForm) or presses Enter on a card (TaskCard)
+      // lost that one key, depending on shuffled file order. Cancel the drag here.
+      await user.keyboard("{Escape}");
+    }
   });
 });
