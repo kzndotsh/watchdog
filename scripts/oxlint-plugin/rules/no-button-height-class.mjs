@@ -175,8 +175,8 @@ export const noButtonHeightClass = {
     const namespaces = new Set();
     /**
      * Every variable initializer (`const`, `let` and `var`: `NAME = <expr>`) in the file,
-     * per name, at any depth. A className identifier reads all of them: a same-named
-     * declaration elsewhere can only add findings, never hide one.
+     * per name, at any depth. Without scope information a className identifier reads all
+     * same-named initializers, so a declaration elsewhere can add findings but never hide one.
      * @type {Map<string, unknown[]>}
      */
     const consts = new Map();

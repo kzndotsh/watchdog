@@ -6,7 +6,7 @@ import { TimelineDot, TimelineSpine } from "@/shared/ui/timeline-spine";
 describe("TimelineSpine", () => {
   it("renders dashed spine content and dot markers", () => {
     render(
-      <TimelineSpine className="ml-2">
+      <TimelineSpine className="ml-2 pl-4">
         <TimelineDot className="bg-accent" />
         <div>Event body</div>
       </TimelineSpine>

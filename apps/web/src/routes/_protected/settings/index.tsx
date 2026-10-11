@@ -1,5 +1,9 @@
 import { useSession } from "@better-auth-ui/react";
-import { createFileRoute, getRouteApi } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  getRouteApi,
+  useRouterState,
+} from "@tanstack/react-router";
 import {
   BuildingIcon,
   KeyIcon,
@@ -23,6 +27,7 @@ import { YourOrganizations } from "@/domains/organization/components/your-organi
 import { SettingsAppearanceSection } from "@/domains/settings/components/settings-appearance-section";
 import { SettingsCredentialsForm } from "@/domains/settings/components/settings-credentials-form";
 import {
+  SETTINGS_LEGACY_TABS,
   SETTINGS_TABS,
   SettingsShell,
   type SettingsNavItem,
@@ -107,14 +112,8 @@ const SETTINGS_NAV: readonly SettingsNavItem[] = [
   },
 ];
 
-/** Tab ids from older links. */
-const LEGACY_SETTINGS_TABS = { team: "members" } as const satisfies Record<
-  string,
-  SettingsTab
->;
-
 const settingsSearchSchema = z.object({
-  tab: tabSearchParam(SETTINGS_TABS, LEGACY_SETTINGS_TABS),
+  tab: tabSearchParam(SETTINGS_TABS, SETTINGS_LEGACY_TABS),
 });
 
 function SettingsPanel({
@@ -192,6 +191,9 @@ function SettingsPanel({
 function SettingsPage() {
   const { tab: tabSearch } = routeApi.useSearch();
   const navigate = routeApi.useNavigate();
+  const searchStr = useRouterState({
+    select: (s) => s.location.searchStr,
+  });
   const { data: session, isPending: sessionPending } = useSession(authClient);
   const canManageUsers = isInstanceAdmin(
     (session?.user as { role?: string | null } | undefined)?.role
@@ -215,14 +217,14 @@ function SettingsPage() {
   );
 
   useEffect(() => {
-    const raw = new URLSearchParams(window.location.search).get("tab");
+    const raw = new URLSearchParams(searchStr).get("tab");
     if (raw !== null && raw !== "" && tabSearch === undefined) {
       void navigate({
         search: (prev) => ({ ...prev, tab: undefined }),
         replace: true,
       });
     }
-  }, [navigate, tabSearch]);
+  }, [navigate, searchStr, tabSearch]);
 
   return (
     <Page className="gap-0">
